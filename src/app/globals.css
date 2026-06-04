@@ -5,6 +5,10 @@
   --foreground: #171717;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -23,4 +27,51 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+main textarea,
+main select {
+  color: #111827 !important;
+  caret-color: #111827;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):-webkit-autofill,
+main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):-webkit-autofill:hover,
+main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):-webkit-autofill:focus,
+main textarea:-webkit-autofill,
+main textarea:-webkit-autofill:hover,
+main textarea:-webkit-autofill:focus,
+main select:-webkit-autofill,
+main select:-webkit-autofill:hover,
+main select:-webkit-autofill:focus {
+  -webkit-text-fill-color: #111827 !important;
+}
+
+main input::placeholder,
+main textarea::placeholder {
+  color: #626770;
+  opacity: 1;
+}
+      
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

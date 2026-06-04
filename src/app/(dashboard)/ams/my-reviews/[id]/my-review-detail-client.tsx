@@ -1,0 +1,242 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { CriteriaPointsForm, CriteriaPointsView } from "@/components/ams/criteria-points-form";
+import type { CriterionPoint } from "@/components/ams/criteria-points-form";
+import { useNotifications } from "@/components/notifications/notification-provider";
+import type { ReviewerRatingAnswers } from "@/modules/ams/criteria-config";
+
+type MyReviewDetail = {
+  id: string;
+  stage: string;
+  reviewerKind: string;
+  reviewerStatus: string;
+  employee: { name: string; designation: string | null };
+  cycle: { name: string; year: number };
+  availabilityDeadline: string | null;
+  reviewerRatingDeadline: string | null;
+  currentRating: ReviewerRatingAnswers | null;
+  submittedAt: string | null;
+  submissionStatus: string | null;
+};
+
+const STAGE_COLOR: Record<string, string> = {
+  DUE_NOTIFIED: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  REVIEWERS_ASSIGNED: "bg-blue-50 text-blue-700 border-blue-200",
+  SELF_ASSESSMENT_OPEN: "bg-purple-50 text-purple-700 border-purple-200",
+  REVIEWER_RATING: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  MANAGEMENT_REVIEW: "bg-orange-50 text-orange-700 border-orange-200",
+  MEETING_PENDING: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  MEETING_LIVE: "bg-green-50 text-green-700 border-green-200",
+  HIKE_FINALISATION: "bg-pink-50 text-pink-700 border-pink-200",
+  CLOSED: "bg-gray-100 text-gray-500 border-gray-200",
+};
+
+const STATUS_COLOR: Record<string, string> = {
+  PENDING: "bg-gray-100 text-gray-500",
+  AVAILABLE: "bg-green-100 text-green-700",
+  UNAVAILABLE: "bg-red-100 text-red-600",
+  FORCED: "bg-orange-100 text-orange-600",
+};
+
+const KIND_LABEL: Record<string, string> = {
+  HR: "HR",
+  TL: "Team Lead",
+  MANAGER: "Manager",
+};
+
+function DeadlineBanner({ deadline, serverNow, label }: { deadline: string; serverNow: string; label: string }) {
+  const passed = new Date(serverNow) >= new Date(deadline);
+  return (
+    <div className={`rounded-lg border px-3 py-2 text-xs ${passed ? "border-red-200 bg-red-50 text-red-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
+      {label}: <strong>{new Date(deadline).toLocaleDateString("en-IN")}</strong>
+      {passed ? " - deadline has passed" : ""}
+    </div>
+  );
+}
+
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-5">
+      <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function getWaitingMessage(stage: string): string {
+  if (stage === "SELF_ASSESSMENT_OPEN") {
+    return "The employee is still completing self-assessment. Your rating window has not opened yet.";
+  }
+  if (stage === "MANAGEMENT_REVIEW") {
+    return "Reviewer ratings are complete. This appraisal is now with management.";
+  }
+  if (stage === "MEETING_PENDING" || stage === "MEETING_LIVE") {
+    return "Your review has been submitted and the appraisal is in the meeting phase.";
+  }
+  if (stage === "HIKE_FINALISATION" || stage === "CLOSED") {
+    return "This appraisal has moved beyond the reviewer stage.";
+  }
+  return "This appraisal is not currently awaiting reviewer action.";
+}
+
+export function MyReviewDetailClient({
+  appraisal,
+  criteria,
+  serverNow,
+}: {
+  appraisal: MyReviewDetail;
+  criteria: CriterionPoint[];
+  serverNow: string;
+}) {
+  const router = useRouter();
+  const [statusLoading, setStatusLoading] = useState<"available" | "unavailable" | null>(null);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const { success, error } = useNotifications();
+
+  const ratingDeadlinePassed = appraisal.reviewerRatingDeadline
+    ? new Date(serverNow) >= new Date(appraisal.reviewerRatingDeadline)
+    : false;
+  const canRate =
+    appraisal.stage === "REVIEWER_RATING" &&
+    (appraisal.reviewerStatus === "AVAILABLE" || appraisal.reviewerStatus === "FORCED");
+  const canSetAvailability =
+    appraisal.stage === "REVIEWERS_ASSIGNED" && appraisal.reviewerStatus === "PENDING";
+
+  async function persistRating(action: "DRAFT" | "SUBMITTED", answers: ReviewerRatingAnswers) {
+    const res = await fetch(`/api/ams/appraisals/${appraisal.id}/reviewer-rating`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, ratings: answers }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      error(data.error ?? (action === "DRAFT" ? "Unable to save reviewer draft" : "Unable to submit reviewer rating"));
+      return;
+    }
+    success(action === "DRAFT" ? "Reviewer draft saved" : "Reviewer rating submitted");
+    setSavedAt(new Date().toLocaleTimeString("en-IN"));
+    router.refresh();
+  }
+
+  async function setAvailability(available: boolean) {
+    setStatusLoading(available ? "available" : "unavailable");
+    const res = await fetch(`/api/ams/appraisals/${appraisal.id}/availability`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ available }),
+    });
+    setStatusLoading(null);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      error(data.error ?? "Unable to update availability");
+      return;
+    }
+    success(available ? "Availability confirmed" : "Marked unavailable");
+    router.refresh();
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <Link href="/ams/my-reviews" className="text-sm text-gray-500 hover:text-gray-700">
+          {"< My Reviews"}
+        </Link>
+        <span className="text-gray-300">/</span>
+        <h1 className="text-2xl font-bold text-gray-900">{appraisal.employee.name}</h1>
+      </div>
+
+      <Card title="Review Summary">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-lg font-semibold text-gray-900">{appraisal.employee.name}</p>
+            <p className="text-sm text-gray-500">
+              {appraisal.employee.designation ?? "No designation"} · {appraisal.cycle.name} {appraisal.cycle.year}
+            </p>
+            <p className="text-xs uppercase tracking-wide text-gray-400">
+              Your role: {KIND_LABEL[appraisal.reviewerKind] ?? appraisal.reviewerKind}
+            </p>
+          </div>
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <span className={`rounded-full border px-3 py-1 text-xs font-medium ${STAGE_COLOR[appraisal.stage] ?? "border-gray-200 bg-gray-100 text-gray-500"}`}>
+              {appraisal.stage.replace(/_/g, " ")}
+            </span>
+            <span className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLOR[appraisal.reviewerStatus] ?? "bg-gray-100 text-gray-500"}`}>
+              {appraisal.reviewerStatus}
+            </span>
+          </div>
+        </div>
+      </Card>
+
+      {appraisal.stage === "REVIEWERS_ASSIGNED" && appraisal.availabilityDeadline && (
+        <DeadlineBanner deadline={appraisal.availabilityDeadline} serverNow={serverNow} label="Availability deadline" />
+      )}
+      {appraisal.stage === "REVIEWER_RATING" && appraisal.reviewerRatingDeadline && (
+        <DeadlineBanner deadline={appraisal.reviewerRatingDeadline} serverNow={serverNow} label="Rating deadline" />
+      )}
+
+      {savedAt && (
+        <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
+          Reviewer rating saved at {savedAt}.
+        </div>
+      )}
+
+      {appraisal.submittedAt && appraisal.currentRating && appraisal.stage !== "REVIEWERS_ASSIGNED" && (
+        <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
+          Last submitted on <strong>{new Date(appraisal.submittedAt).toLocaleString("en-IN")}</strong>.
+        </div>
+      )}
+
+      {canSetAvailability ? (
+        <Card title="Confirm Availability">
+          <p className="text-sm text-gray-600">
+            Confirm whether you can take this review assignment.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setAvailability(true)}
+              disabled={statusLoading !== null}
+              className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              {statusLoading === "available" ? "Saving..." : "Available"}
+            </button>
+            <button
+              onClick={() => setAvailability(false)}
+              disabled={statusLoading !== null}
+              className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-50"
+            >
+              {statusLoading === "unavailable" ? "Saving..." : "Unavailable"}
+            </button>
+          </div>
+        </Card>
+      ) : canRate ? (
+        <Card title="Reviewer Rating">
+          <CriteriaPointsForm
+            mode="reviewer"
+            criteria={criteria}
+            supplementary={[]}
+            initialAnswers={appraisal.currentRating ?? undefined}
+            onSaveDraft={(answers) => persistRating("DRAFT", answers as ReviewerRatingAnswers)}
+            onSubmitFinal={(answers) => persistRating("SUBMITTED", answers as ReviewerRatingAnswers)}
+            disabled={ratingDeadlinePassed}
+            submitted={appraisal.submissionStatus === "SUBMITTED"}
+          />
+        </Card>
+      ) : appraisal.currentRating ? (
+        <Card title="Your Submitted Rating">
+          <CriteriaPointsView
+            criteria={criteria}
+            supplementary={[]}
+            answers={appraisal.currentRating}
+          />
+        </Card>
+      ) : (
+        <Card title="Review Status">
+          <p className="text-sm text-gray-600">{getWaitingMessage(appraisal.stage)}</p>
+        </Card>
+      )}
+    </div>
+  );
+}
