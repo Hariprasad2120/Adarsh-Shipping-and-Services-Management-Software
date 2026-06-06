@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CriteriaPointsView } from "@/components/ams/criteria-points-form";
-import type { CriterionPoint } from "@/components/ams/criteria-points-form";
 import { Button } from "@/components/ui/button";
 import type {
   AppraisalSelfFormTemplate,
@@ -12,6 +11,7 @@ import type {
   ReviewerRatingAnswers,
   ManagementReviewAnswers,
 } from "@/modules/ams/criteria-config";
+import type { CriterionPoint } from "@/modules/ams/types";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 

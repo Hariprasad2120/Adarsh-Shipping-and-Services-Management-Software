@@ -261,10 +261,8 @@ export async function listDueAppraisals(
   year: number,
   month: number
 ): Promise<DueAppraisalRow[]> {
-  console.time("listDueAppraisals:total");
 
   // Parallel: fetch active users (slim — no permission joins) + exempt user IDs
-  console.time("listDueAppraisals:users+exempt");
   const [users, exemptRows] = await Promise.all([
     db.user.findMany({
       where: { orgId, active: true },
@@ -288,7 +286,6 @@ export async function listDueAppraisals(
     }),
   ]);
   const exemptUserIds = new Set(exemptRows.map((r) => r.userId));
-  console.timeEnd("listDueAppraisals:users+exempt");
 
   // Determine which employees have a due slot this month
   type Eligible = { user: typeof users[0]; slot: NonNullable<ReturnType<typeof dueInMonth>>; cycleName: string };
@@ -306,12 +303,10 @@ export async function listDueAppraisals(
   }
 
   if (eligible.length === 0) {
-    console.timeEnd("listDueAppraisals:total");
     return [];
   }
 
   // Batch: load all needed cycles + existing appraisals in two queries instead of 2N
-  console.time("listDueAppraisals:batch");
   const uniqueCycleNames = [...new Set(eligible.map((e) => e.cycleName))];
   const cycles = await db.appraisalCycle.findMany({
     where: { orgId, name: { in: uniqueCycleNames } },
@@ -328,7 +323,6 @@ export async function listDueAppraisals(
       })
     : [];
   const appraisalByKey = new Map(existingAppraisals.map((a) => [`${a.cycleId}:${a.employeeId}`, a.id]));
-  console.timeEnd("listDueAppraisals:batch");
 
   const rows: DueAppraisalRow[] = eligible.map(({ user: u, slot, cycleName }) => {
     const cycleId = cycleByName.get(cycleName);
@@ -344,7 +338,6 @@ export async function listDueAppraisals(
     };
   });
 
-  console.timeEnd("listDueAppraisals:total");
   return rows;
 }
 
@@ -419,7 +412,6 @@ export async function getAppraisal(id: string) {
 
 // Minimal query for the reviewer's own review page — fetches only the fields the page needs.
 export async function getMyReviewView(appraisalId: string, userId: string) {
-  console.time("svc:getMyReviewView");
   const result = await db.appraisal.findUnique({
     where: { id: appraisalId },
     select: {
@@ -427,6 +419,11 @@ export async function getMyReviewView(appraisalId: string, userId: string) {
       stage: true,
       availabilityDeadline: true,
       reviewerRatingDeadline: true,
+      selfAssessment: {
+        select: {
+          editCount: true,
+        },
+      },
       employee: { select: { name: true, designation: true } },
       cycle: { select: { name: true, year: true } },
       reviewers: {
@@ -444,7 +441,6 @@ export async function getMyReviewView(appraisalId: string, userId: string) {
       },
     },
   });
-  console.timeEnd("svc:getMyReviewView");
   return result;
 }
 
@@ -679,37 +675,20 @@ async function notifyManagementReviewOpen(appraisalId: string, orgId: string) {
   );
 }
 
-async function openReviewerRatingStage(appraisalId: string) {
+async function openManagementReviewStage(appraisalId: string, reason?: string) {
   const appraisal = await db.appraisal.findUniqueOrThrow({
     where: { id: appraisalId },
-    include: {
-      cycle: true,
-      employee: { select: { branchId: true } },
-      reviewers: { where: { kind: { in: ["HR", "TL", "MANAGER"] } } },
-    },
+    include: { cycle: true },
   });
 
-  if (appraisal.stage !== "SELF_ASSESSMENT_OPEN") return;
-
-  const holidaySet = await loadHolidaySet(appraisal.cycle.orgId, appraisal.employee.branchId);
-  const reviewerDeadline = addBusinessDays(await getNow(), 3, holidaySet);
+  if (appraisal.stage !== "REVIEWER_RATING") return;
 
   await db.appraisal.update({
     where: { id: appraisalId },
-    data: { stage: "REVIEWER_RATING", reviewerRatingDeadline: reviewerDeadline },
+    data: { stage: "MANAGEMENT_REVIEW" },
   });
-  await logTransition(appraisalId, "SELF_ASSESSMENT_OPEN", "REVIEWER_RATING");
-
-  await notifyMany(
-    appraisal.reviewers.map((reviewer) => reviewer.userId),
-    {
-      orgId: appraisal.cycle.orgId,
-      kind: "REVIEW_OPEN",
-      title: "Reviewer rating window is open",
-      link: `/ams/my-reviews/${appraisalId}`,
-      payload: { appraisalId },
-    }
-  );
+  await logTransition(appraisalId, "REVIEWER_RATING", "MANAGEMENT_REVIEW", undefined, reason);
+  await notifyManagementReviewOpen(appraisalId, appraisal.cycle.orgId);
 }
 
 export async function submitSelfAssessment(
@@ -718,11 +697,13 @@ export async function submitSelfAssessment(
   answers: SelfAssessmentAnswers,
   action: SubmissionStatus,
 ): Promise<{ editCount: number; status: SubmissionStatus }> {
+  const now = await getNow();
   const appraisal = await db.appraisal.findUniqueOrThrow({
     where: { id: appraisalId },
     select: {
       stage: true,
       employeeId: true,
+      selfAssessmentDeadline: true,
       cycle: { select: { orgId: true } },
     },
   });
@@ -732,6 +713,9 @@ export async function submitSelfAssessment(
   }
   if (appraisal.employeeId !== employeeId) {
     throw new Error("Not authorized.");
+  }
+  if (appraisal.selfAssessmentDeadline && now >= appraisal.selfAssessmentDeadline) {
+    throw new Error("Self-assessment deadline has passed.");
   }
 
   const criteria = await loadCriteriaPointsForPhase(appraisal.cycle.orgId, "SELF");
@@ -760,21 +744,17 @@ export async function submitSelfAssessment(
       answers: sanitizedAnswers,
       status: action,
       editCount: { increment: 1 },
-      submittedAt: action === "SUBMITTED" ? await getNow() : null,
+      submittedAt: action === "SUBMITTED" ? now : null,
     },
     create: {
       appraisalId,
       answers: sanitizedAnswers,
       status: action,
       editCount: 0,
-      submittedAt: action === "SUBMITTED" ? await getNow() : null,
+      submittedAt: action === "SUBMITTED" ? now : null,
     },
     select: { editCount: true, status: true },
   });
-
-  if (action === "SUBMITTED") {
-    await openReviewerRatingStage(appraisalId);
-  }
 
   return { editCount: record.editCount, status: record.status as SubmissionStatus };
 }
@@ -786,6 +766,7 @@ export async function submitReviewerRating(
   action: SubmissionStatus,
   overallComments?: string
 ) {
+  const now = await getNow();
   const reviewer = await db.appraisalReviewer.findFirstOrThrow({
     where: { appraisalId, userId: reviewerUserId },
     include: { appraisal: { include: { cycle: true } } },
@@ -799,6 +780,10 @@ export async function submitReviewerRating(
   }
   if (!["AVAILABLE", "FORCED"].includes(reviewer.availabilityStatus)) {
     throw new Error("You are not authorized to rate this appraisal right now.");
+  }
+  if (reviewer.appraisal.reviewerRatingDeadline && now >= reviewer.appraisal.reviewerRatingDeadline) {
+    await openManagementReviewStage(appraisalId, "Reviewer rating deadline passed");
+    throw new Error("Reviewer rating deadline has passed.");
   }
 
   const criteria = await loadCriteriaPointsForPhase(
@@ -818,7 +803,7 @@ export async function submitReviewerRating(
       ratings: { version: "v2", ...sanitized },
       comments: overallComments?.trim() || null,
       status: action,
-      submittedAt: action === "SUBMITTED" ? await getNow() : null,
+      submittedAt: action === "SUBMITTED" ? now : null,
     },
     create: {
       appraisalId,
@@ -826,7 +811,7 @@ export async function submitReviewerRating(
       ratings: { version: "v2", ...sanitized },
       comments: overallComments?.trim() || null,
       status: action,
-      submittedAt: action === "SUBMITTED" ? await getNow() : null,
+      submittedAt: action === "SUBMITTED" ? now : null,
     },
   });
 
@@ -840,15 +825,7 @@ export async function submitReviewerRating(
   const allRated = allReviewers.every((row) => row.ratings.some((rating) => isSubmittedStatus(rating.status)));
   if (!allRated) return;
 
-  const appraisal = await db.appraisal.findUniqueOrThrow({
-    where: { id: appraisalId },
-    include: { cycle: true },
-  });
-  if (appraisal.stage !== "REVIEWER_RATING") return;
-
-  await db.appraisal.update({ where: { id: appraisalId }, data: { stage: "MANAGEMENT_REVIEW" } });
-  await logTransition(appraisalId, "REVIEWER_RATING", "MANAGEMENT_REVIEW");
-  await notifyManagementReviewOpen(appraisalId, appraisal.cycle.orgId);
+  await openManagementReviewStage(appraisalId);
 }
 
 export async function submitManagementReview(

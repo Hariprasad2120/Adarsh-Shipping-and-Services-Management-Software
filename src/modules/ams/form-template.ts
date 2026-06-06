@@ -1,4 +1,3 @@
-import type { CriterionPoint, CriterionSubItem } from "@/components/ams/criteria-points-form";
 import {
   clampRating,
   getVisibleCriteriaForRole,
@@ -9,6 +8,7 @@ import {
   type EvaluatorRole,
   type ReviewerCriterionSeed,
 } from "./criteria-config";
+import type { CriterionPoint, CriterionSubItem } from "./types";
 
 type CriterionChildRow = {
   id: string;

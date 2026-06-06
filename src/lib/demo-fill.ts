@@ -1,19 +1,51 @@
-import type { CriterionPoint } from "@/components/ams/criteria-points-form";
 import type { ReviewerRatingAnswers, SelfAssessmentAnswers } from "@/modules/ams/criteria-config";
+import type { CriterionPoint } from "@/modules/ams/types";
 import {
   buildQuestionKey,
-  CAREER_GROWTH_SECTION,
-  COMPENSATION_SECTION,
-  DECISION_MAKING_SECTION,
+  buildDefaultSelfFormTemplate,
   EMPLOYEE_INFO_FIELDS,
-  RETENTION_SECTION,
-  SELF_ASSESSMENT_PART_A_SECTIONS,
+  type AppraisalSelfFormTemplate,
 } from "@/modules/ams/criteria-config";
 import type { SalaryInputs } from "@/modules/hrms/salary-structure";
 
-export const demoFillEnabled = process.env.NEXT_PUBLIC_ENABLE_DEMO_FILL === "true";
+export const demoFillEnabled =
+  process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_ENABLE_DEMO_FILL !== "false";
 
 type DemoFieldValue = string | number | boolean;
+export type DemoPerformanceProfile = "poor" | "average" | "good";
+
+const DEMO_PROFILE_COPY: Record<
+  DemoPerformanceProfile,
+  {
+    label: string;
+    minRating: number;
+    maxRating: number;
+    feedback: string;
+    reviewerTone: string;
+  }
+> = {
+  poor: {
+    label: "Poor Performer",
+    minRating: 1,
+    maxRating: 2,
+    feedback: "Demo feedback focused on support needed, closer coaching, and a clear improvement plan.",
+    reviewerTone: "highlighting coaching needs, missed expectations, and closer follow-up.",
+  },
+  average: {
+    label: "Average Performer",
+    minRating: 2,
+    maxRating: 4,
+    feedback: "Demo feedback focused on steady delivery, consistency, and a few areas for improvement.",
+    reviewerTone: "highlighting dependable delivery with room for improvement and stronger consistency.",
+  },
+  good: {
+    label: "Good Performer",
+    minRating: 4,
+    maxRating: 5,
+    feedback: "Demo feedback focused on growth, support, and long-term contribution.",
+    reviewerTone: "highlighting strong performance, ownership, and reliable execution.",
+  },
+};
 
 export function formatDateForInput(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -139,21 +171,35 @@ function getQuestionAnswer(label: string, index: number) {
   return `Demo response ${index + 1} for ${label.toLowerCase()} showing ownership, consistency, and measurable impact.`;
 }
 
+function getRandomRating(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 export function buildSelfAssessmentDemoAnswers(
   criteria: CriterionPoint[],
-  supplementary: CriterionPoint[],
+  selfTemplate?: AppraisalSelfFormTemplate,
+  profile: DemoPerformanceProfile = "average",
 ): SelfAssessmentAnswers {
-  void supplementary;
+  const profileCopy = DEMO_PROFILE_COPY[profile];
+  const resolvedTemplate = selfTemplate ?? buildDefaultSelfFormTemplate();
+  const allSections = [
+    ...resolvedTemplate.partASections,
+    resolvedTemplate.careerGrowthSection,
+    resolvedTemplate.decisionMakingSection,
+    resolvedTemplate.retentionSection,
+    resolvedTemplate.compensationSection,
+  ];
+
   return {
     version: "v2",
     employeeInfo: Object.fromEntries(
-      EMPLOYEE_INFO_FIELDS.map((field) => [
+      (resolvedTemplate.employeeInfoFields.length > 0 ? resolvedTemplate.employeeInfoFields : EMPLOYEE_INFO_FIELDS).map((field) => [
         field.id,
         field.id === "has-break-up-period" ? "no" : `Demo ${field.label.toLowerCase()}`,
       ]),
     ),
     responses: Object.fromEntries(
-      [...SELF_ASSESSMENT_PART_A_SECTIONS, CAREER_GROWTH_SECTION, DECISION_MAKING_SECTION, RETENTION_SECTION, COMPENSATION_SECTION]
+      allSections
         .flatMap((section) => section.questions.map((question, index) => [
           buildQuestionKey(section.id, question.id),
           question.type === "radio"
@@ -167,22 +213,34 @@ export function buildSelfAssessmentDemoAnswers(
               },
         ])),
     ),
-    categoryPoints: Object.fromEntries(criteria.map((criterion) => [criterion.id, 4])),
-    feedback: "Demo feedback focused on growth, support, and long-term contribution.",
+    categoryPoints: Object.fromEntries(
+      criteria.map((criterion) => [criterion.id, getRandomRating(profileCopy.minRating, profileCopy.maxRating)]),
+    ),
+    feedback: profileCopy.feedback,
   };
 }
 
-export function buildReviewerDemoAnswers(criteria: CriterionPoint[]): ReviewerRatingAnswers {
+export function buildReviewerDemoAnswers(
+  criteria: CriterionPoint[],
+  profile: DemoPerformanceProfile = "average",
+): ReviewerRatingAnswers {
+  const profileCopy = DEMO_PROFILE_COPY[profile];
   const categoryPoints: Record<string, number> = {};
   const comments: Record<string, string> = {};
   const subItemRatings: Record<string, Record<string, number>> = {};
 
   for (const criterion of criteria) {
-    categoryPoints[criterion.id] = 4;
-    comments[criterion.id] = `Demo reviewer note for ${criterion.label.toLowerCase()} highlighting strong performance and reliable execution.`;
-    subItemRatings[criterion.id] = Object.fromEntries(
-      criterion.items.map((item) => [item.id, 4]),
+    const criterionRatings = Object.fromEntries(
+      criterion.items.map((item) => [item.id, getRandomRating(profileCopy.minRating, profileCopy.maxRating)]),
     );
+    const values = Object.values(criterionRatings);
+    const average = values.length > 0
+      ? Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 10) / 10
+      : getRandomRating(profileCopy.minRating, profileCopy.maxRating);
+
+    categoryPoints[criterion.id] = average;
+    comments[criterion.id] = `Demo reviewer note for ${criterion.label.toLowerCase()} ${profileCopy.reviewerTone}`;
+    subItemRatings[criterion.id] = criterionRatings;
   }
 
   return {
@@ -192,3 +250,6 @@ export function buildReviewerDemoAnswers(criteria: CriterionPoint[]): ReviewerRa
     comments,
   };
 }
+
+export const demoPerformanceProfiles = (Object.entries(DEMO_PROFILE_COPY) as Array<[DemoPerformanceProfile, { label: string }]>)
+  .map(([value, config]) => ({ value, label: config.label }));

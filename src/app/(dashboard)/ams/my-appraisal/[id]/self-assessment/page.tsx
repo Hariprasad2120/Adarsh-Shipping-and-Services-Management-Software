@@ -5,9 +5,9 @@ import { getAppraisal, getSelfFormTemplate } from "@/modules/ams/service";
 import { db } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import { SelfAssessmentForm } from "./self-assessment-form";
-import type { CriterionPoint } from "@/components/ams/criteria-points-form";
 import type { AppraisalSelfFormTemplate, SelfAssessmentAnswers } from "@/modules/ams/criteria-config";
 import { mapCriterionRowToPoint } from "@/modules/ams/form-template";
+import type { CriterionPoint } from "@/modules/ams/types";
 
 export default async function SelfAssessmentPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -24,7 +24,12 @@ export default async function SelfAssessmentPage({ params }: { params: Promise<{
 
   if (!appraisal) notFound();
   if (appraisal.employee.id !== session.user.id) notFound();
-  if (appraisal.stage !== "SELF_ASSESSMENT_OPEN") {
+  const deadlinePassed = appraisal.selfAssessmentDeadline
+    ? now >= new Date(appraisal.selfAssessmentDeadline)
+    : false;
+  const canEdit = appraisal.stage === "SELF_ASSESSMENT_OPEN" && !deadlinePassed;
+
+  if (appraisal.stage !== "SELF_ASSESSMENT_OPEN" && !appraisal.selfAssessment) {
     redirect("/ams/my-appraisal");
   }
 
@@ -42,36 +47,11 @@ export default async function SelfAssessmentPage({ params }: { params: Promise<{
   const existingAnswers: SelfAssessmentAnswers | null = appraisal.selfAssessment?.answers
     ? {
         ...(appraisal.selfAssessment.answers as SelfAssessmentAnswers),
-        employeeInfo: {
-          name: appraisal.employee.name,
-          department: appraisal.employee.department?.name ?? "",
-          position: appraisal.employee.designation ?? "",
-          "years-of-association": appraisal.employee.employmentRecord?.joinDate
-            ? String(
-                Math.max(
-                  0,
-                  new Date(now).getFullYear() - new Date(appraisal.employee.employmentRecord.joinDate).getFullYear(),
-                ),
-              )
-            : "",
-          ...((appraisal.selfAssessment.answers as SelfAssessmentAnswers).employeeInfo ?? {}),
-        },
+        employeeInfo: {},
       }
     : {
         version: "v2",
-        employeeInfo: {
-          name: appraisal.employee.name,
-          department: appraisal.employee.department?.name ?? "",
-          position: appraisal.employee.designation ?? "",
-          "years-of-association": appraisal.employee.employmentRecord?.joinDate
-            ? String(
-                Math.max(
-                  0,
-                  new Date(now).getFullYear() - new Date(appraisal.employee.employmentRecord.joinDate).getFullYear(),
-                ),
-              )
-            : "",
-        },
+        employeeInfo: {},
         responses: {},
         categoryPoints: {},
         feedback: "",
@@ -97,6 +77,9 @@ export default async function SelfAssessmentPage({ params }: { params: Promise<{
         {editCount > 0 && (
           <p className="text-xs text-gray-400 mt-1">Edited {editCount} time{editCount !== 1 ? "s" : ""}</p>
         )}
+        {!canEdit && appraisal.selfAssessment && (
+          <p className="text-xs text-gray-500 mt-1">This self-assessment is available in view-only mode.</p>
+        )}
       </div>
 
       <SelfAssessmentForm
@@ -105,6 +88,7 @@ export default async function SelfAssessmentPage({ params }: { params: Promise<{
         initialAnswers={existingAnswers}
         selfAssessmentDeadline={appraisal.selfAssessmentDeadline?.toISOString() ?? null}
         serverNow={now.toISOString()}
+        canEdit={canEdit}
         status={appraisal.selfAssessment?.status ?? null}
         template={selfTemplate as AppraisalSelfFormTemplate}
       />

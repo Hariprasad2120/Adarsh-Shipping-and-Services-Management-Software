@@ -13,7 +13,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const user = await getUser(id);
   if (!user) return err("Not found", 404);
 
-  const { passwordHash: _, ...safe } = user;
+  const safe = Object.fromEntries(
+    Object.entries(user).filter(([key]) => key !== "passwordHash"),
+  );
   return ok(safe);
 }
 
@@ -54,6 +56,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
   }
 
-  const { passwordHash: _, ...safe } = user;
+  const safe = Object.fromEntries(
+    Object.entries(user).filter(([key]) => key !== "passwordHash"),
+  );
   return ok(safe);
 }

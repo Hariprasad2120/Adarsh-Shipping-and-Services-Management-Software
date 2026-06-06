@@ -9,29 +9,22 @@ import { loadSelfCriteria, loadReviewerCriteria } from "@/modules/ams/criteria-c
 import { listUsersSlim } from "@/modules/core/user/service";
 import { notFound, redirect } from "next/navigation";
 import { AppraisalDetail } from "./appraisal-detail";
-import type { CriterionPoint } from "@/components/ams/criteria-points-form";
 import type { AppraisalSelfFormTemplate, SelfAssessmentAnswers } from "@/modules/ams/criteria-config";
 import { filterCriteriaPointsByRole, mapCriterionRowToPoint } from "@/modules/ams/form-template";
+import type { CriterionPoint } from "@/modules/ams/types";
 
 type AppraisalDetailProps = React.ComponentProps<typeof AppraisalDetail>;
 
 export default async function AppraisalDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  console.time("appraisal-detail:total");
-
-  console.time("appraisal-detail:auth");
   const session = await auth();
-  console.timeEnd("appraisal-detail:auth");
   if (!session) redirect("/login");
 
-  console.time("appraisal-detail:permission");
   await requirePermission(session.user.id, "ams.appraisal.assign_reviewers");
-  console.timeEnd("appraisal-detail:permission");
 
   const { id } = await params;
   const orgId = session.user.orgId!;
 
   // All independent — run in parallel
-  console.time("appraisal-detail:parallel-1");
   const [appraisal, roles, caps, now, selfRows, reviewerRows, selfTemplate] = await Promise.all([
     getAppraisal(id),
     getRoles(orgId),
@@ -41,7 +34,6 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
     loadReviewerCriteria(orgId),  // cached — fast after first hit
     getSelfFormTemplate(orgId),
   ]);
-  console.timeEnd("appraisal-detail:parallel-1");
 
   if (!appraisal) notFound();
 
@@ -59,13 +51,11 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
   // Load score data for HIKE_FINALISATION only
   let scoreData: AppraisalDetailProps["scoreData"] = null;
   if (appraisal.stage === "HIKE_FINALISATION") {
-    console.time("appraisal-detail:score");
     try {
       scoreData = await computeAppraisalScore(id);
     } catch {
       // score not available yet
     }
-    console.timeEnd("appraisal-detail:score");
   }
 
   const hrRoleId = roles.find((r) => r.name === "HR")?.id;
@@ -73,15 +63,11 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
   const managerRoleId = roles.find((r) => r.name === "Manager")?.id;
 
   // Use listUsersSlim — page only needs { id, name } for reviewer dropdowns
-  console.time("appraisal-detail:users");
   const [hrUsers, tlUsers, managerUsers] = await Promise.all([
     hrRoleId ? listUsersSlim(orgId, { roleId: hrRoleId, active: true }) : [],
     tlRoleId ? listUsersSlim(orgId, { roleId: tlRoleId, active: true }) : [],
     managerRoleId ? listUsersSlim(orgId, { roleId: managerRoleId, active: true }) : [],
   ]);
-  console.timeEnd("appraisal-detail:users");
-
-  console.time("appraisal-detail:transform");
   const safeAppraisal: AppraisalDetailProps["appraisal"] = {
     ...appraisal,
     dueDate: appraisal.dueDate.toISOString(),
@@ -122,9 +108,6 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
       createdAt: entry.createdAt.toISOString(),
     })),
   };
-  console.timeEnd("appraisal-detail:transform");
-
-  console.timeEnd("appraisal-detail:total");
 
   return (
     <div className="space-y-6">

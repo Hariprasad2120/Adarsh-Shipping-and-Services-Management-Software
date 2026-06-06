@@ -1,12 +1,100 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { BriefcaseBusiness, CircleUserRound, Landmark, IndianRupee } from "lucide-react";
 import { useCan } from "@/lib/caps-context";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 
+type PayrollMeta = {
+  employeeNumber?: string;
+  monthlyGross?: number | null;
+  breakup?: Record<string, number>;
+  bankDetails?: {
+    holderName?: string | null;
+    bankName?: string | null;
+    accountNumber?: string | null;
+    ifscCode?: string | null;
+    accountType?: string | null;
+    paymentMode?: string | null;
+    stateCode?: string | null;
+  };
+  personalDetails?: {
+    gender?: string | null;
+    personalEmail?: string | null;
+    fatherName?: string | null;
+    mobileNumber?: string | null;
+    dateOfBirth?: string | null;
+    panNumber?: string | null;
+    maritalStatus?: string | null;
+    aadhaar?: string | null;
+  };
+  workLocation?: {
+    name?: string | null;
+    addressLine1?: string | null;
+    addressLine2?: string | null;
+    city?: string | null;
+    stateCode?: string | null;
+    country?: string | null;
+    postalCode?: string | null;
+  };
+  personalAddress?: {
+    addressLine1?: string | null;
+    addressLine2?: string | null;
+    city?: string | null;
+    stateCode?: string | null;
+    postalCode?: string | null;
+    country?: string | null;
+  };
+  latestSalaryRevision?: {
+    ["Revised Gross Amount (per annum)"]?: string | number | null;
+    ["Revised CTC (per annum)"]?: string | number | null;
+    ["Basic"]?: string | number | null;
+    ["House Rent Allowance"]?: string | number | null;
+    ["Conveyance Allowance"]?: string | number | null;
+    ["Transport Allowance"]?: string | number | null;
+    ["Travelling Allowance"]?: string | number | null;
+    ["Fixed Allowance"]?: string | number | null;
+    ["Stipend"]?: string | number | null;
+    ["Effective From"]?: string | null;
+  } | null;
+  salaryDetails?: {
+    ["Gross Amount (per annum)_1"]?: string | number | null;
+    ["CTC Per Annum"]?: string | number | null;
+    ["Basic"]?: string | number | null;
+    ["House Rent Allowance"]?: string | number | null;
+    ["Conveyance Allowance"]?: string | number | null;
+    ["Transport Allowance"]?: string | number | null;
+    ["Travelling Allowance"]?: string | number | null;
+    ["Fixed Allowance"]?: string | number | null;
+    ["Stipend"]?: string | number | null;
+  } | null;
+  statutory?: {
+    ["UAN Number"]?: string | null;
+    parsed?: {
+      uanNumber?: string | null;
+    };
+  } | null;
+  rawSheets?: {
+    employee?: {
+      ["First Name"]?: string | null;
+      ["Last Name"]?: string | null;
+      ["Employee Status"]?: string | null;
+      ["Date of Joining"]?: string | null;
+      ["Personal AddressLine1"]?: string | null;
+      ["Personal AddressLine2"]?: string | null;
+      ["Date of Birth"]?: string | null;
+    } | null;
+  };
+};
+
 type User = {
-  id: string; name: string; email: string; designation: string | null; active: boolean;
+  id: string;
+  name: string;
+  email: string;
+  designation: string | null;
+  active: boolean;
   branch: { id: string; name: string } | null;
   department: { id: string; name: string } | null;
   division: { id: string; name: string } | null;
@@ -15,7 +103,13 @@ type User = {
   reports: { id: string; name: string; designation: string | null }[];
   tlReports: { id: string; name: string; designation: string | null }[];
   roles: { role: { id: string; name: string } }[];
-  employmentRecord: { joinDate: string; grade: string | null; ctc: number | null; priorExperienceYears: number | null } | null;
+  employmentRecord: {
+    joinDate: string;
+    grade: string | null;
+    ctc: number | null;
+    priorExperienceYears: number | null;
+    payrollMeta?: PayrollMeta | null;
+  } | null;
 };
 
 type OrgData = {
@@ -24,6 +118,84 @@ type OrgData = {
 } | null;
 
 type StubUser = { id: string; name: string; email: string };
+
+function asCurrency(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value)) return "-";
+  return `Rs${Number(value).toLocaleString("en-IN")}`;
+}
+
+function asDate(value: string | null | undefined) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-IN");
+}
+
+function asNumber(value: unknown) {
+  if (typeof value === "number") return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value.replace(/,/g, ""));
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function formatAddress(address?: {
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  stateCode?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
+}) {
+  if (!address) return "-";
+  const parts = [
+    address.addressLine1,
+    address.addressLine2,
+    address.city,
+    address.stateCode,
+    address.postalCode,
+    address.country,
+  ].filter((part) => part && String(part).trim());
+  return parts.length > 0 ? parts.join(", ") : "-";
+}
+
+function extractFirstName(user: User, meta: PayrollMeta | null) {
+  return meta?.rawSheets?.employee?.["First Name"] ?? user.name.split(" ")[0] ?? "-";
+}
+
+function extractLastName(meta: PayrollMeta | null) {
+  return meta?.rawSheets?.employee?.["Last Name"] ?? "-";
+}
+
+function salaryValue(meta: PayrollMeta | null, key: string, fallbackKey?: string) {
+  const fromBreakup = meta?.breakup?.[key];
+  if (typeof fromBreakup === "number") return fromBreakup;
+  if (fallbackKey) {
+    const fromBreakupFallback = meta?.breakup?.[fallbackKey];
+    if (typeof fromBreakupFallback === "number") return fromBreakupFallback;
+  }
+
+  const latest = meta?.latestSalaryRevision;
+  if (latest && key in latest) {
+    return asNumber((latest as Record<string, unknown>)[key]);
+  }
+
+  if (fallbackKey && latest && fallbackKey in latest) {
+    return asNumber((latest as Record<string, unknown>)[fallbackKey]);
+  }
+
+  const details = meta?.salaryDetails;
+  if (details && key in details) {
+    return asNumber((details as Record<string, unknown>)[key]);
+  }
+
+  if (fallbackKey && details && fallbackKey in details) {
+    return asNumber((details as Record<string, unknown>)[fallbackKey]);
+  }
+
+  return null;
+}
 
 export function EmployeeProfile({
   user,
@@ -70,16 +242,15 @@ export function EmployeeProfile({
   function set(field: keyof typeof form, value: string) {
     setForm((prev) => {
       const next = { ...prev, [field]: value };
-      // clear division when department changes
       if (field === "departmentId") next.divisionId = "";
       return next;
     });
   }
 
   const activeDivisions =
-    org?.departments.find((d) => d.id === form.departmentId)?.divisions ?? [];
-
-  const otherUsers = allUsers.filter((u) => u.id !== user.id);
+    org?.departments.find((department) => department.id === form.departmentId)?.divisions ?? [];
+  const otherUsers = allUsers.filter((item) => item.id !== user.id);
+  const payrollMeta = (user.employmentRecord?.payrollMeta ?? null) as PayrollMeta | null;
 
   async function patch(data: object) {
     setSaving(true);
@@ -139,246 +310,321 @@ export function EmployeeProfile({
     await patch({ active: !user.active });
   }
 
-  const joinDateDisplay = user.employmentRecord?.joinDate
-    ? new Date(user.employmentRecord.joinDate).toLocaleDateString("en-IN")
-    : "—";
+  const salaryBreakup = [
+    { label: "Gross (Annual)", value: salaryValue(payrollMeta, "Revised Gross Amount (per annum)", "Gross Amount (per annum)_1") },
+    { label: "Gross (Monthly)", value: payrollMeta?.monthlyGross ?? null },
+    { label: "CTC (Annual)", value: user.employmentRecord?.ctc ?? salaryValue(payrollMeta, "Revised CTC (per annum)", "CTC Per Annum") },
+    { label: "Basic", value: salaryValue(payrollMeta, "Basic") },
+    { label: "HRA", value: salaryValue(payrollMeta, "House Rent Allowance", "hra") },
+    { label: "Conveyance", value: salaryValue(payrollMeta, "Conveyance Allowance") },
+    { label: "Transport", value: salaryValue(payrollMeta, "Transport Allowance") },
+    { label: "Travelling", value: salaryValue(payrollMeta, "Travelling Allowance") },
+    { label: "Fixed Allowance", value: salaryValue(payrollMeta, "Fixed Allowance", "specialAllowance") },
+    { label: "Stipend", value: salaryValue(payrollMeta, "Stipend", "monthlyIncentive") },
+  ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Left col — info / edit */}
-      <div className="lg:col-span-2 space-y-4">
-
-        {/* Personal & Employment */}
-        <Card
-          title="Personal & Employment"
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <InfoCard
+          icon={<CircleUserRound className="h-5 w-5" />}
+          title="Personal Details"
           action={canEdit && !editDetails ? (
             <button onClick={() => setEditDetails(true)} className="text-xs text-indigo-600 hover:underline">Edit</button>
           ) : undefined}
         >
           {editDetails ? (
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-              <Field label="Name">
-                <input value={form.name} onChange={(e) => set("name", e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm" placeholder="Full name" />
-              </Field>
-              <Field label="Designation">
-                <input value={form.designation} onChange={(e) => set("designation", e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm" placeholder="e.g. Senior Executive" />
-              </Field>
-              <Field label="Join Date">
-                <input type="date" value={form.joinDate} onChange={(e) => set("joinDate", e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm" />
-              </Field>
-              <Field label="Grade">
-                <input value={form.grade} onChange={(e) => set("grade", e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm" placeholder="e.g. L3" />
-              </Field>
-              <Field label="CTC (₹)">
-                <input type="number" value={form.ctc} onChange={(e) => set("ctc", e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm" placeholder="Annual CTC" />
-              </Field>
-              <Field label="Prior Experience (years)">
-                <input type="number" min="0" value={form.priorExperienceYears} onChange={(e) => set("priorExperienceYears", e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm" placeholder="0 = fresher" />
-              </Field>
-              <div className="col-span-2 flex gap-2 pt-1">
-                <button onClick={saveDetails} disabled={saving}
-                  className="text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg disabled:opacity-50">
-                  Save
-                </button>
-                <button onClick={() => setEditDetails(false)}
-                  className="text-xs px-3 py-1.5 border rounded-lg">
-                  Cancel
-                </button>
-              </div>
-            </div>
+            <EditableIdentitySection form={form} set={set} saveDetails={saveDetails} saving={saving} setEditDetails={setEditDetails} />
           ) : (
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-              <Dt label="Name">{user.name}</Dt>
-              <Dt label="Email">{user.email}</Dt>
-              <Dt label="Designation">{user.designation ?? "—"}</Dt>
-              <Dt label="Join Date">{joinDateDisplay}</Dt>
-              <Dt label="Grade">{user.employmentRecord?.grade ?? "—"}</Dt>
-              <Dt label="CTC">
-                {user.employmentRecord?.ctc
-                  ? `₹${Number(user.employmentRecord.ctc).toLocaleString("en-IN")}`
-                  : "—"}
-              </Dt>
-              <Dt label="Status">
-                <span className={`font-medium ${user.active ? "text-green-600" : "text-red-500"}`}>
-                  {user.active ? "Active" : "Inactive"}
-                </span>
-              </Dt>
-            </dl>
+            <KeyValueGrid
+              items={[
+                { label: "First Name", value: extractFirstName(user, payrollMeta) },
+                { label: "Last Name", value: extractLastName(payrollMeta) },
+                { label: "Father Name", value: payrollMeta?.personalDetails?.fatherName ?? "-" },
+                { label: "DOB", value: asDate(payrollMeta?.personalDetails?.dateOfBirth ?? payrollMeta?.rawSheets?.employee?.["Date of Birth"]) },
+                { label: "Gender", value: payrollMeta?.personalDetails?.gender ?? "-" },
+                { label: "Marital Status", value: payrollMeta?.personalDetails?.maritalStatus ?? "-" },
+                { label: "Personal Email", value: payrollMeta?.personalDetails?.personalEmail ?? "-" },
+                { label: "Personal Phone", value: payrollMeta?.personalDetails?.mobileNumber ?? "-" },
+                { label: "Aadhaar", value: payrollMeta?.personalDetails?.aadhaar ?? "-" },
+                { label: "PAN", value: payrollMeta?.personalDetails?.panNumber ?? "-" },
+                { label: "UAN", value: payrollMeta?.statutory?.parsed?.uanNumber ?? payrollMeta?.statutory?.["UAN Number"] ?? "-" },
+              ]}
+            />
           )}
-        </Card>
+        </InfoCard>
 
-        {/* Organisation Placement */}
-        <Card title="Organisation Placement">
+        <InfoCard icon={<BriefcaseBusiness className="h-5 w-5" />} title="Employment">
           {editDetails ? (
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-              <Field label="Branch">
-                <Select value={form.branchId} onChange={(v) => set("branchId", v)}
-                  options={org?.branches ?? []} placeholder="No branch" />
-              </Field>
-              <Field label="Department">
-                <Select value={form.departmentId} onChange={(v) => set("departmentId", v)}
-                  options={org?.departments ?? []} placeholder="No department" />
-              </Field>
-              <Field label="Division">
-                <Select value={form.divisionId} onChange={(v) => set("divisionId", v)}
-                  options={activeDivisions} placeholder="No division"
-                  disabled={!form.departmentId} />
-              </Field>
-            </div>
+            <EditableEmploymentSection
+              form={form}
+              set={set}
+              org={org}
+              activeDivisions={activeDivisions}
+              otherUsers={otherUsers}
+            />
           ) : (
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-              <Dt label="Branch">{user.branch?.name ?? "—"}</Dt>
-              <Dt label="Department">{user.department?.name ?? "—"}</Dt>
-              <Dt label="Division">{user.division?.name ?? "—"}</Dt>
-            </dl>
+            <KeyValueGrid
+              items={[
+                { label: "Joining Date", value: asDate(user.employmentRecord?.joinDate ?? payrollMeta?.rawSheets?.employee?.["Date of Joining"]) },
+                { label: "Employment Type", value: "-" },
+                { label: "Employee Status", value: user.active ? "Active" : "Inactive" },
+                { label: "Source of Hire", value: "-" },
+                { label: "Designation", value: user.designation ?? "-" },
+                { label: "Reporting TL / Manager", value: user.manager?.name ?? user.tl?.name ?? "-" },
+                { label: "Branch", value: user.branch?.name ?? "-" },
+                { label: "Department", value: user.department?.name ?? "-" },
+                { label: "Division", value: user.division?.name ?? "-" },
+                { label: "Present Address", value: formatAddress(payrollMeta?.personalAddress), span: 2 },
+                { label: "Permanent Address", value: formatAddress(payrollMeta?.workLocation), span: 2 },
+              ]}
+            />
           )}
-        </Card>
-
-        {/* Hierarchy */}
-        <Card title="Hierarchy">
-          {editDetails ? (
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-              <Field label="Manager">
-                <Select value={form.managerId} onChange={(v) => set("managerId", v)}
-                  options={otherUsers} placeholder="No manager" />
-              </Field>
-              <Field label="Team Lead">
-                <Select value={form.tlId} onChange={(v) => set("tlId", v)}
-                  options={otherUsers} placeholder="No TL" />
-              </Field>
-            </div>
-          ) : (
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-              <Dt label="Manager">{user.manager?.name ?? "—"}</Dt>
-              <Dt label="Team Lead">{user.tl?.name ?? "—"}</Dt>
-              <Dt label="Direct Reports">
-                {user.reports.length === 0 ? "None" : user.reports.map((r) => r.name).join(", ")}
-              </Dt>
-              <Dt label="TL Reports">
-                {user.tlReports.length === 0 ? "None" : user.tlReports.map((r) => r.name).join(", ")}
-              </Dt>
-            </dl>
-          )}
-        </Card>
+        </InfoCard>
       </div>
 
-      {/* Right col — actions */}
-      <div className="space-y-4">
-        {/* Roles */}
-        <Card title="Roles">
-          {canEditRoles && editRoles ? (
-            <div className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                {roles.map((r) => (
-                  <button key={r.id} type="button"
-                    onClick={() =>
-                      setSelectedRoles((prev) =>
-                        prev.includes(r.id) ? prev.filter((x) => x !== r.id) : [...prev, r.id]
-                      )
-                    }
-                    className={`px-3 py-1 rounded-full text-xs border transition ${
-                      selectedRoles.includes(r.id)
-                        ? "bg-indigo-600 text-white border-indigo-600"
-                        : "bg-white text-gray-700 border-gray-300"
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+        <InfoCard icon={<IndianRupee className="h-5 w-5" />} title="Salary Details">
+          <KeyValueGrid
+            items={salaryBreakup.map((item) => ({
+              label: item.label,
+              value: asCurrency(item.value),
+              accent: ["Gross (Annual)", "Gross (Monthly)", "CTC (Annual)"].includes(item.label),
+            }))}
+          />
+        </InfoCard>
+
+        <div className="space-y-6">
+          <InfoCard icon={<Landmark className="h-5 w-5" />} title="Bank Details">
+            <KeyValueGrid
+              items={[
+                { label: "Bank", value: payrollMeta?.bankDetails?.bankName ?? "-" },
+                { label: "Account #", value: payrollMeta?.bankDetails?.accountNumber ?? "-" },
+                { label: "IFSC", value: payrollMeta?.bankDetails?.ifscCode ?? "-" },
+                { label: "Account Type", value: payrollMeta?.bankDetails?.accountType ?? "-" },
+                { label: "State Code", value: payrollMeta?.bankDetails?.stateCode ?? payrollMeta?.workLocation?.stateCode ?? "-" },
+                { label: "Payment Mode", value: payrollMeta?.bankDetails?.paymentMode ?? "-" },
+              ]}
+            />
+          </InfoCard>
+
+          <Card title="Roles">
+            {canEditRoles && editRoles ? (
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {roles.map((role) => (
+                    <button
+                      key={role.id}
+                      type="button"
+                      onClick={() =>
+                        setSelectedRoles((prev) =>
+                          prev.includes(role.id) ? prev.filter((id) => id !== role.id) : [...prev, role.id],
+                        )
+                      }
+                      className={`rounded-full border px-3 py-1 text-xs transition ${
+                        selectedRoles.includes(role.id)
+                          ? "border-indigo-600 bg-indigo-600 text-white"
+                          : "border-gray-300 bg-white text-gray-700"
+                      }`}
+                    >
+                      {role.name}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={saveRoles} disabled={saving} className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs text-white">
+                    Save
+                  </button>
+                  <button onClick={() => setEditRoles(false)} className="rounded-lg border px-3 py-1.5 text-xs">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-1">
+                  {user.roles.map((role) => (
+                    <span key={role.role.id} className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700">
+                      {role.role.name}
+                    </span>
+                  ))}
+                  {user.roles.length === 0 && <span className="text-sm text-gray-400">No roles</span>}
+                </div>
+                {canEditRoles && (
+                  <button onClick={() => setEditRoles(true)} className="text-xs text-indigo-600 hover:underline">Edit roles</button>
+                )}
+              </div>
+            )}
+          </Card>
+
+          {(canDeactivate || canResetPassword) && (
+            <Card title="Actions">
+              <div className="space-y-2">
+                {canDeactivate && (
+                  <button
+                    onClick={toggleActive}
+                    disabled={saving}
+                    className={`w-full rounded-lg border py-2 text-sm transition ${
+                      user.active
+                        ? "border-red-300 text-red-600 hover:bg-red-50"
+                        : "border-green-300 text-green-600 hover:bg-green-50"
                     }`}
                   >
-                    {r.name}
+                    {user.active ? "Deactivate" : "Reactivate"} Employee
                   </button>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <button onClick={saveRoles} disabled={saving}
-                  className="text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg">Save</button>
-                <button onClick={() => setEditRoles(false)}
-                  className="text-xs px-3 py-1.5 border rounded-lg">Cancel</button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <div className="flex flex-wrap gap-1">
-                {user.roles.map((r) => (
-                  <span key={r.role.id}
-                    className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-xs">
-                    {r.role.name}
-                  </span>
-                ))}
-                {user.roles.length === 0 && <span className="text-sm text-gray-400">No roles</span>}
-              </div>
-              {canEditRoles && (
-                <button onClick={() => setEditRoles(true)}
-                  className="text-xs text-indigo-600 hover:underline">Edit roles</button>
-              )}
-            </div>
-          )}
-        </Card>
+                )}
 
-        {/* Actions */}
-        {(canDeactivate || canResetPassword) && (
-          <Card title="Actions">
-            <div className="space-y-2">
-              {canDeactivate && (
-                <button onClick={toggleActive} disabled={saving}
-                  className={`w-full text-sm py-2 rounded-lg border transition ${
-                    user.active
-                      ? "border-red-300 text-red-600 hover:bg-red-50"
-                      : "border-green-300 text-green-600 hover:bg-green-50"
-                  }`}
-                >
-                  {user.active ? "Deactivate" : "Reactivate"} Employee
-                </button>
-              )}
-
-              {canResetPassword && (
-                showPwReset ? (
-                  <div className="space-y-2">
-                    <input type="password" value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="New password (min 8)"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-                    <div className="flex gap-2">
-                      <button onClick={resetPassword}
-                        disabled={saving || newPassword.length < 8}
-                        className="flex-1 text-sm py-1.5 bg-gray-800 text-white rounded-lg disabled:opacity-50">
-                        Reset
-                      </button>
-                      <button onClick={() => setShowPwReset(false)}
-                        className="flex-1 text-sm py-1.5 border rounded-lg">
-                        Cancel
-                      </button>
+                {canResetPassword && (
+                  showPwReset ? (
+                    <div className="space-y-2">
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(event) => setNewPassword(event.target.value)}
+                        placeholder="New password (min 8)"
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={resetPassword}
+                          disabled={saving || newPassword.length < 8}
+                          className="flex-1 rounded-lg bg-gray-800 py-1.5 text-sm text-white disabled:opacity-50"
+                        >
+                          Reset
+                        </button>
+                        <button onClick={() => setShowPwReset(false)} className="flex-1 rounded-lg border py-1.5 text-sm">
+                          Cancel
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <button onClick={() => setShowPwReset(true)}
-                    className="w-full text-sm py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">
-                    Reset Password
-                  </button>
-                )
-              )}
-            </div>
-          </Card>
-        )}
+                  ) : (
+                    <button
+                      onClick={() => setShowPwReset(true)}
+                      className="w-full rounded-lg border border-gray-300 py-2 text-sm text-gray-700 transition hover:bg-gray-50"
+                    >
+                      Reset Password
+                    </button>
+                  )
+                )}
+              </div>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-// ── Sub-components ──────────────────────────────────────────────────────────
-
-function Card({ title, children, action }: {
-  title: string;
-  children: React.ReactNode;
-  action?: React.ReactNode;
+function EditableIdentitySection({
+  form,
+  set,
+  saveDetails,
+  saving,
+  setEditDetails,
+}: {
+  form: {
+    name: string;
+    designation: string;
+    joinDate: string;
+    grade: string;
+    ctc: string;
+    priorExperienceYears: string;
+  };
+  set: (field: "name" | "designation" | "joinDate" | "grade" | "ctc" | "priorExperienceYears", value: string) => void;
+  saveDetails: () => Promise<void>;
+  saving: boolean;
+  setEditDetails: (value: boolean) => void;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-gray-900 text-sm">{title}</h2>
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <Field label="Name">
+        <input value={form.name} onChange={(event) => set("name", event.target.value)} className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+      </Field>
+      <Field label="Designation">
+        <input value={form.designation} onChange={(event) => set("designation", event.target.value)} className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+      </Field>
+      <Field label="Join Date">
+        <input type="date" value={form.joinDate} onChange={(event) => set("joinDate", event.target.value)} className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+      </Field>
+      <Field label="Grade">
+        <input value={form.grade} onChange={(event) => set("grade", event.target.value)} className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+      </Field>
+      <Field label="CTC (Rs)">
+        <input type="number" value={form.ctc} onChange={(event) => set("ctc", event.target.value)} className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+      </Field>
+      <Field label="Prior Experience (years)">
+        <input type="number" min="0" value={form.priorExperienceYears} onChange={(event) => set("priorExperienceYears", event.target.value)} className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+      </Field>
+      <div className="md:col-span-2 flex gap-2 pt-1">
+        <button onClick={saveDetails} disabled={saving} className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs text-white disabled:opacity-50">
+          Save
+        </button>
+        <button onClick={() => setEditDetails(false)} className="rounded-lg border px-3 py-1.5 text-xs">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function EditableEmploymentSection({
+  form,
+  set,
+  org,
+  activeDivisions,
+  otherUsers,
+}: {
+  form: {
+    branchId: string;
+    departmentId: string;
+    divisionId: string;
+    managerId: string;
+    tlId: string;
+  };
+  set: (field: "branchId" | "departmentId" | "divisionId" | "managerId" | "tlId", value: string) => void;
+  org: OrgData;
+  activeDivisions: { id: string; name: string }[];
+  otherUsers: StubUser[];
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <Field label="Branch">
+        <Select value={form.branchId} onChange={(value) => set("branchId", value)} options={org?.branches ?? []} placeholder="No branch" />
+      </Field>
+      <Field label="Department">
+        <Select value={form.departmentId} onChange={(value) => set("departmentId", value)} options={org?.departments ?? []} placeholder="No department" />
+      </Field>
+      <Field label="Division">
+        <Select value={form.divisionId} onChange={(value) => set("divisionId", value)} options={activeDivisions} placeholder="No division" disabled={!form.departmentId} />
+      </Field>
+      <Field label="Manager">
+        <Select value={form.managerId} onChange={(value) => set("managerId", value)} options={otherUsers} placeholder="No manager" />
+      </Field>
+      <Field label="Team Lead">
+        <Select value={form.tlId} onChange={(value) => set("tlId", value)} options={otherUsers} placeholder="No TL" />
+      </Field>
+    </div>
+  );
+}
+
+function InfoCard({
+  icon,
+  title,
+  children,
+  action,
+}: {
+  icon: ReactNode;
+  title: string;
+  children: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="text-slate-800">{icon}</div>
+          <h2 className="text-[15px] font-medium uppercase tracking-[0.18em] text-slate-700">{title}</h2>
+        </div>
         {action}
       </div>
       {children}
@@ -386,16 +632,35 @@ function Card({ title, children, action }: {
   );
 }
 
-function Dt({ label, children }: { label: string; children: React.ReactNode }) {
+function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div>
-      <dt className="text-xs text-gray-400">{label}</dt>
-      <dd className="text-gray-900 mt-0.5">{children}</dd>
+    <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
+      <h2 className="mb-4 text-sm font-semibold text-slate-900">{title}</h2>
+      {children}
     </div>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function KeyValueGrid({
+  items,
+}: {
+  items: Array<{ label: string; value: ReactNode; span?: 1 | 2; accent?: boolean }>;
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-x-10 gap-y-4 md:grid-cols-2">
+      {items.map((item) => (
+        <div key={item.label} className={item.span === 2 ? "md:col-span-2" : undefined}>
+          <div className="text-[13px] font-medium text-slate-400">{item.label}</div>
+          <div className={`mt-1 text-[15px] ${item.accent ? "font-semibold text-slate-900" : "text-slate-600"}`}>
+            {item.value}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-xs text-gray-400">{label}</label>
@@ -404,9 +669,15 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Select({ value, onChange, options, placeholder, disabled }: {
+function Select({
+  value,
+  onChange,
+  options,
+  placeholder,
+  disabled,
+}: {
   value: string;
-  onChange: (v: string) => void;
+  onChange: (value: string) => void;
   options: { id: string; name: string }[];
   placeholder: string;
   disabled?: boolean;

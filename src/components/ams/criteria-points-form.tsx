@@ -4,15 +4,21 @@ import { useDeferredValue, useMemo, useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DemoFillButton } from "@/components/demo-fill-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  buildReviewerDemoAnswers,
+  buildSelfAssessmentDemoAnswers,
+  demoPerformanceProfiles,
+  type DemoPerformanceProfile,
+} from "@/lib/demo-fill";
 import { cn } from "@/lib/utils";
 import {
   buildQuestionKey,
   buildDefaultSelfFormTemplate,
   clampRating,
   type AppraisalSelfFormTemplate,
-  type EvaluatorRole,
   type QuestionResponse,
   type AppraisalQuestionDefinition,
   type AppraisalSectionDefinition,
@@ -20,30 +26,7 @@ import {
   type ReviewerRatingAnswers,
   type SelfAssessmentAnswers,
 } from "@/modules/ams/criteria-config";
-
-export type SupplementaryMeta = Record<string, never> | null;
-
-export type CriterionSubItem = {
-  id: string;
-  code: string;
-  label: string;
-  weight: number;
-};
-
-export type CriterionPoint = {
-  id: string;
-  code: string;
-  label: string;
-  description: string;
-  weightage: number;
-  maxPoints: number;
-  kind: string;
-  reviewerOnly: boolean;
-  allowedRoles: EvaluatorRole[];
-  items: CriterionSubItem[];
-  questions: string[];
-  meta: SupplementaryMeta;
-};
+import type { CriterionPoint } from "@/modules/ams/types";
 
 function emptySelfAnswers(): SelfAssessmentAnswers {
   return {
@@ -92,6 +75,20 @@ function computeCriterionAverage(subItemRatings: Record<string, number>): number
   return Math.round((total / values.length) * 10) / 10;
 }
 
+function hasText(value?: string) {
+  return Boolean(value?.trim());
+}
+
+function isQuestionAnswered(question: AppraisalQuestionDefinition, value?: QuestionResponse): boolean {
+  if (question.type === "radio") {
+    if (!value?.option) return false;
+    if (question.allowExplanation) return hasText(value.explanation);
+    return true;
+  }
+
+  return hasText(value?.value);
+}
+
 export function RatingInput({
   id,
   value,
@@ -125,6 +122,7 @@ export function TextAnswerInput({
   disabled,
   multiline = true,
   placeholder,
+  invalid = false,
 }: {
   label: string;
   value: string;
@@ -132,6 +130,7 @@ export function TextAnswerInput({
   disabled?: boolean;
   multiline?: boolean;
   placeholder?: string;
+  invalid?: boolean;
 }) {
   return (
     <div className="space-y-2">
@@ -141,9 +140,14 @@ export function TextAnswerInput({
           value={value}
           disabled={disabled}
           onChange={(event) => onChange(event.target.value)}
-          rows={3}
+          rows={4}
           placeholder={placeholder ?? "Type your answer"}
-          className="min-h-24 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200 disabled:bg-slate-50"
+          className={cn(
+            "min-h-28 w-full rounded-2xl border px-4 py-3 text-sm text-slate-900 outline-none transition focus:ring-2 disabled:bg-slate-50",
+            invalid
+              ? "border-red-400 bg-red-50/60 focus:border-red-500 focus:ring-red-100"
+              : "border-slate-200 focus:border-slate-400 focus:ring-slate-200",
+          )}
         />
       ) : (
         <Input
@@ -151,6 +155,9 @@ export function TextAnswerInput({
           disabled={disabled}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder ?? "Type your answer"}
+          className={cn(
+            invalid && "border-red-400 bg-red-50/60 focus-visible:ring-red-100",
+          )}
         />
       )}
     </div>
@@ -162,11 +169,13 @@ export function OptionQuestionInput({
   value,
   onChange,
   disabled,
+  invalid = false,
 }: {
   question: AppraisalQuestionDefinition;
   value: QuestionResponse;
   onChange: (value: QuestionResponse) => void;
   disabled?: boolean;
+  invalid?: boolean;
 }) {
   return (
     <div className="space-y-3">
@@ -176,10 +185,11 @@ export function OptionQuestionInput({
           <label
             key={option.value}
             className={cn(
-              "flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 text-sm transition",
+              "flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 text-sm transition",
               value.option === option.value
                 ? "border-slate-500 bg-slate-50 text-slate-950"
                 : "border-slate-200 bg-white text-slate-700 hover:border-slate-300",
+              invalid && !value.option && "border-red-400 bg-red-50/60",
               disabled && "cursor-not-allowed opacity-70",
             )}
           >
@@ -200,6 +210,7 @@ export function OptionQuestionInput({
           value={value.explanation ?? ""}
           onChange={(explanation) => onChange({ ...value, explanation })}
           disabled={disabled}
+          invalid={invalid && !hasText(value.explanation)}
         />
       ) : null}
     </div>
@@ -278,11 +289,19 @@ export function SelfAssessmentSection({
   responses,
   onChange,
   disabled,
+  criterion,
+  rating,
+  onRatingChange,
+  missingFieldIds = new Set<string>(),
 }: {
   section: AppraisalSectionDefinition;
   responses: Record<string, QuestionResponse>;
   onChange: (key: string, value: QuestionResponse) => void;
   disabled?: boolean;
+  criterion?: CriterionPoint;
+  rating?: number;
+  onRatingChange?: (value: number) => void;
+  missingFieldIds?: Set<string>;
 }) {
   return (
     <Card>
@@ -291,34 +310,84 @@ export function SelfAssessmentSection({
           <h3 className="text-base font-semibold text-slate-900">{section.title}</h3>
           {section.description ? <p className="text-sm text-slate-500">{section.description}</p> : null}
         </div>
+
         {section.questions.map((question) => {
           const questionKey = buildQuestionKey(section.id, question.id);
           const value = responses[questionKey] ?? {};
-
-          if (question.type === "radio") {
-            return (
-              <OptionQuestionInput
-                key={questionKey}
-                question={question}
-                value={value}
-                onChange={(nextValue) => onChange(questionKey, nextValue)}
-                disabled={disabled}
-              />
-            );
-          }
+          const invalid = missingFieldIds.has(questionKey);
 
           return (
-            <TextAnswerInput
+            <div
               key={questionKey}
-              label={question.prompt}
-              value={value.value ?? ""}
-              onChange={(nextValue) => onChange(questionKey, { ...value, value: nextValue })}
-              disabled={disabled}
-              multiline={question.type !== "text" && question.type !== "number"}
-              placeholder={question.placeholder}
-            />
+              data-field-id={questionKey}
+              className={cn(
+                "rounded-2xl border p-4 transition",
+                invalid ? "border-red-400 bg-red-50/70" : "border-slate-200 bg-white",
+              )}
+            >
+              {question.type === "radio" ? (
+                <OptionQuestionInput
+                  question={question}
+                  value={value}
+                  onChange={(nextValue) => onChange(questionKey, nextValue)}
+                  disabled={disabled}
+                  invalid={invalid}
+                />
+              ) : (
+                <TextAnswerInput
+                  label={question.prompt}
+                  value={value.value ?? ""}
+                  onChange={(nextValue) => onChange(questionKey, { ...value, value: nextValue })}
+                  disabled={disabled}
+                  multiline={question.type !== "text" && question.type !== "number"}
+                  placeholder={question.placeholder}
+                  invalid={invalid}
+                />
+              )}
+            </div>
           );
         })}
+
+        {criterion && onRatingChange ? (
+          <div
+            data-field-id={`rating:${criterion.id}`}
+            className={cn(
+              "rounded-2xl border px-4 py-4 transition",
+              missingFieldIds.has(`rating:${criterion.id}`)
+                ? "border-red-400 bg-red-50/70"
+                : "border-slate-200 bg-slate-50/70",
+            )}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Self Rating</p>
+                <p className="text-xs text-slate-500">
+                  Rate your performance for this section on a scale of 1 to 5.
+                </p>
+              </div>
+              <div className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
+                {rating ?? "Not rated"}
+              </div>
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={5}
+              step={1}
+              value={rating ?? 1}
+              disabled={disabled}
+              onChange={(event) => onRatingChange(clampRating(Number(event.target.value)))}
+              className="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-slate-900 disabled:cursor-not-allowed"
+            />
+            <div className="mt-2 flex justify-between text-xs text-slate-400">
+              <span>1</span>
+              <span>2</span>
+              <span>3</span>
+              <span>4</span>
+              <span>5</span>
+            </div>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );
@@ -356,37 +425,50 @@ export function ReviewerCriteriaSection({
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-slate-200">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold text-slate-600">Sub-criteria</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-600">Rating (1-5)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 bg-white">
-              {criterion.items.map((item) => (
-                <tr key={item.id}>
-                  <td className="px-4 py-3 text-slate-900">{item.label}</td>
-                  <td className="px-4 py-3">
-                    <RatingInput
-                      id={`criterion-${criterion.id}-${item.id}`}
-                      value={value.subItemRatings[item.id] ?? ""}
-                      disabled={disabled}
-                      onChange={(nextRating) => {
-                        const nextSubItemRatings = { ...value.subItemRatings, [item.id]: nextRating };
-                        onChange({
-                          ...value,
-                          subItemRatings: nextSubItemRatings,
-                          categoryScore: computeCriterionAverage(nextSubItemRatings),
-                        });
-                      }}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-3">
+          {criterion.items.map((item) => {
+            const currentRating = value.subItemRatings[item.id];
+
+            return (
+              <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                    <p className="text-xs text-slate-500">Rate this sub-criterion on a scale of 1 to 5.</p>
+                  </div>
+                  <div className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
+                    {currentRating ?? "Not rated"}
+                  </div>
+                </div>
+                <input
+                  id={`criterion-${criterion.id}-${item.id}`}
+                  type="range"
+                  min={1}
+                  max={5}
+                  step={1}
+                  value={currentRating ?? 1}
+                  disabled={disabled}
+                  onChange={(event) => {
+                    const nextRating = clampRating(Number(event.target.value));
+                    const nextSubItemRatings = { ...value.subItemRatings, [item.id]: nextRating };
+                    onChange({
+                      ...value,
+                      subItemRatings: nextSubItemRatings,
+                      categoryScore: computeCriterionAverage(nextSubItemRatings),
+                    });
+                  }}
+                  className="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-slate-900 disabled:cursor-not-allowed"
+                />
+                <div className="mt-2 flex justify-between text-xs text-slate-400">
+                  <span>1</span>
+                  <span>2</span>
+                  <span>3</span>
+                  <span>4</span>
+                  <span>5</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div className="space-y-2">
@@ -464,7 +546,6 @@ export function DynamicAppraisalForm({
   onSaveDraft,
   onSubmitFinal,
   disabled,
-  submitted,
   selfTemplate,
 }: {
   mode: "self" | "reviewer" | "management";
@@ -473,7 +554,6 @@ export function DynamicAppraisalForm({
   onSaveDraft: (answers: SelfAssessmentAnswers | ReviewerRatingAnswers) => Promise<void> | void;
   onSubmitFinal: (answers: SelfAssessmentAnswers | ReviewerRatingAnswers) => Promise<void> | void;
   disabled?: boolean;
-  submitted?: boolean;
   selfTemplate?: AppraisalSelfFormTemplate;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -481,15 +561,24 @@ export function DynamicAppraisalForm({
     () => selfTemplate ?? buildDefaultSelfFormTemplate(),
     [selfTemplate],
   );
-  const allSelfSections = useMemo(() => ([
-    ...resolvedSelfTemplate.partASections,
-    resolvedSelfTemplate.careerGrowthSection,
-    resolvedSelfTemplate.decisionMakingSection,
-    resolvedSelfTemplate.retentionSection,
-    resolvedSelfTemplate.compensationSection,
-  ]), [resolvedSelfTemplate]);
+  const allSelfSections = useMemo(
+    () => ([
+      ...resolvedSelfTemplate.partASections,
+      resolvedSelfTemplate.careerGrowthSection,
+      resolvedSelfTemplate.decisionMakingSection,
+      resolvedSelfTemplate.retentionSection,
+      resolvedSelfTemplate.compensationSection,
+    ]),
+    [resolvedSelfTemplate],
+  );
+  const partARatingCriteria = useMemo(
+    () => criteria.slice(0, resolvedSelfTemplate.partASections.length),
+    [criteria, resolvedSelfTemplate.partASections.length],
+  );
   const [selfAnswers, setSelfAnswers] = useState(() => normalizeSelfAnswers(mode === "self" ? (initialAnswers as SelfAssessmentAnswers | null | undefined) : null));
   const [reviewerAnswers, setReviewerAnswers] = useState(() => normalizeReviewerAnswers(mode !== "self" ? (initialAnswers as ReviewerRatingAnswers | null | undefined) : null));
+  const [missingFieldIds, setMissingFieldIds] = useState<Set<string>>(new Set());
+  const [demoProfile, setDemoProfile] = useState<DemoPerformanceProfile>("average");
   const deferredSelf = useDeferredValue(selfAnswers);
   const deferredReviewer = useDeferredValue(reviewerAnswers);
 
@@ -498,44 +587,93 @@ export function DynamicAppraisalForm({
       return criteria.reduce((count, criterion) => count + criterion.items.length + 1, 0);
     }
 
-    return resolvedSelfTemplate.employeeInfoFields.length
-      + allSelfSections.reduce((count, section) => count + section.questions.length, 0)
-      + criteria.length
+    return allSelfSections.reduce((count, section) => count + section.questions.length, 0)
+      + partARatingCriteria.length
       + 1;
-  }, [allSelfSections, criteria, mode, resolvedSelfTemplate.employeeInfoFields.length]);
+  }, [allSelfSections, criteria, mode, partARatingCriteria.length]);
 
   const completedCount = useMemo(() => {
     if (mode !== "self") {
-      const criterionCompletions = criteria.reduce((count, criterion) => {
+      return criteria.reduce((count, criterion) => {
         const subRatings = deferredReviewer.subItemRatings[criterion.id] ?? {};
         const subCount = criterion.items.filter((item) => Boolean(subRatings[item.id])).length;
         const commentCount = deferredReviewer.comments[criterion.id]?.trim() ? 1 : 0;
         return count + subCount + commentCount;
       }, 0);
-      return criterionCompletions;
     }
 
-    const employeeInfoCount = resolvedSelfTemplate.employeeInfoFields.filter((field) => {
-      if (field.showWhen) {
-        return deferredSelf.employeeInfo[field.showWhen.fieldId] === field.showWhen.equals
-          && Boolean(deferredSelf.employeeInfo[field.id]?.trim());
-      }
-      return Boolean(deferredSelf.employeeInfo[field.id]?.trim());
-    }).length;
-
-    const responseCount = Object.values(deferredSelf.responses).filter((value) =>
-      Boolean(value.option || value.value?.trim() || value.explanation?.trim())
-    ).length;
-    const selfRatingCount = Object.values(deferredSelf.categoryPoints).filter(Boolean).length;
+    const responseCount = allSelfSections.reduce((count, section) => (
+      count
+      + section.questions.filter((question) => {
+        const questionKey = buildQuestionKey(section.id, question.id);
+        return isQuestionAnswered(question, deferredSelf.responses[questionKey]);
+      }).length
+    ), 0);
+    const selfRatingCount = partARatingCriteria.filter((criterion) => Boolean(deferredSelf.categoryPoints[criterion.id])).length;
     const feedbackCount = deferredSelf.feedback.trim() ? 1 : 0;
-    return employeeInfoCount + responseCount + selfRatingCount + feedbackCount;
-  }, [criteria, deferredReviewer, deferredSelf, mode, resolvedSelfTemplate.employeeInfoFields]);
 
-  const readOnly = disabled || submitted;
+    return responseCount + selfRatingCount + feedbackCount;
+  }, [allSelfSections, criteria, deferredReviewer, deferredSelf, mode, partARatingCriteria]);
+
+  const readOnly = disabled;
+
+  function clearMissingField(fieldId: string) {
+    setMissingFieldIds((current) => {
+      if (!current.has(fieldId)) return current;
+      const next = new Set(current);
+      next.delete(fieldId);
+      return next;
+    });
+  }
+
+  function validateSelfAssessment(): string[] {
+    const missing: string[] = [];
+
+    for (const section of allSelfSections) {
+      for (const question of section.questions) {
+        const questionKey = buildQuestionKey(section.id, question.id);
+        if (!isQuestionAnswered(question, selfAnswers.responses[questionKey])) {
+          missing.push(questionKey);
+        }
+      }
+    }
+
+    for (const criterion of partARatingCriteria) {
+      if (!selfAnswers.categoryPoints[criterion.id]) {
+        missing.push(`rating:${criterion.id}`);
+      }
+    }
+
+    if (!selfAnswers.feedback.trim()) {
+      missing.push("feedback");
+    }
+
+    return missing;
+  }
+
+  function focusFirstMissingField(missing: string[]) {
+    if (missing.length === 0) return;
+    const firstField = document.querySelector<HTMLElement>(`[data-field-id="${CSS.escape(missing[0])}"]`);
+    if (!firstField) return;
+
+    firstField.scrollIntoView({ behavior: "smooth", block: "center" });
+    const focusable = firstField.querySelector<HTMLElement>("textarea, input, button");
+    focusable?.focus();
+  }
 
   function runAction(action: "draft" | "submit") {
+    if (mode === "self" && action === "submit") {
+      const missing = validateSelfAssessment();
+      if (missing.length > 0) {
+        setMissingFieldIds(new Set(missing));
+        requestAnimationFrame(() => focusFirstMissingField(missing));
+        return;
+      }
+    }
+
     startTransition(async () => {
       if (mode === "self") {
+        setMissingFieldIds(new Set());
         if (action === "draft") {
           await onSaveDraft(selfAnswers);
         } else {
@@ -568,103 +706,54 @@ export function DynamicAppraisalForm({
 
       {mode === "self" ? (
         <>
-          <Card>
-            <CardContent className="space-y-5">
-              <div className="space-y-1">
-                <h3 className="text-base font-semibold text-slate-900">Employee Information</h3>
-                <p className="text-sm text-slate-500">Review and complete your profile details for this appraisal form.</p>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {resolvedSelfTemplate.employeeInfoFields.map((field) => {
-                  if (field.showWhen) {
-                    const visible = selfAnswers.employeeInfo[field.showWhen.fieldId] === field.showWhen.equals;
-                    if (!visible) return null;
-                  }
-
-                  if (field.type === "radio") {
-                    return (
-                      <div key={field.id} className="space-y-2 md:col-span-2">
-                        <Label className="text-sm font-medium text-slate-700">{field.label}</Label>
-                        <div className="flex flex-wrap gap-2">
-                          {(field.options ?? []).map((option) => (
-                            <button
-                              key={option.value}
-                              type="button"
-                              disabled={readOnly}
-                              onClick={() => setSelfAnswers((current) => ({
-                                ...current,
-                                employeeInfo: { ...current.employeeInfo, [field.id]: option.value },
-                              }))}
-                              className={cn(
-                                "rounded-full border px-4 py-2 text-sm transition",
-                                selfAnswers.employeeInfo[field.id] === option.value
-                                  ? "border-slate-900 bg-slate-900 text-white"
-                                  : "border-slate-300 bg-white text-slate-700",
-                                readOnly && "cursor-not-allowed opacity-70",
-                              )}
-                            >
-                              {option.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div key={field.id} className={field.type === "date" ? "" : "md:col-span-1"}>
-                      <TextAnswerInput
-                        label={field.label}
-                        value={selfAnswers.employeeInfo[field.id] ?? ""}
-                        onChange={(value) => setSelfAnswers((current) => ({
-                          ...current,
-                          employeeInfo: { ...current.employeeInfo, [field.id]: value },
-                        }))}
-                        disabled={readOnly}
-                        multiline={false}
-                        placeholder={field.placeholder}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="space-y-2">
-            <h2 className="text-lg font-semibold text-slate-900">Part A: Employee Self-Assessment</h2>
-            <p className="text-sm text-slate-500">Respond to each section with clear examples and context.</p>
-          </div>
-          {resolvedSelfTemplate.partASections.map((section) => (
-            <SelfAssessmentSection
-              key={section.id}
-              section={section}
-              responses={selfAnswers.responses}
-              onChange={(key, value) => setSelfAnswers((current) => ({
-                ...current,
-                responses: { ...current.responses, [key]: value },
-              }))}
-              disabled={readOnly}
-            />
-          ))}
-
-          <Card>
-            <CardContent className="space-y-4">
-              <div className="space-y-1">
-                <h3 className="text-base font-semibold text-slate-900">{resolvedSelfTemplate.selfRating.title}</h3>
-                <p className="text-sm text-slate-500">{resolvedSelfTemplate.selfRating.description ?? "Rate yourself on a scale from 1 to 5."}</p>
-              </div>
-              <CriteriaRatingTable
-                criteria={criteria}
-                ratings={selfAnswers.categoryPoints}
-                onChange={(criterionId, value) => setSelfAnswers((current) => ({
-                  ...current,
-                  categoryPoints: { ...current.categoryPoints, [criterionId]: value },
-                }))}
-                disabled={readOnly}
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold text-slate-900">Employee Self-Assessment</h2>
+              <p className="text-sm text-slate-500">
+                Answer every question and rate yourself section by section. You can keep updating the form until the deadline.
+              </p>
+            </div>
+            {!readOnly ? (
+              <DemoFillButton
+                profiles={demoPerformanceProfiles}
+                selectedProfile={demoProfile}
+                onProfileChange={setDemoProfile}
+                onClick={() => {
+                  setMissingFieldIds(new Set());
+                  setSelfAnswers(normalizeSelfAnswers(buildSelfAssessmentDemoAnswers(criteria, resolvedSelfTemplate, demoProfile)));
+                }}
               />
-            </CardContent>
-          </Card>
+            ) : null}
+          </div>
+
+          {resolvedSelfTemplate.partASections.map((section, index) => {
+            const criterion = partARatingCriteria[index];
+            return (
+              <SelfAssessmentSection
+                key={section.id}
+                section={section}
+                responses={selfAnswers.responses}
+                onChange={(key, value) => {
+                  clearMissingField(key);
+                  setSelfAnswers((current) => ({
+                    ...current,
+                    responses: { ...current.responses, [key]: value },
+                  }));
+                }}
+                disabled={readOnly}
+                criterion={criterion}
+                rating={criterion ? selfAnswers.categoryPoints[criterion.id] : undefined}
+                onRatingChange={criterion ? ((value) => {
+                  clearMissingField(`rating:${criterion.id}`);
+                  setSelfAnswers((current) => ({
+                    ...current,
+                    categoryPoints: { ...current.categoryPoints, [criterion.id]: value },
+                  }));
+                }) : undefined}
+                missingFieldIds={missingFieldIds}
+              />
+            );
+          })}
 
           {[
             resolvedSelfTemplate.careerGrowthSection,
@@ -676,44 +765,74 @@ export function DynamicAppraisalForm({
               key={section.id}
               section={section}
               responses={selfAnswers.responses}
-              onChange={(key, value) => setSelfAnswers((current) => ({
-                ...current,
-                responses: { ...current.responses, [key]: value },
-              }))}
+              onChange={(key, value) => {
+                clearMissingField(key);
+                setSelfAnswers((current) => ({
+                  ...current,
+                  responses: { ...current.responses, [key]: value },
+                }));
+              }}
               disabled={readOnly}
+              missingFieldIds={missingFieldIds}
             />
           ))}
 
           <Card>
             <CardContent>
-              <TextAnswerInput
-                label={resolvedSelfTemplate.feedbackQuestion.prompt}
-                value={selfAnswers.feedback}
-                onChange={(feedback) => setSelfAnswers((current) => ({ ...current, feedback }))}
-                disabled={readOnly}
-              />
+              <div
+                data-field-id="feedback"
+                className={cn(
+                  "rounded-2xl border p-4 transition",
+                  missingFieldIds.has("feedback") ? "border-red-400 bg-red-50/70" : "border-slate-200 bg-white",
+                )}
+              >
+                <TextAnswerInput
+                  label={resolvedSelfTemplate.feedbackQuestion.prompt}
+                  value={selfAnswers.feedback}
+                  onChange={(feedback) => {
+                    clearMissingField("feedback");
+                    setSelfAnswers((current) => ({ ...current, feedback }));
+                  }}
+                  disabled={readOnly}
+                  invalid={missingFieldIds.has("feedback")}
+                />
+              </div>
             </CardContent>
           </Card>
         </>
       ) : (
-        criteria.map((criterion) => (
-          <ReviewerCriteriaSection
-            key={criterion.id}
-            criterion={criterion}
-            value={{
-              categoryScore: reviewerAnswers.categoryPoints[criterion.id] ?? computeCriterionAverage(reviewerAnswers.subItemRatings[criterion.id] ?? {}),
-              subItemRatings: reviewerAnswers.subItemRatings[criterion.id] ?? {},
-              comment: reviewerAnswers.comments[criterion.id] ?? "",
-            }}
-            onChange={(nextValue) => setReviewerAnswers((current) => ({
-              ...current,
-              categoryPoints: { ...current.categoryPoints, [criterion.id]: nextValue.categoryScore },
-              subItemRatings: { ...current.subItemRatings, [criterion.id]: nextValue.subItemRatings },
-              comments: { ...current.comments, [criterion.id]: nextValue.comment },
-            }))}
-            disabled={readOnly}
-          />
-        ))
+        <>
+          {!readOnly ? (
+            <div className="flex justify-end">
+              <DemoFillButton
+                profiles={demoPerformanceProfiles}
+                selectedProfile={demoProfile}
+                onProfileChange={setDemoProfile}
+                onClick={() => {
+                  setReviewerAnswers(normalizeReviewerAnswers(buildReviewerDemoAnswers(criteria, demoProfile)));
+                }}
+              />
+            </div>
+          ) : null}
+          {criteria.map((criterion) => (
+            <ReviewerCriteriaSection
+              key={criterion.id}
+              criterion={criterion}
+              value={{
+                categoryScore: reviewerAnswers.categoryPoints[criterion.id] ?? computeCriterionAverage(reviewerAnswers.subItemRatings[criterion.id] ?? {}),
+                subItemRatings: reviewerAnswers.subItemRatings[criterion.id] ?? {},
+                comment: reviewerAnswers.comments[criterion.id] ?? "",
+              }}
+              onChange={(nextValue) => setReviewerAnswers((current) => ({
+                ...current,
+                categoryPoints: { ...current.categoryPoints, [criterion.id]: nextValue.categoryScore },
+                subItemRatings: { ...current.subItemRatings, [criterion.id]: nextValue.subItemRatings },
+                comments: { ...current.comments, [criterion.id]: nextValue.comment },
+              }))}
+              disabled={readOnly}
+            />
+          ))}
+        </>
       )}
 
       <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 pt-4">
@@ -775,6 +894,7 @@ export function CriteriaPointsView({
 
   if ("employeeInfo" in answers) {
     const resolvedSelfTemplate = selfTemplate ?? buildDefaultSelfFormTemplate();
+    const partARatingCriteria = criteria.slice(0, resolvedSelfTemplate.partASections.length);
     const allSelfSections = [
       ...resolvedSelfTemplate.partASections,
       resolvedSelfTemplate.careerGrowthSection,
@@ -782,40 +902,32 @@ export function CriteriaPointsView({
       resolvedSelfTemplate.retentionSection,
       resolvedSelfTemplate.compensationSection,
     ];
+
     return (
       <div className="space-y-5">
         {editCount !== undefined ? (
           <p className="text-xs text-slate-400">Edited {editCount} time{editCount === 1 ? "" : "s"}</p>
         ) : null}
 
-        <div className="grid gap-3 md:grid-cols-2">
-          {resolvedSelfTemplate.employeeInfoFields.map((field) => {
-            const value = answers.employeeInfo[field.id];
-            if (!value) return null;
-            return (
-              <div key={field.id} className="rounded-xl border border-slate-200 p-3">
-                <p className="text-xs uppercase tracking-wide text-slate-400">{field.label}</p>
-                <p className="mt-1 text-sm text-slate-700">{value}</p>
-              </div>
-            );
-          })}
-        </div>
-
-        {allSelfSections.map((section) => {
+        {allSelfSections.map((section, index) => {
           const content = renderQuestionResponse(section, answers).filter(Boolean);
-          if (content.length === 0) return null;
+          const criterion = index < partARatingCriteria.length ? partARatingCriteria[index] : null;
+          const rating = criterion ? answers.categoryPoints[criterion.id] : null;
+
+          if (content.length === 0 && !rating) return null;
+
           return (
-            <div key={section.id} className="space-y-3 rounded-xl border border-slate-200 p-4">
-              <h3 className="text-sm font-semibold text-slate-900">{section.title}</h3>
+            <div key={section.id} className="space-y-4 rounded-xl border border-slate-200 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <h3 className="text-sm font-semibold text-slate-900">{section.title}</h3>
+                {criterion ? (
+                  <Badge variant="secondary">Self rating {rating ?? "-"}</Badge>
+                ) : null}
+              </div>
               {content}
             </div>
           );
         })}
-
-        <div className="space-y-3 rounded-xl border border-slate-200 p-4">
-          <h3 className="text-sm font-semibold text-slate-900">{resolvedSelfTemplate.selfRating.title}</h3>
-          <CriteriaRatingTable criteria={criteria} ratings={answers.categoryPoints} />
-        </div>
 
         {answers.feedback ? (
           <div className="space-y-1 rounded-xl border border-slate-200 p-4">
@@ -873,7 +985,6 @@ export function CriteriaPointsForm({
   onSaveDraft,
   onSubmitFinal,
   disabled,
-  submitted,
   selfTemplate,
 }: {
   criteria: CriterionPoint[];
@@ -883,7 +994,6 @@ export function CriteriaPointsForm({
   onSaveDraft: (answers: SelfAssessmentAnswers | ReviewerRatingAnswers) => Promise<void> | void;
   onSubmitFinal: (answers: SelfAssessmentAnswers | ReviewerRatingAnswers) => Promise<void> | void;
   disabled?: boolean;
-  submitted?: boolean;
   selfTemplate?: AppraisalSelfFormTemplate;
 }) {
   return (
@@ -894,7 +1004,6 @@ export function CriteriaPointsForm({
       onSaveDraft={onSaveDraft}
       onSubmitFinal={onSubmitFinal}
       disabled={disabled}
-      submitted={submitted}
       selfTemplate={selfTemplate}
     />
   );

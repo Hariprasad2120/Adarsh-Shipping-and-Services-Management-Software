@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { hash } from "bcryptjs";
 import { getNow } from "@/lib/clock";
+import { Prisma } from "@/generated/prisma/client";
 
 export type CreateUserInput = {
   orgId: string;
@@ -28,7 +29,7 @@ export async function listUsers(orgId: string, filters?: {
   search?: string;
   active?: boolean;
 }) {
-  const where: any = { orgId };
+  const where: Prisma.UserWhereInput = { orgId };
   if (filters?.active !== undefined) where.active = filters.active;
   if (filters?.branchId) where.branchId = filters.branchId;
   if (filters?.departmentId) where.departmentId = filters.departmentId;
@@ -155,6 +156,7 @@ export async function updateUserRoles(userId: string, roleIds: string[]) {
 }
 
 export async function updateEmploymentRecord(userId: string, data: {
+  joinDate?: Date;
   grade?: string;
   ctc?: number;
   priorExperienceYears?: number | null;

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CriteriaPointsForm, CriteriaPointsView } from "@/components/ams/criteria-points-form";
-import type { CriterionPoint } from "@/components/ams/criteria-points-form";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import type {
   AppraisalSelfFormTemplate,
@@ -12,6 +11,7 @@ import type {
   ReviewerRatingAnswers,
   SelfAssessmentAnswers,
 } from "@/modules/ams/criteria-config";
+import type { CriterionPoint } from "@/modules/ams/types";
 
 type ManagementReviewDetail = {
   id: string;
@@ -231,7 +231,6 @@ export function ManagementReviewClient({
               initialAnswers={appraisal.currentRating ?? undefined}
               onSaveDraft={(answers) => persistRating("DRAFT", answers as ManagementReviewAnswers)}
               onSubmitFinal={(answers) => persistRating("SUBMITTED", answers as ManagementReviewAnswers)}
-              submitted={appraisal.submissionStatus === "SUBMITTED"}
             />
           </div>
         </Card>

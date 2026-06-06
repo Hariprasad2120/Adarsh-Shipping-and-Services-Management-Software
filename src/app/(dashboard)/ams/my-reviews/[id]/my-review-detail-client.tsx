@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CriteriaPointsForm, CriteriaPointsView } from "@/components/ams/criteria-points-form";
-import type { CriterionPoint } from "@/components/ams/criteria-points-form";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import type { ReviewerRatingAnswers } from "@/modules/ams/criteria-config";
+import type { CriterionPoint } from "@/modules/ams/types";
 
 type MyReviewDetail = {
   id: string;
@@ -17,6 +17,7 @@ type MyReviewDetail = {
   cycle: { name: string; year: number };
   availabilityDeadline: string | null;
   reviewerRatingDeadline: string | null;
+  selfAssessmentEditCount: number;
   currentRating: ReviewerRatingAnswers | null;
   submittedAt: string | null;
   submissionStatus: string | null;
@@ -94,14 +95,26 @@ export function MyReviewDetailClient({
   const router = useRouter();
   const [statusLoading, setStatusLoading] = useState<"available" | "unavailable" | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [nowMs, setNowMs] = useState(() => new Date(serverNow).getTime());
+  const [currentSubmissionStatus, setCurrentSubmissionStatus] = useState<string | null>(appraisal.submissionStatus);
   const { success, error } = useNotifications();
 
-  const ratingDeadlinePassed = appraisal.reviewerRatingDeadline
-    ? new Date(serverNow) >= new Date(appraisal.reviewerRatingDeadline)
-    : false;
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, 15000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const ratingDeadlinePassed = useMemo(
+    () => (appraisal.reviewerRatingDeadline ? nowMs >= new Date(appraisal.reviewerRatingDeadline).getTime() : false),
+    [appraisal.reviewerRatingDeadline, nowMs],
+  );
   const canRate =
     appraisal.stage === "REVIEWER_RATING" &&
-    (appraisal.reviewerStatus === "AVAILABLE" || appraisal.reviewerStatus === "FORCED");
+    (appraisal.reviewerStatus === "AVAILABLE" || appraisal.reviewerStatus === "FORCED") &&
+    !ratingDeadlinePassed;
   const canSetAvailability =
     appraisal.stage === "REVIEWERS_ASSIGNED" && appraisal.reviewerStatus === "PENDING";
 
@@ -117,6 +130,7 @@ export function MyReviewDetailClient({
       return;
     }
     success(action === "DRAFT" ? "Reviewer draft saved" : "Reviewer rating submitted");
+    setCurrentSubmissionStatus(action);
     setSavedAt(new Date().toLocaleTimeString("en-IN"));
     router.refresh();
   }
@@ -153,10 +167,13 @@ export function MyReviewDetailClient({
           <div className="space-y-1">
             <p className="text-lg font-semibold text-gray-900">{appraisal.employee.name}</p>
             <p className="text-sm text-gray-500">
-              {appraisal.employee.designation ?? "No designation"} · {appraisal.cycle.name} {appraisal.cycle.year}
+              {appraisal.employee.designation ?? "No designation"} - {appraisal.cycle.name} {appraisal.cycle.year}
             </p>
             <p className="text-xs uppercase tracking-wide text-gray-400">
               Your role: {KIND_LABEL[appraisal.reviewerKind] ?? appraisal.reviewerKind}
+            </p>
+            <p className="text-xs text-gray-400">
+              Self-assessment edited {appraisal.selfAssessmentEditCount} time{appraisal.selfAssessmentEditCount === 1 ? "" : "s"}.
             </p>
           </div>
           <div className="flex flex-col items-start gap-2 sm:items-end">
@@ -180,6 +197,18 @@ export function MyReviewDetailClient({
       {savedAt && (
         <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
           Reviewer rating saved at {savedAt}.
+        </div>
+      )}
+
+      {currentSubmissionStatus === "SUBMITTED" && canRate && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+          This review is marked as submitted, but you can still edit and resubmit it until the deadline.
+        </div>
+      )}
+
+      {appraisal.stage === "REVIEWER_RATING" && ratingDeadlinePassed && (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+          Reviewer rating is now view-only because the deadline has passed.
         </div>
       )}
 
@@ -221,7 +250,6 @@ export function MyReviewDetailClient({
             onSaveDraft={(answers) => persistRating("DRAFT", answers as ReviewerRatingAnswers)}
             onSubmitFinal={(answers) => persistRating("SUBMITTED", answers as ReviewerRatingAnswers)}
             disabled={ratingDeadlinePassed}
-            submitted={appraisal.submissionStatus === "SUBMITTED"}
           />
         </Card>
       ) : appraisal.currentRating ? (

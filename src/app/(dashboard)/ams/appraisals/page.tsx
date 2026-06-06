@@ -52,23 +52,16 @@ export default async function AppraisalsPage({
 }: {
   searchParams: Promise<Record<string, string>>;
 }) {
-  console.time("appraisals-list:total");
-
-  console.time("appraisals-list:auth");
   const session = await auth();
-  console.timeEnd("appraisals-list:auth");
   if (!session) redirect("/login");
 
-  console.time("appraisals-list:permission");
   await requirePermission(session.user.id, "ams.appraisal.assign_reviewers");
-  console.timeEnd("appraisals-list:permission");
 
   const sp = await searchParams;
   const now = await getNow();
   const year = now.getFullYear();
   const month = now.getMonth();
 
-  console.time("appraisals-list:queries");
   const [appraisals, cycles, dueRows] = await Promise.all([
     listAppraisals(session.user.orgId!, {
       cycleId: sp.cycleId,
@@ -77,16 +70,10 @@ export default async function AppraisalsPage({
     listCycles(session.user.orgId!),
     listDueAppraisals(session.user.orgId!, year, month),
   ]);
-  console.timeEnd("appraisals-list:queries");
-
-  console.time("appraisals-list:transform");
   const dueRowsSafe = dueRows.map((r) => ({
     ...r,
     dueDate: r.dueDate.toISOString(),
   }));
-  console.timeEnd("appraisals-list:transform");
-
-  console.timeEnd("appraisals-list:total");
 
   return (
     <div className="space-y-8">

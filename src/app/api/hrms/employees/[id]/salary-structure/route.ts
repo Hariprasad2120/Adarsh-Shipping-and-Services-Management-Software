@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getSessionOrUnauth, ok, err } from "@/lib/api-helpers";
 import { requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
+import { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
 
 const bodySchema = z.object({
@@ -23,21 +24,32 @@ export async function POST(
   if (!parsed.success) return err("Invalid input");
 
   const { annualCTC, monthlyGross, breakup } = parsed.data;
+  const existing = await db.employmentRecord.findUnique({
+    where: { userId },
+    select: { payrollMeta: true },
+  });
+  const currentMeta =
+    existing?.payrollMeta && typeof existing.payrollMeta === "object" && !Array.isArray(existing.payrollMeta)
+      ? (existing.payrollMeta as Record<string, unknown>)
+      : {};
+  const nextMeta = {
+    ...currentMeta,
+    monthlyGross,
+    breakup,
+  } satisfies Prisma.InputJsonValue;
 
   // Upsert employment record, setting ctc + payrollMeta
   await db.employmentRecord.upsert({
     where: { userId },
     update: {
       ctc: annualCTC,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      payrollMeta: { monthlyGross, breakup } as any,
+      payrollMeta: nextMeta,
     },
     create: {
       userId,
       joinDate: new Date(),
       ctc: annualCTC,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      payrollMeta: { monthlyGross, breakup } as any,
+      payrollMeta: nextMeta,
     },
   });
 

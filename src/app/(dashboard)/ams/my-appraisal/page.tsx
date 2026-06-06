@@ -49,56 +49,58 @@ export default async function MyAppraisalPage() {
       <h1 className="text-2xl font-bold text-gray-900">My Appraisal</h1>
 
       {appraisals.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 px-6 py-12 text-center text-gray-400 text-sm">
+        <div className="rounded-xl border border-gray-200 bg-white px-6 py-12 text-center text-sm text-gray-400">
           No appraisals found for your account.
         </div>
       ) : (
         <div className="space-y-6">
-          {appraisals.map((a) => {
-            const deadlinePassed = a.availabilityDeadline
-              ? now >= new Date(a.availabilityDeadline)
+          {appraisals.map((appraisal) => {
+            const availabilityDeadlinePassed = appraisal.availabilityDeadline
+              ? now >= new Date(appraisal.availabilityDeadline)
               : false;
-
-            const nonMgmtReviewers = a.reviewers.filter((r) => r.kind !== "MANAGEMENT");
+            const selfDeadlinePassed = appraisal.selfAssessmentDeadline
+              ? now >= new Date(appraisal.selfAssessmentDeadline)
+              : false;
+            const nonMgmtReviewers = appraisal.reviewers.filter((reviewer) => reviewer.kind !== "MANAGEMENT");
 
             return (
-              <div key={a.id} className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
-                {/* Header */}
+              <div key={appraisal.id} className="space-y-5 rounded-xl border border-gray-200 bg-white p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-base font-semibold text-gray-900">{a.cycle.name}</p>
-                    <p className="text-sm text-gray-500 mt-0.5">
-                      Due: {new Date(a.dueDate).toLocaleDateString("en-IN")}
+                    <p className="text-base font-semibold text-gray-900">{appraisal.cycle.name}</p>
+                    <p className="mt-0.5 text-sm text-gray-500">
+                      Due: {new Date(appraisal.dueDate).toLocaleDateString("en-IN")}
                     </p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STAGE_COLOR[a.stage] ?? "bg-gray-100 text-gray-500"}`}>
-                    {STAGE_LABEL[a.stage] ?? a.stage.replace(/_/g, " ")}
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STAGE_COLOR[appraisal.stage] ?? "bg-gray-100 text-gray-500"}`}>
+                    {STAGE_LABEL[appraisal.stage] ?? appraisal.stage.replace(/_/g, " ")}
                   </span>
                 </div>
 
-                {/* Reviewers */}
                 {nonMgmtReviewers.length > 0 ? (
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Your Reviewers</p>
-                    <div className="divide-y divide-gray-100 rounded-lg border border-gray-100 overflow-hidden">
-                      {nonMgmtReviewers.map((r) => (
-                        <div key={r.id} className="flex items-center justify-between px-4 py-3 text-sm">
-                          <div>
-                            <span className="font-medium text-gray-900">{r.user.name}</span>
-                            <span className="ml-2 text-xs text-gray-400 uppercase">{r.kind}</span>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your Reviewers</p>
+                    <div className="overflow-hidden rounded-lg border border-gray-100">
+                      <div className="divide-y divide-gray-100">
+                        {nonMgmtReviewers.map((reviewer) => (
+                          <div key={reviewer.id} className="flex items-center justify-between px-4 py-3 text-sm">
+                            <div>
+                              <span className="font-medium text-gray-900">{reviewer.user.name}</span>
+                              <span className="ml-2 text-xs uppercase text-gray-400">{reviewer.kind}</span>
+                            </div>
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE[reviewer.availabilityStatus] ?? "bg-gray-100 text-gray-500"}`}>
+                              {reviewer.availabilityStatus}
+                            </span>
                           </div>
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[r.availabilityStatus] ?? "bg-gray-100 text-gray-500"}`}>
-                            {r.availabilityStatus}
-                          </span>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
 
-                    {a.availabilityDeadline && a.stage === "REVIEWERS_ASSIGNED" && (
+                    {appraisal.availabilityDeadline && appraisal.stage === "REVIEWERS_ASSIGNED" && (
                       <p className="text-xs text-gray-400">
-                        {deadlinePassed
+                        {availabilityDeadlinePassed
                           ? "Availability deadline has passed."
-                          : `Reviewers have until ${new Date(a.availabilityDeadline).toLocaleDateString("en-IN")} to confirm availability.`}
+                          : `Reviewers have until ${new Date(appraisal.availabilityDeadline).toLocaleDateString("en-IN")} to confirm availability.`}
                       </p>
                     )}
                   </div>
@@ -106,40 +108,66 @@ export default async function MyAppraisalPage() {
                   <p className="text-sm text-gray-400">Reviewers not yet assigned.</p>
                 )}
 
-                {/* Self-assessment opening notice */}
-                {a.stage === "REVIEWERS_ASSIGNED" && a.availabilityDeadline && (
-                  <div className={`rounded-lg border px-4 py-3 text-sm ${
-                    deadlinePassed
-                      ? "bg-amber-50 border-amber-200 text-amber-700"
-                      : "bg-blue-50 border-blue-200 text-blue-700"
-                  }`}>
-                    {deadlinePassed
-                      ? "Your self-assessment window is pending — awaiting reviewer confirmation from admin."
-                      : <>Your self-assessment will open on <strong>{new Date(a.availabilityDeadline).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</strong>.</>
-                    }
+                {appraisal.stage === "REVIEWERS_ASSIGNED" && appraisal.availabilityDeadline && (
+                  <div
+                    className={`rounded-lg border px-4 py-3 text-sm ${
+                      availabilityDeadlinePassed
+                        ? "border-amber-200 bg-amber-50 text-amber-700"
+                        : "border-blue-200 bg-blue-50 text-blue-700"
+                    }`}
+                  >
+                    {availabilityDeadlinePassed ? (
+                      "Your self-assessment window is pending - awaiting reviewer confirmation from admin."
+                    ) : (
+                      <>
+                        Your self-assessment will open on{" "}
+                        <strong>
+                          {new Date(appraisal.availabilityDeadline).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </strong>
+                        .
+                      </>
+                    )}
                   </div>
                 )}
 
-                {/* Self-assessment CTA */}
-                {a.stage === "SELF_ASSESSMENT_OPEN" && (
-                  <div className="pt-2 space-y-2">
-                    {a.selfAssessmentDeadline && (
+                {appraisal.stage === "SELF_ASSESSMENT_OPEN" && (
+                  <div className="space-y-2 pt-2">
+                    {appraisal.selfAssessmentDeadline && (
                       <p className="text-xs text-amber-600">
-                        {now >= new Date(a.selfAssessmentDeadline)
-                          ? "Self-assessment deadline has passed — awaiting auto-advance."
-                          : `Complete by ${new Date(a.selfAssessmentDeadline).toLocaleDateString("en-IN")}`}
+                        {selfDeadlinePassed
+                          ? "Self-assessment deadline has passed. The form is now view-only until workflow advance."
+                          : `Complete by ${new Date(appraisal.selfAssessmentDeadline).toLocaleDateString("en-IN")}`}
                       </p>
                     )}
-                    {a.selfAssessment && (
+                    {appraisal.selfAssessment && (
                       <p className="text-xs text-green-700">
-                        Draft saved — edited {(a.selfAssessment as { editCount?: number }).editCount ?? 0} time{((a.selfAssessment as { editCount?: number }).editCount ?? 0) !== 1 ? "s" : ""}
+                        Draft saved - edited {(appraisal.selfAssessment as { editCount?: number }).editCount ?? 0} time{((appraisal.selfAssessment as { editCount?: number }).editCount ?? 0) !== 1 ? "s" : ""}
                       </p>
                     )}
                     <Link
-                      href={`/ams/my-appraisal/${a.id}/self-assessment`}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700"
+                      href={`/ams/my-appraisal/${appraisal.id}/self-assessment`}
+                      className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
                     >
-                      {a.selfAssessment ? "Edit Self-Assessment →" : "Complete Self-Assessment →"}
+                      {selfDeadlinePassed
+                        ? "View Self-Assessment ->"
+                        : appraisal.selfAssessment
+                          ? "Edit Self-Assessment ->"
+                          : "Complete Self-Assessment ->"}
+                    </Link>
+                  </div>
+                )}
+
+                {appraisal.stage !== "SELF_ASSESSMENT_OPEN" && appraisal.selfAssessment && (
+                  <div className="pt-2">
+                    <Link
+                      href={`/ams/my-appraisal/${appraisal.id}/self-assessment`}
+                      className="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                    >
+                      {"View Self-Assessment ->"}
                     </Link>
                   </div>
                 )}
