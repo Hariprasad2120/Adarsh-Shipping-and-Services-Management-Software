@@ -19,11 +19,11 @@ export default async function SalaryStructurePage() {
   }));
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Salary Structure Calculator</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Compute full CTC breakup. Optionally update an employee&apos;s salary record.
+        <h1 className="ds-h1 text-on-surface">Salary Structure Generator</h1>
+        <p className="mt-1 text-sm text-on-surface-variant">
+          Build the detailed salary sheet, validate take-home, and optionally update an employee&apos;s payroll meta.
         </p>
       </div>
       <SalaryStructureClient employees={employees} />

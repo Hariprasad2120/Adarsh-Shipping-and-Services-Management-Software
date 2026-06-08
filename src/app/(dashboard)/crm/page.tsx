@@ -27,6 +27,7 @@ export default async function CRMPage() {
         { label: "Status", value: "Planned", tone: "slate" },
       ]}
       quickLinks={quickLinks}
+      pageIcon={section?.icon}
     />
   );
 }

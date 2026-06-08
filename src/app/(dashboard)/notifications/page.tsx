@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button-1";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Input } from "@/components/ui/input";
 import { auth } from "@/lib/auth";
 import { getNotificationPolicy } from "@/modules/notifications/policy";
 import { listUserNotifications } from "@/modules/notifications/service";
@@ -52,10 +53,10 @@ export default async function NotificationsPage({
           requiresAck={typeof params.requiresAck === "string" ? params.requiresAck : "all"}
           status={typeof params.status === "string" ? params.status : "all"}
         />
-        <input name="kind" defaultValue={typeof params.kind === "string" ? params.kind : ""} placeholder="Notification kind" className="rounded-lg border border-slate-200 px-3 py-2 text-sm" />
-        <input name="from" type="date" defaultValue={typeof params.from === "string" ? params.from : ""} className="rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+        <Input name="kind" defaultValue={typeof params.kind === "string" ? params.kind : ""} placeholder="Notification kind" />
+        <Input name="from" type="date" defaultValue={typeof params.from === "string" ? params.from : ""} />
         <div className="flex gap-2">
-          <input name="to" type="date" defaultValue={typeof params.to === "string" ? params.to : ""} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+          <Input name="to" type="date" defaultValue={typeof params.to === "string" ? params.to : ""} className="w-full" />
           <Button type="submit" size="sm">Filter</Button>
         </div>
       </form>

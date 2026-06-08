@@ -19,11 +19,11 @@ export default async function AdminSettingsPage() {
         <Link href="/admin" className="text-sm text-gray-500 hover:text-gray-700">
           ← Admin
         </Link>
-        <h1 className="mt-2 text-2xl font-bold text-gray-900">Appraisal Settings</h1>
+        <h1 className="ds-h1 mt-2 text-gray-900">Appraisal Settings</h1>
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white p-6">
-        <h2 className="mb-4 font-semibold text-gray-900">Reviewer Availability</h2>
+        <h2 className="ds-h2 mb-4 text-gray-900">Reviewer Availability</h2>
         <SettingsClient
           initialDays={settings.availabilityDeadlineDays}
           initialWeights={settings.reviewerRoleWeights}

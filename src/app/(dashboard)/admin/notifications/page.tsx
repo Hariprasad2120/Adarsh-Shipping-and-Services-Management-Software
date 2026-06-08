@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button-1";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Input } from "@/components/ui/input";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac";
@@ -60,7 +61,7 @@ export default async function AdminNotificationsPage({
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Admin Notifications</h1>
+        <h1 className="ds-h1 text-slate-900">Admin Notifications</h1>
         <p className="mt-1 text-sm text-slate-500">View all user notifications in your organisation, inspect lifecycle activity, and resend notifications.</p>
       </div>
 
@@ -75,11 +76,11 @@ export default async function AdminNotificationsPage({
           users={users}
         />
         <div className="flex gap-2">
-          <input name="kind" defaultValue={typeof params.kind === "string" ? params.kind : ""} placeholder="Notification kind" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+          <Input name="kind" defaultValue={typeof params.kind === "string" ? params.kind : ""} placeholder="Notification kind" className="w-full" />
           <Button type="submit" size="sm">Filter</Button>
         </div>
-        <input name="from" type="date" defaultValue={typeof params.from === "string" ? params.from : ""} className="rounded-lg border border-slate-200 px-3 py-2 text-sm" />
-        <input name="to" type="date" defaultValue={typeof params.to === "string" ? params.to : ""} className="rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+        <Input name="from" type="date" defaultValue={typeof params.from === "string" ? params.from : ""} />
+        <Input name="to" type="date" defaultValue={typeof params.to === "string" ? params.to : ""} />
       </form>
 
       <AdminNotificationsClient notifications={rows} />

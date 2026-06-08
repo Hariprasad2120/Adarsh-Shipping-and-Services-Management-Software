@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Badge,
   DataTable,
@@ -13,8 +15,6 @@ import { auth } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { requirePermission } from "@/lib/rbac";
 import { listAppraisals, listCycles, listDueAppraisals } from "@/modules/ams/service";
-import Link from "next/link";
-import { redirect } from "next/navigation";
 import { DueThisMonthRow } from "./due-this-month-row";
 
 type Appraisals = Awaited<ReturnType<typeof listAppraisals>>;
@@ -70,18 +70,19 @@ export default async function AppraisalsPage({
     listCycles(session.user.orgId!),
     listDueAppraisals(session.user.orgId!, year, month),
   ]);
-  const dueRowsSafe = dueRows.map((r) => ({
-    ...r,
-    dueDate: r.dueDate.toISOString(),
+
+  const dueRowsSafe = dueRows.map((row) => ({
+    ...row,
+    dueDate: row.dueDate.toISOString(),
   }));
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-gray-900">Appraisals</h1>
+      <h1 className="ds-h1 text-gray-900">Appraisals</h1>
 
       <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold text-gray-900">Due This Month</h2>
+          <h2 className="ds-h2 text-gray-900">Due This Month</h2>
           <span className="text-sm text-gray-500">
             - {MONTH_NAMES[month]} {year}
           </span>
@@ -93,8 +94,8 @@ export default async function AppraisalsPage({
         <DataTable>
           <DataTableHeader>
             <tr>
-              {["Employee", "Designation", "Department", "Type", "Due Date", ""].map((h) => (
-                <DataTableHead key={h}>{h}</DataTableHead>
+              {["Employee", "Designation", "Department", "Type", "Due Date", ""].map((header) => (
+                <DataTableHead key={header}>{header}</DataTableHead>
               ))}
             </tr>
           </DataTableHeader>
@@ -109,7 +110,7 @@ export default async function AppraisalsPage({
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-gray-900">In Progress</h2>
+        <h2 className="ds-h2 text-gray-900">In Progress</h2>
 
         <form className="flex flex-wrap gap-3">
           <AppraisalFilters cycleId={sp.cycleId ?? ""} cycles={cycles as Cycles} stage={sp.stage ?? ""} />
@@ -121,8 +122,8 @@ export default async function AppraisalsPage({
         <DataTable>
           <DataTableHeader>
             <tr>
-              {["Employee", "Cycle", "Stage", "Due Date", ""].map((h) => (
-                <DataTableHead key={h}>{h}</DataTableHead>
+              {["Employee", "Cycle", "Stage", "Due Date", ""].map((header) => (
+                <DataTableHead key={header}>{header}</DataTableHead>
               ))}
             </tr>
           </DataTableHeader>
@@ -130,21 +131,28 @@ export default async function AppraisalsPage({
             {appraisals.length === 0 ? (
               <DataTableEmpty colSpan={5} message="No appraisals found." />
             ) : (
-              (appraisals as Appraisals).map((a) => (
-                <DataTableRow key={a.id}>
-                  <DataTableCell className="font-medium text-gray-900">{a.employee.name}</DataTableCell>
-                  <DataTableCell className="text-gray-500">{a.cycle.name}</DataTableCell>
+              (appraisals as Appraisals).map((appraisal) => (
+                <DataTableRow key={appraisal.id}>
+                  <DataTableCell className="font-medium text-gray-900">{appraisal.employee.name}</DataTableCell>
+                  <DataTableCell className="text-gray-500">{appraisal.cycle.name}</DataTableCell>
                   <DataTableCell>
-                    <Badge className={STAGE_COLOR[a.stage] ?? "bg-gray-100 text-gray-500"}>
-                      {a.stage.replace(/_/g, " ")}
+                    <Badge className={STAGE_COLOR[appraisal.stage] ?? "bg-gray-100 text-gray-500"}>
+                      {appraisal.stage.replace(/_/g, " ")}
                     </Badge>
                   </DataTableCell>
                   <DataTableCell className="text-gray-500">
-                    {new Date(a.dueDate).toLocaleDateString("en-IN")}
+                    {new Date(appraisal.dueDate).toLocaleDateString("en-IN")}
                   </DataTableCell>
                   <DataTableCell>
-                    <Link href={`/ams/appraisals/${a.id}`} className="text-xs text-indigo-600 hover:underline">
-                      Manage →
+                    <Link
+                      href={
+                        appraisal.stage === "DUE_NOTIFIED"
+                          ? `/ams/appraisals/assign/${appraisal.employee.id}`
+                          : `/ams/appraisals/${appraisal.id}`
+                      }
+                      className="text-xs text-indigo-600 hover:underline"
+                    >
+                      {appraisal.stage === "DUE_NOTIFIED" ? "Assign Reviewers ->" : "Manage ->"}
                     </Link>
                   </DataTableCell>
                 </DataTableRow>

@@ -82,20 +82,20 @@ export function DropdownSelect({
         </select>
       ) : null}
 
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <button
             aria-label={ariaLabel}
             className={cn(
-              "flex w-full items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-900 transition outline-none hover:border-gray-400 focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400",
-              selectedValue === "" && "text-gray-500",
+              "flex w-full items-center justify-between gap-2 rounded-full border border-[#00cec4]/30 bg-surface px-4 py-2 text-left text-sm text-on-surface transition outline-none hover:border-[#00cec4]/45 focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:bg-surface-container-low disabled:text-on-surface-variant",
+              selectedValue === "" && "text-on-surface-variant",
               triggerClassName,
             )}
             disabled={disabled}
             type="button"
           >
             <span className="truncate">{buttonLabel}</span>
-            <ChevronDownIcon className="h-4 w-4 shrink-0 text-gray-500" />
+            <ChevronDownIcon className="h-4 w-4 shrink-0 text-on-surface-variant" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className={cn("w-[var(--radix-dropdown-menu-trigger-width)]", contentClassName)}>

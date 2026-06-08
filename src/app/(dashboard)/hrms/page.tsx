@@ -26,7 +26,11 @@ export default async function HRMSPage() {
       description:
         item.href === "/hrms/employees"
           ? "Browse the employee directory, profiles, and reporting lines."
-          : "Add a new employee and complete their onboarding details.",
+          : item.href === "/hrms/employees/new"
+            ? "Add a new employee and complete their onboarding details."
+            : item.href === "/hrms/salary-structure"
+              ? "Build salary structures, calculate take-home, and update payroll metadata."
+              : "Track each employee's latest salary revision and review their past history.",
     })) ?? [];
 
   return (
@@ -40,6 +44,7 @@ export default async function HRMSPage() {
         { label: "Roles", value: roles.length.toString(), tone: "slate" },
       ]}
       quickLinks={quickLinks}
+      pageIcon={section?.icon}
     />
   );
 }

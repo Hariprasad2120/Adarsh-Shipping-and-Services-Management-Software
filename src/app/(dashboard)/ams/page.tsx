@@ -58,6 +58,7 @@ export default async function AMSPage() {
         },
       ]}
       quickLinks={quickLinks}
+      pageIcon={section?.icon}
     />
   );
 }

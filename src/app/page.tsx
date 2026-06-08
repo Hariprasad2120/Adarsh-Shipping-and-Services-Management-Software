@@ -15,6 +15,7 @@ import CRMModule from '../components/landing-page/CRMModule';
 import CompanyOverview from '../components/landing-page/CompanyOverview';
 import { ChevronLeft, LogIn, ArrowRight, X, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import { Input } from '@/components/ui/input';
 
 export default function App() {
   const [activeModule, setActiveModule] = useState<'overview' | 'appraisals' | 'hr' | 'attendance' | 'crm'>('overview');
@@ -39,7 +40,7 @@ export default function App() {
       {/* Dynamic Top Navigation Bar */}
       <header className="border-b border-neutral-200 bg-white sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          
+
           {/* Logo Brand Metaphor */}
           <button
             onClick={() => setActiveModule('overview')}
@@ -75,13 +76,13 @@ export default function App() {
 
             {/* HIGHLY COMPLIANT CTA LOGIN GATEWAY BUTTON */}
             <Link
-  href="/login"
-  id="cta-gate-login"
-  className="px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-mono uppercase tracking-widest font-semibold rounded shadow-sm hover:shadow transition flex items-center gap-2 cursor-pointer"
->
-  <LogIn className="h-3.5 w-3.5" />
-  Sign In // Link Gateway
-</Link>
+              href="/login"
+              id="cta-gate-login"
+              className="px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-mono uppercase tracking-widest font-semibold rounded shadow-sm hover:shadow transition flex items-center gap-2 cursor-pointer"
+            >
+              <LogIn className="h-3.5 w-3.5" />
+              Sign In // Link Gateway
+            </Link>
           </div>
         </div>
       </header>
@@ -89,7 +90,7 @@ export default function App() {
       {/* Main Structural Centered Body */}
       <main className="flex-1 flex flex-col items-center justify-start w-full px-6 py-12">
         <div className="w-full max-w-4xl space-y-8">
-          
+
           {/* Breadcrumb Info Bar (Black/White high-contrast line) */}
           <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
             <div className="flex items-center gap-2 font-mono text-xs text-neutral-500 uppercase tracking-wider">
@@ -99,7 +100,7 @@ export default function App() {
                 {activeModule === 'overview' ? 'DASHBOARD' : `${activeModule.toUpperCase()} _ OVERVIEW`}
               </span>
             </div>
-            
+
             <div className="text-right font-mono text-[10px] text-neutral-400">
               UTC DATE // 2026-06-04
             </div>
@@ -171,7 +172,7 @@ export default function App() {
                 <span className="font-mono text-[10px] tracking-widest text-neutral-400 uppercase block mb-1">
                   SECURE PORTAL ENTRY
                 </span>
-                <h3 className="text-xl font-display font-black text-black tracking-tight uppercase">
+                <h3 className="ds-h3 text-black">
                   ENTERPRISE LOGIN
                 </h3>
               </div>
@@ -192,13 +193,13 @@ export default function App() {
                 <label className="block text-[10px] font-mono text-neutral-600 uppercase tracking-wider mb-1">
                   Security Identifier (Email)
                 </label>
-                <input
+                <Input
                   type="email"
                   required
                   placeholder="e.g. administrator@monolith.com"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-neutral-200 bg-neutral-50 text-sm text-black placeholder-neutral-400 focus:outline-none focus:border-black focus:bg-white rounded transition"
+                  className="w-full rounded-xl border-neutral-200 bg-neutral-50 text-sm text-black placeholder:text-neutral-400 focus:border-black focus-visible:ring-black/10"
                 />
               </div>
 
@@ -206,13 +207,13 @@ export default function App() {
                 <label className="block text-[10px] font-mono text-neutral-600 uppercase tracking-wider mb-1">
                   Cryptographic Token (Password)
                 </label>
-                <input
+                <Input
                   type="password"
                   required
                   placeholder="Enter security token"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-neutral-200 bg-neutral-50 text-sm text-black placeholder-neutral-400 focus:outline-none focus:border-black focus:bg-white rounded transition"
+                  className="w-full rounded-xl border-neutral-200 bg-neutral-50 text-sm text-black placeholder:text-neutral-400 focus:border-black focus-visible:ring-black/10"
                 />
               </div>
 
@@ -228,7 +229,7 @@ export default function App() {
                 >
                   Confirm Gateway Link <ArrowRight className="h-3 w-3" />
                 </button>
-                
+
                 <button
                   type="button"
                   onClick={() => setIsLoginModalOpen(false)}

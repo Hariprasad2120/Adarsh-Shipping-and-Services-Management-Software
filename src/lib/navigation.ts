@@ -77,6 +77,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         permission: "hrms.employee.create",
         matchPaths: ["/hrms/salary-structure"],
       },
+      {
+        href: "/hrms/salary-revisions",
+        label: "Salary Revisions",
+        icon: Report,
+        permission: "hrms.employee.read",
+        matchPaths: ["/hrms/salary-revisions"],
+      },
     ],
   },
   {

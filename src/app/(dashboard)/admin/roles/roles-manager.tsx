@@ -67,7 +67,7 @@ export function RolesManager({
       {/* Role list */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="font-semibold text-gray-900 text-sm">Roles</h2>
+          <h2 className="ds-h2 text-gray-900">Roles</h2>
           <button onClick={addRole} className="text-xs text-indigo-600 hover:underline">+ New</button>
         </div>
         {roles.map((r) => (
@@ -93,7 +93,7 @@ export function RolesManager({
         ) : (
           <>
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-gray-900">{selected.name} — Permissions</h2>
+              <h2 className="ds-h2 text-gray-900">{selected.name} — Permissions</h2>
               <button
                 onClick={savePermissions}
                 disabled={saving}

@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Input } from "@/components/ui/input";
 import type {
   AppraisalQuestionDefinition,
   AppraisalSectionDefinition,
@@ -121,12 +123,12 @@ function TextInput({
   type?: "text" | "number";
 }) {
   return (
-    <input
+    <Input
       type={type}
       value={value}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
-      className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm ${className}`}
+      className={className}
     />
   );
 }
@@ -188,13 +190,12 @@ function SelfFieldEditor({
       <div className="grid gap-3 md:grid-cols-2">
         <TextInput value={field.id} onChange={(value) => onChange({ ...field, id: value })} placeholder="Field id" />
         <TextInput value={field.label} onChange={(value) => onChange({ ...field, label: value })} placeholder="Field label" />
-        <select
+        <DropdownSelect
+          ariaLabel="Field type"
+          onValueChange={(value) => onChange({ ...field, type: value as EmployeeInfoFieldDefinition["type"] })}
+          options={FIELD_TYPE_OPTIONS.map((type) => ({ value: type, label: type }))}
           value={field.type}
-          onChange={(event) => onChange({ ...field, type: event.target.value as EmployeeInfoFieldDefinition["type"] })}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-        >
-          {FIELD_TYPE_OPTIONS.map((type) => <option key={type} value={type}>{type}</option>)}
-        </select>
+        />
         <TextInput value={field.placeholder ?? ""} onChange={(value) => onChange({ ...field, placeholder: value || undefined })} placeholder="Placeholder" />
       </div>
       {field.type === "radio" ? (
@@ -270,13 +271,12 @@ function QuestionEditor({
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         <TextInput value={question.id} onChange={(value) => onChange({ ...question, id: value })} placeholder="Question id" />
-        <select
+        <DropdownSelect
+          ariaLabel="Question type"
+          onValueChange={(value) => onChange({ ...question, type: value as AppraisalQuestionDefinition["type"] })}
+          options={QUESTION_TYPE_OPTIONS.map((type) => ({ value: type, label: type }))}
           value={question.type}
-          onChange={(event) => onChange({ ...question, type: event.target.value as AppraisalQuestionDefinition["type"] })}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-        >
-          {QUESTION_TYPE_OPTIONS.map((type) => <option key={type} value={type}>{type}</option>)}
-        </select>
+        />
       </div>
       <TextArea value={question.prompt} onChange={(value) => onChange({ ...question, prompt: value })} placeholder="Question prompt" />
       <div className="grid gap-3 md:grid-cols-2">
@@ -434,7 +434,7 @@ function SelfTemplatePanel({
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">Live Self-Assessment Template</h2>
+          <h2 className="ds-h2 text-gray-900">Live Self-Assessment Template</h2>
           <p className="text-sm text-gray-500">Changes here apply immediately for this organization.</p>
         </div>
         <button
@@ -451,7 +451,7 @@ function SelfTemplatePanel({
       <div className="space-y-4">
         <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4">
           <div>
-            <h3 className="text-sm font-semibold text-gray-900">Employee Information Fields</h3>
+            <h3 className="ds-h3 text-gray-900">Employee Information Fields</h3>
             <p className="text-sm text-gray-500">Edit profile fields and visibility rules.</p>
           </div>
           {template.employeeInfoFields.map((field, index) => (
@@ -889,7 +889,7 @@ export function CriteriaClient({
           <SelfTemplatePanel initialTemplate={selfTemplate} />
           <div className="space-y-3">
             <div>
-              <h2 className="text-base font-semibold text-gray-900">Self Rating Criteria</h2>
+              <h2 className="ds-h2 text-gray-900">Self Rating Criteria</h2>
               <p className="text-sm text-gray-500">These criteria power the employee self-rating table.</p>
             </div>
             <CriterionEditorPanel

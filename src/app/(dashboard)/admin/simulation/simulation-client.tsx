@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
 
 export function SimulationClient({ initialFrozenAt }: { initialFrozenAt: string | null }) {
   const router = useRouter();
@@ -103,16 +104,16 @@ export function SimulationClient({ initialFrozenAt }: { initialFrozenAt: string 
 
       {/* Freeze date */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <h2 className="font-semibold text-gray-900 text-sm">Freeze System Date</h2>
+        <h2 className="ds-h2 text-gray-900">Freeze System Date</h2>
         <p className="text-xs text-gray-500">Freezing the date also runs the daily appraisal job automatically — stages advance and self-assessments open without a separate step.</p>
         <div className="flex gap-3 items-end">
           <div className="flex-1">
             <label className="text-xs text-gray-500">Date &amp; time to freeze to</label>
-            <input
+            <Input
               type="datetime-local"
               value={dateInput}
               onChange={(e) => setDateInput(e.target.value)}
-              className="w-full mt-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full mt-1"
             />
           </div>
           <button
@@ -136,7 +137,7 @@ export function SimulationClient({ initialFrozenAt }: { initialFrozenAt: string 
 
       {/* Run daily job */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
-        <h2 className="font-semibold text-gray-900 text-sm">Daily Appraisal Job</h2>
+        <h2 className="ds-h2 text-gray-900">Daily Appraisal Job</h2>
         <p className="text-xs text-gray-500">
           Runs the same logic as the scheduled cron: creates appraisals due on the current
           (possibly frozen) date and opens self-assessments whose availability deadline has passed.
@@ -158,7 +159,7 @@ export function SimulationClient({ initialFrozenAt }: { initialFrozenAt: string 
 
       {/* Danger zone — AMS data reset */}
       <div className="bg-white rounded-xl border border-red-200 p-6 space-y-4">
-        <h2 className="font-semibold text-red-700 text-sm">Danger Zone</h2>
+        <h2 className="ds-h2 text-red-700">Danger Zone</h2>
         <p className="text-xs text-gray-500">
           Delete all appraisal cycles, appraisals, reviewers, ratings, reviews, meetings, minutes,
           and hike decisions for this organisation. The simulated date is also cleared.
@@ -168,12 +169,12 @@ export function SimulationClient({ initialFrozenAt }: { initialFrozenAt: string 
           <label className="text-xs text-gray-500">
             Type <code className="bg-gray-100 px-1 rounded">DELETE</code> to confirm
           </label>
-          <input
+          <Input
             type="text"
             value={resetConfirm}
             onChange={(e) => setResetConfirm(e.target.value)}
             placeholder="DELETE"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+            className="w-full focus:ring-red-400"
           />
         </div>
         <button

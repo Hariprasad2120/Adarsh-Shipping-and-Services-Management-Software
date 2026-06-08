@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CriteriaPointsForm, CriteriaPointsView } from "@/components/ams/criteria-points-form";
 import { useNotifications } from "@/components/notifications/notification-provider";
+import { Input } from "@/components/ui/input";
 import type {
   AppraisalSelfFormTemplate,
   ManagementReviewAnswers,
@@ -36,7 +37,7 @@ type ManagementReviewDetail = {
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-5">
-      <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+      <h2 className="ds-h2 text-gray-900">{title}</h2>
       {children}
     </div>
   );
@@ -140,7 +141,7 @@ export function ManagementReviewClient({
           {"< Appraisal Detail"}
         </Link>
         <span className="text-gray-300">/</span>
-        <h1 className="text-2xl font-bold text-gray-900">Management Review</h1>
+        <h1 className="ds-h1 text-gray-900">Management Review</h1>
       </div>
 
       <Card title="Review Summary">
@@ -215,12 +216,12 @@ export function ManagementReviewClient({
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Proposed Meeting Dates</p>
               {proposedDates.map((value, index) => (
-                <input
+                <Input
                   key={index}
                   type="date"
                   value={value}
                   onChange={(e) => setProposedDates((current) => current.map((item, i) => (i === index ? e.target.value : item)))}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm"
+                  className="w-full"
                 />
               ))}
             </div>

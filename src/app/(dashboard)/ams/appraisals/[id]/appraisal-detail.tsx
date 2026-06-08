@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { CalendarDays, CheckCircle2, Circle, ClipboardList, FileText, Star } from "lucide-react";
 import { CriteriaPointsView } from "@/components/ams/criteria-points-form";
 import { Button } from "@/components/ui/button";
 import type {
@@ -14,6 +15,7 @@ import type {
 import type { CriterionPoint } from "@/modules/ams/types";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Input } from "@/components/ui/input";
 
 type Reviewer = {
   id: string;
@@ -167,6 +169,8 @@ export function AppraisalDetail({
           </div>
         </div>
 
+        <ProgressTimeline appraisal={appraisal} />
+
         <StageActions
           appraisal={appraisal}
           hrUsers={hrUsers}
@@ -261,11 +265,14 @@ function StageActions({
   reviewerCriteria: CriterionPoint[];
   scoreData: ScoreData;
 }) {
-  const [selectedHR, setSelectedHR] = useState("");
-  const [selectedTL, setSelectedTL] = useState("");
-  const [selectedManager, setSelectedManager] = useState("");
-  const [includeTL, setIncludeTL] = useState(true);
-  const [includeManager, setIncludeManager] = useState(true);
+  const existingHR = appraisal.reviewers.find((reviewer) => reviewer.kind === "HR")?.userId ?? "";
+  const existingTL = appraisal.reviewers.find((reviewer) => reviewer.kind === "TL")?.userId ?? "";
+  const existingManager = appraisal.reviewers.find((reviewer) => reviewer.kind === "MANAGER")?.userId ?? "";
+  const [selectedHR, setSelectedHR] = useState(existingHR);
+  const [selectedTL, setSelectedTL] = useState(existingTL);
+  const [selectedManager, setSelectedManager] = useState(existingManager);
+  const [includeTL, setIncludeTL] = useState(Boolean(existingTL));
+  const [includeManager, setIncludeManager] = useState(Boolean(existingManager));
   const [meetingDate, setMeetingDate] = useState("");
   const [hikePercent, setHikePercent] = useState(scoreData?.hikePercent != null ? String(scoreData.hikePercent) : "");
   const [hikeAmount, setHikeAmount] = useState("");
@@ -292,15 +299,15 @@ function StageActions({
   return (
     <div className="space-y-4">
 
-      {/* Assign / Re-assign reviewers */}
-      {(stage === "DUE_NOTIFIED" || stage === "REVIEWERS_ASSIGNED") && caps["ams.appraisal.assign_reviewers"] && (
+      {/* Update reviewers */}
+      {stage === "REVIEWERS_ASSIGNED" && caps["ams.appraisal.assign_reviewers"] && (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="space-y-6">
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold text-slate-900">
-                {stage === "REVIEWERS_ASSIGNED" ? "Re-assign Reviewers" : "Assign Reviewers"}
+              <h2 className="ds-h2 text-slate-900">
+                Update Reviewers
               </h2>
-              <p className="text-sm text-slate-600">Configure the evaluation hierarchy for this performance cycle.</p>
+              <p className="text-sm text-slate-600">Adjust the reviewer chain after assignment if a reviewer needs to change.</p>
             </div>
 
             <div className="flex flex-col gap-3 md:flex-row md:items-center">
@@ -315,7 +322,7 @@ function StageActions({
                     .filter((user) => user.id !== appraisal.employee.id)
                     .map((user) => ({ value: user.id, label: user.name })),
                 ]}
-                triggerClassName="h-14 rounded-2xl border-slate-200 px-4 text-base text-slate-900 focus-visible:ring-indigo-500"
+                triggerClassName="h-14 px-4 text-base"
                 value={selectedHR}
               />
             </div>
@@ -345,7 +352,7 @@ function StageActions({
                         .filter((user) => user.id !== appraisal.employee.id)
                         .map((user) => ({ value: user.id, label: user.name })),
                     ]}
-                    triggerClassName="h-12 rounded-2xl border-slate-200 px-4 text-sm text-slate-900 focus-visible:ring-indigo-500"
+                    triggerClassName="h-12 px-4 text-sm"
                     value={selectedTL}
                   />
                 </div>
@@ -377,7 +384,7 @@ function StageActions({
                         .filter((user) => user.id !== appraisal.employee.id)
                         .map((user) => ({ value: user.id, label: user.name })),
                     ]}
-                    triggerClassName="h-12 rounded-2xl border-slate-200 px-4 text-sm text-slate-900 focus-visible:ring-indigo-500"
+                    triggerClassName="h-12 px-4 text-sm"
                     value={selectedManager}
                   />
                 </div>
@@ -410,7 +417,7 @@ function StageActions({
                   disabled={saving || !selectedHR}
                   size="md"
                 >
-                  {stage === "REVIEWERS_ASSIGNED" ? "Re-assign" : "Assign"}
+                  Update Reviewers
                 </Button>
               </div>
             </div>
@@ -579,8 +586,8 @@ function StageActions({
           <div className="flex gap-3 items-end">
             <div className="flex-1">
               <label className="text-xs text-gray-500">Meeting Date & Time</label>
-              <input type="datetime-local" value={meetingDate} onChange={(e) => setMeetingDate(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1" />
+              <Input type="datetime-local" value={meetingDate} onChange={(e) => setMeetingDate(e.target.value)}
+                className="mt-1 w-full" />
             </div>
             <button onClick={() => onAction("meeting", { action: "confirm", scheduledAt: meetingDate })}
               disabled={saving || !meetingDate}
@@ -635,18 +642,18 @@ function StageActions({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-gray-500">Hike %</label>
-              <input type="number" value={hikePercent} onChange={(e) => setHikePercent(e.target.value)}
-                className="w-full mt-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              <Input type="number" value={hikePercent} onChange={(e) => setHikePercent(e.target.value)}
+                className="mt-1 w-full" />
             </div>
             <div>
               <label className="text-xs text-gray-500">Amount (₹)</label>
-              <input type="number" value={hikeAmount} onChange={(e) => setHikeAmount(e.target.value)}
-                className="w-full mt-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              <Input type="number" value={hikeAmount} onChange={(e) => setHikeAmount(e.target.value)}
+                className="mt-1 w-full" />
             </div>
             <div className="col-span-2">
               <label className="text-xs text-gray-500">Effective From</label>
-              <input type="date" value={hikeEffective} onChange={(e) => setHikeEffective(e.target.value)}
-                className="w-full mt-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              <Input type="date" value={hikeEffective} onChange={(e) => setHikeEffective(e.target.value)}
+                className="mt-1 w-full" />
             </div>
           </div>
           <button
@@ -674,6 +681,129 @@ function DeadlineBanner({ deadline, serverNow, label }: { deadline: string; serv
 }
 
 // ─── Reviewers Panel ──────────────────────────────────────────────────────────
+
+const TIMELINE_STAGES = [
+  "DUE_NOTIFIED",
+  "REVIEWERS_ASSIGNED",
+  "SELF_ASSESSMENT_OPEN",
+  "REVIEWER_RATING",
+  "MANAGEMENT_REVIEW",
+  "MEETING_PENDING",
+  "MEETING_LIVE",
+  "HIKE_FINALISATION",
+  "CLOSED",
+] as const;
+
+function ProgressTimeline({ appraisal }: { appraisal: Appraisal }) {
+  const activeIndex = TIMELINE_STAGES.indexOf(appraisal.stage as (typeof TIMELINE_STAGES)[number]);
+  const nonManagementReviewers = appraisal.reviewers.filter((reviewer) => reviewer.kind !== "MANAGEMENT");
+  const availableCount = nonManagementReviewers.filter(
+    (reviewer) => reviewer.availabilityStatus === "AVAILABLE" || reviewer.availabilityStatus === "FORCED",
+  ).length;
+  const submittedRatings = appraisal.reviewerRatings.length;
+  const totalRatings = nonManagementReviewers.length;
+  const timelineItems = [
+    {
+      key: "REVIEWERS_ASSIGNED",
+      title: "Reviewers Assigned",
+      description:
+        appraisal.reviewers.length > 0
+          ? `HR: ${appraisal.reviewers.find((reviewer) => reviewer.kind === "HR")?.user.name ?? "-"}`
+          : "Reviewer chain is waiting to be assigned",
+      icon: CheckCircle2,
+    },
+    {
+      key: "SELF_ASSESSMENT_OPEN",
+      title: "Reviewer Availability Confirmed",
+      description:
+        nonManagementReviewers.length === 0
+          ? "No reviewer confirmations yet"
+          : availableCount === nonManagementReviewers.length
+            ? "All reviewers confirmed available"
+            : `${availableCount} / ${nonManagementReviewers.length} reviewers confirmed`,
+      icon: CheckCircle2,
+    },
+    {
+      key: "REVIEWER_RATING",
+      title: "Self-Assessment",
+      description: appraisal.selfAssessment?.submittedAt
+        ? `Submitted ${new Date(appraisal.selfAssessment.submittedAt).toLocaleDateString("en-IN")}`
+        : "Awaiting employee submission",
+      icon: FileText,
+    },
+    {
+      key: "MANAGEMENT_REVIEW",
+      title: "Reviewer Ratings",
+      description: `${submittedRatings} / ${Math.max(totalRatings, 1)} submitted`,
+      icon: Star,
+    },
+    {
+      key: "MEETING_PENDING",
+      title: "Management Decision",
+      description:
+        appraisal.managementReviews.length > 0 ? "Management review submitted" : "Pending management review",
+      icon: Circle,
+    },
+    {
+      key: "MEETING_LIVE",
+      title: "Meeting Scheduled",
+      description:
+        appraisal.meeting?.scheduledAt
+          ? `Scheduled ${new Date(appraisal.meeting.scheduledAt).toLocaleDateString("en-IN")}`
+          : "Tentative dates not yet proposed",
+      icon: CalendarDays,
+    },
+    {
+      key: "HIKE_FINALISATION",
+      title: "MOM Recorded",
+      description: appraisal.meeting?.minutes.length ? "Minutes captured for the discussion" : "Awaiting meeting",
+      icon: ClipboardList,
+    },
+  ] as const;
+
+  return (
+    <Card title="Cycle Progress">
+      <div className="space-y-0">
+        {timelineItems.map((item, index) => {
+          const stageIndex = TIMELINE_STAGES.indexOf(item.key);
+          const isDone = activeIndex > stageIndex;
+          const isCurrent = activeIndex === stageIndex;
+          const Icon = item.icon;
+
+          return (
+            <div
+              key={item.key}
+              className="relative flex gap-4 pb-6 last:pb-0"
+            >
+              <div className="relative flex w-8 shrink-0 justify-center">
+                {index < timelineItems.length - 1 ? (
+                  <span className="absolute top-9 h-[calc(100%-0.25rem)] w-px bg-slate-200" />
+                ) : null}
+                <span
+                  className={`relative inline-flex h-8 w-8 items-center justify-center rounded-full border-2 ${
+                    isDone || isCurrent
+                      ? "border-emerald-500 text-emerald-500"
+                      : "border-slate-300 text-slate-300"
+                  }`}
+                >
+                  <Icon className="size-5" />
+                </span>
+              </div>
+              <div className="min-w-0 pt-0.5">
+                <p className={`text-[0.95rem] font-semibold ${isDone || isCurrent ? "text-slate-900" : "text-slate-400"}`}>
+                  {item.title}
+                </p>
+                <p className={`mt-1 text-sm ${isDone || isCurrent ? "text-slate-500" : "text-slate-400"}`}>
+                  {item.description}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
 
 function ReviewersPanel({
   reviewers, availabilityDeadline, selfAssessmentDeadline, reviewerRatingDeadline, stage, serverNow,
@@ -789,7 +919,7 @@ function MeetingSection({ meeting, onAddMinute, caps, saving }: {
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
-      {title && <h2 className="font-semibold text-gray-900 text-sm">{title}</h2>}
+      {title && <h2 className="ds-h2 text-gray-900">{title}</h2>}
       {children}
     </div>
   );

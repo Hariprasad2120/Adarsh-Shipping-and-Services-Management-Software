@@ -1,10 +1,7 @@
 "use client";
 
 import { Badge, DataTableCell, DataTableRow } from "@/components/data-table";
-import { useCan } from "@/lib/caps-context";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 export type DueRow = {
   employeeId: string;
@@ -17,21 +14,6 @@ export type DueRow = {
 };
 
 export function DueThisMonthRow({ row }: { row: DueRow }) {
-  const router = useRouter();
-  const canStart = useCan("ams.appraisal.assign_reviewers");
-  const [loading, setLoading] = useState(false);
-
-  async function startAppraisal() {
-    setLoading(true);
-    await fetch("/api/ams/appraisals", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ employeeId: row.employeeId, dueDate: row.dueDate, kind: row.kind }),
-    });
-    setLoading(false);
-    router.refresh();
-  }
-
   return (
     <DataTableRow>
       <DataTableCell className="font-medium text-gray-900">{row.employeeName}</DataTableCell>
@@ -50,16 +32,10 @@ export function DueThisMonthRow({ row }: { row: DueRow }) {
           <Link href={`/ams/appraisals/${row.appraisalId}`} className="text-xs text-indigo-600 hover:underline">
             Open →
           </Link>
-        ) : canStart ? (
-          <button
-            onClick={startAppraisal}
-            disabled={loading}
-            className="rounded-lg bg-indigo-600 px-3 py-1 text-xs text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {loading ? "Starting..." : "Start Appraisal"}
-          </button>
         ) : (
-          <span className="text-xs text-gray-400">Pending</span>
+          <Link href={`/ams/appraisals/assign/${row.employeeId}`} className="rounded-lg bg-indigo-600 px-3 py-1 text-xs text-white hover:bg-indigo-700">
+            Start Appraisal
+          </Link>
         )}
       </DataTableCell>
     </DataTableRow>

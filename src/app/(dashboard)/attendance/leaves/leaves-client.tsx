@@ -15,6 +15,7 @@ import {
   DataTableToolbar,
 } from "@/components/data-table";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Input } from "@/components/ui/input";
 import { getLeaveDemoValues } from "@/lib/demo-fill";
 
 type LeaveType = { id: string; name: string; paid: boolean };
@@ -120,7 +121,7 @@ export function LeavesClient({
 
       <div className="space-y-0 rounded-xl border border-gray-200 bg-white">
         <DataTableToolbar>
-          <h2 className="font-semibold text-gray-900">My Requests</h2>
+          <h2 className="ds-h2 text-gray-900">My Requests</h2>
           <div className="flex gap-2">
             <DemoFillButton disabled={loading || leaveTypes.length === 0} onClick={fillDemoData} />
             <button
@@ -150,24 +151,24 @@ export function LeavesClient({
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-gray-600">From</label>
-                <input type="date" name="fromDate" onChange={(e) => setFromDate(e.target.value)} required value={fromDate} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                <Input type="date" name="fromDate" onChange={(e) => setFromDate(e.target.value)} required value={fromDate} className="w-full" />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-gray-600">To</label>
-                <input type="date" name="toDate" onChange={(e) => setToDate(e.target.value)} required value={toDate} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                <Input type="date" name="toDate" onChange={(e) => setToDate(e.target.value)} required value={toDate} className="w-full" />
               </div>
             </div>
             <div className="flex items-center gap-4">
               <label className="flex items-center gap-2 text-sm text-gray-700">
                 <input checked={halfDay} name="halfDay" onChange={(e) => setHalfDay(e.target.checked)} type="checkbox" className="rounded" /> Half day
               </label>
-              <input
+              <Input
                 type="text"
                 name="notes"
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Notes (optional)"
                 value={notes}
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                className="flex-1"
               />
             </div>
             <div className="flex gap-2">
@@ -217,7 +218,7 @@ export function LeavesClient({
       {canApprove && pendingApprovals.length > 0 && (
         <div className="space-y-0 rounded-xl border border-gray-200 bg-white">
           <DataTableToolbar className="justify-start">
-            <h2 className="font-semibold text-gray-900">Pending Approvals</h2>
+            <h2 className="ds-h2 text-gray-900">Pending Approvals</h2>
           </DataTableToolbar>
           <DataTable className="rounded-none border-0">
             <DataTableHeader>

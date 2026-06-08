@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CircleUserRound } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { getOrg, getRoles } from "@/modules/core/organisation/service";
 import { getUser, listUsers } from "@/modules/core/user/service";
@@ -33,7 +34,12 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
           ← Employees
         </Link>
         <span className="text-gray-300">/</span>
-        <h1 className="text-2xl font-bold text-gray-900">{safeUser.name}</h1>
+        <h1 className="ds-h1 heading-icon-none flex items-center gap-4 text-gray-900">
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
+            <CircleUserRound className="size-5" />
+          </span>
+          {safeUser.name}
+        </h1>
         {!safeUser.active && (
           <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-600">Inactive</span>
         )}

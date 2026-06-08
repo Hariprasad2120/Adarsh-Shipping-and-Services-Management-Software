@@ -20,7 +20,7 @@ export default function CRMModule({ leads }: Props) {
 
   return (
     <div id="crm-module-root" className="w-full space-y-8 animate-fadeIn text-neutral-900">
-      
+
       {/* Editorial Overview Header */}
       <div className="border border-neutral-200 bg-white p-8 rounded-lg space-y-4">
         <div className="flex items-center gap-2">
@@ -29,7 +29,7 @@ export default function CRMModule({ leads }: Props) {
             PROTOCOL REFERENCE // 04
           </span>
         </div>
-        <h2 className="text-3xl font-display font-black text-black tracking-tight font-sans">
+        <h2 className="ds-h2 text-black md:text-[1.75rem]">
           CRM Growth Pipeline & Sales Matrix
         </h2>
         <p className="text-sm text-neutral-600 leading-relaxed max-w-xl">
@@ -80,7 +80,7 @@ export default function CRMModule({ leads }: Props) {
       {/* CRM Funnel Step Walkthrough */}
       <div className="border border-neutral-200 bg-white rounded-lg p-6 space-y-6">
         <div>
-          <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-black border-b border-neutral-100 pb-2">
+          <h3 className="ds-h3 border-b border-neutral-100 pb-2 text-black">
             SALES PIPELINE TRANSITION WORKFLOW
           </h3>
           <p className="text-xs text-neutral-500 mt-1">

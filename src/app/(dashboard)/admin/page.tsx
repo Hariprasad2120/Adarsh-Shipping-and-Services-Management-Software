@@ -53,6 +53,7 @@ export default async function AdminPage() {
         },
       ]}
       quickLinks={quickLinks}
+      pageIcon={section?.icon}
     />
   );
 }

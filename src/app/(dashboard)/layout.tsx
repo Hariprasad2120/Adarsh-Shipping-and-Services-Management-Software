@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { CapsProvider } from "@/lib/caps-context";
 import { loadCaps } from "@/lib/rbac";
 import { redirect } from "next/navigation";
+import { DashboardShell } from "./_components/dashboard-shell";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -15,11 +16,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <CapsProvider value={caps}>
       <NotificationProvider>
-        <div className="flex min-h-screen overflow-x-clip bg-[#1a1a1a]">
+        <div className="flex min-h-screen overflow-x-clip bg-[#0f1319]">
           <Sidebar caps={caps} userName={session.user.name} />
-          <main className="flex min-w-0 flex-1 flex-col overflow-x-clip bg-gray-50 pl-64">
+          <main className="flex min-w-0 flex-1 flex-col overflow-x-clip bg-background pl-64">
             <PageAnimator>
-              <div className="mx-auto flex-1 w-full max-w-7xl px-6 py-8">{children}</div>
+              <DashboardShell userName={session.user.name} sessionToken={session.user.id}>
+                {children}
+              </DashboardShell>
             </PageAnimator>
           </main>
         </div>

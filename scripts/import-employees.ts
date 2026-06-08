@@ -13,8 +13,20 @@ const db = new PrismaClient({
 const DEFAULT_PASSWORD = "password123";
 const DATA_DIR = "C:/Users/SilverCloud/Documents/Data Excel";
 const OUTPUT_DIR = path.join(process.cwd(), "import-output");
+
+function firstExistingFile(...candidates: string[]) {
+  const found = candidates.find((candidate) => fs.existsSync(candidate));
+  if (!found) {
+    throw new Error(`Missing source file. Checked: ${candidates.join(", ")}`);
+  }
+  return found;
+}
+
 const FILES = {
-  employees: path.join(DATA_DIR, "Employee.xls"),
+  employees: firstExistingFile(
+    path.join(DATA_DIR, "Employee_corrected_emails.xlsx"),
+    path.join(DATA_DIR, "Employee.xls"),
+  ),
   salaryDetails: path.join(DATA_DIR, "Employee_Salary_Details.xls"),
   salaryRevisions: path.join(DATA_DIR, "Salary_Revision.xls"),
   statutory: path.join(DATA_DIR, "Employee_Statutory_Information.xls"),
@@ -97,6 +109,36 @@ function buildFullName(row: Row) {
     asString(row["Last Name"]),
   ].filter(Boolean);
   return titleCase(parts.join(" "));
+}
+
+type NormalizedOrgAssignment = {
+  departmentName: string;
+  divisionName: string | null;
+};
+
+function normalizeOrganisationAssignment(rawDepartmentName: string): NormalizedOrgAssignment {
+  const departmentName = rawDepartmentName.trim();
+
+  const exactMappings = new Map<string, NormalizedOrgAssignment>([
+    ["Accounts Payable", { departmentName: "Accounts", divisionName: "Payable" }],
+    ["Accounts Receivable", { departmentName: "Accounts", divisionName: "Receivable" }],
+    ["Custom Broker Documentation", { departmentName: "Custom broker", divisionName: "Documentation" }],
+    ["Custom Broker Operations", { departmentName: "Custom broker", divisionName: "Operations" }],
+    ["Customs Broker Delivery Order", { departmentName: "Custom broker", divisionName: "Delivery Order" }],
+    ["Customer Support", { departmentName: "Freight Forwarding", divisionName: "Customer Support" }],
+    ["Delivery Order Documentation", { departmentName: "Delivery Order", divisionName: "Documentation" }],
+    ["Delivery Order Operations", { departmentName: "Delivery Order", divisionName: "Operations" }],
+    ["Freight Forwarding Business Development", { departmentName: "Freight Forwarding", divisionName: "Business Development" }],
+    ["Freight Forwarding Customer Support", { departmentName: "Freight Forwarding", divisionName: "Customer Support" }],
+    ["Freight Forwarding Sales", { departmentName: "Freight Forwarding", divisionName: "Sales" }],
+    ["Human Resource Operation", { departmentName: "Human Resource", divisionName: "Operation" }],
+    ["Head of Accounts", { departmentName: "Accounts", divisionName: null }],
+    ["Head of Custom Broker's", { departmentName: "Custom broker", divisionName: null }],
+    ["Head of Freight Forwarding", { departmentName: "Freight Forwarding", divisionName: null }],
+    ["Head of HR", { departmentName: "Human Resource", divisionName: null }],
+  ]);
+
+  return exactMappings.get(departmentName) ?? { departmentName, divisionName: null };
 }
 
 function makeCode(input: string, fallbackPrefix: string, usedCodes: Set<string>) {
@@ -266,11 +308,11 @@ async function main() {
   const employeeRole = await db.role.findFirstOrThrow({
     where: { orgId: org.id, name: "Employee" },
   });
-  const passwordHash = await hash(DEFAULT_PASSWORD, 12);
   const deletedUsers = await purgeUsersOutsideSource(org.id, workEmails);
 
   const usedDepartmentCodes = new Set<string>();
   const usedBranchCodes = new Set<string>();
+  const existingDivisions = await db.division.findMany({ where: { orgId: org.id } });
 
   const existingDepartments = await db.department.findMany({ where: { orgId: org.id } });
   const existingBranches = await db.branch.findMany({ where: { orgId: org.id } });
@@ -280,6 +322,9 @@ async function main() {
 
   const departmentByName = new Map(
     existingDepartments.map((department) => [department.name.toLowerCase(), department]),
+  );
+  const divisionByDepartmentAndName = new Map(
+    existingDivisions.map((division) => [`${division.departmentId}:${division.name.toLowerCase()}`, division]),
   );
   const branchByName = new Map(
     existingBranches.map((branch) => [branch.name.toLowerCase(), branch]),
@@ -301,7 +346,8 @@ async function main() {
       continue;
     }
 
-    const departmentName = asString(employeeRow["Department"]);
+    const normalizedOrg = normalizeOrganisationAssignment(asString(employeeRow["Department"]));
+    const departmentName = normalizedOrg.departmentName;
     const branchName = asString(employeeRow["Worklocation Name"]);
 
     let department = departmentName ? departmentByName.get(departmentName.toLowerCase()) ?? null : null;
@@ -314,6 +360,21 @@ async function main() {
         },
       });
       departmentByName.set(departmentName.toLowerCase(), department);
+    }
+
+    let division = department && normalizedOrg.divisionName
+      ? divisionByDepartmentAndName.get(`${department.id}:${normalizedOrg.divisionName.toLowerCase()}`) ?? null
+      : null;
+
+    if (!division && department && normalizedOrg.divisionName) {
+      division = await db.division.create({
+        data: {
+          orgId: org.id,
+          departmentId: department.id,
+          name: normalizedOrg.divisionName,
+        },
+      });
+      divisionByDepartmentAndName.set(`${department.id}:${normalizedOrg.divisionName.toLowerCase()}`, division);
     }
 
     let branch = branchName ? branchByName.get(branchName.toLowerCase()) ?? null : null;
@@ -390,18 +451,18 @@ async function main() {
       salaryRevisions: aggregate.salaryRevisions,
       statutory: aggregate.statutory
         ? {
-            ...aggregate.statutory,
-            parsed: {
-              pfEligible: asBoolean(aggregate.statutory["Is Eligible For PF"]),
-              epsEligible: asBoolean(aggregate.statutory["Is Eligible For EPS"]),
-              esiEligible: asBoolean(aggregate.statutory["Is Eligible For ESI"]),
-              professionalTaxEligible: asBoolean(aggregate.statutory["Is Eligible for Professional Tax"]),
-              lwfEligible: asBoolean(aggregate.statutory["Is Eligible For LWF"]),
-              fullIncomeTaxExemption: asBoolean(aggregate.statutory["Is Eligible For Full Income Tax Exemption"]),
-              uanNumber: asNullableString(aggregate.statutory["UAN Number"]),
-              esiNumber: asNullableString(aggregate.statutory["ESI Number"]),
-            },
-          }
+          ...aggregate.statutory,
+          parsed: {
+            pfEligible: asBoolean(aggregate.statutory["Is Eligible For PF"]),
+            epsEligible: asBoolean(aggregate.statutory["Is Eligible For EPS"]),
+            esiEligible: asBoolean(aggregate.statutory["Is Eligible For ESI"]),
+            professionalTaxEligible: asBoolean(aggregate.statutory["Is Eligible for Professional Tax"]),
+            lwfEligible: asBoolean(aggregate.statutory["Is Eligible For LWF"]),
+            fullIncomeTaxExemption: asBoolean(aggregate.statutory["Is Eligible For Full Income Tax Exemption"]),
+            uanNumber: asNullableString(aggregate.statutory["UAN Number"]),
+            esiNumber: asNullableString(aggregate.statutory["ESI Number"]),
+          },
+        }
         : null,
       rawSheets: {
         employee: aggregate.employee,
@@ -409,39 +470,42 @@ async function main() {
         salaryRevisions: aggregate.salaryRevisions,
         statutory: aggregate.statutory,
       },
-    } satisfies Prisma.InputJsonValue;
+    } as unknown as Prisma.InputJsonValue;
 
     const existingUser = await db.user.findUnique({
       where: { email },
       include: { roles: true, employmentRecord: true },
     });
 
+    const createdPasswordHash = !existingUser ? await hash(DEFAULT_PASSWORD, 12) : null;
+
     const user = existingUser
       ? await db.user.update({
-          where: { email },
-          data: {
-            orgId: existingUser.orgId ?? org.id,
-            email,
-            name,
-            passwordHash,
-            designation: asNullableString(employeeRow["Designation"]),
-            branchId: branch?.id ?? null,
-            departmentId: department?.id ?? null,
-            active,
-          },
-        })
+        where: { email },
+        data: {
+          orgId: existingUser.orgId ?? org.id,
+          email,
+          name,
+          designation: asNullableString(employeeRow["Designation"]),
+          branchId: branch?.id ?? null,
+          departmentId: department?.id ?? null,
+          divisionId: division?.id ?? null,
+          active,
+        },
+      })
       : await db.user.create({
-          data: {
-            orgId: org.id,
-            email,
-            name,
-            passwordHash,
-            designation: asNullableString(employeeRow["Designation"]),
-            branchId: branch?.id ?? null,
-            departmentId: department?.id ?? null,
-            active,
-          },
-        });
+        data: {
+          orgId: org.id,
+          email,
+          name,
+          passwordHash: createdPasswordHash!,
+          designation: asNullableString(employeeRow["Designation"]),
+          branchId: branch?.id ?? null,
+          departmentId: department?.id ?? null,
+          divisionId: division?.id ?? null,
+          active,
+        },
+      });
 
     if (!existingUser || existingUser.roles.length === 0) {
       await db.userRole.upsert({
@@ -473,7 +537,7 @@ async function main() {
       employeeNumber: aggregate.employeeNumber,
       name,
       email,
-      password: DEFAULT_PASSWORD,
+      password: existingUser ? "" : DEFAULT_PASSWORD,
     });
   }
 

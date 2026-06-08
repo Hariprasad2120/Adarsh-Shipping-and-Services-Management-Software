@@ -307,7 +307,7 @@ export function SelfAssessmentSection({
     <Card>
       <CardContent className="space-y-5">
         <div className="space-y-1">
-          <h3 className="text-base font-semibold text-slate-900">{section.title}</h3>
+          <h3 className="ds-h3 text-slate-900">{section.title}</h3>
           {section.description ? <p className="text-sm text-slate-500">{section.description}</p> : null}
         </div>
 
@@ -414,7 +414,7 @@ export function ReviewerCriteriaSection({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold text-slate-900">{criterion.label}</h3>
+              <h3 className="ds-h3 text-slate-900">{criterion.label}</h3>
               <Badge variant="secondary">{criterion.weightage}%</Badge>
             </div>
             <p className="text-sm text-slate-500">{criterion.description}</p>
@@ -708,7 +708,7 @@ export function DynamicAppraisalForm({
         <>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-2">
-              <h2 className="text-lg font-semibold text-slate-900">Employee Self-Assessment</h2>
+              <h2 className="ds-h2 text-slate-900">Employee Self-Assessment</h2>
               <p className="text-sm text-slate-500">
                 Answer every question and rate yourself section by section. You can keep updating the form until the deadline.
               </p>
@@ -919,7 +919,7 @@ export function CriteriaPointsView({
           return (
             <div key={section.id} className="space-y-4 rounded-xl border border-slate-200 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <h3 className="text-sm font-semibold text-slate-900">{section.title}</h3>
+                <h3 className="ds-h3 text-slate-900">{section.title}</h3>
                 {criterion ? (
                   <Badge variant="secondary">Self rating {rating ?? "-"}</Badge>
                 ) : null}

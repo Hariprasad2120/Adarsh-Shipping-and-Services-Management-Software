@@ -1,17 +1,21 @@
 "use client";
 
-import { Children, isValidElement, useRef, useState } from "react";
+import { Children, isValidElement, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { DemoFillButton } from "@/components/demo-fill-button";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
-import { applyDemoFieldValues, getOnboardingDemoValues } from "@/lib/demo-fill";
+import { Input } from "@/components/ui/input";
 
 type Division = { id: string; name: string };
 type Department = { id: string; name: string; code: string; divisions: Division[] };
 type Branch = { id: string; name: string };
 type Role = { id: string; name: string };
 type Manager = { id: string; name: string; designation: string | null };
+
+function optionalString(value: FormDataEntryValue | null) {
+  const text = typeof value === "string" ? value.trim() : "";
+  return text || undefined;
+}
 
 export function OnboardForm({
   org,
@@ -23,7 +27,6 @@ export function OnboardForm({
   managers: Manager[];
 }) {
   const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [branchId, setBranchId] = useState("");
@@ -51,17 +54,46 @@ export function OnboardForm({
       name: fd.get("name"),
       email: fd.get("email"),
       password: fd.get("password"),
-      designation: fd.get("designation") || undefined,
-      branchId: fd.get("branchId") || undefined,
-      departmentId: fd.get("departmentId") || undefined,
-      divisionId: fd.get("divisionId") || undefined,
-      managerId: fd.get("managerId") || undefined,
-      tlId: fd.get("tlId") || undefined,
+      designation: optionalString(fd.get("designation")),
+      branchId: optionalString(fd.get("branchId")),
+      departmentId: optionalString(fd.get("departmentId")),
+      divisionId: optionalString(fd.get("divisionId")),
+      managerId: optionalString(fd.get("managerId")),
+      tlId: optionalString(fd.get("tlId")),
       joinDate: fd.get("joinDate"),
-      grade: fd.get("grade") || undefined,
+      grade: optionalString(fd.get("grade")),
       ctc: fd.get("ctc") ? Number(fd.get("ctc")) : undefined,
       priorExperienceYears: fd.get("priorExperienceYears") !== "" ? Number(fd.get("priorExperienceYears")) : 0,
       roleIds: selectedRoles,
+      payrollMeta: {
+        employeeNumber: optionalString(fd.get("employeeNumber")),
+        personalDetails: {
+          personalEmail: optionalString(fd.get("personalEmail")),
+          fatherName: optionalString(fd.get("fatherName")),
+          mobileNumber: optionalString(fd.get("mobileNumber")),
+          dateOfBirth: optionalString(fd.get("dateOfBirth")),
+          gender: optionalString(fd.get("gender")),
+          maritalStatus: optionalString(fd.get("maritalStatus")),
+          panNumber: optionalString(fd.get("panNumber")),
+          aadhaar: optionalString(fd.get("aadhaar")),
+        },
+        personalAddress: {
+          addressLine1: optionalString(fd.get("presentAddressLine1")),
+          addressLine2: optionalString(fd.get("presentAddressLine2")),
+          city: optionalString(fd.get("presentCity")),
+          stateCode: optionalString(fd.get("presentStateCode")),
+          postalCode: optionalString(fd.get("presentPostalCode")),
+          country: optionalString(fd.get("presentCountry")),
+        },
+        workLocation: {
+          addressLine1: optionalString(fd.get("permanentAddressLine1")),
+          addressLine2: optionalString(fd.get("permanentAddressLine2")),
+          city: optionalString(fd.get("permanentCity")),
+          stateCode: optionalString(fd.get("permanentStateCode")),
+          postalCode: optionalString(fd.get("permanentPostalCode")),
+          country: optionalString(fd.get("permanentCountry")),
+        },
+      },
     };
 
     const res = await fetch("/api/users", {
@@ -80,35 +112,45 @@ export function OnboardForm({
     router.push("/hrms/employees");
   }
 
-  function fillDemoData() {
-    const demo = getOnboardingDemoValues({ org, roles, managers });
-    setBranchId(demo.dropdowns.branchId);
-    setDeptId(demo.dropdowns.departmentId);
-    setDivisionId(demo.dropdowns.divisionId);
-    setManagerId(demo.dropdowns.managerId);
-    setTlId(demo.dropdowns.tlId);
-    setSelectedRoles(demo.roleIds);
-    setError(null);
-
-    if (formRef.current) {
-      applyDemoFieldValues(formRef.current, demo.fields);
-    }
-  }
-
   return (
-    <form onSubmit={handleSubmit} ref={formRef} className="space-y-5 rounded-xl border border-gray-200 bg-white p-6">
-      <div className="flex justify-end">
-        <DemoFillButton disabled={loading} onClick={fillDemoData} />
-      </div>
-
+    <form onSubmit={handleSubmit} className="space-y-6 rounded-[28px] border border-outline-variant/40 bg-surface p-6 text-on-surface shadow-sm">
       <Section title="Personal Details">
         <Row>
           <Field label="Full Name" name="name" required />
-          <Field label="Email" name="email" type="email" required />
+          <Field label="Work Email" name="email" type="email" required />
         </Row>
         <Row>
           <Field label="Password (temporary)" name="password" type="password" required placeholder="Min 8 chars" />
           <Field label="Designation" name="designation" placeholder="e.g. Senior Executive" />
+        </Row>
+        <Row>
+          <Field label="Employee ID" name="employeeNumber" placeholder="e.g. EMP-1024" />
+          <Field label="Personal Email" name="personalEmail" type="email" placeholder="e.g. name@gmail.com" />
+        </Row>
+        <Row>
+          <Field label="Mobile Number" name="mobileNumber" placeholder="10-digit mobile number" />
+          <Field label="Father Name" name="fatherName" placeholder="Employee's father name" />
+        </Row>
+        <Row>
+          <Field label="Date of Birth" name="dateOfBirth" type="date" />
+          <SelectField label="Gender" name="gender">
+            <option value="">- Select -</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </SelectField>
+        </Row>
+        <Row>
+          <SelectField label="Marital Status" name="maritalStatus">
+            <option value="">- Select -</option>
+            <option value="Single">Single</option>
+            <option value="Married">Married</option>
+            <option value="Other">Other</option>
+          </SelectField>
+          <Field label="Aadhaar" name="aadhaar" placeholder="12-digit Aadhaar number" />
+        </Row>
+        <Row>
+          <Field label="PAN" name="panNumber" placeholder="e.g. ABCDE1234F" />
         </Row>
       </Section>
 
@@ -176,6 +218,36 @@ export function OnboardForm({
         </Row>
       </Section>
 
+      <Section title="Present Address">
+        <Row>
+          <Field label="Address Line 1" name="presentAddressLine1" placeholder="House / flat / street" />
+          <Field label="Address Line 2" name="presentAddressLine2" placeholder="Area / landmark" />
+        </Row>
+        <Row>
+          <Field label="City" name="presentCity" placeholder="e.g. Chennai" />
+          <Field label="State" name="presentStateCode" placeholder="e.g. TN" />
+        </Row>
+        <Row>
+          <Field label="Postal Code" name="presentPostalCode" placeholder="e.g. 600001" />
+          <Field label="Country" name="presentCountry" placeholder="e.g. India" />
+        </Row>
+      </Section>
+
+      <Section title="Permanent Address">
+        <Row>
+          <Field label="Address Line 1" name="permanentAddressLine1" placeholder="House / flat / street" />
+          <Field label="Address Line 2" name="permanentAddressLine2" placeholder="Area / landmark" />
+        </Row>
+        <Row>
+          <Field label="City" name="permanentCity" placeholder="e.g. Madurai" />
+          <Field label="State" name="permanentStateCode" placeholder="e.g. TN" />
+        </Row>
+        <Row>
+          <Field label="Postal Code" name="permanentPostalCode" placeholder="e.g. 625001" />
+          <Field label="Country" name="permanentCountry" placeholder="e.g. India" />
+        </Row>
+      </Section>
+
       <Section title="Roles">
         <div className="flex flex-wrap gap-2">
           {roles.map((role) => (
@@ -185,8 +257,8 @@ export function OnboardForm({
               onClick={() => toggleRole(role.id)}
               className={`rounded-full border px-3 py-1.5 text-sm transition ${
                 selectedRoles.includes(role.id)
-                  ? "border-indigo-600 bg-indigo-600 text-white"
-                  : "border-gray-300 bg-white text-gray-700 hover:border-indigo-400"
+                  ? "border-[#00cec4] bg-[#00cec4] text-white"
+                  : "border-gray-300 bg-white text-gray-700 hover:border-[#00cec4]/50"
               }`}
             >
               {role.name}
@@ -203,11 +275,11 @@ export function OnboardForm({
         <button
           type="submit"
           disabled={loading}
-          className="rounded-lg bg-indigo-600 px-5 py-2 font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
+          className="rounded-lg bg-[#00cec4] px-5 py-2 font-medium text-white transition hover:bg-[#00b5ad] disabled:opacity-50"
         >
           {loading ? "Creating..." : "Create Employee"}
         </button>
-        <Link href="/hrms/employees" className="rounded-lg border border-gray-300 px-5 py-2 font-medium text-gray-700 transition hover:bg-gray-50">
+        <Link href="/hrms/employees" className="rounded-lg border border-outline-variant/50 bg-surface px-5 py-2 font-medium text-on-surface transition hover:bg-surface-container-low">
           Cancel
         </Link>
       </div>
@@ -218,7 +290,7 @@ export function OnboardForm({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{title}</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">{title}</p>
       {children}
     </div>
   );
@@ -243,13 +315,12 @@ function Field({
 }) {
   return (
     <div className="space-y-1">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
-      <input
+      <label className="block text-sm font-medium text-on-surface">{label}</label>
+      <Input
         name={name}
         type={type}
         required={required}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
       />
     </div>
   );
@@ -289,7 +360,7 @@ function SelectField({
 
   return (
     <div className="space-y-1">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <label className="block text-sm font-medium text-on-surface">{label}</label>
       <DropdownSelect
         ariaLabel={label}
         name={name}

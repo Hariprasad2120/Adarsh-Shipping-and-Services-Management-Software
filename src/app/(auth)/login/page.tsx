@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   User,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 function BrandMark({ mobile = false }: { mobile?: boolean }) {
   const [logoError, setLogoError] = useState(false);
@@ -328,7 +329,7 @@ export default function LoginPage() {
                 </div>
               </div>
               <div className="space-y-1">
-                <h1 className="text-xl font-bold tracking-tight text-white">
+                <h1 className="ds-h1 heading-icon-none text-white">
                   OPERATIONS PORTAL
                 </h1>
                 <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">
@@ -356,7 +357,7 @@ export default function LoginPage() {
                         : "text-slate-600"
                     }`}
                   />
-                  <input
+                  <Input
                     id="email"
                     type="email"
                     placeholder="Identification Email"
@@ -372,7 +373,7 @@ export default function LoginPage() {
                     }}
                     onBlur={() => setIsTyping(false)}
                     required
-                    className="h-14 w-full rounded-2xl border border-white/5 bg-white/[0.03] pl-12 pr-4 text-sm text-white outline-none transition-all placeholder:text-slate-400 placeholder:opacity-100 focus:border-[#00A89D]/50 focus:bg-white/[0.06] focus:ring-4 focus:ring-[#00A89D]/5"
+                    className="h-14 w-full rounded-2xl border border-white/10 bg-white/[0.03] pl-12 pr-4 text-sm text-white placeholder:text-slate-400 focus:border-[#00A89D]/50 focus:bg-white/[0.06] focus-visible:ring-4 focus-visible:ring-[#00A89D]/10"
                     style={{ colorScheme: "dark" }}
                   />
                   <div
@@ -390,7 +391,7 @@ export default function LoginPage() {
                       isTypingPassword ? "text-[#F47920]" : "text-slate-600"
                     }`}
                   />
-                  <input
+                  <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Access Key"
@@ -409,7 +410,7 @@ export default function LoginPage() {
                       setIsTypingPassword(false);
                     }}
                     required
-                    className="h-14 w-full rounded-2xl border border-white/5 bg-white/[0.03] pl-12 pr-12 text-sm text-white outline-none transition-all placeholder:text-slate-400 placeholder:opacity-100 focus:border-[#F47920]/50 focus:bg-white/[0.06] focus:ring-4 focus:ring-[#F47920]/5"
+                    className="h-14 w-full rounded-2xl border border-white/10 bg-white/[0.03] pl-12 pr-12 text-sm text-white placeholder:text-slate-400 focus:border-[#F47920]/50 focus:bg-white/[0.06] focus-visible:ring-4 focus-visible:ring-[#F47920]/10"
                     style={{ colorScheme: "dark" }}
                   />
                   <button

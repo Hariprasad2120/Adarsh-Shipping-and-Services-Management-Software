@@ -33,7 +33,7 @@ export default async function LeavesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Leaves</h1>
+      <h1 className="ds-h1 text-gray-900">Leaves</h1>
       <LeavesClient
         myRequests={myRequestRows as LeavesClientProps["myRequests"]}
         leaveTypes={leaveTypes as LeavesClientProps["leaveTypes"]}

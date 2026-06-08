@@ -16,7 +16,7 @@ export default async function RolesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Roles & Permissions</h1>
+      <h1 className="ds-h1 text-gray-900">Roles & Permissions</h1>
       <RolesManager roles={roles as any} permissions={permissions} />
     </div>
   );

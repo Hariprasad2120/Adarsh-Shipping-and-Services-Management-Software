@@ -19,6 +19,7 @@ export type CreateUserInput = {
   grade?: string;
   ctc?: number;
   priorExperienceYears?: number;
+  payrollMeta?: Prisma.InputJsonValue;
 };
 
 export async function listUsers(orgId: string, filters?: {
@@ -126,6 +127,7 @@ export async function createUser(input: CreateUserInput) {
         grade: input.grade,
         ctc: input.ctc,
         priorExperienceYears: input.priorExperienceYears ?? 0,
+        payrollMeta: input.payrollMeta,
       },
     });
 

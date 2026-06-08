@@ -1,9 +1,6 @@
-// Salary structure computation — ported from company Apps Script
-// All monetary values in INR, monthly unless noted.
-
 export type PFType = "CAPPED" | "UNCAPPED";
 export type City = "CHENNAI" | "MUMBAI" | "DELHI" | "KOLKATA" | "MUNDRA";
-export type InsuranceCoverage = "SELF" | "SELF_SPOUSE" | "FAMILY" | "FAMILY_PARENTS";
+export type InsuranceCoverage = "NIL" | "SELF" | "SELF_SPOUSE" | "FAMILY" | "FAMILY_PARENTS";
 export type TaxRegime = "NEW" | "OLD";
 
 export type SalaryInputs = {
@@ -16,114 +13,143 @@ export type SalaryInputs = {
 };
 
 export type SalaryBreakup = {
-  // Earnings
+  annualCTC: number;
+  monthlyCTC: number;
   basic: number;
   hra: number;
-  specialAllowance: number;
-  monthlyIncentive: number;
-  // Employer contributions (part of CTC)
   employerPF: number;
-  gratuity: number;
-  // Gross (CTC / 12)
-  monthlyGross: number;
-  // Deductions
   employeePF: number;
-  esi: number;           // employee share (0 if gross > 21000)
-  professionalTax: number;
-  insurancePremium: number;
-  // Take-home
-  inHand: number;
-  // Annualised
-  annualCTC: number;
+  travelAllowance: number;
+  specialAllowance: number;
+  gross: number;
+  monthlyGross: number;
   annualGross: number;
+  esiEmployer: number;
+  esi: number;
+  professionalTax: number;
+  gratuity: number;
+  insurancePremium: number;
+  tax: number;
+  inHand: number;
+  finalTakeHome: number;
   annualInHand: number;
+  annualFinalTakeHome: number;
 };
 
-// HRA rates by city (% of basic)
-const HRA_RATE: Record<City, number> = {
-  MUMBAI: 0.50,
-  DELHI: 0.50,
-  KOLKATA: 0.50,
-  CHENNAI: 0.40,
-  MUNDRA: 0.40,
+const CITY_LABELS: Record<City, string> = {
+  CHENNAI: "Chennai",
+  MUMBAI: "Mumbai",
+  DELHI: "Delhi",
+  KOLKATA: "Kolkata",
+  MUNDRA: "Mundra",
 };
 
-// Professional Tax monthly (INR) by city
-// PT applies if salary > threshold; simplified to standard monthly slab
-const PT_MONTHLY: Record<City, number> = {
-  CHENNAI: 208,   // ₹2500/yr → ~208/mo
-  MUMBAI: 200,
-  DELHI: 0,       // Delhi has no PT
-  KOLKATA: 200,
-  MUNDRA: 0,      // Gujarat PT varies; approximated to 0 for Mundra
-};
+function hraRateFor(city: City) {
+  return city === "CHENNAI" ? 0.5 : 0.4;
+}
 
-// Insurance premiums per month (INR) — approximate group policy rates
-const INSURANCE_PREMIUM: Record<InsuranceCoverage, number> = {
-  SELF: 500,
-  SELF_SPOUSE: 900,
-  FAMILY: 1300,
-  FAMILY_PARENTS: 2000,
-};
+function professionalTaxFor(city: City, gross: number) {
+  if (city === "CHENNAI") {
+    if (gross <= 12000) return 0;
+    if (gross <= 21000) return 200;
+    return 208;
+  }
+
+  if (city === "DELHI" || city === "MUNDRA") return 0;
+  return 200;
+}
+
+function insurancePremiumFor(annualCTC: number, coverage: InsuranceCoverage, gross: number) {
+  if (coverage === "NIL" || gross <= 21000) return 0;
+
+  const base =
+    annualCTC < 400000
+      ? 1000
+      : annualCTC < 800000
+        ? 1500
+        : 2000;
+
+  const multiplier =
+    coverage === "SELF"
+      ? 1
+      : coverage === "SELF_SPOUSE"
+        ? 1.5
+        : coverage === "FAMILY"
+          ? 2
+          : 2.5;
+
+  return Math.round(base * multiplier);
+}
+
+function monthlyTaxFor(annualCTC: number, taxRegime: TaxRegime) {
+  if (taxRegime === "OLD") {
+    return Math.round((annualCTC * 0.1) / 12);
+  }
+
+  const taxable = annualCTC - 50000;
+  if (taxable > 1500000) {
+    return Math.round((60000 + (taxable - 1500000) * 0.3) / 12);
+  }
+  if (taxable > 1200000) {
+    return Math.round(((taxable - 1200000) * 0.2) / 12);
+  }
+  return 0;
+}
 
 export function computeSalary(inputs: SalaryInputs): SalaryBreakup {
-  const { annualCTC, pfType, city, monthlyIncentive, insurance } = inputs;
+  const { annualCTC, pfType, city, monthlyIncentive, insurance, taxRegime } = inputs;
 
-  const monthlyGross = Math.round(annualCTC / 12);
+  const monthlyCTC = Math.round(annualCTC / 12);
+  const basic = Math.round(monthlyCTC * 0.5);
+  const hra = Math.round(basic * hraRateFor(city));
+  const employerPF = pfType === "CAPPED" ? Math.min(Math.round(basic * 0.12), 1800) : Math.round(basic * 0.12);
+  const employeePF = employerPF;
+  const travelAllowance = Math.round(basic * 0.15);
+  const specialAllowance = Math.max(0, monthlyCTC - (basic + hra + employerPF + travelAllowance));
+  const gross = basic + hra + specialAllowance + travelAllowance;
 
-  // Basic = 50% of annual CTC / 12
-  const basic = Math.round(monthlyGross * 0.50);
-
-  // HRA
-  const hra = Math.round(basic * HRA_RATE[city]);
-
-  // PF
-  const employeePF = pfType === "CAPPED"
-    ? 1800
-    : Math.round(basic * 0.12);
-  const employerPF = employeePF; // employer matches employee PF
-
-  // Gratuity = 4.81% of basic
+  const esiEmployer = gross <= 21000 ? Math.round(gross * 0.0325) : 0;
+  const esi = gross <= 21000 ? Math.round(gross * 0.0075) : 0;
+  const professionalTax = professionalTaxFor(city, gross);
+  const insurancePremium = insurancePremiumFor(annualCTC, insurance, gross);
   const gratuity = Math.round(basic * 0.0481);
-
-  // Special Allowance = gross - basic - HRA - incentive - employer PF - gratuity
-  const specialAllowance = Math.max(
-    0,
-    monthlyGross - basic - hra - monthlyIncentive - employerPF - gratuity
-  );
-
-  // ESI (applicable if gross <= 21000): employee 0.75%, employer 3.25%
-  const esiApplicable = monthlyGross <= 21000;
-  const esi = esiApplicable ? Math.round(monthlyGross * 0.0075) : 0;
-
-  // PT
-  const professionalTax = PT_MONTHLY[city];
-
-  // Insurance
-  const insurancePremium = INSURANCE_PREMIUM[insurance];
-
-  // In-Hand
-  const inHand = monthlyGross - employeePF - esi - professionalTax - insurancePremium;
+  const tax = monthlyTaxFor(annualCTC, taxRegime);
+  const inHand = Math.max(0, gross - employeePF - esi - professionalTax);
+  const finalTakeHome = Math.max(0, inHand - tax + monthlyIncentive);
 
   return {
+    annualCTC,
+    monthlyCTC,
     basic,
     hra,
-    specialAllowance,
-    monthlyIncentive,
     employerPF,
-    gratuity,
-    monthlyGross,
     employeePF,
+    travelAllowance,
+    specialAllowance,
+    gross,
+    monthlyGross: gross,
+    annualGross: gross * 12,
+    esiEmployer,
     esi,
     professionalTax,
+    gratuity,
     insurancePremium,
-    inHand: Math.max(0, inHand),
-    annualCTC,
-    annualGross: monthlyGross * 12,
-    annualInHand: Math.max(0, inHand) * 12,
+    tax,
+    inHand,
+    finalTakeHome,
+    annualInHand: inHand * 12,
+    annualFinalTakeHome: finalTakeHome * 12,
   };
 }
 
 export function formatINR(amount: number): string {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount);
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+export function cityLabel(city: City) {
+  return CITY_LABELS[city];
 }

@@ -61,7 +61,7 @@ function DeadlineBanner({ deadline, serverNow, label }: { deadline: string; serv
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-5">
-      <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+      <h2 className="ds-h2 text-gray-900">{title}</h2>
       {children}
     </div>
   );
@@ -159,7 +159,7 @@ export function MyReviewDetailClient({
           {"< My Reviews"}
         </Link>
         <span className="text-gray-300">/</span>
-        <h1 className="text-2xl font-bold text-gray-900">{appraisal.employee.name}</h1>
+        <h1 className="ds-h1 text-gray-900">{appraisal.employee.name}</h1>
       </div>
 
       <Card title="Review Summary">

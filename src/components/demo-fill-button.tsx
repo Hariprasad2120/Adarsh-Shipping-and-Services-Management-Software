@@ -2,6 +2,7 @@
 
 import { WandSparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { demoFillEnabled, type DemoPerformanceProfile } from "@/lib/demo-fill";
 
 export function DemoFillButton({
@@ -26,18 +27,14 @@ export function DemoFillButton({
       {profiles && selectedProfile && onProfileChange ? (
         <label className="flex items-center gap-2 text-xs text-slate-500">
           <span>Demo range</span>
-          <select
-            value={selectedProfile}
+          <DropdownSelect
+            ariaLabel="Demo range"
+            className="min-w-[180px]"
             disabled={disabled}
-            onChange={(event) => onProfileChange(event.target.value as DemoPerformanceProfile)}
-            className="rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 outline-none focus:border-slate-400"
-          >
-            {profiles.map((profile) => (
-              <option key={profile.value} value={profile.value}>
-                {profile.label}
-              </option>
-            ))}
-          </select>
+            onValueChange={(value) => onProfileChange(value as DemoPerformanceProfile)}
+            options={profiles.map((profile) => ({ value: profile.value, label: profile.label }))}
+            value={selectedProfile}
+          />
         </label>
       ) : null}
       <Button disabled={disabled} onClick={onClick} size="sm" variant="outline">

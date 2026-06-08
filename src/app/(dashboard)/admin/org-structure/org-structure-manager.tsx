@@ -181,7 +181,7 @@ function Section({
   return (
     <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-gray-900">{title}</h2>
+        <h2 className="ds-h2 text-gray-900">{title}</h2>
         <button
           onClick={onAdd}
           disabled={loading}
@@ -242,7 +242,7 @@ function MinimalPrompt({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/20 px-4 backdrop-blur-sm">
       <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/10">
         <div className="space-y-1">
-          <h3 className="text-base font-semibold text-slate-900">
+          <h3 className="ds-h3 text-slate-900">
             {isDepartment ? "New department" : "New division"}
           </h3>
           <p className="text-sm text-slate-500">

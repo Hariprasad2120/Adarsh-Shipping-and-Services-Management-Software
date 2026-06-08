@@ -4,6 +4,25 @@ import { requirePermission } from "@/lib/rbac";
 import { listUsers, createUser } from "@/modules/core/user/service";
 import { z } from "zod";
 
+function compactJson(value: unknown): any {
+  if (Array.isArray(value)) {
+    const items = value
+      .map((item) => compactJson(item))
+      .filter((item) => item !== undefined);
+    return items.length > 0 ? items : undefined;
+  }
+
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value)
+      .map(([key, entryValue]) => [key, compactJson(entryValue)] as const)
+      .filter(([, entryValue]) => entryValue !== undefined);
+
+    return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+  }
+
+  return value === undefined ? undefined : value;
+}
+
 export async function GET(req: NextRequest) {
   const { session, error } = await getSessionOrUnauth();
   if (error) return error;
@@ -20,7 +39,11 @@ export async function GET(req: NextRequest) {
   });
 
   // Strip password hashes from response
-  return ok(users.map(({ passwordHash: _, ...u }) => u));
+  return ok(users.map((user) => {
+    const { passwordHash, ...safeUser } = user;
+    void passwordHash;
+    return safeUser;
+  }));
 }
 
 const createSchema = z.object({
@@ -38,6 +61,35 @@ const createSchema = z.object({
   grade: z.string().optional(),
   ctc: z.number().optional(),
   priorExperienceYears: z.number().min(0).optional(),
+  payrollMeta: z.object({
+    employeeNumber: z.string().optional(),
+    personalDetails: z.object({
+      personalEmail: z.string().optional(),
+      fatherName: z.string().optional(),
+      mobileNumber: z.string().optional(),
+      dateOfBirth: z.string().optional(),
+      gender: z.string().optional(),
+      maritalStatus: z.string().optional(),
+      panNumber: z.string().optional(),
+      aadhaar: z.string().optional(),
+    }).optional(),
+    personalAddress: z.object({
+      addressLine1: z.string().optional(),
+      addressLine2: z.string().optional(),
+      city: z.string().optional(),
+      stateCode: z.string().optional(),
+      postalCode: z.string().optional(),
+      country: z.string().optional(),
+    }).optional(),
+    workLocation: z.object({
+      addressLine1: z.string().optional(),
+      addressLine2: z.string().optional(),
+      city: z.string().optional(),
+      stateCode: z.string().optional(),
+      postalCode: z.string().optional(),
+      country: z.string().optional(),
+    }).optional(),
+  }).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -52,8 +104,10 @@ export async function POST(req: NextRequest) {
     ...parsed.data,
     orgId: session!.user.orgId!,
     joinDate: new Date(parsed.data.joinDate),
+    payrollMeta: compactJson(parsed.data.payrollMeta),
   });
 
-  const { passwordHash: _, ...safe } = user;
+  const { passwordHash, ...safe } = user;
+  void passwordHash;
   return ok(safe, 201);
 }

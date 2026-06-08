@@ -23,7 +23,7 @@ export default async function PunchPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Attendance</h1>
+      <h1 className="ds-h1 text-gray-900">Attendance</h1>
       <PunchCard punches={punchRows as PunchCardProps["punches"]} today={now.toISOString()} />
     </div>
   );

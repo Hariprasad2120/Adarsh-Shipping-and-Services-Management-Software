@@ -54,6 +54,7 @@ export default async function AttendancePage() {
         { label: "Reported employees", value: monthlyReport.length.toString(), tone: "slate" },
       ]}
       quickLinks={quickLinks}
+      pageIcon={section?.icon}
     />
   );
 }

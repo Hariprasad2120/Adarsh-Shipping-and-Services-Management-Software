@@ -5,7 +5,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BriefcaseBusiness, CircleUserRound, Landmark, IndianRupee } from "lucide-react";
 import { useCan } from "@/lib/caps-context";
+import { toDisplayTitleCase } from "@/lib/text-case";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Input } from "@/components/ui/input";
 
 type PayrollMeta = {
   employeeNumber?: string;
@@ -150,22 +152,22 @@ function formatAddress(address?: {
 }) {
   if (!address) return "-";
   const parts = [
-    address.addressLine1,
-    address.addressLine2,
-    address.city,
+    toDisplayTitleCase(address.addressLine1),
+    toDisplayTitleCase(address.addressLine2),
+    toDisplayTitleCase(address.city),
     address.stateCode,
     address.postalCode,
-    address.country,
-  ].filter((part) => part && String(part).trim());
+    toDisplayTitleCase(address.country),
+  ].filter((part) => part && part !== "-" && String(part).trim());
   return parts.length > 0 ? parts.join(", ") : "-";
 }
 
 function extractFirstName(user: User, meta: PayrollMeta | null) {
-  return meta?.rawSheets?.employee?.["First Name"] ?? user.name.split(" ")[0] ?? "-";
+  return toDisplayTitleCase(meta?.rawSheets?.employee?.["First Name"] ?? user.name.split(" ")[0] ?? "-");
 }
 
 function extractLastName(meta: PayrollMeta | null) {
-  return meta?.rawSheets?.employee?.["Last Name"] ?? "-";
+  return toDisplayTitleCase(meta?.rawSheets?.employee?.["Last Name"] ?? "-");
 }
 
 function salaryValue(meta: PayrollMeta | null, key: string, fallbackKey?: string) {
@@ -325,14 +327,19 @@ export function EmployeeProfile({
 
   return (
     <div className="space-y-6">
+      {canEdit && !editDetails ? (
+        <div className="flex justify-end">
+          <button
+            onClick={() => setEditDetails(true)}
+            className="rounded-lg border border-[#00cec4]/30 bg-[#00cec4] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#00b5ad]"
+          >
+            Edit Details
+          </button>
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <InfoCard
-          icon={<CircleUserRound className="h-5 w-5" />}
-          title="Personal Details"
-          action={canEdit && !editDetails ? (
-            <button onClick={() => setEditDetails(true)} className="text-xs text-indigo-600 hover:underline">Edit</button>
-          ) : undefined}
-        >
+        <InfoCard icon={<CircleUserRound className="h-5 w-5" />} title="Personal Details">
           {editDetails ? (
             <EditableIdentitySection form={form} set={set} saveDetails={saveDetails} saving={saving} setEditDetails={setEditDetails} />
           ) : (
@@ -340,10 +347,10 @@ export function EmployeeProfile({
               items={[
                 { label: "First Name", value: extractFirstName(user, payrollMeta) },
                 { label: "Last Name", value: extractLastName(payrollMeta) },
-                { label: "Father Name", value: payrollMeta?.personalDetails?.fatherName ?? "-" },
+                { label: "Father Name", value: toDisplayTitleCase(payrollMeta?.personalDetails?.fatherName) },
                 { label: "DOB", value: asDate(payrollMeta?.personalDetails?.dateOfBirth ?? payrollMeta?.rawSheets?.employee?.["Date of Birth"]) },
-                { label: "Gender", value: payrollMeta?.personalDetails?.gender ?? "-" },
-                { label: "Marital Status", value: payrollMeta?.personalDetails?.maritalStatus ?? "-" },
+                { label: "Gender", value: toDisplayTitleCase(payrollMeta?.personalDetails?.gender) },
+                { label: "Marital Status", value: toDisplayTitleCase(payrollMeta?.personalDetails?.maritalStatus) },
                 { label: "Personal Email", value: payrollMeta?.personalDetails?.personalEmail ?? "-" },
                 { label: "Personal Phone", value: payrollMeta?.personalDetails?.mobileNumber ?? "-" },
                 { label: "Aadhaar", value: payrollMeta?.personalDetails?.aadhaar ?? "-" },
@@ -370,11 +377,11 @@ export function EmployeeProfile({
                 { label: "Employment Type", value: "-" },
                 { label: "Employee Status", value: user.active ? "Active" : "Inactive" },
                 { label: "Source of Hire", value: "-" },
-                { label: "Designation", value: user.designation ?? "-" },
-                { label: "Reporting TL / Manager", value: user.manager?.name ?? user.tl?.name ?? "-" },
-                { label: "Branch", value: user.branch?.name ?? "-" },
-                { label: "Department", value: user.department?.name ?? "-" },
-                { label: "Division", value: user.division?.name ?? "-" },
+                { label: "Designation", value: toDisplayTitleCase(user.designation) },
+                { label: "Reporting TL / Manager", value: toDisplayTitleCase(user.manager?.name ?? user.tl?.name) },
+                { label: "Branch", value: toDisplayTitleCase(user.branch?.name) },
+                { label: "Department", value: toDisplayTitleCase(user.department?.name) },
+                { label: "Division", value: toDisplayTitleCase(user.division?.name) },
                 { label: "Present Address", value: formatAddress(payrollMeta?.personalAddress), span: 2 },
                 { label: "Permanent Address", value: formatAddress(payrollMeta?.workLocation), span: 2 },
               ]}
@@ -398,12 +405,12 @@ export function EmployeeProfile({
           <InfoCard icon={<Landmark className="h-5 w-5" />} title="Bank Details">
             <KeyValueGrid
               items={[
-                { label: "Bank", value: payrollMeta?.bankDetails?.bankName ?? "-" },
+                { label: "Bank", value: toDisplayTitleCase(payrollMeta?.bankDetails?.bankName) },
                 { label: "Account #", value: payrollMeta?.bankDetails?.accountNumber ?? "-" },
                 { label: "IFSC", value: payrollMeta?.bankDetails?.ifscCode ?? "-" },
-                { label: "Account Type", value: payrollMeta?.bankDetails?.accountType ?? "-" },
+                { label: "Account Type", value: toDisplayTitleCase(payrollMeta?.bankDetails?.accountType) },
                 { label: "State Code", value: payrollMeta?.bankDetails?.stateCode ?? payrollMeta?.workLocation?.stateCode ?? "-" },
-                { label: "Payment Mode", value: payrollMeta?.bankDetails?.paymentMode ?? "-" },
+                { label: "Payment Mode", value: toDisplayTitleCase(payrollMeta?.bankDetails?.paymentMode) },
               ]}
             />
           </InfoCard>
@@ -424,7 +431,7 @@ export function EmployeeProfile({
                       className={`rounded-full border px-3 py-1 text-xs transition ${
                         selectedRoles.includes(role.id)
                           ? "border-indigo-600 bg-indigo-600 text-white"
-                          : "border-gray-300 bg-white text-gray-700"
+                          : "border-outline-variant/50 bg-surface text-on-surface"
                       }`}
                     >
                       {role.name}
@@ -444,11 +451,11 @@ export function EmployeeProfile({
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-1">
                   {user.roles.map((role) => (
-                    <span key={role.role.id} className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700">
+                    <span key={role.role.id} className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-200">
                       {role.role.name}
                     </span>
                   ))}
-                  {user.roles.length === 0 && <span className="text-sm text-gray-400">No roles</span>}
+                  {user.roles.length === 0 && <span className="text-sm text-on-surface-variant">No roles</span>}
                 </div>
                 {canEditRoles && (
                   <button onClick={() => setEditRoles(true)} className="text-xs text-indigo-600 hover:underline">Edit roles</button>
@@ -477,12 +484,12 @@ export function EmployeeProfile({
                 {canResetPassword && (
                   showPwReset ? (
                     <div className="space-y-2">
-                      <input
+                      <Input
                         type="password"
                         value={newPassword}
                         onChange={(event) => setNewPassword(event.target.value)}
                         placeholder="New password (min 8)"
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                        className="w-full"
                       />
                       <div className="flex gap-2">
                         <button
@@ -500,7 +507,7 @@ export function EmployeeProfile({
                   ) : (
                     <button
                       onClick={() => setShowPwReset(true)}
-                      className="w-full rounded-lg border border-gray-300 py-2 text-sm text-gray-700 transition hover:bg-gray-50"
+                      className="w-full rounded-lg border border-outline-variant/50 bg-surface py-2 text-sm text-on-surface transition hover:bg-surface-container-low"
                     >
                       Reset Password
                     </button>
@@ -538,22 +545,22 @@ function EditableIdentitySection({
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
       <Field label="Name">
-        <input value={form.name} onChange={(event) => set("name", event.target.value)} className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+        <Input value={form.name} onChange={(event) => set("name", event.target.value)} className="w-full" />
       </Field>
       <Field label="Designation">
-        <input value={form.designation} onChange={(event) => set("designation", event.target.value)} className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+        <Input value={form.designation} onChange={(event) => set("designation", event.target.value)} className="w-full" />
       </Field>
       <Field label="Join Date">
-        <input type="date" value={form.joinDate} onChange={(event) => set("joinDate", event.target.value)} className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+        <Input type="date" value={form.joinDate} onChange={(event) => set("joinDate", event.target.value)} className="w-full" />
       </Field>
       <Field label="Grade">
-        <input value={form.grade} onChange={(event) => set("grade", event.target.value)} className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+        <Input value={form.grade} onChange={(event) => set("grade", event.target.value)} className="w-full" />
       </Field>
       <Field label="CTC (Rs)">
-        <input type="number" value={form.ctc} onChange={(event) => set("ctc", event.target.value)} className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+        <Input type="number" value={form.ctc} onChange={(event) => set("ctc", event.target.value)} className="w-full" />
       </Field>
       <Field label="Prior Experience (years)">
-        <input type="number" min="0" value={form.priorExperienceYears} onChange={(event) => set("priorExperienceYears", event.target.value)} className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+        <Input type="number" min="0" value={form.priorExperienceYears} onChange={(event) => set("priorExperienceYears", event.target.value)} className="w-full" />
       </Field>
       <div className="md:col-span-2 flex gap-2 pt-1">
         <button onClick={saveDetails} disabled={saving} className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs text-white disabled:opacity-50">
@@ -611,21 +618,18 @@ function InfoCard({
   icon,
   title,
   children,
-  action,
 }: {
   icon: ReactNode;
   title: string;
   children: ReactNode;
-  action?: ReactNode;
 }) {
   return (
-    <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
-      <div className="mb-6 flex items-center justify-between gap-3">
+    <div className="rounded-[28px] border border-outline-variant/40 bg-surface p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
+      <div className="mb-6 flex items-center gap-3">
         <div className="flex items-center gap-3">
-          <div className="text-slate-800">{icon}</div>
-          <h2 className="text-[15px] font-medium uppercase tracking-[0.18em] text-slate-700">{title}</h2>
+          <div className="text-on-surface">{icon}</div>
+          <h2 className="ds-h2 text-on-surface">{title}</h2>
         </div>
-        {action}
       </div>
       {children}
     </div>
@@ -634,8 +638,8 @@ function InfoCard({
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
-      <h2 className="mb-4 text-sm font-semibold text-slate-900">{title}</h2>
+    <div className="rounded-[28px] border border-outline-variant/40 bg-surface p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
+      <h2 className="ds-h2 mb-4 text-on-surface">{title}</h2>
       {children}
     </div>
   );
@@ -650,8 +654,8 @@ function KeyValueGrid({
     <div className="grid grid-cols-1 gap-x-10 gap-y-4 md:grid-cols-2">
       {items.map((item) => (
         <div key={item.label} className={item.span === 2 ? "md:col-span-2" : undefined}>
-          <div className="text-[13px] font-medium text-slate-400">{item.label}</div>
-          <div className={`mt-1 text-[15px] ${item.accent ? "font-semibold text-slate-900" : "text-slate-600"}`}>
+          <div className="text-[13px] font-medium text-on-surface-variant">{item.label}</div>
+          <div className={`mt-1 text-[15px] ${item.accent ? "font-semibold text-on-surface" : "text-on-surface-variant"}`}>
             {item.value}
           </div>
         </div>
@@ -663,7 +667,7 @@ function KeyValueGrid({
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs text-gray-400">{label}</label>
+      <label className="text-xs text-on-surface-variant">{label}</label>
       {children}
     </div>
   );

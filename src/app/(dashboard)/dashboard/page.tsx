@@ -1,7 +1,7 @@
 import { ModuleHome } from "@/components/module-home";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getVisibleSections } from "@/lib/navigation";
+import { getVisibleSectionById, getVisibleSections } from "@/lib/navigation";
 import { loadCaps } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 
@@ -14,6 +14,7 @@ export default async function DashboardPage() {
     db.notification.count({ where: { userId: session.user.id, readAt: null } }),
   ]);
   const sections = getVisibleSections(caps);
+  const section = getVisibleSectionById(caps, "dashboard");
   const quickLinks = sections
     .slice(1, 5)
     .map((section) => ({
@@ -25,13 +26,14 @@ export default async function DashboardPage() {
 
   return (
     <ModuleHome
-      title={`Welcome back, ${session.user.name}`}
+      title="Dashboard"
       description="Use the dashboard as your workspace launchpad. Each module now has its own home page with shortcuts and status context, and the related links stay nested directly in the sidebar."
       stats={[
         { label: "Available modules", value: sections.length.toString(), tone: "teal" },
         { label: "Unread notifications", value: unreadNotifications.toString(), tone: "amber" },
       ]}
       quickLinks={quickLinks}
+      pageIcon={section?.icon}
     />
   );
 }

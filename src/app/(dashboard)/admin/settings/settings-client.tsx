@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
 import type { ReviewerRoleWeights } from "@/modules/ams/settings";
 
 export function SettingsClient({
@@ -41,14 +42,14 @@ export function SettingsClient({
             Business days reviewers have to confirm availability after being assigned.
           </p>
           <div className="flex items-center gap-3 mt-2">
-            <input
+            <Input
               id="days"
               type="number"
               min={0}
               max={30}
               value={days}
               onChange={(e) => setDays(Number(e.target.value))}
-              className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-24"
             />
             <span className="text-sm text-gray-500">business days</span>
           </div>
@@ -68,7 +69,7 @@ export function SettingsClient({
       {/* Reviewer role weights */}
       <div className="space-y-4 max-w-md pt-6 border-t border-gray-200">
         <div>
-          <h3 className="text-sm font-medium text-gray-700">Reviewer role weights</h3>
+          <h3 className="ds-h3 text-gray-700">Reviewer role weights</h3>
           <p className="text-xs text-gray-500 mt-0.5">
             Relative weights for each reviewer role within the 70% reviewer pool.
             Higher numbers = more influence. Equal values = equal weight.
@@ -78,7 +79,7 @@ export function SettingsClient({
           {roles.map((role) => (
             <div key={role} className="flex items-center gap-4">
               <label className="text-sm text-gray-700 w-20">{role}</label>
-              <input
+              <Input
                 type="number"
                 min={0}
                 step={0.1}
@@ -86,7 +87,7 @@ export function SettingsClient({
                 onChange={(e) =>
                   setWeights((w) => ({ ...w, [role]: parseFloat(e.target.value) || 0 }))
                 }
-                className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-24"
               />
             </div>
           ))}

@@ -70,7 +70,7 @@ export default async function CriteriaPage() {
 
   return (
     <div className="max-w-6xl space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Appraisal Criteria</h1>
+      <h1 className="ds-h1 text-gray-900">Appraisal Criteria</h1>
       <CriteriaClient
         key={editorKey}
         selfTemplate={selfTemplate as AppraisalSelfFormTemplate}

@@ -66,7 +66,7 @@ export default async function SelfAssessmentPage({ params }: { params: Promise<{
           {"< My Appraisal"}
         </Link>
         <span className="text-gray-300">/</span>
-        <h1 className="text-2xl font-bold text-gray-900">Self Assessment</h1>
+        <h1 className="ds-h1 text-gray-900">Self Assessment</h1>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 px-5 py-4">

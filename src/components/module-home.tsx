@@ -1,5 +1,14 @@
 import Link from "next/link";
 import type { CarbonIconType } from "@carbon/icons-react";
+import {
+  AlarmClockCheck,
+  ArrowRight,
+  ArrowUpRight,
+  CalendarDays,
+  CircleAlert,
+  LayoutGrid,
+  UsersRound,
+} from "lucide-react";
 
 type ModuleStat = {
   label: string;
@@ -11,75 +20,132 @@ type ModuleQuickLink = {
   href: string;
   label: string;
   description: string;
-  icon: CarbonIconType;
+  icon: any;
 };
 
 const STAT_STYLES: Record<NonNullable<ModuleStat["tone"]>, string> = {
-  teal: "border-teal-100 bg-teal-50/70 text-teal-700",
-  blue: "border-blue-100 bg-blue-50/70 text-blue-700",
-  amber: "border-amber-100 bg-amber-50/70 text-amber-700",
-  slate: "border-slate-200 bg-slate-50 text-slate-700",
+  teal: "border-t-[#00cec4]",
+  blue: "border-t-[#00cec4]",
+  amber: "border-t-amber-400",
+  slate: "border-t-[#00cec4]",
 };
+
+function getStatIcon(label: string, tone: ModuleStat["tone"]) {
+  const normalized = label.toLowerCase();
+  const iconClassName = tone === "amber" ? "text-amber-600" : "text-[#00cec4]";
+
+  if (normalized.includes("due") || normalized.includes("deadline")) {
+    return <CalendarDays className={`size-5 ${iconClassName}`} strokeWidth={1.9} />;
+  }
+
+  if (normalized.includes("cycle") || normalized.includes("month")) {
+    return <AlarmClockCheck className={`size-5 ${iconClassName}`} strokeWidth={1.9} />;
+  }
+
+  if (normalized.includes("availability") || normalized.includes("employee") || normalized.includes("role")) {
+    return <UsersRound className={`size-5 ${iconClassName}`} strokeWidth={1.9} />;
+  }
+
+  return <CircleAlert className={`size-5 ${iconClassName}`} strokeWidth={1.9} />;
+}
 
 export function ModuleHome({
   title,
   description,
   stats,
   quickLinks,
+  pageIcon: PageIcon = LayoutGrid,
 }: {
   title: string;
   description: string;
   stats: ModuleStat[];
   quickLinks: ModuleQuickLink[];
+  pageIcon?: any;
 }) {
+  void description;
+
   return (
-    <div className="space-y-8">
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-        <p className="text-sm font-medium uppercase tracking-[0.18em] text-teal-600">Module workspace</p>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">{title}</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">{description}</p>
-      </div>
+    <div className="space-y-6 font-sans">
+      <section className="flex items-center gap-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
+          <PageIcon size={20} />
+        </div>
+        <div className="min-w-0 self-center">
+          <h1 className="ds-h1 heading-icon-none leading-tight text-primary">
+            {title}
+          </h1>
+        </div>
+      </section>
 
       {stats.length > 0 && (
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {stats.map((stat) => (
+          {stats.map((stat, index) => (
             <article
               key={stat.label}
-              className={`rounded-2xl border p-5 shadow-sm ${STAT_STYLES[stat.tone ?? "slate"]}`}
+              className={`group relative overflow-hidden rounded-[24px] border border-outline-variant/20 border-t-[3px] bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-surface dark:shadow-ambient dark:hover:shadow-ambient-hover [animation:fade-in-up_0.5s_cubic-bezier(0.22,1,0.36,1)_both] ${STAT_STYLES[stat.tone ?? "slate"]}`}
+              style={{ animationDelay: `${index * 75}ms` }}
             >
-              <p className="text-xs font-medium uppercase tracking-[0.18em]">{stat.label}</p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight">{stat.value}</p>
+              <div className="absolute inset-x-0 top-0 h-14 bg-[linear-gradient(180deg,rgba(0,206,196,0.06),transparent)] dark:bg-[linear-gradient(180deg,rgba(0,206,196,0.08),transparent)]" />
+              <div className="relative flex h-full flex-col">
+                <div className="flex items-start justify-between">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#00cec4]/10 transition duration-300 group-hover:scale-105 group-hover:bg-[#00cec4]/14">
+                    {getStatIcon(stat.label, stat.tone)}
+                  </div>
+                  <ArrowUpRight className="size-4 text-slate-300 transition duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#00cec4] dark:text-outline" />
+                </div>
+
+                <div className="mt-6">
+                  <p className="text-[2.35rem] font-extralight leading-none tracking-[-0.04em] text-slate-900 dark:text-on-surface">
+                    {stat.value}
+                  </p>
+                  <p className="mt-1.5 text-[14px] font-normal text-slate-500 dark:text-on-surface-variant">
+                    {stat.label}
+                  </p>
+                </div>
+              </div>
             </article>
           ))}
         </section>
       )}
 
       {quickLinks.length > 0 && (
-        <section className="space-y-4">
+        <section className="space-y-3">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Quick actions</h2>
-            <p className="mt-1 text-sm text-slate-500">Jump into the core tasks for this module.</p>
+            <h2 className="ds-h2 inline-flex items-center gap-2 text-primary">
+              <ArrowUpRight className="size-4 text-[#00cec4]" />
+              Quick actions
+            </h2>
+            <p className="mt-1 text-sm text-on-surface-variant">Jump into the core tasks for this module.</p>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            {quickLinks.map((item) => {
+            {quickLinks.map((item, index) => {
               const Icon = item.icon;
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md"
+                  className="group rounded-[24px] border border-outline-variant/20 bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:border-[#00cec4]/30 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-surface dark:hover:border-primary/40 dark:hover:shadow-ambient-hover [animation:fade-in-up_0.5s_cubic-bezier(0.22,1,0.36,1)_both]"
+                  style={{ animationDelay: `${160 + index * 75}ms` }}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="rounded-xl bg-slate-900 p-3 text-white transition group-hover:bg-teal-600">
-                      <Icon size={20} />
+                  <div className="flex items-start gap-3.5">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4] transition duration-300 group-hover:scale-105 group-hover:bg-[#00cec4]/14">
+                      <Icon size={18} />
                     </div>
+
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-base font-semibold text-slate-900">{item.label}</h3>
-                        <span className="text-sm text-slate-400 transition group-hover:text-teal-600">→</span>
+                        <ArrowUpRight className="size-4 shrink-0 text-[#00cec4]" />
+                        <h3 className="ds-h3 text-primary">{item.label}</h3>
                       </div>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+
+                      <p className="mt-1.5 text-sm leading-6 text-on-surface-variant">{item.description}</p>
+
+                      <div className="mt-4 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.1rem] text-[#00cec4] transition duration-300 group-hover:gap-3 group-hover:text-[#00b8af] dark:group-hover:text-[#00cec4]">
+                        Open module
+                        <ArrowRight className="size-4" />
+                      </div>
                     </div>
                   </div>
                 </Link>

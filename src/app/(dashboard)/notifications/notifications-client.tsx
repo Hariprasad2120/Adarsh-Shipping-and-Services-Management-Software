@@ -42,7 +42,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
       <DataTable>
         <DataTableToolbar>
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">Notifications</h1>
+            <h1 className="ds-h1 text-slate-900">Notifications</h1>
             <p className="text-sm text-slate-500">Only your notifications appear here.</p>
           </div>
           <Button size="sm" variant="outline" onClick={() => run("/api/notifications/read-all", "Marked all as read")}>

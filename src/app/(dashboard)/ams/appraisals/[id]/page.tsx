@@ -36,6 +36,9 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
   ]);
 
   if (!appraisal) notFound();
+  if (appraisal.stage === "DUE_NOTIFIED") {
+    redirect(`/ams/appraisals/assign/${appraisal.employee.id}`);
+  }
 
   const selfCriteria = selfRows.filter((row) => row.kind === "CATEGORY").map(mapCriterionRowToPoint);
   const selfSupplementary: CriterionPoint[] = [];
@@ -116,7 +119,7 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
           {"< Appraisals"}
         </Link>
         <span className="text-gray-300">/</span>
-        <h1 className="text-2xl font-bold text-gray-900">{appraisal.employee.name}</h1>
+        <h1 className="ds-h1 text-gray-900">{appraisal.employee.name}</h1>
       </div>
       <AppraisalDetail
         appraisal={safeAppraisal}

@@ -18,7 +18,7 @@ export default function HRModule({ employees }: Props) {
 
   return (
     <div id="hr-module-root" className="w-full space-y-8 animate-fadeIn text-neutral-900">
-      
+
       {/* Editorial Overview Header */}
       <div className="border border-neutral-200 bg-white p-8 rounded-lg space-y-4">
         <div className="flex items-center gap-2">
@@ -27,7 +27,7 @@ export default function HRModule({ employees }: Props) {
             PROTOCOL REFERENCE // 02
           </span>
         </div>
-        <h2 className="text-3xl font-display font-black text-black tracking-tight">
+        <h2 className="ds-h2 text-black md:text-[1.75rem]">
           HR Workforce Suite
         </h2>
         <p className="text-sm text-neutral-600 leading-relaxed max-w-xl">
@@ -74,7 +74,7 @@ export default function HRModule({ employees }: Props) {
       {/* HR Workforce Database Scheme checklist */}
       <div className="border border-neutral-200 bg-white rounded-lg p-6 space-y-6">
         <div>
-          <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-black border-b border-neutral-100 pb-2">
+          <h3 className="ds-h3 border-b border-neutral-100 pb-2 text-black">
             DEMOGRAPHICS & LIFECYCLE PARALLEL WORKFLOWS
           </h3>
           <p className="text-xs text-neutral-500 mt-1">
@@ -150,16 +150,15 @@ export default function HRModule({ employees }: Props) {
                 <span className="text-[10px] font-mono border border-neutral-200 bg-neutral-50 text-neutral-600 px-2 py-0.5 rounded uppercase font-semibold">
                   {emp.workMode}
                 </span>
-                
+
                 <span className="text-[10px] font-mono border border-neutral-200 bg-neutral-50 text-neutral-600 px-2 py-0.5 rounded uppercase font-semibold">
                   Joined: {emp.dateJoined}
                 </span>
 
-                <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
-                  emp.status === 'Active'
+                <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase tracking-wider ${emp.status === 'Active'
                     ? 'bg-neutral-100 border border-neutral-300 text-black'
                     : 'bg-red-50 border border-red-200 text-red-700'
-                }`}>
+                  }`}>
                   {emp.status}
                 </span>
               </div>

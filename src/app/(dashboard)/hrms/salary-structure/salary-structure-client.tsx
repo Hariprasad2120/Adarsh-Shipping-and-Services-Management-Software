@@ -1,23 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import type { ReactNode } from "react";
+import { useMemo, useState } from "react";
+import { FileSpreadsheet, IndianRupee, TrendingUp } from "lucide-react";
 import { DemoFillButton } from "@/components/demo-fill-button";
-import {
-  computeSalary,
-  formatINR,
-  type SalaryInputs,
-  type SalaryBreakup,
-  type City,
-  type PFType,
-  type InsuranceCoverage,
-  type TaxRegime,
-} from "@/modules/hrms/salary-structure";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Input } from "@/components/ui/input";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { getSalaryDemoValues } from "@/lib/demo-fill";
+import {
+  cityLabel,
+  computeSalary,
+  formatINR,
+  type City,
+  type InsuranceCoverage,
+  type PFType,
+  type SalaryInputs,
+  type TaxRegime,
+} from "@/modules/hrms/salary-structure";
 
 type Employee = { id: string; name: string; designation: string | null };
 
-const CITIES: { value: City; label: string }[] = [
+const CITIES: Array<{ value: City; label: string }> = [
   { value: "CHENNAI", label: "Chennai" },
   { value: "MUMBAI", label: "Mumbai" },
   { value: "DELHI", label: "Delhi" },
@@ -25,62 +31,111 @@ const CITIES: { value: City; label: string }[] = [
   { value: "MUNDRA", label: "Mundra" },
 ];
 
-const INSURANCE_OPTIONS: { value: InsuranceCoverage; label: string }[] = [
-  { value: "SELF", label: "Self" },
+const INSURANCE_OPTIONS: Array<{ value: InsuranceCoverage; label: string }> = [
+  { value: "NIL", label: "Nil" },
+  { value: "SELF", label: "Self Only" },
   { value: "SELF_SPOUSE", label: "Self + Spouse" },
-  { value: "FAMILY", label: "Family (Self + Spouse + 2 Children)" },
+  { value: "FAMILY", label: "Family" },
   { value: "FAMILY_PARENTS", label: "Family + Parents" },
 ];
 
-function Row({ label, value, bold, sub }: { label: string; value: string; bold?: boolean; sub?: boolean }) {
+const TAX_OPTIONS: Array<{ value: TaxRegime; label: string }> = [
+  { value: "NEW", label: "New" },
+  { value: "OLD", label: "Old" },
+];
+
+const PF_OPTIONS: Array<{ value: PFType; label: string }> = [
+  { value: "CAPPED", label: "Capped" },
+  { value: "UNCAPPED", label: "Uncapped" },
+];
+
+function formatNumber(value: number) {
+  return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(value);
+}
+
+function Row({
+  label,
+  monthly,
+  annual,
+  note,
+  highlight,
+}: {
+  label: string;
+  monthly: number;
+  annual: number;
+  note?: string;
+  highlight?: boolean;
+}) {
   return (
-    <tr className={bold ? "bg-gray-50 font-semibold" : ""}>
-      <td className={`py-2 pr-4 text-sm ${sub ? "pl-6 text-gray-500" : bold ? "pl-3 text-gray-900" : "pl-3 text-gray-700"}`}>
+    <tr className={highlight ? "bg-surface-container-low font-semibold" : ""}>
+      <td className="px-4 py-3 text-sm text-on-surface">
         {label}
+        {note ? <span className="ml-1.5 text-xs text-on-surface-variant">({note})</span> : null}
       </td>
-      <td className={`py-2 text-right text-sm tabular-nums ${bold ? "text-gray-900" : "text-gray-700"}`}>
-        {value}
-      </td>
+      <td className="ds-numeric px-4 py-3 text-right text-sm text-on-surface">₹{formatNumber(monthly)}</td>
+      <td className="ds-numeric px-4 py-3 text-right text-sm text-on-surface">₹{formatNumber(annual)}</td>
     </tr>
   );
 }
 
-function SalaryTable({ breakup }: { breakup: SalaryBreakup }) {
+function SummaryCard({
+  label,
+  value,
+  annual,
+  tone,
+}: {
+  label: string;
+  value: number;
+  annual: number;
+  tone: string;
+}) {
   return (
-    <table className="w-full border-collapse">
-      <thead>
-        <tr className="border-b border-gray-200">
-          <th className="pb-2 pl-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Component</th>
-          <th className="pb-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Monthly (₹)</th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-gray-100">
-        <tr><td colSpan={2} className="pt-3 pb-1 pl-3 text-xs font-semibold uppercase tracking-wide text-indigo-600">Earnings</td></tr>
-        <Row sub label="Basic" value={formatINR(breakup.basic)} />
-        <Row sub label="HRA" value={formatINR(breakup.hra)} />
-        <Row sub label="Special Allowance" value={formatINR(breakup.specialAllowance)} />
-        {breakup.monthlyIncentive > 0 && <Row sub label="Monthly Incentive" value={formatINR(breakup.monthlyIncentive)} />}
+    <Card className="rounded-[22px] border-outline-variant/40 shadow-sm">
+      <CardContent className="p-5">
+        <p className={`text-xs font-medium ${tone}`}>{label}</p>
+        <p className="ds-numeric mt-1 text-3xl font-semibold tracking-tight text-on-surface">₹{formatNumber(value)}</p>
+        <p className="ds-numeric mt-1 text-xs text-on-surface-variant">₹{formatNumber(annual)} / yr</p>
+      </CardContent>
+    </Card>
+  );
+}
 
-        <tr><td colSpan={2} className="pt-3 pb-1 pl-3 text-xs font-semibold uppercase tracking-wide text-indigo-600">Employer Contributions</td></tr>
-        <Row sub label="Employer PF" value={formatINR(breakup.employerPF)} />
-        <Row sub label="Gratuity (4.81%)" value={formatINR(breakup.gratuity)} />
-
-        <Row bold label="Monthly Gross (CTC ÷ 12)" value={formatINR(breakup.monthlyGross)} />
-
-        <tr><td colSpan={2} className="pt-3 pb-1 pl-3 text-xs font-semibold uppercase tracking-wide text-red-500">Deductions</td></tr>
-        <Row sub label="Employee PF" value={`− ${formatINR(breakup.employeePF)}`} />
-        {breakup.esi > 0 && <Row sub label="ESI (0.75%)" value={`− ${formatINR(breakup.esi)}`} />}
-        {breakup.professionalTax > 0 && <Row sub label="Professional Tax" value={`− ${formatINR(breakup.professionalTax)}`} />}
-        {breakup.insurancePremium > 0 && <Row sub label="Insurance Premium" value={`− ${formatINR(breakup.insurancePremium)}`} />}
-
-        <Row bold label="Monthly In-Hand" value={formatINR(breakup.inHand)} />
-
-        <tr><td colSpan={2} className="pt-3 pb-1 pl-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Annual Summary</td></tr>
-        <Row sub label="Annual CTC" value={formatINR(breakup.annualCTC)} />
-        <Row sub label="Annual Gross" value={formatINR(breakup.annualGross)} />
-        <Row bold label="Annual In-Hand (est.)" value={formatINR(breakup.annualInHand)} />
-      </tbody>
-    </table>
+function TableCard({
+  icon,
+  title,
+  rows,
+}: {
+  icon: ReactNode;
+  title: string;
+  rows: Array<{ label: string; monthly: number; annual: number; note?: string; highlight?: boolean }>;
+}) {
+  return (
+    <Card className="overflow-hidden rounded-[24px] border-outline-variant/40 shadow-sm">
+      <CardHeader className="border-b border-outline-variant/20 pb-4">
+        <CardTitle className="flex items-center gap-2 text-base">
+          {icon}
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-surface-container-low">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.14em] text-on-surface-variant">Component</th>
+                <th className="px-4 py-3 text-right text-xs uppercase tracking-[0.14em] text-on-surface-variant">Monthly</th>
+                <th className="px-4 py-3 text-right text-xs uppercase tracking-[0.14em] text-on-surface-variant">Annual</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-outline-variant/20">
+              {rows.map((row) => (
+                <Row key={row.label} {...row} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -88,32 +143,32 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
   const { success, error } = useNotifications();
 
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const [employeeName, setEmployeeName] = useState("");
+  const [employeeRole, setEmployeeRole] = useState("");
+  const [dateOfJoining, setDateOfJoining] = useState("");
   const [inputs, setInputs] = useState<SalaryInputs>({
     annualCTC: 0,
     pfType: "CAPPED",
     city: "CHENNAI",
     monthlyIncentive: 0,
-    insurance: "SELF",
+    insurance: "NIL",
     taxRegime: "NEW",
   });
-  const [breakup, setBreakup] = useState<SalaryBreakup | null>(null);
-  const [saving, setSaving] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const breakup = useMemo(() => computeSalary(inputs), [inputs]);
+
+  const selectedEmployee = employees.find((employee) => employee.id === selectedEmployeeId) ?? null;
 
   function set<K extends keyof SalaryInputs>(key: K, value: SalaryInputs[K]) {
-    setInputs((p) => ({ ...p, [key]: value }));
-    setBreakup(null);
-    setConfirmed(false);
-  }
-
-  function calculate() {
-    if (!inputs.annualCTC || inputs.annualCTC <= 0) return;
-    setBreakup(computeSalary(inputs));
+    setInputs((current) => ({ ...current, [key]: value }));
     setConfirmed(false);
   }
 
   async function updateEmployee() {
-    if (!breakup || !selectedEmployeeId) return;
+    if (!selectedEmployeeId) return;
+
     setSaving(true);
     const res = await fetch(`/api/hrms/employees/${selectedEmployeeId}/salary-structure`, {
       method: "POST",
@@ -122,29 +177,34 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
         annualCTC: breakup.annualCTC,
         monthlyGross: breakup.monthlyGross,
         breakup: {
+          monthlyCTC: breakup.monthlyCTC,
           basic: breakup.basic,
           hra: breakup.hra,
           specialAllowance: breakup.specialAllowance,
-          monthlyIncentive: breakup.monthlyIncentive,
           employerPF: breakup.employerPF,
-          gratuity: breakup.gratuity,
           employeePF: breakup.employeePF,
+          travelAllowance: breakup.travelAllowance,
+          gratuity: breakup.gratuity,
+          esiEmployer: breakup.esiEmployer,
           esi: breakup.esi,
           professionalTax: breakup.professionalTax,
           insurancePremium: breakup.insurancePremium,
+          tax: breakup.tax,
           inHand: breakup.inHand,
+          finalTakeHome: breakup.finalTakeHome,
         },
       }),
     });
     setSaving(false);
+
     if (!res.ok) {
-      const d = await res.json().catch(() => ({}));
-      error(d.error ?? "Update failed");
+      const data = await res.json().catch(() => ({}));
+      error(data.error ?? "Update failed");
       return;
     }
+
     setConfirmed(true);
-    const emp = employees.find((e) => e.id === selectedEmployeeId);
-    success(`Salary updated for ${emp?.name ?? "employee"}`);
+    success(`Salary updated for ${selectedEmployee?.name ?? "employee"}`);
   }
 
   function handlePrint() {
@@ -154,214 +214,262 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
   function fillDemoData() {
     const demo = getSalaryDemoValues(employees);
     setSelectedEmployeeId(demo.selectedEmployeeId);
-    setInputs(demo.inputs);
-    setBreakup(null);
+    setInputs({
+      ...demo.inputs,
+      insurance: demo.inputs.insurance ?? "NIL",
+    });
     setConfirmed(false);
   }
 
+  const detailedRows = [
+    { label: "Monthly CTC", monthly: breakup.monthlyCTC, annual: breakup.monthlyCTC * 12, note: "CTC / 12" },
+    { label: "Basic (50%)", monthly: breakup.basic, annual: breakup.basic * 12, note: "50% of monthly CTC" },
+    { label: "HRA", monthly: breakup.hra, annual: breakup.hra * 12, note: `${inputs.city === "CHENNAI" ? "50%" : "40%"} of basic` },
+    { label: "Employer PF", monthly: breakup.employerPF, annual: breakup.employerPF * 12, note: inputs.pfType === "CAPPED" ? "min(12%, ₹1800)" : "12% of basic" },
+    { label: "travelAllowance", monthly: breakup.travelAllowance, annual: breakup.travelAllowance * 12, note: "15% of basic" },
+    { label: "Special Allowance", monthly: breakup.specialAllowance, annual: breakup.specialAllowance * 12, note: "Balancing" },
+    { label: "Gross Earnings", monthly: breakup.gross, annual: breakup.annualGross, highlight: true },
+    { label: "Employee PF (deduction)", monthly: -breakup.employeePF, annual: -(breakup.employeePF * 12) },
+    { label: "ESI Employer", monthly: breakup.esiEmployer, annual: breakup.esiEmployer * 12, note: breakup.gross <= 21000 ? "3.25% of gross" : "N/A (gross > 21k)" },
+    { label: "ESI Employee (deduction)", monthly: -breakup.esi, annual: -(breakup.esi * 12) },
+    { label: "Professional Tax (deduction)", monthly: -breakup.professionalTax, annual: -(breakup.professionalTax * 12), note: cityLabel(inputs.city) },
+    { label: "Insurance", monthly: breakup.insurancePremium, annual: breakup.insurancePremium * 12, note: inputs.insurance === "NIL" ? "Nil" : "Benefit cover" },
+    { label: "In-Hand Salary", monthly: breakup.inHand, annual: breakup.annualInHand, highlight: true },
+    { label: "Income Tax (deduction)", monthly: -breakup.tax, annual: -(breakup.tax * 12), note: `${inputs.taxRegime === "NEW" ? "New" : "Old"} regime` },
+    { label: "Monthly Incentive", monthly: inputs.monthlyIncentive, annual: inputs.monthlyIncentive * 12 },
+    { label: "Final Take Home", monthly: breakup.finalTakeHome, annual: breakup.annualFinalTakeHome, highlight: true },
+  ];
+
+  const offerRows = [
+    { label: "Basic", monthly: breakup.basic, annual: breakup.basic * 12 },
+    { label: "HRA", monthly: breakup.hra, annual: breakup.hra * 12 },
+    { label: "Special Allowance", monthly: breakup.specialAllowance, annual: breakup.specialAllowance * 12 },
+    { label: "Employer PF", monthly: breakup.employerPF, annual: breakup.employerPF * 12 },
+    { label: "travelAllowance", monthly: breakup.travelAllowance, annual: breakup.travelAllowance * 12 },
+    { label: "Insurance", monthly: breakup.insurancePremium, annual: breakup.insurancePremium * 12 },
+    { label: "Total CTC", monthly: breakup.monthlyCTC, annual: breakup.annualCTC, highlight: true },
+    { label: "CTC + Benefits", monthly: breakup.monthlyCTC + breakup.insurancePremium, annual: breakup.annualCTC + breakup.insurancePremium * 12, highlight: true },
+  ];
+
+  const insuranceBadge =
+    breakup.gross > 21000
+      ? `Insurance applicable (gross > ₹21,000) · ${INSURANCE_OPTIONS.find((option) => option.value === inputs.insurance)?.label ?? "Nil"}`
+      : "ESI applicable (gross ≤ ₹21,000)";
+
+  const taxNote =
+    inputs.taxRegime === "NEW" && breakup.tax === 0
+      ? "No income tax (rebate applies under new regime)"
+      : `Tax regime: ${inputs.taxRegime === "NEW" ? "New" : "Old"}`;
+
   return (
     <div className="space-y-6">
-      {/* Input form */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <h2 className="font-semibold text-gray-900">Inputs</h2>
-          <DemoFillButton disabled={saving} onClick={fillDemoData} />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-          {/* Employee selector */}
-          {employees.length > 0 && (
-            <div className="sm:col-span-2 space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Employee (optional)</label>
-              <select
+      <Card className="rounded-[26px] border-outline-variant/40 shadow-sm">
+        <CardHeader className="pb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <FileSpreadsheet className="size-4 text-[#00cec4]" />
+              Salary Inputs
+            </CardTitle>
+            <DemoFillButton disabled={saving} onClick={fillDemoData} />
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {employees.length > 0 ? (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-on-surface">Employee (optional)</label>
+              <DropdownSelect
+                ariaLabel="Employee"
+                onValueChange={(nextEmployeeId) => {
+                  const nextEmployee = employees.find((employee) => employee.id === nextEmployeeId) ?? null;
+                  setSelectedEmployeeId(nextEmployeeId);
+                  if (nextEmployee) {
+                    setEmployeeName(nextEmployee.name);
+                    setEmployeeRole(nextEmployee.designation ?? "");
+                  }
+                  setConfirmed(false);
+                }}
+                options={[
+                  { value: "", label: "No employee selected" },
+                  ...employees.map((employee) => ({
+                    value: employee.id,
+                    label: `${employee.name}${employee.designation ? ` - ${employee.designation}` : ""}`,
+                  })),
+                ]}
                 value={selectedEmployeeId}
-                onChange={(e) => { setSelectedEmployeeId(e.target.value); setConfirmed(false); }}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">— No employee selected —</option>
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.name}{emp.designation ? ` — ${emp.designation}` : ""}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
-          )}
+          ) : null}
 
-          {/* Annual CTC */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Annual CTC (₹)</label>
-            <input
-              type="number"
-              min={0}
-              value={inputs.annualCTC || ""}
-              onChange={(e) => set("annualCTC", Number(e.target.value))}
-              placeholder="e.g. 600000"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          {/* Monthly Incentive */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Monthly Incentive (₹)</label>
-            <input
-              type="number"
-              min={0}
-              value={inputs.monthlyIncentive || ""}
-              onChange={(e) => set("monthlyIncentive", Number(e.target.value))}
-              placeholder="0"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          {/* PF Type */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">PF Type</label>
-            <div className="flex gap-3">
-              {(["CAPPED", "UNCAPPED"] as PFType[]).map((t) => (
-                <label key={t} className={`flex items-center gap-2 cursor-pointer rounded-lg border px-4 py-2 text-sm flex-1 ${inputs.pfType === t ? "border-indigo-300 bg-indigo-50 text-indigo-800" : "border-gray-200"}`}>
-                  <input
-                    type="radio"
-                    name="pfType"
-                    value={t}
-                    checked={inputs.pfType === t}
-                    onChange={() => set("pfType", t)}
-                    className="accent-indigo-600"
-                  />
-                  {t === "CAPPED" ? "Capped (₹1,800)" : "Uncapped (12%)"}
-                </label>
-              ))}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-on-surface">Employee Name</label>
+              <Input
+                value={employeeName}
+                onChange={(event) => setEmployeeName(event.target.value)}
+                placeholder="Full name"
+                className="placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-on-surface">Role / Designation</label>
+              <Input
+                value={employeeRole}
+                onChange={(event) => setEmployeeRole(event.target.value)}
+                placeholder="e.g. Manager"
+                className="placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-on-surface">Date of Joining</label>
+              <Input type="date" value={dateOfJoining} onChange={(event) => setDateOfJoining(event.target.value)} />
             </div>
           </div>
 
-          {/* City */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">City</label>
-            <select
-              value={inputs.city}
-              onChange={(e) => set("city", e.target.value as City)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              {CITIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-            </select>
-          </div>
-
-          {/* Insurance */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Insurance Coverage</label>
-            <select
-              value={inputs.insurance}
-              onChange={(e) => set("insurance", e.target.value as InsuranceCoverage)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              {INSURANCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </div>
-
-          {/* Tax Regime */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Tax Regime</label>
-            <div className="flex gap-3">
-              {(["NEW", "OLD"] as TaxRegime[]).map((t) => (
-                <label key={t} className={`flex items-center gap-2 cursor-pointer rounded-lg border px-4 py-2 text-sm flex-1 ${inputs.taxRegime === t ? "border-indigo-300 bg-indigo-50 text-indigo-800" : "border-gray-200"}`}>
-                  <input
-                    type="radio"
-                    name="taxRegime"
-                    value={t}
-                    checked={inputs.taxRegime === t}
-                    onChange={() => set("taxRegime", t)}
-                    className="accent-indigo-600"
-                  />
-                  {t === "NEW" ? "New Regime" : "Old Regime"}
-                </label>
-              ))}
+          <div className="grid grid-cols-1 gap-4 border-t border-outline-variant/20 pt-5 md:grid-cols-3">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-on-surface">Annual CTC (₹)</label>
+              <Input
+                type="number"
+                min={0}
+                step={1000}
+                value={inputs.annualCTC === 0 ? "" : inputs.annualCTC}
+                onChange={(event) => set("annualCTC", Number(event.target.value) || 0)}
+                placeholder="0"
+                className="placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-on-surface">PF Type</label>
+              <DropdownSelect
+                ariaLabel="PF Type"
+                onValueChange={(value) => set("pfType", value as PFType)}
+                options={PF_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+                value={inputs.pfType}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-on-surface">City</label>
+              <DropdownSelect
+                ariaLabel="City"
+                onValueChange={(value) => set("city", value as City)}
+                options={CITIES.map((option) => ({ value: option.value, label: option.label }))}
+                value={inputs.city}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-on-surface">Monthly Incentive (₹)</label>
+              <Input
+                type="number"
+                min={0}
+                value={inputs.monthlyIncentive === 0 ? "" : inputs.monthlyIncentive}
+                onChange={(event) => set("monthlyIncentive", Number(event.target.value) || 0)}
+                placeholder="0"
+                className="placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-on-surface">Insurance Coverage</label>
+              <DropdownSelect
+                ariaLabel="Insurance Coverage"
+                onValueChange={(value) => set("insurance", value as InsuranceCoverage)}
+                options={INSURANCE_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+                value={inputs.insurance}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-on-surface">Tax Regime</label>
+              <DropdownSelect
+                ariaLabel="Tax Regime"
+                onValueChange={(value) => set("taxRegime", value as TaxRegime)}
+                options={TAX_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+                value={inputs.taxRegime}
+              />
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <div id="salary-print-area" className="space-y-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <SummaryCard label="Monthly CTC" value={breakup.monthlyCTC} annual={breakup.monthlyCTC * 12} tone="text-[#00a7a0]" />
+          <SummaryCard label="Gross Monthly" value={breakup.gross} annual={breakup.annualGross} tone="text-[#00b8af]" />
+          <SummaryCard label="In-Hand Monthly" value={breakup.inHand} annual={breakup.annualInHand} tone="text-[#00A278]" />
+          <SummaryCard label="Final Take Home" value={breakup.finalTakeHome} annual={breakup.annualFinalTakeHome} tone="text-[#0B8B8F]" />
         </div>
 
-        <div className="mt-5 flex gap-3">
-          <button
-            onClick={calculate}
-            disabled={!inputs.annualCTC || inputs.annualCTC <= 0}
-            className="px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition"
-          >
-            Calculate
-          </button>
+        <div className="flex flex-wrap gap-2 text-xs text-on-surface-variant">
+          <span className="rounded-full bg-surface-container-low px-3 py-1">{insuranceBadge}</span>
+          <span className="rounded-full bg-green-100 px-3 py-1 text-green-700 dark:bg-green-900/30 dark:text-green-300">{taxNote}</span>
+          <span className="rounded-full bg-surface-container-low px-3 py-1">PT: {cityLabel(inputs.city)} · ₹{formatNumber(breakup.professionalTax)}/mo</span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.98fr)]">
+          <TableCard icon={<TrendingUp className="size-4" />} title="Detailed Breakdown" rows={detailedRows} />
+
+          <div className="space-y-6">
+            <TableCard icon={<IndianRupee className="size-4" />} title="Offer Letter Structure" rows={offerRows} />
+
+            <Card className="rounded-[24px] border-outline-variant/40 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Salary Notes</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-on-surface-variant">
+                {employeeName ? <p><span className="font-medium text-on-surface">Employee:</span> {employeeName}</p> : null}
+                {employeeRole ? <p><span className="font-medium text-on-surface">Role:</span> {employeeRole}</p> : null}
+                {dateOfJoining ? <p><span className="font-medium text-on-surface">DOJ:</span> {new Date(dateOfJoining).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p> : null}
+                <div className="border-t border-outline-variant/20 pt-3 text-xs leading-6">
+                  <p>• Basic is 50% of CTC.</p>
+                  <p>• HRA based on city ({cityLabel(inputs.city)}) — {inputs.city === "CHENNAI" ? "50%" : "40%"} of basic.</p>
+                  <p>• PF applied as per {inputs.pfType === "CAPPED" ? "Capped" : "Uncapped"} method.</p>
+                  <p>• travelAllowance included as long-term benefit.</p>
+                  <p>• {inputs.insurance === "NIL" ? "Covered under insurance (Nil)." : `Insurance cover selected: ${INSURANCE_OPTIONS.find((option) => option.value === inputs.insurance)?.label}.`}</p>
+                  <p>• PT applied based on location — ₹{formatNumber(breakup.professionalTax)}/month.</p>
+                  <p>• {breakup.tax > 0 ? `Income tax applied as per ${inputs.taxRegime === "NEW" ? "new" : "old"} regime.` : "No income tax applicable under new regime."}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-[24px] border-outline-variant/40 shadow-sm print:hidden">
+              <CardContent className="flex flex-wrap items-center justify-between gap-3 p-5">
+                <div>
+                  <p className="text-sm font-medium text-on-surface">Actions</p>
+                  <p className="mt-1 text-xs text-on-surface-variant">
+                    Save gross salary for AMS hike calculations or export the page as PDF.
+                  </p>
+                  {confirmed ? (
+                    <p className="mt-1 text-xs text-green-700 dark:text-green-300">
+                      Saved — monthly gross: {formatINR(breakup.monthlyGross)}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    onClick={handlePrint}
+                    variant="outline"
+                    className="border-[#00cec4]/30 text-[#008b85] hover:bg-[#00cec4]/8"
+                  >
+                    Print / PDF
+                  </Button>
+                  {selectedEmployeeId ? (
+                  <Button
+                      onClick={updateEmployee}
+                      disabled={saving || confirmed}
+                      className="bg-[#00cec4] text-white hover:bg-[#00b5ad]"
+                    >
+                      {saving ? "Saving..." : confirmed ? "Updated" : "Update Employee Salary"}
+                    </Button>
+                  ) : null}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
-
-      {/* Results */}
-      {breakup && (
-        <>
-          {/* Print-friendly section */}
-          <div id="salary-print-area" className="bg-white rounded-xl border border-gray-200 p-6 print:border-0 print:p-0">
-            <div className="flex items-start justify-between mb-5 print:mb-4">
-              <div>
-                <h2 className="font-semibold text-gray-900 text-lg">Salary Breakup</h2>
-                {selectedEmployeeId && (
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    {employees.find((e) => e.id === selectedEmployeeId)?.name}
-                  </p>
-                )}
-              </div>
-              <div className="text-right print:hidden flex gap-2">
-                <button
-                  onClick={handlePrint}
-                  className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 transition"
-                >
-                  Print / PDF
-                </button>
-              </div>
-            </div>
-
-            <SalaryTable breakup={breakup} />
-
-            {/* Quick summary chips */}
-            <div className="mt-5 flex flex-wrap gap-3 pt-4 border-t border-gray-100">
-              {[
-                { label: "Monthly Gross", value: formatINR(breakup.monthlyGross) },
-                { label: "Monthly In-Hand", value: formatINR(breakup.inHand), accent: true },
-                { label: "Annual CTC", value: formatINR(breakup.annualCTC) },
-              ].map((chip) => (
-                <div key={chip.label} className={`rounded-lg px-4 py-2 text-sm ${chip.accent ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-800"}`}>
-                  <span className="opacity-75">{chip.label}: </span>
-                  <span className="font-semibold">{chip.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Update employee action */}
-          {selectedEmployeeId && (
-            <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  Update salary for{" "}
-                  <strong>{employees.find((e) => e.id === selectedEmployeeId)?.name}</strong>
-                </p>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Saves CTC + monthly gross to employment record. Used for AMS hike calculations.
-                </p>
-                {confirmed && (
-                  <p className="text-xs text-green-700 mt-1">Saved — monthly gross: {formatINR(breakup.monthlyGross)}</p>
-                )}
-              </div>
-              <button
-                onClick={updateEmployee}
-                disabled={saving || confirmed}
-                className="shrink-0 px-5 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition"
-              >
-                {saving ? "Saving…" : confirmed ? "Updated" : "Update Employee Salary"}
-              </button>
-            </div>
-          )}
-        </>
-      )}
 
       <style>{`
         @media print {
           body > * { display: none !important; }
-          #salary-print-area { display: block !important; position: fixed; top: 0; left: 0; width: 100%; }
+          #salary-print-area { display: block !important; position: absolute; inset: 0; }
         }
       `}</style>
     </div>

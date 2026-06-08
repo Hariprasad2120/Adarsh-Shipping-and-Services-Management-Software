@@ -65,7 +65,7 @@ export default function CompanyOverview({
 
   return (
     <div id="company-overview-root" className="w-full space-y-12 animate-fadeIn text-neutral-900">
-      
+
       {/* Editorial Header Section */}
       <div className="space-y-6 max-w-2xl">
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-neutral-100 border border-neutral-200 rounded-full">
@@ -75,7 +75,7 @@ export default function CompanyOverview({
           </span>
         </div>
 
-        <h1 className="text-4xl md:text-5xl font-display font-black text-black tracking-tight leading-[1.1]">
+        <h1 className="ds-h1 heading-icon-none text-black leading-[1.1] md:text-[2rem]">
           The Decentralized Operating System for <span className="underline decoration-black decoration-wavy underline-offset-4 font-extrabold">Enterprise Core</span>.
         </h1>
 
@@ -125,7 +125,7 @@ export default function CompanyOverview({
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="font-display font-black text-lg text-black tracking-tight group-hover:underline decoration-black decoration-2">
+                  <h3 className="ds-h3 text-black group-hover:underline decoration-black decoration-2">
                     {m.title}
                   </h3>
                   <p className="text-xs text-neutral-500 leading-relaxed font-sans">{m.subtitle}</p>
@@ -135,7 +135,7 @@ export default function CompanyOverview({
                   <span className="font-mono text-[10px] text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
                     {m.stat}
                   </span>
-                  
+
                   <span className="text-xs font-mono text-black font-bold flex items-center gap-1 group-hover:translate-x-1 duration-200 transition-transform">
                     Explore Overview <ArrowUpRight className="h-3.5 w-3.5" />
                   </span>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DemoFillButton } from "@/components/demo-fill-button";
+import { Input } from "@/components/ui/input";
 import { getSetupDemoValues } from "@/lib/demo-fill";
 
 export default function SetupPage() {
@@ -56,7 +57,7 @@ export default function SetupPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Initial Setup</h1>
+          <h1 className="ds-h1 text-gray-900">Initial Setup</h1>
           <p className="text-sm text-gray-500 mt-1">
             Create your organisation and first administrator account.
           </p>
@@ -113,7 +114,7 @@ function Field({
       <label htmlFor={name} className="block text-sm font-medium text-gray-700">
         {label}
       </label>
-      <input
+      <Input
         id={name}
         name={name}
         type={type}
@@ -121,7 +122,6 @@ function Field({
         required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
       />
     </div>
   );

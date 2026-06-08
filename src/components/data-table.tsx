@@ -21,7 +21,7 @@ export function DataTable({
   children: ReactNode;
 }) {
   return (
-    <div className={cn("overflow-x-auto rounded-xl border border-gray-200 bg-white", className)}>
+    <div className={cn("overflow-x-auto rounded-xl border border-outline-variant/40 bg-surface text-on-surface", className)}>
       <table className={cn("min-w-full text-sm", tableClassName)} {...props}>
         {children}
       </table>
@@ -33,7 +33,7 @@ export function DataTableHeader({
   className,
   ...props
 }: HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn("border-b border-gray-200 bg-gray-50", className)} {...props} />;
+  return <thead className={cn("border-b border-outline-variant/40 bg-surface-container-low", className)} {...props} />;
 }
 
 export function DataTableBody({
@@ -47,7 +47,7 @@ export function DataTableRow({
   className,
   ...props
 }: HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("hover:bg-gray-50", className)} {...props} />;
+  return <tr className={cn("hover:bg-surface-container-low", className)} {...props} />;
 }
 
 export function DataTableHead({
@@ -58,6 +58,7 @@ export function DataTableHead({
     <th
       className={cn(
         "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500",
+        "text-on-surface-variant",
         className
       )}
       {...props}
@@ -69,7 +70,7 @@ export function DataTableCell({
   className,
   ...props
 }: TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-4 py-3 align-middle text-gray-700", className)} {...props} />;
+  return <td className={cn("px-4 py-3 align-middle text-on-surface", className)} {...props} />;
 }
 
 export function DataTableEmpty({
@@ -83,7 +84,7 @@ export function DataTableEmpty({
 }) {
   return (
     <DataTableRow className="hover:bg-transparent">
-      <DataTableCell colSpan={colSpan} className={cn("px-4 py-8 text-center text-gray-400", className)}>
+      <DataTableCell colSpan={colSpan} className={cn("px-4 py-8 text-center text-on-surface-variant", className)}>
         {message}
       </DataTableCell>
     </DataTableRow>
@@ -97,7 +98,7 @@ export function DataTableToolbar({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4",
+        "flex items-center justify-between gap-3 border-b border-outline-variant/30 px-5 py-4",
         className
       )}
       {...props}
@@ -131,8 +132,8 @@ export function MetaText({
 }) {
   return (
     <div className="min-w-0" title={title}>
-      <p className="truncate font-medium text-gray-900">{primary}</p>
-      {secondary ? <p className="truncate text-xs text-gray-400">{secondary}</p> : null}
+      <p className="truncate font-medium text-on-surface">{primary}</p>
+      {secondary ? <p className="truncate text-xs text-on-surface-variant">{secondary}</p> : null}
     </div>
   );
 }
