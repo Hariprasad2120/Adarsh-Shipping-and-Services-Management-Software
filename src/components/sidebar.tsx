@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import type { Caps } from "@/lib/rbac";
 import { getActiveItemHref, getVisibleSections, matchesPath } from "@/lib/navigation";
 import { Moon, Sun, LogOut } from "lucide-react";
@@ -16,6 +16,7 @@ function getIconColor(label: string, isActive: boolean) {
   if (lowerLabel.includes("dashboard")) return "text-[#00c4b6]";
   if (lowerLabel.includes("hrms")) return "text-[#818cf8]";
   if (lowerLabel.includes("attendance")) return "text-[#fbbf24]";
+  if (lowerLabel.includes("to-do") || lowerLabel.includes("todo") || lowerLabel.includes("task")) return "text-[#22c55e]";
   if (lowerLabel.includes("ams")) return "text-[#c084fc]";
   if (lowerLabel.includes("admin")) return "text-[#8b5cf6]";
   if (lowerLabel.includes("employee")) return "text-[#60a5fa]";
@@ -61,12 +62,9 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
     visibleSections[0]?.id ??
     "dashboard";
 
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-
-  useEffect(() => {
-    const isDark = document.documentElement.classList.contains("dark");
-    setTheme(isDark ? "dark" : "light");
-  }, []);
+  const [theme, setTheme] = useState<"light" | "dark">(() =>
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark") ? "dark" : "light"
+  );
 
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";

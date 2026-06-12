@@ -624,7 +624,7 @@ function InfoCard({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-[28px] border border-outline-variant/40 bg-surface p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
+    <div className="card-top-accent rounded-[28px] border border-outline-variant/40 bg-surface p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
       <div className="mb-6 flex items-center gap-3">
         <div className="flex items-center gap-3">
           <div className="text-on-surface">{icon}</div>
@@ -638,7 +638,7 @@ function InfoCard({
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="rounded-[28px] border border-outline-variant/40 bg-surface p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
+    <div className="card-top-accent rounded-[28px] border border-outline-variant/40 bg-surface p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
       <h2 className="ds-h2 mb-4 text-on-surface">{title}</h2>
       {children}
     </div>

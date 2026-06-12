@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -6,6 +7,23 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+});
+
+const kionaSans = localFont({
+  src: [
+    {
+      path: "../../public/Kiona-Regular.ttf",
+      style: "normal",
+      weight: "400",
+    },
+    {
+      path: "../../public/Kiona-Itallic.ttf",
+      style: "italic",
+      weight: "400",
+    },
+  ],
+  variable: "--font-kiona-sans",
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -27,7 +45,7 @@ export default function RootLayout({
     <html
   lang="en"
   suppressHydrationWarning
-  className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+  className={`${geistSans.variable} ${kionaSans.variable} ${geistMono.variable} h-full antialiased`}
 >
       <head>
         <script
@@ -54,7 +72,8 @@ export default function RootLayout({
           closeButton
           toastOptions={{
             style: {
-              fontFamily: "Arial, Helvetica, sans-serif",
+              fontFamily: "var(--font-sans), sans-serif",
+              fontSize: "14px",
             },
           }}
         />

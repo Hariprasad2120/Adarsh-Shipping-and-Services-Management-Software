@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CriteriaPointsForm } from "@/components/ams/criteria-points-form";
+import type { EmployeeSummaryField } from "@/components/ams/criteria-points-form";
 import type { AppraisalSelfFormTemplate, SelfAssessmentAnswers } from "@/modules/ams/criteria-config";
 import type { CriterionPoint } from "@/modules/ams/types";
 import { useNotifications } from "@/components/notifications/notification-provider";
@@ -26,6 +27,7 @@ export function SelfAssessmentForm({
   canEdit,
   status,
   template,
+  employeeSummary,
 }: {
   appraisalId: string;
   criteria: CriterionPoint[];
@@ -35,6 +37,7 @@ export function SelfAssessmentForm({
   canEdit: boolean;
   status: string | null;
   template: AppraisalSelfFormTemplate;
+  employeeSummary: EmployeeSummaryField[];
 }) {
   const router = useRouter();
   const [nowMs, setNowMs] = useState(() => new Date(serverNow).getTime());
@@ -112,6 +115,7 @@ export function SelfAssessmentForm({
         onSubmitFinal={(answers) => persist("SUBMITTED", answers as SelfAssessmentAnswers)}
         disabled={!isEditable}
         selfTemplate={template}
+        employeeSummary={employeeSummary}
       />
     </div>
   );

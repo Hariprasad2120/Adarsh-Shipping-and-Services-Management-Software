@@ -1,5 +1,39 @@
 import { db } from "@/lib/db";
 
+const MANAGEMENT_ROLE_PERMISSION_KEYS = [
+  "hrms.employee.read",
+  "hrms.documents.read",
+  "attendance.reports.view",
+  "ams.appraisal.management_review",
+  "ams.meeting.minutes",
+  "ams.hike.finalise",
+  "ams.appraisal.view_all",
+] as const;
+
+async function ensureManagementRole(orgId: string) {
+  const existing = await db.role.findUnique({
+    where: { orgId_name: { orgId, name: "Management" } },
+    select: { id: true },
+  });
+
+  if (existing) return;
+
+  const role = await db.role.create({
+    data: { orgId, name: "Management", isSystem: true },
+  });
+
+  const permissions = await db.permission.findMany({
+    where: { key: { in: [...MANAGEMENT_ROLE_PERMISSION_KEYS] } },
+    select: { id: true },
+  });
+
+  if (permissions.length > 0) {
+    await db.rolePermission.createMany({
+      data: permissions.map((permission) => ({ roleId: role.id, permissionId: permission.id })),
+    });
+  }
+}
+
 export async function getOrg(orgId: string) {
   return db.organisation.findUnique({
     where: { id: orgId },
@@ -45,6 +79,7 @@ export async function deleteDivision(id: string) {
 
 // Roles
 export async function getRoles(orgId: string) {
+  await ensureManagementRole(orgId);
   return db.role.findMany({
     where: { orgId },
     orderBy: { name: "asc" },

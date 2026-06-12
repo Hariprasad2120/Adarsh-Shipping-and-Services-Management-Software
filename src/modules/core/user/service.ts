@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { hash } from "bcryptjs";
 import { getNow } from "@/lib/clock";
 import { Prisma } from "@/generated/prisma/client";
+import { syncEmployeeAppraisalSchedule } from "@/modules/ams/service";
 
 export type CreateUserInput = {
   orgId: string;
@@ -97,7 +98,7 @@ export async function getUser(id: string) {
 export async function createUser(input: CreateUserInput) {
   const passwordHash = await hash(input.password, 12);
 
-  return db.$transaction(async (tx) => {
+  const user = await db.$transaction(async (tx) => {
     const user = await tx.user.create({
       data: {
         orgId: input.orgId,
@@ -133,6 +134,15 @@ export async function createUser(input: CreateUserInput) {
 
     return user;
   });
+
+  await syncEmployeeAppraisalSchedule({
+    orgId: input.orgId,
+    employeeId: user.id,
+    joinDate: input.joinDate,
+    priorExperienceYears: input.priorExperienceYears ?? 0,
+  });
+
+  return user;
 }
 
 export async function updateUser(id: string, data: {
@@ -164,11 +174,27 @@ export async function updateEmploymentRecord(userId: string, data: {
   priorExperienceYears?: number | null;
   exitDate?: Date | null;
 }) {
-  return db.employmentRecord.upsert({
+  const user = await db.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { orgId: true },
+  });
+
+  const record = await db.employmentRecord.upsert({
     where: { userId },
     update: data,
     create: { userId, joinDate: await getNow(), ...data },
   });
+
+  if (user.orgId && !record.exitDate) {
+    await syncEmployeeAppraisalSchedule({
+      orgId: user.orgId,
+      employeeId: userId,
+      joinDate: record.joinDate,
+      priorExperienceYears: record.priorExperienceYears ?? 0,
+    });
+  }
+
+  return record;
 }
 
 export async function resetPassword(userId: string, newPassword: string) {

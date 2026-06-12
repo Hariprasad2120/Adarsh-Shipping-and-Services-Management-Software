@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, BriefcaseBusiness, CalendarDays, ExternalLink, Info, Sparkles, Users } from "lucide-react";
+import { AlertCircle, BriefcaseBusiness, CalendarDays, CircleUserRound, ExternalLink, Info, Sparkles, Users } from "lucide-react";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
 import type { SalaryRevisionSummary } from "@/modules/hrms/salary-revisions-shared";
@@ -29,7 +30,7 @@ function kindLabel(kind: "ANNUAL" | "INTERMEDIATE") {
 }
 
 function sectionCardClass(extra = "") {
-  return `rounded-[28px] border border-outline-variant/40 bg-surface p-5 shadow-sm sm:p-6 ${extra}`.trim();
+  return `card-top-accent rounded-[28px] border border-outline-variant/40 bg-surface p-5 shadow-sm sm:p-6 ${extra}`.trim();
 }
 
 function ToggleCard({
@@ -67,21 +68,29 @@ function SalaryHistoryCard({
   employeeId: string;
   summary: SalaryRevisionSummary | null;
 }) {
-  const historyOptions = summary?.revisions.slice(1).map((revision) => ({
-    value: revision.id,
-    label: `${revision.effectiveLabel} - ${formatINR(revision.revisedCtcAnnual)}`,
-  })) ?? [];
-  const [selectedHistoryId, setSelectedHistoryId] = useState(historyOptions[0]?.value ?? "");
+  const monthOptions = useMemo(() => {
+    if (!summary?.revisions.length) return [];
+
+    return Array.from(
+      new Map(
+        summary.revisions.map((revision) => [
+          revision.effectiveLabel,
+          {
+            value: revision.effectiveLabel,
+            label: revision.effectiveLabel,
+          },
+        ]),
+      ).values(),
+    );
+  }, [summary]);
+  const [selectedMonth, setSelectedMonth] = useState("ALL");
+  const activeMonth = monthOptions.some((option) => option.value === selectedMonth) ? selectedMonth : "ALL";
 
   const rows = useMemo(() => {
-    if (!summary?.latestRevision) return [];
-    const selectedPast =
-      summary.revisions.find((revision) => revision.id === selectedHistoryId) ??
-      summary.revisions[1] ??
-      null;
-
-    return [summary.latestRevision, ...(selectedPast && selectedPast.id !== summary.latestRevision.id ? [selectedPast] : [])];
-  }, [selectedHistoryId, summary]);
+    if (!summary?.revisions.length) return [];
+    if (activeMonth === "ALL") return summary.revisions;
+    return summary.revisions.filter((revision) => revision.effectiveLabel === activeMonth);
+  }, [activeMonth, summary]);
 
   if (!summary || !summary.latestRevision) {
     return (
@@ -121,19 +130,19 @@ function SalaryHistoryCard({
 
       <div className="mt-6">
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-medium text-[#6f86ad]">Recent Revisions</p>
-          {historyOptions.length > 0 ? (
+          <p className="text-sm font-medium text-[#6f86ad]">Revision History</p>
+          {monthOptions.length > 0 ? (
             <div className="w-full max-w-sm">
               <DropdownSelect
-                ariaLabel="Past revision history"
-                onValueChange={setSelectedHistoryId}
+                ariaLabel="Filter revision history by month"
+                onValueChange={setSelectedMonth}
                 options={[
-                  { value: historyOptions[0].value, label: `Past history - ${historyOptions[0].label}` },
-                  ...historyOptions.slice(1),
+                  { value: "ALL", label: "All months" },
+                  ...monthOptions,
                 ]}
-                placeholder="Past history"
+                placeholder="Filter by month"
                 triggerClassName="py-2.5 text-sm"
-                value={selectedHistoryId}
+                value={activeMonth}
               />
             </div>
           ) : null}
@@ -177,7 +186,7 @@ function InlineMetric({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-sm text-[#8ca0c2]">{label}</p>
-      <p className="ds-numeric mt-1 text-[1.4rem] font-semibold text-on-surface">{value}</p>
+      <p className="mt-1 text-[1rem] font-normal text-on-surface sm:text-[1.05rem]">{value}</p>
     </div>
   );
 }
@@ -193,6 +202,7 @@ function IndianRupeeIcon() {
 export function StartAppraisalClient({
   canStartSpecial,
   employee,
+  employeeDetailsHref,
   hrUsers,
   managerUsers,
   salarySummary,
@@ -209,6 +219,7 @@ export function StartAppraisalClient({
     tenureLabel: string;
     employeeTypeLabel: string;
   };
+  employeeDetailsHref: string;
   hrUsers: ReviewerOption[];
   managerUsers: ReviewerOption[];
   salarySummary: SalaryRevisionSummary | null;
@@ -231,6 +242,18 @@ export function StartAppraisalClient({
   const [includeSpecialTL, setIncludeSpecialTL] = useState(true);
   const [includeSpecialManager, setIncludeSpecialManager] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+
+  const scheduledReviewersReady =
+    Boolean(scheduledAppraisal?.dueDate) &&
+    Boolean(scheduledHR) &&
+    (!includeScheduledTL || Boolean(scheduledTL)) &&
+    (!includeScheduledManager || Boolean(scheduledManager));
+
+  const specialReviewersReady =
+    Boolean(specialDate) &&
+    Boolean(specialHR) &&
+    (!includeSpecialTL || Boolean(specialTL)) &&
+    (!includeSpecialManager || Boolean(specialManager));
 
   async function startFlow(mode: "scheduled" | "special") {
     const isScheduled = mode === "scheduled";
@@ -294,11 +317,20 @@ export function StartAppraisalClient({
   return (
     <div className="space-y-5">
       <div className={sectionCardClass()}>
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))_minmax(0,1fr)_auto] xl:items-start">
           <EmployeeInfo icon={<Users className="size-4" />} label="Emp #" value={employee.employeeNumber} />
           <EmployeeInfo icon={<CalendarDays className="size-4" />} label="Joining Date" value={employee.joinDateLabel} />
           <EmployeeInfo icon={<BriefcaseBusiness className="size-4" />} label="Tenure" value={employee.tenureLabel} />
           <EmployeeInfo icon={<Sparkles className="size-4" />} label="Type" value={employee.employeeTypeLabel} accent />
+          <div className="xl:justify-self-end">
+            <Link
+              href={employeeDetailsHref}
+              className="inline-flex items-center gap-2 self-start rounded-2xl border border-outline-variant/40 bg-surface px-4 py-2.5 text-sm font-medium text-on-surface shadow-sm transition hover:border-[#00cec4]/35 hover:text-[#00a79f]"
+            >
+              <CircleUserRound className="size-4" />
+              Employee Details
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -366,8 +398,12 @@ export function StartAppraisalClient({
             <button
               type="button"
               onClick={() => startFlow("scheduled")}
-              disabled={saving !== ""}
-              className="rounded-2xl bg-[#9ec3ce] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#7eafbc] disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={saving !== "" || !scheduledReviewersReady}
+              className={
+                scheduledReviewersReady
+                  ? "rounded-2xl bg-[#00cec4] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#00b8af] disabled:cursor-not-allowed disabled:opacity-50"
+                  : "rounded-2xl bg-slate-300 px-5 py-3 text-sm font-medium text-slate-500 transition disabled:cursor-not-allowed"
+              }
             >
               {saving === "scheduled" ? "Assigning..." : "Assign Reviewers"}
             </button>
@@ -380,7 +416,7 @@ export function StartAppraisalClient({
       </div>
 
       {canStartSpecial ? (
-        <div className={sectionCardClass("border-[#b990ff]/55 shadow-[0_0_0_1px_rgba(185,144,255,0.08)]")}>
+        <div className={sectionCardClass("card-top-accent-violet border-[#b990ff]/55 shadow-[0_0_0_1px_rgba(185,144,255,0.08)]")}>
           <SectionHeader
             icon={<Sparkles className="size-5 text-[#8a52ff]" />}
             title="Start Special Appraisal"
@@ -447,8 +483,12 @@ export function StartAppraisalClient({
             <button
               type="button"
               onClick={() => startFlow("special")}
-              disabled={saving !== ""}
-              className="rounded-2xl bg-[#ba92ff] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#a678ff] disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={saving !== "" || !specialReviewersReady}
+              className={
+                specialReviewersReady
+                  ? "rounded-2xl bg-[#00cec4] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#00b8af] disabled:cursor-not-allowed disabled:opacity-50"
+                  : "rounded-2xl bg-slate-300 px-5 py-3 text-sm font-medium text-slate-500 transition disabled:cursor-not-allowed"
+              }
             >
               {saving === "special" ? "Starting..." : "Start Special Appraisal"}
             </button>
@@ -487,7 +527,7 @@ function ReviewerSelectors({
   tlUsers: ReviewerOption[];
 }) {
   return (
-    <div className={`grid gap-4 ${includeTL || includeManager ? "xl:grid-cols-3" : "xl:grid-cols-1"}`}>
+    <div className="grid gap-4 xl:grid-cols-3">
       <ReviewerField
         accent="bg-emerald-500"
         ariaLabel={hrLabel}
@@ -589,11 +629,11 @@ function EmployeeInfo({
       </div>
       <div className="mt-2">
         {accent ? (
-          <span className="inline-flex rounded-full bg-[#dfe8ff] px-2.5 py-0.5 text-sm font-medium text-[#4267d6]">
+          <span className="inline-flex rounded-full bg-[#dfe8ff] px-2 py-0.5 text-xs font-medium text-[#4267d6]">
             {value}
           </span>
         ) : (
-          <p className="text-[1.65rem] font-medium text-on-surface">{value}</p>
+          <p className="mt-0.5 text-[0.95rem] font-normal text-on-surface sm:text-[1rem]">{value}</p>
         )}
       </div>
     </div>

@@ -47,17 +47,34 @@ export default async function NotificationsPage({
   });
 
   return (
-    <div className="space-y-4">
-      <form className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="space-y-5">
+      <form className="grid gap-3 rounded-[26px] border border-outline-variant/45 bg-white/78 p-5 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.16)] backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-5">
         <NotificationFilters
           requiresAck={typeof params.requiresAck === "string" ? params.requiresAck : "all"}
           status={typeof params.status === "string" ? params.status : "all"}
         />
-        <Input name="kind" defaultValue={typeof params.kind === "string" ? params.kind : ""} placeholder="Notification kind" />
-        <Input name="from" type="date" defaultValue={typeof params.from === "string" ? params.from : ""} />
+        <Input
+          name="kind"
+          defaultValue={typeof params.kind === "string" ? params.kind : ""}
+          placeholder="Notification kind"
+          className="border-outline-variant/60 bg-white"
+        />
+        <Input
+          name="from"
+          type="date"
+          defaultValue={typeof params.from === "string" ? params.from : ""}
+          className="border-outline-variant/60 bg-white"
+        />
         <div className="flex gap-2">
-          <Input name="to" type="date" defaultValue={typeof params.to === "string" ? params.to : ""} className="w-full" />
-          <Button type="submit" size="sm">Filter</Button>
+          <Input
+            name="to"
+            type="date"
+            defaultValue={typeof params.to === "string" ? params.to : ""}
+            className="w-full border-outline-variant/60 bg-white"
+          />
+          <Button type="submit" size="sm" className="rounded-full border-0 bg-[#00cec4] px-4 text-white hover:bg-[#00b8af]">
+            Filter
+          </Button>
         </div>
       </form>
 
@@ -78,7 +95,7 @@ function NotificationFilters({
       <DropdownSelect
         name="status"
         defaultValue={status}
-        triggerClassName="border-slate-200"
+        triggerClassName="border-outline-variant/60 bg-white"
         options={[
           { value: "all", label: "All statuses" },
           { value: "unread", label: "Unread" },
@@ -90,7 +107,7 @@ function NotificationFilters({
       <DropdownSelect
         name="requiresAck"
         defaultValue={requiresAck}
-        triggerClassName="border-slate-200"
+        triggerClassName="border-outline-variant/60 bg-white"
         options={[
           { value: "all", label: "Ack required or not" },
           { value: "yes", label: "Ack required" },

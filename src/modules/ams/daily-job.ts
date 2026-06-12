@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { notifyMany } from "@/lib/notify";
 import { dueOnDate } from "./due-dates";
-import { createAppraisalForEmployee, openPastDeadlineAssessments, advancePastDeadlineStages, notifyStalePendingReviewers } from "./service";
+import { createAppraisalForEmployee, openPastDeadlineAssessments, advancePastDeadlineStages, notifyStalePendingReviewers, syncOrgAppraisalSchedules } from "./service";
 
 const EXEMPT_PERMISSION_KEYS = ["ams.appraisal.management_review", "admin.org.manage"];
 
@@ -17,6 +17,8 @@ export async function runAppraisalDailyJob(now: Date): Promise<{ created: number
   let created = 0;
 
   for (const org of orgs) {
+    await syncOrgAppraisalSchedules(org.id);
+
     const employees = await db.user.findMany({
       where: { orgId: org.id, active: true },
       include: {

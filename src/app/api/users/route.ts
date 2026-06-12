@@ -2,13 +2,14 @@ import { NextRequest } from "next/server";
 import { getSessionOrUnauth, ok, err } from "@/lib/api-helpers";
 import { requirePermission } from "@/lib/rbac";
 import { listUsers, createUser } from "@/modules/core/user/service";
+import type { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
 
-function compactJson(value: unknown): any {
+function compactJson(value: unknown): Prisma.InputJsonValue | undefined {
   if (Array.isArray(value)) {
     const items = value
       .map((item) => compactJson(item))
-      .filter((item) => item !== undefined);
+      .filter((item): item is Prisma.InputJsonValue => item !== undefined);
     return items.length > 0 ? items : undefined;
   }
 
@@ -17,10 +18,10 @@ function compactJson(value: unknown): any {
       .map(([key, entryValue]) => [key, compactJson(entryValue)] as const)
       .filter(([, entryValue]) => entryValue !== undefined);
 
-    return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+    return entries.length > 0 ? (Object.fromEntries(entries) as Prisma.InputJsonValue) : undefined;
   }
 
-  return value === undefined ? undefined : value;
+  return value === undefined ? undefined : (value as Prisma.InputJsonValue);
 }
 
 export async function GET(req: NextRequest) {
@@ -80,6 +81,15 @@ const createSchema = z.object({
       stateCode: z.string().optional(),
       postalCode: z.string().optional(),
       country: z.string().optional(),
+    }).optional(),
+    bankDetails: z.object({
+      holderName: z.string().optional(),
+      bankName: z.string().optional(),
+      accountNumber: z.string().optional(),
+      ifscCode: z.string().optional(),
+      accountType: z.string().optional(),
+      paymentMode: z.string().optional(),
+      stateCode: z.string().optional(),
     }).optional(),
     workLocation: z.object({
       addressLine1: z.string().optional(),

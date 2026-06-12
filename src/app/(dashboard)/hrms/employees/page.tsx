@@ -1,13 +1,13 @@
-import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/rbac";
 import { listUsers } from "@/modules/core/user/service";
 import { getOrg, getRoles } from "@/modules/core/organisation/service";
 import { UsersRound } from "lucide-react";
-import { EmployeeList } from "./employee-list";
+import { EmployeeDirectoryActions, EmployeeList } from "./employee-list";
 
 type EmployeeListProps = React.ComponentProps<typeof EmployeeList>;
+type EmployeeDirectoryActionsProps = React.ComponentProps<typeof EmployeeDirectoryActions>;
 
 export default async function EmployeesPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const session = await auth();
@@ -35,21 +35,22 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="ds-h1 heading-icon-none flex items-center gap-4 text-gray-900">
-          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
-            <UsersRound className="size-5" />
-          </span>
-          Employees
-        </h1>
-        <Link href="/hrms/employees/new" className="px-4 py-2 rounded-lg bg-[#00cec4] text-sm font-medium text-white transition hover:bg-[#00b5ad]">
-          + Onboard
-        </Link>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-3">
+          <h1 className="ds-h1 heading-icon-none flex items-center gap-4 text-gray-900">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
+              <UsersRound className="size-5" />
+            </span>
+            Employees
+          </h1>
+        </div>
+        <EmployeeDirectoryActions
+          org={org as EmployeeDirectoryActionsProps["org"]}
+          roles={roles as EmployeeDirectoryActionsProps["roles"]}
+        />
       </div>
       <EmployeeList
         users={safeUsers as EmployeeListProps["users"]}
-        org={org as EmployeeListProps["org"]}
-        roles={roles as EmployeeListProps["roles"]}
       />
     </div>
   );

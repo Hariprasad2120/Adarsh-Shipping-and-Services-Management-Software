@@ -8,6 +8,24 @@ import { SelfAssessmentForm } from "./self-assessment-form";
 import type { AppraisalSelfFormTemplate, SelfAssessmentAnswers } from "@/modules/ams/criteria-config";
 import { mapCriterionRowToPoint } from "@/modules/ams/form-template";
 import type { CriterionPoint } from "@/modules/ams/types";
+import type { EmployeeSummaryField } from "@/components/ams/criteria-points-form";
+
+function formatDate(value: Date | null | undefined) {
+  if (!value) return "-";
+  return value.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function formatYearsOfAssociation(joinDate: Date | null | undefined, now: Date) {
+  if (!joinDate) return "-";
+  const diffMs = now.getTime() - joinDate.getTime();
+  if (diffMs <= 0) return "Less than 1 month";
+  const totalMonths = Math.max(1, Math.floor(diffMs / (1000 * 60 * 60 * 24 * 30.4375)));
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
+  if (years === 0) return `${months} month${months === 1 ? "" : "s"}`;
+  if (months === 0) return `${years} year${years === 1 ? "" : "s"}`;
+  return `${years} year${years === 1 ? "" : "s"} ${months} month${months === 1 ? "" : "s"}`;
+}
 
 export default async function SelfAssessmentPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -58,6 +76,15 @@ export default async function SelfAssessmentPage({ params }: { params: Promise<{
       };
 
   const editCount = (appraisal.selfAssessment as { editCount?: number } | null)?.editCount ?? 0;
+  const employeeSummary: EmployeeSummaryField[] = [
+    { label: "Employee", value: appraisal.employee.name },
+    { label: "Department", value: appraisal.employee.department?.name ?? "-" },
+    { label: "Designation", value: appraisal.employee.designation ?? "-" },
+    { label: "Joining date", value: formatDate(appraisal.employee.employmentRecord?.joinDate) },
+    { label: "Years of association", value: formatYearsOfAssociation(appraisal.employee.employmentRecord?.joinDate, now) },
+    { label: "Appraisal cycle", value: appraisal.cycle.name },
+    { label: "Due date", value: formatDate(appraisal.dueDate) },
+  ];
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -91,6 +118,7 @@ export default async function SelfAssessmentPage({ params }: { params: Promise<{
         canEdit={canEdit}
         status={appraisal.selfAssessment?.status ?? null}
         template={selfTemplate as AppraisalSelfFormTemplate}
+        employeeSummary={employeeSummary}
       />
     </div>
   );

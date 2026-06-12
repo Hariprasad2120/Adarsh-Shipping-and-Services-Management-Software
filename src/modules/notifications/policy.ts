@@ -9,7 +9,7 @@ export type NotificationVariant =
 
 export type NotificationAppearance = "solid" | "outline" | "light" | "stroke";
 export type NotificationPriority = "normal" | "important";
-export type NotificationSource = "AMS" | "Attendance" | "HRMS" | "Admin" | "System";
+export type NotificationSource = "AMS" | "Attendance" | "HRMS" | "Admin" | "System" | "To-Do";
 
 export type NotificationPolicy = {
   source: NotificationSource;
@@ -187,6 +187,18 @@ export const NOTIFICATION_POLICIES: Record<string, NotificationPolicy> = {
     autoFadeMs: 5000,
     emailByDefault: true,
     labels: { open: "View leave status" },
+  },
+  TODO_REMINDER: {
+    source: "To-Do",
+    variant: "warning",
+    appearance: "light",
+    priority: "normal",
+    requiresAck: false,
+    resendable: false,
+    allowDismiss: true,
+    autoFadeMs: 5000,
+    emailByDefault: false,
+    labels: { open: "Open task" },
   },
 };
 

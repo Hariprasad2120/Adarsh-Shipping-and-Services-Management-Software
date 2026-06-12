@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, CheckCircle2, Circle, ClipboardList, FileText, Star } from "lucide-react";
+import { CalendarDays, CheckCircle2, Circle, ClipboardList, FileText, Info, Star, Users } from "lucide-react";
 import { CriteriaPointsView } from "@/components/ams/criteria-points-form";
 import { Button } from "@/components/ui/button";
 import type {
@@ -89,6 +89,13 @@ const STATUS_BADGE: Record<string, string> = {
   FORCED: "bg-orange-100 text-orange-600",
 };
 
+const KIND_LABEL: Record<string, string> = {
+  HR: "HR",
+  TL: "Team Lead",
+  MANAGER: "Manager",
+  MANAGEMENT: "Management",
+};
+
 // ─── AppraisalDetail ──────────────────────────────────────────────────────────
 
 export function AppraisalDetail({
@@ -152,7 +159,8 @@ export function AppraisalDetail({
   const canClaimManagement = caps["ams.appraisal.management_review"] && !managementClaim;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       {/* Left — stage header + actions */}
       <div className="lg:col-span-2 space-y-4">
         {/* Stage header */}
@@ -235,12 +243,222 @@ export function AppraisalDetail({
             ))}
           </div>
         </Card>
+
       </div>
+      </div>
+
+      {appraisal.stage === "REVIEWERS_ASSIGNED" && caps["ams.appraisal.assign_reviewers"] ? (
+        <UpdateReviewersCard
+          appraisal={appraisal}
+          hrUsers={hrUsers}
+          tlUsers={tlUsers}
+          managerUsers={managerUsers}
+          caps={caps}
+          onAction={api}
+          saving={saving}
+        />
+      ) : null}
     </div>
   );
 }
 
 // ─── Stage Actions ────────────────────────────────────────────────────────────
+
+function UpdateReviewersCard({
+  appraisal,
+  hrUsers,
+  tlUsers,
+  managerUsers,
+  caps,
+  onAction,
+  saving,
+}: {
+  appraisal: Appraisal;
+  hrUsers: SlimUser[];
+  tlUsers: SlimUser[];
+  managerUsers: SlimUser[];
+  caps: Record<string, boolean>;
+  onAction: (path: string, body: object) => Promise<boolean>;
+  saving: boolean;
+}) {
+  const existingHR = appraisal.reviewers.find((reviewer) => reviewer.kind === "HR")?.userId ?? "";
+  const existingTL = appraisal.reviewers.find((reviewer) => reviewer.kind === "TL")?.userId ?? "";
+  const existingManager = appraisal.reviewers.find((reviewer) => reviewer.kind === "MANAGER")?.userId ?? "";
+  const [selectedHR, setSelectedHR] = useState(existingHR);
+  const [selectedTL, setSelectedTL] = useState(existingTL);
+  const [selectedManager, setSelectedManager] = useState(existingManager);
+  const [includeTL, setIncludeTL] = useState(Boolean(existingTL));
+  const [includeManager, setIncludeManager] = useState(Boolean(existingManager));
+  const canForceReviewer = caps["ams.appraisal.force_reviewer"];
+
+  function buildReviewers() {
+    const list: { userId: string; kind: string }[] = [];
+    if (selectedHR) list.push({ userId: selectedHR, kind: "HR" });
+    if (includeTL && selectedTL) list.push({ userId: selectedTL, kind: "TL" });
+    if (includeManager && selectedManager) list.push({ userId: selectedManager, kind: "MANAGER" });
+    return list;
+  }
+
+  return (
+    <div className="card-top-accent rounded-[28px] border border-outline-variant/40 bg-surface p-5 shadow-sm sm:p-6">
+      <div className="space-y-5">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
+            <Users className="size-4.5" />
+          </span>
+          <div>
+            <h2 className="ds-h2 text-on-surface">Assign Reviewers</h2>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-800">
+          <span className="inline-flex items-center gap-2">
+            <Info className="size-4 shrink-0" />
+            <span>
+              Appraisal active: <strong>{appraisal.cycle.name}</strong> - reviewer assignment updates will refresh availability.
+            </span>
+          </span>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <ToggleCard
+            active={includeTL}
+            label="Include TL Reviewer"
+            description="Adds TL as an assigned reviewer"
+            onToggle={() => {
+              setIncludeTL((current) => {
+                const next = !current;
+                if (!next) setSelectedTL("");
+                return next;
+              });
+            }}
+          />
+          <ToggleCard
+            active={includeManager}
+            label="Include Manager Reviewer"
+            description="Adds Manager as an assigned reviewer"
+            onToggle={() => {
+              setIncludeManager((current) => {
+                const next = !current;
+                if (!next) setSelectedManager("");
+                return next;
+              });
+            }}
+          />
+        </div>
+
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <span className="flex items-center gap-2 text-sm font-medium text-on-surface">
+              <span className="inline-flex h-3.5 w-3.5 rounded-full bg-emerald-400" />
+              HR Reviewer
+            </span>
+            <DropdownSelect
+              ariaLabel="Select HR"
+              onValueChange={setSelectedHR}
+              options={[
+                { value: "", label: "Select an option" },
+                ...hrUsers.filter((user) => user.id !== appraisal.employee.id).map((user) => ({ value: user.id, label: user.name })),
+              ]}
+              triggerClassName="h-11 max-w-[530px] px-4 text-sm"
+              value={selectedHR}
+            />
+          </div>
+
+          {includeTL ? (
+            <div className="space-y-2">
+              <span className="flex items-center gap-2 text-sm font-medium text-on-surface">
+                <span className="inline-flex h-3.5 w-3.5 rounded-full bg-emerald-400" />
+                TL Reviewer
+              </span>
+              <DropdownSelect
+                ariaLabel="Select team lead"
+                onValueChange={setSelectedTL}
+                options={[
+                  { value: "", label: "Select an option" },
+                  ...tlUsers.filter((user) => user.id !== appraisal.employee.id).map((user) => ({ value: user.id, label: user.name })),
+                ]}
+                triggerClassName="h-11 max-w-[530px] px-4 text-sm"
+                value={selectedTL}
+              />
+            </div>
+          ) : null}
+
+          {includeManager ? (
+            <div className="space-y-2">
+              <span className="flex items-center gap-2 text-sm font-medium text-on-surface">
+                <span className="inline-flex h-3.5 w-3.5 rounded-full bg-emerald-400" />
+                Manager Reviewer
+              </span>
+              <DropdownSelect
+                ariaLabel="Select manager"
+                onValueChange={setSelectedManager}
+                options={[
+                  { value: "", label: "Select an option" },
+                  ...managerUsers.filter((user) => user.id !== appraisal.employee.id).map((user) => ({ value: user.id, label: user.name })),
+                ]}
+                triggerClassName="h-11 max-w-[530px] px-4 text-sm"
+                value={selectedManager}
+              />
+            </div>
+          ) : null}
+        </div>
+
+        {canForceReviewer ? (
+          <div className="space-y-3 rounded-2xl border border-outline-variant/35 bg-surface-container-low px-4 py-4">
+            <div>
+              <p className="text-sm font-medium text-on-surface">Reviewer Availability Controls</p>
+              <p className="mt-1 text-xs text-on-surface-variant">Force a reviewer to available if you need to unblock the appraisal.</p>
+            </div>
+            <div className="space-y-3">
+              {appraisal.reviewers
+                .filter((reviewer) => reviewer.kind !== "MANAGEMENT")
+                .map((reviewer) => {
+                  const isForceEnabled = reviewer.availabilityStatus === "FORCED" || reviewer.availabilityStatus === "AVAILABLE";
+                  return (
+                    <div key={reviewer.id} className="flex flex-col gap-3 rounded-2xl border border-outline-variant/35 bg-surface px-4 py-3 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-on-surface">{reviewer.user.name}</p>
+                        <p className="mt-1 text-xs text-on-surface-variant">
+                          {(KIND_LABEL[reviewer.kind] ?? reviewer.kind)} - current status {reviewer.availabilityStatus}
+                        </p>
+                      </div>
+                      <ReviewerToggleRow
+                        active={isForceEnabled}
+                        compact
+                        label="Force available"
+                        onToggle={() => onAction("availability", {
+                          available: !isForceEnabled,
+                          force: !isForceEnabled,
+                          userId: reviewer.userId,
+                        })}
+                      />
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        ) : null}
+
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+          Re-assigning will reset all reviewer availability. The original deadline is kept.
+        </p>
+        <div className="flex justify-start">
+          <Button
+            onClick={() => onAction("reviewers", { reviewers: buildReviewers() })}
+            disabled={saving || !selectedHR}
+            size="sm"
+            className={selectedHR
+              ? "rounded-2xl border-0 bg-[#00cec4] px-5 py-3 text-sm font-medium text-white hover:bg-[#00b8af]"
+              : "rounded-2xl bg-slate-300 px-5 py-3 text-sm font-medium text-slate-500 transition disabled:cursor-not-allowed"}
+          >
+            Update Reviewers
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function StageActions({
   appraisal, hrUsers, tlUsers, managerUsers, caps,
@@ -300,7 +518,7 @@ function StageActions({
     <div className="space-y-4">
 
       {/* Update reviewers */}
-      {stage === "REVIEWERS_ASSIGNED" && caps["ams.appraisal.assign_reviewers"] && (
+      {false && stage === "REVIEWERS_ASSIGNED" && caps["ams.appraisal.assign_reviewers"] && (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="space-y-6">
             <div className="space-y-1">
@@ -916,9 +1134,37 @@ function MeetingSection({ meeting, onAddMinute, caps, saving }: {
 
 // ─── Primitives ───────────────────────────────────────────────────────────────
 
+function ToggleCard({
+  active,
+  label,
+  description,
+  onToggle,
+}: {
+  active: boolean;
+  label: string;
+  description: string;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex w-full items-center justify-between rounded-2xl border border-outline-variant/35 bg-surface px-4 py-3 text-left transition hover:border-[#00cec4]/45"
+    >
+      <div>
+        <p className="font-medium text-on-surface">{label}</p>
+        <p className="mt-1 text-xs text-on-surface-variant">{description}</p>
+      </div>
+      <span className={`relative inline-flex h-7 w-12 rounded-full transition ${active ? "bg-[#55627f]" : "bg-slate-300 dark:bg-slate-600"}`}>
+        <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${active ? "left-6" : "left-1"}`} />
+      </span>
+    </button>
+  );
+}
+
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
+    <div className="card-top-accent bg-white rounded-xl border border-gray-200 p-5 space-y-3">
       {title && <h2 className="ds-h2 text-gray-900">{title}</h2>}
       {children}
     </div>
@@ -928,10 +1174,12 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 function ReviewerToggleRow({
   active,
   label,
+  compact = false,
   onToggle,
 }: {
   active: boolean;
   label: string;
+  compact?: boolean;
   onToggle: () => void;
 }) {
   return (
@@ -939,16 +1187,16 @@ function ReviewerToggleRow({
       type="button"
       aria-pressed={active}
       onClick={onToggle}
-      className={`flex w-full items-center justify-between rounded-xl px-4 py-4 text-left transition ${
+      className={`flex ${compact ? "w-auto min-w-[190px]" : "w-full"} items-center justify-between rounded-2xl ${compact ? "px-3 py-2.5" : "px-4 py-4"} text-left transition ${
         active
-          ? "bg-slate-50 text-indigo-700"
-          : "bg-slate-50 text-indigo-600 hover:bg-slate-100"
-      }`}
+          ? "bg-surface text-on-surface"
+          : "bg-surface text-on-surface-variant hover:border-[#00cec4]/35"
+      } ${compact ? "border border-outline-variant/35" : "border border-outline-variant/35"}`}
     >
-      <span className="text-sm font-medium">{label}</span>
+      <span className={`${compact ? "text-xs uppercase tracking-[0.14em]" : "text-sm"} font-medium`}>{label}</span>
       <span
         className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${
-          active ? "bg-indigo-600" : "bg-slate-300"
+          active ? "bg-[#55627f]" : "bg-slate-300 dark:bg-slate-600"
         }`}
       >
         <span

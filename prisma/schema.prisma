@@ -24,6 +24,7 @@ model Organisation {
   users       User[]
 
   appraisalCycles     AppraisalCycle[]
+  appraisalSchedules  AppraisalSchedule[]
   appraisalCriteria   AppraisalCriterion[]
   appraisalSelfTemplate AppraisalSelfTemplate?
   appraisalSettings   OrgAppraisalSettings?
@@ -31,6 +32,7 @@ model Organisation {
   holidays            Holiday[]
   notifications       Notification[]
   notificationActivities NotificationActivity[]
+  todoTasks           TodoTask[]
 
   @@index([slug])
 }
@@ -147,6 +149,7 @@ model User {
   notificationActivities NotificationActivity[] @relation("NotificationActivityActor")
   employmentRecord  EmploymentRecord?
   documents         Document[]
+  todoTasks         TodoTask[]
 
   // Attendance
   punches       AttendancePunch[]
@@ -163,6 +166,7 @@ model User {
   meetingConfirmations AppraisalMeeting[]  @relation("MeetingConfirmedBy")
   meetingMinutes      MeetingMinute[]
   hikeDecisions       HikeDecision[]
+  appraisalSchedules  AppraisalSchedule[]
 
   @@index([orgId])
   @@index([isPlatformAdmin, active])
@@ -246,6 +250,47 @@ model EmailQueue {
   createdAt DateTime  @default(now())
 
   @@index([status, attempts])
+}
+
+model TodoTask {
+  id                  String    @id @default(cuid())
+  userId              String
+  orgId               String?
+  title               String
+  description         String?
+  dueDate             DateTime? @db.Date
+  reminderEnabled     Boolean   @default(false)
+  alertAt             DateTime?
+  status              String    @default("PENDING") // PENDING | COMPLETED
+  completedAt         DateTime?
+  alertTriggeredAt    DateTime?
+  alertNotificationId String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org      Organisation? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  subtasks TodoSubtask[]
+
+  @@index([userId, status, dueDate])
+  @@index([userId, reminderEnabled, alertAt])
+  @@index([orgId, alertAt])
+}
+
+model TodoSubtask {
+  id          String   @id @default(cuid())
+  taskId       String
+  label       String
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  task TodoTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, order])
+  @@index([taskId, completed])
 }
 
 // ─── HRMS ─────────────────────────────────────────────────────────────────────
@@ -388,6 +433,27 @@ model AppraisalCycle {
   @@index([orgId, year])
 }
 
+model AppraisalSchedule {
+  id         String   @id @default(cuid())
+  orgId      String
+  employeeId String
+  dueDate    DateTime @db.Date
+  kind       String   // INTERMEDIATE | ANNUAL
+  cycleIndex Int
+  status     String   @default("SCHEDULED") // SCHEDULED | GENERATED | CANCELLED
+  appraisalId String? @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  employee  User         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  appraisal Appraisal?   @relation("ScheduledAppraisal", fields: [appraisalId], references: [id], onDelete: SetNull)
+
+  @@unique([employeeId, dueDate, kind])
+  @@index([orgId, dueDate, status])
+  @@index([employeeId, status])
+}
+
 model AppraisalCriterion {
   id           String  @id @default(cuid())
   orgId        String
@@ -451,6 +517,7 @@ model Appraisal {
   meeting        AppraisalMeeting?
   hikeDecision   HikeDecision?
   auditLog       AppraisalAuditLog[]
+  scheduleEntry  AppraisalSchedule? @relation("ScheduledAppraisal")
 
   @@unique([cycleId, employeeId])
   @@index([cycleId])

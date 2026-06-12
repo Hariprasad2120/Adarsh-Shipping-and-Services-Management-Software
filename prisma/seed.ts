@@ -58,6 +58,12 @@ const PERMISSIONS = [
 
 const SYSTEM_ROLES: Record<string, string[]> = {
   Admin: PERMISSIONS.map((p) => p.key), // full access
+  Management: [
+    "hrms.employee.read", "hrms.documents.read",
+    "attendance.reports.view",
+    "ams.appraisal.management_review", "ams.meeting.minutes",
+    "ams.hike.finalise", "ams.appraisal.view_all",
+  ],
   HR: [
     "hrms.employee.read", "hrms.employee.create", "hrms.employee.edit",
     "hrms.hierarchy.manage", "hrms.documents.read", "hrms.documents.upload",

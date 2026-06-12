@@ -7,6 +7,7 @@ import type { ReviewerRatingAnswers } from "@/modules/ams/criteria-config";
 import { filterCriteriaPointsByRole } from "@/modules/ams/form-template";
 import type { CriterionPoint } from "@/modules/ams/types";
 import { notFound, redirect } from "next/navigation";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { MyReviewDetailClient } from "./my-review-detail-client";
 
 export default async function MyReviewDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -24,8 +25,7 @@ export default async function MyReviewDetailPage({ params }: { params: Promise<{
   ]);
 
   if (!appraisal) notFound();
-  // getMyReviewView filters reviewers to this user + non-MANAGEMENT at the DB level
-  const myReviewer = appraisal.reviewers[0] ?? null;
+  const myReviewer = appraisal.myReviewer;
   if (!myReviewer) notFound();
 
   const reviewerCriteria: CriterionPoint[] = filterCriteriaPointsByRole(
@@ -36,29 +36,47 @@ export default async function MyReviewDetailPage({ params }: { params: Promise<{
   const currentRatingRow = myReviewer.ratings[0] ?? null;
 
   return (
-    <MyReviewDetailClient
-      appraisal={{
-        id: appraisal.id,
-        stage: appraisal.stage,
-        reviewerKind: myReviewer.kind,
-        reviewerStatus: myReviewer.availabilityStatus,
-        employee: {
-          name: appraisal.employee.name,
-          designation: appraisal.employee.designation,
-        },
-        cycle: {
-          name: appraisal.cycle.name,
-          year: appraisal.cycle.year,
-        },
-        availabilityDeadline: appraisal.availabilityDeadline?.toISOString() ?? null,
-        reviewerRatingDeadline: appraisal.reviewerRatingDeadline?.toISOString() ?? null,
-        selfAssessmentEditCount: appraisal.selfAssessment?.editCount ?? 0,
-        currentRating: currentRatingRow?.ratings as ReviewerRatingAnswers | null,
-        submittedAt: currentRatingRow?.submittedAt?.toISOString() ?? null,
-        submissionStatus: currentRatingRow?.status ?? null,
-      }}
-      criteria={reviewerCriteria}
-      serverNow={now.toISOString()}
-    />
+    <div className="space-y-5">
+      <Breadcrumbs
+        items={[
+          { label: "AMS", href: "/ams" },
+          { label: "My Reviews", href: "/ams/my-reviews" },
+          { label: appraisal.employee.name },
+        ]}
+      />
+      <MyReviewDetailClient
+        appraisal={{
+          id: appraisal.id,
+          stage: appraisal.stage,
+          reviewerKind: myReviewer.kind,
+          reviewerStatus: myReviewer.availabilityStatus,
+          employee: {
+            name: appraisal.employee.name,
+            designation: appraisal.employee.designation,
+          },
+          cycle: {
+            name: appraisal.cycle.name,
+            year: appraisal.cycle.year,
+          },
+          availabilityDeadline: appraisal.availabilityDeadline?.toISOString() ?? null,
+          reviewerRatingDeadline: appraisal.reviewerRatingDeadline?.toISOString() ?? null,
+          selfAssessmentEditCount: appraisal.selfAssessment?.editCount ?? 0,
+          currentRating: currentRatingRow?.ratings as ReviewerRatingAnswers | null,
+          submittedAt: currentRatingRow?.submittedAt?.toISOString() ?? null,
+          submissionStatus: currentRatingRow?.status ?? null,
+          assignedReviewers: appraisal.reviewers.map((reviewer) => ({
+            id: reviewer.id,
+            kind: reviewer.kind,
+            availabilityStatus: reviewer.availabilityStatus,
+            name: reviewer.user.name,
+            designation: reviewer.user.designation,
+            submissionStatus: reviewer.ratings[0]?.status ?? null,
+            submittedAt: reviewer.ratings[0]?.submittedAt?.toISOString() ?? null,
+          })),
+        }}
+        criteria={reviewerCriteria}
+        serverNow={now.toISOString()}
+      />
+    </div>
   );
 }

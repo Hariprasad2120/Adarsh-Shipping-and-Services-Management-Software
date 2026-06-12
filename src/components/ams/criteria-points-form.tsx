@@ -28,6 +28,11 @@ import {
 } from "@/modules/ams/criteria-config";
 import type { CriterionPoint } from "@/modules/ams/types";
 
+export type EmployeeSummaryField = {
+  label: string;
+  value: string;
+};
+
 function emptySelfAnswers(): SelfAssessmentAnswers {
   return {
     version: "v2",
@@ -547,6 +552,7 @@ export function DynamicAppraisalForm({
   onSubmitFinal,
   disabled,
   selfTemplate,
+  employeeSummary,
 }: {
   mode: "self" | "reviewer" | "management";
   criteria: CriterionPoint[];
@@ -555,6 +561,7 @@ export function DynamicAppraisalForm({
   onSubmitFinal: (answers: SelfAssessmentAnswers | ReviewerRatingAnswers) => Promise<void> | void;
   disabled?: boolean;
   selfTemplate?: AppraisalSelfFormTemplate;
+  employeeSummary?: EmployeeSummaryField[];
 }) {
   const [isPending, startTransition] = useTransition();
   const resolvedSelfTemplate = useMemo(
@@ -725,6 +732,25 @@ export function DynamicAppraisalForm({
               />
             ) : null}
           </div>
+
+          {employeeSummary && employeeSummary.length > 0 ? (
+            <Card>
+              <CardContent className="space-y-4">
+                <div className="space-y-1">
+                  <h3 className="ds-h3 text-slate-900">Employee details</h3>
+                  <p className="text-sm text-slate-500">This information comes directly from the system and is shown here for reference.</p>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {employeeSummary.map((item) => (
+                    <div key={item.label} className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{item.label}</p>
+                      <p className="mt-2 text-sm font-medium text-slate-900">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
 
           {resolvedSelfTemplate.partASections.map((section, index) => {
             const criterion = partARatingCriteria[index];
@@ -986,6 +1012,7 @@ export function CriteriaPointsForm({
   onSubmitFinal,
   disabled,
   selfTemplate,
+  employeeSummary,
 }: {
   criteria: CriterionPoint[];
   supplementary: CriterionPoint[];
@@ -995,6 +1022,7 @@ export function CriteriaPointsForm({
   onSubmitFinal: (answers: SelfAssessmentAnswers | ReviewerRatingAnswers) => Promise<void> | void;
   disabled?: boolean;
   selfTemplate?: AppraisalSelfFormTemplate;
+  employeeSummary?: EmployeeSummaryField[];
 }) {
   return (
     <DynamicAppraisalForm
@@ -1005,6 +1033,7 @@ export function CriteriaPointsForm({
       onSubmitFinal={onSubmitFinal}
       disabled={disabled}
       selfTemplate={selfTemplate}
+      employeeSummary={employeeSummary}
     />
   );
 }

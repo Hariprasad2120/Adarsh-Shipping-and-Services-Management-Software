@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { ArrowLeft, CircleUserRound } from "lucide-react";
+import { CircleUserRound } from "lucide-react";
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
@@ -10,6 +9,7 @@ import { getRoles } from "@/modules/core/organisation/service";
 import { getUser, listUsersSlim } from "@/modules/core/user/service";
 import { getSalaryRevisionSummaryForUser } from "@/modules/hrms/salary-revisions";
 import { StartAppraisalClient } from "./start-appraisal-client";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export default async function AssignAppraisalPage({ params }: { params: Promise<{ employeeId: string }> }) {
   const session = await auth();
@@ -72,14 +72,6 @@ export default async function AssignAppraisalPage({ params }: { params: Promise<
     <div className="space-y-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-4">
-          <Link
-            href="/ams/appraisals"
-            className="inline-flex items-center gap-2 text-sm text-[#8ca0c2] transition hover:text-[#6985b0]"
-          >
-            <ArrowLeft className="size-4" />
-            Back to Appraisals
-          </Link>
-
           <div className="flex items-start gap-4">
             <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
               <CircleUserRound className="size-5" />
@@ -89,15 +81,14 @@ export default async function AssignAppraisalPage({ params }: { params: Promise<
               <p className="mt-1 text-base text-[#61779b]">{subtitle || "Employee appraisal setup"}</p>
             </div>
           </div>
+          <Breadcrumbs
+            items={[
+              { label: "AMS", href: "/ams" },
+              { label: "Appraisals", href: "/ams/appraisals" },
+              { label: "Assign Appraisal" },
+            ]}
+          />
         </div>
-
-        <Link
-          href={`/hrms/employees/${user.id}`}
-          className="inline-flex items-center gap-2 self-start rounded-2xl border border-outline-variant/40 bg-surface px-4 py-2.5 text-sm font-medium text-on-surface shadow-sm transition hover:border-[#00cec4]/35 hover:text-[#00a79f]"
-        >
-          <CircleUserRound className="size-4" />
-          Employee Details
-        </Link>
       </div>
 
       <StartAppraisalClient
@@ -111,6 +102,7 @@ export default async function AssignAppraisalPage({ params }: { params: Promise<
           tenureLabel: salarySummary?.tenureLabel ?? "-",
           employeeTypeLabel: salarySummary?.employeeTypeLabel ?? "Employee",
         }}
+        employeeDetailsHref={`/hrms/employees/${user.id}`}
         hrUsers={hrUsers}
         managerUsers={managerUsers}
         salarySummary={salarySummary}

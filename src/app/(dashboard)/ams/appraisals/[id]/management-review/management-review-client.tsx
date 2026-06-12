@@ -36,7 +36,7 @@ type ManagementReviewDetail = {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-5">
+    <div className="card-top-accent space-y-3 rounded-xl border border-gray-200 bg-white p-5">
       <h2 className="ds-h2 text-gray-900">{title}</h2>
       {children}
     </div>

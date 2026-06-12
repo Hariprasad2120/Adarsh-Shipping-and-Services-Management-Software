@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { notify, notifyMany } from "@/lib/notify";
 import { assertTransition, type Stage, type ReviewerKind } from "./workflow";
-import { dueInMonth, addBusinessDays, type AppraisalKind } from "./due-dates";
+import { computeSchedule, dueInMonth, addBusinessDays, type AppraisalKind } from "./due-dates";
 import { getAppraisalSettings } from "./settings";
 import { getNow, setFrozenDate } from "@/lib/clock";
 import {
@@ -48,6 +48,26 @@ async function logTransition(appraisalId: string, from: Stage, to: Stage, actorI
   await db.appraisalAuditLog.create({
     data: { appraisalId, fromStage: from, toStage: to, actorId, note },
   });
+}
+
+const APPRAISAL_SCHEDULE_HORIZON_YEARS = 10;
+
+function normalizeDateOnly(value: Date) {
+  const result = new Date(value);
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
+
+function scheduleKey(dueDate: Date, kind: AppraisalKind) {
+  return `${normalizeDateOnly(dueDate).toISOString().slice(0, 10)}:${kind}`;
+}
+
+function monthBounds(year: number, month: number) {
+  const start = new Date(year, month, 1);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(year, month + 1, 0);
+  end.setHours(0, 0, 0, 0);
+  return { start, end };
 }
 
 // Shared helper: open self-assessment if all non-MANAGEMENT reviewers are ready AND deadline passed
@@ -243,26 +263,112 @@ export async function findOrCreateCycle(orgId: string, year: number, kind: Appra
   return db.appraisalCycle.create({ data: { orgId, name, year, status: "ACTIVE" } });
 }
 
-export type DueAppraisalRow = {
+export async function syncEmployeeAppraisalSchedule({
+  orgId,
+  employeeId,
+  joinDate,
+  priorExperienceYears,
+}: {
+  orgId: string;
   employeeId: string;
-  employeeName: string;
-  designation: string | null;
-  department: string | null;
-  dueDate: Date;
-  kind: AppraisalKind;
-  appraisalId: string | null;
-};
+  joinDate: Date;
+  priorExperienceYears: number;
+}) {
+  const normalizedJoinDate = normalizeDateOnly(joinDate);
+  const slots = computeSchedule(normalizedJoinDate, priorExperienceYears, APPRAISAL_SCHEDULE_HORIZON_YEARS).map((slot) => ({
+    dueDate: normalizeDateOnly(slot.dueDate),
+    kind: slot.kind,
+    cycleIndex: slot.cycleIndex,
+  }));
+  const desiredKeys = new Set(slots.map((slot) => scheduleKey(slot.dueDate, slot.kind)));
+  const existing = await db.appraisalSchedule.findMany({
+    where: { employeeId },
+    select: {
+      id: true,
+      dueDate: true,
+      kind: true,
+      status: true,
+    },
+  });
 
-// Permission keys held by management/admin — excluded from being appraised
-const EXEMPT_PERMISSIONS = ["ams.appraisal.management_review", "admin.org.manage"];
+  const scheduledToDelete = existing
+    .filter((entry) => entry.status === "SCHEDULED" && !desiredKeys.has(scheduleKey(entry.dueDate, entry.kind as AppraisalKind)))
+    .map((entry) => entry.id);
 
-export async function listDueAppraisals(
+  if (scheduledToDelete.length > 0) {
+    await db.appraisalSchedule.deleteMany({
+      where: { id: { in: scheduledToDelete } },
+    });
+  }
+
+  const generatedKeys = new Set(
+    existing
+      .filter((entry) => entry.status === "GENERATED")
+      .map((entry) => scheduleKey(entry.dueDate, entry.kind as AppraisalKind)),
+  );
+
+  for (const slot of slots) {
+    if (generatedKeys.has(scheduleKey(slot.dueDate, slot.kind))) continue;
+
+    await db.appraisalSchedule.upsert({
+      where: {
+        employeeId_dueDate_kind: {
+          employeeId,
+          dueDate: slot.dueDate,
+          kind: slot.kind,
+        },
+      },
+      update: {
+        orgId,
+        cycleIndex: slot.cycleIndex,
+        status: "SCHEDULED",
+        appraisalId: null,
+      },
+      create: {
+        orgId,
+        employeeId,
+        dueDate: slot.dueDate,
+        kind: slot.kind,
+        cycleIndex: slot.cycleIndex,
+        status: "SCHEDULED",
+      },
+    });
+  }
+}
+
+export async function syncOrgAppraisalSchedules(orgId: string) {
+  const employees = await db.user.findMany({
+    where: { orgId },
+    select: {
+      id: true,
+      employmentRecord: {
+        select: {
+          joinDate: true,
+          exitDate: true,
+          priorExperienceYears: true,
+        },
+      },
+    },
+  });
+
+  for (const employee of employees) {
+    const employmentRecord = employee.employmentRecord;
+    if (!employmentRecord || employmentRecord.exitDate) continue;
+
+    await syncEmployeeAppraisalSchedule({
+      orgId,
+      employeeId: employee.id,
+      joinDate: employmentRecord.joinDate,
+      priorExperienceYears: employmentRecord.priorExperienceYears ?? 0,
+    });
+  }
+}
+
+async function listDueAppraisalsFromComputedSchedule(
   orgId: string,
   year: number,
   month: number
 ): Promise<DueAppraisalRow[]> {
-
-  // Parallel: fetch active users (slim — no permission joins) + exempt user IDs
   const [users, exemptRows] = await Promise.all([
     db.user.findMany({
       where: { orgId, active: true },
@@ -276,7 +382,6 @@ export async function listDueAppraisals(
         },
       },
     }),
-    // One flat query for all exempt user IDs — replaces per-user permission chain load
     db.userRole.findMany({
       where: {
         user: { orgId },
@@ -287,58 +392,168 @@ export async function listDueAppraisals(
   ]);
   const exemptUserIds = new Set(exemptRows.map((r) => r.userId));
 
-  // Determine which employees have a due slot this month
   type Eligible = { user: typeof users[0]; slot: NonNullable<ReturnType<typeof dueInMonth>>; cycleName: string };
   const eligible: Eligible[] = [];
 
-  for (const u of users) {
-    if (exemptUserIds.has(u.id)) continue;
-    const rec = u.employmentRecord;
-    if (!rec || rec.exitDate) continue;
-    const slot = dueInMonth(rec.joinDate, rec.priorExperienceYears ?? 0, year, month);
+  for (const user of users) {
+    if (exemptUserIds.has(user.id)) continue;
+    const record = user.employmentRecord;
+    if (!record || record.exitDate) continue;
+
+    const slot = dueInMonth(record.joinDate, record.priorExperienceYears ?? 0, year, month);
     if (!slot) continue;
+
     const cycleYear = slot.dueDate.getFullYear();
     const cycleName = slot.kind === "ANNUAL" ? `Annual ${cycleYear}` : `Intermediate ${cycleYear}`;
-    eligible.push({ user: u, slot, cycleName });
+    eligible.push({ user, slot, cycleName });
   }
 
-  if (eligible.length === 0) {
-    return [];
-  }
+  if (eligible.length === 0) return [];
 
-  // Batch: load all needed cycles + existing appraisals in two queries instead of 2N
-  const uniqueCycleNames = [...new Set(eligible.map((e) => e.cycleName))];
+  const uniqueCycleNames = [...new Set(eligible.map((entry) => entry.cycleName))];
   const cycles = await db.appraisalCycle.findMany({
     where: { orgId, name: { in: uniqueCycleNames } },
     select: { id: true, name: true },
   });
-  const cycleByName = new Map(cycles.map((c) => [c.name, c.id]));
+  const cycleByName = new Map(cycles.map((cycle) => [cycle.name, cycle.id]));
 
-  const relevantCycleIds = cycles.map((c) => c.id);
-  const eligibleEmployeeIds = eligible.map((e) => e.user.id);
+  const relevantCycleIds = cycles.map((cycle) => cycle.id);
+  const eligibleEmployeeIds = eligible.map((entry) => entry.user.id);
   const existingAppraisals = relevantCycleIds.length > 0
     ? await db.appraisal.findMany({
         where: { cycleId: { in: relevantCycleIds }, employeeId: { in: eligibleEmployeeIds } },
         select: { id: true, cycleId: true, employeeId: true },
       })
     : [];
-  const appraisalByKey = new Map(existingAppraisals.map((a) => [`${a.cycleId}:${a.employeeId}`, a.id]));
+  const appraisalByKey = new Map(existingAppraisals.map((appraisal) => [`${appraisal.cycleId}:${appraisal.employeeId}`, appraisal.id]));
 
-  const rows: DueAppraisalRow[] = eligible.map(({ user: u, slot, cycleName }) => {
+  return eligible.map(({ user, slot, cycleName }) => {
     const cycleId = cycleByName.get(cycleName);
-    const appraisalId = cycleId ? (appraisalByKey.get(`${cycleId}:${u.id}`) ?? null) : null;
+    const appraisalId = cycleId ? (appraisalByKey.get(`${cycleId}:${user.id}`) ?? null) : null;
     return {
-      employeeId: u.id,
-      employeeName: u.name,
-      designation: u.designation,
-      department: u.department?.name ?? null,
+      employeeId: user.id,
+      employeeName: user.name,
+      designation: user.designation,
+      department: user.department?.name ?? null,
       dueDate: slot.dueDate,
       kind: slot.kind,
       appraisalId,
     };
   });
+}
 
-  return rows;
+export type DueAppraisalRow = {
+  employeeId: string;
+  employeeName: string;
+  designation: string | null;
+  department: string | null;
+  dueDate: Date;
+  kind: AppraisalKind;
+  appraisalId: string | null;
+};
+
+// Permission keys held by management/admin — excluded from being appraised
+const EXEMPT_PERMISSIONS = ["ams.appraisal.management_review", "admin.org.manage"];
+
+export async function listAppraisalEligibleUsers(orgId: string) {
+  const [users, exemptRows] = await Promise.all([
+    db.user.findMany({
+      where: {
+        orgId,
+        active: true,
+        employmentRecord: {
+          is: {
+            exitDate: null,
+          },
+        },
+      },
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        designation: true,
+        department: { select: { name: true } },
+      },
+    }),
+    db.userRole.findMany({
+      where: {
+        user: { orgId },
+        role: { permissions: { some: { permission: { key: { in: EXEMPT_PERMISSIONS } } } } },
+      },
+      select: { userId: true },
+    }),
+  ]);
+
+  const exemptUserIds = new Set(exemptRows.map((row) => row.userId));
+  return users.filter((user) => !exemptUserIds.has(user.id));
+}
+
+export async function listDueAppraisals(
+  orgId: string,
+  year: number,
+  month: number
+): Promise<DueAppraisalRow[]> {
+  try {
+    const { start, end } = monthBounds(year, month);
+
+    const [schedules, exemptRows] = await Promise.all([
+      db.appraisalSchedule.findMany({
+        where: {
+          orgId,
+          status: { in: ["SCHEDULED", "GENERATED"] },
+          dueDate: { gte: start, lte: end },
+          employee: {
+            active: true,
+            employmentRecord: {
+              is: {
+                exitDate: null,
+              },
+            },
+          },
+        },
+        orderBy: [{ dueDate: "asc" }, { employee: { name: "asc" } }],
+        select: {
+          dueDate: true,
+          kind: true,
+          employeeId: true,
+          appraisalId: true,
+          employee: {
+            select: {
+              name: true,
+              designation: true,
+              department: { select: { name: true } },
+            },
+          },
+        },
+      }),
+      db.userRole.findMany({
+        where: {
+          user: { orgId },
+          role: { permissions: { some: { permission: { key: { in: EXEMPT_PERMISSIONS } } } } },
+        },
+        select: { userId: true },
+      }),
+    ]);
+
+    const exemptUserIds = new Set(exemptRows.map((r) => r.userId));
+
+    return schedules
+      .filter((schedule) => !exemptUserIds.has(schedule.employeeId))
+      .map((schedule) => ({
+        employeeId: schedule.employeeId,
+        employeeName: schedule.employee.name,
+        designation: schedule.employee.designation,
+        department: schedule.employee.department?.name ?? null,
+        dueDate: schedule.dueDate,
+        kind: schedule.kind as AppraisalKind,
+        appraisalId: schedule.appraisalId,
+      }));
+  } catch {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("AMS due-list fallback activated.");
+    }
+    return listDueAppraisalsFromComputedSchedule(orgId, year, month);
+  }
 }
 
 export async function createAppraisalForEmployee(
@@ -347,19 +562,36 @@ export async function createAppraisalForEmployee(
   dueDate: Date,
   kind: AppraisalKind
 ) {
-  const year = dueDate.getFullYear();
+  const normalizedDueDate = normalizeDateOnly(dueDate);
+  const year = normalizedDueDate.getFullYear();
   const cycle = await findOrCreateCycle(orgId, year, kind);
 
-  return db.appraisal.upsert({
+  const appraisal = await db.appraisal.upsert({
     where: { cycleId_employeeId: { cycleId: cycle.id, employeeId } },
-    update: {},
+    update: {
+      dueDate: normalizedDueDate,
+    },
     create: {
       cycleId: cycle.id,
       employeeId,
-      dueDate,
+      dueDate: normalizedDueDate,
       stage: "DUE_NOTIFIED",
     },
   });
+
+  await db.appraisalSchedule.updateMany({
+    where: {
+      employeeId,
+      dueDate: normalizedDueDate,
+      kind,
+    },
+    data: {
+      status: "GENERATED",
+      appraisalId: appraisal.id,
+    },
+  });
+
+  return appraisal;
 }
 
 // ─── Appraisals ───────────────────────────────────────────────────────────────
@@ -427,11 +659,17 @@ export async function getMyReviewView(appraisalId: string, userId: string) {
       employee: { select: { name: true, designation: true } },
       cycle: { select: { name: true, year: true } },
       reviewers: {
-        where: { userId, kind: { not: "MANAGEMENT" } },
         select: {
+          id: true,
           userId: true,
           kind: true,
           availabilityStatus: true,
+          user: {
+            select: {
+              name: true,
+              designation: true,
+            },
+          },
           ratings: {
             orderBy: { submittedAt: "desc" },
             take: 1,
@@ -441,7 +679,13 @@ export async function getMyReviewView(appraisalId: string, userId: string) {
       },
     },
   });
-  return result;
+  if (!result) return null;
+
+  return {
+    ...result,
+    reviewers: result.reviewers.filter((reviewer) => reviewer.kind !== "MANAGEMENT"),
+    myReviewer: result.reviewers.find((reviewer) => reviewer.userId === userId && reviewer.kind !== "MANAGEMENT") ?? null,
+  };
 }
 
 // ─── Stage transitions ────────────────────────────────────────────────────────
@@ -1180,3 +1424,4 @@ export async function listMyReviewAppraisals(userId: string) {
     },
   });
 }
+

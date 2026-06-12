@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { loadCaps } from "@/lib/rbac";
@@ -12,6 +11,7 @@ import { AppraisalDetail } from "./appraisal-detail";
 import type { AppraisalSelfFormTemplate, SelfAssessmentAnswers } from "@/modules/ams/criteria-config";
 import { filterCriteriaPointsByRole, mapCriterionRowToPoint } from "@/modules/ams/form-template";
 import type { CriterionPoint } from "@/modules/ams/types";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 type AppraisalDetailProps = React.ComponentProps<typeof AppraisalDetail>;
 
@@ -114,12 +114,15 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Link href="/ams/appraisals" className="text-sm text-gray-500 hover:text-gray-700">
-          {"< Appraisals"}
-        </Link>
-        <span className="text-gray-300">/</span>
+      <div className="space-y-3">
         <h1 className="ds-h1 text-gray-900">{appraisal.employee.name}</h1>
+        <Breadcrumbs
+          items={[
+            { label: "AMS", href: "/ams" },
+            { label: "Appraisals", href: "/ams/appraisals" },
+            { label: appraisal.employee.name },
+          ]}
+        />
       </div>
       <AppraisalDetail
         appraisal={safeAppraisal}
