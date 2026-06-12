@@ -1,10 +1,14 @@
 import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { getNow } from "@/lib/clock";
-import { getMyReviewView } from "@/modules/ams/service";
-import { loadReviewerCriteria } from "@/modules/ams/criteria-cache";
-import type { ReviewerRatingAnswers } from "@/modules/ams/criteria-config";
-import { filterCriteriaPointsByRole } from "@/modules/ams/form-template";
+import { getMyReviewView, getSelfFormTemplate } from "@/modules/ams/service";
+import { loadReviewerCriteria, loadSelfCriteria } from "@/modules/ams/criteria-cache";
+import type {
+  AppraisalSelfFormTemplate,
+  ReviewerRatingAnswers,
+  SelfAssessmentAnswers,
+} from "@/modules/ams/criteria-config";
+import { filterCriteriaPointsByRole, mapCriterionRowToPoint } from "@/modules/ams/form-template";
 import type { CriterionPoint } from "@/modules/ams/types";
 import { notFound, redirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -15,12 +19,15 @@ export default async function MyReviewDetailPage({ params }: { params: Promise<{
   if (!session) redirect("/login");
 
   const { id } = await params;
+  const orgId = session.user.orgId!;
 
   // All four operations are independent once session + id are resolved — run in parallel.
-  const [, appraisal, reviewerRows, now] = await Promise.all([
+  const [, appraisal, reviewerRows, selfRows, selfTemplate, now] = await Promise.all([
     requirePermission(session.user.id, "ams.appraisal.review"), // also cached via React cache
     getMyReviewView(id, session.user.id),
-    loadReviewerCriteria(session.user.orgId!),
+    loadReviewerCriteria(orgId),
+    loadSelfCriteria(orgId),
+    getSelfFormTemplate(orgId),
     getNow(),
   ]);
 
@@ -32,6 +39,9 @@ export default async function MyReviewDetailPage({ params }: { params: Promise<{
     myReviewer.kind as "HR" | "TL" | "MANAGER" | "MANAGEMENT",
     reviewerRows,
   );
+  const selfCriteria: CriterionPoint[] = selfRows
+    .filter((row) => row.kind === "CATEGORY")
+    .map(mapCriterionRowToPoint);
 
   const currentRatingRow = myReviewer.ratings[0] ?? null;
 
@@ -61,6 +71,7 @@ export default async function MyReviewDetailPage({ params }: { params: Promise<{
           availabilityDeadline: appraisal.availabilityDeadline?.toISOString() ?? null,
           reviewerRatingDeadline: appraisal.reviewerRatingDeadline?.toISOString() ?? null,
           selfAssessmentEditCount: appraisal.selfAssessment?.editCount ?? 0,
+          selfAssessmentAnswers: appraisal.selfAssessment?.answers as SelfAssessmentAnswers | null,
           currentRating: currentRatingRow?.ratings as ReviewerRatingAnswers | null,
           submittedAt: currentRatingRow?.submittedAt?.toISOString() ?? null,
           submissionStatus: currentRatingRow?.status ?? null,
@@ -74,6 +85,8 @@ export default async function MyReviewDetailPage({ params }: { params: Promise<{
             submittedAt: reviewer.ratings[0]?.submittedAt?.toISOString() ?? null,
           })),
         }}
+        selfCriteria={selfCriteria}
+        selfTemplate={selfTemplate as AppraisalSelfFormTemplate}
         criteria={reviewerCriteria}
         serverNow={now.toISOString()}
       />

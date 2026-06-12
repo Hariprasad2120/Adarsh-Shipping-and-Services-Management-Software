@@ -58,6 +58,48 @@ function normalizeDateOnly(value: Date) {
   return result;
 }
 
+function buildRatingChangeMetadata(
+  previous: ReviewerRatingAnswers | ManagementReviewAnswers | null | undefined,
+  current: ReviewerRatingAnswers | ManagementReviewAnswers,
+  allowedCriterionIds: Set<string>,
+) {
+  if (!previous) return {};
+
+  const previousCategoryPoints: Record<string, number> = {};
+  const previousSubItemRatings: Record<string, Record<string, number>> = {};
+  const changeReasons: Record<string, string> = {};
+
+  for (const criterionId of allowedCriterionIds) {
+    const previousScore = previous.categoryPoints?.[criterionId];
+    const currentScore = current.categoryPoints?.[criterionId];
+    const previousSubRatings = previous.subItemRatings?.[criterionId] ?? {};
+    const currentSubRatings = current.subItemRatings?.[criterionId] ?? {};
+    const changed =
+      previousScore !== currentScore ||
+      JSON.stringify(previousSubRatings) !== JSON.stringify(currentSubRatings);
+
+    if (!changed) continue;
+
+    if (typeof previousScore === "number") {
+      previousCategoryPoints[criterionId] = previousScore;
+    }
+    if (Object.keys(previousSubRatings).length > 0) {
+      previousSubItemRatings[criterionId] = previousSubRatings;
+    }
+
+    const reason = current.changeReasons?.[criterionId]?.trim();
+    if (reason) {
+      changeReasons[criterionId] = reason;
+    }
+  }
+
+  return {
+    previousCategoryPoints: Object.keys(previousCategoryPoints).length > 0 ? previousCategoryPoints : undefined,
+    previousSubItemRatings: Object.keys(previousSubItemRatings).length > 0 ? previousSubItemRatings : undefined,
+    changeReasons: Object.keys(changeReasons).length > 0 ? changeReasons : undefined,
+  };
+}
+
 function scheduleKey(dueDate: Date, kind: AppraisalKind) {
   return `${normalizeDateOnly(dueDate).toISOString().slice(0, 10)}:${kind}`;
 }
@@ -653,6 +695,7 @@ export async function getMyReviewView(appraisalId: string, userId: string) {
       reviewerRatingDeadline: true,
       selfAssessment: {
         select: {
+          answers: true,
           editCount: true,
         },
       },
@@ -1040,11 +1083,43 @@ export async function submitReviewerRating(
     ratings.subItemRatings ?? {},
     ratings.comments ?? {},
   );
+  const nextRatings: ReviewerRatingAnswers = {
+    version: "v2",
+    ...sanitized,
+  };
+  const existingRating = await db.reviewerRating.findUnique({
+    where: { appraisalId_reviewerId: { appraisalId, reviewerId: reviewer.id } },
+    select: { ratings: true, status: true },
+  });
+  const previousSubmittedBase =
+    existingRating && isSubmittedStatus(existingRating.status)
+      ? (existingRating.ratings as ReviewerRatingAnswers)
+      : null;
+  const previousSubmitted = previousSubmittedBase ?? (
+    ratings.previousCategoryPoints || ratings.previousSubItemRatings
+      ? {
+          version: "v2",
+          categoryPoints: ratings.previousCategoryPoints ?? {},
+          subItemRatings: ratings.previousSubItemRatings ?? {},
+          comments: {},
+          changeReasons: ratings.changeReasons ?? {},
+        }
+      : null
+  );
+  const changeMeta = buildRatingChangeMetadata(
+    previousSubmitted,
+    { ...nextRatings, changeReasons: ratings.changeReasons ?? {} },
+    new Set(criteria.map((criterion) => criterion.id)),
+  );
+  const persistedRatings: ReviewerRatingAnswers = {
+    ...nextRatings,
+    ...changeMeta,
+  };
 
   await db.reviewerRating.upsert({
     where: { appraisalId_reviewerId: { appraisalId, reviewerId: reviewer.id } },
     update: {
-      ratings: { version: "v2", ...sanitized },
+      ratings: persistedRatings,
       comments: overallComments?.trim() || null,
       status: action,
       submittedAt: action === "SUBMITTED" ? now : null,
@@ -1052,7 +1127,7 @@ export async function submitReviewerRating(
     create: {
       appraisalId,
       reviewerId: reviewer.id,
-      ratings: { version: "v2", ...sanitized },
+      ratings: persistedRatings,
       comments: overallComments?.trim() || null,
       status: action,
       submittedAt: action === "SUBMITTED" ? now : null,
@@ -1099,11 +1174,43 @@ export async function submitManagementReview(
     ratings.subItemRatings ?? {},
     ratings.comments ?? {},
   );
+  const nextRatings: ManagementReviewAnswers = {
+    version: "v2",
+    ...sanitized,
+  };
+  const existingReview = await db.managementReview.findUnique({
+    where: { appraisalId_reviewerId: { appraisalId, reviewerId: reviewerUserId } },
+    select: { ratings: true, status: true },
+  });
+  const previousSubmittedBase =
+    existingReview && isSubmittedStatus(existingReview.status)
+      ? (existingReview.ratings as ManagementReviewAnswers)
+      : null;
+  const previousSubmitted = previousSubmittedBase ?? (
+    ratings.previousCategoryPoints || ratings.previousSubItemRatings
+      ? {
+          version: "v2",
+          categoryPoints: ratings.previousCategoryPoints ?? {},
+          subItemRatings: ratings.previousSubItemRatings ?? {},
+          comments: {},
+          changeReasons: ratings.changeReasons ?? {},
+        }
+      : null
+  );
+  const changeMeta = buildRatingChangeMetadata(
+    previousSubmitted,
+    { ...nextRatings, changeReasons: ratings.changeReasons ?? {} },
+    new Set(criteria.map((criterion) => criterion.id)),
+  );
+  const persistedRatings: ManagementReviewAnswers = {
+    ...nextRatings,
+    ...changeMeta,
+  };
 
   await db.managementReview.upsert({
     where: { appraisalId_reviewerId: { appraisalId, reviewerId: reviewerUserId } },
     update: {
-      ratings: { version: "v2", ...sanitized },
+      ratings: persistedRatings,
       proposedDates,
       status: action,
       submittedAt: action === "SUBMITTED" ? await getNow() : null,
@@ -1111,7 +1218,7 @@ export async function submitManagementReview(
     create: {
       appraisalId,
       reviewerId: reviewerUserId,
-      ratings: { version: "v2", ...sanitized },
+      ratings: persistedRatings,
       proposedDates,
       status: action,
       submittedAt: action === "SUBMITTED" ? await getNow() : null,

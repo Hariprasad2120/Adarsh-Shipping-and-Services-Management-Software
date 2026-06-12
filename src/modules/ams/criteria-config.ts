@@ -94,6 +94,9 @@ export type ReviewerRatingAnswers = {
   categoryPoints: Record<string, number>;
   subItemRatings: Record<string, Record<string, number>>;
   comments: Record<string, string>;
+  previousCategoryPoints?: Record<string, number>;
+  previousSubItemRatings?: Record<string, Record<string, number>>;
+  changeReasons?: Record<string, string>;
 };
 
 export type ManagementReviewAnswers = ReviewerRatingAnswers;

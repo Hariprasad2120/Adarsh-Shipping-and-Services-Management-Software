@@ -27,7 +27,7 @@ export function PageAnimator({ children }: { children: React.ReactNode }) {
       variants={variants}
       initial="initial"
       animate="enter"
-      className="flex w-full flex-1 flex-col overflow-x-hidden [contain:layout_paint] will-change-transform"
+      className="flex w-full flex-1 flex-col overflow-x-clip contain-[layout_paint] will-change-transform"
     >
       {children}
     </motion.div>

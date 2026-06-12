@@ -45,14 +45,102 @@ function getDefaultResponseConfig(
 ) {
   switch (type) {
     case "slider":
-      return { startLabel: "Low", endLabel: "High" };
+      return { startLabel: "Low", endLabel: "High", increment: 5 };
     case "linear_scale":
-      return { startLabel: "Low", endLabel: "High" };
+      return { startLabel: "Low", endLabel: "High", increment: 5 };
     case "rating":
-      return { startLabel: "Poor", endLabel: "Excellent" };
+      return { startLabel: "Poor", endLabel: "Excellent", increment: 5 };
     default:
-      return { startLabel: "", endLabel: "" };
+      return { startLabel: "", endLabel: "", increment: 5 };
   }
+}
+
+type QuestionItem = {
+  id: string;
+  prompt: string;
+  questionType:
+    | "multiple_choice"
+    | "checkboxes"
+    | "dropdown"
+    | "short_answer"
+    | "paragraph"
+    | "slider"
+    | "linear_scale"
+    | "rating"
+    | "date"
+    | "time";
+  options: { id: string; label: string }[];
+  responseConfig: {
+    startLabel: string;
+    endLabel: string;
+    increment: number;
+  };
+};
+
+function parseQuestionItems(
+  value: unknown,
+  fallbackType:
+    | "multiple_choice"
+    | "checkboxes"
+    | "dropdown"
+    | "short_answer"
+    | "paragraph"
+    | "slider"
+    | "linear_scale"
+    | "rating"
+    | "date"
+    | "time",
+  fallbackChildren: { id: string; label: string }[],
+): QuestionItem[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((entry, index) => {
+      if (!entry || typeof entry !== "object") return [];
+      const raw = entry as Record<string, unknown>;
+      const questionType = isQuestionType(raw.questionType) ? raw.questionType : fallbackType;
+      const rawResponseConfig =
+        raw.responseConfig && typeof raw.responseConfig === "object"
+          ? (raw.responseConfig as Record<string, unknown>)
+          : null;
+
+      return [{
+        id: typeof raw.id === "string" && raw.id.length > 0 ? raw.id : `question-${index + 1}`,
+        prompt: typeof raw.prompt === "string" ? raw.prompt : "",
+        questionType,
+        options: Array.isArray(raw.options)
+          ? raw.options.flatMap((option, optionIndex) => {
+              if (!option || typeof option !== "object") return [];
+              const rawOption = option as Record<string, unknown>;
+              return [{
+                id: typeof rawOption.id === "string" && rawOption.id.length > 0 ? rawOption.id : `option-${optionIndex + 1}`,
+                label: typeof rawOption.label === "string" ? rawOption.label : "",
+              }];
+            })
+          : [],
+        responseConfig: {
+          startLabel:
+            typeof rawResponseConfig?.startLabel === "string"
+              ? rawResponseConfig.startLabel
+              : getDefaultResponseConfig(questionType).startLabel,
+          endLabel:
+            typeof rawResponseConfig?.endLabel === "string"
+              ? rawResponseConfig.endLabel
+              : getDefaultResponseConfig(questionType).endLabel,
+          increment:
+            typeof rawResponseConfig?.increment === "number" && Number.isFinite(rawResponseConfig.increment)
+              ? Math.max(2, Math.round(rawResponseConfig.increment))
+              : getDefaultResponseConfig(questionType).increment,
+        },
+      }];
+    });
+  }
+
+  return fallbackChildren.map((child, index) => ({
+    id: child.id || `question-${index + 1}`,
+    prompt: child.label,
+    questionType: fallbackType,
+    options: [],
+    responseConfig: getDefaultResponseConfig(fallbackType),
+  }));
 }
 
 export default async function CriteriaPage() {
@@ -95,7 +183,16 @@ export default async function CriteriaPage() {
               typeof rawResponseConfig?.endLabel === "string"
                 ? rawResponseConfig.endLabel
                 : getDefaultResponseConfig(questionType).endLabel,
+            increment:
+              typeof rawResponseConfig?.increment === "number" && Number.isFinite(rawResponseConfig.increment)
+                ? Math.max(2, Math.round(rawResponseConfig.increment))
+                : getDefaultResponseConfig(questionType).increment,
           },
+          questionItems: parseQuestionItems(
+            meta?.questionItems,
+            questionType,
+            r.children.map((child) => ({ id: child.id, label: child.label })),
+          ),
         };
       })(),
       id: r.id,

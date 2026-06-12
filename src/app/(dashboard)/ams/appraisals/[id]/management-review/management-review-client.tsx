@@ -36,7 +36,7 @@ type ManagementReviewDetail = {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="card-top-accent space-y-3 rounded-xl border border-gray-200 bg-white p-5">
+    <div className="space-y-3 rounded-xl border border-cyan-100 bg-white p-5">
       <h2 className="ds-h2 text-gray-900">{title}</h2>
       {children}
     </div>
@@ -205,7 +205,7 @@ export function ManagementReviewClient({
           <button
             onClick={() => void claimReview()}
             disabled={claiming}
-            className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
+            className="rounded-lg bg-[#00cec4] px-4 py-2 text-sm font-medium text-white hover:bg-[#00b8af] disabled:opacity-50"
           >
             {claiming ? "Claiming..." : "Claim this appraisal"}
           </button>

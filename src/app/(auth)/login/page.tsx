@@ -15,6 +15,7 @@ import {
   User,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { HarborScene3D } from "@/components/login/harbor-scene-3d";
 
 function BrandMark({ mobile = false }: { mobile?: boolean }) {
   const [logoError, setLogoError] = useState(false);
@@ -61,39 +62,9 @@ export default function LoginPage() {
   const [isTypingPassword, setIsTypingPassword] = useState(false);
   const [error, setError] = useState("");
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
-  const [isLoaded, setIsLoaded] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
-  const [hasGrabbedContainer, setHasGrabbedContainer] = useState(false);
-
-  const shouldHaveContainer = isTyping || email.length > 0 || isTypingPassword || password.length > 0;
-  const shouldHaveTruck = isTypingPassword || password.length > 0;
 
   useEffect(() => {
-    if (shouldHaveContainer === hasGrabbedContainer) {
-      return;
-    }
-
-    const startTimer = window.setTimeout(() => {
-      setIsFetching(true);
-    }, 0);
-
-    const finishTimer = window.setTimeout(() => {
-      setHasGrabbedContainer(shouldHaveContainer);
-      setIsFetching(false);
-    }, 1000);
-
-    return () => {
-      window.clearTimeout(startTimer);
-      window.clearTimeout(finishTimer);
-    };
-  }, [shouldHaveContainer, hasGrabbedContainer, isFetching]);
-
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      setIsLoaded(true);
-    });
-
     const handleMouseMove = (e: MouseEvent) => {
       setMousePos({
         x: e.clientX / window.innerWidth,
@@ -103,7 +74,6 @@ export default function LoginPage() {
 
     window.addEventListener("mousemove", handleMouseMove);
     return () => {
-      window.cancelAnimationFrame(frame);
       window.removeEventListener("mousemove", handleMouseMove);
     };
   }, []);
@@ -133,9 +103,6 @@ export default function LoginPage() {
     }, 2500);
   };
 
-  const shipOffset = (mousePos.x - 0.5) * -40;
-  const craneOffset = (mousePos.x - 0.5) * 15;
-
   return (
     <div className="grid min-h-screen bg-[#1A1F24] lg:grid-cols-2">
       <div className="relative hidden flex-col justify-between overflow-hidden border-r border-white/5 bg-[#1A1F24] lg:flex">
@@ -145,152 +112,16 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="absolute inset-0 z-10 flex flex-col justify-end">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#111518] to-[#1A2229]">
-            <div
-              className="absolute left-[20%] top-32 h-10 w-40 rounded-full bg-white/5 blur-2xl transition-transform duration-1000"
-              style={{ transform: `translateX(${shipOffset * 0.5}px)` }}
-            />
-            <div
-              className="absolute right-[25%] top-48 h-12 w-64 rounded-full bg-white/5 blur-2xl transition-transform duration-1000"
-              style={{ transform: `translateX(${shipOffset * 0.3}px)` }}
-            />
-          </div>
-
-          <div
-            className="absolute bottom-[18%] z-20 h-[55px] w-[350px] transition-all duration-[2000ms] ease-out"
-            style={{ 
-              left: isLoaded ? `calc(50% + ${shipOffset}px)` : "-20%", 
-              transform: "translateX(-50%)",
-              opacity: isLoaded ? 1 : 0
-            }}
-          >
-            <div className="relative h-full w-full rounded-b-3xl bg-[#111]">
-              <div className="absolute bottom-full left-6 h-10 w-14 border border-[#005C55] bg-[#007A72]" />
-              <div className="absolute bottom-full left-[5.5rem] h-10 w-14 border border-[#A64C0D] bg-[#C85D10]" />
-              <div className="absolute bottom-full left-[9.5rem] mb-10 h-10 w-14 border border-[#007A72] bg-[#00A89D]" />
-              <div className="absolute bottom-full left-[9.5rem] h-10 w-14 border border-[#111] bg-[#2D2D2D]" />
-              <div className="absolute bottom-full right-6 h-20 w-20 border-l border-[#2D2D2D] bg-[#1A1F24]">
-                <div className="mt-3 h-5 w-full border-y border-[#F47920]/40 bg-[#F47920]/20" />
-              </div>
-            </div>
-          </div>
-
-          <div className="absolute bottom-[10%] z-30 h-[12%] w-full overflow-hidden bg-[#151D24]">
-            <div className="h-full w-full animate-pulse bg-[linear-gradient(90deg,transparent_0%,#00A89D_50%,transparent_100%)] opacity-20" />
-            <div className="absolute top-0 h-[1px] w-full bg-[#00A89D]/30" />
-          </div>
-
-          <div className="absolute bottom-0 z-40 h-[10%] w-full border-t-2 border-[#F47920]/50 bg-[#0A0C0E] shadow-[0_-5px_20px_rgba(244,121,32,0.1)]">
-            <div className="h-2 w-full bg-[repeating-linear-gradient(45deg,#F47920,#F47920_10px,transparent_10px,transparent_20px)] opacity-20" />
-          </div>
-
-          <div
-            className="absolute bottom-[10%] left-12 z-50 transition-transform duration-300"
-            style={{ transform: `translateX(${craneOffset}px)` }}
-          >
-            <div className="relative h-[450px] w-20 border-l-4 border-[#1A1F24] bg-[#2D2D2D] shadow-2xl">
-              <div className="absolute left-0 top-20 h-1 w-full rotate-45 bg-[#1A1F24]" />
-              <div className="absolute left-0 top-40 h-1 w-full -rotate-45 bg-[#1A1F24]" />
-
-              <div className="absolute left-0 top-12 h-10 w-[450px] border-t-2 border-[#F47920]/80 bg-[#2D2D2D]">
-                <div
-                  className="absolute top-full flex h-6 w-14 justify-center bg-[#F47920] shadow-[0_5px_15px_rgba(244,121,32,0.4)] transition-all duration-1000 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
-                  style={{ left: hasGrabbedContainer ? "300px" : "80px" }}
-                >
-                  <div
-                    className="relative w-1.5 bg-[#444] transition-all duration-1000 ease-in-out"
-                    style={{ height: isAuthenticated ? "100px" : isFetching ? "320px" : !hasGrabbedContainer ? "100px" : (shouldHaveTruck || error) ? "290px" : "100px" }}
-                  >
-                    <div className="absolute bottom-0 left-1/2 w-16 h-2 -translate-x-1/2 bg-[#F47920] rounded-sm shadow-md z-10" />
-
-                    <div 
-                      className={`absolute bottom-[-48px] left-1/2 flex h-[48px] w-[140px] -translate-x-1/2 items-center justify-center overflow-hidden border-2 transition-all duration-500 ${error ? "border-red-600 bg-red-500 shadow-[0_10px_20px_rgba(220,38,38,0.4)]" : "border-[#007A72] bg-[#00A89D] shadow-[0_10px_20px_rgba(0,168,157,0.3)]"}`}
-                      style={{ opacity: (!hasGrabbedContainer || isAuthenticated) ? 0 : 1 }}
-                    >
-                      <div className="absolute inset-0 flex justify-evenly px-1">
-                        {[...Array(8)].map((_, i) => (
-                          <div key={i} className={`h-full w-[3px] ${error ? "bg-red-700/40" : "bg-[#007A72]/40"}`} />
-                        ))}
-                      </div>
-
-                      <div
-                        className={`absolute inset-0 flex origin-center transition-all duration-700 ${error ? "bg-red-600" : "bg-[#007A72]"} ${showPassword || error ? "scale-y-0 opacity-0" : "scale-y-100 opacity-100"}`}
-                      >
-                        <div className={`h-full w-1/2 border-r-2 ${error ? "border-red-800" : "border-[#005C55]"}`} />
-                        <div className={`h-full w-1/2 border-l-2 ${error ? "border-red-800" : "border-[#005C55]"}`} />
-                      </div>
-
-                      <div className="absolute inset-0 flex items-center justify-center bg-white/10">
-                        {error ? (
-                          <span className="animate-pulse rounded bg-white/90 px-2 py-1 text-xs font-black tracking-widest text-red-600 shadow-lg">
-                            REJECTED
-                          </span>
-                        ) : showPassword ? (
-                          <span className="animate-pulse rounded bg-white/90 px-2 py-1 text-xs font-black tracking-widest text-[#F47920] shadow-lg">
-                            VERIFIED
-                          </span>
-                        ) : (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/30">
-                            <div className="h-4 w-4 rounded-full bg-white/50" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="absolute bottom-[10%] z-40 flex items-end transition-all ease-in-out"
-            style={{
-              left: isAuthenticated ? "-50vw" : (shouldHaveTruck || error) ? "180px" : "100vw",
-              transform: `translateX(${craneOffset}px)`,
-              transitionDuration: isAuthenticated ? "2500ms" : "1000ms"
-            }}
-          >
-            <div className="relative z-20 h-20 w-24 rounded-tl-2xl rounded-tr-md border-b-4 border-[#C85D10] bg-[#F47920] shadow-lg">
-              <div className="absolute left-3 top-3 h-8 w-10 overflow-hidden rounded-tl-xl border-r-2 border-b-2 border-[#C85D10]/50 bg-[#E0F7F6]/80">
-                <div className="absolute inset-0 translate-x-4 -skew-x-12 bg-white/40" />
-              </div>
-              <div
-                className={`absolute bottom-3 left-0 h-5 w-2 rounded-r transition-all duration-300 ${showPassword ? "bg-white shadow-[[-30px_0_40px_20px_rgba(255,255,255,0.9)]]" : "bg-slate-300"}`}
-              />
-              <div className="absolute -bottom-4 left-3 flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-[#333] bg-[#111]">
-                <div className={`h-3 w-3 rounded-full bg-[#555] ${shouldHaveTruck || isLoading || isAuthenticated ? "animate-spin" : ""}`} />
-              </div>
-              <div className="absolute -bottom-4 right-3 flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-[#333] bg-[#111]">
-                <div className={`h-3 w-3 rounded-full bg-[#555] ${shouldHaveTruck || isLoading || isAuthenticated ? "animate-spin" : ""}`} />
-              </div>
-            </div>
-
-            <div className="relative -ml-2 mb-4 h-4 w-[180px] border-t border-[#444] bg-[#2D2D2D]">
-              <div 
-                className="absolute bottom-full left-4 h-[48px] w-[140px] flex items-center justify-center overflow-hidden border-2 border-[#007A72] bg-[#00A89D] shadow-[0_10px_20px_rgba(0,168,157,0.3)] transition-all duration-500"
-                style={{ opacity: isAuthenticated ? 1 : 0 }}
-              >
-                <div className="absolute inset-0 flex justify-evenly px-1">
-                  {[...Array(8)].map((_, i) => (
-                    <div key={i} className="h-full w-[3px] bg-[#007A72]/40" />
-                  ))}
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center bg-white/10">
-                  <span className="rounded bg-white/90 px-2 py-1 text-xs font-black tracking-widest text-[#F47920] shadow-lg">
-                    VERIFIED
-                  </span>
-                </div>
-              </div>
-
-              <div className="absolute -bottom-4 right-4 flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-[#333] bg-[#111]">
-                <div className={`h-3 w-3 rounded-full bg-[#555] ${shouldHaveTruck || isLoading || isAuthenticated ? "animate-spin" : ""}`} />
-              </div>
-              <div className="absolute -bottom-4 right-14 flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-[#333] bg-[#111]">
-                <div className={`h-3 w-3 rounded-full bg-[#555] ${shouldHaveTruck || isLoading || isAuthenticated ? "animate-spin" : ""}`} />
-              </div>
-            </div>
-          </div>
+        <div className="absolute inset-0 z-10">
+          <HarborScene3D
+            email={email}
+            password={password}
+            isTyping={isTyping}
+            isTypingPassword={isTypingPassword}
+            isAuthenticated={isAuthenticated}
+            error={error}
+            mousePos={mousePos}
+          />
         </div>
 
         <div className="pointer-events-none absolute inset-0 z-50 bg-[radial-gradient(ellipse_at_bottom_left,rgba(0,168,157,0.15),transparent_50%)]" />

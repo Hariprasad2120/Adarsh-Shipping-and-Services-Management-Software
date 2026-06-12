@@ -33,6 +33,13 @@ export type EmployeeSummaryField = {
   value: string;
 };
 
+type ReviewerCriterionValue = {
+  categoryScore: number;
+  subItemRatings: Record<string, number>;
+  comment: string;
+  changeReason: string;
+};
+
 function emptySelfAnswers(): SelfAssessmentAnswers {
   return {
     version: "v2",
@@ -49,6 +56,9 @@ function emptyReviewerAnswers(): ReviewerRatingAnswers {
     categoryPoints: {},
     subItemRatings: {},
     comments: {},
+    previousCategoryPoints: {},
+    previousSubItemRatings: {},
+    changeReasons: {},
   };
 }
 
@@ -70,6 +80,11 @@ function normalizeReviewerAnswers(initialAnswers?: ReviewerRatingAnswers | Manag
     categoryPoints: { ...(initialAnswers?.categoryPoints ?? {}) },
     subItemRatings: { ...(initialAnswers?.subItemRatings ?? {}) },
     comments: { ...(initialAnswers?.comments ?? {}) },
+    previousCategoryPoints: { ...(initialAnswers?.previousCategoryPoints ?? {}) },
+    previousSubItemRatings: Object.fromEntries(
+      Object.entries(initialAnswers?.previousSubItemRatings ?? {}).map(([criterionId, ratings]) => [criterionId, { ...ratings }]),
+    ),
+    changeReasons: { ...(initialAnswers?.changeReasons ?? {}) },
   };
 }
 
@@ -78,6 +93,27 @@ function computeCriterionAverage(subItemRatings: Record<string, number>): number
   if (values.length === 0) return 0;
   const total = values.reduce((sum, value) => sum + clampRating(value), 0);
   return Math.round((total / values.length) * 10) / 10;
+}
+
+function buildSliderStyle(value?: number) {
+  const safeValue = Number.isFinite(value) ? clampRating(value as number) : 1;
+  const progress = ((safeValue - 1) / 4) * 100;
+  return {
+    background: `linear-gradient(90deg, #00cec4 0%, #00cec4 ${progress}%, #d7f7f4 ${progress}%, #d7f7f4 100%)`,
+  };
+}
+
+function hasCriterionChanged(
+  criterionId: string,
+  current: ReviewerRatingAnswers | ManagementReviewAnswers,
+  baseline: ReviewerRatingAnswers | ManagementReviewAnswers | null,
+) {
+  if (!baseline) return false;
+  return (
+    baseline.categoryPoints?.[criterionId] !== current.categoryPoints?.[criterionId] ||
+    JSON.stringify(baseline.subItemRatings?.[criterionId] ?? {}) !==
+      JSON.stringify(current.subItemRatings?.[criterionId] ?? {})
+  );
 }
 
 function hasText(value?: string) {
@@ -151,7 +187,7 @@ export function TextAnswerInput({
             "min-h-28 w-full rounded-2xl border px-4 py-3 text-sm text-slate-900 outline-none transition focus:ring-2 disabled:bg-slate-50",
             invalid
               ? "border-red-400 bg-red-50/60 focus:border-red-500 focus:ring-red-100"
-              : "border-slate-200 focus:border-slate-400 focus:ring-slate-200",
+              : "border-cyan-100 focus:border-[#00cec4] focus:ring-[#00cec4]/20",
           )}
         />
       ) : (
@@ -161,7 +197,9 @@ export function TextAnswerInput({
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder ?? "Type your answer"}
           className={cn(
-            invalid && "border-red-400 bg-red-50/60 focus-visible:ring-red-100",
+            invalid
+              ? "border-red-400 bg-red-50/60 focus-visible:ring-red-100"
+              : "border-cyan-100 focus-visible:border-[#00cec4] focus-visible:ring-[#00cec4]/20",
           )}
         />
       )}
@@ -192,8 +230,8 @@ export function OptionQuestionInput({
             className={cn(
               "flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 text-sm transition",
               value.option === option.value
-                ? "border-slate-500 bg-slate-50 text-slate-950"
-                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300",
+                ? "border-cyan-300 bg-cyan-50/60 text-slate-950"
+                : "border-slate-200 bg-white text-slate-700 hover:border-cyan-200",
               invalid && !value.option && "border-red-400 bg-red-50/60",
               disabled && "cursor-not-allowed opacity-70",
             )}
@@ -203,7 +241,7 @@ export function OptionQuestionInput({
               disabled={disabled}
               checked={value.option === option.value}
               onChange={() => onChange({ ...value, option: option.value, value: option.label })}
-              className="mt-0.5 accent-slate-700"
+              className="mt-0.5 accent-[#00cec4]"
             />
             <span>{option.label}</span>
           </label>
@@ -238,7 +276,7 @@ export function ReviewerCommentBox({
       onChange={(event) => onChange(event.target.value)}
       rows={3}
       placeholder="Add evaluator comments"
-      className="min-h-24 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200 disabled:bg-slate-50"
+      className="min-h-24 w-full rounded-xl border border-cyan-100 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#00cec4] focus:ring-2 focus:ring-[#00cec4]/20 disabled:bg-slate-50"
     />
   );
 }
@@ -255,21 +293,27 @@ export function CriteriaRatingTable({
   disabled?: boolean;
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200">
-      <table className="min-w-full divide-y divide-slate-200 text-sm">
-        <thead className="bg-slate-50">
+    <div className="overflow-x-auto rounded-2xl border border-outline-variant/40 bg-surface">
+      <table className="min-w-full divide-y divide-outline-variant/30 text-sm">
+        <thead className="bg-surface-container-low text-on-surface">
           <tr>
-            <th className="px-4 py-3 text-left font-semibold text-slate-600">Competency</th>
-            <th className="px-4 py-3 text-left font-semibold text-slate-600">Weightage</th>
-            <th className="px-4 py-3 text-left font-semibold text-slate-600">Self Rating (1-5)</th>
+            <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-on-surface-variant">
+              Competency
+            </th>
+            <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-on-surface-variant">
+              Weightage
+            </th>
+            <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-on-surface-variant">
+              Self Rating (1-5)
+            </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200 bg-white">
+        <tbody className="divide-y divide-outline-variant/30 bg-surface">
           {criteria.map((criterion) => (
-            <tr key={criterion.id}>
-              <td className="px-4 py-3 text-slate-900">{criterion.label}</td>
-              <td className="px-4 py-3 text-slate-600">{criterion.weightage}</td>
-              <td className="px-4 py-3">
+            <tr key={criterion.id} className="hover:bg-surface-container-low/80 transition-colors">
+              <td className="px-5 py-4 text-sm text-on-surface">{criterion.label}</td>
+              <td className="px-5 py-4 text-sm text-on-surface-variant">{criterion.weightage}</td>
+              <td className="px-5 py-4">
                 {onChange ? (
                   <RatingInput
                     id={`self-rating-${criterion.id}`}
@@ -278,7 +322,9 @@ export function CriteriaRatingTable({
                     onChange={(value) => onChange(criterion.id, value)}
                   />
                 ) : (
-                  <span className="font-medium text-slate-900">{ratings[criterion.id] ?? "-"}</span>
+                  <span className="ds-numeric font-semibold text-on-surface">
+                    {ratings[criterion.id] ?? "-"}
+                  </span>
                 )}
               </td>
             </tr>
@@ -311,9 +357,11 @@ export function SelfAssessmentSection({
   return (
     <Card>
       <CardContent className="space-y-5">
-        <div className="space-y-1">
-          <h3 className="ds-h3 text-slate-900">{section.title}</h3>
-          {section.description ? <p className="text-sm text-slate-500">{section.description}</p> : null}
+        <div className="border-l-4 border-[#00cec4] pl-4">
+          <div className="space-y-1">
+            <h3 className="ds-h3 text-on-surface">{section.title}</h3>
+            {section.description ? <p className="text-sm text-on-surface-variant">{section.description}</p> : null}
+          </div>
         </div>
 
         {section.questions.map((question) => {
@@ -326,8 +374,8 @@ export function SelfAssessmentSection({
               key={questionKey}
               data-field-id={questionKey}
               className={cn(
-                "rounded-2xl border p-4 transition",
-                invalid ? "border-red-400 bg-red-50/70" : "border-slate-200 bg-white",
+                "rounded-2xl border-l-4 p-4 transition",
+                invalid ? "border-red-400 bg-red-50/70" : "border-[#00cec4] bg-white",
               )}
             >
               {question.type === "radio" ? (
@@ -357,22 +405,22 @@ export function SelfAssessmentSection({
           <div
             data-field-id={`rating:${criterion.id}`}
             className={cn(
-              "rounded-2xl border px-4 py-4 transition",
+              "rounded-2xl border-l-4 px-4 py-4 transition",
               missingFieldIds.has(`rating:${criterion.id}`)
                 ? "border-red-400 bg-red-50/70"
-                : "border-slate-200 bg-slate-50/70",
+                : "border-[#00cec4] bg-[#00cec4]/8",
             )}
           >
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-slate-900">Self Rating</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-sm font-semibold text-on-surface">Self Rating</p>
+                <p className="text-xs text-on-surface-variant">
                   Rate your performance for this section on a scale of 1 to 5.
                 </p>
               </div>
-              <div className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
-                {rating ?? "Not rated"}
-              </div>
+          <div className="rounded-full bg-[#00cec4] px-3 py-1 text-xs font-semibold text-white">
+            {rating ?? "Not rated"}
+          </div>
             </div>
             <input
               type="range"
@@ -382,9 +430,10 @@ export function SelfAssessmentSection({
               value={rating ?? 1}
               disabled={disabled}
               onChange={(event) => onRatingChange(clampRating(Number(event.target.value)))}
-              className="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-slate-900 disabled:cursor-not-allowed"
+              style={buildSliderStyle(rating)}
+              className="cyan-range-slider mt-4 h-2.5 w-full cursor-pointer appearance-none rounded-full disabled:cursor-not-allowed"
             />
-            <div className="mt-2 flex justify-between text-xs text-slate-400">
+            <div className="mt-2 flex justify-between text-xs text-on-surface-variant/60">
               <span>1</span>
               <span>2</span>
               <span>3</span>
@@ -401,48 +450,74 @@ export function SelfAssessmentSection({
 export function ReviewerCriteriaSection({
   criterion,
   value,
+  baselineValue,
   onChange,
   disabled,
+  invalidSubItemIds = new Set<string>(),
+  commentInvalid = false,
+  changeReasonInvalid = false,
+  showComparison = false,
 }: {
   criterion: CriterionPoint;
-  value: {
-    categoryScore: number;
-    subItemRatings: Record<string, number>;
-    comment: string;
-  };
-  onChange: (nextValue: { categoryScore: number; subItemRatings: Record<string, number>; comment: string }) => void;
+  value: ReviewerCriterionValue;
+  baselineValue?: ReviewerCriterionValue | null;
+  onChange: (nextValue: ReviewerCriterionValue) => void;
   disabled?: boolean;
+  invalidSubItemIds?: Set<string>;
+  commentInvalid?: boolean;
+  changeReasonInvalid?: boolean;
+  showComparison?: boolean;
 }) {
+  const hasChanged = showComparison && !!baselineValue && baselineValue.categoryScore !== value.categoryScore;
   return (
-    <Card>
+    <Card id={`reviewer-criterion-${criterion.id}`}>
       <CardContent className="space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-1">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-outline-variant/20 pb-3">
+          <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <h3 className="ds-h3 text-slate-900">{criterion.label}</h3>
+              <h3 className="ds-h3 text-on-surface">{criterion.label}</h3>
               <Badge variant="secondary">{criterion.weightage}%</Badge>
             </div>
-            <p className="text-sm text-slate-500">{criterion.description}</p>
+            <p className="text-sm text-on-surface-variant">{criterion.description}</p>
+            {hasChanged ? (
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="rounded-full border border-red-200 bg-red-50 px-3 py-1 font-semibold text-red-600 line-through">
+                  {baselineValue?.categoryScore ?? "-"}
+                </span>
+                <span className="text-on-surface-variant/60">to</span>
+                <span className="rounded-full border border-[#00cec4]/30 bg-[#00cec4]/10 px-3 py-1 font-semibold text-[#008b85]">
+                  {value.categoryScore || "-"}
+                </span>
+              </div>
+            ) : null}
           </div>
-          <div className="rounded-xl bg-slate-100 px-3 py-2 text-right">
-            <p className="text-xs uppercase tracking-wide text-slate-500">Overall Rating</p>
-            <p className="text-lg font-semibold text-slate-900">{value.categoryScore || "-"}</p>
+          <div className="text-right">
+            <p className="text-xs uppercase tracking-[0.14em] text-on-surface-variant">Overall Rating</p>
+            <p className="ds-numeric text-lg font-semibold text-[#008b85]">{value.categoryScore || "-"}</p>
           </div>
         </div>
 
         <div className="space-y-3">
           {criterion.items.map((item) => {
             const currentRating = value.subItemRatings[item.id];
+            const invalid = invalidSubItemIds.has(item.id);
 
             return (
-              <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-4">
-                <div className="flex items-center justify-between gap-3">
+              <div
+                key={item.id}
+                data-field-id={`criterion:${criterion.id}:${item.id}`}
+                className={cn(
+                  "space-y-3 border-b py-3 last:border-b-0",
+                  invalid ? "border-red-200" : "border-outline-variant/20",
+                )}
+              >
+                <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">{item.label}</p>
-                    <p className="text-xs text-slate-500">Rate this sub-criterion on a scale of 1 to 5.</p>
+                    <p className="text-sm font-semibold text-on-surface">{item.label}</p>
+                    <p className="text-xs text-on-surface-variant">Rate this sub-criterion on a scale of 1 to 5.</p>
                   </div>
-                  <div className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
-                    {currentRating ?? "Not rated"}
+                  <div className={cn("rounded-full px-3 py-1 text-xs font-semibold text-white", invalid ? "bg-red-400" : "bg-[#00cec4]")}>
+                    {currentRating ?? "—"}
                   </div>
                 </div>
                 <input
@@ -453,6 +528,7 @@ export function ReviewerCriteriaSection({
                   step={1}
                   value={currentRating ?? 1}
                   disabled={disabled}
+                  style={buildSliderStyle(currentRating)}
                   onChange={(event) => {
                     const nextRating = clampRating(Number(event.target.value));
                     const nextSubItemRatings = { ...value.subItemRatings, [item.id]: nextRating };
@@ -462,9 +538,9 @@ export function ReviewerCriteriaSection({
                       categoryScore: computeCriterionAverage(nextSubItemRatings),
                     });
                   }}
-                  className="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-slate-900 disabled:cursor-not-allowed"
+                  className="cyan-range-slider h-2.5 w-full cursor-pointer appearance-none rounded-full disabled:cursor-not-allowed"
                 />
-                <div className="mt-2 flex justify-between text-xs text-slate-400">
+                <div className="flex justify-between text-xs font-medium text-on-surface-variant/60">
                   <span>1</span>
                   <span>2</span>
                   <span>3</span>
@@ -476,14 +552,40 @@ export function ReviewerCriteriaSection({
           })}
         </div>
 
-        <div className="space-y-2">
-          <Label className="text-sm font-medium text-slate-700">Comments</Label>
+        <div
+          className={cn(
+            "space-y-2",
+            commentInvalid && "rounded-xl border border-red-400 bg-red-50/70 p-3",
+          )}
+          data-field-id={`comment:${criterion.id}`}
+        >
+          <Label className="text-sm font-medium text-on-surface-variant">Comments</Label>
           <ReviewerCommentBox
             value={value.comment}
             onChange={(comment) => onChange({ ...value, comment })}
             disabled={disabled}
           />
         </div>
+
+        {showComparison ? (
+          <div
+            data-field-id={`change-reason:${criterion.id}`}
+            className={cn(
+              "space-y-2",
+              changeReasonInvalid && "rounded-xl border border-red-400 bg-red-50/70 p-3",
+            )}
+          >
+            <Label className="text-sm font-medium text-on-surface-variant">Reason for rating change</Label>
+            <ReviewerCommentBox
+              value={value.changeReason}
+              onChange={(changeReason) => onChange({ ...value, changeReason })}
+              disabled={disabled}
+            />
+            <p className="text-xs text-on-surface-variant/70">
+              Explain why this criterion was changed from the last submitted rating.
+            </p>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );
@@ -498,14 +600,20 @@ export function FormProgress({
 }) {
   const pct = total === 0 ? 0 : Math.round((completed / total) * 100);
   return (
-    <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-4">
+    <div className="sticky top-4 z-10 space-y-3 rounded-2xl border border-outline-variant/40 bg-surface p-4 shadow-sm">
       <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-slate-700">Progress</span>
-        <span className="text-slate-500">{completed}/{total}</span>
+        <span className="font-medium text-on-surface-variant">Progress</span>
+        <span className="rounded-full bg-[#00cec4]/10 px-3 py-1 text-[#008b85]">
+          {completed}/{total}
+        </span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-        <div className="h-full rounded-full bg-slate-900 transition-all" style={{ width: `${pct}%` }} />
+      <div className="overflow-hidden rounded-full border border-[#00cec4]/20 bg-surface-container p-1">
+        <div
+          className="h-2.5 rounded-full bg-gradient-to-r from-[#00cec4] via-[#00b8af] to-sky-400 transition-all"
+          style={{ width: `${pct}%` }}
+        />
       </div>
+      <p className="text-xs text-on-surface-variant/70">{pct}% complete</p>
     </div>
   );
 }
@@ -520,7 +628,13 @@ export function SaveDraftButton({
   pending?: boolean;
 }) {
   return (
-    <Button type="button" variant="outline" disabled={disabled || pending} onClick={onClick}>
+    <Button
+      type="button"
+      variant="outline"
+      disabled={disabled || pending}
+      onClick={onClick}
+      className="border-cyan-200 bg-white text-[#008b85] hover:bg-cyan-50 hover:text-[#007a75]"
+    >
       {pending ? "Saving..." : "Save Draft"}
     </Button>
   );
@@ -538,7 +652,12 @@ export function SubmitButton({
   label?: string;
 }) {
   return (
-    <Button type="button" disabled={disabled || pending} onClick={onClick}>
+    <Button
+      type="button"
+      disabled={disabled || pending}
+      onClick={onClick}
+      className="border-0 bg-[#00cec4] text-white hover:bg-[#00b8af]"
+    >
       {pending ? "Submitting..." : label}
     </Button>
   );
@@ -585,27 +704,36 @@ export function DynamicAppraisalForm({
   const [selfAnswers, setSelfAnswers] = useState(() => normalizeSelfAnswers(mode === "self" ? (initialAnswers as SelfAssessmentAnswers | null | undefined) : null));
   const [reviewerAnswers, setReviewerAnswers] = useState(() => normalizeReviewerAnswers(mode !== "self" ? (initialAnswers as ReviewerRatingAnswers | null | undefined) : null));
   const [missingFieldIds, setMissingFieldIds] = useState<Set<string>>(new Set());
+  const [formPrompt, setFormPrompt] = useState<string | null>(null);
   const [demoProfile, setDemoProfile] = useState<DemoPerformanceProfile>("average");
   const deferredSelf = useDeferredValue(selfAnswers);
   const deferredReviewer = useDeferredValue(reviewerAnswers);
+  const baselineReviewerAnswers = useMemo(
+    () => (mode === "self" ? null : normalizeReviewerAnswers(initialAnswers as ReviewerRatingAnswers | null | undefined)),
+    [initialAnswers, mode],
+  );
 
   const questionCount = useMemo(() => {
     if (mode !== "self") {
-      return criteria.reduce((count, criterion) => count + criterion.items.length + 1, 0);
+      return criteria.reduce((count, criterion) => {
+        const changed = hasCriterionChanged(criterion.id, deferredReviewer, baselineReviewerAnswers);
+        return count + criterion.items.length + (changed ? 1 : 0);
+      }, 0);
     }
 
     return allSelfSections.reduce((count, section) => count + section.questions.length, 0)
       + partARatingCriteria.length
       + 1;
-  }, [allSelfSections, criteria, mode, partARatingCriteria.length]);
+  }, [allSelfSections, baselineReviewerAnswers, criteria, deferredReviewer, mode, partARatingCriteria.length]);
 
   const completedCount = useMemo(() => {
     if (mode !== "self") {
       return criteria.reduce((count, criterion) => {
         const subRatings = deferredReviewer.subItemRatings[criterion.id] ?? {};
         const subCount = criterion.items.filter((item) => Boolean(subRatings[item.id])).length;
-        const commentCount = deferredReviewer.comments[criterion.id]?.trim() ? 1 : 0;
-        return count + subCount + commentCount;
+        const changed = hasCriterionChanged(criterion.id, deferredReviewer, baselineReviewerAnswers);
+        const changeReasonCount = changed && deferredReviewer.changeReasons?.[criterion.id]?.trim() ? 1 : 0;
+        return count + subCount + changeReasonCount;
       }, 0);
     }
 
@@ -620,7 +748,7 @@ export function DynamicAppraisalForm({
     const feedbackCount = deferredSelf.feedback.trim() ? 1 : 0;
 
     return responseCount + selfRatingCount + feedbackCount;
-  }, [allSelfSections, criteria, deferredReviewer, deferredSelf, mode, partARatingCriteria]);
+  }, [allSelfSections, baselineReviewerAnswers, criteria, deferredReviewer, deferredSelf, mode, partARatingCriteria]);
 
   const readOnly = disabled;
 
@@ -631,6 +759,7 @@ export function DynamicAppraisalForm({
       next.delete(fieldId);
       return next;
     });
+    setFormPrompt(null);
   }
 
   function validateSelfAssessment(): string[] {
@@ -668,11 +797,65 @@ export function DynamicAppraisalForm({
     focusable?.focus();
   }
 
+  function validateReviewerAssessment() {
+    const missing: string[] = [];
+
+    for (const criterion of criteria) {
+      const subRatings = reviewerAnswers.subItemRatings[criterion.id] ?? {};
+
+      for (const item of criterion.items) {
+        if (!subRatings[item.id]) {
+          missing.push(`criterion:${criterion.id}:${item.id}`);
+        }
+      }
+
+      const changed = hasCriterionChanged(criterion.id, reviewerAnswers, baselineReviewerAnswers);
+      if (changed && !reviewerAnswers.changeReasons?.[criterion.id]?.trim()) {
+        missing.push(`change-reason:${criterion.id}`);
+      }
+    }
+
+    return missing;
+  }
+
+  const reviewerMissing = useMemo(() => {
+    const missing: string[] = [];
+
+    for (const criterion of criteria) {
+      const subRatings = reviewerAnswers.subItemRatings[criterion.id] ?? {};
+
+      for (const item of criterion.items) {
+        if (!subRatings[item.id]) {
+          missing.push(`criterion:${criterion.id}:${item.id}`);
+        }
+      }
+
+      const changed = hasCriterionChanged(criterion.id, reviewerAnswers, baselineReviewerAnswers);
+      if (changed && !reviewerAnswers.changeReasons?.[criterion.id]?.trim()) {
+        missing.push(`change-reason:${criterion.id}`);
+      }
+    }
+
+    return missing;
+  }, [baselineReviewerAnswers, criteria, reviewerAnswers]);
+  const reviewerSubmitDisabled = mode !== "self" && reviewerMissing.length > 0;
+
   function runAction(action: "draft" | "submit") {
     if (mode === "self" && action === "submit") {
       const missing = validateSelfAssessment();
       if (missing.length > 0) {
         setMissingFieldIds(new Set(missing));
+        setFormPrompt("Fill every required question before submitting the self-assessment.");
+        requestAnimationFrame(() => focusFirstMissingField(missing));
+        return;
+      }
+    }
+
+    if (mode !== "self" && action === "submit") {
+      const missing = validateReviewerAssessment();
+      if (missing.length > 0) {
+        setMissingFieldIds(new Set(missing));
+        setFormPrompt("Rate every criterion and add a reason for any edited rating before submitting.");
         requestAnimationFrame(() => focusFirstMissingField(missing));
         return;
       }
@@ -681,6 +864,7 @@ export function DynamicAppraisalForm({
     startTransition(async () => {
       if (mode === "self") {
         setMissingFieldIds(new Set());
+        setFormPrompt(null);
         if (action === "draft") {
           await onSaveDraft(selfAnswers);
         } else {
@@ -697,7 +881,19 @@ export function DynamicAppraisalForm({
           if (average > 0) acc[criterion.id] = average;
           return acc;
         }, {}),
+        previousCategoryPoints: baselineReviewerAnswers?.categoryPoints,
+        previousSubItemRatings: baselineReviewerAnswers?.subItemRatings,
+        changeReasons: criteria.reduce<Record<string, string>>((acc, criterion) => {
+          const changed = hasCriterionChanged(criterion.id, reviewerAnswers, baselineReviewerAnswers);
+          const reason = reviewerAnswers.changeReasons?.[criterion.id]?.trim();
+          if (changed && reason) {
+            acc[criterion.id] = reason;
+          }
+          return acc;
+        }, {}),
       };
+      setMissingFieldIds(new Set());
+      setFormPrompt(null);
 
       if (action === "draft") {
         await onSaveDraft(normalized);
@@ -711,12 +907,18 @@ export function DynamicAppraisalForm({
     <div className="space-y-6">
       <FormProgress total={questionCount} completed={completedCount} />
 
+      {formPrompt ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {formPrompt}
+        </div>
+      ) : null}
+
       {mode === "self" ? (
         <>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-2">
-              <h2 className="ds-h2 text-slate-900">Employee Self-Assessment</h2>
-              <p className="text-sm text-slate-500">
+              <h2 className="ds-h2 text-on-surface">Employee Self-Assessment</h2>
+              <p className="text-sm text-on-surface-variant">
                 Answer every question and rate yourself section by section. You can keep updating the form until the deadline.
               </p>
             </div>
@@ -727,6 +929,7 @@ export function DynamicAppraisalForm({
                 onProfileChange={setDemoProfile}
                 onClick={() => {
                   setMissingFieldIds(new Set());
+                  setFormPrompt(null);
                   setSelfAnswers(normalizeSelfAnswers(buildSelfAssessmentDemoAnswers(criteria, resolvedSelfTemplate, demoProfile)));
                 }}
               />
@@ -737,14 +940,14 @@ export function DynamicAppraisalForm({
             <Card>
               <CardContent className="space-y-4">
                 <div className="space-y-1">
-                  <h3 className="ds-h3 text-slate-900">Employee details</h3>
-                  <p className="text-sm text-slate-500">This information comes directly from the system and is shown here for reference.</p>
+                  <h3 className="ds-h3 text-on-surface">Employee details</h3>
+                  <p className="text-sm text-on-surface-variant">This information comes directly from the system and is shown here for reference.</p>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                   {employeeSummary.map((item) => (
-                    <div key={item.label} className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{item.label}</p>
-                      <p className="mt-2 text-sm font-medium text-slate-900">{item.value}</p>
+                    <div key={item.label} className="rounded-2xl border border-outline-variant/30 bg-surface-container-low px-4 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant/70">{item.label}</p>
+                      <p className="mt-2 text-sm font-medium text-on-surface">{item.value}</p>
                     </div>
                   ))}
                 </div>
@@ -835,6 +1038,8 @@ export function DynamicAppraisalForm({
                 selectedProfile={demoProfile}
                 onProfileChange={setDemoProfile}
                 onClick={() => {
+                  setMissingFieldIds(new Set());
+                  setFormPrompt(null);
                   setReviewerAnswers(normalizeReviewerAnswers(buildReviewerDemoAnswers(criteria, demoProfile)));
                 }}
               />
@@ -848,31 +1053,66 @@ export function DynamicAppraisalForm({
                 categoryScore: reviewerAnswers.categoryPoints[criterion.id] ?? computeCriterionAverage(reviewerAnswers.subItemRatings[criterion.id] ?? {}),
                 subItemRatings: reviewerAnswers.subItemRatings[criterion.id] ?? {},
                 comment: reviewerAnswers.comments[criterion.id] ?? "",
+                changeReason: reviewerAnswers.changeReasons?.[criterion.id] ?? "",
               }}
-              onChange={(nextValue) => setReviewerAnswers((current) => ({
-                ...current,
-                categoryPoints: { ...current.categoryPoints, [criterion.id]: nextValue.categoryScore },
-                subItemRatings: { ...current.subItemRatings, [criterion.id]: nextValue.subItemRatings },
-                comments: { ...current.comments, [criterion.id]: nextValue.comment },
-              }))}
+              baselineValue={baselineReviewerAnswers ? {
+                categoryScore: baselineReviewerAnswers.categoryPoints[criterion.id] ?? computeCriterionAverage(baselineReviewerAnswers.subItemRatings[criterion.id] ?? {}),
+                subItemRatings: baselineReviewerAnswers.subItemRatings[criterion.id] ?? {},
+                comment: baselineReviewerAnswers.comments[criterion.id] ?? "",
+                changeReason: baselineReviewerAnswers.changeReasons?.[criterion.id] ?? "",
+              } : null}
+              onChange={(nextValue) => {
+                criterion.items.forEach((item) => clearMissingField(`criterion:${criterion.id}:${item.id}`));
+                clearMissingField(`change-reason:${criterion.id}`);
+                setReviewerAnswers((current) => ({
+                  ...current,
+                  categoryPoints: { ...current.categoryPoints, [criterion.id]: nextValue.categoryScore },
+                  subItemRatings: { ...current.subItemRatings, [criterion.id]: nextValue.subItemRatings },
+                  comments: { ...current.comments, [criterion.id]: nextValue.comment },
+                  changeReasons: { ...current.changeReasons, [criterion.id]: nextValue.changeReason },
+                }));
+              }}
+              invalidSubItemIds={new Set(
+                criterion.items
+                  .filter((item) => missingFieldIds.has(`criterion:${criterion.id}:${item.id}`))
+                  .map((item) => item.id),
+              )}
+              changeReasonInvalid={missingFieldIds.has(`change-reason:${criterion.id}`)}
+              showComparison={hasCriterionChanged(criterion.id, reviewerAnswers, baselineReviewerAnswers)}
               disabled={readOnly}
             />
           ))}
         </>
       )}
 
-      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 pt-4">
+      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-outline-variant/40 pt-4">
         {!readOnly ? (
           <>
             <SaveDraftButton onClick={() => runAction("draft")} pending={isPending} />
+            {reviewerSubmitDisabled ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="border-cyan-200 bg-white text-[#008b85] hover:bg-cyan-50 hover:text-[#007a75]"
+                onClick={() => {
+                  const missing = validateReviewerAssessment();
+                  setMissingFieldIds(new Set(missing));
+                  setFormPrompt("Rate every criterion and add a reason for any edited rating before submitting.");
+                  requestAnimationFrame(() => focusFirstMissingField(missing));
+                }}
+              >
+                Review Missing Items
+              </Button>
+            ) : null}
             <SubmitButton
               onClick={() => runAction("submit")}
               pending={isPending}
+              disabled={reviewerSubmitDisabled}
               label={mode === "self" ? "Submit Self-Assessment" : "Submit Final Rating"}
             />
           </>
         ) : (
-          <p className="text-sm text-slate-500">This submission is read-only.</p>
+          <p className="text-sm text-on-surface-variant">This submission is read-only.</p>
         )}
       </div>
     </div>
@@ -892,9 +1132,9 @@ function renderQuestionResponse(section: AppraisalSectionDefinition, answers: Se
     if (!display) return null;
 
     return (
-      <div key={key} className="space-y-1">
-        <p className="text-sm font-medium text-slate-700">{question.prompt}</p>
-        <p className="text-sm text-slate-600">{display}</p>
+      <div key={key} className="border-b border-outline-variant/20 py-3 last:border-b-0">
+        <p className="mb-1 text-xs text-on-surface-variant/50">{question.prompt}</p>
+        <p className="text-sm text-on-surface">{display}</p>
       </div>
     );
   });
@@ -906,12 +1146,14 @@ export function CriteriaPointsView({
   answers,
   editCount,
   selfTemplate,
+  onReviewerFieldNavigate,
 }: {
   criteria: CriterionPoint[];
   supplementary: CriterionPoint[];
   answers: SelfAssessmentAnswers | ReviewerRatingAnswers | ManagementReviewAnswers | null;
   editCount?: number;
   selfTemplate?: AppraisalSelfFormTemplate;
+  onReviewerFieldNavigate?: (fieldId: string) => void;
 }) {
   void supplementary;
   if (!answers) {
@@ -932,7 +1174,7 @@ export function CriteriaPointsView({
     return (
       <div className="space-y-5">
         {editCount !== undefined ? (
-          <p className="text-xs text-slate-400">Edited {editCount} time{editCount === 1 ? "" : "s"}</p>
+          <p className="text-xs text-on-surface-variant/70">Edited {editCount} time{editCount === 1 ? "" : "s"}</p>
         ) : null}
 
         {allSelfSections.map((section, index) => {
@@ -943,8 +1185,8 @@ export function CriteriaPointsView({
           if (content.length === 0 && !rating) return null;
 
           return (
-            <div key={section.id} className="space-y-4 rounded-xl border border-slate-200 p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
+            <div key={section.id} className="space-y-0">
+              <div className="mb-1 flex flex-wrap items-start justify-between gap-3 border-l-4 border-[#00cec4] pl-3">
                 <h3 className="ds-h3 text-slate-900">{section.title}</h3>
                 {criterion ? (
                   <Badge variant="secondary">Self rating {rating ?? "-"}</Badge>
@@ -956,9 +1198,9 @@ export function CriteriaPointsView({
         })}
 
         {answers.feedback ? (
-          <div className="space-y-1 rounded-xl border border-slate-200 p-4">
-            <p className="text-sm font-semibold text-slate-900">{resolvedSelfTemplate.feedbackQuestion.prompt}</p>
-            <p className="text-sm text-slate-600">{answers.feedback}</p>
+          <div className="space-y-1 rounded-xl border-l-4 border-[#00cec4] bg-surface p-4">
+            <p className="text-sm font-semibold text-on-surface">{resolvedSelfTemplate.feedbackQuestion.prompt}</p>
+            <p className="text-sm text-on-surface-variant">{answers.feedback}</p>
           </div>
         ) : null}
       </div>
@@ -966,36 +1208,81 @@ export function CriteriaPointsView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {criteria.map((criterion) => {
         const categoryScore = answers.categoryPoints[criterion.id];
         const subItemRatings = answers.subItemRatings[criterion.id] ?? {};
         const comment = answers.comments[criterion.id];
+        const previousCategoryScore = answers.previousCategoryPoints?.[criterion.id];
+        const changeReason = answers.changeReasons?.[criterion.id];
         if (!categoryScore && Object.keys(subItemRatings).length === 0 && !comment) return null;
 
         return (
-          <div key={criterion.id} className="space-y-3 rounded-xl border border-slate-200 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+          <div key={criterion.id} className="space-y-0">
+            <div className="mb-2 flex flex-wrap items-start justify-between gap-3 border-l-4 border-[#00cec4] pl-3">
               <div>
-                <p className="text-sm font-semibold text-slate-900">{criterion.label}</p>
-                <p className="text-xs text-slate-500">{criterion.description}</p>
+                {onReviewerFieldNavigate ? (
+                  <button
+                    type="button"
+                    onClick={() => onReviewerFieldNavigate(`reviewer-criterion:${criterion.id}`)}
+                    className="text-left transition hover:text-[#008b85] hover:underline"
+                  >
+                    <h3 className="ds-h3 text-current">{criterion.label}</h3>
+                  </button>
+                ) : (
+                  <h3 className="ds-h3 text-on-surface">{criterion.label}</h3>
+                )}
+                {criterion.description ? (
+                  <p className="text-xs text-on-surface-variant">{criterion.description}</p>
+                ) : null}
+                {typeof previousCategoryScore === "number" && previousCategoryScore !== categoryScore ? (
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 font-semibold text-red-600 line-through">
+                      {previousCategoryScore}
+                    </span>
+                    <span className="text-on-surface-variant/60">→</span>
+                    <span className="rounded-full border border-[#00cec4]/30 bg-[#00cec4]/10 px-2 py-0.5 font-semibold text-[#008b85]">
+                      {categoryScore ?? "-"}
+                    </span>
+                  </div>
+                ) : null}
               </div>
               <Badge variant="secondary">Overall {categoryScore ?? "-"}</Badge>
             </div>
-            <div className="grid gap-2 md:grid-cols-2">
-              {criterion.items.map((item) => {
-                const value = subItemRatings[item.id];
-                if (!value) return null;
-                return (
-                  <div key={item.id} className="rounded-lg bg-slate-50 px-3 py-2 text-sm">
-                    <span className="font-medium text-slate-700">{item.label}:</span>{" "}
-                    <span className="text-slate-600">{value}</span>
-                  </div>
-                );
-              })}
-            </div>
+
+            {criterion.items.map((item) => {
+              const value = subItemRatings[item.id];
+              if (!value) return null;
+              return (
+                <div key={item.id} className="border-b border-outline-variant/20 py-3 last:border-b-0">
+                  {onReviewerFieldNavigate ? (
+                    <button
+                      type="button"
+                      onClick={() => onReviewerFieldNavigate(`criterion:${criterion.id}:${item.id}`)}
+                      className="mb-1 block text-left text-xs text-on-surface-variant/50 transition hover:text-[#008b85] hover:underline"
+                    >
+                      {item.label}
+                    </button>
+                  ) : (
+                    <p className="mb-1 text-xs text-on-surface-variant/50">{item.label}</p>
+                  )}
+                  <p className="ds-numeric text-sm font-semibold text-on-surface">{value}</p>
+                </div>
+              );
+            })}
+
             {comment ? (
-              <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">{comment}</div>
+              <div className="border-b border-outline-variant/20 py-3 last:border-b-0">
+                <p className="mb-1 text-xs text-on-surface-variant/50">Comments</p>
+                <p className="text-sm text-on-surface-variant">{comment}</p>
+              </div>
+            ) : null}
+
+            {changeReason ? (
+              <div className="py-3">
+                <p className="mb-1 text-xs text-on-surface-variant/50">Reason for change</p>
+                <p className="text-sm text-on-surface">{changeReason}</p>
+              </div>
             ) : null}
           </div>
         );

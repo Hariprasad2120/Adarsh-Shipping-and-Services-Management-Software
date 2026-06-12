@@ -34,6 +34,20 @@ type Subtopic = {
 type ResponseConfig = {
   startLabel: string;
   endLabel: string;
+  increment: number;
+};
+
+type QuestionOption = {
+  id: string;
+  label: string;
+};
+
+type CriterionQuestion = {
+  id: string;
+  prompt: string;
+  questionType: QuestionType;
+  options: QuestionOption[];
+  responseConfig: ResponseConfig;
 };
 
 type Topic = {
@@ -51,6 +65,7 @@ type Topic = {
   allowedRoles: EvaluatorRole[];
   questionType: QuestionType;
   responseConfig: ResponseConfig;
+  questionItems: CriterionQuestion[];
 };
 
 const PHASE_META: Record<Phase, { label: string; description: string }> = {
@@ -90,14 +105,61 @@ function supportsResponseLabels(type: QuestionType) {
 function getDefaultResponseConfig(type: QuestionType): ResponseConfig {
   switch (type) {
     case "slider":
-      return { startLabel: "Low", endLabel: "High" };
+      return { startLabel: "Low", endLabel: "High", increment: 5 };
     case "linear_scale":
-      return { startLabel: "Low", endLabel: "High" };
+      return { startLabel: "Low", endLabel: "High", increment: 5 };
     case "rating":
-      return { startLabel: "Poor", endLabel: "Excellent" };
+      return { startLabel: "Poor", endLabel: "Excellent", increment: 5 };
     default:
-      return { startLabel: "", endLabel: "" };
+      return { startLabel: "", endLabel: "", increment: 5 };
   }
+}
+
+function normalizeIncrement(value: number | undefined, fallback = 5) {
+  if (!Number.isFinite(value)) return fallback;
+  return Math.max(2, Math.round(value as number));
+}
+
+function parseIncrementInput(value: string, fallback = 5) {
+  if (value.trim() === "") return fallback;
+  return normalizeIncrement(Number(value), fallback);
+}
+
+function createQuestionOption(label = ""): QuestionOption {
+  return {
+    id: `__option_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    label,
+  };
+}
+
+function createQuestion(type: QuestionType = "short_answer"): CriterionQuestion {
+  return {
+    id: `__question_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    prompt: "",
+    questionType: type,
+    options: hasOptions(type) ? [createQuestionOption()] : [],
+    responseConfig: getDefaultResponseConfig(type),
+  };
+}
+
+function normalizeQuestionOptions(options: QuestionOption[]) {
+  return options.map((option, index) => ({
+    ...option,
+    id: option.id || `option-${index + 1}`,
+  }));
+}
+
+function normalizeQuestionItems(questionItems: CriterionQuestion[]) {
+  return questionItems.map((question, index) => ({
+    ...question,
+    id: question.id || `question-${index + 1}`,
+    options: normalizeQuestionOptions(question.options),
+    responseConfig: {
+      startLabel: question.responseConfig?.startLabel ?? "",
+      endLabel: question.responseConfig?.endLabel ?? "",
+      increment: normalizeIncrement(question.responseConfig?.increment, getDefaultResponseConfig(question.questionType).increment),
+    },
+  }));
 }
 
 function withOrderedSubtopics(subtopics: Subtopic[]) {
@@ -418,18 +480,12 @@ function OptionRow({
   );
 }
 
-function QuestionBody({
+function QuestionPreview({
   type,
-  subtopics,
   responseConfig,
-  onSubtopicsChange,
-  onResponseConfigChange,
 }: {
   type: QuestionType;
-  subtopics: Subtopic[];
   responseConfig: ResponseConfig;
-  onSubtopicsChange: (next: Subtopic[]) => void;
-  onResponseConfigChange: (next: ResponseConfig) => void;
 }) {
   if (type === "short_answer") {
     return <div className="rounded-xl border border-outline-variant/50 bg-surface-container-low px-4 py-3 text-sm italic text-on-surface-variant">Short answer text</div>;
@@ -454,26 +510,13 @@ function QuestionBody({
     );
   }
   if (type === "linear_scale") {
+    const incrementValues = Array.from({ length: responseConfig.increment }, (_, index) => index + 1);
     return (
       <div className="space-y-4 rounded-2xl border border-outline-variant/50 bg-surface-container-low px-4 py-4">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <FieldInput
-            label="Start label"
-            value={responseConfig.startLabel}
-            onChange={(value) => onResponseConfigChange({ ...responseConfig, startLabel: value })}
-            placeholder="Low"
-          />
-          <FieldInput
-            label="End label"
-            value={responseConfig.endLabel}
-            onChange={(value) => onResponseConfigChange({ ...responseConfig, endLabel: value })}
-            placeholder="High"
-          />
-        </div>
         <div className="flex items-center gap-3 text-sm">
           <span className="text-on-surface-variant">{responseConfig.startLabel || "Low"}</span>
           <div className="flex flex-1 items-center gap-3">
-            {[1, 2, 3, 4, 5].map((value) => (
+            {incrementValues.map((value) => (
               <div key={value} className="flex flex-col items-center gap-1">
                 <div className="h-3 w-3 rounded-full border-2 border-outline-variant" />
                 <span className="text-xs text-on-surface-variant">{value}</span>
@@ -488,7 +531,272 @@ function QuestionBody({
   if (type === "slider") {
     return (
       <div className="space-y-4 rounded-2xl border border-outline-variant/50 bg-surface-container-low px-4 py-5">
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex items-center gap-3">
+          <div className="flex min-w-0 flex-col">
+            <span className="text-xs text-on-surface-variant">{responseConfig.startLabel || "Low"}</span>
+            <span className="text-[11px] text-on-surface-variant/70">1</span>
+          </div>
+          <div className="relative flex-1">
+            <div className="h-1.5 rounded-full bg-gradient-to-r from-[#0e8a95] to-[#00cec4]" />
+            <div className="absolute left-[68%] top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border-2 border-white bg-[#00cec4] shadow-[0_8px_20px_-10px_rgba(0,206,196,0.8)]" />
+          </div>
+          <div className="flex min-w-0 flex-col items-end">
+            <span className="text-xs text-on-surface-variant">{responseConfig.endLabel || "High"}</span>
+            <span className="text-[11px] text-on-surface-variant/70">{responseConfig.increment}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (type === "rating") {
+    const incrementValues = Array.from({ length: responseConfig.increment }, (_, index) => index + 1);
+    return (
+      <div className="space-y-4 rounded-2xl border border-outline-variant/50 bg-surface-container-low px-4 py-4">
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-on-surface-variant">{responseConfig.startLabel || "Poor"}</span>
+          <div className="flex items-center gap-1">
+            {incrementValues.map((value) => (
+              <svg key={value} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-outline-variant">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+            ))}
+          </div>
+          <span className="text-xs text-on-surface-variant">{responseConfig.endLabel || "Excellent"}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+function QuestionCard({
+  question,
+  index,
+  onChange,
+  onDelete,
+}: {
+  question: CriterionQuestion;
+  index: number;
+  onChange: (next: CriterionQuestion) => void;
+  onDelete: () => void;
+}) {
+  const optionCapable = hasOptions(question.questionType);
+  const labelCapable = supportsResponseLabels(question.questionType);
+
+  return (
+    <div className="space-y-4 rounded-2xl border border-outline-variant/45 bg-surface px-4 py-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+        <div className="flex-1">
+          <FieldInput
+            label={`Question ${index + 1}`}
+            value={question.prompt}
+            onChange={(value) => onChange({ ...question, prompt: value })}
+            placeholder="Type the question prompt"
+          />
+        </div>
+        <div className="w-full shrink-0 lg:w-56">
+          <p className="mb-1.5 text-xs font-medium text-on-surface-variant">Response type</p>
+          <DropdownSelect
+            value={question.questionType}
+            onValueChange={(value) => {
+              const nextType = value as QuestionType;
+              onChange({
+                ...question,
+                questionType: nextType,
+                options: hasOptions(nextType)
+                  ? (optionCapable ? question.options : [createQuestionOption()])
+                  : [],
+                responseConfig: supportsResponseLabels(nextType)
+                  ? (labelCapable ? question.responseConfig : getDefaultResponseConfig(nextType))
+                  : getDefaultResponseConfig(nextType),
+              });
+            }}
+            options={QUESTION_TYPES.map((entry) => ({ value: entry.value, label: entry.label }))}
+            ariaLabel={`Question ${index + 1} response type`}
+            triggerClassName="h-10 border-outline-variant/60 bg-surface-container-low text-sm shadow-none hover:shadow-none"
+          />
+        </div>
+        <div className="flex items-end">
+          <IconButton title="Delete question" onClick={(event) => { event.stopPropagation(); onDelete(); }} className="hover:border-red-200 hover:text-red-600">
+            <TrashIcon />
+          </IconButton>
+        </div>
+      </div>
+
+      {optionCapable ? (
+        <div className="space-y-3 rounded-2xl border border-outline-variant/35 bg-surface-container-low px-4 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-on-surface">Options</p>
+              <p className="text-xs text-on-surface-variant">Add choices for this question only.</p>
+            </div>
+            <Button
+              size="sm"
+              onClick={(event) => {
+                event.stopPropagation();
+                onChange({ ...question, options: [...question.options, createQuestionOption()] });
+              }}
+              className="border-0 bg-[#00cec4] text-white shadow-[0_14px_28px_-18px_rgba(0,174,198,0.45)] hover:bg-[#00b8af]"
+            >
+              Add option
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {question.options.map((option, optionIndex) => (
+              <OptionRow
+                key={option.id}
+                type={question.questionType}
+                label={option.label}
+                index={optionIndex}
+                onChange={(value) => onChange({
+                  ...question,
+                  options: question.options.map((entry, currentIndex) => (
+                    currentIndex === optionIndex ? { ...entry, label: value } : entry
+                  )),
+                })}
+                onDelete={() => onChange({
+                  ...question,
+                  options: question.options.filter((_, currentIndex) => currentIndex !== optionIndex),
+                })}
+              />
+            ))}
+          </div>
+          {question.options.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-outline-variant/60 bg-surface px-4 py-5 text-center text-sm text-on-surface-variant">
+              No options yet for this question.
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {labelCapable ? (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <FieldInput
+            label="Start label"
+            value={question.responseConfig.startLabel}
+            onChange={(value) => onChange({
+              ...question,
+              responseConfig: { ...question.responseConfig, startLabel: value },
+            })}
+            placeholder={getDefaultResponseConfig(question.questionType).startLabel || "Start"}
+          />
+          <FieldInput
+            label="End label"
+            value={question.responseConfig.endLabel}
+            onChange={(value) => onChange({
+              ...question,
+              responseConfig: { ...question.responseConfig, endLabel: value },
+            })}
+            placeholder={getDefaultResponseConfig(question.questionType).endLabel || "End"}
+          />
+          <FieldInput
+            label="Increment"
+            value={question.responseConfig.increment}
+            onChange={(value) => onChange({
+              ...question,
+              responseConfig: { ...question.responseConfig, increment: parseIncrementInput(value, getDefaultResponseConfig(question.questionType).increment) },
+            })}
+            type="number"
+            placeholder={String(getDefaultResponseConfig(question.questionType).increment)}
+          />
+        </div>
+      ) : null}
+
+      <QuestionPreview type={question.questionType} responseConfig={question.responseConfig} />
+    </div>
+  );
+}
+
+function QuestionBody({
+  phase,
+  type,
+  subtopics,
+  responseConfig,
+  questionItems,
+  onSubtopicsChange,
+  onResponseConfigChange,
+  onQuestionItemsChange,
+}: {
+  phase: Phase;
+  type: QuestionType;
+  subtopics: Subtopic[];
+  responseConfig: ResponseConfig;
+  questionItems: CriterionQuestion[];
+  onSubtopicsChange: (next: Subtopic[]) => void;
+  onResponseConfigChange: (next: ResponseConfig) => void;
+  onQuestionItemsChange: (next: CriterionQuestion[]) => void;
+}) {
+  if (phase === "SELF") {
+    return (
+      <div className="rounded-2xl border border-outline-variant/50 bg-surface-container-low px-4 py-4">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-on-surface">Questions</p>
+            <p className="text-xs text-on-surface-variant">Each question can use its own response type and options.</p>
+          </div>
+          <Button
+            size="sm"
+            onClick={(event) => {
+              event.stopPropagation();
+              onQuestionItemsChange([...questionItems, createQuestion()]);
+            }}
+            className="border-0 bg-[#00cec4] text-white shadow-[0_14px_28px_-18px_rgba(0,174,198,0.45)] hover:bg-[#00b8af]"
+          >
+            Add question
+          </Button>
+        </div>
+
+        <div className="space-y-3">
+          {questionItems.map((question, index) => (
+            <QuestionCard
+              key={question.id}
+              question={question}
+              index={index}
+              onChange={(next) => onQuestionItemsChange(questionItems.map((entry, currentIndex) => (
+                currentIndex === index ? next : entry
+              )))}
+              onDelete={() => onQuestionItemsChange(questionItems.filter((_, currentIndex) => currentIndex !== index))}
+            />
+          ))}
+        </div>
+
+        {questionItems.length === 0 ? (
+          <div className="mt-3 rounded-xl border border-dashed border-outline-variant/60 bg-surface px-4 py-6 text-center text-sm text-on-surface-variant">
+            No questions yet. Add the first question and choose its response type.
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (type === "short_answer") {
+    return <div className="rounded-xl border border-outline-variant/50 bg-surface-container-low px-4 py-3 text-sm italic text-on-surface-variant">Short answer text</div>;
+  }
+  if (type === "paragraph") {
+    return <div className="rounded-xl border border-outline-variant/50 bg-surface-container-low px-4 py-6 text-sm italic text-on-surface-variant">Long answer text</div>;
+  }
+  if (type === "date") {
+    return (
+      <div className="flex items-center gap-2 rounded-xl border border-outline-variant/50 bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+        <QuestionTypeIcon type="date" />
+        <span>Month / Day / Year</span>
+      </div>
+    );
+  }
+  if (type === "time") {
+    return (
+      <div className="flex items-center gap-2 rounded-xl border border-outline-variant/50 bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+        <QuestionTypeIcon type="time" />
+        <span>Time</span>
+      </div>
+    );
+  }
+  if (type === "linear_scale") {
+    const incrementValues = Array.from({ length: responseConfig.increment }, (_, index) => index + 1);
+    return (
+      <div className="space-y-4 rounded-2xl border border-outline-variant/50 bg-surface-container-low px-4 py-4">
+        <div className="grid gap-3 sm:grid-cols-3">
           <FieldInput
             label="Start label"
             value={responseConfig.startLabel}
@@ -501,22 +809,75 @@ function QuestionBody({
             onChange={(value) => onResponseConfigChange({ ...responseConfig, endLabel: value })}
             placeholder="High"
           />
+          <FieldInput
+            label="Increment"
+            value={responseConfig.increment}
+            onChange={(value) => onResponseConfigChange({ ...responseConfig, increment: parseIncrementInput(value, getDefaultResponseConfig(type).increment) })}
+            type="number"
+            placeholder="5"
+          />
+        </div>
+        <div className="flex items-center gap-3 text-sm">
+          <span className="text-on-surface-variant">{responseConfig.startLabel || "Low"}</span>
+          <div className="flex flex-1 items-center gap-3">
+            {incrementValues.map((value) => (
+              <div key={value} className="flex flex-col items-center gap-1">
+                <div className="h-3 w-3 rounded-full border-2 border-outline-variant" />
+                <span className="text-xs text-on-surface-variant">{value}</span>
+              </div>
+            ))}
+          </div>
+          <span className="text-on-surface-variant">{responseConfig.endLabel || "High"}</span>
+        </div>
+      </div>
+    );
+  }
+  if (type === "slider") {
+    return (
+      <div className="space-y-4 rounded-2xl border border-outline-variant/50 bg-surface-container-low px-4 py-5">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <FieldInput
+            label="Start label"
+            value={responseConfig.startLabel}
+            onChange={(value) => onResponseConfigChange({ ...responseConfig, startLabel: value })}
+            placeholder="Low"
+          />
+          <FieldInput
+            label="End label"
+            value={responseConfig.endLabel}
+            onChange={(value) => onResponseConfigChange({ ...responseConfig, endLabel: value })}
+            placeholder="High"
+          />
+          <FieldInput
+            label="Increment"
+            value={responseConfig.increment}
+            onChange={(value) => onResponseConfigChange({ ...responseConfig, increment: parseIncrementInput(value, getDefaultResponseConfig(type).increment) })}
+            type="number"
+            placeholder="5"
+          />
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-on-surface-variant">{responseConfig.startLabel || "Low"}</span>
+          <div className="flex min-w-0 flex-col">
+            <span className="text-xs text-on-surface-variant">{responseConfig.startLabel || "Low"}</span>
+            <span className="text-[11px] text-on-surface-variant/70">1</span>
+          </div>
           <div className="relative flex-1">
             <div className="h-1.5 rounded-full bg-gradient-to-r from-[#0e8a95] to-[#00cec4]" />
             <div className="absolute left-[68%] top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border-2 border-white bg-[#00cec4] shadow-[0_8px_20px_-10px_rgba(0,206,196,0.8)]" />
           </div>
-          <span className="text-xs text-on-surface-variant">{responseConfig.endLabel || "High"}</span>
+          <div className="flex min-w-0 flex-col items-end">
+            <span className="text-xs text-on-surface-variant">{responseConfig.endLabel || "High"}</span>
+            <span className="text-[11px] text-on-surface-variant/70">{responseConfig.increment}</span>
+          </div>
         </div>
       </div>
     );
   }
   if (type === "rating") {
+    const incrementValues = Array.from({ length: responseConfig.increment }, (_, index) => index + 1);
     return (
       <div className="space-y-4 rounded-2xl border border-outline-variant/50 bg-surface-container-low px-4 py-4">
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
           <FieldInput
             label="Start label"
             value={responseConfig.startLabel}
@@ -529,11 +890,18 @@ function QuestionBody({
             onChange={(value) => onResponseConfigChange({ ...responseConfig, endLabel: value })}
             placeholder="Excellent"
           />
+          <FieldInput
+            label="Increment"
+            value={responseConfig.increment}
+            onChange={(value) => onResponseConfigChange({ ...responseConfig, increment: parseIncrementInput(value, getDefaultResponseConfig(type).increment) })}
+            type="number"
+            placeholder="5"
+          />
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-on-surface-variant">{responseConfig.startLabel || "Poor"}</span>
           <div className="flex items-center gap-1">
-            {[1, 2, 3, 4, 5].map((value) => (
+            {incrementValues.map((value) => (
               <svg key={value} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-outline-variant">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
@@ -549,8 +917,8 @@ function QuestionBody({
     <div className="rounded-2xl border border-outline-variant/50 bg-surface-container-low px-4 py-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-on-surface">Options</p>
-          <p className="text-xs text-on-surface-variant">Add the choices respondents should see for this criterion.</p>
+          <p className="text-sm font-medium text-on-surface">Questions</p>
+          <p className="text-xs text-on-surface-variant">Add the questions respondents should answer for this criterion.</p>
         </div>
         <Button
           size="sm"
@@ -563,7 +931,7 @@ function QuestionBody({
           }}
           className="border-0 bg-[#00cec4] text-white shadow-[0_14px_28px_-18px_rgba(0,174,198,0.45)] hover:bg-[#00b8af]"
         >
-          Add option
+          Add Question
         </Button>
       </div>
 
@@ -730,7 +1098,7 @@ function CriterionCard({
       <div className="space-y-5 bg-white px-5 py-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
           <div className="flex-1 space-y-2">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-on-surface-variant">Question</p>
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-on-surface-variant">Criteria Name</p>
             {isActive ? (
               <Input
                 type="text"
@@ -747,7 +1115,7 @@ function CriterionCard({
             )}
           </div>
 
-          {isActive ? (
+          {phase !== "SELF" && isActive ? (
             <div className="w-full shrink-0 lg:w-56" onClick={(event) => event.stopPropagation()}>
               <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-on-surface-variant">Response type</p>
               <DropdownSelect
@@ -765,10 +1133,14 @@ function CriterionCard({
                 triggerClassName="h-12 border-outline-variant/60 bg-surface-container-low text-sm shadow-none hover:shadow-none"
               />
             </div>
-          ) : (
+          ) : phase !== "SELF" ? (
             <div className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-outline-variant/50 bg-surface-container-low px-3 py-2 text-xs text-on-surface-variant">
               <QuestionTypeIcon type={topic.questionType} />
               <span>{QUESTION_TYPES.find((entry) => entry.value === topic.questionType)?.label ?? "Multiple choice"}</span>
+            </div>
+          ) : (
+            <div className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-outline-variant/50 bg-surface-container-low px-3 py-2 text-xs text-on-surface-variant">
+              <span>Per-question response types</span>
             </div>
           )}
         </div>
@@ -776,11 +1148,14 @@ function CriterionCard({
         {isActive ? (
           <>
             <QuestionBody
+              phase={phase}
               type={topic.questionType}
               subtopics={topic.subtopics}
               responseConfig={topic.responseConfig}
+              questionItems={topic.questionItems}
               onSubtopicsChange={(next) => onTopicChange({ ...topic, subtopics: next })}
               onResponseConfigChange={(next) => onTopicChange({ ...topic, responseConfig: next })}
+              onQuestionItemsChange={(next) => onTopicChange({ ...topic, questionItems: normalizeQuestionItems(next) })}
             />
 
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto]">
@@ -851,9 +1226,11 @@ function CriterionCard({
             </div>
           </>
         ) : (
-          (topic.subtopics.length > 0 || topic.description) ? (
+          (topic.questionItems.length > 0 || topic.subtopics.length > 0 || topic.description) ? (
             <p className="rounded-xl bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
-              {hasOptions(topic.questionType) && topic.subtopics.length > 0
+              {phase === "SELF" && topic.questionItems.length > 0
+                ? `${topic.questionItems.length} question${topic.questionItems.length > 1 ? "s" : ""}`
+                : hasOptions(topic.questionType) && topic.subtopics.length > 0
                 ? `${topic.subtopics.length} option${topic.subtopics.length > 1 ? "s" : ""}`
                 : topic.description
                   ? topic.description.slice(0, 80) + (topic.description.length > 80 ? "..." : "")
@@ -944,16 +1321,22 @@ function PhaseHeader({ phase }: { phase: Phase }) {
   );
 }
 
-function toClientTopic(raw: Omit<Topic, "questionType" | "responseConfig"> & {
+function toClientTopic(raw: Omit<Topic, "questionType" | "responseConfig" | "questionItems"> & {
   allowedRoles: EvaluatorRole[];
   questionType?: QuestionType;
   responseConfig?: ResponseConfig;
+  questionItems?: CriterionQuestion[];
 }): Topic {
   const questionType = raw.questionType ?? "multiple_choice";
   return {
     ...raw,
     questionType,
-    responseConfig: raw.responseConfig ?? getDefaultResponseConfig(questionType),
+    responseConfig: {
+      startLabel: raw.responseConfig?.startLabel ?? getDefaultResponseConfig(questionType).startLabel,
+      endLabel: raw.responseConfig?.endLabel ?? getDefaultResponseConfig(questionType).endLabel,
+      increment: normalizeIncrement(raw.responseConfig?.increment, getDefaultResponseConfig(questionType).increment),
+    },
+    questionItems: normalizeQuestionItems(raw.questionItems ?? []),
     subtopics: withOrderedSubtopics(raw.subtopics),
   };
 }
@@ -963,17 +1346,17 @@ export function CriteriaClient({
   reviewerTree,
   mgmtTree,
 }: {
-  selfTree: Omit<Topic, "questionType" | "responseConfig">[];
-  reviewerTree: Omit<Topic, "questionType" | "responseConfig">[];
-  mgmtTree: Omit<Topic, "questionType" | "responseConfig">[];
+  selfTree: Omit<Topic, "questionType" | "responseConfig" | "questionItems">[];
+  reviewerTree: Omit<Topic, "questionType" | "responseConfig" | "questionItems">[];
+  mgmtTree: Omit<Topic, "questionType" | "responseConfig" | "questionItems">[];
 }) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState<Phase>("SELF");
   const [topicMap, setTopicMap] = useState<Record<Phase, Topic[]>>({
-    SELF: withOrderedTopics(selfTree.map((topic) => toClientTopic(topic as Omit<Topic, "questionType" | "responseConfig"> & { allowedRoles: EvaluatorRole[] }))),
-    REVIEWER: withOrderedTopics(reviewerTree.map((topic) => toClientTopic(topic as Omit<Topic, "questionType" | "responseConfig"> & { allowedRoles: EvaluatorRole[] }))),
-    MANAGEMENT: withOrderedTopics(mgmtTree.map((topic) => toClientTopic(topic as Omit<Topic, "questionType" | "responseConfig"> & { allowedRoles: EvaluatorRole[] }))),
+    SELF: withOrderedTopics(selfTree.map((topic) => toClientTopic(topic as Omit<Topic, "questionType" | "responseConfig" | "questionItems"> & { allowedRoles: EvaluatorRole[] }))),
+    REVIEWER: withOrderedTopics(reviewerTree.map((topic) => toClientTopic(topic as Omit<Topic, "questionType" | "responseConfig" | "questionItems"> & { allowedRoles: EvaluatorRole[] }))),
+    MANAGEMENT: withOrderedTopics(mgmtTree.map((topic) => toClientTopic(topic as Omit<Topic, "questionType" | "responseConfig" | "questionItems"> & { allowedRoles: EvaluatorRole[] }))),
   });
   const [activeId, setActiveId] = useState<string | null>(null);
   const [dirtyIds, setDirtyIds] = useState<Set<string>>(new Set());
@@ -1056,10 +1439,12 @@ export function CriteriaClient({
         maxPoints: topic.maxPoints,
         order: topic.order,
         reviewerOnly: topic.reviewerOnly,
+        questions: topic.questionItems.map((question) => question.prompt).filter((prompt) => prompt.trim().length > 0),
         meta: {
           allowedEvaluatorRoles: topic.allowedRoles,
           questionType: topic.questionType,
           responseConfig: topic.responseConfig,
+          questionItems: topic.questionItems,
         },
       });
 
@@ -1169,6 +1554,7 @@ export function CriteriaClient({
           allowedEvaluatorRoles: [],
           questionType: "multiple_choice",
           responseConfig: getDefaultResponseConfig("multiple_choice"),
+          questionItems: [],
         },
       });
 
@@ -1186,6 +1572,7 @@ export function CriteriaClient({
         allowedRoles: [],
         questionType: "multiple_choice",
         responseConfig: getDefaultResponseConfig("multiple_choice"),
+        questionItems: [],
         order: topics.length,
       };
 

@@ -18,6 +18,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         categoryPoints: z.record(z.string(), z.number().min(1).max(5)).default({}),
         subItemRatings: z.record(z.string(), z.record(z.string(), z.number().min(1).max(5))).default({}),
         comments: z.record(z.string(), z.string()).default({}),
+        previousCategoryPoints: z.record(z.string(), z.number().min(1).max(5)).optional(),
+        previousSubItemRatings: z.record(z.string(), z.record(z.string(), z.number().min(1).max(5))).optional(),
+        changeReasons: z.record(z.string(), z.string()).optional(),
       }),
       proposedDates: z.array(z.string()),
     })

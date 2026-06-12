@@ -464,3 +464,23 @@ main textarea {
   border-top-width: 3px;
   border-top-color: #8a52ff;
 }
+
+.cyan-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #00cec4;
+  border: 4px solid #ffffff;
+  box-shadow: 0 0 0 1px rgba(0, 206, 196, 0.12);
+}
+
+.cyan-range-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #00cec4;
+  border: 4px solid #ffffff;
+  box-shadow: 0 0 0 1px rgba(0, 206, 196, 0.12);
+}
