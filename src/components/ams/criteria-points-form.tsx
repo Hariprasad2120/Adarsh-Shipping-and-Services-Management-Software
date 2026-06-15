@@ -848,13 +848,7 @@ export function DynamicAppraisalForm({
     [selfTemplate],
   );
   const allSelfSections = useMemo(
-    () => ([
-      ...resolvedSelfTemplate.partASections,
-      resolvedSelfTemplate.careerGrowthSection,
-      resolvedSelfTemplate.decisionMakingSection,
-      resolvedSelfTemplate.retentionSection,
-      resolvedSelfTemplate.compensationSection,
-    ]),
+    () => resolvedSelfTemplate.partASections,
     [resolvedSelfTemplate],
   );
   const [selfAnswers, setSelfAnswers] = useState(() => normalizeSelfAnswers(mode === "self" ? (initialAnswers as SelfAssessmentAnswers | null | undefined) : null));
@@ -877,9 +871,8 @@ export function DynamicAppraisalForm({
       }, 0);
     }
 
-    const hasFeedback = resolvedSelfTemplate.feedbackQuestion.prompt.trim() !== "";
-    return allSelfSections.reduce((count, section) => count + section.questions.length, 0) + (hasFeedback ? 1 : 0);
-  }, [allSelfSections, baselineReviewerAnswers, criteria, deferredReviewer, mode, resolvedSelfTemplate]);
+    return allSelfSections.reduce((count, section) => count + section.questions.length, 0);
+  }, [allSelfSections, baselineReviewerAnswers, criteria, deferredReviewer, mode]);
 
   const completedCount = useMemo(() => {
     if (mode !== "self") {
@@ -896,18 +889,14 @@ export function DynamicAppraisalForm({
       }, 0);
     }
 
-    const responseCount = allSelfSections.reduce((count, section) => (
+    return allSelfSections.reduce((count, section) => (
       count
       + section.questions.filter((question) => {
         const questionKey = buildQuestionKey(section.id, question.id);
         return isQuestionAnswered(question, deferredSelf.responses[questionKey]);
       }).length
     ), 0);
-    const hasFeedback = resolvedSelfTemplate.feedbackQuestion.prompt.trim() !== "";
-    const feedbackCount = hasFeedback && deferredSelf.feedback.trim() ? 1 : 0;
-
-    return responseCount + feedbackCount;
-  }, [allSelfSections, baselineReviewerAnswers, criteria, deferredReviewer, deferredSelf, mode, resolvedSelfTemplate]);
+  }, [allSelfSections, baselineReviewerAnswers, criteria, deferredReviewer, deferredSelf, mode]);
 
   const readOnly = disabled;
 
@@ -931,10 +920,6 @@ export function DynamicAppraisalForm({
           missing.push(questionKey);
         }
       }
-    }
-
-    if (resolvedSelfTemplate.feedbackQuestion.prompt.trim() && !selfAnswers.feedback.trim()) {
-      missing.push("feedback");
     }
 
     return missing;
@@ -1127,75 +1112,7 @@ export function DynamicAppraisalForm({
             />
           ))}
 
-          {[
-            resolvedSelfTemplate.careerGrowthSection,
-            resolvedSelfTemplate.decisionMakingSection,
-            resolvedSelfTemplate.retentionSection,
-            resolvedSelfTemplate.compensationSection,
-          ].filter((section) => section.questions.length > 0).map((section, i) => (
-            <SelfAssessmentSection
-              key={section.id}
-              section={section}
-              sectionIndex={resolvedSelfTemplate.partASections.length + i}
-              responses={selfAnswers.responses}
-              onChange={(key, value) => {
-                clearMissingField(key);
-                setSelfAnswers((current) => ({
-                  ...current,
-                  responses: { ...current.responses, [key]: value },
-                }));
-              }}
-              disabled={readOnly}
-              missingFieldIds={missingFieldIds}
-            />
-          ))}
 
-          {/* Feedback */}
-          {resolvedSelfTemplate.feedbackQuestion.prompt.trim() ? (
-          <div className="overflow-hidden rounded-2xl border border-outline-variant/40 bg-surface shadow-sm">
-            <div
-              className={cn(
-                "flex items-center gap-4 border-b px-6 py-4 transition",
-                selfAnswers.feedback.trim()
-                  ? "border-[#00cec4]/25 bg-[#00cec4]/5"
-                  : "border-outline-variant/30 bg-surface-container-low/40",
-              )}
-            >
-              <div
-                className={cn(
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold",
-                  selfAnswers.feedback.trim()
-                    ? "bg-[#00cec4] text-white"
-                    : "border border-outline-variant/50 bg-surface text-on-surface-variant",
-                )}
-              >
-                {selfAnswers.feedback.trim() ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                ) : (
-                  resolvedSelfTemplate.partASections.length + 5
-                )}
-              </div>
-              <h3 className="text-base font-semibold text-on-surface">{resolvedSelfTemplate.feedbackQuestion.prompt}</h3>
-            </div>
-            <div
-              data-field-id="feedback"
-              className={cn("px-6 py-5", missingFieldIds.has("feedback") && "bg-red-50/60")}
-            >
-              <TextAnswerInput
-                label=""
-                value={selfAnswers.feedback}
-                onChange={(feedback) => {
-                  clearMissingField("feedback");
-                  setSelfAnswers((current) => ({ ...current, feedback }));
-                }}
-                disabled={readOnly}
-                invalid={missingFieldIds.has("feedback")}
-              />
-            </div>
-          </div>
-          ) : null}
         </>
       ) : (
         <>
@@ -1348,13 +1265,7 @@ export function CriteriaPointsView({
 
   if ("employeeInfo" in answers) {
     const resolvedSelfTemplate = selfTemplate ?? buildDefaultSelfFormTemplate();
-    const allSelfSections = [
-      ...resolvedSelfTemplate.partASections,
-      resolvedSelfTemplate.careerGrowthSection,
-      resolvedSelfTemplate.decisionMakingSection,
-      resolvedSelfTemplate.retentionSection,
-      resolvedSelfTemplate.compensationSection,
-    ];
+    const allSelfSections = resolvedSelfTemplate.partASections;
 
     return (
       <div className="space-y-5">
@@ -1377,12 +1288,6 @@ export function CriteriaPointsView({
           );
         })}
 
-        {answers.feedback ? (
-          <div className="space-y-1 rounded-xl border-l-4 border-[#00cec4] bg-surface p-4">
-            <p className="text-sm font-semibold text-on-surface">{resolvedSelfTemplate.feedbackQuestion.prompt}</p>
-            <p className="text-sm text-on-surface-variant">{answers.feedback}</p>
-          </div>
-        ) : null}
       </div>
     );
   }

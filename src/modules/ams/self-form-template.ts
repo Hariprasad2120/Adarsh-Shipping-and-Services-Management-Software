@@ -36,7 +36,100 @@ function normalizeQuestion(question: unknown, fallbackIndex: number): AppraisalQ
     options: normalizeOptions(raw.options),
     allowExplanation: raw.allowExplanation === true,
     placeholder: typeof raw.placeholder === "string" ? raw.placeholder : undefined,
+    minValue: typeof raw.minValue === "number" && Number.isFinite(raw.minValue) ? raw.minValue : undefined,
+    maxValue: typeof raw.maxValue === "number" && Number.isFinite(raw.maxValue) ? raw.maxValue : undefined,
+    startLabel: typeof raw.startLabel === "string" ? raw.startLabel : undefined,
+    endLabel: typeof raw.endLabel === "string" ? raw.endLabel : undefined,
   };
+}
+
+function resolveCriterionQuestions(criterion: CriterionPoint): AppraisalQuestionDefinition[] {
+  const meta = criterion.meta && typeof criterion.meta === "object"
+    ? criterion.meta as Record<string, unknown>
+    : null;
+
+  const mapLegacyQuestion = (question: Record<string, unknown>, fallbackIndex: number): AppraisalQuestionDefinition | null => {
+    const prompt = typeof question.prompt === "string" ? question.prompt.trim() : "";
+    if (!prompt) return null;
+
+    const questionType = typeof question.questionType === "string" ? question.questionType : "short_answer";
+    const questionId = typeof question.id === "string" && question.id.trim()
+      ? question.id
+      : `question-${fallbackIndex + 1}`;
+
+    switch (questionType) {
+      case "paragraph":
+        return { id: questionId, prompt, type: "textarea" };
+      case "multiple_choice":
+      case "dropdown":
+        return {
+          id: questionId,
+          prompt,
+          type: "radio",
+          options: normalizeOptions(question.options),
+        };
+      case "checkboxes":
+        return {
+          id: questionId,
+          prompt,
+          type: "radio",
+          options: normalizeOptions(question.options),
+          allowExplanation: true,
+        };
+      case "slider":
+      case "linear_scale":
+      case "rating": {
+        const responseConfig = question.responseConfig && typeof question.responseConfig === "object"
+          ? question.responseConfig as Record<string, unknown>
+          : null;
+        const increment = typeof responseConfig?.increment === "number" && Number.isFinite(responseConfig.increment)
+          ? Math.max(2, Math.round(responseConfig.increment))
+          : 5;
+        return {
+          id: questionId,
+          prompt,
+          type: "number",
+          minValue: 1,
+          maxValue: increment,
+          startLabel: typeof responseConfig?.startLabel === "string" ? responseConfig.startLabel : undefined,
+          endLabel: typeof responseConfig?.endLabel === "string" ? responseConfig.endLabel : undefined,
+        };
+      }
+      case "date":
+        return { id: questionId, prompt, type: "text", placeholder: "DD/MM/YYYY" };
+      case "time":
+        return { id: questionId, prompt, type: "text", placeholder: "HH:MM" };
+      case "short_answer":
+      default:
+        return { id: questionId, prompt, type: "text" };
+    }
+  };
+
+  const stored = Array.isArray(meta?.questionItems)
+    ? meta.questionItems
+        .map((question, index) => {
+          if (!question || typeof question !== "object") return null;
+          const normalized = normalizeQuestion(question, index);
+          if (normalized) return normalized;
+          return mapLegacyQuestion(question as Record<string, unknown>, index);
+        })
+        .filter((question): question is AppraisalQuestionDefinition => question !== null)
+    : [];
+
+  if (stored.length > 0) return stored;
+
+  if (criterion.questions.length > 0) {
+    return criterion.questions.flatMap((prompt, index) => {
+      if (!prompt.trim()) return [];
+      return [{
+        id: `question-${index + 1}`,
+        prompt: prompt.trim(),
+        type: "textarea" as const,
+      }];
+    });
+  }
+
+  return [{ id: "response", prompt: `Describe your performance in ${criterion.label}.`, type: "textarea" as const }];
 }
 
 function normalizeSection(section: unknown, fallbackId: string): AppraisalSectionDefinition | null {
@@ -103,12 +196,6 @@ export function normalizeSelfFormTemplate(content: unknown): AppraisalSelfFormTe
         .filter((section): section is AppraisalSectionDefinition => section !== null)
     : fallback.partASections;
 
-  const careerGrowthSection = normalizeSection(raw.careerGrowthSection, fallback.careerGrowthSection.id) ?? fallback.careerGrowthSection;
-  const decisionMakingSection = normalizeSection(raw.decisionMakingSection, fallback.decisionMakingSection.id) ?? fallback.decisionMakingSection;
-  const retentionSection = normalizeSection(raw.retentionSection, fallback.retentionSection.id) ?? fallback.retentionSection;
-  const compensationSection = normalizeSection(raw.compensationSection, fallback.compensationSection.id) ?? fallback.compensationSection;
-  const feedbackQuestion = normalizeQuestion(raw.feedbackQuestion, 0) ?? fallback.feedbackQuestion;
-
   const selfRating = raw.selfRating && typeof raw.selfRating === "object"
     ? {
         title: typeof (raw.selfRating as Record<string, unknown>).title === "string"
@@ -124,11 +211,6 @@ export function normalizeSelfFormTemplate(content: unknown): AppraisalSelfFormTe
     employeeInfoFields: employeeInfoFields.length > 0 ? employeeInfoFields : fallback.employeeInfoFields,
     partASections: partASections.length > 0 ? partASections : fallback.partASections,
     selfRating,
-    careerGrowthSection,
-    decisionMakingSection,
-    retentionSection,
-    compensationSection,
-    feedbackQuestion,
   };
 }
 
@@ -138,23 +220,16 @@ export function resolveSelfFormTemplate(
 ): AppraisalSelfFormTemplate {
   const base = template ?? buildDefaultSelfFormTemplate();
 
-  const criteriaWithQuestions = criteria.filter((c) => c.questionItems.length > 0);
-  if (criteriaWithQuestions.length === 0) return base;
+  if (criteria.length === 0) {
+    return { ...base, partASections: [] };
+  }
 
-  const partASections: AppraisalSectionDefinition[] = criteriaWithQuestions.map((criterion) => ({
+  const partASections: AppraisalSectionDefinition[] = criteria.map((criterion) => ({
     id: `part-a-${criterion.code || criterion.id}`,
     title: criterion.label,
     description: criterion.description || undefined,
-    questions: criterion.questionItems as AppraisalQuestionDefinition[],
+    questions: resolveCriterionQuestions(criterion),
   }));
 
-  return {
-    ...base,
-    partASections,
-    careerGrowthSection: { ...base.careerGrowthSection, questions: [] },
-    decisionMakingSection: { ...base.decisionMakingSection, questions: [] },
-    retentionSection: { ...base.retentionSection, questions: [] },
-    compensationSection: { ...base.compensationSection, questions: [] },
-    feedbackQuestion: { ...base.feedbackQuestion, prompt: "" },
-  };
+  return { ...base, partASections };
 }

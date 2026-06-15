@@ -258,7 +258,7 @@ export async function getCriteriaTree(
     order: t.order,
     maxPoints: t.maxPoints,
     kind: t.kind,
-    questions: (t.questions as string[] | null) ?? [],
+    questions: Array.isArray(t.questions) ? t.questions.filter((value): value is string => typeof value === "string") : [],
     reviewerOnly: t.reviewerOnly,
     meta: (t.meta as Record<string, unknown> | null) ?? null,
     subtopics: t.children.map((s) => ({
@@ -1533,4 +1533,3 @@ export async function listMyReviewAppraisals(userId: string) {
     },
   });
 }
-
