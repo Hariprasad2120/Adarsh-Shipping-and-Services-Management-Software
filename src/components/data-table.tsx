@@ -1,3 +1,4 @@
+import React from "react";
 import type { HTMLAttributes, ReactNode, TableHTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react";
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -20,10 +21,19 @@ export function DataTable({
   tableClassName?: string;
   children: ReactNode;
 }) {
+  const childrenArray = React.Children.toArray(children);
+  const toolbar = childrenArray.find(
+    (child) => React.isValidElement(child) && child.type === DataTableToolbar
+  );
+  const otherChildren = childrenArray.filter(
+    (child) => !(React.isValidElement(child) && child.type === DataTableToolbar)
+  );
+
   return (
     <div className={cn("w-full overflow-x-auto rounded-2xl border border-outline-variant/40 bg-surface text-on-surface shadow-sm", className)}>
+      {toolbar}
       <table className={cn("min-w-full w-full text-sm", tableClassName)} {...props}>
-        {children}
+        {otherChildren}
       </table>
     </div>
   );

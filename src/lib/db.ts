@@ -16,6 +16,7 @@ type PrismaClientWithDelegates = PrismaClient & {
   appraisalSchedule?: unknown;
   todoTask?: unknown;
   todoSubtask?: unknown;
+  crmLead?: unknown;
 };
 
 function hasRequiredDelegates(client: PrismaClient) {
@@ -24,7 +25,8 @@ function hasRequiredDelegates(client: PrismaClient) {
     typeof delegateClient.appraisalSelfTemplate !== "undefined" &&
     typeof delegateClient.appraisalSchedule !== "undefined" &&
     typeof delegateClient.todoTask !== "undefined" &&
-    typeof delegateClient.todoSubtask !== "undefined"
+    typeof delegateClient.todoSubtask !== "undefined" &&
+    typeof delegateClient.crmLead !== "undefined"
   );
 }
 

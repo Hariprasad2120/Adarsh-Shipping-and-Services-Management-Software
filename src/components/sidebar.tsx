@@ -4,10 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { Caps } from "@/lib/rbac";
 import { getActiveItemHref, getVisibleSections, matchesPath } from "@/lib/navigation";
-import { Moon, Sun, LogOut } from "lucide-react";
+import { Moon, Sun, LogOut, ChevronDown, ChevronRight } from "lucide-react";
 
 function getIconColor(label: string, isActive: boolean) {
   if (isActive) return "text-[#00c4b6]";
@@ -53,6 +53,37 @@ function BrandLogo() {
   );
 }
 
+const CRM_GROUP_MAPPING: Record<string, string> = {
+  "Dashboard": "Sales",
+  "Leads": "Sales",
+  "Contacts": "Sales",
+  "Accounts": "Sales",
+  "Deals Pipeline": "Sales",
+  "Forecasts": "Sales",
+  "Documents": "Sales",
+  "Campaigns": "Sales",
+  "Tasks": "Activities",
+  "Events": "Activities",
+  "Calls": "Activities",
+  "Products & Services": "Inventory",
+  "Price Books": "Inventory",
+  "Quotes": "Inventory",
+  "Sales Orders": "Inventory",
+  "Purchase Orders": "Inventory",
+  "Invoices & Sales": "Inventory",
+  "Vendors": "Inventory",
+  "Support Cases": "Support",
+  "Solutions": "Support",
+  "Sales Inbox": "Integrations",
+  "Social Log": "Integrations",
+  "Visits": "Integrations",
+  "Services": "Services & Projects",
+  "Projects": "Services & Projects",
+  "Feedback (VoC)": "Services & Projects",
+};
+
+const CRM_GROUP_ORDER = ["Sales", "Activities", "Inventory", "Support", "Integrations", "Services & Projects"];
+
 export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
   const pathname = usePathname();
   const visibleSections = useMemo(() => getVisibleSections(caps), [caps]);
@@ -61,6 +92,31 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
     visibleSections.find((section) => matchesPath(pathname, section.href, section.matchPaths))?.id ??
     visibleSections[0]?.id ??
     "dashboard";
+
+  const [crmExpandedGroups, setCrmExpandedGroups] = useState<Record<string, boolean>>({
+    Sales: true,
+    Activities: false,
+    Inventory: false,
+    Support: false,
+    Integrations: false,
+    "Services & Projects": false,
+  });
+
+  const toggleCrmGroup = (group: string) => {
+    setCrmExpandedGroups((prev) => ({ ...prev, [group]: !prev[group] }));
+  };
+
+  useEffect(() => {
+    const activeCrmItem = visibleSections
+      .find((s) => s.id === "crm")
+      ?.items.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
+    if (activeCrmItem) {
+      const group = CRM_GROUP_MAPPING[activeCrmItem.label];
+      if (group) {
+        setCrmExpandedGroups((prev) => ({ ...prev, [group]: true }));
+      }
+    }
+  }, [pathname, visibleSections]);
 
   const [theme, setTheme] = useState<"light" | "dark">(() =>
     typeof document !== "undefined" && document.documentElement.classList.contains("dark") ? "dark" : "light"
@@ -116,39 +172,113 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
                 <span className="ml-3 text-[13.5px] font-medium tracking-wide">{section.label}</span>
               </Link>
 
-              {isActive && section.items.length > 0 && (
-                <div className="ml-[38px] space-y-0.5 border-l border-[#1f2530] pl-4">
-                  {section.items.map((item) => {
-                    const ItemIcon = item.icon;
-                    const isChildActive = activeChildHref === item.href;
+              {isActive && section.id === "crm" ? (
+                <div className="ml-[38px] space-y-2 border-l border-[#1f2530] pl-2">
+                  {CRM_GROUP_ORDER.map((groupTitle) => {
+                    const groupItems = section.items.filter(
+                      (item) => (CRM_GROUP_MAPPING[item.label] || "Sales") === groupTitle
+                    );
+                    if (groupItems.length === 0) return null;
+
+                    const isGroupExpanded = !!crmExpandedGroups[groupTitle];
+                    const hasActiveChild = groupItems.some((item) => activeChildHref === item.href);
 
                     return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        title={item.label}
-                        className={`group relative flex items-center rounded-r-md rounded-l-none pl-4 pr-3 py-2 text-[12px] transition-all duration-200 ${
-                          isChildActive
-                            ? "bg-[#161f28]/60 text-[#00c4b6]"
-                            : "text-[#7d8590] hover:bg-[#161f28]/20 hover:text-[#c9d1d9]"
-                        }`}
-                      >
-                        <div
-                          className={`absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full transition-all duration-200 ${
-                            isChildActive ? "bg-[#00c4b6] shadow-[0_0_0_3px_rgba(0,196,182,0.16)]" : "bg-white/10 group-hover:bg-white/30"
+                      <div key={groupTitle} className="space-y-0.5">
+                        <button
+                          type="button"
+                          onClick={() => toggleCrmGroup(groupTitle)}
+                          className={`flex w-full items-center justify-between px-2 py-1 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                            hasActiveChild ? "text-[#00c4b6]" : "text-slate-500 hover:text-slate-300"
                           }`}
-                        />
-                        <ItemIcon
-                          size={14}
-                          className={`shrink-0 transition-transform duration-200 ${
-                            isChildActive ? "text-[#00c4b6]" : `${getIconColor(item.label, false)} group-hover:scale-105`
-                          }`}
-                        />
-                        <span className="ml-3 pl-2 font-medium tracking-wide">{item.label}</span>
-                      </Link>
+                        >
+                          <span>{groupTitle}</span>
+                          {isGroupExpanded ? (
+                            <ChevronDown className="size-3" />
+                          ) : (
+                            <ChevronRight className="size-3" />
+                          )}
+                        </button>
+
+                        {isGroupExpanded && (
+                          <div className="space-y-0.5 pl-1.5 border-l border-[#1c212a]/50 ml-1">
+                            {groupItems.map((item) => {
+                              const ItemIcon = item.icon;
+                              const isChildActive = activeChildHref === item.href;
+
+                              return (
+                                <Link
+                                  key={item.href}
+                                  href={item.href}
+                                  title={item.label}
+                                  className={`group relative flex items-center rounded-r-md rounded-l-none pl-3 pr-2 py-1.5 text-[11.5px] transition-all duration-200 ${
+                                    isChildActive
+                                      ? "bg-[#161f28]/60 text-[#00c4b6]"
+                                      : "text-[#7d8590] hover:bg-[#161f28]/20 hover:text-[#c9d1d9]"
+                                  }`}
+                                >
+                                  <div
+                                    className={`absolute left-1 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full transition-all duration-200 ${
+                                      isChildActive
+                                        ? "bg-[#00c4b6] shadow-[0_0_0_3px_rgba(0,196,182,0.16)]"
+                                        : "bg-white/5 group-hover:bg-white/20"
+                                    }`}
+                                  />
+                                  <ItemIcon
+                                    size={13}
+                                    className={`shrink-0 transition-transform duration-200 ${
+                                      isChildActive
+                                        ? "text-[#00c4b6]"
+                                        : `${getIconColor(item.label, false)} group-hover:scale-105`
+                                    }`}
+                                  />
+                                  <span className="ml-2 pl-1 font-medium tracking-wide truncate">{item.label}</span>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
+              ) : (
+                isActive && section.items.length > 0 && (
+                  <div className="ml-[38px] space-y-0.5 border-l border-[#1f2530] pl-4">
+                    {section.items.map((item) => {
+                      const ItemIcon = item.icon;
+                      const isChildActive = activeChildHref === item.href;
+
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          title={item.label}
+                          className={`group relative flex items-center rounded-r-md rounded-l-none pl-4 pr-3 py-2 text-[12px] transition-all duration-200 ${
+                            isChildActive
+                              ? "bg-[#161f28]/60 text-[#00c4b6]"
+                              : "text-[#7d8590] hover:bg-[#161f28]/20 hover:text-[#c9d1d9]"
+                          }`}
+                        >
+                          <div
+                            className={`absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full transition-all duration-200 ${
+                              isChildActive
+                                ? "bg-[#00c4b6] shadow-[0_0_0_3px_rgba(0,196,182,0.16)]"
+                                : "bg-white/10 group-hover:bg-white/30"
+                            }`}
+                          />
+                          <ItemIcon
+                            size={14}
+                            className={`shrink-0 transition-transform duration-200 ${
+                              isChildActive ? "text-[#00c4b6]" : `${getIconColor(item.label, false)} group-hover:scale-105`
+                            }`}
+                          />
+                          <span className="ml-3 pl-2 font-medium tracking-wide">{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )
               )}
             </div>
           );

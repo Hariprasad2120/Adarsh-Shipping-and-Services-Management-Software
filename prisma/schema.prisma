@@ -34,6 +34,10 @@ model Organisation {
   notificationActivities NotificationActivity[]
   todoTasks           TodoTask[]
 
+  biometricSyncLogs   BiometricSyncLog[]
+  workingCalendar     WorkingCalendar?
+  otSettings          OtSettings?
+
   @@index([slug])
 }
 
@@ -135,6 +139,22 @@ model User {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  // Personal & Biometric mapping
+  employeeNumber  Int?      @unique
+  firstName       String?
+  lastName        String?
+  dob             DateTime?
+  gender          String?
+  photo           String?
+  employmentType  String?
+  personalPhone   String?
+  aadhaar         String?
+  pan             String?
+  uan             String?
+  bankName        String?
+  bankAccount     String?
+  ifsc            String?
+
   org          Organisation? @relation(fields: [orgId], references: [id])
   branch       Branch?       @relation(fields: [branchId], references: [id])
   department   Department?   @relation(fields: [departmentId], references: [id])
@@ -151,13 +171,19 @@ model User {
   documents         Document[]
   todoTasks         TodoTask[]
 
-  // Attendance
-  punches       AttendancePunch[]
-  leaveBalances LeaveBalance[]
-  leaveRequests LeaveRequest[]   @relation("LeaveRequester")
-  leaveApprovals LeaveRequest[]  @relation("LeaveApprover")
-  otEntries     OTEntry[]        @relation("OTEmployee")
-  otApprovals   OTEntry[]        @relation("OTApprover")
+  // Attendance & OT
+  punches             AttendancePunch[]
+  leaveBalances       LeaveBalance[]
+  leaveRequests       LeaveRequest[]   @relation("LeaveRequester")
+  leaveApprovals      LeaveRequest[]  @relation("LeaveApprover")
+  otEntries           OTEntry[]        @relation("OTEmployee")
+  otApprovals         OTEntry[]        @relation("OTApprover")
+  otRecords           OtRecord[]       @relation("EmployeeOtRecords")
+  approvedOts         OtRecord[]       @relation("OtApprovedBy")
+  regularizations     AttendanceRegularization[] @relation("RegularizationEmployee")
+  approvedRegularizations AttendanceRegularization[] @relation("RegularizationApprover")
+  lopRecords          EmployeeLop[]    @relation("EmployeeLopRecords")
+  triggeredSyncs      BiometricSyncLog[] @relation("TriggeredSyncs")
 
   // AMS
   appraisals          Appraisal[]          @relation("AppraisalEmployee")
@@ -167,6 +193,34 @@ model User {
   meetingMinutes      MeetingMinute[]
   hikeDecisions       HikeDecision[]
   appraisalSchedules  AppraisalSchedule[]
+  extensionRequests   AppraisalExtensionRequest[] @relation("ExtRequester")
+  decidedExtensions   AppraisalExtensionRequest[] @relation("ExtDecider")
+  rescheduledMeetings MeetingReschedule[] @relation("RescheduledBy")
+  confirmedReschedules MeetingReschedule[] @relation("RescheduleConfirmer")
+
+  // CRM
+  raisedTickets       CrmTicket[]          @relation("TicketRaiser")
+  assignedTickets     CrmTicket[]          @relation("TicketAssignee")
+  ticketComments      CrmTicketComment[]   @relation("CommentAuthor")
+
+  passkeyResetRequests PasskeyResetRequest[] @relation("PasskeyResetUser")
+  passkeyResetDecisions PasskeyResetRequest[] @relation("PasskeyResetDecider")
+  securityEvents    SecurityEvent[]
+  sessions          UserSession[]
+  passkeySetupRequired Boolean?              @default(false)
+
+  // CRM Module Back-Relations
+  crmLeadsOwned         CrmLead[]          @relation("CrmLeadOwner")
+  crmContactsOwned      CrmContact[]       @relation("CrmContactOwner")
+  crmAccountsOwned      CrmAccount[]       @relation("CrmAccountOwner")
+  crmDealsOwned         CrmDeal[]          @relation("CrmDealOwner")
+  crmActivitiesOwned    CrmActivity[]      @relation("CrmActivityOwner")
+  crmInvoicesOwned      CrmInvoice[]       @relation("CrmInvoiceOwner")
+  crmVendorsOwned       CrmVendor[]        @relation("CrmVendorOwner")
+  crmProjectsOwned      CrmProject[]       @relation("CrmProjectOwner")
+  crmNotesCreated       CrmNote[]          @relation("CrmNoteCreator")
+  crmAttachmentsCreated CrmAttachment[]    @relation("CrmAttachmentCreator")
+  crmTimelineCreated    CrmTimelineEvent[] @relation("CrmTimelineCreator")
 
   @@index([orgId])
   @@index([isPlatformAdmin, active])
@@ -304,6 +358,16 @@ model EmploymentRecord {
   ctc                  Float?
   priorExperienceYears Float?   @default(0)
   payrollMeta          Json?
+  
+  // Salary breakdown
+  basic                Float?   @default(0)
+  hra                  Float?   @default(0)
+  conveyance           Float?   @default(0)
+  transport            Float?   @default(0)
+  travelling           Float?   @default(0)
+  fixedAllowance       Float?   @default(0)
+  stipend              Float?   @default(0)
+
   updatedAt    DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -330,6 +394,12 @@ model AttendancePunch {
   inAt   DateTime?
   outAt  DateTime?
   source String   @default("web") // web | biometric | manual
+
+  status              String?   // PRESENT | HALF_DAY | ABSENT | HOLIDAY | LEAVE | WEEKLY_OFF
+  lateMinutes         Int       @default(0)
+  earlyLeavingMinutes Int       @default(0)
+  workingHours        Float?
+  biometricSynced     Boolean   @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -389,11 +459,12 @@ model LeaveRequest {
 }
 
 model Holiday {
-  id       String   @id @default(cuid())
-  orgId    String
-  branchId String?
-  date     DateTime @db.Date
-  name     String
+  id          String   @id @default(cuid())
+  orgId       String
+  branchId    String?
+  date        DateTime @db.Date
+  name        String
+  holidayType String   @default("COMPANY") // COMPANY | NATIONAL | RESTRICTED | WEEKEND
 
   org    Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   branch Branch?      @relation(fields: [branchId], references: [id])
@@ -518,6 +589,8 @@ model Appraisal {
   hikeDecision   HikeDecision?
   auditLog       AppraisalAuditLog[]
   scheduleEntry  AppraisalSchedule? @relation("ScheduledAppraisal")
+  extensionRequests AppraisalExtensionRequest[]
+  meetingReschedules MeetingReschedule[]
 
   @@unique([cycleId, employeeId])
   @@index([cycleId])
@@ -625,9 +698,11 @@ model HikeDecision {
   effectiveFrom DateTime @db.Date
   notes         String?
   finalisedAt   DateTime @default(now())
+  slabId        String?
 
   appraisal  Appraisal @relation(fields: [appraisalId], references: [id], onDelete: Cascade)
   decidedBy  User      @relation(fields: [decidedById], references: [id])
+  slab       IncrementSlab? @relation(fields: [slabId], references: [id])
 }
 
 model AppraisalAuditLog {
@@ -656,9 +731,586 @@ model OrgAppraisalSettings {
   @@index([orgId])
 }
 
-// Single global row — id is always "global"
 model SystemClock {
   id        String    @id @default("global")
   frozenAt  DateTime?
   updatedAt DateTime  @updatedAt
+}
+
+model BiometricSyncLog {
+  id            String   @id @default(cuid())
+  orgId         String
+  syncTime      DateTime @default(now())
+  status        String   // SUCCESS | FAILED
+  type          String   // MANUAL | AUTO
+  triggeredById String?
+  recordsSynced Int      @default(0)
+  errorMessage  String?
+
+  org         Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  triggeredBy User?        @relation("TriggeredSyncs", fields: [triggeredById], references: [id], onDelete: SetNull)
+
+  @@index([orgId])
+}
+
+model WorkingCalendar {
+  id           String   @id @default("global")
+  orgId        String   @unique
+  workStart    String   @default("09:00")
+  workEnd      String   @default("18:00")
+  timezone     String   @default("Asia/Kolkata")
+  graceMinutes Int      @default(15)
+  workingDays  String   @default("1,2,3,4,5,6") // Monday to Saturday
+  breaks       Json?    // e.g. Lunch break start/end
+
+  org          Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+model OtSettings {
+  id            String   @id @default("global")
+  orgId         String   @unique
+  standardHours Float    @default(8.0)
+  otRate        Float    @default(1.5)
+  graceMinutes  Int      @default(15)
+  compOffSlabs  Json?    // comp-off rules/slabs
+
+  org           Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+model OtRecord {
+  id               String   @id @default(cuid())
+  userId           String
+  date             DateTime @db.Date
+  dayType          String   @default("WORKING_DAY") // WORKING_DAY | HOLIDAY | WEEKEND
+  hoursWorked      Float
+  otHours          Float    @default(0)
+  otRatePerHour    Float    @default(0)
+  otAmount         Float    @default(0)
+  compOffDays      Float    @default(0)
+  earlyLeavingMins Int      @default(0)
+  approvalStatus   String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  approvedById     String?
+  approvedBy       User?    @relation("OtApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  rejectionRemarks String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation("EmployeeOtRecords", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model AttendanceRegularization {
+  id           String   @id @default(cuid())
+  userId       String
+  date         DateTime @db.Date
+  requestedIn  DateTime?
+  requestedOut DateTime?
+  reason       String
+  status       String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  approvedById String?
+  remarks      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user       User  @relation("RegularizationEmployee", fields: [userId], references: [id], onDelete: Cascade)
+  approvedBy User? @relation("RegularizationApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@unique([userId, date])
+}
+
+model EmployeeLop {
+  id           String   @id @default(cuid())
+  userId       String
+  payrollMonth DateTime @db.Date // first day of month
+  lopDays      Float
+  remarks      String?
+  createdById  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation("EmployeeLopRecords", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, payrollMonth])
+  @@index([payrollMonth])
+}
+
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model IncrementSlab {
+  id          String   @id @default(cuid())
+  label       String
+  grade       String   @default("")
+  minRating   Float
+  maxRating   Float
+  hikePercent Float
+
+  hikeDecisions HikeDecision[]
+
+  @@index([minRating, maxRating])
+}
+
+model AppraisalExtensionRequest {
+  id            String    @id @default(cuid())
+  appraisalId   String
+  requesterId   String
+  reason        String
+  status        String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  extendedUntil DateTime?
+  decidedById   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  appraisal Appraisal @relation(fields: [appraisalId], references: [id], onDelete: Cascade)
+  requester User      @relation("ExtRequester", fields: [requesterId], references: [id])
+  decidedBy User?     @relation("ExtDecider", fields: [decidedById], references: [id])
+}
+
+model MeetingReschedule {
+  id              String   @id @default(cuid())
+  appraisalId     String
+  originalDate    DateTime
+  newDate         DateTime
+  reason          String
+  status          String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  rescheduledById String
+  confirmedById   String?
+  createdAt       DateTime @default(now())
+
+  appraisal     Appraisal @relation(fields: [appraisalId], references: [id], onDelete: Cascade)
+  rescheduledBy User      @relation("RescheduledBy", fields: [rescheduledById], references: [id])
+  confirmedBy   User?     @relation("RescheduleConfirmer", fields: [confirmedById], references: [id])
+}
+
+model CrmTicket {
+  id          String   @id @default(cuid())
+  raisedById  String
+  assigneeId  String?
+  title       String
+  description String
+  category    String
+  status      String   @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED | CLOSED
+  priority    String   @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  raisedBy User               @relation("TicketRaiser", fields: [raisedById], references: [id])
+  assignee User?              @relation("TicketAssignee", fields: [assigneeId], references: [id])
+  comments CrmTicketComment[]
+
+  @@index([raisedById, status])
+  @@index([status, createdAt])
+}
+
+model CrmTicketComment {
+  id        String   @id @default(cuid())
+  ticketId  String
+  authorId  String
+  message   String
+  createdAt DateTime @default(now())
+
+  ticket CrmTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author User      @relation("CommentAuthor", fields: [authorId], references: [id])
+
+  @@index([ticketId, createdAt])
+}
+
+model PasskeyResetRequest {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation("PasskeyResetUser", fields: [userId], references: [id], onDelete: Cascade)
+  status      String   @default("PENDING")
+  requestedAt DateTime @default(now())
+  decidedAt   DateTime?
+  decidedById String?
+  decidedBy   User?    @relation("PasskeyResetDecider", fields: [decidedById], references: [id])
+  reason      String?
+
+  @@index([status, requestedAt])
+  @@index([userId, status])
+}
+
+model SecurityEvent {
+  id           String   @id @default(cuid())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email        String?
+  event        String
+  outcome      String
+  ipAddress    String?
+  userAgent    String?
+  sessionToken String?
+  details      Json?
+  createdAt    DateTime @default(now())
+
+  @@index([event, outcome, createdAt])
+  @@index([userId, createdAt])
+  @@index([email, createdAt])
+  @@index([sessionToken, createdAt])
+}
+
+model UserSession {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token       String    @unique
+  loginAt     DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  logoutAt    DateTime?
+  status      String    @default("ACTIVE")
+  ipAddress   String?
+  userAgent   String?
+  location    String?
+
+  @@index([userId, status])
+  @@index([status, lastSeenAt])
+}
+
+// ─── CRM Module Entities ───────────────────────────────────────────────────────
+
+model CrmLead {
+  id             String   @id @default(cuid())
+  orgId          String
+  ownerId        String
+  owner          User     @relation("CrmLeadOwner", fields: [ownerId], references: [id])
+  
+  firstName      String?
+  lastName       String
+  company        String
+  designation    String?
+  email          String?
+  phone          String?
+  mobile         String?
+  fax            String?
+  website        String?
+  source         String?  // e.g. Cold Call, Web Site, Partner
+  status         String   @default("NEW") // e.g. NEW, CONTACTED, QUALIFIED, LOST
+  industry       String?
+  annualRevenue  Float?
+  employeeCount  Int?
+  rating         String?  // e.g. Hot, Warm, Cold
+  address        String?
+  city           String?
+  state          String?
+  country        String?
+  pincode        String?
+  description    String?
+  tags           String[] // array of tags
+  isConverted    Boolean  @default(false)
+  convertedAt    DateTime?
+  
+  createdById    String
+  updatedById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([orgId])
+  @@index([ownerId])
+  @@index([status])
+}
+
+model CrmContact {
+  id             String   @id @default(cuid())
+  orgId          String
+  ownerId        String
+  owner          User     @relation("CrmContactOwner", fields: [ownerId], references: [id])
+  
+  accountId      String?
+  account        CrmAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  firstName      String?
+  lastName       String
+  email          String?
+  phone          String?
+  mobile         String?
+  designation    String?
+  department     String?
+  isDecisionMaker Boolean @default(false)
+  address        String?
+  description    String?
+  tags           String[]
+  
+  createdById    String
+  updatedById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  deals          CrmDeal[]
+  invoices       CrmInvoice[]
+
+  @@index([orgId])
+  @@index([ownerId])
+  @@index([accountId])
+}
+
+model CrmAccount {
+  id             String   @id @default(cuid())
+  orgId          String
+  ownerId        String
+  owner          User     @relation("CrmAccountOwner", fields: [ownerId], references: [id])
+  
+  name           String
+  type           String?  // Customer, Partner, Vendor, Prospect
+  industry       String?
+  website        String?
+  phone          String?
+  email          String?
+  gstin          String?
+  billingAddress String?
+  shippingAddress String?
+  creditLimit    Float    @default(0.0)
+  paymentTerms   String?
+  status         String   @default("ACTIVE")
+  
+  createdById    String
+  updatedById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  contacts       CrmContact[]
+  deals          CrmDeal[]
+  invoices       CrmInvoice[]
+  projects       CrmProject[]
+
+  @@index([orgId])
+  @@index([ownerId])
+}
+
+model CrmDeal {
+  id             String   @id @default(cuid())
+  orgId          String
+  ownerId        String
+  owner          User     @relation("CrmDealOwner", fields: [ownerId], references: [id])
+  
+  accountId      String?
+  account        CrmAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  contactId      String?
+  contact        CrmContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  
+  name           String
+  stage          String   @default("PROSPECTING") // e.g. PROSPECTING, QUALIFICATION, PROPOSAL, NEGOTIATION, WON, LOST
+  amount         Float    @default(0.0)
+  probability    Float    @default(10.0) // 0-100 percentage
+  expectedCloseDate DateTime?
+  source         String?
+  serviceType    String?  // Freight Forwarding, Customs, Transportation, Warehousing, CHA, etc.
+  logisticsCategory String? // Import, Export
+  nextFollowUpDate DateTime?
+  competitor     String?
+  lostReason     String?
+  description    String?
+  tags           String[]
+  
+  createdById    String
+  updatedById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  invoices       CrmInvoice[]
+
+  @@index([orgId])
+  @@index([ownerId])
+  @@index([accountId])
+}
+
+model CrmActivity {
+  id             String   @id @default(cuid())
+  orgId          String
+  ownerId        String
+  owner          User     @relation("CrmActivityOwner", fields: [ownerId], references: [id])
+  
+  type           String   // TASK | EVENT | CALL
+  title          String
+  description    String?
+  status         String   @default("NOT_STARTED") // e.g. NOT_STARTED, IN_PROGRESS, COMPLETED, DEFERRED
+  priority       String   @default("NORMAL") // e.g. LOW, NORMAL, HIGH
+  dueAt          DateTime? // For Tasks
+  startAt        DateTime? // For Events
+  endAt          DateTime? // For Events
+  location       String?   // For Events
+  callResult     String?   // For Calls
+  durationMins   Int?      // For Calls
+  
+  // Polymorphic string relation
+  relatedToType  String?
+  relatedToId    String?
+
+  createdById    String
+  updatedById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([orgId])
+  @@index([ownerId])
+  @@index([relatedToType, relatedToId])
+}
+
+model CrmProduct {
+  id             String   @id @default(cuid())
+  orgId          String
+  name           String
+  sku            String   @unique
+  category       String?  // Freight, Customs, Local Handling, etc.
+  price          Float    @default(0.0)
+  taxPercent     Float    @default(18.0) // GST default
+  active         Boolean  @default(true)
+  description    String?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([orgId])
+}
+
+model CrmVendor {
+  id             String   @id @default(cuid())
+  orgId          String
+  ownerId        String
+  owner          User     @relation("CrmVendorOwner", fields: [ownerId], references: [id])
+  
+  name           String
+  contactName    String?
+  phone          String?
+  email          String?
+  address        String?
+  gstin          String?
+  services       String?
+  status         String   @default("ACTIVE")
+  
+  createdById    String
+  updatedById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  invoices       CrmInvoice[]
+
+  @@index([orgId])
+  @@index([ownerId])
+}
+
+model CrmInvoice {
+  id             String   @id @default(cuid())
+  orgId          String
+  ownerId        String
+  owner          User     @relation("CrmInvoiceOwner", fields: [ownerId], references: [id])
+  
+  invoiceNumber  String   @unique // Auto-generated e.g. INV-1001, QT-1001, SO-1001, PO-1001
+  type           String   // QUOTE | INVOICE | SALES_ORDER | PURCHASE_ORDER
+  date           DateTime @db.Date
+  dueDate        DateTime? @db.Date
+  status         String   @default("DRAFT") // DRAFT, SENT, PAID, OVERDUE, CANCELLED
+  discount       Float    @default(0.0)
+  tax            Float    @default(0.0)
+  total          Float    @default(0.0)
+  
+  accountId      String?
+  account        CrmAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  contactId      String?
+  contact        CrmContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  dealId         String?
+  deal           CrmDeal?   @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  vendorId       String?
+  vendor         CrmVendor? @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  
+  createdById    String
+  updatedById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  items          CrmInvoiceItem[]
+
+  @@index([orgId])
+  @@index([ownerId])
+}
+
+model CrmInvoiceItem {
+  id             String   @id @default(cuid())
+  invoiceId      String
+  invoice        CrmInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  productName    String
+  qty            Float
+  rate           Float
+  taxPercent     Float    @default(18.0)
+  amount         Float
+
+  @@index([invoiceId])
+}
+
+model CrmProject {
+  id             String   @id @default(cuid())
+  orgId          String
+  ownerId        String
+  owner          User     @relation("CrmProjectOwner", fields: [ownerId], references: [id])
+  
+  name           String
+  status         String   @default("PLANNING") // PLANNING, IN_PROGRESS, COMPLETED, ON_HOLD
+  startDate      DateTime? @db.Date
+  endDate        DateTime? @db.Date
+  description    String?
+  
+  accountId      String?
+  account        CrmAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  createdById    String
+  updatedById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([orgId])
+  @@index([ownerId])
+}
+
+model CrmNote {
+  id            String   @id @default(cuid())
+  orgId         String
+  relatedToType String
+  relatedToId   String
+  body          String
+  isPinned      Boolean  @default(false)
+  createdById   String
+  createdBy     User     @relation("CrmNoteCreator", fields: [createdById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([orgId])
+  @@index([relatedToType, relatedToId])
+}
+
+model CrmAttachment {
+  id            String   @id @default(cuid())
+  orgId         String
+  relatedToType String
+  relatedToId   String
+  fileName      String
+  filePath      String
+  fileSize      Int
+  fileType      String
+  createdById   String
+  createdBy     User     @relation("CrmAttachmentCreator", fields: [createdById], references: [id])
+  createdAt     DateTime @default(now())
+
+  @@index([orgId])
+  @@index([relatedToType, relatedToId])
+}
+
+model CrmTimelineEvent {
+  id            String   @id @default(cuid())
+  orgId         String
+  relatedToType String
+  relatedToId   String
+  eventType     String   // e.g. CREATED, UPDATED, CONVERTED, STAGE_CHANGED
+  description   String
+  details       Json?
+  createdById   String
+  createdBy     User     @relation("CrmTimelineCreator", fields: [createdById], references: [id])
+  createdAt     DateTime @default(now())
+
+  @@index([orgId])
+  @@index([relatedToType, relatedToId])
 }

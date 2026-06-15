@@ -50,8 +50,21 @@ const PERMISSIONS = [
   { key: "ams.hike.finalise", label: "Finalise hike decision", group: "AMS" },
   { key: "ams.appraisal.view_all", label: "View all appraisals in org", group: "AMS" },
 
-  // CRM (reserved)
+  // CRM
   { key: "crm.access", label: "Access CRM module", group: "CRM" },
+  { key: "crm.dashboard.read", label: "View CRM dashboard", group: "CRM" },
+  { key: "crm.lead.read", label: "View CRM leads", group: "CRM" },
+  { key: "crm.lead.create", label: "Create CRM leads", group: "CRM" },
+  { key: "crm.lead.convert", label: "Convert CRM leads", group: "CRM" },
+  { key: "crm.lead.delete", label: "Delete CRM leads", group: "CRM" },
+  { key: "crm.contact.manage", label: "Manage CRM contacts", group: "CRM" },
+  { key: "crm.account.manage", label: "Manage CRM accounts", group: "CRM" },
+  { key: "crm.deal.manage", label: "Manage CRM deals & kanban", group: "CRM" },
+  { key: "crm.invoice.manage", label: "Manage quotes & invoices", group: "CRM" },
+  { key: "crm.vendor.manage", label: "Manage procurement vendors", group: "CRM" },
+  { key: "crm.project.manage", label: "Manage operational projects", group: "CRM" },
+  { key: "crm.activity.manage", label: "Manage CRM activities", group: "CRM" },
+  { key: "crm.settings.manage", label: "Manage CRM settings", group: "CRM" },
 ] as const;
 
 // ─── System roles & their default permissions ─────────────────────────────────
@@ -63,6 +76,8 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "attendance.reports.view",
     "ams.appraisal.management_review", "ams.meeting.minutes",
     "ams.hike.finalise", "ams.appraisal.view_all",
+    "crm.access", "crm.dashboard.read", "crm.lead.read",
+    "crm.contact.manage", "crm.account.manage", "crm.deal.manage", "crm.invoice.manage",
   ],
   HR: [
     "hrms.employee.read", "hrms.employee.create", "hrms.employee.edit",
@@ -72,27 +87,37 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "ams.appraisal.assign_reviewers", "ams.appraisal.force_reviewer",
     "ams.appraisal.review", "ams.meeting.confirm", "ams.meeting.minutes",
     "ams.appraisal.view_all",
+    "crm.access", "crm.dashboard.read", "crm.lead.read", "crm.lead.create",
+    "crm.lead.convert", "crm.contact.manage", "crm.account.manage",
+    "crm.deal.manage", "crm.activity.manage", "crm.project.manage",
   ],
   Manager: [
     "hrms.employee.read", "hrms.documents.read",
     "attendance.leave.approve", "attendance.ot.approve", "attendance.reports.view",
     "ams.appraisal.review", "ams.meeting.minutes",
+    "crm.access", "crm.dashboard.read", "crm.lead.read", "crm.lead.create",
+    "crm.contact.manage", "crm.account.manage", "crm.deal.manage", "crm.activity.manage",
   ],
   TL: [
     "hrms.employee.read",
     "attendance.leave.approve", "attendance.ot.approve",
     "ams.appraisal.review", "ams.meeting.minutes",
+    "crm.access", "crm.dashboard.read", "crm.lead.read",
+    "crm.contact.manage", "crm.account.manage", "crm.activity.manage",
   ],
   Director: [
     "hrms.employee.read", "hrms.documents.read",
     "attendance.reports.view",
     "ams.appraisal.management_review", "ams.meeting.minutes",
     "ams.hike.finalise", "ams.appraisal.view_all",
+    "crm.access", "crm.dashboard.read", "crm.lead.read",
+    "crm.contact.manage", "crm.account.manage", "crm.deal.manage", "crm.invoice.manage",
   ],
   Employee: [
     "hrms.employee.read",
     "attendance.punch.self", "attendance.leave.request", "attendance.ot.request",
     "ams.appraisal.self_assess", "ams.meeting.minutes",
+    "crm.access", "crm.activity.manage",
   ],
 };
 
