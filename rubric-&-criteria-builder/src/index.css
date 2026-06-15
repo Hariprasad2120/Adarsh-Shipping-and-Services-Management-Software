@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Premium palette based on the user's color tokens */
+  --color-surface: #f9fafb;
+  --color-surface-container-low: #f3f4f6;
+  --color-surface-container-high: #e5e7eb;
+  --color-on-surface: #0f172a;
+  --color-on-surface-variant: #334155;
+  --color-outline-variant: #cbd5e1;
+  
+  --color-primary: #00cec4;
+  --color-primary-dark: #00b8af;
+}
+
+/* Custom premium styles and elegant utilities */
+@utility bg-grid-dots {
+  background-size: 20px 20px;
+  background-image: radial-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+}
+
+@utility shadow-premium {
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 8px -1px rgba(15, 23, 42, 0.03);
+}
+
+@utility shadow-premium-hover {
+  box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.07), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+}
+
+@utility shadow-glow-primary {
+  box-shadow: 0 0 18px 0 rgba(0, 206, 196, 0.25);
+}
+
+/* Custom styles and scrollbar aesthetics */
+html, body {
+  background-color: #f8fafc;
+  font-family: var(--font-sans);
+  color: var(--color-on-surface);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00cec4;
+}
+
+/* Smooth active focus border animations */
+label {
+  user-select: none;
+}

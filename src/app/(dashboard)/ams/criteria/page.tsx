@@ -59,16 +59,16 @@ type QuestionItem = {
   id: string;
   prompt: string;
   questionType:
-    | "multiple_choice"
-    | "checkboxes"
-    | "dropdown"
-    | "short_answer"
-    | "paragraph"
-    | "slider"
-    | "linear_scale"
-    | "rating"
-    | "date"
-    | "time";
+  | "multiple_choice"
+  | "checkboxes"
+  | "dropdown"
+  | "short_answer"
+  | "paragraph"
+  | "slider"
+  | "linear_scale"
+  | "rating"
+  | "date"
+  | "time";
   options: { id: string; label: string }[];
   responseConfig: {
     startLabel: string;
@@ -108,13 +108,13 @@ function parseQuestionItems(
         questionType,
         options: Array.isArray(raw.options)
           ? raw.options.flatMap((option, optionIndex) => {
-              if (!option || typeof option !== "object") return [];
-              const rawOption = option as Record<string, unknown>;
-              return [{
-                id: typeof rawOption.id === "string" && rawOption.id.length > 0 ? rawOption.id : `option-${optionIndex + 1}`,
-                label: typeof rawOption.label === "string" ? rawOption.label : "",
-              }];
-            })
+            if (!option || typeof option !== "object") return [];
+            const rawOption = option as Record<string, unknown>;
+            return [{
+              id: typeof rawOption.id === "string" && rawOption.id.length > 0 ? rawOption.id : `option-${optionIndex + 1}`,
+              label: typeof rawOption.label === "string" ? rawOption.label : "",
+            }];
+          })
           : [],
         responseConfig: {
           startLabel:
@@ -168,34 +168,34 @@ export default async function CriteriaPage() {
       const meta = (r.meta as Record<string, unknown> | null) ?? null;
       return ({
         ...(function () {
-        const questionType = isQuestionType(meta?.questionType) ? meta.questionType : "multiple_choice";
-        const rawResponseConfig =
-          meta?.responseConfig && typeof meta.responseConfig === "object"
-            ? (meta.responseConfig as Record<string, unknown>)
-            : null;
-        return {
-          questionType,
-          responseConfig: {
-            startLabel:
-              typeof rawResponseConfig?.startLabel === "string"
-                ? rawResponseConfig.startLabel
-                : getDefaultResponseConfig(questionType).startLabel,
-            endLabel:
-              typeof rawResponseConfig?.endLabel === "string"
-                ? rawResponseConfig.endLabel
-                : getDefaultResponseConfig(questionType).endLabel,
-            increment:
-              typeof rawResponseConfig?.increment === "number" && Number.isFinite(rawResponseConfig.increment)
-                ? Math.max(2, Math.round(rawResponseConfig.increment))
-                : getDefaultResponseConfig(questionType).increment,
-          },
-          questionItems: parseQuestionItems(
-            meta?.questionItems,
+          const questionType = isQuestionType(meta?.questionType) ? meta.questionType : "multiple_choice";
+          const rawResponseConfig =
+            meta?.responseConfig && typeof meta.responseConfig === "object"
+              ? (meta.responseConfig as Record<string, unknown>)
+              : null;
+          return {
             questionType,
-            r.children.map((child) => ({ id: child.id, label: child.label })),
-          ),
-        };
-      })(),
+            responseConfig: {
+              startLabel:
+                typeof rawResponseConfig?.startLabel === "string"
+                  ? rawResponseConfig.startLabel
+                  : getDefaultResponseConfig(questionType).startLabel,
+              endLabel:
+                typeof rawResponseConfig?.endLabel === "string"
+                  ? rawResponseConfig.endLabel
+                  : getDefaultResponseConfig(questionType).endLabel,
+              increment:
+                typeof rawResponseConfig?.increment === "number" && Number.isFinite(rawResponseConfig.increment)
+                  ? Math.max(2, Math.round(rawResponseConfig.increment))
+                  : getDefaultResponseConfig(questionType).increment,
+            },
+            questionItems: parseQuestionItems(
+              meta?.questionItems,
+              questionType,
+              r.children.map((child) => ({ id: child.id, label: child.label })),
+            ),
+          };
+        })(),
         id: r.id,
         label: r.label,
         code: r.code ?? "",
