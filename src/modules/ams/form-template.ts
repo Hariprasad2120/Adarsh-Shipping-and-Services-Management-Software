@@ -1,7 +1,6 @@
 import {
   buildQuestionKey,
   clampRating,
-  getVisibleCriteriaForRole,
   REVIEWER_CRITERIA_SEED,
   SELF_RATING_CRITERIA_SEED,
   type AppraisalQuestionDefinition,
@@ -106,7 +105,6 @@ function mapQuestionMetaToDefinition(
       const startLabel = typeof responseConfig?.startLabel === "string" ? responseConfig.startLabel.trim() : "";
       const endLabel = typeof responseConfig?.endLabel === "string" ? responseConfig.endLabel.trim() : "";
       const increment = typeof responseConfig?.increment === "number" ? responseConfig.increment : 5;
-      const rangeHint = [startLabel, endLabel].filter(Boolean).join(" to ");
       return {
         id: questionId,
         prompt,
@@ -115,7 +113,6 @@ function mapQuestionMetaToDefinition(
         maxValue: increment,
         startLabel: startLabel || undefined,
         endLabel: endLabel || undefined,
-        placeholder: rangeHint ? `${rangeHint} (1-${increment})` : `Enter a value from 1 to ${increment}`,
       };
     }
     case "date":
@@ -147,7 +144,6 @@ function normalizeQuestionItems(
 
   if (questionItems.length > 0) return questionItems;
 
-  // If the criterion has a topic-level questionType configured, use it with children as prompts
   const topicQuestionType = typeof meta?.questionType === "string" ? meta.questionType : null;
   if (topicQuestionType && fallbackChildren.length > 0) {
     return fallbackChildren
@@ -232,9 +228,13 @@ export function toCriterionRecord(row: CriterionRowWithChildren): AppraisalCrite
 }
 
 export function filterCriteriaPointsByRole(role: EvaluatorRole, rows: CriterionRowWithChildren[]): CriterionPoint[] {
-  const visibleCodes = new Set(getVisibleCriteriaForRole(role, rows.map(toCriterionRecord)).map((criterion) => criterion.code));
   return rows
-    .filter((row) => row.code && visibleCodes.has(row.code))
+    .filter((row) => {
+      const meta = (row.meta as Record<string, unknown> | null) ?? null;
+      const allowed = Array.isArray(meta?.allowedEvaluatorRoles) ? meta.allowedEvaluatorRoles as string[] : [];
+      // No roles configured → visible to all reviewers
+      return allowed.length === 0 || allowed.includes(role);
+    })
     .map(mapCriterionRowToPoint);
 }
 

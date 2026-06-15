@@ -57,11 +57,6 @@ export type AppraisalSelfFormTemplate = {
   employeeInfoFields: EmployeeInfoFieldDefinition[];
   partASections: AppraisalSectionDefinition[];
   selfRating: SelfRatingCopy;
-  careerGrowthSection: AppraisalSectionDefinition;
-  decisionMakingSection: AppraisalSectionDefinition;
-  retentionSection: AppraisalSectionDefinition;
-  compensationSection: AppraisalSectionDefinition;
-  feedbackQuestion: FeedbackQuestionDefinition;
 };
 
 export type ReviewerCriterionSeed = {
@@ -346,146 +341,6 @@ export const SELF_ASSESSMENT_PART_A_SECTIONS: AppraisalSectionDefinition[] = [
   },
 ];
 
-export const CAREER_GROWTH_SECTION: AppraisalSectionDefinition = {
-  id: "part-b-career-growth",
-  title: "Part B: Career Aspirations & Growth Perspective",
-  questions: [
-    { id: "next-3-years", prompt: "Where do you see yourself in the next 3 years within this company?", type: "textarea" },
-    { id: "leadership-role", prompt: "If given an opportunity for a leadership role, what would you do differently from current managers?", type: "textarea" },
-    { id: "growth-vs-financial", prompt: "What motivates you more: Growth opportunities or financial incentives? Explain why.", type: "textarea" },
-    { id: "open-to-new-roles", prompt: "Would you be open to learning new roles outside your current job description?", type: "textarea" },
-  ],
-};
-
-export const DECISION_MAKING_SECTION: AppraisalSectionDefinition = {
-  id: "part-b-decision-making",
-  title: "Part B: Decision-Making & Managerial Capabilities",
-  questions: [
-    {
-      id: "underperforming-team-member",
-      prompt: "You are assigned to lead a team, but one of your team members consistently underperforms despite repeated guidance. What is your first step? Explain your option.",
-      type: "radio",
-      allowExplanation: true,
-      options: [
-        { value: "report-management", label: "Report to higher management immediately" },
-        { value: "one-on-one", label: "Have a one-on-one conversation to understand the issue" },
-        { value: "reassign-work", label: "Assign their work to someone else to avoid delays" },
-        { value: "ignore", label: "Ignore and continue managing other tasks" },
-      ],
-    },
-    {
-      id: "implement-major-change",
-      prompt: "If you are given a chance to implement a major change in your department, how would you convince your team to support it? Explain your option.",
-      type: "radio",
-      allowExplanation: true,
-      options: [
-        { value: "enforce-rule", label: "Enforce it as a rule and expect compliance" },
-        { value: "explain-benefits", label: "Explain its benefits and take their feedback before implementing" },
-        { value: "wait-approval", label: "Wait for management approval before taking any steps" },
-        { value: "implement-immediately", label: "Implement it immediately and justify later" },
-      ],
-    },
-    {
-      id: "junior-critical-mistake",
-      prompt: "A junior colleague makes a critical mistake that affects an ongoing project. How do you respond? Explain your option.",
-      type: "radio",
-      allowExplanation: true,
-      options: [
-        { value: "blame-report", label: "Blame them and report to management" },
-        { value: "guide-fix", label: "Identify the issue, guide them to fix it, and ensure it doesn't happen again" },
-        { value: "fix-yourself", label: "Fix the problem yourself and inform them later" },
-        { value: "avoid-involvement", label: "Avoid involvement and let the manager handle it" },
-      ],
-    },
-    {
-      id: "crisis-prioritize",
-      prompt: "During a crisis at work, where multiple urgent tasks arise, how do you prioritize? Explain your option.",
-      type: "radio",
-      allowExplanation: true,
-      options: [
-        { value: "easiest-first", label: "Complete the easiest tasks first" },
-        { value: "business-impact", label: "Focus on tasks that impact business operations most" },
-        { value: "delegate-all", label: "Delegate everything to other employees" },
-        { value: "wait-instructions", label: "Wait for instructions from management" },
-      ],
-    },
-    {
-      id: "job-offers",
-      prompt: "You have two job offers: Company A offers a higher salary but no growth opportunities. Company B offers a moderate salary but a clear growth path. Which one would you choose and why?",
-      type: "textarea",
-    },
-  ],
-};
-
-export const RETENTION_SECTION: AppraisalSectionDefinition = {
-  id: "part-c-retention",
-  title: "Part C: Retention / Loyalty / Stability",
-  questions: [
-    {
-      id: "how-long-with-company",
-      prompt: "How long do you see yourself working with this company?",
-      type: "radio",
-      options: [
-        { value: "lt-1", label: "Less than a year" },
-        { value: "1-3", label: "1-3 years" },
-        { value: "3-5", label: "3-5 years" },
-        { value: "long-term", label: "Long-term" },
-      ],
-    },
-    {
-      id: "salary-hike-exit",
-      prompt: "If you were offered a 20% salary hike to leave immediately for another company, what would you do?",
-      type: "radio",
-      options: [
-        { value: "accept", label: "Accept without second thought" },
-        { value: "consider-beyond-salary", label: "Consider factors beyond salary before deciding" },
-        { value: "decline-discuss-growth", label: "Decline and discuss growth opportunities internally" },
-        { value: "negotiate-current", label: "Negotiate a better offer with the current company" },
-      ],
-    },
-    {
-      id: "stability-vs-risk",
-      prompt: "If you had to choose between job stability and a 50% higher salary elsewhere but with risk, what would you prioritize?",
-      type: "radio",
-      options: [
-        { value: "stability", label: "Stability" },
-        { value: "higher-salary", label: "Higher salary" },
-        { value: "depends-role", label: "Depends on the role and responsibilities" },
-        { value: "negotiate-middle-ground", label: "Would negotiate for a middle ground" },
-      ],
-    },
-    {
-      id: "greater-responsibility-role",
-      prompt: "If the company introduces a new role with greater responsibilities but no immediate salary hike, would you take it? Why or why not?",
-      type: "textarea",
-    },
-  ],
-};
-
-export const COMPENSATION_SECTION: AppraisalSectionDefinition = {
-  id: "part-d-compensation",
-  title: "Part D: Compensation & Satisfaction",
-  questions: [
-    { id: "current-salary", prompt: "What is your current salary, Annual and Monthly CTC?", type: "textarea" },
-    { id: "expected-salary", prompt: "What is your expected salary for the year?", type: "text" },
-    {
-      id: "salary-satisfaction",
-      prompt: "Are you satisfied with your current salary?",
-      type: "radio",
-      allowExplanation: true,
-      options: [
-        { value: "yes", label: "Yes" },
-        { value: "no", label: "No" },
-      ],
-    },
-    {
-      id: "feel-valued",
-      prompt: "What would make you feel more valued in this organization aside from salary increments?",
-      type: "textarea",
-    },
-  ],
-};
-
 export const FEEDBACK_QUESTION: AppraisalQuestionDefinition = {
   id: "final-feedback",
   prompt: "Feedback",
@@ -502,11 +357,6 @@ export function buildDefaultSelfFormTemplate(): AppraisalSelfFormTemplate {
     employeeInfoFields: structuredClone(EMPLOYEE_INFO_FIELDS),
     partASections: structuredClone(SELF_ASSESSMENT_PART_A_SECTIONS),
     selfRating: structuredClone(DEFAULT_SELF_RATING_COPY),
-    careerGrowthSection: structuredClone(CAREER_GROWTH_SECTION),
-    decisionMakingSection: structuredClone(DECISION_MAKING_SECTION),
-    retentionSection: structuredClone(RETENTION_SECTION),
-    compensationSection: structuredClone(COMPENSATION_SECTION),
-    feedbackQuestion: structuredClone(FEEDBACK_QUESTION),
   };
 }
 

@@ -143,10 +143,6 @@ function parseQuestionItems(
   }));
 }
 
-function getPhaseDefaultQuestionType(phase: "SELF" | "REVIEWER" | "MANAGEMENT") {
-  return phase === "SELF" ? "short_answer" : "rating";
-}
-
 export default async function CriteriaPage() {
   const session = await auth();
   if (!session) redirect("/login");
@@ -167,12 +163,12 @@ export default async function CriteriaPage() {
     loadPhase("MANAGEMENT"),
   ]);
 
-  function toClientTopics(rows: typeof selfRows, phase: "SELF" | "REVIEWER" | "MANAGEMENT") {
-    return rows.map((r) => ({
-      ...(function () {
-        const meta = (r.meta as Record<string, unknown> | null) ?? null;
-        const fallbackType = getPhaseDefaultQuestionType(phase);
-        const questionType = isQuestionType(meta?.questionType) ? meta.questionType : fallbackType;
+  function toClientTopics(rows: typeof selfRows) {
+    return rows.map((r) => {
+      const meta = (r.meta as Record<string, unknown> | null) ?? null;
+      return ({
+        ...(function () {
+        const questionType = isQuestionType(meta?.questionType) ? meta.questionType : "multiple_choice";
         const rawResponseConfig =
           meta?.responseConfig && typeof meta.responseConfig === "object"
             ? (meta.responseConfig as Record<string, unknown>)
@@ -200,44 +196,45 @@ export default async function CriteriaPage() {
           ),
         };
       })(),
-      id: r.id,
-      label: r.label,
-      code: r.code ?? "",
-      description: r.description ?? "",
-      weight: r.weight,
-      maxPoints: r.maxPoints,
-      kind: r.kind,
-      reviewerOnly: r.reviewerOnly,
-      allowedRoles: getAllowedRoles({
         id: r.id,
-        code: r.code,
         label: r.label,
-        description: r.description,
+        code: r.code ?? "",
+        description: r.description ?? "",
         weight: r.weight,
         maxPoints: r.maxPoints,
         kind: r.kind,
         reviewerOnly: r.reviewerOnly,
-        meta: (r.meta as Record<string, unknown> | null) ?? null,
-        children: [],
-      }),
-      questions: (r.questions as string[] | null) ?? [],
-      order: r.order,
-      subtopics: r.children.map((c) => ({
-        id: c.id,
-        code: c.code ?? "",
-        label: c.label,
-        weight: c.weight,
-        order: c.order,
-        maxPoints: c.maxPoints,
-      })),
-    }));
+        allowedRoles: getAllowedRoles({
+          id: r.id,
+          code: r.code,
+          label: r.label,
+          description: r.description,
+          weight: r.weight,
+          maxPoints: r.maxPoints,
+          kind: r.kind,
+          reviewerOnly: r.reviewerOnly,
+          meta,
+          children: [],
+        }),
+        questions: (r.questions as string[] | null) ?? [],
+        order: r.order,
+        subtopics: r.children.map((c) => ({
+          id: c.id,
+          code: c.code ?? "",
+          label: c.label,
+          weight: c.weight,
+          order: c.order,
+          maxPoints: c.maxPoints,
+        })),
+      });
+    });
   }
 
   return (
     <CriteriaClient
-      selfTree={toClientTopics(selfRows, "SELF")}
-      reviewerTree={toClientTopics(reviewerRows, "REVIEWER")}
-      mgmtTree={toClientTopics(mgmtRows, "MANAGEMENT")}
+      selfTree={toClientTopics(selfRows)}
+      reviewerTree={toClientTopics(reviewerRows)}
+      mgmtTree={toClientTopics(mgmtRows)}
     />
   );
 }

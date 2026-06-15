@@ -53,10 +53,10 @@ export async function PATCH(req: NextRequest) {
     description: z.string().optional(),
     weight: z.number().min(0).optional(),
     order: z.number().int().min(0).optional(),
+    questions: z.array(z.string()).optional(),
     meta: z.record(z.string(), z.unknown()).optional(),
     maxPoints: z.number().int().min(0).optional(),
     reviewerOnly: z.boolean().optional(),
-    questions: z.array(z.string()).optional(),
   }).safeParse(await req.json());
   if (!parsed.success) return err("Invalid input");
 

@@ -6,10 +6,18 @@ import { cn } from "@/lib/utils";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import type { EvaluatorRole, AppraisalSectionDefinition, AppraisalQuestionDefinition } from "@/modules/ams/criteria-config";
-import { CAREER_GROWTH_SECTION, DECISION_MAKING_SECTION, RETENTION_SECTION, COMPENSATION_SECTION } from "@/modules/ams/criteria-config";
+import type { EvaluatorRole } from "@/modules/ams/criteria-config";
 
 type Phase = "SELF" | "REVIEWER" | "MANAGEMENT";
+
+type Subtopic = {
+  id: string;
+  code: string;
+  label: string;
+  weight: number;
+  order: number;
+  maxPoints: number;
+};
 
 type QuestionType =
   | "multiple_choice"
@@ -22,15 +30,6 @@ type QuestionType =
   | "rating"
   | "date"
   | "time";
-
-type Subtopic = {
-  id: string;
-  code: string;
-  label: string;
-  weight: number;
-  order: number;
-  maxPoints: number;
-};
 
 type ResponseConfig = {
   startLabel: string;
@@ -62,11 +61,11 @@ type Topic = {
   kind: string;
   reviewerOnly: boolean;
   questions: string[];
-  subtopics: Subtopic[];
-  allowedRoles: EvaluatorRole[];
   questionType: QuestionType;
   responseConfig: ResponseConfig;
   questionItems: CriterionQuestion[];
+  subtopics: Subtopic[];
+  allowedRoles: EvaluatorRole[];
 };
 
 const PHASE_META: Record<Phase, { label: string; description: string }> = {
@@ -74,6 +73,13 @@ const PHASE_META: Record<Phase, { label: string; description: string }> = {
   REVIEWER: { label: "Reviewer", description: "Criteria used by managers and reviewers to rate employees." },
   MANAGEMENT: { label: "Management", description: "Criteria reserved for management-level review." },
 };
+
+const EVALUATOR_ROLES: { value: EvaluatorRole; label: string }[] = [
+  { value: "MANAGEMENT", label: "Management" },
+  { value: "MANAGER", label: "Manager" },
+  { value: "TL", label: "Team Lead" },
+  { value: "HR", label: "HR" },
+];
 
 const QUESTION_TYPES: { value: QuestionType; label: string }[] = [
   { value: "short_answer", label: "Short answer" },
@@ -86,13 +92,6 @@ const QUESTION_TYPES: { value: QuestionType; label: string }[] = [
   { value: "rating", label: "Rating" },
   { value: "date", label: "Date" },
   { value: "time", label: "Time" },
-];
-
-const EVALUATOR_ROLES: { value: EvaluatorRole; label: string }[] = [
-  { value: "MANAGEMENT", label: "Management" },
-  { value: "MANAGER", label: "Manager" },
-  { value: "TL", label: "Team Lead" },
-  { value: "HR", label: "HR" },
 ];
 
 function hasOptions(type: QuestionType) {
@@ -116,10 +115,6 @@ function getDefaultResponseConfig(type: QuestionType): ResponseConfig {
   }
 }
 
-function getDefaultQuestionTypeForPhase(phase: Phase): QuestionType {
-  return phase === "SELF" ? "short_answer" : "rating";
-}
-
 function normalizeIncrement(value: number | undefined, fallback = 5) {
   if (!Number.isFinite(value)) return fallback;
   return Math.max(2, Math.round(value as number));
@@ -137,80 +132,30 @@ function createQuestionOption(label = ""): QuestionOption {
   };
 }
 
-function createQuestion(type: QuestionType = "short_answer"): CriterionQuestion {
+function createQuestion(): CriterionQuestion {
   return {
     id: `__question_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     prompt: "",
-    questionType: type,
-    options: hasOptions(type) ? [createQuestionOption()] : [],
-    responseConfig: getDefaultResponseConfig(type),
+    questionType: "short_answer",
+    options: [],
+    responseConfig: getDefaultResponseConfig("short_answer"),
   };
-}
-
-function normalizeQuestionOptions(options: QuestionOption[]) {
-  return options.map((option, index) => ({
-    ...option,
-    id: option.id || `option-${index + 1}`,
-  }));
 }
 
 function normalizeQuestionItems(questionItems: CriterionQuestion[]) {
   return questionItems.map((question, index) => ({
     ...question,
     id: question.id || `question-${index + 1}`,
-    options: normalizeQuestionOptions(question.options),
+    options: (question.options ?? []).map((option, optionIndex) => ({
+      ...option,
+      id: option.id || `option-${optionIndex + 1}`,
+    })),
     responseConfig: {
       startLabel: question.responseConfig?.startLabel ?? "",
       endLabel: question.responseConfig?.endLabel ?? "",
       increment: normalizeIncrement(question.responseConfig?.increment, getDefaultResponseConfig(question.questionType).increment),
     },
   }));
-}
-
-function buildQuestionFromSubtopic(
-  subtopic: Subtopic,
-  type: QuestionType,
-  responseConfig: ResponseConfig,
-  index: number,
-  existingQuestion?: CriterionQuestion,
-): CriterionQuestion {
-  return {
-    id: existingQuestion?.id || `question-${index + 1}`,
-    prompt: existingQuestion?.prompt || subtopic.label,
-    questionType: type,
-    options: [],
-    responseConfig: supportsResponseLabels(type)
-      ? {
-          startLabel: responseConfig.startLabel,
-          endLabel: responseConfig.endLabel,
-          increment: normalizeIncrement(responseConfig.increment, getDefaultResponseConfig(type).increment),
-        }
-      : getDefaultResponseConfig(type),
-  };
-}
-
-function buildQuestionItemsFromSubtopics(
-  subtopics: Subtopic[],
-  type: QuestionType,
-  responseConfig: ResponseConfig,
-  existingQuestionItems: CriterionQuestion[],
-) {
-  return subtopics.map((subtopic, index) =>
-    buildQuestionFromSubtopic(subtopic, type, responseConfig, index, existingQuestionItems[index]),
-  );
-}
-
-function buildSubtopicsFromQuestionItems(questionItems: CriterionQuestion[], existingSubtopics: Subtopic[]) {
-  return withOrderedSubtopics(
-    questionItems.map((question, index) => ({
-      id: existingSubtopics[index]?.id ?? `__new_${Date.now()}_${index}`,
-      code: existingSubtopics[index]?.code ?? "",
-      label: question.prompt,
-      weight: existingSubtopics[index]?.weight ?? 1,
-      order: index,
-      maxPoints: existingSubtopics[index]?.maxPoints ?? 0,
-    })),
-  );
 }
 
 function withOrderedSubtopics(subtopics: Subtopic[]) {
@@ -250,7 +195,10 @@ async function apiCreate(data: Record<string, unknown>) {
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to create");
-  return res.json() as Promise<{ id: string }>;
+  const payload = await res.json() as { id?: string; data?: { id?: string } };
+  const id = payload.id ?? payload.data?.id;
+  if (!id) throw new Error("Create response missing id");
+  return { id };
 }
 
 async function apiDelete(id: string) {
@@ -312,85 +260,6 @@ function PlusIcon() {
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
   );
-}
-
-function QuestionTypeIcon({ type }: { type: QuestionType }) {
-  switch (type) {
-    case "short_answer":
-      return (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <line x1="3" y1="12" x2="15" y2="12" />
-          <line x1="3" y1="16" x2="21" y2="16" />
-        </svg>
-      );
-    case "paragraph":
-      return (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <line x1="3" y1="8" x2="21" y2="8" />
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="16" x2="15" y2="16" />
-        </svg>
-      );
-    case "multiple_choice":
-      return (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="9" />
-          <circle cx="12" cy="12" r="4" fill="currentColor" />
-        </svg>
-      );
-    case "checkboxes":
-      return (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <polyline points="9 12 11 14 15 10" />
-        </svg>
-      );
-    case "dropdown":
-      return (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="9" />
-          <polyline points="9 10 12 13 15 10" />
-        </svg>
-      );
-    case "slider":
-      return (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="4" y1="12" x2="20" y2="12" />
-          <circle cx="14" cy="12" r="3" fill="currentColor" />
-        </svg>
-      );
-    case "linear_scale":
-      return (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <circle cx="3" cy="12" r="2" fill="currentColor" />
-          <circle cx="12" cy="12" r="2" fill="currentColor" />
-          <circle cx="21" cy="12" r="2" fill="currentColor" />
-        </svg>
-      );
-    case "rating":
-      return (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-        </svg>
-      );
-    case "date":
-      return (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <line x1="16" y1="2" x2="16" y2="6" />
-          <line x1="8" y1="2" x2="8" y2="6" />
-          <line x1="3" y1="10" x2="21" y2="10" />
-        </svg>
-      );
-    case "time":
-      return (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <circle cx="12" cy="12" r="9" />
-          <polyline points="12 7 12 12 15 15" />
-        </svg>
-      );
-  }
 }
 
 function IconButton({
@@ -490,404 +359,6 @@ function getPhaseChrome(phase: Phase) {
   }
 }
 
-function OptionRow({
-  type,
-  label,
-  index,
-  onChange,
-  onDelete,
-}: {
-  type: QuestionType;
-  label: string;
-  index: number;
-  onChange: (value: string) => void;
-  onDelete: () => void;
-}) {
-  const icon =
-    type === "checkboxes" ? (
-      <div className="h-4 w-4 shrink-0 rounded border-2 border-outline-variant" />
-    ) : type === "dropdown" ? (
-      <span className="w-4 shrink-0 text-xs text-on-surface-variant">{index + 1}.</span>
-    ) : (
-      <div className="h-4 w-4 shrink-0 rounded-full border-2 border-outline-variant" />
-    );
-
-  return (
-    <div className="group flex items-center gap-3 rounded-xl border border-outline-variant/40 bg-surface px-3 py-2.5">
-      {icon}
-      <Input
-        type="text"
-        value={label}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={`Option ${index + 1}`}
-        onClick={(event) => event.stopPropagation()}
-        className="h-9 flex-1 border-0 bg-transparent px-0 py-0 text-sm shadow-none focus:ring-0 hover:border-transparent"
-      />
-      <button
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation();
-          onDelete();
-        }}
-        className="p-1 text-on-surface-variant opacity-0 transition group-hover:opacity-100 hover:text-red-500"
-      >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      </button>
-    </div>
-  );
-}
-
-function QuestionPreview({
-  type,
-  responseConfig,
-}: {
-  type: QuestionType;
-  responseConfig: ResponseConfig;
-}) {
-  if (type === "short_answer") {
-    return <div className="rounded-xl border border-outline-variant/50 bg-surface-container-low px-4 py-3 text-sm italic text-on-surface-variant">Short answer text</div>;
-  }
-  if (type === "paragraph") {
-    return <div className="rounded-xl border border-outline-variant/50 bg-surface-container-low px-4 py-6 text-sm italic text-on-surface-variant">Long answer text</div>;
-  }
-  if (type === "date") {
-    return (
-      <div className="flex items-center gap-2 rounded-xl border border-outline-variant/50 bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
-        <QuestionTypeIcon type="date" />
-        <span>Month / Day / Year</span>
-      </div>
-    );
-  }
-  if (type === "time") {
-    return (
-      <div className="flex items-center gap-2 rounded-xl border border-outline-variant/50 bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
-        <QuestionTypeIcon type="time" />
-        <span>Time</span>
-      </div>
-    );
-  }
-  if (type === "linear_scale") {
-    const incrementValues = Array.from({ length: responseConfig.increment }, (_, index) => index + 1);
-    return (
-      <div className="space-y-4 rounded-2xl border border-outline-variant/50 bg-surface-container-low px-4 py-4">
-        <div className="flex items-center gap-3 text-sm">
-          <span className="text-on-surface-variant">{responseConfig.startLabel || "Low"}</span>
-          <div className="flex flex-1 items-center gap-3">
-            {incrementValues.map((value) => (
-              <div key={value} className="flex flex-col items-center gap-1">
-                <div className="h-3 w-3 rounded-full border-2 border-outline-variant" />
-                <span className="text-xs text-on-surface-variant">{value}</span>
-              </div>
-            ))}
-          </div>
-          <span className="text-on-surface-variant">{responseConfig.endLabel || "High"}</span>
-        </div>
-      </div>
-    );
-  }
-  if (type === "slider") {
-    return (
-      <div className="space-y-4 rounded-2xl border border-outline-variant/50 bg-surface-container-low px-4 py-5">
-        <div className="flex items-center gap-3">
-          <div className="flex min-w-0 flex-col">
-            <span className="text-xs text-on-surface-variant">{responseConfig.startLabel || "Low"}</span>
-            <span className="text-[11px] text-on-surface-variant/70">1</span>
-          </div>
-          <div className="relative flex-1">
-            <div className="h-1.5 rounded-full bg-gradient-to-r from-[#0e8a95] to-[#00cec4]" />
-            <div className="absolute left-[68%] top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border-2 border-white bg-[#00cec4] shadow-[0_8px_20px_-10px_rgba(0,206,196,0.8)]" />
-          </div>
-          <div className="flex min-w-0 flex-col items-end">
-            <span className="text-xs text-on-surface-variant">{responseConfig.endLabel || "High"}</span>
-            <span className="text-[11px] text-on-surface-variant/70">{responseConfig.increment}</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  if (type === "rating") {
-    const incrementValues = Array.from({ length: responseConfig.increment }, (_, index) => index + 1);
-    return (
-      <div className="space-y-4 rounded-2xl border border-outline-variant/50 bg-surface-container-low px-4 py-4">
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-on-surface-variant">{responseConfig.startLabel || "Poor"}</span>
-          <div className="flex items-center gap-1">
-            {incrementValues.map((value) => (
-              <svg key={value} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-outline-variant">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-            ))}
-          </div>
-          <span className="text-xs text-on-surface-variant">{responseConfig.endLabel || "Excellent"}</span>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
-}
-
-function QuestionCard({
-  question,
-  index,
-  onChange,
-  onDelete,
-  questionLabel = "Question",
-}: {
-  question: CriterionQuestion;
-  index: number;
-  onChange: (next: CriterionQuestion) => void;
-  onDelete: () => void;
-  questionLabel?: string;
-}) {
-  const optionCapable = hasOptions(question.questionType);
-  const labelCapable = supportsResponseLabels(question.questionType);
-
-  return (
-    <div className="space-y-4 rounded-2xl border border-outline-variant/45 bg-surface px-4 py-4">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        <div className="flex-1">
-          <FieldInput
-            label={`${questionLabel} ${index + 1}`}
-            value={question.prompt}
-            onChange={(value) => onChange({ ...question, prompt: value })}
-            placeholder={`Type the ${questionLabel.toLowerCase()} prompt`}
-          />
-        </div>
-        <div className="w-full shrink-0 lg:w-56">
-          <p className="mb-1.5 text-xs font-medium text-on-surface-variant">Response type</p>
-          <DropdownSelect
-            value={question.questionType}
-            onValueChange={(value) => {
-              const nextType = value as QuestionType;
-              onChange({
-                ...question,
-                questionType: nextType,
-                options: hasOptions(nextType)
-                  ? (optionCapable ? question.options : [createQuestionOption()])
-                  : [],
-                responseConfig: supportsResponseLabels(nextType)
-                  ? (labelCapable ? question.responseConfig : getDefaultResponseConfig(nextType))
-                  : getDefaultResponseConfig(nextType),
-              });
-            }}
-            options={QUESTION_TYPES.map((entry) => ({ value: entry.value, label: entry.label }))}
-            ariaLabel={`Question ${index + 1} response type`}
-            triggerClassName="h-10 border-outline-variant/60 bg-surface-container-low text-sm shadow-none hover:shadow-none"
-          />
-        </div>
-        <div className="flex items-end">
-          <IconButton title={`Delete ${questionLabel.toLowerCase()}`} onClick={(event) => { event.stopPropagation(); onDelete(); }} className="hover:border-red-200 hover:text-red-600">
-            <TrashIcon />
-          </IconButton>
-        </div>
-      </div>
-
-      {optionCapable ? (
-        <div className="space-y-3 rounded-2xl border border-outline-variant/35 bg-surface-container-low px-4 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-medium text-on-surface">Options</p>
-              <p className="text-xs text-on-surface-variant">Add choices for this question only.</p>
-            </div>
-            <Button
-              size="sm"
-              onClick={(event) => {
-                event.stopPropagation();
-                onChange({ ...question, options: [...question.options, createQuestionOption()] });
-              }}
-              className="border-0 bg-[#00cec4] text-white shadow-[0_14px_28px_-18px_rgba(0,174,198,0.45)] hover:bg-[#00b8af]"
-            >
-              Add option
-            </Button>
-          </div>
-          <div className="space-y-2">
-            {question.options.map((option, optionIndex) => (
-              <OptionRow
-                key={option.id}
-                type={question.questionType}
-                label={option.label}
-                index={optionIndex}
-                onChange={(value) => onChange({
-                  ...question,
-                  options: question.options.map((entry, currentIndex) => (
-                    currentIndex === optionIndex ? { ...entry, label: value } : entry
-                  )),
-                })}
-                onDelete={() => onChange({
-                  ...question,
-                  options: question.options.filter((_, currentIndex) => currentIndex !== optionIndex),
-                })}
-              />
-            ))}
-          </div>
-          {question.options.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-outline-variant/60 bg-surface px-4 py-5 text-center text-sm text-on-surface-variant">
-              No options yet for this question.
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {labelCapable ? (
-        <div className="grid gap-3 sm:grid-cols-3">
-          <FieldInput
-            label="Start label"
-            value={question.responseConfig.startLabel}
-            onChange={(value) => onChange({
-              ...question,
-              responseConfig: { ...question.responseConfig, startLabel: value },
-            })}
-            placeholder={getDefaultResponseConfig(question.questionType).startLabel || "Start"}
-          />
-          <FieldInput
-            label="End label"
-            value={question.responseConfig.endLabel}
-            onChange={(value) => onChange({
-              ...question,
-              responseConfig: { ...question.responseConfig, endLabel: value },
-            })}
-            placeholder={getDefaultResponseConfig(question.questionType).endLabel || "End"}
-          />
-          <FieldInput
-            label="Increment"
-            value={question.responseConfig.increment}
-            onChange={(value) => onChange({
-              ...question,
-              responseConfig: { ...question.responseConfig, increment: parseIncrementInput(value, getDefaultResponseConfig(question.questionType).increment) },
-            })}
-            type="number"
-            placeholder={String(getDefaultResponseConfig(question.questionType).increment)}
-          />
-        </div>
-      ) : null}
-
-      <QuestionPreview type={question.questionType} responseConfig={question.responseConfig} />
-    </div>
-  );
-}
-
-function QuestionBody({
-  phase,
-  subtopics,
-  questionItems,
-  onQuestionItemsChange,
-}: {
-  phase: Phase;
-  subtopics: Subtopic[];
-  questionItems: CriterionQuestion[];
-  onQuestionItemsChange: (next: CriterionQuestion[]) => void;
-}) {
-  if (phase === "SELF") {
-    return (
-      <div className="rounded-2xl border border-outline-variant/50 bg-surface-container-low px-4 py-4">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium text-on-surface">Questions</p>
-            <p className="text-xs text-on-surface-variant">Each question can use its own response type and options.</p>
-          </div>
-          <Button
-            size="sm"
-            onClick={(event) => {
-              event.stopPropagation();
-              onQuestionItemsChange([...questionItems, createQuestion()]);
-            }}
-            className="border-0 bg-[#00cec4] text-white shadow-[0_14px_28px_-18px_rgba(0,174,198,0.45)] hover:bg-[#00b8af]"
-          >
-            Add question
-          </Button>
-        </div>
-
-        <div className="space-y-3">
-          {questionItems.map((question, index) => (
-            <QuestionCard
-              key={question.id}
-              question={question}
-              index={index}
-              onChange={(next) => onQuestionItemsChange(questionItems.map((entry, currentIndex) => (
-                currentIndex === index ? next : entry
-              )))}
-              onDelete={() => onQuestionItemsChange(questionItems.filter((_, currentIndex) => currentIndex !== index))}
-            />
-          ))}
-        </div>
-
-        {questionItems.length === 0 ? (
-          <div className="mt-3 rounded-xl border border-dashed border-outline-variant/60 bg-surface px-4 py-6 text-center text-sm text-on-surface-variant">
-            No questions yet. Add the first question and choose its response type.
-          </div>
-        ) : null}
-      </div>
-    );
-  }
-
-  const reviewerQuestionItems = normalizeQuestionItems(
-    questionItems.length > 0
-      ? questionItems
-      : buildQuestionItemsFromSubtopics(subtopics, "short_answer", getDefaultResponseConfig("short_answer"), questionItems),
-  );
-
-  function syncReviewerQuestions(nextQuestionItems: CriterionQuestion[]) {
-    onQuestionItemsChange(normalizeQuestionItems(nextQuestionItems));
-  }
-
-  return (
-    <div className="rounded-2xl border border-outline-variant/50 bg-surface-container-low px-4 py-4">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-on-surface">Questions</p>
-          <p className="text-xs text-on-surface-variant">
-            Use the same form-style question builder here. These prompts become the reviewer or management rating items.
-          </p>
-        </div>
-        <Button
-          size="sm"
-          onClick={(event) => {
-            event.stopPropagation();
-            syncReviewerQuestions([
-              ...reviewerQuestionItems,
-              createQuestion(),
-            ]);
-          }}
-          className="border-0 bg-[#00cec4] text-white shadow-[0_14px_28px_-18px_rgba(0,174,198,0.45)] hover:bg-[#00b8af]"
-        >
-          Add question
-        </Button>
-      </div>
-
-      <div className="space-y-3">
-        {reviewerQuestionItems.map((question, index) => (
-          <QuestionCard
-            key={question.id}
-            question={question}
-            index={index}
-            questionLabel="Rating item"
-            onChange={(next) =>
-              syncReviewerQuestions(
-                reviewerQuestionItems.map((entry, currentIndex) => (
-                  currentIndex === index ? next : entry
-                )),
-              )
-            }
-            onDelete={() =>
-              syncReviewerQuestions(reviewerQuestionItems.filter((_, currentIndex) => currentIndex !== index))
-            }
-          />
-        ))}
-      </div>
-
-      {reviewerQuestionItems.length === 0 ? (
-        <div className="mt-3 rounded-xl border border-dashed border-outline-variant/60 bg-surface px-4 py-6 text-center text-sm text-on-surface-variant">
-          No questions yet. Add the first question and it will appear as a rating item for this phase.
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 function RoleCheckboxes({
   title = "Visible to roles",
   value,
@@ -936,6 +407,162 @@ function RoleCheckboxes({
   );
 }
 
+function QuestionOptionRow({
+  option,
+  index,
+  onChange,
+  onDelete,
+}: {
+  option: QuestionOption;
+  index: number;
+  onChange: (next: QuestionOption) => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-outline-variant/40 bg-surface px-3 py-2.5">
+      <div className="h-4 w-4 rounded-full border-2 border-outline-variant" />
+      <Input
+        type="text"
+        value={option.label}
+        onChange={(event) => onChange({ ...option, label: event.target.value })}
+        placeholder={`Option ${index + 1}`}
+        onClick={(event) => event.stopPropagation()}
+        className="h-9 flex-1 border-0 bg-transparent px-0 py-0 text-sm shadow-none focus:ring-0 hover:border-transparent"
+      />
+      <button
+        type="button"
+        onClick={(event) => { event.stopPropagation(); onDelete(); }}
+        className="p-1 text-on-surface-variant hover:text-red-500"
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+function QuestionRow({
+  question,
+  index,
+  onChange,
+  onDelete,
+}: {
+  question: CriterionQuestion;
+  index: number;
+  onChange: (next: CriterionQuestion) => void;
+  onDelete: () => void;
+}) {
+  const optionCapable = hasOptions(question.questionType);
+  const labelCapable = supportsResponseLabels(question.questionType);
+
+  return (
+    <div className="space-y-4 rounded-2xl border border-outline-variant/45 bg-surface px-4 py-4">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px_auto]">
+        <FieldInput
+          label={`Question ${index + 1}`}
+          value={question.prompt}
+          onChange={(value) => onChange({ ...question, prompt: value })}
+          placeholder="Type the question prompt"
+        />
+        <div className="w-full shrink-0 lg:w-56">
+          <p className="mb-1.5 text-xs font-medium text-on-surface-variant">Response type</p>
+          <DropdownSelect
+            value={question.questionType}
+            onValueChange={(value) => {
+              const nextType = value as QuestionType;
+              onChange({
+                ...question,
+                questionType: nextType,
+                options: hasOptions(nextType)
+                  ? (optionCapable ? question.options : [createQuestionOption(), createQuestionOption()])
+                  : [],
+                responseConfig: supportsResponseLabels(nextType)
+                  ? (labelCapable ? question.responseConfig : getDefaultResponseConfig(nextType))
+                  : getDefaultResponseConfig(nextType),
+              });
+            }}
+            options={QUESTION_TYPES.map((entry) => ({ value: entry.value, label: entry.label }))}
+            ariaLabel={`Question ${index + 1} response type`}
+            triggerClassName="h-10 border-outline-variant/60 bg-surface-container-low text-sm shadow-none hover:shadow-none"
+          />
+        </div>
+        <div className="flex items-end">
+          <IconButton title="Delete question" onClick={(event) => { event.stopPropagation(); onDelete(); }} className="hover:border-red-200 hover:text-red-600">
+            <TrashIcon />
+          </IconButton>
+        </div>
+      </div>
+
+      {optionCapable ? (
+        <div className="space-y-3 rounded-2xl border border-outline-variant/35 bg-surface-container-low px-4 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-on-surface">Options</p>
+              <p className="text-xs text-on-surface-variant">Add the choices for this question.</p>
+            </div>
+            <Button
+              size="sm"
+              onClick={(event) => {
+                event.stopPropagation();
+                onChange({ ...question, options: [...question.options, createQuestionOption()] });
+              }}
+              className="border-0 bg-[#00cec4] text-white shadow-[0_14px_28px_-18px_rgba(0,174,198,0.45)] hover:bg-[#00b8af]"
+            >
+              Add option
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {question.options.map((option, optionIndex) => (
+              <QuestionOptionRow
+                key={option.id}
+                option={option}
+                index={optionIndex}
+                onChange={(nextOption) => onChange({
+                  ...question,
+                  options: question.options.map((entry, currentIndex) => currentIndex === optionIndex ? nextOption : entry),
+                })}
+                onDelete={() => onChange({
+                  ...question,
+                  options: question.options.filter((_, currentIndex) => currentIndex !== optionIndex),
+                })}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {labelCapable ? (
+        <div className="grid gap-3 sm:grid-cols-4">
+          <FieldInput
+            label="Start label"
+            value={question.responseConfig.startLabel}
+            onChange={(value) => onChange({ ...question, responseConfig: { ...question.responseConfig, startLabel: value } })}
+            placeholder={getDefaultResponseConfig(question.questionType).startLabel || "Start"}
+          />
+          <FieldInput
+            label="End label"
+            value={question.responseConfig.endLabel}
+            onChange={(value) => onChange({ ...question, responseConfig: { ...question.responseConfig, endLabel: value } })}
+            placeholder={getDefaultResponseConfig(question.questionType).endLabel || "End"}
+          />
+          <FieldInput
+            label="Increment"
+            value={question.responseConfig.increment}
+            onChange={(value) => onChange({
+              ...question,
+              responseConfig: { ...question.responseConfig, increment: parseIncrementInput(value, getDefaultResponseConfig(question.questionType).increment) },
+            })}
+            type="number"
+            placeholder={String(getDefaultResponseConfig(question.questionType).increment)}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function CriterionCard({
   topic,
   phase,
@@ -977,14 +604,8 @@ function CriterionCard({
     <div
       data-card-id={topic.id}
       onClick={onActivate}
-      onDragOver={(event) => {
-        event.preventDefault();
-        onDragOver();
-      }}
-      onDrop={(event) => {
-        event.preventDefault();
-        onDrop();
-      }}
+      onDragOver={(event) => { event.preventDefault(); onDragOver(); }}
+      onDrop={(event) => { event.preventDefault(); onDrop(); }}
       className={cn(
         "relative cursor-pointer overflow-hidden rounded-2xl border-l-4 border-y border-r bg-white transition-all duration-200 ease-out",
         chrome.border,
@@ -1002,18 +623,9 @@ function CriterionCard({
             draggable
             aria-label="Drag to reorder or click to collapse"
             title="Drag to reorder or click to collapse"
-            onClick={(event) => {
-              event.stopPropagation();
-              onHandleClick();
-            }}
-            onDragStart={(event) => {
-              event.stopPropagation();
-              onDragStart();
-            }}
-            onDragEnd={(event) => {
-              event.stopPropagation();
-              onDragEnd();
-            }}
+            onClick={(event) => { event.stopPropagation(); onHandleClick(); }}
+            onDragStart={(event) => { event.stopPropagation(); onDragStart(); }}
+            onDragEnd={(event) => { event.stopPropagation(); onDragEnd(); }}
             className="inline-flex h-8 w-8 cursor-grab items-center justify-center text-outline-variant transition hover:text-[#008b85] active:cursor-grabbing"
           >
             <DragDots />
@@ -1041,35 +653,57 @@ function CriterionCard({
               </p>
             )}
           </div>
-
-          {phase === "SELF" ? (
-            <div className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-outline-variant/50 bg-surface-container-low px-3 py-2 text-xs text-on-surface-variant">
-              <span>Per-question response types</span>
-            </div>
-          ) : (
-            <div className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-outline-variant/50 bg-surface-container-low px-3 py-2 text-xs text-on-surface-variant">
-              <span>Per-question response types</span>
-            </div>
-          )}
         </div>
 
         {isActive ? (
           <>
-            <QuestionBody
-              phase={phase}
-              subtopics={topic.subtopics}
-              questionItems={topic.questionItems}
-              onQuestionItemsChange={(next) => {
-                const normalizedQuestions = normalizeQuestionItems(next);
-                onTopicChange({
-                  ...topic,
-                  questionItems: normalizedQuestions,
-                  subtopics: phase === "SELF"
-                    ? topic.subtopics
-                    : buildSubtopicsFromQuestionItems(normalizedQuestions, topic.subtopics),
-                });
-              }}
-            />
+            <div className="rounded-2xl border border-outline-variant/50 bg-surface-container-low px-4 py-4">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-on-surface">Questions</p>
+                  <p className="text-xs text-on-surface-variant">Add questions and choose the response type for each one individually.</p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onTopicChange({
+                      ...topic,
+                      questionItems: normalizeQuestionItems([...topic.questionItems, createQuestion()]),
+                    });
+                  }}
+                  className="border-0 bg-[#00cec4] text-white shadow-[0_14px_28px_-18px_rgba(0,174,198,0.45)] hover:bg-[#00b8af]"
+                >
+                  Add question
+                </Button>
+              </div>
+              <div className="space-y-3">
+                {topic.questionItems.map((question, index) => (
+                  <QuestionRow
+                    key={question.id}
+                    question={question}
+                    index={index}
+                    onChange={(nextQuestion) => onTopicChange({
+                      ...topic,
+                      questionItems: normalizeQuestionItems(
+                        topic.questionItems.map((entry, currentIndex) => currentIndex === index ? nextQuestion : entry),
+                      ),
+                    })}
+                    onDelete={() => onTopicChange({
+                      ...topic,
+                      questionItems: normalizeQuestionItems(
+                        topic.questionItems.filter((_, currentIndex) => currentIndex !== index),
+                      ),
+                    })}
+                  />
+                ))}
+              </div>
+              {topic.questionItems.length === 0 ? (
+                <div className="mt-3 rounded-xl border border-dashed border-outline-variant/60 bg-surface px-4 py-6 text-center text-sm text-on-surface-variant">
+                  No questions yet. Add the first question and choose its response type.
+                </div>
+              ) : null}
+            </div>
 
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto]">
               <label className="flex flex-col gap-2">
@@ -1121,7 +755,6 @@ function CriterionCard({
                   <TrashIcon />
                 </IconButton>
               </div>
-
               <div className="flex items-center gap-3" onClick={(event) => event.stopPropagation()}>
                 {dirty ? (
                   <Button
@@ -1139,15 +772,13 @@ function CriterionCard({
             </div>
           </>
         ) : (
-          (topic.questionItems.length > 0 || topic.subtopics.length > 0 || topic.description) ? (
+          (topic.subtopics.length > 0 || topic.questionItems.length > 0 || topic.description) ? (
             <p className="rounded-xl bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
-              {phase === "SELF" && topic.questionItems.length > 0
+              {topic.questionItems.length > 0
                 ? `${topic.questionItems.length} question${topic.questionItems.length > 1 ? "s" : ""}`
-                : topic.questionItems.length > 0
-                ? `${topic.questionItems.length} question${topic.questionItems.length > 1 ? "s" : ""}`
-                : topic.description
-                  ? topic.description.slice(0, 80) + (topic.description.length > 80 ? "..." : "")
-                  : null}
+                : topic.subtopics.length > 0
+                ? `${topic.subtopics.length} sub-criterion${topic.subtopics.length > 1 ? "a" : ""}`
+                : topic.description.slice(0, 80) + (topic.description.length > 80 ? "..." : "")}
             </p>
           ) : null
         )}
@@ -1172,21 +803,15 @@ function InlineAddCriterion({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-function ScrollToBottomButton({
-  onClick,
-  visible,
-}: {
-  onClick: () => void;
-  visible: boolean;
-}) {
+function ScrollToBottomButton({ onClick, visible }: { onClick: () => void; visible: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label="Scroll to bottom"
       className={cn(
-        "fixed bottom-6 right-6 z-20 inline-flex items-center gap-2 rounded-full border border-[#00cec4]/10 bg-[#00cec4]/[0.045] px-4 py-2 text-xs font-medium text-slate-500 backdrop-blur-[6px] transition-all duration-200",
-        "hover:-translate-y-0.5 hover:border-[#00cec4]/25 hover:bg-[#00cec4]/[0.09] hover:text-slate-700 hover:shadow-[0_12px_28px_-20px_rgba(0,206,196,0.55)]",
+        "fixed bottom-6 right-6 z-20 inline-flex items-center gap-2 rounded-full border border-[#00cec4]/10 bg-[#00cec4]/4.5 px-4 py-2 text-xs font-medium text-slate-500 backdrop-blur-[6px] transition-all duration-200",
+        "hover:-translate-y-0.5 hover:border-[#00cec4]/25 hover:bg-[#00cec4]/9 hover:text-slate-700 hover:shadow-[0_12px_28px_-20px_rgba(0,206,196,0.55)]",
         visible ? "opacity-80" : "pointer-events-none opacity-0 translate-y-2",
       )}
     >
@@ -1234,60 +859,49 @@ function PhaseHeader({ phase }: { phase: Phase }) {
   );
 }
 
-function sectionToCriterionQuestions(questions: AppraisalQuestionDefinition[]): CriterionQuestion[] {
-  return questions.map((q, index) => {
-    const id = q.id || `q-${index + 1}`;
-    let questionType: QuestionType;
-    if (q.type === "textarea") {
-      questionType = "paragraph";
-    } else if (q.type === "radio") {
-      questionType = q.allowExplanation ? "checkboxes" : "multiple_choice";
-    } else if (q.type === "number") {
-      questionType = "slider";
-    } else {
-      questionType = "short_answer";
-    }
-    const options: QuestionOption[] = (q.options ?? []).map((opt) => ({ id: opt.value, label: opt.label }));
-    return { id, prompt: q.prompt, questionType, options, responseConfig: getDefaultResponseConfig(questionType) };
-  });
-}
-
-function toClientTopic(raw: Omit<Topic, "questionType" | "responseConfig" | "questionItems"> & {
-  allowedRoles: EvaluatorRole[];
-  questionType?: QuestionType;
-  responseConfig?: ResponseConfig;
-  questionItems?: CriterionQuestion[];
-}): Topic {
-  const questionType = raw.questionType ?? "multiple_choice";
-  return {
-    ...raw,
-    questionType,
-    responseConfig: {
-      startLabel: raw.responseConfig?.startLabel ?? getDefaultResponseConfig(questionType).startLabel,
-      endLabel: raw.responseConfig?.endLabel ?? getDefaultResponseConfig(questionType).endLabel,
-      increment: normalizeIncrement(raw.responseConfig?.increment, getDefaultResponseConfig(questionType).increment),
-    },
-    questionItems: normalizeQuestionItems(raw.questionItems ?? []),
-    subtopics: withOrderedSubtopics(raw.subtopics),
-  };
-}
-
 export function CriteriaClient({
   selfTree,
   reviewerTree,
   mgmtTree,
 }: {
-  selfTree: Omit<Topic, "questionType" | "responseConfig" | "questionItems">[];
-  reviewerTree: Omit<Topic, "questionType" | "responseConfig" | "questionItems">[];
-  mgmtTree: Omit<Topic, "questionType" | "responseConfig" | "questionItems">[];
+  selfTree: Topic[];
+  reviewerTree: Topic[];
+  mgmtTree: Topic[];
 }) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState<Phase>("SELF");
   const [topicMap, setTopicMap] = useState<Record<Phase, Topic[]>>({
-    SELF: withOrderedTopics(selfTree.map((topic) => toClientTopic(topic as Omit<Topic, "questionType" | "responseConfig" | "questionItems"> & { allowedRoles: EvaluatorRole[] }))),
-    REVIEWER: withOrderedTopics(reviewerTree.map((topic) => toClientTopic(topic as Omit<Topic, "questionType" | "responseConfig" | "questionItems"> & { allowedRoles: EvaluatorRole[] }))),
-    MANAGEMENT: withOrderedTopics(mgmtTree.map((topic) => toClientTopic(topic as Omit<Topic, "questionType" | "responseConfig" | "questionItems"> & { allowedRoles: EvaluatorRole[] }))),
+    SELF: withOrderedTopics(selfTree.map((topic) => ({
+      ...topic,
+      questionType: topic.questionType ?? "multiple_choice",
+      responseConfig: {
+        startLabel: topic.responseConfig?.startLabel ?? getDefaultResponseConfig(topic.questionType ?? "multiple_choice").startLabel,
+        endLabel: topic.responseConfig?.endLabel ?? getDefaultResponseConfig(topic.questionType ?? "multiple_choice").endLabel,
+        increment: normalizeIncrement(topic.responseConfig?.increment, getDefaultResponseConfig(topic.questionType ?? "multiple_choice").increment),
+      },
+      questionItems: normalizeQuestionItems(topic.questionItems ?? []),
+    }))),
+    REVIEWER: withOrderedTopics(reviewerTree.map((topic) => ({
+      ...topic,
+      questionType: topic.questionType ?? "multiple_choice",
+      responseConfig: {
+        startLabel: topic.responseConfig?.startLabel ?? getDefaultResponseConfig(topic.questionType ?? "multiple_choice").startLabel,
+        endLabel: topic.responseConfig?.endLabel ?? getDefaultResponseConfig(topic.questionType ?? "multiple_choice").endLabel,
+        increment: normalizeIncrement(topic.responseConfig?.increment, getDefaultResponseConfig(topic.questionType ?? "multiple_choice").increment),
+      },
+      questionItems: normalizeQuestionItems(topic.questionItems ?? []),
+    }))),
+    MANAGEMENT: withOrderedTopics(mgmtTree.map((topic) => ({
+      ...topic,
+      questionType: topic.questionType ?? "multiple_choice",
+      responseConfig: {
+        startLabel: topic.responseConfig?.startLabel ?? getDefaultResponseConfig(topic.questionType ?? "multiple_choice").startLabel,
+        endLabel: topic.responseConfig?.endLabel ?? getDefaultResponseConfig(topic.questionType ?? "multiple_choice").endLabel,
+        increment: normalizeIncrement(topic.responseConfig?.increment, getDefaultResponseConfig(topic.questionType ?? "multiple_choice").increment),
+      },
+      questionItems: normalizeQuestionItems(topic.questionItems ?? []),
+    }))),
   });
   const [activeId, setActiveId] = useState<string | null>(null);
   const [dirtyIds, setDirtyIds] = useState<Set<string>>(new Set());
@@ -1297,7 +911,6 @@ export function CriteriaClient({
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragTargetId, setDragTargetId] = useState<string | null>(null);
   const [isClearingAll, setIsClearingAll] = useState(false);
-  const [isSeedingDefaults, setIsSeedingDefaults] = useState(false);
   const dragOrderRef = useRef<Topic[] | null>(null);
 
   const topics = topicMap[phase];
@@ -1313,7 +926,6 @@ export function CriteriaClient({
         setActiveId(null);
       }
     }
-
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
@@ -1324,7 +936,6 @@ export function CriteriaClient({
       const viewportBottom = window.scrollY + window.innerHeight;
       setShowScrollButton(documentHeight - viewportBottom > 280);
     }
-
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("resize", handleScroll);
@@ -1355,7 +966,11 @@ export function CriteriaClient({
   }
 
   function updateTopic(id: string, next: Topic) {
-    setTopics(topics.map((topic) => (topic.id === id ? { ...next, subtopics: withOrderedSubtopics(next.subtopics) } : topic)));
+    setTopics(topics.map((topic) => (
+      topic.id === id
+        ? { ...next, subtopics: withOrderedSubtopics(next.subtopics), questionItems: normalizeQuestionItems(next.questionItems) }
+        : topic
+    )));
     markDirty(id);
   }
 
@@ -1366,13 +981,13 @@ export function CriteriaClient({
     try {
       await apiPatch(topic.id, {
         label: topic.label || "Untitled",
-        code: topic.code,
+        code: topic.code.trim() ? topic.code.trim() : undefined,
         description: topic.description,
         weight: topic.weight,
         maxPoints: topic.maxPoints,
         order: topic.order,
         reviewerOnly: topic.reviewerOnly,
-        questions: topic.questionItems.map((question) => question.prompt).filter((prompt) => prompt.trim().length > 0),
+        questions: topic.questionItems.map((question) => question.prompt.trim()).filter(Boolean),
         meta: {
           allowedEvaluatorRoles: topic.allowedRoles,
           questionType: topic.questionType,
@@ -1385,7 +1000,7 @@ export function CriteriaClient({
         if (subtopic.id.startsWith("__new_")) {
           const created = await apiCreate({
             label: subtopic.label || "Option",
-            code: subtopic.code,
+            code: subtopic.code.trim() ? subtopic.code.trim() : undefined,
             weight: subtopic.weight,
             maxPoints: subtopic.maxPoints,
             order: subtopic.order,
@@ -1393,7 +1008,6 @@ export function CriteriaClient({
             phase,
             kind: "CATEGORY",
           });
-
           setTopicMap((previous) => ({
             ...previous,
             [phase]: previous[phase].map((entry) => (
@@ -1408,7 +1022,7 @@ export function CriteriaClient({
         } else {
           await apiPatch(subtopic.id, {
             label: subtopic.label || "Option",
-            code: subtopic.code,
+            code: subtopic.code.trim() ? subtopic.code.trim() : undefined,
             weight: subtopic.weight,
             maxPoints: subtopic.maxPoints,
             order: subtopic.order,
@@ -1433,7 +1047,6 @@ export function CriteriaClient({
     const ordered = withOrderedTopics(next);
     setTopicsForPhase(phase, ordered);
     setError(null);
-
     try {
       await Promise.all(ordered.map((topic) => apiPatch(topic.id, { order: topic.order })));
       router.refresh();
@@ -1454,7 +1067,6 @@ export function CriteriaClient({
   async function deleteTopic(id: string) {
     if (!confirm("Delete this criterion? This cannot be undone.")) return;
     setError(null);
-
     try {
       await apiDelete(id);
       const next = withOrderedTopics(topics.filter((topic) => topic.id !== id));
@@ -1471,12 +1083,9 @@ export function CriteriaClient({
 
   async function addCriterion() {
     setError(null);
-    const defaultQuestionType = getDefaultQuestionTypeForPhase(phase);
-
     try {
       const created = await apiCreate({
         label: "New Criterion",
-        code: "",
         description: "",
         weight: 1,
         maxPoints: 0,
@@ -1486,8 +1095,8 @@ export function CriteriaClient({
         order: topics.length,
         meta: {
           allowedEvaluatorRoles: [],
-          questionType: defaultQuestionType,
-          responseConfig: getDefaultResponseConfig(defaultQuestionType),
+          questionType: "multiple_choice",
+          responseConfig: getDefaultResponseConfig("multiple_choice"),
           questionItems: [],
         },
       });
@@ -1502,11 +1111,11 @@ export function CriteriaClient({
         kind: "CATEGORY",
         reviewerOnly: false,
         questions: [],
+        questionType: "multiple_choice",
+        responseConfig: getDefaultResponseConfig("multiple_choice"),
+        questionItems: [],
         subtopics: [],
         allowedRoles: [],
-        questionType: defaultQuestionType,
-        responseConfig: getDefaultResponseConfig(defaultQuestionType),
-        questionItems: [],
         order: topics.length,
       };
 
@@ -1524,14 +1133,9 @@ export function CriteriaClient({
 
     setIsClearingAll(true);
     setError(null);
-
     try {
       await apiDeleteAll();
-      setTopicMap({
-        SELF: [],
-        REVIEWER: [],
-        MANAGEMENT: [],
-      });
+      setTopicMap({ SELF: [], REVIEWER: [], MANAGEMENT: [] });
       setActiveId(null);
       setDirtyIds(new Set());
       setSavingIds(new Set());
@@ -1540,70 +1144,6 @@ export function CriteriaClient({
       setError("Failed to clear all criteria.");
     } finally {
       setIsClearingAll(false);
-    }
-  }
-
-  async function seedDefaultSelfSections() {
-    if (!confirm("Add default self-assessment sections (Career Growth, Decision Making, Retention, Compensation) to SELF criteria?")) return;
-    setIsSeedingDefaults(true);
-    setError(null);
-
-    const DEFAULT_SELF_SECTIONS: AppraisalSectionDefinition[] = [
-      CAREER_GROWTH_SECTION,
-      DECISION_MAKING_SECTION,
-      RETENTION_SECTION,
-      COMPENSATION_SECTION,
-    ];
-
-    try {
-      for (let i = 0; i < DEFAULT_SELF_SECTIONS.length; i++) {
-        const section = DEFAULT_SELF_SECTIONS[i];
-        const questionItems = sectionToCriterionQuestions(section.questions);
-        const created = await apiCreate({
-          label: section.title,
-          code: "",
-          description: section.description ?? "",
-          weight: 1,
-          maxPoints: 0,
-          reviewerOnly: false,
-          kind: "CATEGORY",
-          phase: "SELF",
-          order: topicMap["SELF"].length + i,
-          questions: section.questions.map((q) => q.prompt),
-          meta: {
-            allowedEvaluatorRoles: [],
-            questionType: "paragraph",
-            responseConfig: getDefaultResponseConfig("paragraph"),
-            questionItems,
-          },
-        });
-        const newTopic: Topic = {
-          id: created.id,
-          label: section.title,
-          code: "",
-          description: section.description ?? "",
-          weight: 1,
-          maxPoints: 0,
-          kind: "CATEGORY",
-          reviewerOnly: false,
-          questions: section.questions.map((q) => q.prompt),
-          subtopics: [],
-          allowedRoles: [],
-          questionType: "paragraph",
-          responseConfig: getDefaultResponseConfig("paragraph"),
-          questionItems,
-          order: topicMap["SELF"].length + i,
-        };
-        setTopicMap((previous) => ({
-          ...previous,
-          SELF: withOrderedTopics([...previous.SELF, newTopic]),
-        }));
-      }
-      router.refresh();
-    } catch {
-      setError("Failed to add default sections.");
-    } finally {
-      setIsSeedingDefaults(false);
     }
   }
 
@@ -1624,10 +1164,7 @@ export function CriteriaClient({
             <button
               key={value}
               type="button"
-              onClick={() => {
-                setPhase(value);
-                setActiveId(null);
-              }}
+              onClick={() => { setPhase(value); setActiveId(null); }}
               className={cn(
                 "rounded-lg px-4 py-2 text-sm font-medium transition",
                 phase === value ? "bg-surface text-on-surface shadow-ambient" : "text-on-surface-variant hover:text-on-surface",
@@ -1639,17 +1176,13 @@ export function CriteriaClient({
         </div>
 
         <div className="flex items-center gap-2">
-          {phase === "SELF" ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void seedDefaultSelfSections()}
-              disabled={isSeedingDefaults}
-              className="border-outline-variant/60 text-on-surface-variant hover:border-[#00cec4]/40 hover:text-on-surface disabled:opacity-50"
-            >
-              {isSeedingDefaults ? "Adding..." : "Add default sections"}
-            </Button>
-          ) : null}
+          <Button
+            type="button"
+            onClick={() => void addCriterion()}
+            className="border-0 bg-[#00cec4] text-white shadow-[0_14px_28px_-18px_rgba(0,174,198,0.45)] hover:bg-[#00b8af]"
+          >
+            Add criterion
+          </Button>
           <Button
             type="button"
             variant="outline"
@@ -1691,9 +1224,7 @@ export function CriteriaClient({
                   onTopicChange={(next) => updateTopic(topic.id, next)}
                   onSave={() => void saveTopic(topicMap[phase].find((entry) => entry.id === topic.id) ?? topic)}
                   onDelete={() => void deleteTopic(topic.id)}
-                  onHandleClick={() => {
-                    setActiveId(activeId === topic.id ? null : topic.id);
-                  }}
+                  onHandleClick={() => { setActiveId(activeId === topic.id ? null : topic.id); }}
                   onDragStart={() => {
                     setDraggingId(topic.id);
                     setDragTargetId(topic.id);

@@ -45,11 +45,6 @@ const templateSchema = z.object({
     title: z.string().min(1),
     description: z.string().optional(),
   }),
-  careerGrowthSection: sectionSchema,
-  decisionMakingSection: sectionSchema,
-  retentionSection: sectionSchema,
-  compensationSection: sectionSchema,
-  feedbackQuestion: questionSchema,
 });
 
 export async function GET() {

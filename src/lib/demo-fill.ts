@@ -4,6 +4,7 @@ import {
   buildQuestionKey,
   buildDefaultSelfFormTemplate,
   EMPLOYEE_INFO_FIELDS,
+  type AppraisalQuestionDefinition,
   type AppraisalSelfFormTemplate,
 } from "@/modules/ams/criteria-config";
 import type { SalaryInputs } from "@/modules/hrms/salary-structure";
@@ -202,15 +203,9 @@ export function buildSelfAssessmentDemoAnswers(
   profile: DemoPerformanceProfile = "average",
 ): SelfAssessmentAnswers {
   void criteria;
-  const profileCopy = DEMO_PROFILE_COPY[profile];
+  void profile;
   const resolvedTemplate = selfTemplate ?? buildDefaultSelfFormTemplate();
-  const allSections = [
-    ...resolvedTemplate.partASections,
-    resolvedTemplate.careerGrowthSection,
-    resolvedTemplate.decisionMakingSection,
-    resolvedTemplate.retentionSection,
-    resolvedTemplate.compensationSection,
-  ];
+  const allSections = resolvedTemplate.partASections;
 
   return {
     version: "v2",
@@ -236,7 +231,7 @@ export function buildSelfAssessmentDemoAnswers(
         ])),
     ),
     categoryPoints: {},
-    feedback: profileCopy.feedback,
+    feedback: "",
   };
 }
 
@@ -251,9 +246,9 @@ export function buildReviewerDemoAnswers(
   const responses: Record<string, Record<string, QuestionResponse>> = {};
 
   for (const criterion of criteria) {
-    const questions = criterion.questionItems.length > 0
+    const questions: AppraisalQuestionDefinition[] = criterion.questionItems.length > 0
       ? criterion.questionItems
-      : criterion.items.map((item) => ({ id: item.id, prompt: item.label, type: "number" as const }));
+      : criterion.items.map((item) => ({ id: item.id, prompt: item.label, type: "number" }));
     const criterionRatings: Record<string, number> = {};
     const criterionResponses: Record<string, QuestionResponse> = {};
 
