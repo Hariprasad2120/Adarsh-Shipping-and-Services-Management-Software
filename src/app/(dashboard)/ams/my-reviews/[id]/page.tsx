@@ -9,6 +9,7 @@ import type {
   SelfAssessmentAnswers,
 } from "@/modules/ams/criteria-config";
 import { filterCriteriaPointsByRole, mapCriterionRowToPoint } from "@/modules/ams/form-template";
+import { resolveSelfFormTemplate } from "@/modules/ams/self-form-template";
 import type { CriterionPoint } from "@/modules/ams/types";
 import { notFound, redirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -42,6 +43,7 @@ export default async function MyReviewDetailPage({ params }: { params: Promise<{
   const selfCriteria: CriterionPoint[] = selfRows
     .filter((row) => row.kind === "CATEGORY")
     .map(mapCriterionRowToPoint);
+  const resolvedSelfTemplate = resolveSelfFormTemplate(selfCriteria, selfTemplate as AppraisalSelfFormTemplate);
 
   const currentRatingRow = myReviewer.ratings[0] ?? null;
 
@@ -86,7 +88,7 @@ export default async function MyReviewDetailPage({ params }: { params: Promise<{
           })),
         }}
         selfCriteria={selfCriteria}
-        selfTemplate={selfTemplate as AppraisalSelfFormTemplate}
+        selfTemplate={resolvedSelfTemplate}
         criteria={reviewerCriteria}
         serverNow={now.toISOString()}
       />

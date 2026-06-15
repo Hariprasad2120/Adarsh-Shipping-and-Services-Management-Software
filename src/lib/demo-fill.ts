@@ -1,4 +1,4 @@
-import type { ReviewerRatingAnswers, SelfAssessmentAnswers } from "@/modules/ams/criteria-config";
+import type { QuestionResponse, ReviewerRatingAnswers, SelfAssessmentAnswers } from "@/modules/ams/criteria-config";
 import type { CriterionPoint } from "@/modules/ams/types";
 import {
   buildQuestionKey,
@@ -201,6 +201,7 @@ export function buildSelfAssessmentDemoAnswers(
   selfTemplate?: AppraisalSelfFormTemplate,
   profile: DemoPerformanceProfile = "average",
 ): SelfAssessmentAnswers {
+  void criteria;
   const profileCopy = DEMO_PROFILE_COPY[profile];
   const resolvedTemplate = selfTemplate ?? buildDefaultSelfFormTemplate();
   const allSections = [
@@ -234,9 +235,7 @@ export function buildSelfAssessmentDemoAnswers(
               },
         ])),
     ),
-    categoryPoints: Object.fromEntries(
-      criteria.map((criterion) => [criterion.id, getRandomRating(profileCopy.minRating, profileCopy.maxRating)]),
-    ),
+    categoryPoints: {},
     feedback: profileCopy.feedback,
   };
 }
@@ -249,11 +248,35 @@ export function buildReviewerDemoAnswers(
   const categoryPoints: Record<string, number> = {};
   const comments: Record<string, string> = {};
   const subItemRatings: Record<string, Record<string, number>> = {};
+  const responses: Record<string, Record<string, QuestionResponse>> = {};
 
   for (const criterion of criteria) {
-    const criterionRatings = Object.fromEntries(
-      criterion.items.map((item) => [item.id, getRandomRating(profileCopy.minRating, profileCopy.maxRating)]),
-    );
+    const questions = criterion.questionItems.length > 0
+      ? criterion.questionItems
+      : criterion.items.map((item) => ({ id: item.id, prompt: item.label, type: "number" as const }));
+    const criterionRatings: Record<string, number> = {};
+    const criterionResponses: Record<string, QuestionResponse> = {};
+
+    for (const question of questions) {
+      if (question.type === "number") {
+        const rating = getRandomRating(profileCopy.minRating, profileCopy.maxRating);
+        criterionRatings[question.id] = rating;
+        criterionResponses[question.id] = { value: String(rating) };
+        continue;
+      }
+
+      if (question.type === "radio") {
+        criterionResponses[question.id] = {
+          option: question.options?.[0]?.value,
+          value: question.options?.[0]?.label,
+          explanation: question.allowExplanation ? getQuestionAnswer(question.prompt, 0) : undefined,
+        };
+        continue;
+      }
+
+      criterionResponses[question.id] = { value: getQuestionAnswer(question.prompt, 0) };
+    }
+
     const values = Object.values(criterionRatings);
     const average = values.length > 0
       ? Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 10) / 10
@@ -262,12 +285,14 @@ export function buildReviewerDemoAnswers(
     categoryPoints[criterion.id] = average;
     comments[criterion.id] = `Demo reviewer note for ${criterion.label.toLowerCase()} ${profileCopy.reviewerTone}`;
     subItemRatings[criterion.id] = criterionRatings;
+    responses[criterion.id] = criterionResponses;
   }
 
   return {
     version: "v2",
     categoryPoints,
     subItemRatings,
+    responses,
     comments,
   };
 }

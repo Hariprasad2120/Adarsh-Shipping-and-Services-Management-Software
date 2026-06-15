@@ -1,10 +1,11 @@
 import {
   buildDefaultSelfFormTemplate,
+  type AppraisalSelfFormTemplate,
   type AppraisalQuestionDefinition,
   type AppraisalSectionDefinition,
-  type AppraisalSelfFormTemplate,
   type EmployeeInfoFieldDefinition,
 } from "./criteria-config";
+import type { CriterionPoint } from "./types";
 
 function normalizeOptions(options: unknown) {
   if (!Array.isArray(options)) return undefined;
@@ -128,5 +129,32 @@ export function normalizeSelfFormTemplate(content: unknown): AppraisalSelfFormTe
     retentionSection,
     compensationSection,
     feedbackQuestion,
+  };
+}
+
+export function resolveSelfFormTemplate(
+  criteria: CriterionPoint[],
+  template?: AppraisalSelfFormTemplate | null,
+): AppraisalSelfFormTemplate {
+  const base = template ?? buildDefaultSelfFormTemplate();
+
+  const criteriaWithQuestions = criteria.filter((c) => c.questionItems.length > 0);
+  if (criteriaWithQuestions.length === 0) return base;
+
+  const partASections: AppraisalSectionDefinition[] = criteriaWithQuestions.map((criterion) => ({
+    id: `part-a-${criterion.code || criterion.id}`,
+    title: criterion.label,
+    description: criterion.description || undefined,
+    questions: criterion.questionItems as AppraisalQuestionDefinition[],
+  }));
+
+  return {
+    ...base,
+    partASections,
+    careerGrowthSection: { ...base.careerGrowthSection, questions: [] },
+    decisionMakingSection: { ...base.decisionMakingSection, questions: [] },
+    retentionSection: { ...base.retentionSection, questions: [] },
+    compensationSection: { ...base.compensationSection, questions: [] },
+    feedbackQuestion: { ...base.feedbackQuestion, prompt: "" },
   };
 }

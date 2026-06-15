@@ -21,6 +21,10 @@ export type AppraisalQuestionDefinition = {
   options?: AppraisalQuestionOption[];
   allowExplanation?: boolean;
   placeholder?: string;
+  minValue?: number;
+  maxValue?: number;
+  startLabel?: string;
+  endLabel?: string;
 };
 
 export type AppraisalSectionDefinition = {
@@ -93,6 +97,7 @@ export type ReviewerRatingAnswers = {
   version: "v2";
   categoryPoints: Record<string, number>;
   subItemRatings: Record<string, Record<string, number>>;
+  responses?: Record<string, Record<string, QuestionResponse>>;
   comments: Record<string, string>;
   previousCategoryPoints?: Record<string, number>;
   previousSubItemRatings?: Record<string, Record<string, number>>;

@@ -1081,6 +1081,7 @@ export async function submitReviewerRating(
   const sanitized = sanitizeReviewerRatings(
     criteria,
     ratings.subItemRatings ?? {},
+    ratings.responses ?? {},
     ratings.comments ?? {},
   );
   const nextRatings: ReviewerRatingAnswers = {
@@ -1172,6 +1173,7 @@ export async function submitManagementReview(
   const sanitized = sanitizeReviewerRatings(
     criteria,
     ratings.subItemRatings ?? {},
+    ratings.responses ?? {},
     ratings.comments ?? {},
   );
   const nextRatings: ManagementReviewAnswers = {

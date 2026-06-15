@@ -143,6 +143,10 @@ function parseQuestionItems(
   }));
 }
 
+function getPhaseDefaultQuestionType(phase: "SELF" | "REVIEWER" | "MANAGEMENT") {
+  return phase === "SELF" ? "short_answer" : "rating";
+}
+
 export default async function CriteriaPage() {
   const session = await auth();
   if (!session) redirect("/login");
@@ -163,11 +167,12 @@ export default async function CriteriaPage() {
     loadPhase("MANAGEMENT"),
   ]);
 
-  function toClientTopics(rows: typeof selfRows) {
+  function toClientTopics(rows: typeof selfRows, phase: "SELF" | "REVIEWER" | "MANAGEMENT") {
     return rows.map((r) => ({
       ...(function () {
         const meta = (r.meta as Record<string, unknown> | null) ?? null;
-        const questionType = isQuestionType(meta?.questionType) ? meta.questionType : "multiple_choice";
+        const fallbackType = getPhaseDefaultQuestionType(phase);
+        const questionType = isQuestionType(meta?.questionType) ? meta.questionType : fallbackType;
         const rawResponseConfig =
           meta?.responseConfig && typeof meta.responseConfig === "object"
             ? (meta.responseConfig as Record<string, unknown>)
@@ -230,9 +235,9 @@ export default async function CriteriaPage() {
 
   return (
     <CriteriaClient
-      selfTree={toClientTopics(selfRows)}
-      reviewerTree={toClientTopics(reviewerRows)}
-      mgmtTree={toClientTopics(mgmtRows)}
+      selfTree={toClientTopics(selfRows, "SELF")}
+      reviewerTree={toClientTopics(reviewerRows, "REVIEWER")}
+      mgmtTree={toClientTopics(mgmtRows, "MANAGEMENT")}
     />
   );
 }

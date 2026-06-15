@@ -1,6 +1,6 @@
-import type { EvaluatorRole } from "@/modules/ams/criteria-config";
+import type { AppraisalQuestionDefinition, EvaluatorRole } from "@/modules/ams/criteria-config";
 
-export type SupplementaryMeta = Record<string, never> | null;
+export type SupplementaryMeta = Record<string, unknown> | null;
 
 export type CriterionSubItem = {
   id: string;
@@ -21,5 +21,6 @@ export type CriterionPoint = {
   allowedRoles: EvaluatorRole[];
   items: CriterionSubItem[];
   questions: string[];
+  questionItems: AppraisalQuestionDefinition[];
   meta: SupplementaryMeta;
 };

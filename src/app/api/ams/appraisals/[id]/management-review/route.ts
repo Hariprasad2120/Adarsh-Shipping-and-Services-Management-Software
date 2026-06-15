@@ -17,6 +17,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         version: z.literal("v2"),
         categoryPoints: z.record(z.string(), z.number().min(1).max(5)).default({}),
         subItemRatings: z.record(z.string(), z.record(z.string(), z.number().min(1).max(5))).default({}),
+        responses: z.record(
+          z.string(),
+          z.record(z.string(), z.object({
+            value: z.string().optional(),
+            option: z.string().optional(),
+            explanation: z.string().optional(),
+          })),
+        ).optional(),
         comments: z.record(z.string(), z.string()).default({}),
         previousCategoryPoints: z.record(z.string(), z.number().min(1).max(5)).optional(),
         previousSubItemRatings: z.record(z.string(), z.record(z.string(), z.number().min(1).max(5))).optional(),

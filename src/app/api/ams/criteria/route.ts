@@ -80,8 +80,19 @@ export async function DELETE(req: NextRequest) {
   if (error) return error;
   await requirePermission(session!.user.id, "ams.criteria.manage");
 
-  const parsed = z.object({ id: z.string() }).safeParse(await req.json());
+  const parsed = z.union([
+    z.object({ id: z.string() }),
+    z.object({ clearAll: z.literal(true) }),
+  ]).safeParse(await req.json());
   if (!parsed.success) return err("Invalid input");
+
+  if ("clearAll" in parsed.data) {
+    await db.appraisalCriterion.deleteMany({
+      where: { orgId: session!.user.orgId! },
+    });
+    invalidateReviewerCriteria(session!.user.orgId!);
+    return ok({ deleted: true, clearedAll: true });
+  }
 
   await deleteCriterion(session!.user.orgId!, parsed.data.id);
   invalidateReviewerCriteria(session!.user.orgId!);

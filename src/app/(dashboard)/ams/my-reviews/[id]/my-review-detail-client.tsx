@@ -128,6 +128,9 @@ export function MyReviewDetailClient({
   const [currentSubmittedAt, setCurrentSubmittedAt] = useState<string | null>(
     appraisal.submittedAt,
   );
+  const [isEditing, setIsEditing] = useState<boolean>(
+    appraisal.submissionStatus !== "SUBMITTED",
+  );
   const [latestSubmissionOpen, setLatestSubmissionOpen] = useState(false);
   const latestSubmissionRef = useRef<HTMLDivElement | null>(null);
   const { success, error } = useNotifications();
@@ -169,6 +172,9 @@ export function MyReviewDetailClient({
     success(action === "DRAFT" ? "Reviewer draft saved" : "Reviewer rating submitted");
     setCurrentRating(answers);
     setCurrentSubmissionStatus(action);
+    if (action === "SUBMITTED") {
+      setIsEditing(false);
+    }
     const nowIso = new Date().toISOString();
     setSavedAt(new Date(nowIso).toLocaleTimeString("en-IN"));
     if (action === "SUBMITTED") {
@@ -200,10 +206,11 @@ export function MyReviewDetailClient({
     router.refresh();
   }
 
-  const showRatingEditor = canRate;
-  const showSubmittedPreview = currentSubmissionStatus === "SUBMITTED" && currentRating && canRate;
-  const showReadOnlyRating = !showRatingEditor && !!currentRating;
-  const showStatusCard = !showRatingEditor && !currentRating;
+  const showRatingEditor = canRate && isEditing;
+  const showSubmittedPreview = currentSubmissionStatus === "SUBMITTED" && currentRating && canRate && isEditing;
+  const showEditableSubmitted = canRate && !isEditing && currentSubmissionStatus === "SUBMITTED" && !!currentRating;
+  const showReadOnlyRating = !canRate && !!currentRating;
+  const showStatusCard = !canRate && !currentRating;
 
   function scrollToElement(target: HTMLElement) {
     target.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -486,7 +493,32 @@ export function MyReviewDetailClient({
                     persistRating("SUBMITTED", answers as ReviewerRatingAnswers)
                   }
                   disabled={ratingDeadlinePassed}
+                  isResubmission={currentSubmissionStatus === "SUBMITTED"}
                 />
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {showEditableSubmitted ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Submitted Rating</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <CriteriaPointsView
+                  criteria={criteria}
+                  supplementary={[]}
+                  answers={currentRating}
+                />
+                <div className="border-t border-outline-variant/40 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(true)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-[#00cec4]/40 px-4 py-2 text-sm font-medium text-[#008b85] transition hover:bg-[#00cec4]/8"
+                  >
+                    Edit Rating
+                  </button>
+                </div>
               </CardContent>
             </Card>
           ) : null}

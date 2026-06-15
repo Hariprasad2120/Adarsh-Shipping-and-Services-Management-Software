@@ -88,6 +88,15 @@ export function ManagementReviewClient({
   const router = useRouter();
   const [claiming, setClaiming] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [currentRating, setCurrentRating] = useState<ManagementReviewAnswers | null>(
+    appraisal.currentRating,
+  );
+  const [currentSubmissionStatus, setCurrentSubmissionStatus] = useState<string | null>(
+    appraisal.submissionStatus,
+  );
+  const [isEditing, setIsEditing] = useState<boolean>(
+    appraisal.submissionStatus !== "SUBMITTED",
+  );
   const [proposedDates, setProposedDates] = useState<string[]>(() => {
     const initial = appraisal.proposedDates.slice(0, 3);
     while (initial.length < 3) initial.push("");
@@ -130,6 +139,11 @@ export function ManagementReviewClient({
       return;
     }
     success(action === "DRAFT" ? "Management draft saved" : "Management review submitted");
+    setCurrentRating(answers);
+    setCurrentSubmissionStatus(action);
+    if (action === "SUBMITTED") {
+      setIsEditing(false);
+    }
     setSavedAt(new Date().toLocaleTimeString("en-IN"));
     router.refresh();
   }
@@ -210,7 +224,7 @@ export function ManagementReviewClient({
             {claiming ? "Claiming..." : "Claim this appraisal"}
           </button>
         </Card>
-      ) : canSubmit ? (
+      ) : canSubmit && isEditing ? (
         <Card title="Your Management Rating">
           <div className="space-y-4">
             <div className="space-y-2">
@@ -229,13 +243,14 @@ export function ManagementReviewClient({
               mode="management"
               criteria={managementCriteria}
               supplementary={[]}
-              initialAnswers={appraisal.currentRating ?? undefined}
+              initialAnswers={currentRating ?? undefined}
               onSaveDraft={(answers) => persistRating("DRAFT", answers as ManagementReviewAnswers)}
               onSubmitFinal={(answers) => persistRating("SUBMITTED", answers as ManagementReviewAnswers)}
+              isResubmission={currentSubmissionStatus === "SUBMITTED"}
             />
           </div>
         </Card>
-      ) : appraisal.currentRating ? (
+      ) : canSubmit && !isEditing && currentRating ? (
         <Card title="Your Submitted Management Rating">
           <>
             {appraisal.proposedDates.length > 0 && (
@@ -248,7 +263,32 @@ export function ManagementReviewClient({
                 ))}
               </div>
             )}
-            <CriteriaPointsView criteria={managementCriteria} supplementary={[]} answers={appraisal.currentRating} />
+            <CriteriaPointsView criteria={managementCriteria} supplementary={[]} answers={currentRating} />
+            <div className="border-t border-gray-100 pt-4">
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="rounded-lg border border-[#00cec4]/40 px-4 py-2 text-sm font-medium text-[#008b85] transition hover:bg-[#00cec4]/8"
+              >
+                Edit Form
+              </button>
+            </div>
+          </>
+        </Card>
+      ) : currentRating ? (
+        <Card title="Your Submitted Management Rating">
+          <>
+            {appraisal.proposedDates.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Proposed Meeting Dates</p>
+                {appraisal.proposedDates.map((value, index) => (
+                  <p key={index} className="text-sm text-gray-700">
+                    {new Date(value).toLocaleDateString("en-IN")}
+                  </p>
+                ))}
+              </div>
+            )}
+            <CriteriaPointsView criteria={managementCriteria} supplementary={[]} answers={currentRating} />
           </>
         </Card>
       ) : (

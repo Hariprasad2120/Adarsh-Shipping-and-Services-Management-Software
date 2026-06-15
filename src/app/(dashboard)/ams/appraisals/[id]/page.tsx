@@ -10,6 +10,7 @@ import { notFound, redirect } from "next/navigation";
 import { AppraisalDetail } from "./appraisal-detail";
 import type { AppraisalSelfFormTemplate, SelfAssessmentAnswers } from "@/modules/ams/criteria-config";
 import { filterCriteriaPointsByRole, mapCriterionRowToPoint } from "@/modules/ams/form-template";
+import { resolveSelfFormTemplate } from "@/modules/ams/self-form-template";
 import type { CriterionPoint } from "@/modules/ams/types";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 
@@ -42,6 +43,7 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
 
   const selfCriteria = selfRows.filter((row) => row.kind === "CATEGORY").map(mapCriterionRowToPoint);
   const selfSupplementary: CriterionPoint[] = [];
+  const resolvedSelfTemplate = resolveSelfFormTemplate(selfCriteria, selfTemplate as AppraisalSelfFormTemplate);
 
   // Filter reviewer criteria by current user's role
   const myReviewer = appraisal.reviewers.find(
@@ -134,7 +136,7 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
         serverNow={now.toISOString()}
         selfCriteria={selfCriteria}
         selfSupplementary={selfSupplementary}
-        selfTemplate={selfTemplate as AppraisalSelfFormTemplate}
+        selfTemplate={resolvedSelfTemplate}
         reviewerCriteria={reviewerCriteria}
         scoreData={scoreData}
       />

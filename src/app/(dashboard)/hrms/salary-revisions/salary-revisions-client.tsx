@@ -75,6 +75,14 @@ export function SalaryRevisionsClient({
   const [sortMode, setSortMode] = useState<SortMode>("LATEST");
   const [search, setSearch] = useState("");
   const [expandedEmployeeId, setExpandedEmployeeId] = useState(initialEmployeeId ?? "");
+  const hasActiveCriteria = statusFilter !== "ALL" || sortMode !== "LATEST" || search.trim().length > 0;
+
+  function clearCriteria() {
+    setStatusFilter("ALL");
+    setSortMode("LATEST");
+    setSearch("");
+    setExpandedEmployeeId("");
+  }
 
   const filteredSummaries = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -156,6 +164,14 @@ export function SalaryRevisionsClient({
               className="rounded-full border border-outline-variant/40 bg-surface px-4 py-2 text-sm text-on-surface-variant transition hover:border-[#00cec4]/45 hover:text-on-surface"
             >
               {sortMode === "LATEST" ? "Latest first" : "By Emp #"}
+            </button>
+            <button
+              type="button"
+              onClick={clearCriteria}
+              disabled={!hasActiveCriteria}
+              className="rounded-full border border-outline-variant/40 bg-surface px-4 py-2 text-sm text-on-surface-variant transition hover:border-[#00cec4]/45 hover:text-on-surface disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Clear criteria
             </button>
           </div>
           <Input

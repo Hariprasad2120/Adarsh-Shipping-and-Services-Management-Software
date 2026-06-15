@@ -9,6 +9,7 @@ import type {
   SelfAssessmentAnswers,
 } from "@/modules/ams/criteria-config";
 import { filterCriteriaPointsByRole, mapCriterionRowToPoint } from "@/modules/ams/form-template";
+import { resolveSelfFormTemplate } from "@/modules/ams/self-form-template";
 import { notFound, redirect } from "next/navigation";
 import { ManagementReviewClient } from "./management-review-client";
 
@@ -52,6 +53,7 @@ export default async function ManagementReviewPage({ params }: { params: Promise
   }
 
   const selfCriteria = selfRows.filter((row) => row.kind === "CATEGORY").map(mapCriterionRowToPoint);
+  const resolvedSelfTemplate = resolveSelfFormTemplate(selfCriteria, selfTemplate as AppraisalSelfFormTemplate);
   const reviewerCriteria = filterCriteriaPointsByRole("MANAGEMENT", reviewerRows);
   const managementCriteria = filterCriteriaPointsByRole("MANAGEMENT", managementRows);
 
@@ -90,7 +92,7 @@ export default async function ManagementReviewPage({ params }: { params: Promise
         submittedAt: mySubmittedReview?.submittedAt?.toISOString() ?? null,
         submissionStatus: mySubmittedReview?.status ?? null,
       }}
-      selfTemplate={selfTemplate as AppraisalSelfFormTemplate}
+      selfTemplate={resolvedSelfTemplate}
       selfCriteria={selfCriteria}
       selfSupplementary={[]}
       reviewerCriteria={reviewerCriteria}

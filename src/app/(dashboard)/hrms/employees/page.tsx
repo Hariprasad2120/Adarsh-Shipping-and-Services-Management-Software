@@ -4,17 +4,27 @@ import { requirePermission } from "@/lib/rbac";
 import { listUsers } from "@/modules/core/user/service";
 import { getOrg, getRoles } from "@/modules/core/organisation/service";
 import { UsersRound } from "lucide-react";
-import { EmployeeDirectoryActions, EmployeeList } from "./employee-list";
+import { EmployeeDirectoryActions } from "./employee-directory-actions";
+import { EmployeeList } from "./employee-list";
 
 type EmployeeListProps = React.ComponentProps<typeof EmployeeList>;
-type EmployeeDirectoryActionsProps = React.ComponentProps<typeof EmployeeDirectoryActions>;
+type EmployeeDirectoryActionsProps = React.ComponentProps<
+  typeof EmployeeDirectoryActions
+>;
 
-export default async function EmployeesPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
+export default async function EmployeesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string>>;
+}) {
   const session = await auth();
+
   if (!session) redirect("/login");
+
   await requirePermission(session.user.id, "hrms.employee.read");
 
   const sp = await searchParams;
+
   const [users, org, roles] = await Promise.all([
     listUsers(session.user.orgId!, {
       branchId: sp.branchId,
@@ -44,14 +54,14 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
             Employees
           </h1>
         </div>
+
         <EmployeeDirectoryActions
           org={org as EmployeeDirectoryActionsProps["org"]}
           roles={roles as EmployeeDirectoryActionsProps["roles"]}
         />
       </div>
-      <EmployeeList
-        users={safeUsers as EmployeeListProps["users"]}
-      />
+
+      <EmployeeList users={safeUsers as EmployeeListProps["users"]} />
     </div>
   );
 }
