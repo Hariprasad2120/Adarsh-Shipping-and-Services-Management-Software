@@ -565,3 +565,88 @@ main textarea {
   border: 4px solid #ffffff;
   box-shadow: 0 0 0 1px rgba(0, 206, 196, 0.12);
 }
+
+/* ─── PeoplePlus / HRMS Theme Compliance Audit ─── */
+
+/* Background overrides for Light Mode */
+html.light [class*="bg-[#0f121b]"],
+html.light [class*="bg-[#0e121b]"],
+html.light [class*="bg-[#0f1319]"] {
+  background-color: var(--color-surface) !important;
+}
+
+html.light [class*="bg-[#161f28]"],
+html.light [class*="bg-[#1f2d3a]"] {
+  background-color: var(--color-surface-container-low) !important;
+}
+
+html.light [class*="bg-slate-950"] {
+  background-color: var(--color-surface-container-lowest) !important;
+}
+
+html.light [class*="border-slate-800"],
+html.light [class*="border-slate-900"],
+html.light [class*="border-slate-850"] {
+  border-color: var(--color-outline-variant) !important;
+}
+
+html.light [class*="text-slate-100"],
+html.light [class*="text-slate-200"],
+html.light [class*="text-slate-300"],
+html.light [class*="text-slate-350"] {
+  color: var(--color-on-surface) !important;
+}
+
+html.light [class*="text-slate-400"],
+html.light [class*="text-slate-500"],
+html.light [class*="text-slate-650"],
+html.light [class*="text-slate-600"] {
+  color: var(--color-on-surface-variant) !important;
+}
+
+/* Background overrides for Dark Mode */
+html.dark [class*="bg-[#0f121b]"],
+html.dark [class*="bg-[#0e121b]"],
+html.dark [class*="bg-[#0f1319]"] {
+  background-color: var(--color-surface-container-low) !important;
+}
+
+html.dark [class*="bg-[#161f28]"],
+html.dark [class*="bg-[#1f2d3a]"] {
+  background-color: var(--color-surface-container) !important;
+}
+
+html.dark [class*="bg-slate-950"] {
+  background-color: var(--color-surface-container-lowest) !important;
+}
+
+html.dark [class*="border-slate-800"],
+html.dark [class*="border-slate-900"],
+html.dark [class*="border-slate-850"] {
+  border-color: var(--color-outline) !important;
+}
+
+html.dark [class*="text-slate-100"],
+html.dark [class*="text-slate-200"],
+html.dark [class*="text-slate-300"] {
+  color: var(--color-on-surface) !important;
+}
+
+html.dark [class*="text-slate-400"],
+html.dark [class*="text-slate-500"] {
+  color: var(--color-on-surface-variant) !important;
+}
+
+/* General improvements for input borders in main workspace */
+main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+main select,
+main textarea {
+  border-color: var(--color-outline-variant) !important;
+  color: var(--color-on-surface) !important;
+  background-color: var(--color-surface) !important;
+}
+
+main input::placeholder,
+main textarea::placeholder {
+  color: var(--color-placeholder) !important;
+}

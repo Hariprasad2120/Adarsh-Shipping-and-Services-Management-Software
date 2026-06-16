@@ -12,6 +12,13 @@ import { SettingsServices } from "@/components/hrms/peopleplus/settings-services
 import { UsersTable } from "@/components/hrms/peopleplus/users-table";
 import { ReporteesList } from "@/components/hrms/peopleplus/reportees-list";
 import { WorkReportsView } from "@/components/hrms/peopleplus/work-reports";
+import { OnboardingView } from "@/components/hrms/peopleplus/onboarding-view";
+import { LmsView } from "@/components/hrms/peopleplus/lms-view";
+import { PmsView } from "@/components/hrms/peopleplus/pms-view";
+import { TravelView } from "@/components/hrms/peopleplus/travel-view";
+import { LettersView } from "@/components/hrms/peopleplus/letters-view";
+import { TasksView } from "@/components/hrms/peopleplus/tasks-view";
+import { ApprovalsView } from "@/components/hrms/peopleplus/approvals-view";
 import { toast } from "sonner";
 
 interface PeoplePlusPortalClientProps {
@@ -186,85 +193,61 @@ export function PeoplePlusPortalClient({
   };
 
   return (
-    <div className="flex h-screen bg-[#f5f7fb] overflow-hidden">
-      {/* Sidebar vertical rail */}
-      <PeoplePlusSidebar
-        activeModule={activeModule}
-        onChangeModule={(mod) => {
-          setActiveModule(mod);
-          if (mod === "home") setActiveTab("myspace");
-        }}
-        permissions={permissions}
-      />
-
-      {/* Main workspace area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top-Nav bar */}
-        <PeoplePlusTopNav
-          activeModule={activeModule}
-          activeTab={activeTab}
-          onChangeTab={setActiveTab}
-          userName={sessionUser.name}
-          onSearchQuery={(q) => console.log("colleague query:", q)}
+    <div className="space-y-6 pb-12">
+      {profile && (
+        <ProfileSummary
+          profile={profile}
+          onPunchAction={handlePunchAction}
+          loading={loading}
         />
+      )}
 
-        {/* Scrollable Main Content canvas */}
-        <main className="flex-1 overflow-y-auto p-6 space-y-6">
-          {activeModule === "home" && (
-            <>
-              {profile && (
-                <ProfileSummary
-                  profile={profile}
-                  onPunchAction={handlePunchAction}
-                  loading={loading}
-                />
-              )}
+      {/* Tab Select buttons */}
+      <div className="flex items-center gap-2 border-b border-outline-variant/30 pb-1.5 text-xs font-black tracking-wider">
+        <button
+          onClick={() => setActiveTab("myspace")}
+          className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
+            activeTab === "myspace"
+              ? "bg-[#161f28]/80 text-[#00c4b6] border border-[#00c4b6]/25 dark:bg-[#161f28]/80 dark:text-[#00c4b6] dark:border-[#00c4b6]/25"
+              : "text-slate-500 hover:text-slate-750 dark:text-slate-400 dark:hover:text-slate-200"
+          }`}
+        >
+          MY SPACE
+        </button>
+        <button
+          onClick={() => setActiveTab("team")}
+          className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
+            activeTab === "team"
+              ? "bg-[#161f28]/80 text-[#00c4b6] border border-[#00c4b6]/25 dark:bg-[#161f28]/80 dark:text-[#00c4b6] dark:border-[#00c4b6]/25"
+              : "text-slate-500 hover:text-slate-750 dark:text-slate-400 dark:hover:text-slate-200"
+          }`}
+        >
+          TEAM
+        </button>
+        <button
+          onClick={() => setActiveTab("organization")}
+          className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
+            activeTab === "organization"
+              ? "bg-[#161f28]/80 text-[#00c4b6] border border-[#00c4b6]/25 dark:bg-[#161f28]/80 dark:text-[#00c4b6] dark:border-[#00c4b6]/25"
+              : "text-slate-500 hover:text-slate-750 dark:text-slate-400 dark:hover:text-slate-200"
+          }`}
+        >
+          ORGANIZATION
+        </button>
+      </div>
 
-              {activeTab === "myspace" && <ActionList />}
-              {activeTab === "team" && <ReporteesList reportees={reportees} />}
-              {activeTab === "organization" && (
-                <OrgServices
-                  data={widgetsData}
-                  employees={initialUsers}
-                  departments={departments}
-                  branches={branches}
-                />
-              )}
-            </>
-          )}
-
-          {activeModule === "workreports" && (
-            <WorkReportsView />
-          )}
-
-          {activeModule === "files" && (
-            <FilesView
-              onFetchFiles={handleFetchFiles}
-              onCreateFolder={handleCreateFolder}
-              onUploadFile={handleUploadFile}
-            />
-          )}
-
-          {activeModule === "hrcase" && (
-            <div className="text-sm font-semibold p-6 bg-white rounded-2xl border border-slate-200 shadow-sm text-slate-500 text-center">
-              HR Query cases can be raised from the Top-Nav ask button.
-            </div>
-          )}
-
-          {activeModule === "generalservice" && (
-            <UsersTable
-              onFetchUsers={handleFetchUsers}
-              onBulkAccountStatus={handleBulkAccountStatus}
-            />
-          )}
-
-          {activeModule === "okr" && (
-            <SettingsServices
-              onFetchServices={handleFetchServices}
-              onUpdateServices={handleUpdateServices}
-            />
-          )}
-        </main>
+      {/* Tab Content */}
+      <div className="space-y-6">
+        {activeTab === "myspace" && <ActionList />}
+        {activeTab === "team" && <ReporteesList reportees={reportees} />}
+        {activeTab === "organization" && (
+          <OrgServices
+            data={widgetsData}
+            employees={initialUsers}
+            departments={departments}
+            branches={branches}
+          />
+        )}
       </div>
     </div>
   );

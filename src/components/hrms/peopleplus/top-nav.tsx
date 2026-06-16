@@ -70,8 +70,34 @@ export function PeoplePlusTopNav({
             </button>
           </div>
         ) : (
-          <h2 className="text-[15px] font-bold text-slate-800 capitalize">
-            {activeModule === "generalservice" ? "Users & Directory" : activeModule === "okr" ? "HRMS Settings" : activeModule}
+          <h2 className="text-[14px] font-black text-slate-800 uppercase tracking-widest">
+            {activeModule === "generalservice"
+              ? "Users & Directory"
+              : activeModule === "okr"
+              ? "HRMS Settings"
+              : activeModule === "onboarding"
+              ? "Employee Onboarding"
+              : activeModule === "workreports"
+              ? "Work Reports"
+              : activeModule === "task"
+              ? "Checklist Tasks"
+              : activeModule === "approvals"
+              ? "Approvals Central"
+              : activeModule === "lms"
+              ? "LMS Certification"
+              : activeModule === "performance"
+              ? "PMS & Appraisals"
+              : activeModule === "travel"
+              ? "Travel & Expenses"
+              : activeModule === "files"
+              ? "Files Vault"
+              : activeModule === "hrservices"
+              ? "HR Letters"
+              : activeModule === "employeeengagement"
+              ? "Surveys & ENPS"
+              : activeModule === "hrcase"
+              ? "HR Help Desk"
+              : activeModule}
           </h2>
         )}
       </div>

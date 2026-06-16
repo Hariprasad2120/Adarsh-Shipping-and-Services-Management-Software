@@ -28,7 +28,7 @@ interface Activity {
   location: string | null;
   callResult: string | null;
   durationMins: number | null;
-  owner: { id: string; name: string };
+  owner?: { id: string; name: string } | null;
 }
 
 interface ActivitiesPanelProps {
@@ -359,7 +359,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                     </span>
                   )}
                   <span>•</span>
-                  <span>Owner: {activity.owner.name}</span>
+                  <span>Owner: {activity.owner?.name || "Unknown"}</span>
                 </div>
               </div>
             </div>

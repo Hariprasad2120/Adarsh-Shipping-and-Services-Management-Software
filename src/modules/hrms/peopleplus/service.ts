@@ -779,3 +779,479 @@ export async function getTeamReportees(userId: string, orgId: string) {
   return result;
 }
 
+// ─── Onboarding & Profile Verification ───────────────────────────────────────
+
+export async function getOnboardingStatus(userId: string) {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      dob: true,
+      gender: true,
+      personalPhone: true,
+      aadhaar: true,
+      pan: true,
+      uan: true,
+      bankName: true,
+      bankAccount: true,
+      ifsc: true,
+      photo: true,
+      hrmsContact: true,
+    },
+  });
+  if (!user) throw new Error("User not found");
+
+  const checklist = [
+    { key: "personal_details", label: "Personal Profile", completed: !!(user.firstName && user.lastName && user.dob && user.gender) },
+    { key: "contact_details", label: "Contact Details", completed: !!(user.personalPhone && user.hrmsContact?.emergencyPhone && user.hrmsContact?.addressLine1) },
+    { key: "financial_details", label: "Bank & Financial Details", completed: !!(user.bankName && user.bankAccount && user.ifsc) },
+    { key: "statutory_ids", label: "Statutory IDs (PAN & Aadhaar)", completed: !!(user.pan && user.aadhaar) },
+  ];
+
+  const total = checklist.length;
+  const completed = checklist.filter((item) => item.completed).length;
+  const progressPercent = Math.round((completed / total) * 100);
+
+  return {
+    user,
+    checklist,
+    progressPercent,
+  };
+}
+
+export async function submitOnboardingDetails(userId: string, data: any) {
+  const { personal, contact, financial, statutory } = data;
+
+  return db.user.update({
+    where: { id: userId },
+    data: {
+      firstName: personal?.firstName,
+      lastName: personal?.lastName,
+      dob: personal?.dob ? new Date(personal.dob) : undefined,
+      gender: personal?.gender,
+      personalPhone: contact?.personalPhone,
+      bankName: financial?.bankName,
+      bankAccount: financial?.bankAccount,
+      ifsc: financial?.ifsc,
+      pan: statutory?.pan,
+      aadhaar: statutory?.aadhaar,
+      uan: statutory?.uan,
+      hrmsContact: {
+        upsert: {
+          create: {
+            personalEmail: contact?.personalEmail,
+            emergencyName: contact?.emergencyName,
+            emergencyPhone: contact?.emergencyPhone,
+            addressLine1: contact?.addressLine1,
+            addressLine2: contact?.addressLine2,
+            city: contact?.city,
+            state: contact?.state,
+            country: contact?.country,
+            zipCode: contact?.zipCode,
+          },
+          update: {
+            personalEmail: contact?.personalEmail,
+            emergencyName: contact?.emergencyName,
+            emergencyPhone: contact?.emergencyPhone,
+            addressLine1: contact?.addressLine1,
+            addressLine2: contact?.addressLine2,
+            city: contact?.city,
+            state: contact?.state,
+            country: contact?.country,
+            zipCode: contact?.zipCode,
+          },
+        },
+      },
+    },
+  });
+}
+
+// ─── LMS Services ────────────────────────────────────────────────────────────
+
+export async function getLmsCourses(orgId: string, userId: string) {
+  const courses = await db.course.findMany({
+    where: { orgId },
+    include: {
+      enrollments: {
+        where: { userId },
+      },
+    },
+  });
+
+  if (courses.length === 0) {
+    // Seed default logistics and compliance courses
+    const defaults = [
+      { title: "Logistics Operations & Supply Chain", duration: "10 Hours", category: "Operations", description: "Basic concepts of freight management, shipping lines, and supply chain strategies." },
+      { title: "Security and Safety Compliance", duration: "2 Hours", category: "Compliance", description: "Information security, physical warehouse safety rules, and GDPR compliance." },
+      { title: "Customer Relationship Management in Freight", duration: "5 Hours", category: "CRM", description: "How to capture, manage, and coordinate deals and invoices inside the monolith portal." },
+    ];
+    await db.course.createMany({
+      data: defaults.map((d) => ({ orgId, ...d })),
+    });
+    return db.course.findMany({
+      where: { orgId },
+      include: {
+        enrollments: {
+          where: { userId },
+        },
+      },
+    });
+  }
+
+  return courses;
+}
+
+export async function enrollInCourse(userId: string, courseId: string) {
+  const existing = await db.courseEnrollment.findFirst({
+    where: { userId, courseId },
+  });
+  if (existing) return existing;
+
+  return db.courseEnrollment.create({
+    data: {
+      userId,
+      courseId,
+      status: "ENROLLED",
+      progress: 0.0,
+    },
+  });
+}
+
+export async function updateCourseProgress(userId: string, courseId: string, progress: number) {
+  const enrollment = await db.courseEnrollment.findFirst({
+    where: { userId, courseId },
+  });
+
+  if (!enrollment) {
+    throw new Error("User not enrolled in this course");
+  }
+
+  const status = progress >= 100 ? "COMPLETED" : "IN_PROGRESS";
+  const completedAt = progress >= 100 ? await getNow() : null;
+
+  return db.courseEnrollment.update({
+    where: { id: enrollment.id },
+    data: {
+      progress,
+      status,
+      completedAt,
+    },
+  });
+}
+
+// ─── PMS / Performance Services ──────────────────────────────────────────────
+
+export async function getPerformanceData(userId: string, orgId: string) {
+  const goals = await db.goal.findMany({
+    where: { userId },
+    orderBy: { dueDate: "asc" },
+  });
+
+  const skills = await db.employeeSkill.findMany({
+    where: { userId },
+    include: { skill: true },
+  });
+
+  const feedbacks = await db.performanceFeedback.findMany({
+    where: {
+      OR: [
+        { fromUserId: userId },
+        { toUserId: userId },
+      ],
+    },
+    include: {
+      fromUser: { select: { name: true, photo: true } },
+      toUser: { select: { name: true, photo: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return {
+    goals,
+    skills,
+    feedbacks,
+  };
+}
+
+export async function createPerformanceGoal(userId: string, orgId: string, title: string, target: string, dueDate: Date) {
+  return db.goal.create({
+    data: {
+      orgId,
+      userId,
+      title,
+      target,
+      dueDate,
+      status: "NOT_STARTED",
+      progress: 0.0,
+    },
+  });
+}
+
+export async function updateGoalProgress(goalId: string, progress: number) {
+  const status = progress >= 100 ? "COMPLETED" : progress > 0 ? "IN_PROGRESS" : "NOT_STARTED";
+  return db.goal.update({
+    where: { id: goalId },
+    data: {
+      progress,
+      status,
+    },
+  });
+}
+
+export async function submitPerformanceFeedback(fromUserId: string, toUserId: string, orgId: string, content: string, feedbackType: string) {
+  return db.performanceFeedback.create({
+    data: {
+      orgId,
+      fromUserId,
+      toUserId,
+      content,
+      feedbackType,
+    },
+  });
+}
+
+// ─── Travel & Expenses Services ──────────────────────────────────────────────
+
+export async function getTravelRequests(userId: string, orgId: string) {
+  return db.travelRequest.findMany({
+    where: { userId, orgId },
+    include: { expenses: true },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function createTravelRequest(userId: string, orgId: string, purpose: string, destination: string, fromDate: Date, toDate: Date) {
+  return db.travelRequest.create({
+    data: {
+      orgId,
+      userId,
+      purpose,
+      destination,
+      fromDate,
+      toDate,
+      status: "PENDING",
+    },
+  });
+}
+
+export async function createTravelExpense(travelRequestId: string, amount: number, category: string, billFileKey?: string) {
+  return db.travelExpense.create({
+    data: {
+      travelRequestId,
+      amount,
+      category,
+      billFileKey,
+      status: "PENDING",
+    },
+  });
+}
+
+// ─── HR Letters Services ─────────────────────────────────────────────────────
+
+export async function getHRLetterTemplates(orgId: string) {
+  const templates = await db.hRLetterTemplate.findMany({
+    where: { orgId },
+  });
+
+  if (templates.length === 0) {
+    // Seed default template items
+    const defaults = [
+      { name: "Bonafide Certificate", content: "<p>This is to certify that <strong>{{employeeName}}</strong> is a bona fide employee of our organisation as a <strong>{{designation}}</strong>.</p>", variables: JSON.stringify(["employeeName", "designation"]) },
+      { name: "No Objection Certificate (NOC)", content: "<p>We have no objection to <strong>{{employeeName}}</strong> pursuing their educational training or visa procedures. Their designation is <strong>{{designation}}</strong>.</p>", variables: JSON.stringify(["employeeName", "designation"]) },
+      { name: "Experience Certificate", content: "<p>This certifies that <strong>{{employeeName}}</strong> worked with us from <strong>{{joiningDate}}</strong> as a <strong>{{designation}}</strong>.</p>", variables: JSON.stringify(["employeeName", "designation", "joiningDate"]) },
+    ];
+    await db.hRLetterTemplate.createMany({
+      data: defaults.map((d) => ({ orgId, ...d })),
+    });
+    return db.hRLetterTemplate.findMany({
+      where: { orgId },
+    });
+  }
+
+  return templates;
+}
+
+export async function getHRLetterRequests(userId: string, orgId: string) {
+  return db.hRLetterRequest.findMany({
+    where: { userId, orgId },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function createHRLetterRequest(userId: string, orgId: string, templateId: string, details: any) {
+  return db.hRLetterRequest.create({
+    data: {
+      orgId,
+      userId,
+      templateId,
+      status: "PENDING",
+      details: details ? JSON.stringify(details) : "{}",
+    },
+  });
+}
+
+// ─── Tasks Services ──────────────────────────────────────────────────────────
+
+export async function getHrmsTasks(userId: string, orgId: string) {
+  return db.hrmsTask.findMany({
+    where: {
+      orgId,
+      OR: [
+        { assigneeId: userId },
+        { createdById: userId },
+      ],
+    },
+    include: {
+      assignee: { select: { name: true, photo: true } },
+      createdBy: { select: { name: true } },
+    },
+    orderBy: { dueDate: "asc" },
+  });
+}
+
+export async function createHrmsTask(orgId: string, createdById: string, title: string, description: string | null, dueDate: Date, assigneeId: string, priority: "LOW" | "MEDIUM" | "HIGH") {
+  return db.hrmsTask.create({
+    data: {
+      orgId,
+      createdById,
+      title,
+      description,
+      dueDate,
+      assigneeId,
+      priority,
+      status: "PENDING",
+    },
+  });
+}
+
+export async function updateHrmsTaskStatus(taskId: string, status: "PENDING" | "COMPLETED") {
+  return db.hrmsTask.update({
+    where: { id: taskId },
+    data: { status },
+  });
+}
+
+// ─── Approvals Inbox Services ───────────────────────────────────────────────
+
+export async function getPendingApprovals(userId: string, orgId: string, isAdmin: boolean) {
+  // If admin: load all pending items in the org. Otherwise, load requests where managerId = userId
+  const managerFilter = isAdmin ? {} : { user: { managerId: userId } };
+  const otManagerFilter = isAdmin ? {} : { user: { managerId: userId } };
+  const workReportFilter = isAdmin ? {} : { report: { user: { managerId: userId } } };
+
+  const [leaves, regularizations, ots, travels, timesheets, workreports] = await Promise.all([
+    db.leaveRequest.findMany({
+      where: { ...managerFilter, status: "pending" },
+      include: {
+        user: { select: { name: true, employeeNumber: true, photo: true } },
+        leaveType: true,
+      },
+    }),
+    db.attendanceRegularization.findMany({
+      where: { ...managerFilter, status: "PENDING" },
+      include: {
+        user: { select: { name: true, employeeNumber: true, photo: true } },
+      },
+    }),
+    db.otRecord.findMany({
+      where: { ...managerFilter, approvalStatus: "PENDING" },
+      include: {
+        user: { select: { name: true, employeeNumber: true, photo: true } },
+      },
+    }),
+    db.travelRequest.findMany({
+      where: { ...managerFilter, status: "PENDING" },
+      include: {
+        user: { select: { name: true, employeeNumber: true, photo: true } },
+      },
+    }),
+    db.timesheetSubmission.findMany({
+      where: { ...managerFilter, status: "PENDING" },
+      include: {
+        user: { select: { name: true, employeeNumber: true, photo: true } },
+      },
+    }),
+    db.workReportApproval.findMany({
+      where: { ...workReportFilter, status: "PENDING" },
+      include: {
+        report: {
+          include: {
+            user: { select: { name: true, employeeNumber: true, photo: true } },
+          },
+        },
+      },
+    }),
+  ]);
+
+  return {
+    leaves,
+    regularizations,
+    ots,
+    travels,
+    timesheets,
+    workreports,
+  };
+}
+
+export async function executeApprovalDecision(
+  userId: string,
+  requestId: string,
+  type: "LEAVE" | "REGULARIZATION" | "OT" | "TRAVEL" | "TIMESHEET" | "WORKREPORT",
+  decision: "APPROVED" | "REJECTED",
+  remarks?: string
+) {
+  const now = await getNow();
+
+  if (type === "LEAVE") {
+    const status = decision === "APPROVED" ? "approved" : "rejected";
+    return db.leaveRequest.update({
+      where: { id: requestId },
+      data: { status, approverId: userId, notes: remarks },
+    });
+  }
+
+  if (type === "REGULARIZATION") {
+    return db.attendanceRegularization.update({
+      where: { id: requestId },
+      data: { status: decision, approvedById: userId, remarks },
+    });
+  }
+
+  if (type === "OT") {
+    return db.otRecord.update({
+      where: { id: requestId },
+      data: { approvalStatus: decision, approvedById: userId, rejectionRemarks: remarks },
+    });
+  }
+
+  if (type === "TRAVEL") {
+    return db.travelRequest.update({
+      where: { id: requestId },
+      data: { status: decision, approvedById: userId },
+    });
+  }
+
+  if (type === "TIMESHEET") {
+    return db.timesheetSubmission.update({
+      where: { id: requestId },
+      data: { status: decision, approvedById: userId },
+    });
+  }
+
+  if (type === "WORKREPORT") {
+    await db.workReportApproval.updateMany({
+      where: { reportId: requestId, approverId: userId },
+      data: { status: decision, comments: remarks },
+    });
+    return db.workReport.update({
+      where: { id: requestId },
+      data: { status: decision },
+    });
+  }
+
+  throw new Error("Unsupported approval type");
+}
+
+

@@ -336,7 +336,7 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
             type="button"
             onClick={toggleTheme}
             className="cursor-pointer rounded-md p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
-            title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            title={!mounted ? "Switch Theme" : theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
           >
             {!mounted ? (
               <div className="w-4 h-4" />

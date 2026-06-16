@@ -488,6 +488,9 @@ export async function createActivity(orgId: string, createdById: string, data: a
       updatedById: createdById,
       ...data,
     },
+    include: {
+      owner: { select: { id: true, name: true } },
+    },
   });
 
   if (data.relatedToType && data.relatedToId) {

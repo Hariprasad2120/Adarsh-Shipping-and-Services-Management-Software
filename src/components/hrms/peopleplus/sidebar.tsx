@@ -11,6 +11,12 @@ import {
   Settings,
   Users,
   Grid,
+  UserCheck,
+  CheckSquare,
+  CheckCircle2,
+  BookOpen,
+  Award,
+  Mail,
 } from "lucide-react";
 import { ModuleKey } from "@/modules/hrms/peopleplus/types";
 
@@ -36,13 +42,19 @@ export function PeoplePlusSidebar({
 
   const items: SidebarItem[] = [
     { key: "home", label: "Home", icon: <Home className="size-5" />, visible: true },
+    { key: "onboarding", label: "Onboard", icon: <UserCheck className="size-5" />, visible: true },
+    { key: "workreports", label: "Reports", icon: <FileText className="size-5" />, visible: true },
+    { key: "task", label: "Tasks", icon: <CheckSquare className="size-5" />, visible: true },
+    { key: "approvals", label: "Approvals", icon: <CheckCircle2 className="size-5" />, visible: true },
+    { key: "lms", label: "LMS", icon: <BookOpen className="size-5" />, visible: true },
+    { key: "performance", label: "PMS", icon: <Award className="size-5" />, visible: true },
+    { key: "travel", label: "Travel", icon: <Plane className="size-5" />, visible: true },
     { key: "files", label: "Files", icon: <Folder className="size-5" />, visible: true },
-    { key: "workreports", label: "Work Reports", icon: <FileText className="size-5" />, visible: true },
+    { key: "hrservices", label: "Letters", icon: <Mail className="size-5" />, visible: true },
     { key: "employeeengagement", label: "Surveys", icon: <Heart className="size-5" />, visible: true },
     { key: "hrcase", label: "Help Desk", icon: <HelpCircle className="size-5" />, visible: true },
-    { key: "hrservices", label: "Letters", icon: <FileText className="size-5" />, visible: true },
-    { key: "travel", label: "Travel", icon: <Plane className="size-5" />, visible: true },
   ];
+
 
   const visibleItems = items.filter((item) => item.visible);
   const mainItems = visibleItems.slice(0, 8);

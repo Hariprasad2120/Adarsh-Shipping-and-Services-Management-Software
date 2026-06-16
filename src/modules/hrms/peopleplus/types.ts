@@ -17,7 +17,8 @@ export type ModuleKey =
   | "okr"
   | "operations"
   | "workreports"
-  | "reports";
+  | "reports"
+  | "approvals";
 
 export type NavModule = {
   key: ModuleKey;
