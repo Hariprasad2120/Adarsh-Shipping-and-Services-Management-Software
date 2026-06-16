@@ -3,7 +3,8 @@ import { getSessionOrUnauth, ok, err } from "@/lib/api-helpers";
 import { requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { getEsslConfig, punchTable, buildDeviceDirMap, resolveDirection, esslDateToUtc, testEsslConnection } from "@/lib/essl";
-import { intimateAdminsOffline } from "@/modules/notifications/service";
+import { intimateAdminsOffline, createNotification } from "@/modules/notifications/service";
+import { getNow } from "@/lib/clock";
 import { calculateOtForPunch } from "@/lib/ot";
 import mssql from "mssql";
 
@@ -32,8 +33,8 @@ export async function GET() {
   const orgId = session!.user.orgId;
   if (!orgId) return err("User does not belong to an organisation");
 
-  // Today in IST
-  const nowIst = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+  const nowClock = await getNow();
+  const nowIst = new Date(nowClock.getTime() + 5.5 * 60 * 60 * 1000);
   const year = nowIst.getUTCFullYear();
   const month = nowIst.getUTCMonth() + 1;
   const day = nowIst.getUTCDate();
@@ -63,21 +64,141 @@ export async function GET() {
     orderBy: { syncTime: "desc" },
   });
 
+  // Query live punches from eSSL database
+  const config = getEsslConfig();
+  let esslPunches: { UserId: string; LogDate: Date; Direction: string; DeviceId: number; DeviceSName: string | null }[] = [];
+  let deviceDirMap = new Map<number, "in" | "out">();
+  let actualTable = "DeviceLogs";
+
+  if (config) {
+    const connected = await testEsslConnection(config);
+    if (connected) {
+      let pool: mssql.ConnectionPool | null = null;
+      try {
+        pool = await mssql.connect(config);
+        const tableName = punchTable(year, month);
+        const tableCheck = await pool.request()
+          .input("tbl", mssql.VarChar, tableName)
+          .query<{ cnt: number }>(
+            "SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME=@tbl"
+          );
+        actualTable = tableCheck.recordset[0]!.cnt > 0 ? tableName : "DeviceLogs";
+        deviceDirMap = await buildDeviceDirMap(pool);
+
+        const punchResult = await pool.request()
+          .input("start", mssql.DateTime, todayStart)
+          .input("end", mssql.DateTime, todayEnd)
+          .query<{ UserId: string; LogDate: Date; Direction: string; DeviceId: number; DeviceSName: string | null }>(`
+            SELECT dl.UserId, dl.LogDate, dl.Direction, dl.DeviceId, d.DeviceSName
+            FROM [${actualTable}] dl
+            LEFT JOIN Devices d ON d.DeviceId = dl.DeviceId
+            WHERE dl.LogDate >= @start AND dl.LogDate <= @end
+            ORDER BY dl.LogDate ASC
+          `);
+        esslPunches = punchResult.recordset;
+      } catch (err) {
+        console.error("eSSL live snapshot query failed in GET:", err);
+      } finally {
+        if (pool) await pool.close();
+      }
+    }
+  }
+
+  // Group punches by UserId
+  const punchGroups = new Map<number, typeof esslPunches>();
+  for (const p of esslPunches) {
+    const empNum = parseInt(p.UserId, 10);
+    if (isNaN(empNum)) continue;
+    if (!punchGroups.has(empNum)) punchGroups.set(empNum, []);
+    punchGroups.get(empNum)!.push(p);
+  }
+
   const result = employees.map((emp) => {
-    const punch = emp.punches[0] ?? null;
-    let status: "IN" | "OUT" | "NOT_ARRIVED" = "NOT_ARRIVED";
-    if (punch?.inAt && !punch.outAt) status = "IN";
-    else if (punch?.inAt && punch.outAt) status = "OUT";
+    let status: "IN" | "OUT" | "NOT_ARRIVED" | "IDLE" = "NOT_ARRIVED";
+    let checkIn: string | null = null;
+    let checkOut: string | null = null;
+    let checkInPlace: string | null = null;
+    let checkOutPlace: string | null = null;
+    let workingHours: number | null = null;
+
+    const empPunches = emp.employeeNumber ? punchGroups.get(emp.employeeNumber) : null;
+
+    if (empPunches && empPunches.length > 0) {
+      // Sort chronologically
+      empPunches.sort((a, b) => a.LogDate.getTime() - b.LogDate.getTime());
+      
+      const mappedPunches = empPunches.map((p) => ({
+        time: esslDateToUtc(new Date(p.LogDate)),
+        dir: resolveDirection(p.DeviceId, p.Direction, deviceDirMap),
+        deviceName: p.DeviceSName ?? "Unknown Device",
+      }));
+
+      const ins = mappedPunches.filter((p) => p.dir === "in");
+      const outs = mappedPunches.filter((p) => p.dir === "out");
+
+      checkIn = ins[0]?.time.toISOString() ?? mappedPunches[0]?.time.toISOString() ?? null;
+      checkOut = outs[outs.length - 1]?.time.toISOString() ?? null;
+
+      if (checkIn && checkOut) {
+        const inTime = new Date(checkIn).getTime();
+        const outTime = new Date(checkOut).getTime();
+        workingHours = Math.round(((outTime - inTime) / 3600000) * 100) / 100;
+      }
+
+      // Check current live status based on last punch
+      const lastPunch = mappedPunches[mappedPunches.length - 1]!;
+      if (lastPunch.dir === "in") {
+        const timeDiffMs = nowClock.getTime() - lastPunch.time.getTime();
+        const fourHoursMs = 4 * 60 * 60 * 1000;
+        if (timeDiffMs >= fourHoursMs) {
+          status = "IDLE";
+        } else {
+          status = "IN";
+        }
+      } else {
+        status = "OUT";
+      }
+
+      const firstIn = ins[0];
+      if (firstIn) {
+        checkInPlace = firstIn.deviceName;
+      }
+      const lastOut = outs[outs.length - 1];
+      if (lastOut) {
+        checkOutPlace = lastOut.deviceName;
+      }
+    } else {
+      // Fallback to local database punches
+      const punch = emp.punches[0] ?? null;
+      if (punch?.inAt) {
+        checkIn = punch.inAt.toISOString();
+        if (punch.outAt) {
+          checkOut = punch.outAt.toISOString();
+          status = "OUT";
+        } else {
+          const timeDiffMs = nowClock.getTime() - punch.inAt.getTime();
+          const fourHoursMs = 4 * 60 * 60 * 1000;
+          if (timeDiffMs >= fourHoursMs) {
+            status = "IDLE";
+          } else {
+            status = "IN";
+          }
+        }
+        workingHours = punch.workingHours ?? null;
+      }
+    }
 
     return {
       id: emp.id,
       name: emp.name,
       employeeNumber: emp.employeeNumber,
       department: emp.department?.name ?? null,
-      checkIn: punch?.inAt?.toISOString() ?? null,
-      checkOut: punch?.outAt?.toISOString() ?? null,
-      workingHours: punch?.workingHours ?? null,
+      checkIn,
+      checkOut,
+      workingHours,
       status,
+      checkInPlace,
+      checkOutPlace,
     };
   });
 
@@ -85,7 +206,7 @@ export async function GET() {
     date: todayIso,
     employees: result,
     lastLiveSync: lastSyncLog?.syncTime?.toISOString() ?? null,
-    presentCount: result.filter((e) => e.status === "IN").length,
+    presentCount: result.filter((e) => e.status === "IN" || e.status === "IDLE").length,
     outCount: result.filter((e) => e.status === "OUT").length,
     notArrivedCount: result.filter((e) => e.status === "NOT_ARRIVED").length,
   });
@@ -159,24 +280,25 @@ export async function POST(req: NextRequest) {
     const punchResult = await pool.request()
       .input("start", mssql.DateTime, todayIstStart)
       .input("end", mssql.DateTime, todayIstEnd)
-      .query<{ UserId: string; LogDate: Date; Direction: string; DeviceId: number }>(`
-        SELECT UserId, LogDate, Direction, DeviceId
-        FROM [${actualTable}]
-        WHERE LogDate >= @start AND LogDate <= @end
-        ORDER BY UserId ASC, LogDate ASC
+      .query<{ UserId: string; LogDate: Date; Direction: string; DeviceId: number; DeviceSName: string | null }>(`
+        SELECT dl.UserId, dl.LogDate, dl.Direction, dl.DeviceId, d.DeviceSName
+        FROM [${actualTable}] dl
+        LEFT JOIN Devices d ON d.DeviceId = dl.DeviceId
+        WHERE dl.LogDate >= @start AND dl.LogDate <= @end
+        ORDER BY dl.UserId ASC, dl.LogDate ASC
       `);
 
     const punches = punchResult.recordset;
 
     // Group punches by employee
-    const punchMap = new Map<string, { time: Date; dir: string }[]>();
+    const punchMap = new Map<string, { time: Date; dir: string; deviceName: string }[]>();
     for (const row of punches) {
       const empId = String(row.UserId ?? "").trim();
       if (!empId) continue;
       const punchTime = esslDateToUtc(new Date(row.LogDate));
       if (!punchMap.has(empId)) punchMap.set(empId, []);
       const dir = resolveDirection(row.DeviceId, row.Direction, deviceDirMap);
-      punchMap.get(empId)!.push({ time: punchTime, dir });
+      punchMap.get(empId)!.push({ time: punchTime, dir, deviceName: row.DeviceSName ?? "Unknown Device" });
     }
 
     // Match eSSL employee IDs to HRMS
@@ -250,6 +372,39 @@ export async function POST(req: NextRequest) {
 
         // Recalculate OT and Comp-Off for this punch
         await calculateOtForPunch(hrmsId, attendanceDate);
+
+        // Check if employee is IDLE and trigger break reminder
+        const lastPunch = dayPunches[dayPunches.length - 1]!;
+        if (lastPunch.dir === "in") {
+          const nowClock = await getNow();
+          const timeDiffMs = nowClock.getTime() - lastPunch.time.getTime();
+          const fourHoursMs = 4 * 60 * 60 * 1000;
+          if (timeDiffMs >= fourHoursMs) {
+            // Check if notification already sent for this employee today
+            const existingNotification = await db.notification.findFirst({
+              where: {
+                userId: hrmsId,
+                kind: "IDLE_BREAK_REMINDER",
+                createdAt: { gte: todayIstStart, lte: todayIstEnd },
+              },
+              select: { id: true },
+            });
+
+            if (!existingNotification) {
+              const funnyNote = "You are working hard but small breaks won't make any dent. Go for a walk and stretch your legs!";
+              await createNotification({
+                userId: hrmsId,
+                orgId,
+                kind: "IDLE_BREAK_REMINDER",
+                title: "Time for a Stretch!",
+                body: funnyNote,
+                link: "/attendance/punch",
+                priority: "normal",
+                email: false,
+              });
+            }
+          }
+        }
 
         if (existing) updated++;
         else synced++;

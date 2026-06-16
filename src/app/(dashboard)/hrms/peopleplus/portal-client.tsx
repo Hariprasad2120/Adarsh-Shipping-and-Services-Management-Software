@@ -49,7 +49,11 @@ export function PeoplePlusPortalClient({
       const res = await fetch("/api/hrms/peopleplus/me");
       const json = await res.json();
       if (json.ok) {
-        setProfile(json.data);
+        const raw = json.data;
+        setProfile({
+          ...raw,
+          ...raw.user,
+        });
       } else {
         toast.error("Failed to load profile context");
       }

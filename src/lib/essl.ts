@@ -105,6 +105,8 @@ export interface PunchSession {
   in: string;          // ISO UTC
   out: string | null;  // ISO UTC or null (still inside)
   durationHours: number | null;
+  inDevice?: string | null;
+  outDevice?: string | null;
 }
 
 /** Pair raw punches into in/out sessions. */
@@ -127,6 +129,8 @@ export function pairPunches(punches: RawPunch[]): PunchSession[] {
         in: punch.time.toISOString(),
         out: outPunch?.time.toISOString() ?? null,
         durationHours: durationHours !== null ? Math.round(durationHours * 100) / 100 : null,
+        inDevice: punch.deviceName ?? "Unknown",
+        outDevice: outPunch?.deviceName ?? null,
       });
       i = outPunch ? j + 1 : i + 1;
     } else {

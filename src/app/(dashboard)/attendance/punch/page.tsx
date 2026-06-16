@@ -59,7 +59,17 @@ export default async function PunchPage({
     }));
   }
 
-  const punches = await getMonthAttendance(targetEmployeeId, selectedYear, selectedMonth);
+  const from = new Date(selectedYear, selectedMonth - 1, 1);
+  const to = new Date(selectedYear, selectedMonth, 0);
+
+  const [punches, otRecords] = await Promise.all([
+    getMonthAttendance(targetEmployeeId, selectedYear, selectedMonth),
+    db.otRecord.findMany({
+      where: { userId: targetEmployeeId, date: { gte: from, lte: to } },
+      select: { date: true, otHours: true, otAmount: true, dayType: true },
+    }),
+  ]);
+
   const punchRows = punches.map((p) => ({
     id: p.id,
     date: p.date.toISOString(),
@@ -67,13 +77,18 @@ export default async function PunchPage({
     outAt: p.outAt?.toISOString() ?? null,
   }));
 
+  const otRows = otRecords.map((o) => ({
+    date: o.date.toISOString(),
+    otHours: o.otHours,
+    otAmount: o.otAmount,
+    dayType: o.dayType,
+  }));
+
   return (
-    <div className="max-w-4xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="ds-h1 text-gray-900 dark:text-white">Attendance Logs</h1>
-      </div>
+    <div className="max-w-6xl mx-auto space-y-6">
       <PunchCard
-        punches={punchRows as PunchCardProps["punches"]}
+        punches={punchRows as any}
+        otRecords={otRows}
         today={now.toISOString()}
         canManage={canManage}
         employees={employees}

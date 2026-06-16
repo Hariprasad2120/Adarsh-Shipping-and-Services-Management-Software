@@ -5,15 +5,84 @@ import { db } from "@/lib/db";
 import { getJustdialConfig, updateImportLog } from "./lead-source.service";
 import { processJustdialLead } from "./crm-lead-conversion.service";
 
+const globalForScraper = globalThis as unknown as {
+  justdialStatus?: Record<string, any>;
+  justdialScreenshot?: Record<string, string>;
+};
+
+if (!globalForScraper.justdialStatus) {
+  globalForScraper.justdialStatus = {};
+}
+if (!globalForScraper.justdialScreenshot) {
+  globalForScraper.justdialScreenshot = {};
+}
+
+function updateScrapeProgress(
+  orgId: string,
+  status: "IDLE" | "RUNNING" | "SUCCESS" | "FAILED",
+  currentStep: string,
+  newLog: string | null,
+  currentUrl: string,
+  processedCount: number,
+  totalCount: number,
+  existingLogs: string[]
+) {
+  if (newLog) {
+    existingLogs.push(`[${new Date().toLocaleTimeString("en-IN")}] ${newLog}`);
+    if (existingLogs.length > 15) {
+      existingLogs.shift();
+    }
+  }
+
+  globalForScraper.justdialStatus![orgId] = {
+    status,
+    currentStep,
+    processedCount,
+    totalCount,
+    logs: existingLogs,
+    currentUrl,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+async function captureScrapeScreenshot(orgId: string, page: any) {
+  try {
+    const screenshotBuffer = await page.screenshot({ type: "png", timeout: 4000 });
+    const base64 = screenshotBuffer.toString("base64");
+    globalForScraper.justdialScreenshot![orgId] = `data:image/png;base64,${base64}`;
+  } catch (err) {
+    console.error("[Justdial Scraper] Error capturing live screenshot in memory:", err);
+  }
+}
+
 export async function runJustdialImport(orgId: string, sysUserId: string, logId: string) {
   let browser: any = null;
+  let page: any = null;
   let successCount = 0;
   let updatedCount = 0;
   let skippedCount = 0;
   let failedCount = 0;
   let totalCount = 0;
 
+  const scraperLogs: string[] = [];
+  let currentUrl = "";
+  
+  const updateProgress = (step: string, logMsg: string | null) => {
+    updateScrapeProgress(
+      orgId,
+      "RUNNING",
+      step,
+      logMsg,
+      currentUrl,
+      successCount + updatedCount + failedCount + skippedCount,
+      totalCount,
+      scraperLogs
+    );
+  };
+
   try {
+    updateProgress("Initializing browser context...", "Initializing Justdial Importer scraper...");
+
     const config = await getJustdialConfig(orgId);
     if (!config) {
       throw new Error("Justdial integration is not configured for this organisation.");
@@ -72,45 +141,114 @@ export async function runJustdialImport(orgId: string, sysUserId: string, logId:
 
     // 2. Launch Browser
     const headless = process.env.JUSTDIAL_HEADLESS !== "false";
-    browser = await chromium.launch({
-      headless,
-      args: ["--disable-http2"] // HTTP/1.1 bypasses some cloudflare h2 protocol block errors
-    });
+    const isVercel = !!process.env.VERCEL || !!process.env.VERCEL_ENV;
+    const remoteUrl = process.env.PLAYWRIGHT_SERVICE_URL || process.env.BROWSERLESS_URL;
+
+    if (remoteUrl) {
+      updateProgress("Connecting to remote browser...", `Connecting to browser service at: ${remoteUrl}`);
+      browser = await chromium.connectOverCDP(remoteUrl);
+    } else {
+      const launchArgs = [
+        "--disable-http2",
+        "--disable-blink-features=AutomationControlled"
+      ];
+      
+      let runHeadless = headless;
+      if (isVercel) {
+        // Vercel serverless environment does not support GUI/display server, must run headless
+        runHeadless = true;
+      } else if (headless) {
+        // Local dev: run headful offscreen to bypass bot WAF detection filters
+        runHeadless = false;
+        launchArgs.push("--window-position=4000,0");
+        launchArgs.push("--window-size=1280,800");
+      }
+
+      updateProgress("Launching browser...", `Launching local browser (headless: ${runHeadless})...`);
+      browser = await chromium.launch({
+        headless: runHeadless,
+        args: launchArgs
+      });
+    }
 
     const context = await browser.newContext({
       userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       viewport: { width: 1280, height: 800 }
     });
 
+    await context.addInitScript(() => {
+      Object.defineProperty(navigator, "webdriver", {
+        get: () => false,
+      });
+    });
+
     await context.addCookies(playwrightCookies);
-    const page = await context.newPage();
+    page = await context.newPage();
 
     let targetUrl = dashboardUrl;
-    if (targetUrl.includes("leaddashboard")) {
-      targetUrl = targetUrl
-        .replace("leaddashboard", "enquiries")
-        .replace("tab=leaddashboard", "tab=enquiries");
-      try {
-        const urlObj = new URL(targetUrl);
-        urlObj.searchParams.delete("searchid");
-        targetUrl = urlObj.toString();
-      } catch (e) {}
+    
+    // Unconditionally convert leaddashboard pages to enquiries and strip searchid snapshot constraints
+    targetUrl = targetUrl.replace(/leaddashboard/g, "enquiries");
+    try {
+      const urlObj = new URL(targetUrl);
+      urlObj.searchParams.delete("searchid");
+      targetUrl = urlObj.toString();
+    } catch (e) {}
+    currentUrl = targetUrl;
+    updateProgress("Navigating to Justdial...", `Navigating browser to enquiries page: ${targetUrl}`);
+    
+    let navigationDone = false;
+    const screenshotLoop = (async () => {
+      while (!navigationDone) {
+        try {
+          if (page && !page.isClosed()) {
+            await captureScrapeScreenshot(orgId, page);
+          }
+        } catch (e) {}
+        await new Promise(r => setTimeout(r, 4000));
+      }
+    })();
+
+    try {
+      await page.goto(targetUrl, { waitUntil: "domcontentloaded", timeout: 35000 });
+    } catch (e: any) {
+      console.warn("[Justdial Scraper] Navigation warning/timeout, proceeding anyway:", e.message);
+      await page.waitForTimeout(5000);
+    } finally {
+      navigationDone = true;
     }
-
-    console.log(`[Justdial Scraper] Navigating to ${targetUrl}`);
-    await page.goto(targetUrl, { waitUntil: "load", timeout: 60000 });
-    await page.waitForTimeout(5000);
-
+    currentUrl = page.url();
+    await captureScrapeScreenshot(orgId, page);
+    await page.waitForTimeout(2000);
+    await captureScrapeScreenshot(orgId, page);
     // Check if redirect to login happened
-    const currentUrl = page.url();
-    if (currentUrl.includes("/login") || currentUrl.includes("/signin") || await page.locator('input[type="tel"]').count() > 0 && await page.locator('button:has-text("Login")').count() > 0) {
+    const currentUrlCheck = page.url();
+    if (currentUrlCheck.includes("/login") || currentUrlCheck.includes("/signin") || await page.locator('input[type="tel"]').count() > 0 && await page.locator('button:has-text("Login")').count() > 0) {
+      updateScrapeProgress(orgId, "FAILED", "Session Expired", "Authentication expired. Redirection to login detected.", currentUrlCheck, 0, 0, scraperLogs);
       throw new Error("Justdial session expired or invalid. Please refresh the Cookie JSON in Lead Sources settings.");
     }
+
+    updateProgress("Session verified. Loading leads container...", "Justdial session cookie verified. Locating leads grid...");
 
     // 3. Extract Lead Cards
     // Wait for the cards container to render
     const cardWrapper = page.locator('div.enquiry-card');
-    await cardWrapper.first().waitFor({ state: "visible", timeout: 20000 });
+    try {
+      await cardWrapper.first().waitFor({ state: "visible", timeout: 25000 });
+    } catch (e: any) {
+      const htmlContent = await page.content();
+      if (htmlContent.includes("Cloudflare") || htmlContent.includes("Attention Required!")) {
+        throw new Error("Blocked by Cloudflare protection. Please refresh cookies in configuration.");
+      }
+      if (htmlContent.length < 800) {
+        throw new Error("Empty response or blank page received from Justdial. Session cookies are expired or invalid.");
+      }
+      if (await page.locator('input[type="tel"]').count() > 0) {
+        throw new Error("Justdial redirected to login. Cookies are expired.");
+      }
+      throw new Error(`Leads container not found. HTML size: ${htmlContent.length} bytes.`);
+    }
+    await captureScrapeScreenshot(orgId, page);
 
     // Scroll to load more cards if needed
     const limit = config.maxLeads || 50;
@@ -121,16 +259,19 @@ export async function runJustdialImport(orgId: string, sysUserId: string, logId:
         break;
       }
       prevCount = currentCount;
+      updateProgress(`Scrolling to load more leads... (Found: ${currentCount})`, `Scrolling to load more leads. Found so far: ${currentCount}`);
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       await page.waitForTimeout(2000);
+      await captureScrapeScreenshot(orgId, page);
     }
 
     const cards = await cardWrapper.locator('div.card-body').all();
-    console.log(`[Justdial Scraper] Found ${cards.length} lead card elements.`);
+    totalCount = Math.min(cards.length, limit);
+    updateProgress(`Found ${cards.length} leads. Starting extraction...`, `Found ${cards.length} lead elements. Extracting top ${totalCount} records.`);
 
     const leadsData: any[] = [];
 
-    for (let i = 0; i < Math.min(cards.length, limit); i++) {
+    for (let i = 0; i < totalCount; i++) {
       try {
         const card = cards[i];
 
@@ -138,6 +279,14 @@ export async function runJustdialImport(orgId: string, sysUserId: string, logId:
         const nameEl = card.locator('.styles_userInfo__cLXcm span.font14.fw-semibold');
         if (await nameEl.count() === 0) continue;
         const customerName = (await nameEl.innerText()).trim();
+
+        updateProgress(`Extracting lead ${i + 1}/${totalCount}: ${customerName}`, `Retrieving details for ${customerName}...`);
+        
+        try {
+          await card.scrollIntoViewIfNeeded();
+          await page.waitForTimeout(500);
+          await captureScrapeScreenshot(orgId, page);
+        } catch (e) {}
 
         // Location (inside styles_userInfo__cLXcm -> p.font12.mb-0)
         const locEl = card.locator('.styles_userInfo__cLXcm p.font12.mb-0');
@@ -199,21 +348,23 @@ export async function runJustdialImport(orgId: string, sysUserId: string, logId:
         let mobile = "";
         const callBtn = card.locator('button[aria-label="Make Call"]').first();
         if (await callBtn.count() > 0) {
-          console.log(`[Justdial Scraper] Clicking Call button for ${customerName}...`);
+          updateProgress(`Extracting lead ${i + 1}/${totalCount}: Clicking Call...`, `Clicking Call button for ${customerName}`);
           await callBtn.click();
           await page.waitForTimeout(1500); // wait for popover rendering
+          await captureScrapeScreenshot(orgId, page);
 
           const tooltip = page.locator('.tooltip-inner').last();
           if (await tooltip.count() > 0) {
             mobile = (await tooltip.innerText()).trim();
-            console.log(`[Justdial Scraper] Retrieved phone: ${mobile}`);
+            updateProgress(`Extracting lead ${i + 1}/${totalCount}: Phone retrieved`, `Retrieved phone number for ${customerName}: ${mobile}`);
           } else {
-            console.log(`[Justdial Scraper] Tooltip not found for ${customerName}`);
+            updateProgress(`Extracting lead ${i + 1}/${totalCount}: Tooltip missing`, `Warning: Call tooltip not found for ${customerName}`);
           }
         }
 
         if (!mobile) {
           console.log(`[Justdial Scraper] Skipping lead ${customerName} because mobile number could not be retrieved.`);
+          failedCount++;
           continue;
         }
 
@@ -238,14 +389,15 @@ export async function runJustdialImport(orgId: string, sysUserId: string, logId:
         });
       } catch (err) {
         console.error("[Justdial Scraper] Error parsing individual card: ", err);
+        failedCount++;
       }
     }
 
-    totalCount = leadsData.length;
-    console.log(`[Justdial Scraper] Ingesting ${totalCount} parsed records into CRM...`);
+    updateProgress("Ingesting leads into database...", `Parsed ${leadsData.length} records successfully. Running CRM database ingestion...`);
 
     // 4. Ingest into CRM DB
     for (const lead of leadsData) {
+      updateProgress(`Saving lead: ${lead.customerName}`, `Ingesting parsed lead for ${lead.customerName}...`);
       const result = await processJustdialLead(orgId, sysUserId, lead, {
         duplicateHandling: config.duplicateHandling,
         defaultOwnerId: config.defaultOwnerId,
@@ -276,20 +428,24 @@ export async function runJustdialImport(orgId: string, sysUserId: string, logId:
       data: { lastSyncedAt: new Date() }
     });
 
+    updateScrapeProgress(
+      orgId,
+      "SUCCESS",
+      "Sync Completed",
+      `Completed successfully. New: ${successCount}, Updated: ${updatedCount}, Failed/Skipped: ${failedCount}`,
+      currentUrl,
+      totalCount,
+      totalCount,
+      scraperLogs
+    );
+
   } catch (err: any) {
     console.error("[Justdial Scraper] Scrape operation failed: ", err);
     
     // Save error screenshot
     try {
-      if (browser) {
-        const pages = browser.contexts()[0]?.pages();
-        if (pages && pages[0]) {
-          const scratchDir = "C:/Users/Purushothaman/.gemini/antigravity-ide/brain/eed1eda0-7f23-415a-ab49-91e5ab83db8e/scratch";
-          if (!fs.existsSync(scratchDir)) {
-            fs.mkdirSync(scratchDir, { recursive: true });
-          }
-          await pages[0].screenshot({ path: path.join(scratchDir, "justdial_error_run.png") });
-        }
+      if (browser && page) {
+        await captureScrapeScreenshot(orgId, page);
       }
     } catch (ssErr) {
       console.error("[Justdial Scraper] Failed to save error screenshot: ", ssErr);
@@ -299,6 +455,18 @@ export async function runJustdialImport(orgId: string, sysUserId: string, logId:
       status: "FAILED",
       errorMessage: err.message || "An unknown error occurred during Playwright execution."
     });
+
+    updateScrapeProgress(
+      orgId,
+      "FAILED",
+      "Failed: " + (err.message || "Scraper error"),
+      `Crawl failure: ${err.message || "An unknown error occurred"}`,
+      currentUrl,
+      successCount + updatedCount + failedCount + skippedCount,
+      totalCount,
+      scraperLogs
+    );
+
     throw err;
   } finally {
     if (browser) {
@@ -336,18 +504,49 @@ export async function testJustdialSession(orgId: string): Promise<{ ok: boolean;
     }));
 
     const headless = process.env.JUSTDIAL_HEADLESS !== "false";
-    browser = await chromium.launch({
-      headless,
-      args: ["--disable-http2"]
-    });
+    const isVercel = !!process.env.VERCEL || !!process.env.VERCEL_ENV;
+    const remoteUrl = process.env.PLAYWRIGHT_SERVICE_URL || process.env.BROWSERLESS_URL;
+
+    if (remoteUrl) {
+      browser = await chromium.connectOverCDP(remoteUrl);
+    } else {
+      const launchArgs = [
+        "--disable-http2",
+        "--disable-blink-features=AutomationControlled"
+      ];
+      
+      let runHeadless = headless;
+      if (isVercel) {
+        runHeadless = true;
+      } else if (headless) {
+        runHeadless = false;
+        launchArgs.push("--window-position=4000,0");
+        launchArgs.push("--window-size=1280,800");
+      }
+
+      browser = await chromium.launch({
+        headless: runHeadless,
+        args: launchArgs
+      });
+    }
     const context = await browser.newContext({
       userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       viewport: { width: 1280, height: 800 }
     });
+    await context.addInitScript(() => {
+      Object.defineProperty(navigator, "webdriver", {
+        get: () => false,
+      });
+    });
     await context.addCookies(playwrightCookies);
     const page = await context.newPage();
 
-    await page.goto(config.dashboardUrl, { waitUntil: "load", timeout: 30000 });
+    try {
+      await page.goto(config.dashboardUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+    } catch (e: any) {
+      console.warn("[Justdial Session check] page.goto warning/timeout:", e.message);
+      await page.waitForTimeout(3000);
+    }
     const title = await page.title();
     
     // Check if login fields are visible

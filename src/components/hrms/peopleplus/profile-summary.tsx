@@ -16,13 +16,13 @@ export function ProfileSummary({
   onPunchAction,
   loading,
 }: ProfileSummaryProps) {
-  const [inTime, setInTime] = useState(profile.totalInTime);
+  const [inTime, setInTime] = useState(profile?.totalInTime ?? "00:00:00");
 
   // Simple tick effect if user is checked in and not on break
   useEffect(() => {
-    setInTime(profile.totalInTime);
+    setInTime(profile?.totalInTime ?? "00:00:00");
 
-    if (profile.attendanceStatus !== "CHECKED_IN") return;
+    if (profile?.attendanceStatus !== "CHECKED_IN") return;
 
     const interval = setInterval(() => {
       setInTime((prev) => {
@@ -43,7 +43,7 @@ export function ProfileSummary({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [profile.attendanceStatus, profile.totalInTime]);
+  }, [profile?.attendanceStatus, profile?.totalInTime]);
 
   const handlePunch = async (action: "CHECK_IN" | "CHECK_OUT" | "START_BREAK" | "RESUME_WORK") => {
     try {
@@ -64,15 +64,15 @@ export function ProfileSummary({
         {/* Left Side: Photo + Name */}
         <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-10 sm:mt-0">
           <div className="size-20 rounded-2xl bg-white border border-slate-200 shadow-md flex items-center justify-center text-[#00c4b6] font-bold text-2xl relative z-10 shrink-0 select-none">
-            {profile.name.charAt(0)}
+            {profile?.name?.charAt(0) ?? ""}
           </div>
           <div className="text-center sm:text-left space-y-1">
-            <h1 className="text-lg font-bold text-slate-800">{profile.name}</h1>
+            <h1 className="text-lg font-bold text-slate-800">{profile?.name ?? ""}</h1>
             <p className="text-xs text-slate-500 font-medium">
-              {profile.designation} &bull; {profile.employeeNo ? `Emp #${profile.employeeNo}` : ""}
+              {profile?.designation} &bull; {profile?.employeeNo ? `Emp #${profile.employeeNo}` : ""}
             </p>
             <p className="text-[11px] text-slate-400">
-              Department: {profile.department || "General"} &bull; Branch: {profile.branch || "Headquarters"}
+              Department: {profile?.department || "General"} &bull; Branch: {profile?.branch || "Headquarters"}
             </p>
           </div>
         </div>
@@ -90,7 +90,7 @@ export function ProfileSummary({
 
           {/* Action buttons */}
           <div className="flex items-center gap-2">
-            {profile.attendanceStatus === "YET_TO_CHECK_IN" && (
+            {profile?.attendanceStatus === "YET_TO_CHECK_IN" && (
               <button
                 type="button"
                 disabled={loading}
@@ -102,7 +102,7 @@ export function ProfileSummary({
               </button>
             )}
 
-            {profile.attendanceStatus === "CHECKED_IN" && (
+            {profile?.attendanceStatus === "CHECKED_IN" && (
               <>
                 <button
                   type="button"
@@ -125,7 +125,7 @@ export function ProfileSummary({
               </>
             )}
 
-            {profile.attendanceStatus === "ON_BREAK" && (
+            {profile?.attendanceStatus === "ON_BREAK" && (
               <button
                 type="button"
                 disabled={loading}
@@ -137,7 +137,7 @@ export function ProfileSummary({
               </button>
             )}
 
-            {profile.attendanceStatus === "CHECKED_OUT" && (
+            {profile?.attendanceStatus === "CHECKED_OUT" && (
               <span className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-rose-500 bg-rose-50 border border-rose-100 rounded-xl">
                 Checked Out
               </span>

@@ -1634,13 +1634,16 @@ export async function runJustdialImportAction(): Promise<ActionResponse> {
     // Create log entry
     const log = await leadSourceService.createImportLog(orgId);
 
-    // Run scraper synchronously (or inside server action)
-    try {
-      await runJustdialImport(orgId, session.user.id, log.id);
-    } finally {
-      // Release lock
-      await leadSourceService.setImportingLock(orgId, false);
-    }
+    // Run scraper asynchronously in the background to avoid blocking the server action response
+    (async () => {
+      try {
+        await runJustdialImport(orgId, session.user.id, log.id);
+      } catch (err: any) {
+        console.error(`[Justdial Background Action Run] Error for org ${orgId}:`, err);
+      } finally {
+        await leadSourceService.setImportingLock(orgId, false);
+      }
+    })();
 
     revalidatePath("/crm/lead-sources");
     revalidatePath("/crm/leads");
@@ -1649,6 +1652,48 @@ export async function runJustdialImportAction(): Promise<ActionResponse> {
     return { ok: false, error: err.message || "Import run failed." };
   }
 }
+
+export async function forceResetJustdialLockAction(): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.leadSource.manage");
+
+    await leadSourceService.setImportingLock(orgId, false);
+    
+    // Also reset in-memory status so the UI updates
+    const globalForScraper = globalThis as unknown as {
+      justdialStatus?: Record<string, any>;
+      justdialScreenshot?: Record<string, string>;
+    };
+    if (!globalForScraper.justdialStatus) {
+      globalForScraper.justdialStatus = {};
+    }
+    globalForScraper.justdialStatus[orgId] = {
+      status: "IDLE",
+      currentStep: "Importer unlocked. Waiting for next trigger.",
+      processedCount: 0,
+      totalCount: 0,
+      logs: [],
+      currentUrl: "",
+      timestamp: new Date().toISOString()
+    };
+    if (!globalForScraper.justdialScreenshot) {
+      globalForScraper.justdialScreenshot = {};
+    }
+    globalForScraper.justdialScreenshot[orgId] = "";
+
+    revalidatePath("/crm/lead-sources");
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to reset lock." };
+  }
+}
+
 
 export async function testJustdialSessionAction(): Promise<ActionResponse> {
   try {

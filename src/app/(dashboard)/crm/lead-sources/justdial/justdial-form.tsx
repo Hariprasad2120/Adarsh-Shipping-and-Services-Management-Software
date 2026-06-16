@@ -87,11 +87,13 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
             defaultValue={initialConfig?.scheduleInterval || "1h"}
             className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
           >
+            <option value="5m">Every 5 Minutes</option>
             <option value="15m">Every 15 Minutes</option>
             <option value="30m">Every 30 Minutes</option>
             <option value="1h">Every 1 Hour</option>
           </select>
         </div>
+
 
         {/* Max Leads per Run */}
         <div className="space-y-1.5">

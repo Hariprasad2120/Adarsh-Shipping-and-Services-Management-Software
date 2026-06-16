@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
-import { getJustdialConfig, getImportLogs } from "@/modules/crm/lead-source.service";
+import { getJustdialConfig, getImportLogs, setImportingLock } from "@/modules/crm/lead-source.service";
 import { ImportButtons } from "./import-button";
 import {
   ShieldAlert,
@@ -45,8 +45,21 @@ export default async function CrmLeadSourcesPage() {
     );
   }
 
-  const config = await getJustdialConfig(orgId);
+  let config = await getJustdialConfig(orgId);
   const logs = await getImportLogs(orgId, 5);
+
+  // Auto-recovery: If database lock is true but memory status is not RUNNING, release the lock
+  if (config && config.isImporting) {
+    const globalForScraper = globalThis as unknown as { justdialStatus?: Record<string, any> };
+    const memStatus = globalForScraper.justdialStatus?.[orgId]?.status;
+    if (memStatus !== "RUNNING") {
+      console.log(`[Justdial Lock Recovery] Resetting stuck database lock for org ${orgId} on page load.`);
+      await setImportingLock(orgId, false);
+      config = await getJustdialConfig(orgId);
+    }
+  }
+
+  const isOffline = config?.isActive && logs.length > 0 && logs[0].status === "FAILED";
 
   return (
     <div className="p-8 space-y-6 max-w-[1600px] mx-auto">
@@ -78,6 +91,10 @@ export default async function CrmLeadSourcesPage() {
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 uppercase tracking-wider">
                   Not Configured
                 </span>
+              ) : isOffline ? (
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/25 uppercase tracking-wider flex items-center gap-1 animate-pulse">
+                  <AlertCircle className="size-3" /> Offline (Update Needed)
+                </span>
               ) : config.isActive ? (
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 uppercase tracking-wider flex items-center gap-1">
                   <CheckCircle className="size-3" /> Active
@@ -92,6 +109,18 @@ export default async function CrmLeadSourcesPage() {
             <p className="text-slate-400 text-xs leading-relaxed">
               Connects to your Justdial business listing dashboard using Playwright browser context, loading injected active session cookies. Automatically expands inquiries detail cards to retrieve client contact information, location, query category, and rating status without mass scraping.
             </p>
+
+            {isOffline && (
+              <div className="flex items-start gap-2.5 bg-rose-500/10 border border-rose-500/25 p-3 rounded-lg text-xs text-rose-300">
+                <AlertCircle className="size-4 shrink-0 text-rose-400 mt-0.5" />
+                <div className="space-y-1">
+                  <span className="font-bold">Integration Offline</span>
+                  <p className="text-slate-400 leading-relaxed">
+                    The latest automation run failed: <span className="text-rose-200">"{logs[0].errorMessage || "Unknown scraper error"}"</span>. This usually indicates that the session cookies have expired or the dashboard URL is invalid. Please configure the importer with updated parameters.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {config ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-[#0a0d12]/50 p-4 rounded-xl border border-[#1c212a]/30 text-xs">
@@ -139,7 +168,7 @@ export default async function CrmLeadSourcesPage() {
             </Link>
             
             {config && (
-              <ImportButtons isImporting={config.isImporting} />
+              <ImportButtons isImporting={config.isImporting} orgId={config.orgId} />
             )}
           </div>
         </div>

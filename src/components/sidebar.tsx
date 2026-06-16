@@ -119,9 +119,14 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
     }
   }, [pathname, visibleSections]);
 
-  const [theme, setTheme] = useState<"light" | "dark">(() =>
-    typeof document !== "undefined" && document.documentElement.classList.contains("dark") ? "dark" : "light"
-  );
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const isDark = document.documentElement.classList.contains("dark");
+    setTheme(isDark ? "dark" : "light");
+  }, []);
 
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
@@ -308,7 +313,13 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
             className="p-1.5 text-slate-400 hover:text-white rounded-md hover:bg-slate-800/20 transition-colors cursor-pointer"
             title="Toggle theme"
           >
-            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            {!mounted ? (
+              <div className="w-4 h-4" />
+            ) : theme === "dark" ? (
+              <Sun size={16} />
+            ) : (
+              <Moon size={16} />
+            )}
           </button>
           <button
             type="button"
