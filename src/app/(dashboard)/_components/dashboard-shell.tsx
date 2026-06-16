@@ -14,9 +14,14 @@ export function DashboardShell({
 }) {
   const pathname = usePathname();
   const isCrm = pathname.startsWith("/crm");
+  const isPeoplePlus = pathname.startsWith("/hrms/peopleplus");
 
   if (isCrm) {
     return <div className="flex flex-1 flex-col min-h-screen bg-[#0f1319] text-[#e2e8f0]">{children}</div>;
+  }
+
+  if (isPeoplePlus) {
+    return <div className="flex flex-1 flex-col min-h-screen bg-[#f5f7fb] dark:bg-[#0f1319] text-[#1f2937] dark:text-[#e2e8f0]">{children}</div>;
   }
 
   return (

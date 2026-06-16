@@ -75,6 +75,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     matchPaths: ["/hrms"],
     items: [
       {
+        href: "/hrms/peopleplus",
+        label: "PeoplePlus Portal",
+        icon: UserMultiple,
+        permission: "hrms.peopleplus.read",
+        matchPaths: ["/hrms/peopleplus"],
+      },
+      {
         href: "/hrms/employees",
         label: "Employees",
         icon: Group,
