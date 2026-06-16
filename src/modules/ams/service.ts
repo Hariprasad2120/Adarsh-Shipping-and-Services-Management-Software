@@ -147,7 +147,7 @@ async function maybeOpenSelfAssessment(appraisalId: string): Promise<boolean> {
     orgId: appraisal.cycle.orgId,
     kind: "SELF_ASSESSMENT_OPEN",
     title: "Your self-assessment is open",
-    body: "Please complete your self-assessment form.",
+    body: `Your self-assessment for ${appraisal.cycle.name} is now open. Please complete it before the deadline.`,
     link: `/ams/my-appraisal/${appraisalId}/self-assessment`,
     email: true,
     payload: { appraisalId, employeeId: appraisal.employeeId },
@@ -805,8 +805,30 @@ export async function setReviewerAvailability(
 
   const appraisal = await db.appraisal.findUniqueOrThrow({
     where: { id: appraisalId },
-    include: { reviewers: true, cycle: true },
+    include: { reviewers: true, cycle: true, employee: { select: { name: true } } },
   });
+
+  const reviewerUser = await db.user.findUnique({ where: { id: userId }, select: { name: true } });
+  const reviewerName = reviewerUser?.name ?? "Reviewer";
+  const employeeName = appraisal.employee.name;
+
+  if (status === "AVAILABLE") {
+    const admins = await db.userRole.findMany({
+      where: { role: { orgId: appraisal.cycle.orgId, name: { in: ["Admin", "HR"] } } },
+      select: { userId: true },
+    });
+    await notifyMany(
+      admins.map((a) => a.userId),
+      {
+        orgId: appraisal.cycle.orgId,
+        kind: "REVIEWER_AVAILABLE",
+        title: "Reviewer confirmed availability",
+        body: `${reviewerName} confirmed availability for ${employeeName}'s appraisal (${appraisal.cycle.name}).`,
+        link: `/ams/appraisals/${appraisalId}`,
+        payload: { appraisalId, reviewerUserId: userId },
+      }
+    );
+  }
 
   // Notify admin/HR if someone is unavailable (and not forced)
   if (status === "UNAVAILABLE") {
@@ -820,7 +842,7 @@ export async function setReviewerAvailability(
         orgId: appraisal.cycle.orgId,
         kind: "REVIEWER_UNAVAILABLE",
         title: "Reviewer unavailable for appraisal",
-        body: "A reviewer is unavailable. Please re-assign or force.",
+        body: `${reviewerName} is unavailable for ${employeeName}'s appraisal (${appraisal.cycle.name}). Please re-assign or force.`,
         link: `/ams/appraisals/${appraisalId}`,
         payload: { appraisalId, unavailableUserId: userId },
       }
@@ -991,7 +1013,7 @@ export async function submitSelfAssessment(
       stage: true,
       employeeId: true,
       selfAssessmentDeadline: true,
-      cycle: { select: { orgId: true } },
+      cycle: { select: { orgId: true, name: true } },
     },
   });
 
@@ -1042,6 +1064,25 @@ export async function submitSelfAssessment(
     },
     select: { editCount: true, status: true },
   });
+
+  if (action === "SUBMITTED") {
+    const employeeUser = await db.user.findUnique({ where: { id: employeeId }, select: { name: true } });
+    const admins = await db.userRole.findMany({
+      where: { role: { orgId: appraisal.cycle.orgId, name: { in: ["Admin", "HR"] } } },
+      select: { userId: true },
+    });
+    await notifyMany(
+      admins.map((a) => a.userId),
+      {
+        orgId: appraisal.cycle.orgId,
+        kind: "SELF_ASSESSMENT_SUBMITTED",
+        title: "Self-assessment submitted",
+        body: `${employeeUser?.name ?? "Employee"} submitted self-assessment for ${appraisal.cycle.name}.`,
+        link: `/ams/appraisals/${appraisalId}`,
+        payload: { appraisalId, employeeId },
+      }
+    );
+  }
 
   return { editCount: record.editCount, status: record.status as SubmissionStatus };
 }

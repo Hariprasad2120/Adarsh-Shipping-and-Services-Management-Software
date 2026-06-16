@@ -115,12 +115,20 @@ export function SelfAssessmentForm({
   const [editCount, setEditCount] = useState<number | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = useState<string | null>(status);
-  const { error } = useNotifications();
+  // Lock form after first submission; Edit button unlocks
+  const [isLocked, setIsLocked] = useState<boolean>(status === "SUBMITTED");
+  const { error, success } = useNotifications();
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 15000);
     return () => window.clearInterval(timer);
   }, []);
+
+  const deadlinePassed = useMemo(
+    () => (selfAssessmentDeadline ? nowMs >= new Date(selfAssessmentDeadline).getTime() : false),
+    [nowMs, selfAssessmentDeadline],
+  );
+  const isEditable = canEdit && !deadlinePassed;
 
   async function persist(action: "DRAFT" | "SUBMITTED", answers: SelfAssessmentAnswers) {
     const res = await fetch(`/api/ams/appraisals/${appraisalId}/self-assessment`, {
@@ -137,14 +145,56 @@ export function SelfAssessmentForm({
     setCurrentStatus(data.status ?? null);
     setEditCount(data.editCount ?? null);
     setSavedAt(new Date().toLocaleTimeString("en-IN"));
+
+    if (action === "SUBMITTED") {
+      setIsLocked(true);
+      // Redirect to My Appraisal with success flag on first submission
+      router.push("/ams/my-appraisal?submitted=1");
+      return;
+    }
+
     router.refresh();
   }
 
-  const deadlinePassed = useMemo(
-    () => (selfAssessmentDeadline ? nowMs >= new Date(selfAssessmentDeadline).getTime() : false),
-    [nowMs, selfAssessmentDeadline],
-  );
-  const isEditable = canEdit && !deadlinePassed;
+  // Locked state: show summary + edit button
+  if (isEditable && isLocked) {
+    return (
+      <div className="space-y-5">
+        <StatusStrip
+          deadline={selfAssessmentDeadline}
+          nowMs={nowMs}
+          savedAt={savedAt}
+          editCount={editCount}
+          currentStatus={currentStatus}
+          isEditable={isEditable}
+        />
+        <div className="rounded-2xl border border-[#00cec4]/30 bg-[#00cec4]/5 px-6 py-5 space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-base font-semibold text-[#008b85]">Self-assessment submitted</p>
+              <p className="text-sm text-on-surface-variant">
+                Your self-assessment has been submitted. You can edit it until the deadline.
+              </p>
+            </div>
+            <svg className="mt-0.5 size-6 shrink-0 text-[#00cec4]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsLocked(false)}
+            className="inline-flex items-center gap-2 rounded-xl border border-[#00cec4]/40 bg-white px-4 py-2 text-sm font-medium text-[#008b85] transition hover:bg-[#00cec4]/8"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+            Edit Self-Assessment
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -157,6 +207,13 @@ export function SelfAssessmentForm({
         isEditable={isEditable}
       />
 
+      {/* In edit mode after a previous submission — show Save Changes label */}
+      {isEditable && !isLocked && currentStatus === "SUBMITTED" && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          You are editing a submitted self-assessment. Click <strong>Save Changes</strong> to update your submission.
+        </div>
+      )}
+
       <CriteriaPointsForm
         mode="self"
         criteria={criteria}
@@ -166,6 +223,7 @@ export function SelfAssessmentForm({
         onSubmitFinal={(answers) => persist("SUBMITTED", answers as SelfAssessmentAnswers)}
         disabled={!isEditable}
         selfTemplate={template}
+        submitLabel={currentStatus === "SUBMITTED" ? "Save Changes" : undefined}
       />
     </div>
   );

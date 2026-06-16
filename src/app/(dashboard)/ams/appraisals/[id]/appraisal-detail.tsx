@@ -723,19 +723,23 @@ function StageActions({
         </Card>
       )}
 
-      {/* Self-assessment read view (admin/reviewer during SELF_ASSESSMENT_OPEN) */}
+      {/* Self-assessment status card (admin/reviewer during SELF_ASSESSMENT_OPEN — full form is not shown inline) */}
       {stage === "SELF_ASSESSMENT_OPEN" && !isEmployee && canViewEmployeeSelfAssessment && (
-        <Card title="Self Assessment (In Progress)">
+        <Card title="Self Assessment">
           {appraisal.selfAssessment ? (
-            <CriteriaPointsView
-              criteria={selfCriteria}
-              supplementary={selfSupplementary}
-              answers={appraisal.selfAssessment.answers}
-              editCount={appraisal.selfAssessment.editCount}
-              selfTemplate={selfTemplate}
-            />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-green-700">Self-assessment submitted</p>
+              {appraisal.selfAssessment.submittedAt && (
+                <p className="text-xs text-on-surface-variant">
+                  Submitted {new Date(appraisal.selfAssessment.submittedAt).toLocaleString("en-IN")}
+                  {appraisal.selfAssessment.editCount != null && appraisal.selfAssessment.editCount > 0
+                    ? ` · ${appraisal.selfAssessment.editCount} edit${appraisal.selfAssessment.editCount !== 1 ? "s" : ""}`
+                    : ""}
+                </p>
+              )}
+            </div>
           ) : (
-            <p className="text-sm text-on-surface-variant/60 italic">Employee has not started self-assessment.</p>
+            <p className="text-sm text-on-surface-variant/60 italic">Employee has not yet submitted their self-assessment.</p>
           )}
         </Card>
       )}
@@ -925,8 +929,10 @@ function ProgressTimeline({ appraisal }: { appraisal: Appraisal }) {
       key: "REVIEWERS_ASSIGNED",
       title: "Reviewers Assigned",
       description:
-        appraisal.reviewers.length > 0
-          ? `HR: ${appraisal.reviewers.find((reviewer) => reviewer.kind === "HR")?.user.name ?? "-"}`
+        nonManagementReviewers.length > 0
+          ? nonManagementReviewers
+              .map((r) => `${KIND_LABEL[r.kind] ?? r.kind}: ${r.user.name}`)
+              .join(" · ")
           : "Reviewer chain is waiting to be assigned",
       icon: CheckCircle2,
     },

@@ -35,17 +35,37 @@ const STAGE_LABEL: Record<string, string> = {
   CLOSED: "Closed",
 };
 
-export default async function MyAppraisalPage() {
+export default async function MyAppraisalPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ submitted?: string }>;
+}) {
   const session = await auth();
   if (!session) redirect("/login");
 
-  const [appraisals, now] = await Promise.all([
+  const [appraisals, now, params] = await Promise.all([
     listMyAppraisals(session.user.id),
     getNow(),
+    searchParams,
   ]);
+
+  const justSubmitted = params.submitted === "1";
 
   return (
     <div className="space-y-6">
+      {justSubmitted && (
+        <div className="rounded-2xl border border-[#00cec4]/30 bg-[#00cec4]/8 px-5 py-4">
+          <div className="flex items-start gap-3">
+            <svg className="mt-0.5 size-5 shrink-0 text-[#00cec4]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            <div>
+              <p className="text-sm font-semibold text-[#008b85]">Self-assessment submitted successfully</p>
+              <p className="mt-0.5 text-xs text-on-surface-variant">Your responses have been saved. You can edit your self-assessment until the deadline.</p>
+            </div>
+          </div>
+        </div>
+      )}
       {appraisals.length === 0 ? (
         <div className="rounded-xl border border-outline-variant bg-surface px-6 py-12 text-center text-sm text-on-surface-variant/60">
           No appraisals found for your account.

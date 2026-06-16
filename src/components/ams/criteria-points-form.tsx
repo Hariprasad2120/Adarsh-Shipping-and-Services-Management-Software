@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown } from "lucide-react";
 import { useDeferredValue, useMemo, useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -621,18 +622,37 @@ export function ReviewerCriteriaSection({
   changeReasonInvalid?: boolean;
   showComparison?: boolean;
 }) {
+  const [collapsed, setCollapsed] = useState(false);
   const hasChanged = showComparison && !!baselineValue && baselineValue.categoryScore !== value.categoryScore;
   const questions = getCriterionQuestions(criterion);
+  const hasInvalid = invalidSubItemIds.size > 0 || commentInvalid || changeReasonInvalid;
+
   return (
     <Card id={`reviewer-criterion-${criterion.id}`}>
       <CardContent className="space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-outline-variant/20 pb-3">
+        {/* Collapsible header */}
+        <button
+          type="button"
+          onClick={() => setCollapsed((c) => !c)}
+          className={cn(
+            "flex w-full flex-wrap items-start justify-between gap-3 pb-3 text-left",
+            collapsed ? "" : "border-b border-outline-variant/20",
+            hasInvalid && collapsed ? "rounded-lg border border-red-200 bg-red-50/40 px-3 py-2" : "",
+          )}
+        >
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h3 className="ds-h3 text-on-surface">{criterion.label}</h3>
               <Badge variant="secondary">{criterion.weightage}%</Badge>
+              {hasInvalid && (
+                <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-600">
+                  Incomplete
+                </span>
+              )}
             </div>
-            <p className="text-sm text-on-surface-variant">{criterion.description}</p>
+            {criterion.description ? (
+              <p className="text-sm text-on-surface-variant">{criterion.description}</p>
+            ) : null}
             {hasChanged ? (
               <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span className="rounded-full border border-red-200 bg-red-50 px-3 py-1 font-semibold text-red-600 line-through">
@@ -645,107 +665,119 @@ export function ReviewerCriteriaSection({
               </div>
             ) : null}
           </div>
-          <div className="text-right">
-            <p className="text-xs uppercase tracking-[0.14em] text-on-surface-variant">Overall Rating</p>
-            <p className="ds-numeric text-lg font-semibold text-[#008b85]">{value.categoryScore || "-"}</p>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-xs uppercase tracking-[0.14em] text-on-surface-variant">Overall Rating</p>
+              <p className="ds-numeric text-lg font-semibold text-[#008b85]">{value.categoryScore || "-"}</p>
+            </div>
+            <ChevronDown
+              className={cn(
+                "size-4 shrink-0 text-on-surface-variant/60 transition-transform duration-200",
+                collapsed ? "rotate-0" : "rotate-180",
+              )}
+            />
           </div>
-        </div>
+        </button>
 
-        <div className="space-y-3">
-          {questions.map((question) => {
-            const currentValue = value.responses[question.id] ?? {};
-            const invalid = invalidSubItemIds.has(question.id);
+        {!collapsed && (
+          <>
+            <div className="space-y-3">
+              {questions.map((question) => {
+                const currentValue = value.responses[question.id] ?? {};
+                const invalid = invalidSubItemIds.has(question.id);
 
-            return (
+                return (
+                  <div
+                    key={question.id}
+                    data-field-id={`criterion:${criterion.id}:${question.id}`}
+                    className={cn(
+                      "space-y-3 border-b py-3 last:border-b-0",
+                      invalid ? "border-red-200" : "border-outline-variant/20",
+                    )}
+                  >
+                    {question.type === "radio" ? (
+                      <OptionQuestionInput
+                        question={question}
+                        value={currentValue}
+                        onChange={(nextResponse) => onChange({
+                          ...value,
+                          responses: { ...value.responses, [question.id]: nextResponse },
+                        })}
+                        disabled={disabled}
+                        invalid={invalid}
+                      />
+                    ) : question.type === "number" ? (
+                      <ReviewerNumberQuestionInput
+                        question={question}
+                        value={currentValue}
+                        disabled={disabled}
+                        invalid={invalid}
+                        onChange={(nextResponse, numericValue) => {
+                          const nextResponses = { ...value.responses, [question.id]: nextResponse };
+                          const nextSubItemRatings = { ...value.subItemRatings, [question.id]: numericValue };
+                          onChange({
+                            ...value,
+                            responses: nextResponses,
+                            subItemRatings: nextSubItemRatings,
+                            categoryScore: computeCriterionAverage(nextSubItemRatings),
+                          });
+                        }}
+                      />
+                    ) : (
+                      <TextAnswerInput
+                        label={question.prompt}
+                        value={currentValue.value ?? ""}
+                        onChange={(nextValue) => onChange({
+                          ...value,
+                          responses: { ...value.responses, [question.id]: { ...currentValue, value: nextValue } },
+                        })}
+                        disabled={disabled}
+                        multiline={question.type !== "text"}
+                        placeholder={question.placeholder}
+                        invalid={invalid}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div
+              className={cn(
+                "space-y-2",
+                commentInvalid && "rounded-xl border border-red-400 bg-red-50/70 p-3",
+              )}
+              data-field-id={`comment:${criterion.id}`}
+            >
+              <Label className="text-sm font-medium text-on-surface-variant">Comments</Label>
+              <ReviewerCommentBox
+                value={value.comment}
+                onChange={(comment) => onChange({ ...value, comment })}
+                disabled={disabled}
+              />
+            </div>
+
+            {showComparison ? (
               <div
-                key={question.id}
-                data-field-id={`criterion:${criterion.id}:${question.id}`}
+                data-field-id={`change-reason:${criterion.id}`}
                 className={cn(
-                  "space-y-3 border-b py-3 last:border-b-0",
-                  invalid ? "border-red-200" : "border-outline-variant/20",
+                  "space-y-2",
+                  changeReasonInvalid && "rounded-xl border border-red-400 bg-red-50/70 p-3",
                 )}
               >
-                {question.type === "radio" ? (
-                  <OptionQuestionInput
-                    question={question}
-                    value={currentValue}
-                    onChange={(nextResponse) => onChange({
-                      ...value,
-                      responses: { ...value.responses, [question.id]: nextResponse },
-                    })}
-                    disabled={disabled}
-                    invalid={invalid}
-                  />
-                ) : question.type === "number" ? (
-                  <ReviewerNumberQuestionInput
-                    question={question}
-                    value={currentValue}
-                    disabled={disabled}
-                    invalid={invalid}
-                    onChange={(nextResponse, numericValue) => {
-                      const nextResponses = { ...value.responses, [question.id]: nextResponse };
-                      const nextSubItemRatings = { ...value.subItemRatings, [question.id]: numericValue };
-                      onChange({
-                        ...value,
-                        responses: nextResponses,
-                        subItemRatings: nextSubItemRatings,
-                        categoryScore: computeCriterionAverage(nextSubItemRatings),
-                      });
-                    }}
-                  />
-                ) : (
-                  <TextAnswerInput
-                    label={question.prompt}
-                    value={currentValue.value ?? ""}
-                    onChange={(nextValue) => onChange({
-                      ...value,
-                      responses: { ...value.responses, [question.id]: { ...currentValue, value: nextValue } },
-                    })}
-                    disabled={disabled}
-                    multiline={question.type !== "text"}
-                    placeholder={question.placeholder}
-                    invalid={invalid}
-                  />
-                )}
+                <Label className="text-sm font-medium text-on-surface-variant">Reason for rating change</Label>
+                <ReviewerCommentBox
+                  value={value.changeReason}
+                  onChange={(changeReason) => onChange({ ...value, changeReason })}
+                  disabled={disabled}
+                />
+                <p className="text-xs text-on-surface-variant/70">
+                  Explain why this criterion was changed from the last submitted rating.
+                </p>
               </div>
-            );
-          })}
-        </div>
-
-        <div
-          className={cn(
-            "space-y-2",
-            commentInvalid && "rounded-xl border border-red-400 bg-red-50/70 p-3",
-          )}
-          data-field-id={`comment:${criterion.id}`}
-        >
-          <Label className="text-sm font-medium text-on-surface-variant">Comments</Label>
-          <ReviewerCommentBox
-            value={value.comment}
-            onChange={(comment) => onChange({ ...value, comment })}
-            disabled={disabled}
-          />
-        </div>
-
-        {showComparison ? (
-          <div
-            data-field-id={`change-reason:${criterion.id}`}
-            className={cn(
-              "space-y-2",
-              changeReasonInvalid && "rounded-xl border border-red-400 bg-red-50/70 p-3",
-            )}
-          >
-            <Label className="text-sm font-medium text-on-surface-variant">Reason for rating change</Label>
-            <ReviewerCommentBox
-              value={value.changeReason}
-              onChange={(changeReason) => onChange({ ...value, changeReason })}
-              disabled={disabled}
-            />
-            <p className="text-xs text-on-surface-variant/70">
-              Explain why this criterion was changed from the last submitted rating.
-            </p>
-          </div>
-        ) : null}
+            ) : null}
+          </>
+        )}
       </CardContent>
     </Card>
   );
@@ -832,6 +864,7 @@ export function DynamicAppraisalForm({
   disabled,
   selfTemplate,
   isResubmission = false,
+  submitLabel,
 }: {
   mode: "self" | "reviewer" | "management";
   criteria: CriterionPoint[];
@@ -841,6 +874,7 @@ export function DynamicAppraisalForm({
   disabled?: boolean;
   selfTemplate?: AppraisalSelfFormTemplate;
   isResubmission?: boolean;
+  submitLabel?: string;
 }) {
   const [isPending, startTransition] = useTransition();
   const resolvedSelfTemplate = useMemo(
@@ -1214,7 +1248,7 @@ export function DynamicAppraisalForm({
               onClick={() => runAction("submit")}
               pending={isPending}
               disabled={reviewerSubmitDisabled}
-              label={mode === "self" ? "Submit Self-Assessment" : isResubmission ? "Update Rating" : "Submit Rating"}
+              label={submitLabel ?? (mode === "self" ? "Submit Self-Assessment" : isResubmission ? "Update Rating" : "Submit Rating")}
             />
           </>
         ) : (
@@ -1390,6 +1424,7 @@ export function CriteriaPointsForm({
   disabled,
   selfTemplate,
   isResubmission,
+  submitLabel,
 }: {
   criteria: CriterionPoint[];
   supplementary: CriterionPoint[];
@@ -1400,6 +1435,7 @@ export function CriteriaPointsForm({
   disabled?: boolean;
   selfTemplate?: AppraisalSelfFormTemplate;
   isResubmission?: boolean;
+  submitLabel?: string;
 }) {
   return (
     <DynamicAppraisalForm
@@ -1411,6 +1447,7 @@ export function CriteriaPointsForm({
       disabled={disabled}
       selfTemplate={selfTemplate}
       isResubmission={isResubmission}
+      submitLabel={submitLabel}
     />
   );
 }

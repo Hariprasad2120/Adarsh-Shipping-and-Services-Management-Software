@@ -427,7 +427,28 @@ export function MyReviewDetailClient({
             <CardTitle>Appraisee Self-Assessment</CardTitle>
           </CardHeader>
           <CardContent>
-            {appraisal.selfAssessmentAnswers ? (
+            {appraisal.stage === "SELF_ASSESSMENT_OPEN" ? (
+              /* Reviewers cannot see self-assessment content until deadline passes */
+              appraisal.selfAssessmentAnswers ? (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00cec4]/10 px-3 py-1.5 text-xs font-medium text-[#008b85] ring-1 ring-[#00cec4]/25">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      Self-assessment submitted
+                    </span>
+                  </div>
+                  <p className="text-xs text-on-surface-variant/70">
+                    The self-assessment content is available after the self-assessment deadline.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm italic text-on-surface-variant/70">
+                  The appraisee has not submitted a self-assessment yet.
+                </p>
+              )
+            ) : appraisal.selfAssessmentAnswers ? (
               <CriteriaPointsView
                 criteria={selfCriteria}
                 supplementary={[]}

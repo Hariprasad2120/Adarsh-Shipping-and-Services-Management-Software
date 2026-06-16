@@ -65,7 +65,10 @@ export default async function MyReviewDetailPage({ params }: { params: Promise<{
           availabilityDeadline: appraisal.availabilityDeadline?.toISOString() ?? null,
           reviewerRatingDeadline: appraisal.reviewerRatingDeadline?.toISOString() ?? null,
           selfAssessmentEditCount: appraisal.selfAssessment?.editCount ?? 0,
-          selfAssessmentAnswers: appraisal.selfAssessment?.answers as SelfAssessmentAnswers | null,
+          // Do not expose self-assessment answers to reviewer while self-assessment is still open
+          selfAssessmentAnswers: appraisal.stage !== "SELF_ASSESSMENT_OPEN"
+            ? (appraisal.selfAssessment?.answers as SelfAssessmentAnswers | null)
+            : null,
           currentRating: currentRatingRow?.ratings as ReviewerRatingAnswers | null,
           submittedAt: currentRatingRow?.submittedAt?.toISOString() ?? null,
           submissionStatus: currentRatingRow?.status ?? null,
