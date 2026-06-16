@@ -68,7 +68,6 @@ export default function DesignSystemPage() {
     <div className="space-y-14 pb-20">
       {/* Page header */}
       <div className="space-y-1">
-        <h1 className="ds-h1 heading-icon-none">Design System</h1>
         <p className="text-on-surface-variant text-sm">
           Tokens, components, and patterns for Monolith Engine.
         </p>
@@ -385,21 +384,19 @@ export default function DesignSystemPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-on-surface-variant">
-                Uses <code className="rounded bg-surface-container px-1 py-0.5 text-xs">.card-top-accent</code> (teal top border) with
-                rounded-xl, surface bg, and ambient shadow.
+                Uses the standard shared card shell with rounded corners, surface background, and ambient shadow.
               </p>
             </CardContent>
           </Card>
 
-          {/* Violet accent card */}
+          {/* Alternate card example */}
           <Card className="card-top-accent-violet">
             <CardHeader>
-              <CardTitle>Violet Accent Card</CardTitle>
+              <CardTitle>Alternate Card</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-on-surface-variant">
-                Uses <code className="rounded bg-surface-container px-1 py-0.5 text-xs">.card-top-accent-violet</code> — for AMS /
-                appraisal contexts.
+                Alternate example using the same card shell for module-specific layouts.
               </p>
             </CardContent>
           </Card>
@@ -592,11 +589,10 @@ export default function DesignSystemPage() {
               </div>
               <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
-                  Card Accents
+                  Card Shell
                 </p>
                 <div className="space-y-1 text-sm text-on-surface">
-                  <p><code className="rounded bg-surface-container px-1 py-0.5 text-xs">.card-top-accent</code> — 3px teal top border (#00cec4)</p>
-                  <p><code className="rounded bg-surface-container px-1 py-0.5 text-xs">.card-top-accent-violet</code> — 3px violet top border (#8a52ff)</p>
+                  <p>Cards now rely on border, radius, surface color, and shadow instead of a colored top accent.</p>
                 </div>
               </div>
             </div>

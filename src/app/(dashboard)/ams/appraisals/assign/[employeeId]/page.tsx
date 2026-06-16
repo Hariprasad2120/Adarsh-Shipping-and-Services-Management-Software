@@ -1,4 +1,3 @@
-import { CircleUserRound } from "lucide-react";
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
@@ -9,7 +8,6 @@ import { getRoles } from "@/modules/core/organisation/service";
 import { getUser, listUsersSlim } from "@/modules/core/user/service";
 import { getSalaryRevisionSummaryForUser } from "@/modules/hrms/salary-revisions";
 import { StartAppraisalClient } from "./start-appraisal-client";
-import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export default async function AssignAppraisalPage({ params }: { params: Promise<{ employeeId: string }> }) {
   const session = await auth();
@@ -70,27 +68,6 @@ export default async function AssignAppraisalPage({ params }: { params: Promise<
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="space-y-4">
-          <div className="flex items-start gap-4">
-            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
-              <CircleUserRound className="size-5" />
-            </span>
-            <div>
-              <h1 className="ds-h1 heading-icon-none text-gray-900">{user.name}</h1>
-              <p className="mt-1 text-base text-[#61779b]">{subtitle || "Employee appraisal setup"}</p>
-            </div>
-          </div>
-          <Breadcrumbs
-            items={[
-              { label: "AMS", href: "/ams" },
-              { label: "Appraisals", href: "/ams/appraisals" },
-              { label: "Assign Appraisal" },
-            ]}
-          />
-        </div>
-      </div>
-
       <StartAppraisalClient
         canStartSpecial={Boolean(caps["admin.org.manage"])}
         employee={{

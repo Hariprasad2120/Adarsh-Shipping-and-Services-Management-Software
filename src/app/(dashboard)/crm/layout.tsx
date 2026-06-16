@@ -89,6 +89,7 @@ const CRM_GROUPS = [
       { label: "Sales Inbox", href: "/crm/sales-inbox", icon: Inbox, permission: "crm.access" },
       { label: "Social", href: "/crm/social", icon: Share2, permission: "crm.access" },
       { label: "Visits", href: "/crm/visits", icon: MapPin, permission: "crm.access" },
+      { label: "Lead Sources", href: "/crm/lead-sources", icon: Settings, permission: "crm.leadSource.read" },
     ],
   },
   {

@@ -83,7 +83,7 @@ export default async function CrmCatchAllPage({ params }: CatchAllPageProps) {
         <span className="px-2 py-0.5 text-[9px] font-bold bg-[#161f28] text-[#00c4b6] rounded uppercase tracking-wider">
           {details.badge}
         </span>
-        <h2 className="text-2xl font-bold tracking-tight text-white mt-2">{formattedTitle} Module</h2>
+        <h2 className="text-2xl font-semibold tracking-tight text-white mt-2">{formattedTitle}</h2>
         <p className="text-slate-400 text-sm mt-1">{details.description}</p>
       </div>
 

@@ -232,7 +232,6 @@ export function MyReviewDetailClient({
     <div className="space-y-6">
       {/* Page header */}
       <div className="space-y-1">
-        <h1 className="ds-h1 text-on-surface">{appraisal.employee.name}</h1>
         <p className="text-sm text-on-surface-variant">
           Reviewer workspace for this appraisal assignment.
         </p>

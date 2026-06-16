@@ -50,12 +50,6 @@ export default async function AdminPasskeysPage() {
   return (
     <div className="max-w-7xl space-y-6">
       <div className="space-y-1">
-        <h1 className="ds-h1 flex items-center gap-4 text-gray-900 dark:text-white">
-          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
-            <KeyRound className="size-5" />
-          </span>
-          Passkey Resets
-        </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
           Manage user credentials reset requests or force users to register new passkeys.
         </p>

@@ -59,7 +59,7 @@ export default async function CrmProductsPage({ searchParams }: { searchParams: 
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#1c212a]/30 pb-5">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">Products & Services</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-white">Products & Services</h2>
           <p className="text-slate-400 text-sm mt-1">Manage standard pricing for freight, warehouse space, transport slabs, and CHA logistics filing fees.</p>
         </div>
       </div>

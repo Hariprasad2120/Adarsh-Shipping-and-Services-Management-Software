@@ -13,7 +13,6 @@ export default async function OrgStructurePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="ds-h1 text-gray-900">Organisation Structure</h1>
       <OrgStructureManager org={org} />
     </div>
   );

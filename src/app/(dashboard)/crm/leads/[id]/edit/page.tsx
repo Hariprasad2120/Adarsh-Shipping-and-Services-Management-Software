@@ -53,7 +53,7 @@ export default async function EditLeadPage({ params }: EditLeadPageProps) {
   return (
     <div className="p-8 space-y-6 max-w-5xl mx-auto">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white">Edit Lead</h2>
+        <h2 className="text-2xl font-semibold tracking-tight text-white">Edit Lead</h2>
         <p className="text-slate-400 text-sm mt-1">Update details for {lead.firstName ? `${lead.firstName} ` : ""}{lead.lastName}.</p>
       </div>
       <LeadForm initialData={lead} employees={employees} />

@@ -17,12 +17,6 @@ export default async function DataToolsPage() {
   return (
     <div className="max-w-4xl space-y-6">
       <div className="space-y-1">
-        <h1 className="ds-h1 flex items-center gap-4 text-gray-900 dark:text-white">
-          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
-            <Database className="size-5" />
-          </span>
-          Data Tools
-        </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
           Manage system data imports, reset operations, and onboarding configurations.
         </p>

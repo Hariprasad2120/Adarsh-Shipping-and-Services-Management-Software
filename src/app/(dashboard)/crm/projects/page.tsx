@@ -75,7 +75,7 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#1c212a]/30 pb-5">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">Operational Projects</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-white">Operational Projects</h2>
           <p className="text-slate-400 text-sm mt-1">Track post-sale customer setups, customized shipping cargos, and warehouse setup projects.</p>
         </div>
       </div>

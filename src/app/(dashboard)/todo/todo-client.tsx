@@ -207,16 +207,14 @@ function StatsCard({
   icon,
   label,
   value,
-  tone,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
-  tone: string;
 }) {
   return (
     <article
-      className={`group rounded-[24px] border border-outline-variant/35 border-t-[3px] bg-surface p-5 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_18px_36px_-22px_rgba(15,23,42,0.28)] ${tone}`}
+      className="group rounded-[24px] border border-outline-variant/35 bg-surface p-5 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_18px_36px_-22px_rgba(15,23,42,0.28)]"
     >
       <div className="flex items-start justify-between">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#00cec4]/10 transition duration-300 group-hover:scale-105 group-hover:bg-[#00cec4]/16">
@@ -509,7 +507,6 @@ export function TodoClient({
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="space-y-2">
-          <h1 className="ds-h1 text-on-surface">To-Do</h1>
           <p className="text-sm text-on-surface-variant">
             Personal tasks, reminders, follow-ups, and checklist items for{" "}
             {currentUserName}.
@@ -532,13 +529,11 @@ export function TodoClient({
           }
           label="Total tasks"
           value={stats.total}
-          tone="border-t-[#00cec4]"
         />
         <StatsCard
           icon={<Plus className="size-5 text-amber-600" strokeWidth={1.9} />}
           label="Pending"
           value={stats.pending}
-          tone="border-t-amber-400"
         />
         <StatsCard
           icon={
@@ -549,7 +544,6 @@ export function TodoClient({
           }
           label="Completed"
           value={stats.completed}
-          tone="border-t-emerald-400"
         />
         <StatsCard
           icon={
@@ -557,7 +551,6 @@ export function TodoClient({
           }
           label="Checklist done"
           value={stats.checklistCompleted}
-          tone="border-t-sky-400"
         />
       </div>
 

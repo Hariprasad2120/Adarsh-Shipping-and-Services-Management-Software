@@ -64,7 +64,6 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
     <div className="space-y-5">
       <div className="flex flex-col gap-4 rounded-[26px] border border-outline-variant/45 bg-white/78 px-5 py-5 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1.5">
-          <h1 className="ds-h1 text-primary">Notification Center</h1>
           <p className="text-sm text-on-surface-variant">Only your notifications appear here.</p>
         </div>
         <div className="flex flex-wrap gap-2">

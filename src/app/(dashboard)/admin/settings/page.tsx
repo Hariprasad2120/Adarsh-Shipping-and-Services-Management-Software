@@ -19,7 +19,6 @@ export default async function AdminSettingsPage() {
         <Link href="/admin" className="text-sm text-gray-500 hover:text-gray-700">
           ← Admin
         </Link>
-        <h1 className="ds-h1 mt-2 text-gray-900">Appraisal Settings</h1>
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white p-6">

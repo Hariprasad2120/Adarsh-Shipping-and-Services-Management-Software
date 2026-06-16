@@ -1,6 +1,7 @@
 "use client";
 
 import { WelcomeBar } from "@/components/welcome-bar";
+import { AutoBreadcrumb } from "@/components/auto-breadcrumb";
 import { usePathname } from "next/navigation";
 
 export function DashboardShell({
@@ -14,20 +15,21 @@ export function DashboardShell({
 }) {
   const pathname = usePathname();
   const isCrm = pathname.startsWith("/crm");
-  const isPeoplePlus = pathname.startsWith("/hrms/peopleplus");
+  const isPortal = pathname === "/dashboard";
 
-  if (isCrm) {
-    return <div className="flex flex-1 flex-col min-h-screen bg-[#0f1319] text-[#e2e8f0]">{children}</div>;
-  }
-
-  if (isPeoplePlus) {
-    return <div className="flex flex-1 flex-col min-h-screen bg-[#f5f7fb] dark:bg-[#0f1319] text-[#1f2937] dark:text-[#e2e8f0]">{children}</div>;
+  if (isCrm || isPortal) {
+    return <div className="flex flex-1 flex-col min-h-screen bg-background text-on-surface">{children}</div>;
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-6 px-8 py-7">
+    <div className="flex flex-1 flex-col min-w-0 h-full overflow-hidden bg-background text-on-surface">
       <WelcomeBar userName={userName} sessionToken={sessionToken} />
-      <div className="flex-1">{children}</div>
+      <AutoBreadcrumb />
+      <div className="flex-1 overflow-y-auto">
+        <div className="flex min-h-full w-full flex-col gap-8 px-6 py-8 lg:px-8 xl:px-10">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }

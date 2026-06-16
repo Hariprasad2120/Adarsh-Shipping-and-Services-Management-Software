@@ -12,7 +12,6 @@ import type { AppraisalSelfFormTemplate, SelfAssessmentAnswers } from "@/modules
 import { filterCriteriaPointsByRole, mapCriterionRowToPoint } from "@/modules/ams/form-template";
 import { resolveSelfFormTemplate } from "@/modules/ams/self-form-template";
 import type { CriterionPoint } from "@/modules/ams/types";
-import { Breadcrumbs } from "@/components/breadcrumbs";
 
 type AppraisalDetailProps = React.ComponentProps<typeof AppraisalDetail>;
 
@@ -116,16 +115,6 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
 
   return (
     <div className="space-y-6">
-      <div className="space-y-3">
-        <h1 className="ds-h1 text-gray-900">{appraisal.employee.name}</h1>
-        <Breadcrumbs
-          items={[
-            { label: "AMS", href: "/ams" },
-            { label: "Appraisals", href: "/ams/appraisals" },
-            { label: appraisal.employee.name },
-          ]}
-        />
-      </div>
       <AppraisalDetail
         appraisal={safeAppraisal}
         hrUsers={hrUsers as AppraisalDetailProps["hrUsers"]}

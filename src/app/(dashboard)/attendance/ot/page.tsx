@@ -1,10 +1,11 @@
 import { auth } from "@/lib/auth";
-import { loadCaps, can } from "@/lib/rbac";
+import { loadCaps } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { OtClient } from "./ot-client";
 import { Clock } from "lucide-react";
 import { getOTEntries } from "@/modules/attendance/service";
+import { getNow } from "@/lib/clock";
 
 export const metadata = {
   title: "Overtime Management | Attendance | Adarsh Shipping",
@@ -13,6 +14,8 @@ export const metadata = {
 interface PageProps {
   searchParams?: Promise<{ month?: string }> | { month?: string };
 }
+
+type OtClientProps = React.ComponentProps<typeof OtClient>;
 
 export default async function OvertimePage({ searchParams }: PageProps) {
   const session = await auth();
@@ -41,7 +44,7 @@ export default async function OvertimePage({ searchParams }: PageProps) {
 
   // Resolve searchParams month
   const resolvedParams = await (searchParams instanceof Promise ? searchParams : Promise.resolve(searchParams));
-  const nowIst = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+  const nowIst = await getNow();
   const defaultMonth = `${nowIst.getUTCFullYear()}-${String(nowIst.getUTCMonth() + 1).padStart(2, "0")}`;
   const monthStr = resolvedParams?.month || defaultMonth;
   const [yearStr, monthPartStr] = monthStr.split("-");
@@ -209,13 +212,7 @@ export default async function OvertimePage({ searchParams }: PageProps) {
   return (
     <div className="max-w-7xl space-y-6">
       <div className="space-y-1">
-        <h1 className="ds-h1 flex items-center gap-4 text-gray-900 dark:text-white">
-          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
-            <Clock className="size-5" />
-          </span>
-          Overtime Management
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+        <p className="text-sm font-medium text-on-surface-variant">
           {canApprove
             ? "Configure grace periods, view overtime metrics, track holidays, manage LOP logs, and export payroll statements."
             : "Request overtime compensation and track your submission history."}
@@ -223,12 +220,12 @@ export default async function OvertimePage({ searchParams }: PageProps) {
       </div>
 
       <OtClient
-        initialEntries={legacyEntries as any}
+        initialEntries={legacyEntries as OtClientProps["initialEntries"]}
         canApprove={canApprove}
         canRequest={canRequest}
         currentUserId={session.user.id}
         monthStr={monthStr}
-        adminData={adminData as any}
+        adminData={adminData as OtClientProps["adminData"]}
       />
     </div>
   );

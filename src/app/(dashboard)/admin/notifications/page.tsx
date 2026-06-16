@@ -61,7 +61,6 @@ export default async function AdminNotificationsPage({
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="ds-h1 text-slate-900">Admin Notifications</h1>
         <p className="mt-1 text-sm text-slate-500">View all user notifications in your organisation, inspect lifecycle activity, and resend notifications.</p>
       </div>
 

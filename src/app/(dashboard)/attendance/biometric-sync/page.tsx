@@ -14,7 +14,6 @@ export default async function BiometricSyncPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="ds-h1 text-gray-900">Biometric Sync</h1>
       <BiometricSyncClient />
     </div>
   );

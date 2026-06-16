@@ -19,7 +19,6 @@ export default async function SimulationPage() {
         <Link href="/admin" className="text-sm text-gray-500 hover:text-gray-700">
           ← Admin
         </Link>
-        <h1 className="ds-h1 mt-2 text-gray-900">Date Simulation</h1>
         <p className="mt-1 text-sm text-gray-500">
           Freeze the system clock for testing deadline and date-driven features.
         </p>

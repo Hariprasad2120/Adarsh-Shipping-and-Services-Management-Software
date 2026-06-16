@@ -19,7 +19,6 @@ export default async function CyclesPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <h1 className="ds-h1 text-gray-900">Appraisal Cycles</h1>
       <CyclesClient cycles={cycles as CyclesClientProps["cycles"]} currentYear={now.getFullYear()} />
     </div>
   );

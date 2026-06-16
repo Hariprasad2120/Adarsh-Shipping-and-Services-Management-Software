@@ -46,8 +46,6 @@ export default async function MyAppraisalPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="ds-h1 text-gray-900">My Appraisal</h1>
-
       {appraisals.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white px-6 py-12 text-center text-sm text-gray-400">
           No appraisals found for your account.

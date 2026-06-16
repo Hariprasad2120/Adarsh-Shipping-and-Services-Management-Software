@@ -76,7 +76,7 @@ export function LeadDetailWrapper({ lead, notes, attachments, activities, timeli
           </Link>
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold tracking-tight text-white">{leadName}</h2>
+              <h2 className="text-xl font-semibold tracking-tight text-white">{leadName}</h2>
               <span className="px-2 py-0.5 text-[10px] font-bold bg-[#161f28] text-slate-300 rounded uppercase tracking-wider">
                 {lead.status}
               </span>

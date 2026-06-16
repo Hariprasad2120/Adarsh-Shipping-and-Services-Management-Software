@@ -201,7 +201,6 @@ export function PeoplePlusPortalClient({
         activeModule={activeModule}
         onChangeModule={(mod) => {
           setActiveModule(mod);
-          // Auto reset tabs when switching top module
           if (mod === "home") setActiveTab("myspace");
         }}
         permissions={permissions}

@@ -72,7 +72,7 @@ export function ContactDetailWrapper({
           </Link>
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold tracking-tight text-white">{contactName}</h2>
+              <h2 className="text-xl font-semibold tracking-tight text-white">{contactName}</h2>
               {contact.isDecisionMaker && (
                 <span className="px-2 py-0.5 text-[9px] font-bold bg-[#00c4b6]/10 text-[#00c4b6] border border-[#00c4b6]/30 rounded uppercase tracking-wider">
                   Key Decision Maker
