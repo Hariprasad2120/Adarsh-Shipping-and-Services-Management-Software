@@ -6,14 +6,11 @@ import { PeoplePlusSidebar } from "@/components/hrms/peopleplus/sidebar";
 import { PeoplePlusTopNav } from "@/components/hrms/peopleplus/top-nav";
 import { ProfileSummary } from "@/components/hrms/peopleplus/profile-summary";
 import { ActionList } from "@/components/hrms/peopleplus/action-list";
-import { DashboardWidgets } from "@/components/hrms/peopleplus/dashboard-widgets";
-import { AttendanceCalendar } from "@/components/hrms/peopleplus/attendance-calendar";
 import { OrgServices } from "@/components/hrms/peopleplus/org-services";
 import { FilesView } from "@/components/hrms/peopleplus/files-view";
 import { SettingsServices } from "@/components/hrms/peopleplus/settings-services";
 import { UsersTable } from "@/components/hrms/peopleplus/users-table";
 import { ReporteesList } from "@/components/hrms/peopleplus/reportees-list";
-import { LeaveTracker } from "@/components/hrms/peopleplus/leave-tracker";
 import { WorkReportsView } from "@/components/hrms/peopleplus/work-reports";
 import { toast } from "sonner";
 
@@ -111,12 +108,6 @@ export function PeoplePlusPortalClient({
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleFetchAttendanceCalendar = async (year: number, month: number) => {
-    const res = await fetch(`/api/hrms/peopleplus/attendance/month?year=${year}&month=${month}`);
-    const json = await res.json();
-    return json.ok ? json.data : [];
   };
 
   const handleFetchFiles = async (scope: string) => {
@@ -242,43 +233,8 @@ export function PeoplePlusPortalClient({
             </>
           )}
 
-          {activeModule === "leavetracker" && (
-            <LeaveTracker />
-          )}
-
-          {activeModule === "attendance" && (
-            <>
-              {activeTab === "team" ? (
-                <ReporteesList reportees={reportees} isAttendanceView={true} />
-              ) : (
-                <>
-                  {profile && (
-                    <ProfileSummary
-                      profile={profile}
-                      onPunchAction={handlePunchAction}
-                      loading={loading}
-                    />
-                  )}
-                  <AttendanceCalendar onFetchCalendar={handleFetchAttendanceCalendar} />
-                </>
-              )}
-            </>
-          )}
-
           {activeModule === "workreports" && (
             <WorkReportsView />
-          )}
-
-          {activeModule === "timetracker" && (
-            <div className="text-sm font-semibold p-6 bg-white rounded-2xl border border-slate-200 shadow-sm text-slate-500 text-center">
-              Timesheet logs are integrated. Open the My Space ledger to add weekly sheets.
-            </div>
-          )}
-
-          {activeModule === "performance" && (
-            <div className="text-sm font-semibold p-6 bg-white rounded-2xl border border-slate-200 shadow-sm text-slate-500 text-center">
-              Dynamic appraisal cycles settings are active under the AMS tab in your sidebar.
-            </div>
           )}
 
           {activeModule === "files" && (
