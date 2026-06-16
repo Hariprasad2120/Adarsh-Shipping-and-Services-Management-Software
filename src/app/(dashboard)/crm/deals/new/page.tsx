@@ -61,7 +61,7 @@ export default async function NewDealPage() {
   return (
     <div className="p-8 space-y-6 max-w-5xl mx-auto">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white">Create Deal</h2>
+        <h2 className="text-2xl font-semibold tracking-tight text-white">Create Deal</h2>
         <p className="text-slate-400 text-sm mt-1">Record a new sales deal, logistics contract, or custom shipping opportunity.</p>
       </div>
       <DealForm accounts={accounts} contacts={formattedContacts} employees={employees} />

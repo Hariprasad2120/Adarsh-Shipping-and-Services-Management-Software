@@ -1,0 +1,108 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import { useSyncExternalStore } from "react";
+import { getBreadcrumbLabels, subscribeBreadcrumb } from "@/lib/breadcrumb-store";
+import { Breadcrumbs } from "./breadcrumbs";
+
+const PATH_LABELS: Record<string, string> = {
+  "/dashboard": "Dashboard",
+  "/todo": "To-Do",
+  "/notifications": "Notifications",
+  "/hrms": "HRMS",
+  "/hrms/employees": "Employees",
+  "/hrms/employees/new": "Onboard Employee",
+  "/hrms/ownership": "Ownership",
+  "/hrms/salary-structure": "Salary Structure",
+  "/hrms/salary-revisions": "Salary Revisions",
+  "/attendance": "Attendance",
+  "/attendance/punch": "My Attendance",
+  "/attendance/leaves": "Leaves",
+  "/attendance/ot": "OT Management",
+  "/attendance/biometric-sync": "Biometric Sync",
+  "/attendance/reports": "Reports",
+  "/ams": "AMS",
+  "/ams/appraisals": "Appraisals",
+  "/ams/my-reviews": "My Reviews",
+  "/ams/my-appraisal": "My Appraisal",
+  "/ams/cycles": "All Cycles",
+  "/ams/criteria": "Criteria Questions",
+  "/ams/slabs": "Increment Slabs",
+  "/ams/extensions": "Extensions",
+  "/ams/kpi": "Department KPI",
+  "/ams/history": "History",
+  "/crm": "CRM",
+  "/crm/dashboard": "Dashboard",
+  "/crm/leads": "Leads",
+  "/crm/leads/new": "New Lead",
+  "/crm/contacts": "Contacts",
+  "/crm/contacts/new": "New Contact",
+  "/crm/accounts": "Accounts",
+  "/crm/accounts/new": "New Account",
+  "/crm/deals": "Deals Pipeline",
+  "/crm/deals/new": "New Deal",
+  "/crm/invoices": "Invoices",
+  "/crm/invoices/new": "New Invoice",
+  "/crm/products": "Products & Services",
+  "/crm/vendors": "Vendors",
+  "/crm/tickets": "Support Cases",
+  "/crm/tickets/new": "New Ticket",
+  "/crm/lead-sources": "Lead Sources",
+  "/crm/lead-sources/justdial": "JustDial Import",
+  "/crm/lead-sources/logs": "Import History",
+  "/crm/projects": "Projects",
+  "/admin": "Admin",
+  "/admin/org-structure": "Organisation Structure",
+  "/admin/roles": "Roles & Permissions",
+  "/admin/settings": "Appraisal Settings",
+  "/admin/passkeys": "Passkey Resets",
+  "/admin/sessions": "Session Monitor",
+  "/admin/data-tools": "Data Tools",
+  "/admin/simulation": "Simulation",
+  "/admin/notifications": "Notifications",
+};
+
+const SEGMENT_LABELS: Record<string, string> = {
+  new: "New",
+  edit: "Edit",
+  assign: "Assign",
+  "management-review": "Management Review",
+  "self-assessment": "Self Assessment",
+  justdial: "JustDial Import",
+  logs: "Import History",
+};
+
+function segmentToLabel(segment: string): string {
+  if (SEGMENT_LABELS[segment]) return SEGMENT_LABELS[segment];
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}/i.test(segment) || /^[0-9a-f]{20,}$/i.test(segment)) return "Detail";
+  return segment.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+const TOP_LEVEL_ONLY = new Set(["/dashboard", "/todo", "/notifications"]);
+
+export function AutoBreadcrumb() {
+  const pathname = usePathname();
+  const dynamicLabels = useSyncExternalStore(
+    subscribeBreadcrumb,
+    getBreadcrumbLabels,
+    getBreadcrumbLabels,
+  );
+
+  if (TOP_LEVEL_ONLY.has(pathname)) return null;
+
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length === 0) return null;
+
+  const items = segments.map((seg, i) => {
+    const path = "/" + segments.slice(0, i + 1).join("/");
+    const label = dynamicLabels[seg] ?? PATH_LABELS[path] ?? segmentToLabel(seg);
+    const isLast = i === segments.length - 1;
+    return { label, href: isLast ? undefined : path };
+  });
+
+  return (
+    <div className="shrink-0 px-6 py-2 lg:px-8 xl:px-10">
+      <Breadcrumbs items={items} />
+    </div>
+  );
+}

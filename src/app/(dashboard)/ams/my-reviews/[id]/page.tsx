@@ -12,7 +12,6 @@ import { filterCriteriaPointsByRole, mapCriterionRowToPoint } from "@/modules/am
 import { resolveSelfFormTemplate } from "@/modules/ams/self-form-template";
 import type { CriterionPoint } from "@/modules/ams/types";
 import { notFound, redirect } from "next/navigation";
-import { Breadcrumbs } from "@/components/breadcrumbs";
 import { MyReviewDetailClient } from "./my-review-detail-client";
 
 export default async function MyReviewDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -49,13 +48,6 @@ export default async function MyReviewDetailPage({ params }: { params: Promise<{
 
   return (
     <div className="space-y-5">
-      <Breadcrumbs
-        items={[
-          { label: "AMS", href: "/ams" },
-          { label: "My Reviews", href: "/ams/my-reviews" },
-          { label: appraisal.employee.name },
-        ]}
-      />
       <MyReviewDetailClient
         appraisal={{
           id: appraisal.id,

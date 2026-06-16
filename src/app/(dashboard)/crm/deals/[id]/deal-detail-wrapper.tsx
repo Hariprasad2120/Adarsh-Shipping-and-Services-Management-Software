@@ -79,7 +79,7 @@ export function DealDetailWrapper({
           </Link>
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold tracking-tight text-white">{deal.name}</h2>
+              <h2 className="text-xl font-semibold tracking-tight text-white">{deal.name}</h2>
               <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${
                 deal.stage === "WON"
                   ? "bg-emerald-500/10 text-emerald-400"

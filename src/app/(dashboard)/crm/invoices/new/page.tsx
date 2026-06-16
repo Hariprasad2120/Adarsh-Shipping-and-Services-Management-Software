@@ -66,7 +66,7 @@ export default async function NewInvoicePage() {
   return (
     <div className="p-8 space-y-6 max-w-5xl mx-auto">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white">Generate Quote / Invoice</h2>
+        <h2 className="text-2xl font-semibold tracking-tight text-white">Generate Quote / Invoice</h2>
         <p className="text-slate-400 text-sm mt-1">Generate a quote, logistics order, purchase order, or sales invoice with dynamic GST line items.</p>
       </div>
       <InvoiceForm

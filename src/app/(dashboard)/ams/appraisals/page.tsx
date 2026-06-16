@@ -114,8 +114,6 @@ export default async function AppraisalsPage({
 
   return (
     <div className="space-y-8">
-      <h1 className="ds-h1 text-gray-900">Appraisals</h1>
-
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <h2 className="ds-h2 text-gray-900">Due This Month</h2>

@@ -23,13 +23,6 @@ type ModuleQuickLink = {
   icon: any;
 };
 
-const STAT_STYLES: Record<NonNullable<ModuleStat["tone"]>, string> = {
-  teal: "border-t-[#00cec4]",
-  blue: "border-t-[#00cec4]",
-  amber: "border-t-amber-400",
-  slate: "border-t-[#00cec4]",
-};
-
 function getStatIcon(label: string, tone: ModuleStat["tone"]) {
   const normalized = label.toLowerCase();
   const iconClassName = tone === "amber" ? "text-amber-600" : "text-[#00cec4]";
@@ -66,23 +59,12 @@ export function ModuleHome({
 
   return (
     <div className="space-y-6 font-sans">
-      <section className="flex items-center gap-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
-          <PageIcon size={20} />
-        </div>
-        <div className="min-w-0 self-center">
-          <h1 className="ds-h1 heading-icon-none leading-tight text-primary">
-            {title}
-          </h1>
-        </div>
-      </section>
-
       {stats.length > 0 && (
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {stats.map((stat, index) => (
             <article
               key={stat.label}
-              className={`group relative overflow-hidden rounded-[24px] border border-outline-variant/20 border-t-[3px] bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-surface dark:shadow-ambient dark:hover:shadow-ambient-hover [animation:fade-in-up_0.5s_cubic-bezier(0.22,1,0.36,1)_both] ${STAT_STYLES[stat.tone ?? "slate"]}`}
+              className="group relative overflow-hidden rounded-[24px] border border-outline-variant/20 bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-surface dark:shadow-ambient dark:hover:shadow-ambient-hover [animation:fade-in-up_0.5s_cubic-bezier(0.22,1,0.36,1)_both]"
               style={{ animationDelay: `${index * 75}ms` }}
             >
               <div className="absolute inset-x-0 top-0 h-14 bg-[linear-gradient(180deg,rgba(0,206,196,0.06),transparent)] dark:bg-[linear-gradient(180deg,rgba(0,206,196,0.08),transparent)]" />
@@ -126,7 +108,7 @@ export function ModuleHome({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="card-top-accent group rounded-[24px] border border-outline-variant/20 bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:border-[#00cec4]/30 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-surface dark:hover:border-primary/40 dark:hover:shadow-ambient-hover [animation:fade-in-up_0.5s_cubic-bezier(0.22,1,0.36,1)_both]"
+                  className="group rounded-[24px] border border-outline-variant/20 bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:border-[#00cec4]/30 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-surface dark:hover:border-primary/40 dark:hover:shadow-ambient-hover [animation:fade-in-up_0.5s_cubic-bezier(0.22,1,0.36,1)_both]"
                   style={{ animationDelay: `${160 + index * 75}ms` }}
                 >
                   <div className="flex items-start gap-3.5">

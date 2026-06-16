@@ -987,7 +987,8 @@ export function OtClient({
                   <Button
                     onClick={handleClearMonthRecords}
                     disabled={isPending}
-                    className="flex items-center gap-2 border border-rose-200 bg-transparent text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                    variant="outline"
+                    className="flex items-center gap-2 !border-rose-200 !bg-transparent !text-rose-600 hover:!bg-rose-50 hover:!text-rose-700"
                   >
                     <Trash className="size-4" />
                     Clear Month OT & Punches
@@ -1015,7 +1016,8 @@ export function OtClient({
                 </div>
                 <Button
                   onClick={() => setActiveTab("payroll")}
-                  className="w-full border border-outline-variant bg-transparent text-on-surface hover:bg-surface-container-low flex items-center justify-center gap-2"
+                  variant="outline"
+                  className="flex w-full items-center justify-center gap-2 !bg-transparent !text-on-surface hover:!bg-surface-container-low"
                 >
                   Go to Export Sheets
                   <ArrowRight className="size-4" />

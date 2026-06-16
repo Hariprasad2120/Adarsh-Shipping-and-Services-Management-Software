@@ -1510,9 +1510,6 @@ export function CriteriaClient({
           <Sparkles className="h-5 w-5 text-[#00cec4]" />
         </div>
         <div>
-          <h1 className="ds-h1 text-on-surface">
-            Rubric &amp; Criteria Builder
-          </h1>
           <p className="text-sm text-on-surface-variant">
             Configure evaluation criteria, assign weightages, and test assessments live.
           </p>

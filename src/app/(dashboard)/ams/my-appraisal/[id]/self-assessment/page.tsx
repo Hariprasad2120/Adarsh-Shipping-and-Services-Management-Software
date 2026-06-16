@@ -8,7 +8,6 @@ import type { AppraisalSelfFormTemplate, SelfAssessmentAnswers } from "@/modules
 import { mapCriterionRowToPoint } from "@/modules/ams/form-template";
 import { resolveSelfFormTemplate } from "@/modules/ams/self-form-template";
 import type { CriterionPoint } from "@/modules/ams/types";
-import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export default async function SelfAssessmentPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -61,17 +60,6 @@ export default async function SelfAssessmentPage({ params }: { params: Promise<{
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="space-y-2">
-        <Breadcrumbs
-          items={[
-            { label: "AMS", href: "/ams" },
-            { label: "My Appraisal", href: "/ams/my-appraisal" },
-            { label: "Self Assessment" },
-          ]}
-        />
-        <h1 className="ds-h1 text-on-surface">Self Assessment</h1>
-      </div>
-
       <SelfAssessmentForm
         appraisalId={id}
         criteria={categories}

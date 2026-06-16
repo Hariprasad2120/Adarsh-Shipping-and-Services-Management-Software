@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f7f9fb;
   --foreground: #191c1e;
@@ -455,14 +457,14 @@ main textarea {
 
 .card-top-accent {
   border-top-style: solid;
-  border-top-width: 3px;
-  border-top-color: #00cec4;
+  border-top-width: 0;
+  border-top-color: transparent;
 }
 
 .card-top-accent-violet {
   border-top-style: solid;
-  border-top-width: 3px;
-  border-top-color: #8a52ff;
+  border-top-width: 0;
+  border-top-color: transparent;
 }
 
 .crm-theme {

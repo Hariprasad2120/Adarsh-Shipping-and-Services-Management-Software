@@ -108,7 +108,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
       {/* ─── PAGE HEADER & STATS ────────────────────────────────────────── */}
       <div className="flex flex-col gap-4 border-b border-outline-variant/30 pb-5 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-on-surface">Deals Pipeline</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-on-surface">Deals Pipeline</h2>
           <p className="mt-1 text-sm text-on-surface-variant">Track shipping negotiations, freight forwarding pipelines, and CHA contracts.</p>
         </div>
         <div className="flex items-center gap-3">

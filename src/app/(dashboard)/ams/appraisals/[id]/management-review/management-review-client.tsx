@@ -155,7 +155,6 @@ export function ManagementReviewClient({
           {"< Appraisal Detail"}
         </Link>
         <span className="text-gray-300">/</span>
-        <h1 className="ds-h1 text-gray-900">Management Review</h1>
       </div>
 
       <Card title="Review Summary">

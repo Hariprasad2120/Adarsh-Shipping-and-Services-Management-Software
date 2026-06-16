@@ -7,7 +7,38 @@ import { signOut } from "next-auth/react";
 import { useMemo, useState, useEffect } from "react";
 import type { Caps } from "@/lib/rbac";
 import { getActiveItemHref, getVisibleSections, matchesPath } from "@/lib/navigation";
-import { Moon, Sun, LogOut, ChevronDown, ChevronRight } from "lucide-react";
+import { Sun, Moon, LogOut, ChevronDown, ChevronRight } from "lucide-react";
+
+type ThemeMode = "light" | "dark";
+
+function applyTheme(theme: ThemeMode) {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  const root = document.documentElement;
+  root.classList.remove("dark", "light");
+  root.classList.add(theme);
+  root.style.colorScheme = theme;
+  window.localStorage.setItem("theme", theme);
+}
+
+function detectTheme(): ThemeMode {
+  if (typeof document === "undefined") {
+    return "light";
+  }
+
+  const root = document.documentElement;
+  if (root.classList.contains("dark")) {
+    return "dark";
+  }
+
+  if (root.classList.contains("light")) {
+    return "light";
+  }
+
+  return "light";
+}
 
 function getIconColor(label: string, isActive: boolean) {
   if (isActive) return "text-[#00c4b6]";
@@ -88,6 +119,7 @@ const CRM_GROUP_ORDER = ["Sales", "Activities", "Inventory", "Support", "Integra
 export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
   const pathname = usePathname();
   const visibleSections = useMemo(() => getVisibleSections(caps), [caps]);
+  const [theme, setTheme] = useState<ThemeMode>(detectTheme);
 
   const activeSectionId =
     visibleSections.find((section) => matchesPath(pathname, section.href, section.matchPaths))?.id ??
@@ -107,41 +139,37 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
     setCrmExpandedGroups((prev) => ({ ...prev, [group]: !prev[group] }));
   };
 
+  const activeCrmItem = visibleSections
+    .find((s) => s.id === "crm")
+    ?.items.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
+
+  const effectiveCrmExpandedGroups = useMemo(() => {
+    const group = activeCrmItem ? CRM_GROUP_MAPPING[activeCrmItem.label] : undefined;
+    if (!group || crmExpandedGroups[group]) {
+      return crmExpandedGroups;
+    }
+
+    return { ...crmExpandedGroups, [group]: true };
+  }, [activeCrmItem, crmExpandedGroups]);
+
   useEffect(() => {
-    const activeCrmItem = visibleSections
-      .find((s) => s.id === "crm")
-      ?.items.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
-    if (activeCrmItem) {
-      const group = CRM_GROUP_MAPPING[activeCrmItem.label];
-      if (group) {
-        setCrmExpandedGroups((prev) => ({ ...prev, [group]: true }));
-      }
-    }
-  }, [pathname, visibleSections]);
+    applyTheme(theme);
+  }, [theme]);
 
-  const [theme, setTheme] = useState<"light" | "dark">(() =>
-    typeof document !== "undefined" && document.documentElement.classList.contains("dark") ? "dark" : "light"
-  );
-
-  const toggleTheme = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    if (nextTheme === "dark") {
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("light");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      document.documentElement.classList.add("light");
-      localStorage.setItem("theme", "light");
-    }
+  const setDashboardTheme = (nextTheme: ThemeMode) => {
+    applyTheme(nextTheme);
     setTheme(nextTheme);
   };
 
+  const toggleTheme = () => {
+    setDashboardTheme(theme === "dark" ? "light" : "dark");
+  };
+
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col overflow-hidden border-r border-[#1c212a]/50 bg-[#0f1319] select-none">
+    <aside className="fixed inset-y-0 left-0 z-40 flex w-57.5 flex-col overflow-hidden border-r border-outline-variant/50 bg-surface text-on-surface shadow-[0_12px_36px_-28px_rgba(15,23,42,0.28)] select-none dark:shadow-[0_18px_42px_-30px_rgba(0,0,0,0.48)]">
       <BrandLogo />
 
-      <div className="flex w-full flex-1 flex-col gap-0.5 overflow-y-auto pl-0 pr-3 py-2">
+      <div className="flex w-full flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2 scrollbar-none [&::-webkit-scrollbar]:hidden">
         {visibleSections.map((section) => {
           const isActive = section.id === activeSectionId;
           const Icon = section.icon;
@@ -152,16 +180,12 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
               <Link
                 href={section.href}
                 title={section.label}
-                className={`group relative flex w-full items-center rounded-r-md rounded-l-none pl-6 pr-4 py-2.5 transition-all duration-200 ${
+                className={`group relative flex w-full items-center rounded-md pl-4 pr-3 py-2 transition-all duration-200 ${
                   isActive
-                    ? "bg-[#161f28] text-[#00c4b6]"
-                    : "text-[#848d97] hover:bg-[#161f28]/40 hover:text-[#c9d1d9]"
+                    ? "bg-primary/10 text-primary"
+                    : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
                 }`}
               >
-                {isActive && (
-                  <div className="absolute left-0 top-0 bottom-0 w-[4px] rounded-r bg-[#00c4b6]" />
-                )}
-
                 <Icon
                   size={18}
                   className={`shrink-0 transition-transform duration-200 ${
@@ -170,11 +194,11 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
                       : `${getIconColor(section.label, false)} group-hover:scale-105`
                   }`}
                 />
-                <span className="ml-3 text-[13.5px] font-medium tracking-wide">{section.label}</span>
+                <span className="ml-3 text-[12px] font-medium tracking-wide">{section.label}</span>
               </Link>
 
               {isActive && section.id === "crm" ? (
-                <div className="ml-[38px] space-y-2 border-l border-[#1f2530] pl-2">
+                <div className="ml-2 space-y-2">
                   {CRM_GROUP_ORDER.map((groupTitle) => {
                     const groupItems = section.items.filter(
                       (item) => (CRM_GROUP_MAPPING[item.label] || "Sales") === groupTitle
@@ -190,7 +214,7 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
                           type="button"
                           onClick={() => toggleCrmGroup(groupTitle)}
                           className={`flex w-full items-center justify-between px-2 py-1 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
-                            hasActiveChild ? "text-[#00c4b6]" : "text-slate-500 hover:text-slate-300"
+                            hasActiveChild ? "text-primary" : "text-on-surface-variant hover:text-on-surface"
                           }`}
                         >
                           <span>{groupTitle}</span>
@@ -202,7 +226,7 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
                         </button>
 
                         {isGroupExpanded && (
-                          <div className="space-y-0.5 pl-1.5 border-l border-[#1c212a]/50 ml-1">
+                          <div className="ml-1 space-y-0.5 pl-1">
                             {groupItems.map((item) => {
                               const ItemIcon = item.icon;
                               const isChildActive = activeChildHref === item.href;
@@ -212,17 +236,17 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
                                   key={item.href}
                                   href={item.href}
                                   title={item.label}
-                                  className={`group relative flex items-center rounded-r-md rounded-l-none pl-3 pr-2 py-1.5 text-[11.5px] transition-all duration-200 ${
+                                  className={`group relative flex items-center rounded-md pl-3 pr-2 py-1.5 text-[12px] transition-all duration-200 ${
                                     isChildActive
-                                      ? "bg-[#161f28]/60 text-[#00c4b6]"
-                                      : "text-[#7d8590] hover:bg-[#161f28]/20 hover:text-[#c9d1d9]"
+                                      ? "bg-primary/10 text-primary"
+                                      : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
                                   }`}
                                 >
                                   <div
                                     className={`absolute left-1 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full transition-all duration-200 ${
                                       isChildActive
                                         ? "bg-[#00c4b6] shadow-[0_0_0_3px_rgba(0,196,182,0.16)]"
-                                        : "bg-white/5 group-hover:bg-white/20"
+                                        : "bg-outline-variant group-hover:bg-outline"
                                     }`}
                                   />
                                   <ItemIcon
@@ -245,7 +269,7 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
                 </div>
               ) : (
                 isActive && section.items.length > 0 && (
-                  <div className="ml-[38px] space-y-0.5 border-l border-[#1f2530] pl-4">
+                  <div className="ml-2 space-y-0.5 pl-1">
                     {section.items.map((item) => {
                       const ItemIcon = item.icon;
                       const isChildActive = activeChildHref === item.href;
@@ -255,17 +279,17 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
                           key={item.href}
                           href={item.href}
                           title={item.label}
-                          className={`group relative flex items-center rounded-r-md rounded-l-none pl-4 pr-3 py-2 text-[12px] transition-all duration-200 ${
+                          className={`group relative flex items-center rounded-md pl-4 pr-3 py-2 text-[12px] transition-all duration-200 ${
                             isChildActive
-                              ? "bg-[#161f28]/60 text-[#00c4b6]"
-                              : "text-[#7d8590] hover:bg-[#161f28]/20 hover:text-[#c9d1d9]"
+                              ? "bg-primary/10 text-primary"
+                              : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
                           }`}
                         >
                           <div
                             className={`absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full transition-all duration-200 ${
                               isChildActive
                                 ? "bg-[#00c4b6] shadow-[0_0_0_3px_rgba(0,196,182,0.16)]"
-                                : "bg-white/10 group-hover:bg-white/30"
+                                : "bg-outline-variant group-hover:bg-outline"
                             }`}
                           />
                           <ItemIcon
@@ -286,13 +310,13 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
         })}
       </div>
 
-      <div className="border-t border-[#1c212a] bg-[#0c0f14] px-4 py-3.5 flex items-center justify-between gap-3 shrink-0">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-outline-variant/50 bg-surface-container-low px-4 py-3.5">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="h-9 w-9 bg-[#00c4b6] text-white flex items-center justify-center font-bold text-sm rounded-full shrink-0">
             {userName ? userName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() : "SA"}
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-[13px] font-bold text-white truncate leading-none">{userName || "Site Admin"}</span>
+            <span className="truncate leading-none text-[13px] font-bold text-on-surface">{userName || "Site Admin"}</span>
             <div className="flex">
               <span className="bg-[#fef3c7] text-[#d97706] text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider scale-95 origin-left mt-1">
                 Admin
@@ -305,15 +329,15 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
           <button
             type="button"
             onClick={toggleTheme}
-            className="p-1.5 text-slate-400 hover:text-white rounded-md hover:bg-slate-800/20 transition-colors cursor-pointer"
-            title="Toggle theme"
+            className="cursor-pointer rounded-md p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+            title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
           >
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </button>
           <button
             type="button"
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="p-1.5 text-slate-400 hover:text-white rounded-md hover:bg-slate-800/20 transition-colors cursor-pointer"
+            className="cursor-pointer rounded-md p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
             title="Sign Out"
           >
             <LogOut size={16} />

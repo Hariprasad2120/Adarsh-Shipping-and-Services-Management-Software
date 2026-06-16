@@ -212,12 +212,6 @@ export default async function OvertimePage({ searchParams }: PageProps) {
   return (
     <div className="max-w-7xl space-y-6">
       <div className="space-y-1">
-        <h1 className="ds-h1 flex items-center gap-4 text-on-surface">
-          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
-            <Clock className="size-5" />
-          </span>
-          Overtime Management
-        </h1>
         <p className="text-sm font-medium text-on-surface-variant">
           {canApprove
             ? "Configure grace periods, view overtime metrics, track holidays, manage LOP logs, and export payroll statements."

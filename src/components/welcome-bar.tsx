@@ -1,8 +1,19 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { CalendarDays, Clock3, Sun, Sunrise, Sunset } from "lucide-react";
+import {
+  CalendarDays,
+  Clock3,
+  LayoutGrid,
+  Bell,
+  Settings,
+  Search,
+} from "lucide-react";
+import { useCaps } from "@/lib/caps-context";
+import { getVisibleSections, matchesPath } from "@/lib/navigation";
 
 function toTitleCase(value: string) {
   return value
@@ -13,21 +24,6 @@ function toTitleCase(value: string) {
     .join(" ");
 }
 
-function getGreeting(date: Date) {
-  const hour = date.getHours();
-  if (hour < 12) return "Good Morning";
-  if (hour < 17) return "Good Afternoon";
-  return "Good Evening";
-}
-
-function getGreetingPeriod(date: Date | null) {
-  if (!date) return "afternoon";
-  const hour = date.getHours();
-  if (hour < 12) return "morning";
-  if (hour < 17) return "afternoon";
-  return "evening";
-}
-
 export function AppHeader({
   userName,
   sessionToken,
@@ -35,6 +31,9 @@ export function AppHeader({
   userName: string;
   sessionToken: string;
 }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const caps = useCaps();
   const [now, setNow] = useState<Date | null>(null);
   const firstName = useMemo(
     () => toTitleCase(userName.split(" ")[0] || "there"),
@@ -61,8 +60,22 @@ export function AppHeader({
     });
   }, [firstName, sessionToken]);
 
-  const greeting = now ? getGreeting(now) : "Good Day";
-  const greetingPeriod = getGreetingPeriod(now);
+  const visibleSections = useMemo(() => getVisibleSections(caps), [caps]);
+  const activeSection = useMemo(
+    () =>
+      visibleSections.find((section) =>
+        matchesPath(pathname, section.href, section.matchPaths),
+      ) ?? visibleSections[0],
+    [pathname, visibleSections],
+  );
+  const activeItem = useMemo(
+    () =>
+      activeSection?.items.find((item) =>
+        matchesPath(pathname, item.href, item.matchPaths),
+      ) ?? null,
+    [activeSection, pathname],
+  );
+
   const dateLabel = now
     ? now.toLocaleDateString("en-IN", {
         weekday: "long",
@@ -75,41 +88,58 @@ export function AppHeader({
     ? now.toLocaleTimeString("en-IN", {
         hour: "2-digit",
         minute: "2-digit",
-        second: "2-digit",
+        hour12: true,
       })
-    : "--:--:--";
+    : "--:--";
+  const workspaceLabel = activeItem?.label ?? activeSection?.label ?? "Workspace";
+  const workspaceHref = activeItem?.href ?? activeSection?.href ?? "/dashboard";
+  const canOpenSettings = Boolean(caps["admin.org.manage"]);
+
+  const SectionIcon = activeSection?.icon ?? LayoutGrid;
 
   return (
-    <header className="bg-background/90 py-1 backdrop-blur">
-      <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div className="pt-0.5">
-          <h1 className="ds-h1 heading-icon-none flex items-center gap-4 text-foreground">
-            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
-              {greetingPeriod === "morning" ? (
-                <Sunrise className="size-5" />
-              ) : greetingPeriod === "evening" ? (
-                <Sunset className="size-5" />
-              ) : (
-                <Sun className="size-5" />
-              )}
-            </span>
-            {greeting}, {firstName}
-          </h1>
+    <header className="sticky top-0 z-20 h-14 shrink-0 border-b border-outline-variant/60 bg-white/85 backdrop-blur-sm flex items-center justify-between px-6 lg:px-8 xl:px-10">
+      <div className="flex items-center gap-3">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#00cec4]/10">
+          <SectionIcon size={16} className="text-[#00cec4]" />
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <span className="inline-flex items-center gap-2 rounded-2xl border border-outline-variant/30 bg-card px-3 py-2">
-            <span className="inline-flex size-10 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
-              <CalendarDays className="size-5" />
-            </span>
-            {dateLabel}
-          </span>
-          <span className="inline-flex items-center gap-2 rounded-2xl border border-outline-variant/30 bg-card px-3 py-2 font-normal tabular-nums text-foreground">
-            <span className="inline-flex size-10 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
-              <Clock3 className="size-5" />
-            </span>
-            {timeLabel}
-          </span>
+        <h1 className="ds-h3 heading-icon-none text-on-surface">{workspaceLabel}</h1>
+      </div>
+
+      <div className="hidden flex-1 max-w-md mx-4 xl:block">
+        <div className="flex items-center gap-3 rounded-xl border border-outline-variant/60 bg-surface px-4 py-1.5 text-on-surface-variant shadow-sm">
+          <Search className="size-4 shrink-0 text-[#00a99f]" />
+          <span className="truncate text-[13px]">{firstName}&apos;s workspace — {workspaceLabel}</span>
         </div>
+      </div>
+
+      <div className="flex items-center gap-3.5">
+        <span className="hidden items-center gap-2 rounded-xl border border-outline-variant/60 bg-surface px-3 py-1.5 text-xs text-on-surface-variant shadow-sm lg:inline-flex">
+          <CalendarDays className="size-3.5 text-[#00a99f]" />
+          {dateLabel}
+        </span>
+        <span className="hidden items-center gap-2 rounded-xl border border-outline-variant/60 bg-surface px-3 py-1.5 text-xs tabular-nums text-on-surface shadow-sm md:inline-flex">
+          <Clock3 className="size-3.5 text-[#00a99f]" />
+          {timeLabel}
+        </span>
+        <button
+          type="button"
+          onClick={() => router.push("/notifications")}
+          className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-all cursor-pointer"
+          title="Notifications"
+        >
+          <Bell className="size-4.5" />
+        </button>
+        {canOpenSettings ? (
+          <button
+            type="button"
+            onClick={() => router.push("/admin/settings")}
+            className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-all cursor-pointer"
+            title="Settings"
+          >
+            <Settings className="size-4.5" />
+          </button>
+        ) : null}
       </div>
     </header>
   );

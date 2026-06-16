@@ -48,7 +48,7 @@ export default async function CrmLeadSourcesLogsPage() {
             <ArrowLeft className="size-4" />
           </Link>
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-white font-sans">Import Run History</h2>
+            <h2 className="text-2xl font-semibold tracking-tight text-white font-sans">Import Run History</h2>
             <p className="text-slate-400 text-sm mt-1">Audit log records of manual and scheduled Playwright lead ingestion processes.</p>
           </div>
         </div>

@@ -53,7 +53,7 @@ export default async function CrmLeadSourcesPage() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#1c212a]/30 pb-5">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">Lead Sources</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-white">Lead Sources</h2>
           <p className="text-slate-400 text-sm mt-1">Integrate external inquiry channels and configure RPA workers to capture CRM leads.</p>
         </div>
       </div>

@@ -149,7 +149,7 @@ export function MetaText({
 }) {
   return (
     <div className="min-w-0" title={title}>
-      <p className="truncate font-medium text-on-surface">{primary}</p>
+      <p className="truncate font-normal text-on-surface">{primary}</p>
       {secondary ? <p className="truncate text-xs text-on-surface-variant">{secondary}</p> : null}
     </div>
   );
@@ -169,7 +169,7 @@ export function AvatarCell({
 
   return (
     <div className="flex min-w-0 items-center gap-3" title={title ?? name}>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
         {initials}
       </div>
       <MetaText primary={name} secondary={secondary} />

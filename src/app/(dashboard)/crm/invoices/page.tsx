@@ -69,7 +69,7 @@ export default async function CrmInvoicesPage({ searchParams }: { searchParams: 
       {/* Page Header */}
       <div className="flex flex-col gap-4 border-b border-outline-variant/30 pb-5 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-on-surface">Invoices & Billing</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-on-surface">Invoices & Billing</h2>
           <p className="mt-1 text-sm text-on-surface-variant">Manage client quotes, logistics sales orders, supplier purchase orders, and standard GST invoices.</p>
         </div>
         <div className="flex items-center gap-2">

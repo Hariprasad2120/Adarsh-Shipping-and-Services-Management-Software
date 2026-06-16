@@ -31,16 +31,14 @@ function StatsCard({
   icon,
   label,
   value,
-  tone,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
-  tone: string;
 }) {
   return (
     <article
-      className={`group relative overflow-hidden rounded-[24px] border border-outline-variant/20 border-t-[3px] bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-surface dark:shadow-ambient dark:hover:shadow-ambient-hover ${tone}`}
+      className="group relative overflow-hidden rounded-[24px] border border-outline-variant/20 bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-surface dark:shadow-ambient dark:hover:shadow-ambient-hover"
     >
       <div className="absolute inset-x-0 top-0 h-14 bg-[linear-gradient(180deg,rgba(0,206,196,0.06),transparent)] dark:bg-[linear-gradient(180deg,rgba(0,206,196,0.08),transparent)]" />
       <div className="relative flex h-full flex-col">
@@ -119,25 +117,21 @@ export function SalaryRevisionsClient({
           icon={<IndianRupee className="size-5 text-[#00cec4]" strokeWidth={1.9} />}
           label="Total revisions"
           value={String(stats.totalRevisions)}
-          tone="border-t-[#00cec4]"
         />
         <StatsCard
           icon={<Users className="size-5 text-[#00cec4]" strokeWidth={1.9} />}
           label="Employees"
           value={String(stats.employees)}
-          tone="border-t-[#00cec4]"
         />
         <StatsCard
           icon={<FileText className="size-5 text-[#00cec4]" strokeWidth={1.9} />}
           label="Approved"
           value={String(stats.approved)}
-          tone="border-t-[#00cec4]"
         />
         <StatsCard
           icon={<TrendingUp className="size-5 text-amber-600" strokeWidth={1.9} />}
           label="Pending"
           value={String(stats.pending)}
-          tone="border-t-amber-400"
         />
       </div>
 

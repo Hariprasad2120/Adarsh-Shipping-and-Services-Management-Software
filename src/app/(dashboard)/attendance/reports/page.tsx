@@ -29,7 +29,6 @@ export default async function AttendanceReportsPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="ds-h1 mt-1 text-gray-900">Attendance Report - {monthName}</h1>
         <form className="flex gap-2">
           <AttendanceReportFilters month={month} now={now} year={year} />
           <button

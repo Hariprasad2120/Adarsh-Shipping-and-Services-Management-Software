@@ -18,9 +18,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <CapsProvider value={caps}>
       <NotificationProvider>
         <TodoReminderAgent />
-        <div className="flex min-h-screen overflow-x-clip bg-[#0f1319]">
+        <div className="flex min-h-screen overflow-x-clip bg-background text-foreground">
           <Sidebar caps={caps} userName={session.user.name} />
-          <main className="flex min-w-0 flex-1 flex-col overflow-x-clip bg-background pl-64">
+          <main className="flex min-w-0 flex-1 flex-col overflow-x-clip bg-background pl-57.5">
             <PageAnimator>
               <DashboardShell userName={session.user.name} sessionToken={session.user.id}>
                 {children}
