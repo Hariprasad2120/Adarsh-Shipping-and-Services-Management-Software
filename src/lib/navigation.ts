@@ -96,13 +96,6 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/hrms/ownership"],
       },
       {
-        href: "/hrms/salary-sheet",
-        label: "Salary Sheet",
-        icon: Analytics,
-        permission: "hrms.employee.create",
-        matchPaths: ["/hrms/salary-sheet"],
-      },
-      {
         href: "/hrms/salary-structure",
         label: "Salary Structure",
         icon: Analytics,
@@ -424,6 +417,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         icon: Report,
         permission: "crm.access",
         matchPaths: ["/crm/voc"],
+      },
+      {
+        href: "/crm/lead-sources",
+        label: "Lead Sources",
+        icon: Settings,
+        permission: "crm.leadSource.read",
+        matchPaths: ["/crm/lead-sources"],
       },
     ],
   },

@@ -28,9 +28,11 @@ export default async function HRMSPage() {
           ? "Browse the employee directory, profiles, and reporting lines."
           : item.href === "/hrms/employees/new"
             ? "Add a new employee and complete their onboarding details."
-            : item.href === "/hrms/salary-structure"
-              ? "Build salary structures, calculate take-home, and update payroll metadata."
-              : "Track each employee's latest salary revision and review their past history.",
+            : item.href === "/hrms/ownership"
+              ? "Define organizational hierarchy, team leads, and managers reporting lines."
+              : item.href === "/hrms/salary-structure"
+                ? "Build salary structures, calculate take-home, and update payroll metadata."
+                : "Track each employee's latest salary revision and review their past history.",
     })) ?? [];
 
   return (

@@ -186,6 +186,90 @@ export function LeadDetailWrapper({ lead, notes, attachments, activities, timeli
             </div>
           </div>
 
+          {/* Justdial Original Enquiry Section */}
+          {lead.crmExternalLead && (
+            <div className="p-6 rounded-xl bg-gradient-to-br from-[#0f1319] to-[#141b24] border border-orange-500/20 shadow-lg space-y-4">
+              <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3 mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="size-8 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center font-black text-sm">
+                    JD
+                  </div>
+                  <h3 className="font-bold text-sm text-white uppercase tracking-wider">Justdial Original Enquiry</h3>
+                </div>
+                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-orange-500/10 text-orange-400 border border-orange-500/10">
+                  Imported Inbound
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Customer Name</span>
+                  <span className="text-white font-medium">{lead.crmExternalLead.customerName}</span>
+                </div>
+                {lead.crmExternalLead.rawPayload && typeof lead.crmExternalLead.rawPayload === "object" && (lead.crmExternalLead.rawPayload as any).intentScore && (
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Intent Score</span>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                      (lead.crmExternalLead.rawPayload as any).intentScore.toLowerCase().includes("very high")
+                        ? "bg-red-500/10 text-red-400 border border-red-500/20 animate-pulse"
+                        : (lead.crmExternalLead.rawPayload as any).intentScore.toLowerCase().includes("high")
+                        ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
+                        : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                    }`}>
+                      🔥 {(lead.crmExternalLead.rawPayload as any).intentScore}
+                    </span>
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Mobile Number</span>
+                  <span className="text-white font-medium">{lead.crmExternalLead.mobileNumber}</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">City / Location</span>
+                  <span className="text-white font-medium">{lead.crmExternalLead.city || "Not provided"}</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Category / Query</span>
+                  <span className="text-white font-medium">{lead.crmExternalLead.category || "Not provided"}</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Enquiry Source</span>
+                  <span className="text-white font-medium">{lead.crmExternalLead.enquirySource || "Justdial Web Dashboard"}</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Original Status</span>
+                  <span className="text-white font-medium">{lead.crmExternalLead.enquiryStatus || "N/A"} ({lead.crmExternalLead.jdLeadStatus || "N/A"})</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Enquiry Time</span>
+                  <span className="text-white font-medium">
+                    {lead.crmExternalLead.enquiryDateTime ? new Date(lead.crmExternalLead.enquiryDateTime).toLocaleString("en-IN") : "N/A"}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Imported At</span>
+                  <span className="text-white font-medium">
+                    {new Date(lead.crmExternalLead.importedAt).toLocaleString("en-IN")}
+                  </span>
+                </div>
+
+                {/* Collapsible raw data payload */}
+                <div className="md:col-span-2 pt-2">
+                  <details className="group border border-[#1c212a]/30 rounded-lg p-3 bg-[#0a0d12]/40">
+                    <summary className="text-[10px] font-bold uppercase tracking-wider text-slate-400 cursor-pointer list-none flex items-center justify-between select-none">
+                      <span>View Raw Snapshot Payload</span>
+                      <span className="text-[#00c4b6] group-open:hidden">+ Expand</span>
+                      <span className="text-slate-500 hidden group-open:inline">- Collapse</span>
+                    </summary>
+                    <div className="mt-3 text-[10px] font-mono text-slate-400 bg-black/30 p-2 rounded max-h-48 overflow-y-auto whitespace-pre-wrap leading-relaxed border border-[#1c212a]/20">
+                      {JSON.stringify(lead.crmExternalLead.rawPayload, null, 2)}
+                    </div>
+                  </details>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Address & Tags Section */}
           <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
             <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">

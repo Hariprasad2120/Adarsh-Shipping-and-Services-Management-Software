@@ -200,6 +200,18 @@ export const NOTIFICATION_POLICIES: Record<string, NotificationPolicy> = {
     emailByDefault: false,
     labels: { open: "Open task" },
   },
+  BIOMETRIC_OFFLINE: {
+    source: "Attendance",
+    variant: "destructive",
+    appearance: "light",
+    priority: "important",
+    requiresAck: true,
+    resendable: true,
+    allowDismiss: true,
+    autoFadeMs: null,
+    emailByDefault: true,
+    labels: { open: "View status", acknowledge: "Acknowledge" },
+  },
 };
 
 export function getNotificationPolicy(kind: string): NotificationPolicy {

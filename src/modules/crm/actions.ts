@@ -5,6 +5,8 @@ import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import * as crmService from "./service";
 import { db } from "@/lib/db";
+import * as leadSourceService from "./lead-source.service";
+import { runJustdialImport, testJustdialSession } from "./justdial-import.service";
 
 type ActionResponse = { ok: true; data?: any } | { ok: false; error: string };
 
@@ -1567,5 +1569,121 @@ export async function seedCrmDemoDataAction(): Promise<ActionResponse> {
     return { ok: true };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to generate CRM demo data" };
+  }
+}
+
+// ─── Justdial Importer Actions ──────────────────────────────────────────────────
+
+export async function saveJustdialConfigAction(formData: FormData): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.leadSource.manage");
+
+    const dashboardUrl = formData.get("dashboardUrl") as string;
+    if (!dashboardUrl) {
+      return { ok: false, error: "Dashboard URL is required" };
+    }
+
+    const data = {
+      dashboardUrl,
+      importMode: (formData.get("importMode") as string) || "MANUAL",
+      scheduleInterval: (formData.get("scheduleInterval") as string) || "1h",
+      maxLeads: parseInt((formData.get("maxLeads") as string) || "50", 10) || 50,
+      duplicateHandling: (formData.get("duplicateHandling") as string) || "UPDATE_EXISTING",
+      defaultOwnerId: (formData.get("defaultOwnerId") as string) || session.user.id,
+      defaultStage: (formData.get("defaultStage") as string) || "NEW",
+      cookiesJson: (formData.get("cookiesJson") as string) || null,
+      isActive: formData.get("isActive") === "true",
+    };
+
+    const config = await leadSourceService.saveJustdialConfig(orgId, data);
+    revalidatePath("/crm/lead-sources");
+    return { ok: true, data: config };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to save Justdial configuration" };
+  }
+}
+
+export async function runJustdialImportAction(): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.lead.import");
+
+    const config = await leadSourceService.getJustdialConfig(orgId);
+    if (!config) {
+      return { ok: false, error: "Justdial integration is not configured." };
+    }
+
+    if (config.isImporting) {
+      return { ok: false, error: "A lead import run is already in progress. Please try again shortly." };
+    }
+
+    // Set lock
+    await leadSourceService.setImportingLock(orgId, true);
+
+    // Create log entry
+    const log = await leadSourceService.createImportLog(orgId);
+
+    // Run scraper synchronously (or inside server action)
+    try {
+      await runJustdialImport(orgId, session.user.id, log.id);
+    } finally {
+      // Release lock
+      await leadSourceService.setImportingLock(orgId, false);
+    }
+
+    revalidatePath("/crm/lead-sources");
+    revalidatePath("/crm/leads");
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Import run failed." };
+  }
+}
+
+export async function testJustdialSessionAction(): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.leadSource.manage");
+
+    const res = await testJustdialSession(orgId);
+    if (res.ok) {
+      return { ok: true, data: res.title };
+    } else {
+      return { ok: false, error: res.error || "Session test failed." };
+    }
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to test session." };
+  }
+}
+
+export async function getJustdialLogsAction(): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.leadSource.read");
+
+    const logs = await leadSourceService.getImportLogs(orgId);
+    return { ok: true, data: logs };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch logs" };
   }
 }

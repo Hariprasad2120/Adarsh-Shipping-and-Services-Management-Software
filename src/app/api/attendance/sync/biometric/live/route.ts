@@ -2,7 +2,9 @@ import { NextRequest } from "next/server";
 import { getSessionOrUnauth, ok, err } from "@/lib/api-helpers";
 import { requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
-import { getEsslConfig, punchTable, buildDeviceDirMap, resolveDirection, esslDateToUtc } from "@/lib/essl";
+import { getEsslConfig, punchTable, buildDeviceDirMap, resolveDirection, esslDateToUtc, testEsslConnection } from "@/lib/essl";
+import { intimateAdminsOffline } from "@/modules/notifications/service";
+import { calculateOtForPunch } from "@/lib/ot";
 import mssql from "mssql";
 
 function toDateString(date: Date): string {
@@ -103,6 +105,24 @@ export async function POST(req: NextRequest) {
   const config = getEsslConfig();
   if (!config) {
     return err("eSSL database not configured.", 503);
+  }
+
+  // Fast connection test to fail early if host is offline
+  const connected = await testEsslConnection(config);
+  if (!connected) {
+    const errorMsg = "Live biometric sync failed: eSSL database host is offline or unreachable.";
+    await db.biometricSyncLog.create({
+      data: {
+        orgId,
+        status: "FAILED",
+        type: "AUTO",
+        triggeredById: session!.user.id,
+        recordsSynced: 0,
+        errorMessage: errorMsg,
+      },
+    });
+    await intimateAdminsOffline(orgId, errorMsg);
+    return err(errorMsg, 503);
   }
 
   const startTs = Date.now();
@@ -227,6 +247,9 @@ export async function POST(req: NextRequest) {
             biometricSynced: true,
           },
         });
+
+        // Recalculate OT and Comp-Off for this punch
+        await calculateOtForPunch(hrmsId, attendanceDate);
 
         if (existing) updated++;
         else synced++;

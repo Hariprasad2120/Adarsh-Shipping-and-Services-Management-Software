@@ -2,25 +2,30 @@ import { db } from "@/lib/db";
 import { notify } from "@/lib/notify";
 import { getNow } from "@/lib/clock";
 import { notifyMany, getUsersWithPermission } from "@/modules/notifications/service";
+import { calculateOtForPunch } from "@/lib/ot";
 
 // ─── Punch ────────────────────────────────────────────────────────────────────
 
 export async function punchIn(userId: string, date: Date) {
   const now = await getNow();
-  return db.attendancePunch.upsert({
+  const punch = await db.attendancePunch.upsert({
     where: { userId_date: { userId, date } },
     update: { inAt: now },
     create: { userId, date, inAt: now, source: "web" },
   });
+  await calculateOtForPunch(userId, date);
+  return punch;
 }
 
 export async function punchOut(userId: string, date: Date) {
   const now = await getNow();
-  return db.attendancePunch.upsert({
+  const punch = await db.attendancePunch.upsert({
     where: { userId_date: { userId, date } },
     update: { outAt: now },
     create: { userId, date, outAt: now, source: "web" },
   });
+  await calculateOtForPunch(userId, date);
+  return punch;
 }
 
 export async function getMonthAttendance(userId: string, year: number, month: number) {

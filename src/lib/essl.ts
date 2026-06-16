@@ -136,3 +136,32 @@ export function pairPunches(punches: RawPunch[]): PunchSession[] {
   }
   return sessions;
 }
+
+/**
+ * Ping test connection to the biometric database server.
+ * Uses a short 3s timeout to fail fast if the host is offline.
+ */
+export async function testEsslConnection(config: mssql.config): Promise<boolean> {
+  let pool: mssql.ConnectionPool | null = null;
+  try {
+    const testConfig = {
+      ...config,
+      connectionTimeout: 3000,
+      requestTimeout: 3000,
+      pool: { max: 1, min: 0, idleTimeoutMillis: 1000 },
+    };
+    pool = await mssql.connect(testConfig);
+    await pool.request().query("SELECT 1");
+    return true;
+  } catch (err) {
+    console.error("[eSSL Connection Check] Active connection failed:", err);
+    return false;
+  } finally {
+    if (pool) {
+      try {
+        await pool.close();
+      } catch {}
+    }
+  }
+}
+

@@ -65,6 +65,9 @@ const PERMISSIONS = [
   { key: "crm.project.manage", label: "Manage operational projects", group: "CRM" },
   { key: "crm.activity.manage", label: "Manage CRM activities", group: "CRM" },
   { key: "crm.settings.manage", label: "Manage CRM settings", group: "CRM" },
+  { key: "crm.leadSource.read", label: "View lead sources & settings", group: "CRM" },
+  { key: "crm.leadSource.manage", label: "Manage lead sources config", group: "CRM" },
+  { key: "crm.lead.import", label: "Run manual lead imports", group: "CRM" },
 ] as const;
 
 // ─── System roles & their default permissions ─────────────────────────────────
@@ -78,6 +81,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "ams.hike.finalise", "ams.appraisal.view_all",
     "crm.access", "crm.dashboard.read", "crm.lead.read",
     "crm.contact.manage", "crm.account.manage", "crm.deal.manage", "crm.invoice.manage",
+    "crm.leadSource.read", "crm.lead.import",
   ],
   HR: [
     "hrms.employee.read", "hrms.employee.create", "hrms.employee.edit",
@@ -90,6 +94,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "crm.access", "crm.dashboard.read", "crm.lead.read", "crm.lead.create",
     "crm.lead.convert", "crm.contact.manage", "crm.account.manage",
     "crm.deal.manage", "crm.activity.manage", "crm.project.manage",
+    "crm.leadSource.read", "crm.leadSource.manage", "crm.lead.import",
   ],
   Manager: [
     "hrms.employee.read", "hrms.documents.read",
@@ -112,6 +117,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "ams.hike.finalise", "ams.appraisal.view_all",
     "crm.access", "crm.dashboard.read", "crm.lead.read",
     "crm.contact.manage", "crm.account.manage", "crm.deal.manage", "crm.invoice.manage",
+    "crm.leadSource.read", "crm.leadSource.manage", "crm.lead.import",
   ],
   Employee: [
     "hrms.employee.read",

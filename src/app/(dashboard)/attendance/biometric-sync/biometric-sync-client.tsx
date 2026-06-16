@@ -36,6 +36,7 @@ const Spinner = ({ className }: { className?: string }) => (
 
 interface SyncStatus {
   configured: boolean;
+  connected?: boolean;
   lastSync: string | null;
   lastSyncMonth: string | null;
   logs: SyncLogEntry[];
@@ -138,6 +139,38 @@ function fmtHours(hours: number): string {
   return `${h}:${String(m).padStart(2, "0")} hrs`;
 }
 
+function getPeriodLabel(log: SyncLogEntry): string {
+  if (!log.month.startsWith("TODAY")) {
+    return log.month;
+  }
+
+  const logDate = new Date(log.time);
+  const logDateStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(logDate);
+
+  const todayStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+
+  if (logDateStr === todayStr) {
+    return "TODAY";
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(logDate);
+}
+
 // ─── Status badge classes ─────────────────────────────────────────────────────
 
 const STATUS_BADGE: Record<
@@ -231,11 +264,25 @@ export function BiometricSyncClient() {
     async (silent = false) => {
       if (!silent) setLiveSyncing(true);
       try {
-        await fetch("/api/attendance/sync/biometric/live", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ triggeredBy: "LIVE_AUTO" }),
-        });
+        // 1. Fetch current status to check connectivity and update client badges
+        const statusRes = await fetch("/api/attendance/sync/biometric");
+        let isConnected = false;
+        if (statusRes.ok) {
+          const statusData = (await statusRes.json()) as SyncStatus;
+          setStatus(statusData);
+          isConnected = !!statusData.connected;
+        }
+
+        // 2. Only trigger sync if connected/online
+        if (isConnected) {
+          await fetch("/api/attendance/sync/biometric/live", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ triggeredBy: "LIVE_AUTO" }),
+          });
+        }
+
+        // 3. Always pull snapshot from the local db to refresh UI
         const r = await fetch("/api/attendance/sync/biometric/live");
         if (r.ok) {
           const data = (await r.json()) as LiveData;
@@ -329,17 +376,31 @@ export function BiometricSyncClient() {
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 bg-white text-xs font-semibold">
           {loadingStatus ? (
             <Spinner className="size-3.5 animate-spin text-gray-400" />
-          ) : status?.configured ? (
-            <Wifi className="size-3.5 text-emerald-500" />
-          ) : (
+          ) : !status?.configured ? (
             <WifiOff className="size-3.5 text-red-500" />
+          ) : !status?.connected ? (
+            <WifiOff className="size-3.5 text-red-500 animate-pulse" />
+          ) : (
+            <Wifi className="size-3.5 text-emerald-500" />
           )}
           <span
             className={
-              status?.configured ? "text-emerald-600" : "text-red-600"
+              loadingStatus
+                ? "text-gray-400"
+                : !status?.configured
+                  ? "text-red-600"
+                  : !status?.connected
+                    ? "text-red-600 font-bold"
+                    : "text-emerald-600"
             }
           >
-            {status?.configured ? "eSSL Connected" : "Not Configured"}
+            {loadingStatus
+              ? "Checking..."
+              : !status?.configured
+                ? "Not Configured"
+                : !status?.connected
+                  ? "Not Connected"
+                  : "eSSL Connected"}
           </span>
         </div>
       </div>
@@ -754,10 +815,10 @@ export function BiometricSyncClient() {
                           {isLive ? (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
                               <span className="size-1 rounded-full bg-emerald-500" />
-                              {log.month}
+                              {getPeriodLabel(log)}
                             </span>
                           ) : (
-                            log.month
+                            getPeriodLabel(log)
                           )}
                         </td>
                         <td className="px-4 py-3 ds-numeric text-[11px] text-gray-400 whitespace-nowrap">
@@ -837,10 +898,12 @@ export function BiometricSyncClient() {
               <div className="flex items-center gap-3 mb-3">
                 {loadingStatus ? (
                   <Spinner className="size-5 text-gray-400 animate-spin" />
-                ) : status?.configured ? (
-                  <Wifi className="size-5 text-emerald-500" />
-                ) : (
+                ) : !status?.configured ? (
                   <WifiOff className="size-5 text-red-500" />
+                ) : !status?.connected ? (
+                  <WifiOff className="size-5 text-red-500 animate-pulse" />
+                ) : (
+                  <Wifi className="size-5 text-emerald-500" />
                 )}
                 <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
                   Connection
@@ -849,14 +912,18 @@ export function BiometricSyncClient() {
               <div className="text-sm font-semibold text-gray-900">
                 {loadingStatus
                   ? "Checking…"
-                  : status?.configured
-                    ? "eSSL DB Configured"
-                    : "Not Configured"}
+                  : !status?.configured
+                    ? "Not Configured"
+                    : !status?.connected
+                      ? "Not Connected"
+                      : "eSSL DB Connected"}
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                {status?.configured
-                  ? "ESSL_DB_SERVER / ESSL_DB_NAME set"
-                  : "Set ESSL_DB_* vars in .env"}
+                {!status?.configured
+                  ? "Set ESSL_DB_* vars in .env"
+                  : !status?.connected
+                    ? "eSSL database host is offline"
+                    : "ESSL_DB_SERVER / ESSL_DB_NAME set"}
               </p>
             </div>
 
@@ -919,7 +986,7 @@ export function BiometricSyncClient() {
               <button
                 id="btn-sync-now"
                 onClick={handleSync}
-                disabled={syncing || !status?.configured}
+                disabled={syncing || !status?.configured || !status?.connected}
                 className="inline-flex items-center gap-2 bg-primary text-white rounded-xl px-5 py-2 text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {syncing ? (

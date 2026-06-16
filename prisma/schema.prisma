@@ -221,6 +221,8 @@ model User {
   crmNotesCreated       CrmNote[]          @relation("CrmNoteCreator")
   crmAttachmentsCreated CrmAttachment[]    @relation("CrmAttachmentCreator")
   crmTimelineCreated    CrmTimelineEvent[] @relation("CrmTimelineCreator")
+  crmJdConfigs                 CrmLeadSourceJustdialConfig[] @relation("CrmJdConfigOwner")
+  crmExternalLeadsAssigned     CrmExternalLeadSnapshot[]    @relation("CrmExternalLeadAssignee")
 
   @@index([orgId])
   @@index([isPlatformAdmin, active])
@@ -1003,6 +1005,7 @@ model CrmLead {
   tags           String[] // array of tags
   isConverted    Boolean  @default(false)
   convertedAt    DateTime?
+  crmExternalLead CrmExternalLeadSnapshot? @relation("CrmExternalLeadToLead")
   
   createdById    String
   updatedById    String
@@ -1313,4 +1316,74 @@ model CrmTimelineEvent {
 
   @@index([orgId])
   @@index([relatedToType, relatedToId])
+}
+
+model CrmLeadSourceJustdialConfig {
+  id                 String   @id @default(cuid())
+  orgId              String   @unique
+  dashboardUrl       String
+  importMode         String   @default("MANUAL") // MANUAL | SCHEDULED
+  scheduleInterval   String   @default("1h") // 15m, 30m, 1h
+  maxLeads           Int      @default(50)
+  duplicateHandling  String   @default("UPDATE_EXISTING") // UPDATE_EXISTING | SKIP
+  defaultOwnerId     String
+  defaultStage       String   @default("NEW")
+  isActive           Boolean  @default(true)
+  lastSyncedAt       DateTime?
+  cookiesJson        String?  // secure field to paste cookies array
+  isImporting        Boolean  @default(false) // lock to prevent overlapping runs
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  defaultOwner       User     @relation("CrmJdConfigOwner", fields: [defaultOwnerId], references: [id])
+
+  @@index([orgId])
+}
+
+model CrmExternalLeadSnapshot {
+  id               String    @id @default(cuid())
+  orgId            String
+  source           String    @default("JUSTDIAL")
+  externalLeadKey  String    @unique // duplicate key (mobileNumber + name + category + time)
+  customerName     String
+  mobileNumber     String
+  city             String?
+  category         String?
+  queryText        String?
+  enquirySource    String?
+  enquiryStatus    String?
+  enquiryDateTime  DateTime?
+  jdLeadStatus     String?
+  rawPayload       Json
+  importedAt       DateTime  @default(now())
+  lastSeenAt       DateTime  @default(now())
+  assignedToUserId String?
+  crmLeadId        String?   @unique
+  duplicateStatus  String    // NEW_LEAD | DUPLICATE_SKIPPED | DUPLICATE_UPDATED
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  crmLead          CrmLead?  @relation("CrmExternalLeadToLead", fields: [crmLeadId], references: [id], onDelete: SetNull)
+  assignedTo       User?     @relation("CrmExternalLeadAssignee", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+
+  @@index([orgId])
+  @@index([externalLeadKey])
+}
+
+model CrmLeadImportLog {
+  id           String    @id @default(cuid())
+  orgId        String
+  source       String    @default("JUSTDIAL")
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
+  status       String    // SUCCESS | FAILED
+  totalScanned Int       @default(0)
+  newLeads     Int       @default(0)
+  updatedLeads Int       @default(0)
+  failedLeads  Int       @default(0)
+  errorMessage String?
+  createdAt    DateTime  @default(now())
+
+  @@index([orgId])
+  @@index([createdAt])
 }

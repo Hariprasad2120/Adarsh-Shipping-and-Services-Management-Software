@@ -77,6 +77,7 @@ const CRM_GROUP_MAPPING: Record<string, string> = {
   "Sales Inbox": "Integrations",
   "Social Log": "Integrations",
   "Visits": "Integrations",
+  "Lead Sources": "Integrations",
   "Services": "Services & Projects",
   "Projects": "Services & Projects",
   "Feedback (VoC)": "Services & Projects",

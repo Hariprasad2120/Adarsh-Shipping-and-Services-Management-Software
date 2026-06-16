@@ -457,3 +457,84 @@ export async function flushEmailQueue(limit = 50): Promise<number> {
   }
   return sent;
 }
+
+/**
+ * Checks for existing active BIOMETRIC_OFFLINE notification.
+ * If none (i.e. no undismissed notification), triggers notifications to all users with permission 'attendance.punch.manage'.
+ */
+export async function intimateAdminsOffline(orgId: string, errorMsg: string) {
+  try {
+    const adminIds = await getUsersWithPermission(orgId, "attendance.punch.manage");
+    if (adminIds.length === 0) return;
+
+    for (const adminId of adminIds) {
+      const existing = await db.notification.findFirst({
+        where: {
+          userId: adminId,
+          orgId,
+          kind: "BIOMETRIC_OFFLINE",
+          dismissedAt: null, // Keep alert active if not dismissed, even if read or acknowledged
+        },
+      });
+
+      if (!existing) {
+        await createNotification({
+          userId: adminId,
+          orgId,
+          kind: "BIOMETRIC_OFFLINE",
+          title: "Biometric Host System Offline",
+          body: `The eSSL database host has gone offline or is unreachable. Error details: ${errorMsg}`,
+          link: "/attendance/biometric-sync",
+          priority: "important",
+          requiresAck: true,
+          email: true,
+        });
+      }
+    }
+  } catch (err) {
+    console.error("Failed to intimate admins about offline biometric database:", err);
+  }
+}
+
+/**
+ * Automatically resolves (dismisses) all active offline alerts for the given organisation
+ * once the biometric database is detected back online.
+ */
+export async function resolveOfflineNotifications(orgId: string) {
+  try {
+    const now = await getNow();
+    const activeAlerts = await db.notification.findMany({
+      where: {
+        orgId,
+        kind: "BIOMETRIC_OFFLINE",
+        dismissedAt: null,
+      },
+      select: { id: true, userId: true },
+    });
+
+    if (activeAlerts.length === 0) return;
+
+    await db.notification.updateMany({
+      where: { id: { in: activeAlerts.map((n) => n.id) } },
+      data: {
+        dismissedAt: now,
+        readAt: now,
+      },
+    });
+
+    await Promise.all(
+      activeAlerts.map((n) =>
+        recordNotificationActivity({
+          notificationId: n.id,
+          orgId,
+          actorId: n.userId,
+          event: "DISMISSED",
+        })
+      )
+    );
+  } catch (err) {
+    console.error("Failed to resolve offline notifications:", err);
+  }
+}
+
+

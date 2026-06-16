@@ -2,7 +2,9 @@ import { NextRequest } from "next/server";
 import { getSessionOrUnauth, ok, err } from "@/lib/api-helpers";
 import { requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
-import { getEsslConfig, punchTable, buildDeviceDirMap, resolveDirection, esslDateToUtc, IST_OFFSET_MS } from "@/lib/essl";
+import { getEsslConfig, punchTable, buildDeviceDirMap, resolveDirection, esslDateToUtc, IST_OFFSET_MS, testEsslConnection } from "@/lib/essl";
+import { intimateAdminsOffline, resolveOfflineNotifications } from "@/modules/notifications/service";
+import { calculateOtForPunch } from "@/lib/ot";
 import mssql from "mssql";
 import { z } from "zod";
 
@@ -32,7 +34,18 @@ export async function GET() {
 
   await requirePermission(session!.user.id, "attendance.punch.manage");
 
-  const configured = !!getEsslConfig();
+  const config = getEsslConfig();
+  const configured = !!config;
+  let connected = false;
+
+  if (config) {
+    connected = await testEsslConnection(config);
+    if (!connected) {
+      await intimateAdminsOffline(session!.user.orgId ?? "", "eSSL database host is unreachable.");
+    } else {
+      await resolveOfflineNotifications(session!.user.orgId ?? "");
+    }
+  }
 
   const dbLogs = await db.biometricSyncLog.findMany({
     where: { orgId: session!.user.orgId ?? "" },
@@ -72,6 +85,7 @@ export async function GET() {
 
   return ok({
     configured,
+    connected,
     logs,
   });
 }
@@ -94,6 +108,24 @@ export async function POST(req: NextRequest) {
 
   const config = getEsslConfig();
   if (!config) return err("eSSL database not configured.", 503);
+
+  // Fast connection test to fail early if host is offline
+  const connected = await testEsslConnection(config);
+  if (!connected) {
+    const errorMsg = "Biometric sync failed: eSSL database host is offline or unreachable.";
+    await db.biometricSyncLog.create({
+      data: {
+        orgId,
+        status: "FAILED",
+        type: "MANUAL",
+        triggeredById: session!.user.id,
+        recordsSynced: 0,
+        errorMessage: errorMsg,
+      },
+    });
+    await intimateAdminsOffline(orgId, errorMsg);
+    return err(errorMsg, 503);
+  }
 
   const [yearStr, monthStr] = parsed.data.month.split("-");
   const year = parseInt(yearStr!, 10);
@@ -250,6 +282,9 @@ export async function POST(req: NextRequest) {
             biometricSynced: true,
           },
         });
+
+        // Recalculate OT and Comp-Off for this punch
+        await calculateOtForPunch(hrmsId, attendanceDate);
 
         if (existing) updated++;
         else synced++;
