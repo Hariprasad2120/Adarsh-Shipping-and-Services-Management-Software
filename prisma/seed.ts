@@ -25,6 +25,8 @@ const PERMISSIONS = [
   { key: "hrms.documents.read", label: "View employee documents", group: "HRMS" },
   { key: "hrms.documents.upload", label: "Upload employee documents", group: "HRMS" },
   { key: "hrms.org_structure.manage", label: "Manage branches, departments, divisions", group: "HRMS" },
+  { key: "hrms.peopleplus.read", label: "Access PeoplePlus portal", group: "HRMS" },
+  { key: "hrms.peopleplus.admin", label: "Administer PeoplePlus features", group: "HRMS" },
 
   // Attendance
   { key: "attendance.punch.self", label: "Record own attendance", group: "Attendance" },
@@ -76,6 +78,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
   Admin: PERMISSIONS.map((p) => p.key), // full access
   Management: [
     "hrms.employee.read", "hrms.documents.read",
+    "hrms.peopleplus.read",
     "attendance.reports.view",
     "ams.appraisal.management_review", "ams.meeting.minutes",
     "ams.hike.finalise", "ams.appraisal.view_all",
@@ -86,6 +89,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
   HR: [
     "hrms.employee.read", "hrms.employee.create", "hrms.employee.edit",
     "hrms.hierarchy.manage", "hrms.documents.read", "hrms.documents.upload",
+    "hrms.peopleplus.read", "hrms.peopleplus.admin",
     "attendance.punch.manage", "attendance.leave.approve", "attendance.leave.manage",
     "attendance.ot.approve", "attendance.holidays.manage", "attendance.reports.view",
     "ams.appraisal.assign_reviewers", "ams.appraisal.force_reviewer",
@@ -98,6 +102,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
   ],
   Manager: [
     "hrms.employee.read", "hrms.documents.read",
+    "hrms.peopleplus.read",
     "attendance.leave.approve", "attendance.ot.approve", "attendance.reports.view",
     "ams.appraisal.review", "ams.meeting.minutes",
     "crm.access", "crm.dashboard.read", "crm.lead.read", "crm.lead.create",
@@ -105,6 +110,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
   ],
   TL: [
     "hrms.employee.read",
+    "hrms.peopleplus.read",
     "attendance.leave.approve", "attendance.ot.approve",
     "ams.appraisal.review", "ams.meeting.minutes",
     "crm.access", "crm.dashboard.read", "crm.lead.read",
@@ -112,6 +118,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
   ],
   Director: [
     "hrms.employee.read", "hrms.documents.read",
+    "hrms.peopleplus.read",
     "attendance.reports.view",
     "ams.appraisal.management_review", "ams.meeting.minutes",
     "ams.hike.finalise", "ams.appraisal.view_all",
@@ -121,6 +128,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
   ],
   Employee: [
     "hrms.employee.read",
+    "hrms.peopleplus.read",
     "attendance.punch.self", "attendance.leave.request", "attendance.ot.request",
     "ams.appraisal.self_assess", "ams.meeting.minutes",
     "crm.access", "crm.activity.manage",

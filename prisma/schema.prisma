@@ -33,6 +33,7 @@ model Organisation {
   notifications       Notification[]
   notificationActivities NotificationActivity[]
   todoTasks           TodoTask[]
+  announcements       Announcement[]
 
   biometricSyncLogs   BiometricSyncLog[]
   workingCalendar     WorkingCalendar?
@@ -223,6 +224,29 @@ model User {
   crmTimelineCreated    CrmTimelineEvent[] @relation("CrmTimelineCreator")
   crmJdConfigs                 CrmLeadSourceJustdialConfig[] @relation("CrmJdConfigOwner")
   crmExternalLeadsAssigned     CrmExternalLeadSnapshot[]    @relation("CrmExternalLeadAssignee")
+
+  // PeoplePlus HRMS Relations
+  hrmsPreferences              EmployeePreference?
+  hrmsContact                  EmployeeContact?
+  hrmsShiftAssignments        ShiftAssignment[]          @relation("UserShiftAssignments")
+  hrmsPermissionRequests      AttendancePermissionRequest[] @relation("PermissionEmployee")
+  hrmsOnDutyRequests          OnDutyRequest[]            @relation("OnDutyEmployee")
+  hrmsTimesheetSubmissions    TimesheetSubmission[]      @relation("TimesheetSubmissions")
+  hrmsGoals                   Goal[]                     @relation("EmployeeGoals")
+  hrmsSkills                  EmployeeSkill[]            @relation("EmployeeSkills")
+  hrmsFeedbacksGiven          PerformanceFeedback[]      @relation("FeedbackGiven")
+  hrmsFeedbacksReceived       PerformanceFeedback[]      @relation("FeedbackReceived")
+  hrmsSalaryLetters           SalaryRevisionLetter[]     @relation("EmployeeSalaryLetters")
+  hrmsCourseEnrollments       CourseEnrollment[]         @relation("CourseEnrollments")
+  hrmsSurveyResponses         SurveyResponse[]           @relation("SurveyResponses")
+  hrmsCases                   HRCase[]                   @relation("HRCaseRaiser")
+  hrmsAssignedCases           HRCase[]                   @relation("HRCaseAssignee")
+  hrmsLetterRequests          HRLetterRequest[]          @relation("LetterRequests")
+  hrmsTravelRequests          TravelRequest[]            @relation("TravelRequests")
+  hrmsTasksAssigned           HrmsTask[]                 @relation("HrmsTasksAssigned")
+  hrmsTasksCreated            HrmsTask[]                 @relation("HrmsTasksCreated")
+  hrmsAuditLogs               HrmsAuditLog[]             @relation("HrmsAuditLogs")
+  hrmsWorkReports             WorkReport[]               @relation("UserWorkReports")
 
   @@index([orgId])
   @@index([isPlatformAdmin, active])
@@ -1387,3 +1411,481 @@ model CrmLeadImportLog {
   @@index([orgId])
   @@index([createdAt])
 }
+
+// ─── PeoplePlus HRMS Models ───────────────────────────────────────────────────
+
+model EmployeePreference {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  widgets   Json     // List of widget settings: { key, visible, order, width }[]
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EmployeeContact {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  personalEmail String?
+  emergencyName String?
+  emergencyPhone String?
+  addressLine1  String?
+  addressLine2  String?
+  city          String?
+  state         String?
+  country       String?
+  zipCode       String?
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ServiceDefinition {
+  id        String        @id @default(cuid())
+  orgId     String
+  key       String        @unique
+  name      String
+  icon      String?
+  position  Int           @default(0)
+  enabled   Boolean       @default(true)
+  forms     ServiceForm[]
+}
+
+model ServiceForm {
+  id          String             @id @default(cuid())
+  serviceId   String
+  name        String
+  formKey     String
+  enabled     Boolean            @default(true)
+  position    Int                @default(0)
+  service     ServiceDefinition  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  fields      CustomField[]
+}
+
+model CustomField {
+  id          String       @id @default(cuid())
+  formId      String
+  name        String
+  type        String       // TEXT | NUMBER | DATE | SELECT
+  required    Boolean      @default(false)
+  options     Json?        // string[] for SELECT type
+  form        ServiceForm  @relation(fields: [formId], references: [id], onDelete: Cascade)
+}
+
+model Shift {
+  id          String             @id @default(cuid())
+  orgId       String
+  name        String
+  startTime   String             // "HH:MM"
+  endTime     String             // "HH:MM"
+  workingDays String             // "1,2,3,4,5"
+  assignments ShiftAssignment[]
+}
+
+model ShiftAssignment {
+  id        String    @id @default(cuid())
+  userId    String
+  shiftId   String
+  startDate DateTime  @db.Date
+  endDate   DateTime? @db.Date
+  shift     Shift     @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  user      User      @relation("UserShiftAssignments", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AttendanceBreak {
+  id        String    @id @default(cuid())
+  punchId   String
+  breakStart DateTime
+  breakEnd  DateTime?
+  durationMinutes Int @default(0)
+}
+
+model AttendancePermissionRequest {
+  id           String    @id @default(cuid())
+  orgId        String
+  userId       String
+  date         DateTime  @db.Date
+  fromTime     String    // "HH:MM"
+  toTime       String    // "HH:MM"
+  reason       String
+  status       String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  approvedById String?
+  createdAt    DateTime  @default(now())
+  user         User      @relation("PermissionEmployee", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OnDutyRequest {
+  id           String    @id @default(cuid())
+  orgId        String
+  userId       String
+  fromDate     DateTime  @db.Date
+  toDate       DateTime  @db.Date
+  reason       String
+  status       String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  approvedById String?
+  createdAt    DateTime  @default(now())
+  user         User      @relation("OnDutyEmployee", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model BiometricDevice {
+  id         String   @id @default(cuid())
+  orgId      String
+  name       String
+  deviceCode String   @unique
+  ipAddress  String?
+  status     String   @default("ONLINE") // ONLINE | OFFLINE
+  lastActive DateTime @default(now())
+}
+
+model BiometricPunchImport {
+  id           String    @id @default(cuid())
+  orgId        String
+  employeeCode String
+  punchTime    DateTime
+  punchType    String    // CHECK_IN | CHECK_OUT
+  status       String    @default("PENDING") // PENDING | PROCESSED | FAILED
+  errorMessage String?
+  processedAt  DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+model TimesheetClient {
+  id          String             @id @default(cuid())
+  orgId       String
+  name        String
+  code        String
+  description String?
+  projects    TimesheetProject[]
+}
+
+model TimesheetProject {
+  id          String            @id @default(cuid())
+  orgId       String
+  clientId    String
+  name        String
+  code        String
+  description String?
+  client      TimesheetClient   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  jobs        TimesheetJob[]
+}
+
+model TimesheetJob {
+  id          String           @id @default(cuid())
+  orgId       String
+  projectId   String
+  name        String
+  description String?
+  project     TimesheetProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  timeLogs    TimeLog[]
+}
+
+model TimeLog {
+  id          String       @id @default(cuid())
+  orgId       String
+  userId      String
+  jobId       String
+  date        DateTime     @db.Date
+  hours       Float
+  isBillable  Boolean      @default(true)
+  description String?
+  job         TimesheetJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model TimesheetSubmission {
+  id           String    @id @default(cuid())
+  orgId        String
+  userId       String
+  startDate    DateTime  @db.Date
+  endDate      DateTime  @db.Date
+  status       String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  approvedById String?
+  createdAt    DateTime  @default(now())
+  user         User      @relation("TimesheetSubmissions", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Goal {
+  id          String   @id @default(cuid())
+  orgId       String
+  userId      String
+  title       String
+  target      String
+  progress    Float    @default(0.0)
+  status      String   @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | COMPLETED | DEFERRED
+  dueDate     DateTime @db.Date
+  createdAt   DateTime @default(now())
+  user         User     @relation("EmployeeGoals", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Skill {
+  id          String          @id @default(cuid())
+  orgId       String
+  name        String
+  description String?
+  employees   EmployeeSkill[]
+}
+
+model EmployeeSkill {
+  id          String @id @default(cuid())
+  userId      String
+  skillId     String
+  proficiency String // BEGINNER | INTERMEDIATE | ADVANCED | EXPERT
+  skill       Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  user        User   @relation("EmployeeSkills", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PerformanceFeedback {
+  id           String   @id @default(cuid())
+  orgId        String
+  fromUserId   String
+  toUserId     String
+  content      String
+  feedbackType String   // PEER_TO_PEER | MANAGER_REVIEW | SELF_REVIEW
+  createdAt    DateTime @default(now())
+  fromUser     User     @relation("FeedbackGiven", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser       User     @relation("FeedbackReceived", fields: [toUserId], references: [id], onDelete: Cascade)
+}
+
+model SalaryRevisionLetter {
+  id            String   @id @default(cuid())
+  orgId         String
+  userId        String
+  letterDate    DateTime @db.Date
+  fileKey       String
+  effectiveDate DateTime @db.Date
+  createdAt     DateTime @default(now())
+  user          User     @relation("EmployeeSalaryLetters", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Course {
+  id          String             @id @default(cuid())
+  orgId       String
+  title       String
+  description String?
+  duration    String?
+  category    String?
+  enrollments CourseEnrollment[]
+}
+
+model CourseEnrollment {
+  id          String    @id @default(cuid())
+  userId      String
+  courseId    String
+  status      String    @default("ENROLLED") // ENROLLED | IN_PROGRESS | COMPLETED
+  progress    Float     @default(0.0)
+  enrolledAt  DateTime  @default(now())
+  completedAt DateTime?
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user        User      @relation("CourseEnrollments", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Survey {
+  id          String           @id @default(cuid())
+  orgId       String
+  title       String
+  description String?
+  status      String           @default("DRAFT") // DRAFT | ACTIVE | CLOSED | ARCHIVED
+  anonymous   Boolean          @default(false)
+  audience    Json?            // Target filters: { departmentId?, branchId? }
+  startDate   DateTime?        @db.Date
+  endDate     DateTime?        @db.Date
+  createdAt   DateTime         @default(now())
+  questions   SurveyQuestion[]
+}
+
+model SurveyQuestion {
+  id       String @id @default(cuid())
+  surveyId String
+  question String
+  type     String // SINGLE_CHOICE | MULTIPLE_CHOICE | TEXT | RATING
+  options  Json?  // string[]
+  order    Int    @default(0)
+  survey   Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+}
+
+model SurveyResponse {
+  id        String   @id @default(cuid())
+  orgId     String
+  surveyId  String
+  userId    String?  // null if anonymous
+  answers   Json     // answers map: { [questionId]: answer }
+  createdAt DateTime @default(now())
+  user      User?    @relation("SurveyResponses", fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model FileFolder {
+  id          String     @id @default(cuid())
+  orgId       String
+  name        String
+  parentId    String?
+  scope       String     @default("personal") // personal | organization | employee
+  createdById String
+  createdAt   DateTime   @default(now())
+  files       FileAsset[]
+}
+
+model FileAsset {
+  id          String      @id @default(cuid())
+  orgId       String
+  name        String
+  fileKey     String
+  mimeType    String
+  sizeBytes   Int
+  folderId    String?
+  scope       String      @default("personal")
+  createdById String
+  createdAt   DateTime    @default(now())
+  folder      FileFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+}
+
+model HRCaseCategory {
+  id          String   @id @default(cuid())
+  orgId       String
+  name        String
+  description String?
+  faqs        FAQ[]
+}
+
+model FAQ {
+  id         String         @id @default(cuid())
+  orgId      String
+  categoryId String
+  question   String
+  answer     String
+  category   HRCaseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+}
+
+model HRCase {
+  id          String          @id @default(cuid())
+  orgId       String
+  categoryId  String
+  userId      String
+  assigneeId  String?
+  title       String
+  description String
+  status      String          @default("OPEN") // OPEN | ASSIGNED | IN_PROGRESS | RESOLVED | CLOSED
+  priority    String          @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  comments    HRCaseComment[]
+  user        User            @relation("HRCaseRaiser", fields: [userId], references: [id], onDelete: Cascade)
+  assignee    User?           @relation("HRCaseAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+}
+
+model HRCaseComment {
+  id        String   @id @default(cuid())
+  caseId    String
+  userId    String
+  message   String
+  createdAt DateTime @default(now())
+  case      HRCase   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+}
+
+model HRLetterTemplate {
+  id        String   @id @default(cuid())
+  orgId     String
+  name      String
+  content   String   // rich text template with variables like {{employeeName}}
+  variables Json?    // string[]
+  createdAt DateTime @default(now())
+}
+
+model HRLetterRequest {
+  id           String    @id @default(cuid())
+  orgId        String
+  userId       String
+  templateId   String
+  status       String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  details      Json?     // Field values collected for the request
+  approvedById String?
+  fileKey      String?
+  createdAt    DateTime  @default(now())
+  user         User      @relation("LetterRequests", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TravelRequest {
+  id           String          @id @default(cuid())
+  orgId        String
+  userId       String
+  purpose      String
+  destination  String
+  fromDate     DateTime        @db.Date
+  toDate       DateTime        @db.Date
+  status       String          @default("PENDING") // PENDING | APPROVED | REJECTED
+  approvedById String?
+  createdAt    DateTime        @default(now())
+  expenses     TravelExpense[]
+  user         User            @relation("TravelRequests", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TravelExpense {
+  id              String        @id @default(cuid())
+  travelRequestId String
+  amount          Float
+  category        String        // HOTEL | FOOD | CAB | FLIGHT | OTHER
+  billFileKey     String?
+  status          String        @default("PENDING") // PENDING | APPROVED | REJECTED
+  createdAt       DateTime      @default(now())
+  travelRequest   TravelRequest @relation(fields: [travelRequestId], references: [id], onDelete: Cascade)
+}
+
+model HrmsTask {
+  id          String   @id @default(cuid())
+  orgId       String
+  title       String
+  description String?
+  status      String   @default("PENDING") // PENDING | COMPLETED
+  priority    String   @default("MEDIUM")
+  dueDate     DateTime @db.Date
+  assigneeId  String
+  createdById String
+  createdAt   DateTime @default(now())
+  assignee    User     @relation("HrmsTasksAssigned", fields: [assigneeId], references: [id], onDelete: Cascade)
+  createdBy   User     @relation("HrmsTasksCreated", fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+model HrmsAuditLog {
+  id         String   @id @default(cuid())
+  orgId      String
+  userId     String
+  action     String   // e.g. PUNCH_IN, LEAVE_APPROVED, TICKET_RESOLVED
+  details    Json?
+  createdAt  DateTime @default(now())
+  user       User     @relation("HrmsAuditLogs", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  orgId       String
+  title       String
+  body        String
+  audience    Json?    // e.g. { branchId, departmentId }
+  publishedAt DateTime?
+  createdById String
+  createdAt   DateTime @default(now())
+  org         Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+model WorkReport {
+  id              String   @id @default(cuid())
+  orgId           String
+  userId          String
+  date            DateTime @db.Date
+  workedOn        String   // "Office" | "Home" | "Others"
+  jobNoName       String
+  description     String
+  status          String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  addedAddress    String?
+  modifiedAddress String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation("UserWorkReports", fields: [userId], references: [id], onDelete: Cascade)
+  approvals       WorkReportApproval[]
+}
+
+model WorkReportApproval {
+  id          String   @id @default(cuid())
+  reportId    String
+  approverId  String
+  status      String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  comments    String?
+  createdAt   DateTime @default(now())
+  report      WorkReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+}
+
