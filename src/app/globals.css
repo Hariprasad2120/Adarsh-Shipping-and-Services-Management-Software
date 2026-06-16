@@ -465,6 +465,85 @@ main textarea {
   border-top-color: #8a52ff;
 }
 
+.crm-theme {
+  background: var(--background);
+  color: var(--color-on-surface);
+}
+
+.crm-theme h1,
+.crm-theme h2,
+.crm-theme h3 {
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+}
+
+.crm-theme [class*="bg-[#0c0f14]"],
+.crm-theme [class*="bg-[#0f1319]"] {
+  background-color: var(--color-surface) !important;
+}
+
+.crm-theme [class*="bg-[#0a0d12]"] {
+  background-color: var(--color-surface-container-low) !important;
+}
+
+.crm-theme [class*="bg-[#161f28]"],
+.crm-theme [class*="bg-[#1f2d3a]"],
+.crm-theme [class*="bg-slate-800"] {
+  background-color: var(--color-surface-container) !important;
+}
+
+.crm-theme [class*="border-[#1c212a]"] {
+  border-color: rgba(191, 200, 198, 0.72) !important;
+}
+
+.crm-theme [class*="divide-[#1c212a]"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(191, 200, 198, 0.45) !important;
+}
+
+.crm-theme [class*="text-white"],
+.crm-theme [class*="text-slate-200"],
+.crm-theme [class*="text-slate-300"] {
+  color: var(--color-on-surface) !important;
+}
+
+.crm-theme [class*="text-slate-400"],
+.crm-theme [class*="text-slate-500"],
+.crm-theme [class*="text-slate-600"] {
+  color: var(--color-on-surface-variant) !important;
+}
+
+.crm-theme button[class*="bg-[#00c4b6]"],
+.crm-theme a[class*="bg-[#00c4b6]"] {
+  color: #ffffff !important;
+}
+
+.crm-theme button[class*="hover:bg-[#00b0a3]"]:hover,
+.crm-theme a[class*="hover:bg-[#00b0a3]"]:hover {
+  color: #ffffff !important;
+}
+
+.crm-theme input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.crm-theme select,
+.crm-theme textarea {
+  border-radius: var(--radius-xl) !important;
+  border-color: rgba(0, 206, 196, 0.35) !important;
+  color: var(--color-on-surface) !important;
+}
+
+.crm-theme input::placeholder,
+.crm-theme textarea::placeholder {
+  color: var(--color-placeholder) !important;
+}
+
+.crm-theme input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+.crm-theme input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus-visible,
+.crm-theme select:focus,
+.crm-theme select:focus-visible,
+.crm-theme textarea:focus,
+.crm-theme textarea:focus-visible {
+  border-color: rgba(0, 206, 196, 0.52) !important;
+  box-shadow: 0 0 0 3px rgba(14, 137, 149, 0.14) !important;
+}
+
 .cyan-range-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
