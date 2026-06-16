@@ -369,6 +369,7 @@ export function BiometricSyncClient() {
           `Sync complete — ${data.synced ?? 0} new, ${data.updated ?? 0} updated, ${data.skipped ?? 0} skipped`,
         );
         void fetchStatus();
+        void refreshLiveSnapshot(true);
       } else {
         toast.error(data.error ?? "Sync failed");
       }
@@ -1038,7 +1039,14 @@ export function BiometricSyncClient() {
                 id="btn-sync-now"
                 onClick={handleSync}
                 disabled={syncing || !status?.configured || !status?.connected}
-                className="inline-flex items-center gap-2 bg-[#00cec4] text-slate-950 rounded-xl px-5 py-2.5 text-sm font-bold hover:bg-[#00c4b6] active:scale-95 transition-all disabled:opacity-50 cursor-pointer shadow-lg"
+                title={
+                  !status?.configured
+                    ? "eSSL database not configured — add ESSL_DB_* to .env"
+                    : !status?.connected
+                      ? "eSSL database offline — cannot sync"
+                      : undefined
+                }
+                className="inline-flex items-center gap-2 bg-[#00cec4] text-slate-950 rounded-xl px-5 py-2.5 text-sm font-bold hover:bg-[#00c4b6] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg"
               >
                 {syncing ? (
                   <Spinner className="size-4 animate-spin" />

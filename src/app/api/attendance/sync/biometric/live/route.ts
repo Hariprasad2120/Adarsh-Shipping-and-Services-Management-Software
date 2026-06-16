@@ -259,7 +259,10 @@ export async function POST(req: NextRequest) {
       const ins = dayPunches.filter((p) => p.dir === "in");
       const outs = dayPunches.filter((p) => p.dir === "out");
       const checkIn = ins[0]?.time ?? dayPunches[0]?.time ?? null;
-      const checkOut = outs[outs.length - 1]?.time ?? null;
+      // Only mark checked-out if the last punch of the day was "out".
+      // If employee returned after lunch (last punch = "in"), keep outAt null.
+      const lastDayPunch = dayPunches[dayPunches.length - 1];
+      const checkOut = lastDayPunch?.dir === "out" ? (outs[outs.length - 1]?.time ?? null) : null;
 
       try {
         const attendanceDate = normalizeToISTMidnight(new Date(todayIst));
