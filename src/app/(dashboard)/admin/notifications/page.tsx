@@ -61,10 +61,10 @@ export default async function AdminNotificationsPage({
   return (
     <div className="space-y-4">
       <div>
-        <p className="mt-1 text-sm text-slate-500">View all user notifications in your organisation, inspect lifecycle activity, and resend notifications.</p>
+        <p className="mt-1 text-sm text-on-surface-variant">View all user notifications in your organisation, inspect lifecycle activity, and resend notifications.</p>
       </div>
 
-      <form className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-5">
+      <form className="grid gap-3 rounded-2xl border border-outline-variant bg-surface p-4 sm:grid-cols-2 lg:grid-cols-5">
         <AdminNotificationFilters
           activity={typeof params.activity === "string" ? params.activity : "all"}
           link={typeof params.link === "string" ? params.link : "all"}
@@ -109,7 +109,7 @@ function AdminNotificationFilters({
       <DropdownSelect
         name="userId"
         defaultValue={userId}
-        triggerClassName="border-slate-200"
+        triggerClassName="border-outline-variant"
         options={[
           { value: "", label: "All recipients" },
           ...users.map((user) => ({ value: user.id, label: user.name })),
@@ -118,7 +118,7 @@ function AdminNotificationFilters({
       <DropdownSelect
         name="status"
         defaultValue={status}
-        triggerClassName="border-slate-200"
+        triggerClassName="border-outline-variant"
         options={[
           { value: "all", label: "All statuses" },
           { value: "unread", label: "Unread" },
@@ -130,7 +130,7 @@ function AdminNotificationFilters({
       <DropdownSelect
         name="activity"
         defaultValue={activity}
-        triggerClassName="border-slate-200"
+        triggerClassName="border-outline-variant"
         options={[
           { value: "all", label: "All activity states" },
           { value: "active", label: "Active" },
@@ -141,7 +141,7 @@ function AdminNotificationFilters({
       <DropdownSelect
         name="requiresAck"
         defaultValue={requiresAck}
-        triggerClassName="border-slate-200"
+        triggerClassName="border-outline-variant"
         options={[
           { value: "all", label: "Ack required or not" },
           { value: "yes", label: "Ack required" },
@@ -151,7 +151,7 @@ function AdminNotificationFilters({
       <DropdownSelect
         name="source"
         defaultValue={source}
-        triggerClassName="border-slate-200"
+        triggerClassName="border-outline-variant"
         options={[
           { value: "", label: "All sources" },
           { value: "AMS", label: "AMS" },
@@ -164,7 +164,7 @@ function AdminNotificationFilters({
       <DropdownSelect
         name="link"
         defaultValue={link}
-        triggerClassName="border-slate-200"
+        triggerClassName="border-outline-variant"
         options={[
           { value: "all", label: "Link or no link" },
           { value: "yes", label: "Has link" },

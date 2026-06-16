@@ -63,7 +63,7 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
             placeholder="https://wap.justdial.com/analytics/leadsdashboard?el=0&min=1&docid=..."
             className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-[#00c4b6]"
           />
-          <p className="text-[10px] text-slate-500">Provide the exact mobile leads URL visible when logged into your merchant portal.</p>
+          <p className="text-[10px] text-on-surface-variant">Provide the exact mobile leads URL visible when logged into your merchant portal.</p>
         </div>
 
         {/* Import Mode */}
@@ -177,7 +177,7 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
             placeholder='[{"name": "MP_city", "value": "Chennai", "domain": ".justdial.com", "path": "/"}, ...]'
             className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs font-mono text-white placeholder-slate-600 focus:outline-none focus:border-[#00c4b6] leading-relaxed"
           />
-          <p className="text-[10px] text-slate-500">
+          <p className="text-[10px] text-on-surface-variant">
             Paste the cookies array exported from your browser. In development, it defaults to reading from C:/Users/Purushothaman/Downloads/Cookie.txt if left empty.
           </p>
         </div>

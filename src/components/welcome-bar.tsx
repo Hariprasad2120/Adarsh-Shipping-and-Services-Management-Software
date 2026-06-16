@@ -98,7 +98,7 @@ export function AppHeader({
   const SectionIcon = activeSection?.icon ?? LayoutGrid;
 
   return (
-    <header className="sticky top-0 z-20 h-14 shrink-0 border-b border-outline-variant/60 bg-white/85 backdrop-blur-sm flex items-center justify-between px-6 lg:px-8 xl:px-10">
+    <header className="sticky top-0 z-20 h-14 shrink-0 border-b border-outline-variant/60 bg-surface/90 backdrop-blur-sm flex items-center justify-between px-6 lg:px-8 xl:px-10">
       <div className="flex items-center gap-3">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#00cec4]/10">
           <SectionIcon size={16} className="text-[#00cec4]" />

@@ -165,7 +165,7 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="crm-theme flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-background text-on-surface">
       {/* ─── TOP UTILITY BAR ────────────────────────────────────────── */}
-      <header className="h-14 border-b border-outline-variant/60 bg-white/85 backdrop-blur-sm flex items-center justify-between px-6 shrink-0 z-20">
+      <header className="h-14 border-b border-outline-variant/60 bg-surface/90 backdrop-blur-sm flex items-center justify-between px-6 shrink-0 z-20">
         
         {/* Left Area: Module Title */}
         <div className="flex items-center gap-4">
@@ -339,7 +339,7 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
 
       {/* ─── APP LAUNCHER MODAL / POPUP ─── */}
       {showAppLauncher && (
-        <div className="absolute inset-0 bg-white/55 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-2xl bg-surface border border-outline-variant/70 rounded-2xl shadow-lg overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-outline-variant/50 bg-surface-container-low">
               <span className="font-bold text-sm text-on-surface uppercase tracking-wider">Monolith Engine App Launcher</span>

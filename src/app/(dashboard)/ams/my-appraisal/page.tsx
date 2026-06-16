@@ -13,11 +13,11 @@ const STAGE_COLOR: Record<string, string> = {
   MEETING_PENDING: "bg-cyan-50 text-cyan-700",
   MEETING_LIVE: "bg-green-50 text-green-700",
   HIKE_FINALISATION: "bg-pink-50 text-pink-700",
-  CLOSED: "bg-gray-100 text-gray-500",
+  CLOSED: "bg-surface-container-high text-on-surface-variant",
 };
 
 const STATUS_BADGE: Record<string, string> = {
-  PENDING: "bg-gray-100 text-gray-500",
+  PENDING: "bg-surface-container-high text-on-surface-variant",
   AVAILABLE: "bg-green-100 text-green-700",
   UNAVAILABLE: "bg-red-100 text-red-600",
   FORCED: "bg-orange-100 text-orange-600",
@@ -47,7 +47,7 @@ export default async function MyAppraisalPage() {
   return (
     <div className="space-y-6">
       {appraisals.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 bg-white px-6 py-12 text-center text-sm text-gray-400">
+        <div className="rounded-xl border border-outline-variant bg-surface px-6 py-12 text-center text-sm text-on-surface-variant/60">
           No appraisals found for your account.
         </div>
       ) : (
@@ -62,31 +62,31 @@ export default async function MyAppraisalPage() {
             const nonMgmtReviewers = appraisal.reviewers.filter((reviewer) => reviewer.kind !== "MANAGEMENT");
 
             return (
-              <div key={appraisal.id} className="space-y-5 rounded-xl border border-gray-200 bg-white p-6">
+              <div key={appraisal.id} className="space-y-5 rounded-xl border border-outline-variant bg-surface p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-base font-semibold text-gray-900">{appraisal.cycle.name}</p>
-                    <p className="mt-0.5 text-sm text-gray-500">
+                    <p className="text-base font-semibold text-on-surface">{appraisal.cycle.name}</p>
+                    <p className="mt-0.5 text-sm text-on-surface-variant">
                       Due: {new Date(appraisal.dueDate).toLocaleDateString("en-IN")}
                     </p>
                   </div>
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STAGE_COLOR[appraisal.stage] ?? "bg-gray-100 text-gray-500"}`}>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STAGE_COLOR[appraisal.stage] ?? "bg-surface-container-high text-on-surface-variant"}`}>
                     {STAGE_LABEL[appraisal.stage] ?? appraisal.stage.replace(/_/g, " ")}
                   </span>
                 </div>
 
                 {nonMgmtReviewers.length > 0 ? (
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your Reviewers</p>
-                    <div className="overflow-hidden rounded-lg border border-gray-100">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Your Reviewers</p>
+                    <div className="overflow-hidden rounded-lg border border-outline-variant/40">
                       <div className="divide-y divide-gray-100">
                         {nonMgmtReviewers.map((reviewer) => (
                           <div key={reviewer.id} className="flex items-center justify-between px-4 py-3 text-sm">
                             <div>
-                              <span className="font-medium text-gray-900">{reviewer.user.name}</span>
-                              <span className="ml-2 text-xs uppercase text-gray-400">{reviewer.kind}</span>
+                              <span className="font-medium text-on-surface">{reviewer.user.name}</span>
+                              <span className="ml-2 text-xs uppercase text-on-surface-variant/60">{reviewer.kind}</span>
                             </div>
-                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE[reviewer.availabilityStatus] ?? "bg-gray-100 text-gray-500"}`}>
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE[reviewer.availabilityStatus] ?? "bg-surface-container-high text-on-surface-variant"}`}>
                               {reviewer.availabilityStatus}
                             </span>
                           </div>
@@ -95,7 +95,7 @@ export default async function MyAppraisalPage() {
                     </div>
 
                     {appraisal.availabilityDeadline && appraisal.stage === "REVIEWERS_ASSIGNED" && (
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-on-surface-variant/60">
                         {availabilityDeadlinePassed
                           ? "Availability deadline has passed."
                           : `Reviewers have until ${new Date(appraisal.availabilityDeadline).toLocaleDateString("en-IN")} to confirm availability.`}
@@ -103,7 +103,7 @@ export default async function MyAppraisalPage() {
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-400">Reviewers not yet assigned.</p>
+                  <p className="text-sm text-on-surface-variant/60">Reviewers not yet assigned.</p>
                 )}
 
                 {appraisal.stage === "REVIEWERS_ASSIGNED" && appraisal.availabilityDeadline && (

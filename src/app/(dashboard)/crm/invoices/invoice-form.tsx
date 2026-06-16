@@ -334,7 +334,7 @@ export function InvoiceForm({ initialData, accounts, contacts, vendors, employee
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(index)}
-                        className="p-1 text-slate-500 hover:text-red-400 rounded hover:bg-slate-800 cursor-pointer"
+                        className="p-1 text-on-surface-variant hover:text-red-400 rounded hover:bg-slate-800 cursor-pointer"
                         title="Delete Row"
                       >
                         <Trash2 className="size-4" />
@@ -355,7 +355,7 @@ export function InvoiceForm({ initialData, accounts, contacts, vendors, employee
         <div className="w-full md:w-64 space-y-1.5">
           <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide">Applied Flat Discount (INR)</label>
           <div className="relative">
-            <DollarSign className="absolute left-2.5 top-2.5 size-4 text-slate-500" />
+            <DollarSign className="absolute left-2.5 top-2.5 size-4 text-on-surface-variant" />
             <input
               type="number"
               min="0"

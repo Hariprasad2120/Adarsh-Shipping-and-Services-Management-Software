@@ -146,7 +146,7 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
     <div className="max-w-7xl space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+          <p className="text-sm text-on-surface-variant dark:text-slate-400 font-medium">
             Define organizational hierarchy, team leads, and managers reporting lines.
           </p>
         </div>
@@ -163,7 +163,7 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
         <div className="grid gap-6 xl:grid-cols-[1fr_400px]">
           {/* TL list with employees */}
           <section className="space-y-4">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-slate-200">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-on-surface dark:text-slate-200">
               <UserCheck className="size-4 text-[#00cec4]" /> TL Teams
             </h2>
             {tlUsers.length === 0 && (
@@ -175,18 +175,18 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
               const owned = employeesByTl.get(tl.id) ?? [];
               return (
                 <div key={tl.id} className="rounded-xl border border-outline-variant bg-surface shadow-sm overflow-hidden">
-                  <div className="flex items-center justify-between gap-3 border-b border-outline-variant/60 px-5 py-3.5 bg-slate-50/50 dark:bg-slate-800/20">
+                  <div className="flex items-center justify-between gap-3 border-b border-outline-variant/60 px-5 py-3.5 bg-surface-container-high/50 dark:bg-slate-800/20">
                     <div>
                       <p className="text-sm font-bold text-slate-900 dark:text-white">{toTitleCase(tl.name)}</p>
                       <p className="text-[11px] font-medium text-slate-400">{tl.department?.name ?? "No department"} · TL</p>
                     </div>
-                    <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                    <span className="rounded-full bg-surface-container-high dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-on-surface-variant dark:text-slate-300">
                       {owned.length} employee{owned.length === 1 ? "" : "s"}
                     </span>
                   </div>
                   <div className="divide-y divide-outline-variant/60">
                     {owned.map((emp) => (
-                      <div key={emp.id} className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-slate-50/30 dark:hover:bg-slate-800/10 transition">
+                      <div key={emp.id} className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-surface-container-high/30 dark:hover:bg-slate-800/10 transition">
                         <div className="min-w-0">
                           <p className="truncate text-xs font-semibold text-slate-800 dark:text-slate-200">
                             {emp.employeeNumber ? `${emp.employeeNumber} – ` : ""}{toTitleCase(emp.name)}
@@ -228,7 +228,7 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
           {/* Assign form */}
           <section>
             <form action={assignEmployeesToTlAction} className="rounded-xl border border-outline-variant bg-surface p-5 space-y-4 shadow-sm">
-              <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-slate-200">
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-on-surface dark:text-slate-200">
                 <Users className="size-4 text-[#00cec4]" /> Assign to TL
               </h2>
               <div className="space-y-1.5">
@@ -246,12 +246,12 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
                 <Label>Employees (select one or more)</Label>
                 <div className="max-h-[350px] space-y-1 overflow-y-auto rounded-xl border border-outline-variant/60 p-2.5">
                   {appraisableNonTl.map((u) => (
-                    <label key={u.id} className="flex items-center gap-3 rounded-lg px-2.5 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/30 cursor-pointer font-medium text-slate-700 dark:text-slate-300">
+                    <label key={u.id} className="flex items-center gap-3 rounded-lg px-2.5 py-2 text-xs hover:bg-surface-container-high dark:hover:bg-slate-800/30 cursor-pointer font-medium text-slate-700 dark:text-slate-300">
                       <input type="checkbox" name="employeeId" value={u.id} className="accent-[#00cec4] size-4 rounded cursor-pointer" />
                       <span className="min-w-0 flex-1 truncate">
                         {u.employeeNumber ? `${u.employeeNumber} – ` : ""}{toTitleCase(u.name)}
                       </span>
-                      <span className="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-semibold shrink-0">
+                      <span className="text-[10px] text-slate-400 bg-surface-container-high dark:bg-slate-800 px-1.5 py-0.5 rounded font-semibold shrink-0">
                         {u.tl ? toTitleCase(u.tl.name) : "Unassigned"}
                       </span>
                     </label>
@@ -274,7 +274,7 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
         <div className="grid gap-6 xl:grid-cols-[1fr_400px]">
           {/* Manager hierarchy */}
           <section className="space-y-4">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-slate-200">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-on-surface dark:text-slate-200">
               <UserCheck className="size-4 text-[#00cec4]" /> Manager Teams
             </h2>
             {managerUsers.length === 0 && (
@@ -287,12 +287,12 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
               const totalEmployees = ownedTls.reduce((sum, tl) => sum + (employeesByTl.get(tl.id)?.length ?? 0), 0);
               return (
                 <div key={mgr.id} className="rounded-xl border border-outline-variant bg-surface shadow-sm overflow-hidden">
-                  <div className="flex items-center justify-between gap-3 border-b border-outline-variant/60 px-5 py-3.5 bg-slate-50/50 dark:bg-slate-800/20">
+                  <div className="flex items-center justify-between gap-3 border-b border-outline-variant/60 px-5 py-3.5 bg-surface-container-high/50 dark:bg-slate-800/20">
                     <div>
                       <p className="text-sm font-bold text-slate-900 dark:text-white">{toTitleCase(mgr.name)}</p>
                       <p className="text-[11px] font-medium text-slate-400">{mgr.department?.name ?? "No department"} · Manager</p>
                     </div>
-                    <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                    <span className="rounded-full bg-surface-container-high dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-on-surface-variant dark:text-slate-300">
                       {ownedTls.length} TL{ownedTls.length === 1 ? "" : "s"} · {totalEmployees} employee{totalEmployees === 1 ? "" : "s"}
                     </span>
                   </div>
@@ -300,7 +300,7 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
                     {ownedTls.map((tl) => {
                       const tlEmployees = employeesByTl.get(tl.id) ?? [];
                       return (
-                        <div key={tl.id} className="px-5 py-3.5 hover:bg-slate-50/20 transition">
+                        <div key={tl.id} className="px-5 py-3.5 hover:bg-surface-container-high/20 transition">
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
                               <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
@@ -318,7 +318,7 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
                           {tlEmployees.length > 0 && (
                             <div className="mt-2.5 flex flex-wrap gap-1.5 pl-3.5 border-l-2 border-outline-variant">
                               {tlEmployees.map((emp) => (
-                                <span key={emp.id} className="rounded-md border border-outline-variant bg-slate-50/50 dark:bg-slate-800/20 px-2 py-0.5 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                                <span key={emp.id} className="rounded-md border border-outline-variant bg-surface-container-high/50 dark:bg-slate-800/20 px-2 py-0.5 text-[10px] font-semibold text-on-surface-variant dark:text-slate-400">
                                   {emp.employeeNumber ? `${emp.employeeNumber} – ` : ""}{toTitleCase(emp.name)}
                                 </span>
                               ))}
@@ -357,7 +357,7 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
           {/* Assign TLs to manager form */}
           <section>
             <form action={assignTlsToManagerAction} className="rounded-xl border border-outline-variant bg-surface p-5 space-y-4 shadow-sm">
-              <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-slate-200">
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-on-surface dark:text-slate-200">
                 <Users className="size-4 text-[#00cec4]" /> Assign TL to Manager
               </h2>
               <div className="space-y-1.5">
@@ -375,12 +375,12 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
                 <Label>Team Leads (select one or more)</Label>
                 <div className="max-h-[350px] space-y-1 overflow-y-auto rounded-xl border border-outline-variant/60 p-2.5">
                   {tlUsers.map((tl) => (
-                    <label key={tl.id} className="flex items-center gap-3 rounded-lg px-2.5 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/30 cursor-pointer font-medium text-slate-700 dark:text-slate-300">
+                    <label key={tl.id} className="flex items-center gap-3 rounded-lg px-2.5 py-2 text-xs hover:bg-surface-container-high dark:hover:bg-slate-800/30 cursor-pointer font-medium text-slate-700 dark:text-slate-300">
                       <input type="checkbox" name="tlId" value={tl.id} className="accent-[#00cec4] size-4 rounded cursor-pointer" />
                       <span className="min-w-0 flex-1 truncate">
                         {tl.employeeNumber ? `${tl.employeeNumber} – ` : ""}{toTitleCase(tl.name)}
                       </span>
-                      <span className="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-semibold shrink-0">
+                      <span className="text-[10px] text-slate-400 bg-surface-container-high dark:bg-slate-800 px-1.5 py-0.5 rounded font-semibold shrink-0">
                         {tl.managerId ? toTitleCase(users.find((u) => u.id === tl.managerId)?.name) : "Unassigned"}
                       </span>
                     </label>
@@ -401,14 +401,14 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
       {/* ── Department/Division Mapping Tab ── */}
       {activeTab === "departments" && (
         <div className="space-y-4">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-slate-200">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-on-surface dark:text-slate-200">
             <Building2 className="size-4 text-[#00cec4]" /> Hierarchy Map
           </h2>
           <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[800px] text-sm text-left">
                 <thead>
-                  <tr className="border-b border-outline-variant bg-slate-50 dark:bg-slate-800/30 text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <tr className="border-b border-outline-variant bg-surface-container-high dark:bg-slate-800/30 text-xs font-bold text-on-surface-variant dark:text-slate-400">
                     <th className="px-5 py-3.5 font-semibold">Department / Division</th>
                     <th className="px-5 py-3.5 font-semibold">Managers</th>
                     <th className="px-5 py-3.5 font-semibold">Team Leads</th>
@@ -427,20 +427,20 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
 
                     if (divs.length === 0) {
                       return (
-                        <tr key={dept.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/5 transition">
+                        <tr key={dept.id} className="hover:bg-surface-container-high/30 dark:hover:bg-slate-800/5 transition">
                           <td className="px-5 py-4 font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                             <ChevronRight className="size-4 text-slate-400" />
                             {dept.name}
                           </td>
-                          <td className="px-5 py-4 text-xs font-semibold text-slate-500">
+                          <td className="px-5 py-4 text-xs font-semibold text-on-surface-variant">
                             {deptManagers.length > 0 ? deptManagers.map((m) => toTitleCase(m.name)).join(", ") : "—"}
                           </td>
-                          <td className="px-5 py-4 text-xs font-semibold text-slate-500">
+                          <td className="px-5 py-4 text-xs font-semibold text-on-surface-variant">
                             {deptTls.length > 0 ? deptTls.map((t) => toTitleCase(t.name)).join(", ") : "—"}
                           </td>
-                          <td className="px-5 py-4 text-xs font-semibold text-slate-500">
+                          <td className="px-5 py-4 text-xs font-semibold text-on-surface-variant">
                             {deptEmployees.length > 0 ? (
-                              <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5">{deptEmployees.length} employee{deptEmployees.length === 1 ? "" : "s"}</span>
+                              <span className="rounded-full bg-surface-container-high dark:bg-slate-800 px-2 py-0.5">{deptEmployees.length} employee{deptEmployees.length === 1 ? "" : "s"}</span>
                             ) : "—"}
                           </td>
                         </tr>
@@ -449,7 +449,7 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
 
                     return (
                       <Fragment key={dept.id}>
-                        <tr className="bg-slate-50/50 dark:bg-slate-800/10 font-bold border-y border-outline-variant/40">
+                        <tr className="bg-surface-container-high/50 dark:bg-slate-800/10 font-bold border-y border-outline-variant/40">
                           <td className="px-5 py-3 font-extrabold text-slate-900 dark:text-white" colSpan={4}>
                             {dept.name}
                             <span className="ml-2.5 rounded bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-400 px-2 py-0.5 text-[10px] font-bold">
@@ -465,19 +465,19 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
                             !u.roles.some((ur) => ["TL", "Manager", "Admin", "Management", "Director"].includes(ur.role.name))
                           );
                           return (
-                            <tr key={div.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/5 transition">
+                            <tr key={div.id} className="hover:bg-surface-container-high/30 dark:hover:bg-slate-800/5 transition">
                               <td className="px-5 py-3.5 pl-10 text-slate-700 dark:text-slate-300 font-semibold flex items-center gap-1">
                                 <span className="text-slate-400 mr-1.5 font-normal">└</span>{div.name}
                               </td>
-                              <td className="px-5 py-3.5 text-xs font-semibold text-slate-500">
+                              <td className="px-5 py-3.5 text-xs font-semibold text-on-surface-variant">
                                 {divManagers.length > 0 ? divManagers.map((m) => toTitleCase(m.name)).join(", ") : "—"}
                               </td>
-                              <td className="px-5 py-3.5 text-xs font-semibold text-slate-500">
+                              <td className="px-5 py-3.5 text-xs font-semibold text-on-surface-variant">
                                 {divTls.length > 0 ? divTls.map((t) => toTitleCase(t.name)).join(", ") : "—"}
                               </td>
-                              <td className="px-5 py-3.5 text-xs font-semibold text-slate-500">
+                              <td className="px-5 py-3.5 text-xs font-semibold text-on-surface-variant">
                                 {divEmployees.length > 0 ? (
-                                  <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5">{divEmployees.length} employee{divEmployees.length === 1 ? "" : "s"}</span>
+                                  <span className="rounded-full bg-surface-container-high dark:bg-slate-800 px-2 py-0.5">{divEmployees.length} employee{divEmployees.length === 1 ? "" : "s"}</span>
                                 ) : "—"}
                               </td>
                             </tr>

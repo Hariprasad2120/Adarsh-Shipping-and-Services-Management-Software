@@ -77,13 +77,13 @@ const roleColors: Record<string, string> = {
   Manager: "text-teal-600 bg-teal-100 dark:text-teal-400 dark:bg-teal-950/40",
   HR: "text-cyan-600 bg-cyan-100 dark:text-cyan-400 dark:bg-cyan-950/40",
   TL: "text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-950/40",
-  Employee: "text-slate-600 bg-slate-100 dark:text-slate-400 dark:bg-slate-950/40",
+  Employee: "text-on-surface-variant bg-surface-container-high dark:text-on-surface-variant dark:bg-slate-950/40",
 };
 
 const statusColors: Record<string, string> = {
   ACTIVE: "text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-950/40",
   TIMED_OUT: "text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-950/40",
-  LOGGED_OUT: "text-slate-600 bg-slate-100 dark:text-slate-400 dark:bg-slate-950/40",
+  LOGGED_OUT: "text-on-surface-variant bg-surface-container-high dark:text-on-surface-variant dark:bg-slate-950/40",
 };
 
 const outcomeColors: Record<string, string> = {
@@ -158,8 +158,8 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
           >
             <div className={`${stat.color} shrink-0`}>{stat.icon}</div>
             <div>
-              <div className="text-xl font-extrabold text-slate-900 dark:text-white">{stat.value}</div>
-              <div className="text-xs text-slate-400 font-semibold">{stat.label}</div>
+              <div className="text-xl font-extrabold text-on-surface-variant dark:text-white">{stat.value}</div>
+              <div className="text-xs text-on-surface-variant font-semibold">{stat.label}</div>
             </div>
           </motion.div>
         ))}
@@ -167,7 +167,7 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
 
       {/* Timeout config */}
       <div className="bg-surface border border-outline-variant rounded-xl p-5 shadow-sm">
-        <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+        <h2 className="text-sm font-bold text-on-surface-variant dark:text-on-surface-variant mb-3 flex items-center gap-2">
           <Shield className="size-4 text-[#ff8333]" />
           Inactivity Timeout Config
         </h2>
@@ -181,7 +181,7 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
               onChange={(e) => setNewTimeout(e.target.value)}
               className="w-20 h-11 rounded-xl border border-[#00cec4]/55 bg-surface px-3 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/15 transition"
             />
-            <span className="text-sm font-semibold text-slate-500">minutes</span>
+            <span className="text-sm font-semibold text-on-surface-variant">minutes</span>
           </div>
           <Button
             size="sm"
@@ -191,7 +191,7 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
           >
             {savingTimeout ? "Saving…" : timeoutSaved ? "Saved ✓" : "Save"}
           </Button>
-          <p className="text-xs font-semibold text-slate-400 max-w-md">
+          <p className="text-xs font-semibold text-on-surface-variant max-w-md">
             Warning appears during the final 20% of idle time, capped at 2 minutes. Changes apply after the next page load.
           </p>
         </div>
@@ -200,7 +200,7 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
       {/* Active sessions */}
       <div>
         <div className="flex items-center justify-between mb-3.5">
-          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <h2 className="text-sm font-bold text-on-surface-variant dark:text-on-surface-variant flex items-center gap-2">
             <Wifi className="size-4 text-green-500" />
             Currently Active Sessions
             <span className="ml-1 text-xs bg-green-500/10 text-green-600 dark:text-green-400 px-2.5 py-0.5 rounded-full font-bold">
@@ -220,7 +220,7 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
         </div>
 
         {active.length === 0 ? (
-          <div className="text-center py-16 text-slate-400 font-semibold border border-dashed border-outline-variant/80 rounded-xl bg-surface">
+          <div className="text-center py-16 text-on-surface-variant font-semibold border border-dashed border-outline-variant/80 rounded-xl bg-surface">
             No active sessions
           </div>
         ) : (
@@ -239,16 +239,16 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
                     {s.userName.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-bold text-slate-900 dark:text-white truncate">{s.userName}</div>
-                    <div className="text-xs text-slate-400 font-semibold truncate">{s.userEmail}</div>
+                    <div className="text-sm font-bold text-on-surface-variant dark:text-white truncate">{s.userName}</div>
+                    <div className="text-xs text-on-surface-variant font-semibold truncate">{s.userEmail}</div>
                   </div>
-                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded ml-auto md:ml-2 uppercase ${roleColors[s.userRole] ?? "text-slate-400 bg-slate-100"}`}>
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded ml-auto md:ml-2 uppercase ${roleColors[s.userRole] ?? "text-on-surface-variant bg-surface-container-high"}`}>
                     {s.userRole}
                   </span>
                 </div>
 
                 {/* Session meta */}
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                <div className="flex flex-wrap items-center gap-4 text-xs text-on-surface-variant dark:text-on-surface-variant font-semibold">
                   <div className="flex items-center gap-1.5">
                     <Clock className="size-3.5" />
                     <span>Login: {formatTime(s.loginAt)}</span>
@@ -272,15 +272,15 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
 
       {/* Session history */}
       <div className="space-y-3">
-        <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-          <Clock className="size-4 text-slate-400" />
+        <h2 className="text-sm font-bold text-on-surface-variant dark:text-on-surface-variant flex items-center gap-2">
+          <Clock className="size-4 text-on-surface-variant" />
           Session History (last 100)
         </h2>
         <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left min-w-[700px]">
               <thead>
-                <tr className="border-b border-outline-variant bg-slate-50 dark:bg-slate-800/30 text-xs font-bold text-slate-500 dark:text-slate-400">
+                <tr className="border-b border-outline-variant bg-slate-50 dark:bg-slate-800/30 text-xs font-bold text-on-surface-variant dark:text-on-surface-variant">
                   <th className="px-5 py-3 font-semibold">User</th>
                   <th className="px-5 py-3 font-semibold">Login</th>
                   <th className="px-5 py-3 font-semibold">Duration</th>
@@ -288,18 +288,18 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
                   <th className="px-5 py-3 font-semibold">IP / Location</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-outline-variant/60 font-medium text-slate-700 dark:text-slate-300">
+              <tbody className="divide-y divide-outline-variant/60 font-medium text-on-surface-variant dark:text-on-surface-variant">
                 {history.map((s, idx) => (
                   <tr
                     key={s.id}
                     className="hover:bg-slate-50/30 dark:hover:bg-slate-800/5 transition duration-150"
                   >
                     <td className="px-5 py-3">
-                      <div className="font-bold text-slate-900 dark:text-white">{s.userName}</div>
-                      <div className="text-xs text-slate-400 font-semibold">{s.userEmail}</div>
+                      <div className="font-bold text-on-surface-variant dark:text-white">{s.userName}</div>
+                      <div className="text-xs text-on-surface-variant font-semibold">{s.userEmail}</div>
                     </td>
-                    <td className="px-5 py-3 text-slate-500 font-semibold whitespace-nowrap">{formatTime(s.loginAt)}</td>
-                    <td className="px-5 py-3 text-slate-500 font-semibold whitespace-nowrap">
+                    <td className="px-5 py-3 text-on-surface-variant font-semibold whitespace-nowrap">{formatTime(s.loginAt)}</td>
+                    <td className="px-5 py-3 text-on-surface-variant font-semibold whitespace-nowrap">
                       {formatDuration(
                         s.logoutAt
                           ? new Date(s.logoutAt).getTime() - new Date(s.loginAt).getTime()
@@ -307,11 +307,11 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
                       )}
                     </td>
                     <td className="px-5 py-3">
-                      <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] uppercase ${statusColors[s.status] ?? "text-slate-400"}`}>
+                      <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] uppercase ${statusColors[s.status] ?? "text-on-surface-variant"}`}>
                         {s.status.replace("_", " ")}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-slate-500 font-semibold">
+                    <td className="px-5 py-3 text-on-surface-variant font-semibold">
                       {s.ipAddress ?? "—"}
                       {s.location ? ` · ${s.location}` : ""}
                     </td>
@@ -319,7 +319,7 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
                 ))}
                 {history.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-5 py-10 text-center text-slate-400 font-semibold">No session history</td>
+                    <td colSpan={5} className="px-5 py-10 text-center text-on-surface-variant font-semibold">No session history</td>
                   </tr>
                 )}
               </tbody>
@@ -330,7 +330,7 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
 
       {/* Security audit trail */}
       <div className="space-y-3">
-        <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+        <h2 className="text-sm font-bold text-on-surface-variant dark:text-on-surface-variant flex items-center gap-2">
           <Shield className="size-4 text-[#ff8333]" />
           Security Audit Trail (last 100)
         </h2>
@@ -338,7 +338,7 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left min-w-[800px]">
               <thead>
-                <tr className="border-b border-outline-variant bg-slate-50 dark:bg-slate-800/30 text-xs font-bold text-slate-500 dark:text-slate-400">
+                <tr className="border-b border-outline-variant bg-slate-50 dark:bg-slate-800/30 text-xs font-bold text-on-surface-variant dark:text-on-surface-variant">
                   <th className="px-5 py-3 font-semibold">When</th>
                   <th className="px-5 py-3 font-semibold">Event</th>
                   <th className="px-5 py-3 font-semibold">Outcome</th>
@@ -347,30 +347,30 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
                   <th className="px-5 py-3 font-semibold">User Agent</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-outline-variant/60 font-medium text-slate-700 dark:text-slate-300">
+              <tbody className="divide-y divide-outline-variant/60 font-medium text-on-surface-variant dark:text-on-surface-variant">
                 {securityEvents.map((event, idx) => (
                   <tr
                     key={event.id}
                     className="hover:bg-slate-50/30 dark:hover:bg-slate-800/5 transition duration-150"
                   >
-                    <td className="px-5 py-3 text-slate-500 font-semibold whitespace-nowrap">{formatTime(event.createdAt)}</td>
-                    <td className="px-5 py-3 text-slate-800 dark:text-slate-200 font-semibold whitespace-nowrap">{formatEventLabel(event.event)}</td>
+                    <td className="px-5 py-3 text-on-surface-variant font-semibold whitespace-nowrap">{formatTime(event.createdAt)}</td>
+                    <td className="px-5 py-3 text-on-surface-variant dark:text-on-surface-variant font-semibold whitespace-nowrap">{formatEventLabel(event.event)}</td>
                     <td className="px-5 py-3">
-                      <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] uppercase ${outcomeColors[event.outcome] ?? "text-slate-400"}`}>
+                      <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] uppercase ${outcomeColors[event.outcome] ?? "text-on-surface-variant"}`}>
                         {event.outcome}
                       </span>
                     </td>
                     <td className="px-5 py-3">
-                      <div className="font-bold text-slate-900 dark:text-white">{event.userName ?? event.email ?? "Unknown"}</div>
-                      <div className="text-xs text-slate-400 font-semibold">{event.userEmail ?? event.email ?? "No account matched"}</div>
+                      <div className="font-bold text-on-surface-variant dark:text-white">{event.userName ?? event.email ?? "Unknown"}</div>
+                      <div className="text-xs text-on-surface-variant font-semibold">{event.userEmail ?? event.email ?? "No account matched"}</div>
                     </td>
-                    <td className="px-5 py-3 text-slate-500 font-semibold whitespace-nowrap">{event.ipAddress ?? "N/A"}</td>
-                    <td className="px-5 py-3 text-slate-400 font-semibold max-w-[260px] truncate" title={event.userAgent ?? ""}>{event.userAgent ?? "N/A"}</td>
+                    <td className="px-5 py-3 text-on-surface-variant font-semibold whitespace-nowrap">{event.ipAddress ?? "N/A"}</td>
+                    <td className="px-5 py-3 text-on-surface-variant font-semibold max-w-[260px] truncate" title={event.userAgent ?? ""}>{event.userAgent ?? "N/A"}</td>
                   </tr>
                 ))}
                 {securityEvents.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-5 py-10 text-center text-slate-400 font-semibold">No security events yet</td>
+                    <td colSpan={6} className="px-5 py-10 text-center text-on-surface-variant font-semibold">No security events yet</td>
                   </tr>
                 )}
               </tbody>

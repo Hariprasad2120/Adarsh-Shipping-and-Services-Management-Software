@@ -36,11 +36,11 @@ const STAGE_COLOR: Record<string, string> = {
   MEETING_PENDING: "bg-cyan-50 text-cyan-700",
   MEETING_LIVE: "bg-green-50 text-green-700",
   HIKE_FINALISATION: "bg-pink-50 text-pink-700",
-  CLOSED: "bg-gray-100 text-gray-500",
+  CLOSED: "bg-surface-container-high text-on-surface-variant",
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  PENDING: "bg-gray-100 text-gray-500",
+  PENDING: "bg-surface-container-high text-on-surface-variant",
   AVAILABLE: "bg-green-100 text-green-700",
   UNAVAILABLE: "bg-red-100 text-red-600",
   FORCED: "bg-orange-100 text-orange-600",
@@ -119,25 +119,25 @@ export function MyReviewsClient({ appraisals }: { appraisals: ReviewEntry[] }) {
                 <DataTableCell>
                   <MetaText primary={a.employee.name} secondary={a.employee.designation ?? undefined} />
                 </DataTableCell>
-                <DataTableCell className="text-gray-500">
+                <DataTableCell className="text-on-surface-variant">
                   {a.cycle.name} {a.cycle.year}
                 </DataTableCell>
                 <DataTableCell>
-                  <Badge className={STAGE_COLOR[a.stage] ?? "bg-gray-100 text-gray-500"}>
+                  <Badge className={STAGE_COLOR[a.stage] ?? "bg-surface-container-high text-on-surface-variant"}>
                     {a.stage.replace(/_/g, " ")}
                   </Badge>
                 </DataTableCell>
-                <DataTableCell className="text-gray-500">
+                <DataTableCell className="text-on-surface-variant">
                   {myReviewer ? KIND_LABEL[myReviewer.kind] ?? myReviewer.kind : "-"}
                 </DataTableCell>
                 <DataTableCell>
                   {myReviewer ? (
-                    <Badge className={STATUS_COLOR[myReviewer.availabilityStatus] ?? "bg-gray-100 text-gray-500"}>
+                    <Badge className={STATUS_COLOR[myReviewer.availabilityStatus] ?? "bg-surface-container-high text-on-surface-variant"}>
                       {myReviewer.availabilityStatus}
                     </Badge>
                   ) : "-"}
                 </DataTableCell>
-                <DataTableCell className="text-xs text-gray-500">
+                <DataTableCell className="text-xs text-on-surface-variant">
                   {getDeadlineLabel(a)}
                 </DataTableCell>
                 <DataTableCell>

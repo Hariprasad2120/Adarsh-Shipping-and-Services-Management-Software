@@ -41,7 +41,7 @@ export default async function SlabsPage() {
     <div className="max-w-7xl space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+          <p className="text-sm text-on-surface-variant dark:text-slate-400 font-medium">
             Configure recommended appraisal hike percentages based on employee performance grades and rating bands.
           </p>
         </div>
@@ -56,12 +56,12 @@ export default async function SlabsPage() {
       {/* Grade reference bar */}
       <div className="flex flex-wrap gap-2 text-[11px] font-semibold">
         {GRADE_BANDS.map((b) => (
-          <div key={b.grade} className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/40 border border-outline-variant/30 rounded-xl px-3 py-1.5 shadow-sm">
-            <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${gradeColors[b.grade] ?? "bg-slate-100 text-slate-600"}`}>
+          <div key={b.grade} className="flex items-center gap-1.5 bg-surface-container-high dark:bg-slate-800/40 border border-outline-variant/30 rounded-xl px-3 py-1.5 shadow-sm">
+            <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${gradeColors[b.grade] ?? "bg-surface-container-high text-on-surface-variant"}`}>
               {b.grade}
             </span>
-            <span className="text-slate-500 dark:text-slate-400">{b.label}</span>
-            <span className="text-slate-400 dark:text-slate-500">{b.minNormalized}–{b.maxNormalized}</span>
+            <span className="text-on-surface-variant dark:text-slate-400">{b.label}</span>
+            <span className="text-slate-400 dark:text-on-surface-variant">{b.minNormalized}–{b.maxNormalized}</span>
           </div>
         ))}
       </div>
@@ -83,7 +83,7 @@ export default async function SlabsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                   <thead>
-                    <tr className="border-b border-outline-variant bg-slate-50 dark:bg-slate-800/30 text-xs font-bold text-slate-500 dark:text-slate-400">
+                    <tr className="border-b border-outline-variant bg-surface-container-high dark:bg-slate-800/30 text-xs font-bold text-on-surface-variant dark:text-slate-400">
                       <th className="py-3 px-5 font-semibold">Grade</th>
                       <th className="px-5 py-3 font-semibold">Label</th>
                       <th className="px-5 py-3 font-semibold">Rating Band</th>
@@ -93,16 +93,16 @@ export default async function SlabsPage() {
                   </thead>
                   <tbody className="divide-y divide-outline-variant/60 font-medium text-slate-700 dark:text-slate-300">
                     {slabs.map((slab) => (
-                      <tr key={slab.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/5 transition duration-150">
+                      <tr key={slab.id} className="hover:bg-surface-container-high/30 dark:hover:bg-slate-800/5 transition duration-150">
                         <td className="py-3 px-5">
-                          <span className={`font-bold px-2.5 py-0.5 rounded text-[10px] ${gradeColors[slab.grade] ?? "bg-slate-100 text-slate-600"}`}>
+                          <span className={`font-bold px-2.5 py-0.5 rounded text-[10px] ${gradeColors[slab.grade] ?? "bg-surface-container-high text-on-surface-variant"}`}>
                             {slab.grade}
                           </span>
                         </td>
-                        <td className="px-5 py-3 text-slate-600 dark:text-slate-400">
+                        <td className="px-5 py-3 text-on-surface-variant dark:text-slate-400">
                           {slab.label}
                         </td>
-                        <td className="px-5 py-3 text-slate-500 font-semibold">
+                        <td className="px-5 py-3 text-on-surface-variant font-semibold">
                           {slab.minRating}–{slab.maxRating}
                         </td>
                         <td className="px-5 py-3">

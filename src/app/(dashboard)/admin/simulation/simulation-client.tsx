@@ -87,28 +87,28 @@ export function SimulationClient({ initialFrozenAt }: { initialFrozenAt: string 
   return (
     <div className="space-y-6 max-w-lg">
       {/* Current clock status */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-1">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Current System Time</p>
+      <div className="bg-surface rounded-xl border border-outline-variant p-6 space-y-1">
+        <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Current System Time</p>
         {effectiveNow ? (
           <div className="flex items-center gap-2 mt-1">
             <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">FROZEN</span>
-            <p className="text-lg font-bold text-gray-900">{effectiveNow.toLocaleString("en-IN")}</p>
+            <p className="text-lg font-bold text-on-surface">{effectiveNow.toLocaleString("en-IN")}</p>
           </div>
         ) : (
           <div className="flex items-center gap-2 mt-1">
             <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">LIVE</span>
-            <p className="text-lg font-bold text-gray-900">Real time</p>
+            <p className="text-lg font-bold text-on-surface">Real time</p>
           </div>
         )}
       </div>
 
       {/* Freeze date */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <h2 className="ds-h2 text-gray-900">Freeze System Date</h2>
-        <p className="text-xs text-gray-500">Freezing the date also runs the daily appraisal job automatically — stages advance and self-assessments open without a separate step.</p>
+      <div className="bg-surface rounded-xl border border-outline-variant p-6 space-y-4">
+        <h2 className="ds-h2 text-on-surface">Freeze System Date</h2>
+        <p className="text-xs text-on-surface-variant">Freezing the date also runs the daily appraisal job automatically — stages advance and self-assessments open without a separate step.</p>
         <div className="flex gap-3 items-end">
           <div className="flex-1">
-            <label className="text-xs text-gray-500">Date &amp; time to freeze to</label>
+            <label className="text-xs text-on-surface-variant">Date &amp; time to freeze to</label>
             <Input
               type="datetime-local"
               value={dateInput}
@@ -128,7 +128,7 @@ export function SimulationClient({ initialFrozenAt }: { initialFrozenAt: string 
           <button
             onClick={clearDate}
             disabled={saving}
-            className="text-sm text-gray-500 hover:text-gray-700 underline"
+            className="text-sm text-on-surface-variant hover:text-on-surface underline"
           >
             Reset to real time
           </button>
@@ -136,9 +136,9 @@ export function SimulationClient({ initialFrozenAt }: { initialFrozenAt: string 
       </div>
 
       {/* Run daily job */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
-        <h2 className="ds-h2 text-gray-900">Daily Appraisal Job</h2>
-        <p className="text-xs text-gray-500">
+      <div className="bg-surface rounded-xl border border-outline-variant p-6 space-y-3">
+        <h2 className="ds-h2 text-on-surface">Daily Appraisal Job</h2>
+        <p className="text-xs text-on-surface-variant">
           Runs the same logic as the scheduled cron: creates appraisals due on the current
           (possibly frozen) date and opens self-assessments whose availability deadline has passed.
         </p>
@@ -158,16 +158,16 @@ export function SimulationClient({ initialFrozenAt }: { initialFrozenAt: string 
       </div>
 
       {/* Danger zone — AMS data reset */}
-      <div className="bg-white rounded-xl border border-red-200 p-6 space-y-4">
+      <div className="bg-surface rounded-xl border border-red-200 p-6 space-y-4">
         <h2 className="ds-h2 text-red-700">Danger Zone</h2>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-on-surface-variant">
           Delete all appraisal cycles, appraisals, reviewers, ratings, reviews, meetings, minutes,
           and hike decisions for this organisation. The simulated date is also cleared.
           <strong className="text-red-600"> This cannot be undone.</strong>
         </p>
         <div className="space-y-2">
-          <label className="text-xs text-gray-500">
-            Type <code className="bg-gray-100 px-1 rounded">DELETE</code> to confirm
+          <label className="text-xs text-on-surface-variant">
+            Type <code className="bg-surface-container-high px-1 rounded">DELETE</code> to confirm
           </label>
           <Input
             type="text"

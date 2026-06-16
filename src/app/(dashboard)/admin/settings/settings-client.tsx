@@ -35,10 +35,10 @@ export function SettingsClient({
       {/* Availability deadline */}
       <div className="space-y-4 max-w-md">
         <div className="space-y-1">
-          <label htmlFor="days" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="days" className="block text-sm font-medium text-on-surface">
             Reviewer availability deadline
           </label>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-on-surface-variant">
             Business days reviewers have to confirm availability after being assigned.
           </p>
           <div className="flex items-center gap-3 mt-2">
@@ -51,7 +51,7 @@ export function SettingsClient({
               onChange={(e) => setDays(Number(e.target.value))}
               className="w-24"
             />
-            <span className="text-sm text-gray-500">business days</span>
+            <span className="text-sm text-on-surface-variant">business days</span>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -67,10 +67,10 @@ export function SettingsClient({
       </div>
 
       {/* Reviewer role weights */}
-      <div className="space-y-4 max-w-md pt-6 border-t border-gray-200">
+      <div className="space-y-4 max-w-md pt-6 border-t border-outline-variant">
         <div>
-          <h3 className="ds-h3 text-gray-700">Reviewer role weights</h3>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <h3 className="ds-h3 text-on-surface">Reviewer role weights</h3>
+          <p className="text-xs text-on-surface-variant mt-0.5">
             Relative weights for each reviewer role within the 70% reviewer pool.
             Higher numbers = more influence. Equal values = equal weight.
           </p>
@@ -78,7 +78,7 @@ export function SettingsClient({
         <div className="space-y-3">
           {roles.map((role) => (
             <div key={role} className="flex items-center gap-4">
-              <label className="text-sm text-gray-700 w-20">{role}</label>
+              <label className="text-sm text-on-surface w-20">{role}</label>
               <Input
                 type="number"
                 min={0}

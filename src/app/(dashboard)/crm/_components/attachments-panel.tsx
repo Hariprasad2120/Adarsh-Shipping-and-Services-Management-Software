@@ -97,13 +97,13 @@ export function AttachmentsPanel({ relatedToType, relatedToId, initialAttachment
           <span className="text-sm font-semibold text-white">
             {isUploading ? "Uploading file..." : "Click or drag files to upload"}
           </span>
-          <span className="text-[11px] text-slate-500">Max file size: 10MB</span>
+          <span className="text-[11px] text-on-surface-variant">Max file size: 10MB</span>
         </div>
       </div>
 
       {/* Attachments List */}
       {attachments.length === 0 ? (
-        <div className="p-6 text-center text-slate-500 text-sm border border-dashed border-[#1c212a]/50 rounded-lg">
+        <div className="p-6 text-center text-on-surface-variant text-sm border border-dashed border-[#1c212a]/50 rounded-lg">
           No files attached.
         </div>
       ) : (
@@ -140,7 +140,7 @@ export function AttachmentsPanel({ relatedToType, relatedToId, initialAttachment
                 </a>
                 <button
                   onClick={() => handleDeleteAttachment(attachment.id)}
-                  className="p-1.5 text-slate-500 hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer"
+                  className="p-1.5 text-on-surface-variant hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer"
                   title="Remove Attachment"
                 >
                   <Trash2 className="size-4" />

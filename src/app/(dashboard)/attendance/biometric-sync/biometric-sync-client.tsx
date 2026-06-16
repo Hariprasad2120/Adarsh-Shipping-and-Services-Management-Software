@@ -190,8 +190,8 @@ const STATUS_BADGE: Record<
     label: "OUT",
   },
   NOT_ARRIVED: {
-    bg: "bg-slate-800/40 border border-slate-800/80",
-    text: "text-slate-500",
+    bg: "bg-surface-container-high border border-outline-variant/60 dark:bg-slate-800/40 dark:border-slate-800/80",
+    text: "text-on-surface-variant",
     label: "NOT IN",
   },
   IDLE: {
@@ -218,16 +218,16 @@ function StatCard({
 }) {
   return (
     <div
-      className="relative overflow-hidden rounded-2xl border border-slate-800/60 bg-slate-950/40 p-5 flex flex-col gap-2.5 transition-all duration-300 hover:-translate-y-1 hover:border-slate-750 hover:shadow-[0_8px_32px_rgba(0,0,0,0.25)] backdrop-blur-md group"
+      className="relative flex flex-col gap-2.5 overflow-hidden rounded-2xl border border-outline-variant/55 bg-surface p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#00cec4]/30 hover:shadow-[0_18px_36px_-26px_rgba(15,23,42,0.18)] dark:border-slate-800/60 dark:bg-slate-950/40 dark:hover:border-slate-700/60 dark:hover:shadow-[0_8px_32px_rgba(0,0,0,0.25)] dark:backdrop-blur-md group"
     >
       {/* Background glow decoration */}
       <div className={`absolute -right-4 -top-4 w-12 h-12 rounded-full blur-2xl opacity-10 transition-opacity duration-300 group-hover:opacity-20 ${glowColor}`} />
       
       <div className="flex items-center justify-between select-none">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/60">
           {label}
         </span>
-        <div className="p-1.5 rounded-xl bg-slate-900/60 border border-slate-800/80 transition-colors duration-300 group-hover:bg-slate-900 group-hover:border-slate-700/50">
+        <div className="rounded-xl border border-outline-variant/55 bg-surface-container-low p-1.5 transition-colors duration-300 group-hover:bg-surface-container dark:border-slate-800/80 dark:bg-slate-900/60 dark:group-hover:bg-slate-900 dark:group-hover:border-slate-700/50">
           {icon}
         </div>
       </div>
@@ -391,23 +391,23 @@ export function BiometricSyncClient() {
   // Prevent server hydration mismatches by returning loading state until mounted
   if (!mounted) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 gap-4 text-slate-500 select-none">
+      <div className="flex flex-col items-center justify-center py-32 gap-4 text-on-surface-variant select-none">
         <Spinner className="size-6 animate-spin text-[#00cec4]" />
-        <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Loading Biometric Workspace...</span>
+        <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant/60">Loading Biometric Workspace...</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-6xl text-slate-200">
+    <div className="max-w-6xl space-y-6 text-on-surface dark:text-slate-200">
       {/* ── Page subheader + connection pill ─────────────────────────────── */}
       <div className="flex items-center justify-between flex-wrap gap-4 select-none">
-        <p className="text-xs font-bold text-slate-500 tracking-wider">
+        <p className="text-xs font-bold text-on-surface-variant tracking-wider">
           Live attendance monitor and eSSL eTimetracklite sync control
         </p>
-        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-slate-800/80 bg-slate-950/60 text-xs font-bold shadow-md">
+        <div className="flex items-center gap-2 rounded-full border border-outline-variant/60 bg-surface px-3.5 py-1.5 text-xs font-bold shadow-sm dark:border-slate-800/80 dark:bg-slate-950/60 dark:shadow-ambient">
           {loadingStatus ? (
-            <Spinner className="size-3.5 animate-spin text-slate-500" />
+            <Spinner className="size-3.5 animate-spin text-on-surface-variant" />
           ) : !status?.configured ? (
             <WifiOff className="size-3.5 text-rose-500" />
           ) : !status?.connected ? (
@@ -418,7 +418,7 @@ export function BiometricSyncClient() {
           <span
             className={
               loadingStatus
-                ? "text-slate-500"
+                ? "text-on-surface-variant"
                 : !status?.configured
                   ? "text-rose-400"
                   : !status?.connected
@@ -438,7 +438,7 @@ export function BiometricSyncClient() {
       </div>
 
       {/* ── Tabs ─────────────────────────────────────────────────────────── */}
-      <div className="bg-slate-950/40 p-1.5 rounded-2xl border border-slate-800/60 inline-flex items-center gap-1.5 select-none shadow-sm backdrop-blur-md">
+      <div className="inline-flex items-center gap-1.5 rounded-2xl border border-outline-variant/60 bg-surface p-1.5 select-none shadow-sm dark:border-slate-800/60 dark:bg-slate-950/40 dark:shadow-ambient dark:backdrop-blur-md">
         {(["live", "logs", "sync"] as const).map((t) => (
           <button
             key={t}
@@ -446,8 +446,8 @@ export function BiometricSyncClient() {
             onClick={() => setTab(t)}
             className={`flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all duration-300 cursor-pointer ${
               tab === t
-                ? "bg-slate-800 text-[#00cec4] border border-slate-700/50 shadow-sm"
-                : "text-slate-500 hover:text-slate-300"
+                ? "border border-outline-variant/60 bg-surface-container-high text-[#008b85] shadow-sm dark:border-slate-700/50 dark:bg-slate-800 dark:text-[#00cec4] dark:shadow-ambient"
+                : "text-on-surface-variant hover:text-on-surface dark:hover:text-slate-300"
             }`}
           >
             {t === "live" && (
@@ -467,7 +467,7 @@ export function BiometricSyncClient() {
                 <List className="size-3.5" />
                 Logs Report
                 {logs.length > 0 && (
-                  <span className="ml-1 text-[9px] bg-slate-900 border border-slate-800 text-slate-400 rounded-full px-1.5 py-0.5 font-bold">
+                  <span className="ml-1 rounded-full border border-outline-variant/60 bg-surface-container-low px-1.5 py-0.5 text-[9px] font-bold text-on-surface-variant/80 dark:border-slate-800 dark:bg-slate-900 dark:text-on-surface-variant/60">
                     {logs.length}
                   </span>
                 )}
@@ -507,9 +507,9 @@ export function BiometricSyncClient() {
             <StatCard
               label="Not Yet Arrived"
               value={liveData?.notArrivedCount ?? "—"}
-              icon={<User className="size-4 text-slate-400" />}
-              color="text-slate-300"
-              glowColor="bg-slate-500"
+              icon={<User className="size-4 text-on-surface-variant/60" />}
+              color="text-on-surface dark:text-slate-300"
+              glowColor="bg-slate-400"
             />
             <StatCard
               label="Total Employees"
@@ -521,23 +521,23 @@ export function BiometricSyncClient() {
           </div>
 
           {/* Monitor panel */}
-          <div className="rounded-3xl border border-slate-800/80 bg-slate-950/30 overflow-hidden shadow-2xl backdrop-blur-md">
+          <div className="overflow-hidden rounded-3xl border border-outline-variant/60 bg-surface shadow-sm dark:border-slate-800/80 dark:bg-slate-950/30 dark:shadow-2xl dark:backdrop-blur-md">
             {/* Toolbar */}
-            <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-slate-800/60 bg-slate-900/20 flex-wrap select-none">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-outline-variant/50 bg-surface-container-low/70 px-6 py-4 select-none dark:border-slate-800/60 dark:bg-slate-900/20">
               <div className="flex items-center gap-2">
                 <Radio className="size-4 text-[#00cec4] animate-pulse" />
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-100">
+                <span className="text-xs font-bold uppercase tracking-wider text-on-surface dark:text-slate-100">
                   Live Attendance Monitor
                 </span>
                 {liveData && (
-                  <span className="text-[10px] font-bold text-slate-500 font-mono">
+                  <span className="text-[10px] font-bold text-on-surface-variant font-mono">
                     — {liveData.date}
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-3 flex-wrap">
                 {/* Filter pills */}
-                <div className="flex items-center gap-1 bg-slate-955 border border-slate-800/80 rounded-xl p-1">
+                <div className="flex items-center gap-1 rounded-xl border border-outline-variant/60 bg-surface-container-low p-1 dark:border-slate-800/80 dark:bg-slate-950/60">
                   {(
                     ["ALL", "IN", "OUT", "NOT_ARRIVED", "IDLE"] as const
                   ).map((f) => (
@@ -547,8 +547,8 @@ export function BiometricSyncClient() {
                       onClick={() => setLiveFilter(f)}
                       className={`text-[9px] font-bold px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer ${
                         liveFilter === f
-                          ? "bg-slate-800 text-[#00cec4] border border-slate-700/50 shadow-sm"
-                          : "text-slate-400 hover:text-slate-200"
+                          ? "border border-outline-variant/60 bg-surface text-[#008b85] shadow-sm dark:border-slate-700/50 dark:bg-slate-800 dark:text-[#00cec4] dark:shadow-ambient"
+                          : "text-on-surface-variant/70 hover:text-on-surface dark:hover:text-slate-200"
                       }`}
                     >
                       {f === "NOT_ARRIVED" ? "NOT IN" : f}
@@ -557,7 +557,7 @@ export function BiometricSyncClient() {
                 </div>
 
                 {/* Auto-sync status */}
-                <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+                <div className="flex items-center gap-2 text-xs text-on-surface-variant/60 font-medium">
                   <span className="relative flex size-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full size-2 bg-[#00cec4]"></span>
@@ -570,7 +570,7 @@ export function BiometricSyncClient() {
                   id="btn-live-sync-now"
                   onClick={() => void triggerLiveSyncAndRefresh(false)}
                   disabled={liveSyncing}
-                  className="inline-flex items-center gap-2 text-xs bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 active:scale-95 transition-all px-4 py-2 rounded-xl font-bold disabled:opacity-50 cursor-pointer shadow-sm"
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-xs font-bold text-cyan-700 shadow-sm transition-all hover:bg-cyan-500/15 active:scale-95 disabled:opacity-50 dark:text-cyan-400 dark:shadow-ambient dark:hover:bg-cyan-500/20"
                 >
                   {liveSyncing ? (
                     <>
@@ -589,7 +589,7 @@ export function BiometricSyncClient() {
 
             {/* Table headers */}
             {displayedEmployees.length > 0 && (
-              <div className="grid grid-cols-[1fr_96px_112px_112px_96px] gap-4 items-center px-6 py-3 border-b border-slate-800/40 bg-slate-950/20 text-[10px] font-bold text-slate-500 uppercase tracking-wider select-none">
+              <div className="grid grid-cols-[1fr_96px_112px_112px_96px] items-center gap-4 border-b border-outline-variant/50 bg-surface-container-low/70 px-6 py-3 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant select-none dark:border-slate-800/40 dark:bg-slate-950/20">
                 <div>Employee</div>
                 <div className="text-center">Status</div>
                 <div className="text-right">Check-In</div>
@@ -600,44 +600,44 @@ export function BiometricSyncClient() {
 
             {/* Employee list */}
             {liveSyncing && !liveData ? (
-              <div className="flex items-center justify-center py-24 gap-3 text-slate-500 select-none">
+              <div className="flex items-center justify-center py-24 gap-3 text-on-surface-variant select-none">
                 <Spinner className="size-5 animate-spin text-[#00cec4]" />
                 <span className="text-xs font-bold uppercase tracking-wider">Syncing from eSSL…</span>
               </div>
             ) : displayedEmployees.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 gap-3 select-none">
-                <div className="size-12 rounded-2xl bg-slate-950/40 border border-slate-800/60 flex items-center justify-center">
-                  <UserAvatarFilled className="size-6 text-slate-600" />
+                <div className="flex size-12 items-center justify-center rounded-2xl border border-outline-variant/55 bg-surface-container-low dark:border-slate-800/60 dark:bg-slate-950/40">
+                  <UserAvatarFilled className="size-6 text-on-surface-variant" />
                 </div>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">
                   No employees match the filter
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-slate-950/20">
+              <div className="divide-y divide-outline-variant/35 dark:divide-slate-950/20">
                 {[...byDept.entries()].map(([dept, emps]) => (
                   <div key={dept}>
                     {/* Department header */}
-                    <div className="flex items-center gap-2 px-6 py-2.5 bg-slate-950/30 border-b border-slate-800/40 select-none">
-                      <Building className="size-3.5 text-slate-500" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <div className="flex items-center gap-2 border-b border-outline-variant/45 bg-surface-container-low/80 px-6 py-2.5 select-none dark:border-slate-800/40 dark:bg-slate-950/30">
+                      <Building className="size-3.5 text-on-surface-variant" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/60">
                         {dept}
                       </span>
-                      <span className="text-[10px] text-slate-600 font-bold ml-1">
+                      <span className="text-[10px] text-on-surface-variant font-bold ml-1">
                         ({emps.length})
                       </span>
                       <div className="ml-auto flex items-center gap-2.5">
                         <span className="text-[10px] text-emerald-400 font-bold">
                           {emps.filter((e) => e.status === "IN" || e.status === "IDLE").length} IN
                         </span>
-                        <span className="text-[10px] text-slate-600 font-bold">
+                        <span className="text-[10px] text-on-surface-variant font-bold">
                           ·{" "}
                           {emps.filter((e) => e.status === "OUT").length} OUT
                         </span>
                       </div>
                     </div>
                     {/* Employees */}
-                    <div className="divide-y divide-slate-900/40">
+                    <div className="divide-y divide-outline-variant/35 dark:divide-slate-900/40">
                       {emps.map((emp) => {
                         const badge = STATUS_BADGE[emp.status];
                         const initials = emp.name.split(" ").slice(0, 2).map((n) => n[0]).join("") || "?";
@@ -645,13 +645,13 @@ export function BiometricSyncClient() {
                         return (
                           <div
                             key={emp.id}
-                            className="grid grid-cols-[1fr_96px_112px_112px_96px] gap-4 items-center px-6 py-3.5 border-b border-slate-900/40 hover:bg-slate-900/20 transition-all group cursor-pointer"
+                            className="grid grid-cols-[1fr_96px_112px_112px_96px] items-center gap-4 border-b border-outline-variant/30 px-6 py-3.5 transition-all group cursor-pointer hover:bg-surface-container-low/70 dark:border-slate-900/40 dark:hover:bg-slate-900/20"
                           >
                             {/* Avatar + Name + EMP no */}
                             <div className="flex items-center gap-3 min-w-0">
                               {/* Pulse dot wrapper around avatar */}
                               <div className="relative shrink-0 select-none">
-                                <div className="size-8 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400">
+                                <div className="flex size-8 items-center justify-center rounded-full border border-outline-variant/55 bg-surface-container-low text-[10px] font-bold text-on-surface-variant/70 dark:border-slate-800 dark:bg-slate-900 dark:text-on-surface-variant/60">
                                   {initials}
                                 </div>
                                 {emp.status === "IN" ? (
@@ -669,10 +669,10 @@ export function BiometricSyncClient() {
                                 ) : null}
                               </div>
                               <div className="min-w-0">
-                                <div className="text-sm font-semibold text-slate-200 truncate group-hover:text-cyan-400 transition-colors">
+                                <div className="truncate text-sm font-semibold text-on-surface transition-colors group-hover:text-[#008b85] dark:text-slate-200 dark:group-hover:text-cyan-400">
                                   {emp.name}
                                 </div>
-                                <div className="text-[10px] text-slate-500 font-mono ds-numeric mt-0.5">
+                                <div className="text-[10px] text-on-surface-variant font-mono ds-numeric mt-0.5">
                                   EMP-{String(emp.employeeNumber ?? "—").padStart(3, "0")}
                                 </div>
                               </div>
@@ -703,15 +703,15 @@ export function BiometricSyncClient() {
                             <div className="text-right shrink-0">
                               {emp.checkIn ? (
                                 <div>
-                                  <div className="text-xs font-semibold text-slate-200 ds-numeric font-mono">
+                                  <div className="text-xs font-semibold text-on-surface ds-numeric font-mono dark:text-slate-200">
                                     {fmtTimeShort(emp.checkIn)}
                                   </div>
-                                  <div className="text-[10px] text-slate-550 font-medium truncate max-w-[108px] mt-0.5 ml-auto" title={emp.checkInPlace || "Check-in"}>
+                                  <div className="mt-0.5 ml-auto max-w-[108px] truncate text-[10px] font-medium text-on-surface-variant/80 dark:text-slate-500" title={emp.checkInPlace || "Check-in"}>
                                     {emp.checkInPlace || "Check-in"}
                                   </div>
                                 </div>
                               ) : (
-                                <div className="text-xs text-slate-700 font-bold ds-numeric">
+                                <div className="text-xs text-on-surface font-bold ds-numeric">
                                   —
                                 </div>
                               )}
@@ -721,10 +721,10 @@ export function BiometricSyncClient() {
                             <div className="text-right shrink-0">
                               {emp.checkOut ? (
                                 <div>
-                                  <div className="text-xs font-semibold text-slate-200 ds-numeric font-mono">
+                                  <div className="text-xs font-semibold text-on-surface ds-numeric font-mono dark:text-slate-200">
                                     {fmtTimeShort(emp.checkOut)}
                                   </div>
-                                  <div className="text-[10px] text-slate-550 font-medium truncate max-w-[108px] mt-0.5 ml-auto" title={emp.checkOutPlace || "Check-out"}>
+                                  <div className="mt-0.5 ml-auto max-w-[108px] truncate text-[10px] font-medium text-on-surface-variant/80 dark:text-slate-500" title={emp.checkOutPlace || "Check-out"}>
                                     {emp.checkOutPlace || "Check-out"}
                                   </div>
                                 </div>
@@ -733,7 +733,7 @@ export function BiometricSyncClient() {
                                   Still inside
                                 </div>
                               ) : (
-                                <div className="text-xs text-slate-700 font-bold ds-numeric">
+                                <div className="text-xs text-on-surface font-bold ds-numeric">
                                   —
                                 </div>
                               )}
@@ -742,11 +742,11 @@ export function BiometricSyncClient() {
                             {/* Hours spent */}
                             <div className="text-right shrink-0">
                               {emp.workingHours ? (
-                                <div className="text-xs font-semibold text-slate-200 font-mono ds-numeric">
+                                <div className="text-xs font-semibold text-on-surface font-mono ds-numeric dark:text-slate-200">
                                   {fmtHours(emp.workingHours)}
                                 </div>
                               ) : (
-                                <div className="text-xs text-slate-700 font-bold">—</div>
+                                <div className="text-xs text-on-surface font-bold">—</div>
                               )}
                             </div>
                           </div>
@@ -765,21 +765,21 @@ export function BiometricSyncClient() {
       {/* LOGS REPORT TAB                                                     */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {tab === "logs" && (
-        <div className="rounded-3xl border border-slate-800/80 bg-slate-950/30 overflow-hidden shadow-2xl backdrop-blur-md">
-          <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-slate-800/60 bg-slate-900/20 select-none">
+        <div className="overflow-hidden rounded-3xl border border-outline-variant/60 bg-surface shadow-sm dark:border-slate-800/80 dark:bg-slate-950/30 dark:shadow-2xl dark:backdrop-blur-md">
+          <div className="flex items-center justify-between gap-4 border-b border-outline-variant/50 bg-surface-container-low/70 px-6 py-4 select-none dark:border-slate-800/60 dark:bg-slate-900/20">
             <div className="flex items-center gap-2">
-              <List className="size-4 text-slate-400" />
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+              <List className="size-4 text-on-surface-variant/60" />
+              <span className="text-xs font-bold uppercase tracking-wider text-on-surface dark:text-slate-200">
                 Sync History
               </span>
-              <span className="text-[10px] text-slate-500 font-bold">
+              <span className="text-[10px] text-on-surface-variant font-bold">
                 ({logs.length} entries — last 200 kept)
               </span>
             </div>
             <button
               id="btn-logs-refresh"
               onClick={() => void fetchStatus()}
-              className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-250 active:scale-95 transition-all cursor-pointer font-bold"
+              className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-on-surface-variant/70 transition-all hover:text-on-surface active:scale-95 dark:hover:text-slate-200"
             >
               <Renew className="size-3.5" />
               Refresh
@@ -788,13 +788,13 @@ export function BiometricSyncClient() {
 
           {logs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3 text-center select-none">
-              <div className="size-12 rounded-2xl bg-slate-950/40 border border-slate-800/65 flex items-center justify-center">
-                <DataBase className="size-6 text-slate-600" />
+              <div className="flex size-12 items-center justify-center rounded-2xl border border-outline-variant/55 bg-surface-container-low dark:border-slate-800/65 dark:bg-slate-950/40">
+                <DataBase className="size-6 text-on-surface-variant" />
               </div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <p className="text-xs font-bold text-on-surface-variant/60 uppercase tracking-wider">
                 No sync history yet
               </p>
-              <p className="text-xs text-slate-500 max-w-xs leading-relaxed mt-1">
+              <p className="text-xs text-on-surface-variant max-w-xs leading-relaxed mt-1">
                 Switch to{" "}
                 <button
                   onClick={() => setTab("live")}
@@ -816,7 +816,7 @@ export function BiometricSyncClient() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-800/60 bg-slate-950/20 select-none">
+                  <tr className="border-b border-outline-variant/50 bg-surface-container-low/70 select-none dark:border-slate-800/60 dark:bg-slate-950/20">
                     {[
                       "Time",
                       "Period",
@@ -832,14 +832,14 @@ export function BiometricSyncClient() {
                     ].map((h) => (
                       <th
                         key={h}
-                        className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap"
+                        className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap"
                       >
                         {h}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-900/40">
+                <tbody className="divide-y divide-outline-variant/35 dark:divide-slate-900/40">
                   {logs.map((log, i) => {
                     const isLive =
                       log.triggeredBy === "LIVE_AUTO" ||
@@ -847,9 +847,9 @@ export function BiometricSyncClient() {
                     return (
                       <tr
                         key={i}
-                        className={`transition-colors hover:bg-slate-900/20 border-b border-slate-900/40 ${i === 0 ? "bg-emerald-500/[0.01]" : ""}`}
+                        className={`border-b border-outline-variant/30 transition-colors hover:bg-surface-container-low/70 dark:border-slate-900/40 dark:hover:bg-slate-900/20 ${i === 0 ? "bg-emerald-500/[0.03] dark:bg-emerald-500/[0.01]" : ""}`}
                       >
-                        <td className="px-4 py-3 ds-numeric text-xs text-slate-300 font-mono whitespace-nowrap">
+                        <td className="px-4 py-3 ds-numeric text-xs text-on-surface font-mono whitespace-nowrap dark:text-slate-300">
                           <div className="flex items-center gap-1.5">
                             {i === 0 && (
                               <span className="size-1.5 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
@@ -857,7 +857,7 @@ export function BiometricSyncClient() {
                             {fmtTime(log.time)}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-xs text-slate-300 whitespace-nowrap">
+                        <td className="px-4 py-3 text-xs text-on-surface whitespace-nowrap dark:text-slate-300">
                           {isLive ? (
                             <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400">
                               <span className="size-1 rounded-full bg-emerald-400" />
@@ -867,15 +867,15 @@ export function BiometricSyncClient() {
                             getPeriodLabel(log)
                           )}
                         </td>
-                        <td className="px-4 py-3 ds-numeric text-[11px] text-slate-500 font-mono whitespace-nowrap">
+                        <td className="px-4 py-3 ds-numeric text-[11px] text-on-surface-variant font-mono whitespace-nowrap">
                           {log.punchTable}
                         </td>
-                        <td className="px-4 py-3 text-xs text-right font-semibold text-slate-300 font-mono">
+                        <td className="px-4 py-3 text-right text-xs font-semibold text-on-surface font-mono dark:text-slate-300">
                           {log.totalPunches.toLocaleString()}
                         </td>
-                        <td className="px-4 py-3 text-xs text-right text-slate-300 font-mono">
+                        <td className="px-4 py-3 text-right text-xs text-on-surface font-mono dark:text-slate-300">
                           {log.matchedInHrms}
-                          <span className="text-slate-550">
+                          <span className="text-on-surface-variant/75 dark:text-slate-500">
                             /{log.uniqueEmployees}
                           </span>
                         </td>
@@ -908,12 +908,12 @@ export function BiometricSyncClient() {
                             {log.status}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-xs text-right ds-numeric text-slate-500 font-mono whitespace-nowrap">
+                        <td className="px-4 py-3 text-xs text-right ds-numeric text-on-surface-variant font-mono whitespace-nowrap">
                           {log.timeTakenMs < 1000
                             ? `${log.timeTakenMs}ms`
                             : `${(log.timeTakenMs / 1000).toFixed(1)}s`}
                         </td>
-                        <td className="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">
+                        <td className="px-4 py-3 text-xs text-on-surface-variant/60 whitespace-nowrap">
                           {isLive ? (
                             <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
                               <Radio className="size-2.5" />
@@ -940,10 +940,10 @@ export function BiometricSyncClient() {
         <div className="space-y-5">
           {/* Info cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="rounded-2xl border border-slate-800/60 bg-slate-950/40 p-5 backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-700/50 hover:shadow-[0_8px_32px_rgba(0,0,0,0.25)]">
+            <div className="relative overflow-hidden rounded-2xl border border-outline-variant/55 bg-surface p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#00cec4]/25 hover:shadow-[0_18px_36px_-28px_rgba(15,23,42,0.16)] dark:border-slate-800/60 dark:bg-slate-950/40 dark:hover:border-slate-700/50 dark:hover:shadow-[0_8px_32px_rgba(0,0,0,0.25)] dark:backdrop-blur-md">
               <div className="flex items-center gap-3 mb-3 select-none">
                 {loadingStatus ? (
-                  <Spinner className="size-5 text-slate-500 animate-spin" />
+                  <Spinner className="size-5 text-on-surface-variant animate-spin" />
                 ) : !status?.configured ? (
                   <WifiOff className="size-5 text-rose-500" />
                 ) : !status?.connected ? (
@@ -951,11 +951,11 @@ export function BiometricSyncClient() {
                 ) : (
                   <Wifi className="size-5 text-emerald-500 animate-pulse" />
                 )}
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/60">
                   Connection
                 </span>
               </div>
-              <div className="text-sm font-bold text-slate-200">
+              <div className="text-sm font-bold text-on-surface dark:text-slate-200">
                 {loadingStatus
                   ? "Checking…"
                   : !status?.configured
@@ -964,7 +964,7 @@ export function BiometricSyncClient() {
                       ? "Not Connected"
                       : "eSSL DB Connected"}
               </div>
-              <p className="text-[10px] text-slate-550 mt-1.5 leading-relaxed">
+              <p className="mt-1.5 text-[10px] leading-relaxed text-on-surface-variant/80 dark:text-slate-500">
                 {!status?.configured
                   ? "Set ESSL_DB_* vars in .env"
                   : !status?.connected
@@ -973,45 +973,45 @@ export function BiometricSyncClient() {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-slate-800/60 bg-slate-950/40 p-5 backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-700/50 hover:shadow-[0_8px_32px_rgba(0,0,0,0.25)]">
+            <div className="relative overflow-hidden rounded-2xl border border-outline-variant/55 bg-surface p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#00cec4]/25 hover:shadow-[0_18px_36px_-28px_rgba(15,23,42,0.16)] dark:border-slate-800/60 dark:bg-slate-950/40 dark:hover:border-slate-700/50 dark:hover:shadow-[0_8px_32px_rgba(0,0,0,0.25)] dark:backdrop-blur-md">
               <div className="flex items-center gap-3 mb-3 select-none">
                 <Time className="size-5 text-[#00cec4]" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/60">
                   Last Sync
                 </span>
               </div>
-              <div className="text-sm font-bold text-slate-200">
+              <div className="text-sm font-bold text-on-surface dark:text-slate-200">
                 {status?.lastSync
                   ? formatRelativeTime(status.lastSync)
                   : "Never synced"}
               </div>
-              <p className="text-[10px] text-slate-550 mt-1.5 ds-numeric font-mono">
+              <p className="mt-1.5 text-[10px] text-on-surface-variant/80 ds-numeric font-mono dark:text-slate-500">
                 {status?.lastSync ? fmtTime(status.lastSync) : "—"}
               </p>
             </div>
 
-            <div className="rounded-2xl border border-slate-800/60 bg-slate-950/40 p-5 backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-700/50 hover:shadow-[0_8px_32px_rgba(0,0,0,0.25)]">
+            <div className="relative overflow-hidden rounded-2xl border border-outline-variant/55 bg-surface p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#00cec4]/25 hover:shadow-[0_18px_36px_-28px_rgba(15,23,42,0.16)] dark:border-slate-800/60 dark:bg-slate-950/40 dark:hover:border-slate-700/50 dark:hover:shadow-[0_8px_32px_rgba(0,0,0,0.25)] dark:backdrop-blur-md">
               <div className="flex items-center gap-3 mb-3 select-none">
                 <CalendarHeatMap className="size-5 text-orange-400" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/60">
                   Last Month Synced
                 </span>
               </div>
-              <div className="text-sm font-bold text-slate-200 uppercase tracking-widest">
+              <div className="text-sm font-bold uppercase tracking-widest text-on-surface dark:text-slate-200">
                 {status?.lastSyncMonth ?? "—"}
               </div>
-              <p className="text-[10px] text-slate-550 mt-1.5">
+              <p className="mt-1.5 text-[10px] text-on-surface-variant/80 dark:text-slate-500">
                 Logs: {logs.length} entries
               </p>
             </div>
           </div>
 
           {/* Trigger panel */}
-          <div className="rounded-3xl border border-slate-800/80 bg-slate-950/30 p-6 shadow-2xl backdrop-blur-md">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-100 mb-1 select-none">
+          <div className="rounded-3xl border border-outline-variant/60 bg-surface p-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-950/30 dark:shadow-2xl dark:backdrop-blur-md">
+            <h2 className="mb-1 text-xs font-bold uppercase tracking-wider text-on-surface select-none dark:text-slate-100">
               Trigger Manual Sync
             </h2>
-            <p className="text-xs text-slate-450 mb-5 leading-relaxed select-none">
+            <p className="mb-5 text-xs leading-relaxed text-on-surface-variant select-none dark:text-slate-400">
               Select a month and click Sync Now to pull attendance records from
               the eSSL eTimetracklite database.{" "}
               <button
@@ -1027,7 +1027,7 @@ export function BiometricSyncClient() {
                 type="month"
                 value={month}
                 onChange={(e) => setMonth(e.target.value)}
-                className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-2 text-sm text-slate-300 font-bold outline-none focus:border-cyan-500/50 hover:border-slate-700 transition-colors"
+                className="rounded-xl border border-outline-variant/60 bg-surface-container-low px-4 py-2 text-sm font-bold text-on-surface outline-none transition-colors hover:border-[#00cec4]/40 focus:border-cyan-500/50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-slate-700"
               />
               <button
                 id="btn-sync-now"
@@ -1045,7 +1045,7 @@ export function BiometricSyncClient() {
               {logs.length > 0 && (
                 <button
                   onClick={() => setTab("logs")}
-                  className="ml-auto inline-flex items-center gap-1.5 text-xs text-slate-450 hover:text-slate-200 active:scale-95 transition-all cursor-pointer font-bold"
+                  className="ml-auto inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-on-surface-variant transition-all hover:text-on-surface active:scale-95 dark:text-slate-400 dark:hover:text-slate-200"
                 >
                   <Events className="size-3.5" />
                   View Logs
@@ -1053,7 +1053,7 @@ export function BiometricSyncClient() {
               )}
             </div>
             {syncing && (
-              <div className="mt-4 flex items-center gap-2 text-xs text-slate-500 font-semibold animate-pulse select-none">
+              <div className="mt-4 flex items-center gap-2 text-xs text-on-surface-variant font-semibold animate-pulse select-none">
                 <Spinner className="size-3.5 animate-spin" />
                 Connecting to eSSL database… this may take a few seconds
               </div>
@@ -1062,21 +1062,21 @@ export function BiometricSyncClient() {
 
           {/* Not-configured warning */}
           {!loadingStatus && !status?.configured && (
-            <div className="rounded-3xl border border-amber-550/20 bg-amber-500/[0.02] p-6 backdrop-blur-md">
+            <div className="rounded-3xl border border-amber-500/25 bg-amber-50/70 p-6 backdrop-blur-md dark:bg-amber-500/[0.02]">
               <div className="flex items-start gap-3">
                 <Information className="size-5 text-amber-500 shrink-0 mt-0.5" />
                 <div className="space-y-3">
                   <h2 className="text-sm font-bold uppercase tracking-wider text-amber-400">
                     eSSL Database Not Configured
                   </h2>
-                  <p className="text-xs text-slate-450 leading-relaxed">
+                  <p className="text-xs leading-relaxed text-on-surface-variant dark:text-slate-400">
                     Add the following to your{" "}
-                    <code className="font-mono bg-slate-950 px-1.5 py-0.5 rounded border border-slate-900 text-slate-350">
+                    <code className="rounded border border-outline-variant/60 bg-surface px-1.5 py-0.5 font-mono text-on-surface dark:border-slate-900 dark:bg-slate-950 dark:text-slate-300">
                       .env
                     </code>{" "}
                     file and restart the server:
                   </p>
-                  <pre className="text-xs bg-slate-950 border border-slate-900 rounded-xl p-4 font-mono text-slate-300 overflow-x-auto select-all">
+                  <pre className="overflow-x-auto rounded-xl border border-outline-variant/60 bg-surface-container-low p-4 text-xs font-mono text-on-surface select-all dark:border-slate-900 dark:bg-slate-950 dark:text-slate-300">
                     {`# eSSL eTimetracklite SQL Server\nESSL_DB_SERVER=DESKTOP-J2P68VT\nESSL_DB_PORT=1433\nESSL_DB_NAME=eTimeTracklite1\nESSL_DB_USER=sa\nESSL_DB_PASSWORD=essl`}
                   </pre>
                 </div>
@@ -1087,19 +1087,19 @@ export function BiometricSyncClient() {
           {/* Last sync result */}
           {lastResult && (
             <div
-              className={`rounded-3xl border bg-[#0e121b] overflow-hidden shadow-2xl border-l-4 ${lastResult.success ? "border-l-emerald-500 border-slate-900" : "border-l-rose-500 border-slate-900"}`}
+              className={`overflow-hidden rounded-3xl border border-l-4 bg-surface shadow-sm dark:bg-[#0e121b] dark:shadow-2xl ${lastResult.success ? "border-l-emerald-500 border-outline-variant/60 dark:border-slate-900" : "border-l-rose-500 border-outline-variant/60 dark:border-slate-900"}`}
             >
-              <div className="px-6 py-4 border-b border-slate-950/20 bg-slate-950/10 flex items-center gap-3 select-none">
+              <div className="flex items-center gap-3 border-b border-outline-variant/50 bg-surface-container-low/70 px-6 py-4 select-none dark:border-slate-950/20 dark:bg-slate-950/10">
                 {lastResult.success ? (
                   <CheckmarkFilled className="size-5 text-emerald-400" />
                 ) : (
                   <Warning className="size-5 text-rose-400" />
                 )}
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-on-surface dark:text-slate-200">
                   {lastResult.success ? "Sync Completed" : "Sync Failed"}
                 </h2>
                 {lastResult.punchTable && (
-                  <span className="text-[10px] bg-slate-950 border border-slate-900 text-slate-500 px-2 py-0.5 rounded font-mono ds-numeric">
+                  <span className="rounded border border-outline-variant/60 bg-surface-container-low px-2 py-0.5 text-[10px] font-mono text-on-surface-variant ds-numeric dark:border-slate-900 dark:bg-slate-950">
                     {lastResult.punchTable}
                   </span>
                 )}
@@ -1119,9 +1119,9 @@ export function BiometricSyncClient() {
                       {
                         label: "Total Punches",
                         value: (lastResult.totalPunches ?? 0).toLocaleString(),
-                        color: "text-slate-200",
-                        bg: "bg-slate-950/20",
-                        border: "border-slate-900",
+                        color: "text-on-surface dark:text-slate-200",
+                        bg: "bg-surface-container-low dark:bg-slate-950/20",
+                        border: "border-outline-variant/60 dark:border-slate-900",
                       },
                       {
                         label: "Employees Found",
@@ -1161,7 +1161,7 @@ export function BiometricSyncClient() {
                         >
                           {item.value}
                         </div>
-                        <div className="text-[9px] font-black uppercase tracking-wider text-slate-500 mt-1 select-none">
+                        <div className="text-[9px] font-black uppercase tracking-wider text-on-surface-variant mt-1 select-none">
                           {item.label}
                         </div>
                       </div>
@@ -1175,10 +1175,10 @@ export function BiometricSyncClient() {
           )}
 
           {/* How it works */}
-          <div className="rounded-3xl border border-slate-800/60 bg-slate-950/40 p-6 shadow-2xl select-none backdrop-blur-md">
-            <div className="flex items-center gap-2 mb-4 border-b border-slate-800/40 pb-3">
-              <Renew className="size-4 text-slate-500" />
-              <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="rounded-3xl border border-outline-variant/60 bg-surface p-6 shadow-sm select-none dark:border-slate-800/60 dark:bg-slate-950/40 dark:shadow-2xl dark:backdrop-blur-md">
+            <div className="mb-4 flex items-center gap-2 border-b border-outline-variant/50 pb-3 dark:border-slate-800/40">
+              <Renew className="size-4 text-on-surface-variant" />
+              <h2 className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/60">
                 How Biometric Sync Works
               </h2>
             </div>
@@ -1210,10 +1210,10 @@ export function BiometricSyncClient() {
                     {item.step}
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-200">
+                    <div className="text-xs font-bold text-on-surface dark:text-slate-200">
                       {item.title}
                     </div>
-                    <div className="text-[10px] text-slate-550 mt-1 leading-relaxed">
+                    <div className="mt-1 text-[10px] leading-relaxed text-on-surface-variant/80 dark:text-slate-500">
                       {item.desc}
                     </div>
                   </div>

@@ -93,7 +93,7 @@ export function OrgStructureManager({ org }: { org: Org }) {
     setPromptState(null);
   }
 
-  if (!org) return <p className="text-gray-500">No organisation found.</p>;
+  if (!org) return <p className="text-on-surface-variant">No organisation found.</p>;
 
   return (
     <>
@@ -119,10 +119,10 @@ export function OrgStructureManager({ org }: { org: Org }) {
           ) : (
             org.departments.map((d) => (
               <div key={d.id} className="space-y-1">
-                <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
+                <div className="flex items-center justify-between rounded-lg bg-surface-container-high px-3 py-2">
                   <div>
-                    <span className="text-sm font-medium text-gray-900">{d.name}</span>
-                    <span className="ml-2 text-xs text-gray-400">{d.code}</span>
+                    <span className="text-sm font-medium text-on-surface">{d.name}</span>
+                    <span className="ml-2 text-xs text-on-surface-variant/60">{d.code}</span>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -140,7 +140,7 @@ export function OrgStructureManager({ org }: { org: Org }) {
                   </div>
                 </div>
                 {d.divisions.map((div) => (
-                  <div key={div.id} className="flex items-center justify-between py-1 pl-6 text-sm text-gray-600">
+                  <div key={div.id} className="flex items-center justify-between py-1 pl-6 text-sm text-on-surface-variant">
                     <span>&rarr; {div.name}</span>
                     <button
                       onClick={() => deleteDivision(div.id, div.name)}
@@ -179,9 +179,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="card-top-accent space-y-3 rounded-xl border border-gray-200 bg-white p-5">
+    <div className="card-top-accent space-y-3 rounded-xl border border-outline-variant bg-surface p-5">
       <div className="flex items-center justify-between">
-        <h2 className="ds-h2 text-gray-900">{title}</h2>
+        <h2 className="ds-h2 text-on-surface">{title}</h2>
         <button
           onClick={onAdd}
           disabled={loading}
@@ -205,10 +205,10 @@ function Row({
   onDelete: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-gray-50">
+    <div className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-surface-container-high">
       <div>
-        <span className="text-sm text-gray-900">{primary}</span>
-        <span className="ml-2 text-xs text-gray-400">{secondary}</span>
+        <span className="text-sm text-on-surface">{primary}</span>
+        <span className="ml-2 text-xs text-on-surface-variant/60">{secondary}</span>
       </div>
       <button onClick={onDelete} className="text-xs text-red-500 hover:underline">
         Delete
@@ -218,7 +218,7 @@ function Row({
 }
 
 function EmptyState({ text }: { text: string }) {
-  return <p className="py-2 text-sm text-gray-400">{text}</p>;
+  return <p className="py-2 text-sm text-on-surface-variant/60">{text}</p>;
 }
 
 function MinimalPrompt({
@@ -240,7 +240,7 @@ function MinimalPrompt({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/20 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/10">
+      <div className="w-full max-w-sm rounded-2xl border border-outline-variant bg-surface p-5 shadow-xl shadow-slate-900/10">
         <div className="space-y-1">
           <h3 className="ds-h3 text-slate-900">
             {isDepartment ? "New department" : "New division"}

@@ -1526,7 +1526,7 @@ export function CriteriaClient({
         ].map(({ icon, label, value, accent }) => (
           <article
             key={label}
-            className="card-top-accent group relative overflow-hidden rounded-[24px] border border-outline-variant/20 bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:border-[#00cec4]/30 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)]"
+            className="card-top-accent group relative overflow-hidden rounded-[24px] border border-outline-variant/20 bg-surface p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:border-[#00cec4]/30 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)]"
           >
             <div className="absolute inset-x-0 top-0 h-14 bg-[linear-gradient(180deg,rgba(0,206,196,0.06),transparent)]" />
             <div className="relative flex h-full flex-col">

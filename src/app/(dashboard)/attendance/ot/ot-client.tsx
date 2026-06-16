@@ -743,13 +743,13 @@ export function OtClient({
         <div className="lg:col-span-2 space-y-6">
           <Card className="border-0 shadow-sm bg-surface">
             <CardHeader className="pb-3 border-b border-outline-variant/60">
-              <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">
+              <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">
                 My Overtime Requests
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {legacyEntries.length === 0 ? (
-                <div className="text-center text-slate-400/80 py-16 text-sm font-medium">
+                <div className="text-center text-on-surface-variant/60/80 py-16 text-sm font-medium">
                   No overtime entries requested yet.
                 </div>
               ) : (
@@ -757,23 +757,23 @@ export function OtClient({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-outline-variant bg-surface-container-low/40 dark:bg-surface-container-lowest/50 text-left">
-                        <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider text-slate-400">Date</th>
-                        <th className="px-4 text-xs font-bold uppercase tracking-wider text-slate-400">Requested Hours</th>
-                        <th className="px-4 text-xs font-bold uppercase tracking-wider text-slate-400">Status</th>
-                        <th className="px-4 text-xs font-bold uppercase tracking-wider text-slate-400">Notes</th>
+                        <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Date</th>
+                        <th className="px-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Requested Hours</th>
+                        <th className="px-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Status</th>
+                        <th className="px-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Notes</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-outline-variant/40">
                       {legacyEntries.map((entry) => (
-                        <tr key={entry.id} className="hover:bg-slate-50/20 dark:hover:bg-slate-800/10 transition">
-                          <td className="py-3.5 px-4 font-semibold text-slate-700 dark:text-slate-300">
+                        <tr key={entry.id} className="hover:bg-surface-container-high/20 dark:hover:bg-slate-800/10 transition">
+                          <td className="py-3.5 px-4 font-semibold text-on-surface dark:text-on-surface-variant/40">
                             {new Date(entry.date).toLocaleDateString("en-IN", {
                               day: "2-digit",
                               month: "short",
                               year: "numeric",
                             })}
                           </td>
-                          <td className="px-4 text-slate-600 dark:text-slate-400 font-bold">
+                          <td className="px-4 text-on-surface-variant dark:text-on-surface-variant/60 font-bold">
                             {entry.hours} hrs
                           </td>
                           <td className="px-4">
@@ -789,7 +789,7 @@ export function OtClient({
                               {entry.status}
                             </span>
                           </td>
-                          <td className="px-4 text-xs text-slate-400 font-semibold max-w-[200px] truncate">
+                          <td className="px-4 text-xs text-on-surface-variant/60 font-semibold max-w-[200px] truncate">
                             {entry.notes || "—"}
                           </td>
                         </tr>
@@ -805,7 +805,7 @@ export function OtClient({
         <div>
           <Card className="border-0 shadow-sm border-l-4 border-l-[#00cec4] bg-surface">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">
+              <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">
                 Submit OT Request
               </CardTitle>
             </CardHeader>
@@ -832,7 +832,7 @@ export function OtClient({
                 });
               }} className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Date</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Date</label>
                   <input
                     type="date"
                     required
@@ -842,7 +842,7 @@ export function OtClient({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Hours</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Hours</label>
                   <input
                     type="number"
                     step="0.5"
@@ -856,7 +856,7 @@ export function OtClient({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Work Description</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Work Description</label>
                   <textarea
                     value={reqNotes}
                     onChange={(e) => setReqNotes(e.target.value)}
@@ -919,7 +919,7 @@ export function OtClient({
                 <Card
                   key={item.label}
                   className={cn(
-                    "group relative overflow-hidden rounded-[26px] border bg-white p-0 shadow-[0_18px_38px_-28px_rgba(15,23,42,0.3)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-28px_rgba(0,206,196,0.32)]",
+                    "group relative overflow-hidden rounded-[26px] border bg-surface p-0 shadow-[0_18px_38px_-28px_rgba(15,23,42,0.3)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-28px_rgba(0,206,196,0.32)]",
                     item.cardClassName
                   )}
                 >
@@ -1052,7 +1052,7 @@ export function OtClient({
                   desc: "Calculates hourly rate dynamically from annual CTC or falls back to standard base.",
                 },
               ].map((flow, i) => (
-                <div key={i} className="card-top-accent relative flex flex-col justify-between space-y-3 rounded-[24px] border border-outline-variant/30 bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.18)]">
+                <div key={i} className="card-top-accent relative flex flex-col justify-between space-y-3 rounded-[24px] border border-outline-variant/30 bg-surface p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.18)]">
                   <div className="space-y-1">
                     <span className="inline-flex rounded-full bg-[#00cec4]/10 px-2 py-0.5 text-[11px] font-semibold tracking-[0.14em] text-[#008b85]">{flow.step}</span>
                     <h4 className="ds-h3 pt-1 text-primary">{flow.title}</h4>
@@ -1386,7 +1386,7 @@ export function OtClient({
                                           setAdjustedEarlyMins(rec.earlyLeavingMins);
                                           setAdjustedCompOff(rec.compOffDays);
                                         }}
-                                        className="h-7 w-7 p-0 bg-transparent border border-outline-variant hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 flex items-center justify-center rounded"
+                                        className="h-7 w-7 p-0 bg-transparent border border-outline-variant hover:bg-surface-container-high dark:hover:bg-slate-800 text-on-surface-variant flex items-center justify-center rounded"
                                       >
                                         <Sliders className="size-3.5" />
                                       </Button>
@@ -1446,20 +1446,20 @@ export function OtClient({
           <div className="lg:col-span-2 space-y-4">
             <Card className="border-0 shadow-sm bg-surface">
               <CardHeader className="pb-3 border-b border-outline-variant/60">
-                <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">
+                <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">
                   Holidays Calendar ({new Date().getFullYear()})
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 {holidays.length === 0 ? (
-                  <div className="text-center text-slate-400 py-16 text-sm font-semibold">
+                  <div className="text-center text-on-surface-variant/60 py-16 text-sm font-semibold">
                     No holidays configured for this year.
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-outline-variant bg-slate-50/20 dark:bg-slate-800/10 text-left text-xs text-slate-400 font-bold uppercase">
+                        <tr className="border-b border-outline-variant bg-surface-container-high/20 dark:bg-slate-800/10 text-left text-xs text-on-surface-variant/60 font-bold uppercase">
                           <th className="p-3.5">Date</th>
                           <th className="p-3.5">Name</th>
                           <th className="p-3.5">Type</th>
@@ -1469,8 +1469,8 @@ export function OtClient({
                       </thead>
                       <tbody className="divide-y divide-outline-variant/40">
                         {holidays.map((h) => (
-                          <tr key={h.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/10 transition">
-                            <td className="p-3.5 font-bold text-slate-800 dark:text-slate-200">
+                          <tr key={h.id} className="hover:bg-surface-container-high/30 dark:hover:bg-slate-800/10 transition">
+                            <td className="p-3.5 font-bold text-on-surface dark:text-slate-200">
                               {new Date(h.date).toLocaleDateString("en-IN", {
                                 day: "2-digit",
                                 month: "short",
@@ -1478,19 +1478,19 @@ export function OtClient({
                                 weekday: "short",
                               })}
                             </td>
-                            <td className="p-3.5 font-medium text-slate-700 dark:text-slate-300">{h.name}</td>
+                            <td className="p-3.5 font-medium text-on-surface dark:text-on-surface-variant/40">{h.name}</td>
                             <td className="p-3.5">
                               <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border capitalize ${
                                 h.holidayType === "NATIONAL"
                                   ? "bg-red-100 text-red-700 border-red-200"
                                   : h.holidayType === "RESTRICTED"
                                   ? "bg-amber-100 text-amber-700 border-amber-200"
-                                  : "bg-slate-100 text-slate-700 border-slate-200"
+                                  : "bg-surface-container-high text-on-surface border-outline-variant"
                               }`}>
                                 {h.holidayType.toLowerCase()}
                               </span>
                             </td>
-                            <td className="p-3.5 text-slate-500 font-semibold">{h.branch?.name || "All Branches"}</td>
+                            <td className="p-3.5 text-on-surface-variant font-semibold">{h.branch?.name || "All Branches"}</td>
                             <td className="p-3.5 text-right">
                               <Button
                                 size="sm"
@@ -1513,12 +1513,12 @@ export function OtClient({
           <div>
             <Card className="border-0 shadow-sm border-l-4 border-l-sky-500 bg-surface">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">Add Holiday</CardTitle>
+                <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">Add Holiday</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSaveHoliday} className="space-y-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Date</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Date</label>
                     <input
                       type="date"
                       required
@@ -1528,7 +1528,7 @@ export function OtClient({
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Holiday Name</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Holiday Name</label>
                     <input
                       type="text"
                       required
@@ -1539,7 +1539,7 @@ export function OtClient({
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Type</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Type</label>
                     <select
                       value={holidayType}
                       onChange={(e) => setHolidayType(e.target.value)}
@@ -1551,7 +1551,7 @@ export function OtClient({
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Branch Applicability</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Branch Applicability</label>
                     <select
                       value={holidayBranch}
                       onChange={(e) => setHolidayBranch(e.target.value)}
@@ -1579,20 +1579,20 @@ export function OtClient({
           <div className="lg:col-span-2 space-y-4">
             <Card className="border-0 shadow-sm bg-surface">
               <CardHeader className="pb-3 border-b border-outline-variant/60">
-                <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">
+                <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">
                   Loss of Pay (LOP) Log Sheets
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 {lopRecords.length === 0 ? (
-                  <div className="text-center text-slate-400 py-16 text-sm font-semibold">
+                  <div className="text-center text-on-surface-variant/60 py-16 text-sm font-semibold">
                     No LOP records logged for this month.
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-outline-variant bg-slate-50/20 dark:bg-slate-800/10 text-left text-xs text-slate-400 font-bold uppercase">
+                        <tr className="border-b border-outline-variant bg-surface-container-high/20 dark:bg-slate-800/10 text-left text-xs text-on-surface-variant/60 font-bold uppercase">
                           <th className="p-3.5">Employee</th>
                           <th className="p-3.5 text-right">LOP Days</th>
                           <th className="p-3.5">Remarks</th>
@@ -1601,20 +1601,20 @@ export function OtClient({
                       </thead>
                       <tbody className="divide-y divide-outline-variant/40">
                         {lopRecords.map((r) => (
-                          <tr key={r.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/10 transition">
+                          <tr key={r.id} className="hover:bg-surface-container-high/30 dark:hover:bg-slate-800/10 transition">
                             <td className="p-3.5">
                               <div className="flex items-center gap-2">
-                                <span className="p-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded shrink-0">
+                                <span className="p-1 bg-surface-container-high dark:bg-slate-800 text-on-surface-variant rounded shrink-0">
                                   <User className="size-4" />
                                 </span>
                                 <div>
-                                  <span className="font-bold text-slate-800 dark:text-slate-200">{r.user.name}</span>
-                                  {r.user.employeeNumber && <span className="text-[10px] text-slate-400 font-bold ml-1">#{r.user.employeeNumber}</span>}
+                                  <span className="font-bold text-on-surface dark:text-slate-200">{r.user.name}</span>
+                                  {r.user.employeeNumber && <span className="text-[10px] text-on-surface-variant/60 font-bold ml-1">#{r.user.employeeNumber}</span>}
                                 </div>
                               </div>
                             </td>
                             <td className="p-3.5 text-right font-black text-rose-600 dark:text-rose-400">{r.lopDays.toFixed(1)} days</td>
-                            <td className="p-3.5 text-xs text-slate-500 font-semibold max-w-[200px] truncate">{r.remarks || "—"}</td>
+                            <td className="p-3.5 text-xs text-on-surface-variant font-semibold max-w-[200px] truncate">{r.remarks || "—"}</td>
                             <td className="p-3.5 text-right">
                               <Button
                                 size="sm"
@@ -1637,12 +1637,12 @@ export function OtClient({
           <div>
             <Card className="border-0 shadow-sm border-l-4 border-l-rose-500 bg-surface">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">Log LOP Days</CardTitle>
+                <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">Log LOP Days</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSaveLop} className="space-y-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Employee</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Employee</label>
                     <select
                       required
                       value={lopUser}
@@ -1656,7 +1656,7 @@ export function OtClient({
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400">LOP Days</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">LOP Days</label>
                     <input
                       type="number"
                       step="0.5"
@@ -1669,7 +1669,7 @@ export function OtClient({
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Remarks / Reason</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Remarks / Reason</label>
                     <textarea
                       value={lopRemarks}
                       onChange={(e) => setLopRemarks(e.target.value)}
@@ -1694,15 +1694,15 @@ export function OtClient({
           <Card className="border-0 shadow-sm bg-surface">
             <CardHeader className="pb-3 border-b border-outline-variant/60 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">
+                <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">
                   Consolidated Payroll Summary
                 </CardTitle>
-                <p className="text-xs text-slate-400 font-semibold mt-1">Payroll metrics merging Loss of Pay and approved Overtime payouts</p>
+                <p className="text-xs text-on-surface-variant/60 font-semibold mt-1">Payroll metrics merging Loss of Pay and approved Overtime payouts</p>
               </div>
               <Button
                 onClick={handleExportCsv}
                 disabled={payrollRows.length === 0}
-                className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 text-xs px-3 h-9 rounded-lg"
+                className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white dark:bg-surface dark:text-slate-900 dark:hover:bg-surface-container-high text-xs px-3 h-9 rounded-lg"
               >
                 <Download className="size-4" />
                 Export to CSV
@@ -1710,14 +1710,14 @@ export function OtClient({
             </CardHeader>
             <CardContent className="p-0">
               {payrollRows.length === 0 ? (
-                <div className="text-center text-slate-400 py-20 text-sm font-semibold">
+                <div className="text-center text-on-surface-variant/60 py-20 text-sm font-semibold">
                   No payroll summary records available for this month. Ensure OT records are approved.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-outline-variant bg-slate-50/20 dark:bg-slate-800/10 text-left text-xs text-slate-400 font-bold uppercase">
+                      <tr className="border-b border-outline-variant bg-surface-container-high/20 dark:bg-slate-800/10 text-left text-xs text-on-surface-variant/60 font-bold uppercase">
                         <th className="p-3.5">Employee ID</th>
                         <th className="p-3.5">Name</th>
                         <th className="p-3.5">Department</th>
@@ -1729,11 +1729,11 @@ export function OtClient({
                     </thead>
                     <tbody className="divide-y divide-outline-variant/40">
                       {payrollRows.map((r, i) => (
-                        <tr key={i} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/10 transition">
-                          <td className="p-3.5 font-semibold text-slate-500">#{r.employeeNumber || "N/A"}</td>
-                          <td className="p-3.5 font-bold text-slate-800 dark:text-slate-100">{r.employeeName}</td>
-                          <td className="p-3.5 text-slate-500 font-semibold">{r.department || "No Department"}</td>
-                          <td className="p-3.5 text-right font-extrabold text-slate-700 dark:text-slate-300">{r.totalOtHours.toFixed(2)} hrs</td>
+                        <tr key={i} className="hover:bg-surface-container-high/30 dark:hover:bg-slate-800/10 transition">
+                          <td className="p-3.5 font-semibold text-on-surface-variant">#{r.employeeNumber || "N/A"}</td>
+                          <td className="p-3.5 font-bold text-on-surface dark:text-slate-100">{r.employeeName}</td>
+                          <td className="p-3.5 text-on-surface-variant font-semibold">{r.department || "No Department"}</td>
+                          <td className="p-3.5 text-right font-extrabold text-on-surface dark:text-on-surface-variant/40">{r.totalOtHours.toFixed(2)} hrs</td>
                           <td className="p-3.5 text-right font-extrabold text-emerald-600 dark:text-emerald-400">₹{r.totalOtAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                           <td className="p-3.5 text-right font-bold text-[#00cec4]">{r.totalCompOffDays.toFixed(1)} days</td>
                           <td className="p-3.5 text-right font-black text-rose-600 dark:text-rose-400">{r.lopDays.toFixed(1)} days</td>
@@ -1918,16 +1918,16 @@ export function OtClient({
           <div className="grid gap-6 lg:grid-cols-3">
             <Card className="border-0 shadow-sm bg-surface lg:col-span-2">
               <CardHeader className="pb-3 border-b border-outline-variant/60">
-                <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">
+                <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">
                   Upload CSV Attendance Punch Log
                 </CardTitle>
-                <p className="text-xs text-slate-400 font-semibold mt-1">
+                <p className="text-xs text-on-surface-variant/60 font-semibold mt-1">
                   Upload a raw punch card log in CSV format. Align columns with database variables, match employees, and recalculate OT instantly.
                 </p>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
                 {/* Upload File Input */}
-                <div className="border-2 border-dashed border-outline-variant/60 hover:border-[#00cec4]/50 rounded-2xl p-8 text-center transition bg-slate-50/20 dark:bg-slate-900/10 cursor-pointer relative">
+                <div className="border-2 border-dashed border-outline-variant/60 hover:border-[#00cec4]/50 rounded-2xl p-8 text-center transition bg-surface-container-high/20 dark:bg-slate-900/10 cursor-pointer relative">
                   <input
                     type="file"
                     accept=".csv"
@@ -1935,25 +1935,25 @@ export function OtClient({
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
                   <div className="space-y-2">
-                    <div className="mx-auto w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                    <div className="mx-auto w-12 h-12 rounded-full bg-surface-container-high dark:bg-slate-800 flex items-center justify-center text-on-surface-variant/60">
                       <Download className="size-6 rotate-180 text-[#00cec4]" />
                     </div>
-                    <div className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                    <div className="text-sm font-bold text-on-surface dark:text-slate-200">
                       {csvFileName ? `Selected File: ${csvFileName}` : "Drag & Drop CSV file or click to select"}
                     </div>
-                    <p className="text-xs text-slate-400">CSV format only. Files should contain employee credentials and clock entries.</p>
+                    <p className="text-xs text-on-surface-variant/60">CSV format only. Files should contain employee credentials and clock entries.</p>
                   </div>
                 </div>
 
                 {/* Column Mapping Section */}
                 {csvHeaders.length > 0 && (
                   <div className="space-y-4 border border-outline-variant/60 rounded-xl p-4 bg-surface">
-                    <h4 className="text-sm font-black text-slate-800 dark:text-white flex items-center gap-1.5">
+                    <h4 className="text-sm font-black text-on-surface dark:text-white flex items-center gap-1.5">
                       <Sliders className="size-4 text-[#00cec4]" /> Map CSV Columns to Attendance Variables
                     </h4>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
                           Employee Number / ID
                           <span className="text-[9px] text-[#00cec4] font-black uppercase">(Matches ID)</span>
                         </label>
@@ -1968,7 +1968,7 @@ export function OtClient({
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
                           Official Email Address
                           <span className="text-[9px] text-[#00cec4] font-black uppercase">(Matches Email)</span>
                         </label>
@@ -1983,7 +1983,7 @@ export function OtClient({
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
                           Employee Name
                           <span className="text-[9px] text-[#00cec4] font-black uppercase">(Matches Name)</span>
                         </label>
@@ -1998,7 +1998,7 @@ export function OtClient({
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
                           Attendance Date *
                           <span className="text-[9px] text-rose-500 font-black uppercase">(Required)</span>
                         </label>
@@ -2014,7 +2014,7 @@ export function OtClient({
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
                           Check-in / Clock-in Time
                         </label>
                         <select
@@ -2028,7 +2028,7 @@ export function OtClient({
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
                           Check-out / Clock-out Time
                         </label>
                         <select
@@ -2042,7 +2042,7 @@ export function OtClient({
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
                           Total Hours Worked
                         </label>
                         <select
@@ -2088,11 +2088,11 @@ export function OtClient({
             <div className="space-y-4">
               <Card className="border-0 shadow-sm border-l-4 border-l-[#00cec4] bg-surface">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">
+                  <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">
                     Import Information
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="text-xs text-slate-500 dark:text-slate-400 space-y-2 leading-relaxed font-semibold">
+                <CardContent className="text-xs text-on-surface-variant dark:text-on-surface-variant/60 space-y-2 leading-relaxed font-semibold">
                   <p>
                     • Employees are matched dynamically using a fallback hierarchy: first by **Employee Number / ID**, then by **Official Email**, and finally by **Exact Name**.
                   </p>
@@ -2111,7 +2111,7 @@ export function OtClient({
               {importSummary && (
                 <Card className="border-0 shadow-sm bg-surface animate-in zoom-in-95 duration-200">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                    <CardTitle className="text-sm font-bold text-on-surface dark:text-slate-200">
                       Import Statistics Summary
                     </CardTitle>
                   </CardHeader>
@@ -2119,21 +2119,21 @@ export function OtClient({
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div className="p-2 bg-emerald-500/10 rounded-lg">
                         <div className="text-lg font-black text-emerald-600 dark:text-emerald-400">{importSummary.imported}</div>
-                        <div className="text-[10px] text-slate-400 font-bold">Imported</div>
+                        <div className="text-[10px] text-on-surface-variant/60 font-bold">Imported</div>
                       </div>
                       <div className="p-2 bg-blue-500/10 rounded-lg">
                         <div className="text-lg font-black text-blue-600 dark:text-blue-400">{importSummary.updated}</div>
-                        <div className="text-[10px] text-slate-400 font-bold">Updated</div>
+                        <div className="text-[10px] text-on-surface-variant/60 font-bold">Updated</div>
                       </div>
                       <div className="p-2 bg-rose-500/10 rounded-lg">
                         <div className="text-lg font-black text-rose-600 dark:text-rose-400">{importSummary.skipped}</div>
-                        <div className="text-[10px] text-slate-400 font-bold">Skipped</div>
+                        <div className="text-[10px] text-on-surface-variant/60 font-bold">Skipped</div>
                       </div>
                     </div>
 
                     {importSummary.errors.length > 0 && (
                       <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Errors/Logs (Max 50):</label>
+                        <label className="text-[10px] font-black uppercase text-on-surface-variant/60 tracking-wider">Errors/Logs (Max 50):</label>
                         <div className="max-h-[150px] overflow-y-auto border border-rose-200/50 rounded-lg p-2 bg-rose-500/5 text-[10px] text-rose-600 font-mono space-y-1">
                           {importSummary.errors.map((err, i) => (
                             <div key={i}>{err}</div>
@@ -2154,20 +2154,20 @@ export function OtClient({
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
           <div className="bg-surface rounded-2xl border border-outline-variant max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-5 border-b border-outline-variant/60">
-              <h3 className="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <h3 className="text-base font-bold text-on-surface dark:text-white flex items-center gap-2">
                 <Sliders className="size-5 text-[#00cec4]" />
                 Manual Calculation Overrides
               </h3>
-              <p className="text-xs text-slate-400 font-semibold mt-1">
+              <p className="text-xs text-on-surface-variant/60 font-semibold mt-1">
                 For {adjustingRecord.user.name} on {new Date(adjustingRecord.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
               </p>
             </div>
             
             <div className="p-5 space-y-4">
               <div className="space-y-1.5">
-                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">
                   <span>Overtime Minutes</span>
-                  <span className="text-slate-800 dark:text-white font-black">{adjustedMins} mins ({(adjustedMins / 60).toFixed(2)} hrs)</span>
+                  <span className="text-on-surface dark:text-white font-black">{adjustedMins} mins ({(adjustedMins / 60).toFixed(2)} hrs)</span>
                 </div>
                 <input
                   type="range"
@@ -2181,9 +2181,9 @@ export function OtClient({
               </div>
 
               <div className="space-y-1.5">
-                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">
                   <span>Early Leaving Minutes</span>
-                  <span className="text-slate-800 dark:text-white font-black">{adjustedEarlyMins} mins</span>
+                  <span className="text-on-surface dark:text-white font-black">{adjustedEarlyMins} mins</span>
                 </div>
                 <input
                   type="range"
@@ -2197,9 +2197,9 @@ export function OtClient({
               </div>
 
               <div className="space-y-1.5">
-                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">
                   <span>Comp-Off Days</span>
-                  <span className="text-slate-800 dark:text-white font-black">{adjustedCompOff.toFixed(1)} days</span>
+                  <span className="text-on-surface dark:text-white font-black">{adjustedCompOff.toFixed(1)} days</span>
                 </div>
                 <input
                   type="range"
@@ -2213,12 +2213,12 @@ export function OtClient({
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50 dark:bg-slate-900/40 border-t border-outline-variant/60 flex justify-end gap-2.5">
+            <div className="p-4 bg-surface-container-high dark:bg-slate-900/40 border-t border-outline-variant/60 flex justify-end gap-2.5">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => setAdjustingRecord(null)}
-                className="text-xs h-9 px-4 border-outline-variant text-slate-500 hover:bg-slate-100"
+                className="text-xs h-9 px-4 border-outline-variant text-on-surface-variant hover:bg-surface-container-high"
               >
                 Cancel
               </Button>

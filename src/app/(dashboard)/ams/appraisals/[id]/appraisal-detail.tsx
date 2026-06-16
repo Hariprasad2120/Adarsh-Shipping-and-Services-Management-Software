@@ -79,11 +79,11 @@ const STAGE_COLOR: Record<string, string> = {
   MEETING_PENDING: "bg-cyan-50 text-cyan-700 border-cyan-200",
   MEETING_LIVE: "bg-green-50 text-green-700 border-green-200",
   HIKE_FINALISATION: "bg-pink-50 text-pink-700 border-pink-200",
-  CLOSED: "bg-gray-100 text-gray-500 border-gray-200",
+  CLOSED: "bg-surface-container-high text-on-surface-variant border-outline-variant",
 };
 
 const STATUS_BADGE: Record<string, string> = {
-  PENDING: "bg-gray-100 text-gray-500",
+  PENDING: "bg-surface-container-high text-on-surface-variant",
   AVAILABLE: "bg-green-100 text-green-700",
   UNAVAILABLE: "bg-red-100 text-red-600",
   FORCED: "bg-orange-100 text-orange-600",
@@ -235,8 +235,8 @@ export function AppraisalDetail({
         <Card title="Audit Log">
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {appraisal.auditLog.map((log) => (
-              <div key={log.id} className="text-xs text-gray-500 border-l-2 border-gray-200 pl-3">
-                <p className="font-medium text-gray-700">→ {log.toStage.replace(/_/g, " ")}</p>
+              <div key={log.id} className="text-xs text-on-surface-variant border-l-2 border-outline-variant pl-3">
+                <p className="font-medium text-on-surface">→ {log.toStage.replace(/_/g, " ")}</p>
                 {log.note && <p>{log.note}</p>}
                 <p>{new Date(log.createdAt).toLocaleString("en-IN")}</p>
               </div>
@@ -450,7 +450,7 @@ function UpdateReviewersCard({
             size="sm"
             className={selectedHR
               ? "rounded-2xl border-0 bg-[#00cec4] px-5 py-3 text-sm font-medium text-white hover:bg-[#00b8af]"
-              : "rounded-2xl bg-slate-300 px-5 py-3 text-sm font-medium text-slate-500 transition disabled:cursor-not-allowed"}
+              : "rounded-2xl bg-outline-variant px-5 py-3 text-sm font-medium text-on-surface-variant transition disabled:cursor-not-allowed"}
           >
             Update Reviewers
           </Button>
@@ -519,13 +519,13 @@ function StageActions({
 
       {/* Update reviewers */}
       {false && stage === "REVIEWERS_ASSIGNED" && caps["ams.appraisal.assign_reviewers"] && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-outline-variant bg-surface p-6 shadow-sm">
           <div className="space-y-6">
             <div className="space-y-1">
               <h2 className="ds-h2 text-slate-900">
                 Update Reviewers
               </h2>
-              <p className="text-sm text-slate-600">Adjust the reviewer chain after assignment if a reviewer needs to change.</p>
+              <p className="text-sm text-on-surface-variant">Adjust the reviewer chain after assignment if a reviewer needs to change.</p>
             </div>
 
             <div className="flex flex-col gap-3 md:flex-row md:items-center">
@@ -559,7 +559,7 @@ function StageActions({
               />
               {includeTL && (
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:pl-6">
-                  <span className="text-xs font-semibold text-slate-500 md:w-22">TL</span>
+                  <span className="text-xs font-semibold text-on-surface-variant md:w-22">TL</span>
                   <DropdownSelect
                     ariaLabel="Select team lead"
                     className="w-full md:flex-1"
@@ -591,7 +591,7 @@ function StageActions({
               />
               {includeManager && (
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:pl-6">
-                  <span className="text-xs font-semibold text-slate-500 md:w-22">Manager</span>
+                  <span className="text-xs font-semibold text-on-surface-variant md:w-22">Manager</span>
                   <DropdownSelect
                     ariaLabel="Select manager"
                     className="w-full md:flex-1"
@@ -615,7 +615,7 @@ function StageActions({
               </p>
             )}
 
-            <div className="border-t border-slate-200 pt-6">
+            <div className="border-t border-outline-variant pt-6">
               <div className="flex items-center justify-end gap-3">
                 <Button
                   variant="outline"
@@ -648,7 +648,7 @@ function StageActions({
         <Card title="Confirm Your Availability">
           {myReviewer.availabilityStatus === "PENDING" ? (
             <div className="space-y-3">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-on-surface-variant">
                 Can you attend the appraisal review for <strong>{appraisal.employee.name}</strong>?
               </p>
               <div className="flex gap-3">
@@ -667,7 +667,7 @@ function StageActions({
               <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[myReviewer.availabilityStatus] ?? ""}`}>
                 {myReviewer.availabilityStatus}
               </span>
-              <span className="text-sm text-gray-500">Response recorded.</span>
+              <span className="text-sm text-on-surface-variant">Response recorded.</span>
             </div>
           )}
         </Card>
@@ -680,7 +680,7 @@ function StageActions({
           <div className="space-y-2">
             {appraisal.reviewers.filter((r) => r.availabilityStatus === "UNAVAILABLE").map((r) => (
               <div key={r.id} className="flex items-center justify-between text-sm">
-                <span>{r.user.name} <span className="text-gray-400">({r.kind})</span></span>
+                <span>{r.user.name} <span className="text-on-surface-variant/60">({r.kind})</span></span>
                 <button onClick={() => onAction("availability", { available: true, force: true, userId: r.userId })}
                   className="text-xs px-2 py-1 bg-orange-500 text-white rounded hover:bg-orange-600">
                   Force available
@@ -735,7 +735,7 @@ function StageActions({
               selfTemplate={selfTemplate}
             />
           ) : (
-            <p className="text-sm text-gray-400 italic">Employee has not started self-assessment.</p>
+            <p className="text-sm text-on-surface-variant/60 italic">Employee has not started self-assessment.</p>
           )}
         </Card>
       )}
@@ -747,7 +747,7 @@ function StageActions({
           <div className="space-y-6">
             {appraisal.reviewerRatings.map((rr) => (
               <div key={rr.id} className="space-y-2">
-                <p className="text-xs font-semibold text-gray-500">
+                <p className="text-xs font-semibold text-on-surface-variant">
                   {rr.reviewer?.user?.name} ({rr.reviewer?.kind})
                 </p>
                 <CriteriaPointsView
@@ -766,7 +766,7 @@ function StageActions({
         <>
           {canClaimManagement && (
             <Card title="Management Review">
-              <p className="text-sm text-gray-600 mb-3">
+              <p className="text-sm text-on-surface-variant mb-3">
                 No management reviewer has claimed this appraisal yet.
               </p>
               <button onClick={() => onAction("claim-management", {})} disabled={saving}
@@ -784,7 +784,7 @@ function StageActions({
 
           {isClaimant && (
             <Card title="Management Review">
-              <p className="text-sm text-gray-600 mb-3">
+              <p className="text-sm text-on-surface-variant mb-3">
                 Your management review is handled on a dedicated page so self-assessment, reviewer ratings, and management scoring stay separate.
               </p>
               <Link
@@ -803,7 +803,7 @@ function StageActions({
         <Card title="Confirm Meeting Date">
           <div className="flex gap-3 items-end">
             <div className="flex-1">
-              <label className="text-xs text-gray-500">Meeting Date & Time</label>
+              <label className="text-xs text-on-surface-variant">Meeting Date & Time</label>
               <Input type="datetime-local" value={meetingDate} onChange={(e) => setMeetingDate(e.target.value)}
                 className="mt-1 w-full" />
             </div>
@@ -815,9 +815,9 @@ function StageActions({
           </div>
           {appraisal.managementReviews.length > 0 && (
             <div className="mt-3">
-              <p className="text-xs text-gray-500">Proposed dates from management:</p>
+              <p className="text-xs text-on-surface-variant">Proposed dates from management:</p>
               {appraisal.managementReviews.flatMap((mr) => mr.proposedDates).map((d, i) => (
-                <p key={i} className="text-sm text-gray-700">{new Date(d).toLocaleString("en-IN")}</p>
+                <p key={i} className="text-sm text-on-surface">{new Date(d).toLocaleString("en-IN")}</p>
               ))}
             </div>
           )}
@@ -826,7 +826,7 @@ function StageActions({
 
       {stage === "MEETING_PENDING" && caps["ams.meeting.confirm"] && appraisal.meeting?.status === "SCHEDULED" && (
         <Card title="Meeting Scheduled">
-          <p className="text-sm text-gray-600">{new Date(appraisal.meeting.scheduledAt).toLocaleString("en-IN")}</p>
+          <p className="text-sm text-on-surface-variant">{new Date(appraisal.meeting.scheduledAt).toLocaleString("en-IN")}</p>
           <button onClick={() => onAction("meeting", { action: "start" })} disabled={saving}
             className="mt-3 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
             Start Meeting
@@ -859,17 +859,17 @@ function StageActions({
           )}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-gray-500">Hike %</label>
+              <label className="text-xs text-on-surface-variant">Hike %</label>
               <Input type="number" value={hikePercent} onChange={(e) => setHikePercent(e.target.value)}
                 className="mt-1 w-full" />
             </div>
             <div>
-              <label className="text-xs text-gray-500">Amount (₹)</label>
+              <label className="text-xs text-on-surface-variant">Amount (₹)</label>
               <Input type="number" value={hikeAmount} onChange={(e) => setHikeAmount(e.target.value)}
                 className="mt-1 w-full" />
             </div>
             <div className="col-span-2">
-              <label className="text-xs text-gray-500">Effective From</label>
+              <label className="text-xs text-on-surface-variant">Effective From</label>
               <Input type="date" value={hikeEffective} onChange={(e) => setHikeEffective(e.target.value)}
                 className="mt-1 w-full" />
             </div>
@@ -995,7 +995,7 @@ function ProgressTimeline({ appraisal }: { appraisal: Appraisal }) {
             >
               <div className="relative flex w-8 shrink-0 justify-center">
                 {index < timelineItems.length - 1 ? (
-                  <span className="absolute top-9 h-[calc(100%-0.25rem)] w-px bg-slate-200" />
+                  <span className="absolute top-9 h-[calc(100%-0.25rem)] w-px bg-outline-variant" />
                 ) : null}
                 <span
                   className={`relative inline-flex h-8 w-8 items-center justify-center rounded-full border-2 ${
@@ -1011,7 +1011,7 @@ function ProgressTimeline({ appraisal }: { appraisal: Appraisal }) {
                 <p className={`text-[0.95rem] font-semibold ${isDone || isCurrent ? "text-slate-900" : "text-slate-400"}`}>
                   {item.title}
                 </p>
-                <p className={`mt-1 text-sm ${isDone || isCurrent ? "text-slate-500" : "text-slate-400"}`}>
+                <p className={`mt-1 text-sm ${isDone || isCurrent ? "text-on-surface-variant" : "text-slate-400"}`}>
                   {item.description}
                 </p>
               </div>
@@ -1041,16 +1041,16 @@ function ReviewersPanel({
   return (
     <Card title="Reviewers">
       {reviewers.length === 0 ? (
-        <p className="text-sm text-gray-400">Not assigned yet.</p>
+        <p className="text-sm text-on-surface-variant/60">Not assigned yet.</p>
       ) : (
         <div className="space-y-2">
           {reviewers.map((r) => (
             <div key={r.id} className="flex items-center justify-between text-sm">
               <div>
-                <span className="font-medium text-gray-900">{r.user.name}</span>
-                <span className="ml-2 text-xs text-gray-400 uppercase">{r.kind}</span>
+                <span className="font-medium text-on-surface">{r.user.name}</span>
+                <span className="ml-2 text-xs text-on-surface-variant/60 uppercase">{r.kind}</span>
               </div>
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[r.availabilityStatus] ?? "bg-gray-100 text-gray-500"}`}>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[r.availabilityStatus] ?? "bg-surface-container-high text-on-surface-variant"}`}>
                 {r.availabilityStatus}
               </span>
             </div>
@@ -1059,7 +1059,7 @@ function ReviewersPanel({
       )}
 
       {stage === "REVIEWERS_ASSIGNED" && availabilityDeadline && (
-        <div className={`mt-3 pt-3 border-t border-gray-100 text-xs ${deadlinePassed ? "text-green-700" : "text-gray-500"}`}>
+        <div className={`mt-3 pt-3 border-t border-outline-variant/40 text-xs ${deadlinePassed ? "text-green-700" : "text-on-surface-variant"}`}>
           {deadlinePassed ? <span>Availability deadline passed.</span> : (
             <span>Availability deadline: <strong>{new Date(availabilityDeadline).toLocaleDateString("en-IN")}</strong></span>
           )}
@@ -1068,13 +1068,13 @@ function ReviewersPanel({
       )}
 
       {stage === "SELF_ASSESSMENT_OPEN" && selfAssessmentDeadline && (
-        <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-purple-700">
+        <div className="mt-3 pt-3 border-t border-outline-variant/40 text-xs text-purple-700">
           Self-assessment deadline: <strong>{new Date(selfAssessmentDeadline).toLocaleDateString("en-IN")}</strong>
         </div>
       )}
 
       {stage === "REVIEWER_RATING" && reviewerRatingDeadline && (
-        <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-indigo-700">
+        <div className="mt-3 pt-3 border-t border-outline-variant/40 text-xs text-indigo-700">
           Reviewer rating deadline: <strong>{new Date(reviewerRatingDeadline).toLocaleDateString("en-IN")}</strong>
         </div>
       )}
@@ -1097,29 +1097,29 @@ function MeetingSection({ meeting, onAddMinute, caps, saving }: {
     <Card title="Meeting Minutes">
       <div className="space-y-2 max-h-48 overflow-y-auto mb-3">
         {meeting.minutes.length === 0 ? (
-          <p className="text-sm text-gray-400">No minutes yet.</p>
+          <p className="text-sm text-on-surface-variant/60">No minutes yet.</p>
         ) : (
           meeting.minutes.map((m) => (
             <div key={m.id} className="border-l-2 border-indigo-200 pl-3">
               <p className="text-xs font-semibold text-indigo-600">{m.role} — {m.author.name}</p>
-              <p className="text-sm text-gray-700">{m.content}</p>
+              <p className="text-sm text-on-surface">{m.content}</p>
             </div>
           ))
         )}
       </div>
       {caps["ams.meeting.minutes"] && meeting.status !== "DONE" && (
-        <div className="space-y-2 pt-3 border-t border-gray-100">
+        <div className="space-y-2 pt-3 border-t border-outline-variant/40">
           <div className="flex gap-2">
             {(["HR", "MANAGEMENT", "EMPLOYEE"] as const).map((r) => (
               <button key={r} type="button" onClick={() => setMinuteRole(r)}
-                className={`text-xs px-2 py-1 rounded ${minuteRole === r ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-700"}`}>
+                className={`text-xs px-2 py-1 rounded ${minuteRole === r ? "bg-indigo-600 text-white" : "bg-surface-container-high text-on-surface"}`}>
                 {r}
               </button>
             ))}
           </div>
           <textarea value={minuteContent} onChange={(e) => setMinuteContent(e.target.value)}
             placeholder="Add minute…" rows={2}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none" />
+            className="w-full border border-outline rounded-lg px-3 py-2 text-sm resize-none" />
           <button
             onClick={() => { onAddMinute(minuteRole, minuteContent); setMinuteContent(""); }}
             disabled={saving || !minuteContent}
@@ -1155,8 +1155,8 @@ function ToggleCard({
         <p className="font-medium text-on-surface">{label}</p>
         <p className="mt-1 text-xs text-on-surface-variant">{description}</p>
       </div>
-      <span className={`relative inline-flex h-7 w-12 rounded-full transition ${active ? "bg-[#55627f]" : "bg-slate-300 dark:bg-slate-600"}`}>
-        <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${active ? "left-6" : "left-1"}`} />
+      <span className={`relative inline-flex h-7 w-12 rounded-full transition ${active ? "bg-[#55627f]" : "bg-outline-variant dark:bg-slate-600"}`}>
+        <span className={`absolute top-1 h-5 w-5 rounded-full bg-surface transition ${active ? "left-6" : "left-1"}`} />
       </span>
     </button>
   );
@@ -1164,8 +1164,8 @@ function ToggleCard({
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="card-top-accent bg-white rounded-xl border border-gray-200 p-5 space-y-3">
-      {title && <h2 className="ds-h2 text-gray-900">{title}</h2>}
+    <div className="card-top-accent bg-surface rounded-xl border border-outline-variant p-5 space-y-3">
+      {title && <h2 className="ds-h2 text-on-surface">{title}</h2>}
       {children}
     </div>
   );
@@ -1196,11 +1196,11 @@ function ReviewerToggleRow({
       <span className={`${compact ? "text-xs uppercase tracking-[0.14em]" : "text-sm"} font-medium`}>{label}</span>
       <span
         className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${
-          active ? "bg-[#55627f]" : "bg-slate-300 dark:bg-slate-600"
+          active ? "bg-[#55627f]" : "bg-outline-variant dark:bg-slate-600"
         }`}
       >
         <span
-          className={`inline-block h-6 w-6 rounded-full bg-white shadow-sm transition ${
+          className={`inline-block h-6 w-6 rounded-full bg-surface shadow-sm transition ${
             active ? "translate-x-5" : "translate-x-1"
           }`}
         />
@@ -1212,8 +1212,8 @@ function ReviewerToggleRow({
 function Dt({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-2">
-      <dt className="text-gray-400 min-w-20">{label}</dt>
-      <dd className="text-gray-900">{children}</dd>
+      <dt className="text-on-surface-variant/60 min-w-20">{label}</dt>
+      <dd className="text-on-surface">{children}</dd>
     </div>
   );
 }

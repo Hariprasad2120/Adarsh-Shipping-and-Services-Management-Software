@@ -33,14 +33,14 @@ function getNotificationIcon(notification: NotificationRow) {
 }
 
 function getNotificationAccent(notification: NotificationRow) {
-  if (notification.dismissedAt) return "text-slate-400";
+  if (notification.dismissedAt) return "text-on-surface-variant/50";
   if (notification.acknowledgedAt) return "text-emerald-500";
   if (notification.requiresAck) return "text-amber-500";
   return "text-[#00cec4]";
 }
 
 function getNotificationStatus(notification: NotificationRow) {
-  if (notification.dismissedAt) return { label: "Dismissed", className: "border-slate-200 bg-slate-100 text-slate-500" };
+  if (notification.dismissedAt) return { label: "Dismissed", className: "border-outline-variant bg-surface-container-high text-on-surface-variant" };
   if (notification.acknowledgedAt) return { label: "Acknowledged", className: "border-emerald-200 bg-emerald-50 text-emerald-600" };
   if (notification.readAt) return { label: "Read", className: "border-[#00cec4]/20 bg-[#00cec4]/10 text-[#008f88]" };
   return { label: "Unread", className: "border-[#00cec4]/25 bg-[#00cec4]/12 text-[#008f88]" };
@@ -62,7 +62,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-4 rounded-[26px] border border-outline-variant/45 bg-white/78 px-5 py-5 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-4 rounded-[26px] border border-outline-variant/45 bg-surface/85 px-5 py-5 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1.5">
           <p className="text-sm text-on-surface-variant">Only your notifications appear here.</p>
         </div>
@@ -70,7 +70,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
           <Button
             size="sm"
             variant="outline"
-            className="rounded-full border-[#00cec4]/30 bg-white text-[#00a99f] hover:bg-[#00cec4]/[0.06]"
+            className="rounded-full border-[#00cec4]/30 bg-surface text-[#00a99f] hover:bg-[#00cec4]/[0.06]"
             onClick={() => run("/api/notifications/read-all", "Marked all as read")}
           >
             <CheckCheck className="mr-1.5 size-4" />
@@ -79,7 +79,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
           <Button
             size="sm"
             variant="outline"
-            className="rounded-full border-[#00cec4]/30 bg-white text-[#00a99f] hover:bg-[#00cec4]/[0.06]"
+            className="rounded-full border-[#00cec4]/30 bg-surface text-[#00a99f] hover:bg-[#00cec4]/[0.06]"
             onClick={() => run("/api/notifications/dismiss-all", "Dismissed all notifications")}
           >
             <Trash2 className="mr-1.5 size-4" />
@@ -89,7 +89,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
       </div>
 
       {notifications.length === 0 ? (
-        <div className="rounded-[26px] border border-dashed border-outline-variant/60 bg-white/68 px-6 py-14 text-center shadow-[0_18px_36px_-32px_rgba(15,23,42,0.12)] backdrop-blur-xl">
+        <div className="rounded-[26px] border border-dashed border-outline-variant/60 bg-surface/70 px-6 py-14 text-center shadow-[0_18px_36px_-32px_rgba(15,23,42,0.12)] backdrop-blur-xl">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
             <Bell className="size-6" />
           </div>
@@ -107,7 +107,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
               <article
                 key={notification.id}
                 className={cn(
-                  "group rounded-[26px] border border-white/70 bg-white/76 px-5 py-5 backdrop-blur-xl transition-all duration-200",
+                  "group rounded-[26px] border border-outline-variant/40 bg-surface/85 px-5 py-5 backdrop-blur-xl transition-all duration-200",
                   "shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] hover:border-[#00cec4]/45 hover:shadow-[0_24px_50px_-36px_rgba(0,206,196,0.25)]",
                 )}
               >
@@ -123,7 +123,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
                           {status.label}
                         </span>
                         {notification.source ? (
-                          <span className="rounded-full border border-outline-variant/50 bg-white/70 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-on-surface-variant">
+                          <span className="rounded-full border border-outline-variant/50 bg-surface/70 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-on-surface-variant">
                             {notification.source}
                           </span>
                         ) : null}
@@ -149,7 +149,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
                       <Button
                         size="sm"
                         variant="outline"
-                        className="rounded-full border-[#00cec4]/30 bg-white text-[#00a99f] hover:bg-[#00cec4]/[0.06]"
+                        className="rounded-full border-[#00cec4]/30 bg-surface text-[#00a99f] hover:bg-[#00cec4]/[0.06]"
                         onClick={() => run(`/api/notifications/${notification.id}/read`, "Marked as read")}
                       >
                         <Eye className="mr-1.5 size-4" />
@@ -170,7 +170,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
                       <Button
                         size="sm"
                         variant="outline"
-                        className="rounded-full border-[#00cec4]/30 bg-white text-[#00a99f] hover:bg-[#00cec4]/[0.06]"
+                        className="rounded-full border-[#00cec4]/30 bg-surface text-[#00a99f] hover:bg-[#00cec4]/[0.06]"
                         onClick={async () => {
                           const res = await fetch(`/api/notifications/${notification.id}/open`, { method: "POST" });
                           const data = (await res.json()) as { link?: string | null };
@@ -190,7 +190,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
                       <Button
                         size="sm"
                         variant="outline"
-                        className="rounded-full border-[#00cec4]/30 bg-white text-[#00a99f] hover:bg-[#00cec4]/[0.06]"
+                        className="rounded-full border-[#00cec4]/30 bg-surface text-[#00a99f] hover:bg-[#00cec4]/[0.06]"
                         onClick={() => run(`/api/notifications/${notification.id}/dismiss`, "Notification dismissed")}
                       >
                         <Trash2 className="mr-1.5 size-4" />

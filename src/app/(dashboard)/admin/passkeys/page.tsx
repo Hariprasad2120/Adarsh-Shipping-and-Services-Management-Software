@@ -50,7 +50,7 @@ export default async function AdminPasskeysPage() {
   return (
     <div className="max-w-7xl space-y-6">
       <div className="space-y-1">
-        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+        <p className="text-sm text-on-surface-variant dark:text-on-surface-variant font-medium">
           Manage user credentials reset requests or force users to register new passkeys.
         </p>
       </div>
@@ -59,21 +59,21 @@ export default async function AdminPasskeysPage() {
         {/* Reset requests list */}
         <Card className="border-0 shadow-sm overflow-hidden bg-surface h-fit">
           <CardHeader className="pb-3 border-b border-outline-variant/60">
-            <CardTitle className="text-base font-semibold text-slate-800 dark:text-slate-200">
+            <CardTitle className="text-base font-semibold text-on-surface-variant dark:text-on-surface-variant">
               Reset Requests
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0 divide-y divide-outline-variant/60">
             {requests.length === 0 ? (
-              <div className="text-center text-slate-400/80 py-12 text-sm font-medium">
+              <div className="text-center text-on-surface-variant/80 py-12 text-sm font-medium">
                 No active passkey reset requests.
               </div>
             ) : (
               requests.map((request) => (
-                <div key={request.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 hover:bg-slate-50/20 transition">
+                <div key={request.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 hover:bg-surface-container-high/20 transition">
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">{toTitleCase(request.user.name)}</p>
-                    <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                    <p className="text-sm font-bold text-on-surface-variant dark:text-white">{toTitleCase(request.user.name)}</p>
+                    <p className="text-xs text-on-surface-variant font-semibold mt-0.5">
                       {request.user.email} · {new Date(request.requestedAt).toLocaleString("en-IN")}
                     </p>
                   </div>
@@ -115,16 +115,16 @@ export default async function AdminPasskeysPage() {
         {/* Force reset list */}
         <Card className="border-0 shadow-sm overflow-hidden bg-surface">
           <CardHeader className="pb-3 border-b border-outline-variant/60">
-            <CardTitle className="text-base flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-200">
+            <CardTitle className="text-base flex items-center gap-2 font-semibold text-on-surface-variant dark:text-on-surface-variant">
               <ShieldAlert className="size-4 text-[#00cec4]" /> Force Reset Credentials
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0 max-h-[500px] overflow-y-auto divide-y divide-outline-variant/60">
             {users.map((user) => (
-              <div key={user.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 hover:bg-slate-50/20 transition">
+              <div key={user.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 hover:bg-surface-container-high/20 transition">
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">{toTitleCase(user.name)}</p>
-                  <p className="text-xs text-slate-400 font-semibold mt-0.5">{user.email}</p>
+                  <p className="text-sm font-bold text-on-surface-variant dark:text-white">{toTitleCase(user.name)}</p>
+                  <p className="text-xs text-on-surface-variant font-semibold mt-0.5">{user.email}</p>
                 </div>
                 <form action={forcePasskeyResetAction}>
                   <input type="hidden" name="userId" value={user.id} />
@@ -135,8 +135,8 @@ export default async function AdminPasskeysPage() {
                     disabled={!!user.passkeySetupRequired}
                     className={`h-8 text-[11px] font-semibold border-outline-variant/60 transition ${
                       user.passkeySetupRequired
-                        ? "bg-slate-50 text-slate-400 border-slate-200 dark:bg-slate-800/40"
-                        : "text-slate-700 dark:text-slate-200 hover:bg-surface-container-low"
+                        ? "bg-surface-container-high text-on-surface-variant border-outline-variant dark:bg-slate-800/40"
+                        : "text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-low"
                     }`}
                   >
                     {user.passkeySetupRequired ? "Reset pending" : "Force reset"}

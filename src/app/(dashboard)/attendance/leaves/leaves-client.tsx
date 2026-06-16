@@ -36,7 +36,7 @@ const STATUS_COLOR: Record<string, string> = {
   pending: "bg-yellow-50 text-yellow-700",
   approved: "bg-green-50 text-green-700",
   rejected: "bg-red-50 text-red-600",
-  cancelled: "bg-gray-100 text-gray-500",
+  cancelled: "bg-surface-container-high text-on-surface-variant",
 };
 
 export function LeavesClient({

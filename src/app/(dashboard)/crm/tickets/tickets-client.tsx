@@ -32,11 +32,11 @@ const STATUS_COLORS: Record<string, string> = {
   OPEN: "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-900/30",
   IN_PROGRESS: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-900/30",
   RESOLVED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/30",
-  CLOSED: "bg-slate-100 text-slate-500 dark:bg-slate-800/40 dark:text-slate-400 border-slate-200 dark:border-slate-700/30",
+  CLOSED: "bg-surface-container-high text-on-surface-variant dark:bg-slate-800/40 dark:text-slate-400 border-outline-variant dark:border-slate-700/30",
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  LOW: "bg-slate-100 text-slate-500 dark:bg-slate-800/40 dark:text-slate-400",
+  LOW: "bg-surface-container-high text-on-surface-variant dark:bg-slate-800/40 dark:text-slate-400",
   MEDIUM: "bg-amber-100 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400",
   HIGH: "bg-orange-100 text-orange-600 dark:bg-orange-950/30 dark:text-orange-400",
   URGENT: "bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40",
@@ -145,7 +145,7 @@ export function TicketsClient({
                   className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase transition ${
                     statusFilter === s
                       ? "bg-[#00cec4] text-white"
-                      : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                      : "text-on-surface-variant hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
                   {s.replace("_", " ")} ({count})
@@ -209,14 +209,14 @@ export function TicketsClient({
                       {ticket.title}
                     </h3>
 
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+                    <p className="text-xs text-on-surface-variant dark:text-slate-400 line-clamp-1">
                       {ticket.description}
                     </p>
 
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-400 font-semibold">
                       <span className="flex items-center gap-1">
                         <User className="size-3.5" />
-                        Raised by: <span className="text-slate-600 dark:text-slate-300 font-bold">{ticket.raisedBy.name}</span>
+                        Raised by: <span className="text-on-surface-variant dark:text-slate-300 font-bold">{ticket.raisedBy.name}</span>
                         {ticket.raisedBy.designation && ` (${ticket.raisedBy.designation})`}
                       </span>
                       <span className="flex items-center gap-1">

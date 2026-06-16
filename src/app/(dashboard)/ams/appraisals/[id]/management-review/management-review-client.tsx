@@ -36,8 +36,8 @@ type ManagementReviewDetail = {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-3 rounded-xl border border-cyan-100 bg-white p-5">
-      <h2 className="ds-h2 text-gray-900">{title}</h2>
+    <div className="space-y-3 rounded-xl border border-cyan-100 bg-surface p-5">
+      <h2 className="ds-h2 text-on-surface">{title}</h2>
       {children}
     </div>
   );
@@ -52,7 +52,7 @@ const STAGE_COLOR: Record<string, string> = {
   MEETING_PENDING: "bg-cyan-50 text-cyan-700 border-cyan-200",
   MEETING_LIVE: "bg-green-50 text-green-700 border-green-200",
   HIKE_FINALISATION: "bg-pink-50 text-pink-700 border-pink-200",
-  CLOSED: "bg-gray-100 text-gray-500 border-gray-200",
+  CLOSED: "bg-surface-container-high text-on-surface-variant border-outline-variant",
 };
 
 function getStatusMessage(appraisal: ManagementReviewDetail): string {
@@ -151,21 +151,21 @@ export function ManagementReviewClient({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Link href={`/ams/appraisals/${appraisal.id}`} className="text-sm text-gray-500 hover:text-gray-700">
+        <Link href={`/ams/appraisals/${appraisal.id}`} className="text-sm text-on-surface-variant hover:text-on-surface">
           {"< Appraisal Detail"}
         </Link>
-        <span className="text-gray-300">/</span>
+        <span className="text-on-surface-variant/40">/</span>
       </div>
 
       <Card title="Review Summary">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
-            <p className="text-lg font-semibold text-gray-900">{appraisal.employee.name}</p>
-            <p className="text-sm text-gray-500">
+            <p className="text-lg font-semibold text-on-surface">{appraisal.employee.name}</p>
+            <p className="text-sm text-on-surface-variant">
               {appraisal.employee.designation ?? "No designation"} · {appraisal.cycle.name} {appraisal.cycle.year}
             </p>
           </div>
-          <span className={`rounded-full border px-3 py-1 text-xs font-medium ${STAGE_COLOR[appraisal.stage] ?? "border-gray-200 bg-gray-100 text-gray-500"}`}>
+          <span className={`rounded-full border px-3 py-1 text-xs font-medium ${STAGE_COLOR[appraisal.stage] ?? "border-outline-variant bg-surface-container-high text-on-surface-variant"}`}>
             {appraisal.stage.replace(/_/g, " ")}
           </span>
         </div>
@@ -198,7 +198,7 @@ export function ManagementReviewClient({
           <div className="space-y-6">
             {appraisal.reviewerRatings.map((row) => (
               <div key={row.id} className="space-y-2">
-                <p className="text-xs font-semibold text-gray-500">
+                <p className="text-xs font-semibold text-on-surface-variant">
                   {row.reviewer.user.name} ({row.reviewer.kind})
                 </p>
                 <CriteriaPointsView criteria={reviewerCriteria} supplementary={[]} answers={row.ratings} />
@@ -206,13 +206,13 @@ export function ManagementReviewClient({
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-400 italic">Reviewer ratings are not available yet.</p>
+          <p className="text-sm text-on-surface-variant/60 italic">Reviewer ratings are not available yet.</p>
         )}
       </Card>
 
       {appraisal.canClaim ? (
         <Card title="Claim Management Review">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-on-surface-variant">
             Claim this appraisal to open your separate management rating form.
           </p>
           <button
@@ -227,7 +227,7 @@ export function ManagementReviewClient({
         <Card title="Your Management Rating">
           <div className="space-y-4">
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Proposed Meeting Dates</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Proposed Meeting Dates</p>
               {proposedDates.map((value, index) => (
                 <Input
                   key={index}
@@ -254,16 +254,16 @@ export function ManagementReviewClient({
           <>
             {appraisal.proposedDates.length > 0 && (
               <div className="space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Proposed Meeting Dates</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Proposed Meeting Dates</p>
                 {appraisal.proposedDates.map((value, index) => (
-                  <p key={index} className="text-sm text-gray-700">
+                  <p key={index} className="text-sm text-on-surface">
                     {new Date(value).toLocaleDateString("en-IN")}
                   </p>
                 ))}
               </div>
             )}
             <CriteriaPointsView criteria={managementCriteria} supplementary={[]} answers={currentRating} />
-            <div className="border-t border-gray-100 pt-4">
+            <div className="border-t border-outline-variant/40 pt-4">
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
@@ -279,9 +279,9 @@ export function ManagementReviewClient({
           <>
             {appraisal.proposedDates.length > 0 && (
               <div className="space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Proposed Meeting Dates</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Proposed Meeting Dates</p>
                 {appraisal.proposedDates.map((value, index) => (
-                  <p key={index} className="text-sm text-gray-700">
+                  <p key={index} className="text-sm text-on-surface">
                     {new Date(value).toLocaleDateString("en-IN")}
                   </p>
                 ))}
@@ -292,7 +292,7 @@ export function ManagementReviewClient({
         </Card>
       ) : (
         <Card title="Review Status">
-          <p className="text-sm text-gray-600">{getStatusMessage(appraisal)}</p>
+          <p className="text-sm text-on-surface-variant">{getStatusMessage(appraisal)}</p>
         </Card>
       )}
     </div>

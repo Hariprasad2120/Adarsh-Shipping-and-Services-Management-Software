@@ -65,9 +65,9 @@ export function RolesManager({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Role list */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
+      <div className="bg-surface rounded-xl border border-outline-variant p-4 space-y-2">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="ds-h2 text-gray-900">Roles</h2>
+          <h2 className="ds-h2 text-on-surface">Roles</h2>
           <button onClick={addRole} className="text-xs text-indigo-600 hover:underline">+ New</button>
         </div>
         {roles.map((r) => (
@@ -77,23 +77,23 @@ export function RolesManager({
             className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
               selected?.id === r.id
                 ? "bg-indigo-50 text-indigo-700 font-medium"
-                : "hover:bg-gray-50 text-gray-700"
+                : "hover:bg-surface-container-high text-on-surface"
             }`}
           >
             {r.name}
-            {r.isSystem && <span className="ml-2 text-xs text-gray-400">system</span>}
+            {r.isSystem && <span className="ml-2 text-xs text-on-surface-variant/60">system</span>}
           </button>
         ))}
       </div>
 
       {/* Permission matrix */}
-      <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+      <div className="lg:col-span-2 bg-surface rounded-xl border border-outline-variant p-5 space-y-4">
         {!selected ? (
-          <p className="text-sm text-gray-400">Select a role to edit permissions.</p>
+          <p className="text-sm text-on-surface-variant/60">Select a role to edit permissions.</p>
         ) : (
           <>
             <div className="flex items-center justify-between">
-              <h2 className="ds-h2 text-gray-900">{selected.name} — Permissions</h2>
+              <h2 className="ds-h2 text-on-surface">{selected.name} — Permissions</h2>
               <button
                 onClick={savePermissions}
                 disabled={saving}
@@ -105,7 +105,7 @@ export function RolesManager({
 
             {Object.entries(groups).map(([group, perms]) => (
               <div key={group}>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{group}</p>
+                <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-2">{group}</p>
                 <div className="space-y-1">
                   {perms.map((p) => (
                     <label key={p.id} className="flex items-center gap-3 py-1 cursor-pointer">
@@ -113,10 +113,10 @@ export function RolesManager({
                         type="checkbox"
                         checked={checkedIds.has(p.id)}
                         onChange={() => togglePerm(p.id)}
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                        className="h-4 w-4 rounded border-outline text-indigo-600"
                       />
-                      <span className="text-sm text-gray-800">{p.label}</span>
-                      <span className="text-xs text-gray-400 font-mono">{p.key}</span>
+                      <span className="text-sm text-on-surface">{p.label}</span>
+                      <span className="text-xs text-on-surface-variant/60 font-mono">{p.key}</span>
                     </label>
                   ))}
                 </div>

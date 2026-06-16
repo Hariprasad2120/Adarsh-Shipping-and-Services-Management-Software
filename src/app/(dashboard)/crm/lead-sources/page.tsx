@@ -125,34 +125,34 @@ export default async function CrmLeadSourcesPage() {
             {config ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-[#0a0d12]/50 p-4 rounded-xl border border-[#1c212a]/30 text-xs">
                 <div>
-                  <span className="text-slate-500 block">Mode</span>
+                  <span className="text-on-surface-variant block">Mode</span>
                   <span className="font-semibold text-white uppercase">{config.importMode}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Interval</span>
+                  <span className="text-on-surface-variant block">Interval</span>
                   <span className="font-semibold text-white">{config.importMode === "SCHEDULED" ? config.scheduleInterval : "Manual Only"}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Max Leads / Run</span>
+                  <span className="text-on-surface-variant block">Max Leads / Run</span>
                   <span className="font-semibold text-[#00c4b6]">{config.maxLeads} leads</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Duplicate Handling</span>
+                  <span className="text-on-surface-variant block">Duplicate Handling</span>
                   <span className="font-semibold text-white uppercase">{config.duplicateHandling.replace("_", " ")}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Last Synced</span>
+                  <span className="text-on-surface-variant block">Last Synced</span>
                   <span className="font-semibold text-white">
                     {config.lastSyncedAt ? new Date(config.lastSyncedAt).toLocaleString("en-IN") : "Never"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Default Owner</span>
+                  <span className="text-on-surface-variant block">Default Owner</span>
                   <span className="font-semibold text-white">{config.defaultOwner.name}</span>
                 </div>
               </div>
             ) : (
-              <div className="p-4 bg-[#0a0d12]/40 rounded-xl border border-dashed border-[#1c212a]/60 text-center text-xs text-slate-500">
+              <div className="p-4 bg-[#0a0d12]/40 rounded-xl border border-dashed border-[#1c212a]/60 text-center text-xs text-on-surface-variant">
                 Setup your Justdial parameters to authorize session cookie injection.
               </div>
             )}
@@ -203,12 +203,12 @@ export default async function CrmLeadSourcesPage() {
             </div>
           </div>
 
-          <div className="p-4 bg-slate-500/5 rounded-xl border border-slate-500/10 space-y-2">
+          <div className="p-4 bg-surface-container-high0/5 rounded-xl border border-outline-variant/40 space-y-2">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
               <HelpCircle className="size-4 text-[#00c4b6]" />
               <span>Cookie Synchronization</span>
             </div>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
+            <p className="text-[11px] text-on-surface-variant leading-relaxed">
               Playwright uses the cookie JSON saved in your configuration parameters. If login expired warnings appear, export cookies from your authenticated Justdial desktop tab and paste the text block.
             </p>
           </div>
@@ -234,14 +234,14 @@ export default async function CrmLeadSourcesPage() {
         </div>
 
         {logs.length === 0 ? (
-          <div className="p-8 text-center text-slate-500 text-xs">
+          <div className="p-8 text-center text-on-surface-variant text-xs">
             No recent import activities found. Trigger a manual sync run above.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse text-slate-300">
               <thead>
-                <tr className="border-b border-[#1c212a]/60 bg-[#0c0f14]/50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <tr className="border-b border-[#1c212a]/60 bg-[#0c0f14]/50 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
                   <th className="px-4 py-3">Start Date/Time</th>
                   <th className="px-4 py-3">Duration</th>
                   <th className="px-4 py-3">Status</th>

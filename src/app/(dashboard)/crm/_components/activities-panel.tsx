@@ -284,7 +284,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
 
       {/* Activities List */}
       {activities.length === 0 ? (
-        <div className="p-6 text-center text-slate-500 text-sm border border-dashed border-[#1c212a]/50 rounded-lg">
+        <div className="p-6 text-center text-on-surface-variant text-sm border border-dashed border-[#1c212a]/50 rounded-lg">
           No activities planned yet.
         </div>
       ) : (
@@ -329,16 +329,16 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
 
                 <p className="text-xs text-slate-400 mt-1">{activity.description}</p>
 
-                <div className="flex flex-wrap items-center gap-3 text-[10px] text-slate-500 mt-2">
+                <div className="flex flex-wrap items-center gap-3 text-[10px] text-on-surface-variant mt-2">
                   {activity.type === "TASK" && activity.dueAt && (
                     <span className="flex items-center gap-1">
-                      <Clock className="size-3 text-slate-500" />
+                      <Clock className="size-3 text-on-surface-variant" />
                       <span>Due: {new Date(activity.dueAt).toLocaleDateString("en-IN")}</span>
                     </span>
                   )}
                   {activity.type === "EVENT" && activity.startAt && (
                     <span className="flex items-center gap-1">
-                      <Clock className="size-3 text-slate-500" />
+                      <Clock className="size-3 text-on-surface-variant" />
                       <span>
                         Time: {new Date(activity.startAt).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
                       </span>
@@ -346,7 +346,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                   )}
                   {activity.type === "CALL" && (
                     <span className="flex items-center gap-1">
-                      <Clock className="size-3 text-slate-500" />
+                      <Clock className="size-3 text-on-surface-variant" />
                       <span>
                         Duration: {activity.durationMins || "0"}m • {activity.callResult || "No result"}
                       </span>
@@ -354,7 +354,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                   )}
                   {activity.location && (
                     <span className="flex items-center gap-1">
-                      <MapPin className="size-3 text-slate-500" />
+                      <MapPin className="size-3 text-on-surface-variant" />
                       <span>{activity.location}</span>
                     </span>
                   )}

@@ -16,13 +16,13 @@ export default async function AdminSettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/admin" className="text-sm text-gray-500 hover:text-gray-700">
+        <Link href="/admin" className="text-sm text-on-surface-variant hover:text-on-surface-variant">
           ← Admin
         </Link>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-6">
-        <h2 className="ds-h2 mb-4 text-gray-900">Reviewer Availability</h2>
+      <div className="rounded-xl border border-outline-variant bg-surface p-6">
+        <h2 className="ds-h2 mb-4 text-on-surface-variant">Reviewer Availability</h2>
         <SettingsClient
           initialDays={settings.availabilityDeadlineDays}
           initialWeights={settings.reviewerRoleWeights}

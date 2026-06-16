@@ -17,7 +17,7 @@ import {
 type Cycle = { id: string; name: string; year: number; status: string; _count: { appraisals: number } };
 
 const STATUS_COLOR: Record<string, string> = {
-  DRAFT: "bg-gray-100 text-gray-600",
+  DRAFT: "bg-surface-container-high text-on-surface-variant",
   ACTIVE: "bg-green-50 text-green-700",
   CLOSED: "bg-red-50 text-red-600",
 };
@@ -54,7 +54,7 @@ export function CyclesClient({ cycles, currentYear }: { cycles: Cycle[]; current
   return (
     <DataTable>
       <DataTableToolbar>
-        <p className="font-semibold text-gray-900">All Cycles</p>
+        <p className="font-semibold text-on-surface">All Cycles</p>
         <button
           onClick={createCycle}
           disabled={loading}
@@ -77,12 +77,12 @@ export function CyclesClient({ cycles, currentYear }: { cycles: Cycle[]; current
         ) : (
           cycles.map((c) => (
             <DataTableRow key={c.id}>
-              <DataTableCell className="font-medium text-gray-900">{c.name}</DataTableCell>
-              <DataTableCell className="text-gray-500">{c.year}</DataTableCell>
+              <DataTableCell className="font-medium text-on-surface">{c.name}</DataTableCell>
+              <DataTableCell className="text-on-surface-variant">{c.year}</DataTableCell>
               <DataTableCell>
-                <Badge className={STATUS_COLOR[c.status] ?? "bg-gray-100 text-gray-600"}>{c.status}</Badge>
+                <Badge className={STATUS_COLOR[c.status] ?? "bg-surface-container-high text-on-surface-variant"}>{c.status}</Badge>
               </DataTableCell>
-              <DataTableCell className="text-gray-500">{c._count.appraisals}</DataTableCell>
+              <DataTableCell className="text-on-surface-variant">{c._count.appraisals}</DataTableCell>
               <DataTableCell className="text-right">
                 {c.status === "DRAFT" && (
                   <button onClick={() => updateStatus(c.id, "activate")} className="text-xs text-green-600 hover:underline">

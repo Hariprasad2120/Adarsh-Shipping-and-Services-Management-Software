@@ -30,7 +30,7 @@ const STAGE_COLOR: Record<string, string> = {
   MEETING_PENDING: "bg-cyan-50 text-cyan-700",
   MEETING_LIVE: "bg-green-50 text-green-700",
   HIKE_FINALISATION: "bg-pink-50 text-pink-700",
-  CLOSED: "bg-gray-100 text-gray-500",
+  CLOSED: "bg-surface-container-high text-on-surface-variant",
 };
 
 const MONTH_NAMES = [
@@ -116,8 +116,8 @@ export default async function AppraisalsPage({
     <div className="space-y-8">
       <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <h2 className="ds-h2 text-gray-900">Due This Month</h2>
-          <span className="text-sm text-gray-500">
+          <h2 className="ds-h2 text-on-surface">Due This Month</h2>
+          <span className="text-sm text-on-surface-variant">
             - {MONTH_NAMES[defaultMonth]} {defaultYear}
           </span>
           {dueThisMonthRowsSafe.length > 0 && (
@@ -145,7 +145,7 @@ export default async function AppraisalsPage({
 
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="ds-h2 text-gray-900">In Progress</h2>
+          <h2 className="ds-h2 text-on-surface">In Progress</h2>
           <InProgressFilterMenu cycles={cycles as Cycles} stageOptions={Object.keys(STAGE_COLOR)} />
         </div>
 
@@ -178,7 +178,7 @@ export default async function AppraisalsPage({
             ) : (
               (appraisals as Appraisals).map((appraisal) => (
                 <DataTableRow key={appraisal.id}>
-                  <DataTableCell className="font-medium text-gray-900">
+                  <DataTableCell className="font-medium text-on-surface">
                     <Link
                       href={
                         appraisal.stage === "DUE_NOTIFIED"
@@ -190,13 +190,13 @@ export default async function AppraisalsPage({
                       <span>{appraisal.employee.name}</span>
                     </Link>
                   </DataTableCell>
-                  <DataTableCell className="text-gray-500">{appraisal.cycle.name}</DataTableCell>
+                  <DataTableCell className="text-on-surface-variant">{appraisal.cycle.name}</DataTableCell>
                   <DataTableCell>
-                    <Badge className={STAGE_COLOR[appraisal.stage] ?? "bg-gray-100 text-gray-500"}>
+                    <Badge className={STAGE_COLOR[appraisal.stage] ?? "bg-surface-container-high text-on-surface-variant"}>
                       {appraisal.stage.replace(/_/g, " ")}
                     </Badge>
                   </DataTableCell>
-                  <DataTableCell className="text-gray-500">
+                  <DataTableCell className="text-on-surface-variant">
                     {new Date(appraisal.dueDate).toLocaleDateString("en-IN")}
                   </DataTableCell>
                   <DataTableCell className="text-right">
@@ -222,13 +222,13 @@ export default async function AppraisalsPage({
       <section className="space-y-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="flex items-center gap-2">
-            <h2 className="ds-h2 text-gray-900">{isDueFilterApplied ? "Eligible For Appraisal" : "All Employees"}</h2>
+            <h2 className="ds-h2 text-on-surface">{isDueFilterApplied ? "Eligible For Appraisal" : "All Employees"}</h2>
             {isDueFilterApplied ? (
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-on-surface-variant">
                 - {MONTH_NAMES[month]} {year}
               </span>
             ) : (
-              <span className="text-sm text-gray-500">- Company directory</span>
+              <span className="text-sm text-on-surface-variant">- Company directory</span>
             )}
             {eligibleRowsToShow.length > 0 && (
               <Badge className="bg-red-50 text-red-600">{eligibleRowsToShow.length}</Badge>

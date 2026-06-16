@@ -24,7 +24,7 @@ function statusBadgeClass(status: StatusFilter | "UNKNOWN") {
   if (status === "APPROVED") return "border-emerald-200 bg-emerald-50 text-emerald-700";
   if (status === "PENDING") return "border-amber-200 bg-amber-50 text-amber-700";
   if (status === "REJECTED") return "border-rose-200 bg-rose-50 text-rose-700";
-  return "border-slate-200 bg-slate-50 text-slate-600";
+  return "border-outline-variant bg-surface-container-high text-on-surface-variant";
 }
 
 function StatsCard({
@@ -38,7 +38,7 @@ function StatsCard({
 }) {
   return (
     <article
-      className="group relative overflow-hidden rounded-[24px] border border-outline-variant/20 bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-surface dark:shadow-ambient dark:hover:shadow-ambient-hover"
+      className="group relative overflow-hidden rounded-[24px] border border-outline-variant/20 bg-surface p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-surface dark:shadow-ambient dark:hover:shadow-ambient-hover"
     >
       <div className="absolute inset-x-0 top-0 h-14 bg-[linear-gradient(180deg,rgba(0,206,196,0.06),transparent)] dark:bg-[linear-gradient(180deg,rgba(0,206,196,0.08),transparent)]" />
       <div className="relative flex h-full flex-col">
@@ -53,7 +53,7 @@ function StatsCard({
           <p className="text-[2.35rem] font-extralight leading-none tracking-[-0.04em] text-slate-900 dark:text-on-surface">
             {value}
           </p>
-          <p className="mt-1.5 text-[14px] font-normal text-slate-500 dark:text-on-surface-variant">{label}</p>
+          <p className="mt-1.5 text-[14px] font-normal text-on-surface-variant dark:text-on-surface-variant">{label}</p>
         </div>
       </div>
     </article>

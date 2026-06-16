@@ -44,7 +44,7 @@ const STAGE_COLOR: Record<string, string> = {
   MEETING_PENDING: "bg-cyan-50 text-cyan-700 border-cyan-200",
   MEETING_LIVE: "bg-green-50 text-green-700 border-green-200",
   HIKE_FINALISATION: "bg-pink-50 text-pink-700 border-pink-200",
-  CLOSED: "bg-gray-100 text-gray-500 border-gray-200",
+  CLOSED: "bg-surface-container-high text-on-surface-variant border-outline-variant",
 };
 
 const STATUS_COLOR: Record<string, string> = {

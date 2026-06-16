@@ -80,7 +80,7 @@ const ROLE_GROUPS = [
     key: "Employee",
     label: "Employees",
     roles: ["Employee"],
-    badgeClass: "border-slate-200 bg-slate-50 text-slate-700",
+    badgeClass: "border-outline-variant bg-surface-container-high text-slate-700",
   },
 ] as const;
 
@@ -167,7 +167,7 @@ function roleBadgeClass(roleName: string) {
       return "border-cyan-200 bg-cyan-50 text-cyan-700";
 
     default:
-      return "border-slate-200 bg-slate-50 text-slate-700";
+      return "border-outline-variant bg-surface-container-high text-slate-700";
   }
 }
 
@@ -305,8 +305,8 @@ export function EmployeeList({ users }: { users: User[] }) {
   return (
     <div className="space-y-6">
       {users.length === 0 ? (
-        <Card className="rounded-[28px] border-slate-200 shadow-sm dark:border-[#00cec4]/25">
-          <CardContent className="py-10 text-center text-sm text-slate-500">
+        <Card className="rounded-[28px] border-outline-variant shadow-sm dark:border-[#00cec4]/25">
+          <CardContent className="py-10 text-center text-sm text-on-surface-variant">
             No employees found.
           </CardContent>
         </Card>
@@ -315,7 +315,7 @@ export function EmployeeList({ users }: { users: User[] }) {
           {groupedUsers.map((section) => (
             <Card
               key={section.key}
-              className="overflow-hidden rounded-[30px] border-slate-200 shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:border-[#00cec4]/25"
+              className="overflow-hidden rounded-[30px] border-outline-variant shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:border-[#00cec4]/25"
             >
               <CardHeader className="bg-surface px-5 pb-4 pt-5">
                 <CardTitle className="w-full text-lg font-medium uppercase tracking-[0.12em] text-slate-700">
@@ -334,7 +334,7 @@ export function EmployeeList({ users }: { users: User[] }) {
           ))}
 
           {uncategorizedUsers.length > 0 ? (
-            <Card className="overflow-hidden rounded-[30px] border-slate-200 shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:border-[#00cec4]/25">
+            <Card className="overflow-hidden rounded-[30px] border-outline-variant shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:border-[#00cec4]/25">
               <CardHeader className="bg-surface px-5 pb-4 pt-5">
                 <CardTitle className="w-full text-lg font-medium uppercase tracking-[0.12em] text-slate-700">
                   Other Roles

@@ -85,17 +85,15 @@ export default async function PunchPage({
   }));
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <PunchCard
-        punches={punchRows as any}
-        otRecords={otRows}
-        today={now.toISOString()}
-        canManage={canManage}
-        employees={employees}
-        selectedEmployeeId={targetEmployeeId}
-        selectedYear={selectedYear}
-        selectedMonth={selectedMonth}
-      />
-    </div>
+    <PunchCard
+      punches={punchRows as any}
+      otRecords={otRows}
+      today={now.toISOString()}
+      canManage={canManage}
+      employees={employees}
+      selectedEmployeeId={targetEmployeeId}
+      selectedYear={selectedYear}
+      selectedMonth={selectedMonth}
+    />
   );
 }

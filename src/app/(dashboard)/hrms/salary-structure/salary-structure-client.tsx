@@ -90,7 +90,7 @@ function SummaryCard({
   tone: string;
 }) {
   return (
-    <Card className="rounded-[22px] border-outline-variant/40 shadow-sm">
+    <Card className="rounded-[22px] border-outline-variant/40 shadow-ambient">
       <CardContent className="p-5">
         <p className={`text-xs font-medium ${tone}`}>{label}</p>
         <p className="ds-numeric mt-1 text-3xl font-semibold tracking-tight text-on-surface">₹{formatNumber(value)}</p>
@@ -110,7 +110,7 @@ function TableCard({
   rows: Array<{ label: string; monthly: number; annual: number; note?: string; highlight?: boolean }>;
 }) {
   return (
-    <Card className="overflow-hidden rounded-[24px] border-outline-variant/40 shadow-sm">
+    <Card className="overflow-hidden rounded-[24px] border-outline-variant/40 shadow-ambient">
       <CardHeader className="border-b border-outline-variant/20 pb-4">
         <CardTitle className="flex items-center gap-2 text-base">
           {icon}
@@ -263,7 +263,7 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-[26px] border-outline-variant/40 shadow-sm">
+      <Card className="rounded-[26px] border-outline-variant/40 shadow-ambient">
         <CardHeader className="pb-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -307,7 +307,7 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
                 value={employeeName}
                 onChange={(event) => setEmployeeName(event.target.value)}
                 placeholder="Full name"
-                className="placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                className="placeholder:text-on-surface-variant/60 dark:placeholder:text-on-surface-variant"
               />
             </div>
             <div className="space-y-1.5">
@@ -316,7 +316,7 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
                 value={employeeRole}
                 onChange={(event) => setEmployeeRole(event.target.value)}
                 placeholder="e.g. Manager"
-                className="placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                className="placeholder:text-on-surface-variant/60 dark:placeholder:text-on-surface-variant"
               />
             </div>
             <div className="space-y-1.5">
@@ -335,7 +335,7 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
                 value={inputs.annualCTC === 0 ? "" : inputs.annualCTC}
                 onChange={(event) => set("annualCTC", Number(event.target.value) || 0)}
                 placeholder="0"
-                className="placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                className="placeholder:text-on-surface-variant/60 dark:placeholder:text-on-surface-variant"
               />
             </div>
             <div className="space-y-1.5">
@@ -364,7 +364,7 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
                 value={inputs.monthlyIncentive === 0 ? "" : inputs.monthlyIncentive}
                 onChange={(event) => set("monthlyIncentive", Number(event.target.value) || 0)}
                 placeholder="0"
-                className="placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                className="placeholder:text-on-surface-variant/60 dark:placeholder:text-on-surface-variant"
               />
             </div>
             <div className="space-y-1.5">
@@ -409,7 +409,7 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
           <div className="space-y-6">
             <TableCard icon={<IndianRupee className="size-4" />} title="Offer Letter Structure" rows={offerRows} />
 
-            <Card className="rounded-[24px] border-outline-variant/40 shadow-sm">
+            <Card className="rounded-[24px] border-outline-variant/40 shadow-ambient">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Salary Notes</CardTitle>
               </CardHeader>
@@ -429,7 +429,7 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
               </CardContent>
             </Card>
 
-            <Card className="rounded-[24px] border-outline-variant/40 shadow-sm print:hidden">
+            <Card className="rounded-[24px] border-outline-variant/40 shadow-ambient print:hidden">
               <CardContent className="flex flex-wrap items-center justify-between gap-3 p-5">
                 <div>
                   <p className="text-sm font-medium text-on-surface">Actions</p>

@@ -129,7 +129,7 @@ export function KpiClient({ departments }: KpiClientProps) {
   return (
     <div className="space-y-6">
       {/* Tab system */}
-      <div className="flex items-center gap-1 border-b border-gray-200">
+      <div className="flex items-center gap-1 border-b border-outline-variant">
         {[
           { id: "templates", label: "KPI Templates", icon: FileText },
           { id: "reviews", label: "Monthly Reviews", icon: Award },
@@ -143,7 +143,7 @@ export function KpiClient({ departments }: KpiClientProps) {
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                 tab === t.id
                   ? "border-primary text-primary"
-                  : "border-transparent text-gray-500 hover:text-gray-900"
+                  : "border-transparent text-on-surface-variant hover:text-on-surface"
               }`}
             >
               <Icon className="size-4" />
@@ -178,9 +178,9 @@ export function KpiClient({ departments }: KpiClientProps) {
                     </thead>
                     <tbody className="divide-y divide-outline-variant/30">
                       {temp.metrics.map((metric, i) => (
-                        <tr key={i} className="hover:bg-slate-50/20 transition">
+                        <tr key={i} className="hover:bg-surface-container-high/20 transition">
                           <td className="py-3 px-4 font-bold text-slate-900 dark:text-white">{metric.name}</td>
-                          <td className="px-4 font-semibold text-slate-500 dark:text-slate-400">{metric.target}</td>
+                          <td className="px-4 font-semibold text-on-surface-variant dark:text-slate-400">{metric.target}</td>
                           <td className="px-4 font-bold text-slate-900 dark:text-white text-right">{metric.weight}%</td>
                         </tr>
                       ))}
@@ -225,7 +225,7 @@ export function KpiClient({ departments }: KpiClientProps) {
 
                     {/* Metrics Add Area */}
                     <div className="space-y-3 rounded-lg border border-outline-variant/40 p-3 bg-surface-container-low/20">
-                      <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
                         Add Metric Row
                       </h4>
 
@@ -270,7 +270,7 @@ export function KpiClient({ departments }: KpiClientProps) {
                         <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                           Template Metrics ({newMetrics.reduce((s, m) => s + m.weight, 0)}% total)
                         </label>
-                        <ul className="text-xs font-semibold text-slate-600 dark:text-slate-400 space-y-1">
+                        <ul className="text-xs font-semibold text-on-surface-variant dark:text-slate-400 space-y-1">
                           {newMetrics.map((m, idx) => (
                             <li key={idx} className="flex justify-between p-1 border-b border-outline-variant/20">
                               <span>{m.name}</span>
@@ -304,7 +304,7 @@ export function KpiClient({ departments }: KpiClientProps) {
                   <Info className="size-4 text-[#00cec4]" /> KPI Guidelines
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-4 space-y-3 text-xs text-slate-500 dark:text-slate-400 font-semibold leading-relaxed">
+              <CardContent className="pt-4 space-y-3 text-xs text-on-surface-variant dark:text-slate-400 font-semibold leading-relaxed">
                 <p>
                   1. Each department must have a designated KPI template configured containing critical delivery items.
                 </p>
@@ -339,10 +339,10 @@ export function KpiClient({ departments }: KpiClientProps) {
                 </thead>
                 <tbody className="divide-y divide-outline-variant/40">
                   {reviews.map((rev) => (
-                    <tr key={rev.id} className="hover:bg-slate-50/20 transition">
+                    <tr key={rev.id} className="hover:bg-surface-container-high/20 transition">
                       <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white">{rev.department}</td>
-                      <td className="px-4 font-semibold text-slate-500 dark:text-slate-400">{rev.period}</td>
-                      <td className="px-4 font-semibold text-slate-500 dark:text-slate-400">{rev.reviewer}</td>
+                      <td className="px-4 font-semibold text-on-surface-variant dark:text-slate-400">{rev.period}</td>
+                      <td className="px-4 font-semibold text-on-surface-variant dark:text-slate-400">{rev.reviewer}</td>
                       <td className="px-4 font-bold text-[#00cec4] text-right">{rev.score}</td>
                       <td className="px-4 text-center">
                         <span className="inline-flex rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/30 px-2 py-0.5 text-[10px] font-bold">
@@ -395,7 +395,7 @@ export function KpiClient({ departments }: KpiClientProps) {
                         className={`text-[9px] px-2 py-0.5 rounded-full font-bold border uppercase ${
                           hasTemplate
                             ? "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300"
-                            : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400"
+                            : "bg-surface-container-high text-on-surface-variant border-outline-variant dark:bg-slate-800 dark:text-slate-400"
                         }`}
                       >
                         {hasTemplate ? "Assigned" : "No Template"}

@@ -22,7 +22,7 @@ function statusBadgeClass(status: string) {
   if (status === "APPROVED") return "border-emerald-200 bg-emerald-50 text-emerald-700";
   if (status === "PENDING") return "border-amber-200 bg-amber-50 text-amber-700";
   if (status === "REJECTED") return "border-rose-200 bg-rose-50 text-rose-700";
-  return "border-slate-200 bg-slate-50 text-slate-600";
+  return "border-outline-variant bg-surface-container-high text-on-surface-variant";
 }
 
 function kindLabel(kind: "ANNUAL" | "INTERMEDIATE") {
@@ -54,8 +54,8 @@ function ToggleCard({
         <p className="font-medium text-on-surface">{label}</p>
         <p className="mt-1 text-xs text-on-surface-variant">{description}</p>
       </div>
-      <span className={`relative inline-flex h-7 w-12 rounded-full transition ${active ? "bg-[#4e909a]" : "bg-slate-300 dark:bg-slate-600"}`}>
-        <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${active ? "left-6" : "left-1"}`} />
+      <span className={`relative inline-flex h-7 w-12 rounded-full transition ${active ? "bg-[#4e909a]" : "bg-outline-variant dark:bg-slate-600"}`}>
+        <span className={`absolute top-1 h-5 w-5 rounded-full bg-surface transition ${active ? "left-6" : "left-1"}`} />
       </span>
     </button>
   );
@@ -402,7 +402,7 @@ export function StartAppraisalClient({
               className={
                 scheduledReviewersReady
                   ? "rounded-2xl bg-[#00cec4] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#00b8af] disabled:cursor-not-allowed disabled:opacity-50"
-                  : "rounded-2xl bg-slate-300 px-5 py-3 text-sm font-medium text-slate-500 transition disabled:cursor-not-allowed"
+                  : "rounded-2xl bg-outline-variant px-5 py-3 text-sm font-medium text-on-surface-variant transition disabled:cursor-not-allowed"
               }
             >
               {saving === "scheduled" ? "Assigning..." : "Assign Reviewers"}
@@ -487,7 +487,7 @@ export function StartAppraisalClient({
               className={
                 specialReviewersReady
                   ? "rounded-2xl bg-[#00cec4] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#00b8af] disabled:cursor-not-allowed disabled:opacity-50"
-                  : "rounded-2xl bg-slate-300 px-5 py-3 text-sm font-medium text-slate-500 transition disabled:cursor-not-allowed"
+                  : "rounded-2xl bg-outline-variant px-5 py-3 text-sm font-medium text-on-surface-variant transition disabled:cursor-not-allowed"
               }
             >
               {saving === "special" ? "Starting..." : "Start Special Appraisal"}
