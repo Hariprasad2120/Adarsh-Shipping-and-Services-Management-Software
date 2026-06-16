@@ -162,26 +162,26 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#0c0f14] text-slate-200">
+    <div className="crm-theme flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-background text-on-surface">
       {/* ─── TOP UTILITY BAR ────────────────────────────────────────── */}
-      <header className="h-14 border-b border-[#1c212a]/50 bg-[#0f1319] flex items-center justify-between px-6 shrink-0 z-20">
+      <header className="h-14 border-b border-outline-variant/60 bg-white/85 backdrop-blur-sm flex items-center justify-between px-6 shrink-0 z-20">
         
         {/* Left Area: Module Title */}
         <div className="flex items-center gap-4">
           <button
             onClick={() => setShowAppLauncher(!showAppLauncher)}
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800/40 rounded transition-all cursor-pointer"
+            className="p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl transition-all cursor-pointer"
             title="App Launcher"
           >
             <Grid className="size-4.5" />
           </button>
-          <h1 className="text-base font-bold text-white tracking-wide">{activeModuleTitle}</h1>
+          <h1 className="ds-h3 heading-icon-none text-on-surface">{activeModuleTitle}</h1>
         </div>
 
         {/* Middle Area: Global Search */}
         <div ref={searchContainerRef} className="relative w-full max-w-md mx-4">
           <div className="relative">
-            <Search className="absolute left-3 top-2.5 size-4 text-slate-500" />
+            <Search className="absolute left-3 top-2.5 size-4 text-on-surface-variant" />
             <input
               type="text"
               placeholder="Global CRM search (Leads, Deals, Accounts, Cases)..."
@@ -190,12 +190,12 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
               onFocus={() => {
                 if (searchResults.length > 0) setShowSearchDropdown(true);
               }}
-              className="w-full pl-9 pr-8 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-md text-[13px] placeholder-slate-500 focus:outline-none focus:border-[#00c4b6]/80 text-white"
+              className="w-full pl-9 pr-8 py-1.5 bg-surface border border-outline-variant/60 rounded-xl text-[13px] placeholder:text-on-surface-variant focus:outline-none focus:border-[#00c4b6]/80 text-on-surface shadow-sm"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-2.5 p-0.5 text-slate-400 hover:text-white cursor-pointer"
+                className="absolute right-2.5 top-2.5 p-0.5 text-on-surface-variant hover:text-on-surface cursor-pointer"
               >
                 <X className="size-3.5" />
               </button>
@@ -204,15 +204,15 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
 
           {/* Global Search Results Dropdown */}
           {showSearchDropdown && (
-            <div className="absolute top-11 left-0 right-0 bg-[#0f1319] border border-[#1c212a] rounded-lg shadow-2xl overflow-hidden max-h-96 overflow-y-auto z-50">
-              <div className="p-2 bg-[#0c0f14] border-b border-[#1c212a]/50 flex items-center justify-between">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Search Results</span>
+            <div className="absolute top-11 left-0 right-0 bg-surface border border-outline-variant/70 rounded-xl shadow-lg overflow-hidden max-h-96 overflow-y-auto z-50">
+              <div className="p-2 bg-surface-container-low border-b border-outline-variant/50 flex items-center justify-between">
+                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Search Results</span>
                 {isSearching && <span className="text-[10px] text-[#00c4b6]">Searching...</span>}
               </div>
               {searchResults.length === 0 ? (
-                <div className="p-4 text-center text-slate-500 text-sm">No results match your query</div>
+                <div className="p-4 text-center text-on-surface-variant text-sm">No results match your query</div>
               ) : (
-                <div className="divide-y divide-[#1c212a]/30">
+                <div className="divide-y divide-outline-variant/30">
                   {searchResults.map((item: any) => (
                     <button
                       key={`${item.type}-${item.id}`}
@@ -221,13 +221,13 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
                         setShowSearchDropdown(false);
                         setSearchQuery("");
                       }}
-                      className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#161f28] text-left transition-colors cursor-pointer"
+                      className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-surface-container-low text-left transition-colors cursor-pointer"
                     >
                       <div className="min-w-0 flex-1 pr-4">
-                        <span className="font-semibold text-sm text-white block truncate">{item.title}</span>
-                        <span className="text-xs text-slate-400 block truncate">{item.subtitle}</span>
+                        <span className="font-semibold text-sm text-on-surface block truncate">{item.title}</span>
+                        <span className="text-xs text-on-surface-variant block truncate">{item.subtitle}</span>
                       </div>
-                      <span className="px-2 py-0.5 text-[10px] font-semibold bg-slate-800 text-slate-300 rounded uppercase tracking-wide shrink-0">
+                      <span className="px-2 py-0.5 text-[10px] font-semibold bg-surface-container text-on-surface-variant rounded-full uppercase tracking-wide shrink-0">
                         {item.type}
                       </span>
                     </button>
@@ -250,14 +250,14 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
               <span>QUICK CREATE</span>
             </button>
             {showQuickCreate && (
-              <div className="absolute right-0 top-9 w-56 bg-[#0f1319] border border-[#1c212a] rounded-lg shadow-2xl py-1.5 overflow-hidden z-50">
-                <div className="px-3 py-1 bg-[#0c0f14] border-b border-[#1c212a]/50 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+              <div className="absolute right-0 top-9 w-56 bg-surface border border-outline-variant/70 rounded-xl shadow-lg py-1.5 overflow-hidden z-50">
+                <div className="px-3 py-1 bg-surface-container-low border-b border-outline-variant/50 text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
                   Create New Record
                 </div>
                 <Link
                   href="/crm/leads/new"
                   onClick={() => setShowQuickCreate(false)}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-[#161f28] text-sm text-slate-200 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 hover:bg-surface-container-low text-sm text-on-surface transition-colors"
                 >
                   <UserCheck className="size-4 text-[#818cf8]" />
                   <span>Lead</span>
@@ -265,7 +265,7 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
                 <Link
                   href="/crm/contacts"
                   onClick={() => setShowQuickCreate(false)}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-[#161f28] text-sm text-slate-200 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 hover:bg-surface-container-low text-sm text-on-surface transition-colors"
                 >
                   <Users className="size-4 text-[#fbbf24]" />
                   <span>Contact</span>
@@ -273,7 +273,7 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
                 <Link
                   href="/crm/accounts"
                   onClick={() => setShowQuickCreate(false)}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-[#161f28] text-sm text-slate-200 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 hover:bg-surface-container-low text-sm text-on-surface transition-colors"
                 >
                   <Building2 className="size-4 text-[#38bdf8]" />
                   <span>Account</span>
@@ -281,7 +281,7 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
                 <Link
                   href="/crm/deals"
                   onClick={() => setShowQuickCreate(false)}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-[#161f28] text-sm text-slate-200 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 hover:bg-surface-container-low text-sm text-on-surface transition-colors"
                 >
                   <Landmark className="size-4 text-[#34d399]" />
                   <span>Deal / Opportunity</span>
@@ -289,7 +289,7 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
                 <Link
                   href="/crm/invoices"
                   onClick={() => setShowQuickCreate(false)}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-[#161f28] text-sm text-slate-200 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 hover:bg-surface-container-low text-sm text-on-surface transition-colors"
                 >
                   <FileText className="size-4 text-[#fb923c]" />
                   <span>Quote / Invoice</span>
@@ -297,7 +297,7 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
                 <Link
                   href="/crm/tickets"
                   onClick={() => setShowQuickCreate(false)}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-[#161f28] text-sm text-slate-200 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 hover:bg-surface-container-low text-sm text-on-surface transition-colors"
                 >
                   <LifeBuoy className="size-4 text-[#f472b6]" />
                   <span>Support Ticket</span>
@@ -309,17 +309,17 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
           {/* Signals / Notifications */}
           <button
             onClick={() => router.push("/notifications")}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/40 rounded-full transition-all cursor-pointer relative"
+            className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-all cursor-pointer relative"
             title="CRM Signals"
           >
             <Bell className="size-4.5" />
-            <span className="absolute top-1 right-1 size-2 bg-[#d97706] rounded-full ring-2 ring-[#0f1319]" />
+            <span className="absolute top-1 right-1 size-2 bg-[#d97706] rounded-full ring-2 ring-white" />
           </button>
 
           {/* Calendar Shortcut */}
           <button
             onClick={() => router.push("/attendance/punch")}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/40 rounded-full transition-all cursor-pointer"
+            className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-all cursor-pointer"
             title="Calendar & Scheduling"
           >
             <Calendar className="size-4.5" />
@@ -328,7 +328,7 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
           {/* Settings Setup */}
           <button
             onClick={() => router.push("/admin/settings")}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/40 rounded-full transition-all cursor-pointer"
+            className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-all cursor-pointer"
             title="CRM Setup & Picklists"
           >
             <Settings className="size-4.5" />
@@ -338,13 +338,13 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
 
       {/* ─── APP LAUNCHER MODAL / POPUP ─── */}
       {showAppLauncher && (
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-[#0f1319] border border-[#1c212a] rounded-xl shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-[#1c212a]/50 bg-[#0c0f14]">
-              <span className="font-bold text-sm text-white uppercase tracking-wider">Monolith Engine App Launcher</span>
+        <div className="absolute inset-0 bg-white/55 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-surface border border-outline-variant/70 rounded-2xl shadow-lg overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-outline-variant/50 bg-surface-container-low">
+              <span className="font-bold text-sm text-on-surface uppercase tracking-wider">Monolith Engine App Launcher</span>
               <button
                 onClick={() => setShowAppLauncher(false)}
-                className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white cursor-pointer"
+                className="p-1 hover:bg-surface-container rounded text-on-surface-variant hover:text-on-surface cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -353,50 +353,50 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
               <Link
                 href="/dashboard"
                 onClick={() => setShowAppLauncher(false)}
-                className="flex flex-col items-center text-center p-4 rounded-lg bg-[#161f28]/30 hover:bg-[#161f28]/80 border border-[#1c212a]/30 transition-all gap-2"
+                className="flex flex-col items-center text-center p-4 rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/40 transition-all gap-2"
               >
                 <div className="p-3 bg-[#00c4b6]/10 text-[#00c4b6] rounded-xl"><LayoutDashboard className="size-6" /></div>
-                <span className="font-semibold text-sm text-white">Dashboard</span>
+                <span className="font-semibold text-sm text-on-surface">Dashboard</span>
               </Link>
               <Link
                 href="/hrms/employees"
                 onClick={() => setShowAppLauncher(false)}
-                className="flex flex-col items-center text-center p-4 rounded-lg bg-[#161f28]/30 hover:bg-[#161f28]/80 border border-[#1c212a]/30 transition-all gap-2"
+                className="flex flex-col items-center text-center p-4 rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/40 transition-all gap-2"
               >
                 <div className="p-3 bg-[#818cf8]/10 text-[#818cf8] rounded-xl"><Users className="size-6" /></div>
-                <span className="font-semibold text-sm text-white">HRMS</span>
+                <span className="font-semibold text-sm text-on-surface">HRMS</span>
               </Link>
               <Link
                 href="/attendance/punch"
                 onClick={() => setShowAppLauncher(false)}
-                className="flex flex-col items-center text-center p-4 rounded-lg bg-[#161f28]/30 hover:bg-[#161f28]/80 border border-[#1c212a]/30 transition-all gap-2"
+                className="flex flex-col items-center text-center p-4 rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/40 transition-all gap-2"
               >
                 <div className="p-3 bg-[#fbbf24]/10 text-[#fbbf24] rounded-xl"><Calendar className="size-6" /></div>
-                <span className="font-semibold text-sm text-white">Attendance</span>
+                <span className="font-semibold text-sm text-on-surface">Attendance</span>
               </Link>
               <Link
                 href="/ams/appraisals"
                 onClick={() => setShowAppLauncher(false)}
-                className="flex flex-col items-center text-center p-4 rounded-lg bg-[#161f28]/30 hover:bg-[#161f28]/80 border border-[#1c212a]/30 transition-all gap-2"
+                className="flex flex-col items-center text-center p-4 rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/40 transition-all gap-2"
               >
                 <div className="p-3 bg-[#c084fc]/10 text-[#c084fc] rounded-xl"><FolderKanban className="size-6" /></div>
-                <span className="font-semibold text-sm text-white">AMS</span>
+                <span className="font-semibold text-sm text-on-surface">AMS</span>
               </Link>
               <Link
                 href="/todo"
                 onClick={() => setShowAppLauncher(false)}
-                className="flex flex-col items-center text-center p-4 rounded-lg bg-[#161f28]/30 hover:bg-[#161f28]/80 border border-[#1c212a]/30 transition-all gap-2"
+                className="flex flex-col items-center text-center p-4 rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/40 transition-all gap-2"
               >
                 <div className="p-3 bg-[#34d399]/10 text-[#34d399] rounded-xl"><CheckSquare className="size-6" /></div>
-                <span className="font-semibold text-sm text-white">Tasks / To-Do</span>
+                <span className="font-semibold text-sm text-on-surface">Tasks / To-Do</span>
               </Link>
               <Link
                 href="/admin/org-structure"
                 onClick={() => setShowAppLauncher(false)}
-                className="flex flex-col items-center text-center p-4 rounded-lg bg-[#161f28]/30 hover:bg-[#161f28]/80 border border-[#1c212a]/30 transition-all gap-2"
+                className="flex flex-col items-center text-center p-4 rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/40 transition-all gap-2"
               >
                 <div className="p-3 bg-[#f472b6]/10 text-[#f472b6] rounded-xl"><Settings className="size-6" /></div>
-                <span className="font-semibold text-sm text-white">System Admin</span>
+                <span className="font-semibold text-sm text-on-surface">System Admin</span>
               </Link>
             </div>
           </div>
@@ -404,7 +404,7 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* ─── CRM MODULE PAGE CONTENT ────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto bg-[#0a0d12]">
+      <div className="flex-1 overflow-y-auto bg-transparent">
         {children}
       </div>
     </div>
