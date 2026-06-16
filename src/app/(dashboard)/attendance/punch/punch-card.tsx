@@ -400,19 +400,21 @@ export function PunchCard({
                     <DataTableCell className="font-bold text-slate-700 dark:text-slate-300">
                       {hours} {hours !== "-" ? "hrs" : ""}
                     </DataTableCell>
-                    <div className="flex items-center justify-end py-3 px-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs text-indigo-600 hover:text-indigo-700 font-bold"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedDateStr(dateOnly);
-                        }}
-                      >
-                        Details
-                      </Button>
-                    </div>
+                    <DataTableCell className="text-right">
+                      <div className="flex items-center justify-end">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs text-indigo-600 hover:text-indigo-700 font-bold"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDateStr(dateOnly);
+                          }}
+                        >
+                          Details
+                        </Button>
+                      </div>
+                    </DataTableCell>
                   </DataTableRow>
                 );
               })

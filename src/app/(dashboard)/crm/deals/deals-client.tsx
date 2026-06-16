@@ -2,24 +2,25 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateDealStageAction, deleteDealAction } from "@/modules/crm/actions";
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableEmpty,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from "@/components/data-table";
+import { Input } from "@/components/ui/input";
 import {
   List,
   Kanban,
   Search,
   Plus,
-  Landmark,
-  Building,
-  Calendar,
-  DollarSign,
-  TrendingUp,
   Eye,
   Trash2,
-  Edit2,
-  ChevronRight,
-  RefreshCcw
 } from "lucide-react";
 
 interface Deal {
@@ -50,7 +51,6 @@ const STAGE_PROBABILITIES: Record<string, number> = {
 };
 
 export function DealsClient({ initialDeals }: DealsClientProps) {
-  const router = useRouter();
   const [deals, setDeals] = useState<Deal[]>(initialDeals);
   const [viewMode, setViewMode] = useState<"KANBAN" | "LIST">("KANBAN");
   const [searchQuery, setSearchQuery] = useState("");
@@ -106,18 +106,18 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
     <div className="p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-200">
       
       {/* ─── PAGE HEADER & STATS ────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#1c212a]/30 pb-5">
+      <div className="flex flex-col gap-4 border-b border-outline-variant/30 pb-5 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">Deals Pipeline</h2>
-          <p className="text-slate-400 text-sm mt-1">Track shipping negotiations, freight forwarding pipelines, and CHA contracts.</p>
+          <h2 className="text-2xl font-bold tracking-tight text-on-surface">Deals Pipeline</h2>
+          <p className="mt-1 text-sm text-on-surface-variant">Track shipping negotiations, freight forwarding pipelines, and CHA contracts.</p>
         </div>
         <div className="flex items-center gap-3">
           {/* View Mode Toggle */}
-          <div className="flex border border-[#1c212a] bg-[#0f1319] p-0.5 rounded-lg">
+          <div className="flex rounded-xl border border-outline-variant/40 bg-surface-container-low p-0.5">
             <button
               onClick={() => setViewMode("KANBAN")}
               className={`p-1.5 rounded-md cursor-pointer ${
-                viewMode === "KANBAN" ? "bg-[#161f28] text-[#00c4b6]" : "text-slate-400 hover:text-white"
+                viewMode === "KANBAN" ? "bg-surface text-[#00c4b6] shadow-sm" : "text-on-surface-variant hover:text-on-surface"
               }`}
               title="Pipeline Kanban Grid"
             >
@@ -126,7 +126,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
             <button
               onClick={() => setViewMode("LIST")}
               className={`p-1.5 rounded-md cursor-pointer ${
-                viewMode === "LIST" ? "bg-[#161f28] text-[#00c4b6]" : "text-slate-400 hover:text-white"
+                viewMode === "LIST" ? "bg-surface text-[#00c4b6] shadow-sm" : "text-on-surface-variant hover:text-on-surface"
               }`}
               title="Table List View"
             >
@@ -145,34 +145,34 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
       </div>
 
       {/* Mini Stats Summary Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-[#0f1319]/55 border border-[#1c212a]/55 rounded-xl p-4">
+      <div className="grid grid-cols-2 gap-4 rounded-2xl border border-outline-variant/40 bg-surface p-4 shadow-sm md:grid-cols-4">
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Open Pipeline</span>
-          <span className="text-white font-bold text-lg">₹{stats.totalPipeline.toLocaleString("en-IN")}</span>
+          <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-on-surface-variant">Open Pipeline</span>
+          <span className="text-lg font-semibold text-on-surface">₹{stats.totalPipeline.toLocaleString("en-IN")}</span>
         </div>
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Weighted Forecast</span>
-          <span className="text-[#00c4b6] font-bold text-lg">₹{stats.totalForecast.toLocaleString("en-IN")}</span>
+          <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-on-surface-variant">Weighted Forecast</span>
+          <span className="text-lg font-semibold text-[#00c4b6]">₹{stats.totalForecast.toLocaleString("en-IN")}</span>
         </div>
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Active Enquiries</span>
-          <span className="text-white font-bold text-lg">{stats.openCount} Deals</span>
+          <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-on-surface-variant">Active Enquiries</span>
+          <span className="text-lg font-semibold text-on-surface">{stats.openCount} Deals</span>
         </div>
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Negotiations Won</span>
-          <span className="text-emerald-400 font-bold text-lg">{stats.wonCount} Closed</span>
+          <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-on-surface-variant">Negotiations Won</span>
+          <span className="text-lg font-semibold text-emerald-600">{stats.wonCount} Closed</span>
         </div>
       </div>
 
       {/* Search Filter bar */}
       <div className="relative w-full max-w-md">
-        <Search className="absolute left-3 top-2.5 size-4 text-slate-500" />
-        <input
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-variant" />
+        <Input
           type="text"
           placeholder="Filter deals by name or account..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-9 pr-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#00c4b6] text-white"
+          className="h-10 pl-9 pr-4 text-sm"
         />
       </div>
 
@@ -184,13 +184,13 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
             const stageSum = stageDeals.reduce((sum, d) => sum + d.amount, 0);
             
             return (
-              <div key={stage} className="bg-[#0f1319] border border-[#1c212a]/55 rounded-xl p-3 space-y-3 shrink-0 min-w-[240px]">
+              <div key={stage} className="min-w-[240px] shrink-0 space-y-3 rounded-2xl border border-outline-variant/40 bg-surface p-3 shadow-sm">
                 {/* Column Header */}
-                <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-2">
-                  <span className="text-xs font-bold text-white uppercase tracking-wider">
+                <div className="flex items-center justify-between border-b border-outline-variant/30 pb-2">
+                  <span className="text-xs font-medium uppercase tracking-[0.14em] text-on-surface">
                     {stage.replace("_", " ")}
                   </span>
-                  <span className="text-[10px] font-bold text-slate-500 bg-[#0c0f14] px-2 py-0.5 rounded-full">
+                  <span className="rounded-full bg-surface-container px-2 py-0.5 text-[10px] font-semibold text-on-surface-variant">
                     {stageDeals.length}
                   </span>
                 </div>
@@ -199,40 +199,40 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                 {/* Cards List */}
                 <div className="space-y-2.5 min-h-[300px] overflow-y-auto max-h-[500px] custom-scrollbar">
                   {stageDeals.length === 0 ? (
-                    <div className="py-8 text-center text-slate-600 text-xs italic">No deals</div>
+                    <div className="py-8 text-center text-xs italic text-on-surface-variant">No deals</div>
                   ) : (
                     stageDeals.map((deal) => (
                       <div
                         key={deal.id}
-                        className={`p-3 bg-[#0a0d12]/90 border border-[#1c212a]/70 rounded-lg hover:border-[#00c4b6]/60 transition-all space-y-2 relative ${
+                        className={`relative space-y-2 rounded-xl border border-outline-variant/35 bg-surface-container-low p-3 transition-all hover:border-[#00c4b6]/40 ${
                           updatingId === deal.id ? "opacity-50" : ""
                         }`}
                       >
                         {/* Title & Amount */}
                         <div className="space-y-1">
-                          <Link href={`/crm/deals/${deal.id}`} className="font-bold text-white text-xs block hover:underline hover:text-[#00c4b6] truncate pr-4">
+                          <Link href={`/crm/deals/${deal.id}`} className="block truncate pr-4 text-xs font-medium text-on-surface hover:text-[#00c4b6] hover:underline">
                             {deal.name}
                           </Link>
                           {deal.account && (
-                            <span className="text-[10px] text-slate-400 block truncate">{deal.account.name}</span>
+                            <span className="block truncate text-[10px] text-on-surface-variant">{deal.account.name}</span>
                           )}
                         </div>
 
-                        <div className="flex items-center justify-between text-[11px] font-bold text-[#00c4b6]">
+                        <div className="flex items-center justify-between text-[11px] font-semibold text-[#00c4b6]">
                           <span>₹{deal.amount.toLocaleString("en-IN")}</span>
-                          <span className="text-[9px] text-slate-500 uppercase tracking-wide bg-slate-800/40 px-1.5 py-0.5 rounded">
+                          <span className="rounded bg-surface px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-on-surface-variant">
                             {deal.probability}%
                           </span>
                         </div>
 
                         {/* Dropdown to quick shift stage */}
-                        <div className="pt-2 border-t border-[#1c212a]/30 flex items-center justify-between gap-1.5">
-                          <span className="text-[9px] text-slate-500 truncate">Owner: {deal.owner.name.split(" ")[0]}</span>
+                        <div className="flex items-center justify-between gap-1.5 border-t border-outline-variant/30 pt-2">
+                          <span className="truncate text-[9px] text-on-surface-variant">Owner: {deal.owner.name.split(" ")[0]}</span>
                           <select
                             value={deal.stage}
                             onChange={(e) => handleStageChange(deal.id, e.target.value)}
                             disabled={updatingId === deal.id}
-                            className="bg-[#0c0f14] border border-[#1c212a] text-[9.5px] font-semibold text-slate-400 rounded px-1 py-0.5 focus:outline-none focus:border-[#00c4b6] cursor-pointer"
+                            className="cursor-pointer rounded border border-outline-variant/50 bg-surface px-1 py-0.5 text-[9.5px] font-medium text-on-surface-variant focus:border-[#00c4b6] focus:outline-none"
                           >
                             {STAGES.map((st) => (
                               <option key={st} value={st}>{st.replace("_", " ")}</option>
@@ -249,85 +249,81 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
         </div>
       ) : (
         /* ─── LIST VIEW ─── */
-        <div className="bg-[#0f1319] border border-[#1c212a]/50 rounded-xl overflow-hidden shadow-2xl">
-          {filteredDeals.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">No deals matched search criteria</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left text-sm text-slate-200">
-                <thead>
-                  <tr className="border-b border-[#1c212a]/80 bg-[#0c0f14]/80 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    <th className="px-6 py-4">Deal Name</th>
-                    <th className="px-6 py-4">Account Name</th>
-                    <th className="px-6 py-4">Deal Stage</th>
-                    <th className="px-6 py-4">Value</th>
-                    <th className="px-6 py-4">Close Date</th>
-                    <th className="px-6 py-4">Owner</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#1c212a]/30">
-                  {filteredDeals.map((deal) => (
-                    <tr key={deal.id} className="hover:bg-[#161f28]/35 transition-colors">
-                      <td className="px-6 py-4 font-bold text-white">
-                        <Link href={`/crm/deals/${deal.id}`} className="hover:text-[#00c4b6] hover:underline">
-                          {deal.name}
-                        </Link>
-                        {deal.serviceType && (
-                          <span className="text-[10px] text-slate-400 block font-normal mt-0.5">
-                            {deal.serviceType} • {deal.logisticsCategory || "CHA"}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-slate-300">
-                        {deal.account ? (
-                          <Link href={`/crm/accounts/${deal.account.id}`} className="hover:underline text-[#00c4b6]">
-                            {deal.account.name}
-                          </Link>
-                        ) : (
-                          <span className="text-slate-500 italic">No account</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                          deal.stage === "WON"
-                            ? "bg-emerald-500/10 text-emerald-400"
-                            : deal.stage === "LOST"
-                            ? "bg-red-500/10 text-red-400"
-                            : "bg-[#00c4b6]/10 text-[#00c4b6]"
-                        }`}>
-                          {deal.stage.replace("_", " ")}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 font-bold text-[#00c4b6]">
-                        ₹{deal.amount.toLocaleString("en-IN")}
-                      </td>
-                      <td className="px-6 py-4 text-slate-400 text-xs">
-                        {deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString("en-IN") : "No Close Date"}
-                      </td>
-                      <td className="px-6 py-4 text-slate-300 text-xs font-semibold">
-                        {deal.owner.name}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Link href={`/crm/deals/${deal.id}`} className="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800/40 cursor-pointer">
-                            <Eye className="size-4" />
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(deal.id)}
-                            className="p-1.5 text-slate-500 hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer"
-                          >
-                            <Trash2 className="size-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+        <DataTable>
+          <DataTableHeader>
+            <tr>
+              <DataTableHead>Deal Name</DataTableHead>
+              <DataTableHead>Account Name</DataTableHead>
+              <DataTableHead>Deal Stage</DataTableHead>
+              <DataTableHead>Value</DataTableHead>
+              <DataTableHead>Close Date</DataTableHead>
+              <DataTableHead>Owner</DataTableHead>
+              <DataTableHead className="text-right">Actions</DataTableHead>
+            </tr>
+          </DataTableHeader>
+          <DataTableBody>
+            {filteredDeals.length === 0 ? (
+              <DataTableEmpty colSpan={7} message="No deals matched search criteria." className="py-8" />
+            ) : (
+              filteredDeals.map((deal) => (
+                <DataTableRow key={deal.id}>
+                  <DataTableCell>
+                    <Link href={`/crm/deals/${deal.id}`} className="font-medium text-on-surface hover:text-[#00c4b6] hover:underline">
+                      {deal.name}
+                    </Link>
+                    {deal.serviceType ? (
+                      <span className="mt-0.5 block text-[10px] text-on-surface-variant">
+                        {deal.serviceType} • {deal.logisticsCategory || "CHA"}
+                      </span>
+                    ) : null}
+                  </DataTableCell>
+                  <DataTableCell>
+                    {deal.account ? (
+                      <Link href={`/crm/accounts/${deal.account.id}`} className="text-[#00c4b6] hover:underline">
+                        {deal.account.name}
+                      </Link>
+                    ) : (
+                      <span className="italic text-on-surface-variant">No account</span>
+                    )}
+                  </DataTableCell>
+                  <DataTableCell>
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                      deal.stage === "WON"
+                        ? "bg-emerald-500/10 text-emerald-600"
+                        : deal.stage === "LOST"
+                        ? "bg-red-500/10 text-red-500"
+                        : "bg-[#00c4b6]/10 text-[#00c4b6]"
+                    }`}>
+                      {deal.stage.replace("_", " ")}
+                    </span>
+                  </DataTableCell>
+                  <DataTableCell className="font-semibold text-[#00c4b6]">
+                    ₹{deal.amount.toLocaleString("en-IN")}
+                  </DataTableCell>
+                  <DataTableCell className="text-xs text-on-surface-variant">
+                    {deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString("en-IN") : "No Close Date"}
+                  </DataTableCell>
+                  <DataTableCell className="text-sm font-medium text-on-surface">
+                    {deal.owner.name}
+                  </DataTableCell>
+                  <DataTableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Link href={`/crm/deals/${deal.id}`} className="rounded-lg p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
+                        <Eye className="size-4" />
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(deal.id)}
+                        className="rounded-lg p-1.5 text-on-surface-variant transition-colors hover:bg-red-500/10 hover:text-red-500"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </div>
+                  </DataTableCell>
+                </DataTableRow>
+              ))
+            )}
+          </DataTableBody>
+        </DataTable>
       )}
     </div>
   );

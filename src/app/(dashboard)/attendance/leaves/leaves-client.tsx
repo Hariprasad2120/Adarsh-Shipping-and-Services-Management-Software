@@ -111,17 +111,17 @@ export function LeavesClient({
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {balances.map((b) => (
-          <div key={b.leaveType.id} className="rounded-xl border border-gray-200 bg-white p-4 text-center">
-            <p className="text-xs text-gray-500">{b.leaveType.name}</p>
-            <p className="mt-1 text-2xl font-bold text-gray-900">{b.balance}</p>
-            <p className="text-xs text-gray-400">{b.leaveType.paid ? "Paid" : "Unpaid"}</p>
+          <div key={b.leaveType.id} className="rounded-2xl border border-outline-variant/40 bg-surface p-4 text-center shadow-sm">
+            <p className="text-xs text-on-surface-variant">{b.leaveType.name}</p>
+            <p className="mt-1 text-2xl font-semibold text-on-surface">{b.balance}</p>
+            <p className="text-xs text-on-surface-variant">{b.leaveType.paid ? "Paid" : "Unpaid"}</p>
           </div>
         ))}
       </div>
 
-      <div className="space-y-0 rounded-xl border border-gray-200 bg-white">
+      <div className="space-y-0 rounded-2xl border border-outline-variant/40 bg-surface shadow-sm">
         <DataTableToolbar>
-          <h2 className="ds-h2 text-gray-900">My Requests</h2>
+          <h2 className="ds-h2 text-on-surface">My Requests</h2>
           <div className="flex gap-2">
             <DemoFillButton disabled={loading || leaveTypes.length === 0} onClick={fillDemoData} />
             <button
@@ -134,10 +134,10 @@ export function LeavesClient({
         </DataTableToolbar>
 
         {showForm && (
-          <form onSubmit={submitLeave} className="space-y-3 border-b border-gray-100 bg-gray-50 px-5 py-4">
+          <form onSubmit={submitLeave} className="space-y-3 border-b border-outline-variant/30 bg-surface-container-low px-5 py-4">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">Leave Type</label>
+                <label className="text-xs font-medium text-on-surface-variant">Leave Type</label>
                 <DropdownSelect
                   name="leaveTypeId"
                   onValueChange={setLeaveTypeId}
@@ -150,16 +150,16 @@ export function LeavesClient({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">From</label>
+                <label className="text-xs font-medium text-on-surface-variant">From</label>
                 <Input type="date" name="fromDate" onChange={(e) => setFromDate(e.target.value)} required value={fromDate} className="w-full" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">To</label>
+                <label className="text-xs font-medium text-on-surface-variant">To</label>
                 <Input type="date" name="toDate" onChange={(e) => setToDate(e.target.value)} required value={toDate} className="w-full" />
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+              <label className="flex items-center gap-2 text-sm text-on-surface">
                 <input checked={halfDay} name="halfDay" onChange={(e) => setHalfDay(e.target.checked)} type="checkbox" className="rounded" /> Half day
               </label>
               <Input
@@ -179,7 +179,7 @@ export function LeavesClient({
               >
                 Submit
               </button>
-              <button type="button" onClick={() => setShowForm(false)} className="rounded-lg border px-4 py-1.5 text-sm">
+              <button type="button" onClick={() => setShowForm(false)} className="rounded-lg border border-outline-variant/50 px-4 py-1.5 text-sm text-on-surface">
                 Cancel
               </button>
             </div>
@@ -207,7 +207,7 @@ export function LeavesClient({
                   <DataTableCell>
                     <Badge className={STATUS_COLOR[r.status]}>{r.status}</Badge>
                   </DataTableCell>
-                  <DataTableCell className="text-gray-400">{r.notes ?? "-"}</DataTableCell>
+                  <DataTableCell className="text-on-surface-variant">{r.notes ?? "-"}</DataTableCell>
                 </DataTableRow>
               ))
             )}
@@ -216,9 +216,9 @@ export function LeavesClient({
       </div>
 
       {canApprove && pendingApprovals.length > 0 && (
-        <div className="space-y-0 rounded-xl border border-gray-200 bg-white">
+        <div className="space-y-0 rounded-2xl border border-outline-variant/40 bg-surface shadow-sm">
           <DataTableToolbar className="justify-start">
-            <h2 className="ds-h2 text-gray-900">Pending Approvals</h2>
+            <h2 className="ds-h2 text-on-surface">Pending Approvals</h2>
           </DataTableToolbar>
           <DataTable className="rounded-none border-0">
             <DataTableHeader>
@@ -235,7 +235,7 @@ export function LeavesClient({
 
                 return (
                   <DataTableRow key={r.id}>
-                    <DataTableCell className="font-medium text-gray-900">{r.user.name}</DataTableCell>
+                    <DataTableCell className="font-medium text-on-surface">{r.user.name}</DataTableCell>
                     <DataTableCell>{r.leaveType.name}</DataTableCell>
                     <DataTableCell>{fmtDate(r.fromDate)}</DataTableCell>
                     <DataTableCell>{fmtDate(r.toDate)}</DataTableCell>

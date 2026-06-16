@@ -70,7 +70,7 @@ export default async function PunchPage({
   return (
     <div className="max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="ds-h1 text-gray-900 dark:text-white">Attendance Logs</h1>
+        <h1 className="ds-h1 text-on-surface">Attendance Logs</h1>
       </div>
       <PunchCard
         punches={punchRows as PunchCardProps["punches"]}
