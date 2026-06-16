@@ -280,30 +280,11 @@ export function BiometricSyncClient() {
     }
   }, [fetchStatus, mounted]);
 
-  // ── Live today: POST sync then GET snapshot ─────────────────────────────────
-  const triggerLiveSyncAndRefresh = useCallback(
+  // ── Live today: fast snapshot fetch from local DB ──────────────────────────
+  const refreshLiveSnapshot = useCallback(
     async (silent = false) => {
       if (!silent) setLiveSyncing(true);
       try {
-        // 1. Fetch current status to check connectivity and update client badges
-        const statusRes = await fetch("/api/attendance/sync/biometric");
-        let isConnected = false;
-        if (statusRes.ok) {
-          const statusData = (await statusRes.json()) as SyncStatus;
-          setStatus(statusData);
-          isConnected = !!statusData.connected;
-        }
-
-        // 2. Only trigger sync if connected/online
-        if (isConnected) {
-          await fetch("/api/attendance/sync/biometric/live", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ triggeredBy: "LIVE_AUTO" }),
-          });
-        }
-
-        // 3. Always pull snapshot from the local db to refresh UI
         const r = await fetch("/api/attendance/sync/biometric/live");
         if (r.ok) {
           const data = (await r.json()) as LiveData;
@@ -321,18 +302,42 @@ export function BiometricSyncClient() {
     [],
   );
 
-  // Auto-refresh every 2 min when on live tab
+  // Auto-refresh every 2 min when on live tab using the latest synced snapshot.
   useEffect(() => {
     if (!mounted || tab !== "live") return;
-    void triggerLiveSyncAndRefresh(false);
+    void refreshLiveSnapshot(false);
     liveIntervalRef.current = setInterval(() => {
-      void triggerLiveSyncAndRefresh(true);
+      void refreshLiveSnapshot(true);
     }, 2 * 60 * 1000);
     return () => {
       if (liveIntervalRef.current) clearInterval(liveIntervalRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, mounted]);
+  }, [tab, mounted, refreshLiveSnapshot]);
+
+  async function handleLiveSyncNow() {
+    setLiveSyncing(true);
+    try {
+      if (status?.configured && status?.connected) {
+        const syncRes = await fetch("/api/attendance/sync/biometric/live", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ triggeredBy: "LIVE_MANUAL" }),
+        });
+
+        if (!syncRes.ok) {
+          void fetchStatus();
+          toast.error("Live biometric sync failed");
+          return;
+        }
+      }
+
+      await refreshLiveSnapshot(true);
+    } catch {
+      toast.error("Failed to refresh biometric snapshot");
+    } finally {
+      setLiveSyncing(false);
+    }
+  }
 
   // Tick — update relative time display every 30 s
   useEffect(() => {
@@ -568,7 +573,7 @@ export function BiometricSyncClient() {
                 {/* Manual refresh */}
                 <button
                   id="btn-live-sync-now"
-                  onClick={() => void triggerLiveSyncAndRefresh(false)}
+                  onClick={() => void handleLiveSyncNow()}
                   disabled={liveSyncing}
                   className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-xs font-bold text-cyan-700 shadow-sm transition-all hover:bg-cyan-500/15 active:scale-95 disabled:opacity-50 dark:text-cyan-400 dark:shadow-ambient dark:hover:bg-cyan-500/20"
                 >

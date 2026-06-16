@@ -6,7 +6,6 @@ import { requirePermission } from "@/lib/rbac";
 import * as crmService from "./service";
 import { db } from "@/lib/db";
 import * as leadSourceService from "./lead-source.service";
-import { runJustdialImport, testJustdialSession } from "./justdial-import.service";
 
 type ActionResponse = { ok: true; data?: any } | { ok: false; error: string };
 
@@ -1637,6 +1636,7 @@ export async function runJustdialImportAction(): Promise<ActionResponse> {
     // Run scraper asynchronously in the background to avoid blocking the server action response
     (async () => {
       try {
+        const { runJustdialImport } = await import("./justdial-import.service");
         await runJustdialImport(orgId, session.user.id, log.id);
       } catch (err: any) {
         console.error(`[Justdial Background Action Run] Error for org ${orgId}:`, err);
@@ -1705,6 +1705,7 @@ export async function testJustdialSessionAction(): Promise<ActionResponse> {
 
     await requirePermission(session.user.id, "crm.leadSource.manage");
 
+    const { testJustdialSession } = await import("./justdial-import.service");
     const res = await testJustdialSession(orgId);
     if (res.ok) {
       return { ok: true, data: res.title };

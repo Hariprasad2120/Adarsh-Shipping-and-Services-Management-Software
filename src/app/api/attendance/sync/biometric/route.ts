@@ -288,10 +288,10 @@ export async function POST(req: NextRequest) {
 
         if (existing) updated++;
         else synced++;
-      } catch (err: any) {
+      } catch (syncError: any) {
         skipped++;
         if (errors.length < 20) {
-          errors.push(`emp ${esslEmpId} on ${dateStr}: ${String(err.message || err)}`);
+          errors.push(`emp ${esslEmpId} on ${dateStr}: ${String(syncError.message || syncError)}`);
         }
       }
     }
@@ -338,8 +338,8 @@ export async function POST(req: NextRequest) {
       timeTakenMs,
     });
 
-  } catch (err: any) {
-    const msg = err.message || String(err);
+  } catch (syncError: any) {
+    const msg = syncError.message || String(syncError);
     await db.biometricSyncLog.create({
       data: {
         orgId,

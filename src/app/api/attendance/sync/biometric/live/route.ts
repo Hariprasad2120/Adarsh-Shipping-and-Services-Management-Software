@@ -64,55 +64,6 @@ export async function GET() {
     orderBy: { syncTime: "desc" },
   });
 
-  // Query live punches from eSSL database
-  const config = getEsslConfig();
-  let esslPunches: { UserId: string; LogDate: Date; Direction: string; DeviceId: number; DeviceSName: string | null }[] = [];
-  let deviceDirMap = new Map<number, "in" | "out">();
-  let actualTable = "DeviceLogs";
-
-  if (config) {
-    const connected = await testEsslConnection(config);
-    if (connected) {
-      let pool: mssql.ConnectionPool | null = null;
-      try {
-        pool = await mssql.connect(config);
-        const tableName = punchTable(year, month);
-        const tableCheck = await pool.request()
-          .input("tbl", mssql.VarChar, tableName)
-          .query<{ cnt: number }>(
-            "SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME=@tbl"
-          );
-        actualTable = tableCheck.recordset[0]!.cnt > 0 ? tableName : "DeviceLogs";
-        deviceDirMap = await buildDeviceDirMap(pool);
-
-        const punchResult = await pool.request()
-          .input("start", mssql.DateTime, todayStart)
-          .input("end", mssql.DateTime, todayEnd)
-          .query<{ UserId: string; LogDate: Date; Direction: string; DeviceId: number; DeviceSName: string | null }>(`
-            SELECT dl.UserId, dl.LogDate, dl.Direction, dl.DeviceId, d.DeviceSName
-            FROM [${actualTable}] dl
-            LEFT JOIN Devices d ON d.DeviceId = dl.DeviceId
-            WHERE dl.LogDate >= @start AND dl.LogDate <= @end
-            ORDER BY dl.LogDate ASC
-          `);
-        esslPunches = punchResult.recordset;
-      } catch (err) {
-        console.error("eSSL live snapshot query failed in GET:", err);
-      } finally {
-        if (pool) await pool.close();
-      }
-    }
-  }
-
-  // Group punches by UserId
-  const punchGroups = new Map<number, typeof esslPunches>();
-  for (const p of esslPunches) {
-    const empNum = parseInt(p.UserId, 10);
-    if (isNaN(empNum)) continue;
-    if (!punchGroups.has(empNum)) punchGroups.set(empNum, []);
-    punchGroups.get(empNum)!.push(p);
-  }
-
   const result = employees.map((emp) => {
     let status: "IN" | "OUT" | "NOT_ARRIVED" | "IDLE" = "NOT_ARRIVED";
     let checkIn: string | null = null;
@@ -121,71 +72,18 @@ export async function GET() {
     let checkOutPlace: string | null = null;
     let workingHours: number | null = null;
 
-    const empPunches = emp.employeeNumber ? punchGroups.get(emp.employeeNumber) : null;
-
-    if (empPunches && empPunches.length > 0) {
-      // Sort chronologically
-      empPunches.sort((a, b) => a.LogDate.getTime() - b.LogDate.getTime());
-      
-      const mappedPunches = empPunches.map((p) => ({
-        time: esslDateToUtc(new Date(p.LogDate)),
-        dir: resolveDirection(p.DeviceId, p.Direction, deviceDirMap),
-        deviceName: p.DeviceSName ?? "Unknown Device",
-      }));
-
-      const ins = mappedPunches.filter((p) => p.dir === "in");
-      const outs = mappedPunches.filter((p) => p.dir === "out");
-
-      checkIn = ins[0]?.time.toISOString() ?? mappedPunches[0]?.time.toISOString() ?? null;
-      checkOut = outs[outs.length - 1]?.time.toISOString() ?? null;
-
-      if (checkIn && checkOut) {
-        const inTime = new Date(checkIn).getTime();
-        const outTime = new Date(checkOut).getTime();
-        workingHours = Math.round(((outTime - inTime) / 3600000) * 100) / 100;
-      }
-
-      // Check current live status based on last punch
-      const lastPunch = mappedPunches[mappedPunches.length - 1]!;
-      if (lastPunch.dir === "in") {
-        const timeDiffMs = nowClock.getTime() - lastPunch.time.getTime();
-        const fourHoursMs = 4 * 60 * 60 * 1000;
-        if (timeDiffMs >= fourHoursMs) {
-          status = "IDLE";
-        } else {
-          status = "IN";
-        }
-      } else {
+    const punch = emp.punches[0] ?? null;
+    if (punch?.inAt) {
+      checkIn = punch.inAt.toISOString();
+      if (punch.outAt) {
+        checkOut = punch.outAt.toISOString();
         status = "OUT";
+      } else {
+        const timeDiffMs = nowClock.getTime() - punch.inAt.getTime();
+        const fourHoursMs = 4 * 60 * 60 * 1000;
+        status = timeDiffMs >= fourHoursMs ? "IDLE" : "IN";
       }
-
-      const firstIn = ins[0];
-      if (firstIn) {
-        checkInPlace = firstIn.deviceName;
-      }
-      const lastOut = outs[outs.length - 1];
-      if (lastOut) {
-        checkOutPlace = lastOut.deviceName;
-      }
-    } else {
-      // Fallback to local database punches
-      const punch = emp.punches[0] ?? null;
-      if (punch?.inAt) {
-        checkIn = punch.inAt.toISOString();
-        if (punch.outAt) {
-          checkOut = punch.outAt.toISOString();
-          status = "OUT";
-        } else {
-          const timeDiffMs = nowClock.getTime() - punch.inAt.getTime();
-          const fourHoursMs = 4 * 60 * 60 * 1000;
-          if (timeDiffMs >= fourHoursMs) {
-            status = "IDLE";
-          } else {
-            status = "IN";
-          }
-        }
-        workingHours = punch.workingHours ?? null;
-      }
+      workingHours = punch.workingHours ?? null;
     }
 
     return {
@@ -247,6 +145,7 @@ export async function POST(req: NextRequest) {
   }
 
   const startTs = Date.now();
+  const nowClock = await getNow();
 
   // Today's date in IST
   const nowUtc = new Date();
@@ -313,6 +212,32 @@ export async function POST(req: NextRequest) {
       if (emp.employeeNumber !== null) empNumberToId.set(emp.employeeNumber, emp.id);
     }
 
+    const hrmsUserIds = hrmsEmployees.map((emp) => emp.id);
+    const existingPunches = await db.attendancePunch.findMany({
+      where: {
+        userId: { in: hrmsUserIds },
+        date: todayIstStart,
+      },
+      select: {
+        id: true,
+        userId: true,
+        inAt: true,
+        outAt: true,
+        workingHours: true,
+      },
+    });
+    const existingPunchByUserId = new Map(existingPunches.map((p) => [p.userId, p]));
+
+    const existingIdleNotifications = await db.notification.findMany({
+      where: {
+        userId: { in: hrmsUserIds },
+        kind: "IDLE_BREAK_REMINDER",
+        createdAt: { gte: todayIstStart, lte: todayIstEnd },
+      },
+      select: { userId: true },
+    });
+    const idleReminderUsers = new Set(existingIdleNotifications.map((n) => n.userId));
+
     let synced = 0;
     let updated = 0;
     let skipped = 0;
@@ -345,72 +270,63 @@ export async function POST(req: NextRequest) {
           workingHours = Math.round(workingHours * 100) / 100;
         }
 
-        const existing = await db.attendancePunch.findUnique({
-          where: { userId_date: { userId: hrmsId, date: attendanceDate } },
-          select: { id: true },
-        });
+        const existing = existingPunchByUserId.get(hrmsId);
+        const unchanged =
+          existing &&
+          existing.inAt?.getTime() === checkIn?.getTime() &&
+          existing.outAt?.getTime() === checkOut?.getTime() &&
+          existing.workingHours === workingHours;
 
-        await db.attendancePunch.upsert({
-          where: { userId_date: { userId: hrmsId, date: attendanceDate } },
-          update: {
-            inAt: checkIn,
-            outAt: checkOut,
-            workingHours,
-            source: "biometric",
-            biometricSynced: true,
-          },
-          create: {
-            userId: hrmsId,
-            date: attendanceDate,
-            inAt: checkIn,
-            outAt: checkOut,
-            workingHours,
-            source: "biometric",
-            biometricSynced: true,
-          },
-        });
+        if (!unchanged) {
+          await db.attendancePunch.upsert({
+            where: { userId_date: { userId: hrmsId, date: attendanceDate } },
+            update: {
+              inAt: checkIn,
+              outAt: checkOut,
+              workingHours,
+              source: "biometric",
+              biometricSynced: true,
+            },
+            create: {
+              userId: hrmsId,
+              date: attendanceDate,
+              inAt: checkIn,
+              outAt: checkOut,
+              workingHours,
+              source: "biometric",
+              biometricSynced: true,
+            },
+          });
 
-        // Recalculate OT and Comp-Off for this punch
-        await calculateOtForPunch(hrmsId, attendanceDate);
+          await calculateOtForPunch(hrmsId, attendanceDate);
+        }
 
         // Check if employee is IDLE and trigger break reminder
         const lastPunch = dayPunches[dayPunches.length - 1]!;
         if (lastPunch.dir === "in") {
-          const nowClock = await getNow();
           const timeDiffMs = nowClock.getTime() - lastPunch.time.getTime();
           const fourHoursMs = 4 * 60 * 60 * 1000;
-          if (timeDiffMs >= fourHoursMs) {
-            // Check if notification already sent for this employee today
-            const existingNotification = await db.notification.findFirst({
-              where: {
-                userId: hrmsId,
-                kind: "IDLE_BREAK_REMINDER",
-                createdAt: { gte: todayIstStart, lte: todayIstEnd },
-              },
-              select: { id: true },
+          if (timeDiffMs >= fourHoursMs && !idleReminderUsers.has(hrmsId)) {
+            const funnyNote = "You are working hard but small breaks won't make any dent. Go for a walk and stretch your legs!";
+            await createNotification({
+              userId: hrmsId,
+              orgId,
+              kind: "IDLE_BREAK_REMINDER",
+              title: "Time for a Stretch!",
+              body: funnyNote,
+              link: "/attendance/punch",
+              priority: "normal",
+              email: false,
             });
-
-            if (!existingNotification) {
-              const funnyNote = "You are working hard but small breaks won't make any dent. Go for a walk and stretch your legs!";
-              await createNotification({
-                userId: hrmsId,
-                orgId,
-                kind: "IDLE_BREAK_REMINDER",
-                title: "Time for a Stretch!",
-                body: funnyNote,
-                link: "/attendance/punch",
-                priority: "normal",
-                email: false,
-              });
-            }
+            idleReminderUsers.add(hrmsId);
           }
         }
 
         if (existing) updated++;
         else synced++;
-      } catch (err: any) {
+      } catch (syncError: any) {
         skipped++;
-        errors.push(`emp ${esslEmpId}: ${err.message || String(err)}`);
+        errors.push(`emp ${esslEmpId}: ${syncError.message || String(syncError)}`);
       }
     }
 
@@ -455,8 +371,8 @@ export async function POST(req: NextRequest) {
       skipped,
       timeTakenMs,
     });
-  } catch (err: any) {
-    const msg = err.message || String(err);
+  } catch (syncError: any) {
+    const msg = syncError.message || String(syncError);
     await db.biometricSyncLog.create({
       data: {
         orgId,

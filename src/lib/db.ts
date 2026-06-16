@@ -76,8 +76,10 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
 
 // Background Scheduler for Justdial Importer
 const globalForScheduler = globalThis as unknown as { justdialSchedulerStarted?: boolean };
+const shouldStartJustdialScheduler =
+  process.env.NODE_ENV === "development" && !process.env.VERCEL;
 
-if (!globalForScheduler.justdialSchedulerStarted) {
+if (shouldStartJustdialScheduler && !globalForScheduler.justdialSchedulerStarted) {
   globalForScheduler.justdialSchedulerStarted = true;
   console.log("[Justdial Scheduler] Starting local background scheduler loop (checks every 30 seconds)...");
 
