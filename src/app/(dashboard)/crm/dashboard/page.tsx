@@ -7,11 +7,16 @@ import { startOfMonth } from "date-fns";
 import {
   TrendingUp,
   UserCheck,
+  Briefcase,
   DollarSign,
+  AlertCircle,
   Calendar,
+  Users,
+  Building,
   Target,
   Clock,
   PhoneCall,
+  Activity,
   ChevronRight,
   ShieldAlert,
   CheckSquare
@@ -37,7 +42,7 @@ export default async function CrmDashboardPage() {
   // Permission Guard
   try {
     await requirePermission(session.user.id, "crm.access");
-  } catch {
+  } catch (e) {
     return (
       <div className="p-8 text-center text-red-400">
         <ShieldAlert className="size-12 mx-auto mb-4" />
@@ -83,6 +88,7 @@ export default async function CrmDashboardPage() {
   // Deal Calculations
   const openDeals = deals.filter(d => d.stage !== "WON" && d.stage !== "LOST");
   const wonDeals = deals.filter(d => d.stage === "WON");
+  const lostDeals = deals.filter(d => d.stage === "LOST");
 
   const pipelineValue = openDeals.reduce((sum, d) => sum + d.amount, 0);
   const forecastValue = openDeals.reduce((sum, d) => sum + (d.amount * (d.probability / 100)), 0);
@@ -101,13 +107,18 @@ export default async function CrmDashboardPage() {
 
   const stagesList = ["PROSPECTING", "QUALIFICATION", "PROPOSAL", "NEGOTIATION", "WON", "LOST"];
 
+  // Activity categorisation
+  const tasks = activities.filter(a => a.type === "TASK");
+  const meetings = activities.filter(a => a.type === "EVENT");
+  const calls = activities.filter(a => a.type === "CALL");
+
   return (
     <div className="p-8 space-y-8 max-w-[1600px] mx-auto">
       {/* Page Header */}
-      <div className="flex flex-col gap-4 border-b border-outline-variant/30 pb-5 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#1c212a]/30 pb-5">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-on-surface">CRM Dashboard</h2>
-          <p className="mt-1 text-sm text-on-surface-variant">Real-time pipeline metrics and customer activity log for your logistics network.</p>
+          <h2 className="text-2xl font-bold tracking-tight text-white">CRM Dashboard</h2>
+          <p className="text-slate-400 text-sm mt-1">Real-time pipeline metrics and customer activity log for your logistics network.</p>
         </div>
         <div className="flex items-center gap-3">
           <DemoDataButton />
@@ -119,7 +130,7 @@ export default async function CrmDashboardPage() {
           </Link>
           <Link
             href="/crm/deals"
-            className="flex items-center gap-2 rounded-lg border border-outline-variant/50 bg-surface px-4 py-2 text-sm font-medium text-on-surface transition-all hover:bg-surface-container-low cursor-pointer"
+            className="flex items-center gap-2 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a]/80 text-slate-200 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer"
           >
             <span>View Deals</span>
           </Link>
@@ -130,14 +141,14 @@ export default async function CrmDashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         
         {/* KPI Card: Leads Status */}
-        <div className="flex items-start justify-between rounded-2xl border border-outline-variant/40 bg-surface p-5 shadow-sm">
+        <div className="p-5 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 flex items-start justify-between">
           <div className="space-y-2">
-            <span className="text-[12px] font-medium uppercase tracking-[0.14em] text-on-surface-variant">Leads Summary</span>
-            <div className="text-3xl font-semibold text-on-surface">{totalLeads}</div>
-            <div className="flex items-center gap-1.5 pt-1 text-xs text-on-surface-variant">
-              <span className="font-semibold text-emerald-600">+{newLeadsThisMonth}</span> new this month
-              <span className="text-outline">|</span>
-              <span className="font-semibold text-[#00c4b6]">{convertedLeads}</span> converted
+            <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">Leads Summary</span>
+            <div className="text-3xl font-black text-white">{totalLeads}</div>
+            <div className="text-xs text-slate-400 flex items-center gap-1.5 pt-1">
+              <span className="text-emerald-400 font-bold">+{newLeadsThisMonth}</span> new this month
+              <span className="text-slate-600">|</span>
+              <span className="text-[#00c4b6] font-bold">{convertedLeads}</span> converted
             </div>
           </div>
           <div className="p-3 bg-[#818cf8]/10 text-[#818cf8] rounded-lg">
@@ -146,14 +157,14 @@ export default async function CrmDashboardPage() {
         </div>
 
         {/* KPI Card: Pipeline Value */}
-        <div className="flex items-start justify-between rounded-2xl border border-outline-variant/40 bg-surface p-5 shadow-sm">
+        <div className="p-5 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 flex items-start justify-between">
           <div className="space-y-2">
-            <span className="text-[12px] font-medium uppercase tracking-[0.14em] text-on-surface-variant">Deals Pipeline</span>
-            <div className="text-3xl font-semibold text-on-surface">₹{(pipelineValue / 100000).toFixed(1)}L</div>
-            <div className="flex items-center gap-1.5 pt-1 text-xs text-on-surface-variant">
-              <span className="font-semibold text-amber-600">{openDeals.length}</span> open deals
-              <span className="text-outline">|</span>
-              <span className="font-semibold text-emerald-600">{wonDeals.length}</span> won
+            <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">Deals Pipeline</span>
+            <div className="text-3xl font-black text-white">₹{(pipelineValue / 100000).toFixed(1)}L</div>
+            <div className="text-xs text-slate-400 flex items-center gap-1.5 pt-1">
+              <span className="text-amber-400 font-bold">{openDeals.length}</span> open deals
+              <span className="text-slate-600">|</span>
+              <span className="text-emerald-400 font-bold">{wonDeals.length}</span> won
             </div>
           </div>
           <div className="p-3 bg-[#00c4b6]/10 text-[#00c4b6] rounded-lg">
@@ -162,11 +173,11 @@ export default async function CrmDashboardPage() {
         </div>
 
         {/* KPI Card: Weighted Forecast */}
-        <div className="flex items-start justify-between rounded-2xl border border-outline-variant/40 bg-surface p-5 shadow-sm">
+        <div className="p-5 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 flex items-start justify-between">
           <div className="space-y-2">
-            <span className="text-[12px] font-medium uppercase tracking-[0.14em] text-on-surface-variant">Weighted Forecast</span>
-            <div className="text-3xl font-semibold text-on-surface">₹{(forecastValue / 100000).toFixed(1)}L</div>
-            <div className="flex items-center gap-1.5 pt-1 text-xs text-on-surface-variant">
+            <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">Weighted Forecast</span>
+            <div className="text-3xl font-black text-white">₹{(forecastValue / 100000).toFixed(1)}L</div>
+            <div className="text-xs text-slate-400 flex items-center gap-1.5 pt-1">
               Weighted revenue based on close probability percentages.
             </div>
           </div>
@@ -176,12 +187,12 @@ export default async function CrmDashboardPage() {
         </div>
 
         {/* KPI Card: Total Revenue */}
-        <div className="flex items-start justify-between rounded-2xl border border-outline-variant/40 bg-surface p-5 shadow-sm">
+        <div className="p-5 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 flex items-start justify-between">
           <div className="space-y-2">
-            <span className="text-[12px] font-medium uppercase tracking-[0.14em] text-on-surface-variant">Won Revenue</span>
-            <div className="text-3xl font-semibold text-[#00c4b6]">₹{(revenueTotal / 100000).toFixed(1)}L</div>
-            <div className="flex items-center gap-1.5 pt-1 text-xs text-on-surface-variant">
-              <span>₹{(pendingRevenue / 100000).toFixed(1)}L pending invoices</span>
+            <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">Won Revenue</span>
+            <div className="text-3xl font-black text-[#00c4b6]">₹{(revenueTotal / 100000).toFixed(1)}L</div>
+            <div className="text-xs text-slate-400 flex items-center gap-1.5 pt-1">
+              <span className="text-slate-400">₹{(pendingRevenue / 100000).toFixed(1)}L pending invoices</span>
             </div>
           </div>
           <div className="p-3 bg-emerald-500/10 text-[#34d399] rounded-lg">
@@ -198,10 +209,10 @@ export default async function CrmDashboardPage() {
         <div className="lg:col-span-2 space-y-6">
           
           {/* Sales Funnel Chart */}
-          <div className="space-y-5 rounded-2xl border border-outline-variant/40 bg-surface p-6 shadow-sm">
-            <div className="flex items-center justify-between border-b border-outline-variant/30 pb-3">
-              <h3 className="text-sm font-medium uppercase tracking-[0.14em] text-on-surface">Freight Sales Pipeline Funnel</h3>
-              <span className="text-xs text-on-surface-variant">{deals.length} total negotiations</span>
+          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-5">
+            <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3">
+              <h3 className="font-bold text-sm text-white uppercase tracking-wider">Freight Sales Pipeline Funnel</h3>
+              <span className="text-xs text-slate-400">{deals.length} total negotiations</span>
             </div>
             
             <div className="space-y-3">
@@ -213,12 +224,12 @@ export default async function CrmDashboardPage() {
                 return (
                   <div key={stage} className="space-y-1">
                     <div className="flex justify-between text-xs font-semibold">
-                      <span className="text-[11px] uppercase tracking-wide text-on-surface">{stage.replace("_", " ")}</span>
-                      <span className="text-on-surface-variant">
+                      <span className="text-slate-300 uppercase tracking-wide text-[11px]">{stage.replace("_", " ")}</span>
+                      <span className="text-slate-400">
                         {stageData.count} {stageData.count === 1 ? "deal" : "deals"} (₹{(stageData.value / 1000).toFixed(0)}K)
                       </span>
                     </div>
-                    <div className="h-3 overflow-hidden rounded-full border border-outline-variant/40 bg-surface-container">
+                    <div className="h-3 bg-[#0a0d12] rounded-full overflow-hidden border border-[#1c212a]/40">
                       <div
                         style={{ width: `${pct}%` }}
                         className={`h-full rounded-full transition-all duration-500 ${
@@ -237,9 +248,9 @@ export default async function CrmDashboardPage() {
           </div>
 
           {/* Recent Leads Panel */}
-          <div className="space-y-4 rounded-2xl border border-outline-variant/40 bg-surface p-6 shadow-sm">
-            <div className="flex items-center justify-between border-b border-outline-variant/30 pb-3">
-              <h3 className="text-sm font-medium uppercase tracking-[0.14em] text-on-surface">Recently Acquired Leads</h3>
+          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3">
+              <h3 className="font-bold text-sm text-white uppercase tracking-wider">Recently Acquired Leads</h3>
               <Link href="/crm/leads" className="text-xs text-[#00c4b6] hover:underline flex items-center gap-1 font-semibold cursor-pointer">
                 <span>All Leads</span>
                 <ChevronRight className="size-3" />
@@ -249,16 +260,16 @@ export default async function CrmDashboardPage() {
             {recentLeads.length === 0 ? (
               <div className="p-8 text-center text-slate-500 text-sm">No new leads available</div>
             ) : (
-              <div className="divide-y divide-outline-variant/30">
+              <div className="divide-y divide-[#1c212a]/30">
                 {recentLeads.map((lead) => (
                   <div key={lead.id} className="py-3 flex items-center justify-between">
                     <div>
-                      <Link href={`/crm/leads/${lead.id}`} className="block text-sm font-medium text-on-surface transition-colors hover:text-[#00c4b6]">
+                      <Link href={`/crm/leads/${lead.id}`} className="font-bold text-white hover:text-[#00c4b6] transition-colors block text-sm">
                         {lead.firstName ? `${lead.firstName} ` : ""}{lead.lastName}
                       </Link>
-                      <span className="text-xs text-on-surface-variant">{lead.company} • Owner: {lead.owner.name}</span>
+                      <span className="text-xs text-slate-400">{lead.company} • Owner: {lead.owner.name}</span>
                     </div>
-                    <span className="rounded-full bg-surface-container px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+                    <span className="px-2 py-0.5 text-[10px] font-bold bg-[#161f28] text-slate-300 rounded uppercase tracking-wider">
                       {lead.status}
                     </span>
                   </div>
@@ -272,11 +283,11 @@ export default async function CrmDashboardPage() {
         {/* Column 3: Activities list & upcoming followups */}
         <div className="space-y-6">
           
-          <div className="flex h-full flex-col justify-between space-y-4 rounded-2xl border border-outline-variant/40 bg-surface p-6 shadow-sm">
+          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4 flex flex-col h-full justify-between">
             <div>
-              <div className="flex items-center justify-between border-b border-outline-variant/30 pb-3">
-                <h3 className="text-sm font-medium uppercase tracking-[0.14em] text-on-surface">Signals & Reminders</h3>
-                <span className="text-xs font-semibold text-amber-600">{activities.length} pending</span>
+              <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3">
+                <h3 className="font-bold text-sm text-white uppercase tracking-wider">Signals & Reminders</h3>
+                <span className="text-xs text-amber-400 font-bold">{activities.length} pending</span>
               </div>
 
               {activities.length === 0 ? (
@@ -284,7 +295,7 @@ export default async function CrmDashboardPage() {
               ) : (
                 <div className="space-y-3.5 mt-4">
                   {activities.map((activity) => (
-                    <div key={activity.id} className="flex items-start gap-3 rounded-xl border border-outline-variant/35 bg-surface-container-low p-3">
+                    <div key={activity.id} className="p-3 bg-[#0a0d12] border border-[#1c212a]/40 rounded-lg flex gap-3 items-start">
                       <div className={`p-2 rounded-lg shrink-0 ${
                         activity.type === "TASK"
                           ? "bg-blue-500/10 text-blue-400"
@@ -295,8 +306,8 @@ export default async function CrmDashboardPage() {
                         {activity.type === "TASK" ? <CheckSquare className="size-4" /> : activity.type === "EVENT" ? <Calendar className="size-4" /> : <PhoneCall className="size-4" />}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <span className="block truncate text-xs font-medium leading-tight text-on-surface">{activity.title}</span>
-                        <span className="mt-1 block text-[10px] font-medium uppercase tracking-[0.14em] text-on-surface-variant">
+                        <span className="font-bold text-white text-xs block truncate leading-tight">{activity.title}</span>
+                        <span className="text-[10px] text-slate-400 block mt-1 uppercase tracking-wider font-semibold">
                           Due: {activity.dueAt ? new Date(activity.dueAt).toLocaleDateString("en-IN") : "No date"} • Priority: {activity.priority}
                         </span>
                       </div>
@@ -306,7 +317,7 @@ export default async function CrmDashboardPage() {
               )}
             </div>
             
-            <div className="flex items-center justify-between border-t border-outline-variant/30 pt-4 text-xs text-on-surface-variant">
+            <div className="pt-4 border-t border-[#1c212a]/30 flex items-center justify-between text-xs text-slate-400">
               <div className="flex items-center gap-1.5">
                 <Clock className="size-3.5 text-amber-500" />
                 <span>Overdue: {activities.filter(a => a.dueAt && new Date(a.dueAt) < new Date()).length} tasks</span>

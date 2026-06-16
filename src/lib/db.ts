@@ -11,42 +11,13 @@ function createPrismaClient() {
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
-type RuntimeModel = {
-  fields?: Array<{ name?: string }> | Record<string, unknown>;
-};
-
 type PrismaClientWithDelegates = PrismaClient & {
   appraisalSelfTemplate?: unknown;
   appraisalSchedule?: unknown;
   todoTask?: unknown;
   todoSubtask?: unknown;
   crmLead?: unknown;
-  _runtimeDataModel?: {
-    models?: Record<string, RuntimeModel>;
-  };
 };
-
-function runtimeModelHasField(model: RuntimeModel | undefined, fieldName: string) {
-  if (!model?.fields) return false;
-
-  if (Array.isArray(model.fields)) {
-    return model.fields.some((field) => field?.name === fieldName);
-  }
-
-  return Object.prototype.hasOwnProperty.call(model.fields, fieldName);
-}
-
-function hasRequiredCrmLeadFields(client: PrismaClient) {
-  const runtimeClient = client as PrismaClientWithDelegates;
-  const crmLeadModel =
-    runtimeClient._runtimeDataModel?.models?.CrmLead ??
-    runtimeClient._runtimeDataModel?.models?.crmLead;
-
-  return (
-    runtimeModelHasField(crmLeadModel, "owner") &&
-    runtimeModelHasField(crmLeadModel, "crmExternalLead")
-  );
-}
 
 function hasRequiredDelegates(client: PrismaClient) {
   const delegateClient = client as PrismaClientWithDelegates;
@@ -60,13 +31,7 @@ function hasRequiredDelegates(client: PrismaClient) {
 }
 
 const existingPrisma = globalForPrisma.prisma;
-const shouldRefreshPrisma =
-  existingPrisma &&
-  (!hasRequiredDelegates(existingPrisma) || !hasRequiredCrmLeadFields(existingPrisma));
-
-if (shouldRefreshPrisma) {
-  void existingPrisma.$disconnect().catch(() => undefined);
-}
+const shouldRefreshPrisma = existingPrisma && !hasRequiredDelegates(existingPrisma);
 
 export const db = shouldRefreshPrisma
   ? createPrismaClient()
