@@ -2,25 +2,15 @@ import { NextRequest } from "next/server";
 import { getSessionOrUnauth, ok, err } from "@/lib/api-helpers";
 import { requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
-import { getEsslConfig, punchTable, buildDeviceDirMap, resolveDirection, esslDateToUtc, IST_OFFSET_MS, testEsslConnection } from "@/lib/essl";
+import { getEsslConfig, punchTable, buildDeviceDirMap, resolveDirection, esslDateToUtc, testEsslConnection } from "@/lib/essl";
+import { attendanceDateFromParts, getEsslMonthWindow, toAttendanceDateString } from "@/lib/attendance-date";
 import { intimateAdminsOffline, resolveOfflineNotifications } from "@/modules/notifications/service";
 import { calculateOtForPunch } from "@/lib/ot";
 import mssql from "mssql";
 import { z } from "zod";
 
-function toDateString(date: Date): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Kolkata",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
-}
-
-function normalizeToISTMidnight(date: Date): Date {
-  const dateStr = toDateString(date);
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(Date.UTC(y!, m! - 1, d!, 0, 0, 0));
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 const syncSchema = z.object({
@@ -131,8 +121,7 @@ export async function POST(req: NextRequest) {
   const year = parseInt(yearStr!, 10);
   const month = parseInt(monthStr!, 10);
 
-  const paddedStart = new Date(year, month - 1, 1);
-  const paddedEnd = new Date(year, month, 1);
+  const { start: paddedStart, endExclusive: paddedEnd } = getEsslMonthWindow(year, month);
 
   const tableName = punchTable(year, month);
   let pool: mssql.ConnectionPool | null = null;
@@ -197,7 +186,7 @@ export async function POST(req: NextRequest) {
       if (!empId) continue;
 
       const punchTime = esslDateToUtc(new Date(row.LogDate));
-      const dateStr = toDateString(punchTime);
+      const dateStr = toAttendanceDateString(punchTime);
       const key = `${empId}|${dateStr}`;
 
       if (!punchMap.has(key)) punchMap.set(key, []);
@@ -248,7 +237,8 @@ export async function POST(req: NextRequest) {
       const checkOut = outs[outs.length - 1]?.time ?? null;
 
       try {
-        const attendanceDate = normalizeToISTMidnight(new Date(dateStr));
+        const [attendanceYear, attendanceMonth, attendanceDay] = dateStr.split("-").map(Number);
+        const attendanceDate = attendanceDateFromParts(attendanceYear!, attendanceMonth!, attendanceDay!);
 
         // Calculate working hours if both exist
         let workingHours = null;
@@ -288,10 +278,10 @@ export async function POST(req: NextRequest) {
 
         if (existing) updated++;
         else synced++;
-      } catch (syncError: any) {
+      } catch (syncError: unknown) {
         skipped++;
         if (errors.length < 20) {
-          errors.push(`emp ${esslEmpId} on ${dateStr}: ${String(syncError.message || syncError)}`);
+          errors.push(`emp ${esslEmpId} on ${dateStr}: ${getErrorMessage(syncError)}`);
         }
       }
     }
@@ -335,11 +325,13 @@ export async function POST(req: NextRequest) {
       synced,
       updated,
       skipped,
+      errors,
+      totalErrors: errors.length,
       timeTakenMs,
     });
 
-  } catch (syncError: any) {
-    const msg = syncError.message || String(syncError);
+  } catch (syncError: unknown) {
+    const msg = getErrorMessage(syncError);
     await db.biometricSyncLog.create({
       data: {
         orgId,

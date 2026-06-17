@@ -1,114 +1,135 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { ModuleKey, UserProfile } from "@/modules/hrms/peopleplus/types";
-import { PeoplePlusSidebar } from "@/components/hrms/peopleplus/sidebar";
-import { PeoplePlusTopNav } from "@/components/hrms/peopleplus/top-nav";
-import { ProfileSummary } from "@/components/hrms/peopleplus/profile-summary";
-import { ActionList } from "@/components/hrms/peopleplus/action-list";
-import { OrgServices } from "@/components/hrms/peopleplus/org-services";
-import { FilesView } from "@/components/hrms/peopleplus/files-view";
-import { SettingsServices } from "@/components/hrms/peopleplus/settings-services";
-import { UsersTable } from "@/components/hrms/peopleplus/users-table";
-import { ReporteesList } from "@/components/hrms/peopleplus/reportees-list";
-import { WorkReportsView } from "@/components/hrms/peopleplus/work-reports";
-import { OnboardingView } from "@/components/hrms/peopleplus/onboarding-view";
-import { LmsView } from "@/components/hrms/peopleplus/lms-view";
-import { PmsView } from "@/components/hrms/peopleplus/pms-view";
-import { TravelView } from "@/components/hrms/peopleplus/travel-view";
-import { LettersView } from "@/components/hrms/peopleplus/letters-view";
-import { TasksView } from "@/components/hrms/peopleplus/tasks-view";
-import { ApprovalsView } from "@/components/hrms/peopleplus/approvals-view";
+import React, { useState } from "react";
+import { Building2, Sparkles, Users2 } from "lucide-react";
+import { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
+import { ProfileSummary } from "@/components/hrms/profile-summary";
+import { ActionList } from "@/components/hrms/action-list";
+import { OrgServices } from "@/components/hrms/org-services";
+import { ReporteesList } from "@/components/hrms/reportees-list";
 import { toast } from "sonner";
 
-interface PeoplePlusPortalClientProps {
+interface HrmsPortalClientProps {
   sessionUser: { id: string; name: string; email: string };
-  permissions: string[];
-  departments: any[];
-  branches: any[];
-  initialUsers: any[];
+  departments: unknown[];
+  branches: unknown[];
+  initialUsers: unknown[];
+  initialProfile: UserProfile;
+  initialWidgetsData: DashboardWidgetsData;
+  initialReportees: ReporteeSummary[];
 }
 
-export function PeoplePlusPortalClient({
+interface ReporteeSummary {
+  id: string;
+  name: string;
+  email: string;
+  employeeNo: string;
+  designation: string;
+  location: string;
+  photo: string | null;
+  punchStatus: "YET_TO_CHECK_IN" | "CHECKED_IN" | "ON_BREAK" | "CHECKED_OUT";
+  shift: {
+    name: string;
+    startTime: string;
+    endTime: string;
+  } | null;
+}
+
+type ProfilePayload = {
+  user: Pick<UserProfile, "id" | "employeeNo" | "name" | "email" | "designation" | "department" | "branch" | "manager" | "photo">;
+  widgets: UserProfile["widgets"];
+  attendanceStatus: UserProfile["attendanceStatus"];
+  totalInTime: UserProfile["totalInTime"];
+  pendingCounts?: UserProfile["pendingCounts"];
+};
+
+function toUserProfile(raw: ProfilePayload): UserProfile {
+  return {
+    id: raw.user.id,
+    employeeNo: raw.user.employeeNo,
+    name: raw.user.name,
+    email: raw.user.email,
+    designation: raw.user.designation,
+    department: raw.user.department,
+    branch: raw.user.branch,
+    manager: raw.user.manager,
+    photo: raw.user.photo,
+    attendanceStatus: raw.attendanceStatus,
+    totalInTime: raw.totalInTime,
+    widgets: raw.widgets,
+    pendingCounts: raw.pendingCounts,
+  };
+}
+
+export function HrmsPortalClient({
   sessionUser,
-  permissions,
   departments,
   branches,
   initialUsers,
-}: PeoplePlusPortalClientProps) {
-  const [activeModule, setActiveModule] = useState<ModuleKey>("home");
+  initialProfile,
+  initialWidgetsData,
+  initialReportees,
+}: HrmsPortalClientProps) {
   const [activeTab, setActiveTab] = useState<string>("myspace");
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile>(initialProfile);
   const [loading, setLoading] = useState(false);
-  const [reportees, setReportees] = useState<any[]>([]);
-  const [widgetsData, setWidgetsData] = useState<{
-    upcomingHolidays: any[];
-    announcements: any[];
-    recentTasks: any[];
-  }>({ upcomingHolidays: [], announcements: [], recentTasks: [] });
+  const [reportees, setReportees] = useState<ReporteeSummary[]>(initialReportees);
+  const [widgetsData, setWidgetsData] = useState<DashboardWidgetsData>(initialWidgetsData);
 
   const loadProfile = async () => {
-    setLoading(true);
     try {
-      const res = await fetch("/api/hrms/peopleplus/me");
+      const res = await fetch("/api/hrms/me");
       const json = await res.json();
       if (json.ok) {
-        const raw = json.data;
-        setProfile({
-          ...raw,
-          ...raw.user,
-        });
+        const raw = json.data as ProfilePayload;
+        setProfile(toUserProfile(raw));
       } else {
         toast.error("Failed to load profile context");
       }
-    } catch (error) {
+    } catch {
       toast.error("Network error while loading profile context");
-    } finally {
-      setLoading(false);
     }
   };
 
-  const loadDashboardData = async () => {
+  const refreshDashboardData = async () => {
     try {
-      const res = await fetch("/api/hrms/peopleplus/dashboard");
+      const res = await fetch("/api/hrms/dashboard");
       const json = await res.json();
       if (json.ok) {
-        setWidgetsData(json.data);
+        setWidgetsData(json.data as DashboardWidgetsData);
       }
-    } catch (error) {
+    } catch {
       console.error("Failed to sync dashboard widgets");
     }
   };
 
-  const loadReportees = async () => {
+  const refreshReportees = async () => {
     try {
-      const res = await fetch("/api/hrms/peopleplus/team/reportees");
+      const res = await fetch("/api/hrms/team/reportees");
       const json = await res.json();
       if (json.ok) {
-        setReportees(json.data);
+        setReportees(json.data as ReporteeSummary[]);
       }
-    } catch (error) {
+    } catch {
       console.error("Failed to sync reportees");
     }
   };
 
-  useEffect(() => {
-    loadProfile();
-    loadDashboardData();
-    loadReportees();
-  }, []);
-
   const handlePunchAction = async (action: "CHECK_IN" | "CHECK_OUT" | "START_BREAK" | "RESUME_WORK") => {
     setLoading(true);
     try {
-      const res = await fetch("/api/hrms/peopleplus/attendance/punch", {
+      const res = await fetch("/api/hrms/attendance/punch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
       });
       const json = await res.json();
       if (json.ok) {
-        await loadProfile();
+        await Promise.all([
+          loadProfile(),
+          refreshDashboardData(),
+          refreshReportees(),
+        ]);
       } else {
         throw new Error(json.error?.message || "Failed to log attendance punch");
       }
@@ -117,128 +138,83 @@ export function PeoplePlusPortalClient({
     }
   };
 
-  const handleFetchFiles = async (scope: string) => {
-    const res = await fetch(`/api/hrms/peopleplus/files?scope=${scope}`);
-    const json = await res.json();
-    return json.ok ? json.data : { folders: [], files: [] };
-  };
-
-  const handleCreateFolder = async (name: string, scope: string) => {
-    const res = await fetch("/api/hrms/peopleplus/files", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, scope, type: "folder" }),
-    });
-    return res.json();
-  };
-
-  const handleUploadFile = async (name: string, fileKey: string, mimeType: string, sizeBytes: number, scope: string) => {
-    const res = await fetch("/api/hrms/peopleplus/files", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, fileKey, mimeType, sizeBytes, scope, type: "file" }),
-    });
-    return res.json();
-  };
-
-  const handleFetchServices = async () => {
-    const res = await fetch("/api/hrms/peopleplus/settings/services");
-    const json = await res.json();
-    return json.ok ? json.data : [];
-  };
-
-  const handleUpdateServices = async (services: any[]) => {
-    const res = await fetch("/api/hrms/peopleplus/settings/services", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ services }),
-    });
-    return res.json();
-  };
-
-  const handleFetchUsers = async () => {
-    const res = await fetch("/api/hrms/peopleplus/employees");
-    const json = await res.json();
-    return json.ok ? json.data : [];
-  };
-
-  const handleBulkAccountStatus = async (userIds: string[], status: "LOGIN_ENABLED" | "LOGIN_DISABLED") => {
-    const res = await fetch("/api/hrms/peopleplus/employees", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userIds, status }),
-    });
-    return res.json();
-  };
-
-  const handleToggleWidget = async (key: string) => {
-    if (!profile) return;
-    const nextWidgets = profile.widgets.map((w: any) =>
-      w.key === key ? { ...w, visible: false } : w
-    );
-    try {
-      const res = await fetch("/api/hrms/peopleplus/dashboard/widgets", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ widgets: nextWidgets }),
-      });
-      const json = await res.json();
-      if (json.ok) {
-        setProfile((prev: any) => ({ ...prev, widgets: nextWidgets }));
-        toast.success("Dashboard customized.");
-      }
-    } catch (error) {
-      toast.error("Failed to save dashboard settings");
-    }
-  };
-
   return (
-    <div className="space-y-6 pb-12">
-      {profile && (
-        <ProfileSummary
-          profile={profile}
-          onPunchAction={handlePunchAction}
-          loading={loading}
-        />
-      )}
+    <div className="pb-12">
+      <ProfileSummary
+        profile={profile}
+        onPunchAction={handlePunchAction}
+        loading={loading}
+      />
 
-      {/* Tab Select buttons */}
-      <div className="flex items-center gap-2 border-b border-outline-variant/30 pb-1.5 text-xs font-black tracking-wider">
-        <button
-          onClick={() => setActiveTab("myspace")}
-          className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
-            activeTab === "myspace"
-              ? "bg-[#161f28]/80 text-[#00c4b6] border border-[#00c4b6]/25 dark:bg-[#161f28]/80 dark:text-[#00c4b6] dark:border-[#00c4b6]/25"
-              : "text-slate-500 hover:text-slate-750 dark:text-slate-400 dark:hover:text-slate-200"
-          }`}
-        >
-          MY SPACE
-        </button>
-        <button
-          onClick={() => setActiveTab("team")}
-          className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
-            activeTab === "team"
-              ? "bg-[#161f28]/80 text-[#00c4b6] border border-[#00c4b6]/25 dark:bg-[#161f28]/80 dark:text-[#00c4b6] dark:border-[#00c4b6]/25"
-              : "text-slate-500 hover:text-slate-750 dark:text-slate-400 dark:hover:text-slate-200"
-          }`}
-        >
-          TEAM
-        </button>
-        <button
-          onClick={() => setActiveTab("organization")}
-          className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
-            activeTab === "organization"
-              ? "bg-[#161f28]/80 text-[#00c4b6] border border-[#00c4b6]/25 dark:bg-[#161f28]/80 dark:text-[#00c4b6] dark:border-[#00c4b6]/25"
-              : "text-slate-500 hover:text-slate-750 dark:text-slate-400 dark:hover:text-slate-200"
-          }`}
-        >
-          ORGANIZATION
-        </button>
+      <div className="flex flex-col gap-8 px-6 py-8 lg:px-8 xl:px-10">
+
+      <div className="border border-outline-variant bg-surface-container-low">
+        <div className="grid md:grid-cols-3 divide-x divide-outline-variant">
+          {[
+            {
+              key: "myspace",
+              label: "My Space",
+              detail: "Personal rhythm, tasks, and check-in context.",
+              icon: Sparkles,
+            },
+            {
+              key: "team",
+              label: "Team",
+              detail: "Reportee visibility and attendance at a glance.",
+              icon: Users2,
+            },
+            {
+              key: "organization",
+              label: "Organization",
+              detail: "Announcements, directory, and company services.",
+              icon: Building2,
+            },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.key;
+
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={`group flex items-start gap-3 px-5 py-4 text-left transition-all cursor-pointer w-full ${
+                  isActive
+                    ? "bg-[#0f1c22] text-white border-b-2 border-b-[#00cec4]"
+                    : "bg-transparent text-on-surface-variant hover:bg-surface-container"
+                }`}
+              >
+                <span
+                  className={`mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border ${
+                    isActive
+                      ? "border-white/15 bg-white/10 text-[#00cec4]"
+                      : "border-outline-variant bg-surface text-[#00cec4]"
+                  }`}
+                >
+                  <Icon className="size-4" />
+                </span>
+                <span className="block">
+                  <span className={`block text-xs font-semibold uppercase tracking-[0.12em] ${isActive ? "text-[#00cec4]" : "text-on-surface-variant"}`}>
+                    {tab.label}
+                  </span>
+                  <span className={`mt-1 block text-sm leading-relaxed ${isActive ? "text-white/70" : "text-on-surface-variant"}`}>
+                    {tab.detail}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Tab Content */}
       <div className="space-y-6">
-        {activeTab === "myspace" && <ActionList />}
+        {activeTab === "myspace" && (
+          <ActionList
+            profile={profile}
+            sessionUser={sessionUser}
+            data={widgetsData}
+          />
+        )}
         {activeTab === "team" && <ReporteesList reportees={reportees} />}
         {activeTab === "organization" && (
           <OrgServices
@@ -248,6 +224,8 @@ export function PeoplePlusPortalClient({
             branches={branches}
           />
         )}
+      </div>
+
       </div>
     </div>
   );

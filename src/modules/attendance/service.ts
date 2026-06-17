@@ -3,34 +3,36 @@ import { notify } from "@/lib/notify";
 import { getNow } from "@/lib/clock";
 import { notifyMany, getUsersWithPermission } from "@/modules/notifications/service";
 import { calculateOtForPunch } from "@/lib/ot";
+import { getAttendanceMonthBounds, toAttendanceDate } from "@/lib/attendance-date";
 
 // ─── Punch ────────────────────────────────────────────────────────────────────
 
 export async function punchIn(userId: string, date: Date) {
   const now = await getNow();
+  const attendanceDate = toAttendanceDate(date);
   const punch = await db.attendancePunch.upsert({
-    where: { userId_date: { userId, date } },
+    where: { userId_date: { userId, date: attendanceDate } },
     update: { inAt: now },
-    create: { userId, date, inAt: now, source: "web" },
+    create: { userId, date: attendanceDate, inAt: now, source: "web" },
   });
-  await calculateOtForPunch(userId, date);
+  await calculateOtForPunch(userId, attendanceDate);
   return punch;
 }
 
 export async function punchOut(userId: string, date: Date) {
   const now = await getNow();
+  const attendanceDate = toAttendanceDate(date);
   const punch = await db.attendancePunch.upsert({
-    where: { userId_date: { userId, date } },
+    where: { userId_date: { userId, date: attendanceDate } },
     update: { outAt: now },
-    create: { userId, date, outAt: now, source: "web" },
+    create: { userId, date: attendanceDate, outAt: now, source: "web" },
   });
-  await calculateOtForPunch(userId, date);
+  await calculateOtForPunch(userId, attendanceDate);
   return punch;
 }
 
 export async function getMonthAttendance(userId: string, year: number, month: number) {
-  const from = new Date(year, month - 1, 1);
-  const to = new Date(year, month, 0);
+  const { start: from, end: to } = getAttendanceMonthBounds(year, month);
   return db.attendancePunch.findMany({
     where: { userId, date: { gte: from, lte: to } },
     orderBy: { date: "asc" },
@@ -225,8 +227,7 @@ export async function getMonthlyReport(orgId: string, year: number, month: numbe
     select: { id: true, name: true, designation: true },
   });
 
-  const from = new Date(year, month - 1, 1);
-  const to = new Date(year, month, 0);
+  const { start: from, end: to } = getAttendanceMonthBounds(year, month);
 
   const punches = await db.attendancePunch.findMany({
     where: { userId: { in: users.map((u) => u.id) }, date: { gte: from, lte: to } },

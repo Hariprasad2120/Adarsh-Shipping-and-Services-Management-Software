@@ -48,7 +48,7 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     icon: Dashboard,
     alwaysVisible: true,
     matchPaths: ["/dashboard"],
-    items: [{ href: "/dashboard", label: "Overview", icon: View, matchPaths: ["/dashboard"] }],
+    items: [],
   },
   {
     id: "todo",
@@ -568,18 +568,18 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/admin/settings"],
       },
       {
-        href: "/admin/peopleplus/users",
+        href: "/admin/hrms/users",
         label: "HRMS User Control",
         icon: UserMultiple,
         permission: "admin.org.manage",
-        matchPaths: ["/admin/peopleplus/users"],
+        matchPaths: ["/admin/hrms/users"],
       },
       {
-        href: "/admin/peopleplus/settings",
+        href: "/admin/hrms/settings",
         label: "HRMS App Settings",
         icon: Settings,
         permission: "admin.org.manage",
-        matchPaths: ["/admin/peopleplus/settings"],
+        matchPaths: ["/admin/hrms/settings"],
       },
       {
         href: "/admin/passkeys",

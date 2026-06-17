@@ -1,7 +1,7 @@
 import React from "react";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { OnboardingView } from "@/components/hrms/peopleplus/onboarding-view";
+import { OnboardingView } from "@/components/hrms/onboarding-view";
 
 export default async function OnboardingPage() {
   const session = await auth();

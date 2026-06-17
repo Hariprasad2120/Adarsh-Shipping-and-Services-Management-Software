@@ -17,8 +17,22 @@ export function DashboardShell({
   const isCrm = pathname.startsWith("/crm");
   const isPortal = pathname === "/dashboard";
 
-  if (isCrm || isPortal) {
-    return <div className="flex flex-1 flex-col min-h-screen bg-background text-on-surface">{children}</div>;
+  if (isPortal) {
+    return (
+      <div className="flex flex-1 flex-col min-h-screen bg-background text-on-surface">
+        <WelcomeBar userName={userName} sessionToken={sessionToken} />
+        {children}
+      </div>
+    );
+  }
+
+  if (isCrm) {
+    return (
+      <div className="flex flex-1 flex-col min-h-screen bg-background text-on-surface">
+        <WelcomeBar userName={userName} sessionToken={sessionToken} />
+        {children}
+      </div>
+    );
   }
 
   return (

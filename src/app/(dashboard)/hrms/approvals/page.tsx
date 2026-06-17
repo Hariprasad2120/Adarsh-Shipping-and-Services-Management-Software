@@ -2,7 +2,7 @@ import React from "react";
 import { auth } from "@/lib/auth";
 import { loadCaps } from "@/lib/rbac";
 import { redirect } from "next/navigation";
-import { ApprovalsView } from "@/components/hrms/peopleplus/approvals-view";
+import { ApprovalsView } from "@/components/hrms/approvals-view";
 
 export default async function ApprovalsPage() {
   const session = await auth();

@@ -94,6 +94,9 @@ interface LiveData {
   presentCount: number;
   outCount: number;
   notArrivedCount: number;
+  source: "essl" | "db-fallback";
+  degraded?: boolean;
+  message?: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -257,6 +260,7 @@ export function BiometricSyncClient() {
   const [lastLiveSyncText, setLastLiveSyncText] = useState("Never");
   const liveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastLiveSyncRef = useRef<Date | null>(null);
+  const hasAutoSyncedRef = useRef(false);
 
   // Mount state guard to prevent hydration errors
   useEffect(() => {
@@ -280,9 +284,19 @@ export function BiometricSyncClient() {
     }
   }, [fetchStatus, mounted]);
 
+  // Auto-trigger a live eSSL sync once when page loads and status confirms connected
+  useEffect(() => {
+    if (!mounted || !status || hasAutoSyncedRef.current || tab !== "live") return;
+    hasAutoSyncedRef.current = true;
+    if (status.configured && status.connected) {
+      void handleLiveSyncNow();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted, status, tab]);
+
   // ── Live today: fast snapshot fetch from local DB ──────────────────────────
   const refreshLiveSnapshot = useCallback(
-    async (silent = false) => {
+    async (silent = false): Promise<LiveData | null> => {
       if (!silent) setLiveSyncing(true);
       try {
         const r = await fetch("/api/attendance/sync/biometric/live");
@@ -292,12 +306,14 @@ export function BiometricSyncClient() {
           const now = new Date();
           lastLiveSyncRef.current = now;
           setLastLiveSyncText("Just now");
+          return data;
         }
       } catch {
         /* silent */
       } finally {
         if (!silent) setLiveSyncing(false);
       }
+      return null;
     },
     [],
   );
@@ -325,13 +341,24 @@ export function BiometricSyncClient() {
         });
 
         if (!syncRes.ok) {
+          const failure = (await syncRes.json().catch(() => null)) as { error?: string } | null;
           void fetchStatus();
-          toast.error("Live biometric sync failed");
+          toast.error(failure?.error ?? "Live biometric sync failed");
           return;
         }
       }
 
-      await refreshLiveSnapshot(true);
+      const snapshot = await refreshLiveSnapshot(true);
+      if (!snapshot) {
+        toast.error("Failed to refresh biometric snapshot");
+        return;
+      }
+
+      if (snapshot.source === "essl") {
+        toast.success("Live biometric data refreshed from eSSL");
+      } else {
+        toast.warning(snapshot.message ?? "eSSL is unavailable. Showing local attendance records.");
+      }
     } catch {
       toast.error("Failed to refresh biometric snapshot");
     } finally {
@@ -364,10 +391,13 @@ export function BiometricSyncClient() {
       });
       const data = (await res.json()) as SyncResult;
       setLastResult(data);
-      if (data.success) {
-        toast.success(
-          `Sync complete — ${data.synced ?? 0} new, ${data.updated ?? 0} updated, ${data.skipped ?? 0} skipped`,
-        );
+      if (res.ok && data.success) {
+        const resultText = `Sync complete — ${data.synced ?? 0} new, ${data.updated ?? 0} updated, ${data.skipped ?? 0} skipped`;
+        if ((data.errors?.length ?? 0) > 0) {
+          toast.warning(`${resultText}. ${data.errors!.length} sync issue(s) need review.`);
+        } else {
+          toast.success(resultText);
+        }
         void fetchStatus();
         void refreshLiveSnapshot(true);
       } else {
@@ -527,7 +557,7 @@ export function BiometricSyncClient() {
           </div>
 
           {/* Monitor panel */}
-          <div className="overflow-hidden rounded-3xl border border-outline-variant/60 bg-surface shadow-sm dark:border-slate-800/80 dark:bg-slate-950/30 dark:shadow-2xl dark:backdrop-blur-md">
+            <div className="overflow-hidden rounded-3xl border border-outline-variant/60 bg-surface shadow-sm dark:border-slate-800/80 dark:bg-slate-950/30 dark:shadow-2xl dark:backdrop-blur-md">
             {/* Toolbar */}
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-outline-variant/50 bg-surface-container-low/70 px-6 py-4 select-none dark:border-slate-800/60 dark:bg-slate-900/20">
               <div className="flex items-center gap-2">
@@ -592,6 +622,27 @@ export function BiometricSyncClient() {
                 </button>
               </div>
             </div>
+
+            {liveData && (
+              <div
+                className={
+                  liveData.source === "essl"
+                    ? "flex flex-wrap items-center gap-2 border-b border-outline-variant/35 bg-[#00cec4]/6 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#009d96] dark:text-[#00cec4]"
+                    : "flex flex-wrap items-center gap-2 border-b border-orange-500/15 bg-orange-500/6 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.08em] text-orange-600 dark:text-orange-400"
+                }
+              >
+                <span
+                  className={
+                    liveData.source === "essl"
+                      ? "inline-flex items-center rounded-full border border-[#00cec4]/20 bg-[#00cec4]/10 px-2 py-0.5"
+                      : "inline-flex items-center rounded-full border border-orange-500/20 bg-orange-500/10 px-2 py-0.5"
+                  }
+                >
+                  {liveData.source === "essl" ? "Live Source: eSSL" : "Fallback: Local Attendance Records"}
+                </span>
+                {liveData.message ? <span className="text-on-surface-variant">{liveData.message}</span> : null}
+              </div>
+            )}
 
             {/* Table headers */}
             {displayedEmployees.length > 0 && (
@@ -687,7 +738,7 @@ export function BiometricSyncClient() {
                             {/* Status badge */}
                             <div className="flex justify-center shrink-0">
                               <span
-                                className={`inline-flex items-center gap-1 text-[9px] font-bold px-2.5 py-1 rounded-full select-none ${badge.bg} ${badge.text}`}
+                                className={`inline-flex items-center gap-1 text-[9px] font-bold px-2.5 py-1 rounded-full select-none ${badge.bg} ${badge.text} ${emp.status === "IN" ? "animate-pulse" : ""}`}
                               >
                                 {emp.status === "IN" && (
                                   <Flash className="size-2.5" />

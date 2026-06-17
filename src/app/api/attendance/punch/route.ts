@@ -3,6 +3,7 @@ import { getSessionOrUnauth, ok, err } from "@/lib/api-helpers";
 import { requirePermission } from "@/lib/rbac";
 import { punchIn, punchOut, getMonthAttendance } from "@/modules/attendance/service";
 import { getNow } from "@/lib/clock";
+import { getAttendanceDateParts, toAttendanceDate } from "@/lib/attendance-date";
 import { z } from "zod";
 
 export async function GET(req: NextRequest) {
@@ -12,8 +13,9 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get("userId") ?? session!.user.id;
   const now = await getNow();
-  const year = Number(searchParams.get("year") ?? now.getFullYear());
-  const month = Number(searchParams.get("month") ?? now.getMonth() + 1);
+  const today = getAttendanceDateParts(now);
+  const year = Number(searchParams.get("year") ?? today.year);
+  const month = Number(searchParams.get("month") ?? today.month);
 
   return ok(await getMonthAttendance(userId, year, month));
 }
@@ -39,8 +41,7 @@ export async function POST(req: NextRequest) {
     await requirePermission(session!.user.id, "attendance.punch.self");
   }
 
-  const d = date ? new Date(date) : await getNow();
-  d.setHours(0, 0, 0, 0);
+  const d = toAttendanceDate(date ? new Date(date) : await getNow());
 
   const punch = action === "in" ? await punchIn(targetId, d) : await punchOut(targetId, d);
   return ok(punch);

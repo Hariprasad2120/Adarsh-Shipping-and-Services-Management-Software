@@ -6,6 +6,11 @@
 
 import { db } from "@/lib/db";
 import { isWorkingDate, calendarFromDb } from "@/lib/working-hours";
+import {
+  getAttendanceMonthBounds,
+  toAttendanceDate as normalizeToISTMidnight,
+  toAttendanceDateString as toDateString,
+} from "@/lib/attendance-date";
 
 export interface CompOffSlab {
   minHours: number;
@@ -25,20 +30,7 @@ export const DEFAULT_OT_SETTINGS = {
   compOffSlabs: DEFAULT_COMPOFF_SLABS,
 };
 
-export function toDateString(date: Date): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Kolkata",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
-}
-
-export function normalizeToISTMidnight(date: Date): Date {
-  const dateStr = toDateString(date);
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(Date.UTC(y!, m! - 1, d!, 0, 0, 0));
-}
+export { normalizeToISTMidnight, toDateString };
 
 /**
  * Counts the number of working days in a selected month.
@@ -125,15 +117,21 @@ export async function calculateOtForPunch(userId: string, date: Date): Promise<b
   const [dbCalendar, dbSettings, dbHolidays] = await Promise.all([
     db.workingCalendar.findUnique({ where: { orgId } }),
     db.otSettings.findUnique({ where: { orgId } }),
-    db.holiday.findMany({
-      where: {
-        orgId,
-        date: {
-          gte: new Date(date.getFullYear(), date.getMonth(), 1),
-          lte: new Date(date.getFullYear(), date.getMonth() + 1, 0),
+    (() => {
+      const { start, end } = getAttendanceMonthBounds(
+        attendanceDate.getUTCFullYear(),
+        attendanceDate.getUTCMonth() + 1
+      );
+      return db.holiday.findMany({
+        where: {
+          orgId,
+          date: {
+            gte: start,
+            lte: end,
+          },
         },
-      },
-    }),
+      });
+    })(),
   ]);
 
   const holidayDateStrings = dbHolidays.map((h) => toDateString(h.date));
@@ -260,8 +258,10 @@ export async function calculateOtForPunch(userId: string, date: Date): Promise<b
 export async function processMonthOt(orgId: string, monthDate: Date): Promise<{
   processed: number;
 }> {
-  const startOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-  const endOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+  const { start: startOfMonth, end: endOfMonth } = getAttendanceMonthBounds(
+    monthDate.getUTCFullYear(),
+    monthDate.getUTCMonth() + 1
+  );
 
   const users = await db.user.findMany({
     where: { orgId, active: true, isPlatformAdmin: false },
@@ -304,8 +304,10 @@ export async function generatePayrollSummary(
   orgId: string,
   monthDate: Date
 ): Promise<PayrollSummaryRow[]> {
-  const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-  const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+  const { start: monthStart, end: monthEnd } = getAttendanceMonthBounds(
+    monthDate.getUTCFullYear(),
+    monthDate.getUTCMonth() + 1
+  );
 
   const [otRecords, lopRecords] = await Promise.all([
     db.otRecord.findMany({

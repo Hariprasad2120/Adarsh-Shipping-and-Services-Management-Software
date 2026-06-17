@@ -114,27 +114,21 @@ export default async function CrmDashboardPage() {
 
   return (
     <div className="p-8 space-y-8 max-w-[1600px] mx-auto">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#1c212a]/30 pb-5">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">CRM Dashboard</h2>
-          <p className="text-slate-400 text-sm mt-1">Real-time pipeline metrics and customer activity log for your logistics network.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <DemoDataButton />
-          <Link
-            href="/crm/leads/new"
-            className="flex items-center gap-2 bg-[#00c4b6] hover:bg-[#00b0a3] text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[#00c4b6]/10 cursor-pointer"
-          >
-            <span>+ Add Lead</span>
-          </Link>
-          <Link
-            href="/crm/deals"
-            className="flex items-center gap-2 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a]/80 text-slate-200 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer"
-          >
-            <span>View Deals</span>
-          </Link>
-        </div>
+      {/* Actions bar */}
+      <div className="flex items-center justify-end gap-3">
+        <DemoDataButton />
+        <Link
+          href="/crm/leads/new"
+          className="flex items-center gap-2 bg-[#00c4b6] hover:bg-[#00b0a3] text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[#00c4b6]/10 cursor-pointer"
+        >
+          <span>+ Add Lead</span>
+        </Link>
+        <Link
+          href="/crm/deals"
+          className="flex items-center gap-2 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a]/80 text-slate-200 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer"
+        >
+          <span>View Deals</span>
+        </Link>
       </div>
 
       {/* ─── KPI METRICS GRID ─────────────────────────────────────────── */}

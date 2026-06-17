@@ -505,14 +505,7 @@ export function TodoClient({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="space-y-2">
-          <p className="text-sm text-on-surface-variant">
-            Personal tasks, reminders, follow-ups, and checklist items for{" "}
-            {currentUserName}.
-          </p>
-        </div>
-
+      <div className="flex items-center justify-end">
         <Button
           onClick={openCreateTask}
           className="border-0 bg-cyan-500 text-white shadow-[0_14px_28px_-18px_rgba(6,182,212,0.55)] hover:bg-cyan-600"

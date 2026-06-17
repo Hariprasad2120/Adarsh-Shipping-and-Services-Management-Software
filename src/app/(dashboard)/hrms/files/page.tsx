@@ -1,17 +1,17 @@
 "use client";
 
 import React from "react";
-import { FilesView } from "@/components/hrms/peopleplus/files-view";
+import { FilesView } from "@/components/hrms/files-view";
 
 export default function FilesPage() {
   const handleFetchFiles = async (scope: "personal" | "organization" | "employee") => {
-    const res = await fetch(`/api/hrms/peopleplus/files?scope=${scope}`);
+    const res = await fetch(`/api/hrms/files?scope=${scope}`);
     const json = await res.json();
     return json.ok ? json.data : { folders: [], files: [] };
   };
 
   const handleCreateFolder = async (name: string, scope: string) => {
-    const res = await fetch("/api/hrms/peopleplus/files", {
+    const res = await fetch("/api/hrms/files", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, scope, type: "folder" }),
@@ -20,7 +20,7 @@ export default function FilesPage() {
   };
 
   const handleUploadFile = async (name: string, fileKey: string, mimeType: string, sizeBytes: number, scope: string) => {
-    const res = await fetch("/api/hrms/peopleplus/files", {
+    const res = await fetch("/api/hrms/files", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, fileKey, mimeType, sizeBytes, scope, type: "file" }),

@@ -11,6 +11,7 @@ import {
   pairPunches,
   type RawPunch,
 } from "@/lib/essl";
+import { attendanceDateFromParts, getEsslDayWindow } from "@/lib/attendance-date";
 import mssql from "mssql";
 import { z } from "zod";
 
@@ -57,10 +58,11 @@ export async function GET(req: NextRequest) {
   const [yearStr, monthStr, dayStr] = parsed.data.date.split("-") as [string, string, string];
   const year = parseInt(yearStr, 10);
   const month = parseInt(monthStr, 10);
+  const day = parseInt(dayStr, 10);
+  const selectedDate = attendanceDateFromParts(year, month, day);
 
   // Day window (IST stored without tz in eSSL)
-  const dayStart = new Date(Date.UTC(year, month - 1, parseInt(dayStr, 10), 0, 0, 0));
-  const dayEnd = new Date(Date.UTC(year, month - 1, parseInt(dayStr, 10), 23, 59, 59));
+  const { start: dayStart, end: dayEnd } = getEsslDayWindow(selectedDate);
 
   const tableName = punchTable(year, month);
   let pool: mssql.ConnectionPool | null = null;
@@ -111,8 +113,9 @@ export async function GET(req: NextRequest) {
         deviceName: p.deviceName,
       })),
     });
-  } catch (err: any) {
-    return err("eSSL error: " + (err.message || String(err)), 500);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return err("eSSL error: " + message, 500);
   } finally {
     if (pool) await pool.close();
   }

@@ -101,7 +101,7 @@ export function DropdownSelect({
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="start"
-          className={cn("w-[var(--radix-dropdown-menu-trigger-width)]", contentClassName)}
+          className={cn("w-[var(--radix-dropdown-menu-trigger-width)] max-h-[300px] overflow-y-auto", contentClassName)}
           data-dropdown-select-content="true"
         >
           <DropdownMenuRadioGroup onValueChange={handleValueChange} value={selectedValue}>

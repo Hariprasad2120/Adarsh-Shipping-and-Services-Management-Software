@@ -66,22 +66,6 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="p-8 space-y-6 max-w-[1600px] mx-auto">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#1c212a]/30 pb-5">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">Leads Module</h2>
-          <p className="text-slate-400 text-sm mt-1">Manage and qualify fresh enquiries from customer and logistics channels.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/crm/leads/new"
-            className="flex items-center gap-2 bg-[#00c4b6] hover:bg-[#00b0a3] text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[#00c4b6]/10 cursor-pointer"
-          >
-            <UserPlus className="size-4" />
-            <span>Create Lead</span>
-          </Link>
-        </div>
-      </div>
 
       {/* Filters Bar */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-[#0f1319] p-4 rounded-xl border border-[#1c212a]/50">
@@ -131,8 +115,17 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
           )}
         </form>
         
-        <div className="text-xs text-slate-400 font-bold shrink-0">
-          Showing {leads.length} leads
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="text-xs text-slate-400 font-bold">
+            Showing {leads.length} leads
+          </div>
+          <Link
+            href="/crm/leads/new"
+            className="flex items-center gap-2 bg-[#00c4b6] hover:bg-[#00b0a3] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+          >
+            <UserPlus className="size-3.5" />
+            <span>Create Lead</span>
+          </Link>
         </div>
       </div>
 
@@ -170,7 +163,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
               <tbody className="divide-y divide-[#1c212a]/30">
                 {leads.map((lead) => (
                   <tr key={lead.id} className="hover:bg-[#161f28]/35 transition-colors">
-                    <td className="px-6 py-4 font-bold text-white">
+                    <td className="px-6 py-4 text-white">
                       <Link href={`/crm/leads/${lead.id}`} className="hover:text-[#00c4b6] transition-all block">
                         {lead.firstName ? `${lead.firstName} ` : ""}{lead.lastName}
                       </Link>

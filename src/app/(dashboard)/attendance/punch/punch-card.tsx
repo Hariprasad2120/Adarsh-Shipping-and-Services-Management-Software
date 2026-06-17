@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useTransition, useMemo } from "react";
+import { useState, useEffect, useTransition, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { cn } from "@/lib/utils";
@@ -43,6 +43,7 @@ type PunchCardProps = {
   selectedEmployeeId: string;
   selectedYear: number;
   selectedMonth: number;
+  monthSessions?: Record<string, TimelineSession[]>;
 };
 
 type TimelineSession = {
@@ -62,33 +63,32 @@ export function PunchCard({
   selectedEmployeeId,
   selectedYear,
   selectedMonth,
+  monthSessions = {},
 }: PunchCardProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // Real-time system clock state to calculate current day worked time and progress bar live
-  // We initialize it using todayIso and track elapsed time via performance/Date.now offset to support frozen system clock.
-  const [nowState, setNowState] = useState<Date>(() => new Date(todayIso));
+  // Real-time client clock.
+  // IMPORTANT: do not drive this from `todayIso` because in many pages that prop is only
+  // a date string, which starts the clock at 00:00 and makes the live line appear wrong.
+  const [nowState, setNowState] = useState<Date>(() => new Date());
 
   useEffect(() => {
-    const startClientTime = Date.now();
-    const startServerTime = new Date(todayIso).getTime();
-
-    const timer = setInterval(() => {
-      const elapsed = Date.now() - startClientTime;
-      setNowState(new Date(startServerTime + elapsed));
-    }, 10000); // Update every 10 seconds
+    const tick = () => setNowState(new Date());
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [todayIso]);
+  }, []);
 
   // Today's local date string representation (live roll-over at midnight)
   const todayStr = useMemo(() => {
     return `${nowState.getFullYear()}-${String(nowState.getMonth() + 1).padStart(2, "0")}-${String(nowState.getDate()).padStart(2, "0")}`;
   }, [nowState]);
 
-  // Active date selection
+  // Active date selection. Use the actual client date so the current row matches the
+  // live clock even when the server prop was serialized as a date-only value.
   const [selectedDateStr, setSelectedDateStr] = useState<string>(() => {
-    const d = new Date(todayIso);
+    const d = new Date();
     const todayYear = d.getFullYear();
     const todayMonth = d.getMonth() + 1;
     const todayStrLocal = `${todayYear}-${String(todayMonth).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -105,6 +105,30 @@ export function PunchCard({
 
   const syncLabel = isPending ? "Updating..." : "Synced live";
 
+  // Ref for today's row — scroll into view on mount and on employee switch
+  const todayRowRef = useRef<HTMLDivElement>(null);
+
+  // One single live time overlay. This prevents the header line and row lines
+  // from rendering at slightly different X positions.
+  const tableRef = useRef<HTMLDivElement>(null);
+  const currentDayTrackRef = useRef<HTMLDivElement>(null);
+  const [liveLineLeft, setLiveLineLeft] = useState<number | null>(null);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      todayRowRef.current?.scrollIntoView({ behavior: "instant", block: "center" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [selectedEmployeeId]);
+
+  // Compare ISO date string to local YYYY-MM-DD string (handles IST midnight stored as UTC)
+  const isSameLocalDate = (isoDate: string, localDateStr: string): boolean => {
+    const d = new Date(isoDate);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}` === localDateStr;
+  };
+
   // Generate all days of the selected month
   const daysInMonth = useMemo(() => {
     const totalDays = new Date(selectedYear, selectedMonth, 0).getDate();
@@ -116,8 +140,8 @@ export function PunchCard({
       const dayOfWeek = date.getDay();
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       
-      const punch = punches.find((p) => p.date.startsWith(dateStr));
-      const ot = otRecords.find((o) => o.date.startsWith(dateStr));
+      const punch = punches.find((p) => isSameLocalDate(p.date, dateStr));
+      const ot = otRecords.find((o) => isSameLocalDate(o.date, dateStr));
       
       list.push({
         dayNum: d,
@@ -161,7 +185,7 @@ export function PunchCard({
       } catch (err: any) {
         if (!active) return;
         setTimelineError(err.message || "Offline");
-        const matchPunch = punches.find((p) => p.date.startsWith(selectedDateStr));
+        const matchPunch = punches.find((p) => isSameLocalDate(p.date, selectedDateStr));
         if (matchPunch?.inAt) {
           setTimelineSessions([
             {
@@ -209,19 +233,24 @@ export function PunchCard({
         })
       : "-";
 
-  // Maps time to coordinates on standard timeline grid (9:30 AM to 5:30 PM)
-  const getPercent = (timeIso: string | null) => {
+  // Maps time to coordinates on the standard timeline grid.
+  // Keep the raw percentage separate so OT and before/after-hours logic still work.
+  const WORK_START_MINUTES = 9 * 60 + 30; // 9:30 AM
+  const WORK_END_MINUTES = 17 * 60 + 30; // 5:30 PM
+  const WORK_TOTAL_MINUTES = WORK_END_MINUTES - WORK_START_MINUTES;
+
+  const clampPercent = (pct: number) => Math.min(100, Math.max(0, pct));
+
+  const getPercentRaw = (timeIso: string | null) => {
     if (!timeIso) return 0;
     const t = new Date(timeIso);
-    const mins = t.getHours() * 60 + t.getMinutes();
-    
-    const startLimit = 9 * 60 + 30; // 9:30 AM
-    const endLimit = 17 * 60 + 30; // 5:30 PM
-    const total = endLimit - startLimit;
-    
-    const pct = ((mins - startLimit) / total) * 100;
-    return Math.min(100, Math.max(0, pct));
+    if (Number.isNaN(t.getTime())) return 0;
+
+    const mins = t.getHours() * 60 + t.getMinutes() + t.getSeconds() / 60;
+    return ((mins - WORK_START_MINUTES) / WORK_TOTAL_MINUTES) * 100;
   };
+
+  const getPercent = (timeIso: string | null) => clampPercent(getPercentRaw(timeIso));
 
   const handleFilterChange = (params: {
     employeeId?: string;
@@ -269,8 +298,8 @@ export function PunchCard({
   }, [selectedDateStr]);
 
   const selectedDayMetrics = useMemo(() => {
-    const dayPunch = punches.find((p) => p.date.startsWith(selectedDateStr));
-    const dayOt = otRecords.find((o) => o.date.startsWith(selectedDateStr));
+    const dayPunch = punches.find((p) => isSameLocalDate(p.date, selectedDateStr));
+    const dayOt = otRecords.find((o) => isSameLocalDate(o.date, selectedDateStr));
     const dayMeta = daysInMonth.find((day) => day.dateStr === selectedDateStr) ?? null;
     return { dayPunch, dayOt, dayMeta };
   }, [selectedDateStr, punches, otRecords, daysInMonth]);
@@ -295,13 +324,63 @@ export function PunchCard({
     return `${hrs}:${mins.toString().padStart(2, "0")} Hrs`;
   };
 
+  const nowPercentRaw = useMemo(() => getPercentRaw(nowState.toISOString()), [nowState]);
+  const nowPercent = useMemo(() => clampPercent(nowPercentRaw), [nowPercentRaw]);
+
+  // Show the current-time line for the current month even before 9:30 or after 5:30.
+  // It clamps to the left/right edge instead of disappearing.
+  const showLiveTimeLine =
+    selectedYear === nowState.getFullYear() &&
+    selectedMonth === nowState.getMonth() + 1;
+
+  // Measure the real timeline track used by today's row and position ONE overlay line
+  // over the whole table. The old implementation rendered one line in the header
+  // and another inside every row, which caused two different live-time positions.
+  useEffect(() => {
+    if (!showLiveTimeLine) {
+      setLiveLineLeft(null);
+      return;
+    }
+
+    const updateLiveLine = () => {
+      const table = tableRef.current;
+      const track = currentDayTrackRef.current;
+
+      if (!table || !track) {
+        setLiveLineLeft(null);
+        return;
+      }
+
+      const tableRect = table.getBoundingClientRect();
+      const trackRect = track.getBoundingClientRect();
+      const x = trackRect.left - tableRect.left + (trackRect.width * nowPercent) / 100;
+      setLiveLineLeft(x);
+    };
+
+    const frame = requestAnimationFrame(updateLiveLine);
+    window.addEventListener("resize", updateLiveLine);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(updateLiveLine);
+      if (tableRef.current) resizeObserver.observe(tableRef.current);
+      if (currentDayTrackRef.current) resizeObserver.observe(currentDayTrackRef.current);
+    }
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", updateLiveLine);
+      resizeObserver?.disconnect();
+    };
+  }, [showLiveTimeLine, nowPercent, selectedEmployeeId, selectedYear, selectedMonth, todayStr]);
+
   return (
-    <div className="grid gap-6 rounded-[28px] border border-outline-variant/45 bg-surface p-5 shadow-ambient lg:grid-cols-4 xl:p-6">
+    <div className="grid gap-6 lg:grid-cols-4">
       {/* Left Column: Timeline Table (spans 3 columns) */}
-      <div className="space-y-6 lg:col-span-3">
-        
+      <div className="flex flex-col gap-6 lg:col-span-3 lg:max-h-[calc(100vh-180px)]">
+
         {/* Header Block */}
-        <div className="flex flex-wrap items-center justify-end gap-3 border-b border-outline-variant/30 pb-4">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-b border-outline-variant/30 pb-4">
           <div className="flex flex-wrap items-center gap-3">
             {canManage && employees.length > 0 && (
               <div className="w-64">
@@ -353,13 +432,29 @@ export function PunchCard({
         </div>
 
         {/* Timeline Grid Table */}
-        <div className="overflow-hidden rounded-[26px] border border-outline-variant/40 bg-surface shadow-sm">
-          
+        <div
+          ref={tableRef}
+          className="relative flex flex-1 flex-col min-h-0 overflow-hidden rounded-[26px] border border-outline-variant/40 bg-surface shadow-sm"
+        >
+
+          {showLiveTimeLine && liveLineLeft !== null && (
+            <div
+              className="pointer-events-none absolute top-0 bottom-0 z-[90] -translate-x-1/2 border-l border-dashed border-[#4f8cff]/80"
+              style={{ left: `${liveLineLeft}px` }}
+              aria-hidden="true"
+            >
+              <span className="absolute top-2 left-1/2 -translate-x-1/2 rounded-full border border-[#4f8cff]/25 bg-surface px-1.5 py-0.5 text-[7px] font-semibold tracking-[0.08em] text-[#4f8cff] shadow-sm">
+                NOW
+              </span>
+              <span className="absolute top-[54px] left-1/2 flex size-2.5 -translate-x-1/2 items-center justify-center rounded-full bg-[#4f8cff] shadow-[0_0_0_4px_rgba(79,140,255,0.15)]" />
+            </div>
+          )}
+
           {/* Header row. Track sits inside a calc(100% - 65px) container.
               This leaves a 65px safety margin on the right of the column for float OT labels. */}
-          <div className="grid grid-cols-[85px_1fr_65px_95px] items-center gap-4 border-b border-outline-variant/30 bg-surface-container-low px-6 py-4 text-[10px] font-medium tracking-[0.08em] text-on-surface-variant select-none">
+          <div className="shrink-0 grid grid-cols-[85px_1fr_65px_95px] items-center gap-4 border-b border-outline-variant/30 bg-surface-container-low px-6 py-4 text-[10px] font-medium tracking-[0.08em] text-on-surface-variant select-none">
             <div>Day</div>
-            <div className="flex w-[calc(100%-65px)] justify-between px-2 text-[8px] tracking-[0.06em] text-on-surface-variant">
+            <div className="relative flex w-[calc(100%-65px)] justify-between px-2 text-[8px] tracking-[0.06em] text-on-surface-variant overflow-visible">
               <span>9:30 AM</span>
               <span>10:30 AM</span>
               <span>11:30 AM</span>
@@ -369,13 +464,14 @@ export function PunchCard({
               <span>3:30 PM</span>
               <span>4:30 PM</span>
               <span>5:30 PM</span>
+
             </div>
             <div className="text-center">OT</div>
             <div className="text-right">Hours</div>
           </div>
 
           {/* Body Rows */}
-          <div className="max-h-[62vh] divide-y divide-outline-variant/25 overflow-y-auto pr-1">
+          <div className="flex-1 min-h-0 divide-y divide-outline-variant/25 overflow-y-auto pr-1">
             {daysInMonth.map((day) => {
               const isSelected = selectedDateStr === day.dateStr;
               const isCurrentDay = day.dateStr === todayStr;
@@ -389,88 +485,156 @@ export function PunchCard({
               const inTime = day.punch?.inAt;
               const outTime = day.punch?.outAt;
 
+              // Prefer freshly fetched selected-day sessions, then fallback to monthSessions.
+              // This makes the open/still-inside state appear without needing a page reload.
+              const fetchedSelectedSessions = selectedDateStr === day.dateStr ? timelineSessions : [];
+              const daySessions =
+                fetchedSelectedSessions.length > 0
+                  ? fetchedSelectedSessions
+                  : monthSessions[day.dateStr] ?? [];
+              const hasSessionData = daySessions.length > 0;
+
+              // The live-time line is rendered once as an overlay on the full table.
+              // Do not render another per-row line here, otherwise the UI shows two lines.
+              const nowLine = null;
+
               // Timeline Coordinates
               let visualBar = null;
 
-              if (inTime) {
-                const startPct = getPercent(inTime);
-                const currentOutTime = outTime || (isCurrentDay ? nowState.toISOString() : null);
-                const endPct = currentOutTime ? getPercent(currentOutTime) : 100;
-                
-                const standardEndPct = Math.min(100, endPct);
-                const standardWidth = Math.max(1, standardEndPct - startPct);
-                const hasOt = endPct > 100 || (day.ot && day.ot.otHours > 0);
-                const otWidth = hasOt ? Math.max(2, endPct - 100) : 0;
+              const firstIn = hasSessionData ? daySessions[0]!.in : inTime;
+
+              if (firstIn) {
+                const lastSession = hasSessionData ? daySessions[daySessions.length - 1]! : null;
+                const lastOut = hasSessionData ? (lastSession!.out || null) : outTime;
+
+                // Employee is still inside when today's latest session has no OUT.
+                // Also fallback to the summary record when monthSessions is not populated yet.
+                const lastSessionOpen =
+                  isCurrentDay &&
+                  ((hasSessionData && !lastSession!.out) || (!!inTime && !outTime));
+
+                const effectiveLastOut = lastOut || (lastSessionOpen ? nowState.toISOString() : firstIn);
+                const lastEndRawPct = getPercentRaw(effectiveLastOut);
+                const hasOt = lastEndRawPct > 100 || (day.ot && day.ot.otHours > 0);
+                const otWidth = hasOt ? Math.min(28, Math.max(2, lastEndRawPct - 100)) : 0;
+                const liveIndicatorPct = clampPercent(lastEndRawPct);
 
                 visualBar = (
-                  <div className="relative w-[calc(100%-65px)] h-6 flex items-center overflow-visible">
-                    {/* Background track line - Slimmed down to 1px */}
-                    <div className="absolute h-px w-full bg-outline-variant/70" />
-                    
-                    {/* Standard worked segment - Slimmed down to h-1 */}
-                    <div
-                      className="absolute flex h-1 items-center rounded-full border-l border-r border-primary bg-primary/80 transition animate-fade-in"
-                      style={{ left: `${startPct}%`, width: `${standardWidth}%` }}
-                    >
-                      <span className="absolute left-0 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary bg-surface shadow-sm" />
-                      {!hasOt && (
-                        outTime ? (
-                          <span className="absolute right-0 top-1/2 h-1.5 w-1.5 translate-x-1/2 -translate-y-1/2 rounded-full border border-primary bg-surface shadow-sm" />
-                        ) : isCurrentDay ? (
-                          // Live pulsating orange indicator dot
-                          <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 flex h-2.5 w-2.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-80"></span>
-                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 border border-white bg-orange-500 shadow"></span>
-                          </span>
-                        ) : null
-                      )}
-                    </div>
+                  <div
+                    ref={isCurrentDay ? currentDayTrackRef : undefined}
+                    className="relative w-[calc(100%-65px)] h-6 flex items-center overflow-visible"
+                  >
+                    {/* Center axis line */}
+                    <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-outline-variant/30" />
+                    {nowLine}
 
-                    {/* OT worked segment - Slimmed down to h-1 */}
+                    {hasSessionData ? (
+                      // Per-session segments — gaps where employee was outside
+                      daySessions.map((session, idx) => {
+                        const sessionOut = session.out || null;
+                        const isOpenLiveSession = isCurrentDay && idx === daySessions.length - 1 && !sessionOut;
+                        const segStart = getPercent(session.in);
+                        const segOutIso = sessionOut ?? (isOpenLiveSession ? nowState.toISOString() : null);
+                        const segEnd = segOutIso ? Math.min(100, getPercent(segOutIso)) : segStart + 0.5;
+                        const segWidth = Math.max(0.5, segEnd - segStart);
+                        return (
+                          <div
+                            key={idx}
+                            className={cn(
+                              "absolute flex h-1 items-center rounded-full border-l border-r border-[#00cec4] bg-[#00cec4]/80 animate-fade-in",
+                              isOpenLiveSession && "shadow-[0_0_10px_rgba(0,206,196,0.45)]"
+                            )}
+                            style={{ left: `${segStart}%`, width: `${segWidth}%` }}
+                          >
+                            <span className="absolute left-0 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-green-500 bg-green-500 shadow-sm" />
+                            {sessionOut && (
+                              <span className="absolute right-0 top-1/2 h-1.5 w-1.5 translate-x-1/2 -translate-y-1/2 rounded-full border border-red-500 bg-red-500 shadow-sm" />
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      // Fallback: single summary bar (first-in → last-out)
+                      (() => {
+                        const startPct = getPercent(firstIn);
+                        const endPct = effectiveLastOut ? Math.min(100, getPercent(effectiveLastOut)) : 100;
+                        const width = Math.max(1, endPct - startPct);
+                        return (
+                          <div
+                            className="absolute flex h-1 items-center rounded-full border-l border-r border-[#00cec4] bg-[#00cec4]/80 animate-fade-in"
+                            style={{ left: `${startPct}%`, width: `${width}%` }}
+                          >
+                            <span className="absolute left-0 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-green-500 bg-green-500 shadow-sm" />
+                            {outTime && (
+                              <span className="absolute right-0 top-1/2 h-1.5 w-1.5 translate-x-1/2 -translate-y-1/2 rounded-full border border-red-500 bg-red-500 shadow-sm" />
+                            )}
+                          </div>
+                        );
+                      })()
+                    )}
+
+                    {/* OT segment */}
                     {hasOt && (
                       <div
-                        className="absolute flex h-1 items-center rounded-r-full border-y border-r border-orange-500 bg-orange-500/80 transition animate-fade-in"
-                        style={{ left: `100%`, width: `${otWidth}%` }}
+                        className="absolute flex h-1 items-center rounded-r-full border-y border-r border-orange-500 bg-orange-500/80 animate-fade-in"
+                        style={{ left: "100%", width: `${otWidth}%` }}
                       >
-                        {outTime ? (
+                        {lastOut && (
                           <span className="absolute right-0 top-1/2 h-1.5 w-1.5 translate-x-1/2 -translate-y-1/2 rounded-full border border-orange-500 bg-surface shadow-sm" />
-                        ) : isCurrentDay ? (
-                          // Live pulsating orange indicator dot at the end of active OT
-                          <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 flex h-2.5 w-2.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-80"></span>
-                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 border border-white bg-orange-500 shadow"></span>
-                          </span>
-                        ) : null}
-                        
-                        {/* Floating OT label */}
+                        )}
                         <span className="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 whitespace-nowrap text-[9px] font-medium text-orange-500">
                           {day.ot ? day.ot.otHours.toFixed(2) : "0.00"} Hrs OT
                         </span>
                       </div>
                     )}
+
+                    {/* Still-inside live pulse */}
+                    {lastSessionOpen && (
+                      <span
+                        className="absolute top-1/2 z-[60] flex h-3 w-3 -translate-x-1/2 -translate-y-1/2"
+                        style={{ left: `${liveIndicatorPct}%` }}
+                        title="Still inside"
+                      >
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00cec4] opacity-75" />
+                        <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-white bg-[#00cec4] shadow-[0_0_12px_rgba(0,206,196,0.75)]" />
+                        <span className="absolute left-[calc(100%+6px)] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-[#00cec4]/20 bg-[#00cec4]/10 px-2 py-0.5 text-[8px] font-semibold tracking-[0.08em] text-[#009d96] dark:text-[#00cec4]">
+                          INSIDE
+                        </span>
+                      </span>
+                    )}
                   </div>
                 );
               } else if (day.isWeekend) {
                 if (day.dayOfWeek === 6) {
-                  // Saturday
                   visualBar = (
-                    <div className="relative flex h-6 w-[calc(100%-65px)] items-center justify-center rounded-full border border-secondary/10 bg-secondary/5 select-none">
+                    <div
+                      ref={isCurrentDay ? currentDayTrackRef : undefined}
+                      className="relative flex h-6 w-[calc(100%-65px)] items-center justify-center rounded-full border border-secondary/10 bg-secondary/5 select-none overflow-visible"
+                    >
                       <span className="text-[9px] font-medium tracking-[0.08em] text-secondary/70">Saturday</span>
+                      {nowLine}
                     </div>
                   );
                 } else {
-                  // Sunday
                   visualBar = (
-                    <div className="relative flex h-6 w-[calc(100%-65px)] items-center justify-center rounded-full border border-dashed border-outline-variant/80 bg-surface-container-low select-none">
+                    <div
+                      ref={isCurrentDay ? currentDayTrackRef : undefined}
+                      className="relative flex h-6 w-[calc(100%-65px)] items-center justify-center rounded-full border border-dashed border-outline-variant/80 bg-surface-container-low select-none overflow-visible"
+                    >
                       <span className="text-[9px] font-medium tracking-[0.08em] text-on-surface-variant">Sunday</span>
+                      {nowLine}
                     </div>
                   );
                 }
               } else {
-                // Weekday absent: red dotted line
+                // Weekday absent
                 visualBar = (
-                  <div className="w-[calc(100%-65px)] flex items-center select-none">
-                    <div className="my-3 h-0 w-full border-t border-dashed border-rose-500/30" />
+                  <div
+                    ref={isCurrentDay ? currentDayTrackRef : undefined}
+                    className="relative w-[calc(100%-65px)] h-6 flex items-center select-none overflow-visible"
+                  >
+                    <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-rose-500/20" />
+                    {nowLine}
                   </div>
                 );
               }
@@ -478,6 +642,7 @@ export function PunchCard({
               return (
                 <div
                   key={day.dateStr}
+                  ref={isCurrentDay ? todayRowRef : undefined}
                   onClick={() => setSelectedDateStr(day.dateStr)}
                   className={cn(
                     "grid cursor-pointer grid-cols-[85px_1fr_65px_95px] items-center gap-4 border-l-2 px-6 py-3 transition select-none",
@@ -528,7 +693,7 @@ export function PunchCard({
       </div>
 
       {/* Right Column: Detailed Day Panel (spans 1 column) */}
-      <div className="space-y-6">
+      <div className="space-y-6 lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-180px)] lg:overflow-hidden">
         <div className="flex h-full flex-col rounded-[26px] border border-outline-variant/40 bg-surface shadow-sm">
 
           {/* Sidebar Header */}
@@ -557,8 +722,16 @@ export function PunchCard({
                 Attendance Status
               </span>
               {selectedDayMetrics.dayPunch?.inAt ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-[#00cec4]/20 bg-[#00cec4]/10 px-3 py-1 text-xs font-medium text-[#009d96] dark:text-[#00cec4]">
-                  <CheckCircle className="size-3.5" /> Present
+                <span className={`inline-flex items-center gap-1.5 rounded-full border border-[#00cec4]/20 bg-[#00cec4]/10 px-3 py-1 text-xs font-medium text-[#009d96] dark:text-[#00cec4] ${!selectedDayMetrics.dayPunch?.outAt && selectedDateStr === todayStr ? "animate-pulse" : ""}`}>
+                  {!selectedDayMetrics.dayPunch?.outAt && selectedDateStr === todayStr ? (
+                    <span className="relative flex size-2 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00cec4] opacity-75" />
+                      <span className="relative inline-flex rounded-full size-2 bg-[#00cec4]" />
+                    </span>
+                  ) : (
+                    <CheckCircle className="size-3.5" />
+                  )}
+                  Present
                 </span>
               ) : selectedDayMetrics.dayMeta?.isWeekend ? (
                 <span className="inline-flex items-center gap-1 rounded-full border border-outline-variant/50 bg-surface px-3 py-1 text-xs font-medium text-on-surface-variant">
@@ -669,7 +842,7 @@ export function PunchCard({
 
             {/* Overtime Section Card */}
             {selectedDayMetrics.dayOt && selectedDayMetrics.dayOt.otHours > 0 && (
-              <div className="space-y-3.5 rounded-2xl border border-orange-500/20 bg-orange-500/[0.04] p-4">
+              <div className="space-y-3.5 rounded-2xl border border-orange-500/20 bg-orange-500/4 p-4">
                 <div className="flex items-center gap-2 text-xs font-medium tracking-[0.08em] text-orange-500">
                   <TrendingUp className="size-4 shrink-0 text-orange-500" />
                   <span>OVERTIME</span>
@@ -709,7 +882,7 @@ export function PunchCard({
               </div>
 
               {selectedDayMetrics.dayPunch?.inAt && (
-                <div className="flex select-none items-center justify-center gap-1.5 rounded-xl border border-[#00cec4]/15 bg-[#00cec4]/[0.06] py-2 text-[10px] font-medium tracking-[0.08em] text-[#009d96] dark:text-[#00cec4]">
+                <div className="flex select-none items-center justify-center gap-1.5 rounded-xl border border-[#00cec4]/15 bg-[#00cec4]/6 py-2 text-[10px] font-medium tracking-[0.08em] text-[#009d96] dark:text-[#00cec4]">
                   <CheckCircle className="size-3.5" />
                   <span>Approved</span>
                 </div>

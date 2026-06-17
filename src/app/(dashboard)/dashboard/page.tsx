@@ -1,36 +1,52 @@
 import { auth } from "@/lib/auth";
-import { loadCaps } from "@/lib/rbac";
 import { getOrg } from "@/modules/core/organisation/service";
 import { listUsers } from "@/modules/core/user/service";
+import { getDashboardWidgets, getMe, getTeamReportees } from "@/modules/hrms/service";
+import { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 import { redirect } from "next/navigation";
-import { PeoplePlusPortalClient } from "./portal-client";
+import { HrmsPortalClient } from "./portal-client";
 
 export default async function DashboardPage() {
   const session = await auth();
   if (!session) redirect("/login");
 
   const orgId = session.user.orgId!;
-  const caps = await loadCaps(session.user.id);
 
-  const [org, users] = await Promise.all([
+  const [org, users, profileData, dashboardData, reportees] = await Promise.all([
     getOrg(orgId),
     listUsers(orgId, { active: true }),
+    getMe(session.user.id),
+    getDashboardWidgets(session.user.id, orgId),
+    getTeamReportees(session.user.id, orgId),
   ]);
 
-  const permissions = Object.keys(caps).filter((k) => caps[k]);
-  const safeUsers = users.map(({ passwordHash, ...u }) => u);
+  const safeUsers = users.map((user) => {
+    const { passwordHash, ...safeUser } = user;
+    void passwordHash;
+    return safeUser;
+  });
+
+  const initialProfile: UserProfile = {
+    ...profileData.user,
+    attendanceStatus: profileData.attendanceStatus,
+    totalInTime: profileData.totalInTime,
+    widgets: profileData.widgets,
+    pendingCounts: profileData.pendingCounts,
+  };
 
   return (
-    <PeoplePlusPortalClient
+    <HrmsPortalClient
       sessionUser={{
         id: session.user.id,
         name: session.user.name,
         email: session.user.email,
       }}
-      permissions={permissions}
       departments={org?.departments ?? []}
       branches={org?.branches ?? []}
       initialUsers={safeUsers}
+      initialProfile={initialProfile}
+      initialWidgetsData={dashboardData as DashboardWidgetsData}
+      initialReportees={reportees}
     />
   );
 }

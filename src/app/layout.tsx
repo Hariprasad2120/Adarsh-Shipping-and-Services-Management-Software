@@ -16,12 +16,12 @@ const kionaSans = localFont({
     {
       path: "../../public/Kiona-Regular.ttf",
       style: "normal",
-      weight: "400",
+      weight: "100 900",
     },
     {
       path: "../../public/Kiona-Itallic.ttf",
       style: "italic",
-      weight: "400",
+      weight: "100 900",
     },
   ],
   variable: "--font-kiona-sans",
@@ -79,7 +79,7 @@ export default function RootLayout({
           closeButton
           toastOptions={{
             style: {
-              fontFamily: "var(--font-sans), sans-serif",
+              fontFamily: "var(--font-kiona-sans), sans-serif",
               fontSize: "14px",
             },
           }}
