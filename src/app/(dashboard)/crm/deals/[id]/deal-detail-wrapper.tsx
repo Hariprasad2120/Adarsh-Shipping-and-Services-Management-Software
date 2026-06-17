@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { deleteDealAction } from "@/modules/crm/actions";
+import { generateInvoiceFromDealAction } from "@/modules/accounting/actions";
 import { NotesPanel } from "../../_components/notes-panel";
 import { AttachmentsPanel } from "../../_components/attachments-panel";
 import { ActivitiesPanel } from "../../_components/activities-panel";
@@ -23,7 +24,8 @@ import {
   DollarSign,
   AlertCircle,
   Truck,
-  Info
+  Info,
+  Receipt
 } from "lucide-react";
 
 interface DealDetailWrapperProps {
@@ -32,6 +34,7 @@ interface DealDetailWrapperProps {
   attachments: any[];
   activities: any[];
   timeline: any[];
+  invoice?: any;
 }
 
 export function DealDetailWrapper({
@@ -40,8 +43,10 @@ export function DealDetailWrapper({
   attachments,
   activities,
   timeline,
+  invoice,
 }: DealDetailWrapperProps) {
   const router = useRouter();
+  const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
   const [activeTab, setActiveTab] = useState<"OVERVIEW" | "NOTES" | "ACTIVITIES" | "ATTACHMENTS" | "TIMELINE">("OVERVIEW");
 
   const handleDelete = async () => {
@@ -207,7 +212,7 @@ export function DealDetailWrapper({
             </div>
           </div>
 
-          {/* Description & Lost reason */}
+          {/* Description & Lost reason / Invoice details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-2">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block border-b border-[#1c212a]/30 pb-1.5">Description</span>
@@ -221,6 +226,76 @@ export function DealDetailWrapper({
                 <p className="text-sm text-red-300 whitespace-pre-wrap leading-relaxed">
                   {deal.lostReason || "No loss details provided."}
                 </p>
+              </div>
+            )}
+            {deal.stage === "WON" && (
+              <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4 card-left-accent">
+                <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
+                  <Receipt className="size-4.5 text-[#00cec4]" />
+                  <h3 className="font-bold text-sm text-white uppercase tracking-wider">Billing & Invoice</h3>
+                </div>
+                {invoice ? (
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Invoice Number:</span>
+                      <Link href={`/accounting/sales-invoices/${invoice.id}`} className="text-[#00cec4] hover:underline font-mono font-bold">
+                        {invoice.invoiceNumber}
+                      </Link>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Amount:</span>
+                      <span className="text-white font-bold font-mono">₹{Number(invoice.grandTotal).toLocaleString("en-IN")}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Status:</span>
+                      <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${
+                        invoice.status === "PAID"
+                          ? "bg-emerald-500/10 text-emerald-400"
+                          : invoice.status === "CANCELLED"
+                          ? "bg-red-500/10 text-red-400"
+                          : "bg-amber-500/10 text-amber-400"
+                      }`}>
+                        {invoice.status}
+                      </span>
+                    </div>
+                    <div className="pt-2">
+                      <Link
+                        href={`/accounting/sales-invoices/${invoice.id}`}
+                        className="inline-block text-center bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all w-full"
+                      >
+                        View Invoice Detail
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3 text-xs">
+                    <p className="text-slate-400">
+                      This deal is won! You can now generate a Sales Invoice to record accounts receivable and request payment.
+                    </p>
+                    <button
+                      disabled={isGeneratingInvoice}
+                      onClick={async () => {
+                        try {
+                          setIsGeneratingInvoice(true);
+                          const res = await generateInvoiceFromDealAction(deal.id);
+                          if (res.ok) {
+                            toast.success("Sales Invoice generated successfully!");
+                            router.refresh();
+                          } else {
+                            toast.error(res.error);
+                          }
+                        } catch (err: any) {
+                          toast.error(err.message || "Failed to generate invoice");
+                        } finally {
+                          setIsGeneratingInvoice(false);
+                        }
+                      }}
+                      className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide transition-all w-full cursor-pointer disabled:opacity-50"
+                    >
+                      {isGeneratingInvoice ? "Generating Invoice..." : "Generate Sales Invoice"}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

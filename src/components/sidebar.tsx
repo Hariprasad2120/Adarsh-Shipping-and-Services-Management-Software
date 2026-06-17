@@ -91,7 +91,7 @@ const CRM_GROUP_ORDER = ["Sales", "Activities", "Inventory", "Support", "Integra
 export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
   const pathname = usePathname();
   const visibleSections = useMemo(() => getVisibleSections(caps), [caps]);
-  const [theme, setTheme] = useState<ThemeMode>(detectTheme);
+  const [theme, setTheme] = useState<ThemeMode>("light");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hoveredSectionId, setHoveredSectionId] = useState<string | null>(null);
   const [flyoutPos, setFlyoutPos] = useState({ top: 0, maxHeight: 400 });
@@ -137,6 +137,7 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
     setMounted(true);
     const saved = localStorage.getItem("sidebar-collapsed");
     if (saved === "true") setIsCollapsed(true);
+    setTheme(detectTheme());
   }, []);
 
   useEffect(() => {

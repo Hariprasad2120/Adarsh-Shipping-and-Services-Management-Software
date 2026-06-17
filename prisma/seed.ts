@@ -70,6 +70,26 @@ const PERMISSIONS = [
   { key: "crm.leadSource.read", label: "View lead sources & settings", group: "CRM" },
   { key: "crm.leadSource.manage", label: "Manage lead sources config", group: "CRM" },
   { key: "crm.lead.import", label: "Run manual lead imports", group: "CRM" },
+
+  // Accounting
+  { key: "accounting.dashboard.view", label: "View accounting dashboard", group: "Accounting" },
+  { key: "accounting.account.read", label: "View Chart of Accounts", group: "Accounting" },
+  { key: "accounting.account.create", label: "Create ledger accounts", group: "Accounting" },
+  { key: "accounting.account.update", label: "Update ledger accounts", group: "Accounting" },
+  { key: "accounting.journal.read", label: "View Journal Entries", group: "Accounting" },
+  { key: "accounting.journal.create", label: "Create Journal Entries", group: "Accounting" },
+  { key: "accounting.journal.submit", label: "Submit Journal Entries", group: "Accounting" },
+  { key: "accounting.journal.cancel", label: "Cancel Journal Entries", group: "Accounting" },
+  { key: "accounting.invoice.read", label: "View Sales & Purchase Invoices", group: "Accounting" },
+  { key: "accounting.invoice.create", label: "Create Invoices", group: "Accounting" },
+  { key: "accounting.invoice.update", label: "Update Invoices", group: "Accounting" },
+  { key: "accounting.invoice.submit", label: "Submit/Post Invoices", group: "Accounting" },
+  { key: "accounting.invoice.cancel", label: "Cancel/Reverse Invoices", group: "Accounting" },
+  { key: "accounting.payment.read", label: "View Payments", group: "Accounting" },
+  { key: "accounting.payment.create", label: "Create Payments", group: "Accounting" },
+  { key: "accounting.payment.submit", label: "Submit Payments", group: "Accounting" },
+  { key: "accounting.reports.view", label: "View Financial Reports", group: "Accounting" },
+  { key: "accounting.settings.manage", label: "Manage Accounting Settings", group: "Accounting" },
 ] as const;
 
 // ─── System roles & their default permissions ─────────────────────────────────
@@ -85,6 +105,8 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "crm.access", "crm.dashboard.read", "crm.lead.read",
     "crm.contact.manage", "crm.account.manage", "crm.deal.manage", "crm.invoice.manage",
     "crm.leadSource.read", "crm.lead.import",
+    "accounting.dashboard.view", "accounting.account.read", "accounting.journal.read",
+    "accounting.invoice.read", "accounting.payment.read", "accounting.reports.view",
   ],
   HR: [
     "hrms.employee.read", "hrms.employee.create", "hrms.employee.edit",

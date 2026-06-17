@@ -2,13 +2,8 @@ import React from "react";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
-import {
-  getDeal,
-  getNotes,
-  getAttachments,
-  listActivities,
-  getTimelineEvents,
-} from "@/modules/crm/service";
+import { db } from "@/lib/db";
+import { getDeal, getNotes, getAttachments, listActivities, getTimelineEvents } from "@/modules/crm/service";
 import { DealDetailWrapper } from "./deal-detail-wrapper";
 import { ShieldAlert } from "lucide-react";
 
@@ -46,13 +41,14 @@ export default async function DealDetailPage({ params }: DealDetailPageProps) {
 
   const { id } = await params;
 
-  // Fetch deal and related list items in parallel
-  const [deal, notes, attachments, activities, timeline] = await Promise.all([
+  // Fetch deal, related list items, and linked sales invoice in parallel
+  const [deal, notes, attachments, activities, timeline, invoice] = await Promise.all([
     getDeal(orgId, id),
     getNotes(orgId, "DEAL", id),
     getAttachments(orgId, "DEAL", id),
     listActivities(orgId, { relatedToType: "DEAL", relatedToId: id }),
     getTimelineEvents(orgId, "DEAL", id),
+    db.salesInvoice.findFirst({ where: { orgId, crmDealId: id } }),
   ]);
 
   if (!deal) notFound();
@@ -64,6 +60,7 @@ export default async function DealDetailPage({ params }: DealDetailPageProps) {
       attachments={attachments}
       activities={activities}
       timeline={timeline}
+      invoice={invoice}
     />
   );
 }
