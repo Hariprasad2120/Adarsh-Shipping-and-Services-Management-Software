@@ -572,14 +572,35 @@ export async function createVendor(orgId: string, createdById: string, data: any
 
 // ─── Invoices, Quotes & Sales Orders ─────────────────────────────────────────
 
-export async function listInvoices(orgId: string, filters?: { type?: string; customerId?: string }) {
+export async function listInvoices(
+  orgId: string,
+  filters?: {
+    type?: string;
+    customerId?: string;
+    search?: string;
+    accountId?: string;
+    take?: number;
+    skip?: number;
+  },
+) {
   const where: any = { orgId };
   if (filters?.type) where.type = filters.type;
   if (filters?.customerId) where.accountId = filters.customerId;
+  if (filters?.accountId) where.accountId = filters.accountId;
+
+  // Push text search to DB — avoids loading every row into JS just to filter
+  if (filters?.search) {
+    where.OR = [
+      { invoiceNumber: { contains: filters.search, mode: "insensitive" } },
+      { account: { name: { contains: filters.search, mode: "insensitive" } } },
+    ];
+  }
 
   return db.crmInvoice.findMany({
     where,
     orderBy: { createdAt: "desc" },
+    take: filters?.take ?? 100,
+    skip: filters?.skip,
     include: {
       account: { select: { id: true, name: true } },
       owner: { select: { id: true, name: true } },

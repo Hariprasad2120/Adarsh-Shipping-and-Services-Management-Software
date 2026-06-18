@@ -1093,11 +1093,25 @@ export async function deleteInvoiceAction(invoiceId: string): Promise<ActionResp
 
     await requirePermission(session.user.id, "crm.invoice.manage");
 
+    const invoice = await db.crmInvoice.findUnique({
+      where: { id: invoiceId, orgId },
+      select: { type: true, approvalStatus: true }
+    });
+
+    if (!invoice) {
+      return { ok: false, error: "Quote/Invoice not found" };
+    }
+
+    if (invoice.type === "QUOTE" && invoice.approvalStatus !== "DRAFT") {
+      return { ok: false, error: "Only draft quotes can be deleted" };
+    }
+
     await db.crmInvoice.delete({
       where: { id: invoiceId, orgId },
     });
 
     revalidatePath("/crm/invoices");
+    revalidatePath("/crm/quotes");
     return { ok: true };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to delete invoice" };
@@ -1761,4 +1775,168 @@ export async function toggleJustdialActiveAction(isActive: boolean): Promise<Act
     return { ok: false, error: err.message || "Failed to toggle Justdial status" };
   }
 }
+
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports */
+export async function saveQuoteAction(
+  quoteId: string | undefined,
+  values: any,
+  isSubmit: boolean
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.invoice.manage");
+
+    const {
+      customerId,
+      location,
+      quoteNumber,
+      referenceNumber,
+      quoteDate,
+      expiryDate,
+      salesperson,
+      discountValue,
+      discountType,
+      adjustment,
+      roundOff,
+      subtotal,
+      total,
+      customerNotes,
+      terms,
+      bankDetailsId,
+      lineItems,
+      portOfLoading,
+      portOfLoadingCountry,
+      portOfDischarge,
+      portOfDestinationCountry,
+      incoterm,
+      containerType,
+      numberOfContainers,
+      commodity,
+      weight,
+    } = values;
+
+    if (!quoteNumber) {
+      return { ok: false, error: "Quote Number is required" };
+    }
+
+    const parsedItems = lineItems || [];
+    const tax = parsedItems.reduce((sum: number, item: any) => {
+      const rate = parseFloat(item.rate) || 0;
+      const quantity = parseFloat(item.quantity) || 0;
+      const taxPercent = parseFloat(item.tax) || 18;
+      return sum + (rate * quantity * (taxPercent / 100));
+    }, 0);
+
+    const now = new Date();
+    const data: any = {
+      orgId,
+      invoiceNumber: quoteNumber,
+      type: "QUOTE",
+      date: quoteDate ? new Date(quoteDate) : now,
+      dueDate: expiryDate ? new Date(expiryDate) : null,
+      status: isSubmit ? "PENDING_APPROVAL" : "DRAFT",
+      approvalStatus: isSubmit ? "PENDING_APPROVAL" : "DRAFT",
+      discount: parseFloat(discountValue) || 0,
+      tax: tax,
+      total: parseFloat(total) || 0,
+      accountId: customerId && customerId.trim() ? customerId.trim() : null,
+      manualNotes: customerNotes || null,
+      terms: terms || null,
+      bankDetails: bankDetailsId || null,
+      ownerId: salesperson || session.user.id,
+      createdById: session.user.id,
+      updatedById: session.user.id,
+      referenceNumber: referenceNumber || null,
+      location: location || null,
+      discountType: discountType || "percentage",
+      portOfLoading: portOfLoading || null,
+      portOfLoadingCountry: portOfLoadingCountry || null,
+      portOfDischarge: portOfDischarge || null,
+      portOfDestinationCountry: portOfDestinationCountry || null,
+      incoterm: incoterm || null,
+      containerType: containerType || null,
+      numberOfContainers: numberOfContainers ? parseInt(numberOfContainers) : null,
+      commodity: commodity || null,
+      weight: weight || null,
+    };
+
+    let savedQuote;
+    if (quoteId) {
+      // Edit
+      savedQuote = await db.crmInvoice.update({
+        where: { id: quoteId },
+        data: {
+          ...data,
+          updatedById: session.user.id,
+          createdById: undefined,
+        },
+      });
+
+      // delete and recreate items
+      await db.crmInvoiceItem.deleteMany({
+        where: { invoiceId: quoteId },
+      });
+
+      await db.crmInvoiceItem.createMany({
+        data: parsedItems.map((item: any) => ({
+          invoiceId: quoteId,
+          productName: item.description || "Line Item",
+          qty: parseFloat(item.quantity) || 1,
+          rate: parseFloat(item.rate) || 0,
+          taxPercent: parseFloat(String(item.tax ?? "18").match(/[\d.]+/)?.[0] ?? "18") || 18,
+          taxLabel: item.tax || null,
+          unit: item.unit || null,
+          tds: item.tds || null,
+          amount: parseFloat(item.amount) || 0,
+          currency: "INR",
+          exchangeRate: 1,
+        })),
+      });
+    } else {
+      // Create
+      savedQuote = await db.crmInvoice.create({
+        data: {
+          ...data,
+          items: {
+            create: parsedItems.map((item: any) => ({
+              productName: item.description || "Line Item",
+              qty: parseFloat(item.quantity) || 1,
+              rate: parseFloat(item.rate) || 0,
+              taxPercent: parseFloat(String(item.tax ?? "18").match(/[\d.]+/)?.[0] ?? "18") || 18,
+              taxLabel: item.tax || null,
+              unit: item.unit || null,
+              tds: item.tds || null,
+              amount: parseFloat(item.amount) || 0,
+              currency: "INR",
+              exchangeRate: 1,
+            })),
+          },
+        },
+      });
+    }
+
+    if (isSubmit) {
+      const { submitForApproval } = require("./approval-workflow");
+      await submitForApproval({
+        invoiceId: savedQuote.id,
+        orgId,
+        actorId: session.user.id,
+        note: "Submitted from quote form.",
+      });
+    }
+
+    revalidatePath("/crm/quotes");
+    revalidatePath(`/crm/quotes/${savedQuote.id}`);
+    return { ok: true, data: { id: savedQuote.id } };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to save quote" };
+  }
+}
+
+/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports */
 

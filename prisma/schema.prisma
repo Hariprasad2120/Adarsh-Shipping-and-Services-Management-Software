@@ -35,6 +35,7 @@ model Organisation {
   todoTasks              TodoTask[]
   announcements          Announcement[]
 
+  crmApprovalLogs   CrmApprovalLog[]
   biometricSyncLogs BiometricSyncLog[]
   workingCalendar   WorkingCalendar?
   otSettings        OtSettings?
@@ -252,6 +253,8 @@ model User {
   passkeySetupRequired  Boolean?              @default(false)
 
   // CRM Module Back-Relations
+  crmInvoicesApproved      CrmInvoice[]                  @relation("CrmInvoiceApprover")
+  crmApprovalLogsActed     CrmApprovalLog[]              @relation("CrmApprovalLogActor")
   crmLeadsOwned            CrmLead[]                     @relation("CrmLeadOwner")
   crmContactsOwned         CrmContact[]                  @relation("CrmContactOwner")
   crmAccountsOwned         CrmAccount[]                  @relation("CrmAccountOwner")
@@ -343,6 +346,10 @@ model Notification {
   @@index([userId, dismissedAt, acknowledgedAt])
   @@index([kind, createdAt])
   @@index([source])
+  // Covers listActiveUserNotifications: WHERE userId + dismissedAt IS NULL + priority
+  @@index([userId, dismissedAt, priority])
+  // Covers the presentedAt IS NULL filter used when marking notifications as presented
+  @@index([userId, presentedAt])
 }
 
 model NotificationActivity {
@@ -361,6 +368,8 @@ model NotificationActivity {
   @@index([notificationId, createdAt])
   @@index([orgId, event, createdAt])
   @@index([actorId])
+  // Covers the "already displayed?" lookup in listActiveUserNotifications
+  @@index([notificationId, actorId, event])
 }
 
 model EmailQueue {
@@ -1295,6 +1304,19 @@ model CrmInvoice {
   tax           Float     @default(0.0)
   total         Float     @default(0.0)
 
+  // Approval workflow fields
+  approvalStatus  String    @default("DRAFT")
+  // QUOTE:        DRAFT | PENDING_APPROVAL | APPROVED | REWORK | SENT | CUSTOMER_VIEWED | ACCEPTED | INVOICED | DECLINED
+  // SALES_ORDER:  DRAFT | PENDING_APPROVAL | APPROVED | ACTIVE | COMPLETED
+  // INVOICE:      DRAFT | PENDING_APPROVAL | APPROVED | SENT | PAID
+  submittedAt     DateTime?
+  approvedAt      DateTime?
+  approvedById    String?
+  approvedBy      User?     @relation("CrmInvoiceApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvalNote    String? // note from approver (approval message or rejection reason)
+  reworkNote      String? // note when sent back for rework
+  slaDeadline     DateTime? // SalesOrder: 30 business days from approval
+
   accountId String?
   account   CrmAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
   contactId String?
@@ -1306,16 +1328,52 @@ model CrmInvoice {
 
   bankDetails   String?
   manualNotes   String?
+  terms         String?
+
+  referenceNumber          String?
+  location                 String?
+  portOfLoading            String?
+  portOfLoadingCountry     String?
+  portOfDischarge          String?
+  portOfDestinationCountry String?
+  incoterm                 String?
+  containerType            String?
+  numberOfContainers       Int?
+  commodity                String?
+  weight                   String?
+  discountType             String?  @default("percentage")
 
   createdById String
   updatedById String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  items CrmInvoiceItem[]
+  items        CrmInvoiceItem[]
+  approvalLogs CrmApprovalLog[]
 
   @@index([orgId])
   @@index([ownerId])
+  @@index([approvalStatus])
+  @@index([approvedById])
+}
+
+model CrmApprovalLog {
+  id         String   @id @default(cuid())
+  orgId      String
+  invoiceId  String
+  actorId    String
+  fromStatus String
+  toStatus   String
+  note       String?
+  createdAt  DateTime @default(now())
+
+  org     Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  invoice CrmInvoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  actor   User         @relation("CrmApprovalLogActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId, createdAt])
+  @@index([orgId, toStatus, createdAt])
+  @@index([actorId])
 }
 
 model CrmInvoiceItem {
@@ -1326,10 +1384,13 @@ model CrmInvoiceItem {
   productName String
   qty         Float
   rate        Float
-  taxPercent  Float  @default(18.0)
+  taxPercent  Float   @default(18.0)
+  taxLabel    String?
+  tds         String?
+  unit        String?
   amount      Float
-  currency     String  @default("INR")
-  exchangeRate Float   @default(1.0)
+  currency    String  @default("INR")
+  exchangeRate Float  @default(1.0)
 
   @@index([invoiceId])
 }
