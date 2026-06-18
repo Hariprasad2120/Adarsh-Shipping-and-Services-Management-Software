@@ -73,9 +73,27 @@ export async function GET() {
     };
   });
 
+  // Find last sync (most recent successful sync)
+  const lastSuccessLog = logs.find((l) => l.status === 200);
+  const lastSync = lastSuccessLog ? lastSuccessLog.time : null;
+
+  // Find last manual sync month (most recent successful manual sync)
+  const lastManualSuccessDbLog = dbLogs.find(
+    (row) => row.status === "SUCCESS" && row.type === "MANUAL"
+  );
+  let lastSyncMonth = null;
+  if (lastManualSuccessDbLog && lastManualSuccessDbLog.errorMessage && lastManualSuccessDbLog.errorMessage.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(lastManualSuccessDbLog.errorMessage);
+      lastSyncMonth = parsed.month;
+    } catch {}
+  }
+
   return ok({
     configured,
     connected,
+    lastSync,
+    lastSyncMonth,
     logs,
   });
 }

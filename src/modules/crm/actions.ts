@@ -1733,3 +1733,26 @@ export async function getJustdialLogsAction(): Promise<ActionResponse> {
     return { ok: false, error: err.message || "Failed to fetch logs" };
   }
 }
+
+export async function toggleJustdialActiveAction(isActive: boolean): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.leadSource.manage");
+
+    const config = await db.crmLeadSourceJustdialConfig.update({
+      where: { orgId },
+      data: { isActive },
+    });
+
+    revalidatePath("/crm/lead-sources");
+    return { ok: true, data: config };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to toggle Justdial status" };
+  }
+}
+

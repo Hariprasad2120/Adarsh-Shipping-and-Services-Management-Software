@@ -367,6 +367,7 @@ export async function postGLTransactions(
         partyId: line.partyId || null,
         voucherType,
         voucherId,
+        journalEntryId: voucherType === "JOURNAL_ENTRY" ? voucherId : null,
         debit: new Prisma.Decimal(line.debit),
         credit: new Prisma.Decimal(line.credit),
         remarks: line.remarks || null,
@@ -414,6 +415,7 @@ export async function reverseGLTransactions(
         partyId: entry.partyId,
         voucherType,
         voucherId,
+        journalEntryId: voucherType === "JOURNAL_ENTRY" ? voucherId : null,
         debit: entry.credit, // SWAP DEBIT
         credit: entry.debit, // SWAP CREDIT
         remarks: `Reversal of entry: ${reversalRemarks}`,
@@ -2139,3 +2141,933 @@ export async function runDepreciationForAsset(orgId: string, assetId: string, mo
   await createAuditLog(orgId, userId, "RUN_DEPRECIATION", "Asset", assetId, null, resultEntry);
   return resultEntry;
 }
+
+// ─── Rebuild & Expanded Accounting Module Services ──────────────────────────────────
+
+// 1. Period Locking Validation
+export async function getTransactionLock(orgId: string) {
+  return db.transactionLock.findUnique({
+    where: { orgId }
+  });
+}
+
+export async function updateTransactionLock(orgId: string, data: any) {
+  return db.transactionLock.upsert({
+    where: { orgId },
+    update: {
+      lockDate: new Date(data.lockDate),
+      lockType: data.lockType || "FULL",
+      password: data.password || null,
+      lockedBy: data.lockedBy || "Admin",
+    },
+    create: {
+      orgId,
+      lockDate: new Date(data.lockDate),
+      lockType: data.lockType || "FULL",
+      password: data.password || null,
+      lockedBy: data.lockedBy || "Admin",
+    }
+  });
+}
+
+export async function validatePostingDateNotLocked(orgId: string, date: Date | string) {
+  const lock = await db.transactionLock.findUnique({ where: { orgId } });
+  if (lock) {
+    const lockDate = new Date(lock.lockDate);
+    const checkDate = new Date(date);
+    if (checkDate <= lockDate) {
+      throw new Error(`Period Locked: Posting date ${checkDate.toLocaleDateString('en-IN')} is locked. Lock date is set to ${lockDate.toLocaleDateString('en-IN')}`);
+    }
+  }
+}
+
+// 2. Quotation Preparation Services
+export async function listQuotations(orgId: string) {
+  return db.quotation.findMany({
+    where: { orgId },
+    include: { customer: { select: { name: true } } },
+    orderBy: { postingDate: "desc" }
+  });
+}
+
+export async function getQuotation(orgId: string, id: string) {
+  return db.quotation.findFirst({
+    where: { id, orgId },
+    include: { customer: true, items: true }
+  });
+}
+
+export async function createQuotation(orgId: string, createdById: string, data: any) {
+  const count = await db.quotation.count({ where: { orgId } });
+  const quotationNumber = `QUOT-${1001 + count}`;
+  const postingDate = data.postingDate ? new Date(data.postingDate) : new Date();
+  const validUntil = data.validUntil ? new Date(data.validUntil) : new Date(postingDate.getTime() + 15 * 24 * 3600000);
+
+  const items = data.items || [];
+  let subTotal = 0;
+  let taxAmount = 0;
+  for (const it of items) {
+    const qty = parseFloat(it.qty || 1);
+    const rate = parseFloat(it.rate || 0);
+    const disc = parseFloat(it.discount || 0);
+    const taxRate = parseFloat(it.taxRate || 18);
+    const amt = qty * rate - disc;
+    subTotal += amt;
+    taxAmount += amt * (taxRate / 100);
+  }
+  const grandTotal = subTotal + taxAmount;
+
+  return db.quotation.create({
+    data: {
+      orgId,
+      branchId: data.branchId || null,
+      quotationNumber,
+      customerId: data.customerId,
+      postingDate,
+      validUntil,
+      status: "OPEN",
+      subTotal: new Prisma.Decimal(subTotal),
+      discountAmount: new Prisma.Decimal(data.discountAmount || 0),
+      taxAmount: new Prisma.Decimal(taxAmount),
+      grandTotal: new Prisma.Decimal(grandTotal),
+      terms: data.terms || null,
+      remarks: data.remarks || null,
+      createdById,
+      items: {
+        create: items.map((it: any) => ({
+          itemName: it.itemName,
+          hsnSac: it.hsnSac || null,
+          qty: parseFloat(it.qty || 1),
+          uom: it.uom || "Nos",
+          rate: new Prisma.Decimal(parseFloat(it.rate || 0)),
+          discount: new Prisma.Decimal(parseFloat(it.discount || 0)),
+          taxRate: parseFloat(it.taxRate || 18),
+          taxAmount: new Prisma.Decimal(parseFloat(it.qty || 1) * parseFloat(it.rate || 0) * (parseFloat(it.taxRate || 18) / 100)),
+          amount: new Prisma.Decimal((parseFloat(it.qty || 1) * parseFloat(it.rate || 0)) - parseFloat(it.discount || 0)),
+        }))
+      }
+    }
+  });
+}
+
+export async function convertQuotationToInvoice(orgId: string, quotationId: string, createdById: string) {
+  const quot = await db.quotation.findFirst({
+    where: { id: quotationId, orgId, status: "OPEN" },
+    include: { items: true }
+  });
+  if (!quot) throw new Error("Quotation not found or already converted.");
+
+  const count = await db.salesInvoice.count({ where: { orgId } });
+  const invoiceNumber = `SINV-${1001 + count}`;
+  const postingDate = new Date();
+  const dueDate = new Date(postingDate.getTime() + 30 * 24 * 3600000);
+
+  const settings = await db.accountingSettings.findUnique({ where: { orgId } });
+  if (!settings?.defaultSalesAccountId || !settings?.defaultTaxAccountId || !settings?.defaultReceivableAccountId) {
+    throw new Error("Accounting settings default accounts are not set up.");
+  }
+
+  return db.$transaction(async (tx) => {
+    const inv = await tx.salesInvoice.create({
+      data: {
+        orgId,
+        branchId: quot.branchId,
+        invoiceNumber,
+        customerId: quot.customerId,
+        postingDate,
+        dueDate,
+        status: "UNPAID",
+        grandTotal: quot.grandTotal,
+        paidAmount: new Prisma.Decimal(0),
+        outstandingAmount: quot.grandTotal,
+        discountAmount: quot.discountAmount,
+        taxAmount: quot.taxAmount,
+        remarks: `Converted from Quotation ${quot.quotationNumber}. ${quot.remarks || ""}`,
+        createdById,
+        items: {
+          create: quot.items.map(it => ({
+            itemName: it.itemName,
+            qty: it.qty,
+            rate: it.rate,
+            amount: it.amount
+          }))
+        },
+        taxLines: Number(quot.taxAmount) > 0 ? {
+          create: [
+            {
+              accountId: settings.defaultTaxAccountId!,
+              taxRate: 18.0,
+              taxAmount: quot.taxAmount
+            }
+          ]
+        } : undefined
+      }
+    });
+
+    const glLines = [
+      {
+        accountId: settings.defaultReceivableAccountId!,
+        debit: Number(quot.grandTotal),
+        credit: 0,
+        partyType: "CUSTOMER",
+        partyId: quot.customerId,
+        remarks: `Sales Invoice ${invoiceNumber} (Converted)`,
+      },
+      {
+        accountId: settings.defaultSalesAccountId!,
+        debit: 0,
+        credit: Number(quot.subTotal),
+        remarks: `Sales Revenue from ${invoiceNumber}`,
+      }
+    ];
+
+    if (Number(quot.taxAmount) > 0) {
+      glLines.push({
+        accountId: settings.defaultTaxAccountId!,
+        debit: 0,
+        credit: Number(quot.taxAmount),
+        remarks: `Output GST for ${invoiceNumber}`,
+      });
+    }
+
+    await postGLTransactions(tx, orgId, "SALES_INVOICE", inv.id, postingDate, glLines, quot.branchId, createdById);
+
+    await tx.quotation.update({
+      where: { id: quotationId },
+      data: { status: "CONVERTED" }
+    });
+
+    return inv;
+  });
+}
+
+// 3. Debit & Credit Notes (Customer)
+export async function listCustomerNotes(orgId: string) {
+  return db.customerNote.findMany({
+    where: { orgId },
+    include: { customer: { select: { name: true } } },
+    orderBy: { postingDate: "desc" }
+  });
+}
+
+export async function getCustomerNote(orgId: string, id: string) {
+  return db.customerNote.findFirst({
+    where: { id, orgId },
+    include: { customer: true, items: true, originalInvoice: true }
+  });
+}
+
+export async function createCustomerNote(orgId: string, createdById: string, data: any) {
+  const count = await db.customerNote.count({ where: { orgId } });
+  const noteNumber = `${data.noteType === "DEBIT" ? "CDN" : "CCN"}-${1001 + count}`;
+  const postingDate = data.postingDate ? new Date(data.postingDate) : new Date();
+
+  const items = data.items || [];
+  let taxableAmount = 0;
+  let taxAmount = 0;
+  for (const it of items) {
+    taxableAmount += parseFloat(it.qty) * parseFloat(it.rate);
+    taxAmount += parseFloat(it.qty) * parseFloat(it.rate) * (parseFloat(it.taxRate || 18) / 100);
+  }
+  const grandTotal = taxableAmount + taxAmount;
+
+  return db.customerNote.create({
+    data: {
+      orgId,
+      branchId: data.branchId || null,
+      noteNumber,
+      noteType: data.noteType,
+      customerId: data.customerId,
+      originalInvoiceId: data.originalInvoiceId || null,
+      postingDate,
+      reason: data.reason || null,
+      taxableAmount: new Prisma.Decimal(taxableAmount),
+      taxAmount: new Prisma.Decimal(taxAmount),
+      grandTotal: new Prisma.Decimal(grandTotal),
+      status: "DRAFT",
+      remarks: data.remarks || null,
+      createdById,
+      items: {
+        create: items.map((it: any) => ({
+          itemName: it.itemName,
+          qty: parseFloat(it.qty),
+          rate: new Prisma.Decimal(parseFloat(it.rate)),
+          amount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate)),
+          taxRate: parseFloat(it.taxRate || 18),
+          taxAmount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate) * (parseFloat(it.taxRate || 18) / 100)),
+        }))
+      }
+    }
+  });
+}
+
+export async function submitCustomerNote(orgId: string, id: string, userId: string) {
+  const note = await db.customerNote.findFirst({
+    where: { id, orgId, status: "DRAFT" },
+    include: { items: true }
+  });
+  if (!note) throw new Error("Customer Note not found or already submitted.");
+
+  await validatePostingDateNotLocked(orgId, note.postingDate);
+
+  const settings = await db.accountingSettings.findUnique({ where: { orgId } });
+  if (!settings?.defaultReceivableAccountId || !settings?.defaultSalesAccountId || !settings?.defaultTaxAccountId) {
+    throw new Error("Default accounting settings are missing.");
+  }
+
+  return db.$transaction(async (tx) => {
+    const isDebit = note.noteType === "DEBIT";
+    const total = Number(note.grandTotal);
+    const tax = Number(note.taxAmount);
+    const taxable = total - tax;
+
+    const glLines = [];
+    if (isDebit) {
+      glLines.push({
+        accountId: settings.defaultReceivableAccountId!,
+        debit: total,
+        credit: 0,
+        partyType: "CUSTOMER",
+        partyId: note.customerId,
+        remarks: `Debit Note ${note.noteNumber}`,
+      });
+      glLines.push({
+        accountId: settings.defaultSalesAccountId!,
+        debit: 0,
+        credit: taxable,
+        remarks: `Additional income from Debit Note ${note.noteNumber}`,
+      });
+      if (tax > 0) {
+        glLines.push({
+          accountId: settings.defaultTaxAccountId!,
+          debit: 0,
+          credit: tax,
+          remarks: `Additional Output GST for Debit Note ${note.noteNumber}`,
+        });
+      }
+    } else {
+      glLines.push({
+        accountId: settings.defaultReceivableAccountId!,
+        debit: 0,
+        credit: total,
+        partyType: "CUSTOMER",
+        partyId: note.customerId,
+        remarks: `Credit Note ${note.noteNumber}`,
+      });
+      glLines.push({
+        accountId: settings.defaultSalesAccountId!,
+        debit: taxable,
+        credit: 0,
+        remarks: `Sales Reversal for Credit Note ${note.noteNumber}`,
+      });
+      if (tax > 0) {
+        glLines.push({
+          accountId: settings.defaultTaxAccountId!,
+          debit: tax,
+          credit: 0,
+          remarks: `GST Reversal for Credit Note ${note.noteNumber}`,
+        });
+      }
+    }
+
+    await postGLTransactions(tx, orgId, "CUSTOMER_NOTE", note.id, note.postingDate, glLines, note.branchId, userId);
+
+    await tx.customerLedgerEntry.create({
+      data: {
+        orgId,
+        customerId: note.customerId,
+        postingDate: note.postingDate,
+        voucherType: "CUSTOMER_NOTE",
+        voucherId: note.id,
+        debit: new Prisma.Decimal(isDebit ? total : 0),
+        credit: new Prisma.Decimal(isDebit ? 0 : total),
+        remarks: `${note.noteType} Note ${note.noteNumber}`,
+      }
+    });
+
+    return tx.customerNote.update({
+      where: { id },
+      data: { status: "SUBMITTED" }
+    });
+  });
+}
+
+// 4. Debit & Credit Notes (Vendor)
+export async function listVendorNotes(orgId: string) {
+  return db.vendorNote.findMany({
+    where: { orgId },
+    include: { vendor: { select: { name: true } } },
+    orderBy: { postingDate: "desc" }
+  });
+}
+
+export async function getVendorNote(orgId: string, id: string) {
+  return db.vendorNote.findFirst({
+    where: { id, orgId },
+    include: { vendor: true, items: true, originalInvoice: true }
+  });
+}
+
+export async function createVendorNote(orgId: string, createdById: string, data: any) {
+  const count = await db.vendorNote.count({ where: { orgId } });
+  const noteNumber = `${data.noteType === "DEBIT" ? "VDN" : "VCN"}-${1001 + count}`;
+  const postingDate = data.postingDate ? new Date(data.postingDate) : new Date();
+
+  const items = data.items || [];
+  let taxableAmount = 0;
+  let taxAmount = 0;
+  for (const it of items) {
+    taxableAmount += parseFloat(it.qty) * parseFloat(it.rate);
+    taxAmount += parseFloat(it.qty) * parseFloat(it.rate) * (parseFloat(it.taxRate || 18) / 100);
+  }
+  const grandTotal = taxableAmount + taxAmount;
+
+  return db.vendorNote.create({
+    data: {
+      orgId,
+      branchId: data.branchId || null,
+      noteNumber,
+      noteType: data.noteType,
+      vendorId: data.vendorId,
+      originalInvoiceId: data.originalInvoiceId || null,
+      postingDate,
+      reason: data.reason || null,
+      taxableAmount: new Prisma.Decimal(taxableAmount),
+      taxAmount: new Prisma.Decimal(taxAmount),
+      grandTotal: new Prisma.Decimal(grandTotal),
+      status: "DRAFT",
+      remarks: data.remarks || null,
+      createdById,
+      items: {
+        create: items.map((it: any) => ({
+          itemName: it.itemName,
+          qty: parseFloat(it.qty),
+          rate: new Prisma.Decimal(parseFloat(it.rate)),
+          amount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate)),
+          taxRate: parseFloat(it.taxRate || 18),
+          taxAmount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate) * (parseFloat(it.taxRate || 18) / 100)),
+        }))
+      }
+    }
+  });
+}
+
+export async function submitVendorNote(orgId: string, id: string, userId: string) {
+  const note = await db.vendorNote.findFirst({
+    where: { id, orgId, status: "DRAFT" },
+    include: { items: true }
+  });
+  if (!note) throw new Error("Vendor Note not found or already submitted.");
+
+  await validatePostingDateNotLocked(orgId, note.postingDate);
+
+  const settings = await db.accountingSettings.findUnique({ where: { orgId } });
+  if (!settings?.defaultPayableAccountId || !settings?.defaultPurchaseAccountId || !settings?.defaultTaxAccountId) {
+    throw new Error("Default accounting settings are missing.");
+  }
+
+  return db.$transaction(async (tx) => {
+    const isDebit = note.noteType === "DEBIT";
+    const total = Number(note.grandTotal);
+    const tax = Number(note.taxAmount);
+    const taxable = total - tax;
+
+    const glLines = [];
+    if (isDebit) {
+      glLines.push({
+        accountId: settings.defaultPayableAccountId!,
+        debit: total,
+        credit: 0,
+        partyType: "SUPPLIER",
+        partyId: note.vendorId,
+        remarks: `Vendor Debit Note ${note.noteNumber}`,
+      });
+      glLines.push({
+        accountId: settings.defaultPurchaseAccountId!,
+        debit: 0,
+        credit: taxable,
+        remarks: `Purchase Return from Debit Note ${note.noteNumber}`,
+      });
+      if (tax > 0) {
+        glLines.push({
+          accountId: settings.defaultTaxAccountId!,
+          debit: 0,
+          credit: tax,
+          remarks: `Input GST Reversal for Debit Note ${note.noteNumber}`,
+        });
+      }
+    } else {
+      glLines.push({
+        accountId: settings.defaultPayableAccountId!,
+        debit: total,
+        credit: 0,
+        partyType: "SUPPLIER",
+        partyId: note.vendorId,
+        remarks: `Vendor Credit Note ${note.noteNumber}`,
+      });
+      glLines.push({
+        accountId: settings.defaultPurchaseAccountId!,
+        debit: 0,
+        credit: taxable,
+        remarks: `Rebate/Discount from Credit Note ${note.noteNumber}`,
+      });
+      if (tax > 0) {
+        glLines.push({
+          accountId: settings.defaultTaxAccountId!,
+          debit: 0,
+          credit: tax,
+          remarks: `Input GST adjustment for Credit Note ${note.noteNumber}`,
+        });
+      }
+    }
+
+    await postGLTransactions(tx, orgId, "VENDOR_NOTE", note.id, note.postingDate, glLines, note.branchId, userId);
+
+    await tx.supplierLedgerEntry.create({
+      data: {
+        orgId,
+        supplierId: note.vendorId,
+        postingDate: note.postingDate,
+        voucherType: "VENDOR_NOTE",
+        voucherId: note.id,
+        debit: new Prisma.Decimal(total),
+        credit: new Prisma.Decimal(0),
+        remarks: `${note.noteType} Note ${note.noteNumber}`,
+      }
+    });
+
+    return tx.vendorNote.update({
+      where: { id },
+      data: { status: "SUBMITTED" }
+    });
+  });
+}
+
+// 5. Recurring Entries Processing
+function calculateNextDueDate(current: Date, frequency: string): Date {
+  const next = new Date(current);
+  switch (frequency.toUpperCase()) {
+    case "DAILY":
+      next.setDate(next.getDate() + 1);
+      break;
+    case "WEEKLY":
+      next.setDate(next.getDate() + 7);
+      break;
+    case "MONTHLY":
+      next.setMonth(next.getMonth() + 1);
+      break;
+    case "QUARTERLY":
+      next.setMonth(next.getMonth() + 3);
+      break;
+    case "YEARLY":
+      next.setFullYear(next.getFullYear() + 1);
+      break;
+    default:
+      next.setMonth(next.getMonth() + 1);
+  }
+  return next;
+}
+
+export async function processRecurringExpenses(orgId: string, userId: string) {
+  const now = new Date();
+  const templates = await db.recurringExpense.findMany({
+    where: { orgId, isActive: true, nextDueDate: { lte: now } }
+  });
+
+  const settings = await db.accountingSettings.findUnique({ where: { orgId } });
+  if (!settings?.defaultPayableAccountId) return;
+
+  for (const t of templates) {
+    const postingDate = new Date(t.nextDueDate);
+    const count = await db.purchaseInvoice.count({ where: { orgId } });
+    const billNumber = `REC-BILL-${1001 + count}`;
+    const amountVal = Number(t.amount);
+    const taxAmt = amountVal * (t.taxRate / 100);
+    const grandTotal = amountVal + taxAmt;
+
+    await db.$transaction(async (tx) => {
+      if (t.autoPost) {
+        const bill = await tx.purchaseInvoice.create({
+          data: {
+            orgId,
+            branchId: t.branchId,
+            invoiceNumber: billNumber,
+            supplierId: t.vendorId,
+            postingDate,
+            dueDate: postingDate,
+            status: "UNPAID",
+            grandTotal: new Prisma.Decimal(grandTotal),
+            paidAmount: new Prisma.Decimal(0),
+            outstandingAmount: new Prisma.Decimal(grandTotal),
+            discountAmount: new Prisma.Decimal(0),
+            taxAmount: new Prisma.Decimal(taxAmt),
+            remarks: t.narration || `Recurring expense template: ${t.templateName}`,
+            createdById: userId,
+            items: {
+              create: [
+                {
+                  itemName: t.templateName,
+                  qty: 1,
+                  rate: t.amount,
+                  amount: t.amount
+                }
+              ]
+            }
+          }
+        });
+
+        const glLines = [
+          {
+            accountId: settings.defaultPayableAccountId!,
+            debit: 0,
+            credit: grandTotal,
+            partyType: "SUPPLIER",
+            partyId: t.vendorId,
+            remarks: `Recurring bill ${billNumber}`,
+          },
+          {
+            accountId: t.expenseAccountId,
+            debit: amountVal,
+            credit: 0,
+            remarks: `Periodic Expense ${billNumber}`,
+          }
+        ];
+
+        if (taxAmt > 0 && settings.defaultTaxAccountId) {
+          glLines.push({
+            accountId: settings.defaultTaxAccountId,
+            debit: taxAmt,
+            credit: 0,
+            remarks: `Input tax for recurring ${billNumber}`,
+          });
+        }
+
+        await postGLTransactions(tx, orgId, "PURCHASE_INVOICE", bill.id, postingDate, glLines, t.branchId, userId);
+
+        await tx.supplierLedgerEntry.create({
+          data: {
+            orgId,
+            supplierId: t.vendorId,
+            postingDate,
+            voucherType: "PURCHASE_INVOICE",
+            voucherId: bill.id,
+            debit: new Prisma.Decimal(0),
+            credit: new Prisma.Decimal(grandTotal),
+            remarks: `Recurring bill ${billNumber}`,
+          }
+        });
+      }
+
+      const nextDate = calculateNextDueDate(postingDate, t.frequency);
+      await tx.recurringExpense.update({
+        where: { id: t.id },
+        data: {
+          nextDueDate: nextDate,
+          isActive: t.endDate ? nextDate <= new Date(t.endDate) : true
+        }
+      });
+    });
+  }
+}
+
+export async function processRecurringJournals(orgId: string, userId: string) {
+  const now = new Date();
+  const templates = await db.recurringJournal.findMany({
+    where: { orgId, isActive: true, nextDueDate: { lte: now } }
+  });
+
+  for (const t of templates) {
+    const postingDate = new Date(t.nextDueDate);
+    const count = await db.journalEntry.count({ where: { orgId } });
+    const voucherNo = `REC-JV-${1001 + count}`;
+    const amountVal = Number(t.amount);
+
+    await db.$transaction(async (tx) => {
+      if (t.autoPost) {
+        const jv = await tx.journalEntry.create({
+          data: {
+            orgId,
+            branchId: t.branchId,
+            voucherNo,
+            postingDate,
+            remarks: t.narration || `Recurring journal template: ${t.templateName}`,
+            status: "SUBMITTED",
+            totalDebit: t.amount,
+            totalCredit: t.amount,
+            createdById: userId,
+            lines: {
+              create: [
+                {
+                  accountId: t.debitAccountId,
+                  debit: t.amount,
+                  credit: new Prisma.Decimal(0),
+                  remarks: t.narration
+                },
+                {
+                  accountId: t.creditAccountId,
+                  debit: new Prisma.Decimal(0),
+                  credit: t.amount,
+                  remarks: t.narration
+                }
+              ]
+            }
+          }
+        });
+
+        const glLines = [
+          {
+            accountId: t.debitAccountId,
+            debit: amountVal,
+            credit: 0,
+            remarks: t.narration
+          },
+          {
+            accountId: t.creditAccountId,
+            debit: 0,
+            credit: amountVal,
+            remarks: t.narration
+          }
+        ];
+
+        await postGLTransactions(tx, orgId, "JOURNAL_ENTRY", jv.id, postingDate, glLines, t.branchId, userId);
+      }
+
+      const nextDate = calculateNextDueDate(postingDate, t.frequency);
+      await tx.recurringJournal.update({
+        where: { id: t.id },
+        data: {
+          nextDueDate: nextDate,
+          isActive: t.endDate ? nextDate <= new Date(t.endDate) : true
+        }
+      });
+    });
+  }
+}
+
+// 6. Partner Accounts Services
+export async function listPartnerAccounts(orgId: string) {
+  return db.partnerAccount.findMany({
+    where: { orgId },
+    include: {
+      capitalAccount: { select: { accountName: true, accountCode: true } },
+      currentAccount: { select: { accountName: true, accountCode: true } }
+    }
+  });
+}
+
+export async function createPartnerAccount(orgId: string, data: any) {
+  return db.partnerAccount.create({
+    data: {
+      orgId,
+      partnerName: data.partnerName,
+      partnerCode: data.partnerCode,
+      capitalAccountId: data.capitalAccountId,
+      currentAccountId: data.currentAccountId,
+      profitSharingRatio: parseFloat(data.profitSharingRatio),
+      interestOnCapital: parseFloat(data.interestOnCapital || 0),
+      salary: new Prisma.Decimal(parseFloat(data.salary || 0)),
+      drawings: new Prisma.Decimal(parseFloat(data.drawings || 0)),
+      interestOnDrawings: parseFloat(data.interestOnDrawings || 0),
+    }
+  });
+}
+
+export async function updatePartnerAccount(orgId: string, id: string, data: any) {
+  return db.partnerAccount.update({
+    where: { id },
+    data: {
+      partnerName: data.partnerName,
+      profitSharingRatio: parseFloat(data.profitSharingRatio),
+      interestOnCapital: parseFloat(data.interestOnCapital || 0),
+      salary: new Prisma.Decimal(parseFloat(data.salary || 0)),
+      interestOnDrawings: parseFloat(data.interestOnDrawings || 0)
+    }
+  });
+}
+
+async function getOrCreateAccount(tx: any, orgId: string, name: string, code: string): Promise<string> {
+  const cleanName = name.trim();
+  const cleanCode = code.trim();
+
+  const existing = await tx.account.findUnique({
+    where: { orgId_accountCode: { orgId, accountCode: cleanCode } },
+  });
+  if (existing) return existing.id;
+
+  const existingByName = await tx.account.findFirst({
+    where: { orgId, accountName: { equals: cleanName, mode: "insensitive" } },
+  });
+  if (existingByName) return existingByName.id;
+
+  let rootType = "EXPENSE";
+  let accountType = "EXPENSE";
+  if (cleanCode.startsWith("4")) {
+    rootType = "INCOME";
+    accountType = "SALES";
+  } else if (cleanCode.startsWith("5")) {
+    rootType = "EXPENSE";
+    accountType = "EXPENSE";
+  }
+
+  const parent = await tx.account.findFirst({
+    where: { orgId, rootType, isGroup: true },
+    orderBy: { accountCode: "asc" },
+  });
+
+  const created = await tx.account.create({
+    data: {
+      orgId,
+      accountCode: cleanCode,
+      accountName: cleanName,
+      rootType,
+      accountType,
+      isGroup: false,
+      parentAccountId: parent?.id || null,
+    },
+  });
+  return created.id;
+}
+
+export async function recordPartnerTransaction(orgId: string, partnerId: string, type: "DRAWINGS" | "CAPITAL_INTRODUCED" | "SALARY" | "INTEREST_ON_CAPITAL" | "INTEREST_ON_DRAWINGS", amount: number, userId: string) {
+  const partner = await db.partnerAccount.findUnique({
+    where: { id: partnerId },
+    include: { capitalAccount: true, currentAccount: true }
+  });
+  if (!partner) throw new Error("Partner not found");
+
+  const postingDate = new Date();
+  const count = await db.journalEntry.count({ where: { orgId } });
+  const voucherNo = `PARTNER-JV-${1001 + count}`;
+
+  return db.$transaction(async (tx) => {
+    let drAccountId = "";
+    let crAccountId = "";
+    let remarks = "";
+
+    const settings = await db.accountingSettings.findUnique({ where: { orgId } });
+
+    if (type === "DRAWINGS") {
+      drAccountId = partner.currentAccountId;
+      crAccountId = settings?.defaultBankAccountId || "";
+      remarks = `Partner drawings: ${partner.partnerName}`;
+      await tx.partnerAccount.update({
+        where: { id: partnerId },
+        data: { drawings: { increment: amount } }
+      });
+    } else if (type === "CAPITAL_INTRODUCED") {
+      drAccountId = settings?.defaultBankAccountId || "";
+      crAccountId = partner.capitalAccountId;
+      remarks = `Partner capital introduction: ${partner.partnerName}`;
+    } else if (type === "SALARY") {
+      drAccountId = await getOrCreateAccount(tx, orgId, "Partner Remuneration Expense", "5810");
+      crAccountId = partner.currentAccountId;
+      remarks = `Partner salary allocation: ${partner.partnerName}`;
+    } else if (type === "INTEREST_ON_CAPITAL") {
+      drAccountId = await getOrCreateAccount(tx, orgId, "Interest on Partner Capital", "5820");
+      crAccountId = partner.currentAccountId;
+      remarks = `Interest on Capital: ${partner.partnerName}`;
+    } else if (type === "INTEREST_ON_DRAWINGS") {
+      drAccountId = partner.currentAccountId;
+      crAccountId = await getOrCreateAccount(tx, orgId, "Interest on Drawings Income", "4610");
+      remarks = `Interest charged on Drawings: ${partner.partnerName}`;
+    }
+
+    if (!drAccountId || !crAccountId) {
+      throw new Error("Invalid accounts resolved for partner transaction. Please check bank/cash and partner settings.");
+    }
+
+    const jv = await tx.journalEntry.create({
+      data: {
+        orgId,
+        voucherNo,
+        postingDate,
+        remarks,
+        status: "SUBMITTED",
+        totalDebit: new Prisma.Decimal(amount),
+        totalCredit: new Prisma.Decimal(amount),
+        createdById: userId,
+        lines: {
+          create: [
+            {
+              accountId: drAccountId,
+              debit: new Prisma.Decimal(amount),
+              credit: new Prisma.Decimal(0),
+              remarks
+            },
+            {
+              accountId: crAccountId,
+              debit: new Prisma.Decimal(0),
+              credit: new Prisma.Decimal(amount),
+              remarks
+            }
+          ]
+        }
+      }
+    });
+
+    const glLines = [
+      { accountId: drAccountId, debit: amount, credit: 0, remarks },
+      { accountId: crAccountId, debit: 0, credit: amount, remarks }
+    ];
+
+    await postGLTransactions(tx, orgId, "JOURNAL_ENTRY", jv.id, postingDate, glLines, null, userId);
+    return jv;
+  });
+}
+
+// 7. Job Costing & Register Services
+export async function listJobCostings(orgId: string) {
+  return db.jobCosting.findMany({
+    where: { orgId },
+    include: { customer: { select: { name: true } } },
+    orderBy: { startDate: "desc" }
+  });
+}
+
+export async function getJobCosting(orgId: string, id: string) {
+  return db.jobCosting.findFirst({
+    where: { id, orgId },
+    include: {
+      customer: true,
+      salesInvoices: true,
+      purchaseInvoices: true,
+      glEntries: {
+        include: { account: { select: { accountName: true, accountCode: true } } }
+      }
+    }
+  });
+}
+
+export async function createJobCosting(orgId: string, data: any) {
+  const count = await db.jobCosting.count({ where: { orgId } });
+  const jobCode = `JOB-${1001 + count}`;
+  return db.jobCosting.create({
+    data: {
+      orgId,
+      branchId: data.branchId || null,
+      jobCode,
+      jobName: data.jobName,
+      customerId: data.customerId,
+      startDate: new Date(data.startDate),
+      expectedEndDate: data.expectedEndDate ? new Date(data.expectedEndDate) : null,
+      contractValue: new Prisma.Decimal(parseFloat(data.contractValue || 0)),
+      status: "OPEN",
+      costCentre: data.costCentre || null
+    }
+  });
+}
+
+export async function updateJobCosting(orgId: string, id: string, data: any) {
+  return db.jobCosting.update({
+    where: { id },
+    data: {
+      jobName: data.jobName,
+      expectedEndDate: data.expectedEndDate ? new Date(data.expectedEndDate) : null,
+      actualEndDate: data.actualEndDate ? new Date(data.actualEndDate) : null,
+      contractValue: new Prisma.Decimal(parseFloat(data.contractValue || 0)),
+      status: data.status,
+      costCentre: data.costCentre || null
+    }
+  });
+}
+

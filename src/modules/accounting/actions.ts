@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import * as accService from "./service";
+import * as accReports from "./reports";
 import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
+import { Prisma } from "@/generated/prisma/client";
 
 type ActionResponse = { ok: true; data?: any } | { ok: false; error: string };
 
@@ -549,3 +551,506 @@ export async function runDepreciationAction(assetId: string, monthDate: Date): P
     return { ok: false, error: err.message || "Failed to run asset depreciation" };
   }
 }
+
+// ─── Quotation Actions ────────────────────────────────────────────────────────
+export async function listQuotationsAction(): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const data = await accService.listQuotations(orgId);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to list quotations" };
+  }
+}
+
+export async function getQuotationAction(id: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const data = await accService.getQuotation(orgId, id);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to get quotation" };
+  }
+}
+
+export async function createQuotationAction(data: any): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const quotation = await accService.createQuotation(orgId, session.user.id, data);
+    revalidatePath("/accounting/quotations");
+    return { ok: true, data: quotation };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to create quotation" };
+  }
+}
+
+export async function convertQuotationToInvoiceAction(id: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const invoice = await accService.convertQuotationToInvoice(orgId, id, session.user.id);
+    revalidatePath("/accounting/quotations");
+    revalidatePath("/accounting/sales-invoices");
+    return { ok: true, data: invoice };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to convert quotation" };
+  }
+}
+
+// ─── Customer Note Actions ───────────────────────────────────────────────────
+export async function listCustomerNotesAction(): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const data = await accService.listCustomerNotes(orgId);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to list customer notes" };
+  }
+}
+
+export async function getCustomerNoteAction(id: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const data = await accService.getCustomerNote(orgId, id);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to get customer note" };
+  }
+}
+
+export async function createCustomerNoteAction(data: any): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const note = await accService.createCustomerNote(orgId, session.user.id, data);
+    revalidatePath("/accounting/quotations");
+    return { ok: true, data: note };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to create customer note" };
+  }
+}
+
+export async function submitCustomerNoteAction(id: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const note = await accService.submitCustomerNote(orgId, id, session.user.id);
+    revalidatePath("/accounting/quotations");
+    return { ok: true, data: note };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to submit customer note" };
+  }
+}
+
+// ─── Period Lock Actions ─────────────────────────────────────────────────────
+export async function getTransactionLockAction(): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const data = await accService.getTransactionLock(orgId);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to get period lock" };
+  }
+}
+
+export async function updateTransactionLockAction(data: any): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const lock = await accService.updateTransactionLock(orgId, data);
+    revalidatePath("/accounting");
+    return { ok: true, data: lock };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update period lock" };
+  }
+}
+
+// ─── Cargo Job Actions ───────────────────────────────────────────────────────
+export async function listJobCostingsAction(): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const data = await accService.listJobCostings(orgId);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to list jobs" };
+  }
+}
+
+export async function getJobCostingAction(id: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const data = await accService.getJobCosting(orgId, id);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to get job costing details" };
+  }
+}
+
+export async function createJobCostingAction(data: any): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const job = await accService.createJobCosting(orgId, data);
+    revalidatePath("/accounting/jobs");
+    return { ok: true, data: job };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to create job" };
+  }
+}
+
+export async function updateJobCostingAction(id: string, data: any): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const job = await accService.updateJobCosting(orgId, id, data);
+    revalidatePath("/accounting/jobs");
+    revalidatePath(`/accounting/jobs/${id}`);
+    return { ok: true, data: job };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update job" };
+  }
+}
+
+// ─── Reporting Actions ───────────────────────────────────────────────────────
+export async function getARAgeingAction(asOfDate?: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const parsedDate = asOfDate ? new Date(asOfDate) : new Date();
+    const data = await accReports.getARAgeing(orgId, parsedDate);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch AR Ageing" };
+  }
+}
+
+export async function getAPAgeingAction(asOfDate?: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const parsedDate = asOfDate ? new Date(asOfDate) : new Date();
+    const data = await accReports.getAPAgeing(orgId, parsedDate);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch AP Ageing" };
+  }
+}
+
+export async function getSalesRegisterAction(filters: any = {}): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const parsed = {
+      fromDate: filters.fromDate ? new Date(filters.fromDate) : undefined,
+      toDate: filters.toDate ? new Date(filters.toDate) : undefined,
+    };
+    const data = await accReports.getSalesRegister(orgId, parsed);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch Sales Register" };
+  }
+}
+
+export async function getPurchaseRegisterAction(filters: any = {}): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const parsed = {
+      fromDate: filters.fromDate ? new Date(filters.fromDate) : undefined,
+      toDate: filters.toDate ? new Date(filters.toDate) : undefined,
+    };
+    const data = await accReports.getPurchaseRegister(orgId, parsed);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch Purchase Register" };
+  }
+}
+
+export async function getGSTR1SummaryAction(filters: any = {}): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const parsed = {
+      fromDate: filters.fromDate ? new Date(filters.fromDate) : undefined,
+      toDate: filters.toDate ? new Date(filters.toDate) : undefined,
+    };
+    const data = await accReports.getGSTR1Summary(orgId, parsed);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch GSTR-1 Summary" };
+  }
+}
+
+export async function getGSTR2BSummaryAction(filters: any = {}): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const parsed = {
+      fromDate: filters.fromDate ? new Date(filters.fromDate) : undefined,
+      toDate: filters.toDate ? new Date(filters.toDate) : undefined,
+    };
+    const data = await accReports.getGSTR2BSummary(orgId, parsed);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch GSTR-2B Summary" };
+  }
+}
+
+export async function getConsolidatedGSTLedgerAction(filters: any = {}): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const parsed = {
+      fromDate: filters.fromDate ? new Date(filters.fromDate) : undefined,
+      toDate: filters.toDate ? new Date(filters.toDate) : undefined,
+    };
+    const data = await accReports.getConsolidatedGSTLedger(orgId, parsed);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch Consolidated GST Ledger" };
+  }
+}
+
+export async function getDayBookAction(dateStr: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const parsedDate = new Date(dateStr);
+    const data = await accReports.getDayBook(orgId, parsedDate);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch Day Book" };
+  }
+}
+
+export async function getJournalRegisterAction(filters: any = {}): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const parsed = {
+      fromDate: filters.fromDate ? new Date(filters.fromDate) : undefined,
+      toDate: filters.toDate ? new Date(filters.toDate) : undefined,
+    };
+    const data = await accReports.getJournalRegister(orgId, parsed);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch Journal Register" };
+  }
+}
+
+export async function getJobProfitabilityAction(): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const data = await accReports.getJobProfitability(orgId);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch Job Profitability Report" };
+  }
+}
+
+export async function getCashAndBankLedgerAction(filters: any = {}): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const parsed = {
+      fromDate: filters.fromDate ? new Date(filters.fromDate) : undefined,
+      toDate: filters.toDate ? new Date(filters.toDate) : undefined,
+    };
+    const data = await accReports.getCashAndBankLedger(orgId, parsed);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch Cash and Bank Ledger" };
+  }
+}
+
+export async function recordBankTransferAction(data: {
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  postingDate: string;
+  remarks: string;
+}): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "accounting.journal.create");
+
+    // Validate period lock
+    await accService.validatePostingDateNotLocked(orgId, data.postingDate);
+
+    // Create a Journal Entry for the transfer
+    const jv = await db.$transaction(async (tx) => {
+      const count = await tx.journalEntry.count({ where: { orgId } });
+      const voucherNo = `BT-${1001 + count}`;
+      const postingDate = new Date(data.postingDate);
+
+      const entry = await tx.journalEntry.create({
+        data: {
+          orgId,
+          voucherNo,
+          postingDate,
+          remarks: data.remarks || "Bank Transfer",
+          status: "SUBMITTED",
+          totalDebit: new Prisma.Decimal(data.amount),
+          totalCredit: new Prisma.Decimal(data.amount),
+          createdById: session.user.id,
+          lines: {
+            create: [
+              {
+                accountId: data.toAccountId,
+                debit: new Prisma.Decimal(data.amount),
+                credit: new Prisma.Decimal(0),
+                remarks: data.remarks || "Transfer In",
+              },
+              {
+                accountId: data.fromAccountId,
+                debit: new Prisma.Decimal(0),
+                credit: new Prisma.Decimal(data.amount),
+                remarks: data.remarks || "Transfer Out",
+              }
+            ]
+          }
+        }
+      });
+
+      const glLines = [
+        {
+          accountId: data.toAccountId,
+          debit: data.amount,
+          credit: 0,
+          remarks: data.remarks || "Transfer In",
+        },
+        {
+          accountId: data.fromAccountId,
+          debit: 0,
+          credit: data.amount,
+          remarks: data.remarks || "Transfer Out",
+        }
+      ];
+
+      await accService.postGLTransactions(tx, orgId, "JOURNAL_ENTRY", entry.id, postingDate, glLines, null, session.user.id);
+      return entry;
+    });
+
+    revalidatePath("/accounting/banking");
+    return { ok: true, data: jv };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to record bank transfer" };
+  }
+}
+
+export async function getProfitAndLossAction(filters: any = {}): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const parsed = {
+      fromDate: filters.fromDate ? new Date(filters.fromDate) : null,
+      toDate: filters.toDate ? new Date(filters.toDate) : null,
+    };
+    const data = await accReports.getProfitAndLoss(orgId, parsed);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch Profit and Loss" };
+  }
+}
+
+export async function getBalanceSheetAction(filters: any = {}): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const parsed = {
+      toDate: filters.toDate ? new Date(filters.toDate) : null,
+    };
+    const data = await accReports.getBalanceSheet(orgId, parsed);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch Balance Sheet" };
+  }
+}
+
+export async function getTrialBalanceAction(filters: any = {}): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const parsed = {
+      fromDate: filters.fromDate ? new Date(filters.fromDate) : null,
+      toDate: filters.toDate ? new Date(filters.toDate) : null,
+      includeZero: !!filters.includeZero,
+    };
+    const data = await accReports.getTrialBalance(orgId, parsed);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch Trial Balance" };
+  }
+}
+
+
+

@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Wifi,
@@ -284,6 +286,15 @@ export function BiometricSyncClient() {
     }
   }, [fetchStatus, mounted]);
 
+  // Poll sync status and logs every 15 seconds to keep badges and report updated in live
+  useEffect(() => {
+    if (!mounted) return;
+    const interval = setInterval(() => {
+      void fetchStatus();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [mounted, fetchStatus]);
+
   // Auto-trigger a live eSSL sync once when page loads and status confirms connected
   useEffect(() => {
     if (!mounted || !status || hasAutoSyncedRef.current || tab !== "live") return;
@@ -353,6 +364,8 @@ export function BiometricSyncClient() {
         toast.error("Failed to refresh biometric snapshot");
         return;
       }
+
+      void fetchStatus();
 
       if (snapshot.source === "essl") {
         toast.success("Live biometric data refreshed from eSSL");

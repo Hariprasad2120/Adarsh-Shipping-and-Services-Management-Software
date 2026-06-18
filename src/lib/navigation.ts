@@ -51,6 +51,15 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     items: [],
   },
   {
+    id: "product-catalogue",
+    href: "/product-catalogue",
+    label: "Product Catalogue",
+    icon: Report,
+    alwaysVisible: true,
+    matchPaths: ["/product-catalogue"],
+    items: [],
+  },
+  {
     id: "todo",
     href: "/todo",
     label: "To-Do",

@@ -54,6 +54,14 @@ model Organisation {
   payrollBatches      PayrollBatch[]
   assets              Asset[]
   assetDepreciations  AssetDepreciationEntry[]
+  jobCostings         JobCosting[]
+  quotations          Quotation[]
+  customerNotes       CustomerNote[]
+  vendorNotes         VendorNote[]
+  recurringExpenses   RecurringExpense[]
+  recurringJournals   RecurringJournal[]
+  transactionLock     TransactionLock?
+  partnerAccounts     PartnerAccount[]
 
   @@index([slug])
 }
@@ -69,15 +77,21 @@ model Branch {
   holidays Holiday[]
 
   // Accounting Module Relations
-  accounts         Account[]
-  journalEntries   JournalEntry[]
-  generalLedgers   GeneralLedgerEntry[]
-  salesInvoices    SalesInvoice[]
-  purchaseInvoices PurchaseInvoice[]
-  paymentEntries   PaymentEntry[]
-  customerLedgers  CustomerLedgerEntry[]
-  supplierLedgers  SupplierLedgerEntry[]
-  assets           Asset[]
+  accounts          Account[]
+  journalEntries    JournalEntry[]
+  generalLedgers    GeneralLedgerEntry[]
+  salesInvoices     SalesInvoice[]
+  purchaseInvoices  PurchaseInvoice[]
+  paymentEntries    PaymentEntry[]
+  customerLedgers   CustomerLedgerEntry[]
+  supplierLedgers   SupplierLedgerEntry[]
+  assets            Asset[]
+  jobCostings       JobCosting[]
+  quotations        Quotation[]
+  customerNotes     CustomerNote[]
+  vendorNotes       VendorNote[]
+  recurringExpenses RecurringExpense[]
+  recurringJournals RecurringJournal[]
 
   @@unique([orgId, code])
   @@index([orgId])
@@ -1137,6 +1151,9 @@ model CrmAccount {
   // Accounting Module Relations
   salesInvoices   SalesInvoice[]
   customerLedgers CustomerLedgerEntry[]
+  quotations      Quotation[]
+  customerNotes   CustomerNote[]
+  jobCostings     JobCosting[]
 
   @@index([orgId])
   @@index([ownerId])
@@ -1254,8 +1271,10 @@ model CrmVendor {
   invoices CrmInvoice[]
 
   // Accounting Module Relations
-  purchaseInvoices PurchaseInvoice[]
-  supplierLedgers  SupplierLedgerEntry[]
+  purchaseInvoices  PurchaseInvoice[]
+  supplierLedgers   SupplierLedgerEntry[]
+  vendorNotes       VendorNote[]
+  recurringExpenses RecurringExpense[]
 
   @@index([orgId])
   @@index([ownerId])
@@ -1959,6 +1978,13 @@ model Account {
   paymentsTo        PaymentEntry[]       @relation("PaymentsTo")
   taxLines          TaxLine[]
 
+  // New accounting relations
+  recurringExpenses       RecurringExpense[]
+  recurringJournalsDebit  RecurringJournal[] @relation("RecurringDebit")
+  recurringJournalsCredit RecurringJournal[] @relation("RecurringCredit")
+  partnerCapitalAccounts  PartnerAccount[]   @relation("PartnerCapital")
+  partnerCurrentAccounts  PartnerAccount[]   @relation("PartnerCurrent")
+
   @@unique([orgId, accountCode])
   @@index([orgId])
   @@index([branchId])
@@ -2040,15 +2066,21 @@ model GeneralLedgerEntry {
   createdById String
   createdAt   DateTime @default(now())
 
-  org          Organisation  @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  branch       Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  account      Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  journalEntry JournalEntry? @relation(fields: [voucherId], references: [id], map: "GLEntry_JournalEntry_FK")
+  jobId String?
+  job   JobCosting? @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  org            Organisation  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  branch         Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  account        Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  journalEntryId String?
+  journalEntry   JournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: Cascade, map: "GLEntry_JournalEntry_FK")
 
   @@index([orgId])
   @@index([branchId])
   @@index([accountId])
   @@index([voucherId])
+  @@index([journalEntryId])
+  @@index([jobId])
 }
 
 model SalesInvoice {
@@ -2071,19 +2103,24 @@ model SalesInvoice {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  org      Organisation        @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  branch   Branch?             @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  customer CrmAccount          @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  deal     CrmDeal?            @relation(fields: [crmDealId], references: [id], onDelete: SetNull)
-  items    SalesInvoiceItem[]
-  taxLines TaxLine[]
-  payments PaymentAllocation[]
+  jobId String?
+  job   JobCosting? @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  org           Organisation        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  branch        Branch?             @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  customer      CrmAccount          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  deal          CrmDeal?            @relation(fields: [crmDealId], references: [id], onDelete: SetNull)
+  items         SalesInvoiceItem[]
+  taxLines      TaxLine[]
+  payments      PaymentAllocation[]
+  customerNotes CustomerNote[]
 
   @@unique([orgId, invoiceNumber])
   @@index([orgId])
   @@index([branchId])
   @@index([customerId])
   @@index([crmDealId])
+  @@index([jobId])
 }
 
 model SalesInvoiceItem {
@@ -2118,17 +2155,22 @@ model PurchaseInvoice {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  org      Organisation          @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  branch   Branch?               @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  supplier CrmVendor             @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  items    PurchaseInvoiceItem[]
-  taxLines TaxLine[]
-  payments PaymentAllocation[]
+  jobId String?
+  job   JobCosting? @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  org         Organisation          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  branch      Branch?               @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  supplier    CrmVendor             @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  items       PurchaseInvoiceItem[]
+  taxLines    TaxLine[]
+  payments    PaymentAllocation[]
+  vendorNotes VendorNote[]
 
   @@unique([orgId, invoiceNumber])
   @@index([orgId])
   @@index([branchId])
   @@index([supplierId])
+  @@index([jobId])
 }
 
 model PurchaseInvoiceItem {
@@ -2349,4 +2391,277 @@ model AssetDepreciationEntry {
   @@unique([assetId, depreciationDate])
   @@index([orgId])
   @@index([assetId])
+}
+
+// ─── Rebuild & Expanded Accounting Module Models ─────────────────────────────────
+
+model Quotation {
+  id              String   @id @default(cuid())
+  orgId           String
+  branchId        String?
+  quotationNumber String
+  customerId      String
+  postingDate     DateTime @db.Date
+  validUntil      DateTime @db.Date
+  status          String   @default("DRAFT") // DRAFT | OPEN | CONVERTED | EXPIRED | CANCELLED
+  subTotal        Decimal  @default(0.0) @db.Decimal(18, 4)
+  discountAmount  Decimal  @default(0.0) @db.Decimal(18, 4)
+  taxAmount       Decimal  @default(0.0) @db.Decimal(18, 4)
+  grandTotal      Decimal  @default(0.0) @db.Decimal(18, 4)
+  terms           String?
+  remarks         String?
+  createdById     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  org      Organisation    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  branch   Branch?         @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  customer CrmAccount      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  items    QuotationItem[]
+
+  @@unique([orgId, quotationNumber])
+  @@index([orgId])
+  @@index([branchId])
+  @@index([customerId])
+}
+
+model QuotationItem {
+  id          String  @id @default(cuid())
+  quotationId String
+  itemName    String
+  hsnSac      String?
+  qty         Float
+  uom         String?
+  rate        Decimal @db.Decimal(18, 4)
+  discount    Decimal @default(0.0) @db.Decimal(18, 4)
+  taxRate     Float   @default(18.0)
+  taxAmount   Decimal @default(0.0) @db.Decimal(18, 4)
+  amount      Decimal @db.Decimal(18, 4)
+
+  quotation Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+
+  @@index([quotationId])
+}
+
+model CustomerNote {
+  id                String   @id @default(cuid())
+  orgId             String
+  branchId          String?
+  noteNumber        String
+  noteType          String // DEBIT | CREDIT
+  customerId        String
+  originalInvoiceId String?
+  postingDate       DateTime @db.Date
+  reason            String?
+  taxableAmount     Decimal  @default(0.0) @db.Decimal(18, 4)
+  taxAmount         Decimal  @default(0.0) @db.Decimal(18, 4)
+  grandTotal        Decimal  @default(0.0) @db.Decimal(18, 4)
+  status            String   @default("DRAFT") // DRAFT | SUBMITTED | CANCELLED
+  remarks           String?
+  createdById       String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  org             Organisation       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  branch          Branch?            @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  customer        CrmAccount         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  originalInvoice SalesInvoice?      @relation(fields: [originalInvoiceId], references: [id], onDelete: SetNull)
+  items           CustomerNoteItem[]
+
+  @@unique([orgId, noteNumber])
+  @@index([orgId])
+  @@index([branchId])
+  @@index([customerId])
+  @@index([originalInvoiceId])
+}
+
+model CustomerNoteItem {
+  id             String  @id @default(cuid())
+  customerNoteId String
+  itemName       String
+  qty            Float
+  rate           Decimal @db.Decimal(18, 4)
+  amount         Decimal @db.Decimal(18, 4)
+  taxRate        Float   @default(18.0)
+  taxAmount      Decimal @default(0.0) @db.Decimal(18, 4)
+
+  customerNote CustomerNote @relation(fields: [customerNoteId], references: [id], onDelete: Cascade)
+
+  @@index([customerNoteId])
+}
+
+model VendorNote {
+  id                String   @id @default(cuid())
+  orgId             String
+  branchId          String?
+  noteNumber        String
+  noteType          String // DEBIT | CREDIT
+  vendorId          String
+  originalInvoiceId String?
+  postingDate       DateTime @db.Date
+  reason            String?
+  taxableAmount     Decimal  @default(0.0) @db.Decimal(18, 4)
+  taxAmount         Decimal  @default(0.0) @db.Decimal(18, 4)
+  grandTotal        Decimal  @default(0.0) @db.Decimal(18, 4)
+  status            String   @default("DRAFT") // DRAFT | SUBMITTED | CANCELLED
+  remarks           String?
+  createdById       String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  org             Organisation     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  branch          Branch?          @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  vendor          CrmVendor        @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  originalInvoice PurchaseInvoice? @relation(fields: [originalInvoiceId], references: [id], onDelete: SetNull)
+  items           VendorNoteItem[]
+
+  @@unique([orgId, noteNumber])
+  @@index([orgId])
+  @@index([branchId])
+  @@index([vendorId])
+  @@index([originalInvoiceId])
+}
+
+model VendorNoteItem {
+  id           String  @id @default(cuid())
+  vendorNoteId String
+  itemName     String
+  qty          Float
+  rate         Decimal @db.Decimal(18, 4)
+  amount       Decimal @db.Decimal(18, 4)
+  taxRate      Float   @default(18.0)
+  taxAmount    Decimal @default(0.0) @db.Decimal(18, 4)
+
+  vendorNote VendorNote @relation(fields: [vendorNoteId], references: [id], onDelete: Cascade)
+
+  @@index([vendorNoteId])
+}
+
+model RecurringExpense {
+  id               String    @id @default(cuid())
+  orgId            String
+  branchId         String?
+  templateName     String
+  vendorId         String
+  expenseAccountId String
+  amount           Decimal   @db.Decimal(18, 4)
+  taxRate          Float     @default(0.0)
+  frequency        String // DAILY | WEEKLY | MONTHLY | QUARTERLY | YEARLY
+  startDate        DateTime  @db.Date
+  endDate          DateTime? @db.Date
+  nextDueDate      DateTime  @db.Date
+  narration        String?
+  autoPost         Boolean   @default(false)
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  org            Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  branch         Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  vendor         CrmVendor    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  expenseAccount Account      @relation(fields: [expenseAccountId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([branchId])
+  @@index([vendorId])
+  @@index([expenseAccountId])
+}
+
+model RecurringJournal {
+  id              String    @id @default(cuid())
+  orgId           String
+  branchId        String?
+  templateName    String
+  debitAccountId  String
+  creditAccountId String
+  amount          Decimal   @db.Decimal(18, 4)
+  narration       String?
+  frequency       String // DAILY | WEEKLY | MONTHLY | QUARTERLY | YEARLY
+  startDate       DateTime  @db.Date
+  endDate         DateTime? @db.Date
+  nextDueDate     DateTime  @db.Date
+  autoPost        Boolean   @default(false)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  org           Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  branch        Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  debitAccount  Account      @relation("RecurringDebit", fields: [debitAccountId], references: [id], onDelete: Cascade)
+  creditAccount Account      @relation("RecurringCredit", fields: [creditAccountId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([branchId])
+  @@index([debitAccountId])
+  @@index([creditAccountId])
+}
+
+model TransactionLock {
+  id        String   @id @default(cuid())
+  orgId     String   @unique
+  lockDate  DateTime @db.Date
+  lockType  String   @default("FULL") // FULL | SOFT
+  password  String?
+  lockedBy  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+}
+
+model PartnerAccount {
+  id                 String   @id @default(cuid())
+  orgId              String
+  partnerName        String
+  partnerCode        String
+  capitalAccountId   String
+  currentAccountId   String
+  profitSharingRatio Float
+  interestOnCapital  Float    @default(0.0)
+  salary             Decimal  @default(0.0) @db.Decimal(18, 4)
+  drawings           Decimal  @default(0.0) @db.Decimal(18, 4)
+  interestOnDrawings Float    @default(0.0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  org            Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  capitalAccount Account      @relation("PartnerCapital", fields: [capitalAccountId], references: [id], onDelete: Cascade)
+  currentAccount Account      @relation("PartnerCurrent", fields: [currentAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, partnerCode])
+  @@index([orgId])
+  @@index([capitalAccountId])
+  @@index([currentAccountId])
+}
+
+model JobCosting {
+  id              String    @id @default(cuid())
+  orgId           String
+  branchId        String?
+  jobCode         String
+  jobName         String
+  customerId      String
+  startDate       DateTime  @db.Date
+  expectedEndDate DateTime? @db.Date
+  actualEndDate   DateTime? @db.Date
+  contractValue   Decimal   @default(0.0) @db.Decimal(18, 4)
+  status          String    @default("OPEN") // OPEN | IN_PROGRESS | COMPLETED | CLOSED
+  costCentre      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  org      Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  branch   Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  customer CrmAccount   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  salesInvoices    SalesInvoice[]
+  purchaseInvoices PurchaseInvoice[]
+  glEntries        GeneralLedgerEntry[]
+
+  @@unique([orgId, jobCode])
+  @@index([orgId])
+  @@index([branchId])
+  @@index([customerId])
 }

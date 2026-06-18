@@ -32,6 +32,7 @@ function getIconColor(label: string, isActive: boolean) {
   if (isActive) return "text-[#00c4b6]";
   const lowerLabel = label.toLowerCase();
   if (lowerLabel.includes("dashboard")) return "text-[#00c4b6]";
+  if (lowerLabel.includes("catalogue") || lowerLabel.includes("catalog")) return "text-[#00cec4]";
   if (lowerLabel.includes("hrms")) return "text-[#818cf8]";
   if (lowerLabel.includes("attendance")) return "text-[#fbbf24]";
   if (lowerLabel.includes("to-do") || lowerLabel.includes("todo") || lowerLabel.includes("task")) return "text-[#22c55e]";
