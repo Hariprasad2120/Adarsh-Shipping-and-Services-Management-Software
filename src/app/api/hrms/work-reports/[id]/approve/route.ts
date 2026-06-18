@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { submitWorkReportApproval } from "@/modules/hrms/service";
 import { WorkReportApprovalSchema } from "@/modules/hrms/validators";
+import { requirePermission, apiError } from "@/lib/rbac";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -9,6 +10,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (!session || !session.user || !session.user.orgId) {
       return NextResponse.json({ ok: false, error: { code: "UNAUTHORIZED", message: "Unauthorized access" } }, { status: 401 });
     }
+
+    await requirePermission(session.user.id, "hrms.workreport.approve");
 
     const { id: reportId } = await params;
     const body = await request.json();
@@ -26,7 +29,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     );
 
     return NextResponse.json({ ok: true, data });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: { code: "BAD_REQUEST", message: error.message } }, { status: 400 });
+  } catch (error) {
+    return apiError(error);
   }
 }

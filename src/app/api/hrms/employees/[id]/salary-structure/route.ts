@@ -17,7 +17,7 @@ export async function POST(
 ) {
   const { session, error } = await getSessionOrUnauth();
   if (error) return error;
-  await requirePermission(session!.user.id, "hrms.employee.create");
+  await requirePermission(session!.user.id, "hrms.salary.manage");
 
   const { id: userId } = await params;
   const parsed = bodySchema.safeParse(await req.json());

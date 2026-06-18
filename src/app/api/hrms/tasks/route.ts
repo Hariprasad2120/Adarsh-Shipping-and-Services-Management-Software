@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getHrmsTasks, createHrmsTask, updateHrmsTaskStatus } from "@/modules/hrms/service";
+import { requirePermission, apiError } from "@/lib/rbac";
 
 export async function GET() {
   try {
@@ -9,10 +10,12 @@ export async function GET() {
       return NextResponse.json({ ok: false, error: { code: "UNAUTHORIZED", message: "Unauthorized" } }, { status: 401 });
     }
 
+    await requirePermission(session.user.id, "hrms.tasks.manage");
+
     const data = await getHrmsTasks(session.user.id, session.user.orgId!);
     return NextResponse.json({ ok: true, data });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: { code: "INTERNAL_ERROR", message: error.message } }, { status: 500 });
+  } catch (error) {
+    return apiError(error);
   }
 }
 
@@ -22,6 +25,8 @@ export async function POST(req: Request) {
     if (!session || !session.user) {
       return NextResponse.json({ ok: false, error: { code: "UNAUTHORIZED", message: "Unauthorized" } }, { status: 401 });
     }
+
+    await requirePermission(session.user.id, "hrms.tasks.manage");
 
     const body = await req.json();
     const { action } = body;
@@ -47,7 +52,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ ok: false, error: { code: "BAD_REQUEST", message: "Invalid action" } }, { status: 400 });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: { code: "INTERNAL_ERROR", message: error.message } }, { status: 500 });
+  } catch (error) {
+    return apiError(error);
   }
 }

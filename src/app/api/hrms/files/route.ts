@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getFiles, createFolder, uploadFileAsset } from "@/modules/hrms/service";
+import { requirePermission, apiError } from "@/lib/rbac";
 
 export async function GET(request: Request) {
   try {
@@ -12,10 +13,12 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const scope = (searchParams.get("scope") || "personal") as "personal" | "organization" | "employee";
 
+    await requirePermission(session.user.id, "hrms.documents.read");
+
     const data = await getFiles(session.user.orgId, session.user.id, scope);
     return NextResponse.json({ ok: true, data });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: { code: "INTERNAL_ERROR", message: error.message } }, { status: 500 });
+  } catch (error) {
+    return apiError(error);
   }
 }
 
@@ -25,6 +28,8 @@ export async function POST(request: Request) {
     if (!session || !session.user || !session.user.orgId) {
       return NextResponse.json({ ok: false, error: { code: "UNAUTHORIZED", message: "Unauthorized" } }, { status: 401 });
     }
+
+    await requirePermission(session.user.id, "hrms.documents.upload");
 
     const body = await request.json();
     const type = body.type || "file"; // file | folder
@@ -39,6 +44,7 @@ export async function POST(request: Request) {
       if (!body.name || !body.fileKey) {
         return NextResponse.json({ ok: false, error: { code: "VALIDATION_ERROR", message: "File name and key are required" } }, { status: 400 });
       }
+      await requirePermission(session.user.id, "hrms.documents.upload");
       const data = await uploadFileAsset(
         session.user.orgId,
         body.name,
@@ -51,7 +57,7 @@ export async function POST(request: Request) {
       );
       return NextResponse.json({ ok: true, data });
     }
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: { code: "BAD_REQUEST", message: error.message } }, { status: 400 });
+  } catch (error) {
+    return apiError(error);
   }
 }
