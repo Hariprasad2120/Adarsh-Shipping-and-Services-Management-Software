@@ -19,8 +19,8 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
   const errors = form.formState.errors;
 
   return (
-    <section className="border-b border-[#d9dee7] px-5 py-5">
-      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#6b7280]">Customer and Location</h2>
+    <section className="ds-form-section border-b border-[#d9dee7] px-5 py-5">
+      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-on-surface-variant">Customer and Location</h2>
       <div className="space-y-0">
         <FormRow label="Customer Name" required error={errors.customerId?.message}>
           <div className="flex gap-2">
@@ -44,7 +44,7 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
             </div>
             <button
               type="button"
-              className="inline-flex h-9 items-center gap-1 rounded-md border border-[#8eb8ff] bg-[#eef5ff] px-3 text-[12px] font-medium text-[#408dfb]"
+              className="inline-flex h-9 items-center gap-1 rounded-md border border-[rgba(0,206,196,0.4)] bg-[#00cec4]/10 px-3 text-[12px] font-medium text-[#00cec4]"
               aria-label="Advanced customer search"
             >
               <Search className="size-3.5" />
@@ -64,7 +64,7 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
         <FormRow label="Location" helperText={`Source of Supply: ${sourceOfSupply}`}>
           <select
             aria-label="Location"
-            className="h-9 w-full rounded-md border border-[#d9dee7] bg-white px-3 text-[13px] text-[#1f2937] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/20"
+            className="h-9 w-full rounded-md bg-white px-3 text-[13px] text-[#1f2937] outline-none"
             {...form.register("location")}
           >
             {locations.map((location) => (

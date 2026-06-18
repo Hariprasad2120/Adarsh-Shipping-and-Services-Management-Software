@@ -19,14 +19,14 @@ export function QuoteMetaSection({ form, salespersons, projectOptions, hasCustom
   const errors = form.formState.errors;
 
   return (
-    <section className="border-b border-[#d9dee7] px-5 py-5">
-      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#6b7280]">Quote Metadata</h2>
+    <section className="ds-form-section border-b border-[#d9dee7] px-5 py-5">
+      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-on-surface-variant">Quote Metadata</h2>
       <div className="space-y-0">
         <FormRow label="Quote#" required error={errors.quoteNumber?.message}>
           <div className="flex gap-2">
             <input
               aria-required="true"
-              className="h-9 flex-1 rounded-md border border-[#d9dee7] bg-white px-3 text-[13px] text-[#1f2937] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/20"
+              className="h-9 flex-1 rounded-md bg-white px-3 text-[13px] text-[#1f2937] outline-none"
               {...form.register("quoteNumber")}
             />
             <button
@@ -41,7 +41,7 @@ export function QuoteMetaSection({ form, salespersons, projectOptions, hasCustom
 
         <FormRow label="Reference#" error={errors.referenceNumber?.message}>
           <input
-            className="h-9 w-full rounded-md border border-[#d9dee7] bg-white px-3 text-[13px] text-[#1f2937] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/20"
+            className="h-9 w-full rounded-md bg-white px-3 text-[13px] text-[#1f2937] outline-none"
             {...form.register("referenceNumber")}
           />
         </FormRow>

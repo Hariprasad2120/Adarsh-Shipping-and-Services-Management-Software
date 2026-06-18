@@ -65,8 +65,8 @@ export function ComboboxField({ options, value, onChange, placeholder, disabled,
           value={inputValue}
           placeholder={placeholder}
           className={cn(
-            "h-9 w-full rounded-md border border-[#d9dee7] bg-white pl-9 pr-9 text-[13px] text-[#1f2937] outline-none transition",
-            "focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/20 disabled:cursor-not-allowed disabled:bg-[#f3f5f8] disabled:text-[#9ca3af]",
+            "h-9 w-full rounded-md bg-white pl-9 pr-9 text-[13px] text-[#1f2937] outline-none transition",
+            "disabled:cursor-not-allowed disabled:bg-[#f3f5f8] disabled:text-[#9ca3af]",
           )}
           onFocus={() => {
             if (!disabled) {
@@ -131,7 +131,7 @@ export function ComboboxField({ options, value, onChange, placeholder, disabled,
                   aria-selected={isSelected}
                   className={cn(
                     "flex w-full items-start justify-between gap-3 px-3 py-2 text-left text-[13px]",
-                    isActive ? "bg-[#eef5ff]" : "hover:bg-[#f5f7fa]",
+                    isActive ? "bg-[#00cec4]/10" : "hover:bg-[#f5f7fa]",
                   )}
                   onMouseEnter={() => setHighlightedIndex(index)}
                   onMouseDown={(event) => event.preventDefault()}
@@ -141,7 +141,7 @@ export function ComboboxField({ options, value, onChange, placeholder, disabled,
                     <span className="block text-[#1f2937]">{option.label}</span>
                     {option.description ? <span className="block text-[11px] text-[#6b7280]">{option.description}</span> : null}
                   </span>
-                  {isSelected ? <Check className="mt-0.5 size-4 text-[#408dfb]" /> : null}
+                  {isSelected ? <Check className="mt-0.5 size-4 text-[#00cec4]" /> : null}
                 </button>
               );
             })

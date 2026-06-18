@@ -251,7 +251,7 @@ export function NewQuotePage({
             <div className="border-b border-[#dfe6f3] bg-[#f8f9fa] px-6 py-4 flex items-center gap-4">
               <Link
                 href="/crm/quotes"
-                className="inline-flex size-10 items-center justify-center rounded-xl border border-[#dbe3f0] bg-white text-[#5d6c86] shadow-sm hover:bg-gray-50 transition-colors"
+                className="inline-flex size-10 items-center justify-center rounded-xl border border-[#dbe3f0] bg-white text-[#5d6c86] shadow-sm hover:bg-surface-container-low transition-colors"
                 aria-label="Back to quotes"
               >
                 <ArrowLeft className="size-4" />

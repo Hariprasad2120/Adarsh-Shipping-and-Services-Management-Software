@@ -162,7 +162,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
             <textarea
               rows={6}
               placeholder="Will be displayed on the quote"
-              className="w-full rounded-md border border-[#d9dee7] bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/20"
+              className="w-full rounded-md bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none"
               {...form.register("customerNotes")}
             />
 
@@ -179,13 +179,13 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
                     if (e.key === "Escape") setSaveDialogOpen(false);
                   }}
                   placeholder="Template name…"
-                  className="flex-1 min-w-0 bg-white border border-[#d9dee7] rounded px-2 py-1 text-[12px] text-[#1f2937] outline-none focus:border-[#408dfb]"
+                  className="flex-1 min-w-0 bg-white rounded px-2 py-1 text-[12px] text-[#1f2937] outline-none"
                 />
                 <button
                   type="button"
                   onClick={handleSaveTemplate}
                   disabled={!newTemplateName.trim()}
-                  className="px-3 py-1 rounded bg-[#408dfb] text-white text-[11px] font-medium hover:bg-[#2e7bf0] disabled:opacity-40 transition-colors"
+                  className="px-3 py-1 rounded bg-[#00cec4] text-white text-[11px] font-medium hover:bg-[#00b8af] disabled:opacity-40 transition-colors"
                 >
                   Save
                 </button>
@@ -210,7 +210,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
       {/* Bank Details for Quote */}
       <section className="border-b border-[#d9dee7] px-5 py-5">
         <div className="flex items-center gap-2 mb-3">
-          <CreditCard size={14} className="text-[#408dfb]" />
+          <CreditCard size={14} className="text-[#00cec4]" />
           <h3 className="text-[12px] font-semibold text-[#374151] uppercase tracking-wide">
             Bank Details to Display
           </h3>
@@ -223,7 +223,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
             </label>
             <select
               id="bankDetailsId"
-              className="w-full rounded-md border border-[#d9dee7] bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/20"
+              className="w-full rounded-md bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none"
               {...form.register("bankDetailsId")}
             >
               <option value="">— None (hide bank details) —</option>
@@ -266,7 +266,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
             <textarea
               rows={4}
               placeholder="Enter the terms and conditions of your business to be displayed in your transaction"
-              className="w-full rounded-md border border-[#d9dee7] bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/20"
+              className="w-full rounded-md bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none"
               {...form.register("terms")}
             />
           </div>

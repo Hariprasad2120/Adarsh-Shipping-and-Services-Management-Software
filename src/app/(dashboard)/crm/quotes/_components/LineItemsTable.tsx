@@ -59,7 +59,7 @@ export function LineItemRow({
       </td>
       <td className="min-w-[110px] px-2 py-2">
         <select
-          className="h-9 w-full rounded-md border border-[#d9dee7] bg-white px-2 text-[12px] text-[#1f2937] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/20"
+          className="h-9 w-full rounded-md bg-white px-2 text-[12px] text-[#1f2937] outline-none"
           {...form.register(`lineItems.${index}.unit`)}
         >
           {units.map((unit) => (
@@ -74,7 +74,7 @@ export function LineItemRow({
           type="number"
           min="0"
           step="0.01"
-          className="h-9 w-full rounded-md border border-[#d9dee7] bg-white px-3 text-right text-[12px] text-[#1f2937] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/20"
+          className="h-9 w-full rounded-md bg-white px-3 text-right text-[12px] text-[#1f2937] outline-none"
           {...form.register(`lineItems.${index}.quantity`, { valueAsNumber: true })}
         />
         {errors?.quantity ? <p className="mt-1 text-[11px] text-[#fe4242]">{errors.quantity.message}</p> : null}
@@ -84,14 +84,14 @@ export function LineItemRow({
           type="number"
           min="0"
           step="0.01"
-          className="h-9 w-full rounded-md border border-[#d9dee7] bg-white px-3 text-right text-[12px] text-[#1f2937] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/20"
+          className="h-9 w-full rounded-md bg-white px-3 text-right text-[12px] text-[#1f2937] outline-none"
           {...form.register(`lineItems.${index}.rate`, { valueAsNumber: true })}
         />
         {errors?.rate ? <p className="mt-1 text-[11px] text-[#fe4242]">{errors.rate.message}</p> : null}
       </td>
       <td className="min-w-[130px] px-2 py-2">
         <select
-          className="h-9 w-full rounded-md border border-[#d9dee7] bg-white px-2 text-[12px] text-[#1f2937] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/20"
+          className="h-9 w-full rounded-md bg-white px-2 text-[12px] text-[#1f2937] outline-none"
           {...form.register(`lineItems.${index}.tax`)}
         >
           <option value="">Select a Tax</option>
@@ -104,7 +104,7 @@ export function LineItemRow({
       </td>
       <td className="min-w-[130px] px-2 py-2">
         <select
-          className="h-9 w-full rounded-md border border-[#d9dee7] bg-white px-2 text-[12px] text-[#1f2937] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/20"
+          className="h-9 w-full rounded-md bg-white px-2 text-[12px] text-[#1f2937] outline-none"
           {...form.register(`lineItems.${index}.tds`)}
         >
           {tdsOptions.map((tds) => (
@@ -184,7 +184,7 @@ export function LineItemsTable({ form }: LineItemsTableProps) {
       <div className="mt-3 flex flex-wrap gap-2">
         <Button
           variant="outline"
-          className="h-9 border-[#b9cff7] bg-[#eef5ff] px-3 text-[12px] text-[#408dfb] hover:bg-[#e5f0ff]"
+          className="h-9 border-[rgba(0,206,196,0.4)] bg-[#00cec4]/10 px-3 text-[12px] text-[#00cec4] hover:bg-[#00cec4]/15"
           onClick={() => append(createEmptyLineItem())}
         >
           <Plus className="mr-1 size-4" />
@@ -193,7 +193,7 @@ export function LineItemsTable({ form }: LineItemsTableProps) {
         </Button>
         <Button
           variant="outline"
-          className="h-9 border-[#b9cff7] bg-white px-3 text-[12px] text-[#408dfb] hover:bg-[#f6f9ff]"
+          className="h-9 border-[rgba(0,206,196,0.4)] bg-white px-3 text-[12px] text-[#00cec4] hover:bg-[#00cec4]/10"
           onClick={() => append(createEmptyLineItem())}
         >
           <Plus className="mr-1 size-4" />

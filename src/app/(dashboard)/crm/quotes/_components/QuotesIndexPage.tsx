@@ -15,13 +15,13 @@ import { quoteViews } from "../_lib/quote-list-data";
 import type { QuoteListStatus, QuoteRecord } from "../_lib/types";
 
 const statusTone: Record<Exclude<QuoteListStatus, "all">, string> = {
-  draft: "bg-slate-100 text-slate-700",
+  draft: "bg-[#f1f3f5] text-[#495057]",
   "pending-approval": "bg-amber-100 text-amber-700",
-  approved: "bg-sky-100 text-sky-700",
+  approved: "bg-[#00cec4]/10 text-[#00968f]",
   sent: "bg-indigo-100 text-indigo-700",
   "customer-viewed": "bg-violet-100 text-violet-700",
   accepted: "bg-emerald-100 text-emerald-700",
-  invoiced: "bg-cyan-100 text-cyan-700",
+  invoiced: "bg-[#00cec4]/20 text-[#00968f]",
   declined: "bg-rose-100 text-rose-700",
   rework: "bg-orange-100 text-orange-700",
 };
@@ -134,7 +134,7 @@ export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[
                             }}
                             className={cn(
                               "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
-                              activeView === view.id ? "bg-[#eef4ff] text-[#1f2937]" : "text-[#334155] hover:bg-[#f8fafc]",
+                              activeView === view.id ? "bg-[#00cec4]/10 text-[#00968f]" : "text-[#334155] hover:bg-[#f8fafc]",
                             )}
                           >
                             <span>{view.label}</span>
@@ -148,7 +148,7 @@ export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[
               </div>
               <Link
                 href="/crm/quotes/new"
-                className="inline-flex h-10 items-center rounded-xl bg-[#408dfb] px-4 text-sm font-medium text-white transition-colors hover:bg-[#2e7bf0]"
+                className="inline-flex h-10 items-center rounded-xl bg-[#00cec4] px-4 text-sm font-medium text-white transition-colors hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)]"
               >
                 <Plus className="mr-1 size-4" />
                 New
@@ -172,7 +172,7 @@ export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search quotes"
-                className="h-11 w-full rounded-xl border border-[#dbe3f0] bg-white pl-10 pr-3 text-sm text-[#1f2937] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/15"
+                className="h-11 w-full rounded-xl border border-[#dbe3f0] bg-white pl-10 pr-3 text-sm text-[#1f2937] outline-none focus:border-[#00cec4] focus:ring-2 focus:ring-[#00cec4]/20"
               />
             </div>
           </div>
@@ -183,7 +183,7 @@ export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search quotes"
-                className="h-11 w-full rounded-xl border border-[#dbe3f0] bg-white pl-10 pr-3 text-sm text-[#1f2937] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/15"
+                className="h-11 w-full rounded-xl border border-[#dbe3f0] bg-white pl-10 pr-3 text-sm text-[#1f2937] outline-none focus:border-[#00cec4] focus:ring-2 focus:ring-[#00cec4]/20"
               />
             </div>
           </div>
@@ -200,7 +200,7 @@ export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[
             </div>
 
             <div className="overflow-x-auto">
-              <table className="min-w-[860px] w-full">
+              <table className="ds-table min-w-[860px]">
                 <thead className="bg-[#fafbfd] text-left text-[11px] uppercase tracking-[0.12em] text-[#7b8798]">
                   <tr>
                     <th className="px-4 py-3">
@@ -220,14 +220,14 @@ export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[
                 </thead>
                 <tbody className="divide-y divide-[#edf1f6] text-sm">
                   {filteredRecords.map((record) => (
-                    <tr key={record.id} className="transition-colors hover:bg-[#fbfcff]">
+                    <tr key={record.id} className="ds-row-link transition-colors">
                       <td className="px-4 py-3">
                         <input type="checkbox" aria-label={`Select ${record.quoteNumber}`} />
                       </td>
                       <td className="px-4 py-3 text-[#435066]">{formatDate(record.date)}</td>
                       <td className="px-4 py-3 text-[#435066]">{record.location}</td>
                       <td className="px-4 py-3">
-                        <Link href={`/crm/quotes/${record.id}`} className="font-semibold text-[#2563eb] hover:underline">
+                        <Link href={`/crm/quotes/${record.id}`} className="font-semibold text-[#00cec4] hover:underline">
                           {record.quoteNumber}
                         </Link>
                       </td>

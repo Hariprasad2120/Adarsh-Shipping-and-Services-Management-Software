@@ -29,7 +29,7 @@ export function FixedActionBar({
     <div className="sticky bottom-0 z-40 border-t border-[#d9dee7] bg-white px-4 py-3 shadow-[0_-8px_18px_rgba(15,23,42,0.04)]">
       <div className="mx-auto flex max-w-[1400px] flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-2">
-          <Button className="h-9 bg-[#408dfb] px-4 text-[12px] hover:bg-[#2e7df1]" onClick={onSaveDraft}>
+          <Button className="h-9 bg-[#00cec4] px-4 text-[12px] hover:bg-[#00b8af]" onClick={onSaveDraft}>
             Save as Draft
           </Button>
           <Button variant="outline" className="h-9 border-[#cdd8e6] px-4 text-[12px]" onClick={onSaveSend}>
@@ -42,7 +42,7 @@ export function FixedActionBar({
 
         <div className="relative flex items-center gap-2 text-[12px] text-[#4b5563]">
           <span>PDF Template: &lsquo;{template}&rsquo;</span>
-          <button type="button" onClick={onToggleTemplateMenu} className="inline-flex items-center gap-1 font-medium text-[#408dfb]">
+          <button type="button" onClick={onToggleTemplateMenu} className="inline-flex items-center gap-1 font-medium text-[#00cec4]">
             Change
             <ChevronDown className="size-4" />
           </button>

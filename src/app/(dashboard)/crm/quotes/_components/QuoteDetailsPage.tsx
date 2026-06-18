@@ -47,7 +47,7 @@ function toApprovalStatus(s: Exclude<QuoteListStatus, "all">): ApprovalStatus {
 }
 
 const statusTone: Record<Exclude<QuoteListStatus, "all">, string> = {
-  draft: "bg-slate-100 text-slate-700",
+  draft: "bg-[#f1f3f5] text-[#495057]",
   "pending-approval": "bg-amber-100 text-amber-700",
   approved: "bg-sky-100 text-sky-700",
   sent: "bg-indigo-100 text-indigo-700",
@@ -156,7 +156,7 @@ export function QuoteDetailsPage({
               <div className="flex items-center gap-2">
                 <Link
                   href="/crm/quotes/new"
-                  className="inline-flex size-10 items-center justify-center rounded-xl bg-[#408dfb] text-white transition-colors hover:bg-[#2e7bf0]"
+                  className="inline-flex size-10 items-center justify-center rounded-xl bg-[#00cec4] text-white transition-colors hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)]"
                   aria-label="Create quote"
                 >
                   <Plus className="size-4" />
@@ -179,7 +179,7 @@ export function QuoteDetailsPage({
                   onClick={() => setActiveView(view.id)}
                   className={cn(
                     "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                    activeView === view.id ? "bg-[#eef4ff] text-[#2563eb]" : "bg-[#f6f8fc] text-[#66758f] hover:bg-[#edf2f9]",
+                    activeView === view.id ? "bg-[#00cec4]/10 text-[#00968f]" : "bg-[#f6f8fc] text-[#66758f] hover:bg-[#edf2f9]",
                   )}
                 >
                   {view.label}
@@ -195,7 +195,7 @@ export function QuoteDetailsPage({
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search quotes"
-                className="h-11 w-full rounded-xl border border-[#dbe3f0] bg-white pl-10 pr-3 text-sm text-[#1f2937] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/15"
+                className="h-11 w-full rounded-xl border border-[#dbe3f0] bg-white pl-10 pr-3 text-sm text-[#1f2937] outline-none focus:border-[#00cec4] focus:ring-2 focus:ring-[#00cec4]/20"
               />
             </div>
           </div>
@@ -220,7 +220,7 @@ export function QuoteDetailsPage({
                         <span className="shrink-0 text-sm font-semibold text-[#1f2937]">{formatAmount(record.amount)}</span>
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#71809a]">
-                        <span className="font-medium text-[#2563eb]">{record.quoteNumber}</span>
+                        <span className="font-medium text-[#00cec4]">{record.quoteNumber}</span>
                         <span className="size-1 rounded-full bg-[#cbd5e1]" />
                         <span>{formatDate(record.date)}</span>
                       </div>
@@ -427,7 +427,7 @@ export function QuoteDetailsPage({
                         <div className="grid gap-5 lg:grid-cols-[1.2fr_1fr_1fr]">
                           <div>
                             <div className="flex items-center gap-3">
-                              <div className="flex size-10 items-center justify-center rounded-full bg-[#e8f0ff] text-sm font-semibold text-[#2563eb]">
+                              <div className="flex size-10 items-center justify-center rounded-full bg-[#00cec4]/10 text-sm font-semibold text-[#00968f]">
                                 {quote.customerInitial}
                               </div>
                               <div>
@@ -445,7 +445,7 @@ export function QuoteDetailsPage({
                         <div className="flex items-center justify-between border-b border-[#eef2f7] px-5 py-4">
                           <div className="flex items-center gap-3">
                             <h2 className="text-lg font-semibold tracking-[-0.02em] text-[#0f172a]">Items</h2>
-                            <span className="rounded-full bg-[#eef4ff] px-2.5 py-1 text-xs font-semibold text-[#2563eb]">{quote.items.length}</span>
+                            <span className="rounded-full bg-[#00cec4]/10 px-2.5 py-1 text-xs font-semibold text-[#00968f]">{quote.items.length}</span>
                           </div>
                           <div className="inline-flex items-center gap-2 rounded-full bg-[#f5f7fb] px-3 py-1.5 text-xs font-medium text-[#67768e]">
                             <FileText className="size-4" />

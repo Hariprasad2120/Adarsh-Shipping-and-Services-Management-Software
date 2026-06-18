@@ -36,7 +36,7 @@ export function ConfirmDialog({ open, title, description, confirmLabel, onConfir
           <Button variant="outline" className="h-9 border-[#d9dee7] px-4 text-[12px]" onClick={onCancel}>
             Cancel
           </Button>
-          <Button className="h-9 bg-[#408dfb] px-4 text-[12px] hover:bg-[#2e7df1]" onClick={onConfirm}>
+          <Button className="h-9 bg-[#00cec4] px-4 text-[12px] hover:bg-[#00b8af]" onClick={onConfirm}>
             {confirmLabel}
           </Button>
         </div>

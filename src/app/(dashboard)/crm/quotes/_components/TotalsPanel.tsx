@@ -27,7 +27,7 @@ export function TotalsPanel({ form, discountAmount }: TotalsPanelProps) {
           <div className="min-w-0">
             <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-3">
               <select
-                className="h-11 rounded-xl border border-[#d9dee7] bg-white px-2 text-[12px] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/20"
+                className="h-11 rounded-xl bg-whitepx-2 text-[12px] outline-none"
                 {...form.register("discountType")}
               >
                 <option value="percentage">%</option>
@@ -37,7 +37,7 @@ export function TotalsPanel({ form, discountAmount }: TotalsPanelProps) {
                 type="number"
                 min="0"
                 step="0.01"
-                className="h-11 min-w-0 rounded-xl border border-[#d9dee7] bg-white px-3 text-right text-[12px] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/20"
+                className="h-11 min-w-0 rounded-xl bg-whitepx-3 text-right text-[12px] outline-none"
                 {...form.register("discountValue", { valueAsNumber: true })}
               />
             </div>
@@ -50,7 +50,7 @@ export function TotalsPanel({ form, discountAmount }: TotalsPanelProps) {
           <input
             type="number"
             step="0.01"
-            className="h-11 min-w-0 rounded-xl border border-[#d9dee7] bg-white px-3 text-right text-[12px] outline-none focus:border-[#408dfb] focus:ring-2 focus:ring-[#408dfb]/20"
+            className="h-11 min-w-0 rounded-xl bg-whitepx-3 text-right text-[12px] outline-none"
             {...form.register("adjustment", { valueAsNumber: true })}
           />
         </div>
