@@ -209,7 +209,7 @@ export function QuoteDetailsPage({
                   href={`/crm/quotes/${record.id}`}
                   className={cn(
                     "block border-b border-[#eef2f7] px-4 py-4 transition-colors",
-                    active ? "bg-[#f8fbff]" : "hover:bg-[#fafcff]",
+                    active ? "bg-[#00cec4]/5 shadow-[inset_3px_0_0_#00cec4]" : "hover:bg-[#fafcff]",
                   )}
                 >
                   <div className="flex items-start gap-3">
@@ -351,7 +351,7 @@ export function QuoteDetailsPage({
                         onClick={() => setActiveTab("details")}
                         className={cn(
                           "border-b-[3px] pb-4 text-base font-semibold transition-colors",
-                          activeTab === "details" ? "border-[#5f8fff] text-[#0f172a]" : "border-transparent text-[#64748b]",
+                          activeTab === "details" ? "border-[#00cec4] text-[#0f172a]" : "border-transparent text-[#64748b]",
                         )}
                       >
                         Quote Details
@@ -361,7 +361,7 @@ export function QuoteDetailsPage({
                         onClick={() => setActiveTab("activity")}
                         className={cn(
                           "border-b-[3px] pb-4 text-base font-medium transition-colors",
-                          activeTab === "activity" ? "border-[#5f8fff] text-[#0f172a]" : "border-transparent text-[#64748b]",
+                          activeTab === "activity" ? "border-[#00cec4] text-[#0f172a]" : "border-transparent text-[#64748b]",
                         )}
                       >
                         Activity Logs

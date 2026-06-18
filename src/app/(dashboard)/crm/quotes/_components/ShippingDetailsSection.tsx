@@ -40,7 +40,7 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
             <label className="mb-1 block text-[12px] font-medium text-[#374151]">{field.label}</label>
             <input
               type={field.type ?? "text"}
-              className="h-9 w-full rounded-md bg-white px-3 text-[13px] text-[#1f2937] outline-none"
+              className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
               {...form.register(field.name, field.type === "number" ? { valueAsNumber: true } : undefined)}
             />
             {errors[field.name]?.message ? <p className="mt-1 text-[11px] text-[#fe4242]">{errors[field.name]?.message}</p> : null}
@@ -50,7 +50,7 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
         <div>
           <label className="mb-1 block text-[12px] font-medium text-[#374151]">INCOTERM</label>
           <select
-            className="h-9 w-full rounded-md bg-white px-3 text-[13px] text-[#1f2937] outline-none"
+            className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
             {...form.register("incoterm")}
           >
             <option value="">Select INCOTERM</option>
@@ -65,7 +65,7 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
         <div>
           <label className="mb-1 block text-[12px] font-medium text-[#374151]">Container type</label>
           <select
-            className="h-9 w-full rounded-md bg-white px-3 text-[13px] text-[#1f2937] outline-none"
+            className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
             {...form.register("containerType")}
           >
             <option value="">Select container type</option>
@@ -82,7 +82,7 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
             <label className="mb-1 block text-[12px] font-medium text-[#374151]">{field.label}</label>
             <input
               type={field.type ?? "text"}
-              className="h-9 w-full rounded-md bg-white px-3 text-[13px] text-[#1f2937] outline-none"
+              className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
               {...form.register(field.name, field.type === "number" ? { valueAsNumber: true } : undefined)}
             />
             {errors[field.name]?.message ? <p className="mt-1 text-[11px] text-[#fe4242]">{errors[field.name]?.message}</p> : null}

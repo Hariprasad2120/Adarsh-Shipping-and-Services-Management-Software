@@ -59,7 +59,7 @@ export function LineItemRow({
       </td>
       <td className="min-w-[110px] px-2 py-2">
         <select
-          className="h-9 w-full rounded-md bg-white px-2 text-[12px] text-[#1f2937] outline-none"
+          className="h-9 w-full rounded-xl border bg-white px-2 text-[12px] text-[#1f2937] outline-none"
           {...form.register(`lineItems.${index}.unit`)}
         >
           {units.map((unit) => (
@@ -74,7 +74,7 @@ export function LineItemRow({
           type="number"
           min="0"
           step="0.01"
-          className="h-9 w-full rounded-md bg-white px-3 text-right text-[12px] text-[#1f2937] outline-none"
+          className="h-9 w-full rounded-xl border bg-white px-3 text-right text-[12px] text-[#1f2937] outline-none"
           {...form.register(`lineItems.${index}.quantity`, { valueAsNumber: true })}
         />
         {errors?.quantity ? <p className="mt-1 text-[11px] text-[#fe4242]">{errors.quantity.message}</p> : null}
@@ -84,14 +84,14 @@ export function LineItemRow({
           type="number"
           min="0"
           step="0.01"
-          className="h-9 w-full rounded-md bg-white px-3 text-right text-[12px] text-[#1f2937] outline-none"
+          className="h-9 w-full rounded-xl border bg-white px-3 text-right text-[12px] text-[#1f2937] outline-none"
           {...form.register(`lineItems.${index}.rate`, { valueAsNumber: true })}
         />
         {errors?.rate ? <p className="mt-1 text-[11px] text-[#fe4242]">{errors.rate.message}</p> : null}
       </td>
       <td className="min-w-[130px] px-2 py-2">
         <select
-          className="h-9 w-full rounded-md bg-white px-2 text-[12px] text-[#1f2937] outline-none"
+          className="h-9 w-full rounded-xl border bg-white px-2 text-[12px] text-[#1f2937] outline-none"
           {...form.register(`lineItems.${index}.tax`)}
         >
           <option value="">Select a Tax</option>
@@ -104,7 +104,7 @@ export function LineItemRow({
       </td>
       <td className="min-w-[130px] px-2 py-2">
         <select
-          className="h-9 w-full rounded-md bg-white px-2 text-[12px] text-[#1f2937] outline-none"
+          className="h-9 w-full rounded-xl border bg-white px-2 text-[12px] text-[#1f2937] outline-none"
           {...form.register(`lineItems.${index}.tds`)}
         >
           {tdsOptions.map((tds) => (

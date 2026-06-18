@@ -65,7 +65,7 @@ export function ComboboxField({ options, value, onChange, placeholder, disabled,
           value={inputValue}
           placeholder={placeholder}
           className={cn(
-            "h-9 w-full rounded-md bg-white pl-9 pr-9 text-[13px] text-[#1f2937] outline-none transition",
+            "h-9 w-full rounded-xl border bg-white pl-9 pr-9 text-[13px] text-[#1f2937] outline-none transition",
             "disabled:cursor-not-allowed disabled:bg-[#f3f5f8] disabled:text-[#9ca3af]",
           )}
           onFocus={() => {

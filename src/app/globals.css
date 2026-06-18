@@ -388,6 +388,8 @@ html.dark .shadow-2xl {
 main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 main select,
 main textarea {
+  border-width: 1px !important;
+  border-style: solid !important;
   border-radius: var(--radius-xl) !important;
   border-color: rgba(0, 206, 196, 0.55) !important;
   color: var(--color-on-surface) !important;
@@ -437,6 +439,21 @@ main textarea {
   }
 }
 
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-page-enter {
+  animation: page-enter 0.16s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 .card-top-accent {
   border-top: 2px solid #00cec4;
 }
@@ -453,9 +470,21 @@ main textarea {
   border-left: 3px solid #fb923c;
 }
 
-/* CRM: only override text-white inside crm-theme — bg overrides handled by html.light/dark rules */
-.crm-theme [class*="text-white"] {
+/* Global light mode: prevent text-white from becoming invisible on light surfaces */
+html.light [class*="text-white"],
+html.light [class*="text-[#ffffff]"],
+html.light [class*="text-[#fff]"] {
   color: var(--color-on-surface) !important;
+}
+
+/* Restore white text for elements with explicitly colored backgrounds (must come after, same specificity → last wins) */
+html.light [class*="bg-[#00c4b6]"],
+html.light [class*="bg-[#00cec4]"],
+html.light [class*="bg-[#ef4444]"],
+html.light [class*="bg-red-500"],
+html.light [class*="bg-red-600"],
+html.light [class*="bg-red-700"] {
+  color: #ffffff !important;
 }
 
 /* Ensure cyan-background buttons always keep white text regardless of theme */

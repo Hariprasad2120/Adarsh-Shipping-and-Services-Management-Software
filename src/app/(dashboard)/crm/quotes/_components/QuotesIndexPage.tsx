@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ChevronDown,
   ChevronRight,
@@ -59,6 +60,7 @@ function matchesSearch(record: QuoteRecord, query: string) {
 }
 
 export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[] }) {
+  const router = useRouter();
   const [quotes, setQuotes] = useState<QuoteRecord[]>(initialQuotes);
   const [activeView, setActiveView] = useState<QuoteListStatus>("all");
   const [search, setSearch] = useState("");
@@ -189,7 +191,7 @@ export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-4 sm:p-6">
+        <div className="flex-1 overflow-auto p-4 pt-5 sm:p-6 sm:pt-5">
           <div className="overflow-hidden rounded-2xl border border-[#dfe6f3] bg-white shadow-[0_12px_36px_rgba(15,23,42,0.06)]">
             <div className="flex items-center justify-between border-b border-[#edf1f6] px-4 py-3">
               <div className="flex items-center gap-2 text-sm font-medium text-[#5d6c86]">
@@ -218,9 +220,9 @@ export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#edf1f6] text-sm">
+                <tbody className="text-sm">
                   {filteredRecords.map((record) => (
-                    <tr key={record.id} className="ds-row-link transition-colors">
+                    <tr key={record.id} className="ds-row-link" onClick={() => router.push(`/crm/quotes/${record.id}`)}>
                       <td className="px-4 py-3">
                         <input type="checkbox" aria-label={`Select ${record.quoteNumber}`} />
                       </td>

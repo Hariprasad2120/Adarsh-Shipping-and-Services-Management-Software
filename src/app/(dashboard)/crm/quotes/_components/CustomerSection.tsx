@@ -64,7 +64,7 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
         <FormRow label="Location" helperText={`Source of Supply: ${sourceOfSupply}`}>
           <select
             aria-label="Location"
-            className="h-9 w-full rounded-md bg-white px-3 text-[13px] text-[#1f2937] outline-none"
+            className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
             {...form.register("location")}
           >
             {locations.map((location) => (

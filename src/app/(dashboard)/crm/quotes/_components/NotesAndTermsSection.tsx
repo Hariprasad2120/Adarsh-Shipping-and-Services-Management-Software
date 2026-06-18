@@ -162,7 +162,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
             <textarea
               rows={6}
               placeholder="Will be displayed on the quote"
-              className="w-full rounded-md bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none"
+              className="w-full rounded-xl border bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none"
               {...form.register("customerNotes")}
             />
 
@@ -223,7 +223,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
             </label>
             <select
               id="bankDetailsId"
-              className="w-full rounded-md bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none"
+              className="w-full rounded-xl border bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none"
               {...form.register("bankDetailsId")}
             >
               <option value="">— None (hide bank details) —</option>
@@ -266,7 +266,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
             <textarea
               rows={4}
               placeholder="Enter the terms and conditions of your business to be displayed in your transaction"
-              className="w-full rounded-md bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none"
+              className="w-full rounded-xl border bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none"
               {...form.register("terms")}
             />
           </div>

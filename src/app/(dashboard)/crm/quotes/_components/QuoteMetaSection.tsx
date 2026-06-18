@@ -26,7 +26,7 @@ export function QuoteMetaSection({ form, salespersons, projectOptions, hasCustom
           <div className="flex gap-2">
             <input
               aria-required="true"
-              className="h-9 flex-1 rounded-md bg-white px-3 text-[13px] text-[#1f2937] outline-none"
+              className="h-9 flex-1 rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
               {...form.register("quoteNumber")}
             />
             <button
@@ -41,7 +41,7 @@ export function QuoteMetaSection({ form, salespersons, projectOptions, hasCustom
 
         <FormRow label="Reference#" error={errors.referenceNumber?.message}>
           <input
-            className="h-9 w-full rounded-md bg-white px-3 text-[13px] text-[#1f2937] outline-none"
+            className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
             {...form.register("referenceNumber")}
           />
         </FormRow>

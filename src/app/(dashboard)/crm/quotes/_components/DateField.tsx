@@ -12,7 +12,7 @@ export function DateField({ className, error, ...props }: DateFieldProps) {
       <input
         type="date"
         className={cn(
-          "h-9 w-full rounded-md border bg-white px-3 pr-9 text-[13px] text-[#1f2937] outline-none transition",
+          "h-9 w-full rounded-xl border bg-white px-3 pr-9 text-[13px] text-[#1f2937] outline-none transition",
           error ? "border-[#fe4242] focus:ring-[#fe4242]/15" : "",
           className,
         )}
