@@ -64,6 +64,7 @@ interface AdminData {
       name: string;
       employeeNumber: number | null;
       department: { name: string } | null;
+      employmentRecord?: { ctc: number | null } | null;
     };
   }>;
   holidays: Array<{
@@ -99,6 +100,7 @@ interface AdminData {
     name: string;
     employeeNumber: number | null;
     department: { name: string } | null;
+    employmentRecord?: { ctc: number | null } | null;
   }>;
   branches: Array<{
     id: string;
@@ -134,6 +136,21 @@ function formatOtDate(date: string) {
     month: "short",
     weekday: "short",
   });
+}
+
+function getMinuteSalary(ctc: number | null | undefined, dateStr: string, standardHours: number) {
+  const annualCtc = ctc || 0;
+  if (annualCtc <= 0) return 100 / 60;
+
+  const d = new Date(dateStr);
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  const monthlyGross = annualCtc / 12;
+  const dailySalary = monthlyGross / daysInMonth;
+  const minuteSalary = dailySalary / (standardHours * 60);
+  return minuteSalary;
 }
 
 export function OtClient({
@@ -1280,6 +1297,33 @@ export function OtClient({
                       {isExpanded ? (
                         <DataTableRow className="hover:bg-transparent">
                           <DataTableCell colSpan={8} className="bg-surface-container-low/40 px-4 py-4">
+                            {/* Rate Review Banner */}
+                            {(() => {
+                              const firstRec = group.records[0];
+                              const ctc = firstRec?.user?.employmentRecord?.ctc || 0;
+                              const standardHours = otSettings.standardHours || 8.0;
+                              const minSalary = getMinuteSalary(ctc, firstRec?.date || new Date().toISOString(), standardHours);
+                              const daysInMonth = new Date(new Date(selectedMonth + "-01").getFullYear(), new Date(selectedMonth + "-01").getMonth() + 1, 0).getDate() || 30;
+                              const monthlyGross = ctc ? ctc / 12 : 0;
+                              return (
+                                <div className="mb-3 flex flex-wrap gap-4 items-center justify-between rounded-xl border border-outline-variant bg-surface px-4 py-3 text-xs select-none">
+                                  <div>
+                                    <span className="font-semibold text-on-surface">Rate Review: </span>
+                                    <span className="text-on-surface-variant font-medium">
+                                      Gross Salary: <span className="font-semibold font-mono text-on-surface">{ctc ? `₹${monthlyGross.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mo` : "N/A"}</span> | 
+                                      Days in Month: <span className="font-semibold font-mono text-on-surface">{daysInMonth}</span> | 
+                                      Minute Salary: <span className="font-semibold font-mono text-emerald-600">₹{minSalary.toFixed(4)}/min</span>
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-on-surface text-[10px] uppercase tracking-wider text-on-surface-variant/75">OT Multiplier:</span>
+                                    <span className="rounded-full bg-[#00cec4]/10 border border-[#00cec4]/20 px-2 py-0.5 font-bold font-mono text-[#009d96] dark:text-[#00cec4]">
+                                      {otSettings.otRate}x
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                             <DataTable className="rounded-xl border-outline-variant/40 bg-surface shadow-none" tableClassName="text-xs">
                               <DataTableHeader className="bg-surface-container-low/70">
                                 <DataTableRow className="hover:bg-transparent">
@@ -2164,6 +2208,26 @@ export function OtClient({
             </div>
             
             <div className="p-5 space-y-4">
+              {/* Rate Review Sub-box */}
+              {(() => {
+                const ctc = adjustingRecord.user?.employmentRecord?.ctc || 0;
+                const standardHours = otSettings.standardHours || 8.0;
+                const minSalary = getMinuteSalary(ctc, adjustingRecord.date, standardHours);
+                const daysInMonth = new Date(new Date(adjustingRecord.date).getFullYear(), new Date(adjustingRecord.date).getMonth() + 1, 0).getDate();
+                const monthlyGross = ctc ? ctc / 12 : 0;
+                return (
+                  <div className="rounded-xl border border-outline-variant bg-surface-container-low/50 px-3 py-2 text-[11px] leading-relaxed select-none">
+                    <span className="font-semibold text-on-surface">Rate Review:</span>
+                    <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-on-surface-variant font-medium">
+                      <div>Gross Salary: <span className="font-semibold font-mono text-on-surface">{ctc ? `₹${monthlyGross.toLocaleString("en-IN", { minimumFractionDigits: 2 })}/mo` : "N/A"}</span></div>
+                      <div>Days in Month: <span className="font-semibold font-mono text-on-surface">{daysInMonth}</span></div>
+                      <div>Minute Salary: <span className="font-semibold font-mono text-emerald-600">₹{minSalary.toFixed(4)}/min</span></div>
+                      <div>OT Multiplier: <span className="font-semibold font-mono text-on-surface">{otSettings.otRate}x</span></div>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">
                   <span>Overtime Minutes</span>

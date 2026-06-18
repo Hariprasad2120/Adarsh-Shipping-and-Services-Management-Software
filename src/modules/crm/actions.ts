@@ -978,10 +978,10 @@ export async function createInvoiceAction(formData: FormData, itemsJSON: string)
 
     // Calculations
     const discount = parseFloat(formData.get("discount") as string || "0") || 0;
-    const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.qty) * parseFloat(item.rate)), 0);
+    const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.qty) * parseFloat(item.rate) * parseFloat(item.exchangeRate ?? 1)), 0);
     const tax = items.reduce((sum, item) => {
       const itemTaxPercent = parseFloat(item.taxPercent ?? "18");
-      return sum + (parseFloat(item.qty) * parseFloat(item.rate) * (itemTaxPercent / 100));
+      return sum + (parseFloat(item.qty) * parseFloat(item.rate) * parseFloat(item.exchangeRate ?? 1) * (itemTaxPercent / 100));
     }, 0);
     const total = subtotal + tax - discount;
 
@@ -999,6 +999,8 @@ export async function createInvoiceAction(formData: FormData, itemsJSON: string)
       dealId: (formData.get("dealId") as string) || null,
       vendorId: (formData.get("vendorId") as string) || null,
       ownerId: (formData.get("ownerId") as string) || session.user.id,
+      bankDetails: (formData.get("bankDetails") as string) || null,
+      manualNotes: (formData.get("manualNotes") as string) || null,
     };
 
     const invoice = await crmService.createInvoice(orgId, session.user.id, data, items);
@@ -1025,10 +1027,10 @@ export async function updateInvoiceAction(invoiceId: string, formData: FormData,
     }
 
     const discount = parseFloat(formData.get("discount") as string || "0") || 0;
-    const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.qty) * parseFloat(item.rate)), 0);
+    const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.qty) * parseFloat(item.rate) * parseFloat(item.exchangeRate ?? 1)), 0);
     const tax = items.reduce((sum, item) => {
       const itemTaxPercent = parseFloat(item.taxPercent ?? "18");
-      return sum + (parseFloat(item.qty) * parseFloat(item.rate) * (itemTaxPercent / 100));
+      return sum + (parseFloat(item.qty) * parseFloat(item.rate) * parseFloat(item.exchangeRate ?? 1) * (itemTaxPercent / 100));
     }, 0);
     const total = subtotal + tax - discount;
 
@@ -1044,6 +1046,8 @@ export async function updateInvoiceAction(invoiceId: string, formData: FormData,
       dealId: (formData.get("dealId") as string) || null,
       vendorId: (formData.get("vendorId") as string) || null,
       ownerId: (formData.get("ownerId") as string) || session.user.id,
+      bankDetails: (formData.get("bankDetails") as string) || null,
+      manualNotes: (formData.get("manualNotes") as string) || null,
       updatedById: session.user.id,
     };
 
@@ -1065,7 +1069,9 @@ export async function updateInvoiceAction(invoiceId: string, formData: FormData,
         qty: parseFloat(item.qty),
         rate: parseFloat(item.rate),
         taxPercent: parseFloat(item.taxPercent ?? 18),
-        amount: parseFloat(item.qty) * parseFloat(item.rate) * (1 + (parseFloat(item.taxPercent ?? 18) / 100)),
+        amount: parseFloat(item.qty) * parseFloat(item.rate) * parseFloat(item.exchangeRate ?? 1) * (1 + (parseFloat(item.taxPercent ?? 18) / 100)),
+        currency: item.currency || "INR",
+        exchangeRate: parseFloat(item.exchangeRate ?? 1),
       })),
     });
 
@@ -1733,3 +1739,26 @@ export async function getJustdialLogsAction(): Promise<ActionResponse> {
     return { ok: false, error: err.message || "Failed to fetch logs" };
   }
 }
+
+export async function toggleJustdialActiveAction(isActive: boolean): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.leadSource.manage");
+
+    const config = await db.crmLeadSourceJustdialConfig.update({
+      where: { orgId },
+      data: { isActive },
+    });
+
+    revalidatePath("/crm/lead-sources");
+    return { ok: true, data: config };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to toggle Justdial status" };
+  }
+}
+

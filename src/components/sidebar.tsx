@@ -32,6 +32,7 @@ function getIconColor(label: string, isActive: boolean) {
   if (isActive) return "text-[#00c4b6]";
   const lowerLabel = label.toLowerCase();
   if (lowerLabel.includes("dashboard")) return "text-[#00c4b6]";
+  if (lowerLabel.includes("catalogue") || lowerLabel.includes("catalog")) return "text-[#00cec4]";
   if (lowerLabel.includes("hrms")) return "text-[#818cf8]";
   if (lowerLabel.includes("attendance")) return "text-[#fbbf24]";
   if (lowerLabel.includes("to-do") || lowerLabel.includes("todo") || lowerLabel.includes("task")) return "text-[#22c55e]";
@@ -91,7 +92,7 @@ const CRM_GROUP_ORDER = ["Sales", "Activities", "Inventory", "Support", "Integra
 export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
   const pathname = usePathname();
   const visibleSections = useMemo(() => getVisibleSections(caps), [caps]);
-  const [theme, setTheme] = useState<ThemeMode>(detectTheme);
+  const [theme, setTheme] = useState<ThemeMode>("light");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hoveredSectionId, setHoveredSectionId] = useState<string | null>(null);
   const [flyoutPos, setFlyoutPos] = useState({ top: 0, maxHeight: 400 });
@@ -137,6 +138,7 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
     setMounted(true);
     const saved = localStorage.getItem("sidebar-collapsed");
     if (saved === "true") setIsCollapsed(true);
+    setTheme(detectTheme());
   }, []);
 
   useEffect(() => {

@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useTransition, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -54,10 +56,57 @@ type TimelineSession = {
   outDevice?: string | null;
 };
 
+const fmt = (iso: string | null) =>
+  iso
+    ? new Date(iso).toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+    : "-";
+
+const formatHoursAndMins = (decimalHours: number | null) => {
+  if (decimalHours === null || decimalHours <= 0) return "0 Mins";
+  const totalMinutes = Math.round(decimalHours * 60);
+  const hrs = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  if (hrs > 0) {
+    return `${hrs} Hrs ${mins} Mins`;
+  }
+  return `${mins} Mins`;
+};
+
+const getDurationHoursNoSeconds = (startIso: string, endIso: string) => {
+  const s = new Date(startIso);
+  const e = new Date(endIso);
+  s.setSeconds(0, 0);
+  e.setSeconds(0, 0);
+  return Math.max(0, (e.getTime() - s.getTime()) / 3600000);
+};
+
+// Maps time to coordinates on the standard timeline grid.
+// Keep the raw percentage separate so OT and before/after-hours logic still work.
+const WORK_START_MINUTES = 9 * 60 + 30; // 9:30 AM
+const WORK_END_MINUTES = 17 * 60 + 30; // 5:30 PM
+const WORK_TOTAL_MINUTES = WORK_END_MINUTES - WORK_START_MINUTES;
+
+const clampPercent = (pct: number) => Math.min(100, Math.max(0, pct));
+
+const getPercentRaw = (timeIso: string | null) => {
+  if (!timeIso) return 0;
+  const t = new Date(timeIso);
+  if (Number.isNaN(t.getTime())) return 0;
+
+  const mins = t.getHours() * 60 + t.getMinutes() + t.getSeconds() / 60;
+  return ((mins - WORK_START_MINUTES) / WORK_TOTAL_MINUTES) * 100;
+};
+
+const getPercent = (timeIso: string | null) => clampPercent(getPercentRaw(timeIso));
+
 export function PunchCard({
   punches,
   otRecords,
-  today: todayIso,
+  today: _todayIso,
   canManage,
   employees,
   selectedEmployeeId,
@@ -161,6 +210,7 @@ export function PunchCard({
     let active = true;
     setTimelineLoading(true);
     setTimelineError(null);
+    setTimelineSessions([]); // Clear previous sessions to prevent glitch/crossover rendering of old bars
 
     async function loadTimeline(showLoading = true) {
       if (showLoading) setTimelineLoading(true);
@@ -182,9 +232,10 @@ export function PunchCard({
         } else {
           setTimelineSessions([]);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!active) return;
-        setTimelineError(err.message || "Offline");
+        const errMsg = err instanceof Error ? err.message : "Offline";
+        setTimelineError(errMsg);
         const matchPunch = punches.find((p) => isSameLocalDate(p.date, selectedDateStr));
         if (matchPunch?.inAt) {
           setTimelineSessions([
@@ -223,34 +274,6 @@ export function PunchCard({
       if (timer) clearInterval(timer);
     };
   }, [selectedDateStr, selectedEmployeeId, punches, todayStr]);
-
-  const fmt = (iso: string | null) =>
-    iso
-      ? new Date(iso).toLocaleTimeString("en-IN", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        })
-      : "-";
-
-  // Maps time to coordinates on the standard timeline grid.
-  // Keep the raw percentage separate so OT and before/after-hours logic still work.
-  const WORK_START_MINUTES = 9 * 60 + 30; // 9:30 AM
-  const WORK_END_MINUTES = 17 * 60 + 30; // 5:30 PM
-  const WORK_TOTAL_MINUTES = WORK_END_MINUTES - WORK_START_MINUTES;
-
-  const clampPercent = (pct: number) => Math.min(100, Math.max(0, pct));
-
-  const getPercentRaw = (timeIso: string | null) => {
-    if (!timeIso) return 0;
-    const t = new Date(timeIso);
-    if (Number.isNaN(t.getTime())) return 0;
-
-    const mins = t.getHours() * 60 + t.getMinutes() + t.getSeconds() / 60;
-    return ((mins - WORK_START_MINUTES) / WORK_TOTAL_MINUTES) * 100;
-  };
-
-  const getPercent = (timeIso: string | null) => clampPercent(getPercentRaw(timeIso));
 
   const handleFilterChange = (params: {
     employeeId?: string;
@@ -304,20 +327,36 @@ export function PunchCard({
     return { dayPunch, dayOt, dayMeta };
   }, [selectedDateStr, punches, otRecords, daysInMonth]);
 
-  const totalWorkedSelectedDay = useMemo(() => {
-    if (timelineSessions.length === 0) return 0;
-    return timelineSessions.reduce((sum, s) => {
-      if (s.durationHours) return sum + s.durationHours;
-      if (s.out === null && selectedDateStr === todayStr) {
-        const dur = (nowState.getTime() - new Date(s.in).getTime()) / 3600000;
-        return sum + Math.max(0, dur);
+  const lastProperOutTime = useMemo(() => {
+    if (timelineSessions.length > 0) {
+      for (let i = timelineSessions.length - 1; i >= 0; i--) {
+        if (timelineSessions[i]!.out) {
+          return timelineSessions[i]!.out;
+        }
       }
-      return sum;
-    }, 0);
-  }, [timelineSessions, selectedDateStr, todayStr, nowState]);
+    }
+    return selectedDayMetrics.dayPunch?.outAt || null;
+  }, [timelineSessions, selectedDayMetrics.dayPunch]);
+
+  const totalWorkedSelectedDay = useMemo(() => {
+    const inAt = timelineSessions.length > 0 ? timelineSessions[0]!.in : selectedDayMetrics.dayPunch?.inAt;
+    if (!inAt) return 0;
+
+    const isToday = selectedDateStr === todayStr;
+    const lastSession = timelineSessions[timelineSessions.length - 1];
+    const isLive = lastSession && !lastSession.out && isToday;
+
+    const outAt = isLive
+      ? nowState.toISOString()
+      : lastProperOutTime;
+
+    if (!outAt) return 0;
+
+    return getDurationHoursNoSeconds(inAt, outAt);
+  }, [selectedDayMetrics.dayPunch, timelineSessions, lastProperOutTime, selectedDateStr, todayStr, nowState]);
 
   const formatDuration = (decimalHours: number | null) => {
-    if (decimalHours === null || decimalHours <= 0) return "0:00";
+    if (decimalHours === null || decimalHours <= 0) return "0:00 Hrs";
     const totalMinutes = Math.round(decimalHours * 60);
     const hrs = Math.floor(totalMinutes / 60);
     const mins = totalMinutes % 60;
@@ -475,15 +514,6 @@ export function PunchCard({
             {daysInMonth.map((day) => {
               const isSelected = selectedDateStr === day.dateStr;
               const isCurrentDay = day.dateStr === todayStr;
-              
-              const hoursWorked = day.punch?.inAt && day.punch?.outAt
-                ? ((new Date(day.punch.outAt).getTime() - new Date(day.punch.inAt).getTime()) / 3600000)
-                : (isCurrentDay && day.punch?.inAt
-                    ? (nowState.getTime() - new Date(day.punch.inAt).getTime()) / 3600000
-                    : 0);
-
-              const inTime = day.punch?.inAt;
-              const outTime = day.punch?.outAt;
 
               // Prefer freshly fetched selected-day sessions, then fallback to monthSessions.
               // This makes the open/still-inside state appear without needing a page reload.
@@ -494,6 +524,34 @@ export function PunchCard({
                   : monthSessions[day.dateStr] ?? [];
               const hasSessionData = daySessions.length > 0;
 
+              const inTime = day.punch?.inAt;
+              const outTime = day.punch?.outAt;
+
+              const firstIn = hasSessionData ? daySessions[0]!.in : inTime;
+
+              let lastProperOutForDay = outTime || null;
+              if (daySessions.length > 0) {
+                for (let i = daySessions.length - 1; i >= 0; i--) {
+                  if (daySessions[i]!.out) {
+                    lastProperOutForDay = daySessions[i]!.out;
+                    break;
+                  }
+                }
+              }
+
+              const lastSession = hasSessionData ? daySessions[daySessions.length - 1]! : null;
+              const lastSessionOpen =
+                isCurrentDay &&
+                ((hasSessionData && !lastSession!.out) || (!!inTime && !outTime));
+
+              const effectiveOutForDay = lastSessionOpen
+                ? nowState.toISOString()
+                : lastProperOutForDay;
+
+              const hoursWorked = firstIn && effectiveOutForDay
+                ? getDurationHoursNoSeconds(firstIn, effectiveOutForDay)
+                : 0;
+
               // The live-time line is rendered once as an overlay on the full table.
               // Do not render another per-row line here, otherwise the UI shows two lines.
               const nowLine = null;
@@ -501,21 +559,11 @@ export function PunchCard({
               // Timeline Coordinates
               let visualBar = null;
 
-              const firstIn = hasSessionData ? daySessions[0]!.in : inTime;
-
               if (firstIn) {
-                const lastSession = hasSessionData ? daySessions[daySessions.length - 1]! : null;
                 const lastOut = hasSessionData ? (lastSession!.out || null) : outTime;
-
-                // Employee is still inside when today's latest session has no OUT.
-                // Also fallback to the summary record when monthSessions is not populated yet.
-                const lastSessionOpen =
-                  isCurrentDay &&
-                  ((hasSessionData && !lastSession!.out) || (!!inTime && !outTime));
-
                 const effectiveLastOut = lastOut || (lastSessionOpen ? nowState.toISOString() : firstIn);
                 const lastEndRawPct = getPercentRaw(effectiveLastOut);
-                const hasOt = lastEndRawPct > 100 || (day.ot && day.ot.otHours > 0);
+                const hasOt = !!(day.ot && day.ot.otHours > 0);
                 const otWidth = hasOt ? Math.min(28, Math.max(2, lastEndRawPct - 100)) : 0;
                 const liveIndicatorPct = clampPercent(lastEndRawPct);
 
@@ -583,7 +631,7 @@ export function PunchCard({
                           <span className="absolute right-0 top-1/2 h-1.5 w-1.5 translate-x-1/2 -translate-y-1/2 rounded-full border border-orange-500 bg-surface shadow-sm" />
                         )}
                         <span className="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 whitespace-nowrap text-[9px] font-medium text-orange-500">
-                          {day.ot ? day.ot.otHours.toFixed(2) : "0.00"} Hrs OT
+                          {day.ot ? `${Math.round(day.ot.otHours * 60)} Mins` : "0 Mins"} OT
                         </span>
                       </div>
                     )}
@@ -669,16 +717,16 @@ export function PunchCard({
                   {/* OT column */}
                   <div className="text-center text-xs font-medium">
                     {day.ot && day.ot.otHours > 0 ? (
-                      <span className="text-orange-500">{day.ot.otHours.toFixed(2)}</span>
+                      <span className="text-orange-500">{Math.round(day.ot.otHours * 60)} Mins</span>
                     ) : (
-                      <span className="text-on-surface-variant">—</span>
+                      <span className="text-on-surface-variant">0 Mins</span>
                     )}
                   </div>
 
                   {/* Hours column */}
                   <div className="text-right">
                     <p className="font-mono text-xs font-medium text-on-surface">
-                      {hoursWorked > 0 ? `${hoursWorked.toFixed(2)} Hrs` : "00:00"}
+                      {hoursWorked > 0 ? formatHoursAndMins(hoursWorked) : "0 Mins"}
                     </p>
                     {hoursWorked > 0 && (
                       <p className="mt-0.5 text-[8px] font-medium tracking-[0.08em] text-on-surface-variant">worked</p>
@@ -841,31 +889,33 @@ export function PunchCard({
             </div>
 
             {/* Overtime Section Card */}
-            {selectedDayMetrics.dayOt && selectedDayMetrics.dayOt.otHours > 0 && (
-              <div className="space-y-3.5 rounded-2xl border border-orange-500/20 bg-orange-500/4 p-4">
-                <div className="flex items-center gap-2 text-xs font-medium tracking-[0.08em] text-orange-500">
-                  <TrendingUp className="size-4 shrink-0 text-orange-500" />
-                  <span>OVERTIME</span>
+            <div className="space-y-3.5 rounded-2xl border border-orange-500/20 bg-orange-500/4 p-4 select-none">
+              <div className="flex items-center gap-2 text-xs font-medium tracking-[0.08em] text-orange-500">
+                <TrendingUp className="size-4 shrink-0 text-orange-500" />
+                <span>OVERTIME</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[9px] font-medium tracking-[0.08em] text-on-surface-variant">OT Hours</p>
+                  <p className="mt-1 font-mono text-sm font-medium text-orange-500">
+                    {selectedDayMetrics.dayOt && selectedDayMetrics.dayOt.otHours > 0
+                      ? `${Math.round(selectedDayMetrics.dayOt.otHours * 60)} Mins`
+                      : "0 Mins"}
+                  </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-[9px] font-medium tracking-[0.08em] text-on-surface-variant">OT Hours</p>
-                    <p className="mt-1 font-mono text-sm font-medium text-orange-500">
-                      {formatDuration(selectedDayMetrics.dayOt.otHours)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] font-medium tracking-[0.08em] text-on-surface-variant">OT Amount</p>
-                    <p className="mt-1 font-mono text-sm font-medium text-orange-500">
-                      ₹{selectedDayMetrics.dayOt.otAmount.toFixed(0)}
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-[9px] font-medium tracking-[0.08em] text-on-surface-variant">OT Amount</p>
+                  <p className="mt-1 font-mono text-sm font-medium text-orange-500">
+                    ₹{selectedDayMetrics.dayOt && selectedDayMetrics.dayOt.otHours > 0
+                      ? selectedDayMetrics.dayOt.otAmount.toFixed(0)
+                      : "0"}
+                  </p>
                 </div>
               </div>
-            )}
+            </div>
 
             {/* Summary Metrics at the bottom */}
-            <div className="space-y-4 border-t border-outline-variant/30 pt-4">
+            <div className="space-y-4 border-t border-outline-variant/30 pt-4 select-none">
               <div className="grid grid-cols-3 gap-2 text-center font-sans text-[9px] font-medium tracking-[0.08em] text-on-surface-variant">
                 <div>First In</div>
                 <div>Last Out</div>
@@ -874,11 +924,11 @@ export function PunchCard({
               <div className="grid grid-cols-3 gap-2 text-center font-mono text-xs font-medium text-on-surface">
                 <div>{timelineSessions.length > 0 ? fmt(timelineSessions[0]!.in) : "—"}</div>
                 <div>
-                  {timelineSessions.length > 0 && timelineSessions[timelineSessions.length - 1]!.out
-                    ? fmt(timelineSessions[timelineSessions.length - 1]!.out)
+                  {lastProperOutTime
+                    ? fmt(lastProperOutTime)
                     : "—"}
                 </div>
-                <div>{totalWorkedSelectedDay > 0 ? `${totalWorkedSelectedDay.toFixed(2)} Hrs` : "—"}</div>
+                <div>{totalWorkedSelectedDay > 0 ? formatHoursAndMins(totalWorkedSelectedDay) : "—"}</div>
               </div>
 
               {selectedDayMetrics.dayPunch?.inAt && (

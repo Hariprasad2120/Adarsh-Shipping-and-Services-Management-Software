@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * OT and comp-off calculation engine.
  * Computes hours, rates, penalties, and grace periods based on attendance punches,
@@ -56,6 +57,36 @@ export function countWorkingDaysInMonth(
 }
 
 /**
+ * Resolves the employee's dynamic minute salary rate based on CTC and actual calendar days of the month.
+ * Fallback is based on a standard hourly base of ₹100 (₹1.67/min) if CTC is missing.
+ */
+export async function getEmployeeMinuteSalary(
+  userId: string,
+  date: Date,
+  settings: typeof DEFAULT_OT_SETTINGS
+): Promise<number> {
+  const empRecord = await db.employmentRecord.findUnique({
+    where: { userId },
+  });
+
+  const annualCtc = empRecord?.ctc;
+  if (!annualCtc || annualCtc <= 0) {
+    // Fallback standard rate per minute (standard 100 base / 60)
+    return 100 / 60;
+  }
+
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  const monthlyGross = annualCtc / 12;
+  const dailySalary = monthlyGross / daysInMonth;
+  const minuteSalary = dailySalary / (settings.standardHours * 60);
+
+  return Number(minuteSalary.toFixed(4));
+}
+
+/**
  * Resolves the employee's dynamic OT rate per hour based on CTC.
  * Fallback to standard OT rate multiplier if CTC or payroll information is missing.
  */
@@ -65,26 +96,8 @@ export async function getEmployeeHourlyOtRate(
   settings: typeof DEFAULT_OT_SETTINGS,
   calendarConfig: any
 ): Promise<number> {
-  const empRecord = await db.employmentRecord.findUnique({
-    where: { userId },
-  });
-
-  const annualCtc = empRecord?.ctc;
-  if (!annualCtc || annualCtc <= 0) {
-    // Fallback standard rate per hour (rate index * standard 100 base or settings.otRate base)
-    return settings.otRate * 100;
-  }
-
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const workingDays = countWorkingDaysInMonth(year, month, calendarConfig);
-  const standardMonthlyHours = workingDays * settings.standardHours;
-
-  if (standardMonthlyHours <= 0) return settings.otRate * 100;
-
-  const monthlyGross = annualCtc / 12;
-  const hourlyRate = monthlyGross / standardMonthlyHours;
-  return Number(hourlyRate.toFixed(2));
+  const minuteSalary = await getEmployeeMinuteSalary(userId, date, settings);
+  return Number((minuteSalary * 60).toFixed(2));
 }
 
 /**
@@ -166,8 +179,6 @@ export async function calculateOtForPunch(userId: string, date: Date): Promise<b
   const isRegularized = regularization?.status === "APPROVED";
 
   const hoursWorked = punch.workingHours;
-  const minutesWorked = Math.round(hoursWorked * 60);
-  const standardMinutes = Math.round(settings.standardHours * 60);
 
   let otHours = 0;
   let otRatePerHour = 0;
@@ -193,11 +204,36 @@ export async function calculateOtForPunch(userId: string, date: Date): Promise<b
     }
   } else {
     // Regular working day: Overtime Calculation
-    if (minutesWorked < standardMinutes) {
-      earlyLeavingMins = standardMinutes - minutesWorked;
-    } else if (minutesWorked >= standardMinutes + settings.graceMinutes) {
-      // Overtime calculation starts strictly after the grace period threshold
-      let otMins = minutesWorked - (standardMinutes + settings.graceMinutes);
+    const year = attendanceDate.getUTCFullYear();
+    const month = attendanceDate.getUTCMonth() + 1;
+    const day = attendanceDate.getUTCDate();
+
+    const [startH, startM] = (dbCalendar?.workStart ?? "09:30").split(":").map(Number);
+    const [endH, endM] = (dbCalendar?.workEnd ?? "17:30").split(":").map(Number);
+
+    const scheduledShiftStartMs = Date.UTC(year, month - 1, day, startH!, startM!, 0, 0) - (5.5 * 60 * 60 * 1000);
+    const scheduledShiftEndMs = Date.UTC(year, month - 1, day, endH!, endM!, 0, 0) - (5.5 * 60 * 60 * 1000);
+
+    const actualIn = new Date(punch.inAt);
+    actualIn.setSeconds(0, 0);
+    const actualInMs = actualIn.getTime();
+
+    const actualOut = new Date(punch.outAt);
+    actualOut.setSeconds(0, 0);
+    const actualOutMs = actualOut.getTime();
+
+    // Late arrival shifts the required check-out time to complete compulsory 8 hours
+    const latenessMs = Math.max(0, actualInMs - scheduledShiftStartMs);
+    const requiredCheckOutMs = scheduledShiftEndMs + latenessMs;
+
+    // Grace period ends 15 mins (or settings.graceMinutes) after required checkout
+    const graceEndMs = requiredCheckOutMs + (settings.graceMinutes * 60 * 1000);
+
+    if (actualOutMs < requiredCheckOutMs) {
+      earlyLeavingMins = Math.round((requiredCheckOutMs - actualOutMs) / 60000);
+    } else if (actualOutMs > graceEndMs) {
+      // Overtime calculation starts strictly after the grace period ends
+      let otMins = Math.round((actualOutMs - requiredCheckOutMs) / 60000);
 
       if (isRegularized && otMins > 0) {
         // Apply 75% regularization penalty on OT minutes
@@ -206,9 +242,9 @@ export async function calculateOtForPunch(userId: string, date: Date): Promise<b
 
       if (otMins > 0) {
         otHours = Number((otMins / 60).toFixed(2));
-        const hourlyRate = await getEmployeeHourlyOtRate(userId, attendanceDate, settings, calendarConfig);
-        otRatePerHour = hourlyRate;
-        otAmount = Number((otHours * hourlyRate).toFixed(2));
+        const minuteSalary = await getEmployeeMinuteSalary(userId, attendanceDate, settings);
+        otRatePerHour = Number((minuteSalary * 60).toFixed(2));
+        otAmount = Number((otMins * minuteSalary * settings.otRate).toFixed(2));
       }
     }
   }

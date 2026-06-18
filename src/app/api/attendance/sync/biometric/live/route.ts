@@ -448,8 +448,7 @@ export async function POST(req: NextRequest) {
       const outs = sortedPunches.filter((punch) => punch.dir === "out");
       const checkIn = ins[0]?.time ?? sortedPunches[0]?.time ?? null;
       const lastDayPunch = sortedPunches[sortedPunches.length - 1] ?? null;
-      const checkOut =
-        lastDayPunch?.dir === "out" ? (outs[outs.length - 1]?.time ?? null) : null;
+      const checkOut = outs[outs.length - 1]?.time ?? null;
 
       try {
         const workingHours =

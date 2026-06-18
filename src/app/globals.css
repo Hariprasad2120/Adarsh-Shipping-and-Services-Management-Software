@@ -672,3 +672,49 @@ html.dark [class*="text-slate-500"] {
   color: var(--color-on-surface-variant) !important;
 }
 
+/* Core overrides for inputs and selectors inside main to ensure color compatibility in Light Mode */
+html.light main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+html.light main select,
+html.light main textarea,
+html.light main [class*="bg-[var(--color-background)]"],
+html.light main [class*="bg-[var(--color-surface)]"],
+html.light main [class*="bg-[#161f28]"] {
+  color: var(--color-on-surface) !important;
+}
+
+html.light main [class*="bg-[var(--color-background)]"]::placeholder,
+html.light main [class*="bg-[var(--color-surface)]"]::placeholder {
+  color: var(--color-placeholder) !important;
+}
+
+/* Wildcard selector to safely override any hardcoded text-white colors in light mode,
+   excluding active solid backgrounds like buttons and badges */
+html.light main [class*="text-white"]:not([class*="bg-"]):not(button):not(a[class*="bg-"]):not(span[class*="bg-"]):not(div[class*="bg-"]),
+html.light main [class*="text-white/"]:not([class*="bg-"]):not(button):not(a[class*="bg-"]):not(span[class*="bg-"]):not(div[class*="bg-"]) {
+  color: var(--color-on-surface) !important;
+}
+
+html.light [class*="text-slate-400"],
+html.light [class*="text-slate-500"] {
+  color: var(--color-on-surface-variant) !important;
+}
+
+
+/* Ensure colored buttons and solid badges always preserve white text in both light and dark themes */
+[class*="bg-[#00cec4]"] *,
+[class*="bg-[#00cec4]"],
+[class*="bg-[#00c4b6]"] *,
+[class*="bg-[#00c4b6]"],
+.bg-emerald-500,
+.bg-emerald-600,
+.bg-rose-500,
+.bg-rose-600,
+.bg-red-500,
+.bg-red-600,
+.bg-amber-500,
+.bg-orange-500,
+.bg-blue-600 {
+  color: #ffffff !important;
+}
+
+

@@ -112,6 +112,7 @@ export default async function OvertimePage({ searchParams }: PageProps) {
             name: true,
             employeeNumber: true,
             department: { select: { name: true } },
+            employmentRecord: { select: { ctc: true } },
           },
         },
       },
@@ -181,6 +182,7 @@ export default async function OvertimePage({ searchParams }: PageProps) {
         name: true,
         employeeNumber: true,
         department: { select: { name: true } },
+        employmentRecord: { select: { ctc: true } },
       },
       orderBy: { name: "asc" },
     });

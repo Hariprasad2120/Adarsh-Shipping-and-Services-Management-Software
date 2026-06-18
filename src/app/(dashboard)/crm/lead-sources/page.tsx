@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { getJustdialConfig, getImportLogs, setImportingLock } from "@/modules/crm/lead-source.service";
 import { ImportButtons } from "./import-button";
+import { JustdialToggle } from "./justdial-toggle";
 import {
   ShieldAlert,
   Settings,
@@ -69,7 +70,13 @@ export default async function CrmLeadSourcesPage() {
           <h2 className="text-2xl font-semibold tracking-tight text-white">Lead Sources</h2>
           <p className="text-slate-400 text-sm mt-1">Integrate external inquiry channels and configure RPA workers to capture CRM leads.</p>
         </div>
+        {config && (
+          <div className="flex items-center gap-3 shrink-0">
+            <JustdialToggle initialActive={config.isActive} />
+          </div>
+        )}
       </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Source Card: Justdial */}
