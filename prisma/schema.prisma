@@ -1304,6 +1304,9 @@ model CrmInvoice {
   vendorId  String?
   vendor    CrmVendor?  @relation(fields: [vendorId], references: [id], onDelete: SetNull)
 
+  bankDetails   String?
+  manualNotes   String?
+
   createdById String
   updatedById String
   createdAt   DateTime @default(now())
@@ -1325,6 +1328,8 @@ model CrmInvoiceItem {
   rate        Float
   taxPercent  Float  @default(18.0)
   amount      Float
+  currency     String  @default("INR")
+  exchangeRate Float   @default(1.0)
 
   @@index([invoiceId])
 }
@@ -2099,6 +2104,8 @@ model SalesInvoice {
   discountAmount    Decimal  @default(0.0) @db.Decimal(18, 4)
   taxAmount         Decimal  @default(0.0) @db.Decimal(18, 4)
   remarks           String?
+  bankDetails       String?
+  manualNotes       String?
   createdById       String
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -2130,6 +2137,8 @@ model SalesInvoiceItem {
   qty       Float
   rate      Decimal @db.Decimal(18, 4)
   amount    Decimal @db.Decimal(18, 4)
+  currency     String  @default("INR")
+  exchangeRate Float   @default(1.0)
 
   salesInvoice SalesInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Calendar, FileText, User, Receipt, Loader2 } from "lucide-react";
@@ -9,9 +9,16 @@ import { createSalesInvoiceAction } from "@/modules/accounting/actions";
 interface NewInvoiceClientProps {
   customers: any[];
   branches: any[];
+  products?: { id: string; name: string; price: number; taxPercent: number }[];
+  bankAccounts?: { id: string; accountName: string; accountCode: string }[];
 }
 
-export function NewInvoiceClient({ customers, branches }: NewInvoiceClientProps) {
+export function NewInvoiceClient({
+  customers,
+  branches,
+  products = [],
+  bankAccounts = []
+}: NewInvoiceClientProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   
@@ -26,14 +33,24 @@ export function NewInvoiceClient({ customers, branches }: NewInvoiceClientProps)
   const [submitImmediately, setSubmitImmediately] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [taxRate, setTaxRate] = useState(18);
+  const [bankDetails, setBankDetails] = useState("");
+  const [manualNotes, setManualNotes] = useState("Thanks for your business.");
 
   // Item lines
   const [items, setItems] = useState<any[]>([
-    { itemName: "", qty: 1, rate: 0 },
+    { itemName: "", qty: 1, rate: 0, currency: "INR", exchangeRate: 1 },
   ]);
 
+  useEffect(() => {
+    if (postingDate) {
+      const d = new Date(postingDate);
+      d.setDate(d.getDate() + 30);
+      setDueDate(d.toISOString().split("T")[0]);
+    }
+  }, [postingDate]);
+
   const handleAddItem = () => {
-    setItems([...items, { itemName: "", qty: 1, rate: 0 }]);
+    setItems([...items, { itemName: "", qty: 1, rate: 0, currency: "INR", exchangeRate: 1 }]);
   };
 
   const handleRemoveItem = (idx: number) => {
@@ -46,18 +63,33 @@ export function NewInvoiceClient({ customers, branches }: NewInvoiceClientProps)
 
   const handleItemChange = (idx: number, field: string, value: any) => {
     const newItems = [...items];
-    if (field === "qty") {
-      newItems[idx][field] = parseFloat(value) || 0;
-    } else if (field === "rate") {
+    if (field === "qty" || field === "rate" || field === "exchangeRate") {
       newItems[idx][field] = parseFloat(value) || 0;
     } else {
       newItems[idx][field] = value;
     }
+
+    if (field === "itemName") {
+      const match = products.find(p => p.name.toLowerCase() === value.trim().toLowerCase());
+      if (match) {
+        newItems[idx].rate = match.price;
+        if (match.taxPercent !== undefined) {
+          setTaxRate(match.taxPercent);
+        }
+      }
+    }
+
+    if (field === "currency") {
+      if (value === "INR") {
+        newItems[idx].exchangeRate = 1;
+      }
+    }
+
     setItems(newItems);
   };
 
   // Calculations
-  const subtotal = items.reduce((sum, item) => sum + (item.qty * item.rate), 0);
+  const subtotal = items.reduce((sum, item) => sum + (item.qty * item.rate * (item.exchangeRate || 1)), 0);
   const taxableAmount = Math.max(0, subtotal - discountAmount);
   const taxAmount = taxableAmount * (taxRate / 100);
   const grandTotal = taxableAmount + taxAmount;
@@ -86,10 +118,14 @@ export function NewInvoiceClient({ customers, branches }: NewInvoiceClientProps)
         taxRate,
         remarks: remarks || null,
         submit: submitImmediately,
+        bankDetails: bankDetails || null,
+        manualNotes: manualNotes || null,
         items: items.map((item) => ({
           itemName: item.itemName,
           qty: item.qty,
           rate: item.rate,
+          currency: item.currency || "INR",
+          exchangeRate: item.exchangeRate || 1,
         })),
       });
 
@@ -160,15 +196,23 @@ export function NewInvoiceClient({ customers, branches }: NewInvoiceClientProps)
           </div>
 
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Due Date</label>
-            <input
-              type="date"
-              required
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
+            <label className="ds-label block text-slate-400">Bank Details</label>
+            <select
+              value={bankDetails}
+              onChange={(e) => setBankDetails(e.target.value)}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
-            />
+            >
+              <option value="">Select Bank Account...</option>
+              {bankAccounts.map((acc) => (
+                <option key={acc.id} value={`${acc.accountName} (A/C: ${acc.accountCode})`}>
+                  {acc.accountName} ({acc.accountCode})
+                </option>
+              ))}
+            </select>
           </div>
+
+          {/* Hidden Due Date (will default to postingDate + 30 days) */}
+          <input type="hidden" value={dueDate} />
 
         </div>
 
@@ -210,15 +254,46 @@ export function NewInvoiceClient({ customers, branches }: NewInvoiceClientProps)
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Customs Clearance Fee"
+                  placeholder="e.g. Customs CHA filing, Local transport..."
                   value={item.itemName}
+                  list="products-datalist"
                   onChange={(e) => handleItemChange(idx, "itemName", e.target.value)}
                   className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs"
                 />
               </div>
 
-              {/* Quantity */}
+              {/* Currency */}
               <div className="w-full md:w-24 space-y-1">
+                <label className="ds-label text-slate-500 md:hidden">Currency</label>
+                <select
+                  value={item.currency || "INR"}
+                  onChange={(e) => handleItemChange(idx, "currency", e.target.value)}
+                  className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
+                >
+                  <option value="INR">INR</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="SGD">SGD</option>
+                </select>
+              </div>
+
+              {/* Exchange Rate */}
+              <div className="w-full md:w-24 space-y-1">
+                <label className="ds-label text-slate-500 md:hidden">Exch Rate</label>
+                <input
+                  type="number"
+                  min="0.0001"
+                  step="any"
+                  required
+                  disabled={(item.currency || "INR") === "INR"}
+                  value={item.exchangeRate || ""}
+                  onChange={(e) => handleItemChange(idx, "exchangeRate", e.target.value)}
+                  className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-mono disabled:opacity-50"
+                />
+              </div>
+
+              {/* Quantity */}
+              <div className="w-full md:w-20 space-y-1">
                 <label className="ds-label text-slate-500 md:hidden">Qty</label>
                 <input
                   type="number"
@@ -233,8 +308,8 @@ export function NewInvoiceClient({ customers, branches }: NewInvoiceClientProps)
               </div>
 
               {/* Rate */}
-              <div className="w-full md:w-36 space-y-1">
-                <label className="ds-label text-slate-500 md:hidden">Rate (₹)</label>
+              <div className="w-full md:w-28 space-y-1">
+                <label className="ds-label text-slate-500 md:hidden">Rate</label>
                 <input
                   type="number"
                   min="0.01"
@@ -251,7 +326,7 @@ export function NewInvoiceClient({ customers, branches }: NewInvoiceClientProps)
               <div className="w-full md:w-36 space-y-1 text-right">
                 <span className="ds-label text-slate-500 block mb-1">Total (₹)</span>
                 <div className="w-full bg-[#161f28]/40 border border-[#1c212a]/30 text-white rounded-xl p-2 text-xs font-mono font-bold">
-                  ₹{(item.qty * item.rate).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  ₹{(item.qty * item.rate * (item.exchangeRate || 1)).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                 </div>
               </div>
 
@@ -268,31 +343,51 @@ export function NewInvoiceClient({ customers, branches }: NewInvoiceClientProps)
         </div>
 
         {/* FINANCIAL SUMMARY TOTALS */}
-        <div className="border-t border-[#1c212a]/50 pt-4 flex flex-col sm:flex-row sm:justify-between items-center sm:items-start gap-4 text-xs font-semibold text-white">
-          <div className="flex gap-4">
-            <div className="space-y-1">
-              <label className="ds-label block text-slate-400">Discount (₹)</label>
-              <input
-                type="number"
-                min="0"
-                value={discountAmount || ""}
-                onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
-                className="bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2 text-xs font-mono w-28"
+        <div className="border-t border-[#1c212a]/50 pt-4 flex flex-col md:flex-row md:justify-between items-start gap-6 text-xs font-semibold text-white">
+          
+          {/* Left side: Notes and Global Parameters (Discount, Tax) */}
+          <div className="w-full md:w-1/2 space-y-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide">Customer Notes</label>
+              <textarea
+                placeholder="Type any manual notes here..."
+                value={manualNotes}
+                onChange={(e) => setManualNotes(e.target.value)}
+                rows={3}
+                className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs"
               />
             </div>
-            <div className="space-y-1">
-              <label className="ds-label block text-slate-400">Tax Rate (%)</label>
-              <input
-                type="number"
-                min="0"
-                value={taxRate || ""}
-                onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                className="bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2 text-xs font-mono w-20"
-              />
+
+            <div className="flex gap-4">
+              <div className="space-y-1">
+                <label className="ds-label block text-slate-400">Discount (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={discountAmount || ""}
+                  onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
+                  className="bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2 text-xs font-mono w-28"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="ds-label block text-slate-400">Tax Rate (GST)</label>
+                <select
+                  value={taxRate}
+                  onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                  className="bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-mono w-28 text-white"
+                >
+                  <option value="0">0%</option>
+                  <option value="5">5%</option>
+                  <option value="12">12%</option>
+                  <option value="18">18%</option>
+                  <option value="28">28%</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          <div className="w-64 space-y-2 text-xs text-slate-400">
+          {/* Right side: Totals summary */}
+          <div className="w-64 space-y-2 text-xs text-slate-400 self-end">
             <div className="flex justify-between">
               <span>Subtotal:</span>
               <span className="font-mono text-white">₹{subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
@@ -345,6 +440,13 @@ export function NewInvoiceClient({ customers, branches }: NewInvoiceClientProps)
           )}
         </button>
       </div>
+
+      {/* Autocomplete Datalist */}
+      <datalist id="products-datalist">
+        {products.map((p) => (
+          <option key={p.id} value={p.name} />
+        ))}
+      </datalist>
 
     </form>
   );

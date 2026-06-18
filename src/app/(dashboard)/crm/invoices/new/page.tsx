@@ -35,7 +35,7 @@ export default async function NewInvoicePage() {
   }
 
   // Fetch related lookup tables in parallel
-  const [accounts, contacts, vendors, employees] = await Promise.all([
+  const [accounts, contacts, vendors, employees, products, bankAccounts, quoteCount, invoiceCount, debitNoteCount, salesOrderCount, purchaseOrderCount] = await Promise.all([
     db.crmAccount.findMany({
       where: { orgId },
       select: { id: true, name: true },
@@ -43,7 +43,7 @@ export default async function NewInvoicePage() {
     }),
     db.crmContact.findMany({
       where: { orgId },
-      select: { id: true, firstName: true, lastName: true },
+      select: { id: true, firstName: true, lastName: true, accountId: true },
       orderBy: { lastName: "asc" },
     }),
     db.crmVendor.findMany({
@@ -56,12 +56,36 @@ export default async function NewInvoicePage() {
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
+    db.crmProduct.findMany({
+      where: { orgId, active: true },
+      select: { id: true, name: true, price: true, taxPercent: true },
+      orderBy: { name: "asc" },
+    }),
+    db.account.findMany({
+      where: { orgId, accountType: "BANK", isActive: true },
+      select: { id: true, accountName: true, accountCode: true },
+      orderBy: { accountName: "asc" },
+    }),
+    db.crmInvoice.count({ where: { orgId, type: "QUOTE" } }),
+    db.crmInvoice.count({ where: { orgId, type: "INVOICE" } }),
+    db.crmInvoice.count({ where: { orgId, type: "DEBIT_NOTE" } }),
+    db.crmInvoice.count({ where: { orgId, type: "SALES_ORDER" } }),
+    db.crmInvoice.count({ where: { orgId, type: "PURCHASE_ORDER" } }),
   ]);
 
   const formattedContacts = contacts.map((c) => ({
     id: c.id,
     name: `${c.firstName || ""} ${c.lastName}`.trim(),
+    accountId: c.accountId,
   }));
+
+  const nextNumbers = {
+    QUOTE: `CHN-Quote-${String(quoteCount + 1).padStart(3, "0")}`,
+    INVOICE: `CHN-Invoice-${String(invoiceCount + 1).padStart(3, "0")}`,
+    DEBIT_NOTE: `CHN-DN-${String(debitNoteCount + 1).padStart(3, "0")}`,
+    SALES_ORDER: `CHN-SO-${String(salesOrderCount + 1).padStart(3, "0")}`,
+    PURCHASE_ORDER: `CHN-PO-${String(purchaseOrderCount + 1).padStart(3, "0")}`,
+  };
 
   return (
     <div className="p-8 space-y-6 max-w-5xl mx-auto">
@@ -74,6 +98,9 @@ export default async function NewInvoicePage() {
         contacts={formattedContacts}
         vendors={vendors}
         employees={employees}
+        products={products}
+        bankAccounts={bankAccounts}
+        nextNumbers={nextNumbers}
       />
     </div>
   );

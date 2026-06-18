@@ -16,17 +16,31 @@ interface InvoiceItem {
   qty: number;
   rate: number;
   taxPercent: number;
+  currency: string;
+  exchangeRate: number;
 }
 
 interface InvoiceFormProps {
   initialData?: any;
   accounts: Option[];
-  contacts: { id: string; name: string }[];
+  contacts: { id: string; name: string; accountId?: string | null }[];
   vendors: Option[];
   employees: Option[];
+  products?: { id: string; name: string; price: number; taxPercent: number }[];
+  bankAccounts?: { id: string; accountName: string; accountCode: string }[];
+  nextNumbers?: Record<string, string>;
 }
 
-export function InvoiceForm({ initialData, accounts, contacts, vendors, employees }: InvoiceFormProps) {
+export function InvoiceForm({
+  initialData,
+  accounts,
+  contacts,
+  vendors,
+  employees,
+  products = [],
+  bankAccounts = [],
+  nextNumbers = {}
+}: InvoiceFormProps) {
   const router = useRouter();
   const isEdit = !!initialData;
 
@@ -35,6 +49,14 @@ export function InvoiceForm({ initialData, accounts, contacts, vendors, employee
   const [type, setType] = useState(initialData?.type || "QUOTE");
   const [discount, setDiscount] = useState<number>(initialData?.discount || 0);
 
+  const [accountId, setAccountId] = useState(initialData?.accountId || "");
+  const [issueDate, setIssueDate] = useState(
+    initialData?.date ? new Date(initialData.date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0]
+  );
+  const [dueDateState, setDueDateState] = useState(
+    initialData?.dueDate ? new Date(initialData.dueDate).toISOString().split("T")[0] : ""
+  );
+
   // Line items state
   const [items, setItems] = useState<InvoiceItem[]>(
     initialData?.items?.map((item: any) => ({
@@ -42,11 +64,19 @@ export function InvoiceForm({ initialData, accounts, contacts, vendors, employee
       qty: item.qty,
       rate: item.rate,
       taxPercent: item.taxPercent || 18,
-    })) || [{ productName: "", qty: 1, rate: 0, taxPercent: 18 }]
+      currency: item.currency || "INR",
+      exchangeRate: item.exchangeRate || 1,
+    })) || [{ productName: "", qty: 1, rate: 0, taxPercent: 18, currency: "INR", exchangeRate: 1 }]
   );
 
+  useEffect(() => {
+    if (!isEdit && nextNumbers && nextNumbers[type]) {
+      setInvoiceNumber(nextNumbers[type]);
+    }
+  }, [type, isEdit, nextNumbers]);
+
   const handleAddItem = () => {
-    setItems((prev) => [...prev, { productName: "", qty: 1, rate: 0, taxPercent: 18 }]);
+    setItems((prev) => [...prev, { productName: "", qty: 1, rate: 0, taxPercent: 18, currency: "INR", exchangeRate: 1 }]);
   };
 
   const handleRemoveItem = (index: number) => {
@@ -61,18 +91,31 @@ export function InvoiceForm({ initialData, accounts, contacts, vendors, employee
     setItems((prev) =>
       prev.map((item, i) => {
         if (i !== index) return item;
-        return {
+        let updated = {
           ...item,
-          [field]: field === "productName" ? value : parseFloat(value) || 0,
+          [field]: field === "productName" || field === "currency" ? value : parseFloat(value) || 0,
         };
+
+        if (field === "currency" && value === "INR") {
+          updated.exchangeRate = 1;
+        }
+
+        if (field === "productName") {
+          const match = products.find(p => p.name.toLowerCase() === value.trim().toLowerCase());
+          if (match) {
+            updated.rate = match.price;
+            updated.taxPercent = match.taxPercent;
+          }
+        }
+        return updated;
       })
     );
   };
 
   // Real-time calculations
   const totals = React.useMemo(() => {
-    const subtotal = items.reduce((sum, item) => sum + (item.qty * item.rate), 0);
-    const tax = items.reduce((sum, item) => sum + (item.qty * item.rate * (item.taxPercent / 100)), 0);
+    const subtotal = items.reduce((sum, item) => sum + (item.qty * item.rate * item.exchangeRate), 0);
+    const tax = items.reduce((sum, item) => sum + (item.qty * item.rate * item.exchangeRate * (item.taxPercent / 100)), 0);
     const total = subtotal + tax - discount;
     return { subtotal, tax, total };
   }, [items, discount]);
@@ -95,6 +138,9 @@ export function InvoiceForm({ initialData, accounts, contacts, vendors, employee
     fd.append("type", type);
     fd.append("discount", discount.toString());
 
+    // Explicitly add accountId since it is controlled
+    fd.append("accountId", accountId);
+
     const res = isEdit
       ? await updateInvoiceAction(initialData.id, fd, JSON.stringify(items))
       : await createInvoiceAction(fd, JSON.stringify(items));
@@ -109,8 +155,7 @@ export function InvoiceForm({ initialData, accounts, contacts, vendors, employee
     }
   };
 
-  const invoiceTypes = ["QUOTE", "INVOICE", "SALES_ORDER", "PURCHASE_ORDER"];
-  const invoiceStatuses = ["DRAFT", "SENT", "PAID", "OVERDUE", "CANCELLED"];
+  const invoiceTypes = ["QUOTE", "INVOICE", "DEBIT_NOTE", "SALES_ORDER", "PURCHASE_ORDER"];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl bg-[#0f1319] border border-[#1c212a]/60 rounded-xl p-6 shadow-2xl">
@@ -153,20 +198,45 @@ export function InvoiceForm({ initialData, accounts, contacts, vendors, employee
             <input
               type="date"
               name="date"
-              defaultValue={initialData?.date ? new Date(initialData.date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0]}
+              value={issueDate}
+              onChange={(e) => setIssueDate(e.target.value)}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Due Date</label>
-            <input
-              type="date"
-              name="dueDate"
-              defaultValue={initialData?.dueDate ? new Date(initialData.dueDate).toISOString().split("T")[0] : ""}
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Bank Details</label>
+            <select
+              name="bankDetails"
+              defaultValue={initialData?.bankDetails || ""}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
-            />
+            >
+              <option value="">Select Bank Account...</option>
+              {bankAccounts.map((acc) => (
+                <option key={acc.id} value={`${acc.accountName} (A/C: ${acc.accountCode})`}>
+                  {acc.accountName} ({acc.accountCode})
+                </option>
+              ))}
+            </select>
           </div>
+          {(type === "INVOICE" || type === "DEBIT_NOTE") ? (
+            <input
+              type="hidden"
+              name="dueDate"
+              value={new Date(new Date(issueDate).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}
+            />
+          ) : (
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Due Date</label>
+              <input
+                type="date"
+                name="dueDate"
+                value={dueDateState}
+                onChange={(e) => setDueDateState(e.target.value)}
+                className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -182,7 +252,8 @@ export function InvoiceForm({ initialData, accounts, contacts, vendors, employee
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Customer (Account)</label>
             <select
               name="accountId"
-              defaultValue={initialData?.accountId || ""}
+              value={accountId}
+              onChange={(e) => setAccountId(e.target.value)}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
             >
               <option value="">Link Account</option>
@@ -199,9 +270,11 @@ export function InvoiceForm({ initialData, accounts, contacts, vendors, employee
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
             >
               <option value="">Link Contact</option>
-              {contacts.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
+              {contacts
+                .filter((c) => !accountId || c.accountId === accountId)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
             </select>
           </div>
           {type === "PURCHASE_ORDER" && (
@@ -219,18 +292,7 @@ export function InvoiceForm({ initialData, accounts, contacts, vendors, employee
               </select>
             </div>
           )}
-          <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Status</label>
-            <select
-              name="status"
-              defaultValue={initialData?.status || "DRAFT"}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
-            >
-              {invoiceStatuses.map((st) => (
-                <option key={st} value={st}>{st}</option>
-              ))}
-            </select>
-          </div>
+          <input type="hidden" name="status" value={initialData?.status || "DRAFT"} />
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Document Owner *</label>
             <select
@@ -268,27 +330,54 @@ export function InvoiceForm({ initialData, accounts, contacts, vendors, employee
           <table className="w-full text-left text-xs text-slate-300 border-collapse">
             <thead>
               <tr className="bg-[#0c0f14] border-b border-[#1c212a] font-bold text-slate-400">
-                <th className="px-4 py-3 min-w-[240px]">Product / Service Name *</th>
-                <th className="px-4 py-3 w-24">Qty</th>
-                <th className="px-4 py-3 w-36">Rate (INR)</th>
+                <th className="px-4 py-3 min-w-[200px]">Product / Service Name *</th>
+                <th className="px-4 py-3 w-24">Currency</th>
+                <th className="px-4 py-3 w-28">EXCH Rate</th>
+                <th className="px-4 py-3 w-20">Qty</th>
+                <th className="px-4 py-3 w-28">Rate</th>
                 <th className="px-4 py-3 w-28">GST Tax (%)</th>
-                <th className="px-4 py-3 w-36 text-right">Amount (INR)</th>
-                <th className="px-4 py-3 w-16 text-center"></th>
+                <th className="px-4 py-3 w-32 text-right">Amount (INR)</th>
+                <th className="px-4 py-3 w-12 text-center"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1c212a]/30">
               {items.map((item, index) => {
-                const itemAmount = item.qty * item.rate * (1 + (item.taxPercent / 100));
-                
+                const itemAmount = item.qty * item.rate * item.exchangeRate * (1 + (item.taxPercent / 100));
+
                 return (
                   <tr key={index} className="hover:bg-[#161f28]/15">
                     <td className="px-4 py-2">
                       <input
                         type="text"
                         value={item.productName}
+                        list="products-datalist"
                         onChange={(e) => handleItemChange(index, "productName", e.target.value)}
                         placeholder="e.g. Customs CHA filing, Local transport..."
                         className="w-full px-2 py-1 bg-[#0a0d12] border border-[#1c212a] rounded text-white focus:outline-none focus:border-[#00c4b6]"
+                        required
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <select
+                        value={item.currency}
+                        onChange={(e) => handleItemChange(index, "currency", e.target.value)}
+                        className="w-full px-2 py-1 bg-[#0a0d12] border border-[#1c212a] rounded text-white focus:outline-none focus:border-[#00c4b6]"
+                      >
+                        <option value="INR">INR</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="SGD">SGD</option>
+                      </select>
+                    </td>
+                    <td className="px-4 py-2">
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={item.exchangeRate}
+                        disabled={item.currency === "INR"}
+                        onChange={(e) => handleItemChange(index, "exchangeRate", e.target.value)}
+                        className="w-full px-2 py-1 bg-[#0a0d12] border border-[#1c212a] rounded text-white focus:outline-none focus:border-[#00c4b6] disabled:opacity-50"
                         required
                       />
                     </td>
@@ -350,24 +439,36 @@ export function InvoiceForm({ initialData, accounts, contacts, vendors, employee
 
       {/* ─── REAL-TIME FINANCIAL TOTALS ─── */}
       <div className="flex flex-col md:flex-row md:justify-between items-start gap-6 pt-4 border-t border-[#1c212a]/30">
-        
-        {/* Discount input */}
-        <div className="w-full md:w-64 space-y-1.5">
-          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide">Applied Flat Discount (INR)</label>
-          <div className="relative">
-            <DollarSign className="absolute left-2.5 top-2.5 size-4 text-on-surface-variant" />
-            <input
-              type="number"
-              min="0"
-              value={discount}
-              onChange={(e) => setDiscount(Math.max(0, parseFloat(e.target.value) || 0))}
-              placeholder="e.g. 500"
-              className="w-full pl-8 pr-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+        {/* Left side: Notes & Discount */}
+        <div className="w-full md:w-1/2 space-y-4">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide">Customer Notes</label>
+            <textarea
+              name="manualNotes"
+              defaultValue={initialData?.manualNotes || "Thanks for your business."}
+              placeholder="Type any manual notes here..."
+              rows={3}
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
             />
+          </div>
+
+          <div className="w-64 space-y-1.5">
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide">Applied Flat Discount (INR)</label>
+            <div className="relative">
+              <div className="absolute left-3 top-1.5 text-slate-500 font-bold text-sm">₹</div>
+              <input
+                type="number"
+                min="0"
+                value={discount}
+                onChange={(e) => setDiscount(Math.max(0, parseFloat(e.target.value) || 0))}
+                placeholder="e.g. 500"
+                className="w-full pl-8 pr-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Totals Summary */}
+        {/* Right side: Totals Summary */}
         <div className="w-full md:w-80 bg-[#0c0f14] p-4 rounded-xl border border-[#1c212a]/80 space-y-2.5 text-slate-300">
           <div className="flex justify-between text-xs font-semibold">
             <span>Subtotal</span>
@@ -386,7 +487,6 @@ export function InvoiceForm({ initialData, accounts, contacts, vendors, employee
             <span className="text-[#00c4b6]">₹{totals.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
           </div>
         </div>
-
       </div>
 
       {/* Action Buttons */}
@@ -407,6 +507,13 @@ export function InvoiceForm({ initialData, accounts, contacts, vendors, employee
           <span>{isSubmitting ? "Generating Sheet..." : isEdit ? "Update Document" : "Save Document"}</span>
         </button>
       </div>
+
+      {/* Autocomplete Datalist */}
+      <datalist id="products-datalist">
+        {products.map((p) => (
+          <option key={p.id} value={p.name} />
+        ))}
+      </datalist>
     </form>
   );
 }

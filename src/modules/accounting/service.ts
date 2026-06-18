@@ -643,7 +643,7 @@ export async function createSalesInvoice(orgId: string, createdById: string, dat
   const items = data.items || [];
   let subtotal = 0;
   for (const it of items) {
-    subtotal += parseFloat(it.qty) * parseFloat(it.rate);
+    subtotal += parseFloat(it.qty) * parseFloat(it.rate) * parseFloat(it.exchangeRate || 1);
   }
 
   const discountAmount = data.discountAmount || 0;
@@ -681,13 +681,17 @@ export async function createSalesInvoice(orgId: string, createdById: string, dat
         discountAmount: new Prisma.Decimal(discountAmount),
         taxAmount: new Prisma.Decimal(taxAmount),
         remarks: data.remarks || null,
+        bankDetails: data.bankDetails || null,
+        manualNotes: data.manualNotes || null,
         createdById,
         items: {
           create: items.map((it: any) => ({
             itemName: it.itemName,
             qty: parseFloat(it.qty),
             rate: new Prisma.Decimal(it.rate),
-            amount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate)),
+            amount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate) * parseFloat(it.exchangeRate || 1)),
+            currency: it.currency || "INR",
+            exchangeRate: parseFloat(it.exchangeRate || 1),
           })),
         },
         taxLines: taxRate > 0 ? {

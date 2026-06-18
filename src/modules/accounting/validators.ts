@@ -47,6 +47,8 @@ export const InvoiceItemSchema = z.object({
   itemName: z.string().min(1, "Item name is required"),
   qty: z.number().positive("Quantity must be positive"),
   rate: z.number().nonnegative("Rate cannot be negative"),
+  currency: z.string().default("INR").optional(),
+  exchangeRate: z.number().positive().default(1).optional(),
 });
 
 export const SalesInvoiceSchema = z.object({
@@ -59,6 +61,8 @@ export const SalesInvoiceSchema = z.object({
   discountAmount: z.number().nonnegative().default(0),
   taxRate: z.number().nonnegative().default(18), // Default GST 18%
   remarks: z.string().nullable().optional(),
+  bankDetails: z.string().nullable().optional(),
+  manualNotes: z.string().nullable().optional(),
 });
 
 export const PurchaseInvoiceSchema = z.object({
