@@ -32,7 +32,7 @@ export function ConvertModal({ leadId, leadName, companyName, onClose }: Convert
 
     if (res.ok) {
       toast.success("Lead converted successfully!");
-      router.push(`/crm/accounts/${res.data.accountId}`);
+      router.push(`/crm/customers/${res.data.accountId}`);
     } else {
       toast.error(res.error);
     }

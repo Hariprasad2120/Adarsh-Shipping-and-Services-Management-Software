@@ -51,6 +51,8 @@ function getIconColor(label: string, isActive: boolean) {
   if (lowerLabel.includes("leaves")) return "text-[#fb923c]";
   if (lowerLabel.includes("reports") || lowerLabel.includes("kpi")) return "text-[#34d399]";
   if (lowerLabel.includes("crm") || lowerLabel.includes("overview")) return "text-[#34d399]";
+  if (lowerLabel.includes("communication")) return "text-[#38bdf8]";
+  if (lowerLabel.includes("expense")) return "text-[#fbbf24]";
   if (lowerLabel.includes("settings")) return "text-[#f59e0b]";
   if (lowerLabel.includes("simulation")) return "text-[#ec4899]";
   if (lowerLabel.includes("notifications")) return "text-[#8b5cf6]";

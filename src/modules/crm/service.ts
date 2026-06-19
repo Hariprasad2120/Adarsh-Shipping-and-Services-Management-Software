@@ -147,7 +147,11 @@ export async function deleteAttachment(orgId: string, id: string, userId: string
 
 export async function listLeads(orgId: string, filters?: { status?: string; search?: string }) {
   const where: any = { orgId, isConverted: false };
-  if (filters?.status) where.status = filters.status;
+  if (filters?.status) {
+    where.status = filters.status;
+  } else {
+    where.status = { notIn: ["INTERESTED", "FOLLOW_UP"] };
+  }
   if (filters?.search) {
     where.OR = [
       { firstName: { contains: filters.search, mode: "insensitive" } },
@@ -162,6 +166,38 @@ export async function listLeads(orgId: string, filters?: { status?: string; sear
     orderBy: { createdAt: "desc" },
     include: {
       owner: { select: { id: true, name: true } },
+    },
+  });
+}
+
+export async function listEnquiries(orgId: string, filters?: { search?: string; type?: "all" | "perishable" | "future_follow" }) {
+  const where: any = { 
+    orgId, 
+    isConverted: false,
+    status: { in: ["INTERESTED", "FOLLOW_UP"] } 
+  };
+  
+  if (filters?.type === "perishable") {
+    where.isPerishable = true;
+  } else if (filters?.type === "future_follow") {
+    where.isFutureFollowUp = true;
+  }
+  
+  if (filters?.search) {
+    where.OR = [
+      { firstName: { contains: filters.search, mode: "insensitive" } },
+      { lastName: { contains: filters.search, mode: "insensitive" } },
+      { company: { contains: filters.search, mode: "insensitive" } },
+      { email: { contains: filters.search, mode: "insensitive" } },
+      { enquiryRef: { contains: filters.search, mode: "insensitive" } },
+    ];
+  }
+
+  return db.crmLead.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    include: {
+      owner: { select: { id: true, name: true, email: true } },
     },
   });
 }
@@ -249,7 +285,7 @@ export async function getContact(orgId: string, id: string) {
   return db.crmContact.findFirst({
     where: { id, orgId },
     include: {
-      account: { select: { id: true, name: true, phone: true, email: true } },
+      account: { select: { id: true, name: true, phone: true, email: true, website: true, billingAddress: true, shippingAddress: true, customerSubType: true } },
       owner: { select: { id: true, name: true, email: true } },
     },
   });
@@ -312,6 +348,7 @@ export async function listAccounts(orgId: string, filters?: { search?: string })
     orderBy: { name: "asc" },
     include: {
       owner: { select: { id: true, name: true } },
+      invoices: { select: { total: true, status: true } },
     },
   });
 }

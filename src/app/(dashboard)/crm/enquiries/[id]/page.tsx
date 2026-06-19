@@ -10,14 +10,14 @@ import {
   listActivities,
   getTimelineEvents,
 } from "@/modules/crm/service";
-import { LeadDetailWrapper } from "./lead-detail-wrapper";
 import { ShieldAlert } from "lucide-react";
+import { EnquiryDetailClient } from "./enquiry-detail-client";
 
-interface LeadDetailPageProps {
+interface EnquiryDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
+export default async function EnquiryDetailPage({ params }: EnquiryDetailPageProps) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -40,7 +40,7 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
       <div className="p-8 text-center text-red-400">
         <ShieldAlert className="size-12 mx-auto mb-4" />
         <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-sm mt-1">You do not have permission to view CRM leads.</p>
+        <p className="text-sm mt-1">You do not have permission to view CRM enquiries.</p>
       </div>
     );
   }
@@ -49,48 +49,47 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
   const lead = await getLead(orgId, id);
   if (!lead) notFound();
 
-  if (lead.status === "INTERESTED" || lead.status === "FOLLOW_UP") {
-    redirect(`/crm/enquiries/${id}`);
+  if (lead.status !== "INTERESTED" && lead.status !== "FOLLOW_UP") {
+    redirect(`/crm/leads/${id}`);
   }
 
-  // Parallel fetches for related list items, work logs, and quotes
-  const [notes, attachments, activities, timeline, workTimeLogs, quotes] = await Promise.all([
+  // Fetch active users for the manager assignment dropdown
+  const users = await db.user.findMany({
+    where: { orgId, active: true },
+    select: { id: true, name: true, email: true },
+    orderBy: { name: "asc" }
+  });
+
+  // Check if current user is manager or admin
+  const userRoles = await db.userRole.findMany({
+    where: { userId: session.user.id },
+    include: { role: true }
+  });
+
+  const isManager = userRoles.some(
+    (ur) =>
+      ur.role.name.toLowerCase() === "admin" ||
+      ur.role.name.toLowerCase() === "manager" ||
+      ur.role.name.toLowerCase() === "crm manager"
+  );
+
+  // Parallel fetches for notes, attachments, activities, timeline
+  const [notes, attachments, activities, timeline] = await Promise.all([
     getNotes(orgId, "LEAD", id),
     getAttachments(orgId, "LEAD", id),
     listActivities(orgId, { relatedToType: "LEAD", relatedToId: id }),
     getTimelineEvents(orgId, "LEAD", id),
-    db.crmWorkTimeLog.findMany({
-      where: {
-        orgId,
-        OR: [
-          { leadId: id },
-          lead.convertedAccountId ? { accountId: lead.convertedAccountId } : undefined,
-        ].filter(Boolean) as any,
-      },
-      include: { user: { select: { name: true } } },
-      orderBy: { loggedAt: "desc" },
-    }),
-    db.crmInvoice.findMany({
-      where: {
-        orgId,
-        OR: [
-          { crmLeadId: id },
-          lead.convertedAccountId ? { accountId: lead.convertedAccountId, type: "QUOTE" } : undefined,
-        ].filter(Boolean) as any,
-      },
-      orderBy: { createdAt: "desc" },
-    }),
   ]);
 
   return (
-    <LeadDetailWrapper
+    <EnquiryDetailClient
       lead={lead}
+      users={users}
       notes={notes}
       attachments={attachments}
       activities={activities}
       timeline={timeline}
-      workTimeLogs={workTimeLogs}
-      quotes={quotes}
+      isManager={isManager}
     />
   );
 }

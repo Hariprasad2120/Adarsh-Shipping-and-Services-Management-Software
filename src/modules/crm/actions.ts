@@ -27,6 +27,15 @@ export async function createLeadAction(formData: FormData): Promise<ActionRespon
       return { ok: false, error: "Lead Name/Last Name and Company are required" };
     }
 
+    const isPerishable = formData.get("isPerishable") === "true";
+    const perishableDetails = isPerishable ? {
+      perishableType: (formData.get("perishableType") as string) || "",
+      tempRequired: (formData.get("tempRequired") as string) || "",
+      humidityControl: (formData.get("humidityControl") as string) || "",
+      ventilation: (formData.get("ventilation") as string) || "",
+      perishableRemarks: (formData.get("perishableRemarks") as string) || "",
+    } : null;
+
     const data = {
       firstName: (formData.get("firstName") as string) || null,
       lastName,
@@ -51,6 +60,8 @@ export async function createLeadAction(formData: FormData): Promise<ActionRespon
       description: (formData.get("description") as string) || null,
       tags: formData.get("tags") ? (formData.get("tags") as string).split(",").map(t => t.trim()).filter(Boolean) : [],
       ownerId: (formData.get("ownerId") as string) || session.user.id,
+      isPerishable,
+      perishableDetails,
     };
 
     const lead = await crmService.createLead(orgId, session.user.id, data);
@@ -77,6 +88,15 @@ export async function updateLeadAction(leadId: string, formData: FormData): Prom
       return { ok: false, error: "Lead Name/Last Name and Company are required" };
     }
 
+    const isPerishable = formData.get("isPerishable") === "true";
+    const perishableDetails = isPerishable ? {
+      perishableType: (formData.get("perishableType") as string) || "",
+      tempRequired: (formData.get("tempRequired") as string) || "",
+      humidityControl: (formData.get("humidityControl") as string) || "",
+      ventilation: (formData.get("ventilation") as string) || "",
+      perishableRemarks: (formData.get("perishableRemarks") as string) || "",
+    } : null;
+
     const data = {
       firstName: (formData.get("firstName") as string) || null,
       lastName,
@@ -101,6 +121,8 @@ export async function updateLeadAction(leadId: string, formData: FormData): Prom
       description: (formData.get("description") as string) || null,
       tags: formData.get("tags") ? (formData.get("tags") as string).split(",").map(t => t.trim()).filter(Boolean) : [],
       ownerId: (formData.get("ownerId") as string) || session.user.id,
+      isPerishable,
+      perishableDetails,
     };
 
     const lead = await crmService.updateLead(orgId, leadId, session.user.id, data);
@@ -219,6 +241,9 @@ export async function convertLeadAction(
       data: {
         isConverted: true,
         convertedAt: new Date(),
+        convertedAccountId: account.id,
+        convertedContactId: contact.id,
+        convertedDealId: dealId || null,
       },
     });
 
@@ -232,7 +257,7 @@ export async function convertLeadAction(
     });
 
     revalidatePath("/crm/leads");
-    revalidatePath("/crm/accounts");
+    revalidatePath("/crm/customers");
     revalidatePath("/crm/contacts");
 
     return {
@@ -266,6 +291,314 @@ export async function deleteLeadAction(leadId: string): Promise<ActionResponse> 
   }
 }
 
+function calculateCrmReminderTime(now: Date): Date {
+  const alertTime = new Date(now.getTime() + 2 * 60 * 60 * 1000); // +2 hours
+  
+  const alertHour = alertTime.getHours();
+  const alertMin = alertTime.getMinutes();
+  const alertMinutesFromMidnight = alertHour * 60 + alertMin;
+  
+  const startVal = 9 * 60 + 30; // 9:30 AM = 570 minutes
+  const endVal = 17 * 60 + 30;  // 5:30 PM = 1050 minutes
+  
+  if (alertMinutesFromMidnight > endVal) {
+    // Beyond 5:30 PM -> Tomorrow at 9:30 AM
+    const scheduledDate = new Date(now);
+    scheduledDate.setDate(scheduledDate.getDate() + 1);
+    scheduledDate.setHours(9, 30, 0, 0);
+    return scheduledDate;
+  } else if (alertMinutesFromMidnight < startVal) {
+    // Before 9:30 AM -> Today at 9:30 AM
+    const scheduledDate = new Date(now);
+    scheduledDate.setHours(9, 30, 0, 0);
+    return scheduledDate;
+  }
+  
+  return alertTime;
+}
+
+export async function updateLeadStatusAction(
+  leadId: string,
+  status: string,
+  additionalData?: any
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.lead.create");
+
+    const existingLead = await db.crmLead.findFirst({
+      where: { id: leadId, orgId },
+    });
+    if (!existingLead) return { ok: false, error: "Lead not found" };
+
+    const isChangeFromFollowUp = existingLead.status === "NOT_PICKED" || existingLead.status === "NOT_REACHABLE";
+    const changeRemarks = additionalData?.remarks || additionalData?.reason || "";
+
+    // Require reason/remarks if changing from a follow-up status (or if retrying/rescheduling follow-up)
+    if (isChangeFromFollowUp) {
+      if (!changeRemarks.trim()) {
+        return { ok: false, error: "A reason/remark for the status update is required during the follow-up period." };
+      }
+    }
+
+    // Complete any existing pending/open follow-up tasks
+    if (isChangeFromFollowUp) {
+      const completionText = `Completed status update to ${status.replace("_", " ")} at ${new Date().toLocaleString("en-IN")}.${changeRemarks ? ` Outcome/Remarks: ${changeRemarks}` : ""}`;
+      await db.crmActivity.updateMany({
+        where: {
+          relatedToType: "LEAD",
+          relatedToId: leadId,
+          type: "TASK",
+          title: { startsWith: "Follow-up:" },
+          status: "NOT_STARTED",
+        },
+        data: {
+          status: "COMPLETED",
+          description: completionText
+        }
+      });
+    }
+
+    const updateData: any = { status };
+
+    if (status === "NOT_INTERESTED") {
+      updateData.notInterestedReason = additionalData?.reason || "";
+    } else if (status === "INTERESTED") {
+      updateData.enquiryDetails = additionalData?.enquiry || null;
+      updateData.isPerishable = additionalData?.isPerishable ?? false;
+      updateData.isFutureFollowUp = additionalData?.isFutureFollowUp ?? false;
+      updateData.followUpReminderDate = additionalData?.followUpReminderDate ? new Date(additionalData.followUpReminderDate) : null;
+    }
+
+    if (status === "INTERESTED" || status === "FOLLOW_UP") {
+      if (!existingLead.enquiryRef) {
+        const rand = Math.random().toString(36).substring(2, 7).toUpperCase();
+        updateData.enquiryRef = `ADR-ENQ-${rand}`;
+      }
+
+      // Automatically save contact details to the Contacts tab of CRM
+      const contactEmail = existingLead.email || "";
+      const contactMobile = existingLead.mobile || "";
+
+      let existingContact = null;
+      if (contactEmail || contactMobile) {
+        existingContact = await db.crmContact.findFirst({
+          where: {
+            orgId,
+            OR: [
+              contactEmail ? { email: contactEmail } : undefined,
+              contactMobile ? { mobile: contactMobile } : undefined,
+            ].filter(Boolean) as any,
+          },
+        });
+      }
+
+      if (!existingContact) {
+        await db.crmContact.create({
+          data: {
+            orgId,
+            ownerId: existingLead.ownerId,
+            firstName: existingLead.firstName,
+            lastName: existingLead.lastName,
+            email: existingLead.email,
+            phone: existingLead.phone,
+            mobile: existingLead.mobile,
+            designation: existingLead.designation,
+            address: existingLead.address,
+            createdById: session.user.id,
+            updatedById: session.user.id,
+          },
+        });
+      }
+    }
+
+    const lead = await db.crmLead.update({
+      where: { id: leadId },
+      data: updateData,
+    });
+
+    await crmService.addTimelineEvent(orgId, {
+      relatedToType: "LEAD",
+      relatedToId: leadId,
+      eventType: "LEAD_STATUS_CHANGED",
+      description: `Lead status updated to ${status.replace("_", " ")}.${changeRemarks ? ` Reason/Remarks: ${changeRemarks}` : ""}`,
+      createdById: session.user.id,
+    });
+
+    if (status === "NOT_INTERESTED" && additionalData?.reason) {
+      await crmService.addNote(orgId, {
+        relatedToType: "LEAD",
+        relatedToId: leadId,
+        body: `Not Interested Reason: ${additionalData.reason}`,
+        createdById: session.user.id,
+      });
+    }
+
+    if (status === "INTERESTED" && changeRemarks) {
+      await crmService.addNote(orgId, {
+        relatedToType: "LEAD",
+        relatedToId: leadId,
+        body: `[System Note - Status Change: Interested] Reason: ${changeRemarks}`,
+        createdById: session.user.id,
+      });
+    }
+
+    if (status === "INTERESTED" && additionalData?.enquiry) {
+      const enq = additionalData.enquiry;
+      const type = enq.type || "Sea";
+      let bodyText = `In-call Enquiry Captured (${type} Cargo):\n`;
+      if (type === "Sea") {
+        bodyText += `- Import/Export: ${enq.seaType || "N/A"}\n`
+          + `- POL: ${enq.pol || "N/A"}\n`
+          + `- POD: ${enq.pod || "N/A"}\n`
+          + `- Commodity: ${enq.commodity || "N/A"}\n`
+          + `- Weight: ${enq.weight || "N/A"}\n`
+          + `- CBM/Volume: ${enq.cbm || "N/A"}\n`
+          + `- Dimensions/Container type: ${enq.containerType || "N/A"}\n`
+          + `- No. of containers: ${enq.containerCount || "N/A"}\n`
+          + `- Incoterm: ${enq.incoterm || "N/A"}\n`
+          + `- Shipment planning: ${enq.shipmentPlanning || "N/A"}\n`
+          + `- Prior shipments done: ${enq.shipmentsDoneBefore || "N/A"}\n`
+          + `- Purpose: ${enq.purpose || "N/A"}`;
+      } else {
+        bodyText += `- AOL: ${enq.aol || "N/A"}\n`
+          + `- AOD: ${enq.aod || "N/A"}\n`
+          + `- Commodity: ${enq.commodity || "N/A"}\n`
+          + `- Weight: ${enq.weight || "N/A"}\n`
+          + `- Dimensions: ${enq.dimensions || "N/A"}\n`
+          + `- No. of packages: ${enq.packages || "N/A"}\n`
+          + `- Incoterm: ${enq.incoterm || "N/A"}\n`
+          + `- Shipment planning: ${enq.shipmentPlanning || "N/A"}\n`
+          + `- Prior shipments done: ${enq.shipmentsDoneBefore || "N/A"}\n`
+          + `- Purpose: ${enq.purpose || "N/A"}`;
+      }
+
+      await crmService.addNote(orgId, {
+        relatedToType: "LEAD",
+        relatedToId: leadId,
+        body: bodyText,
+        createdById: session.user.id,
+      });
+    }
+
+    if (status === "NOT_PICKED" || status === "NOT_REACHABLE") {
+      const now = new Date();
+      const alertAt = calculateCrmReminderTime(now);
+
+      await db.crmLeadReminder.deleteMany({
+        where: { leadId, status: "PENDING" },
+      });
+
+      await db.crmLeadReminder.create({
+        data: {
+          orgId,
+          leadId,
+          userId: lead.ownerId,
+          alertAt,
+          status: "PENDING",
+        },
+      });
+
+      const remarks = additionalData?.remarks || "";
+      const extraDesc = remarks ? `\nRemarks: ${remarks}` : "";
+      const statusLabel = status === "NOT_PICKED" ? "Not Picked" : "Not Reachable";
+      
+      await crmService.addTimelineEvent(orgId, {
+        relatedToType: "LEAD",
+        relatedToId: leadId,
+        eventType: "REMINDER_SCHEDULED",
+        description: `Follow-up reminder scheduled for ${alertAt.toLocaleString("en-IN")} because lead was marked as ${statusLabel}.${extraDesc}`,
+        createdById: session.user.id,
+      });
+
+      // Also create a CRM Activity Task for the user's activities panel
+      await db.crmActivity.create({
+        data: {
+          orgId,
+          ownerId: lead.ownerId,
+          type: "TASK",
+          title: `Follow-up: ${statusLabel} Lead`,
+          description: `This lead was marked as ${statusLabel}. Follow up is required by ${alertAt.toLocaleString("en-IN")}.${extraDesc}`,
+          status: "NOT_STARTED",
+          priority: "HIGH",
+          dueAt: alertAt,
+          relatedToType: "LEAD",
+          relatedToId: leadId,
+          createdById: session.user.id,
+          updatedById: session.user.id,
+        }
+      });
+
+      // Add a Note to the lead for review purpose
+      if (remarks) {
+        await crmService.addNote(orgId, {
+          relatedToType: "LEAD",
+          relatedToId: leadId,
+          body: `[System Note - Status Change: ${statusLabel}] ${remarks}`,
+          createdById: session.user.id,
+        });
+      }
+    }
+
+    revalidatePath(`/crm/leads/${leadId}`);
+    revalidatePath("/crm/leads");
+    return { ok: true, data: lead };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update lead status" };
+  }
+}
+
+export async function saveEnquiryRatesAction(
+  leadId: string,
+  ratesData: any
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.lead.create");
+
+    const lead = await db.crmLead.findFirst({
+      where: { id: leadId, orgId },
+    });
+    if (!lead) return { ok: false, error: "Lead not found" };
+
+    const currentEnquiry = (lead.enquiryDetails as any) || {};
+    const updatedEnquiry = {
+      ...currentEnquiry,
+      rates: ratesData,
+    };
+
+    const updatedLead = await db.crmLead.update({
+      where: { id: leadId },
+      data: {
+        enquiryDetails: updatedEnquiry,
+      },
+    });
+
+    await crmService.addTimelineEvent(orgId, {
+      relatedToType: "LEAD",
+      relatedToId: leadId,
+      eventType: "RATES_UPDATED",
+      description: `Rates worksheet updated for enquiry`,
+      createdById: session.user.id,
+    });
+
+    revalidatePath(`/crm/leads/${leadId}`);
+    return { ok: true, data: updatedLead };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to save enquiry rates" };
+  }
+}
+
 // ─── Account & Contact Actions ────────────────────────────────────────────────
 
 export async function createAccountAction(formData: FormData): Promise<ActionResponse> {
@@ -278,8 +611,54 @@ export async function createAccountAction(formData: FormData): Promise<ActionRes
 
     await requirePermission(session.user.id, "crm.account.manage");
 
-    const name = formData.get("name") as string;
-    if (!name) return { ok: false, error: "Account Name is required" };
+    const displayName = (formData.get("displayName") as string) || "";
+    const companyName = (formData.get("companyName") as string) || "";
+    const firstName = (formData.get("firstName") as string) || "";
+    const lastName = (formData.get("lastName") as string) || "";
+    const name = displayName.trim() || companyName.trim() || `${firstName} ${lastName}`.trim() || "Unnamed Customer";
+
+    const parseAddressDetails = (prefix: "billing" | "shipping") => {
+      return {
+        attention: (formData.get(`${prefix}Attention`) as string) || "",
+        country: (formData.get(`${prefix}Country`) as string) || "",
+        street1: (formData.get(`${prefix}Street1`) as string) || "",
+        street2: (formData.get(`${prefix}Street2`) as string) || "",
+        city: (formData.get(`${prefix}City`) as string) || "",
+        state: (formData.get(`${prefix}State`) as string) || "",
+        pincode: (formData.get(`${prefix}Pincode`) as string) || "",
+        phone: (formData.get(`${prefix}Phone`) as string) || "",
+        fax: (formData.get(`${prefix}Fax`) as string) || "",
+      };
+    };
+
+    const billingAddressDetails = parseAddressDetails("billing");
+    const shippingAddressDetails = parseAddressDetails("shipping");
+
+    const formatAddressString = (details: any) => {
+      const parts = [];
+      if (details.attention) parts.push(`Attention: ${details.attention}`);
+      if (details.street1) parts.push(details.street1);
+      if (details.street2) parts.push(details.street2);
+      
+      const cityStateZip = [];
+      if (details.city) cityStateZip.push(details.city);
+      if (details.state) cityStateZip.push(details.state);
+      if (details.pincode) cityStateZip.push(details.pincode);
+      if (cityStateZip.length > 0) parts.push(cityStateZip.join(", "));
+      
+      if (details.country) parts.push(details.country);
+      if (details.phone) parts.push(`Phone: ${details.phone}`);
+      if (details.fax) parts.push(`Fax: ${details.fax}`);
+      
+      return parts.join("\n") || null;
+    };
+
+    const billingAddress = formatAddressString(billingAddressDetails);
+    const shippingAddress = formatAddressString(shippingAddressDetails);
+
+    const channels: string[] = [];
+    if (formData.get("channelEmail") === "true" || formData.get("channelEmail") === "on") channels.push("EMAIL");
+    if (formData.get("channelSms") === "true" || formData.get("channelSms") === "on") channels.push("SMS");
 
     const data = {
       name,
@@ -289,15 +668,34 @@ export async function createAccountAction(formData: FormData): Promise<ActionRes
       phone: (formData.get("phone") as string) || null,
       email: (formData.get("email") as string) || null,
       gstin: (formData.get("gstin") as string) || null,
-      billingAddress: (formData.get("billingAddress") as string) || null,
-      shippingAddress: (formData.get("shippingAddress") as string) || null,
+      billingAddress,
+      shippingAddress,
       creditLimit: parseFloat((formData.get("creditLimit") as string) || "0") || 0,
       paymentTerms: (formData.get("paymentTerms") as string) || null,
       ownerId: (formData.get("ownerId") as string) || session.user.id,
+
+      customerSubType: (formData.get("customerSubType") as string) || null,
+      salutation: (formData.get("salutation") as string) || null,
+      firstName: firstName || null,
+      lastName: lastName || null,
+      companyName: companyName || null,
+      language: (formData.get("language") as string) || "English",
+      communicationChannels: channels,
+      gstTreatment: (formData.get("gstTreatment") as string) || null,
+      placeOfSupply: (formData.get("placeOfSupply") as string) || null,
+      pan: (formData.get("pan") as string) || null,
+      taxPreference: (formData.get("taxPreference") as string) || null,
+      currency: (formData.get("currency") as string) || "INR",
+      openingBalanceBranch: (formData.get("openingBalanceBranch") as string) || null,
+      openingBalanceAmount: parseFloat((formData.get("openingBalanceAmount") as string) || "0") || 0,
+      isPortalEnabled: formData.get("isPortalEnabled") === "true" || formData.get("isPortalEnabled") === "on",
+      remarks: (formData.get("remarks") as string) || null,
+      billingAddressDetails: billingAddressDetails as any,
+      shippingAddressDetails: shippingAddressDetails as any,
     };
 
     const account = await crmService.createAccount(orgId, session.user.id, data);
-    revalidatePath("/crm/accounts");
+    revalidatePath("/crm/customers");
     return { ok: true, data: account };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to create account" };
@@ -583,7 +981,7 @@ export async function globalCrmSearchAction(query: string): Promise<ActionRespon
     const results = [
       ...leads.map(l => ({ id: l.id, title: `${l.firstName || ""} ${l.lastName}`.trim(), subtitle: l.company, type: "Lead", href: `/crm/leads/${l.id}` })),
       ...contacts.map(c => ({ id: c.id, title: `${c.firstName || ""} ${c.lastName}`.trim(), subtitle: c.email || "No email", type: "Contact", href: `/crm/contacts/${c.id}` })),
-      ...accounts.map(a => ({ id: a.id, title: a.name, subtitle: a.phone || "No phone", type: "Account", href: `/crm/accounts/${a.id}` })),
+      ...accounts.map(a => ({ id: a.id, title: a.name, subtitle: a.phone || "No phone", type: "Customer", href: `/crm/customers/${a.id}` })),
       ...deals.map(d => ({ id: d.id, title: d.name, subtitle: `${d.stage} - ₹${d.amount}`, type: "Deal", href: `/crm/deals/${d.id}` })),
       ...invoices.map(i => ({ id: i.id, title: i.invoiceNumber, subtitle: `${i.type} - ₹${i.total} (${i.status})`, type: i.type === "QUOTE" ? "Quote" : i.type === "INVOICE" ? "Invoice" : i.type === "SALES_ORDER" ? "Sales Order" : "Purchase Order", href: i.type === "QUOTE" ? `/crm/invoices/${i.id}` : `/crm/invoices/${i.id}` })),
       ...tickets.map(t => ({ id: t.id, title: t.title, subtitle: `${t.category} (${t.status})`, type: "Support Case", href: `/crm/tickets/${t.id}` })),
@@ -666,8 +1064,54 @@ export async function updateAccountAction(accountId: string, formData: FormData)
 
     await requirePermission(session.user.id, "crm.account.manage");
 
-    const name = formData.get("name") as string;
-    if (!name) return { ok: false, error: "Account Name is required" };
+    const displayName = (formData.get("displayName") as string) || "";
+    const companyName = (formData.get("companyName") as string) || "";
+    const firstName = (formData.get("firstName") as string) || "";
+    const lastName = (formData.get("lastName") as string) || "";
+    const name = displayName.trim() || companyName.trim() || `${firstName} ${lastName}`.trim() || "Unnamed Customer";
+
+    const parseAddressDetails = (prefix: "billing" | "shipping") => {
+      return {
+        attention: (formData.get(`${prefix}Attention`) as string) || "",
+        country: (formData.get(`${prefix}Country`) as string) || "",
+        street1: (formData.get(`${prefix}Street1`) as string) || "",
+        street2: (formData.get(`${prefix}Street2`) as string) || "",
+        city: (formData.get(`${prefix}City`) as string) || "",
+        state: (formData.get(`${prefix}State`) as string) || "",
+        pincode: (formData.get(`${prefix}Pincode`) as string) || "",
+        phone: (formData.get(`${prefix}Phone`) as string) || "",
+        fax: (formData.get(`${prefix}Fax`) as string) || "",
+      };
+    };
+
+    const billingAddressDetails = parseAddressDetails("billing");
+    const shippingAddressDetails = parseAddressDetails("shipping");
+
+    const formatAddressString = (details: any) => {
+      const parts = [];
+      if (details.attention) parts.push(`Attention: ${details.attention}`);
+      if (details.street1) parts.push(details.street1);
+      if (details.street2) parts.push(details.street2);
+      
+      const cityStateZip = [];
+      if (details.city) cityStateZip.push(details.city);
+      if (details.state) cityStateZip.push(details.state);
+      if (details.pincode) cityStateZip.push(details.pincode);
+      if (cityStateZip.length > 0) parts.push(cityStateZip.join(", "));
+      
+      if (details.country) parts.push(details.country);
+      if (details.phone) parts.push(`Phone: ${details.phone}`);
+      if (details.fax) parts.push(`Fax: ${details.fax}`);
+      
+      return parts.join("\n") || null;
+    };
+
+    const billingAddress = formatAddressString(billingAddressDetails);
+    const shippingAddress = formatAddressString(shippingAddressDetails);
+
+    const channels: string[] = [];
+    if (formData.get("channelEmail") === "true" || formData.get("channelEmail") === "on") channels.push("EMAIL");
+    if (formData.get("channelSms") === "true" || formData.get("channelSms") === "on") channels.push("SMS");
 
     const data = {
       name,
@@ -677,16 +1121,35 @@ export async function updateAccountAction(accountId: string, formData: FormData)
       phone: (formData.get("phone") as string) || null,
       email: (formData.get("email") as string) || null,
       gstin: (formData.get("gstin") as string) || null,
-      billingAddress: (formData.get("billingAddress") as string) || null,
-      shippingAddress: (formData.get("shippingAddress") as string) || null,
+      billingAddress,
+      shippingAddress,
       creditLimit: parseFloat((formData.get("creditLimit") as string) || "0") || 0,
       paymentTerms: (formData.get("paymentTerms") as string) || null,
       ownerId: (formData.get("ownerId") as string) || session.user.id,
+
+      customerSubType: (formData.get("customerSubType") as string) || null,
+      salutation: (formData.get("salutation") as string) || null,
+      firstName: firstName || null,
+      lastName: lastName || null,
+      companyName: companyName || null,
+      language: (formData.get("language") as string) || "English",
+      communicationChannels: channels,
+      gstTreatment: (formData.get("gstTreatment") as string) || null,
+      placeOfSupply: (formData.get("placeOfSupply") as string) || null,
+      pan: (formData.get("pan") as string) || null,
+      taxPreference: (formData.get("taxPreference") as string) || null,
+      currency: (formData.get("currency") as string) || "INR",
+      openingBalanceBranch: (formData.get("openingBalanceBranch") as string) || null,
+      openingBalanceAmount: parseFloat((formData.get("openingBalanceAmount") as string) || "0") || 0,
+      isPortalEnabled: formData.get("isPortalEnabled") === "true" || formData.get("isPortalEnabled") === "on",
+      remarks: (formData.get("remarks") as string) || null,
+      billingAddressDetails: billingAddressDetails as any,
+      shippingAddressDetails: shippingAddressDetails as any,
     };
 
     const account = await crmService.updateAccount(orgId, accountId, session.user.id, data);
-    revalidatePath("/crm/accounts");
-    revalidatePath(`/crm/accounts/${accountId}`);
+    revalidatePath("/crm/customers");
+    revalidatePath(`/crm/customers/${accountId}`);
     return { ok: true, data: account };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to update account" };
@@ -707,7 +1170,7 @@ export async function deleteAccountAction(accountId: string): Promise<ActionResp
       where: { id: accountId, orgId },
     });
 
-    revalidatePath("/crm/accounts");
+    revalidatePath("/crm/customers");
     return { ok: true };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to delete account" };
@@ -1577,7 +2040,7 @@ export async function seedCrmDemoDataAction(): Promise<ActionResponse> {
 
     revalidatePath("/crm/dashboard");
     revalidatePath("/crm/leads");
-    revalidatePath("/crm/accounts");
+    revalidatePath("/crm/customers");
     revalidatePath("/crm/contacts");
     revalidatePath("/crm/deals");
     revalidatePath("/crm/invoices");
@@ -1834,6 +2297,17 @@ export async function saveQuoteAction(
     }, 0);
 
     const now = new Date();
+
+    let matchedLeadId = null;
+    if (customerId && customerId.trim()) {
+      const matchedLead = await db.crmLead.findFirst({
+        where: { orgId, convertedAccountId: customerId.trim() }
+      });
+      if (matchedLead) {
+        matchedLeadId = matchedLead.id;
+      }
+    }
+
     const data: any = {
       orgId,
       invoiceNumber: quoteNumber,
@@ -1846,6 +2320,7 @@ export async function saveQuoteAction(
       tax: tax,
       total: parseFloat(total) || 0,
       accountId: customerId && customerId.trim() ? customerId.trim() : null,
+      crmLeadId: matchedLeadId,
       manualNotes: customerNotes || null,
       terms: terms || null,
       bankDetails: bankDetailsId || null,
@@ -1940,5 +2415,318 @@ export async function saveQuoteAction(
   }
 }
 
+
+export async function logWorkTimeAction(data: {
+  leadId?: string;
+  accountId?: string;
+  invoiceId?: string;
+  activityType: string;
+  durationHours: number;
+  description?: string;
+  loggedAt?: string;
+}): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    const { leadId, accountId, invoiceId, activityType, durationHours, description, loggedAt } = data;
+
+    if (!activityType) return { ok: false, error: "Activity type is required" };
+    if (!durationHours || durationHours <= 0) return { ok: false, error: "Duration must be greater than 0" };
+
+    const logDate = loggedAt ? new Date(loggedAt) : new Date();
+
+    const newLog = await db.crmWorkTimeLog.create({
+      data: {
+        orgId,
+        userId: session.user.id,
+        leadId: leadId || null,
+        accountId: accountId || null,
+        invoiceId: invoiceId || null,
+        activityType,
+        durationHours: parseFloat(durationHours as any),
+        description: description || null,
+        loggedAt: logDate,
+      },
+    });
+
+    let relatedToType = "LEAD";
+    let relatedToId = leadId;
+    if (accountId) {
+      relatedToType = "ACCOUNT";
+      relatedToId = accountId;
+    } else if (invoiceId) {
+      relatedToType = "QUOTE";
+      relatedToId = invoiceId;
+    }
+
+    if (relatedToId) {
+      await crmService.addTimelineEvent(orgId, {
+        relatedToType,
+        relatedToId,
+        eventType: "TIME_LOGGED",
+        description: `Logged ${durationHours} hours for ${activityType.toLowerCase().replace("_", " ")}`,
+        createdById: session.user.id,
+      });
+    }
+
+    if (leadId) revalidatePath(`/crm/leads/${leadId}`);
+    if (accountId) revalidatePath(`/crm/customers/${accountId}`);
+    if (invoiceId) revalidatePath(`/crm/quotes/${invoiceId}`);
+    revalidatePath("/crm/efficiency");
+
+    return { ok: true, data: newLog };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to log work time" };
+  }
+}
+
+export async function deleteWorkTimeAction(logId: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    const log = await db.crmWorkTimeLog.findFirst({
+      where: { id: logId, orgId }
+    });
+    if (!log) return { ok: false, error: "Time log not found" };
+
+    await db.crmWorkTimeLog.delete({
+      where: { id: logId }
+    });
+
+    if (log.leadId) revalidatePath(`/crm/leads/${log.leadId}`);
+    if (log.accountId) revalidatePath(`/crm/customers/${log.accountId}`);
+    if (log.invoiceId) revalidatePath(`/crm/quotes/${log.invoiceId}`);
+    revalidatePath("/crm/efficiency");
+
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to delete time log" };
+  }
+}
+
 /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports */
+
+export async function assignLeadOwnerAction(leadId: string, ownerId: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.lead.create");
+
+    const lead = await db.crmLead.findFirst({
+      where: { id: leadId, orgId },
+    });
+    if (!lead) return { ok: false, error: "Lead not found" };
+
+    const updatedLead = await db.crmLead.update({
+      where: { id: leadId },
+      data: { ownerId },
+    });
+
+    // Also update any pending task ownership
+    await db.crmActivity.updateMany({
+      where: { relatedToType: "LEAD", relatedToId: leadId, status: "NOT_STARTED" },
+      data: { ownerId },
+    });
+
+    await crmService.addTimelineEvent(orgId, {
+      relatedToType: "LEAD",
+      relatedToId: leadId,
+      eventType: "LEAD_OWNER_ASSIGNED",
+      description: `Lead owner assigned/transferred to user ${ownerId}`,
+      createdById: session.user.id,
+    });
+
+    revalidatePath(`/crm/enquiries/${leadId}`);
+    revalidatePath(`/crm/leads/${leadId}`);
+    return { ok: true, data: updatedLead };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to assign lead owner" };
+  }
+}
+
+export async function updatePerishableDetailsAction(
+  leadId: string,
+  isPerishable: boolean,
+  details: any
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.lead.create");
+
+    const lead = await db.crmLead.update({
+      where: { id: leadId },
+      data: {
+        isPerishable,
+        perishableDetails: details,
+      },
+    });
+
+    await crmService.addTimelineEvent(orgId, {
+      relatedToType: "LEAD",
+      relatedToId: leadId,
+      eventType: "PERISHABLE_DETAILS_UPDATED",
+      description: `Perishable cargo details updated. Active: ${isPerishable}`,
+      createdById: session.user.id,
+    });
+
+    revalidatePath(`/crm/enquiries/${leadId}`);
+    revalidatePath(`/crm/leads/${leadId}`);
+    return { ok: true, data: lead };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update perishable details" };
+  }
+}
+
+export async function simulateInboundEmailAction(
+  subject: string,
+  body: string,
+  fromEmail: string
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    // Find reference number in subject or body using regex
+    // Format: ADR-ENQ-XXXXX
+    const refRegex = /ADR-ENQ-[A-Z0-9]{5}/i;
+    const matchSubject = subject.match(refRegex);
+    const matchBody = body.match(refRegex);
+    
+    const matchedRef = (matchSubject ? matchSubject[0] : (matchBody ? matchBody[0] : null))?.toUpperCase();
+    if (!matchedRef) {
+      return { ok: false, error: "No original reference number (ADR-ENQ-XXXXX) found in subject or email content" };
+    }
+
+    const lead = await db.crmLead.findFirst({
+      where: { orgId, enquiryRef: matchedRef },
+    });
+    if (!lead) {
+      return { ok: false, error: `No active enquiry found with reference number ${matchedRef}` };
+    }
+
+    // Add email reply to history (as a note)
+    const emailReplyText = `[Inbound Email Reply from ${fromEmail}]\nSubject: ${subject}\n\n${body}`;
+    await crmService.addNote(orgId, {
+      relatedToType: "LEAD",
+      relatedToId: lead.id,
+      body: emailReplyText,
+      createdById: session.user.id,
+    });
+
+    // Parse rates from the email body
+    const parsedRates = parseRatesFromEmail(body);
+    
+    // Save rates to Lead's enquiryDetails
+    const currentEnquiry = (lead.enquiryDetails as any) || {};
+    const updatedRates = {
+      ...(currentEnquiry.rates || {}),
+      ...parsedRates,
+    };
+    
+    const updatedEnquiry = {
+      ...currentEnquiry,
+      rates: updatedRates,
+    };
+
+    const updatedLead = await db.crmLead.update({
+      where: { id: lead.id },
+      data: {
+        enquiryDetails: updatedEnquiry,
+      },
+    });
+
+    await crmService.addTimelineEvent(orgId, {
+      relatedToType: "LEAD",
+      relatedToId: lead.id,
+      eventType: "RATES_AUTO_PARSED",
+      description: `Rates automatically parsed from inbound email`,
+      createdById: session.user.id,
+    });
+
+    revalidatePath(`/crm/enquiries/${lead.id}`);
+    revalidatePath(`/crm/leads/${lead.id}`);
+    
+    return { ok: true, data: { leadId: lead.id, parsedRates } };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to process simulated inbound email" };
+  }
+}
+
+// Rate parser helper
+function parseRatesFromEmail(bodyText: string) {
+  const rates: any = {};
+  
+  // Regex to match a keyword followed by optional symbols, spaces, colon, currency sign, and a number
+  const findRate = (keywords: string[]) => {
+    for (const kw of keywords) {
+      const regex = new RegExp(`${kw}\\s*(?:charges|freight)?\\s*(?:[:=-]|\\bis\\b)\\s*(?:rs\\.?|inr|usd|\\$)?\\s*([\\d,]+(?:\\.\\d+)?)`, "i");
+      const match = bodyText.match(regex);
+      if (match) {
+        return parseFloat(match[1].replace(/,/g, ""));
+      }
+    }
+    return null;
+  };
+
+  // Sea rates
+  const oceanFreight = findRate(["ocean freight", "ocean", "freight"]);
+  if (oceanFreight !== null) rates.oceanFreight = oceanFreight;
+  
+  const cfsCharges = findRate(["cfs charges", "cfs"]);
+  if (cfsCharges !== null) rates.cfsCharges = cfsCharges;
+  
+  const customsClearance = findRate(["customs clearance", "customs", "clearance"]);
+  if (customsClearance !== null) rates.customsClearance = customsClearance;
+  
+  const blCharges = findRate(["bl charges", "bl", "b/l"]);
+  if (blCharges !== null) rates.blCharges = blCharges;
+  
+  const vgmCharges = findRate(["vgm charges", "vgm"]);
+  if (vgmCharges !== null) rates.vgmCharges = vgmCharges;
+  
+  const lclCharges = findRate(["lcl charges", "lcl"]);
+  if (lclCharges !== null) rates.lclCharges = lclCharges;
+  
+  const doCharges = findRate(["do charges", "do", "delivery order"]);
+  if (doCharges !== null) rates.doCharges = doCharges;
+  
+  const cfsCustoms = findRate(["cfs customs", "cfs-customs"]);
+  if (cfsCustoms !== null) rates.cfsCustoms = cfsCustoms;
+
+  // Air rates
+  const airFreight = findRate(["air freight", "air"]);
+  if (airFreight !== null) rates.airFreight = airFreight;
+
+  const handlingCharges = findRate(["handling charges", "handling"]);
+  if (handlingCharges !== null) rates.handlingCharges = handlingCharges;
+
+  const awbCharges = findRate(["awb charges", "awb"]);
+  if (awbCharges !== null) rates.awbCharges = awbCharges;
+
+  const deliveryCharges = findRate(["delivery charges", "delivery"]);
+  if (deliveryCharges !== null) rates.deliveryCharges = deliveryCharges;
+
+  return rates;
+}
+
 
