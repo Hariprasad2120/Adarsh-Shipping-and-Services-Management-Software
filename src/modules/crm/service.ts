@@ -147,7 +147,11 @@ export async function deleteAttachment(orgId: string, id: string, userId: string
 
 export async function listLeads(orgId: string, filters?: { status?: string; search?: string }) {
   const where: any = { orgId, isConverted: false };
-  if (filters?.status) where.status = filters.status;
+  if (filters?.status) {
+    where.status = filters.status;
+  } else {
+    where.status = { notIn: ["INTERESTED", "FOLLOW_UP"] };
+  }
   if (filters?.search) {
     where.OR = [
       { firstName: { contains: filters.search, mode: "insensitive" } },

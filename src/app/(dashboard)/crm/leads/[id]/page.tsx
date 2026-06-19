@@ -49,6 +49,10 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
   const lead = await getLead(orgId, id);
   if (!lead) notFound();
 
+  if (lead.status === "INTERESTED" || lead.status === "FOLLOW_UP") {
+    redirect(`/crm/enquiries/${id}`);
+  }
+
   // Parallel fetches for related list items, work logs, and quotes
   const [notes, attachments, activities, timeline, workTimeLogs, quotes] = await Promise.all([
     getNotes(orgId, "LEAD", id),

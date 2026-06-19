@@ -24,6 +24,7 @@ import { DeleteRecordButton } from "../_components/delete-record-button";
 interface SearchParams {
   search?: string;
   status?: string;
+  tab?: string;
 }
 
 export default async function CrmLeadsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
@@ -57,12 +58,56 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
   const awaitedParams = await searchParams;
   const search = awaitedParams.search || "";
   const status = awaitedParams.status || "";
+  const tab = awaitedParams.tab || "unopened";
 
   // Fetch leads from db
   const leads = await listLeads(orgId, { search, status });
 
+  const now = new Date();
+  const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+
+  // Partition leads:
+  // 1. Unopened / Active: NEW status (or anything other than INTERESTED, FOLLOW_UP, NOT_INTERESTED, NOT_PICKED, NOT_REACHABLE)
+  //    OR (NOT_PICKED / NOT_REACHABLE status AND 2-hour window has expired, i.e., updatedAt <= twoHoursAgo)
+  const unopenedLeads = leads.filter((lead) => {
+    if (lead.status === "NOT_INTERESTED") return false;
+    if (lead.status === "NOT_PICKED" || lead.status === "NOT_REACHABLE") {
+      return new Date(lead.updatedAt) <= twoHoursAgo;
+    }
+    return true;
+  });
+
+  const notInterestedLeads = leads.filter((lead) => lead.status === "NOT_INTERESTED");
+
+  const unreachableLeads = leads.filter((lead) => {
+    if (lead.status === "NOT_PICKED" || lead.status === "NOT_REACHABLE") {
+      return new Date(lead.updatedAt) > twoHoursAgo;
+    }
+    return false;
+  });
+
+  let displayedLeads = unopenedLeads;
+  if (tab === "not_interested") {
+    displayedLeads = notInterestedLeads;
+  } else if (tab === "unreachable") {
+    displayedLeads = unreachableLeads;
+  }
+
+  // Helper function to format the remaining timer window
+  function formatTimer(updatedAt: Date): string {
+    const diffMs = (new Date(updatedAt).getTime() + 2 * 60 * 60 * 1000) - now.getTime();
+    if (diffMs <= 0) return "Ready";
+    const mins = Math.ceil(diffMs / (60 * 1000));
+    if (mins >= 60) {
+      const hrs = Math.floor(mins / 60);
+      const remMins = mins % 60;
+      return `${hrs}h ${remMins}m left`;
+    }
+    return `${mins}m left`;
+  }
+
   // Standard lead statuses for dropdown/filters
-  const leadStatuses = ["NEW", "CONTACTED", "QUALIFIED", "LOST", "ATTEMPTED_TO_CONTACT"];
+  const leadStatuses = ["NEW", "CONTACTED", "QUALIFIED", "LOST", "ATTEMPTED_TO_CONTACT", "NOT_INTERESTED", "NOT_PICKED", "NOT_REACHABLE"];
 
   return (
     <div className="p-8 space-y-6 max-w-[1600px] mx-auto">
@@ -70,6 +115,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
       {/* Filters Bar */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-[#0f1319] p-4 rounded-xl border border-[#1c212a]/50">
         <form method="GET" className="flex flex-1 flex-col sm:flex-row gap-3 w-full">
+          <input type="hidden" name="tab" value={tab} />
           {/* Search Input */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 size-4 text-slate-500" />
@@ -107,7 +153,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
           
           {(search || status) && (
             <Link
-              href="/crm/leads"
+              href={`/crm/leads?tab=${tab}`}
               className="px-3 py-1.5 text-slate-400 hover:text-white text-xs font-semibold flex items-center justify-center"
             >
               Reset
@@ -117,7 +163,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
         
         <div className="flex items-center gap-3 shrink-0">
           <div className="text-xs text-slate-400 font-bold">
-            Showing {leads.length} leads
+            Showing {displayedLeads.length} leads
           </div>
           <Link
             href="/crm/leads/new"
@@ -129,22 +175,82 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
         </div>
       </div>
 
+      {/* Sub-Navigation Tabs */}
+      <div className="flex border-b border-[#1c212a]/80 pb-px">
+        <Link
+          href={`/crm/leads?tab=unopened${search ? `&search=${search}` : ""}${status ? `&status=${status}` : ""}`}
+          className={`px-4 py-3 text-xs uppercase tracking-wider font-bold transition-all border-b-2 -mb-px flex items-center ${
+            tab === "unopened"
+              ? "border-[#00cec4] text-[#00cec4]"
+              : "border-transparent text-slate-400 hover:text-white"
+          }`}
+        >
+          <span>Unopened / Due</span>
+          <span className={`ml-2 px-1.5 py-0.5 text-[10px] rounded-full font-mono ds-numeric ${
+            tab === "unopened" ? "bg-[#00cec4]/10 text-[#00cec4]" : "bg-[#1c212a] text-slate-400"
+          }`}>
+            {unopenedLeads.length}
+          </span>
+        </Link>
+        <Link
+          href={`/crm/leads?tab=not_interested${search ? `&search=${search}` : ""}${status ? `&status=${status}` : ""}`}
+          className={`px-4 py-3 text-xs uppercase tracking-wider font-bold transition-all border-b-2 -mb-px flex items-center ${
+            tab === "not_interested"
+              ? "border-[#00cec4] text-[#00cec4]"
+              : "border-transparent text-slate-400 hover:text-white"
+          }`}
+        >
+          <span>Not Interested</span>
+          <span className={`ml-2 px-1.5 py-0.5 text-[10px] rounded-full font-mono ds-numeric ${
+            tab === "not_interested" ? "bg-[#00cec4]/10 text-[#00cec4]" : "bg-[#1c212a] text-slate-400"
+          }`}>
+            {notInterestedLeads.length}
+          </span>
+        </Link>
+        <Link
+          href={`/crm/leads?tab=unreachable${search ? `&search=${search}` : ""}${status ? `&status=${status}` : ""}`}
+          className={`px-4 py-3 text-xs uppercase tracking-wider font-bold transition-all border-b-2 -mb-px flex items-center ${
+            tab === "unreachable"
+              ? "border-[#00cec4] text-[#00cec4]"
+              : "border-transparent text-slate-400 hover:text-white"
+          }`}
+        >
+          <span>Unreachable</span>
+          <span className={`ml-2 px-1.5 py-0.5 text-[10px] rounded-full font-mono ds-numeric ${
+            tab === "unreachable" ? "bg-[#00cec4]/10 text-[#00cec4]" : "bg-[#1c212a] text-slate-400"
+          }`}>
+            {unreachableLeads.length}
+          </span>
+        </Link>
+      </div>
+
       {/* Leads Data Table */}
       <div className="bg-[#0f1319] border border-[#1c212a]/50 rounded-xl overflow-hidden shadow-2xl">
-        {leads.length === 0 ? (
+        {displayedLeads.length === 0 ? (
           <div className="p-12 text-center text-slate-500 space-y-4">
             <div className="size-12 rounded-full bg-slate-800/40 text-slate-600 flex items-center justify-center mx-auto">
               <Users className="size-6" />
             </div>
-            <h3 className="font-bold text-base text-white">No active leads found</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">Either refine your filters or create a fresh lead record to get started with validation.</p>
-            <Link
-              href="/crm/leads/new"
-              className="inline-flex items-center gap-1.5 text-[#00c4b6] hover:underline text-xs font-bold"
-            >
-              <span>Onboard a new lead</span>
-              <ArrowRight className="size-3.5" />
-            </Link>
+            <h3 className="font-bold text-base text-white">
+              {tab === "unopened" ? "No active leads found" : tab === "not_interested" ? "No uninterested leads found" : "No unreachable leads found"}
+            </h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              {tab === "unopened" 
+                ? "Either refine your filters or create a fresh lead record to get started with validation."
+                : tab === "not_interested"
+                ? "Leads marked as Not Interested will show up here."
+                : "Leads marked as Not Picked or Unreachable will appear here during their 2-hour cooldown window."
+              }
+            </p>
+            {tab === "unopened" && (
+              <Link
+                href="/crm/leads/new"
+                className="inline-flex items-center gap-1.5 text-[#00c4b6] hover:underline text-xs font-bold"
+              >
+                <span>Onboard a new lead</span>
+                <ArrowRight className="size-3.5" />
+              </Link>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -155,13 +261,13 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
                   <th className="px-6 py-4">Company</th>
                   <th className="px-6 py-4">Contact Info</th>
                   <th className="px-6 py-4">Source</th>
-                  <th className="px-6 py-4">Lead Status</th>
+                  <th className="px-6 py-4">{tab === "unreachable" ? "Timer Window" : "Lead Status"}</th>
                   <th className="px-6 py-4">Owner</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1c212a]/30">
-                {leads.map((lead) => (
+                {displayedLeads.map((lead) => (
                   <tr key={lead.id} className="hover:bg-[#161f28]/35 transition-colors">
                     <td className="px-6 py-4 text-white">
                       <Link href={`/crm/leads/${lead.id}`} className="hover:text-[#00c4b6] transition-all block">
@@ -195,17 +301,30 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
                       {lead.source || "Cold Call"}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                        lead.status === "NEW"
-                          ? "bg-blue-500/10 text-blue-400"
-                          : lead.status === "LOST"
-                          ? "bg-red-500/10 text-red-400"
-                          : lead.status === "QUALIFIED"
-                          ? "bg-emerald-500/10 text-emerald-400"
-                          : "bg-amber-500/10 text-amber-400"
-                      }`}>
-                        {lead.status.replace("_", " ")}
-                      </span>
+                      {tab === "unreachable" ? (
+                        <div className="space-y-1">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-orange-500/10 text-orange-400">
+                            {lead.status.replace("_", " ")}
+                          </span>
+                          <span className="block text-[11px] text-orange-400/80 font-mono ds-numeric">
+                            {formatTimer(lead.updatedAt)}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          lead.status === "NEW"
+                            ? "bg-blue-500/10 text-blue-400"
+                            : lead.status === "LOST"
+                            ? "bg-red-500/10 text-red-400"
+                            : lead.status === "QUALIFIED"
+                            ? "bg-emerald-500/10 text-emerald-400"
+                            : lead.status === "NOT_INTERESTED"
+                            ? "bg-rose-500/10 text-rose-400"
+                            : "bg-amber-500/10 text-amber-400"
+                        }`}>
+                          {lead.status.replace("_", " ")}
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-xs text-slate-300 font-medium">
                       {lead.owner.name}

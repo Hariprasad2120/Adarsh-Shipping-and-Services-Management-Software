@@ -47,8 +47,10 @@ export default async function EnquiryDetailPage({ params }: EnquiryDetailPagePro
 
   const { id } = await params;
   const lead = await getLead(orgId, id);
-  if (!lead || (lead.status !== "INTERESTED" && lead.status !== "FOLLOW_UP")) {
-    notFound();
+  if (!lead) notFound();
+
+  if (lead.status !== "INTERESTED" && lead.status !== "FOLLOW_UP") {
+    redirect(`/crm/leads/${id}`);
   }
 
   // Fetch active users for the manager assignment dropdown
