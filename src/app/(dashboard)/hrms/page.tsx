@@ -1,18 +1,17 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { getVisibleSectionById } from "@/lib/navigation";
+import { loadCaps } from "@/lib/rbac";
 import { getOrg, getRoles } from "@/modules/core/organisation/service";
-import { listUsers } from "@/modules/core/user/service";
+import { listUsersForDashboard } from "@/modules/core/user/service";
+import { db } from "@/lib/db";
 import {
   Users,
-  UserPlus,
   Building2,
   Network,
-  DollarSign,
-  TrendingUp,
   ArrowRight,
   BarChart3,
-  GitBranch,
 } from "lucide-react";
 import {
   DataTable,
@@ -30,29 +29,48 @@ export default async function HrmsDashboardPage() {
   if (!session) redirect("/login");
 
   const orgId = session.user.orgId!;
+  const caps = await loadCaps(session.user.id);
 
-  const [org, users, roles] = await Promise.all([
+  // listUsersForDashboard fetches only the fields displayed on this page and
+  // applies take:8 at the DB level — avoids loading all employees with all
+  // relations just to slice the first 8.
+  const [org, recentEmployees, roles, totalActiveCount] = await Promise.all([
     getOrg(orgId),
-    listUsers(orgId, { active: true }),
+    listUsersForDashboard(orgId, { active: true, take: 8 }),
     getRoles(orgId),
+    db.user.count({ where: { orgId, active: true } }),
   ]);
-
-  const recentEmployees = users.slice(0, 8);
+  const hrmsSection = getVisibleSectionById(caps, "hrms");
 
   const stats = [
-    { label: "Active Employees", value: users.length, icon: Users, color: "text-[#00c4b6]", bg: "bg-[#00c4b6]/10" },
+    { label: "Active Employees", value: totalActiveCount, icon: Users, color: "text-[#00c4b6]", bg: "bg-[#00c4b6]/10" },
     { label: "Departments", value: org?.departments.length ?? 0, icon: Network, color: "text-[#818cf8]", bg: "bg-[#818cf8]/10" },
     { label: "Branches", value: org?.branches.length ?? 0, icon: Building2, color: "text-[#fbbf24]", bg: "bg-[#fbbf24]/10" },
     { label: "Roles", value: roles.length, icon: BarChart3, color: "text-[#34d399]", bg: "bg-[#34d399]/10" },
   ];
 
-  const quickActions = [
-    { href: "/hrms/employees", label: "Employee Directory", description: "Browse profiles, reporting lines, and contact details.", icon: Users },
-    { href: "/hrms/employees/new", label: "Onboard Employee", description: "Add a new hire and complete their onboarding record.", icon: UserPlus },
-    { href: "/hrms/ownership", label: "Org Ownership", description: "Define team leads, managers, and reporting hierarchy.", icon: GitBranch },
-    { href: "/hrms/salary-structure", label: "Salary Structure", description: "Build salary structures and update payroll metadata.", icon: DollarSign },
-    { href: "/hrms/salary-revisions", label: "Salary Revisions", description: "Track each employee's latest revision and history.", icon: TrendingUp },
-  ];
+  const descriptionByLabel: Record<string, string> = {
+    Employees: "Browse profiles, reporting lines, and contact details.",
+    "Onboarding Checklists": "Track onboarding steps and completion status.",
+    "Work Reports": "Review submitted work logs and daily progress.",
+    "Task Checklists": "Manage recurring HR and employee task lists.",
+    "Approvals Central": "Handle requests and approval workflows from one place.",
+    "Travel & Expenses": "Manage travel requests, reimbursements, and approvals.",
+    "HR Letters": "Generate and manage employee letters.",
+    "Document Drive": "Open employee files and shared HR documents.",
+    "Help Desk": "Handle internal support and HR help requests.",
+    "Onboard Employee": "Add a new hire and complete their onboarding record.",
+    Ownership: "Define team leads, managers, and reporting hierarchy.",
+    "Salary Structure": "Build salary structures and update payroll metadata.",
+    "Salary Revisions": "Track each employee's latest revision and history.",
+    "Payroll Batches": "Run payroll batches and monitor payout prep.",
+  };
+
+  const quickActions = (hrmsSection?.items ?? []).map((item) => ({
+    href: item.href,
+    label: item.label,
+    description: descriptionByLabel[item.label] ?? "Open this HRMS workspace.",
+  }));
 
   return (
     <>
@@ -80,9 +98,8 @@ export default async function HrmsDashboardPage() {
       {/* Quick Actions */}
       <section className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-widest text-on-surface-variant">Quick Actions</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {quickActions.map((action) => {
-            const Icon = action.icon;
             return (
               <Link
                 key={action.href}
@@ -90,7 +107,7 @@ export default async function HrmsDashboardPage() {
                 className="group flex flex-col gap-3 rounded-2xl border border-outline-variant/20 bg-surface p-4 shadow-ambient transition hover:-translate-y-0.5 hover:border-[#00c4b6]/30 hover:shadow-ambient-hover"
               >
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#00c4b6]/10">
-                  <Icon className="size-4 text-[#00c4b6]" strokeWidth={1.8} />
+                  <ArrowRight className="size-4 text-[#00c4b6]" strokeWidth={1.8} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-on-surface">{action.label}</p>

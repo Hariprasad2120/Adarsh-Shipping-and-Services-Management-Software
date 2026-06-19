@@ -6,10 +6,6 @@ import { requirePermission } from "@/lib/rbac";
 import {
   Search,
   Package,
-  Plus,
-  Trash2,
-  DollarSign,
-  Tag,
   ShieldAlert,
   Save
 } from "lucide-react";
@@ -56,14 +52,6 @@ export default async function CrmProductsPage({ searchParams }: { searchParams: 
 
   return (
     <div className="p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-200">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#1c212a]/30 pb-5">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-white">Products & Services</h2>
-          <p className="text-slate-400 text-sm mt-1">Manage standard pricing for freight, warehouse space, transport slabs, and CHA logistics filing fees.</p>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Left Column: Products List Table */}
         <div className="lg:col-span-2 bg-[#0f1319] border border-[#1c212a]/55 rounded-xl overflow-hidden shadow-2xl p-6 space-y-4">

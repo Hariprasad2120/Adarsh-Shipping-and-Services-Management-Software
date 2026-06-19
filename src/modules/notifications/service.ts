@@ -91,17 +91,29 @@ export async function recordNotificationActivity(params: {
 
 export async function createNotification(params: CreateNotificationParams) {
   const policy = getNotificationPolicy(params.kind);
-  const now = await getNow();
-  const userOrg =
+  const shouldEmail = params.email === true || policy.emailByDefault;
+
+  // Fetch the current time and any missing org/email data in parallel so we
+  // only pay extra round trips when strictly needed.
+  const [now, resolvedOrgId, userEmail] = await Promise.all([
+    getNow(),
     params.orgId !== undefined
-      ? { orgId: params.orgId }
-      : await db.user.findUnique({ where: { id: params.userId }, select: { orgId: true } });
+      ? Promise.resolve(params.orgId)
+      : db.user
+          .findUnique({ where: { id: params.userId }, select: { orgId: true } })
+          .then((u) => u?.orgId ?? null),
+    shouldEmail
+      ? db.user
+          .findUnique({ where: { id: params.userId }, select: { email: true } })
+          .then((u) => u?.email ?? null)
+      : Promise.resolve(null),
+  ]);
 
   const notification = await db.notification.create({
     data: {
       parentId: params.parentId,
       userId: params.userId,
-      orgId: userOrg?.orgId ?? null,
+      orgId: resolvedOrgId ?? null,
       kind: params.kind,
       title: params.title,
       body: params.body,
@@ -116,26 +128,24 @@ export async function createNotification(params: CreateNotificationParams) {
     },
   });
 
-  await recordNotificationActivity({
-    notificationId: notification.id,
-    orgId: notification.orgId ?? undefined,
-    actorId: params.actorId ?? params.userId,
-    event: "CREATED",
-  });
-
-  const shouldEmail = params.email === true || policy.emailByDefault;
-  if (shouldEmail) {
-    const user = await db.user.findUnique({ where: { id: params.userId }, select: { email: true } });
-    if (user) {
-      await db.emailQueue.create({
-        data: {
-          to: user.email,
-          subject: params.title,
-          html: params.emailHtml ?? `<p>${params.body ?? params.title}</p>`,
-        },
-      });
-    }
-  }
+  // Fire activity record and optional email queue insert in parallel.
+  await Promise.all([
+    recordNotificationActivity({
+      notificationId: notification.id,
+      orgId: notification.orgId ?? undefined,
+      actorId: params.actorId ?? params.userId,
+      event: "CREATED",
+    }),
+    shouldEmail && userEmail
+      ? db.emailQueue.create({
+          data: {
+            to: userEmail,
+            subject: params.title,
+            html: params.emailHtml ?? `<p>${params.body ?? params.title}</p>`,
+          },
+        })
+      : Promise.resolve(null),
+  ]);
 
   return notification;
 }
@@ -164,33 +174,35 @@ export async function listActiveUserNotifications(userId: string) {
 
   if (notifications.length > 0) {
     const ids = notifications.map((notification) => notification.id);
-    const now = await getNow();
-    await db.notification.updateMany({
-      where: { id: { in: ids }, presentedAt: null },
-      data: { presentedAt: now },
-    });
 
-    const existingDisplayed = await db.notificationActivity.findMany({
-      where: {
-        notificationId: { in: ids },
-        actorId: userId,
-        event: "DISPLAYED",
-      },
-      select: { notificationId: true },
-    });
+    // Run the time lookup and existing-activity check in parallel rather than
+    // sequentially. Both are independent of each other.
+    const [now, existingDisplayed] = await Promise.all([
+      getNow(),
+      db.notificationActivity.findMany({
+        where: { notificationId: { in: ids }, actorId: userId, event: "DISPLAYED" },
+        select: { notificationId: true },
+      }),
+    ]);
+
     const displayedIds = new Set(existingDisplayed.map((item) => item.notificationId));
-    await Promise.all(
-      notifications
-        .filter((notification) => !displayedIds.has(notification.id))
-        .map((notification) =>
-          recordNotificationActivity({
-            notificationId: notification.id,
-            orgId: notification.orgId ?? undefined,
-            actorId: userId,
-            event: "DISPLAYED",
-          })
-        )
-    );
+    const newlyDisplayed = notifications.filter((n) => !displayedIds.has(n.id));
+
+    // Fire the updateMany and all new activity inserts in parallel.
+    await Promise.all([
+      db.notification.updateMany({
+        where: { id: { in: ids }, presentedAt: null },
+        data: { presentedAt: now },
+      }),
+      ...newlyDisplayed.map((n) =>
+        recordNotificationActivity({
+          notificationId: n.id,
+          orgId: n.orgId ?? undefined,
+          actorId: userId,
+          event: "DISPLAYED",
+        })
+      ),
+    ]);
   }
 
   return notifications.map((notification) => ({

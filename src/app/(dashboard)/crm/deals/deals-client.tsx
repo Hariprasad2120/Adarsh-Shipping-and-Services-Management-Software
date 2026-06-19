@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateDealStageAction, deleteDealAction } from "@/modules/crm/actions";
 import {
@@ -10,16 +9,8 @@ import {
   Kanban,
   Search,
   Plus,
-  Landmark,
-  Building,
-  Calendar,
-  DollarSign,
-  TrendingUp,
   Eye,
   Trash2,
-  Edit2,
-  ChevronRight,
-  RefreshCcw
 } from "lucide-react";
 
 interface Deal {
@@ -50,7 +41,6 @@ const STAGE_PROBABILITIES: Record<string, number> = {
 };
 
 export function DealsClient({ initialDeals }: DealsClientProps) {
-  const router = useRouter();
   const [deals, setDeals] = useState<Deal[]>(initialDeals);
   const [viewMode, setViewMode] = useState<"KANBAN" | "LIST">("KANBAN");
   const [searchQuery, setSearchQuery] = useState("");
@@ -104,46 +94,6 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
 
   return (
     <div className="p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-200">
-      
-      {/* ─── PAGE HEADER & STATS ────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#1c212a]/30 pb-5">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">Deals Pipeline</h2>
-          <p className="text-slate-400 text-sm mt-1">Track shipping negotiations, freight forwarding pipelines, and CHA contracts.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* View Mode Toggle */}
-          <div className="flex border border-[#1c212a] bg-[#0f1319] p-0.5 rounded-lg">
-            <button
-              onClick={() => setViewMode("KANBAN")}
-              className={`p-1.5 rounded-md cursor-pointer ${
-                viewMode === "KANBAN" ? "bg-[#161f28] text-[#00c4b6]" : "text-slate-400 hover:text-white"
-              }`}
-              title="Pipeline Kanban Grid"
-            >
-              <Kanban className="size-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("LIST")}
-              className={`p-1.5 rounded-md cursor-pointer ${
-                viewMode === "LIST" ? "bg-[#161f28] text-[#00c4b6]" : "text-slate-400 hover:text-white"
-              }`}
-              title="Table List View"
-            >
-              <List className="size-4" />
-            </button>
-          </div>
-
-          <Link
-            href="/crm/deals/new"
-            className="flex items-center gap-2 bg-[#00c4b6] hover:bg-[#00b0a3] text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[#00c4b6]/10 cursor-pointer"
-          >
-            <Plus className="size-4" />
-            <span>Create Deal</span>
-          </Link>
-        </div>
-      </div>
-
       {/* Mini Stats Summary Bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-[#0f1319]/55 border border-[#1c212a]/55 rounded-xl p-4">
         <div className="space-y-1">
@@ -165,15 +115,46 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
       </div>
 
       {/* Search Filter bar */}
-      <div className="relative w-full max-w-md">
-        <Search className="absolute left-3 top-2.5 size-4 text-slate-500" />
-        <input
-          type="text"
-          placeholder="Filter deals by name or account..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-9 pr-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#00c4b6] text-white"
-        />
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-3 top-2.5 size-4 text-slate-500" />
+          <input
+            type="text"
+            placeholder="Filter deals by name or account..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#00c4b6] text-white"
+          />
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex border border-[#1c212a] bg-[#0f1319] p-0.5 rounded-lg">
+            <button
+              onClick={() => setViewMode("KANBAN")}
+              className={`p-1.5 rounded-md cursor-pointer ${
+                viewMode === "KANBAN" ? "bg-[#161f28] text-[#00c4b6]" : "text-slate-400 hover:text-white"
+              }`}
+              title="Pipeline Kanban Grid"
+            >
+              <Kanban className="size-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("LIST")}
+              className={`p-1.5 rounded-md cursor-pointer ${
+                viewMode === "LIST" ? "bg-[#161f28] text-[#00c4b6]" : "text-slate-400 hover:text-white"
+              }`}
+              title="Table List View"
+            >
+              <List className="size-4" />
+            </button>
+          </div>
+          <Link
+            href="/crm/deals/new"
+            className="flex items-center gap-2 bg-[#00c4b6] hover:bg-[#00b0a3] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md shadow-[#00c4b6]/10 cursor-pointer"
+          >
+            <Plus className="size-3.5" />
+            <span>Create Deal</span>
+          </Link>
+        </div>
       </div>
 
       {/* ─── KANBAN VIEW ────────────────────────────────────────────────── */}

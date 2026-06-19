@@ -2,53 +2,62 @@ import { db } from "@/lib/db";
 import { notify } from "@/lib/notify";
 import { notifyMany, getUsersWithPermission } from "@/modules/notifications/service";
 import { getNow } from "@/lib/clock";
+import { loadUserPermissions } from "@/lib/rbac";
 import { getAttendanceMonthBounds, toAttendanceDate } from "@/lib/attendance-date";
 
 // ─── Core & Dashboard ──────────────────────────────────────────────────────────
 
 export async function getMe(userId: string) {
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      orgId: true,
-      name: true,
-      email: true,
-      designation: true,
-      employeeNumber: true,
-      branchId: true,
-      departmentId: true,
-      managerId: true,
-      tlId: true,
-      photo: true,
-      manager: { select: { id: true, name: true } },
-      department: { select: { id: true, name: true } },
-      branch: { select: { id: true, name: true } },
-      roles: { include: { role: { include: { permissions: { include: { permission: true } } } } } },
-    },
-  });
+  // getNow is request-memoized; call it first so todayStart is available for the
+  // punch query, then fire all independent DB calls in parallel.
+  const now = await getNow();
+  const todayStart = toAttendanceDate(now);
+
+  const [user, punch, pendingLeaves, pendingCases, pendingTasks, pref, permsSet] =
+    await Promise.all([
+      db.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          orgId: true,
+          name: true,
+          email: true,
+          designation: true,
+          employeeNumber: true,
+          branchId: true,
+          departmentId: true,
+          managerId: true,
+          tlId: true,
+          photo: true,
+          manager: { select: { id: true, name: true } },
+          department: { select: { id: true, name: true } },
+          branch: { select: { id: true, name: true } },
+        },
+      }),
+      db.attendancePunch.findUnique({
+        where: { userId_date: { userId, date: todayStart } },
+      }),
+      db.leaveRequest.count({ where: { userId, status: "pending" } }),
+      db.hRCase.count({
+        where: { userId, status: { in: ["OPEN", "ASSIGNED", "IN_PROGRESS"] } },
+      }),
+      db.hrmsTask.count({ where: { assigneeId: userId, status: "PENDING" } }),
+      db.employeePreference.findUnique({ where: { userId } }),
+      // loadUserPermissions is React-cached — zero extra DB round trip when the
+      // calling route already resolved permissions (e.g. requirePermission above).
+      loadUserPermissions(userId),
+    ]);
 
   if (!user) throw new Error("User not found");
 
-  const permissionKeys = user.roles.flatMap((ur) =>
-    ur.role.permissions.map((rp) => rp.permission.key)
-  );
-
-  // Today's attendance status
-  const now = await getNow();
-  const todayStart = toAttendanceDate(now);
-  const punch = await db.attendancePunch.findUnique({
-    where: { userId_date: { userId, date: todayStart } },
-  });
-
-  let attendanceStatus: "YET_TO_CHECK_IN" | "CHECKED_IN" | "ON_BREAK" | "CHECKED_OUT" = "YET_TO_CHECK_IN";
+  let attendanceStatus: "YET_TO_CHECK_IN" | "CHECKED_IN" | "ON_BREAK" | "CHECKED_OUT" =
+    "YET_TO_CHECK_IN";
   let totalInTime = "00:00:00";
 
   if (punch) {
     if (punch.outAt) {
       attendanceStatus = "CHECKED_OUT";
     } else if (punch.inAt) {
-      // Check if there is an active break
       const activeBreak = await db.attendanceBreak.findFirst({
         where: { punchId: punch.id, breakEnd: null },
       });
@@ -65,23 +74,9 @@ export async function getMe(userId: string) {
     }
   }
 
-  // Pending counts (Leave requests, HR cases, Tasks)
-  const pendingLeaves = await db.leaveRequest.count({
-    where: { userId, status: "pending" },
-  });
-
-  const pendingCases = await db.hRCase.count({
-    where: { userId, status: { in: ["OPEN", "ASSIGNED", "IN_PROGRESS"] } },
-  });
-
-  const pendingTasks = await db.hrmsTask.count({
-    where: { assigneeId: userId, status: "PENDING" },
-  });
-
-  // Load preferences
-  let pref = await db.employeePreference.findUnique({ where: { userId } });
-  if (!pref) {
-    pref = await db.employeePreference.create({
+  let activePref = pref;
+  if (!activePref) {
+    activePref = await db.employeePreference.create({
       data: {
         userId,
         widgets: JSON.stringify([
@@ -107,8 +102,8 @@ export async function getMe(userId: string) {
       manager: user.manager?.name ?? "",
       photo: user.photo,
     },
-    permissions: Array.from(new Set(permissionKeys)),
-    widgets: JSON.parse(pref.widgets as string),
+    permissions: Array.from(permsSet),
+    widgets: JSON.parse(activePref.widgets as string),
     attendanceStatus,
     totalInTime,
     pendingCounts: {

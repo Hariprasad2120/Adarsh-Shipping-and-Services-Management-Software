@@ -62,13 +62,19 @@ export async function getLeaveBalances(userId: string, year: number) {
 
 export async function initLeaveBalancesForUser(userId: string, orgId: string, year: number) {
   const types = await db.leaveType.findMany({ where: { orgId } });
-  for (const t of types) {
-    await db.leaveBalance.upsert({
-      where: { userId_leaveTypeId_year: { userId, leaveTypeId: t.id, year } },
-      update: {},
-      create: { userId, leaveTypeId: t.id, year, balance: t.defaultBalance },
-    });
-  }
+  if (types.length === 0) return;
+
+  // createMany with skipDuplicates replaces N sequential upserts with one
+  // batch INSERT ... ON CONFLICT DO NOTHING, reducing round trips from N to 1.
+  await db.leaveBalance.createMany({
+    data: types.map((t) => ({
+      userId,
+      leaveTypeId: t.id,
+      year,
+      balance: t.defaultBalance,
+    })),
+    skipDuplicates: true,
+  });
 }
 
 // ─── Leave requests ───────────────────────────────────────────────────────────

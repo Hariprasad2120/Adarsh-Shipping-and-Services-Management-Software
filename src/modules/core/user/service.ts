@@ -30,6 +30,8 @@ export async function listUsers(orgId: string, filters?: {
   roleId?: string;
   search?: string;
   active?: boolean;
+  take?: number;
+  skip?: number;
 }) {
   const where: Prisma.UserWhereInput = { orgId };
   if (filters?.active !== undefined) where.active = filters.active;
@@ -50,6 +52,8 @@ export async function listUsers(orgId: string, filters?: {
   return db.user.findMany({
     where,
     orderBy: { name: "asc" },
+    ...(filters?.take !== undefined ? { take: filters.take } : {}),
+    ...(filters?.skip !== undefined ? { skip: filters.skip } : {}),
     include: {
       branch: true,
       department: true,
@@ -58,6 +62,30 @@ export async function listUsers(orgId: string, filters?: {
       manager: { select: { id: true, name: true } },
       tl: { select: { id: true, name: true } },
       employmentRecord: true,
+    },
+  });
+}
+
+// Lean list for dashboards/stats that only need id, name, email, employeeNumber,
+// department.name, and branch.name. Skips employmentRecord, roles, division, etc.
+export async function listUsersForDashboard(orgId: string, filters?: {
+  active?: boolean;
+  take?: number;
+}) {
+  const where: Prisma.UserWhereInput = { orgId };
+  if (filters?.active !== undefined) where.active = filters.active;
+
+  return db.user.findMany({
+    where,
+    orderBy: { name: "asc" },
+    ...(filters?.take !== undefined ? { take: filters.take } : {}),
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      employeeNumber: true,
+      department: { select: { id: true, name: true } },
+      branch: { select: { id: true, name: true } },
     },
   });
 }

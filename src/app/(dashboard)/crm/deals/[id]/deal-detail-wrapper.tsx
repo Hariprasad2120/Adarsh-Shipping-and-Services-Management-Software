@@ -11,18 +11,8 @@ import { AttachmentsPanel } from "../../_components/attachments-panel";
 import { ActivitiesPanel } from "../../_components/activities-panel";
 import { TimelinePanel } from "../../_components/timeline-panel";
 import {
-  ChevronLeft,
   Edit2,
   Trash2,
-  Landmark,
-  Building,
-  User,
-  Calendar,
-  Clock,
-  MapPin,
-  Tag,
-  DollarSign,
-  AlertCircle,
   Truck,
   Info,
   Receipt
@@ -71,59 +61,6 @@ export function DealDetailWrapper({
 
   return (
     <div className="p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-200">
-      
-      {/* ─── RECORD HEADER ACTIONS ─────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#1c212a]/30 pb-5">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/crm/deals"
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800/40 rounded transition-all cursor-pointer"
-            title="Back to Deals"
-          >
-            <ChevronLeft className="size-5" />
-          </Link>
-          <div>
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-semibold tracking-tight text-white">{deal.name}</h2>
-              <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${
-                deal.stage === "WON"
-                  ? "bg-emerald-500/10 text-emerald-400"
-                  : deal.stage === "LOST"
-                  ? "bg-red-500/10 text-red-400"
-                  : "bg-[#00c4b6]/10 text-[#00c4b6]"
-              }`}>
-                {deal.stage.replace("_", " ")}
-              </span>
-            </div>
-            {deal.account && (
-              <p className="text-slate-400 text-xs mt-1">
-                Account:{" "}
-                <Link href={`/crm/accounts/${deal.account.id}`} className="hover:underline text-[#00c4b6]">
-                  {deal.account.name}
-                </Link>
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/crm/deals/${deal.id}/edit`}
-            className="flex items-center gap-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-200 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-          >
-            <Edit2 className="size-3.5" />
-            <span>Edit</span>
-          </Link>
-          <button
-            onClick={handleDelete}
-            className="flex items-center gap-1.5 bg-[#161f28] hover:bg-red-500/10 hover:text-red-400 border border-[#1c212a] text-slate-400 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-          >
-            <Trash2 className="size-3.5" />
-            <span>Delete</span>
-          </button>
-        </div>
-      </div>
-
       {/* ─── SPLIT VIEW LAYOUT ──────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
@@ -144,6 +81,22 @@ export function DealDetailWrapper({
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Close Target</span>
               <span className="text-white font-bold text-sm leading-8">{formattedCloseDate}</span>
             </div>
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <Link
+              href={`/crm/deals/${deal.id}/edit`}
+              className="flex items-center gap-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-200 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+            >
+              <Edit2 className="size-3.5" />
+              <span>Edit</span>
+            </Link>
+            <button
+              onClick={handleDelete}
+              className="flex items-center gap-1.5 bg-[#161f28] hover:bg-red-500/10 hover:text-red-400 border border-[#1c212a] text-slate-400 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+            >
+              <Trash2 className="size-3.5" />
+              <span>Delete</span>
+            </button>
           </div>
 
           {/* Deal Details */}

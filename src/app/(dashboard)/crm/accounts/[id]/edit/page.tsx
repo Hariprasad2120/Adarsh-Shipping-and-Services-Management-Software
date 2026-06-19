@@ -52,10 +52,6 @@ export default async function EditAccountPage({ params }: EditAccountPageProps) 
 
   return (
     <div className="p-8 space-y-6 max-w-5xl mx-auto">
-      <div>
-        <h2 className="text-2xl font-semibold tracking-tight text-white">Edit Account</h2>
-        <p className="text-slate-400 text-sm mt-1">Update details for {account.name}.</p>
-      </div>
       <AccountForm initialData={account} employees={employees} />
     </div>
   );

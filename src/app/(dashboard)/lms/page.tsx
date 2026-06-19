@@ -1,10 +1,5 @@
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { LmsView } from "@/components/hrms/lms-view";
+import { LmsRoutePage } from "./_components/lms-route-page";
 
 export default async function LMSPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-
-  return <LmsView />;
+  return <LmsRoutePage />;
 }

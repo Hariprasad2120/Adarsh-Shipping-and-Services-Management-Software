@@ -43,10 +43,6 @@ export default async function NewAccountPage() {
 
   return (
     <div className="p-8 space-y-6 max-w-5xl mx-auto">
-      <div>
-        <h2 className="text-2xl font-semibold tracking-tight text-white">Create New Account</h2>
-        <p className="text-slate-400 text-sm mt-1">Register client companies, partners, or logistical suppliers.</p>
-      </div>
       <AccountForm employees={employees} />
     </div>
   );

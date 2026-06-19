@@ -72,9 +72,6 @@ const CRM_GROUP_MAPPING: Record<string, string> = {
   "Products & Services": "Inventory",
   "Price Books": "Inventory",
   "Quotes": "Inventory",
-  "Sales Orders": "Inventory",
-  "Purchase Orders": "Inventory",
-  "Invoices & Sales": "Inventory",
   "Vendors": "Inventory",
   "Support Cases": "Support",
   "Solutions": "Support",
@@ -120,12 +117,6 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
     .find((s) => s.id === "crm")
     ?.items.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
 
-  const effectiveCrmExpandedGroups = useMemo(() => {
-    const group = activeCrmItem ? CRM_GROUP_MAPPING[activeCrmItem.label] : undefined;
-    if (!group || crmExpandedGroups[group]) return crmExpandedGroups;
-    return { ...crmExpandedGroups, [group]: true };
-  }, [activeCrmItem, crmExpandedGroups]);
-
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   const toggleSection = (sectionId: string) => {
@@ -157,6 +148,13 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
       setExpandedSections((prev) => ({ ...prev, [activeSection.id]: true }));
     }
   }, [pathname, visibleSections]);
+
+  useEffect(() => {
+    const activeGroup = activeCrmItem ? CRM_GROUP_MAPPING[activeCrmItem.label] : undefined;
+    if (!activeGroup) return;
+
+    setCrmExpandedGroups((prev) => (prev[activeGroup] ? prev : { ...prev, [activeGroup]: true }));
+  }, [activeCrmItem]);
 
   const setDashboardTheme = (nextTheme: ThemeMode) => {
     applyTheme(nextTheme);
@@ -288,7 +286,7 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
                         (item) => (CRM_GROUP_MAPPING[item.label] || "Sales") === groupTitle
                       );
                       if (groupItems.length === 0) return null;
-                      const isGroupExpanded = !!effectiveCrmExpandedGroups[groupTitle];
+                      const isGroupExpanded = !!crmExpandedGroups[groupTitle];
                       const hasActiveChild = groupItems.some((item) => activeChildHref === item.href);
 
                       return (

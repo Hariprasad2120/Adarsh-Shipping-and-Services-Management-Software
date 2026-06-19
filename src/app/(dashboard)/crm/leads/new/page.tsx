@@ -43,10 +43,6 @@ export default async function NewLeadPage() {
 
   return (
     <div className="p-8 space-y-6 max-w-5xl mx-auto">
-      <div>
-        <h2 className="text-2xl font-semibold tracking-tight text-white">Create New Lead</h2>
-        <p className="text-slate-400 text-sm mt-1">Record enquiries and target profiles for sales outreach.</p>
-      </div>
       <LeadForm employees={employees} />
     </div>
   );

@@ -10,21 +10,13 @@ import { AttachmentsPanel } from "../../_components/attachments-panel";
 import { ActivitiesPanel } from "../../_components/activities-panel";
 import { TimelinePanel } from "../../_components/timeline-panel";
 import {
-  ChevronLeft,
   Edit2,
   Trash2,
-  Building,
   Users,
   Briefcase,
   FileText,
-  FolderKanban,
-  MapPin,
-  Clock,
-  Coins,
-  ShieldCheck,
   Plus,
   Eye,
-  ArrowUpRight
 } from "lucide-react";
 
 interface AccountDetailWrapperProps {
@@ -66,46 +58,6 @@ export function AccountDetailWrapper({
 
   return (
     <div className="p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-200">
-      
-      {/* ─── RECORD HEADER ACTIONS ─────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#1c212a]/30 pb-5">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/crm/accounts"
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800/40 rounded transition-all cursor-pointer"
-            title="Back to Accounts"
-          >
-            <ChevronLeft className="size-5" />
-          </Link>
-          <div>
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-semibold tracking-tight text-white">{account.name}</h2>
-              <span className="px-2 py-0.5 text-[10px] font-bold bg-[#161f28] text-slate-300 rounded uppercase tracking-wider">
-                {account.type || "Customer"}
-              </span>
-            </div>
-            <p className="text-slate-400 text-xs mt-1">Industry: {account.industry || "Not Specified"} • Owner: {account.owner.name}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/crm/accounts/${account.id}/edit`}
-            className="flex items-center gap-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-200 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-          >
-            <Edit2 className="size-3.5" />
-            <span>Edit</span>
-          </Link>
-          <button
-            onClick={handleDelete}
-            className="flex items-center gap-1.5 bg-[#161f28] hover:bg-red-500/10 hover:text-red-400 border border-[#1c212a] text-slate-400 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-          >
-            <Trash2 className="size-3.5" />
-            <span>Delete</span>
-          </button>
-        </div>
-      </div>
-
       {/* ─── SPLIT VIEW LAYOUT ──────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
@@ -128,6 +80,22 @@ export function AccountDetailWrapper({
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Billed</span>
               <span className="text-[#00c4b6] font-bold text-lg">₹{totalInvoiced.toLocaleString("en-IN")}</span>
             </div>
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <Link
+              href={`/crm/accounts/${account.id}/edit`}
+              className="flex items-center gap-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-200 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+            >
+              <Edit2 className="size-3.5" />
+              <span>Edit</span>
+            </Link>
+            <button
+              onClick={handleDelete}
+              className="flex items-center gap-1.5 bg-[#161f28] hover:bg-red-500/10 hover:text-red-400 border border-[#1c212a] text-slate-400 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+            >
+              <Trash2 className="size-3.5" />
+              <span>Delete</span>
+            </button>
           </div>
 
           {/* Related Contacts */}
@@ -206,7 +174,7 @@ export function AccountDetailWrapper({
                 <h3 className="font-bold text-sm text-white uppercase tracking-wider">Invoices & Quotes ({invoices.length})</h3>
               </div>
               <Link
-                href={`/crm/invoices?accountId=${account.id}`}
+                href={`/accounting/invoices-sales?accountId=${account.id}`}
                 className="flex items-center gap-1 text-xs text-[#00c4b6] font-bold hover:underline cursor-pointer"
               >
                 <Plus className="size-3.5" />

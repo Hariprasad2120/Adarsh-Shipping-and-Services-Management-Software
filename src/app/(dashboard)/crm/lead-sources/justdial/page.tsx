@@ -46,11 +46,6 @@ export default async function JustdialConfigPage() {
 
   return (
     <div className="p-8 space-y-6 max-w-[1600px] mx-auto">
-      <div>
-        <h2 className="text-2xl font-semibold tracking-tight text-white font-sans">Lead Sources Setup</h2>
-        <p className="text-slate-400 text-sm mt-1">Configure automation variables, cron scheduling, and cookie headers.</p>
-      </div>
-
       <JustdialForm initialConfig={config} employees={employees} />
     </div>
   );

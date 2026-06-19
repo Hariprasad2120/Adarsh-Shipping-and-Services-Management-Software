@@ -7,7 +7,7 @@ import { SalaryStructureClient } from "./salary-structure-client";
 export default async function SalaryStructurePage() {
   const session = await auth();
   if (!session) redirect("/login");
-  await requirePermission(session.user.id, "hrms.employee.create");
+  await requirePermission(session.user.id, "hrms.salary.read");
 
   const orgId = session.user.orgId!;
   const allUsers = await listUsers(orgId, { active: true });

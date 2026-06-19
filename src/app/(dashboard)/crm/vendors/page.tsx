@@ -7,13 +7,10 @@ import { requirePermission } from "@/lib/rbac";
 import {
   Search,
   Truck,
-  Plus,
-  Trash2,
   Phone,
   Mail,
   ShieldAlert,
   Save,
-  MapPin
 } from "lucide-react";
 import { createVendorAction, deleteVendorAction } from "@/modules/crm/actions";
 import { DeleteRecordButton } from "../_components/delete-record-button";
@@ -65,14 +62,6 @@ export default async function CrmVendorsPage({ searchParams }: { searchParams: P
 
   return (
     <div className="p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-200">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#1c212a]/30 pb-5">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-white">Vendor Directory</h2>
-          <p className="text-slate-400 text-sm mt-1">Manage procurement vendors, transport linehaul suppliers, and overseas agent networks.</p>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Left Column: Vendors list table */}
         <div className="lg:col-span-2 bg-[#0f1319] border border-[#1c212a]/55 rounded-xl overflow-hidden shadow-2xl p-6 space-y-4">

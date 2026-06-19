@@ -15,7 +15,6 @@ import {
   HelpCircle,
   ArrowRight,
   TrendingUp,
-  Link2,
 } from "lucide-react";
 
 export default async function CrmLeadSourcesPage() {
@@ -64,20 +63,6 @@ export default async function CrmLeadSourcesPage() {
 
   return (
     <div className="p-8 space-y-6 max-w-[1600px] mx-auto">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#1c212a]/30 pb-5">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-white">Lead Sources</h2>
-          <p className="text-slate-400 text-sm mt-1">Integrate external inquiry channels and configure RPA workers to capture CRM leads.</p>
-        </div>
-        {config && (
-          <div className="flex items-center gap-3 shrink-0">
-            <JustdialToggle initialActive={config.isActive} />
-          </div>
-        )}
-      </div>
-
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Source Card: Justdial */}
         <div className="lg:col-span-2 bg-[#0f1319] border border-[#1c212a]/55 rounded-xl p-6 shadow-2xl space-y-6 flex flex-col justify-between">
@@ -112,6 +97,11 @@ export default async function CrmLeadSourcesPage() {
                 </span>
               )}
             </div>
+            {config && (
+              <div className="flex justify-end">
+                <JustdialToggle initialActive={config.isActive} />
+              </div>
+            )}
 
             <p className="text-slate-400 text-xs leading-relaxed">
               Connects to your Justdial business listing dashboard using Playwright browser context, loading injected active session cookies. Automatically expands inquiries detail cards to retrieve client contact information, location, query category, and rating status without mass scraping.

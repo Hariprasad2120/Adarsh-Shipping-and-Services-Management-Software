@@ -38,24 +38,14 @@ export default async function CrmLeadSourcesLogsPage() {
 
   return (
     <div className="p-8 space-y-6 max-w-[1600px] mx-auto">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#1c212a]/30 pb-5">
-        <div className="flex items-center gap-2">
+      <div className="bg-[#0f1319] border border-[#1c212a]/55 rounded-xl p-6 shadow-2xl space-y-4">
+        <div className="flex items-center gap-2 text-slate-300 border-b border-[#1c212a]/20 pb-2">
           <Link
             href="/crm/lead-sources"
             className="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800/40 cursor-pointer"
           >
             <ArrowLeft className="size-4" />
           </Link>
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-white font-sans">Import Run History</h2>
-            <p className="text-slate-400 text-sm mt-1">Audit log records of manual and scheduled Playwright lead ingestion processes.</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-[#0f1319] border border-[#1c212a]/55 rounded-xl p-6 shadow-2xl space-y-4">
-        <div className="flex items-center gap-2 text-slate-300 border-b border-[#1c212a]/20 pb-2">
           <History className="size-4.5 text-[#00c4b6]" />
           <h3 className="font-bold text-xs uppercase tracking-wider text-white">Ingestion Run Audit Log</h3>
         </div>

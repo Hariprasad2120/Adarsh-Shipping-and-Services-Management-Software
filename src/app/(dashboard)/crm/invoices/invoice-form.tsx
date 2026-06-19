@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createInvoiceAction, updateInvoiceAction } from "@/modules/crm/actions";
 import { Save, Plus, Trash2, FileText, Building, User, Calendar, Percent, DollarSign } from "lucide-react";
+import { MOCK_ITEMS } from "@/lib/items/mock-data";
 
 interface Option {
   id: string;
@@ -29,6 +30,9 @@ interface InvoiceFormProps {
   products?: { id: string; name: string; price: number; taxPercent: number }[];
   bankAccounts?: { id: string; accountName: string; accountCode: string }[];
   nextNumbers?: Record<string, string>;
+  defaultType?: string;
+  redirectPath?: string;
+  allowedTypes?: string[];
 }
 
 export function InvoiceForm({
@@ -39,14 +43,17 @@ export function InvoiceForm({
   employees,
   products = [],
   bankAccounts = [],
-  nextNumbers = {}
+  nextNumbers = {},
+  defaultType = "QUOTE",
+  redirectPath = "/crm/invoices",
+  allowedTypes,
 }: InvoiceFormProps) {
   const router = useRouter();
   const isEdit = !!initialData;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [invoiceNumber, setInvoiceNumber] = useState(initialData?.invoiceNumber || "");
-  const [type, setType] = useState(initialData?.type || "QUOTE");
+  const [type, setType] = useState(initialData?.type || defaultType);
   const [discount, setDiscount] = useState<number>(initialData?.discount || 0);
 
   const [accountId, setAccountId] = useState(initialData?.accountId || "");
@@ -88,6 +95,11 @@ export function InvoiceForm({
   };
 
   const handleItemChange = (index: number, field: keyof InvoiceItem, value: any) => {
+    if (field === "productName" && value === "__ADD_NEW__") {
+      router.push("/crm/items/new");
+      return;
+    }
+
     setItems((prev) =>
       prev.map((item, i) => {
         if (i !== index) return item;
@@ -101,10 +113,16 @@ export function InvoiceForm({
         }
 
         if (field === "productName") {
-          const match = products.find(p => p.name.toLowerCase() === value.trim().toLowerCase());
-          if (match) {
-            updated.rate = match.price;
-            updated.taxPercent = match.taxPercent;
+          const q = value.trim().toLowerCase();
+          const prodMatch = products.find(p => p.name.toLowerCase() === q);
+          if (prodMatch) {
+            updated.rate = prodMatch.price;
+            updated.taxPercent = prodMatch.taxPercent;
+          } else {
+            const itemMatch = MOCK_ITEMS.find(i => i.name.toLowerCase() === q);
+            if (itemMatch) {
+              updated.rate = itemMatch.rate;
+            }
           }
         }
         return updated;
@@ -149,13 +167,15 @@ export function InvoiceForm({
 
     if (res.ok) {
       toast.success(isEdit ? "Record updated successfully" : "Record created successfully");
-      router.push("/crm/invoices");
+      router.push(redirectPath);
     } else {
       toast.error(res.error);
     }
   };
 
-  const invoiceTypes = ["QUOTE", "INVOICE", "DEBIT_NOTE", "SALES_ORDER", "PURCHASE_ORDER"];
+  const invoiceTypes = allowedTypes && allowedTypes.length > 0
+    ? allowedTypes
+    : ["QUOTE", "INVOICE", "DEBIT_NOTE", "SALES_ORDER", "PURCHASE_ORDER"];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl bg-[#0f1319] border border-[#1c212a]/60 rounded-xl p-6 shadow-2xl">
@@ -172,7 +192,7 @@ export function InvoiceForm({
             <select
               value={type}
               onChange={(e) => setType(e.target.value)}
-              disabled={isEdit}
+              disabled={isEdit || invoiceTypes.length === 1}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
             >
               {invoiceTypes.map((t) => (
@@ -508,11 +528,17 @@ export function InvoiceForm({
         </button>
       </div>
 
-      {/* Autocomplete Datalist */}
+      {/* Autocomplete Datalist — combines Products catalog + Items master */}
       <datalist id="products-datalist">
         {products.map((p) => (
-          <option key={p.id} value={p.name} />
+          <option key={`prod-${p.id}`} value={p.name} />
         ))}
+        {MOCK_ITEMS
+          .filter((mi) => !products.some((p) => p.name.toLowerCase() === mi.name.toLowerCase()))
+          .map((mi) => (
+            <option key={`item-${mi.id}`} value={mi.name} />
+          ))}
+        <option value="__ADD_NEW__">+ Add New Item...</option>
       </datalist>
     </form>
   );

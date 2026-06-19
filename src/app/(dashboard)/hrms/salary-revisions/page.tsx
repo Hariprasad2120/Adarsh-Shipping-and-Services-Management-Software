@@ -14,7 +14,7 @@ export default async function SalaryRevisionsPage({
 }) {
   const session = await auth();
   if (!session) redirect("/login");
-  await requirePermission(session.user.id, "hrms.employee.read");
+  await requirePermission(session.user.id, "hrms.salary.read");
 
   const params = await searchParams;
   const initialEmployeeId = typeof params.employeeId === "string" ? params.employeeId : undefined;
