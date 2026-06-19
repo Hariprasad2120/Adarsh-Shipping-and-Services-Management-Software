@@ -42,6 +42,8 @@ type ReviewerCriterionValue = {
   changeReason: string;
 };
 
+type RatingAnswers = ReviewerRatingAnswers | ManagementReviewAnswers;
+
 function emptySelfAnswers(): SelfAssessmentAnswers {
   return {
     version: "v2",
@@ -52,7 +54,7 @@ function emptySelfAnswers(): SelfAssessmentAnswers {
   };
 }
 
-function emptyReviewerAnswers(): ReviewerRatingAnswers {
+function emptyReviewerAnswers(): RatingAnswers {
   return {
     version: "v2",
     categoryPoints: {},
@@ -76,7 +78,7 @@ function normalizeSelfAnswers(initialAnswers?: SelfAssessmentAnswers | null): Se
   };
 }
 
-function normalizeReviewerAnswers(initialAnswers?: ReviewerRatingAnswers | ManagementReviewAnswers | null): ReviewerRatingAnswers {
+function normalizeReviewerAnswers(initialAnswers?: RatingAnswers | null): RatingAnswers {
   return {
     ...emptyReviewerAnswers(),
     ...(initialAnswers ?? {}),
@@ -113,7 +115,7 @@ function getCriterionQuestions(criterion: CriterionPoint): AppraisalQuestionDefi
 function getReviewerQuestionResponse(
   criterionId: string,
   question: AppraisalQuestionDefinition,
-  answers: ReviewerRatingAnswers | ManagementReviewAnswers,
+  answers: RatingAnswers,
 ): QuestionResponse {
   const stored = answers.responses?.[criterionId]?.[question.id];
   if (stored) return stored;
@@ -151,8 +153,8 @@ function buildSliderStyle(value: number, minValue = 1, maxValue = 5) {
 
 function hasCriterionChanged(
   criterionId: string,
-  current: ReviewerRatingAnswers | ManagementReviewAnswers,
-  baseline: ReviewerRatingAnswers | ManagementReviewAnswers | null,
+  current: RatingAnswers,
+  baseline: RatingAnswers | null,
 ) {
   if (!baseline) return false;
   return (
@@ -865,16 +867,18 @@ export function DynamicAppraisalForm({
   selfTemplate,
   isResubmission = false,
   submitLabel,
+  showDemoFill = true,
 }: {
   mode: "self" | "reviewer" | "management";
   criteria: CriterionPoint[];
-  initialAnswers: SelfAssessmentAnswers | ReviewerRatingAnswers | ManagementReviewAnswers | null | undefined;
-  onSaveDraft: (answers: SelfAssessmentAnswers | ReviewerRatingAnswers) => Promise<void> | void;
-  onSubmitFinal: (answers: SelfAssessmentAnswers | ReviewerRatingAnswers) => Promise<void> | void;
+  initialAnswers: SelfAssessmentAnswers | RatingAnswers | null | undefined;
+  onSaveDraft: (answers: SelfAssessmentAnswers | RatingAnswers) => Promise<void> | void;
+  onSubmitFinal: (answers: SelfAssessmentAnswers | RatingAnswers) => Promise<void> | void;
   disabled?: boolean;
   selfTemplate?: AppraisalSelfFormTemplate;
   isResubmission?: boolean;
   submitLabel?: string;
+  showDemoFill?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
   const resolvedSelfTemplate = useMemo(
@@ -886,14 +890,14 @@ export function DynamicAppraisalForm({
     [resolvedSelfTemplate],
   );
   const [selfAnswers, setSelfAnswers] = useState(() => normalizeSelfAnswers(mode === "self" ? (initialAnswers as SelfAssessmentAnswers | null | undefined) : null));
-  const [reviewerAnswers, setReviewerAnswers] = useState(() => normalizeReviewerAnswers(mode !== "self" ? (initialAnswers as ReviewerRatingAnswers | null | undefined) : null));
+  const [reviewerAnswers, setReviewerAnswers] = useState(() => normalizeReviewerAnswers(mode !== "self" ? (initialAnswers as RatingAnswers | null | undefined) : null));
   const [missingFieldIds, setMissingFieldIds] = useState<Set<string>>(new Set());
   const [formPrompt, setFormPrompt] = useState<string | null>(null);
   const [demoProfile, setDemoProfile] = useState<DemoPerformanceProfile>("average");
   const deferredSelf = useDeferredValue(selfAnswers);
   const deferredReviewer = useDeferredValue(reviewerAnswers);
   const baselineReviewerAnswers = useMemo(
-    () => (mode === "self" || !isResubmission ? null : normalizeReviewerAnswers(initialAnswers as ReviewerRatingAnswers | null | undefined)),
+    () => (mode === "self" || !isResubmission ? null : normalizeReviewerAnswers(initialAnswers as RatingAnswers | null | undefined)),
     [initialAnswers, mode, isResubmission],
   );
 
@@ -1058,7 +1062,7 @@ export function DynamicAppraisalForm({
         return;
       }
 
-      const normalized: ReviewerRatingAnswers = {
+      const normalized: RatingAnswers = {
         ...reviewerAnswers,
         categoryPoints: criteria.reduce<Record<string, number>>((acc, criterion) => {
           const subItemRatings = reviewerAnswers.subItemRatings[criterion.id] ?? {};
@@ -1107,7 +1111,7 @@ export function DynamicAppraisalForm({
                   />
                 </div>
               </div>
-              {!readOnly ? (
+              {!readOnly && showDemoFill ? (
                 <DemoFillButton
                   profiles={demoPerformanceProfiles}
                   selectedProfile={demoProfile}
@@ -1158,7 +1162,7 @@ export function DynamicAppraisalForm({
             </div>
           ) : null}
 
-          {!readOnly ? (
+          {!readOnly && showDemoFill ? (
             <div className="flex justify-end">
               <DemoFillButton
                 profiles={demoPerformanceProfiles}
@@ -1287,7 +1291,7 @@ export function CriteriaPointsView({
 }: {
   criteria: CriterionPoint[];
   supplementary: CriterionPoint[];
-  answers: SelfAssessmentAnswers | ReviewerRatingAnswers | ManagementReviewAnswers | null;
+  answers: SelfAssessmentAnswers | RatingAnswers | null;
   editCount?: number;
   selfTemplate?: AppraisalSelfFormTemplate;
   onReviewerFieldNavigate?: (fieldId: string) => void;
@@ -1425,17 +1429,19 @@ export function CriteriaPointsForm({
   selfTemplate,
   isResubmission,
   submitLabel,
+  showDemoFill = true,
 }: {
   criteria: CriterionPoint[];
   supplementary: CriterionPoint[];
-  initialAnswers: SelfAssessmentAnswers | ReviewerRatingAnswers | ManagementReviewAnswers | null | undefined;
+  initialAnswers: SelfAssessmentAnswers | RatingAnswers | null | undefined;
   mode: "self" | "reviewer" | "management";
-  onSaveDraft: (answers: SelfAssessmentAnswers | ReviewerRatingAnswers) => Promise<void> | void;
-  onSubmitFinal: (answers: SelfAssessmentAnswers | ReviewerRatingAnswers) => Promise<void> | void;
+  onSaveDraft: (answers: SelfAssessmentAnswers | RatingAnswers) => Promise<void> | void;
+  onSubmitFinal: (answers: SelfAssessmentAnswers | RatingAnswers) => Promise<void> | void;
   disabled?: boolean;
   selfTemplate?: AppraisalSelfFormTemplate;
   isResubmission?: boolean;
   submitLabel?: string;
+  showDemoFill?: boolean;
 }) {
   return (
     <DynamicAppraisalForm
@@ -1448,6 +1454,7 @@ export function CriteriaPointsForm({
       selfTemplate={selfTemplate}
       isResubmission={isResubmission}
       submitLabel={submitLabel}
+      showDemoFill={showDemoFill}
     />
   );
 }

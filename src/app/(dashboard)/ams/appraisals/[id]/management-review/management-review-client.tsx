@@ -4,8 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CriteriaPointsForm, CriteriaPointsView } from "@/components/ams/criteria-points-form";
+import { DemoFillButton } from "@/components/demo-fill-button";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { Input } from "@/components/ui/input";
+import {
+  buildReviewerDemoAnswers,
+  demoPerformanceProfiles,
+  type DemoPerformanceProfile,
+} from "@/lib/demo-fill";
 import type {
   AppraisalSelfFormTemplate,
   ManagementReviewAnswers,
@@ -97,6 +103,8 @@ export function ManagementReviewClient({
   const [isEditing, setIsEditing] = useState<boolean>(
     appraisal.submissionStatus !== "SUBMITTED",
   );
+  const [demoProfile, setDemoProfile] = useState<DemoPerformanceProfile>("average");
+  const [formSeed, setFormSeed] = useState(0);
   const [proposedDates, setProposedDates] = useState<string[]>(() => {
     const initial = appraisal.proposedDates.slice(0, 3);
     while (initial.length < 3) initial.push("");
@@ -146,6 +154,21 @@ export function ManagementReviewClient({
     }
     setSavedAt(new Date().toLocaleTimeString("en-IN"));
     router.refresh();
+  }
+
+  function buildDemoMeetingDates() {
+    const start = new Date();
+    return Array.from({ length: 3 }, (_, index) => {
+      const next = new Date(start);
+      next.setDate(start.getDate() + index + 1);
+      return next.toISOString().slice(0, 10);
+    });
+  }
+
+  function fillManagementDemoData() {
+    setCurrentRating(buildReviewerDemoAnswers(managementCriteria, demoProfile) as ManagementReviewAnswers);
+    setProposedDates(buildDemoMeetingDates());
+    setFormSeed((current) => current + 1);
   }
 
   return (
@@ -226,6 +249,14 @@ export function ManagementReviewClient({
       ) : canSubmit && isEditing ? (
         <Card title="Your Management Rating">
           <div className="space-y-4">
+            <div className="flex justify-end">
+              <DemoFillButton
+                profiles={demoPerformanceProfiles}
+                selectedProfile={demoProfile}
+                onProfileChange={setDemoProfile}
+                onClick={fillManagementDemoData}
+              />
+            </div>
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Proposed Meeting Dates</p>
               {proposedDates.map((value, index) => (
@@ -239,6 +270,7 @@ export function ManagementReviewClient({
               ))}
             </div>
             <CriteriaPointsForm
+              key={`management-rating-form:${formSeed}`}
               mode="management"
               criteria={managementCriteria}
               supplementary={[]}
@@ -246,6 +278,7 @@ export function ManagementReviewClient({
               onSaveDraft={(answers) => persistRating("DRAFT", answers as ManagementReviewAnswers)}
               onSubmitFinal={(answers) => persistRating("SUBMITTED", answers as ManagementReviewAnswers)}
               isResubmission={currentSubmissionStatus === "SUBMITTED"}
+              showDemoFill={false}
             />
           </div>
         </Card>
