@@ -36,6 +36,7 @@ model Organisation {
   announcements          Announcement[]
 
   crmApprovalLogs   CrmApprovalLog[]
+  crmWorkTimeLogs   CrmWorkTimeLog[]
   biometricSyncLogs BiometricSyncLog[]
   workingCalendar   WorkingCalendar?
   otSettings        OtSettings?
@@ -268,6 +269,8 @@ model User {
   crmTimelineCreated       CrmTimelineEvent[]            @relation("CrmTimelineCreator")
   crmJdConfigs             CrmLeadSourceJustdialConfig[] @relation("CrmJdConfigOwner")
   crmExternalLeadsAssigned CrmExternalLeadSnapshot[]     @relation("CrmExternalLeadAssignee")
+  crmLeadReminders         CrmLeadReminder[]             @relation("CrmLeadReminderUser")
+  crmWorkTimeLogs          CrmWorkTimeLog[]              @relation("CrmWorkTimeLogUser")
 
   // PeoplePlus HRMS Relations
   hrmsPreferences          EmployeePreference?
@@ -1080,9 +1083,22 @@ model CrmLead {
   pincode         String?
   description     String?
   tags            String[] // array of tags
-  isConverted     Boolean                  @default(false)
-  convertedAt     DateTime?
-  crmExternalLead CrmExternalLeadSnapshot? @relation("CrmExternalLeadToLead")
+  isConverted         Boolean                  @default(false)
+  convertedAt         DateTime?
+  convertedAccountId  String?
+  convertedContactId  String?
+  convertedDealId     String?
+  crmExternalLead     CrmExternalLeadSnapshot? @relation("CrmExternalLeadToLead")
+  enquiryDetails      Json?
+  notInterestedReason String?
+  isPerishable        Boolean                  @default(false)
+  perishableDetails   Json?
+  enquiryRef          String?                  @unique
+  isFutureFollowUp    Boolean                  @default(false)
+  followUpReminderDate DateTime?
+  reminders           CrmLeadReminder[]
+  workTimeLogs        CrmWorkTimeLog[]
+  crmQuotes           CrmInvoice[]             @relation("CrmLeadQuotes")
 
   createdById String
   updatedById String
@@ -1092,6 +1108,23 @@ model CrmLead {
   @@index([orgId])
   @@index([ownerId])
   @@index([status])
+}
+
+model CrmLeadReminder {
+  id          String    @id @default(cuid())
+  orgId       String
+  leadId      String
+  userId      String
+  alertAt     DateTime
+  triggeredAt DateTime?
+  status      String    @default("PENDING") // PENDING | TRIGGERED
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  lead CrmLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user User    @relation("CrmLeadReminderUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, alertAt])
 }
 
 model CrmContact {
@@ -1146,6 +1179,25 @@ model CrmAccount {
   creditLimit     Float   @default(0.0)
   paymentTerms    String?
   status          String  @default("ACTIVE")
+
+  customerSubType       String?   // Business, Individual
+  salutation            String?   // Mr., Mrs., etc.
+  firstName             String?
+  lastName              String?
+  companyName           String?
+  language              String?   @default("English")
+  communicationChannels String[]  @default([])
+  gstTreatment          String?   // Registered Business - Regular, Registered Business - Composition, Unregistered Business, Consumer, Overseas, SEZ
+  placeOfSupply         String?   // Indian state
+  pan                   String?
+  taxPreference         String?   // Taxable, Tax Exempt
+  currency              String?   @default("INR")
+  openingBalanceBranch  String?
+  openingBalanceAmount  Float?    @default(0.0)
+  isPortalEnabled       Boolean   @default(false)
+  remarks               String?
+  billingAddressDetails  Json?
+  shippingAddressDetails Json?
 
   createdById String
   updatedById String
@@ -1325,6 +1377,8 @@ model CrmInvoice {
   deal      CrmDeal?    @relation(fields: [dealId], references: [id], onDelete: SetNull)
   vendorId  String?
   vendor    CrmVendor?  @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  crmLeadId String?
+  crmLead   CrmLead?    @relation("CrmLeadQuotes", fields: [crmLeadId], references: [id], onDelete: SetNull)
 
   bankDetails   String?
   manualNotes   String?
@@ -1356,6 +1410,7 @@ model CrmInvoice {
   @@index([ownerId])
   @@index([approvalStatus])
   @@index([approvedById])
+  @@index([crmLeadId])
 }
 
 model CrmApprovalLog {
@@ -2736,3 +2791,29 @@ model JobCosting {
   @@index([branchId])
   @@index([customerId])
 }
+
+model CrmWorkTimeLog {
+  id            String   @id @default(cuid())
+  orgId         String
+  userId        String
+  leadId        String?
+  accountId     String?
+  invoiceId     String?
+  activityType  String
+  durationHours Float
+  description   String?
+  loggedAt      DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User         @relation("CrmWorkTimeLogUser", fields: [userId], references: [id], onDelete: Cascade)
+  lead CrmLead?     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  org  Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([leadId])
+  @@index([accountId])
+  @@index([invoiceId])
+  @@index([userId])
+}
+

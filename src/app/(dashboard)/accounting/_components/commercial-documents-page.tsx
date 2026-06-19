@@ -187,7 +187,7 @@ export async function CommercialDocumentsPage({
                       {inv.account ? (
                         <div className="flex items-center gap-1.5 text-xs">
                           <Building className="size-3.5 text-slate-500" />
-                          <Link href={`/crm/accounts/${inv.account.id}`} className="hover:text-[#00c4b6] hover:underline">
+                          <Link href={`/crm/customers/${inv.account.id}`} className="hover:text-[#00c4b6] hover:underline">
                             {inv.account.name}
                           </Link>
                         </div>

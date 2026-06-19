@@ -23,6 +23,48 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastName, setLastName] = useState(initialData?.lastName || "");
   const [company, setCompany] = useState(initialData?.company || "");
+  const [isPerishable, setIsPerishable] = useState(initialData?.isPerishable || false);
+  const [showPerishablesDialog, setShowPerishablesDialog] = useState(false);
+  const [perishableType, setPerishableType] = useState(initialData?.perishableDetails?.perishableType || "");
+  const [tempRequired, setTempRequired] = useState(initialData?.perishableDetails?.tempRequired || "");
+  const [humidityControl, setHumidityControl] = useState(initialData?.perishableDetails?.humidityControl || "");
+  const [ventilation, setVentilation] = useState(initialData?.perishableDetails?.ventilation || "");
+  const [perishableRemarks, setPerishableRemarks] = useState(initialData?.perishableDetails?.perishableRemarks || "");
+
+  const handleFillDemo = () => {
+    // Set controlled states
+    setLastName("Hari");
+    setCompany("Adarsh Shipping Logistics");
+    
+    // Set other inputs
+    const formEl = document.querySelector("form");
+    if (formEl) {
+      const setVal = (name: string, val: string) => {
+        const el = formEl.elements.namedItem(name) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+        if (el) el.value = val;
+      };
+      setVal("firstName", "Adarsh");
+      setVal("designation", "Operations Manager");
+      setVal("email", "adarsh.hari@example.com");
+      setVal("phone", "+91 44 2819 1234");
+      setVal("mobile", "+91 98840 12345");
+      setVal("fax", "+91 44 2819 5678");
+      setVal("website", "https://www.adarshshipping.in");
+      setVal("source", "Partner Referral");
+      setVal("status", "NEW");
+      setVal("rating", "Hot");
+      setVal("industry", "Logistics & Supply Chain");
+      setVal("annualRevenue", "15000000");
+      setVal("address", "14 East Coast Road, Thiruvanmiyur");
+      setVal("city", "Chennai");
+      setVal("state", "Tamil Nadu");
+      setVal("pincode", "600041");
+      setVal("country", "India");
+      setVal("tags", "VIP Customer, Custom Clearance");
+      setVal("description", "Requires regular import shipments of automotive parts from Shanghai to Chennai Port. Expects LCL consolidation and custom clearing CHA support.");
+      toast.success("Lead form demo data filled!");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -251,6 +293,151 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
         </div>
       </div>
 
+      {/* ─── SECTION: PERISHABLE CARGO ───────────────────────────────────── */}
+      <div className="space-y-4 p-5 rounded-xl bg-[#161f28]/45 border border-[#1c212a] hover-cyan transition-all">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Perishable Cargo Handling</h4>
+            <p className="text-[11px] text-slate-400">Specify if this client requires temperature-controlled or perishable cargo shipping</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={isPerishable}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setIsPerishable(checked);
+                if (checked) {
+                  setShowPerishablesDialog(true);
+                }
+              }}
+              className="sr-only peer"
+            />
+            <div className="w-9 h-5 bg-[#161f28] border border-[#1c212a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-[#00c4b6] after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#00c4b6]/10 peer-checked:border-[#00c4b6]/40"></div>
+          </label>
+        </div>
+
+        {/* Hidden inputs to be caught by FormData */}
+        <input type="hidden" name="isPerishable" value={isPerishable ? "true" : "false"} />
+        <input type="hidden" name="perishableType" value={perishableType} />
+        <input type="hidden" name="tempRequired" value={tempRequired} />
+        <input type="hidden" name="humidityControl" value={humidityControl} />
+        <input type="hidden" name="ventilation" value={ventilation} />
+        <input type="hidden" name="perishableRemarks" value={perishableRemarks} />
+
+        {isPerishable && (
+          <div className="p-4 bg-[#0a0d12]/60 rounded-lg border border-[#1c212a]/50 text-xs grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in duration-200">
+            <div>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-0.5">Cargo Type</span>
+              <span className="text-white font-medium">{perishableType || "Not specified"}</span>
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-0.5">Temperature Range</span>
+              <span className="text-white font-medium">{tempRequired || "Not specified"}</span>
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-0.5">Humidity / Vent</span>
+              <span className="text-white font-medium">H: {humidityControl || "N/A"} / V: {ventilation || "N/A"}</span>
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-0.5">Remarks</span>
+              <span className="text-white font-medium block truncate">{perishableRemarks || "None"}</span>
+            </div>
+            <div className="col-span-2 md:col-span-4 flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={() => setShowPerishablesDialog(true)}
+                className="px-3 py-1 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-[#00c4b6] rounded text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
+              >
+                Edit Perishable Info
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {showPerishablesDialog && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-[#0f1319] border border-[#1c212a] rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-[#1c212a]/50 bg-[#0c0f14]">
+              <span className="font-bold text-xs text-white uppercase tracking-wider">Perishable Cargo Specification</span>
+              <button 
+                type="button" 
+                onClick={() => setShowPerishablesDialog(false)} 
+                className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Cargo Type (e.g. Fresh Fruits, Seafood, Vaccines)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Chilled Blueberries"
+                  value={perishableType}
+                  onChange={(e) => setPerishableType(e.target.value)}
+                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00c4b6]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Required Temp (°C)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 2°C to 4°C"
+                    value={tempRequired}
+                    onChange={(e) => setTempRequired(e.target.value)}
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00c4b6]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Humidity (%)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 85%"
+                    value={humidityControl}
+                    onChange={(e) => setHumidityControl(e.target.value)}
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00c4b6]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Ventilation</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 25 cbm/h"
+                    value={ventilation}
+                    onChange={(e) => setVentilation(e.target.value)}
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00c4b6]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Special Remarks & Instructions</label>
+                <textarea
+                  rows={3}
+                  placeholder="Provide remarks regarding temperature logging, reefer power connection, or pre-cooling needs..."
+                  value={perishableRemarks}
+                  onChange={(e) => setPerishableRemarks(e.target.value)}
+                  className="w-full p-2.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00c4b6] placeholder-slate-600 resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 p-4 bg-[#0c0f14] border-t border-[#1c212a]/30">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPerishablesDialog(false);
+                }}
+                className="px-4 py-2 bg-[#00c4b6] hover:bg-[#00b0a3] text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+              >
+                Save Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ─── SECTION: ADDRESS ───────────────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
@@ -336,6 +523,13 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-3.5 pt-4 border-t border-[#1c212a]/30">
+        <button
+          type="button"
+          onClick={handleFillDemo}
+          className="px-5 py-2 bg-[#00c4b6]/10 hover:bg-[#00c4b6]/20 border border-[#00c4b6]/35 text-[#00c4b6] rounded-lg text-sm font-semibold cursor-pointer"
+        >
+          Fill Demo Data
+        </button>
         <button
           type="button"
           onClick={() => router.back()}

@@ -388,6 +388,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/crm/leads"],
       },
       {
+        href: "/crm/enquiries",
+        label: "Enquiries",
+        icon: View,
+        permission: "crm.lead.read",
+        matchPaths: ["/crm/enquiries"],
+      },
+      {
         href: "/crm/contacts",
         label: "Contacts",
         icon: Group,
@@ -395,11 +402,11 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/crm/contacts"],
       },
       {
-        href: "/crm/accounts",
-        label: "Accounts",
+        href: "/crm/customers",
+        label: "Customers",
         icon: Group,
         permission: "crm.account.manage",
-        matchPaths: ["/crm/accounts"],
+        matchPaths: ["/crm/customers"],
       },
       {
         href: "/crm/deals",
@@ -547,6 +554,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         icon: Report,
         permission: "crm.access",
         matchPaths: ["/crm/voc"],
+      },
+      {
+        href: "/crm/efficiency",
+        label: "Sales Efficiency",
+        icon: Time,
+        permission: "crm.access",
+        matchPaths: ["/crm/efficiency"],
       },
       {
         href: "/crm/lead-sources",

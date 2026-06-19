@@ -146,16 +146,19 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
                         <span className="text-[11px] text-slate-400 block font-normal">{contact.designation}</span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 p-0">
                       {contact.account ? (
-                        <div className="flex items-center gap-1.5 text-slate-300">
+                        <Link
+                          href={`/crm/customers/${contact.account.id}`}
+                          className="flex items-center gap-1.5 text-slate-300 hover:text-[#00c4b6] transition-all px-6 py-4 block w-full h-full"
+                        >
                           <Building className="size-3.5 text-slate-500" />
-                          <Link href={`/crm/accounts/${contact.account.id}`} className="hover:underline hover:text-[#00c4b6]">
-                            {contact.account.name}
-                          </Link>
-                        </div>
+                          <span>{contact.account.name}</span>
+                        </Link>
                       ) : (
-                        <span className="text-slate-500 italic">No account linked</span>
+                        <div className="px-6 py-4">
+                          <span className="text-slate-500 italic">No account linked</span>
+                        </div>
                       )}
                     </td>
                     <td className="px-6 py-4 text-slate-300">

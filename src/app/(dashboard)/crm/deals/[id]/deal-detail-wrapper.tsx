@@ -111,7 +111,7 @@ export function DealDetailWrapper({
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Customer Company</span>
                 <span className="text-white font-medium">
                   {deal.account ? (
-                    <Link href={`/crm/accounts/${deal.account.id}`} className="hover:underline text-[#00c4b6] font-bold">
+                    <Link href={`/crm/customers/${deal.account.id}`} className="hover:underline text-[#00c4b6] font-bold">
                       {deal.account.name}
                     </Link>
                   ) : (

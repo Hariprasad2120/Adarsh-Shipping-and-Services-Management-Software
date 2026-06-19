@@ -236,6 +236,18 @@ export const NOTIFICATION_POLICIES: Record<string, NotificationPolicy> = {
     emailByDefault: true,
     labels: { open: "View status", acknowledge: "Acknowledge" },
   },
+  CRM_LEAD_FOLLOWUP: {
+    source: "System",
+    variant: "warning",
+    appearance: "light",
+    priority: "important",
+    requiresAck: true,
+    resendable: false,
+    allowDismiss: true,
+    autoFadeMs: null,
+    emailByDefault: false,
+    labels: { open: "View Lead", acknowledge: "Acknowledge" },
+  },
 };
 
 export function getNotificationPolicy(kind: string): NotificationPolicy {

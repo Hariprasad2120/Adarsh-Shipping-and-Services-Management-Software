@@ -12,7 +12,8 @@ import { TimelinePanel } from "../../_components/timeline-panel";
 import {
   Edit2,
   Trash2,
-  Info
+  Info,
+  Building
 } from "lucide-react";
 
 interface ContactDetailWrapperProps {
@@ -87,7 +88,7 @@ export function ContactDetailWrapper({
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Linked Company</span>
                 <span className="text-white font-medium">
                   {contact.account ? (
-                    <Link href={`/crm/accounts/${contact.account.id}`} className="hover:underline text-[#00c4b6] font-bold">
+                    <Link href={`/crm/customers/${contact.account.id}`} className="hover:underline text-[#00c4b6] font-bold">
                       {contact.account.name}
                     </Link>
                   ) : (
@@ -125,6 +126,65 @@ export function ContactDetailWrapper({
               </div>
             </div>
           </div>
+
+          {/* Customer Account Details Card (Combined View) */}
+          {contact.account && (
+            <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
+              <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3 mb-2">
+                <div className="flex items-center gap-3">
+                  <Building className="size-4.5 text-[#00c4b6]" />
+                  <h3 className="font-bold text-sm text-white uppercase tracking-wider">Customer Account Details</h3>
+                </div>
+                <Link
+                  href={`/crm/customers/${contact.account.id}`}
+                  className="text-xs text-[#00c4b6] hover:underline font-bold"
+                >
+                  View Full Profile
+                </Link>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Company Name</span>
+                  <span className="text-white font-medium">{contact.account.name}</span>
+                </div>
+                {contact.account.customerSubType && (
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Customer Sub-Type</span>
+                    <span className="text-white font-medium">{contact.account.customerSubType}</span>
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Account Email</span>
+                  <span className="text-white font-medium">{contact.account.email || "Not Specified"}</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Account Phone</span>
+                  <span className="text-white font-medium">{contact.account.phone || "Not Specified"}</span>
+                </div>
+                {contact.account.website && (
+                  <div className="space-y-1 md:col-span-2">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Website</span>
+                    <a href={contact.account.website} target="_blank" rel="noopener noreferrer" className="text-[#00c4b6] hover:underline font-medium">
+                      {contact.account.website}
+                    </a>
+                  </div>
+                )}
+                {contact.account.billingAddress && (
+                  <div className="space-y-1 md:col-span-2">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Billing Address</span>
+                    <span className="text-slate-300 font-medium whitespace-pre-line">{contact.account.billingAddress}</span>
+                  </div>
+                )}
+                {contact.account.shippingAddress && (
+                  <div className="space-y-1 md:col-span-2">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Shipping Address</span>
+                    <span className="text-slate-300 font-medium whitespace-pre-line">{contact.account.shippingAddress}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Description Section */}
           {contact.description && (

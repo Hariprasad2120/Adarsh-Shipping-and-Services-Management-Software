@@ -262,7 +262,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                       </td>
                       <td className="px-6 py-4 text-slate-300">
                         {deal.account ? (
-                          <Link href={`/crm/accounts/${deal.account.id}`} className="hover:underline text-[#00c4b6]">
+                          <Link href={`/crm/customers/${deal.account.id}`} className="hover:underline text-[#00c4b6]">
                             {deal.account.name}
                           </Link>
                         ) : (

@@ -158,7 +158,51 @@ export async function notifyMany(userIds: string[], params: Omit<CreateNotificat
   await Promise.all(userIds.map((userId) => createNotification({ ...params, userId })));
 }
 
+export async function triggerCrmLeadReminders(userId: string) {
+  try {
+    const now = new Date();
+    const dueReminders = await db.crmLeadReminder.findMany({
+      where: {
+        userId,
+        status: "PENDING",
+        alertAt: { lte: now }
+      },
+      include: {
+        lead: true
+      }
+    });
+
+    for (const reminder of dueReminders) {
+      if (reminder.lead && (reminder.lead.status === "NOT_PICKED" || reminder.lead.status === "NOT_REACHABLE")) {
+        const statusLabel = reminder.lead.status === "NOT_PICKED" ? "Not Picked" : "Not Reachable";
+        await createNotification({
+          userId: reminder.userId,
+          orgId: reminder.orgId || undefined,
+          kind: "CRM_LEAD_FOLLOWUP",
+          title: `Lead Follow-up: ${reminder.lead.firstName ? reminder.lead.firstName + " " : ""}${reminder.lead.lastName}`,
+          body: `Lead is marked as ${statusLabel}. Follow-up contact needs to be established.`,
+          link: `/crm/leads/${reminder.leadId}`,
+          priority: "important",
+          requiresAck: true
+        });
+      }
+
+      await db.crmLeadReminder.update({
+        where: { id: reminder.id },
+        data: {
+          status: "TRIGGERED",
+          triggeredAt: now
+        }
+      });
+    }
+  } catch (e) {
+    console.error("[CrmLeadReminder] Failed to trigger reminders:", e);
+  }
+}
+
 export async function listActiveUserNotifications(userId: string) {
+  await triggerCrmLeadReminders(userId);
+
   const notifications = await db.notification.findMany({
     where: {
       userId,
