@@ -29,6 +29,7 @@ function buildItems(subtotal: number, seed: number): QuoteDetailItem[] {
       id: `item_${seed}_${index + 1}`,
       name: service.name,
       description: `${service.note} for quote batch ${seed + 1}`,
+      hsnSac: "996712",
       quantity: 1,
       price: amount,
       amount,

@@ -16,7 +16,7 @@ export default async function NewCrmQuotePage() {
     }),
     db.crmAccount.findMany({
       where: { orgId },
-      select: { id: true, name: true, email: true, phone: true, billingAddress: true },
+      select: { id: true, name: true, email: true, phone: true, billingAddress: true, gstin: true },
       orderBy: { name: "asc" },
     }),
   ]);
@@ -33,6 +33,7 @@ export default async function NewCrmQuotePage() {
     billingAddress: a.billingAddress ?? undefined,
     contactEmail: a.email ?? undefined,
     phone: a.phone ?? undefined,
+    gstin: a.gstin ?? undefined,
   }));
 
   return <NewQuotePage salespersons={salespersons} accounts={accounts} />;

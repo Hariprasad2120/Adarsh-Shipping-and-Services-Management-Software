@@ -14,6 +14,7 @@ import { ItemFormHeader } from "./ItemFormHeader";
 import { InventoryInfoBanner } from "./InventoryInfoBanner";
 import { ItemPrimaryInfoSection } from "./ItemPrimaryInfoSection";
 import { ItemSalesInfoSection } from "./ItemSalesInfoSection";
+import { ItemPriceListSection } from "./ItemPriceListSection";
 import { ItemPurchaseInfoSection } from "./ItemPurchaseInfoSection";
 import { ItemInventorySection } from "./ItemInventorySection";
 import { ItemLogisticsFieldsSection } from "./ItemLogisticsFieldsSection";
@@ -46,6 +47,8 @@ const DEFAULT_VALUES: ItemFormSchema = {
   chargeCategory: "",
   applicableFor: "",
   defaultContainerType: "",
+  priceList: [],
+  priceListAuto: true,
 };
 
 export function NewItemPage({ backPath = "/crm/items" }: NewItemPageProps) {
@@ -77,6 +80,8 @@ export function NewItemPage({ backPath = "/crm/items" }: NewItemPageProps) {
         type: data.type,
         taxPreference: data.taxPreference,
         status: "Active",
+        priceList: data.priceList,
+        priceListAuto: data.priceListAuto,
       };
       saveCustomItem(newItem);
       await new Promise((r) => setTimeout(r, 400));
@@ -104,6 +109,8 @@ export function NewItemPage({ backPath = "/crm/items" }: NewItemPageProps) {
         type: data.type,
         taxPreference: data.taxPreference,
         status: "Active",
+        priceList: data.priceList,
+        priceListAuto: data.priceListAuto,
       };
       saveCustomItem(newItem);
       await new Promise((r) => setTimeout(r, 400));
@@ -143,6 +150,11 @@ export function NewItemPage({ backPath = "/crm/items" }: NewItemPageProps) {
           {/* Sales info card */}
           <div className="bg-white border border-[#d9dee7] rounded p-6">
             <ItemSalesInfoSection form={form} />
+          </div>
+
+          {/* Price List card */}
+          <div className="bg-white border border-[#d9dee7] rounded p-6">
+            <ItemPriceListSection form={form} />
           </div>
 
           {/* Purchase info card */}

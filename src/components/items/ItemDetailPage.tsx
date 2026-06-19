@@ -95,6 +95,40 @@ export function ItemDetailPage({ item, backPath = "/crm/items" }: ItemDetailPage
             <Row label="Purchase Description" value={item.purchaseDescription || "—"} />
           </dl>
         </div>
+
+        {/* Price List */}
+        {item.priceList && item.priceList.length > 0 && (
+          <div className="bg-white border border-[#d9dee7] rounded">
+            <div className="px-4 py-2.5 border-b border-[#d9dee7] flex items-center gap-2">
+              <Hash size={13} className="text-[#00cec4]" />
+              <span className="text-xs font-semibold text-[#212529] uppercase tracking-wide">Multi-Currency Price List</span>
+            </div>
+            <div className="px-4 py-3">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-[#374151]">
+                  <thead>
+                    <tr className="border-b border-[#e5e7eb] text-[10px] uppercase tracking-wider text-gray-500 font-semibold">
+                      <th className="pb-2">Currency</th>
+                      <th className="pb-2">Exchange Rate (1 Foreign Unit = X INR)</th>
+                      <th className="pb-2 text-right">Selling Price</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#e5e7eb]">
+                    {item.priceList.map((pl) => (
+                      <tr key={pl.currency} className="hover:bg-gray-50/50">
+                        <td className="py-2 font-medium text-gray-900">{pl.currency}</td>
+                        <td className="py-2 text-gray-500 font-mono">{pl.exchangeRate.toFixed(4)}</td>
+                        <td className="py-2 text-right font-mono font-semibold text-gray-900">
+                          {pl.currency} {pl.customPrice?.toFixed(2) ?? (item.rate / pl.exchangeRate).toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

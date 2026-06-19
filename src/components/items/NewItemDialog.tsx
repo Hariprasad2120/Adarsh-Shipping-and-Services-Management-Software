@@ -13,6 +13,7 @@ import { saveCustomItem, saveItemOverride, generateItemId } from "@/lib/items/it
 import { InventoryInfoBanner } from "./InventoryInfoBanner";
 import { ItemPrimaryInfoSection } from "./ItemPrimaryInfoSection";
 import { ItemSalesInfoSection } from "./ItemSalesInfoSection";
+import { ItemPriceListSection } from "./ItemPriceListSection";
 import { ItemPurchaseInfoSection } from "./ItemPurchaseInfoSection";
 import { ItemInventorySection } from "./ItemInventorySection";
 import { ItemLogisticsFieldsSection } from "./ItemLogisticsFieldsSection";
@@ -48,6 +49,8 @@ const DEFAULT_VALUES: ItemFormSchema = {
   chargeCategory: "",
   applicableFor: "",
   defaultContainerType: "",
+  priceList: [],
+  priceListAuto: true,
 };
 
 export function NewItemDialog({ open, onClose, onSaveSuccess, initialName = "", itemToEdit }: NewItemDialogProps) {
@@ -82,6 +85,8 @@ export function NewItemDialog({ open, onClose, onSaveSuccess, initialName = "", 
         chargeCategory: "",
         applicableFor: "",
         defaultContainerType: "",
+        priceList: itemToEdit.priceList || [],
+        priceListAuto: itemToEdit.priceListAuto ?? true,
       };
     }
     return {
@@ -117,6 +122,8 @@ export function NewItemDialog({ open, onClose, onSaveSuccess, initialName = "", 
         type: data.type,
         taxPreference: data.taxPreference,
         status,
+        priceList: data.priceList,
+        priceListAuto: data.priceListAuto,
       };
 
       saveCustomItem(newItem);
@@ -133,6 +140,8 @@ export function NewItemDialog({ open, onClose, onSaveSuccess, initialName = "", 
           usageUnit: data.unit || undefined,
           type: data.type,
           taxPreference: data.taxPreference,
+          priceList: data.priceList,
+          priceListAuto: data.priceListAuto,
         });
       }
 
@@ -175,6 +184,11 @@ export function NewItemDialog({ open, onClose, onSaveSuccess, initialName = "", 
           {/* Sales info card */}
           <div className="bg-white border border-[#d9dee7] rounded p-6">
             <ItemSalesInfoSection form={form} />
+          </div>
+
+          {/* Price List card */}
+          <div className="bg-white border border-[#d9dee7] rounded p-6">
+            <ItemPriceListSection form={form} />
           </div>
 
           {/* Purchase info card */}

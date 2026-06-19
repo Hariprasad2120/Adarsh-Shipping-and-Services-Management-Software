@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { MOCK_ITEMS } from "@/lib/items/mock-data";
 import { NewQuotePage } from "../../_components/NewQuotePage";
 import type { QuoteFormValues } from "../../_lib/types";
 
@@ -30,6 +31,7 @@ export default async function EditCrmQuotePage({
   const initialData: QuoteFormValues = {
     customerId: dbQuote.accountId || "",
     location: (dbQuote as any).location || "Chennai",
+    placeOfSupply: (dbQuote as any).placeOfSupply || "33",
     quoteNumber: dbQuote.invoiceNumber,
     referenceNumber: (dbQuote as any).referenceNumber || "",
     quoteDate: dbQuote.date.toISOString().slice(0, 10),
@@ -48,12 +50,15 @@ export default async function EditCrmQuotePage({
     lineItems: dbQuote.items.map((item) => ({
       id: item.id,
       description: item.productName,
+      hsnSac: MOCK_ITEMS.find((catalogItem) => catalogItem.name === item.productName)?.hsnSac || "",
       unit: ((item as any).unit || "PCS") as "PCS" | "KG" | "TON" | "CBM" | "Container" | "Shipment",
       quantity: item.qty,
       rate: item.rate,
       tax: (item as any).taxLabel || (item.taxPercent ? `GST ${item.taxPercent}%` : "GST 18%"),
       tds: ((item as any).tds || "None") as "None" | "TDS 1%" | "TDS 2%" | "TDS 10%",
       amount: item.amount,
+      currency: (item as any).currency || "INR",
+      exchangeRate: (item as any).exchangeRate || 1,
     })),
     customerNotes: dbQuote.manualNotes || "",
     terms: (dbQuote as any).terms || "",
@@ -73,7 +78,7 @@ export default async function EditCrmQuotePage({
     }),
     db.crmAccount.findMany({
       where: { orgId },
-      select: { id: true, name: true, email: true, phone: true, billingAddress: true },
+      select: { id: true, name: true, email: true, phone: true, billingAddress: true, gstin: true },
       orderBy: { name: "asc" },
     }),
   ]);
@@ -90,6 +95,7 @@ export default async function EditCrmQuotePage({
     billingAddress: a.billingAddress ?? undefined,
     contactEmail: a.email ?? undefined,
     phone: a.phone ?? undefined,
+    gstin: a.gstin ?? undefined,
   }));
 
   return <NewQuotePage initialData={initialData} quoteId={quoteId} salespersons={salespersons} accounts={accounts} />;

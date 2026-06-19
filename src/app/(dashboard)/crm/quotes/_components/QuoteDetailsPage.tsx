@@ -29,6 +29,7 @@ import { ApprovalActionBar, ApprovalLogList, type ApprovalCaps, type ApprovalLog
 import type { ApprovalStatus } from "@/modules/crm/approval-workflow";
 import { toast } from "sonner";
 import { deleteInvoiceAction } from "@/modules/crm/actions";
+import { getStateCodeForLocation } from "../_lib/gst-states";
 
 // Map mock QuoteListStatus (lowercase-hyphenated) → ApprovalStatus (UPPER_SNAKE)
 function toApprovalStatus(s: Exclude<QuoteListStatus, "all">): ApprovalStatus {
@@ -107,6 +108,7 @@ export function QuoteDetailsPage({
   const [activeView, setActiveView] = useState<QuoteListStatus>("all");
   const [activeTab, setActiveTab] = useState<"details" | "activity">("details");
   const [detailMode, setDetailMode] = useState<"details" | "pdf">("details");
+  const [displayCurrency, setDisplayCurrency] = useState<"INR" | "foreign">("INR");
   const [actionsOpen, setActionsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -369,27 +371,51 @@ export function QuoteDetailsPage({
                     </div>
 
                     {activeTab === "details" ? (
-                      <div className="mb-3 inline-flex items-center rounded-xl border border-[#dbe3f0] bg-[#f4f6fb] p-1">
-                        <button
-                          type="button"
-                          onClick={() => setDetailMode("details")}
-                          className={cn(
-                            "rounded-lg px-5 py-2 text-sm font-medium transition-colors",
-                            detailMode === "details" ? "bg-white text-[#0f172a] shadow-sm" : "text-[#64748b]",
-                          )}
-                        >
-                          Details
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDetailMode("pdf")}
-                          className={cn(
-                            "rounded-lg px-5 py-2 text-sm font-medium transition-colors",
-                            detailMode === "pdf" ? "bg-white text-[#0f172a] shadow-sm" : "text-[#64748b]",
-                          )}
-                        >
-                          PDF
-                        </button>
+                      <div className="mb-3 flex flex-wrap items-center gap-3">
+                        <div className="inline-flex items-center rounded-xl border border-[#dbe3f0] bg-[#f4f6fb] p-1">
+                          <button
+                            type="button"
+                            onClick={() => setDisplayCurrency("INR")}
+                            className={cn(
+                              "rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors",
+                              displayCurrency === "INR" ? "bg-[#00cec4] text-white shadow-sm" : "text-[#64748b]"
+                            )}
+                          >
+                            INR
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDisplayCurrency("foreign")}
+                            className={cn(
+                              "rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors",
+                              displayCurrency === "foreign" ? "bg-[#00cec4] text-white shadow-sm" : "text-[#64748b]"
+                            )}
+                          >
+                            Foreign
+                          </button>
+                        </div>
+                        <div className="inline-flex items-center rounded-xl border border-[#dbe3f0] bg-[#f4f6fb] p-1">
+                          <button
+                            type="button"
+                            onClick={() => setDetailMode("details")}
+                            className={cn(
+                              "rounded-lg px-5 py-2 text-sm font-medium transition-colors",
+                              detailMode === "details" ? "bg-white text-[#0f172a] shadow-sm" : "text-[#64748b]",
+                            )}
+                          >
+                            Details
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDetailMode("pdf")}
+                            className={cn(
+                              "rounded-lg px-5 py-2 text-sm font-medium transition-colors",
+                              detailMode === "pdf" ? "bg-white text-[#0f172a] shadow-sm" : "text-[#64748b]",
+                            )}
+                          >
+                            PDF
+                          </button>
+                        </div>
                       </div>
                     ) : null}
                   </div>
@@ -459,24 +485,62 @@ export function QuoteDetailsPage({
                               <tr>
                                 <th className="px-5 py-3">S.No</th>
                                 <th className="px-5 py-3">Item</th>
+                                <th className="px-5 py-3">HSN/SAC</th>
                                 <th className="px-5 py-3 text-right">Qty</th>
                                 <th className="px-5 py-3 text-right">Price</th>
                                 <th className="px-5 py-3 text-right">Amount</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-[#eef2f7] text-sm">
-                              {quote.items.map((item, index) => (
-                                <tr key={item.id}>
-                                  <td className="px-5 py-4 text-[#435066]">{index + 1}</td>
-                                  <td className="px-5 py-4">
-                                    <div className="font-medium text-[#1f2937]">{item.name}</div>
-                                    {item.description ? <div className="mt-1 text-xs text-[#7b8798]">{item.description}</div> : null}
-                                  </td>
-                                  <td className="px-5 py-4 text-right text-[#435066]">{item.quantity}</td>
-                                  <td className="px-5 py-4 text-right text-[#435066]">{formatAmount(item.price)}</td>
-                                  <td className="px-5 py-4 text-right font-medium text-[#1f2937]">{formatAmount(item.amount)}</td>
-                                </tr>
-                              ))}
+                              {quote.items.map((item, index) => {
+                                const showForeign = displayCurrency === "foreign" && item.currency && item.currency !== "INR";
+                                const formattedPrice = showForeign
+                                  ? (() => {
+                                      try {
+                                        return new Intl.NumberFormat("en-US", {
+                                          style: "currency",
+                                          currency: item.currency,
+                                          minimumFractionDigits: 2,
+                                        }).format(item.price);
+                                      } catch {
+                                        return `${item.price.toFixed(2)} ${item.currency}`;
+                                      }
+                                    })()
+                                  : formatAmount(item.price * (item.exchangeRate || 1));
+
+                                const formattedAmountVal = showForeign
+                                  ? (() => {
+                                      try {
+                                        return new Intl.NumberFormat("en-US", {
+                                          style: "currency",
+                                          currency: item.currency,
+                                          minimumFractionDigits: 2,
+                                        }).format(item.quantity * item.price);
+                                      } catch {
+                                        return `${(item.quantity * item.price).toFixed(2)} ${item.currency}`;
+                                      }
+                                    })()
+                                  : formatAmount(item.amount);
+
+                                return (
+                                  <tr key={item.id}>
+                                    <td className="px-5 py-4 text-[#435066]">{index + 1}</td>
+                                    <td className="px-5 py-4">
+                                      <div className="font-medium text-[#1f2937]">{item.name}</div>
+                                      {item.description ? <div className="mt-1 text-xs text-[#7b8798]">{item.description}</div> : null}
+                                      {showForeign && (
+                                        <div className="mt-1 text-[11px] text-[#71809a]">
+                                          Ex. Rate: 1 {item.currency} = ₹{item.exchangeRate ?? 1} INR
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="px-5 py-4 text-[#435066]">{item.hsnSac || "—"}</td>
+                                    <td className="px-5 py-4 text-right text-[#435066]">{item.quantity}</td>
+                                    <td className="px-5 py-4 text-right text-[#435066] font-mono">{formattedPrice}</td>
+                                    <td className="px-5 py-4 text-right font-medium text-[#1f2937] font-mono">{formattedAmountVal}</td>
+                                  </tr>
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
@@ -529,7 +593,7 @@ export function QuoteDetailsPage({
                       </section>
                     </div>
                   ) : (
-                    <QuotePdfPreview quote={quote} />
+                    <QuotePdfPreview quote={quote} displayCurrency={displayCurrency} />
                   )
                 ) : (
                   <div className="p-6 bg-white rounded-2xl border border-[#e7edf5]">
@@ -623,7 +687,10 @@ function SummaryRow({ label, value, strong = false }: { label: string; value: st
   );
 }
 
-function QuotePdfPreview({ quote }: { quote: QuoteDetailRecord }) {
+function QuotePdfPreview({ quote, displayCurrency }: { quote: QuoteDetailRecord; displayCurrency: "INR" | "foreign" }) {
+  const supplierStateCode = quote.location ? getStateCodeForLocation(quote.location) : "";
+  const isSameState = supplierStateCode && supplierStateCode === quote.placeOfSupply;
+
   return (
     <div className="overflow-auto bg-[#fbfcff] p-6 sm:p-8">
       <div className="mx-auto w-full max-w-[1120px] rounded-[28px] border border-[#dfe6f3] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-10">
@@ -657,66 +724,121 @@ function QuotePdfPreview({ quote }: { quote: QuoteDetailRecord }) {
           <div className="border-b border-[#b8c1ce] px-3 py-2 text-[13px] font-semibold text-black">Bill To</div>
           <div className="border-b border-[#b8c1ce] px-3 py-2 text-[15px] font-semibold text-[#4c6fff]">{quote.customerName}</div>
 
-          <table className="w-full border-collapse text-[13px] text-black">
-            <thead>
-              <tr className="bg-[#fafbfd]">
-                <PdfCell as="th" className="w-[42px] text-center font-semibold">#</PdfCell>
-                <PdfCell as="th" className="min-w-[220px] text-left font-semibold">Item & Description</PdfCell>
-                <PdfCell as="th" className="w-[100px] text-left font-semibold">Unit</PdfCell>
-                <PdfCell as="th" className="w-[90px] text-left font-semibold">HSN/SAC</PdfCell>
-                <PdfCell as="th" className="w-[78px] text-right font-semibold">Qty</PdfCell>
-                <PdfCell as="th" className="w-[96px] text-right font-semibold">Rate</PdfCell>
-                <PdfCell as="th" className="w-[50px] text-right font-semibold">%</PdfCell>
-                <PdfCell as="th" className="w-[74px] text-right font-semibold">CGST Amt</PdfCell>
-                <PdfCell as="th" className="w-[50px] text-right font-semibold">%</PdfCell>
-                <PdfCell as="th" className="w-[74px] text-right font-semibold">SGST Amt</PdfCell>
-                <PdfCell as="th" className="w-[110px] text-right font-semibold">Amount</PdfCell>
-              </tr>
-            </thead>
-            <tbody>
-              {quote.items.map((item, index) => {
-                const taxAmount = Math.round(item.amount * 0.09);
-                const unit = index % 2 === 0 ? "Container Count" : "BL";
-                const hsn = "996712";
+          <div className="overflow-x-auto w-full">
+            <table className="w-full border-collapse text-[13px] text-black min-w-[920px]">
+              <thead>
+                <tr className="bg-[#fafbfd]">
+                  <PdfCell as="th" className="w-[42px] text-center font-semibold">#</PdfCell>
+                  <PdfCell as="th" className="min-w-[200px] text-left font-semibold">Item & Description</PdfCell>
+                  <PdfCell as="th" className="w-[90px] text-left font-semibold">Unit</PdfCell>
+                  <PdfCell as="th" className="w-[80px] text-left font-semibold">HSN/SAC</PdfCell>
+                  <PdfCell as="th" className="w-[70px] text-right font-semibold">Qty</PdfCell>
+                  <PdfCell as="th" className="w-[90px] text-right font-semibold">Rate</PdfCell>
+                  {isSameState ? (
+                    <>
+                      <PdfCell as="th" className="w-[50px] text-right font-semibold">%</PdfCell>
+                      <PdfCell as="th" className="w-[74px] text-right font-semibold">CGST Amt</PdfCell>
+                      <PdfCell as="th" className="w-[50px] text-right font-semibold">%</PdfCell>
+                      <PdfCell as="th" className="w-[74px] text-right font-semibold">SGST Amt</PdfCell>
+                    </>
+                  ) : (
+                    <>
+                      <PdfCell as="th" className="w-[60px] text-right font-semibold">%</PdfCell>
+                      <PdfCell as="th" className="w-[80px] text-right font-semibold">IGST Amt</PdfCell>
+                    </>
+                  )}
+                  <PdfCell as="th" className="w-[100px] text-right font-semibold">Amount</PdfCell>
+                </tr>
+              </thead>
+              <tbody>
+                {quote.items.map((item, index) => {
+                  const taxPercent = parseFloat(String(item.tax).match(/[\d.]+/)?.[0] ?? "18");
+                  const totalTaxAmount = item.amount * (taxPercent / 100);
+                  const unit = item.unit || (index % 2 === 0 ? "Container" : "Shipment");
+                  const hsn = item.hsnSac || "—";
 
-                return (
-                  <tr key={item.id}>
-                    <PdfCell className="align-top text-center">{index + 1}</PdfCell>
-                    <PdfCell className="align-top">
-                      <div>{item.name}</div>
-                      {item.description ? <div className="mt-1 text-[12px] text-[#4b5563]">{item.description}</div> : null}
-                    </PdfCell>
-                    <PdfCell className="align-top">{unit}</PdfCell>
-                    <PdfCell className="align-top">{hsn}</PdfCell>
-                    <PdfCell className="align-top text-right">{item.quantity.toFixed(2)}</PdfCell>
-                    <PdfCell className="align-top text-right">{formatPdfMoney(item.price)}</PdfCell>
-                    <PdfCell className="align-top text-right">9%</PdfCell>
-                    <PdfCell className="align-top text-right">{formatPdfMoney(taxAmount)}</PdfCell>
-                    <PdfCell className="align-top text-right">9%</PdfCell>
-                    <PdfCell className="align-top text-right">{formatPdfMoney(taxAmount)}</PdfCell>
-                    <PdfCell className="align-top text-right">{formatPdfMoney(item.amount)}</PdfCell>
-                  </tr>
-                );
-              })}
-              <tr>
-                <td colSpan={11} className="border border-[#b8c1ce] p-0">
-                  <div className="ml-auto max-w-[360px] space-y-2 px-4 py-4 text-[13px]">
-                    <PdfSummaryRow label="Sub Total" value={formatPdfMoney(quote.subtotal)} strong />
-                    {quote.taxes.map((tax) => (
-                      <PdfSummaryRow key={tax.label} label={tax.label} value={formatPdfMoney(tax.amount)} />
-                    ))}
-                    <PdfSummaryRow label="Discount" value={formatPdfMoney(quote.discount)} />
-                    <PdfSummaryRow label="Adjustment" value={String(quote.adjustment)} />
-                    <PdfSummaryRow label="Round Off" value={formatPdfMoney(quote.roundOff)} />
-                    <div className="mt-3 flex items-center justify-between border-t border-[#b8c1ce] pt-3 text-[16px] font-semibold">
-                      <span>Total</span>
-                      <span>{formatPdfMoney(quote.total)}</span>
+                  const showForeign = displayCurrency === "foreign" && item.currency && item.currency !== "INR";
+                  const formattedPrice = showForeign
+                    ? (() => {
+                        try {
+                          return new Intl.NumberFormat("en-US", {
+                            style: "currency",
+                            currency: item.currency,
+                            minimumFractionDigits: 2,
+                          }).format(item.price);
+                        } catch {
+                          return `${item.price.toFixed(2)} ${item.currency}`;
+                        }
+                      })()
+                    : formatPdfMoney(item.price * (item.exchangeRate || 1));
+
+                  const formattedAmountVal = showForeign
+                    ? (() => {
+                        try {
+                          return new Intl.NumberFormat("en-US", {
+                            style: "currency",
+                            currency: item.currency,
+                            minimumFractionDigits: 2,
+                          }).format(item.quantity * item.price);
+                        } catch {
+                          return `${(item.quantity * item.price).toFixed(2)} ${item.currency}`;
+                        }
+                      })()
+                    : formatPdfMoney(item.amount);
+
+                  return (
+                    <tr key={item.id}>
+                      <PdfCell className="align-top text-center">{index + 1}</PdfCell>
+                      <PdfCell className="align-top">
+                        <div>{item.name}</div>
+                        {item.description ? <div className="mt-1 text-[12px] text-[#4b5563]">{item.description}</div> : null}
+                        {showForeign && (
+                          <div className="mt-1 text-[10px] text-[#4b5563]">
+                            Ex. Rate: 1 {item.currency} = ₹{item.exchangeRate ?? 1} INR
+                          </div>
+                        )}
+                      </PdfCell>
+                      <PdfCell className="align-top">{unit}</PdfCell>
+                      <PdfCell className="align-top">{hsn}</PdfCell>
+                      <PdfCell className="align-top text-right">{item.quantity.toFixed(2)}</PdfCell>
+                      <PdfCell className="align-top text-right font-mono">{formattedPrice}</PdfCell>
+                      {isSameState ? (
+                        <>
+                          <PdfCell className="align-top text-right">{(taxPercent / 2).toFixed(1)}%</PdfCell>
+                          <PdfCell className="align-top text-right">{formatPdfMoney(totalTaxAmount / 2)}</PdfCell>
+                          <PdfCell className="align-top text-right">{(taxPercent / 2).toFixed(1)}%</PdfCell>
+                          <PdfCell className="align-top text-right">{formatPdfMoney(totalTaxAmount / 2)}</PdfCell>
+                        </>
+                      ) : (
+                        <>
+                          <PdfCell className="align-top text-right">{taxPercent.toFixed(1)}%</PdfCell>
+                          <PdfCell className="align-top text-right">{formatPdfMoney(totalTaxAmount)}</PdfCell>
+                        </>
+                      )}
+                      <PdfCell className="align-top text-right font-mono">{formattedAmountVal}</PdfCell>
+                    </tr>
+                  );
+                })}
+                <tr>
+                  <td colSpan={isSameState ? 11 : 9} className="border border-[#b8c1ce] p-0">
+                    <div className="ml-auto max-w-[360px] space-y-2 px-4 py-4 text-[13px]">
+                      <PdfSummaryRow label="Sub Total" value={formatPdfMoney(quote.subtotal)} strong />
+                      {quote.taxes.map((tax) => (
+                        <PdfSummaryRow key={tax.label} label={tax.label} value={formatPdfMoney(tax.amount)} />
+                      ))}
+                      <PdfSummaryRow label="Discount" value={formatPdfMoney(quote.discount)} />
+                      <PdfSummaryRow label="Adjustment" value={String(quote.adjustment)} />
+                      <PdfSummaryRow label="Round Off" value={formatPdfMoney(quote.roundOff)} />
+                      <div className="mt-3 flex items-center justify-between border-t border-[#b8c1ce] pt-3 text-[16px] font-semibold">
+                        <span>Total</span>
+                        <span>{formatPdfMoney(quote.total)}</span>
+                      </div>
                     </div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
           <div className="border-t border-[#b8c1ce] px-4 py-4 text-[13px] text-black">
             <div className="mb-2 font-semibold">Notes</div>

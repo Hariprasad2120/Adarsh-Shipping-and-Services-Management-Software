@@ -107,6 +107,7 @@ export function createEmptyLineItem(): LineItem {
   return {
     id: `line_${Math.random().toString(36).slice(2, 10)}`,
     description: "",
+    hsnSac: "",
     unit: "PCS",
     quantity: 0,
     rate: 0,
@@ -119,6 +120,7 @@ export function createEmptyLineItem(): LineItem {
 export const defaultQuoteValues: QuoteFormValues = {
   customerId: "",
   location: "Chennai",
+  placeOfSupply: "33",
   quoteNumber: "QT-2026-001",
   referenceNumber: "",
   quoteDate: new Date().toISOString().slice(0, 10),

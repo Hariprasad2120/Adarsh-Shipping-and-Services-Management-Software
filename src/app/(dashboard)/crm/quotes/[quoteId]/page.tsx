@@ -2,9 +2,11 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
+import { MOCK_ITEMS } from "@/lib/items/mock-data";
 import { QuoteDetailsPage } from "../_components/QuoteDetailsPage";
 import type { ApprovalCaps, ApprovalLogEntry } from "@/components/crm/ApprovalActionBar";
 import type { QuoteDetailRecord, QuoteListStatus, QuoteRecord } from "../_lib/types";
+import { getStateCodeForLocation } from "../_lib/gst-states";
 
 export default async function CrmQuoteDetailsPage({
   params,
@@ -43,7 +45,7 @@ export default async function CrmQuoteDetailsPage({
   const dbQuote = await db.crmInvoice.findFirst({
     where: { id: quoteId, orgId, type: "QUOTE" },
     include: {
-      account: { select: { id: true, name: true, phone: true, email: true, billingAddress: true, shippingAddress: true } },
+      account: { select: { id: true, name: true, phone: true, email: true, billingAddress: true, shippingAddress: true, gstin: true } },
       contact: { select: { id: true, firstName: true, lastName: true, email: true } },
       deal: { select: { id: true, name: true } },
       owner: { select: { id: true, name: true } },
@@ -69,7 +71,7 @@ export default async function CrmQuoteDetailsPage({
     amount: dbQuote.total,
     creationDate: dbQuote.createdAt.toISOString().split("T")[0],
     salesperson: dbQuote.owner?.name || "Admin User",
-    placeOfSupply: q.location || "Chennai",
+    placeOfSupply: (dbQuote as any).placeOfSupply || "33",
     pdfTemplate: "Spreadsheet Template",
     customerInitial: (dbQuote.account?.name || "C").charAt(0).toUpperCase(),
     billingAddress: dbQuote.account?.billingAddress || "",
@@ -81,16 +83,29 @@ export default async function CrmQuoteDetailsPage({
       id: item.id,
       name: item.productName,
       description: item.productName,
+      hsnSac: MOCK_ITEMS.find((catalogItem) => catalogItem.name === item.productName)?.hsnSac || "",
       quantity: item.qty,
       unit: (item as any).unit || "PCS",
       price: item.rate,
       tax: (item as any).taxLabel || `GST ${item.taxPercent}%`,
       tds: (item as any).tds || "None",
       amount: item.amount,
+      currency: (item as any).currency || "INR",
+      exchangeRate: (item as any).exchangeRate || 1,
     })),
-    taxes: [
-      { label: "GST", amount: dbQuote.tax },
-    ],
+    taxes: (() => {
+      const supplierStateCode = getStateCodeForLocation(dbQuote.location || "Chennai");
+      const isSameState = supplierStateCode && supplierStateCode === (dbQuote as any).placeOfSupply;
+      if (isSameState) {
+        return [
+          { label: "CGST", amount: dbQuote.tax / 2 },
+          { label: "SGST", amount: dbQuote.tax / 2 },
+        ];
+      }
+      return [
+        { label: "IGST", amount: dbQuote.tax },
+      ];
+    })(),
     discount: dbQuote.discount,
     discountType: q.discountType || "percentage",
     adjustment: 0,

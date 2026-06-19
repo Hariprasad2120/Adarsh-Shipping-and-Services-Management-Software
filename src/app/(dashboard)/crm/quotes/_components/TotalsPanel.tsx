@@ -7,9 +7,12 @@ import type { QuoteFormValues } from "../_lib/types";
 type TotalsPanelProps = {
   form: UseFormReturn<QuoteFormValues>;
   discountAmount: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
 };
 
-export function TotalsPanel({ form, discountAmount }: TotalsPanelProps) {
+export function TotalsPanel({ form, discountAmount, cgst, sgst, igst }: TotalsPanelProps) {
   const subtotal = form.watch("subtotal");
   const total = form.watch("total");
   const roundOff = form.watch("roundOff");
@@ -21,6 +24,27 @@ export function TotalsPanel({ form, discountAmount }: TotalsPanelProps) {
           <span>Sub Total</span>
           <span className="ds-numeric text-right">₹ {formatMoney(subtotal)}</span>
         </div>
+
+        {cgst > 0 && (
+          <div className="grid grid-cols-[112px_minmax(0,1fr)] items-center gap-x-4 text-gray-500 text-xs">
+            <span>CGST</span>
+            <span className="ds-numeric text-right">₹ {formatMoney(cgst)}</span>
+          </div>
+        )}
+
+        {sgst > 0 && (
+          <div className="grid grid-cols-[112px_minmax(0,1fr)] items-center gap-x-4 text-gray-500 text-xs">
+            <span>SGST</span>
+            <span className="ds-numeric text-right">₹ {formatMoney(sgst)}</span>
+          </div>
+        )}
+
+        {igst > 0 && (
+          <div className="grid grid-cols-[112px_minmax(0,1fr)] items-center gap-x-4 text-gray-500 text-xs">
+            <span>IGST</span>
+            <span className="ds-numeric text-right">₹ {formatMoney(igst)}</span>
+          </div>
+        )}
 
         <div className="grid grid-cols-[112px_minmax(0,1fr)] gap-x-4 gap-y-2 items-start">
           <span>Discount</span>

@@ -81,6 +81,7 @@ export function NewQuotePage({
 
   const customerId = useWatch({ control: form.control, name: "customerId", defaultValue: initialData?.customerId || defaultQuoteValues.customerId });
   const location = useWatch({ control: form.control, name: "location", defaultValue: initialData?.location || defaultQuoteValues.location });
+  const placeOfSupply = useWatch({ control: form.control, name: "placeOfSupply", defaultValue: initialData?.placeOfSupply || "33" });
   const lineItems = useWatch({ control: form.control, name: "lineItems", defaultValue: initialData?.lineItems || defaultQuoteValues.lineItems });
   const discountType = useWatch({ control: form.control, name: "discountType", defaultValue: initialData?.discountType || defaultQuoteValues.discountType });
   const discountValue = useWatch({ control: form.control, name: "discountValue", defaultValue: initialData?.discountValue || defaultQuoteValues.discountValue });
@@ -105,9 +106,20 @@ export function NewQuotePage({
         discountValue,
         adjustment,
         roundOff: 0,
+        location,
+        placeOfSupply,
       }),
-    [adjustment, discountType, discountValue, lineItems],
+    [adjustment, discountType, discountValue, lineItems, location, placeOfSupply],
   );
+
+  useEffect(() => {
+    if (selectedCustomer && selectedCustomer.gstin) {
+      const stateCode = selectedCustomer.gstin.substring(0, 2);
+      if (stateCode && /^\d{2}$/.test(stateCode)) {
+        form.setValue("placeOfSupply", stateCode, { shouldDirty: true, shouldValidate: true });
+      }
+    }
+  }, [customerId, selectedCustomer, form]);
 
   useEffect(() => {
     lineItems.forEach((item, index) => {
@@ -142,6 +154,7 @@ export function NewQuotePage({
     form.reset({
       customerId: firstAccount?.id ?? "",
       location: "Chennai",
+      placeOfSupply: "33",
       quoteNumber: `QT-2026-${suffix}`,
       referenceNumber: `REF-EXP-${suffix}`,
       quoteDate: today.toISOString().slice(0, 10),
@@ -161,6 +174,7 @@ export function NewQuotePage({
         {
           id: `line_demo_1`,
           description: "Ocean Freight Charges",
+          hsnSac: "996719",
           unit: "Container",
           quantity: 2,
           rate: 28500,
@@ -171,6 +185,7 @@ export function NewQuotePage({
         {
           id: `line_demo_2`,
           description: "Documentation & BL Fees",
+          hsnSac: "996712",
           unit: "Shipment",
           quantity: 1,
           rate: 3500,
@@ -181,6 +196,7 @@ export function NewQuotePage({
         {
           id: `line_demo_3`,
           description: "Port Handling & THC",
+          hsnSac: "996712",
           unit: "Container",
           quantity: 2,
           rate: 6200,
@@ -191,6 +207,7 @@ export function NewQuotePage({
         {
           id: `line_demo_4`,
           description: "Customs Clearance Charges",
+          hsnSac: "996712",
           unit: "Shipment",
           quantity: 1,
           rate: 4800,
@@ -290,7 +307,15 @@ export function NewQuotePage({
             />
             <ShippingDetailsSection form={form} incoterms={incoterms} containerTypes={containerTypes} />
             <LineItemsTable form={form} />
-            <NotesAndTermsSection form={form} files={files} onFilesChange={setFiles} discountAmount={calculations.discountAmount} />
+             <NotesAndTermsSection
+              form={form}
+              files={files}
+              onFilesChange={setFiles}
+              discountAmount={calculations.discountAmount}
+              cgst={calculations.cgst}
+              sgst={calculations.sgst}
+              igst={calculations.igst}
+            />
           </div>
         </main>
 

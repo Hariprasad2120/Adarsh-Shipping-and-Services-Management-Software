@@ -34,9 +34,12 @@ type NotesAndTermsSectionProps = {
   files: File[];
   onFilesChange: (files: File[]) => void;
   discountAmount: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
 };
 
-export function NotesAndTermsSection({ form, files, onFilesChange, discountAmount }: NotesAndTermsSectionProps) {
+export function NotesAndTermsSection({ form, files, onFilesChange, discountAmount, cgst, sgst, igst }: NotesAndTermsSectionProps) {
   const [templates, setTemplates] = useState<NoteTemplate[]>([]);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -202,7 +205,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
           </div>
 
           <div>
-            <TotalsPanel form={form} discountAmount={discountAmount} />
+            <TotalsPanel form={form} discountAmount={discountAmount} cgst={cgst} sgst={sgst} igst={igst} />
           </div>
         </div>
       </section>

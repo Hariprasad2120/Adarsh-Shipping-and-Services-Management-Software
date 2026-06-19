@@ -16,17 +16,21 @@ export type QuoteListStatus =
 export type LineItem = {
   id: string;
   description: string;
+  hsnSac?: string;
   unit: string;
   quantity: number;
   rate: number;
   tax: string;
   tds: string;
   amount: number;
+  currency?: string;
+  exchangeRate?: number;
 };
 
 export type QuoteFormValues = {
   customerId: string;
   location: string;
+  placeOfSupply: string;
   quoteNumber: string;
   referenceNumber?: string;
   quoteDate: string;
@@ -65,6 +69,7 @@ export type CustomerOption = ComboboxOption & {
   billingAddress?: string;
   contactEmail?: string;
   phone?: string;
+  gstin?: string;
 };
 
 export type QuoteTemplateOption = "Spreadsheet Template" | "Standard Template" | "Compact Template";
@@ -90,12 +95,15 @@ export type QuoteDetailItem = {
   id: string;
   name: string;
   description?: string;
+  hsnSac?: string;
   quantity: number;
   unit?: string;
   price: number;
   tax?: string;
   tds?: string;
   amount: number;
+  currency?: string;
+  exchangeRate?: number;
 };
 
 export type QuoteDetailRecord = QuoteRecord & {

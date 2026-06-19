@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import { ComboboxField } from "./ComboboxField";
 import { FormRow } from "./FormRow";
 import type { CustomerOption, QuoteFormValues } from "../_lib/types";
+import { gstStateCodes } from "../_lib/gst-states";
 
 type CustomerSectionProps = {
   form: UseFormReturn<QuoteFormValues>;
@@ -56,9 +57,25 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
               <div>{selectedCustomer.billingAddress}</div>
               <div className="mt-1 text-[#6b7280]">
                 {selectedCustomer.contactEmail} {selectedCustomer.phone ? `· ${selectedCustomer.phone}` : ""}
+                {selectedCustomer.gstin ? ` · GSTIN: ${selectedCustomer.gstin}` : ""}
               </div>
             </div>
           ) : null}
+        </FormRow>
+
+        <FormRow label="Place of Supply" error={errors.placeOfSupply?.message}>
+          <select
+            aria-label="Place of Supply"
+            className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
+            {...form.register("placeOfSupply")}
+          >
+            <option value="">Select Place of Supply</option>
+            {Object.entries(gstStateCodes).map(([code, name]) => (
+              <option key={code} value={code}>
+                {code} - {name}
+              </option>
+            ))}
+          </select>
         </FormRow>
 
         <FormRow label="Location" helperText={`Source of Supply: ${sourceOfSupply}`}>
@@ -78,3 +95,4 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
     </section>
   );
 }
+

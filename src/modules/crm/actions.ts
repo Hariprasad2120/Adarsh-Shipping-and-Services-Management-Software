@@ -1794,6 +1794,7 @@ export async function saveQuoteAction(
     const {
       customerId,
       location,
+      placeOfSupply,
       quoteNumber,
       referenceNumber,
       quoteDate,
@@ -1853,6 +1854,7 @@ export async function saveQuoteAction(
       updatedById: session.user.id,
       referenceNumber: referenceNumber || null,
       location: location || null,
+      placeOfSupply: placeOfSupply || null,
       discountType: discountType || "percentage",
       portOfLoading: portOfLoading || null,
       portOfLoadingCountry: portOfLoadingCountry || null,
@@ -1893,8 +1895,8 @@ export async function saveQuoteAction(
           unit: item.unit || null,
           tds: item.tds || null,
           amount: parseFloat(item.amount) || 0,
-          currency: "INR",
-          exchangeRate: 1,
+          currency: item.currency || "INR",
+          exchangeRate: parseFloat(item.exchangeRate) || 1,
         })),
       });
     } else {
@@ -1912,8 +1914,8 @@ export async function saveQuoteAction(
               unit: item.unit || null,
               tds: item.tds || null,
               amount: parseFloat(item.amount) || 0,
-              currency: "INR",
-              exchangeRate: 1,
+              currency: item.currency || "INR",
+              exchangeRate: parseFloat(item.exchangeRate) || 1,
             })),
           },
         },

@@ -23,6 +23,15 @@ export const itemFormSchema = z
     chargeCategory: z.string().optional(),
     applicableFor: z.string().optional(),
     defaultContainerType: z.string().optional(),
+    priceList: z.array(
+      z.object({
+        currency: z.string(),
+        exchangeRate: z.coerce.number(),
+        customPrice: z.coerce.number().optional(),
+        useAutomatic: z.boolean().optional(),
+      })
+    ).optional(),
+    priceListAuto: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.taxPreference === "Taxable" && !data.taxRate) {

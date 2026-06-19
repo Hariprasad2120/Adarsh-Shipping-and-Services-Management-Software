@@ -3,6 +3,13 @@ export type TaxPreference = "Taxable" | "Non-Taxable";
 export type ItemStatus = "Active" | "Inactive";
 export type ItemFilter = "all" | "active" | "inactive" | "goods" | "services" | "sales" | "purchase";
 
+export type PriceListItem = {
+  currency: string;
+  exchangeRate: number;
+  customPrice?: number;
+  useAutomatic?: boolean;
+};
+
 export type ItemListItem = {
   id: string;
   name: string;
@@ -16,6 +23,8 @@ export type ItemListItem = {
   type: ItemType;
   taxPreference: TaxPreference;
   status: ItemStatus;
+  priceList?: PriceListItem[];
+  priceListAuto?: boolean;
 };
 
 export type ItemFormValues = {
@@ -40,4 +49,6 @@ export type ItemFormValues = {
   chargeCategory?: string;
   applicableFor?: string;
   defaultContainerType?: string;
+  priceList?: PriceListItem[];
+  priceListAuto?: boolean;
 };

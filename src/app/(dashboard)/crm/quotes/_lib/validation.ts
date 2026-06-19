@@ -5,18 +5,22 @@ const numberField = z.coerce.number().min(0, "Must be 0 or more");
 export const lineItemSchema = z.object({
   id: z.string(),
   description: z.string(),
+  hsnSac: z.string().optional(),
   unit: z.string(),
   quantity: numberField,
   rate: numberField,
   tax: z.string(),
   tds: z.string(),
   amount: z.coerce.number(),
+  currency: z.string().optional(),
+  exchangeRate: z.coerce.number().optional(),
 });
 
 export const quoteFormSchema = z
   .object({
     customerId: z.string().min(1, "Customer Name is required"),
     location: z.string().min(1, "Location is required"),
+    placeOfSupply: z.string().min(1, "Place of Supply is required"),
     quoteNumber: z.string().min(1, "Quote# is required"),
     referenceNumber: z.string().optional(),
     quoteDate: z.string().min(1, "Quote Date is required"),
@@ -54,4 +58,3 @@ export const quoteFormSchema = z
   });
 
 export type QuoteFormSchemaValues = z.infer<typeof quoteFormSchema>;
-

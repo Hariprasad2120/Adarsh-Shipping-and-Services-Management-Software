@@ -10,7 +10,7 @@ import { NewItemDialog } from "@/components/items/NewItemDialog";
 interface ItemAutocompleteProps {
   value: string;
   onChange: (name: string) => void;
-  onSelectItem: (item: Pick<ItemListItem, "name" | "rate" | "usageUnit" | "hsnSac">) => void;
+  onSelectItem: (item: ItemListItem) => void;
   error?: string;
 }
 
@@ -104,7 +104,7 @@ export function ItemAutocomplete({
 
   function select(item: ItemListItem) {
     onChange(item.name);
-    onSelectItem({ name: item.name, rate: item.rate, usageUnit: item.usageUnit, hsnSac: item.hsnSac });
+    onSelectItem(item);
     setOpen(false);
   }
 

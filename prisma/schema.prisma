@@ -1332,6 +1332,7 @@ model CrmInvoice {
 
   referenceNumber          String?
   location                 String?
+  placeOfSupply            String?
   portOfLoading            String?
   portOfLoadingCountry     String?
   portOfDischarge          String?
