@@ -117,6 +117,20 @@ const PERMISSIONS = [
   { key: "accounting.payment.submit", label: "Submit Payments", group: "Accounting" },
   { key: "accounting.reports.view", label: "View Financial Reports", group: "Accounting" },
   { key: "accounting.settings.manage", label: "Manage Accounting Settings", group: "Accounting" },
+
+  // Communication Hub
+  { key: "communication.mail.access", label: "Access mail inbox and threads", group: "Communication" },
+  { key: "communication.mail.send", label: "Compose and send emails", group: "Communication" },
+  { key: "communication.chat.access", label: "Access internal chat conversations", group: "Communication" },
+  { key: "communication.chat.moderator", label: "Admin moderation and channel settings", group: "Communication" },
+  { key: "communication.calendar.access", label: "Access calendar events and schedules", group: "Communication" },
+  { key: "communication.calendar.manage_resources", label: "Manage calendar resource rooms", group: "Communication" },
+  { key: "communication.files.access", label: "Access company folder drives", group: "Communication" },
+  { key: "communication.files.share_external", label: "Toggle external sharing links", group: "Communication" },
+  { key: "communication.docs.access", label: "Collaborate on documents and files", group: "Communication" },
+  { key: "communication.forms.access", label: "Access forms answers and respond", group: "Communication" },
+  { key: "communication.forms.create", label: "Create and publish forms", group: "Communication" },
+  { key: "communication.admin.manage", label: "Manage communication settings and retention", group: "Communication" },
 ] as const;
 
 // ─── System roles & their default permissions ─────────────────────────────────
@@ -136,6 +150,11 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "lms.access", "lms.reports.view",
     "accounting.dashboard.view", "accounting.account.read", "accounting.journal.read",
     "accounting.invoice.read", "accounting.payment.read", "accounting.reports.view",
+    "communication.mail.access", "communication.mail.send",
+    "communication.chat.access", "communication.calendar.access",
+    "communication.files.access", "communication.docs.access",
+    "communication.forms.access", "communication.forms.create",
+    "communication.admin.manage",
   ],
   HR: [
     "hrms.employee.read", "hrms.employee.create", "hrms.employee.edit",
@@ -160,6 +179,11 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "crm.deal.manage", "crm.activity.manage", "crm.project.manage",
     "crm.leadSource.read", "crm.leadSource.manage", "crm.lead.import",
     "lms.access", "lms.course.manage", "lms.assignment.manage", "lms.reports.view",
+    "communication.mail.access", "communication.mail.send",
+    "communication.chat.access", "communication.chat.moderator",
+    "communication.calendar.access", "communication.calendar.manage_resources",
+    "communication.files.access", "communication.docs.access",
+    "communication.forms.access", "communication.forms.create",
   ],
   Manager: [
     "hrms.employee.read", "hrms.documents.read",
@@ -171,6 +195,10 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "crm.access", "crm.dashboard.read", "crm.lead.read", "crm.lead.create",
     "crm.contact.manage", "crm.account.manage", "crm.deal.manage", "crm.activity.manage",
     "lms.access", "lms.learning.self",
+    "communication.mail.access", "communication.mail.send",
+    "communication.chat.access", "communication.calendar.access",
+    "communication.files.access", "communication.docs.access",
+    "communication.forms.access", "communication.forms.create",
   ],
   TL: [
     "hrms.employee.read",
@@ -181,6 +209,10 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "crm.access", "crm.dashboard.read", "crm.lead.read",
     "crm.contact.manage", "crm.account.manage", "crm.activity.manage",
     "lms.access", "lms.learning.self",
+    "communication.mail.access", "communication.mail.send",
+    "communication.chat.access", "communication.calendar.access",
+    "communication.files.access", "communication.docs.access",
+    "communication.forms.access",
   ],
   Director: [
     "hrms.employee.read", "hrms.documents.read",
@@ -193,6 +225,10 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "crm.contact.manage", "crm.account.manage", "crm.deal.manage", "crm.invoice.manage",
     "crm.leadSource.read", "crm.leadSource.manage", "crm.lead.import",
     "lms.access", "lms.reports.view",
+    "communication.mail.access", "communication.mail.send",
+    "communication.chat.access", "communication.calendar.access",
+    "communication.files.access", "communication.docs.access",
+    "communication.forms.access", "communication.admin.manage",
   ],
   Employee: [
     "hrms.employee.read",
@@ -204,6 +240,10 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "ams.appraisal.self_assess", "ams.meeting.minutes",
     "crm.access", "crm.activity.manage",
     "lms.access", "lms.learning.self",
+    "communication.mail.access", "communication.mail.send",
+    "communication.chat.access", "communication.calendar.access",
+    "communication.files.access", "communication.docs.access",
+    "communication.forms.access",
   ],
 };
 

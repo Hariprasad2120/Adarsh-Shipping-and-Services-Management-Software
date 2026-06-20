@@ -14,4 +14,5 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/client", "bcryptjs"],
 };
 
+// Force dev server restart: 2026-06-20-v2
 export default nextConfig;

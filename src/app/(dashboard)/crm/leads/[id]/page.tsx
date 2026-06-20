@@ -53,8 +53,21 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
     redirect(`/crm/enquiries/${id}`);
   }
 
-  // Parallel fetches for related list items, work logs, and quotes
-  const [notes, attachments, activities, timeline, workTimeLogs, quotes] = await Promise.all([
+  // Check manager status for playback and rating access
+  const userRoles = await db.userRole.findMany({
+    where: { userId: session.user.id },
+    include: { role: true },
+  });
+  const isManagerOrAdmin =
+    session.user.isPlatformAdmin ||
+    userRoles.some((ur) =>
+      ["admin", "manager", "crm manager", "hr", "director", "management"].includes(
+        ur.role.name.toLowerCase()
+      )
+    );
+
+  // Parallel fetches for related list items, work logs, quotes, and call logs
+  const [notes, attachments, activities, timeline, workTimeLogs, quotes, calls] = await Promise.all([
     getNotes(orgId, "LEAD", id),
     getAttachments(orgId, "LEAD", id),
     listActivities(orgId, { relatedToType: "LEAD", relatedToId: id }),
@@ -80,6 +93,27 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
       },
       orderBy: { createdAt: "desc" },
     }),
+    db.crmCallAttempt.findMany({
+      where: {
+        orgId,
+        leadId: id,
+      },
+      include: {
+        salesperson: { select: { id: true, name: true, email: true } },
+        recordings: {
+          include: {
+            transcript: true,
+            reviews: {
+              include: {
+                reviewer: { select: { id: true, name: true } },
+              },
+              orderBy: { createdAt: "desc" },
+            },
+          },
+        },
+      },
+      orderBy: { callStartedAt: "desc" },
+    }),
   ]);
 
   return (
@@ -91,6 +125,8 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
       timeline={timeline}
       workTimeLogs={workTimeLogs}
       quotes={quotes}
+      calls={calls}
+      isManagerOrAdmin={isManagerOrAdmin}
     />
   );
 }

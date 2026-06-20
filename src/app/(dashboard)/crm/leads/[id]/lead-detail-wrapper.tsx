@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { deleteLeadAction, updateLeadStatusAction, saveEnquiryRatesAction, logWorkTimeAction, deleteWorkTimeAction } from "@/modules/crm/actions";
+import { deleteLeadAction, updateLeadStatusAction, saveEnquiryRatesAction, logWorkTimeAction, deleteWorkTimeAction, getCallAttemptsAction } from "@/modules/crm/actions";
 import { ConvertModal } from "./convert-modal";
 import { RemarksModal } from "./remarks-modal";
 import { InterestedModal } from "./interested-modal";
@@ -37,16 +37,28 @@ interface LeadDetailWrapperProps {
   timeline: any[];
   workTimeLogs?: any[];
   quotes?: any[];
+  calls?: any[];
+  isManagerOrAdmin?: boolean;
 }
 
-export function LeadDetailWrapper({ lead, notes, attachments, activities, timeline, workTimeLogs = [], quotes = [] }: LeadDetailWrapperProps) {
+export function LeadDetailWrapper({
+  lead,
+  notes,
+  attachments,
+  activities,
+  timeline,
+  workTimeLogs = [],
+  quotes = [],
+  calls = [],
+  isManagerOrAdmin = false,
+}: LeadDetailWrapperProps) {
   const router = useRouter();
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [showInterestedModal, setShowInterestedModal] = useState(false);
   const [showRemarksModal, setShowRemarksModal] = useState(false);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [followUpStatus, setFollowUpStatus] = useState<"NOT_PICKED" | "NOT_REACHABLE" | null>(null);
-  const [activeTab, setActiveTab] = useState<"OVERVIEW" | "NOTES" | "ACTIVITIES" | "ATTACHMENTS" | "TIMELINE" | "TIME_TRACKER">("OVERVIEW");
+  const [activeTab, setActiveTab] = useState<"OVERVIEW" | "NOTES" | "ACTIVITIES" | "ATTACHMENTS" | "TIMELINE" | "TIME_TRACKER" | "CALLS">("OVERVIEW");
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this lead?")) return;
@@ -560,6 +572,14 @@ export function LeadDetailWrapper({ lead, notes, attachments, activities, timeli
               >
                 Time Tracker ({workTimeLogs.length})
               </button>
+              <button
+                onClick={() => setActiveTab("CALLS")}
+                className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
+                  activeTab === "CALLS" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                }`}
+              >
+                Calls ({calls.length})
+              </button>
             </div>
 
             {/* Tab Rendering Content */}
@@ -608,6 +628,14 @@ export function LeadDetailWrapper({ lead, notes, attachments, activities, timeli
                   workTimeLogs={workTimeLogs}
                   quotes={quotes}
                   timeline={timeline}
+                />
+              )}
+
+              {activeTab === "CALLS" && (
+                <CallsPanel
+                  calls={calls}
+                  isManagerOrAdmin={isManagerOrAdmin}
+                  leadId={lead.id}
                 />
               )}
             </div>
@@ -1218,6 +1246,445 @@ function TimeTrackerPanel({ lead, workTimeLogs, quotes, timeline }: { lead: any;
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── CALLS & RECORDINGS PANEL ───────────────────────────────────────────────────
+
+import { useEffect } from "react";
+
+function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: any[]; isManagerOrAdmin: boolean; leadId: string }) {
+  const [selectedCallId, setSelectedCallId] = useState<string | null>(calls[0]?.id || null);
+  const [subTab, setSubTab] = useState<"TRANSCRIPT" | "SUMMARY" | "REVIEW">("TRANSCRIPT");
+  const [rating, setRating] = useState<number>(5);
+  const [comments, setComments] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
+  const [localCalls, setLocalCalls] = useState(calls);
+
+  useEffect(() => {
+    setLocalCalls(calls);
+    if (calls.length > 0 && !selectedCallId) {
+      setSelectedCallId(calls[0].id);
+    }
+  }, [calls]);
+
+  useEffect(() => {
+    const hasUploading = localCalls.some((c: any) => 
+      c.recordings?.some((r: any) => r.uploadStatus === "UPLOADING")
+    );
+
+    const intervalTime = hasUploading ? 3000 : 10000;
+
+    const interval = setInterval(async () => {
+      const res = await getCallAttemptsAction(leadId);
+      if (res.ok && res.data) {
+        setLocalCalls(res.data);
+      }
+    }, intervalTime);
+
+    return () => clearInterval(interval);
+  }, [localCalls, leadId]);
+
+  const selectedCall = localCalls.find((c) => c.id === selectedCallId);
+  const recording = selectedCall?.recordings?.[0];
+  const transcript = recording?.transcript;
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!recording) return;
+
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/crm/recordings/${recording.id}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating, comments }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to submit review");
+
+      toast.success("Call quality review logged successfully!");
+      
+      // Update local state to show review immediately
+      setLocalCalls((prevCalls) =>
+        prevCalls.map((c) => {
+          if (c.id === selectedCall.id) {
+            const reviews = c.recordings[0].reviews || [];
+            const newReview = {
+              id: data.review.id,
+              rating,
+              comments,
+              createdAt: new Date().toISOString(),
+              reviewer: { name: "You" },
+            };
+            return {
+              ...c,
+              recordings: [
+                {
+                  ...c.recordings[0],
+                  reviews: [newReview, ...reviews],
+                },
+              ],
+            };
+          }
+          return c;
+        })
+      );
+      setComments("");
+    } catch (err: any) {
+      toast.error(err.message || "An error occurred");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (calls.length === 0) {
+    return (
+      <div className="p-8 text-center text-slate-500 text-xs italic">
+        No call attempts tracked for this client yet.
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-slate-300">
+      {/* Calls List */}
+      <div className="space-y-3 md:col-span-1 border-r border-[#1c212a]/30 pr-0 md:pr-4 max-h-[500px] overflow-y-auto">
+        <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Call Log History</h4>
+        {localCalls.map((call) => {
+          const hasRecording = call.recordings && call.recordings.length > 0;
+          const rec = call.recordings?.[0];
+          const quality = rec?.transcript?.qualityScore;
+          
+          return (
+            <div
+              key={call.id}
+              onClick={() => setSelectedCallId(call.id)}
+              className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                selectedCallId === call.id
+                  ? "bg-[#161f28] border-[#00cec4]/70 shadow-[0_0_0_1px_rgba(0,206,196,0.2)]"
+                  : "bg-[#0a0d12]/50 border-[#1c212a]/55 hover:border-slate-700"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-200">{call.salesperson?.name || "Agent"}</span>
+                {hasRecording && quality && (
+                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider ${
+                    quality >= 80 ? "bg-emerald-400/10 text-emerald-400 border border-emerald-400/20" : "bg-[#fb923c]/10 text-[#fb923c] border border-[#fb923c]/20"
+                  }`}>
+                    AI {quality}%
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-slate-500 mt-1">{new Date(call.callStartedAt).toLocaleString("en-IN")}</p>
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#1c212a]/30">
+                <span className="text-[9px] uppercase tracking-wider font-semibold text-slate-400">
+                  {call.durationSeconds ? `${Math.floor(call.durationSeconds / 60)}m ${call.durationSeconds % 60}s` : "Pending"}
+                </span>
+                <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                  (call.status === "COMPLETED" || rec?.uploadStatus === "UPLOADED") ? "text-emerald-400" :
+                  rec?.uploadStatus === "UPLOADING" ? "text-[#00cec4]" :
+                  rec?.uploadStatus === "CANCELLED" ? "text-amber-400" :
+                  rec?.uploadStatus === "FAILED" ? "text-red-400" :
+                  "text-amber-400"
+                }`}>
+                  {
+                    rec?.uploadStatus === "UPLOADED" ? "COMPLETED" :
+                    rec?.uploadStatus === "UPLOADING" ? "UPLOADING" :
+                    rec?.uploadStatus === "CANCELLED" ? "CANCELLED" :
+                    rec?.uploadStatus === "FAILED" ? "FAILED" :
+                    call.status
+                  }
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Call Details / Analytics Panel */}
+      <div className="md:col-span-2 space-y-4">
+        {selectedCall ? (
+          <>
+            <div className="p-4 bg-[#0a0d12]/60 rounded-xl border border-[#1c212a]/55 space-y-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="text-sm font-bold text-white uppercase tracking-wide">Call Details</h4>
+                  <p className="text-slate-500 text-[10px] mt-0.5">
+                    ID: <span className="font-mono">{selectedCall.id}</span> • Customer Number: <span className="font-mono">{selectedCall.customerPhone}</span>
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] font-bold uppercase block text-slate-400">Duration</span>
+                  <span className="text-slate-200 font-bold">{selectedCall.durationSeconds ? `${selectedCall.durationSeconds} seconds` : "N/A"}</span>
+                </div>
+              </div>
+
+              {/* Audio Playback Section */}
+              {recording ? (
+                <div className="p-3 bg-[#11161d] rounded-lg border border-[#1c212a]/40 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-white uppercase text-[10px] tracking-wide flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        recording.uploadStatus === "UPLOADED" ? "bg-emerald-400" :
+                        recording.uploadStatus === "UPLOADING" ? "bg-[#00cec4] animate-pulse" :
+                        recording.uploadStatus === "CANCELLED" ? "bg-amber-400" :
+                        "bg-red-400"
+                      }`}></span>
+                      Audio Call Recording
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${
+                        recording.uploadStatus === "UPLOADED" ? "bg-emerald-400/10 text-emerald-400" :
+                        recording.uploadStatus === "UPLOADING" ? "bg-cyan-400/10 text-[#00cec4] animate-pulse" :
+                        recording.uploadStatus === "CANCELLED" ? "bg-amber-400/10 text-amber-400" :
+                        "bg-red-400/10 text-red-400"
+                      }`}>
+                        {recording.uploadStatus === "UPLOADED" ? "UPLOADED SUCCESSFULLY" : recording.uploadStatus}
+                      </span>
+                      {recording.uploadStatus === "UPLOADED" && (
+                        <a
+                          href={`/api/crm/recordings/${recording.id}/download`}
+                          className="text-[10px] text-[#00cec4] font-bold uppercase hover:underline transition-all cursor-pointer"
+                        >
+                          Download MP3
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {recording.uploadStatus === "UPLOADED" ? (
+                    <audio
+                      src={`/api/crm/recordings/${recording.id}/playback`}
+                      controls
+                      className="w-full h-9 rounded-lg"
+                    />
+                  ) : recording.uploadStatus === "UPLOADING" ? (
+                    <div className="space-y-1 py-1">
+                      <div className="w-full bg-[#1c212a] h-1.5 rounded-full overflow-hidden">
+                        <div
+                          className="bg-[#00cec4] h-1.5 rounded-full transition-all duration-300"
+                          style={{ width: `${recording.uploadProgress || 0}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[9px] text-[#00cec4] font-mono">
+                        <span>Uploading from mobile...</span>
+                        <span>{recording.uploadProgress || 0}%</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={`text-[10px] p-2 rounded border space-y-1 ${
+                      recording.uploadStatus === "CANCELLED"
+                        ? "text-amber-400 bg-amber-400/5 border-amber-400/10"
+                        : "text-red-400 bg-red-400/5 border-red-400/10"
+                    }`}>
+                      <span className="font-bold uppercase text-[9px] block">
+                        {recording.uploadStatus === "CANCELLED" ? "Upload Cancelled:" : "Upload Failure:"}
+                      </span>
+                      <p>{recording.errorMessage || (recording.uploadStatus === "CANCELLED" ? "The upload was cancelled by the user." : "The upload has failed.")}</p>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center justify-between text-[9px] text-slate-500">
+                    <span>File size: {(recording.fileSize / 1024 / 1024).toFixed(2)} MB</span>
+                    <span>Matched by: {recording.matchReason} (Confidence: {recording.matchConfidence}%)</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-slate-800/10 rounded-lg border border-dashed border-[#1c212a] text-center text-slate-500 italic">
+                  No recording uploaded for this call attempt.
+                </div>
+              )}
+            </div>
+
+            {/* AI Analysis Tab Panel */}
+            {recording && (
+              <div className="p-4 bg-[#0a0d12]/60 rounded-xl border border-[#1c212a]/55 space-y-4">
+                {/* Detail Tabs */}
+                <div className="flex border-b border-[#1c212a]/50 pb-1 gap-4 select-none">
+                  <button
+                    onClick={() => setSubTab("TRANSCRIPT")}
+                    className={`pb-1.5 text-[10px] font-bold uppercase tracking-wider border-b transition-all cursor-pointer ${
+                      subTab === "TRANSCRIPT" ? "border-[#00cec4] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
+                    }`}
+                  >
+                    AI Transcript
+                  </button>
+                  <button
+                    onClick={() => setSubTab("SUMMARY")}
+                    className={`pb-1.5 text-[10px] font-bold uppercase tracking-wider border-b transition-all cursor-pointer ${
+                      subTab === "SUMMARY" ? "border-[#00cec4] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
+                    }`}
+                  >
+                    AI Analysis & Actions
+                  </button>
+                  <button
+                    onClick={() => setSubTab("REVIEW")}
+                    className={`pb-1.5 text-[10px] font-bold uppercase tracking-wider border-b transition-all cursor-pointer ${
+                      subTab === "REVIEW" ? "border-[#00cec4] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
+                    }`}
+                  >
+                    Manager Quality Review ({recording.reviews?.length || 0})
+                  </button>
+                </div>
+
+                <div className="pt-1">
+                  {/* AI Transcript View */}
+                  {subTab === "TRANSCRIPT" && (
+                    <div className="space-y-3">
+                      {transcript ? (
+                        <div className="p-3 bg-[#11161d] rounded-lg border border-[#1c212a]/30 max-h-[250px] overflow-y-auto whitespace-pre-line leading-relaxed text-slate-300 animate-in fade-in duration-200">
+                          {transcript.transcriptText}
+                        </div>
+                      ) : (
+                        <div className="p-4 text-center text-slate-500 italic">
+                          AI Transcription is currently {recording.transcriptionStatus.toLowerCase()}...
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* AI Analysis View */}
+                  {subTab === "SUMMARY" && (
+                    <div className="space-y-3 animate-in fade-in duration-200">
+                      {transcript ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-3 col-span-1">
+                            <div>
+                              <span className="font-bold text-slate-500 uppercase text-[9px] block">AI Summary</span>
+                              <p className="text-slate-200 mt-1 leading-normal font-medium">{transcript.summary}</p>
+                            </div>
+                            <div>
+                              <span className="font-bold text-slate-500 uppercase text-[9px] block">Objections Raised</span>
+                              <p className={`mt-1 font-bold ${transcript.objections === "None" ? "text-emerald-400" : "text-[#fb923c]"}`}>
+                                {transcript.objections}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-3 col-span-1">
+                            <div>
+                              <span className="font-bold text-slate-500 uppercase text-[9px] block">Follow-up Actions</span>
+                              <p className="text-slate-200 mt-1 font-medium leading-normal">{transcript.followUpActions}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <span className="font-bold text-slate-500 uppercase text-[9px] block">Sentiment</span>
+                                <span className={`inline-block mt-1 font-extrabold uppercase text-[10px] px-2 py-0.5 rounded ${
+                                  transcript.sentiment === "POSITIVE"
+                                    ? "bg-emerald-400/10 text-emerald-400 border border-emerald-400/20"
+                                    : "bg-slate-400/10 text-slate-400 border border-slate-400/20"
+                                }`}>
+                                  {transcript.sentiment}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="font-bold text-slate-500 uppercase text-[9px] block">Quality Score</span>
+                                <span className="text-white mt-1 font-extrabold text-[13px] block font-mono">
+                                  {transcript.qualityScore}%
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-4 text-center text-slate-500 italic">
+                          AI Analysis is pending transcription completion.
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Manager Quality Review Tab */}
+                  {subTab === "REVIEW" && (
+                    <div className="space-y-4 animate-in fade-in duration-200">
+                      {/* Review Submission Form (Only for Managers/Admins) */}
+                      {isManagerOrAdmin ? (
+                        <form onSubmit={handleSubmitReview} className="p-3 bg-[#11161d] rounded-lg border border-[#1c212a]/30 space-y-3">
+                          <span className="font-bold text-white uppercase text-[10px] tracking-wide block">Log Quality Review</span>
+                          
+                          <div className="grid grid-cols-3 items-center gap-3">
+                            <div className="col-span-1">
+                              <label className="text-slate-500 font-bold uppercase text-[9px] block mb-1">Quality Rating</label>
+                              <select
+                                value={rating}
+                                onChange={(e) => setRating(parseInt(e.target.value))}
+                                className="w-full bg-[#0a0d12] border border-[#1c212a] text-white px-2 py-1 rounded text-xs focus:outline-none"
+                              >
+                                <option value={5}>⭐⭐⭐⭐⭐ (5/5)</option>
+                                <option value={4}>⭐⭐⭐⭐ (4/5)</option>
+                                <option value={3}>⭐⭐⭐ (3/5)</option>
+                                <option value={2}>⭐⭐ (2/5)</option>
+                                <option value={1}>⭐ (1/5)</option>
+                              </select>
+                            </div>
+                            <div className="col-span-2">
+                              <label className="text-slate-500 font-bold uppercase text-[9px] block mb-1">Comments / Action items</label>
+                              <input
+                                type="text"
+                                value={comments}
+                                onChange={(e) => setComments(e.target.value)}
+                                placeholder="Provide audit feedback or training directives..."
+                                className="w-full bg-[#0a0d12] border border-[#1c212a] text-slate-200 px-3 py-1 rounded text-xs focus:outline-none placeholder-slate-600"
+                                required
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-end">
+                            <button
+                              type="submit"
+                              disabled={submitting}
+                              className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide cursor-pointer transition-all disabled:opacity-50"
+                            >
+                              {submitting ? "Submitting..." : "Submit Call Audit"}
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <div className="p-3 bg-[#11161d] rounded-lg border border-[#1c212a]/30 text-center text-slate-500 italic">
+                          Manager call reviews are read-only for representatives.
+                        </div>
+                      )}
+
+                      {/* Logged Reviews list */}
+                      <div className="space-y-2">
+                        <span className="font-bold text-slate-400 uppercase text-[9px] block">Audit Log History</span>
+                        {recording.reviews && recording.reviews.length > 0 ? (
+                          <div className="space-y-2.5 max-h-[200px] overflow-y-auto">
+                            {recording.reviews.map((rev: any) => (
+                              <div key={rev.id} className="p-2.5 bg-[#0a0d12]/40 rounded border border-[#1c212a]/30 flex flex-col gap-1.5">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-slate-300">{rev.reviewer?.name || "Manager"}</span>
+                                  <span className="text-[#fb923c] font-bold">{"⭐".repeat(rev.rating)}</span>
+                                </div>
+                                {rev.comments && <p className="text-slate-400 text-xs font-normal pl-0.5 leading-normal">{rev.comments}</p>}
+                                <span className="text-[8px] text-slate-500 text-right pr-0.5">
+                                  {new Date(rev.createdAt).toLocaleString("en-IN")}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="p-4 text-center text-slate-600 italic">
+                            No manager audits logged for this call recording.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="p-8 text-center bg-[#0a0d12]/30 border border-[#1c212a]/40 rounded-xl text-slate-500 italic">
+            Select a call attempt from the left to view metrics.
+          </div>
+        )}
       </div>
     </div>
   );

@@ -73,12 +73,44 @@ export default async function EnquiryDetailPage({ params }: EnquiryDetailPagePro
       ur.role.name.toLowerCase() === "crm manager"
   );
 
-  // Parallel fetches for notes, attachments, activities, timeline
-  const [notes, attachments, activities, timeline] = await Promise.all([
+  // Parallel fetches for notes, attachments, activities, timeline, work logs, and calls
+  const [notes, attachments, activities, timeline, workTimeLogs, calls] = await Promise.all([
     getNotes(orgId, "LEAD", id),
     getAttachments(orgId, "LEAD", id),
     listActivities(orgId, { relatedToType: "LEAD", relatedToId: id }),
     getTimelineEvents(orgId, "LEAD", id),
+    db.crmWorkTimeLog.findMany({
+      where: {
+        orgId,
+        OR: [
+          { leadId: id },
+          lead.convertedAccountId ? { accountId: lead.convertedAccountId } : undefined,
+        ].filter(Boolean) as any,
+      },
+      include: { user: { select: { name: true } } },
+      orderBy: { loggedAt: "desc" },
+    }),
+    db.crmCallAttempt.findMany({
+      where: {
+        orgId,
+        leadId: id,
+      },
+      include: {
+        salesperson: { select: { id: true, name: true, email: true } },
+        recordings: {
+          include: {
+            transcript: true,
+            reviews: {
+              include: {
+                reviewer: { select: { id: true, name: true } },
+              },
+              orderBy: { createdAt: "desc" },
+            },
+          },
+        },
+      },
+      orderBy: { callStartedAt: "desc" },
+    }),
   ]);
 
   return (
@@ -89,6 +121,8 @@ export default async function EnquiryDetailPage({ params }: EnquiryDetailPagePro
       attachments={attachments}
       activities={activities}
       timeline={timeline}
+      workTimeLogs={workTimeLogs}
+      calls={calls}
       isManager={isManager}
     />
   );
