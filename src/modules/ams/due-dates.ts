@@ -19,9 +19,13 @@ export type DueSlot = {
 };
 
 function addMonths(date: Date, months: number): Date {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + months);
-  return d;
+  return new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth() + months,
+      date.getUTCDate(),
+    ),
+  );
 }
 
 export function computeSchedule(
@@ -52,7 +56,7 @@ export function dueInMonth(
   const schedule = computeSchedule(joinDate, priorExperienceYears, 50);
   return (
     schedule.find(
-      (s) => s.dueDate.getFullYear() === year && s.dueDate.getMonth() === month
+      (s) => s.dueDate.getUTCFullYear() === year && s.dueDate.getUTCMonth() === month
     ) ?? null
   );
 }
@@ -66,9 +70,9 @@ export function dueOnDate(
   return (
     schedule.find(
       (s) =>
-        s.dueDate.getFullYear() === date.getFullYear() &&
-        s.dueDate.getMonth() === date.getMonth() &&
-        s.dueDate.getDate() === date.getDate()
+        s.dueDate.getUTCFullYear() === date.getUTCFullYear() &&
+        s.dueDate.getUTCMonth() === date.getUTCMonth() &&
+        s.dueDate.getUTCDate() === date.getUTCDate()
     ) ?? null
   );
 }

@@ -12,7 +12,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { id } = await params;
   const parsed = z.object({
     percent: z.number().min(0),
-    amount: z.number().min(0),
     effectiveFrom: z.string(),
     notes: z.string().optional(),
   }).safeParse(await req.json());
@@ -22,7 +21,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     id,
     session!.user.id,
     parsed.data.percent,
-    parsed.data.amount,
     new Date(parsed.data.effectiveFrom),
     parsed.data.notes
   );

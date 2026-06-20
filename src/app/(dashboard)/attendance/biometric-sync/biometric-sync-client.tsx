@@ -570,7 +570,7 @@ export function BiometricSyncClient() {
           </div>
 
           {/* Monitor panel */}
-            <div className="overflow-hidden rounded-3xl border border-outline-variant/60 bg-surface shadow-sm dark:border-slate-800/80 dark:bg-slate-950/30 dark:shadow-2xl dark:backdrop-blur-md">
+            <div className="ds-shell-lg overflow-hidden border border-outline-variant/60 bg-surface shadow-sm dark:border-slate-800/80 dark:bg-slate-950/30 dark:shadow-2xl dark:backdrop-blur-md">
             {/* Toolbar */}
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-outline-variant/50 bg-surface-container-low/70 px-6 py-4 select-none dark:border-slate-800/60 dark:bg-slate-900/20">
               <div className="flex items-center gap-2">
@@ -835,7 +835,7 @@ export function BiometricSyncClient() {
       {/* LOGS REPORT TAB                                                     */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {tab === "logs" && (
-        <div className="overflow-hidden rounded-3xl border border-outline-variant/60 bg-surface shadow-sm dark:border-slate-800/80 dark:bg-slate-950/30 dark:shadow-2xl dark:backdrop-blur-md">
+        <div className="ds-shell-lg overflow-hidden border border-outline-variant/60 bg-surface shadow-sm dark:border-slate-800/80 dark:bg-slate-950/30 dark:shadow-2xl dark:backdrop-blur-md">
           <div className="flex items-center justify-between gap-4 border-b border-outline-variant/50 bg-surface-container-low/70 px-6 py-4 select-none dark:border-slate-800/60 dark:bg-slate-900/20">
             <div className="flex items-center gap-2">
               <List className="size-4 text-on-surface-variant/60" />
@@ -1077,7 +1077,7 @@ export function BiometricSyncClient() {
           </div>
 
           {/* Trigger panel */}
-          <div className="rounded-3xl border border-outline-variant/60 bg-surface p-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-950/30 dark:shadow-2xl dark:backdrop-blur-md">
+          <div className="ds-shell-lg border border-outline-variant/60 bg-surface p-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-950/30 dark:shadow-2xl dark:backdrop-blur-md">
             <h2 className="mb-1 text-xs font-bold uppercase tracking-wider text-on-surface select-none dark:text-slate-100">
               Trigger Manual Sync
             </h2>
@@ -1139,7 +1139,7 @@ export function BiometricSyncClient() {
 
           {/* Not-configured warning */}
           {!loadingStatus && !status?.configured && (
-            <div className="rounded-3xl border border-amber-500/25 bg-amber-50/70 p-6 backdrop-blur-md dark:bg-amber-500/[0.02]">
+            <div className="ds-shell-lg border border-amber-500/25 bg-amber-50/70 p-6 backdrop-blur-md dark:bg-amber-500/[0.02]">
               <div className="flex items-start gap-3">
                 <Information className="size-5 text-amber-500 shrink-0 mt-0.5" />
                 <div className="space-y-3">
@@ -1164,7 +1164,7 @@ export function BiometricSyncClient() {
           {/* Last sync result */}
           {lastResult && (
             <div
-              className={`overflow-hidden rounded-3xl border border-l-4 bg-surface shadow-sm dark:bg-[#0e121b] dark:shadow-2xl ${lastResult.success ? "border-l-emerald-500 border-outline-variant/60 dark:border-slate-900" : "border-l-rose-500 border-outline-variant/60 dark:border-slate-900"}`}
+              className={`ds-shell-lg overflow-hidden border border-l-4 bg-surface shadow-sm dark:bg-[#0e121b] dark:shadow-2xl ${lastResult.success ? "border-l-emerald-500 border-outline-variant/60 dark:border-slate-900" : "border-l-rose-500 border-outline-variant/60 dark:border-slate-900"}`}
             >
               <div className="flex items-center gap-3 border-b border-outline-variant/50 bg-surface-container-low/70 px-6 py-4 select-none dark:border-slate-950/20 dark:bg-slate-950/10">
                 {lastResult.success ? (
@@ -1252,7 +1252,7 @@ export function BiometricSyncClient() {
           )}
 
           {/* How it works */}
-          <div className="rounded-3xl border border-outline-variant/60 bg-surface p-6 shadow-sm select-none dark:border-slate-800/60 dark:bg-slate-950/40 dark:shadow-2xl dark:backdrop-blur-md">
+          <div className="ds-shell-lg border border-outline-variant/60 bg-surface p-6 shadow-sm select-none dark:border-slate-800/60 dark:bg-slate-950/40 dark:shadow-2xl dark:backdrop-blur-md">
             <div className="mb-4 flex items-center gap-2 border-b border-outline-variant/50 pb-3 dark:border-slate-800/40">
               <Renew className="size-4 text-on-surface-variant" />
               <h2 className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/60">

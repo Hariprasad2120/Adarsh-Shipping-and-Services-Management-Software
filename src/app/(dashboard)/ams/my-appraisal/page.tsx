@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
 import { listMyAppraisals } from "@/modules/ams/service";
 import { getNow } from "@/lib/clock";
 
@@ -94,6 +95,25 @@ export default async function MyAppraisalPage({
                     {STAGE_LABEL[appraisal.stage] ?? appraisal.stage.replace(/_/g, " ")}
                   </span>
                 </div>
+
+                <CycleProgressCard
+                  stage={appraisal.stage}
+                  cycleName={appraisal.cycle.name}
+                  cycleYear={appraisal.cycle.year}
+                  reviewers={appraisal.reviewers.map((reviewer) => ({
+                    kind: reviewer.kind,
+                    name: reviewer.user.name,
+                    availabilityStatus: reviewer.availabilityStatus,
+                  }))}
+                  selfAssessment={
+                    appraisal.selfAssessment
+                      ? {
+                          editCount:
+                            (appraisal.selfAssessment as { editCount?: number }).editCount ?? 0,
+                        }
+                      : null
+                  }
+                />
 
                 {nonMgmtReviewers.length > 0 ? (
                   <div className="space-y-2">

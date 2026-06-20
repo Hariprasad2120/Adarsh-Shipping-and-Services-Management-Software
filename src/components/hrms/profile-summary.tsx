@@ -98,7 +98,7 @@ export function ProfileSummary({
   return (
     <section className="overflow-hidden border border-[#d6dfdc] shadow-[0_28px_80px_rgba(15,23,42,0.12)]">
       <div className="grid gap-0 xl:grid-cols-[1.3fr_0.9fr]">
-        <div className="relative overflow-hidden bg-[#0f1c22] px-6 py-6 text-white sm:px-8 sm:py-8">
+        <div className="relative overflow-hidden bg-[#0f1c22] px-6 py-6 text-white sm:px-8 sm:py-8 ds-dark-banner">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(126,230,216,0.26),transparent_34%),radial-gradient(circle_at_70%_20%,rgba(252,211,77,0.16),transparent_25%)]" />
           <div className="relative space-y-7">
             <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">

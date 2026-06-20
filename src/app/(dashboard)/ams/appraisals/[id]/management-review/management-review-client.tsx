@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
+import { FormPreviewModal } from "@/components/ams/form-preview-modal";
 import { CriteriaPointsForm, CriteriaPointsView } from "@/components/ams/criteria-points-form";
 import { DemoFillButton } from "@/components/demo-fill-button";
 import { useNotifications } from "@/components/notifications/notification-provider";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   buildReviewerDemoAnswers,
@@ -32,12 +35,26 @@ type ManagementReviewDetail = {
   reviewerRatings: {
     id: string;
     ratings: ReviewerRatingAnswers;
+    status: string | null;
+    submittedAt: string | null;
+    updatedAt: string | null;
     reviewer: { kind: string; user: { name: string } };
   }[];
   currentRating: ManagementReviewAnswers | null;
   proposedDates: string[];
   submittedAt: string | null;
+  updatedAt: string | null;
   submissionStatus: string | null;
+};
+
+type ScorePreview = {
+  finalNormalized: number | null;
+  flooredScore: number | null;
+  grade: string | null;
+  gradeLabel: string | null;
+  hikePercent: number | null;
+  slabLabel: string | null;
+  slabRange: string | null;
 };
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
@@ -100,11 +117,16 @@ export function ManagementReviewClient({
   const [currentSubmissionStatus, setCurrentSubmissionStatus] = useState<string | null>(
     appraisal.submissionStatus,
   );
+  const [currentSubmittedAt, setCurrentSubmittedAt] = useState<string | null>(appraisal.submittedAt);
+  const [currentUpdatedAt, setCurrentUpdatedAt] = useState<string | null>(appraisal.updatedAt);
   const [isEditing, setIsEditing] = useState<boolean>(
     appraisal.submissionStatus !== "SUBMITTED",
   );
   const [demoProfile, setDemoProfile] = useState<DemoPerformanceProfile>("average");
   const [formSeed, setFormSeed] = useState(0);
+  const [formPreviewOpen, setFormPreviewOpen] = useState(false);
+  const [scorePreview, setScorePreview] = useState<ScorePreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [proposedDates, setProposedDates] = useState<string[]>(() => {
     const initial = appraisal.proposedDates.slice(0, 3);
     while (initial.length < 3) initial.push("");
@@ -113,6 +135,35 @@ export function ManagementReviewClient({
   const { success, error } = useNotifications();
 
   const canSubmit = appraisal.stage === "MANAGEMENT_REVIEW" && appraisal.isClaimant;
+  const hasRequiredMeetingDates = proposedDates.filter(Boolean).length > 0;
+
+  useEffect(() => {
+    if (!canSubmit || !currentRating) {
+      setScorePreview(null);
+      return;
+    }
+
+    let cancelled = false;
+    const run = async () => {
+      setPreviewLoading(true);
+      const res = await fetch(`/api/ams/appraisals/${appraisal.id}/score-preview`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ratings: currentRating }),
+      });
+      if (cancelled) return;
+      setPreviewLoading(false);
+      if (!res.ok) return;
+      const data = await res.json().catch(() => null);
+      setScorePreview(data?.data ?? data ?? null);
+    };
+
+    const timeout = window.setTimeout(run, 250);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [appraisal.id, canSubmit, currentRating]);
 
   async function claimReview() {
     setClaiming(true);
@@ -132,6 +183,10 @@ export function ManagementReviewClient({
   }
 
   async function persistRating(action: "DRAFT" | "SUBMITTED", answers: ManagementReviewAnswers) {
+    if (action === "SUBMITTED" && !hasRequiredMeetingDates) {
+      error("Select the required meeting date options before submitting.");
+      return;
+    }
     const res = await fetch(`/api/ams/appraisals/${appraisal.id}/management-review`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -149,7 +204,10 @@ export function ManagementReviewClient({
     success(action === "DRAFT" ? "Management draft saved" : "Management review submitted");
     setCurrentRating(answers);
     setCurrentSubmissionStatus(action);
+    const nowIso = new Date().toISOString();
+    setCurrentUpdatedAt(nowIso);
     if (action === "SUBMITTED") {
+      setCurrentSubmittedAt(nowIso);
       setIsEditing(false);
     }
     setSavedAt(new Date().toLocaleTimeString("en-IN"));
@@ -180,19 +238,52 @@ export function ManagementReviewClient({
         <span className="text-on-surface-variant/40">/</span>
       </div>
 
-      <Card title="Review Summary">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-1">
-            <p className="text-lg font-semibold text-on-surface">{appraisal.employee.name}</p>
-            <p className="text-sm text-on-surface-variant">
-              {appraisal.employee.designation ?? "No designation"} · {appraisal.cycle.name} {appraisal.cycle.year}
-            </p>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] xl:items-start">
+        <CycleProgressCard
+          stage={appraisal.stage}
+          cycleName={appraisal.cycle.name}
+          cycleYear={appraisal.cycle.year}
+          reviewers={appraisal.reviewerRatings.map((row) => ({
+            kind: row.reviewer.kind,
+            name: row.reviewer.user.name,
+            submissionStatus: row.status,
+          }))}
+          selfAssessment={
+            appraisal.selfAssessment
+              ? { editCount: appraisal.selfAssessment.editCount ?? 0 }
+              : null
+          }
+          management={{
+            claimedByName: appraisal.claimedByName,
+            submitted: appraisal.submissionStatus === "SUBMITTED",
+          }}
+          meeting={{
+            scheduledAt: appraisal.proposedDates[0] ?? null,
+            hasMinutes: appraisal.stage === "HIKE_FINALISATION" || appraisal.stage === "CLOSED",
+          }}
+        />
+
+        <Card title="Review Summary">
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="space-y-1">
+                <p className="text-lg font-semibold text-on-surface">{appraisal.employee.name}</p>
+                <p className="text-sm text-on-surface-variant">
+                  {appraisal.employee.designation ?? "No designation"} · {appraisal.cycle.name} {appraisal.cycle.year}
+                </p>
+              </div>
+              <span className={`rounded-full border px-3 py-1 text-xs font-medium ${STAGE_COLOR[appraisal.stage] ?? "border-outline-variant bg-surface-container-high text-on-surface-variant"}`}>
+                {appraisal.stage.replace(/_/g, " ")}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button variant="outline" className="border-[#00cec4]/35 text-[#008b85] hover:bg-[#00cec4]/8" onClick={() => setFormPreviewOpen(true)}>
+                View Forms
+              </Button>
+            </div>
           </div>
-          <span className={`rounded-full border px-3 py-1 text-xs font-medium ${STAGE_COLOR[appraisal.stage] ?? "border-outline-variant bg-surface-container-high text-on-surface-variant"}`}>
-            {appraisal.stage.replace(/_/g, " ")}
-          </span>
-        </div>
-      </Card>
+        </Card>
+      </div>
 
       {savedAt && (
         <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
@@ -206,31 +297,11 @@ export function ManagementReviewClient({
         </div>
       )}
 
-      <Card title="Self Assessment">
-        <CriteriaPointsView
-          criteria={selfCriteria}
-          supplementary={selfSupplementary}
-          answers={appraisal.selfAssessment?.answers ?? null}
-          editCount={appraisal.selfAssessment?.editCount}
-          selfTemplate={selfTemplate}
-        />
-      </Card>
-
-      <Card title="Reviewer Ratings">
-        {appraisal.reviewerRatings.length > 0 ? (
-          <div className="space-y-6">
-            {appraisal.reviewerRatings.map((row) => (
-              <div key={row.id} className="space-y-2">
-                <p className="text-xs font-semibold text-on-surface-variant">
-                  {row.reviewer.user.name} ({row.reviewer.kind})
-                </p>
-                <CriteriaPointsView criteria={reviewerCriteria} supplementary={[]} answers={row.ratings} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-on-surface-variant/60 italic">Reviewer ratings are not available yet.</p>
-        )}
+      <Card title="Forms Access">
+        <p className="text-sm text-on-surface-variant">
+          The self-assessment and reviewer forms are available in the popup window.
+          Use <strong>View Forms</strong> to open them.
+        </p>
       </Card>
 
       {appraisal.canClaim ? (
@@ -268,16 +339,40 @@ export function ManagementReviewClient({
                   className="w-full"
                 />
               ))}
+              <p className="text-xs text-on-surface-variant">
+                Final submission stays disabled until at least one meeting date is selected.
+              </p>
             </div>
+            {scorePreview ? (
+              <div className="rounded-2xl border border-[#00cec4]/20 bg-[#00cec4]/8 px-4 py-4 text-sm">
+                <p className="font-semibold text-[#008b85]">Live Hike Preview</p>
+                <div className="mt-2 grid gap-2 md:grid-cols-2">
+                  <p className="text-on-surface">Current calculated rating: <strong>{scorePreview.finalNormalized?.toFixed(2) ?? "-"}</strong></p>
+                  <p className="text-on-surface">Floored rating: <strong>{scorePreview.flooredScore ?? "-"}</strong></p>
+                  <p className="text-on-surface">Grade: <strong>{scorePreview.grade ?? "-"}</strong>{scorePreview.gradeLabel ? ` · ${scorePreview.gradeLabel}` : ""}</p>
+                  <p className="text-on-surface">Slab: <strong>{scorePreview.slabLabel ?? "Not configured"}</strong>{scorePreview.slabRange ? ` (${scorePreview.slabRange})` : ""}</p>
+                  <p className="text-on-surface md:col-span-2">Suggested hike percentage: <strong>{scorePreview.hikePercent != null ? `${scorePreview.hikePercent}%` : "No matching slab"}</strong></p>
+                </div>
+                {scorePreview.hikePercent == null ? (
+                  <p className="mt-2 text-xs text-red-600">No increment slab matches this score. Fix the slab configuration before final submission.</p>
+                ) : null}
+              </div>
+            ) : previewLoading ? (
+              <div className="rounded-2xl border border-outline-variant/35 bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+                Calculating live hike preview…
+              </div>
+            ) : null}
             <CriteriaPointsForm
               key={`management-rating-form:${formSeed}`}
               mode="management"
               criteria={managementCriteria}
               supplementary={[]}
               initialAnswers={currentRating ?? undefined}
+              onAnswersChange={(answers) => setCurrentRating(answers as ManagementReviewAnswers)}
               onSaveDraft={(answers) => persistRating("DRAFT", answers as ManagementReviewAnswers)}
               onSubmitFinal={(answers) => persistRating("SUBMITTED", answers as ManagementReviewAnswers)}
               isResubmission={currentSubmissionStatus === "SUBMITTED"}
+              submitDisabled={!hasRequiredMeetingDates || previewLoading || !scorePreview || scorePreview.hikePercent === null}
               showDemoFill={false}
             />
           </div>
@@ -328,6 +423,42 @@ export function ManagementReviewClient({
           <p className="text-sm text-on-surface-variant">{getStatusMessage(appraisal)}</p>
         </Card>
       )}
+
+      <FormPreviewModal
+        open={formPreviewOpen}
+        onClose={() => setFormPreviewOpen(false)}
+        title="Management Form Popup"
+        appraisee={appraisal.employee}
+        cycle={appraisal.cycle}
+        selfTemplate={selfTemplate}
+        selfCriteria={selfCriteria}
+        reviewerCriteria={reviewerCriteria}
+        managementCriteria={managementCriteria}
+        selfPreview={{
+          answers: appraisal.selfAssessment?.answers ?? null,
+          editCount: appraisal.selfAssessment?.editCount,
+        }}
+        reviewerPreviews={[
+          ...appraisal.reviewerRatings.map((row) => ({
+            id: row.id,
+            reviewerName: row.reviewer.user.name,
+            reviewerRole: row.reviewer.kind,
+            status: row.status,
+            submittedAt: row.submittedAt,
+            updatedAt: row.updatedAt,
+            answers: row.ratings,
+          })),
+          {
+            id: `${appraisal.id}:management`,
+            reviewerName: appraisal.claimedByName ?? "Management Review",
+            reviewerRole: "MANAGEMENT",
+            status: currentSubmissionStatus,
+            submittedAt: currentSubmittedAt,
+            updatedAt: currentUpdatedAt,
+            answers: currentRating,
+          },
+        ]}
+      />
     </div>
   );
 }

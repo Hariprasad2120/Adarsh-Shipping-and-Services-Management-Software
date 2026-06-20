@@ -547,7 +547,7 @@ export function TodoClient({
         />
       </div>
 
-      <div className="overflow-hidden rounded-[28px] border border-outline-variant/40 bg-surface shadow-sm">
+      <div className="ds-shell-lg overflow-hidden border border-outline-variant/40 bg-surface shadow-sm">
         <div className="space-y-4 border-b border-outline-variant/30 px-5 py-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0">
@@ -809,7 +809,7 @@ export function TodoClient({
 
       {isTaskFormOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6">
-          <Card className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-[28px] border-outline-variant/40 bg-surface shadow-2xl">
+          <Card className="ds-shell-lg max-h-[90vh] w-full max-w-3xl overflow-hidden border-outline-variant/40 bg-surface shadow-2xl">
             <CardHeader className="flex flex-row items-start justify-between gap-4 border-b border-outline-variant/30">
               <div>
                 <CardTitle>

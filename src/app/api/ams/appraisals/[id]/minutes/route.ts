@@ -11,7 +11,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   const parsed = z.object({
-    role: z.enum(["HR", "MANAGEMENT", "EMPLOYEE"]),
+    role: z.enum(["HR", "MANAGEMENT", "EMPLOYEE", "ADMIN"]),
     content: z.string().min(1),
   }).safeParse(await req.json());
   if (!parsed.success) return err("Invalid input");

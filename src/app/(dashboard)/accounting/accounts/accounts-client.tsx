@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
-  Folder,
   FolderOpen,
   FileText,
   Plus,
@@ -15,6 +14,7 @@ import {
   HelpCircle,
   Loader2
 } from "lucide-react";
+import { FolderIcon as Folder } from "@/components/ui/folder-icon";
 import { createAccountAction } from "@/modules/accounting/actions";
 
 interface AccountsClientProps {

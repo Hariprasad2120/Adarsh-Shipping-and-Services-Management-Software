@@ -30,7 +30,7 @@ function kindLabel(kind: "ANNUAL" | "INTERMEDIATE") {
 }
 
 function sectionCardClass(extra = "") {
-  return `card-top-accent rounded-[28px] border border-outline-variant/40 bg-surface p-5 shadow-sm sm:p-6 ${extra}`.trim();
+  return `card-top-accent ds-shell-lg border border-outline-variant/40 bg-surface p-5 shadow-sm sm:p-6 ${extra}`.trim();
 }
 
 function ToggleCard({
@@ -58,6 +58,17 @@ function ToggleCard({
         <span className={`absolute top-1 h-5 w-5 rounded-full bg-surface transition ${active ? "left-6" : "left-1"}`} />
       </span>
     </button>
+  );
+}
+
+function CurrentStepIcon({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#00cec4]/35 bg-[#00cec4]/10 text-[#00a39a] shadow-[0_0_0_4px_rgba(0,206,196,0.12),0_0_18px_rgba(0,206,196,0.14)] animate-pulse">
+      <span className="absolute inset-[-6px] rounded-full border border-[#00cec4]/30 animate-ping" />
+      <span className="relative z-10 inline-flex items-center justify-center">
+        {children}
+      </span>
+    </span>
   );
 }
 
@@ -255,6 +266,10 @@ export function StartAppraisalClient({
     (!includeSpecialTL || Boolean(specialTL)) &&
     (!includeSpecialManager || Boolean(specialManager));
 
+  function hasDuplicateReviewers(reviewers: string[]) {
+    return new Set(reviewers).size !== reviewers.length;
+  }
+
   async function startFlow(mode: "scheduled" | "special") {
     const isScheduled = mode === "scheduled";
     const dueDate = isScheduled ? scheduledAppraisal?.dueDate : specialDate;
@@ -267,6 +282,16 @@ export function StartAppraisalClient({
 
     if (!dueDate || !kind || !selectedHR) {
       setErrorMessage("Select an HR reviewer and ensure the appraisal date is available.");
+      return;
+    }
+
+    const selectedReviewerIds = [
+      selectedHR,
+      ...(includeTL && selectedTL ? [selectedTL] : []),
+      ...(includeManager && selectedManager ? [selectedManager] : []),
+    ];
+    if (hasDuplicateReviewers(selectedReviewerIds)) {
+      setErrorMessage("Each reviewer role must be assigned to a different employee.");
       return;
     }
 
@@ -344,7 +369,14 @@ export function StartAppraisalClient({
       ) : null}
 
       <div className={sectionCardClass()}>
-        <SectionHeader icon={<Users className="size-5" />} title="Assign Reviewers" />
+        <SectionHeader
+          icon={
+            <CurrentStepIcon>
+              <Users className="size-5" />
+            </CurrentStepIcon>
+          }
+          title="Assign Reviewers"
+        />
 
         {scheduledAppraisal ? (
           <div className="mt-6 space-y-5">

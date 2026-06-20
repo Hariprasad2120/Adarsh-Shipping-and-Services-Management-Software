@@ -41,6 +41,7 @@
   --radius-xl: 12px;
   --radius-2xl: 16px;
   --radius-3xl: 20px;
+  --radius-card-lg: 24px;
   --radius-full: 9999px;
 
   --text-xs: 10px;
@@ -455,11 +456,11 @@ main textarea {
 }
 
 .card-top-accent {
-  border-top: 2px solid #00cec4;
+  box-shadow: inset 0 2px 0 #00cec4;
 }
 
 .card-top-accent-orange {
-  border-top: 2px solid #fb923c;
+  box-shadow: inset 0 2px 0 #fb923c;
 }
 
 .card-left-accent {
@@ -478,8 +479,8 @@ html.light [class*="text-[#fff]"] {
 }
 
 /* Restore white text for elements with explicitly colored backgrounds (must come after, same specificity → last wins) */
-html.light [class*="bg-[#00c4b6]"],
-html.light [class*="bg-[#00cec4]"],
+html.light [class*="bg-[#00c4b6]"]:not([class*="/"]),
+html.light [class*="bg-[#00cec4]"]:not([class*="/"]),
 html.light [class*="bg-[#ef4444]"],
 html.light [class*="bg-red-500"],
 html.light [class*="bg-red-600"],
@@ -488,8 +489,8 @@ html.light [class*="bg-red-700"] {
 }
 
 /* Ensure cyan-background buttons always keep white text regardless of theme */
-[class*="bg-[#00c4b6]"],
-[class*="bg-[#00cec4]"] {
+[class*="bg-[#00c4b6]"]:not([class*="/"]),
+[class*="bg-[#00cec4]"]:not([class*="/"]) {
   color: #ffffff !important;
 }
 
@@ -537,6 +538,11 @@ html.light [class*="bg-red-700"] {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: #00cec4;
+}
+
+.ds-icon-badge svg,
+.ds-icon-badge * {
+  color: inherit !important;
 }
 
 /* Form section — cyan vertical bar before heading */
@@ -609,7 +615,125 @@ html.light [class*="bg-red-700"] {
   box-shadow: 0 0 0 2px rgba(0, 206, 196, 0.25);
 }
 
+.ds-shell-lg {
+  border-radius: var(--radius-card-lg);
+}
+
 /* ─── Theme Compliance Overrides ─── */
+
+/* Background overrides for Light Mode */
+html.light [class*="bg-[#0f121b]"],
+html.light [class*="bg-[#0e121b]"],
+html.light [class*="bg-[#0f1319]"],
+html.light [class*="bg-[#0c0f14]"],
+html.light [class*="bg-[#0a0d12]"],
+html.light [class*="bg-[#07090d]"],
+html.light [class*="bg-[#05070a]"] {
+  background-color: var(--color-surface) !important;
+}
+
+html.light [class*="bg-[#161f28]"],
+html.light [class*="bg-[#1f2d3a]"] {
+  background-color: var(--color-surface-container-low) !important;
+}
+
+html.light [class*="bg-slate-950"] {
+  background-color: var(--color-surface-container-lowest) !important;
+}
+
+html.light [class*="border-slate-800"],
+html.light [class*="border-slate-900"],
+html.light [class*="border-slate-850"],
+html.light [class*="border-[#1c212a]"] {
+  border-color: transparent !important;
+}
+
+html.light [class*="divide-[#1c212a]"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: transparent !important;
+}
+
+html.light [class*="text-slate-100"],
+html.light [class*="text-slate-200"],
+html.light [class*="text-slate-300"],
+html.light [class*="text-slate-350"] {
+  color: var(--color-on-surface) !important;
+}
+
+html.light [class*="text-slate-400"],
+html.light [class*="text-slate-500"],
+html.light [class*="text-slate-650"],
+html.light [class*="text-slate-600"] {
+  color: var(--color-on-surface-variant) !important;
+}
+
+/* Background overrides for Dark Mode */
+html.dark [class*="bg-[#0f121b]"],
+html.dark [class*="bg-[#0e121b]"],
+html.dark [class*="bg-[#0f1319]"],
+html.dark [class*="bg-[#0c0f14]"],
+html.dark [class*="bg-[#0a0d12]"] {
+  background-color: var(--color-surface-container-low) !important;
+}
+
+html.dark [class*="bg-[#07090d]"],
+html.dark [class*="bg-[#05070a]"] {
+  background-color: var(--color-surface-dim) !important;
+}
+
+html.dark [class*="bg-[#161f28]"],
+html.dark [class*="bg-[#1f2d3a]"] {
+  background-color: var(--color-surface-container) !important;
+}
+
+html.dark [class*="bg-slate-950"] {
+  background-color: var(--color-surface-container-lowest) !important;
+}
+
+html.dark [class*="border-slate-800"],
+html.dark [class*="border-slate-900"],
+html.dark [class*="border-slate-850"],
+html.dark [class*="border-[#1c212a]"] {
+  border-color: var(--color-outline-variant) !important;
+}
+
+html.dark [class*="divide-[#1c212a]"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--color-outline-variant) !important;
+}
+
+html.dark [class*="text-slate-100"],
+html.dark [class*="text-slate-200"],
+html.dark [class*="text-slate-300"] {
+  color: var(--color-on-surface) !important;
+}
+
+html.dark [class*="text-slate-400"],
+html.dark [class*="text-slate-500"] {
+  color: var(--color-on-surface-variant) !important;
+}
+
+/* Core overrides for inputs and selectors inside main to ensure color compatibility in Light Mode */
+html.light main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+html.light main select,
+html.light main textarea,
+html.light main [class*="bg-[var(--color-background)]"],
+html.light main [class*="bg-[var(--color-surface)]"],
+html.light main [class*="bg-[#161f28]"] {
+  color: var(--color-on-surface) !important;
+}
+
+html.light main [class*="bg-[var(--color-background)]"]::placeholder,
+html.light main [class*="bg-[var(--color-surface)]"]::placeholder {
+  color: var(--color-placeholder) !important;
+}
+
+/* Wildcard selector to safely override any hardcoded text-white colors in light mode,
+   excluding active solid backgrounds like buttons and badges */
+html.light main [class*="text-white"]:not([class*="bg-"]):not(button):not(a[class*="bg-"]):not(span[class*="bg-"]):not(div[class*="bg-"]),
+html.light main [class*="text-white/"]:not([class*="bg-"]):not(button):not(a[class*="bg-"]):not(span[class*="bg-"]):not(div[class*="bg-"]) {
+  color: var(--color-on-surface) !important;
+}
+
+html.light [class*="text-slate-400"],
 
 /* Background overrides for Light Mode */
 html.light [class*="bg-[#0f121b]"],
@@ -730,10 +854,10 @@ html.light [class*="text-slate-500"] {
 
 
 /* Ensure colored buttons and solid badges always preserve white text in both light and dark themes */
-[class*="bg-[#00cec4]"] *,
-[class*="bg-[#00cec4]"],
-[class*="bg-[#00c4b6]"] *,
-[class*="bg-[#00c4b6]"],
+[class*="bg-[#00cec4]"]:not([class*="/"]) *,
+[class*="bg-[#00cec4]"]:not([class*="/"]),
+[class*="bg-[#00c4b6]"]:not([class*="/"]) *,
+[class*="bg-[#00c4b6]"]:not([class*="/"]),
 .bg-emerald-500,
 .bg-emerald-600,
 .bg-rose-500,
@@ -746,4 +870,19 @@ html.light [class*="text-slate-500"] {
   color: #ffffff !important;
 }
 
-
+/* Ensure text inside intentionally dark banners (such as Employee Cockpit) remains white/light in both themes */
+html.light main .ds-dark-banner [class*="text-white"] {
+  color: #ffffff !important;
+}
+html.light main .ds-dark-banner [class*="text-white/70"] {
+  color: rgba(255, 255, 255, 0.70) !important;
+}
+html.light main .ds-dark-banner [class*="text-white/72"] {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+html.light main .ds-dark-banner [class*="text-white/66"] {
+  color: rgba(255, 255, 255, 0.66) !important;
+}
+html.light main .ds-dark-banner [class*="text-white/56"] {
+  color: rgba(255, 255, 255, 0.56) !important;
+}

@@ -22,9 +22,11 @@ type ReviewEntry = {
   dueDate: string;
   availabilityDeadline: string | null;
   reviewerRatingDeadline: string | null;
+  myRole: string;
+  myStatus: string;
+  detailHref: string;
   employee: { id: string; name: string; designation: string | null };
   cycle: { name: string; year: number };
-  reviewers: { kind: string; availabilityStatus: string }[];
 };
 
 const STAGE_COLOR: Record<string, string> = {
@@ -44,12 +46,15 @@ const STATUS_COLOR: Record<string, string> = {
   AVAILABLE: "bg-green-100 text-green-700",
   UNAVAILABLE: "bg-red-100 text-red-600",
   FORCED: "bg-orange-100 text-orange-600",
+  CLAIMABLE: "bg-orange-100 text-orange-700",
+  CLAIMED: "bg-cyan-100 text-cyan-700",
 };
 
 const KIND_LABEL: Record<string, string> = {
   HR: "HR",
   TL: "Team Lead",
   MANAGER: "Manager",
+  MANAGEMENT: "Management",
 };
 
 function getDeadlineLabel(appraisal: ReviewEntry): string {
@@ -71,6 +76,7 @@ function getDeadlineLabel(appraisal: ReviewEntry): string {
 function getActionLabel(stage: string): string {
   if (stage === "REVIEWER_RATING") return "Review";
   if (stage === "REVIEWERS_ASSIGNED") return "Open";
+  if (stage === "MANAGEMENT_REVIEW") return "Open";
   return "View";
 }
 
@@ -107,12 +113,11 @@ export function MyReviewsClient({ appraisals }: { appraisals: ReviewEntry[] }) {
       </DataTableHeader>
       <DataTableBody>
         {appraisals.length === 0 ? (
-          <DataTableEmpty colSpan={7} message="No appraisals assigned to you as reviewer." className="py-12 text-sm" />
+          <DataTableEmpty colSpan={7} message="No review assignments or management reviews are waiting for you." className="py-12 text-sm" />
         ) : (
           appraisals.map((a) => {
-            const myReviewer = a.reviewers[0];
             const canSetAvailability =
-              a.stage === "REVIEWERS_ASSIGNED" && myReviewer?.availabilityStatus === "PENDING";
+              a.stage === "REVIEWERS_ASSIGNED" && a.myStatus === "PENDING";
 
             return (
               <DataTableRow key={a.id}>
@@ -128,14 +133,12 @@ export function MyReviewsClient({ appraisals }: { appraisals: ReviewEntry[] }) {
                   </Badge>
                 </DataTableCell>
                 <DataTableCell className="text-on-surface-variant">
-                  {myReviewer ? KIND_LABEL[myReviewer.kind] ?? myReviewer.kind : "-"}
+                  {KIND_LABEL[a.myRole] ?? a.myRole}
                 </DataTableCell>
                 <DataTableCell>
-                  {myReviewer ? (
-                    <Badge className={STATUS_COLOR[myReviewer.availabilityStatus] ?? "bg-surface-container-high text-on-surface-variant"}>
-                      {myReviewer.availabilityStatus}
-                    </Badge>
-                  ) : "-"}
+                  <Badge className={STATUS_COLOR[a.myStatus] ?? "bg-surface-container-high text-on-surface-variant"}>
+                    {a.myStatus}
+                  </Badge>
                 </DataTableCell>
                 <DataTableCell className="text-xs text-on-surface-variant">
                   {getDeadlineLabel(a)}
@@ -159,7 +162,7 @@ export function MyReviewsClient({ appraisals }: { appraisals: ReviewEntry[] }) {
                       </button>
                     </div>
                   ) : (
-                    <Link href={`/ams/my-reviews/${a.id}`} className="text-xs text-indigo-600 hover:underline">
+                    <Link href={a.detailHref} className="text-xs text-indigo-600 hover:underline">
                       {getActionLabel(a.stage)} →
                     </Link>
                   )}

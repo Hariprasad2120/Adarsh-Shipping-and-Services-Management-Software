@@ -3,7 +3,6 @@ import {
   Calendar,
   DollarSign,
   FileText,
-  Folder,
   HelpCircle,
   Inbox,
   Megaphone,
@@ -18,12 +17,13 @@ import {
   CheckSquare,
   MapPin,
 } from "lucide-react";
+import { FolderIcon as Folder } from "@/components/ui/folder-icon";
 
 type WorkspaceDetails = {
   title?: string;
   description: string;
   badge: string;
-  icon: LucideIcon;
+  icon: any;
   iconClassName: string;
   summary: string;
 };

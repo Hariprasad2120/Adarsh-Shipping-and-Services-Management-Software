@@ -9,6 +9,7 @@ import {
   DataTableEmpty,
   DataTableHead,
   DataTableHeader,
+  DataTablePrimaryLinkCell,
   DataTableRow,
 } from "@/components/data-table";
 import { auth } from "@/lib/auth";
@@ -47,6 +48,8 @@ const MONTH_NAMES = [
   "November",
   "December",
 ];
+
+const dueDateFormatter = new Intl.DateTimeFormat("en-IN", { timeZone: "UTC" });
 
 function parseDueMonth(value: string | undefined, fallbackYear: number, fallbackMonth: number) {
   if (!value) return { year: fallbackYear, month: fallbackMonth };
@@ -137,7 +140,9 @@ export default async function AppraisalsPage({
             {dueThisMonthRowsSafe.length === 0 ? (
               <DataTableEmpty colSpan={6} message="No appraisals due this month." className="py-6 text-sm" />
             ) : (
-              dueThisMonthRowsSafe.map((row) => <DueThisMonthRow key={row.employeeId} row={row} />)
+              dueThisMonthRowsSafe.map((row) => (
+                <DueThisMonthRow key={`${row.employeeId}-${row.kind}-${row.dueDate}`} row={row} />
+              ))
             )}
           </DataTableBody>
         </DataTable>
@@ -178,18 +183,16 @@ export default async function AppraisalsPage({
             ) : (
               (appraisals as Appraisals).map((appraisal) => (
                 <DataTableRow key={appraisal.id}>
-                  <DataTableCell className="font-medium text-on-surface">
-                    <Link
-                      href={
-                        appraisal.stage === "DUE_NOTIFIED"
-                          ? `/ams/appraisals/assign/${appraisal.employee.id}`
-                          : `/ams/appraisals/${appraisal.id}`
-                      }
-                      className="inline-flex items-center gap-2 transition-colors hover:text-[#00b5ad]"
-                    >
-                      <span>{appraisal.employee.name}</span>
-                    </Link>
-                  </DataTableCell>
+                  <DataTablePrimaryLinkCell
+                    href={
+                      appraisal.stage === "DUE_NOTIFIED"
+                        ? `/ams/appraisals/assign/${appraisal.employee.id}`
+                        : `/ams/appraisals/${appraisal.id}`
+                    }
+                    className="font-medium text-on-surface"
+                  >
+                    <span>{appraisal.employee.name}</span>
+                  </DataTablePrimaryLinkCell>
                   <DataTableCell className="text-on-surface-variant">{appraisal.cycle.name}</DataTableCell>
                   <DataTableCell>
                     <Badge className={STAGE_COLOR[appraisal.stage] ?? "bg-surface-container-high text-on-surface-variant"}>
@@ -197,7 +200,7 @@ export default async function AppraisalsPage({
                     </Badge>
                   </DataTableCell>
                   <DataTableCell className="text-on-surface-variant">
-                    {new Date(appraisal.dueDate).toLocaleDateString("en-IN")}
+                    {dueDateFormatter.format(new Date(appraisal.dueDate))}
                   </DataTableCell>
                   <DataTableCell className="text-right">
                     <Link

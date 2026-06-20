@@ -3,6 +3,7 @@
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
 import { CriteriaPointsForm, CriteriaPointsView } from "@/components/ams/criteria-points-form";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { Button } from "@/components/ui/button-1";
@@ -230,205 +231,223 @@ export function MyReviewDetailClient({
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
       <div className="space-y-1">
         <p className="text-sm text-on-surface-variant">
           Reviewer workspace for this appraisal assignment.
         </p>
       </div>
 
-      {/* Review Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Review Summary</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-1">
-              <p className="text-[15px] font-semibold text-on-surface">
-                {appraisal.employee.name}
-              </p>
-              <p className="text-sm text-on-surface-variant">
-                {appraisal.employee.designation ?? "No designation"} — {appraisal.cycle.name}{" "}
-                {appraisal.cycle.year}
-              </p>
-              <p className="text-xs uppercase tracking-[0.14em] text-on-surface-variant/70">
-                Your role: {KIND_LABEL[appraisal.reviewerKind] ?? appraisal.reviewerKind}
-              </p>
-              <p className="text-xs text-on-surface-variant/60">
-                Self-assessment edited {appraisal.selfAssessmentEditCount} time
-                {appraisal.selfAssessmentEditCount === 1 ? "" : "s"}.
-              </p>
-            </div>
-            <div className="flex flex-col items-start gap-2 sm:items-end">
-              <span
-                className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                  STAGE_COLOR[appraisal.stage] ?? "border-outline-variant/40 bg-surface-container text-on-surface-variant"
-                }`}
-              >
-                {appraisal.stage.replace(/_/g, " ")}
-              </span>
-              <span
-                className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                  STATUS_COLOR[appraisal.reviewerStatus] ??
-                  "bg-surface-container text-on-surface-variant border-outline-variant/40"
-                }`}
-              >
-                {appraisal.reviewerStatus}
-              </span>
-            </div>
-          </div>
+      <div className="grid gap-6 xl:grid-cols-3 xl:items-start">
+        <CycleProgressCard
+          stage={appraisal.stage}
+          cycleName={appraisal.cycle.name}
+          cycleYear={appraisal.cycle.year}
+          reviewers={appraisal.assignedReviewers.map((reviewer) => ({
+            kind: reviewer.kind,
+            name: reviewer.name,
+            availabilityStatus: reviewer.availabilityStatus,
+            submissionStatus: reviewer.submissionStatus,
+          }))}
+          selfAssessment={appraisal.selfAssessmentAnswers ? { editCount: appraisal.selfAssessmentEditCount } : null}
+          management={{ submitted: appraisal.stage !== "REVIEWER_RATING" && appraisal.stage !== "SELF_ASSESSMENT_OPEN" && appraisal.stage !== "REVIEWERS_ASSIGNED" }}
+          meeting={{
+            scheduledAt: null,
+            hasMinutes:
+              appraisal.stage === "HIKE_FINALISATION" || appraisal.stage === "CLOSED",
+          }}
+          className="h-full"
+        />
 
-          <div className="space-y-3">
-            {appraisal.stage === "REVIEWERS_ASSIGNED" && appraisal.availabilityDeadline ? (
-              <DeadlineBanner
-                deadline={appraisal.availabilityDeadline}
-                serverNow={serverNow}
-                label="Availability deadline"
-              />
-            ) : null}
-            {appraisal.stage === "REVIEWER_RATING" && appraisal.reviewerRatingDeadline ? (
-              <DeadlineBanner
-                deadline={appraisal.reviewerRatingDeadline}
-                serverNow={serverNow}
-                label="Rating deadline"
-              />
-            ) : null}
-
-            {savedAt ? (
-              <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                Reviewer rating saved at {savedAt}.
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle>Review Summary</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="space-y-1">
+                <p className="text-[15px] font-semibold text-on-surface">
+                  {appraisal.employee.name}
+                </p>
+                <p className="text-sm text-on-surface-variant">
+                  {appraisal.employee.designation ?? "No designation"} — {appraisal.cycle.name}{" "}
+                  {appraisal.cycle.year}
+                </p>
+                <p className="text-xs uppercase tracking-[0.14em] text-on-surface-variant/70">
+                  Your role: {KIND_LABEL[appraisal.reviewerKind] ?? appraisal.reviewerKind}
+                </p>
+                <p className="text-xs text-on-surface-variant/60">
+                  Self-assessment edited {appraisal.selfAssessmentEditCount} time
+                  {appraisal.selfAssessmentEditCount === 1 ? "" : "s"}.
+                </p>
               </div>
-            ) : null}
-
-            {currentSubmissionStatus === "SUBMITTED" && canRate ? (
-              <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-                This review is marked as submitted, but you can still edit and resubmit it until
-                the deadline.
-              </div>
-            ) : null}
-
-            {appraisal.stage === "REVIEWER_RATING" && ratingDeadlinePassed ? (
-              <div className="rounded-xl border border-outline-variant/40 bg-surface-container px-4 py-3 text-sm text-on-surface-variant">
-                Reviewer rating is now view-only because the deadline has passed.
-              </div>
-            ) : null}
-
-            {currentSubmittedAt && currentRating && appraisal.stage !== "REVIEWERS_ASSIGNED" ? (
-              <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                Last submitted on{" "}
-                <strong>{new Date(currentSubmittedAt).toLocaleString("en-IN")}</strong>.
-              </div>
-            ) : null}
-
-            {showSubmittedPreview ? (
-              <div ref={latestSubmissionRef} className="">
-                <button
-                  type="button"
-                  onClick={() => setLatestSubmissionOpen((current) => !current)}
-                  className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+              <div className="flex flex-col items-start gap-2 sm:items-end">
+                <span
+                  className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                    STAGE_COLOR[appraisal.stage] ?? "border-outline-variant/40 bg-surface-container text-on-surface-variant"
+                  }`}
                 >
-                  <div>
-                    <p className="text-sm font-semibold text-on-surface">Latest Submitted Rating</p>
-                    <p className="text-xs text-on-surface-variant">
-                      Expand to review the last submitted answers and jump back to any criterion.
-                    </p>
-                  </div>
-                  <ChevronDown
-                    className={`h-4 w-4 text-[#008b85] transition-transform duration-200 ${
-                      latestSubmissionOpen ? "rotate-180" : "rotate-0"
-                    }`}
-                  />
-                </button>
-
-                {latestSubmissionOpen ? (
-                  <div className="px-5 pb-4">
-                    <CriteriaPointsView
-                      criteria={criteria}
-                      supplementary={[]}
-                      answers={currentRating}
-                      onReviewerFieldNavigate={handleReviewerFieldNavigate}
-                    />
-                  </div>
-                ) : null}
+                  {appraisal.stage.replace(/_/g, " ")}
+                </span>
+                <span
+                  className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                    STATUS_COLOR[appraisal.reviewerStatus] ??
+                    "bg-surface-container text-on-surface-variant border-outline-variant/40"
+                  }`}
+                >
+                  {appraisal.reviewerStatus}
+                </span>
               </div>
-            ) : null}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Assigned Reviewers */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Assigned Reviewers</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {appraisal.assignedReviewers.map((reviewer) => (
-              <div
-                key={reviewer.id}
-                className="rounded-2xl border border-outline-variant/40 bg-surface-container-low px-4 py-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-semibold text-on-surface">
-                      {reviewer.name ?? KIND_LABEL[reviewer.kind] ?? reviewer.kind}
-                    </p>
-                    <p className="text-xs text-on-surface-variant">
-                      {reviewer.designation ?? KIND_LABEL[reviewer.kind] ?? reviewer.kind}
-                    </p>
-                  </div>
-                  <span
-                    className={`rounded-full border px-3 py-1 text-[11px] font-medium ${
-                      STATUS_COLOR[reviewer.availabilityStatus] ??
-                      "bg-surface-container text-on-surface-variant border-outline-variant/40"
-                    }`}
-                  >
-                    {reviewer.availabilityStatus}
-                  </span>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="rounded-full border border-outline-variant/40 bg-surface px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-on-surface-variant">
-                    {KIND_LABEL[reviewer.kind] ?? reviewer.kind}
-                  </span>
-                  {reviewer.submissionStatus ? (
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle>Assigned Reviewers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {appraisal.assignedReviewers.map((reviewer) => (
+                <div
+                  key={reviewer.id}
+                  className="rounded-2xl border border-outline-variant/40 bg-surface-container-low px-4 py-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-semibold text-on-surface">
+                        {reviewer.name ?? KIND_LABEL[reviewer.kind] ?? reviewer.kind}
+                      </p>
+                      <p className="text-xs text-on-surface-variant">
+                        {reviewer.designation ?? KIND_LABEL[reviewer.kind] ?? reviewer.kind}
+                      </p>
+                    </div>
                     <span
-                      className={`rounded-full border px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] ${
-                        REVIEW_SUBMISSION_COLOR[reviewer.submissionStatus] ??
+                      className={`rounded-full border px-3 py-1 text-[11px] font-medium ${
+                        STATUS_COLOR[reviewer.availabilityStatus] ??
                         "bg-surface-container text-on-surface-variant border-outline-variant/40"
                       }`}
                     >
-                      {reviewer.submissionStatus}
+                      {reviewer.availabilityStatus}
                     </span>
-                  ) : null}
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className="rounded-full border border-outline-variant/40 bg-surface px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-on-surface-variant">
+                      {KIND_LABEL[reviewer.kind] ?? reviewer.kind}
+                    </span>
+                    {reviewer.submissionStatus ? (
+                      <span
+                        className={`rounded-full border px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] ${
+                          REVIEW_SUBMISSION_COLOR[reviewer.submissionStatus] ??
+                          "bg-surface-container text-on-surface-variant border-outline-variant/40"
+                        }`}
+                      >
+                        {reviewer.submissionStatus}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {reviewer.submittedAt ? (
+                    <p className="mt-3 text-xs text-on-surface-variant">
+                      Submitted on {new Date(reviewer.submittedAt).toLocaleString("en-IN")}
+                    </p>
+                  ) : (
+                    <p className="mt-3 text-xs text-on-surface-variant/60">
+                      No rating submitted yet.
+                    </p>
+                  )}
                 </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-                {reviewer.submittedAt ? (
-                  <p className="mt-3 text-xs text-on-surface-variant">
-                    Submitted on {new Date(reviewer.submittedAt).toLocaleString("en-IN")}
-                  </p>
-                ) : (
-                  <p className="mt-3 text-xs text-on-surface-variant/60">
-                    No rating submitted yet.
-                  </p>
-                )}
-              </div>
-            ))}
+      <div className="space-y-3">
+        {appraisal.stage === "REVIEWERS_ASSIGNED" && appraisal.availabilityDeadline ? (
+          <DeadlineBanner
+            deadline={appraisal.availabilityDeadline}
+            serverNow={serverNow}
+            label="Availability deadline"
+          />
+        ) : null}
+        {appraisal.stage === "REVIEWER_RATING" && appraisal.reviewerRatingDeadline ? (
+          <DeadlineBanner
+            deadline={appraisal.reviewerRatingDeadline}
+            serverNow={serverNow}
+            label="Rating deadline"
+          />
+        ) : null}
+
+        {savedAt ? (
+          <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            Reviewer rating saved at {savedAt}.
           </div>
-        </CardContent>
-      </Card>
+        ) : null}
 
-      {/* Main columns */}
+        {currentSubmissionStatus === "SUBMITTED" && canRate ? (
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            This review is marked as submitted, but you can still edit and resubmit it until
+            the deadline.
+          </div>
+        ) : null}
+
+        {appraisal.stage === "REVIEWER_RATING" && ratingDeadlinePassed ? (
+          <div className="rounded-xl border border-outline-variant/40 bg-surface-container px-4 py-3 text-sm text-on-surface-variant">
+            Reviewer rating is now view-only because the deadline has passed.
+          </div>
+        ) : null}
+
+        {currentSubmittedAt && currentRating && appraisal.stage !== "REVIEWERS_ASSIGNED" ? (
+          <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            Last submitted on{" "}
+            <strong>{new Date(currentSubmittedAt).toLocaleString("en-IN")}</strong>.
+          </div>
+        ) : null}
+
+        {showSubmittedPreview ? (
+          <Card>
+            <div ref={latestSubmissionRef}>
+              <button
+                type="button"
+                onClick={() => setLatestSubmissionOpen((current) => !current)}
+                className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-on-surface">Latest Submitted Rating</p>
+                  <p className="text-xs text-on-surface-variant">
+                    Expand to review the last submitted answers and jump back to any criterion.
+                  </p>
+                </div>
+                <ChevronDown
+                  className={`h-4 w-4 text-[#008b85] transition-transform duration-200 ${
+                    latestSubmissionOpen ? "rotate-180" : "rotate-0"
+                  }`}
+                />
+              </button>
+
+              {latestSubmissionOpen ? (
+                <div className="px-5 pb-4">
+                  <CriteriaPointsView
+                    criteria={criteria}
+                    supplementary={[]}
+                    answers={currentRating}
+                    onReviewerFieldNavigate={handleReviewerFieldNavigate}
+                  />
+                </div>
+              ) : null}
+            </div>
+          </Card>
+        ) : null}
+      </div>
+
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)] xl:items-start">
-        {/* Left — self-assessment view */}
         <Card>
           <CardHeader>
             <CardTitle>Appraisee Self-Assessment</CardTitle>
           </CardHeader>
           <CardContent>
             {appraisal.stage === "SELF_ASSESSMENT_OPEN" ? (
-              /* Reviewers cannot see self-assessment content until deadline passes */
               appraisal.selfAssessmentAnswers ? (
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
@@ -464,7 +483,6 @@ export function MyReviewDetailClient({
           </CardContent>
         </Card>
 
-        {/* Right — actions */}
         <div className="space-y-6">
           {canSetAvailability ? (
             <Card>
@@ -572,7 +590,6 @@ export function MyReviewDetailClient({
           ) : null}
         </div>
       </div>
-
     </div>
   );
 }

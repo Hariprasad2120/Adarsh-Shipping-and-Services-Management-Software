@@ -5,7 +5,6 @@ import {
   Dashboard,
   DocumentAdd,
   Education,
-  Folder,
   Group,
   Notification,
   Report,
@@ -17,6 +16,8 @@ import {
   UserMultiple,
   View,
 } from "@carbon/icons-react";
+import { FolderIcon } from "@/components/ui/folder-icon";
+const Folder = FolderIcon as any;
 import type { Caps } from "@/lib/rbac";
 
 export type SecondaryNavItem = {
@@ -259,7 +260,7 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         href: "/ams/my-reviews",
         label: "My Reviews",
         icon: Task,
-        permission: "ams.appraisal.review",
+        permission: ["ams.appraisal.review", "ams.appraisal.management_review"],
         hideFor: "admin.org.manage",
         matchPaths: ["/ams/my-reviews"],
       },

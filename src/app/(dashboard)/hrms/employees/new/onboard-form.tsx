@@ -26,7 +26,7 @@ function optionalString(value: FormDataEntryValue | null) {
 }
 
 function sectionCardClass(extra = "") {
-  return `card-top-accent rounded-[28px] border border-outline-variant/40 bg-surface p-5 shadow-sm sm:p-6 ${extra}`.trim();
+  return `card-top-accent ds-shell-lg border border-outline-variant/40 bg-surface p-5 shadow-sm sm:p-6 ${extra}`.trim();
 }
 
 export function OnboardForm({

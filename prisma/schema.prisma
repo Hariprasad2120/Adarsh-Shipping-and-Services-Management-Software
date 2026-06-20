@@ -751,6 +751,8 @@ model AppraisalMeeting {
   scheduledAt   DateTime
   confirmedById String
   status        String   @default("SCHEDULED") // SCHEDULED | LIVE | DONE | CANCELLED
+  lockedAt      DateTime?
+  updatedAt     DateTime @updatedAt
 
   appraisal   Appraisal       @relation(fields: [appraisalId], references: [id], onDelete: Cascade)
   confirmedBy User            @relation("MeetingConfirmedBy", fields: [confirmedById], references: [id])
@@ -764,23 +766,33 @@ model MeetingMinute {
   role      String // HR | MANAGEMENT | EMPLOYEE
   content   String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   meeting AppraisalMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   author  User             @relation(fields: [authorId], references: [id])
 
+  @@unique([meetingId, authorId, role])
   @@index([meetingId])
 }
 
 model HikeDecision {
-  id            String   @id @default(cuid())
-  appraisalId   String   @unique
-  decidedById   String
-  percent       Float
-  amount        Float
-  effectiveFrom DateTime @db.Date
-  notes         String?
-  finalisedAt   DateTime @default(now())
-  slabId        String?
+  id                   String   @id @default(cuid())
+  appraisalId          String   @unique
+  decidedById          String
+  percent              Float
+  amount               Float
+  effectiveFrom        DateTime @db.Date
+  notes                String?
+  finalisedAt          DateTime @default(now())
+  slabId               String?
+  suggestedPercent     Float?
+  suggestedScore       Float?
+  suggestedFlooredScore Int?
+  suggestedGrade       String?
+  previousSalary       Float?
+  finalSalary          Float?
+  negotiationRemarks   String?
+  isLocked             Boolean  @default(true)
 
   appraisal Appraisal      @relation(fields: [appraisalId], references: [id], onDelete: Cascade)
   decidedBy User           @relation(fields: [decidedById], references: [id])
@@ -791,9 +803,13 @@ model AppraisalAuditLog {
   id          String   @id @default(cuid())
   appraisalId String
   actorId     String?
+  actorRole   String?
+  action      String?
   fromStage   String?
   toStage     String
   note        String?
+  oldValue    Json?
+  newValue    Json?
   createdAt   DateTime @default(now())
 
   appraisal Appraisal @relation(fields: [appraisalId], references: [id], onDelete: Cascade)

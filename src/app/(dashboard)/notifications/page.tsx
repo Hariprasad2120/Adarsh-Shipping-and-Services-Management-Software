@@ -48,7 +48,7 @@ export default async function NotificationsPage({
 
   return (
     <div className="space-y-5">
-      <form className="grid gap-3 rounded-[26px] border border-outline-variant/45 bg-white/78 p-5 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.16)] backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-5">
+      <form className="ds-shell-lg grid gap-3 border border-outline-variant/45 bg-white/78 p-5 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.16)] backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-5">
         <NotificationFilters
           requiresAck={typeof params.requiresAck === "string" ? params.requiresAck : "all"}
           status={typeof params.status === "string" ? params.status : "all"}

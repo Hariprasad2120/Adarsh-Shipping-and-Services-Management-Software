@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
+import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
 import { getAppraisal, getSelfFormTemplate } from "@/modules/ams/service";
 import { db } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
@@ -59,7 +60,65 @@ export default async function SelfAssessmentPage({ params }: { params: Promise<{
       };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:items-start">
+        <CycleProgressCard
+          stage={appraisal.stage}
+          cycleName={appraisal.cycle.name}
+          cycleYear={appraisal.cycle.year}
+          reviewers={appraisal.reviewers.map((reviewer) => ({
+            kind: reviewer.kind,
+            name: reviewer.user.name,
+            availabilityStatus: reviewer.availabilityStatus,
+          }))}
+          selfAssessment={
+            appraisal.selfAssessment
+              ? {
+                  submittedAt:
+                    appraisal.selfAssessment.submittedAt?.toISOString() ?? null,
+                  editCount: appraisal.selfAssessment.editCount ?? 0,
+                }
+              : null
+          }
+          management={{
+            claimedByName:
+              appraisal.reviewers.find((reviewer) => reviewer.kind === "MANAGEMENT")?.user.name ??
+              null,
+            submitted: appraisal.managementReviews.length > 0,
+          }}
+          meeting={{
+            scheduledAt: appraisal.meeting?.scheduledAt.toISOString() ?? null,
+            hasMinutes: (appraisal.meeting?.minutes.length ?? 0) > 0,
+          }}
+        />
+
+        <div className="card-left-accent rounded-[24px] border border-outline-variant/35 bg-surface p-6">
+          <h2 className="ds-h2 text-on-surface">Self-Assessment Summary</h2>
+          <div className="mt-4 space-y-2 text-sm text-on-surface-variant">
+            <p className="text-base font-semibold text-on-surface">{appraisal.employee.name}</p>
+            <p>{appraisal.employee.designation ?? "No designation"}</p>
+            <p>
+              {appraisal.cycle.name} {appraisal.cycle.year}
+            </p>
+            <p>
+              Current stage:{" "}
+              <span className="font-medium text-on-surface">
+                {appraisal.stage.replace(/_/g, " ")}
+              </span>
+            </p>
+            {appraisal.selfAssessmentDeadline ? (
+              <p>
+                Self-assessment deadline:{" "}
+                <span className="font-medium text-on-surface">
+                  {new Date(appraisal.selfAssessmentDeadline).toLocaleDateString("en-IN")}
+                </span>
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl">
       <SelfAssessmentForm
         appraisalId={id}
         criteria={categories}
@@ -70,6 +129,7 @@ export default async function SelfAssessmentPage({ params }: { params: Promise<{
         status={appraisal.selfAssessment?.status ?? null}
         template={resolvedSelfTemplate}
       />
+      </div>
     </div>
   );
 }

@@ -208,7 +208,6 @@ export function AccountDetailWrapper({
               <span className="px-2 py-0.5 rounded bg-[#00cec4]/10 border border-[#00cec4]/20 text-[9px] font-bold text-[#00cec4] uppercase tracking-wider">
                 {account.customerSubType || "Business"}
               </span>
-              <span className="text-xs text-slate-400">ID: {account.id.substring(account.id.length - 8).toUpperCase()}</span>
             </div>
             <h1 className="ds-h1 text-white truncate max-w-xl">{account.name}</h1>
           </div>

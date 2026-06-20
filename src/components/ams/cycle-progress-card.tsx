@@ -1,5 +1,3 @@
-"use client";
-
 import {
   CalendarDays,
   CheckCircle2,
@@ -8,8 +6,33 @@ import {
   FileText,
   Star,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+
+type ProgressReviewer = {
+  kind: string;
+  name?: string | null;
+  availabilityStatus?: string | null;
+  submissionStatus?: string | null;
+};
+
+type CycleProgressCardProps = {
+  stage: string;
+  cycleName?: string;
+  cycleYear?: number;
+  reviewers?: ProgressReviewer[];
+  selfAssessment?: {
+    submittedAt?: string | null;
+    editCount?: number | null;
+  } | null;
+  management?: {
+    claimedByName?: string | null;
+    submitted?: boolean;
+  } | null;
+  meeting?: {
+    scheduledAt?: string | null;
+    hasMinutes?: boolean;
+  } | null;
+  className?: string;
+};
 
 const TIMELINE_STAGES = [
   "DUE_NOTIFIED",
@@ -27,66 +50,81 @@ const KIND_LABEL: Record<string, string> = {
   HR: "HR",
   TL: "Team Lead",
   MANAGER: "Manager",
+  MANAGEMENT: "Management",
 };
 
-function describeAssignedReviewers(reviewers: ProgressReviewer[]) {
-  if (reviewers.length === 0) {
-    return "Reviewer chain is waiting to be assigned";
-  }
+const ACTIVE_BADGE_CLASS =
+  "border-[rgba(0,148,140,0.3)] bg-[rgba(0,148,140,0.12)] text-[#005f5a]";
+const PENDING_BADGE_CLASS =
+  "border-[rgba(112,121,119,0.35)] bg-[rgba(112,121,119,0.08)] text-[#56605e]";
+const CURRENT_STEP_GLOW_CLASS =
+  "shadow-[0_0_0_4px_rgba(0,206,196,0.14),0_0_22px_rgba(0,206,196,0.18)]";
 
-  const roleList = reviewers
-    .map((reviewer) => KIND_LABEL[reviewer.kind] ?? reviewer.kind)
-    .filter((value, index, array) => array.indexOf(value) === index);
-
-  return `${reviewers.length} reviewer${reviewers.length === 1 ? "" : "s"} assigned${roleList.length ? ` · ${roleList.join(", ")}` : ""}`;
+function cardClassName(className?: string) {
+  return [
+    "card-top-accent rounded-[24px] border border-outline-variant/35 bg-surface p-5",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
-type ProgressReviewer = {
-  kind: string;
-  name?: string | null;
-  availabilityStatus: string;
-  submissionStatus?: string | null;
-};
+function formatCycleLabel(cycleName?: string, cycleYear?: number) {
+  if (!cycleName && !cycleYear) return null;
+  if (!cycleName) return String(cycleYear);
+  if (!cycleYear) return cycleName;
+
+  const yearText = String(cycleYear);
+  return cycleName.includes(yearText) ? cycleName : `${cycleName} ${yearText}`;
+}
 
 export function CycleProgressCard({
-  className,
   stage,
-  reviewers,
-  selfAssessmentSubmittedAt,
-  managementReviewCount,
-  meetingScheduledAt,
-  meetingMinutesCount,
-}: {
-  className?: string;
-  stage: string;
-  reviewers: ProgressReviewer[];
-  selfAssessmentSubmittedAt?: string | null;
-  managementReviewCount?: number;
-  meetingScheduledAt?: string | null;
-  meetingMinutesCount?: number;
-}) {
-  const activeIndex = TIMELINE_STAGES.indexOf(stage as (typeof TIMELINE_STAGES)[number]);
+  cycleName,
+  cycleYear,
+  reviewers = [],
+  selfAssessment,
+  management,
+  meeting,
+  className,
+}: CycleProgressCardProps) {
+  const cycleLabel = formatCycleLabel(cycleName, cycleYear);
   const nonManagementReviewers = reviewers.filter((reviewer) => reviewer.kind !== "MANAGEMENT");
   const availableCount = nonManagementReviewers.filter(
-    (reviewer) => reviewer.availabilityStatus === "AVAILABLE" || reviewer.availabilityStatus === "FORCED",
+    (reviewer) =>
+      reviewer.availabilityStatus === "AVAILABLE" || reviewer.availabilityStatus === "FORCED",
   ).length;
   const submittedRatings = nonManagementReviewers.filter(
     (reviewer) => reviewer.submissionStatus === "SUBMITTED",
   ).length;
-  const totalRatings = nonManagementReviewers.length;
+  const hasAssignedReviewers = nonManagementReviewers.length > 0;
+  const currentTimelineKey =
+    stage === "REVIEWERS_ASSIGNED" && hasAssignedReviewers
+      ? "SELF_ASSESSMENT_OPEN"
+      : stage;
+  const currentStageIndex = TIMELINE_STAGES.indexOf(
+    currentTimelineKey as (typeof TIMELINE_STAGES)[number],
+  );
+  const stageBadgeLabel =
+    stage === "REVIEWERS_ASSIGNED" && hasAssignedReviewers
+      ? "REVIEWER AVAILABILITY"
+      : stage.replace(/_/g, " ");
 
   const timelineItems = [
     {
-      id: "reviewers-assigned",
       key: "REVIEWERS_ASSIGNED",
       title: "Reviewers Assigned",
-      description: describeAssignedReviewers(nonManagementReviewers),
+      description:
+        nonManagementReviewers.length > 0
+          ? nonManagementReviewers
+              .map((reviewer) => KIND_LABEL[reviewer.kind] ?? reviewer.kind)
+              .join(" · ")
+          : "Reviewer chain is waiting to be assigned",
       icon: CheckCircle2,
     },
     {
-      id: "availability-confirmed",
       key: "SELF_ASSESSMENT_OPEN",
-      title: "Reviewer Availability Confirmed",
+      title: "Reviewer Availability",
       description:
         nonManagementReviewers.length === 0
           ? "No reviewer confirmations yet"
@@ -96,103 +134,109 @@ export function CycleProgressCard({
       icon: CheckCircle2,
     },
     {
-      id: "self-assessment",
-      key: "SELF_ASSESSMENT_OPEN",
+      key: "REVIEWER_RATING",
       title: "Self-Assessment",
-      description: selfAssessmentSubmittedAt
-        ? `Submitted ${new Date(selfAssessmentSubmittedAt).toLocaleDateString("en-IN")}`
+      description: selfAssessment?.submittedAt
+        ? `Submitted ${new Date(selfAssessment.submittedAt).toLocaleDateString("en-IN")}`
         : "Awaiting employee submission",
       icon: FileText,
     },
     {
-      id: "reviewer-ratings",
-      key: "REVIEWER_RATING",
+      key: "MANAGEMENT_REVIEW",
       title: "Reviewer Ratings",
-      description: `${submittedRatings} / ${Math.max(totalRatings, 1)} submitted`,
+      description: nonManagementReviewers.length > 0
+        ? `${submittedRatings} / ${nonManagementReviewers.length} submitted`
+        : "Reviewer scoring not started",
       icon: Star,
     },
     {
-      id: "management-decision",
-      key: "MANAGEMENT_REVIEW",
-      title: "Management Decision",
-      description:
-        (managementReviewCount ?? 0) > 0 ? "Management review submitted" : "Pending management review",
+      key: "MEETING_PENDING",
+      title: "Management Review",
+      description: management?.submitted
+        ? "Management review submitted"
+        : management?.claimedByName
+          ? `Claimed by ${management.claimedByName}`
+          : "Pending management review",
       icon: Circle,
     },
     {
-      id: "meeting-scheduled",
-      key: "MEETING_PENDING",
+      key: "MEETING_LIVE",
       title: "Meeting Scheduled",
-      description: meetingScheduledAt
-        ? `Scheduled ${new Date(meetingScheduledAt).toLocaleDateString("en-IN")}`
-        : "Tentative dates not yet proposed",
+      description: meeting?.scheduledAt
+        ? `Scheduled ${new Date(meeting.scheduledAt).toLocaleDateString("en-IN")}`
+        : "Meeting not scheduled yet",
       icon: CalendarDays,
     },
     {
-      id: "mom-recorded",
-      key: "MEETING_LIVE",
+      key: "HIKE_FINALISATION",
       title: "MOM Recorded",
-      description: (meetingMinutesCount ?? 0) > 0 ? "Minutes captured for the discussion" : "Awaiting meeting",
+      description: meeting?.hasMinutes
+        ? "Minutes captured for the discussion"
+        : "Awaiting meeting notes",
       icon: ClipboardList,
     },
   ] as const;
 
-  const currentItemIndex = timelineItems.reduce((lastMatch, item, index) => (
-    TIMELINE_STAGES.indexOf(item.key) === activeIndex ? index : lastMatch
-  ), -1);
-
   return (
-    <Card className={cn("card-top-accent h-full", className)}>
-      <CardHeader>
-        <CardTitle>Cycle Progress</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-0">
+    <section className={cardClassName(className)}>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h2 className="ds-h2 text-on-surface">Cycle Progress</h2>
+          {cycleLabel && (
+            <p className="text-xs text-on-surface-variant">
+              {cycleLabel}
+            </p>
+          )}
+        </div>
+        <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${ACTIVE_BADGE_CLASS}`}>
+          {stageBadgeLabel}
+        </span>
+      </div>
+
+      <div className="space-y-0">
         {timelineItems.map((item, index) => {
           const stageIndex = TIMELINE_STAGES.indexOf(item.key);
-          const isCurrent = index === currentItemIndex;
-          const isDone = activeIndex > stageIndex || (activeIndex === stageIndex && index < currentItemIndex);
+          const isDone = currentStageIndex > stageIndex;
+          const isCurrent = currentStageIndex === stageIndex;
           const Icon = item.icon;
 
           return (
-            <div key={item.id} className="relative flex gap-4 pb-6 last:pb-0">
-              <div className="relative flex w-8 shrink-0 justify-center">
+            <div
+              key={item.key}
+              className="grid grid-cols-[44px_minmax(0,1fr)] gap-4 pb-5 last:pb-0"
+            >
+              <div className="relative flex min-h-[54px] justify-center">
                 {index < timelineItems.length - 1 ? (
-                  <span className="absolute top-9 h-[calc(100%-0.25rem)] w-px bg-outline-variant" />
+                  <span
+                    className={`absolute left-1/2 top-8 bottom-[-20px] w-px -translate-x-1/2 ${
+                      isDone || isCurrent ? "bg-[rgba(0,148,140,0.28)]" : "bg-outline-variant/80"
+                    }`}
+                  />
                 ) : null}
                 <span
-                  className={`relative inline-flex h-8 w-8 items-center justify-center rounded-full border-2 ${
-                    isCurrent
-                      ? "border-[#00cec4] bg-[#00cec4]/10 text-[#008b85] shadow-[0_0_0_4px_rgba(0,206,196,0.12)] animate-pulse"
-                      : isDone
-                        ? "border-[#00cec4] text-[#00cec4]"
-                      : "border-outline-variant text-on-surface-variant/40"
-                  }`}
+                  className={`relative mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full border-2 ${
+                    isDone || isCurrent
+                      ? ACTIVE_BADGE_CLASS
+                      : PENDING_BADGE_CLASS
+                  } ${isCurrent ? `animate-pulse ${CURRENT_STEP_GLOW_CLASS}` : ""}`}
                 >
                   {isCurrent ? (
                     <span className="absolute inset-[-6px] rounded-full border border-[#00cec4]/35 animate-ping" />
                   ) : null}
-                  <Icon className="size-4" />
+                  <Icon className="relative z-10 size-4" />
                 </span>
               </div>
-              <div className="min-w-0 pt-0.5">
+              <div className="min-w-0 pt-1">
                 <p
-                  className={`text-sm font-semibold uppercase tracking-[0.04em] ${
-                    isCurrent
-                      ? "text-[#008b85]"
-                      : isDone
-                        ? "text-on-surface"
-                        : "text-on-surface-variant/60"
+                  className={`text-sm font-semibold ${
+                    isDone || isCurrent ? "text-on-surface" : "text-on-surface-variant"
                   }`}
                 >
                   {item.title}
                 </p>
                 <p
                   className={`mt-1 text-sm ${
-                    isCurrent
-                      ? "text-on-surface"
-                      : isDone
-                        ? "text-on-surface-variant"
-                        : "text-on-surface-variant/60"
+                    isDone || isCurrent ? "text-on-surface-variant" : "text-on-surface-variant/70"
                   }`}
                 >
                   {item.description}
@@ -201,7 +245,7 @@ export function CycleProgressCard({
             </div>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

@@ -12,7 +12,7 @@ import { filterCriteriaPointsByRole, mapCriterionRowToPoint } from "@/modules/am
 import { resolveSelfFormTemplate } from "@/modules/ams/self-form-template";
 import type { CriterionPoint } from "@/modules/ams/types";
 import { notFound, redirect } from "next/navigation";
-import { MyReviewDetailClient } from "./my-review-detail-client";
+import { MyReviewDetailClient } from "./_components/my-review-detail-client";
 
 export default async function MyReviewDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();

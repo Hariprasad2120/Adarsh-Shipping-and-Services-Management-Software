@@ -473,7 +473,7 @@ export function PunchCard({
         {/* Timeline Grid Table */}
         <div
           ref={tableRef}
-          className="relative flex flex-1 flex-col min-h-0 overflow-hidden rounded-[26px] border border-outline-variant/40 bg-surface shadow-sm"
+          className="ds-shell-lg relative flex flex-1 flex-col min-h-0 overflow-hidden border border-outline-variant/40 bg-surface shadow-sm"
         >
 
           {showLiveTimeLine && liveLineLeft !== null && (
@@ -742,7 +742,7 @@ export function PunchCard({
 
       {/* Right Column: Detailed Day Panel (spans 1 column) */}
       <div className="space-y-6 lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-180px)] lg:overflow-hidden">
-        <div className="flex h-full flex-col rounded-[26px] border border-outline-variant/40 bg-surface shadow-sm">
+        <div className="ds-shell-lg flex h-full flex-col border border-outline-variant/40 bg-surface shadow-sm">
 
           {/* Sidebar Header */}
           <div className="space-y-1 border-b border-outline-variant/30 p-5 pb-4">

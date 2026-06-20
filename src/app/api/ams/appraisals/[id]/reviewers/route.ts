@@ -20,6 +20,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success) return err("Invalid input");
 
-  await assignReviewers(id, parsed.data.reviewers, session!.user.id);
-  return ok({ assigned: true });
+  try {
+    await assignReviewers(id, parsed.data.reviewers, session!.user.id);
+    return ok({ assigned: true });
+  } catch (cause) {
+    const message = cause instanceof Error ? cause.message : "Unable to assign reviewers.";
+    return err(message);
+  }
 }

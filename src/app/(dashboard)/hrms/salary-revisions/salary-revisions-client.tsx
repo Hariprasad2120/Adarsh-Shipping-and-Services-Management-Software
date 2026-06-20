@@ -11,6 +11,7 @@ import {
   DataTableEmpty,
   DataTableHead,
   DataTableHeader,
+  DataTablePrimaryLinkCell,
   DataTableRow,
 } from "@/components/data-table";
 import { Input } from "@/components/ui/input";
@@ -135,7 +136,7 @@ export function SalaryRevisionsClient({
         />
       </div>
 
-      <div className="card-top-accent overflow-hidden rounded-[28px] border border-outline-variant/40 bg-surface shadow-sm">
+      <div className="card-top-accent ds-shell-lg overflow-hidden border border-outline-variant/40 bg-surface shadow-sm">
         <div className="flex flex-col gap-3 p-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-2">
             {(["ALL", "APPROVED", "PENDING", "REJECTED"] as const).map((status) => (
@@ -203,8 +204,8 @@ export function SalaryRevisionsClient({
                   <Fragment key={summary.userId}>
                     <DataTableRow key={summary.userId}>
                       <DataTableCell className="px-5 py-4 font-medium text-on-surface">{summary.employeeNumber}</DataTableCell>
-                      <DataTableCell className="px-5 py-4">
-                        {hasHistory ? (
+                      {hasHistory ? (
+                        <DataTableCell className="px-5 py-4">
                           <button
                             type="button"
                             onClick={() => setExpandedEmployeeId((current) => (current === summary.userId ? "" : summary.userId))}
@@ -215,15 +216,19 @@ export function SalaryRevisionsClient({
                               <p className="text-xs text-on-surface-variant">{summary.designation ?? "-"}</p>
                             </div>
                           </button>
-                        ) : (
-                          <Link href={`/hrms/employees/${summary.userId}`} className="block min-w-0">
-                            <div className="space-y-0.5">
-                              <p className="font-medium text-on-surface">{summary.employeeName}</p>
-                              <p className="text-xs text-on-surface-variant">{summary.designation ?? "-"}</p>
-                            </div>
-                          </Link>
-                        )}
-                      </DataTableCell>
+                        </DataTableCell>
+                      ) : (
+                        <DataTablePrimaryLinkCell
+                          href={`/hrms/employees/${summary.userId}`}
+                          className="px-0 py-0"
+                          linkClassName="block min-w-0 py-4"
+                        >
+                          <div className="space-y-0.5">
+                            <p className="font-medium text-on-surface">{summary.employeeName}</p>
+                            <p className="text-xs text-on-surface-variant">{summary.designation ?? "-"}</p>
+                          </div>
+                        </DataTablePrimaryLinkCell>
+                      )}
                       <DataTableCell className="px-5 py-4 text-on-surface-variant">{summary.departmentName ?? "-"}</DataTableCell>
                       <DataTableCell className="px-5 py-4 text-on-surface-variant">{latest?.effectiveLabel ?? "-"}</DataTableCell>
                       <DataTableCell className="ds-numeric px-5 py-4 font-semibold text-on-surface">{formatINR(latest?.revisedCtcAnnual ?? null)}</DataTableCell>

@@ -1,5 +1,7 @@
 import { db } from "@/lib/db";
+import { can } from "@/lib/rbac";
 import { notify, notifyMany } from "@/lib/notify";
+import { getUsersWithPermission } from "@/modules/notifications/service";
 import { assertTransition, type Stage, type ReviewerKind } from "./workflow";
 import { computeSchedule, dueInMonth, addBusinessDays, type AppraisalKind } from "./due-dates";
 import { getAppraisalSettings } from "./settings";
@@ -8,7 +10,6 @@ import {
   buildDefaultSelfFormTemplate,
   normalizeScore,
   getGrade,
-  getHikePercent,
   isSubmittedStatus,
   type AppraisalSelfFormTemplate,
   type EvaluatorRole,
@@ -24,6 +25,7 @@ import {
   sanitizeSelfRatings,
 } from "./form-template";
 import { normalizeSelfFormTemplate } from "./self-form-template";
+import { createAppraisalAuditLogCompat } from "./audit-log";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -45,8 +47,53 @@ async function computeAvailabilityDeadline(orgId: string, branchId?: string | nu
 }
 
 async function logTransition(appraisalId: string, from: Stage, to: Stage, actorId?: string, note?: string) {
-  await db.appraisalAuditLog.create({
-    data: { appraisalId, fromStage: from, toStage: to, actorId, note },
+  await createAppraisalAuditLogCompat({
+    appraisalId,
+    action: "STAGE_TRANSITION",
+    fromStage: from,
+    toStage: to,
+    actorId,
+    note,
+  });
+}
+
+function assertDistinctAssignedReviewers(
+  reviewers: { userId: string; kind: Exclude<ReviewerKind, "MANAGEMENT"> }[],
+) {
+  if (reviewers.length === 0) {
+    throw new Error("Select at least one reviewer before assigning.");
+  }
+
+  const seenUserIds = new Set<string>();
+  for (const reviewer of reviewers) {
+    if (seenUserIds.has(reviewer.userId)) {
+      throw new Error("Each reviewer role must be assigned to a different employee.");
+    }
+    seenUserIds.add(reviewer.userId);
+  }
+}
+
+async function createAuditEvent(params: {
+  appraisalId: string;
+  actorId?: string;
+  actorRole?: string;
+  action: string;
+  note?: string;
+  fromStage?: string | null;
+  toStage?: string;
+  oldValue?: unknown;
+  newValue?: unknown;
+}) {
+  await createAppraisalAuditLogCompat({
+    appraisalId: params.appraisalId,
+    actorId: params.actorId,
+    actorRole: params.actorRole,
+    action: params.action,
+    fromStage: params.fromStage ?? null,
+    toStage: params.toStage ?? "NO_STAGE_CHANGE",
+    note: params.note,
+    oldValue: params.oldValue,
+    newValue: params.newValue,
   });
 }
 
@@ -54,7 +101,7 @@ const APPRAISAL_SCHEDULE_HORIZON_YEARS = 10;
 
 function normalizeDateOnly(value: Date) {
   const result = new Date(value);
-  result.setHours(0, 0, 0, 0);
+  result.setUTCHours(0, 0, 0, 0);
   return result;
 }
 
@@ -105,11 +152,99 @@ function scheduleKey(dueDate: Date, kind: AppraisalKind) {
 }
 
 function monthBounds(year: number, month: number) {
-  const start = new Date(year, month, 1);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(year, month + 1, 0);
-  end.setHours(0, 0, 0, 0);
+  const start = new Date(Date.UTC(year, month, 1));
+  start.setUTCHours(0, 0, 0, 0);
+  const end = new Date(Date.UTC(year, month + 1, 0));
+  end.setUTCHours(0, 0, 0, 0);
   return { start, end };
+}
+
+type IncrementSlabMatch = {
+  id: string;
+  label: string;
+  grade: string;
+  minRating: number;
+  maxRating: number;
+  hikePercent: number;
+};
+
+export type AppraisalScoreResult = {
+  selfNormalized: number | null;
+  reviewerNormalized: number | null;
+  managementNormalized: number | null;
+  finalNormalized: number | null;
+  flooredScore: number | null;
+  grade: string | null;
+  gradeLabel: string | null;
+  hikePercent: number | null;
+  slabLabel: string | null;
+  slabRange: string | null;
+  slabId: string | null;
+  previousSalary: number | null;
+  projectedFinalSalary: number | null;
+};
+
+function normalizeMeetingDateOptions(proposedDates: Date[]) {
+  return [...new Set(
+    proposedDates
+      .filter((date) => Number.isFinite(date.getTime()))
+      .map((date) => new Date(date))
+      .sort((left, right) => left.getTime() - right.getTime())
+      .map((date) => date.toISOString()),
+  )].map((value) => new Date(value));
+}
+
+async function findIncrementSlabForScore(score: number) {
+  const flooredScore = Math.floor(score);
+  const slab = await db.incrementSlab.findFirst({
+    where: {
+      minRating: { lte: flooredScore },
+      maxRating: { gte: flooredScore },
+    },
+    orderBy: [{ minRating: "asc" }, { maxRating: "asc" }],
+  });
+
+  return {
+    flooredScore,
+    slab: slab
+      ? ({
+          id: slab.id,
+          label: slab.label,
+          grade: slab.grade,
+          minRating: slab.minRating,
+          maxRating: slab.maxRating,
+          hikePercent: slab.hikePercent,
+        } satisfies IncrementSlabMatch)
+      : null,
+  };
+}
+
+function buildMeetingNotificationSummary(appraiseeName: string, cycleName: string, proposedDates: Date[]) {
+  const formattedDates = proposedDates.map((date) => date.toLocaleString("en-IN"));
+  return {
+    title: `Meeting dates proposed for ${appraiseeName}`,
+    body: `${appraiseeName} (${cycleName}) has proposed appraisal meeting options: ${formattedDates.join(" | ")}`,
+  };
+}
+
+function buildSalaryRevisionRow(params: {
+  employeeNumber?: string | null;
+  effectiveFrom: Date;
+  previousSalary: number;
+  finalSalary: number;
+  finalPercent: number;
+}) {
+  return {
+    "Employee Number": params.employeeNumber ?? "",
+    "Status": "APPROVED",
+    "Effective From": params.effectiveFrom.toISOString().slice(0, 10),
+    "Payout Month": params.effectiveFrom.toISOString().slice(0, 7),
+    "Gross Amount (per annum)": params.previousSalary,
+    "Revised Gross Amount (per annum)": params.finalSalary,
+    "CTC (per annum)": params.previousSalary,
+    "Revised CTC (per annum)": params.finalSalary,
+    "Revision Percentage": params.finalPercent,
+  };
 }
 
 // Shared helper: open self-assessment if all non-MANAGEMENT reviewers are ready AND deadline passed
@@ -445,7 +580,7 @@ async function listDueAppraisalsFromComputedSchedule(
     const slot = dueInMonth(record.joinDate, record.priorExperienceYears ?? 0, year, month);
     if (!slot) continue;
 
-    const cycleYear = slot.dueDate.getFullYear();
+    const cycleYear = slot.dueDate.getUTCFullYear();
     const cycleName = slot.kind === "ANNUAL" ? `Annual ${cycleYear}` : `Intermediate ${cycleYear}`;
     eligible.push({ user, slot, cycleName });
   }
@@ -557,6 +692,7 @@ export async function listDueAppraisals(
         select: {
           dueDate: true,
           kind: true,
+          cycleIndex: true,
           employeeId: true,
           appraisalId: true,
           employee: {
@@ -579,17 +715,41 @@ export async function listDueAppraisals(
 
     const exemptUserIds = new Set(exemptRows.map((r) => r.userId));
 
-    return schedules
-      .filter((schedule) => !exemptUserIds.has(schedule.employeeId))
-      .map((schedule) => ({
-        employeeId: schedule.employeeId,
-        employeeName: schedule.employee.name,
-        designation: schedule.employee.designation,
-        department: schedule.employee.department?.name ?? null,
-        dueDate: schedule.dueDate,
-        kind: schedule.kind as AppraisalKind,
-        appraisalId: schedule.appraisalId,
-      }));
+    const dedupedSchedules = new Map<
+      string,
+      (typeof schedules)[number]
+    >();
+
+    for (const schedule of schedules) {
+      if (exemptUserIds.has(schedule.employeeId)) continue;
+
+      const dedupeKey = `${schedule.employeeId}:${schedule.kind}:${schedule.cycleIndex}`;
+      const existing = dedupedSchedules.get(dedupeKey);
+
+      if (!existing) {
+        dedupedSchedules.set(dedupeKey, schedule);
+        continue;
+      }
+
+      const shouldReplace =
+        (!!schedule.appraisalId && !existing.appraisalId) ||
+        (schedule.appraisalId === existing.appraisalId && schedule.dueDate.getTime() > existing.dueDate.getTime()) ||
+        (!schedule.appraisalId && !existing.appraisalId && schedule.dueDate.getTime() > existing.dueDate.getTime());
+
+      if (shouldReplace) {
+        dedupedSchedules.set(dedupeKey, schedule);
+      }
+    }
+
+    return [...dedupedSchedules.values()].map((schedule) => ({
+      employeeId: schedule.employeeId,
+      employeeName: schedule.employee.name,
+      designation: schedule.employee.designation,
+      department: schedule.employee.department?.name ?? null,
+      dueDate: schedule.dueDate,
+      kind: schedule.kind as AppraisalKind,
+      appraisalId: schedule.appraisalId,
+    }));
   } catch {
     if (process.env.NODE_ENV === "development") {
       console.warn("AMS due-list fallback activated.");
@@ -605,7 +765,7 @@ export async function createAppraisalForEmployee(
   kind: AppraisalKind
 ) {
   const normalizedDueDate = normalizeDateOnly(dueDate);
-  const year = normalizedDueDate.getFullYear();
+  const year = normalizedDueDate.getUTCFullYear();
   const cycle = await findOrCreateCycle(orgId, year, kind);
 
   const appraisal = await db.appraisal.upsert({
@@ -677,8 +837,28 @@ export async function getAppraisal(id: string) {
       selfAssessment: true,
       reviewerRatings: { include: { reviewer: { include: { user: { select: { id: true, name: true } } } } } },
       managementReviews: { include: { reviewer: { select: { id: true, name: true } } } },
-      meeting: { include: { minutes: { include: { author: { select: { id: true, name: true } } } } } },
-      hikeDecision: { include: { decidedBy: { select: { id: true, name: true } } } },
+      meeting: {
+        select: {
+          id: true,
+          scheduledAt: true,
+          status: true,
+          minutes: {
+            include: { author: { select: { id: true, name: true } } },
+          },
+        },
+      },
+      hikeDecision: {
+        select: {
+          id: true,
+          appraisalId: true,
+          decidedById: true,
+          percent: true,
+          amount: true,
+          effectiveFrom: true,
+          notes: true,
+          finalisedAt: true,
+        },
+      },
       auditLog: { orderBy: { createdAt: "asc" } },
     },
   });
@@ -716,7 +896,7 @@ export async function getMyReviewView(appraisalId: string, userId: string) {
           ratings: {
             orderBy: { submittedAt: "desc" },
             take: 1,
-            select: { ratings: true, submittedAt: true, status: true },
+            select: { ratings: true, submittedAt: true, updatedAt: true, status: true },
           },
         },
       },
@@ -738,9 +918,11 @@ export async function assignReviewers(
   reviewers: { userId: string; kind: Exclude<ReviewerKind, "MANAGEMENT"> }[],
   actorId: string
 ) {
+  assertDistinctAssignedReviewers(reviewers);
+
   const appraisal = await db.appraisal.findUniqueOrThrow({
     where: { id: appraisalId },
-    include: { cycle: true, employee: { select: { branchId: true } } },
+    include: { cycle: true, employee: { select: { id: true, name: true, branchId: true } } },
   });
 
   // Allow from DUE_NOTIFIED or REVIEWERS_ASSIGNED (re-assignment)
@@ -778,7 +960,7 @@ export async function assignReviewers(
   await logTransition(appraisalId, appraisal.stage as Stage, "REVIEWERS_ASSIGNED", actorId);
 
   await notifyMany(
-    reviewers.map((r) => r.userId),
+    [...new Set(reviewers.map((r) => r.userId))],
     {
       orgId: appraisal.cycle.orgId,
       kind: "REVIEWER_ASSIGNED",
@@ -788,6 +970,16 @@ export async function assignReviewers(
       payload: { appraisalId },
     }
   );
+
+  await notify({
+    userId: appraisal.employee.id,
+    orgId: appraisal.cycle.orgId,
+    kind: "REVIEWER_ASSIGNED",
+    title: "Reviewers assigned to your appraisal",
+    body: `Your reviewer panel for ${appraisal.cycle.name} is now assigned and awaiting availability confirmations.`,
+    link: `/ams/my-appraisal/${appraisalId}`,
+    payload: { appraisalId, employeeId: appraisal.employee.id },
+  });
 }
 
 export async function setReviewerAvailability(
@@ -1176,6 +1368,18 @@ export async function submitReviewerRating(
     },
   });
 
+  await createAuditEvent({
+    appraisalId,
+    actorId: reviewerUserId,
+    actorRole: reviewer.kind,
+    action: action === "SUBMITTED" ? "REVIEWER_RATING_SUBMITTED" : "REVIEWER_RATING_DRAFT_SAVED",
+    note: overallComments?.trim() || undefined,
+    fromStage: reviewer.appraisal.stage,
+    toStage: reviewer.appraisal.stage,
+    oldValue: existingRating?.ratings ?? null,
+    newValue: persistedRatings,
+  });
+
   if (action !== "SUBMITTED") return;
 
   const allReviewers = await db.appraisalReviewer.findMany({
@@ -1196,9 +1400,18 @@ export async function submitManagementReview(
   proposedDates: Date[],
   action: SubmissionStatus,
 ) {
+  const now = await getNow();
   const reviewer = await db.appraisalReviewer.findFirst({
     where: { appraisalId, userId: reviewerUserId, kind: "MANAGEMENT" },
-    include: { appraisal: { include: { cycle: true } } },
+    include: {
+      appraisal: {
+        include: {
+          cycle: true,
+          employee: { select: { name: true } },
+          managementReviews: { select: { ratings: true } },
+        },
+      },
+    },
   });
   if (!reviewer) throw new Error("You have not claimed this appraisal.");
 
@@ -1249,22 +1462,49 @@ export async function submitManagementReview(
     ...nextRatings,
     ...changeMeta,
   };
+  const normalizedProposedDates = normalizeMeetingDateOptions(proposedDates);
+  if (action === "SUBMITTED" && normalizedProposedDates.length === 0) {
+    throw new Error("Select at least one meeting date before submitting the management review.");
+  }
+
+  const scorePreview = await computeAppraisalScore(appraisalId, persistedRatings);
+  if (action === "SUBMITTED" && scorePreview.finalNormalized !== null && scorePreview.hikePercent === null) {
+    throw new Error("No increment slab matches the calculated rating. Update increment slabs before submitting.");
+  }
 
   await db.managementReview.upsert({
     where: { appraisalId_reviewerId: { appraisalId, reviewerId: reviewerUserId } },
     update: {
       ratings: persistedRatings,
-      proposedDates,
+      proposedDates: normalizedProposedDates,
       status: action,
-      submittedAt: action === "SUBMITTED" ? await getNow() : null,
+      submittedAt: action === "SUBMITTED" ? now : null,
     },
     create: {
       appraisalId,
       reviewerId: reviewerUserId,
       ratings: persistedRatings,
-      proposedDates,
+      proposedDates: normalizedProposedDates,
       status: action,
-      submittedAt: action === "SUBMITTED" ? await getNow() : null,
+      submittedAt: action === "SUBMITTED" ? now : null,
+    },
+  });
+
+  await createAuditEvent({
+    appraisalId,
+    actorId: reviewerUserId,
+    actorRole: "MANAGEMENT",
+    action: action === "SUBMITTED" ? "MANAGEMENT_REVIEW_SUBMITTED" : "MANAGEMENT_REVIEW_DRAFT_SAVED",
+    note: scorePreview.hikePercent === null
+      ? "No matching increment slab found during preview."
+      : `Live preview suggested ${scorePreview.hikePercent}% using floored score ${scorePreview.flooredScore}.`,
+    fromStage: reviewer.appraisal.stage,
+    toStage: reviewer.appraisal.stage,
+    oldValue: existingReview?.ratings ?? null,
+    newValue: {
+      ratings: persistedRatings,
+      proposedDates: normalizedProposedDates.map((date) => date.toISOString()),
+      scorePreview,
     },
   });
 
@@ -1276,41 +1516,115 @@ export async function submitManagementReview(
   const hrReviewers = await db.appraisalReviewer.findMany({
     where: { appraisalId, kind: "HR" },
   });
+  const hrRecipients = hrReviewers.length > 0
+    ? hrReviewers.map((reviewRow) => reviewRow.userId)
+    : await getUsersWithPermission(reviewer.appraisal.cycle.orgId, "ams.meeting.confirm");
+  const notification = buildMeetingNotificationSummary(
+    reviewer.appraisal.employee.name,
+    reviewer.appraisal.cycle.name,
+    normalizedProposedDates,
+  );
   await notifyMany(
-    hrReviewers.map((r) => r.userId),
+    [...new Set(hrRecipients)],
     {
       kind: "MEETING_PENDING",
-      title: "Confirm appraisal meeting date",
+      orgId: reviewer.appraisal.cycle.orgId,
+      title: notification.title,
+      body: notification.body,
       link: `/ams/appraisals/${appraisalId}`,
       email: true,
+      payload: {
+        appraisalId,
+        proposedDates: normalizedProposedDates.map((date) => date.toISOString()),
+      },
     }
   );
 }
 
 export async function confirmMeeting(appraisalId: string, hrUserId: string, scheduledAt: Date) {
+  const appraisal = await db.appraisal.findUniqueOrThrow({
+    where: { id: appraisalId },
+    include: {
+      cycle: true,
+      employee: { select: { name: true } },
+      reviewers: true,
+      managementReviews: { select: { proposedDates: true } },
+      meeting: true,
+    },
+  });
+  if (appraisal.meeting?.lockedAt) {
+    const canOverride = await can(hrUserId, "ams.appraisal.view_all");
+    if (!canOverride) {
+      throw new Error("The final meeting date is already locked.");
+    }
+  }
+  const proposedDates = appraisal.managementReviews.flatMap((review) => review.proposedDates);
+  if (proposedDates.length > 0 && !proposedDates.some((date) => date.getTime() === scheduledAt.getTime())) {
+    throw new Error("Final meeting date must be selected from the proposed management dates.");
+  }
+  const lockedAt = await getNow();
+
   await db.appraisalMeeting.upsert({
     where: { appraisalId },
-    update: { scheduledAt, confirmedById: hrUserId, status: "SCHEDULED" },
-    create: { appraisalId, scheduledAt, confirmedById: hrUserId, status: "SCHEDULED" },
+    update: {
+      scheduledAt,
+      confirmedById: hrUserId,
+      status: "SCHEDULED",
+      lockedAt,
+    },
+    create: {
+      appraisalId,
+      scheduledAt,
+      confirmedById: hrUserId,
+      status: "SCHEDULED",
+      lockedAt,
+    },
   });
 
   await db.appraisal.update({ where: { id: appraisalId }, data: { stage: "MEETING_PENDING" } });
-
-  const appraisal = await db.appraisal.findUniqueOrThrow({
-    where: { id: appraisalId },
-    include: { reviewers: true },
+  await createAuditEvent({
+    appraisalId,
+    actorId: hrUserId,
+    actorRole: "HR",
+    action: "FINAL_MEETING_DATE_SELECTED",
+    note: `Final meeting date locked for ${scheduledAt.toLocaleString("en-IN")}`,
+    fromStage: appraisal.stage,
+    toStage: "MEETING_PENDING",
+    oldValue: appraisal.meeting ? { scheduledAt: appraisal.meeting.scheduledAt.toISOString() } : null,
+    newValue: { scheduledAt: scheduledAt.toISOString() },
   });
 
   const participants = [appraisal.employeeId, ...appraisal.reviewers.map((r) => r.userId)];
+  const admins = await getUsersWithPermission(appraisal.cycle.orgId, "ams.appraisal.view_all");
   await notifyMany([...new Set(participants)], {
+    orgId: appraisal.cycle.orgId,
     kind: "MEETING_CONFIRMED",
-    title: `Appraisal meeting confirmed: ${scheduledAt.toDateString()}`,
+    title: `Appraisal meeting finalised for ${appraisal.employee.name}`,
+    body: `Final meeting date/time: ${scheduledAt.toLocaleString("en-IN")}`,
     link: `/ams/appraisals/${appraisalId}`,
     email: true,
+    payload: { appraisalId, scheduledAt: scheduledAt.toISOString() },
   });
+  await notifyMany(
+    [...new Set(admins.filter((userId) => !participants.includes(userId)))],
+    {
+      orgId: appraisal.cycle.orgId,
+      kind: "MEETING_CONFIRMED",
+      title: `Appraisal meeting finalised for ${appraisal.employee.name}`,
+      body: `Final meeting date/time: ${scheduledAt.toLocaleString("en-IN")}`,
+      link: `/ams/appraisals/${appraisalId}`,
+      email: true,
+      payload: { appraisalId, scheduledAt: scheduledAt.toISOString() },
+    },
+  );
 }
 
 export async function startMeeting(appraisalId: string) {
+  const meeting = await db.appraisalMeeting.findUniqueOrThrow({ where: { appraisalId } });
+  const now = await getNow();
+  if (now < meeting.scheduledAt) {
+    throw new Error("The meeting can only be opened on or after the finalized meeting date.");
+  }
   await db.appraisalMeeting.update({ where: { appraisalId }, data: { status: "LIVE" } });
   await db.appraisal.update({ where: { id: appraisalId }, data: { stage: "MEETING_LIVE" } });
   await logTransition(appraisalId, "MEETING_PENDING", "MEETING_LIVE");
@@ -1322,8 +1636,72 @@ export async function addMeetingMinute(
   role: string,
   content: string
 ) {
-  const meeting = await db.appraisalMeeting.findUniqueOrThrow({ where: { appraisalId } });
-  return db.meetingMinute.create({ data: { meetingId: meeting.id, authorId, role, content } });
+  const meeting = await db.appraisalMeeting.findUniqueOrThrow({
+    where: { appraisalId },
+    include: {
+      appraisal: {
+        include: {
+          reviewers: {
+            select: {
+              userId: true,
+              kind: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  const now = await getNow();
+  if (now < meeting.scheduledAt) {
+    throw new Error("MOM opens on the finalized meeting date.");
+  }
+  const allowedRoles = new Set<string>();
+  if (meeting.appraisal.employeeId === authorId) {
+    allowedRoles.add("EMPLOYEE");
+  }
+  if (meeting.appraisal.reviewers.some((reviewer) => reviewer.userId === authorId && reviewer.kind === "HR")) {
+    allowedRoles.add("HR");
+  }
+  if (meeting.appraisal.reviewers.some((reviewer) => reviewer.userId === authorId && reviewer.kind === "MANAGEMENT")) {
+    allowedRoles.add("MANAGEMENT");
+  }
+  if (await can(authorId, "ams.appraisal.view_all")) {
+    allowedRoles.add("ADMIN");
+  }
+  if (!allowedRoles.has(role)) {
+    throw new Error("You can only create or edit your own meeting minutes role.");
+  }
+
+  const existing = await db.meetingMinute.findFirst({
+    where: { meetingId: meeting.id, authorId, role },
+    select: { id: true, content: true },
+  });
+
+  const saved = await db.meetingMinute.upsert({
+    where: {
+      meetingId_authorId_role: {
+        meetingId: meeting.id,
+        authorId,
+        role,
+      },
+    },
+    update: { content },
+    create: { meetingId: meeting.id, authorId, role, content },
+  });
+
+  await createAuditEvent({
+    appraisalId,
+    actorId: authorId,
+    actorRole: role,
+    action: existing ? "MOM_UPDATED" : "MOM_CREATED",
+    note: `Private MOM ${existing ? "updated" : "created"} for ${role}.`,
+    fromStage: "MEETING_LIVE",
+    toStage: "MEETING_LIVE",
+    oldValue: existing ? { content: existing.content } : null,
+    newValue: { content },
+  });
+
+  return saved;
 }
 
 export async function closeMeeting(appraisalId: string) {
@@ -1336,60 +1714,183 @@ export async function finaliseHike(
   appraisalId: string,
   decidedById: string,
   percent: number,
-  amount: number,
   effectiveFrom: Date,
   notes?: string
 ) {
   const appraisal = await db.appraisal.findUniqueOrThrow({
     where: { id: appraisalId },
-    include: { employee: { include: { employmentRecord: true } } },
+    include: {
+      cycle: true,
+      employee: { include: { employmentRecord: true } },
+      reviewers: true,
+      hikeDecision: true,
+    },
   });
-
-  await db.hikeDecision.upsert({
-    where: { appraisalId },
-    update: { decidedById, percent, amount, effectiveFrom, notes },
-    create: { appraisalId, decidedById, percent, amount, effectiveFrom, notes },
-  });
-
-  if (appraisal.employee.employmentRecord) {
-    const newCtc = (appraisal.employee.employmentRecord.ctc ?? 0) + amount;
-    await db.employmentRecord.update({
-      where: { userId: appraisal.employeeId },
-      data: { ctc: newCtc },
-    });
+  if (appraisal.hikeDecision?.isLocked) {
+    const canOverride = await can(decidedById, "ams.appraisal.view_all");
+    if (!canOverride) {
+      throw new Error("The final hike is already locked.");
+    }
+  }
+  const scorePreview = await computeAppraisalScore(appraisalId);
+  if (scorePreview.finalNormalized === null) {
+    throw new Error("Unable to calculate final appraisal score.");
+  }
+  if (!scorePreview.slabId || scorePreview.hikePercent === null) {
+    throw new Error("No increment slab matches the calculated appraisal score.");
   }
 
-  await db.appraisal.update({
-    where: { id: appraisalId },
-    data: {
-      stage: "CLOSED",
-      hikeFinal: { percent, amount, effectiveFrom: effectiveFrom.toISOString() },
+  const payrollMeta = (appraisal.employee.employmentRecord?.payrollMeta ?? null) as {
+    monthlyGross?: number | null;
+    employeeNumber?: string | null;
+    latestSalaryRevision?: Record<string, unknown> | null;
+    salaryRevisions?: Record<string, unknown>[] | null;
+  } | null;
+  const previousSalary = appraisal.employee.employmentRecord?.ctc ?? ((payrollMeta?.monthlyGross ?? 0) * 12);
+  const finalSalary = Number((previousSalary * (1 + percent / 100)).toFixed(2));
+  const amount = Number((finalSalary - previousSalary).toFixed(2));
+  const revisionRow = buildSalaryRevisionRow({
+    employeeNumber: payrollMeta?.employeeNumber,
+    effectiveFrom,
+    previousSalary,
+    finalSalary,
+    finalPercent: percent,
+  });
+  const existingRevisions = Array.isArray(payrollMeta?.salaryRevisions) ? payrollMeta?.salaryRevisions : [];
+  const nextPayrollMeta = {
+    ...(payrollMeta ?? {}),
+    monthlyGross: Number((finalSalary / 12).toFixed(2)),
+    latestSalaryRevision: revisionRow,
+    salaryRevisions: [revisionRow, ...existingRevisions],
+  };
+
+  await db.$transaction(async (tx) => {
+    await tx.hikeDecision.upsert({
+      where: { appraisalId },
+      update: {
+        decidedById,
+        percent,
+        amount,
+        effectiveFrom,
+        notes,
+        slabId: scorePreview.slabId,
+        suggestedPercent: scorePreview.hikePercent,
+        suggestedScore: scorePreview.finalNormalized,
+        suggestedFlooredScore: scorePreview.flooredScore,
+        suggestedGrade: scorePreview.grade,
+        previousSalary,
+        finalSalary,
+        negotiationRemarks: notes,
+        isLocked: true,
+        finalisedAt: await getNow(),
+      },
+      create: {
+        appraisalId,
+        decidedById,
+        percent,
+        amount,
+        effectiveFrom,
+        notes,
+        slabId: scorePreview.slabId,
+        suggestedPercent: scorePreview.hikePercent,
+        suggestedScore: scorePreview.finalNormalized,
+        suggestedFlooredScore: scorePreview.flooredScore,
+        suggestedGrade: scorePreview.grade,
+        previousSalary,
+        finalSalary,
+        negotiationRemarks: notes,
+        isLocked: true,
+      },
+    });
+
+    if (appraisal.employee.employmentRecord) {
+      await tx.employmentRecord.update({
+        where: { userId: appraisal.employeeId },
+        data: {
+          ctc: finalSalary,
+          payrollMeta: nextPayrollMeta as never,
+        },
+      });
+    }
+
+    await tx.appraisal.update({
+      where: { id: appraisalId },
+      data: {
+        stage: "CLOSED",
+        hikeFinal: {
+          suggestedPercent: scorePreview.hikePercent,
+          finalPercent: percent,
+          previousSalary,
+          finalSalary,
+          amount,
+          effectiveFrom: effectiveFrom.toISOString(),
+          remarks: notes ?? null,
+        },
+      },
+    });
+  });
+
+  await createAuditEvent({
+    appraisalId,
+    actorId: decidedById,
+    actorRole: "MANAGEMENT",
+    action: "HIKE_FINALISED",
+    note: notes,
+    fromStage: appraisal.stage,
+    toStage: "CLOSED",
+    oldValue: appraisal.hikeDecision ?? null,
+    newValue: {
+      suggestedPercent: scorePreview.hikePercent,
+      finalPercent: percent,
+      previousSalary,
+      finalSalary,
+      amount,
+      effectiveFrom: effectiveFrom.toISOString(),
+    },
+  });
+  await logTransition(appraisalId, "HIKE_FINALISATION", "CLOSED", decidedById);
+
+  const payrollUsers = await getUsersWithPermission(appraisal.cycle.orgId, "hrms.salary.manage");
+  const adminUsers = await getUsersWithPermission(appraisal.cycle.orgId, "ams.appraisal.view_all");
+  const hrUsers = appraisal.reviewers.filter((reviewer) => reviewer.kind === "HR").map((reviewer) => reviewer.userId);
+  const recipients = [...new Set([appraisal.employeeId, decidedById, ...hrUsers, ...adminUsers, ...payrollUsers])];
+  await notifyMany(recipients, {
+    orgId: appraisal.cycle.orgId,
+    kind: "HIKE_FINALISED",
+    title: `Final hike for ${appraisal.employee.name}: ${percent}%`,
+    body: `Final salary: ₹${finalSalary.toLocaleString("en-IN")} effective ${effectiveFrom.toLocaleDateString("en-IN")}.`,
+    link: `/ams/appraisals/${appraisalId}`,
+    email: true,
+    payload: {
+      appraisalId,
+      previousSalary,
+      finalSalary,
+      finalPercent: percent,
+      effectiveFrom: effectiveFrom.toISOString(),
     },
   });
 
-  await logTransition(appraisalId, "HIKE_FINALISATION", "CLOSED", decidedById);
-
-  await notify({
-    userId: appraisal.employeeId,
-    kind: "HIKE_FINALISED",
-    title: "Appraisal complete — hike finalised",
-    body: `Your hike of ${percent}% has been finalised.`,
-    link: `/ams/appraisals/${appraisalId}`,
-    email: true,
-  });
+  await Promise.all(
+    [...new Set(payrollUsers)].map((userId) =>
+      db.todoTask.create({
+        data: {
+          userId,
+          orgId: appraisal.cycle.orgId,
+          title: `Post salary revision for ${appraisal.employee.name}`,
+          description: `Appraisal hike finalized at ${percent}%. Update payroll with final salary ₹${finalSalary.toLocaleString("en-IN")} effective ${effectiveFrom.toLocaleDateString("en-IN")}.`,
+          dueDate: normalizeDateOnly(effectiveFrom),
+          reminderEnabled: true,
+          alertAt: effectiveFrom,
+        },
+      }),
+    ),
+  );
 }
 
-export type AppraisalScoreResult = {
-  selfNormalized: number | null;
-  reviewerNormalized: number | null;
-  managementNormalized: number | null;
-  finalNormalized: number | null;
-  grade: string | null;
-  gradeLabel: string | null;
-  hikePercent: number | null;
-};
-
-export async function computeAppraisalScore(appraisalId: string): Promise<AppraisalScoreResult> {
+export async function computeAppraisalScore(
+  appraisalId: string,
+  draftManagementAnswers?: ManagementReviewAnswers | null,
+): Promise<AppraisalScoreResult> {
   const appraisal = await db.appraisal.findUniqueOrThrow({
     where: { id: appraisalId },
     include: {
@@ -1397,7 +1898,7 @@ export async function computeAppraisalScore(appraisalId: string): Promise<Apprai
       reviewerRatings: { include: { reviewer: { select: { kind: true } } } },
       managementReviews: { select: { ratings: true } },
       cycle: { select: { orgId: true } },
-      employee: { include: { employmentRecord: { select: { payrollMeta: true } } } },
+      employee: { include: { employmentRecord: { select: { payrollMeta: true, ctc: true } } } },
     },
   });
 
@@ -1460,8 +1961,11 @@ export async function computeAppraisalScore(appraisalId: string): Promise<Apprai
   })();
 
   const managementNormalized = (() => {
-    if (appraisal.managementReviews.length === 0) return null;
-    const scores = appraisal.managementReviews.map((mr) => {
+    const managementRatings = draftManagementAnswers
+      ? [{ ratings: draftManagementAnswers }]
+      : appraisal.managementReviews;
+    if (managementRatings.length === 0) return null;
+    const scores = managementRatings.map((mr) => {
       const { raw, max } = sumPoints(
         mr.ratings as Record<string, unknown>,
         criteriaForPhaseRole("MANAGEMENT", "MANAGEMENT"),
@@ -1472,23 +1976,47 @@ export async function computeAppraisalScore(appraisalId: string): Promise<Apprai
   })();
 
   if (selfScore === null && reviewerNormalized === null && managementNormalized === null) {
-    return { selfNormalized: null, reviewerNormalized: null, managementNormalized: null, finalNormalized: null, grade: null, gradeLabel: null, hikePercent: null };
+    return {
+      selfNormalized: null,
+      reviewerNormalized: null,
+      managementNormalized: null,
+      finalNormalized: null,
+      flooredScore: null,
+      grade: null,
+      gradeLabel: null,
+      hikePercent: null,
+      slabLabel: null,
+      slabRange: null,
+      slabId: null,
+      previousSalary: null,
+      projectedFinalSalary: null,
+    };
   }
 
   const finalNormalized = 0.2 * (selfScore ?? 0) + 0.7 * (reviewerNormalized ?? 0) + 0.1 * (managementNormalized ?? 0);
   const gradeInfo = getGrade(finalNormalized);
-  const payrollMeta = appraisal.employee.employmentRecord?.payrollMeta as { monthlyGross?: number } | null;
-  const monthlyGross = payrollMeta?.monthlyGross ?? 0;
-  const hikePercent = getHikePercent(gradeInfo.grade, monthlyGross);
+  const { flooredScore, slab } = await findIncrementSlabForScore(finalNormalized);
+  const payrollMeta = (appraisal.employee.employmentRecord?.payrollMeta ?? null) as { monthlyGross?: number | null } | null;
+  const previousSalary = appraisal.employee.employmentRecord?.ctc ?? ((payrollMeta?.monthlyGross ?? 0) * 12);
+  const projectedFinalSalary =
+    previousSalary != null && slab
+      ? Number((previousSalary * (1 + slab.hikePercent / 100)).toFixed(2))
+      : null;
 
   return {
     selfNormalized: selfScore,
     reviewerNormalized,
     managementNormalized,
     finalNormalized,
+    flooredScore,
     grade: gradeInfo.grade,
     gradeLabel: gradeInfo.label,
-    hikePercent,
+    hikePercent: slab?.hikePercent ?? null,
+    slabLabel: slab?.label ?? null,
+    slabRange: slab ? `${slab.minRating}-${slab.maxRating}` : null,
+    slabId: slab?.id ?? null,
+    previousSalary,
+    projectedFinalSalary,
   };
 }
 
@@ -1554,9 +2082,14 @@ export async function resetAmsData(orgId: string): Promise<void> {
 }
 
 export async function listMyReviewAppraisals(userId: string) {
-  return db.appraisal.findMany({
+  const canManageReviews = await can(userId, "ams.appraisal.management_review");
+
+  const appraisals = await db.appraisal.findMany({
     where: {
-      reviewers: { some: { userId, kind: { not: "MANAGEMENT" } } },
+      OR: [
+        { reviewers: { some: { userId, kind: { not: "MANAGEMENT" } } } },
+        ...(canManageReviews ? [{ stage: "MANAGEMENT_REVIEW" as const }] : []),
+      ],
     },
     orderBy: { createdAt: "desc" },
     select: {
@@ -1568,9 +2101,38 @@ export async function listMyReviewAppraisals(userId: string) {
       employee: { select: { id: true, name: true, designation: true } },
       cycle: { select: { name: true, year: true } },
       reviewers: {
-        where: { userId },
-        select: { kind: true, availabilityStatus: true },
+        select: { userId: true, kind: true, availabilityStatus: true },
       },
     },
+  });
+
+  return appraisals.flatMap((appraisal) => {
+    const myReviewer = appraisal.reviewers.find((reviewer) => reviewer.userId === userId && reviewer.kind !== "MANAGEMENT");
+    if (myReviewer) {
+      return [{
+        ...appraisal,
+        myRole: myReviewer.kind,
+        myStatus: myReviewer.availabilityStatus,
+        detailHref: `/ams/my-reviews/${appraisal.id}`,
+      }];
+    }
+
+    if (!canManageReviews || appraisal.stage !== "MANAGEMENT_REVIEW") {
+      return [];
+    }
+
+    const managementClaim = appraisal.reviewers.find((reviewer) => reviewer.kind === "MANAGEMENT") ?? null;
+    const claimedByMe = managementClaim?.userId === userId;
+
+    if (managementClaim && !claimedByMe) {
+      return [];
+    }
+
+    return [{
+      ...appraisal,
+      myRole: "MANAGEMENT",
+      myStatus: claimedByMe ? "CLAIMED" : "CLAIMABLE",
+      detailHref: `/ams/appraisals/${appraisal.id}/management-review`,
+    }];
   });
 }

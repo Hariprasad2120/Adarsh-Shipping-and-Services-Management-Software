@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { useDeferredValue, useMemo, useState, useTransition } from "react";
+import { useDeferredValue, useEffect, useMemo, useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -863,10 +863,12 @@ export function DynamicAppraisalForm({
   initialAnswers,
   onSaveDraft,
   onSubmitFinal,
+  onAnswersChange,
   disabled,
   selfTemplate,
   isResubmission = false,
   submitLabel,
+  submitDisabled = false,
   showDemoFill = true,
 }: {
   mode: "self" | "reviewer" | "management";
@@ -874,10 +876,12 @@ export function DynamicAppraisalForm({
   initialAnswers: SelfAssessmentAnswers | RatingAnswers | null | undefined;
   onSaveDraft: (answers: SelfAssessmentAnswers | RatingAnswers) => Promise<void> | void;
   onSubmitFinal: (answers: SelfAssessmentAnswers | RatingAnswers) => Promise<void> | void;
+  onAnswersChange?: (answers: SelfAssessmentAnswers | RatingAnswers) => void;
   disabled?: boolean;
   selfTemplate?: AppraisalSelfFormTemplate;
   isResubmission?: boolean;
   submitLabel?: string;
+  submitDisabled?: boolean;
   showDemoFill?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -1029,6 +1033,11 @@ export function DynamicAppraisalForm({
   }, [baselineReviewerAnswers, criteria, isResubmission, reviewerAnswers]);
   const reviewerSubmitDisabled = mode !== "self" && reviewerMissing.length > 0;
 
+  useEffect(() => {
+    if (!onAnswersChange) return;
+    onAnswersChange(mode === "self" ? deferredSelf : deferredReviewer);
+  }, [deferredReviewer, deferredSelf, mode, onAnswersChange]);
+
   function runAction(action: "draft" | "submit") {
     if (mode === "self" && action === "submit") {
       const missing = validateSelfAssessment();
@@ -1096,35 +1105,26 @@ export function DynamicAppraisalForm({
     <div className="space-y-5">
       {mode === "self" ? (
         <>
-          {/* Sticky compact progress */}
-          <div className="sticky top-2 z-10 overflow-hidden rounded-2xl border border-outline-variant/35 bg-surface/95 shadow-sm backdrop-blur-sm">
-            <div className="flex items-center gap-4 px-5 py-3">
-              <div className="flex-1 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-on-surface-variant">Progress</span>
-                  <span className="text-xs font-semibold text-[#008b85]">{completedCount} / {questionCount}</span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-surface-container">
-                  <div
-                    className="h-full rounded-full bg-linear-to-r from-[#00cec4] to-sky-400 transition-[width] duration-500"
-                    style={{ width: `${questionCount === 0 ? 0 : Math.round((completedCount / questionCount) * 100)}%` }}
-                  />
-                </div>
-              </div>
-              {!readOnly && showDemoFill ? (
-                <DemoFillButton
-                  profiles={demoPerformanceProfiles}
-                  selectedProfile={demoProfile}
-                  onProfileChange={setDemoProfile}
-                  onClick={() => {
-                    setMissingFieldIds(new Set());
-                    setFormPrompt(null);
-                    setSelfAnswers(normalizeSelfAnswers(buildSelfAssessmentDemoAnswers(criteria, resolvedSelfTemplate, demoProfile)));
-                  }}
-                />
-              ) : null}
+          <FormProgress total={questionCount} completed={completedCount} />
+
+          {!readOnly && showDemoFill ? (
+            <div className="flex justify-end">
+              <DemoFillButton
+                profiles={demoPerformanceProfiles}
+                selectedProfile={demoProfile}
+                onProfileChange={setDemoProfile}
+                onClick={() => {
+                  setMissingFieldIds(new Set());
+                  setFormPrompt(null);
+                  setSelfAnswers(
+                    normalizeSelfAnswers(
+                      buildSelfAssessmentDemoAnswers(criteria, resolvedSelfTemplate, demoProfile),
+                    ),
+                  );
+                }}
+              />
             </div>
-          </div>
+          ) : null}
 
           {formPrompt ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -1233,25 +1233,29 @@ export function DynamicAppraisalForm({
         {!readOnly ? (
           <>
             <SaveDraftButton onClick={() => runAction("draft")} pending={isPending} />
-            {reviewerSubmitDisabled ? (
+            {reviewerSubmitDisabled || submitDisabled ? (
               <Button
                 type="button"
                 variant="outline"
                 className="border-cyan-200 bg-white text-[#008b85] hover:bg-cyan-50 hover:text-[#007a75]"
                 onClick={() => {
+                  if (submitDisabled) {
+                    setFormPrompt("Select all required meeting date options before submitting the management review.");
+                    return;
+                  }
                   const missing = validateReviewerAssessment();
                   setMissingFieldIds(new Set(missing));
                   setFormPrompt("Rate every criterion and add a reason for any edited rating before submitting.");
                   requestAnimationFrame(() => focusFirstMissingField(missing));
                 }}
               >
-                Review Missing Items
+                {submitDisabled ? "Meeting Dates Required" : "Review Missing Items"}
               </Button>
             ) : null}
             <SubmitButton
               onClick={() => runAction("submit")}
               pending={isPending}
-              disabled={reviewerSubmitDisabled}
+              disabled={reviewerSubmitDisabled || submitDisabled}
               label={submitLabel ?? (mode === "self" ? "Submit Self-Assessment" : isResubmission ? "Update Rating" : "Submit Rating")}
             />
           </>
@@ -1425,10 +1429,12 @@ export function CriteriaPointsForm({
   mode,
   onSaveDraft,
   onSubmitFinal,
+  onAnswersChange,
   disabled,
   selfTemplate,
   isResubmission,
   submitLabel,
+  submitDisabled,
   showDemoFill = true,
 }: {
   criteria: CriterionPoint[];
@@ -1437,10 +1443,12 @@ export function CriteriaPointsForm({
   mode: "self" | "reviewer" | "management";
   onSaveDraft: (answers: SelfAssessmentAnswers | RatingAnswers) => Promise<void> | void;
   onSubmitFinal: (answers: SelfAssessmentAnswers | RatingAnswers) => Promise<void> | void;
+  onAnswersChange?: (answers: SelfAssessmentAnswers | RatingAnswers) => void;
   disabled?: boolean;
   selfTemplate?: AppraisalSelfFormTemplate;
   isResubmission?: boolean;
   submitLabel?: string;
+  submitDisabled?: boolean;
   showDemoFill?: boolean;
 }) {
   return (
@@ -1450,10 +1458,12 @@ export function CriteriaPointsForm({
       initialAnswers={initialAnswers}
       onSaveDraft={onSaveDraft}
       onSubmitFinal={onSubmitFinal}
+      onAnswersChange={onAnswersChange}
       disabled={disabled}
       selfTemplate={selfTemplate}
       isResubmission={isResubmission}
       submitLabel={submitLabel}
+      submitDisabled={submitDisabled}
       showDemoFill={showDemoFill}
     />
   );

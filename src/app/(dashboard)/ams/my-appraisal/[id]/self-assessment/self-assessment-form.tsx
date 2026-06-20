@@ -8,6 +8,9 @@ import type { CriterionPoint } from "@/modules/ams/types";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { cn } from "@/lib/utils";
 
+const CYAN_PILL_CLASS =
+  "border border-[rgba(0,148,140,0.28)] bg-[rgba(0,148,140,0.12)] text-[#005f5a]";
+
 function StatusStrip({
   deadline,
   nowMs,
@@ -33,12 +36,12 @@ function StatusStrip({
       {deadline ? (
         <span
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium",
+            "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold",
             passed
-              ? "bg-red-50 text-red-700 ring-1 ring-red-200"
+              ? "border border-red-200 bg-red-50 text-red-700"
               : daysLeft !== null && daysLeft <= 3
-              ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
-              : "bg-[#00cec4]/10 text-[#008b85] ring-1 ring-[#00cec4]/25",
+              ? "border border-amber-200 bg-amber-50 text-amber-700"
+              : CYAN_PILL_CLASS,
           )}
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -58,20 +61,20 @@ function StatusStrip({
       ) : null}
 
       {currentStatus === "SUBMITTED" ? (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00cec4]/10 px-3 py-1.5 text-xs font-medium text-[#008b85] ring-1 ring-[#00cec4]/25">
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${CYAN_PILL_CLASS}`}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12" />
           </svg>
           Submitted
         </span>
       ) : currentStatus === "DRAFT" ? (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-container px-3 py-1.5 text-xs font-medium text-on-surface-variant ring-1 ring-outline-variant/40">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-semibold text-on-surface-variant">
           Draft
         </span>
       ) : null}
 
       {!isEditable && (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-container px-3 py-1.5 text-xs font-medium text-on-surface-variant ring-1 ring-outline-variant/40">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-semibold text-on-surface-variant">
           View-only
         </span>
       )}

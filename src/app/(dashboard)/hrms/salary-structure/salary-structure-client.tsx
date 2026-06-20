@@ -263,7 +263,7 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-[26px] border-outline-variant/40 shadow-ambient">
+      <Card className="ds-shell-lg border-outline-variant/40 shadow-ambient">
         <CardHeader className="pb-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle className="flex items-center gap-2 text-base">
