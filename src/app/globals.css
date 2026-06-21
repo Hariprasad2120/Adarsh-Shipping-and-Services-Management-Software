@@ -51,6 +51,10 @@ html {
   scrollbar-color: rgba(148, 163, 184, 0.85) rgba(255, 255, 255, 0.22);
 }
 
+html.dark {
+  scrollbar-color: rgba(100, 116, 139, 0.5) rgba(13, 17, 23, 0.4);
+}
+
 body {
   -ms-overflow-style: auto;
 }
@@ -67,6 +71,12 @@ body::-webkit-scrollbar-track {
   border-left: 1px solid rgba(255, 255, 255, 0.35);
 }
 
+html.dark::-webkit-scrollbar-track,
+html.dark body::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, rgba(0, 206, 196, 0.08), rgba(13, 17, 23, 0.4));
+  border-left: 1px solid rgba(48, 54, 61, 0.5);
+}
+
 html::-webkit-scrollbar-thumb,
 body::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(226, 232, 240, 0.82));
@@ -75,6 +85,15 @@ body::-webkit-scrollbar-thumb {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.45),
     0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+html.dark::-webkit-scrollbar-thumb,
+html.dark body::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(100, 116, 139, 0.5), rgba(71, 85, 105, 0.4));
+  border: 3px solid rgba(13, 17, 23, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 html::-webkit-scrollbar-thumb:hover,
@@ -86,6 +105,15 @@ body::-webkit-scrollbar-thumb:hover {
     0 0 18px rgba(34, 211, 238, 0.22);
 }
 
+html.dark::-webkit-scrollbar-thumb:hover,
+html.dark body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(100, 116, 139, 0.7), rgba(71, 85, 105, 0.6));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(0, 206, 196, 0.2),
+    0 0 18px rgba(0, 206, 196, 0.12);
+}
+
 html::-webkit-scrollbar-thumb:active,
 body::-webkit-scrollbar-thumb:active {
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(226, 232, 240, 0.94));
@@ -94,6 +122,15 @@ body::-webkit-scrollbar-thumb:active {
     0 0 0 1px rgba(34, 211, 238, 0.22),
     0 0 24px rgba(34, 211, 238, 0.4),
     0 8px 24px rgba(34, 211, 238, 0.16);
+}
+
+html.dark::-webkit-scrollbar-thumb:active,
+html.dark body::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, rgba(100, 116, 139, 0.8), rgba(71, 85, 105, 0.7));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(0, 206, 196, 0.3),
+    0 0 24px rgba(0, 206, 196, 0.15);
 }
 
 html::-webkit-scrollbar-corner,
@@ -213,7 +250,9 @@ body {
 
 /* Geist body text uses its full weight scale — no global override */
 
-html.dark .bg-white {
+html.dark .bg-white,
+html.dark [class*="bg-[#ffffff]"],
+html.dark [class*="bg-[#fff]"] {
   background-color: var(--color-surface) !important;
 }
 
@@ -351,6 +390,22 @@ main textarea:focus-visible {
 main textarea {
   resize: none;
   overflow-y: auto;
+}
+
+/* Global placeholder color for both themes */
+main input::placeholder,
+main select::placeholder,
+main textarea::placeholder {
+  color: var(--color-placeholder) !important;
+}
+
+/* Default table cell colors — semantic tokens, non-!important so explicit classes win */
+main table th {
+  color: var(--color-on-surface-variant);
+}
+
+main table td {
+  color: var(--color-on-surface);
 }
 
 @keyframes fade-in {
@@ -661,17 +716,7 @@ html.light main [class*="bg-[var(--color-surface)]"]::placeholder {
   color: var(--color-placeholder) !important;
 }
 
-/* Wildcard selector to safely override any hardcoded text-white colors in light mode,
-   excluding active solid backgrounds like buttons and badges */
-html.light main [class*="text-white"]:not([class*="bg-"]):not(button):not(a[class*="bg-"]):not(span[class*="bg-"]):not(div[class*="bg-"]),
-html.light main [class*="text-white/"]:not([class*="bg-"]):not(button):not(a[class*="bg-"]):not(span[class*="bg-"]):not(div[class*="bg-"]) {
-  color: var(--color-on-surface) !important;
-}
-
-html.light [class*="text-slate-400"],
-html.light [class*="text-slate-500"] {
-  color: var(--color-on-surface-variant) !important;
-}
+/* (Consolidated into L409-413 — the broad html.light text-white rule covers all cases) */
 
 
 

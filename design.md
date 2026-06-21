@@ -338,6 +338,19 @@ These are approved exceptions to the "no Tailwind color" rule.
 - Form grids: `grid-cols-1 sm:grid-cols-2`
 - Table layouts: Full-width, horizontal scroll on mobile
 
+### 10.1 Page Shell (DashboardShell)
+
+All dashboard pages are wrapped by `DashboardShell` (`src/app/(dashboard)/_components/dashboard-shell.tsx`). It provides:
+- `WelcomeBar` (top bar with search, date, theme toggle)
+- `AutoBreadcrumb` (for non-CRM, non-portal routes)
+- Consistent padding: `px-6 py-8 lg:px-8 xl:px-10`
+- Scroll container: `overflow-y-auto` on a flex-1 wrapper
+
+**Rules:**
+- **Never add `p-8`, `px-6 py-8`, or equivalent outer padding** to page-level components — the shell provides it.
+- **Never bypass the shell** by rendering outside the dashboard layout.
+- If a component needs full-width (no padding), it must use negative margins or be moved above the padding wrapper.
+
 ---
 
 ## 11. Accessibility & Contrast
@@ -360,6 +373,10 @@ These are approved exceptions to the "no Tailwind color" rule.
 6. **No lowercase headings** — all `.ds-h*` classes enforce UPPERCASE
 7. **No arbitrary hex colors** when a token exists
 8. **No arbitrary pixel values** when a radius/size token exists
+9. **No light-only backgrounds** — never use `bg-white`, `bg-[#ffffff]`, or light hex backgrounds without ensuring dark-mode compatibility. Use `bg-surface`, `bg-surface-container-low`, etc.
+10. **No light-only text colors** — never use `text-slate-900`, `text-gray-900`, or dark hex text without dark-mode fallbacks. Use `text-on-surface`, `text-on-surface-variant`, etc.
+11. **No page-level padding** — `DashboardShell` provides all outer padding. Do not add `p-8` or similar to the root element of a page component.
+12. **Test both themes** — every new page or component must be verified in both light and dark mode before completion.
 
 ---
 
@@ -389,3 +406,7 @@ Before completing any UI work, verify:
 - [ ] No new Tailwind slate/gray classes introduced
 - [ ] Status colors match the approved palette from Section 3.7
 - [ ] Module identity colors (if used) are limited to navigation
+- [ ] No `p-8` or outer padding on page root — shell provides it
+- [ ] No hard-coded light-only backgrounds (`bg-white`, `bg-[#fff*]`)
+- [ ] No hard-coded light-only text (`text-slate-900`, `text-gray-900`)
+- [ ] Verified in dark mode — all text readable, no invisible elements

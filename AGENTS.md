@@ -191,6 +191,9 @@ crm: #38bdf8
 - **No gray borders on inputs** — inputs in `<main>` get cyan borders automatically. Don't override.
 - **No colored backgrounds on buttons** except cyan (`#00cec4`) for primary and red (`#ef4444`) for destructive.
 - **No importing from `Design System/`** — that folder is deleted. All tokens are in `globals.css` and `design-tokens.ts`.
+- **No light-only backgrounds** — never use `bg-white`, `bg-[#ffffff]`, or light hex backgrounds. Use `bg-surface`, `bg-surface-container-low`, etc.
+- **No light-only text colors** — never use `text-slate-900`, `text-gray-900`. Use `text-on-surface`, `text-on-surface-variant`.
+- **No page-level padding** — `DashboardShell` provides `px-6 py-8 lg:px-8 xl:px-10`. Do not add `p-8` to page root elements.
 
 ---
 
@@ -218,4 +221,8 @@ Every AI agent must report these checks in their final response after UI work:
 8. ✅ No new Tailwind slate/gray classes introduced
 9. ✅ No gray input borders — cyan applied automatically
 10. ✅ No legacy style removed without user approval
+11. ✅ No `bg-white` or light-only hex backgrounds — used `bg-surface` tokens
+12. ✅ No `text-slate-900` or light-only text — used `text-on-surface` tokens
+13. ✅ No `p-8` on page root — shell provides outer padding
+14. ✅ Dark mode verified — all text readable, no invisible elements
 <!-- END:design-system -->

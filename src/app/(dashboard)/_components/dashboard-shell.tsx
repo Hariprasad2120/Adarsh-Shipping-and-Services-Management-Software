@@ -19,18 +19,26 @@ export function DashboardShell({
 
   if (isPortal) {
     return (
-      <div className="flex flex-1 flex-col min-h-screen bg-background text-on-surface">
+      <div className="flex flex-1 flex-col min-w-0 h-full overflow-hidden bg-background text-on-surface">
         <WelcomeBar userName={userName} sessionToken={sessionToken} />
-        {children}
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex min-h-full w-full flex-col gap-8 px-6 py-8 lg:px-8 xl:px-10">
+            {children}
+          </div>
+        </div>
       </div>
     );
   }
 
   if (isCrm) {
     return (
-      <div className="flex flex-1 flex-col min-h-screen bg-background text-on-surface">
+      <div className="flex flex-1 flex-col min-w-0 h-full overflow-hidden bg-background text-on-surface">
         <WelcomeBar userName={userName} sessionToken={sessionToken} />
-        {children}
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex min-h-full w-full flex-col gap-8 px-6 py-8 lg:px-8 xl:px-10">
+            {children}
+          </div>
+        </div>
       </div>
     );
   }

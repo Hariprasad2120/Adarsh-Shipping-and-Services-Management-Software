@@ -57,7 +57,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
   const contacts = await listContacts(orgId, { search });
 
   return (
-    <div className="p-8 space-y-6 max-w-[1600px] mx-auto">
+    <div className="space-y-6 max-w-[1600px] mx-auto">
       {/* Filters Bar */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-[#0f1319] p-4 rounded-xl border border-[#1c212a]/50">
         <form method="GET" className="flex flex-1 flex-col sm:flex-row gap-3 w-full">

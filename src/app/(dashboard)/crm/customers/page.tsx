@@ -43,7 +43,7 @@ export default async function CrmCustomersPage({ searchParams }: { searchParams:
   const accounts = await listAccounts(orgId, { search });
 
   return (
-    <div className="p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-200">
+    <div className="space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-200">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-b border-[#1c212a]/30 pb-5">
         <div>
