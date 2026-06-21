@@ -241,6 +241,24 @@ async function purgeUsersOutsideSource(orgId: string, allowedEmails: string[]) {
       });
     }
 
+    // Clean up CRM references to avoid foreign key violations on purge
+    await tx.crmLeadReminder.deleteMany({ where: { userId: { in: userIds } } });
+    await tx.crmExternalLeadSnapshot.deleteMany({ where: { assignedToUserId: { in: userIds } } });
+    await tx.crmLeadSourceJustdialConfig.deleteMany({ where: { defaultOwnerId: { in: userIds } } });
+    await tx.crmTimelineEvent.deleteMany({ where: { createdById: { in: userIds } } });
+    await tx.crmAttachment.deleteMany({ where: { createdById: { in: userIds } } });
+    await tx.crmNote.deleteMany({ where: { createdById: { in: userIds } } });
+    await tx.crmProject.deleteMany({ where: { ownerId: { in: userIds } } });
+    await tx.crmApprovalLog.deleteMany({ where: { actorId: { in: userIds } } });
+    await tx.crmInvoice.deleteMany({ where: { OR: [{ ownerId: { in: userIds } }, { approvedById: { in: userIds } }] } });
+    await tx.crmVendor.deleteMany({ where: { ownerId: { in: userIds } } });
+    await tx.crmActivity.deleteMany({ where: { ownerId: { in: userIds } } });
+    await tx.crmDeal.deleteMany({ where: { ownerId: { in: userIds } } });
+    await tx.crmAccount.deleteMany({ where: { ownerId: { in: userIds } } });
+    await tx.crmContact.deleteMany({ where: { ownerId: { in: userIds } } });
+    await tx.crmLead.deleteMany({ where: { ownerId: { in: userIds } } });
+    await tx.crmWorkTimeLog.deleteMany({ where: { userId: { in: userIds } } });
+
     await tx.document.deleteMany({ where: { userId: { in: userIds } } });
     await tx.employmentRecord.deleteMany({ where: { userId: { in: userIds } } });
     await tx.userRole.deleteMany({ where: { userId: { in: userIds } } });

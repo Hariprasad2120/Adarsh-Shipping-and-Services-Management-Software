@@ -1,4 +1,4 @@
-// Trigger recompilation after schema updates: 2026-06-19-v2
+// Trigger recompilation after schema updates: 2026-06-20-v4
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
@@ -28,6 +28,7 @@ type PrismaClientWithDelegates = PrismaClient & {
   account?: unknown;
   transactionLock?: unknown;
   crmWorkTimeLog?: unknown;
+  chaTeamGroup?: unknown;
 };
 
 function hasRequiredDelegates(client: PrismaClient) {
@@ -40,7 +41,8 @@ function hasRequiredDelegates(client: PrismaClient) {
     typeof delegateClient.crmLead !== "undefined" &&
     typeof delegateClient.account !== "undefined" &&
     typeof delegateClient.transactionLock !== "undefined" &&
-    typeof delegateClient.crmWorkTimeLog !== "undefined"
+    typeof delegateClient.crmWorkTimeLog !== "undefined" &&
+    typeof delegateClient.chaTeamGroup !== "undefined"
   );
 }
 

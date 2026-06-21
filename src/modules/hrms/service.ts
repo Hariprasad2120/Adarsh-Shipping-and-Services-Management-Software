@@ -76,8 +76,10 @@ export async function getMe(userId: string) {
 
   let activePref = pref;
   if (!activePref) {
-    activePref = await db.employeePreference.create({
-      data: {
+    activePref = await db.employeePreference.upsert({
+      where: { userId },
+      update: {},
+      create: {
         userId,
         widgets: JSON.stringify([
           { key: "ANNOUNCEMENTS", visible: true, order: 0, width: "md" },

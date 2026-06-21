@@ -1,4 +1,5 @@
 ALTER TABLE "AppraisalCriterion"
+ADD COLUMN "phase" TEXT NOT NULL DEFAULT 'SELF',
 ADD COLUMN "code" TEXT,
 ADD COLUMN "description" TEXT;
 

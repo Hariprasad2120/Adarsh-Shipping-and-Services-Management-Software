@@ -55,6 +55,8 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
     getSelfFormTemplate(orgId),
   ]);
 
+  if (!appraisal) notFound();
+
   const selfCriteria = selfRows.filter((row) => row.kind === "CATEGORY").map(mapCriterionRowToPoint);
   const resolvedSelfTemplate = resolveSelfFormTemplate(selfCriteria, selfTemplate as AppraisalSelfFormTemplate);
 

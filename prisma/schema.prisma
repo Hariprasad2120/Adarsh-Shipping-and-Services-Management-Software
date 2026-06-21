@@ -65,6 +65,12 @@ model Organisation {
   transactionLock     TransactionLock?
   partnerAccounts     PartnerAccount[]
 
+  chaSettings         ChaSettings?
+  chaJobs             ChaJob[]
+  chaExpenseRequests  ChaExpenseRequest[]
+  chaAuditLogs        ChaAuditLog[]
+  chaTeamGroups       ChaTeamGroup[]
+
   @@index([slug])
 }
 
@@ -94,6 +100,8 @@ model Branch {
   vendorNotes       VendorNote[]
   recurringExpenses RecurringExpense[]
   recurringJournals RecurringJournal[]
+
+  chaJobs           ChaJob[]
 
   @@unique([orgId, code])
   @@index([orgId])
@@ -297,6 +305,19 @@ model User {
 
   // Accounting Module Relations
   accountingAuditLogs AccountingAuditLog[]
+
+  // CHA Module Relations
+  chaJobsOwned                 ChaJob[]                  @relation("ChaJobPrimaryOwner")
+  chaJobAssignments            ChaJobAssignment[]
+  chaDocumentVersionsUploaded  ChaDocumentVersion[]
+  chaDocumentExceptionsCreated ChaDocumentException[]
+  chaChecklistImportsUploaded  ChaChecklistImport[]
+  chaChecklistApprovals        ChaChecklistApproval[]
+  chaChecklistReworkNotes      ChaChecklistReworkNote[]
+  chaFilingHistorySet          ChaFilingDateHistory[]
+  chaExpenseRequestsCreated    ChaExpenseRequest[]       @relation("ChaExpenseRequestedBy")
+  chaExpensePaymentsMade       ChaExpensePayment[]
+  chaExpenseQueriesCreated     ChaExpenseQuery[]         @relation("ChaExpenseQueryAuthor")
 
   @@index([orgId])
   @@index([isPlatformAdmin, active])
@@ -1231,6 +1252,8 @@ model CrmAccount {
   quotations      Quotation[]
   customerNotes   CustomerNote[]
   jobCostings     JobCosting[]
+
+  chaJobs         ChaJob[]
 
   @@index([orgId])
   @@index([ownerId])
@@ -2831,5 +2854,402 @@ model CrmWorkTimeLog {
   @@index([accountId])
   @@index([invoiceId])
   @@index([userId])
+}
+
+// ─── CHA Module Models ────────────────────────────────────────────────────────
+
+model ChaSettings {
+  id                    String       @id @default(cuid())
+  orgId                 String       @unique
+  org                   Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  jobCreatorRoles       Json?        // Role names/IDs that can create jobs
+  jobCreatorUsers       Json?        // Specific user IDs that can create jobs
+  selfApprovalAllowed   Boolean      @default(false)
+  managerApprovalPolicy String       @default("ALL") // ALL | ANY
+  expenseCategories     Json?        // List of allowed categories
+  jobNumberPrefix       String       @default("CHA")
+  jobNumberNextNum      Int          @default(1)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+}
+
+model ChaTeamGroup {
+  id        String       @id @default(cuid())
+  orgId     String
+  name      String
+  memberIds Json         // JSON array of user IDs
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, name])
+  @@index([orgId])
+}
+
+model ChaJobType {
+  id                  String                  @id @default(cuid())
+  orgId               String
+  name                String
+  documentDefinitions ChaDocumentDefinition[]
+  jobs                ChaJob[]
+
+  @@unique([orgId, name])
+  @@index([orgId])
+}
+
+model ChaDocumentDefinition {
+  id           String     @id @default(cuid())
+  jobTypeId    String
+  name         String
+  category     String
+  isMandatory  Boolean    @default(true)
+  allowedTypes Json?      // e.g. ["pdf", "jpg", "png"]
+  maxSize      Int        @default(5242880) // 5MB in bytes
+
+  jobType ChaJobType @relation(fields: [jobTypeId], references: [id], onDelete: Cascade)
+
+  @@index([jobTypeId])
+}
+
+model ChaJob {
+  id             String   @id @default(cuid())
+  orgId          String
+  jobNumber      String
+  title          String
+  customerId     String
+  customerRef    String?
+  jobTypeId      String
+  branchId       String
+  priority       String   @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
+  stage          String   @default("DOCUMENT_COLLECTION") // DOCUMENT_COLLECTION | CHECKLIST_PREPARATION | CHECKLIST_APPROVAL | FILING | FILED
+  status         String   @default("ACTIVE") // ACTIVE | ON_HOLD | CANCELLED | COMPLETED
+  primaryOwnerId String
+  remarks        String?
+  estimatedClosureDate DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  org                  Organisation                @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer             CrmAccount                  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  jobType              ChaJobType                  @relation(fields: [jobTypeId], references: [id])
+  branch               Branch                      @relation(fields: [branchId], references: [id])
+  primaryOwner         User                        @relation("ChaJobPrimaryOwner", fields: [primaryOwnerId], references: [id])
+  assignments          ChaJobAssignment[]
+  documentRequirements ChaJobDocumentRequirement[]
+  checklistImports     ChaChecklistImport[]
+  filing               ChaFiling?
+  customerAdvance      ChaCustomerAdvance?
+  expenseRequests      ChaExpenseRequest[]
+  auditLogs            ChaAuditLog[]
+
+  @@unique([orgId, jobNumber])
+  @@index([orgId, stage, status])
+  @@index([orgId, jobNumber])
+  @@index([primaryOwnerId])
+  @@index([createdAt])
+}
+
+model ChaJobAssignment {
+  id             String @id @default(cuid())
+  jobId          String
+  userId         String
+  responsibility String // DOCUMENTATION | OPERATIONS | FILING | ACCOUNTS | APPROVAL
+
+  job  ChaJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, userId, responsibility])
+  @@index([userId])
+}
+
+model ChaJobDocumentRequirement {
+  id          String   @id @default(cuid())
+  jobId       String
+  name        String
+  category    String
+  isMandatory Boolean  @default(true)
+  status      String   @default("PENDING") // PENDING | UPLOADED | NOT_AVAILABLE | REPLACED | REQUIRES_ATTENTION
+
+  job       ChaJob               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  versions  ChaDocumentVersion[]
+  exception ChaDocumentException?
+
+  @@index([jobId])
+}
+
+model ChaDocumentVersion {
+  id            String   @id @default(cuid())
+  requirementId String
+  fileKey       String
+  fileName      String
+  mimeType      String
+  sizeBytes     Int
+  checksum      String?
+  uploadedById  String
+  uploadedAt    DateTime @default(now())
+  isCurrent     Boolean  @default(true)
+
+  requirement ChaJobDocumentRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  uploadedBy  User                      @relation(fields: [uploadedById], references: [id])
+
+  @@index([requirementId])
+  @@index([uploadedById])
+}
+
+model ChaDocumentException {
+  id            String   @id @default(cuid())
+  requirementId String   @unique
+  reason        String
+  userId        String
+  createdAt     DateTime @default(now())
+  attachmentKey String?
+
+  requirement ChaJobDocumentRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  user        User                      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model ChaChecklistImport {
+  id              String   @id @default(cuid())
+  jobId           String
+  fileName        String
+  fileSize        Int
+  templateVersion String
+  status          String   @default("DRAFT") // DRAFT | VALIDATION_FAILED | READY | PENDING_APPROVAL | APPROVED | REWORK
+  uploadedById    String
+  uploadedAt      DateTime @default(now())
+  remarks         String?
+
+  job         ChaJob                   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  uploadedBy  User                     @relation(fields: [uploadedById], references: [id])
+  sections    ChaChecklistSection[]
+  approvals   ChaChecklistApproval[]
+  reworkNotes ChaChecklistReworkNote[]
+
+  @@index([jobId])
+  @@index([uploadedById])
+}
+
+model ChaChecklistSection {
+  id       String @id @default(cuid())
+  importId String
+  name     String
+  order    Int
+
+  checklistImport ChaChecklistImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+  items           ChaChecklistItem[]
+
+  @@index([importId])
+}
+
+model ChaChecklistItem {
+  id           String  @id @default(cuid())
+  sectionId    String
+  order        Int
+  identifier   String
+  question     String
+  responseType String  // TEXT | YES_NO | NUMBER | DATE
+  value        String?
+  remarks      String?
+
+  section ChaChecklistSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId])
+}
+
+model ChaChecklistApproval {
+  id         String    @id @default(cuid())
+  importId   String
+  managerId  String
+  decision   String    @default("PENDING") // PENDING | APPROVED | REWORK
+  remarks    String?
+  actionedAt DateTime?
+
+  checklistImport ChaChecklistImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+  manager         User               @relation(fields: [managerId], references: [id])
+
+  @@index([importId])
+  @@index([managerId])
+}
+
+model ChaChecklistReworkNote {
+  id        String   @id @default(cuid())
+  importId  String
+  authorId  String
+  note      String
+  createdAt DateTime @default(now())
+
+  checklistImport ChaChecklistImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+  author          User               @relation(fields: [authorId], references: [id])
+
+  @@index([importId])
+  @@index([authorId])
+}
+
+model ChaFiling {
+  id                  String                 @id @default(cuid())
+  jobId               String                 @unique
+  estimatedFilingDate DateTime?
+  actualFilingDate    DateTime?
+  filingRef           String?
+  filedBillCopyKey    String?
+  status              String                 @default("PENDING") // PENDING | OVERDUE | FILED
+  exceptionReason     String?
+  delayReason         String?
+  assignedUserId      String?
+  job                 ChaJob                 @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  dateHistory         ChaFilingDateHistory[]
+
+  @@index([estimatedFilingDate, status])
+}
+
+model ChaFilingDateHistory {
+  id                  String   @id @default(cuid())
+  filingId            String
+  estimatedFilingDate DateTime
+  setById             String
+  createdAt           DateTime @default(now())
+
+  filing ChaFiling @relation(fields: [filingId], references: [id], onDelete: Cascade)
+  setBy  User      @relation(fields: [setById], references: [id])
+
+  @@index([filingId])
+  @@index([setById])
+}
+
+model ChaCustomerAdvance {
+  id                String                      @id @default(cuid())
+  jobId             String                      @unique
+  expectedAmount    Decimal                     @default(0.0) @db.Decimal(18, 4)
+  dueDate           DateTime?
+  status            String                      @default("PENDING") // PENDING | FOLLOW_UP | PARTIALLY_RECEIVED | FULLY_RECEIVED | NOT_REQUIRED | COLLECTION_ISSUE
+  notRequiredReason String?
+  assignedUserId    String?
+  job               ChaJob                      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  receipts          ChaCustomerAdvanceReceipt[]
+}
+
+model ChaCustomerAdvanceReceipt {
+  id              String             @id @default(cuid())
+  advanceId       String
+  amount          Decimal            @db.Decimal(18, 4)
+  receivedDate    DateTime
+  paymentMethod   String
+  referenceNumber String?
+  receiptProofKey String?
+  remarks         String?
+  recordedById    String
+  createdAt       DateTime           @default(now())
+  advance         ChaCustomerAdvance @relation(fields: [advanceId], references: [id], onDelete: Cascade)
+
+  @@index([advanceId])
+}
+
+model ChaExpenseRequest {
+  id                  String                    @id @default(cuid())
+  jobId               String
+  orgId               String
+  status              String                    @default("SUBMITTED") // SUBMITTED | UNDER_REVIEW | CLARIFICATION_REQUIRED | APPROVED | READY_FOR_DISBURSEMENT | PAYMENT_DUE | URGENT_PAYMENT_REQUIRED | PAID | QUERY_RAISED | RECEIPT_ACKNOWLEDGED | REJECTED | CANCELLED
+  requestedById       String
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  isUrgent            Boolean                   @default(false)
+  urgencyReason       String?
+  urgentTargetDate    DateTime?
+  urgentRequestedAt   DateTime?
+  urgentRequestedById String?
+  job                 ChaJob                    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  org                 Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  requestedBy         User                      @relation("ChaExpenseRequestedBy", fields: [requestedById], references: [id])
+  lines               ChaExpenseLine[]
+  payments            ChaExpensePayment[]
+  queries             ChaExpenseQuery[]
+  statusHistory       ChaExpenseStatusHistory[]
+
+  @@index([jobId])
+  @@index([orgId, status])
+  @@index([requestedById])
+}
+
+model ChaExpenseLine {
+  id                    String            @id @default(cuid())
+  requestId             String
+  category              String
+  purpose               String
+  amount                Decimal           @db.Decimal(18, 4)
+  requiredDate          DateTime
+  supportingDocumentKey String?
+  remarks               String?
+  request               ChaExpenseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+}
+
+model ChaExpenseStatusHistory {
+  id           String            @id @default(cuid())
+  requestId    String
+  status       String
+  actionedById String
+  remarks      String?
+  createdAt    DateTime          @default(now())
+  request      ChaExpenseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+}
+
+model ChaExpensePayment {
+  id                   String            @id @default(cuid())
+  requestId            String
+  amountPaid           Decimal           @db.Decimal(18, 4)
+  paymentDate          DateTime
+  paymentMethod        String
+  transactionReference String
+  paymentProofKey      String?
+  remarks              String?
+  paidById             String
+  createdAt            DateTime          @default(now())
+  request              ChaExpenseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  paidBy               User              @relation(fields: [paidById], references: [id])
+
+  @@index([requestId])
+  @@index([paidById])
+}
+
+model ChaExpenseQuery {
+  id             String            @id @default(cuid())
+  requestId      String
+  authorId       String
+  queryText      String
+  resolved       Boolean           @default(false)
+  resolutionText String?
+  resolvedById   String?
+  resolvedAt     DateTime?
+  createdAt      DateTime          @default(now())
+  request        ChaExpenseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  author         User              @relation("ChaExpenseQueryAuthor", fields: [authorId], references: [id])
+
+  @@index([requestId])
+  @@index([authorId])
+}
+
+model ChaAuditLog {
+  id         String       @id @default(cuid())
+  orgId      String
+  jobId      String?
+  entityType String
+  entityId   String
+  event      String
+  actorId    String
+  timestamp  DateTime     @default(now())
+  prevState  String?
+  newState   String?
+  remarks    String?
+  metadata   Json?
+  org        Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  job        ChaJob?      @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, timestamp])
+  @@index([jobId, timestamp])
 }
 

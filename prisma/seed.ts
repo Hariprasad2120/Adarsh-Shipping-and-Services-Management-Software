@@ -117,6 +117,29 @@ const PERMISSIONS = [
   { key: "accounting.payment.submit", label: "Submit Payments", group: "Accounting" },
   { key: "accounting.reports.view", label: "View Financial Reports", group: "Accounting" },
   { key: "accounting.settings.manage", label: "Manage Accounting Settings", group: "Accounting" },
+
+  // CHA Module
+  { key: "cha.access", label: "Access CHA Module", group: "CHA" },
+  { key: "cha.dashboard.view", label: "View CHA Dashboard", group: "CHA" },
+  { key: "cha.job.read", label: "Read CHA Jobs", group: "CHA" },
+  { key: "cha.job.create", label: "Create CHA Jobs", group: "CHA" },
+  { key: "cha.job.update", label: "Update CHA Jobs", group: "CHA" },
+  { key: "cha.job.assign", label: "Assign CHA Jobs", group: "CHA" },
+  { key: "cha.job.view_all", label: "View All Organisation Jobs", group: "CHA" },
+  { key: "cha.document.read", label: "Read Job Documents", group: "CHA" },
+  { key: "cha.document.upload", label: "Upload Job Documents", group: "CHA" },
+  { key: "cha.document.exception", label: "Declare Document Exception", group: "CHA" },
+  { key: "cha.checklist.prepare", label: "Prepare Checklist", group: "CHA" },
+  { key: "cha.checklist.submit", label: "Submit Checklist", group: "CHA" },
+  { key: "cha.checklist.self_approve", label: "Self-Approve Checklist", group: "CHA" },
+  { key: "cha.checklist.manager_approve", label: "Approve/Rework Checklists", group: "CHA" },
+  { key: "cha.filing.manage", label: "Manage Filing Stage", group: "CHA" },
+  { key: "cha.advance.manage", label: "Manage Customer Advances", group: "CHA" },
+  { key: "cha.expense.request", label: "Request Job Expenses", group: "CHA" },
+  { key: "cha.expense.manage", label: "Manage/Review Job Expenses", group: "CHA" },
+  { key: "cha.expense.pay", label: "Post Expense Payments", group: "CHA" },
+  { key: "cha.audit.view", label: "View Job Audit Trail", group: "CHA" },
+  { key: "cha.settings.manage", label: "Manage CHA Settings", group: "CHA" },
 ] as const;
 
 // ─── System roles & their default permissions ─────────────────────────────────
@@ -136,6 +159,10 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "lms.access", "lms.reports.view",
     "accounting.dashboard.view", "accounting.account.read", "accounting.journal.read",
     "accounting.invoice.read", "accounting.payment.read", "accounting.reports.view",
+    // CHA Module permissions
+    "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.view_all", "cha.document.read",
+    "cha.checklist.manager_approve", "cha.filing.manage", "cha.advance.manage", "cha.expense.manage",
+    "cha.expense.pay", "cha.audit.view",
   ],
   HR: [
     "hrms.employee.read", "hrms.employee.create", "hrms.employee.edit",
@@ -171,6 +198,9 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "crm.access", "crm.dashboard.read", "crm.lead.read", "crm.lead.create",
     "crm.contact.manage", "crm.account.manage", "crm.deal.manage", "crm.activity.manage",
     "lms.access", "lms.learning.self",
+    // CHA Module permissions
+    "cha.access", "cha.dashboard.view", "cha.job.read", "cha.document.read", "cha.checklist.manager_approve",
+    "cha.expense.manage", "cha.audit.view",
   ],
   TL: [
     "hrms.employee.read",
@@ -193,6 +223,10 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "crm.contact.manage", "crm.account.manage", "crm.deal.manage", "crm.invoice.manage",
     "crm.leadSource.read", "crm.leadSource.manage", "crm.lead.import",
     "lms.access", "lms.reports.view",
+    // CHA Module permissions
+    "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.view_all", "cha.document.read",
+    "cha.checklist.manager_approve", "cha.filing.manage", "cha.advance.manage", "cha.expense.manage",
+    "cha.expense.pay", "cha.audit.view",
   ],
   Employee: [
     "hrms.employee.read",
@@ -204,6 +238,11 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "ams.appraisal.self_assess", "ams.meeting.minutes",
     "crm.access", "crm.activity.manage",
     "lms.access", "lms.learning.self",
+    // CHA Module permissions
+    "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.create", "cha.job.update",
+    "cha.document.read", "cha.document.upload", "cha.document.exception", "cha.checklist.prepare",
+    "cha.checklist.submit", "cha.checklist.self_approve", "cha.filing.manage", "cha.expense.request",
+    "cha.audit.view",
   ],
 };
 

@@ -1,17 +1,16 @@
 import "dotenv/config";
-import { db } from "@/lib/db";
+import * as fs from "fs";
 
 async function main() {
-  try {
-    const log = await db.crmLeadImportLog.findFirst({
-      orderBy: { startedAt: 'desc' }
-    });
-    console.log("Latest Import Log in DB:", log);
-  } catch (err: any) {
-    console.error("DB check failed:", err.message);
-  } finally {
-    process.exit(0);
+  const schema = fs.readFileSync("prisma/schema.prisma", "utf8");
+  const lines = schema.split("\n");
+  const startIndex = lines.findIndex(l => l.includes("model ChaAuditLog"));
+  if (startIndex !== -1) {
+    console.log(lines.slice(startIndex, startIndex + 25).join("\n"));
+  } else {
+    console.log("Model ChaAuditLog not found in schema");
   }
+  process.exit(0);
 }
 
 main();
