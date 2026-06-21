@@ -42,4 +42,22 @@ next-env.d.ts
 
 /src/generated/prisma
 
-.vercel
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS metadata
+Thumbs.db
+desktop.ini
+
+# pnpm (project uses npm)
+pnpm-lock.yaml
+
+# scratch / temp
+/scratch/
+/_cleanup_review/
+
+# sensitive data output
+/import-output/
