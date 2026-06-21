@@ -58,6 +58,7 @@ pnpm-lock.yaml
 # scratch / temp
 /scratch/
 /_cleanup_review/
+/docs/
 
 # sensitive data output
 /import-output/
