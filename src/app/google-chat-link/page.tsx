@@ -134,7 +134,7 @@ function LinkPageContent() {
 
       try {
         const response = await fetch(
-          `/api/google-chat/link?token=${encodeURIComponent(token)}`,
+          `/api/google-chat/link?token=${encodeURIComponent(token || "")}`,
           {
             cache: "no-store",
             signal: controller.signal,
