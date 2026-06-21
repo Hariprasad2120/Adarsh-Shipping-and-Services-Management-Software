@@ -225,4 +225,9 @@ Every AI agent must report these checks in their final response after UI work:
 12. ✅ No `text-slate-900` or light-only text — used `text-on-surface` tokens
 13. ✅ No `p-8` on page root — shell provides outer padding
 14. ✅ Dark mode verified — all text readable, no invisible elements
+15. ✅ Tables use `ds-table` inside `overflow-hidden rounded-xl` container — see `design.md` Section 7.1
+16. ✅ Table data cells use `font-weight: 400` (normal) — only name/identifier columns use `font-medium`
+17. ✅ No `border-collapse` on tables — `ds-table` uses `border-separate` with `border-spacing: 0`
+18. ✅ No `divide-y divide-[#hex]` on `<tbody>` — `ds-table td` border-bottom handles row separators
+19. ✅ Table rounded corners verified in browser — not just class applied
 <!-- END:design-system -->

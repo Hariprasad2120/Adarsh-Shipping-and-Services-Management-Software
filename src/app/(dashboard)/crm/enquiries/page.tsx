@@ -221,15 +221,15 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
 
       </div>
 
-      {/* Main List Card Container - 3D styled */}
-      <div className="bg-[#0f1319] border border-[#1c212a]/80 rounded-xl overflow-hidden shadow-2xl">
+      {/* Main List Card Container */}
+      <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
         {enquiries.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 space-y-4">
-            <div className="size-12 rounded-full bg-slate-800/40 flex items-center justify-center mx-auto">
-              <AlertTriangle className="size-6 text-slate-600" />
+          <div className="p-12 text-center space-y-4">
+            <div className="size-12 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center mx-auto">
+              <AlertTriangle className="size-6" />
             </div>
-            <h3 className="font-bold text-base text-white">No active enquiries found</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            <h3 className="font-bold text-base text-on-surface">No active enquiries found</h3>
+            <p className="text-xs text-on-surface-variant max-w-sm mx-auto">
               {type === "perishable" 
                 ? "No perishable cargo enquiries logged yet." 
                 : type === "future_follow" 
@@ -239,75 +239,75 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm text-slate-200">
+            <table className="ds-table">
               <thead>
-                <tr className="border-b border-[#1c212a]/80 bg-[#0c0f14]/80 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  <th className="px-6 py-4">Reference No</th>
-                  <th className="px-6 py-4">Client / Company</th>
-                  <th className="px-6 py-4">Route & Cargo Details</th>
-                  <th className="px-6 py-4">Ownership</th>
-                  <th className="px-6 py-4">Flags</th>
-                  <th className="px-6 py-4">Lead Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                <tr>
+                  <th className="px-6 py-3">Reference No</th>
+                  <th className="px-6 py-3">Client / Company</th>
+                  <th className="px-6 py-3">Route & Cargo Details</th>
+                  <th className="px-6 py-3">Ownership</th>
+                  <th className="px-6 py-3">Flags</th>
+                  <th className="px-6 py-3">Lead Status</th>
+                  <th className="px-6 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1c212a]/30">
+              <tbody>
                 {enquiries.map((enquiry) => {
                   const details: any = enquiry.enquiryDetails || {};
                   const isSea = details.type === "Sea";
                   const isAir = details.type === "Air";
                   
                   return (
-                    <tr key={enquiry.id} className="hover:bg-[#161f28]/35 transition-colors">
+                    <tr key={enquiry.id} className="ds-row-link">
                       {/* Ref No */}
-                      <td className="px-6 py-4 text-white font-bold ds-numeric">
-                        <Link href={`/crm/enquiries/${enquiry.id}`} className="hover:text-[#00cec4] transition-all">
+                      <td className="px-6 py-4 ds-numeric font-medium">
+                        <Link href={`/crm/enquiries/${enquiry.id}`} className="hover:text-[#00cec4] transition-colors">
                           {enquiry.enquiryRef || "GEN-ENQ"}
                         </Link>
                       </td>
                       
                       {/* Client / Company */}
-                      <td className="px-6 py-4 text-white">
-                        <div className="font-semibold">
+                      <td className="px-6 py-4">
+                        <div className="font-medium">
                           {enquiry.firstName ? `${enquiry.firstName} ` : ""}{enquiry.lastName}
                         </div>
-                        <div className="flex items-center gap-1 text-[11px] text-slate-400 font-normal">
-                          <Briefcase className="size-3 text-slate-500" />
+                        <div className="flex items-center gap-1 text-[11px] text-on-surface-variant font-normal">
+                          <Briefcase className="size-3" />
                           <span>{enquiry.company || "Direct Client"}</span>
                         </div>
                       </td>
 
                       {/* Route & Cargo */}
-                      <td className="px-6 py-4 text-slate-300">
+                      <td className="px-6 py-4">
                         {isSea ? (
                           <div className="space-y-0.5">
-                            <div className="flex items-center gap-1.5 text-xs text-white font-medium">
+                            <div className="flex items-center gap-1.5 text-xs font-medium">
                               <Ship className="size-3.5 text-[#00cec4]" />
                               <span>{details.pol} ➔ {details.pod}</span>
                             </div>
-                            <span className="text-[11px] text-slate-400 block">
+                            <span className="text-[11px] text-on-surface-variant block">
                               {details.commodity} • {details.weight} • {details.seaLclFcl}
                             </span>
                           </div>
                         ) : isAir ? (
                           <div className="space-y-0.5">
-                            <div className="flex items-center gap-1.5 text-xs text-white font-medium">
+                            <div className="flex items-center gap-1.5 text-xs font-medium">
                               <Plane className="size-3.5 text-[#00cec4]" />
                               <span>{details.aol} ➔ {details.aod}</span>
                             </div>
-                            <span className="text-[11px] text-slate-400 block">
+                            <span className="text-[11px] text-on-surface-variant block">
                               {details.commodity} • {details.weight} • {details.packages}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-slate-500 italic text-xs">No specific route logged</span>
+                          <span className="text-on-surface-variant italic text-xs">No specific route logged</span>
                         )}
                       </td>
 
                       {/* Owner / Assigned */}
-                      <td className="px-6 py-4 text-xs text-slate-300">
-                        <div className="flex items-center gap-1.5">
-                          <User className="size-3 text-slate-500" />
+                      <td className="px-6 py-4 text-xs">
+                        <div className="flex items-center gap-1.5 text-on-surface-variant">
+                          <User className="size-3" />
                           <span>{enquiry.owner?.name || "Unassigned"}</span>
                         </div>
                       </td>
@@ -354,7 +354,7 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
                       <td className="px-6 py-4 text-right">
                         <Link
                           href={`/crm/enquiries/${enquiry.id}`}
-                          className="inline-flex items-center gap-1 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] hover:border-[#00cec4]/50 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all"
+                          className="inline-flex items-center gap-1 bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface-variant px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all"
                         >
                           <Eye className="size-3.5" />
                           <span>View Detail</span>

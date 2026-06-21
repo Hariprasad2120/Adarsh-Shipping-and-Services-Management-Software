@@ -1045,49 +1045,7 @@ export async function createTravelExpense(travelRequestId: string, amount: numbe
   });
 }
 
-// ─── HR Letters Services ─────────────────────────────────────────────────────
 
-export async function getHRLetterTemplates(orgId: string) {
-  const templates = await db.hRLetterTemplate.findMany({
-    where: { orgId },
-  });
-
-  if (templates.length === 0) {
-    // Seed default template items
-    const defaults = [
-      { name: "Bonafide Certificate", content: "<p>This is to certify that <strong>{{employeeName}}</strong> is a bona fide employee of our organisation as a <strong>{{designation}}</strong>.</p>", variables: JSON.stringify(["employeeName", "designation"]) },
-      { name: "No Objection Certificate (NOC)", content: "<p>We have no objection to <strong>{{employeeName}}</strong> pursuing their educational training or visa procedures. Their designation is <strong>{{designation}}</strong>.</p>", variables: JSON.stringify(["employeeName", "designation"]) },
-      { name: "Experience Certificate", content: "<p>This certifies that <strong>{{employeeName}}</strong> worked with us from <strong>{{joiningDate}}</strong> as a <strong>{{designation}}</strong>.</p>", variables: JSON.stringify(["employeeName", "designation", "joiningDate"]) },
-    ];
-    await db.hRLetterTemplate.createMany({
-      data: defaults.map((d) => ({ orgId, ...d })),
-    });
-    return db.hRLetterTemplate.findMany({
-      where: { orgId },
-    });
-  }
-
-  return templates;
-}
-
-export async function getHRLetterRequests(userId: string, orgId: string) {
-  return db.hRLetterRequest.findMany({
-    where: { userId, orgId },
-    orderBy: { createdAt: "desc" },
-  });
-}
-
-export async function createHRLetterRequest(userId: string, orgId: string, templateId: string, details: any) {
-  return db.hRLetterRequest.create({
-    data: {
-      orgId,
-      userId,
-      templateId,
-      status: "PENDING",
-      details: details ? JSON.stringify(details) : "{}",
-    },
-  });
-}
 
 // ─── Tasks Services ──────────────────────────────────────────────────────────
 

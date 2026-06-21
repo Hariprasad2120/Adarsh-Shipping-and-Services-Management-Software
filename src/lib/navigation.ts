@@ -15,6 +15,7 @@ import {
   UserAvatar,
   UserMultiple,
   View,
+  Search,
 } from "@carbon/icons-react";
 import { FolderIcon } from "@/components/ui/folder-icon";
 const Folder = FolderIcon as any;
@@ -758,6 +759,103 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     ],
   },
   {
+    id: "recruit",
+    href: "/hrms/recruit",
+    label: "Recruit",
+    icon: Search,
+    permission: ["recruit.view", "recruit.jobseeker.use"],
+    matchPaths: ["/hrms/recruit"],
+    items: [
+      // Employer Workspace
+      {
+        href: "/hrms/recruit/employer",
+        label: "Employer Dashboard",
+        icon: Dashboard,
+        permission: "recruit.dashboard.view",
+        matchPaths: ["/hrms/recruit/employer"],
+      },
+      {
+        href: "/hrms/recruit/employer/jobs",
+        label: "Job Openings",
+        icon: DocumentAdd,
+        permission: "recruit.view",
+        matchPaths: ["/hrms/recruit/employer/jobs"],
+      },
+      {
+        href: "/hrms/recruit/employer/candidates",
+        label: "Candidates",
+        icon: Group,
+        permission: "recruit.candidate.view",
+        matchPaths: ["/hrms/recruit/employer/candidates"],
+      },
+      {
+        href: "/hrms/recruit/employer/applications",
+        label: "Applications",
+        icon: Task,
+        permission: "recruit.application.manage",
+        matchPaths: ["/hrms/recruit/employer/applications"],
+      },
+      // Job Seeker Workspace
+      {
+        href: "/hrms/recruit/career",
+        label: "Career Dashboard",
+        icon: UserAvatar,
+        permission: "recruit.jobseeker.use",
+        matchPaths: ["/hrms/recruit/career"],
+      },
+      {
+        href: "/hrms/recruit/career/profile",
+        label: "My Career Profile",
+        icon: UserAvatar,
+        permission: "recruit.jobseeker.profile.manage",
+        matchPaths: ["/hrms/recruit/career/profile"],
+      },
+      {
+        href: "/hrms/recruit/career/jobs",
+        label: "Job Search",
+        icon: Search,
+        permission: "recruit.jobseeker.jobs.search",
+        matchPaths: ["/hrms/recruit/career/jobs"],
+      },
+      {
+        href: "/hrms/recruit/career/resumes",
+        label: "My Resumes",
+        icon: DocumentAdd,
+        permission: "recruit.jobseeker.resume.manage",
+        matchPaths: ["/hrms/recruit/career/resumes"],
+      },
+      {
+        href: "/hrms/recruit/career/applications",
+        label: "My Applications",
+        icon: Task,
+        permission: "recruit.jobseeker.application.manage",
+        matchPaths: ["/hrms/recruit/career/applications"],
+      },
+      {
+        href: "/hrms/recruit/career/assistant",
+        label: "Career Assistant",
+        icon: Notification,
+        permission: "recruit.jobseeker.use",
+        matchPaths: ["/hrms/recruit/career/assistant"],
+      },
+      // Administration
+      {
+        href: "/hrms/recruit/settings",
+        label: "Recruit Settings",
+        icon: Settings,
+        permission: "recruit.settings.manage",
+        matchPaths: ["/hrms/recruit/settings"],
+      },
+      {
+        href: "/hrms/recruit/audit",
+        label: "Recruit Audit Log",
+        icon: Security,
+        permission: "recruit.audit.view",
+        matchPaths: ["/hrms/recruit/audit"],
+      },
+    ],
+  },
+  {
     id: "admin",
     href: "/admin",
     label: "Admin",
@@ -834,6 +932,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         icon: Notification,
         permission: "admin.org.manage",
         matchPaths: ["/admin/notifications"],
+      },
+      {
+        href: "/admin/google-chat",
+        label: "Google Chat",
+        icon: Group,
+        permission: "admin.org.manage",
+        matchPaths: ["/admin/google-chat"],
       },
     ],
   },

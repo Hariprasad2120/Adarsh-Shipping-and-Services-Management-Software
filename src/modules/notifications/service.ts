@@ -145,6 +145,25 @@ export async function createNotification(params: CreateNotificationParams) {
           },
         })
       : Promise.resolve(null),
+    // Route to Google Chat non-blocking
+    (async () => {
+      try {
+        const { routeNotification } = await import("@/modules/google-chat/router");
+        await routeNotification({
+          userId: params.userId,
+          orgId: notification.orgId ?? undefined,
+          kind: params.kind,
+          title: params.title,
+          body: params.body,
+          link: params.link,
+          priority: notification.priority,
+          requiresAck: notification.requiresAck,
+          notificationId: notification.id,
+        });
+      } catch {
+        // Never break notification creation for Chat routing failures
+      }
+    })(),
   ]);
 
   return notification;

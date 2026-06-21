@@ -23,11 +23,11 @@ export function ItemsPagination({
   const end = Math.min(page * perPage, total);
 
   return (
-    <div className="sticky bottom-0 z-10 bg-white border-t border-[#d9dee7] px-4 py-2 flex items-center justify-between text-xs text-[#6b7280]">
+    <div className="sticky bottom-0 z-10 bg-surface border-t border-[var(--color-outline-variant)] px-4 py-2 flex items-center justify-between text-xs text-on-surface-variant">
       <div className="flex items-center gap-2">
         <span>Total Count:</span>
-        <span className="font-semibold text-[#212529]">{total}</span>
-        <button className="text-[#2563eb] hover:underline ml-2">View</button>
+        <span className="font-semibold text-on-surface">{total}</span>
+        <button className="text-[#00cec4] hover:underline ml-2">View</button>
       </div>
 
       <div className="flex items-center gap-3">
@@ -42,7 +42,7 @@ export function ItemsPagination({
               onPerPageChange(Number(e.target.value));
               onPageChange(1);
             }}
-            className="border border-[#d9dee7] rounded px-2 py-1 text-xs text-[#212529] bg-white focus:outline-none focus:border-[#00cec4]"
+            className="border border-[var(--color-outline-variant)] rounded-xl px-2 py-1 text-xs text-on-surface bg-surface focus:outline-none focus:border-[#00cec4]"
           >
             {[10, 25, 50, 100].map((n) => (
               <option key={n} value={n}>
@@ -55,20 +55,20 @@ export function ItemsPagination({
         <button
           onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={page <= 1}
-          className="p-1 rounded border border-[#d9dee7] hover:bg-[#f3f5f8] disabled:opacity-40 disabled:cursor-not-allowed"
+          className="p-1 rounded-lg border border-[var(--color-outline-variant)] hover:bg-surface-container-low text-on-surface-variant disabled:opacity-40 disabled:cursor-not-allowed"
           aria-label="Previous page"
         >
           <ChevronLeft size={14} />
         </button>
 
-        <span className="min-w-[60px] text-center">
+        <span className="min-w-[60px] text-center text-on-surface">
           {total === 0 ? "0" : `${start} - ${end}`}
         </span>
 
         <button
           onClick={() => onPageChange(Math.min(totalPages, page + 1))}
           disabled={page >= totalPages}
-          className="p-1 rounded border border-[#d9dee7] hover:bg-[#f3f5f8] disabled:opacity-40 disabled:cursor-not-allowed"
+          className="p-1 rounded-lg border border-[var(--color-outline-variant)] hover:bg-surface-container-low text-on-surface-variant disabled:opacity-40 disabled:cursor-not-allowed"
           aria-label="Next page"
         >
           <ChevronRight size={14} />

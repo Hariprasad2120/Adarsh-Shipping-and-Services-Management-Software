@@ -20,4 +20,12 @@ Before creating, editing, or reviewing any frontend UI:
 - **Never use `border-gray-200`** → use `border-outline-variant`
 - **Never add `p-8` to page root** → `DashboardShell` provides outer padding
 - **Always verify dark mode** before marking UI work complete
+
+## Critical Table Rules
+
+- **Always wrap tables** in `overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm`
+- **Always use `ds-table`** on the `<table>` element — never inline border-collapse/border-spacing
+- **Never use `divide-y`** on `<tbody>` — `ds-table td` border-bottom handles separation
+- **Never use `font-bold` or `font-semibold`** on ordinary `<td>` — only `font-medium` on name columns
+- **Read `design.md` Section 7.1** for the canonical table wrapper hierarchy
 <!-- END:design-system-reference -->

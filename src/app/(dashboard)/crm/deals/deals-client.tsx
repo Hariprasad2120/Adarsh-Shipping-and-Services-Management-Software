@@ -230,43 +230,43 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
         </div>
       ) : (
         /* ─── LIST VIEW ─── */
-        <div className="bg-[#0f1319] border border-[#1c212a]/50 rounded-xl overflow-hidden shadow-2xl">
+        <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
           {filteredDeals.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">No deals matched search criteria</div>
+            <div className="p-8 text-center text-on-surface-variant">No deals matched search criteria</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left text-sm text-slate-200">
+              <table className="ds-table">
                 <thead>
-                  <tr className="border-b border-[#1c212a]/80 bg-[#0c0f14]/80 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    <th className="px-6 py-4">Deal Name</th>
-                    <th className="px-6 py-4">Account Name</th>
-                    <th className="px-6 py-4">Deal Stage</th>
-                    <th className="px-6 py-4">Value</th>
-                    <th className="px-6 py-4">Close Date</th>
-                    <th className="px-6 py-4">Owner</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
+                  <tr>
+                    <th className="px-6 py-3">Deal Name</th>
+                    <th className="px-6 py-3">Account Name</th>
+                    <th className="px-6 py-3">Deal Stage</th>
+                    <th className="px-6 py-3">Value</th>
+                    <th className="px-6 py-3">Close Date</th>
+                    <th className="px-6 py-3">Owner</th>
+                    <th className="px-6 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#1c212a]/30">
+                <tbody>
                   {filteredDeals.map((deal) => (
-                    <tr key={deal.id} className="hover:bg-[#161f28]/35 transition-colors">
-                      <td className="px-6 py-4 font-bold text-white">
-                        <Link href={`/crm/deals/${deal.id}`} className="hover:text-[#00c4b6] hover:underline">
+                    <tr key={deal.id} className="ds-row-link">
+                      <td className="px-6 py-4 font-medium">
+                        <Link href={`/crm/deals/${deal.id}`} className="hover:text-[#00cec4] transition-colors">
                           {deal.name}
                         </Link>
                         {deal.serviceType && (
-                          <span className="text-[10px] text-slate-400 block font-normal mt-0.5">
+                          <span className="ds-label block mt-0.5 font-normal">
                             {deal.serviceType} • {deal.logisticsCategory || "CHA"}
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-slate-300">
+                      <td className="px-6 py-4">
                         {deal.account ? (
-                          <Link href={`/crm/customers/${deal.account.id}`} className="hover:underline text-[#00c4b6]">
+                          <Link href={`/crm/customers/${deal.account.id}`} className="hover:underline text-[#00cec4]">
                             {deal.account.name}
                           </Link>
                         ) : (
-                          <span className="text-slate-500 italic">No account</span>
+                          <span className="text-on-surface-variant italic">No account</span>
                         )}
                       </td>
                       <td className="px-6 py-4">
@@ -275,28 +275,28 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                             ? "bg-emerald-500/10 text-emerald-400"
                             : deal.stage === "LOST"
                             ? "bg-red-500/10 text-red-400"
-                            : "bg-[#00c4b6]/10 text-[#00c4b6]"
+                            : "bg-[#00cec4]/10 text-[#00cec4]"
                         }`}>
                           {deal.stage.replace("_", " ")}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-bold text-[#00c4b6]">
+                      <td className="px-6 py-4 font-medium text-[#00cec4]">
                         ₹{deal.amount.toLocaleString("en-IN")}
                       </td>
-                      <td className="px-6 py-4 text-slate-400 text-xs">
+                      <td className="px-6 py-4 text-on-surface-variant text-xs">
                         {deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString("en-IN") : "No Close Date"}
                       </td>
-                      <td className="px-6 py-4 text-slate-300 text-xs font-semibold">
+                      <td className="px-6 py-4 text-xs">
                         {deal.owner.name}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Link href={`/crm/deals/${deal.id}`} className="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800/40 cursor-pointer">
+                          <Link href={`/crm/deals/${deal.id}`} className="p-1.5 text-on-surface-variant hover:text-on-surface rounded hover:bg-surface-container cursor-pointer">
                             <Eye className="size-4" />
                           </Link>
                           <button
                             onClick={() => handleDelete(deal.id)}
-                            className="p-1.5 text-slate-500 hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer"
+                            className="p-1.5 text-on-surface-variant hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer"
                           >
                             <Trash2 className="size-4" />
                           </button>

@@ -20,6 +20,11 @@ interface ProfileSummaryProps {
   loading: boolean;
 }
 
+type PunchCelebration = {
+  mode: "break" | "resume";
+  token: number;
+} | null;
+
 const attendanceCopy: Record<UserProfile["attendanceStatus"], { label: string; detail: string }> = {
   YET_TO_CHECK_IN: {
     label: "Ready to begin",
@@ -83,7 +88,27 @@ export function ProfileSummary({
   onPunchAction,
   loading,
 }: ProfileSummaryProps) {
+  const [celebration, setCelebration] = useState<PunchCelebration>(null);
+
+  useEffect(() => {
+    if (!celebration) return;
+
+    const timeout = window.setTimeout(() => {
+      setCelebration(null);
+    }, 1900);
+
+    return () => window.clearTimeout(timeout);
+  }, [celebration]);
+
   const handlePunch = async (action: "CHECK_IN" | "CHECK_OUT" | "START_BREAK" | "RESUME_WORK") => {
+    if (action === "START_BREAK") {
+      setCelebration({ mode: "break", token: Date.now() });
+    }
+
+    if (action === "RESUME_WORK") {
+      setCelebration({ mode: "resume", token: Date.now() });
+    }
+
     try {
       await onPunchAction(action);
       toast.success(`Punch action "${action}" registered successfully.`);
@@ -94,6 +119,8 @@ export function ProfileSummary({
 
   const attendanceStatus = attendanceCopy[profile.attendanceStatus];
   const pendingCounts = profile.pendingCounts ?? { leaves: 0, cases: 0, tasks: 0 };
+  const showBreakParty = celebration?.mode === "break";
+  const showResumeParty = celebration?.mode === "resume";
 
   return (
     <section className="overflow-hidden border border-[#d6dfdc] shadow-[0_28px_80px_rgba(15,23,42,0.12)]">
@@ -220,15 +247,43 @@ export function ProfileSummary({
 
             {profile?.attendanceStatus === "CHECKED_IN" && (
               <div className="grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => handlePunch("START_BREAK")}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#d8ddd8] bg-white px-5 py-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-                >
-                  <Coffee className="size-4" />
-                  Start Break
-                </button>
+                <div className="relative">
+                  <button
+                    type="button"
+                    disabled={loading}
+                    onClick={() => handlePunch("START_BREAK")}
+                    className={`relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl border border-[#d8ddd8] bg-white px-5 py-4 text-sm font-semibold text-slate-700 transition disabled:opacity-50 ${
+                      showBreakParty
+                        ? "scale-[1.03] -rotate-1 bg-[#fff7eb] shadow-[0_18px_35px_rgba(217,119,6,0.18)]"
+                        : "hover:bg-slate-50"
+                    }`}
+                  >
+                    <span
+                      className={`absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(251,146,60,0.16),transparent_32%),radial-gradient(circle_at_80%_30%,rgba(0,206,196,0.15),transparent_28%)] transition-opacity duration-300 ${
+                        showBreakParty ? "opacity-100" : "opacity-0"
+                      }`}
+                    />
+                    <Coffee className={`relative size-4 ${showBreakParty ? "animate-bounce" : ""}`} />
+                    <span className="relative">Start Break</span>
+                    {showBreakParty ? (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg">☕</span>
+                    ) : null}
+                  </button>
+
+                  {showBreakParty ? (
+                    <>
+                      <span className="pointer-events-none absolute -top-3 left-5 rounded-full bg-[#fff3dd] px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#c46d09] animate-bounce">
+                        BRB
+                      </span>
+                      <span className="pointer-events-none absolute -right-2 top-2 rounded-full bg-[#ecfdfa] px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#0f8f85] [animation:bounce_1s_ease-in-out_0.15s_2]">
+                        Snack Quest
+                      </span>
+                      <span className="pointer-events-none absolute bottom-[-12px] left-1/2 -translate-x-1/2 rounded-full bg-[#1f2937] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white [animation:fade-in-up_220ms_ease-out,fade-out_260ms_ease-in_1.45s_forwards]">
+                        Bean boost engaged
+                      </span>
+                    </>
+                  ) : null}
+                </div>
                 <button
                   type="button"
                   disabled={loading}
@@ -242,15 +297,43 @@ export function ProfileSummary({
             )}
 
             {profile?.attendanceStatus === "ON_BREAK" && (
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => handlePunch("RESUME_WORK")}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#d97706] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#b86105] disabled:opacity-50"
-              >
-                <Play className="size-4 fill-current" />
-                Resume Work
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handlePunch("RESUME_WORK")}
+                  className={`relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl px-5 py-4 text-sm font-semibold text-white transition disabled:opacity-50 ${
+                    showResumeParty
+                      ? "scale-[1.02] bg-[#ef8f22] shadow-[0_20px_40px_rgba(217,119,6,0.28)]"
+                      : "bg-[#d97706] hover:bg-[#b86105]"
+                  }`}
+                >
+                  <span
+                    className={`absolute inset-0 bg-[linear-gradient(115deg,transparent_0%,rgba(255,255,255,0.15)_30%,transparent_55%),radial-gradient(circle_at_18%_50%,rgba(255,244,214,0.35),transparent_24%)] transition-opacity duration-300 ${
+                      showResumeParty ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                  <Play className={`relative size-4 fill-current ${showResumeParty ? "translate-x-0.5 animate-pulse" : ""}`} />
+                  <span className="relative">Resume Work</span>
+                  {showResumeParty ? (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg">🚀</span>
+                  ) : null}
+                </button>
+
+                {showResumeParty ? (
+                  <>
+                    <span className="pointer-events-none absolute -top-3 left-4 rounded-full bg-[#1d2934] px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#ffe1b8] animate-bounce">
+                      Oops, productivity
+                    </span>
+                    <span className="pointer-events-none absolute right-4 top-[-10px] text-lg [animation:bounce_0.9s_ease-in-out_2]">
+                      ⚡
+                    </span>
+                    <span className="pointer-events-none absolute bottom-[-12px] left-1/2 -translate-x-1/2 rounded-full bg-[#fff2dc] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#b86105] [animation:fade-in-up_220ms_ease-out,fade-out_260ms_ease-in_1.45s_forwards]">
+                      Back to the spreadsheets
+                    </span>
+                  </>
+                ) : null}
+              </div>
             )}
 
             {profile?.attendanceStatus === "CHECKED_OUT" && (

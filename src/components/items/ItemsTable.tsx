@@ -29,10 +29,10 @@ export function ItemsTable({
 
   return (
     <div className="flex-1 overflow-auto">
-      <table className="w-full text-xs border-collapse">
-        <thead className="sticky top-0 z-10 bg-[#f3f5f8]">
+      <table className="ds-table">
+        <thead>
           <tr>
-            <th className="w-8 px-3 py-2.5 border-b border-[#d9dee7]">
+            <th className="w-8 px-3 py-2">
               <input
                 type="checkbox"
                 checked={allSelected}
@@ -40,37 +40,37 @@ export function ItemsTable({
                   if (el) el.indeterminate = someSelected && !allSelected;
                 }}
                 onChange={onToggleAll}
-                className="rounded border-[#d9dee7] accent-[#00cec4]"
+                className="rounded accent-[#00cec4]"
                 aria-label="Select all items"
               />
             </th>
-            <th className="px-3 py-2.5 text-left font-semibold text-[#6b7280] uppercase tracking-wide border-b border-[#d9dee7] whitespace-nowrap">
+            <th className="px-3 py-2 text-left whitespace-nowrap">
               Name
             </th>
-            <th className="px-3 py-2.5 text-left font-semibold text-[#6b7280] uppercase tracking-wide border-b border-[#d9dee7] whitespace-nowrap">
+            <th className="px-3 py-2 text-left whitespace-nowrap">
               SKU
             </th>
-            <th className="px-3 py-2.5 text-left font-semibold text-[#6b7280] uppercase tracking-wide border-b border-[#d9dee7] whitespace-nowrap">
+            <th className="px-3 py-2 text-left whitespace-nowrap">
               Purchase Description
             </th>
-            <th className="px-3 py-2.5 text-right font-semibold text-[#6b7280] uppercase tracking-wide border-b border-[#d9dee7] whitespace-nowrap">
+            <th className="px-3 py-2 text-right whitespace-nowrap">
               Purchase Rate
             </th>
-            <th className="px-3 py-2.5 text-left font-semibold text-[#6b7280] uppercase tracking-wide border-b border-[#d9dee7] whitespace-nowrap">
+            <th className="px-3 py-2 text-left whitespace-nowrap">
               Description
             </th>
-            <th className="px-3 py-2.5 text-right font-semibold text-[#6b7280] uppercase tracking-wide border-b border-[#d9dee7] whitespace-nowrap">
+            <th className="px-3 py-2 text-right whitespace-nowrap">
               Rate
             </th>
-            <th className="px-3 py-2.5 text-left font-semibold text-[#6b7280] uppercase tracking-wide border-b border-[#d9dee7] whitespace-nowrap">
+            <th className="px-3 py-2 text-left whitespace-nowrap">
               HSN/SAC
             </th>
-            <th className="px-3 py-2.5 text-left font-semibold text-[#6b7280] uppercase tracking-wide border-b border-[#d9dee7] whitespace-nowrap">
+            <th className="px-3 py-2 text-left whitespace-nowrap">
               Usage Unit
             </th>
-            <th className="w-10 px-3 py-2.5 text-center border-b border-[#d9dee7]">
+            <th className="w-10 px-3 py-2 text-center">
               <button
-                className="text-[#6b7280] hover:text-[#212529]"
+                className="text-on-surface-variant hover:text-on-surface"
                 aria-label="Advanced search"
                 title="Advanced search"
               >
@@ -82,7 +82,7 @@ export function ItemsTable({
         <tbody>
           {items.length === 0 ? (
             <tr>
-              <td colSpan={10} className="text-center py-16 text-[#6b7280]">
+              <td colSpan={10} className="text-center py-16 text-on-surface-variant">
                 <Package size={32} className="mx-auto mb-3 opacity-30" />
                 <p className="text-sm">No items found.</p>
               </td>
@@ -91,48 +91,48 @@ export function ItemsTable({
             items.map((item) => (
               <tr
                 key={item.id}
-                className={`border-b border-[#d9dee7] hover:bg-[#f7f9fb] transition-colors ${
-                  selectedIds.has(item.id) ? "bg-blue-50" : "bg-white"
+                className={`ds-row-link transition-colors ${
+                  selectedIds.has(item.id) ? "bg-[rgba(0,206,196,0.06)]" : ""
                 }`}
               >
-                <td className="px-3 py-2">
+                <td className="px-3 py-1.5">
                   <input
                     type="checkbox"
                     checked={selectedIds.has(item.id)}
                     onChange={() => onToggleSelect(item.id)}
-                    className="rounded border-[#d9dee7] accent-[#00cec4]"
+                    className="rounded accent-[#00cec4]"
                     aria-label={`Select ${item.name}`}
                   />
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap">
-                  <div className="flex items-center gap-2">
-                    <span className="flex-shrink-0 w-7 h-7 rounded border border-[#d9dee7] bg-[#f3f5f8] flex items-center justify-center text-[#6b7280]">
-                      <Package size={12} />
+                <td className="px-3 py-1.5 whitespace-nowrap">
+                  <div className="flex items-center gap-1.5">
+                    <span className="flex-shrink-0 w-5 h-5 rounded border border-[var(--color-outline-variant)] bg-surface-container-low flex items-center justify-center text-on-surface-variant">
+                      <Package size={10} />
                     </span>
                     <button
                       onClick={() => router.push(`${basePath}/${item.id}`)}
-                      className="text-[#2563eb] hover:underline font-medium text-left"
+                      className="text-[#00cec4] hover:underline font-medium text-left"
                     >
                       {item.name}
                     </button>
                   </div>
                 </td>
-                <td className="px-3 py-2 text-[#212529] whitespace-nowrap">{item.sku || "—"}</td>
-                <td className="px-3 py-2 text-[#6b7280] max-w-[160px] truncate">
+                <td className="px-3 py-1.5 text-on-surface whitespace-nowrap">{item.sku || "—"}</td>
+                <td className="px-3 py-1.5 text-on-surface-variant max-w-[160px] truncate">
                   {item.purchaseDescription || "—"}
                 </td>
-                <td className="px-3 py-2 text-right font-mono text-[#212529] whitespace-nowrap">
+                <td className="px-3 py-1.5 text-right ds-numeric text-on-surface whitespace-nowrap">
                   {formatINRCompact(item.purchaseRate)}
                 </td>
-                <td className="px-3 py-2 text-[#6b7280] max-w-[160px] truncate">
+                <td className="px-3 py-1.5 text-on-surface-variant max-w-[160px] truncate">
                   {item.description || "—"}
                 </td>
-                <td className="px-3 py-2 text-right font-mono text-[#212529] whitespace-nowrap">
+                <td className="px-3 py-1.5 text-right ds-numeric text-on-surface whitespace-nowrap">
                   {formatINRCompact(item.rate)}
                 </td>
-                <td className="px-3 py-2 text-[#212529] whitespace-nowrap">{item.hsnSac || "—"}</td>
-                <td className="px-3 py-2 text-[#212529] whitespace-nowrap">{item.usageUnit || "—"}</td>
-                <td className="px-3 py-2 text-center whitespace-nowrap">
+                <td className="px-3 py-1.5 text-on-surface whitespace-nowrap">{item.hsnSac || "—"}</td>
+                <td className="px-3 py-1.5 text-on-surface whitespace-nowrap">{item.usageUnit || "—"}</td>
+                <td className="px-3 py-1.5 text-center whitespace-nowrap">
                   {onEditItem && (
                     <button
                       type="button"

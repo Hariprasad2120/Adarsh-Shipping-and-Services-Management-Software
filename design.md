@@ -295,6 +295,52 @@ Form label: `text-sm`, `font-medium`, `text-on-surface`.
 
 ---
 
+### 7.1 Canonical Table Implementation
+
+Tables must follow this exact wrapper hierarchy for visible rounded corners, proper clipping, and theme compatibility:
+
+```tsx
+{/* Outer shell: provides rounded corners, clipping, border, and background */}
+<div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+  
+  {/* Optional: Toolbar section */}
+  <div className="p-4 border-b border-outline-variant">
+    {/* Search, filters, actions */}
+  </div>
+  
+  {/* Scroll wrapper: horizontal scrolling on narrow viewports */}
+  <div className="overflow-x-auto">
+    <table className="ds-table">
+      <thead>
+        <tr>
+          <th className="px-6 py-3">Column Header</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr className="ds-row-link">
+          <td className="px-6 py-4">Cell data</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  {/* Optional: Pagination (inside the shell) */}
+</div>
+```
+
+**Rules:**
+- **Border radius** belongs on the outer `overflow-hidden` container — never on `<table>` directly
+- **`overflow-x-auto`** goes on the inner scroll wrapper — not on the clipping container
+- **`ds-table`** uses `border-separate` + `border-spacing: 0` — never use `border-collapse`
+- **`ds-table th`** has `background-color: var(--color-surface-container-low)` — provides subtle header distinction
+- **Last row** has `border-bottom: none` — prevents double border with container
+- **Ordinary data cells** use `font-weight: 400` — only name/identifier columns use `font-medium`
+- **Row separators** use `var(--color-outline-variant)` — never hard-coded hex borders
+- **Do not** use `divide-y` on `<tbody>` — the `ds-table td` border-bottom handles separation
+- **Do not** add `bg-[#0f1319]` or other hard-coded backgrounds — use `bg-surface`
+
+---
+
 ## 8. Stat Card Tones
 
 Defined in `design-tokens.ts` under `statTones`:

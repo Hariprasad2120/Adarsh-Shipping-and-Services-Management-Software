@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getVisibleSectionById } from "@/lib/navigation";
 import { loadCaps } from "@/lib/rbac";
+import { isRecruitEnabled } from "@/lib/recruit-flag";
 import { getOrg, getRoles } from "@/modules/core/organisation/service";
 import { listUsersForDashboard } from "@/modules/core/user/service";
 import { db } from "@/lib/db";
@@ -41,6 +42,7 @@ export default async function HrmsDashboardPage() {
     db.user.count({ where: { orgId, active: true } }),
   ]);
   const hrmsSection = getVisibleSectionById(caps, "hrms");
+  const recruitSection = isRecruitEnabled() ? getVisibleSectionById(caps, "recruit") : null;
 
   const stats = [
     { label: "Active Employees", value: totalActiveCount, icon: Users, color: "text-[#00c4b6]", bg: "bg-[#00c4b6]/10" },
@@ -64,13 +66,28 @@ export default async function HrmsDashboardPage() {
     "Salary Structure": "Build salary structures and update payroll metadata.",
     "Salary Revisions": "Track each employee's latest revision and history.",
     "Payroll Batches": "Run payroll batches and monitor payout prep.",
+    Recruit: "Open hiring and career workflows for employer and employee workspaces.",
+    "Employer Dashboard": "Track openings, candidates, applications, and hiring workflows.",
+    "Career Dashboard": "Manage private career profile, resumes, and job applications.",
   };
 
-  const quickActions = (hrmsSection?.items ?? []).map((item) => ({
-    href: item.href,
-    label: item.label,
-    description: descriptionByLabel[item.label] ?? "Open this HRMS workspace.",
-  }));
+  const quickActions = [
+    ...(hrmsSection?.items ?? []).map((item) => ({
+      href: item.href,
+      label: item.label,
+      description: descriptionByLabel[item.label] ?? "Open this HRMS workspace.",
+    })),
+    ...(recruitSection
+      ? [
+          {
+            href: recruitSection.href,
+            label: recruitSection.label,
+            description:
+              descriptionByLabel[recruitSection.label] ?? "Open this HRMS workspace.",
+          },
+        ]
+      : []),
+  ];
 
   return (
     <>

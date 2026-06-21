@@ -107,7 +107,7 @@ export function DataTablePrimaryLinkCell({
       <Link
         href={href}
         className={cn(
-          "block w-full px-5 py-2.5 text-inherit transition-colors hover:text-[#00b5ad] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#00cec4]/30",
+          "flex w-full items-center px-5 py-2.5 text-inherit transition-colors hover:text-[#00b5ad] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#00cec4]/30",
           linkClassName,
         )}
       >

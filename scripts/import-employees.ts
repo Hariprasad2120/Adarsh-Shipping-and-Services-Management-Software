@@ -10,27 +10,8 @@ const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
 } as ConstructorParameters<typeof PrismaClient>[0]);
 
-const DEFAULT_PASSWORD = "password123";
-const DATA_DIR = "C:/Users/SilverCloud/Documents/Data Excel";
+const DEFAULT_PASSWORD = "password@123";
 const OUTPUT_DIR = path.join(process.cwd(), "import-output");
-
-function firstExistingFile(...candidates: string[]) {
-  const found = candidates.find((candidate) => fs.existsSync(candidate));
-  if (!found) {
-    throw new Error(`Missing source file. Checked: ${candidates.join(", ")}`);
-  }
-  return found;
-}
-
-const FILES = {
-  employees: firstExistingFile(
-    path.join(DATA_DIR, "Employee_corrected_emails.xlsx"),
-    path.join(DATA_DIR, "Employee.xls"),
-  ),
-  salaryDetails: path.join(DATA_DIR, "Employee_Salary_Details.xls"),
-  salaryRevisions: path.join(DATA_DIR, "Salary_Revision.xls"),
-  statutory: path.join(DATA_DIR, "Employee_Statutory_Information.xls"),
-} as const;
 
 type Row = Record<string, unknown>;
 
@@ -42,9 +23,9 @@ type EmployeeAggregate = {
   statutory: Row | null;
 };
 
-function readSheet(filePath: string) {
-  const workbook = XLSX.readFile(filePath, { cellDates: true });
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+function readSheet(workbook: XLSX.WorkBook, sheetName: string): Row[] {
+  const sheet = workbook.Sheets[sheetName];
+  if (!sheet) return [];
   return XLSX.utils.sheet_to_json<Row>(sheet, { defval: null, raw: false });
 }
 
@@ -268,15 +249,98 @@ async function purgeUsersOutsideSource(orgId: string, allowedEmails: string[]) {
   return usersToDelete;
 }
 
+const MANUAL_MATCHES: Record<string, string> = {
+  "admin@adarshshipping.in": "133",
+  "amirthavarshini@adarshshipping.in": "130",
+  "arun.kumar@adarshshipping.in": "128",
+  "bala.m@adarshshipping.in": "162",
+  "goswami.kolkata@adarshshipping.in": "106",
+  "hariharan@adarshshipping.in": "174",
+  "ravi.mumbai@adarshshipping.in": "125",
+  "sathya.m@adarshshipping.in": "108",
+  "shalini.k@adarshshipping.in": "160",
+  "sriram@adarshshipping.in": "186",
+  "sujatha.kolkata@adarshshipping.in": "105",
+};
+
+const normalizeName = (s: string) => String(s || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+
+function matchLoginEmail(
+  dashRow: Row,
+  mailRows: Row[]
+): string | null {
+  const empId = String(dashRow['Employee ID']);
+  
+  // 1. Manual override
+  for (const [mailEmail, manualId] of Object.entries(MANUAL_MATCHES)) {
+    if (manualId === empId) {
+      return mailEmail.toLowerCase();
+    }
+  }
+
+  // 2. Email exact match
+  const dashEmail = String(dashRow['Email address'] || "").trim().toLowerCase();
+  const dashPersonal = String(dashRow['Personal Email Address'] || "").trim().toLowerCase();
+  
+  const emailMatch = mailRows.find(mr => {
+    const mrEmail = String(mr['Email Address [Required]'] || "").trim().toLowerCase();
+    return mrEmail === dashEmail || mrEmail === dashPersonal;
+  });
+  if (emailMatch) {
+    return String(emailMatch['Email Address [Required]']).toLowerCase();
+  }
+
+  // 3. Name match
+  const dashFull = normalizeName(String(dashRow['First Name'] || "") + " " + String(dashRow['Last Name'] || ""));
+  const nameMatch = mailRows.find(mr => {
+    const mrFirst = normalizeName(String(mr['First Name [Required]'] || ""));
+    const mrLast = normalizeName(String(mr['Last Name [Required]'] || ""));
+    const mrFull = normalizeName(String(mr['First Name [Required]'] || "") + " " + String(mr['Last Name [Required]'] || ""));
+    
+    return mrFull === dashFull ||
+           (mrFirst === normalizeName(String(dashRow['First Name'] || "")) && mrLast === normalizeName(String(dashRow['Last Name'] || ""))) ||
+           (mrFirst === normalizeName(String(dashRow['First Name'] || "")) && mrLast.startsWith(normalizeName(String(dashRow['Last Name'] || "")))) ||
+           (normalizeName(String(dashRow['First Name'] || "")) === mrFirst && normalizeName(String(dashRow['Last Name'] || "")).startsWith(mrLast));
+  });
+  
+  if (nameMatch) {
+    return String(nameMatch['Email Address [Required]']).toLowerCase();
+  }
+
+  return null;
+}
+
+function getRoleForUser(email: string, departmentName: string, designation: string): string {
+  const emailLower = email.toLowerCase();
+  const deptLower = departmentName.toLowerCase();
+  const desgLower = designation.toLowerCase();
+
+  if (emailLower === "hr@adarshshipping.in") {
+    return "Admin";
+  }
+  if (deptLower.includes("human resource") || desgLower.includes("hr")) {
+    return "HR";
+  }
+  if (desgLower.includes("manager") || desgLower.includes("assistant manager")) {
+    return "Manager";
+  }
+  if (desgLower.includes("team leader")) {
+    return "TL";
+  }
+  if (desgLower.includes("management") || deptLower.includes("management") || deptLower.includes("directors") || desgLower.includes("consultant")) {
+    return "Director";
+  }
+  return "Employee";
+}
+
 async function main() {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
-  const [employeeRows, salaryRows, revisionRows, statutoryRows] = [
-    readSheet(FILES.employees),
-    readSheet(FILES.salaryDetails),
-    readSheet(FILES.salaryRevisions),
-    readSheet(FILES.statutory),
-  ];
+  const workbook = XLSX.readFile(path.join(process.cwd(), "docs/Employee_View_Sentence_Case.xlsx"));
+  const employeeRows = readSheet(workbook, 'Employee Dasboard Info');
+  const salaryRows = readSheet(workbook, 'Employee salary details');
+  const revisionRows = readSheet(workbook, 'Salary Revision Details');
+  const mailRows = readSheet(workbook, 'Official Mail ID for Logins');
 
   const byEmployeeNumber = new Map<string, EmployeeAggregate>();
 
@@ -295,7 +359,7 @@ async function main() {
   }
 
   for (const row of employeeRows) {
-    const employeeNumber = asString(row["Employee Number"]);
+    const employeeNumber = asString(row["Employee ID"]);
     if (!employeeNumber) continue;
     touch(employeeNumber).employee = row;
   }
@@ -312,15 +376,25 @@ async function main() {
     touch(employeeNumber).salaryRevisions.push(row);
   }
 
-  for (const row of statutoryRows) {
-    const employeeNumber = asString(row["Employee Number"]);
-    if (!employeeNumber) continue;
-    touch(employeeNumber).statutory = row;
-  }
+  // Work emails map for only active users
+  const activeAggregates = [...byEmployeeNumber.values()].filter(aggregate => {
+    if (!aggregate.employee) return false;
+    const status = asString(aggregate.employee["Employee Status"]).toLowerCase();
+    return status === "active";
+  });
 
-  const workEmails = [...byEmployeeNumber.values()]
-    .map((aggregate) => asString(aggregate.employee?.["Work Email"]).toLowerCase())
+  const workEmails = activeAggregates
+    .map((aggregate) => {
+      const emailMatch = matchLoginEmail(aggregate.employee!, mailRows);
+      const email = (emailMatch || asString(aggregate.employee!["Email address"]) || asString(aggregate.employee!["Personal Email Address"])).toLowerCase().trim();
+      return email;
+    })
     .filter(Boolean);
+
+  // Add the default HR Administrator email to make sure they aren't deleted
+  if (!workEmails.includes("hr@adarshshipping.in")) {
+    workEmails.push("hr@adarshshipping.in");
+  }
 
   const org = await db.organisation.findFirstOrThrow();
   const employeeRole = await db.role.findFirstOrThrow({
@@ -350,23 +424,31 @@ async function main() {
 
   const credentials: Array<{ employeeNumber: string; name: string; email: string; password: string }> = [];
   const skipped: Array<{ employeeNumber: string; reason: string }> = [];
+  const userMap = new Map<string, string>();
 
   for (const aggregate of byEmployeeNumber.values()) {
     if (!aggregate.employee) {
-      skipped.push({ employeeNumber: aggregate.employeeNumber, reason: "Missing Employee.xls row" });
+      skipped.push({ employeeNumber: aggregate.employeeNumber, reason: "Missing dashboard row" });
       continue;
     }
 
     const employeeRow = aggregate.employee;
-    const email = asString(employeeRow["Work Email"]).toLowerCase();
+    const status = asString(employeeRow["Employee Status"]).toLowerCase();
+    if (status !== "active") {
+      skipped.push({ employeeNumber: aggregate.employeeNumber, reason: "Not an active employee" });
+      continue;
+    }
+
+    const emailMatch = matchLoginEmail(employeeRow, mailRows);
+    const email = (emailMatch || asString(employeeRow["Email address"]) || asString(aggregate.employee!["Personal Email Address"])).toLowerCase().trim();
     if (!email) {
-      skipped.push({ employeeNumber: aggregate.employeeNumber, reason: "Missing work email" });
+      skipped.push({ employeeNumber: aggregate.employeeNumber, reason: "Missing email address" });
       continue;
     }
 
     const normalizedOrg = normalizeOrganisationAssignment(asString(employeeRow["Department"]));
     const departmentName = normalizedOrg.departmentName;
-    const branchName = asString(employeeRow["Worklocation Name"]);
+    const branchName = asString(employeeRow["Location Name"] || employeeRow["Worklocation Name"]);
 
     let department = departmentName ? departmentByName.get(departmentName.toLowerCase()) ?? null : null;
     if (!department && departmentName) {
@@ -423,6 +505,7 @@ async function main() {
     const name = buildFullName(employeeRow) || asString(aggregate.salaryDetails?.["Employee Name"]) || email;
     const joinDate = parseDate(employeeRow["Date of Joining"]) ?? new Date();
     const exitDate = parseDate(employeeRow["Last Working Day"]);
+    const designation = asNullableString(employeeRow["Designation"]);
 
     const payrollMeta = {
       employeeNumber: aggregate.employeeNumber,
@@ -505,7 +588,7 @@ async function main() {
           email,
           name,
           employeeNumber: parseInt(aggregate.employeeNumber, 10),
-          designation: asNullableString(employeeRow["Designation"]),
+          designation,
           branchId: branch?.id ?? null,
           departmentId: department?.id ?? null,
           divisionId: division?.id ?? null,
@@ -519,7 +602,7 @@ async function main() {
           name,
           employeeNumber: parseInt(aggregate.employeeNumber, 10),
           passwordHash: createdPasswordHash!,
-          designation: asNullableString(employeeRow["Designation"]),
+          designation,
           branchId: branch?.id ?? null,
           departmentId: department?.id ?? null,
           divisionId: division?.id ?? null,
@@ -527,13 +610,24 @@ async function main() {
         },
       });
 
-    if (!existingUser || existingUser.roles.length === 0) {
-      await db.userRole.upsert({
-        where: { userId_roleId: { userId: user.id, roleId: employeeRole.id } },
-        update: {},
-        create: { userId: user.id, roleId: employeeRole.id },
-      });
-    }
+    userMap.set(aggregate.employeeNumber, user.id);
+    userMap.set(email, user.id);
+
+    const mappedRoleName = getRoleForUser(email, departmentName || "", designation || "");
+    const userRoleObj = await db.role.findFirstOrThrow({ where: { orgId: org.id, name: mappedRoleName } });
+    await db.userRole.upsert({
+      where: { userId_roleId: { userId: user.id, roleId: userRoleObj.id } },
+      update: {},
+      create: { userId: user.id, roleId: userRoleObj.id },
+    });
+
+    const basic = asNumber(revision?.["Basic"]) ?? asNumber(aggregate.salaryDetails?.["Basic"]) ?? 0;
+    const hra = asNumber(revision?.["House Rent Allowance"]) ?? asNumber(aggregate.salaryDetails?.["House Rent Allowance"]) ?? 0;
+    const conveyance = asNumber(revision?.["Conveyance Allowance"]) ?? asNumber(aggregate.salaryDetails?.["Conveyance Allowance"]) ?? 0;
+    const transport = asNumber(revision?.["Transport Allowance"]) ?? asNumber(aggregate.salaryDetails?.["Transport Allowance"]) ?? 0;
+    const travelling = asNumber(revision?.["Travelling Allowance"]) ?? asNumber(aggregate.salaryDetails?.["Travelling Allowance"]) ?? 0;
+    const fixedAllowance = asNumber(revision?.["Fixed Allowance"]) ?? asNumber(aggregate.salaryDetails?.["Fixed Allowance"]) ?? 0;
+    const stipend = asNumber(revision?.["Stipend"]) ?? asNumber(aggregate.salaryDetails?.["Stipend"]) ?? 0;
 
     await db.employmentRecord.upsert({
       where: { userId: user.id },
@@ -541,6 +635,13 @@ async function main() {
         joinDate,
         exitDate,
         ctc,
+        basic,
+        hra,
+        conveyance,
+        transport,
+        travelling,
+        fixedAllowance,
+        stipend,
         payrollMeta,
       },
       create: {
@@ -549,6 +650,13 @@ async function main() {
         exitDate,
         ctc,
         priorExperienceYears: 0,
+        basic,
+        hra,
+        conveyance,
+        transport,
+        travelling,
+        fixedAllowance,
+        stipend,
         payrollMeta,
       },
     });
@@ -559,6 +667,26 @@ async function main() {
       email,
       password: existingUser ? "" : DEFAULT_PASSWORD,
     });
+  }
+
+  // Set Manager relationships (Second pass)
+  for (const aggregate of activeAggregates) {
+    const employeeRow = aggregate.employee!;
+    const mgrStr = asString(employeeRow["Reporting Manager"]);
+    if (mgrStr) {
+      const match = mgrStr.match(/\b(\d+)$/);
+      const managerEmpNum = match ? match[1] : null;
+      if (managerEmpNum) {
+        const userId = userMap.get(aggregate.employeeNumber);
+        const managerId = userMap.get(managerEmpNum);
+        if (userId && managerId) {
+          await db.user.update({
+            where: { id: userId },
+            data: { managerId },
+          });
+        }
+      }
+    }
   }
 
   const sortedCredentials = credentials.sort((a, b) => a.name.localeCompare(b.name));
