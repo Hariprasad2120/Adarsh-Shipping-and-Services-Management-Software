@@ -24,10 +24,11 @@ Rule: cyan = action/interactive. Orange = alert/secondary data. Never both on th
 
 ## Typography
 
-- **All text**: Kiona — `--font-sans` and `--font-display` both map to `var(--font-kiona-sans)`. Applied to body and all headings.
+- **Body text**: Geist Sans — `--font-sans` and `--font-display` both map to `var(--font-geist-sans)` in the `@theme inline` block.
+- **Display / Headings**: Kiona Sans is available via `var(--font-kiona-sans)` and exported as `fonts.display` from `design-tokens.ts`.
 - **Numbers/Code**: Geist Mono (`var(--font-mono)`) — use `.ds-numeric` for tabular figures
 
-Headings use `font-weight: 700` with `letter-spacing: -0.025em` (tight tracking). This matches the CRM dashboard heading style — Kiona renders the synthesized bold as a heavier geometric. Body text stays at 400.
+Heading utility classes (`.ds-h1`, `.ds-h2`, `.ds-h3`) inherit font-weight from context. Body text uses `400`.
 
 ### Typography Classes
 
@@ -190,4 +191,31 @@ crm: #38bdf8
 - **No gray borders on inputs** — inputs in `<main>` get cyan borders automatically. Don't override.
 - **No colored backgrounds on buttons** except cyan (`#00cec4`) for primary and red (`#ef4444`) for destructive.
 - **No importing from `Design System/`** — that folder is deleted. All tokens are in `globals.css` and `design-tokens.ts`.
+
+---
+
+## Mandatory: Read `design.md`
+
+**Before creating, editing, or reviewing any frontend UI, read `design.md` at the project root.** It is the authoritative visual standard and contains:
+
+- Complete token tables (colors, typography, spacing, radius, shadows)
+- Light/dark theme mappings with exact values
+- All shared component locations and variants
+- Approved exceptions (module colors, status colors, stat tones)
+- Rules for introducing new tokens
+
+### Implementation Checklist
+
+Every AI agent must report these checks in their final response after UI work:
+
+1. ✅ Used semantic tokens — no raw hex unless approved exception
+2. ✅ Used shared components — no duplicate primitives created
+3. ✅ Light and dark theme verified
+4. ✅ Mobile and desktop layout verified
+5. ✅ Headings use `.ds-h*` with UPPERCASE
+6. ✅ Numbers use `.ds-numeric`
+7. ✅ Tables use `.ds-table`
+8. ✅ No new Tailwind slate/gray classes introduced
+9. ✅ No gray input borders — cyan applied automatically
+10. ✅ No legacy style removed without user approval
 <!-- END:design-system -->
