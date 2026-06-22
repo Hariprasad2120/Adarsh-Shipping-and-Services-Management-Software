@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -230,21 +231,101 @@ fun PostCallOutcomeScreen(
                 }
                 // STATE: Upload completed — show confirmation
                 else if (uploadDone) {
+                    // Animated success card
+                    val scaleAnim = remember { androidx.compose.animation.core.Animatable(0f) }
+                    val glowAlpha = rememberInfiniteTransition(label = "glow").animateFloat(
+                        initialValue = 0.3f,
+                        targetValue = 0.8f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(1200, easing = EaseInOut),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "glow_alpha"
+                    )
+                    val textAlpha = remember { androidx.compose.animation.core.Animatable(0f) }
+                    var countdownSeconds by remember { mutableStateOf(3) }
+
+                    LaunchedEffect(Unit) {
+                        // Scale-in bounce animation
+                        scaleAnim.animateTo(
+                            targetValue = 1f,
+                            animationSpec = spring(
+                                dampingRatio = 0.5f,
+                                stiffness = 300f
+                            )
+                        )
+                        // Fade in text after checkmark animation
+                        textAlpha.animateTo(1f, animationSpec = tween(500))
+                        // Auto-navigate countdown
+                        while (countdownSeconds > 0) {
+                            delay(1000)
+                            countdownSeconds--
+                        }
+                        callTrackingViewModel.clearActiveCall()
+                        onCompleted()
+                    }
+
                     Card(
                         colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                        border = BorderStroke(
+                            2.dp,
+                            CyanPrimary.copy(alpha = glowAlpha.value)
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
                             modifier = Modifier.padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text("✅", fontSize = 40.sp)
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text("RECORDING UPLOADED", color = CyanPrimary, fontSize = 14.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
-                            uploadStatusText?.let {
-                                Text(it, color = OnSurfaceVariant, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+                            // Animated checkmark with glow
+                            Box(contentAlignment = Alignment.Center) {
+                                // Outer glow ring
+                                Box(
+                                    modifier = Modifier
+                                        .size((60 * scaleAnim.value).dp)
+                                        .clip(RoundedCornerShape(50))
+                                        .background(CyanPrimary.copy(alpha = glowAlpha.value * 0.15f))
+                                )
+                                // Checkmark circle
+                                Box(
+                                    modifier = Modifier
+                                        .size((44 * scaleAnim.value).dp)
+                                        .clip(RoundedCornerShape(50))
+                                        .background(CyanPrimary.copy(alpha = 0.9f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = "Success",
+                                        tint = DarkBackground,
+                                        modifier = Modifier.size((24 * scaleAnim.value).dp)
+                                    )
+                                }
                             }
-                            Spacer(modifier = Modifier.height(20.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                "RECORDING UPLOADED",
+                                color = CyanPrimary.copy(alpha = textAlpha.value),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.sp
+                            )
+                            uploadStatusText?.let {
+                                Text(
+                                    it,
+                                    color = OnSurfaceVariant.copy(alpha = textAlpha.value),
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                "Returning to leads in ${countdownSeconds}s...",
+                                color = OnSurfaceVariant.copy(alpha = 0.6f),
+                                fontSize = 10.sp,
+                                fontFamily = FontFamily.Monospace
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
                             Button(
                                 onClick = {
                                     callTrackingViewModel.clearActiveCall()

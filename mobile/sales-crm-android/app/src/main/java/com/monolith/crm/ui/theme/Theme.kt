@@ -2,6 +2,7 @@ package com.monolith.crm.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
 private val DarkColorScheme = darkColorScheme(
@@ -17,12 +18,28 @@ private val DarkColorScheme = darkColorScheme(
     outline = OutlineColor
 )
 
+private val LightColorScheme = lightColorScheme(
+    primary = CyanPrimary,
+    secondary = CyanAccent,
+    background = LightBackground,
+    surface = LightSurface,
+    onPrimary = LightBackground,
+    onSecondary = LightBackground,
+    onBackground = LightOnSurface,
+    onSurface = LightOnSurface,
+    onSurfaceVariant = LightOnSurfaceVariant,
+    outline = LightOutlineColor
+)
+
 @Composable
 fun MonolithSalesCRMTheme(
+    isDarkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val colorScheme = if (isDarkTheme) DarkColorScheme else LightColorScheme
+
     MaterialTheme(
-        colorScheme = DarkColorScheme,
+        colorScheme = colorScheme,
         typography = Typography,
         content = content
     )

@@ -2,14 +2,17 @@ package com.monolith.crm.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,6 +40,7 @@ fun LeadsScreen(
     viewModel: LeadsViewModel,
     onLeadSelected: (LeadMetadata) -> Unit,
     onMonaClicked: () -> Unit,
+    onSettingsClicked: () -> Unit,
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
@@ -76,6 +80,28 @@ fun LeadsScreen(
         }
     }
 
+    // Start auto-refresh when this screen is displayed
+    DisposableEffect(Unit) {
+        viewModel.startAutoRefresh()
+        onDispose {
+            viewModel.stopAutoRefresh()
+        }
+    }
+
+    // Calculate time since last refresh
+    var timeSinceRefresh by remember { mutableStateOf("just now") }
+    LaunchedEffect(viewModel.lastRefreshTime) {
+        while (true) {
+            val elapsed = (System.currentTimeMillis() - viewModel.lastRefreshTime) / 1000
+            timeSinceRefresh = when {
+                elapsed < 5 -> "just now"
+                elapsed < 60 -> "${elapsed}s ago"
+                else -> "${elapsed / 60}m ago"
+            }
+            kotlinx.coroutines.delay(5000)
+        }
+    }
+
     if (showChangelog) {
         AlertDialog(
             onDismissRequest = {
@@ -99,11 +125,13 @@ fun LeadsScreen(
                     )
                     listOf(
                         "🔒 Saved corporate login credentials securely using EncryptedSharedPreferences.",
-                        "💎 Integrated 3D rotating prism wireframe logo on the login screen.",
+                        "💎 Integrated 3D rotating cube wireframe logo on the login screen.",
                         "📲 Added automated in-app updater to push silent APK updates.",
-                        "⚙️ Repositioned the debug FAB to the top-right to prevent layout blocking.",
-                        "⚠️ Reset consent terms screen automatically upon new build installations.",
-                        "🔔 Request CRM outbound and media audio permissions on terms agreement."
+                        "⚙️ Added Settings panel with theme toggle and version info.",
+                        "📋 Added Enquiries tab for interested/follow-up leads.",
+                        "🔄 Leads auto-refresh every 30 seconds.",
+                        "🎯 Debug FAB is now draggable — move it anywhere on screen.",
+                        "📱 Fixed orientation change app refresh issue."
                     ).forEach { item ->
                         Text(
                             text = "• $item",
@@ -143,6 +171,9 @@ fun LeadsScreen(
                     }
                     IconButton(onClick = { viewModel.fetchLeads() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = Color.White)
+                    }
+                    IconButton(onClick = onSettingsClicked) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = OnSurfaceVariant)
                     }
                     IconButton(onClick = onLogout) {
                         Icon(Icons.Default.ExitToApp, contentDescription = "Logout", tint = Color(0xFFef4444))
@@ -187,12 +218,13 @@ fun LeadsScreen(
                 }
             }
 
-            // Tab Row — matching web CRM tabs
+            // Tab Row — scrollable to fit 4 tabs
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp)
-                    .padding(top = 4.dp, bottom = 8.dp),
+                    .padding(top = 4.dp, bottom = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 TabChip(
@@ -200,21 +232,46 @@ fun LeadsScreen(
                     count = viewModel.unopenedLeads.size,
                     isSelected = viewModel.currentTab == "unopened",
                     onClick = { viewModel.currentTab = "unopened" },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.widthIn(min = 80.dp)
                 )
                 TabChip(
                     label = "NOT INTERESTED",
                     count = viewModel.notInterestedLeads.size,
                     isSelected = viewModel.currentTab == "not_interested",
                     onClick = { viewModel.currentTab = "not_interested" },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.widthIn(min = 80.dp)
                 )
                 TabChip(
                     label = "UNREACHABLE",
                     count = viewModel.unreachableLeads.size,
                     isSelected = viewModel.currentTab == "unreachable",
                     onClick = { viewModel.currentTab = "unreachable" },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.widthIn(min = 80.dp)
+                )
+                TabChip(
+                    label = "ENQUIRIES",
+                    count = viewModel.enquiryLeads.size,
+                    isSelected = viewModel.currentTab == "enquiries",
+                    onClick = { viewModel.currentTab = "enquiries" },
+                    modifier = Modifier.widthIn(min = 80.dp),
+                    accentColor = Color(0xFF10B981)
+                )
+            }
+
+            // Auto-refresh indicator
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 4.dp),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "↻ $timeSinceRefresh",
+                    color = OnSurfaceVariant.copy(alpha = 0.5f),
+                    fontSize = 9.sp,
+                    fontFamily = FontFamily.Monospace
                 )
             }
 
@@ -230,6 +287,7 @@ fun LeadsScreen(
                             text = when (viewModel.currentTab) {
                                 "not_interested" -> "No uninterested leads"
                                 "unreachable" -> "No unreachable leads"
+                                "enquiries" -> "No active enquiries"
                                 else -> "No active leads"
                             },
                             color = OnSurfaceVariant,
@@ -240,6 +298,7 @@ fun LeadsScreen(
                             text = when (viewModel.currentTab) {
                                 "not_interested" -> "Leads marked as Not Interested show here"
                                 "unreachable" -> "Not Picked / Not Reachable leads in 2hr cooldown show here"
+                                "enquiries" -> "Interested and Follow-Up leads will appear here"
                                 else -> "All leads have been processed or are in cooldown"
                             },
                             color = OnSurfaceVariant.copy(alpha = 0.6f),
@@ -258,6 +317,7 @@ fun LeadsScreen(
                         LeadCard(
                             lead = lead,
                             isUnreachableTab = viewModel.currentTab == "unreachable",
+                            isEnquiriesTab = viewModel.currentTab == "enquiries",
                             timerText = if (viewModel.currentTab == "unreachable") viewModel.getTimerText(lead.updatedAt) else null,
                             onClick = { onLeadSelected(lead) }
                         )
@@ -275,11 +335,13 @@ private fun TabChip(
     count: Int,
     isSelected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    accentColor: Color? = null
 ) {
-    val bgColor = if (isSelected) CyanPrimary.copy(alpha = 0.15f) else DarkSurface
-    val textColor = if (isSelected) CyanPrimary else OnSurfaceVariant
-    val borderColor = if (isSelected) CyanPrimary.copy(alpha = 0.4f) else Color.Transparent
+    val activeColor = accentColor ?: CyanPrimary
+    val bgColor = if (isSelected) activeColor.copy(alpha = 0.15f) else DarkSurface
+    val textColor = if (isSelected) activeColor else OnSurfaceVariant
+    val borderColor = if (isSelected) activeColor.copy(alpha = 0.4f) else Color.Transparent
 
     Surface(
         shape = RoundedCornerShape(10.dp),
@@ -318,6 +380,7 @@ private fun TabChip(
 private fun LeadCard(
     lead: LeadMetadata,
     isUnreachableTab: Boolean,
+    isEnquiriesTab: Boolean = false,
     timerText: String?,
     onClick: () -> Unit
 ) {
@@ -329,6 +392,7 @@ private fun LeadCard(
         "NOT_PICKED" -> OrangeAlert
         "NOT_REACHABLE" -> OrangeAlert
         "INTERESTED" -> Color(0xFF10B981)
+        "FOLLOW_UP" -> Color(0xFF8B5CF6)
         "LOST" -> Color(0xFFEF4444)
         else -> Color(0xFFF59E0B)
     }
@@ -394,6 +458,17 @@ private fun LeadCard(
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Monospace,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+
+            // Enquiry indicator for enquiries tab
+            if (isEnquiriesTab) {
+                Text(
+                    text = if (lead.status == "INTERESTED") "📋 Active Enquiry" else "🔄 Follow-Up Required",
+                    color = if (lead.status == "INTERESTED") Color(0xFF10B981) else Color(0xFF8B5CF6),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }

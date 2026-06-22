@@ -9,6 +9,8 @@ import androidx.lifecycle.viewModelScope
 import com.monolith.crm.data.remote.LeadMetadata
 import com.monolith.crm.data.repository.CrmRepository
 import com.monolith.crm.ui.components.AppLogger
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -22,6 +24,11 @@ class LeadsViewModel(private val repository: CrmRepository) : ViewModel() {
     var errorMessage by mutableStateOf<String?>(null)
     var selectedLead by mutableStateOf<LeadMetadata?>(null)
     var currentTab by mutableStateOf("unopened")
+
+    // Auto-refresh
+    private var autoRefreshJob: Job? = null
+    var lastRefreshTime by mutableStateOf(System.currentTimeMillis())
+        private set
 
     // Categorized lead lists — matching web CRM logic
     val unopenedLeads: List<LeadMetadata>
@@ -53,10 +60,15 @@ class LeadsViewModel(private val repository: CrmRepository) : ViewModel() {
             }
         }
 
+    // Enquiry leads — INTERESTED / FOLLOW_UP status
+    val enquiryLeads: List<LeadMetadata>
+        get() = allLeads.filter { it.status == "INTERESTED" || it.status == "FOLLOW_UP" }
+
     val displayedLeads: List<LeadMetadata>
         get() = when (currentTab) {
             "not_interested" -> notInterestedLeads
             "unreachable" -> unreachableLeads
+            "enquiries" -> enquiryLeads
             else -> unopenedLeads
         }
 
@@ -68,12 +80,39 @@ class LeadsViewModel(private val repository: CrmRepository) : ViewModel() {
             isLoading = false
             if (result.isSuccess) {
                 allLeads = result.getOrDefault(emptyList())
+                lastRefreshTime = System.currentTimeMillis()
                 AppLogger.info("Leads", "Fetched ${allLeads.size} leads")
             } else {
                 errorMessage = result.exceptionOrNull()?.message ?: "Failed to load leads"
                 AppLogger.error("Leads", "Failed to fetch leads", result.exceptionOrNull())
             }
         }
+    }
+
+    // Auto-refresh every 30 seconds
+    fun startAutoRefresh() {
+        if (autoRefreshJob?.isActive == true) return
+        autoRefreshJob = viewModelScope.launch {
+            while (true) {
+                delay(30_000L)
+                val result = repository.getAssignedLeads()
+                if (result.isSuccess) {
+                    allLeads = result.getOrDefault(emptyList())
+                    lastRefreshTime = System.currentTimeMillis()
+                    AppLogger.info("Leads", "Auto-refreshed: ${allLeads.size} leads")
+                }
+            }
+        }
+    }
+
+    fun stopAutoRefresh() {
+        autoRefreshJob?.cancel()
+        autoRefreshJob = null
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        stopAutoRefresh()
     }
 
     var isMockCallMode by mutableStateOf(repository.isMockCallMode())

@@ -148,11 +148,21 @@ class CrmRepository(private val context: Context) {
             } else {
                 val errorBody = response.errorBody()?.string()
                 val msg = try {
-                    // Try to extract JSON error message
-                    val json = com.google.gson.JsonParser.parseString(errorBody ?: "").asJsonObject
-                    json.get("error")?.asString ?: "Login failed (HTTP ${response.code()})"
+                    // Check if response is HTML (server error page) instead of JSON
+                    if (errorBody != null && (errorBody.trimStart().startsWith("<!") || errorBody.trimStart().startsWith("<html"))) {
+                        "Server returned unexpected response (HTTP ${response.code()}). Check server URL in debug panel."
+                    } else {
+                        // Try to extract JSON error message
+                        val json = com.google.gson.JsonParser.parseString(errorBody ?: "").asJsonObject
+                        json.get("error")?.asString ?: "Login failed (HTTP ${response.code()})"
+                    }
                 } catch (_: Exception) {
-                    errorBody?.take(200) ?: "Login failed (HTTP ${response.code()})"
+                    when (response.code()) {
+                        401 -> "Invalid email or password"
+                        404 -> "API endpoint not found — check server URL"
+                        500 -> "Server error — please try again"
+                        else -> "Login failed (HTTP ${response.code()})"
+                    }
                 }
                 Result.failure(Exception(msg))
             }
@@ -398,6 +408,18 @@ class CrmRepository(private val context: Context) {
     fun getLastViewedChangelogVersion(): Long = sharedPreferences.getLong("last_viewed_changelog_version", 0L)
     fun setLastViewedChangelogVersion(versionCode: Long) {
         sharedPreferences.edit().putLong("last_viewed_changelog_version", versionCode).apply()
+    }
+
+    // ── Theme preference ──
+    fun isDarkTheme(): Boolean = sharedPreferences.getBoolean("dark_theme", true)
+    fun setDarkTheme(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("dark_theme", enabled).apply()
+    }
+
+    // ── Dismissed update version ──
+    fun getDismissedUpdateVersion(): Long = sharedPreferences.getLong("dismissed_update_version", 0L)
+    fun setDismissedUpdateVersion(versionCode: Long) {
+        sharedPreferences.edit().putLong("dismissed_update_version", versionCode).apply()
     }
 
     data class ActiveCall(val attemptId: String, val leadId: String, val phone: String, val startTime: Long)

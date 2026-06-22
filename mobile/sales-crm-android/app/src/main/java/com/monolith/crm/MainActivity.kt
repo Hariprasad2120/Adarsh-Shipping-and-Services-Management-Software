@@ -52,6 +52,9 @@ class MainActivity : ComponentActivity() {
     private var loadingText by mutableStateOf("Loading...")
     private var updateDialogInfo by mutableStateOf<com.monolith.crm.data.remote.AppUpdateResponse?>(null)
 
+    // Theme state
+    private var isDarkTheme by mutableStateOf(true)
+
     // Permission request launcher
     private val requestPermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -92,12 +95,22 @@ class MainActivity : ComponentActivity() {
         // Refresh AuthViewModel's state to match
         authViewModel.hasConsent = repository.hasConsent()
 
+        // Load theme preference
+        isDarkTheme = repository.isDarkTheme()
+
+        // Try auto-login if consent was just reset but we have valid credentials
+        if (authViewModel.hasConsent && !authViewModel.isLoggedIn) {
+            authViewModel.tryAutoLogin {
+                leadsViewModel.fetchLeads()
+            }
+        }
+
         setContent {
-            MonolithSalesCRMTheme {
+            MonolithSalesCRMTheme(isDarkTheme = isDarkTheme) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     MainNavigation()
                     
-                    // Floating debug log overlay — always on top, repositioned to TopEnd
+                    // Floating debug log overlay — always on top, now draggable
                     DebugLogOverlay(repository = repository)
 
                     // Global Loading/Updating overlay
@@ -133,7 +146,11 @@ class MainActivity : ComponentActivity() {
                     // Dynamic In-App Update Dialog
                     updateDialogInfo?.let { update ->
                         AlertDialog(
-                            onDismissRequest = { updateDialogInfo = null },
+                            onDismissRequest = {
+                                // When dismissed, save the dismissed version so we don't prompt again
+                                repository.setDismissedUpdateVersion(update.versionCode.toLong())
+                                updateDialogInfo = null
+                            },
                             title = {
                                 Text(
                                     "App Update Available",
@@ -168,7 +185,10 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
                             dismissButton = {
-                                TextButton(onClick = { updateDialogInfo = null }) {
+                                TextButton(onClick = {
+                                    repository.setDismissedUpdateVersion(update.versionCode.toLong())
+                                    updateDialogInfo = null
+                                }) {
                                     Text("LATER", color = Color.White)
                                 }
                             },
@@ -185,19 +205,39 @@ class MainActivity : ComponentActivity() {
         callTrackingViewModel.checkActiveCall()
     }
 
-    private fun checkForUpdates() {
+    fun checkForUpdates(forceShow: Boolean = false) {
         lifecycleScope.launch {
             val result = repository.checkUpdate()
             if (result.isSuccess) {
                 val update = result.getOrNull()
                 if (update != null && update.versionCode > currentVersionCode) {
-                    AppLogger.info("Update", "New update detected: Code ${update.versionCode}, Name ${update.versionName}")
-                    updateDialogInfo = update
+                    // Only show if not previously dismissed (unless forced from settings)
+                    val dismissedVersion = repository.getDismissedUpdateVersion()
+                    if (forceShow || update.versionCode.toLong() > dismissedVersion) {
+                        AppLogger.info("Update", "New update detected: Code ${update.versionCode}, Name ${update.versionName}")
+                        updateDialogInfo = update
+                    } else {
+                        AppLogger.info("Update", "Update v${update.versionCode} already dismissed, skipping notification")
+                    }
+                } else if (forceShow) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@MainActivity, "You're on the latest version (v${currentVersionCode})", Toast.LENGTH_SHORT).show()
+                    }
                 }
             } else {
                 AppLogger.warn("Update", "Update check failed: ${result.exceptionOrNull()?.message}")
+                if (forceShow) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@MainActivity, "Failed to check for updates", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
+    }
+
+    fun toggleTheme(dark: Boolean) {
+        isDarkTheme = dark
+        repository.setDarkTheme(dark)
     }
 
     private fun downloadAndInstallApk(url: String) {
@@ -305,6 +345,10 @@ class MainActivity : ComponentActivity() {
 
                         authViewModel.submitConsent(true) {
                             repository.recordConsentAccepted(currentVersionCode)
+                            // After consent, try auto-login so user doesn't need to re-enter credentials
+                            authViewModel.tryAutoLogin {
+                                leadsViewModel.fetchLeads()
+                            }
                         }
                     },
                     onDecline = { finish() }
@@ -369,6 +413,9 @@ class MainActivity : ComponentActivity() {
                                 currentScreen = Screen.MonaChat
                                 isGlobalLoading = false
                             },
+                            onSettingsClicked = {
+                                currentScreen = Screen.Settings
+                            },
                             onLogout = {
                                 isGlobalLoading = true
                                 loadingText = "Logging out..."
@@ -411,6 +458,17 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     }
+                    is Screen.Settings -> {
+                        SettingsScreen(
+                            repository = repository,
+                            isDarkTheme = isDarkTheme,
+                            onThemeChanged = { dark -> toggleTheme(dark) },
+                            onCheckUpdate = { checkForUpdates(forceShow = true) },
+                            onBack = {
+                                currentScreen = Screen.Dashboard
+                            }
+                        )
+                    }
                     else -> {
                         currentScreen = Screen.Dashboard
                     }
@@ -424,5 +482,6 @@ class MainActivity : ComponentActivity() {
         object LeadDetails : Screen
         object PostCallOutcome : Screen
         object MonaChat : Screen
+        object Settings : Screen
     }
 }
