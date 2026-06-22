@@ -21,6 +21,35 @@ class AuthViewModel(private val repository: CrmRepository) : ViewModel() {
     var hasConsent by mutableStateOf(repository.hasConsent())
     var hasFolderSetup by mutableStateOf(repository.getSelectedFolderUri() != null)
 
+    /**
+     * Attempt auto-login if the user previously enabled Remember Me
+     * and a valid auth token already exists. This prevents the user
+     * from having to re-enter credentials every time they open the app
+     * (especially after consent resets on new builds).
+     */
+    fun tryAutoLogin(onSuccess: () -> Unit) {
+        // If we already have a valid token, we're already logged in
+        if (repository.getAuthToken() != null) {
+            isLoggedIn = true
+            AppLogger.info("Auth", "Auto-restored session from saved token")
+            onSuccess()
+            return
+        }
+
+        // If Remember Me is enabled and we have saved credentials, perform silent login
+        if (repository.isRememberMeEnabled()) {
+            val savedEmail = repository.getRememberedEmail()
+            val savedPassword = repository.getRememberedPassword()
+            if (savedEmail.isNotBlank() && savedPassword.isNotBlank()) {
+                email = savedEmail
+                password = savedPassword
+                AppLogger.info("Auth", "Attempting auto-login with saved credentials")
+                login(onSuccess)
+                return
+            }
+        }
+    }
+
     fun login(onSuccess: () -> Unit) {
         errorMessage = null
         if (email.isBlank() || password.isBlank()) {

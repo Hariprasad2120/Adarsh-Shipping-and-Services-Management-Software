@@ -11,8 +11,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -51,8 +51,8 @@ fun LoginScreen(
                 modifier = Modifier.padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Cool 3D Executable code style Prism Logo
-                Rotating3DPrism(
+                // Clean 3D rotating cube wireframe — no text overlay
+                Rotating3DCube(
                     modifier = Modifier
                         .size(140.dp)
                         .padding(bottom = 12.dp)
@@ -161,166 +161,190 @@ fun LoginScreen(
     }
 }
 
+/**
+ * Clean 3D rotating cube wireframe with dual-axis rotation,
+ * pulsating vertex glow, and subtle scan line. No text overlay.
+ */
 @Composable
-fun Rotating3DPrism(modifier: Modifier = Modifier) {
-    val infiniteTransition = rememberInfiniteTransition(label = "prism_rotation")
-    
-    // Constant rotation angle
-    val angle by infiniteTransition.animateFloat(
+fun Rotating3DCube(modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "cube_rotation")
+
+    // Primary Y-axis rotation
+    val angleY by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 8000, easing = LinearEasing),
+            animation = tween(durationMillis = 10000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "prism_angle"
+        label = "cube_angle_y"
     )
 
-    // Laser scanning line progress
+    // Subtle X-axis tilt
+    val angleX by infiniteTransition.animateFloat(
+        initialValue = -15f,
+        targetValue = 15f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 6000, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "cube_angle_x"
+    )
+
+    // Vertex glow pulsation
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2000, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "cube_glow"
+    )
+
+    // Scan line progress
     val scanProgress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 3500, easing = EaseInOut),
+            animation = tween(durationMillis = 4000, easing = EaseInOut),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "prism_scan"
+        label = "cube_scan"
     )
-
-    // Setup Text Paint for real-time overlay metrics
-    val paintText = remember {
-        android.graphics.Paint().apply {
-            color = android.graphics.Color.parseColor("#00cec4")
-            textSize = 20f
-            typeface = android.graphics.Typeface.MONOSPACE
-            alpha = 180
-            isAntiAlias = true
-        }
-    }
-
-    val orangePaintText = remember {
-        android.graphics.Paint().apply {
-            color = android.graphics.Color.parseColor("#fb923c")
-            textSize = 16f
-            typeface = android.graphics.Typeface.MONOSPACE
-            alpha = 140
-            isAntiAlias = true
-        }
-    }
 
     Canvas(modifier = modifier) {
         val centerX = size.width / 2
         val centerY = size.height / 2
-        val scale = size.minDimension * 0.35f
-        val rad = Math.toRadians(angle.toDouble())
-
-        // Top triangle (y = -0.7) and Bottom triangle (y = 0.7)
-        val yTop = -0.7f
-        val yBottom = 0.7f
-
-        // Angle offsets for triangular faces (120 degrees apart)
-        val alpha0 = 0.0
-        val alpha1 = 2.0 * PI / 3.0
-        val alpha2 = 4.0 * PI / 3.0
-
-        val r = 0.85f // radius in 3D space
-
-        // 3D rotated point projection helper
-        fun project(x3d: Float, y3d: Float, z3d: Float): androidx.compose.ui.geometry.Offset {
-            // Rotate around Y axis
-            val xr = x3d * cos(rad) - z3d * sin(rad)
-            val yr = y3d
-            val zr = x3d * sin(rad) + z3d * cos(rad)
-
-            // Perspective division
-            val distance = 2.4f
-            val factor = distance / (distance - zr)
-            val sx = centerX + xr * factor * scale
-            val sy = centerY + yr * factor * scale
-            return androidx.compose.ui.geometry.Offset(sx.toFloat(), sy.toFloat())
-        }
-
-        // Draw Coordinate Grid Lines (Axes)
-        drawLine(
-            color = Color.White.copy(alpha = 0.1f),
-            start = androidx.compose.ui.geometry.Offset(0f, centerY),
-            end = androidx.compose.ui.geometry.Offset(size.width, centerY),
-            strokeWidth = 1f
-        )
-        drawLine(
-            color = Color.White.copy(alpha = 0.1f),
-            start = androidx.compose.ui.geometry.Offset(centerX, 0f),
-            end = androidx.compose.ui.geometry.Offset(centerX, size.height),
-            strokeWidth = 1f
-        )
-
-        // Project top face points
-        val p0 = project((r * cos(alpha0)).toFloat(), yTop, (r * sin(alpha0)).toFloat())
-        val p1 = project((r * cos(alpha1)).toFloat(), yTop, (r * sin(alpha1)).toFloat())
-        val p2 = project((r * cos(alpha2)).toFloat(), yTop, (r * sin(alpha2)).toFloat())
-
-        // Project bottom face points
-        val p3 = project((r * cos(alpha0)).toFloat(), yBottom, (r * sin(alpha0)).toFloat())
-        val p4 = project((r * cos(alpha1)).toFloat(), yBottom, (r * sin(alpha1)).toFloat())
-        val p5 = project((r * cos(alpha2)).toFloat(), yBottom, (r * sin(alpha2)).toFloat())
+        val scale = size.minDimension * 0.30f
+        val radY = Math.toRadians(angleY.toDouble())
+        val radX = Math.toRadians(angleX.toDouble())
 
         val cyanColor = CyanPrimary
         val orangeColor = Color(0xFFFB923C)
 
-        // Draw top face wireframe
-        drawLine(cyanColor.copy(alpha = 0.8f), p0, p1, strokeWidth = 2.5f)
-        drawLine(cyanColor.copy(alpha = 0.8f), p1, p2, strokeWidth = 2.5f)
-        drawLine(cyanColor.copy(alpha = 0.8f), p2, p0, strokeWidth = 2.5f)
-
-        // Draw bottom face wireframe
-        drawLine(cyanColor.copy(alpha = 0.8f), p3, p4, strokeWidth = 2.5f)
-        drawLine(cyanColor.copy(alpha = 0.8f), p4, p5, strokeWidth = 2.5f)
-        drawLine(cyanColor.copy(alpha = 0.8f), p5, p3, strokeWidth = 2.5f)
-
-        // Draw vertical columns
-        drawLine(cyanColor.copy(alpha = 0.8f), p0, p3, strokeWidth = 2.5f)
-        drawLine(cyanColor.copy(alpha = 0.8f), p1, p4, strokeWidth = 2.5f)
-        drawLine(cyanColor.copy(alpha = 0.8f), p2, p5, strokeWidth = 2.5f)
-
-        // Dynamic diag wireframe lines (Orange alert colors)
-        drawLine(orangeColor.copy(alpha = 0.3f), p0, p4, strokeWidth = 1f)
-        drawLine(orangeColor.copy(alpha = 0.3f), p1, p5, strokeWidth = 1f)
-        drawLine(orangeColor.copy(alpha = 0.3f), p2, p3, strokeWidth = 1f)
-
-        // Draw glowing vertex points
-        val vertices = listOf(p0, p1, p2, p3, p4, p5)
-        for (p in vertices) {
-            drawCircle(cyanColor, radius = 5f, center = p)
-            drawCircle(cyanColor.copy(alpha = 0.3f), radius = 10f, center = p)
-        }
-
-        // Draw dynamic laser scanning line
-        val scanY = (centerY - scale) + (2 * scale * scanProgress)
-        drawLine(
-            color = orangeColor.copy(alpha = 0.6f),
-            start = androidx.compose.ui.geometry.Offset(centerX - scale * 1.3f, scanY),
-            end = androidx.compose.ui.geometry.Offset(centerX + scale * 1.3f, scanY),
-            strokeWidth = 2f
-        )
-        // Subtler glow for scan line
-        drawLine(
-            color = orangeColor.copy(alpha = 0.2f),
-            start = androidx.compose.ui.geometry.Offset(centerX - scale * 1.3f, scanY),
-            end = androidx.compose.ui.geometry.Offset(centerX + scale * 1.3f, scanY),
-            strokeWidth = 6f
+        // Cube vertices in 3D space (unit cube centered at origin)
+        val cubeVertices = listOf(
+            Triple(-0.7f, -0.7f, -0.7f), // 0: front-top-left
+            Triple( 0.7f, -0.7f, -0.7f), // 1: front-top-right
+            Triple( 0.7f,  0.7f, -0.7f), // 2: front-bottom-right
+            Triple(-0.7f,  0.7f, -0.7f), // 3: front-bottom-left
+            Triple(-0.7f, -0.7f,  0.7f), // 4: back-top-left
+            Triple( 0.7f, -0.7f,  0.7f), // 5: back-top-right
+            Triple( 0.7f,  0.7f,  0.7f), // 6: back-bottom-right
+            Triple(-0.7f,  0.7f,  0.7f)  // 7: back-bottom-left
         )
 
-        // Render real-time overlay vector code & values
-        drawContext.canvas.nativeCanvas.apply {
-            drawText("MONOLITH.EXE", 12f, 24f, paintText)
-            drawText("DEG: ${angle.toInt()}°", 12f, 48f, paintText)
-            
-            // Render mock running algorithm vectors
-            drawText("V_X: ${(cos(rad) * r).toString().take(5)}", 12f, size.height - 36f, orangePaintText)
-            drawText("V_Z: ${(sin(rad) * r).toString().take(5)}", 12f, size.height - 18f, orangePaintText)
-            
-            drawText("STATE: PLOTTING_3D", size.width - 200f, 24f, paintText)
-            drawText("RATE: 60FPS", size.width - 120f, 48f, orangePaintText)
+        // 3D projection with dual-axis rotation
+        fun project(x3d: Float, y3d: Float, z3d: Float): Offset {
+            // Rotate around X axis (tilt)
+            val y1 = y3d * cos(radX).toFloat() - z3d * sin(radX).toFloat()
+            val z1 = y3d * sin(radX).toFloat() + z3d * cos(radX).toFloat()
+
+            // Rotate around Y axis (spin)
+            val x2 = x3d * cos(radY).toFloat() - z1 * sin(radY).toFloat()
+            val z2 = x3d * sin(radY).toFloat() + z1 * cos(radY).toFloat()
+
+            // Perspective projection
+            val distance = 3.0f
+            val factor = distance / (distance - z2)
+            val sx = centerX + x2 * factor * scale
+            val sy = centerY + y1 * factor * scale
+            return Offset(sx, sy)
         }
+
+        // Project all vertices
+        val projected = cubeVertices.map { (x, y, z) -> project(x, y, z) }
+
+        // Draw subtle grid lines
+        drawLine(
+            color = Color.White.copy(alpha = 0.05f),
+            start = Offset(0f, centerY),
+            end = Offset(size.width, centerY),
+            strokeWidth = 0.5f
+        )
+        drawLine(
+            color = Color.White.copy(alpha = 0.05f),
+            start = Offset(centerX, 0f),
+            end = Offset(centerX, size.height),
+            strokeWidth = 0.5f
+        )
+
+        // Cube edges — 12 edges total
+        val edges = listOf(
+            // Front face
+            0 to 1, 1 to 2, 2 to 3, 3 to 0,
+            // Back face
+            4 to 5, 5 to 6, 6 to 7, 7 to 4,
+            // Connecting edges
+            0 to 4, 1 to 5, 2 to 6, 3 to 7
+        )
+
+        // Draw edges with cyan glow
+        for ((a, b) in edges) {
+            // Outer glow
+            drawLine(
+                color = cyanColor.copy(alpha = 0.15f),
+                start = projected[a],
+                end = projected[b],
+                strokeWidth = 6f
+            )
+            // Main line
+            drawLine(
+                color = cyanColor.copy(alpha = 0.85f),
+                start = projected[a],
+                end = projected[b],
+                strokeWidth = 2f
+            )
+        }
+
+        // Inner diagonal lines (subtle depth cue)
+        val diagonals = listOf(0 to 6, 1 to 7, 2 to 4, 3 to 5)
+        for ((a, b) in diagonals) {
+            drawLine(
+                color = orangeColor.copy(alpha = 0.12f),
+                start = projected[a],
+                end = projected[b],
+                strokeWidth = 0.8f
+            )
+        }
+
+        // Draw vertices with pulsating glow
+        for (p in projected) {
+            // Outer glow
+            drawCircle(
+                color = cyanColor.copy(alpha = glowAlpha * 0.4f),
+                radius = 12f,
+                center = p
+            )
+            // Mid glow
+            drawCircle(
+                color = cyanColor.copy(alpha = glowAlpha * 0.7f),
+                radius = 6f,
+                center = p
+            )
+            // Core dot
+            drawCircle(
+                color = cyanColor,
+                radius = 3f,
+                center = p
+            )
+        }
+
+        // Subtle horizontal scan line
+        val scanY = (centerY - scale * 1.2f) + (2.4f * scale * scanProgress)
+        drawLine(
+            color = orangeColor.copy(alpha = 0.25f),
+            start = Offset(centerX - scale * 1.1f, scanY),
+            end = Offset(centerX + scale * 1.1f, scanY),
+            strokeWidth = 1.5f
+        )
+        // Glow for scan line
+        drawLine(
+            color = orangeColor.copy(alpha = 0.08f),
+            start = Offset(centerX - scale * 1.1f, scanY),
+            end = Offset(centerX + scale * 1.1f, scanY),
+            strokeWidth = 5f
+        )
     }
 }
