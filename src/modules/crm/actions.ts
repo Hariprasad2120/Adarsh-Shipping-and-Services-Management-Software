@@ -2729,4 +2729,41 @@ function parseRatesFromEmail(bodyText: string) {
   return rates;
 }
 
+export async function getCallAttemptsAction(leadId: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    const calls = await db.crmCallAttempt.findMany({
+      where: {
+        orgId,
+        leadId,
+      },
+      include: {
+        salesperson: { select: { id: true, name: true, email: true } },
+        recordings: {
+          include: {
+            transcript: true,
+            reviews: {
+              include: {
+                reviewer: { select: { id: true, name: true } },
+              },
+              orderBy: { createdAt: "desc" },
+            },
+          },
+        },
+      },
+      orderBy: { callStartedAt: "desc" },
+    });
+
+    return { ok: true, data: calls };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch calls" };
+  }
+}
+
+
 

@@ -15,6 +15,9 @@
     "db:bootstrap:cha-admin": "npx tsx scripts/bootstrap-cha-test-admin.ts",
     "db:studio": "prisma studio",
     "import:employees": "npx tsx scripts/import-employees.ts",
+    "fix:employee-org": "npx tsx scripts/fix-employee-org-structure.ts",
+    "integrate:mails": "npx tsx scripts/bulk-integrate-emails.ts",
+    "seed:comm-panels": "npx tsx scripts/seed-communication-panels.ts",
     "test": "vitest run"
   },
   "dependencies": {

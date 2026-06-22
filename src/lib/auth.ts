@@ -21,6 +21,8 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+import Google from "next-auth/providers/google";
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
@@ -84,8 +86,79 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         };
       },
     }),
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      authorization: {
+        params: {
+          scope: "openid email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/contacts.readonly https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/drive.readonly",
+          access_type: "offline",
+          prompt: "consent",
+        },
+      },
+    }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === "google") {
+        try {
+          const fs = require("fs");
+          const logMsg = `[${new Date().toISOString()}] Google Sign-in attempt: email=${user.email}, name=${user.name}, provider=${account.provider}, hasAccessToken=${!!account.access_token}, hasRefreshToken=${!!account.refresh_token}\n`;
+          fs.appendFileSync("next-auth.log", logMsg);
+        } catch (e) {
+          console.error("Error writing to next-auth.log", e);
+        }
+
+        if (!user.email) return false;
+        const dbUser = await db.user.findFirst({
+          where: { email: { equals: user.email, mode: "insensitive" } },
+        });
+        
+        try {
+          const fs = require("fs");
+          const logMsg = `[${new Date().toISOString()}] DB User lookup: found=${!!dbUser}, email=${dbUser?.email}, orgId=${dbUser?.orgId}, active=${dbUser?.active}\n`;
+          fs.appendFileSync("next-auth.log", logMsg);
+        } catch (e) {}
+
+        if (!dbUser || !dbUser.orgId) return false; // Must be pre-registered by admin in database
+
+        const tokenExpiresAt = account.expires_at
+          ? new Date(account.expires_at * 1000)
+          : null;
+
+        const existingAcc = await db.mailAccount.findFirst({
+          where: { userId: dbUser.id, provider: "GOOGLE", orgId: dbUser.orgId },
+        });
+
+        if (existingAcc) {
+          await db.mailAccount.update({
+            where: { id: existingAcc.id },
+            data: {
+              accessToken: account.access_token,
+              refreshToken: account.refresh_token || undefined,
+              tokenExpiresAt,
+              isActive: true,
+            },
+          });
+        } else {
+          await db.mailAccount.create({
+            data: {
+              orgId: dbUser.orgId,
+              userId: dbUser.id,
+              name: dbUser.name || user.name || "Google Mail",
+              email: dbUser.email,
+              provider: "GOOGLE",
+              accessToken: account.access_token,
+              refreshToken: account.refresh_token,
+              tokenExpiresAt,
+              isActive: true,
+              isDefault: false,
+            },
+          });
+        }
+      }
+      return true;
+    },
     jwt({ token, user }) {
       if (user) {
         // First-time token creation (login)

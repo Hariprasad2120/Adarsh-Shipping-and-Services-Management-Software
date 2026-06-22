@@ -623,7 +623,17 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     icon: Notification,
     alwaysVisible: true,
     matchPaths: ["/communication"],
-    items: [],
+    items: [
+      { href: "/communication/mail", label: "Mail Inbox", icon: Notification, matchPaths: ["/communication/mail"] },
+      { href: "/communication/chat", label: "Chat Messenger", icon: Notification, matchPaths: ["/communication/chat"] },
+      { href: "/communication/calendar", label: "Scheduler Calendar", icon: Calendar, matchPaths: ["/communication/calendar"] },
+      { href: "/communication/meetings", label: "Video Meetings", icon: View, matchPaths: ["/communication/meetings"] },
+      { href: "/communication/files", label: "Drive Storage", icon: Folder, matchPaths: ["/communication/files"] },
+      { href: "/communication/docs", label: "Collaborative Docs", icon: DocumentAdd, matchPaths: ["/communication/docs"] },
+      { href: "/communication/forms", label: "Custom Forms", icon: Report, matchPaths: ["/communication/forms"] },
+      { href: "/communication/search", label: "Universal Search", icon: Analytics, matchPaths: ["/communication/search"] },
+      { href: "/communication/admin", label: "Admin Console", icon: Settings, matchPaths: ["/communication/admin"] },
+    ],
   },
   {
     id: "expense",

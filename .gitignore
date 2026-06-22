@@ -42,6 +42,13 @@ next-env.d.ts
 
 /src/generated/prisma
 
+.vercel
+
+# runtime logs and uploads
+next-auth.log
+/uploads
+/users.json
+
 # IDE
 .idea/
 .vscode/
@@ -74,4 +81,3 @@ pnpm-lock.yaml
 credentials.json
 *service-account*.json
 ngrok.yml
-

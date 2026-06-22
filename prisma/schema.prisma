@@ -14,6 +14,7 @@ model Organisation {
   name      String
   slug      String   @unique
   active    Boolean  @default(true)
+  crmCallRetentionDays Int @default(90)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -130,6 +131,12 @@ model Department {
   org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   divisions Division[]
   users     User[]
+
+  // Communication Hub Relations
+  mailAccounts            MailAccount[]
+  chatConversations       ChatConversation[]
+  calendars               Calendar[]
+  filePermissions         FilePermission[]
 
   @@unique([orgId, code])
   @@index([orgId])
@@ -319,6 +326,33 @@ model User {
 
   // Accounting Module Relations
   accountingAuditLogs AccountingAuditLog[]
+
+  // CRM Mobile Call Tracking
+  crmCallAttempts          CrmCallAttempt[]              @relation("CrmCallAttemptSalesperson")
+  crmCallReviews           CrmCallReview[]               @relation("CrmCallReviewer")
+  crmCallAuditLogs         CrmCallRecordingAuditLog[]    @relation("CrmCallAuditLogUser")
+
+  // Communication Hub Relations
+  communicationProfile    CommunicationProfile?
+  mailAccounts            MailAccount[]
+  chatParticipants        ChatParticipant[]
+  chatMessages            ChatMessage[]
+  chatMessageReads        ChatMessageRead[]
+  chatReactions           ChatReaction[]
+  calendars               Calendar[]
+  eventAttendees          CalendarEventAttendee[]
+  createdEvents           CalendarEvent[]             @relation("EventCreator")
+  meetingsHosted          Meeting[]
+  meetingParticipations   MeetingParticipant[]
+  meetingNotes            MeetingNote[]
+  filePermissions         FilePermission[]
+  fileVersions            FileVersion[]
+  fileShareLinks          FileShareLink[]
+  commDocumentsCreated    CommDocument[]              @relation("DocumentCreator")
+  commDocumentVersions    CommDocumentVersion[]
+  formsCreated            Form[]                      @relation("FormCreator")
+  formResponses           FormResponse[]
+  communicationAuditLogs  CommunicationAuditLog[]
 
   // Google Chat Integration
   googleChatLink               GoogleChatUserLink?
@@ -1170,6 +1204,7 @@ model CrmLead {
   reminders           CrmLeadReminder[]
   workTimeLogs        CrmWorkTimeLog[]
   crmQuotes           CrmInvoice[]             @relation("CrmLeadQuotes")
+  crmCallAttempts     CrmCallAttempt[]         @relation("CrmCallAttemptLead")
 
   createdById String
   updatedById String
@@ -1973,6 +2008,9 @@ model FileFolder {
   createdById String
   createdAt   DateTime    @default(now())
   files       FileAsset[]
+
+  // Communication Hub Relations
+  permissions FilePermission[]
 }
 
 model FileAsset {
@@ -1987,6 +2025,11 @@ model FileAsset {
   createdById String
   createdAt   DateTime    @default(now())
   folder      FileFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  // Communication Hub Relations
+  permissions FilePermission[]
+  versions    FileVersion[]
+  shareLinks  FileShareLink[]
 }
 
 model HRCaseCategory {
@@ -2933,6 +2976,681 @@ model CrmWorkTimeLog {
   @@index([leadId])
   @@index([accountId])
   @@index([invoiceId])
+  @@index([userId])
+}
+
+model CrmCallAttempt {
+  id              String             @id @default(cuid())
+  orgId           String
+  leadId          String
+  salespersonId   String
+  customerPhone   String
+  callStartedAt   DateTime           @default(now())
+  callEndedAt     DateTime?
+  durationSeconds Int?
+  status          String             @default("PENDING") // PENDING, COMPLETED, NO_ANSWER, FAILED
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  lead            CrmLead            @relation("CrmCallAttemptLead", fields: [leadId], references: [id], onDelete: Cascade)
+  salesperson     User               @relation("CrmCallAttemptSalesperson", fields: [salespersonId], references: [id], onDelete: Cascade)
+  recordings      CrmCallRecording[]
+
+  @@index([orgId])
+  @@index([leadId])
+  @@index([salespersonId])
+}
+
+model CrmCallRecording {
+  id                  String                      @id @default(cuid())
+  orgId               String
+  callAttemptId       String                      @unique
+  leadId              String
+  salespersonId       String
+  customerPhone       String
+  fileName            String
+  mimeType            String
+  fileSize            Int
+  filePath            String?                     // Path to file in secure storage (local dev)
+  fileData            String?                     @db.Text // Base64-encoded file content (Vercel/serverless)
+  durationSeconds     Float
+  recordedAt          DateTime                    @default(now())
+  sha256Hash          String                      @unique
+  matchConfidence     Float
+  matchReason         String?
+  uploadStatus        String                      @default("PENDING") // PENDING, UPLOADING, UPLOADED, FAILED
+  uploadProgress      Int                         @default(0)
+  errorMessage        String?
+  transcriptionStatus String                      @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
+
+  callAttempt         CrmCallAttempt              @relation(fields: [callAttemptId], references: [id], onDelete: Cascade)
+  transcript          CrmCallTranscript?
+  reviews             CrmCallReview[]
+  auditLogs           CrmCallRecordingAuditLog[]
+
+  @@index([orgId])
+  @@index([leadId])
+  @@index([salespersonId])
+}
+
+model CrmCallTranscript {
+  id                 String           @id @default(cuid())
+  orgId              String
+  recordingId        String           @unique
+  transcriptText     String           @db.Text
+  summary            String?          @db.Text
+  objections         String?          @db.Text
+  followUpActions    String?          @db.Text
+  sentiment          String?          // POSITIVE, NEUTRAL, NEGATIVE
+  qualityScore       Float?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  recording          CrmCallRecording @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+}
+
+model CrmCallReview {
+  id          String           @id @default(cuid())
+  orgId       String
+  recordingId String
+  reviewerId  String
+  rating      Int              // 1 to 5 stars
+  comments    String?          @db.Text
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  recording   CrmCallRecording @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+  reviewer    User             @relation("CrmCallReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([recordingId])
+  @@index([reviewerId])
+}
+
+model CrmCallRecordingAuditLog {
+  id          String           @id @default(cuid())
+  orgId       String
+  recordingId String
+  userId      String
+  action      String           // VIEW, DOWNLOAD, DELETE, TRANSCRIPT_VIEW
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime         @default(now())
+
+  recording   CrmCallRecording @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+  user        User             @relation("CrmCallAuditLogUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([recordingId])
+  @@index([userId])
+}
+
+// ─── Communication Hub ────────────────────────────────────────────────────────
+
+model CommunicationProfile {
+  id                      String   @id @default(cuid())
+  userId                  String   @unique
+  orgId                   String
+  emailSignature          String?  @db.Text
+  emailSignatureEnabled   Boolean  @default(false)
+  chatPresence            String   @default("OFFLINE") // ONLINE, OFFLINE, AWAY, DND
+  notificationPreferences Json?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+}
+
+model MailAccount {
+  id               String      @id @default(cuid())
+  orgId            String
+  userId           String?
+  departmentId     String?
+  name             String
+  email            String      @unique
+  smtpHost         String?
+  smtpPort         Int?
+  smtpUser         String?
+  smtpPasswordHash String?
+  imapHost         String?
+  imapPort         Int?
+  imapUser         String?
+  imapPasswordHash String?
+  isActive         Boolean     @default(true)
+  isDefault        Boolean     @default(false)
+  isShared         Boolean     @default(false)
+  provider         String      @default("SMTP_IMAP")
+  accessToken      String?     @db.Text
+  refreshToken     String?     @db.Text
+  tokenExpiresAt   DateTime?
+  historyId        String?
+  watchResource    String?
+  watchExpiration  DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  user             User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  department       Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  messages         MailMessage[]
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([departmentId])
+}
+
+model MailThread {
+  id        String        @id @default(cuid())
+  orgId     String
+  subject   String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  MailMessage[]
+  labels    MailLabel[]
+
+  @@index([orgId])
+}
+
+model MailMessage {
+  id               String           @id @default(cuid())
+  orgId            String
+  threadId         String
+  mailAccountId    String
+  from             String
+  to               String
+  cc               String?
+  bcc              String?
+  subject          String
+  bodyText         String?          @db.Text
+  bodyHtml         String?          @db.Text
+  isIncoming       Boolean          @default(false)
+  status           String           @default("SENT") // PENDING, SENT, DRAFT, FAILED
+  attempts         Int              @default(0)
+  readAt           DateTime?
+  linkedRecordType String?          // CRM_LEAD, HRMS_EMPLOYEE, TASK, APPROVAL
+  linkedRecordId   String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  thread           MailThread       @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  mailAccount      MailAccount      @relation(fields: [mailAccountId], references: [id], onDelete: Cascade)
+  attachments      MailAttachment[]
+
+  @@index([orgId])
+  @@index([threadId])
+  @@index([mailAccountId])
+  @@index([linkedRecordType, linkedRecordId])
+}
+
+model MailAttachment {
+  id            String      @id @default(cuid())
+  orgId         String
+  mailMessageId String
+  fileKey       String
+  fileName      String
+  fileSize      Int
+  mimeType      String
+  createdAt     DateTime    @default(now())
+
+  message       MailMessage @relation(fields: [mailMessageId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([mailMessageId])
+}
+
+model MailLabel {
+  id        String       @id @default(cuid())
+  orgId     String
+  userId    String
+  name      String
+  color     String?
+  createdAt DateTime     @default(now())
+  threads   MailThread[]
+
+  @@index([orgId])
+  @@index([userId])
+}
+
+model ChatConversation {
+  id           String            @id @default(cuid())
+  orgId        String
+  name         String?
+  type         String            @default("DIRECT") // DIRECT, GROUP, CHANNEL
+  departmentId String?
+  projectId    String?
+  leadId       String?
+  employeeId   String?
+  isPublic     Boolean           @default(false)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  department   Department?       @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  participants ChatParticipant[]
+  messages     ChatMessage[]
+
+  @@index([orgId])
+  @@index([departmentId])
+  @@index([projectId])
+  @@index([leadId])
+  @@index([employeeId])
+}
+
+model ChatParticipant {
+  id             String           @id @default(cuid())
+  orgId          String
+  conversationId String
+  userId         String
+  role           String           @default("MEMBER") // ADMIN, MEMBER
+  joinedAt       DateTime         @default(now())
+
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([orgId])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id             String            @id @default(cuid())
+  orgId          String
+  conversationId String
+  senderId       String
+  body           String            @db.Text
+  parentId       String?
+  isPinned       Boolean           @default(false)
+  isEdited       Boolean           @default(false)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  conversation   ChatConversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User              @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  parent         ChatMessage?      @relation("ThreadReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies        ChatMessage[]     @relation("ThreadReplies")
+  reactions      ChatReaction[]
+  attachments    ChatAttachment[]
+  readReceipts   ChatMessageRead[]
+
+  @@index([orgId])
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([parentId])
+}
+
+model ChatMessageRead {
+  id        String      @id @default(cuid())
+  orgId     String
+  messageId String
+  userId    String
+  readAt    DateTime    @default(now())
+
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([orgId])
+  @@index([userId])
+}
+
+model ChatReaction {
+  id        String      @id @default(cuid())
+  orgId     String
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime    @default(now())
+
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([orgId])
+  @@index([userId])
+}
+
+model ChatAttachment {
+  id        String      @id @default(cuid())
+  orgId     String
+  messageId String
+  fileKey   String
+  fileName  String
+  fileSize  Int
+  mimeType  String
+  createdAt DateTime    @default(now())
+
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([messageId])
+}
+
+model Calendar {
+  id           String          @id @default(cuid())
+  orgId        String
+  userId       String?
+  name         String
+  type         String          @default("PERSONAL") // PERSONAL, DEPARTMENT, TEAM, COMPANY
+  departmentId String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  user         User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department   Department?     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  events       CalendarEvent[]
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([departmentId])
+}
+
+model CalendarEvent {
+  id               String                  @id @default(cuid())
+  orgId            String
+  calendarId       String
+  title            String
+  description      String?                 @db.Text
+  startAt          DateTime
+  endAt            DateTime
+  isAllDay         Boolean                 @default(false)
+  recurrence       String?
+  location         String?
+  resourceId       String?
+  linkedRecordType String?                 // CRM_LEAD, HRMS_LEAVE, ATTENDANCE
+  linkedRecordId   String?
+  createdById      String
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  calendar         Calendar                @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  createdBy        User                    @relation("EventCreator", fields: [createdById], references: [id])
+  attendees        CalendarEventAttendee[]
+  meeting          Meeting?
+
+  @@index([orgId])
+  @@index([calendarId])
+  @@index([createdById])
+  @@index([resourceId])
+  @@index([linkedRecordType, linkedRecordId])
+}
+
+model CalendarEventAttendee {
+  id        String        @id @default(cuid())
+  orgId     String
+  eventId   String
+  userId    String?
+  email     String
+  status    String        @default("PENDING") // PENDING, ACCEPTED, DECLINED, TENTATIVE
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  event     CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([eventId, email])
+  @@index([orgId])
+  @@index([userId])
+}
+
+model CalendarResource {
+  id        String   @id @default(cuid())
+  orgId     String
+  name      String
+  type      String
+  capacity  Int?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgId])
+}
+
+model Meeting {
+  id               String               @id @default(cuid())
+  orgId            String
+  eventId          String?              @unique
+  title            String
+  agenda           String?              @db.Text
+  link             String
+  hostId           String
+  startAt          DateTime
+  endAt            DateTime
+  recordingUrl     String?
+  linkedRecordType String?
+  linkedRecordId   String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  event            CalendarEvent?       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  host             User                 @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  participants     MeetingParticipant[]
+  notes            MeetingNote[]
+
+  @@index([orgId])
+  @@index([hostId])
+  @@index([linkedRecordType, linkedRecordId])
+}
+
+model MeetingParticipant {
+  id        String    @id @default(cuid())
+  orgId     String
+  meetingId String
+  userId    String?
+  name      String
+  joinedAt  DateTime?
+  leftAt    DateTime?
+  attended  Boolean   @default(false)
+
+  meeting   Meeting   @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([orgId])
+  @@index([meetingId])
+  @@index([userId])
+}
+
+model MeetingNote {
+  id        String   @id @default(cuid())
+  orgId     String
+  meetingId String
+  authorId  String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([meetingId])
+  @@index([authorId])
+}
+
+model FilePermission {
+  id           String      @id @default(cuid())
+  orgId        String
+  fileAssetId  String?
+  fileFolderId String?
+  userId       String?
+  departmentId String?
+  role         String      @default("VIEWER") // OWNER, EDITOR, VIEWER
+  createdAt    DateTime    @default(now())
+
+  fileAsset    FileAsset?  @relation(fields: [fileAssetId], references: [id], onDelete: Cascade)
+  fileFolder   FileFolder? @relation(fields: [fileFolderId], references: [id], onDelete: Cascade)
+  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@index([orgId])
+  @@index([fileAssetId])
+  @@index([fileFolderId])
+  @@index([userId])
+  @@index([departmentId])
+}
+
+model FileVersion {
+  id          String    @id @default(cuid())
+  orgId       String
+  fileAssetId String
+  version     Int
+  fileKey     String
+  sizeBytes   Int
+  createdById String
+  createdAt   DateTime  @default(now())
+
+  fileAsset   FileAsset @relation(fields: [fileAssetId], references: [id], onDelete: Cascade)
+  createdBy   User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([fileAssetId])
+  @@index([createdById])
+}
+
+model FileShareLink {
+  id          String    @id @default(cuid())
+  orgId       String
+  fileAssetId String
+  token       String    @unique
+  isPublic    Boolean   @default(false)
+  expiresAt   DateTime?
+  createdById String
+  createdAt   DateTime  @default(now())
+
+  fileAsset   FileAsset @relation(fields: [fileAssetId], references: [id], onDelete: Cascade)
+  createdBy   User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([fileAssetId])
+  @@index([createdById])
+}
+
+model CommDocument {
+  id               String                @id @default(cuid())
+  orgId            String
+  name             String
+  fileKey          String
+  type             String                @default("DOCUMENT") // DOCUMENT, SPREADSHEET, PRESENTATION
+  createdById      String
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  linkedRecordType String?
+  linkedRecordId   String?
+
+  createdBy        User                  @relation("DocumentCreator", fields: [createdById], references: [id])
+  versions         CommDocumentVersion[]
+
+  @@index([orgId])
+  @@index([createdById])
+  @@index([linkedRecordType, linkedRecordId])
+}
+
+model CommDocumentVersion {
+  id          String       @id @default(cuid())
+  orgId       String
+  documentId  String
+  version     Int
+  fileKey     String
+  createdById String
+  createdAt   DateTime     @default(now())
+
+  document    CommDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdBy   User         @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([documentId])
+  @@index([createdById])
+}
+
+model Form {
+  id          String         @id @default(cuid())
+  orgId       String
+  title       String
+  description String?        @db.Text
+  createdById String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  isActive    Boolean        @default(true)
+
+  createdBy   User           @relation("FormCreator", fields: [createdById], references: [id])
+  fields      FormField[]
+  responses   FormResponse[]
+
+  @@index([orgId])
+  @@index([createdById])
+}
+
+model FormField {
+  id        String   @id @default(cuid())
+  orgId     String
+  formId    String
+  label     String
+  type      String
+  options   String?
+  required  Boolean  @default(false)
+  order     Int      @default(0)
+
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([formId])
+}
+
+model FormResponse {
+  id        String   @id @default(cuid())
+  orgId     String
+  formId    String
+  userId    String?
+  answers   Json
+  createdAt DateTime @default(now())
+
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([orgId])
+  @@index([formId])
+  @@index([userId])
+}
+
+model CommunicationSetting {
+  id                      String   @id @default(cuid())
+  orgId                   String   @unique
+  allowedDomains          String?
+  externalSharingEnabled  Boolean  @default(false)
+  jitsiServerUrl          String   @default("https://meet.jit.si")
+  onlyOfficeUrl           String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([orgId])
+}
+
+model RetentionPolicy {
+  id            String   @id @default(cuid())
+  orgId         String
+  targetTable   String
+  retentionDays Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([orgId, targetTable])
+  @@index([orgId])
+}
+
+model CommunicationAuditLog {
+  id        String   @id @default(cuid())
+  orgId     String
+  userId    String
+  action    String   // SEND_EMAIL, DELETE_EMAIL, DELETE_CHAT, SHARE_FILE, etc.
+  details   String?  @db.Text
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
   @@index([userId])
 }
 

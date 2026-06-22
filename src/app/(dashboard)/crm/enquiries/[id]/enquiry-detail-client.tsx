@@ -10,7 +10,8 @@ import {
   updatePerishableDetailsAction,
   saveEnquiryRatesAction,
   simulateInboundEmailAction,
-  updateLeadAction
+  updateLeadAction,
+  getCallAttemptsAction
 } from "@/modules/crm/actions";
 import { NotesPanel } from "../../_components/notes-panel";
 import { AttachmentsPanel } from "../../_components/attachments-panel";
@@ -44,6 +45,8 @@ interface EnquiryDetailClientProps {
   attachments: any[];
   activities: any[];
   timeline: any[];
+  workTimeLogs: any[];
+  calls: any[];
   isManager: boolean;
 }
 
@@ -54,11 +57,40 @@ export function EnquiryDetailClient({
   attachments,
   activities,
   timeline,
+  workTimeLogs,
+  calls,
   isManager
 }: EnquiryDetailClientProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState<"OVERVIEW" | "NOTES" | "ACTIVITIES" | "ATTACHMENTS" | "TIMELINE">("OVERVIEW");
+  const [activeTab, setActiveTab] = useState<"OVERVIEW" | "NOTES" | "ACTIVITIES" | "ATTACHMENTS" | "TIMELINE" | "TIME_TRACKER" | "CALLS">("OVERVIEW");
+  const [selectedCallIndex, setSelectedCallIndex] = useState<number | null>(null);
+  const [callSubTab, setCallSubTab] = useState<"TRANSCRIPT" | "SUMMARY" | "REVIEW">("TRANSCRIPT");
+
+  const [localCalls, setLocalCalls] = useState(calls);
+
+  useEffect(() => {
+    setLocalCalls(calls);
+  }, [calls]);
+
+  useEffect(() => {
+    const hasUploading = localCalls.some((c: any) => 
+      c.recordings?.some((r: any) => r.uploadStatus === "UPLOADING")
+    );
+
+    const intervalTime = hasUploading ? 3000 : activeTab === "CALLS" ? 10000 : null;
+
+    if (!intervalTime) return;
+
+    const interval = setInterval(async () => {
+      const res = await getCallAttemptsAction(lead.id);
+      if (res.ok && res.data) {
+        setLocalCalls(res.data);
+      }
+    }, intervalTime);
+
+    return () => clearInterval(interval);
+  }, [localCalls, activeTab, lead.id]);
 
   // Status management states
   const [isMarkingFollowUp, setIsMarkingFollowUp] = useState(false);
@@ -968,6 +1000,22 @@ export function EnquiryDetailClient({
               >
                 Audit
               </button>
+              <button
+                onClick={() => setActiveTab("TIME_TRACKER")}
+                className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
+                  activeTab === "TIME_TRACKER" ? "border-[#00cec4] text-white" : "border-transparent text-slate-400 hover:text-white"
+                }`}
+              >
+                Time Tracker ({workTimeLogs.length})
+              </button>
+              <button
+                onClick={() => setActiveTab("CALLS")}
+                className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
+                  activeTab === "CALLS" ? "border-[#00cec4] text-white" : "border-transparent text-slate-400 hover:text-white"
+                }`}
+              >
+                Calls ({calls.length})
+              </button>
             </div>
 
             {/* Content areas */}
@@ -1004,6 +1052,263 @@ export function EnquiryDetailClient({
 
               {activeTab === "TIMELINE" && (
                 <TimelinePanel events={timeline} />
+              )}
+
+              {/* ── TIME TRACKER TAB ── */}
+              {activeTab === "TIME_TRACKER" && (
+                <div className="space-y-3">
+                  {workTimeLogs.length === 0 ? (
+                    <p className="text-slate-500 italic py-4 text-center">No time logs recorded for this enquiry yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {workTimeLogs.map((log: any, i: number) => (
+                        <div key={log.id || i} className="p-3 bg-[#0a0d12]/50 rounded-lg border border-[#1c212a]/30 flex items-start justify-between">
+                          <div>
+                            <span className="text-white font-bold text-xs">{log.user?.name || "Unknown"}</span>
+                            <span className="text-slate-500 text-[10px] ml-2">{log.activityType || "General"}</span>
+                            {log.description && (
+                              <p className="text-slate-400 text-[11px] mt-1">{log.description}</p>
+                            )}
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className="text-[#00cec4] font-bold font-mono text-sm">{log.durationHours}h</span>
+                            <span className="text-slate-500 text-[10px] block">
+                              {new Date(log.loggedAt).toLocaleDateString("en-IN")}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="text-right pt-2 border-t border-[#1c212a]/30">
+                        <span className="text-slate-400 text-[10px] uppercase font-bold">Total: </span>
+                        <span className="text-white font-bold font-mono">
+                          {workTimeLogs.reduce((sum: number, l: any) => sum + (l.durationHours || 0), 0).toFixed(1)}h
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── CALLS TAB ── */}
+              {activeTab === "CALLS" && (
+                <div className="space-y-3">
+                  {localCalls.length === 0 ? (
+                    <p className="text-slate-500 italic py-4 text-center">No call recordings for this enquiry yet.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {/* Call attempt list */}
+                      {localCalls.map((call: any, idx: number) => {
+                        const recording = call.recordings?.[0];
+                        const transcript = recording?.transcript;
+                        const isExpanded = selectedCallIndex === idx;
+
+                        return (
+                          <div key={call.id} className="rounded-lg border border-[#1c212a]/40 overflow-hidden">
+                            {/* Call header */}
+                            <button
+                              onClick={() => setSelectedCallIndex(isExpanded ? null : idx)}
+                              className="w-full p-3 bg-[#0a0d12]/50 flex items-center justify-between text-left hover:bg-[#161f28] transition-all cursor-pointer"
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className="size-8 rounded-lg bg-[#00cec4]/10 text-[#00cec4] flex items-center justify-center text-xs">📞</span>
+                                <div>
+                                  <span className="text-white font-bold text-xs block">
+                                    {call.salesperson?.name || "Salesperson"}
+                                  </span>
+                                  <span className="text-slate-500 text-[10px]">
+                                    {call.customerPhone} • {new Date(call.callStartedAt).toLocaleString("en-IN")}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {call.durationSeconds && (
+                                  <span className="text-[#00cec4] font-mono font-bold text-xs">
+                                    {Math.floor(call.durationSeconds / 60)}:{String(call.durationSeconds % 60).padStart(2, "0")}
+                                  </span>
+                                )}
+                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+                                  (call.status === "COMPLETED" || recording?.uploadStatus === "UPLOADED") ? "bg-emerald-400/10 text-emerald-400" :
+                                  recording?.uploadStatus === "UPLOADING" ? "bg-cyan-400/10 text-[#00cec4]" :
+                                  recording?.uploadStatus === "CANCELLED" ? "bg-amber-400/10 text-amber-400" :
+                                  recording?.uploadStatus === "FAILED" ? "bg-red-400/10 text-red-400" :
+                                  call.status === "PENDING" ? "bg-amber-400/10 text-amber-400" :
+                                  "bg-slate-400/10 text-slate-400"
+                                }`}>
+                                  {
+                                    recording?.uploadStatus === "UPLOADED" ? "COMPLETED" :
+                                    recording?.uploadStatus === "UPLOADING" ? "UPLOADING" :
+                                    recording?.uploadStatus === "CANCELLED" ? "CANCELLED" :
+                                    recording?.uploadStatus === "FAILED" ? "FAILED" :
+                                    call.status
+                                  }
+                                </span>
+                                <span className="text-slate-500">{isExpanded ? "▲" : "▼"}</span>
+                              </div>
+                            </button>
+
+                            {/* Expanded: recording + transcript */}
+                            {isExpanded && (
+                              <div className="p-3 bg-surface border-t border-outline-variant space-y-3">
+                                {recording ? (
+                                  <>
+                                    {/* Audio player */}
+                                    <div className="space-y-2 p-2 bg-surface-container-low rounded-lg border border-outline-variant/40">
+                                      <div className="flex items-center justify-between gap-3 min-w-0">
+                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                          <span className="text-[9px] font-bold text-slate-500 uppercase shrink-0">Recording:</span>
+                                          <span className="text-slate-200 text-[11px] truncate" title={recording.fileName}>
+                                            {recording.fileName}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${
+                                            recording.uploadStatus === "UPLOADED" ? "bg-emerald-400/10 text-emerald-400" :
+                                            recording.uploadStatus === "UPLOADING" ? "bg-cyan-400/10 text-[#00cec4] animate-pulse" :
+                                            recording.uploadStatus === "CANCELLED" ? "bg-amber-400/10 text-amber-400" :
+                                            "bg-red-400/10 text-red-400"
+                                          }`}>
+                                            {recording.uploadStatus === "UPLOADED" ? "UPLOADED SUCCESSFULLY" : recording.uploadStatus}
+                                          </span>
+                                          {recording.uploadStatus === "UPLOADED" && (
+                                            <a
+                                              href={`/api/crm/recordings/${recording.id}/download`}
+                                              className="text-[10px] text-[#00cec4] font-bold uppercase hover:underline transition-all cursor-pointer"
+                                              title="Download recording"
+                                            >
+                                              Download
+                                            </a>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      {/* Audio playback component */}
+                                      {recording.uploadStatus === "UPLOADED" && (
+                                        <audio
+                                          src={`/api/crm/recordings/${recording.id}/playback`}
+                                          controls
+                                          className="w-full h-9 rounded-lg mt-1"
+                                        />
+                                      )}
+
+                                      {/* Live Upload Progress Bar */}
+                                      {recording.uploadStatus === "UPLOADING" && (
+                                        <div className="space-y-1">
+                                          <div className="w-full bg-[#1c212a] h-1.5 rounded-full overflow-hidden">
+                                            <div
+                                              className="bg-[#00cec4] h-1.5 rounded-full transition-all duration-300"
+                                              style={{ width: `${recording.uploadProgress || 0}%` }}
+                                            />
+                                          </div>
+                                          <div className="flex justify-between text-[9px] text-[#00cec4] font-mono">
+                                            <span>Uploading from mobile...</span>
+                                            <span>{recording.uploadProgress || 0}%</span>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Error or Cancelled Notice */}
+                                      {(recording.uploadStatus === "FAILED" || recording.uploadStatus === "CANCELLED") && (
+                                        <div className={`text-[10px] p-2 rounded border space-y-1 ${
+                                          recording.uploadStatus === "CANCELLED"
+                                            ? "text-amber-400 bg-amber-400/5 border-amber-400/10"
+                                            : "text-red-400 bg-red-400/5 border-red-400/10"
+                                        }`}>
+                                          <span className="font-bold uppercase text-[9px] block">
+                                            {recording.uploadStatus === "CANCELLED" ? "Upload Cancelled:" : "Upload Failure:"}
+                                          </span>
+                                          <p>{recording.errorMessage || (recording.uploadStatus === "CANCELLED" ? "The upload was cancelled by the user." : "The upload has failed.")}</p>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Transcript sub-tabs */}
+                                    <div className="flex gap-3 border-b border-[#1c212a]/30 pb-1">
+                                      <button
+                                        onClick={() => setCallSubTab("TRANSCRIPT")}
+                                        className={`text-[10px] font-bold uppercase tracking-wider pb-1 border-b-2 cursor-pointer ${
+                                          callSubTab === "TRANSCRIPT" ? "border-[#00cec4] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
+                                        }`}
+                                      >
+                                        AI Transcript
+                                      </button>
+                                      <button
+                                        onClick={() => setCallSubTab("SUMMARY")}
+                                        className={`text-[10px] font-bold uppercase tracking-wider pb-1 border-b-2 cursor-pointer ${
+                                          callSubTab === "SUMMARY" ? "border-[#00cec4] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
+                                        }`}
+                                      >
+                                        AI Summary
+                                      </button>
+                                    </div>
+
+                                    {callSubTab === "TRANSCRIPT" && (
+                                      <div>
+                                        {transcript ? (
+                                          <div className="p-3 bg-[#11161d] rounded-lg border border-[#1c212a]/30 max-h-[200px] overflow-y-auto whitespace-pre-line leading-relaxed text-slate-300 text-[11px]">
+                                            {transcript.transcriptText}
+                                          </div>
+                                        ) : (
+                                          <p className="text-slate-500 italic text-[11px]">Transcription {recording.transcriptionStatus?.toLowerCase() || "pending"}...</p>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {callSubTab === "SUMMARY" && (
+                                      <div>
+                                        {transcript ? (
+                                          <div className="space-y-2">
+                                            <div>
+                                              <span className="font-bold text-slate-500 uppercase text-[9px] block">AI Summary</span>
+                                              <p className="text-slate-200 text-[11px] mt-1 leading-normal">{transcript.summary}</p>
+                                            </div>
+                                            <div>
+                                              <span className="font-bold text-slate-500 uppercase text-[9px] block">Objections</span>
+                                              <p className={`text-[11px] mt-1 font-bold ${transcript.objections === "None" ? "text-emerald-400" : "text-[#fb923c]"}`}>
+                                                {transcript.objections}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <span className="font-bold text-slate-500 uppercase text-[9px] block">Follow-up Actions</span>
+                                              <p className="text-slate-200 text-[11px] mt-1">{transcript.followUpActions}</p>
+                                            </div>
+                                            <div className="flex gap-4">
+                                              <div>
+                                                <span className="font-bold text-slate-500 uppercase text-[9px] block">Sentiment</span>
+                                                <span className={`inline-block mt-1 font-extrabold uppercase text-[10px] px-2 py-0.5 rounded ${
+                                                  transcript.sentiment === "POSITIVE"
+                                                    ? "bg-emerald-400/10 text-emerald-400 border border-emerald-400/20"
+                                                    : transcript.sentiment === "NEGATIVE"
+                                                    ? "bg-red-400/10 text-red-400 border border-red-400/20"
+                                                    : "bg-slate-400/10 text-slate-400 border border-slate-400/20"
+                                                }`}>
+                                                  {transcript.sentiment}
+                                                </span>
+                                              </div>
+                                              <div>
+                                                <span className="font-bold text-slate-500 uppercase text-[9px] block">Quality Score</span>
+                                                <span className="text-white mt-1 font-extrabold text-[13px] block font-mono">
+                                                  {transcript.qualityScore}%
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <p className="text-slate-500 italic text-[11px]">AI analysis pending transcription.</p>
+                                        )}
+                                      </div>
+                                    )}
+                                  </>
+                                ) : (
+                                  <p className="text-slate-500 italic text-[11px]">No recording uploaded for this call attempt.</p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>

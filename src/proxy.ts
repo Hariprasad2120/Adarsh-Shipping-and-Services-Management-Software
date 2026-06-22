@@ -4,7 +4,7 @@ import { isBlockedApiPath, isBlockedRoutePath } from "@/lib/app-edition";
 
 /**
  * Next.js 16 Proxy — runs before every matched request.
- * 
+ *
  * Responsibilities:
  * 1. Allow public paths through without auth check
  * 2. Redirect unauthenticated requests on protected paths to /login
@@ -16,9 +16,10 @@ import { isBlockedApiPath, isBlockedRoutePath } from "@/lib/app-edition";
 const PUBLIC_PATHS = [
   "/login",
   "/setup",
-  "/api/auth",      // NextAuth endpoints
+  "/api/auth", // NextAuth endpoints
   "/api/setup",
   "/api/erp/ping",
+  "/api/mobile",
   "/api/google-chat",
   "/api/cron",
   "/google-chat-link",
@@ -35,6 +36,13 @@ const SESSION_COOKIE_NAMES = [
   "next-auth.session-token",
   "__Secure-next-auth.session-token",
 ];
+
+const MOBILE_CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+  "Access-Control-Max-Age": "86400",
+};
 
 function isPublicPath(pathname: string): boolean {
   // Root landing page is public
@@ -65,6 +73,11 @@ function hasSessionCookie(req: NextRequest): boolean {
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const isMobileApi = pathname.startsWith("/api/mobile");
+
+  if (isMobileApi && req.method === "OPTIONS") {
+    return new NextResponse(null, { status: 204, headers: MOBILE_CORS_HEADERS });
+  }
 
   if (isBlockedApiPath(pathname)) {
     return NextResponse.json({ ok: false, error: { code: "NOT_FOUND", message: "Not found" } }, { status: 404 });
@@ -76,7 +89,15 @@ export function proxy(req: NextRequest) {
 
   // Public paths — pass through
   if (isPublicPath(pathname)) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+
+    if (isMobileApi) {
+      Object.entries(MOBILE_CORS_HEADERS).forEach(([key, value]) => {
+        response.headers.set(key, value);
+      });
+    }
+
+    return response;
   }
 
   // Protected path — check for session cookie
