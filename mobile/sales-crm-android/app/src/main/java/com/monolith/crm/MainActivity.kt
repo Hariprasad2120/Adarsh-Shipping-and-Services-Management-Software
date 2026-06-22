@@ -25,6 +25,7 @@ class MainActivity : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels { AuthViewModelFactory(repository) }
     private val leadsViewModel: LeadsViewModel by viewModels { LeadsViewModelFactory(repository) }
     private val callTrackingViewModel: CallTrackingViewModel by viewModels { CallTrackingViewModelFactory(repository) }
+    private val monaViewModel: MonaViewModel by viewModels { MonaViewModelFactory(repository) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -104,6 +105,9 @@ class MainActivity : ComponentActivity() {
                                 activeLeadForDetail = lead
                                 currentScreen = Screen.LeadDetails
                             },
+                            onMonaClicked = {
+                                currentScreen = Screen.MonaChat
+                            },
                             onLogout = { authViewModel.logout() }
                         )
                     }
@@ -136,6 +140,14 @@ class MainActivity : ComponentActivity() {
                             currentScreen = Screen.Dashboard
                         }
                     }
+                    is Screen.MonaChat -> {
+                        MonaScreen(
+                            viewModel = monaViewModel,
+                            onBack = {
+                                currentScreen = Screen.Dashboard
+                            }
+                        )
+                    }
                     else -> {
                         currentScreen = Screen.Dashboard
                     }
@@ -148,5 +160,6 @@ class MainActivity : ComponentActivity() {
         object Dashboard : Screen
         object LeadDetails : Screen
         object PostCallOutcome : Screen
+        object MonaChat : Screen
     }
 }

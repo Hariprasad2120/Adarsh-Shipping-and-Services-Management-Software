@@ -60,4 +60,10 @@ interface CrmApiService {
         @Path("callAttemptId") callAttemptId: String,
         @Body request: RecordingStatusRequest
     ): Response<RecordingStatusResponse>
+
+    @POST("api/mobile/mona/chat")
+    suspend fun chatWithMona(
+        @Header("Authorization") token: String,
+        @Body request: MonaChatRequest
+    ): Response<MonaChatResponse>
 }

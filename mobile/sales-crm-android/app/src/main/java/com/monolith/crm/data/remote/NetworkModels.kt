@@ -60,3 +60,16 @@ data class RecordingStatusRequest(
     val sha256Hash: String? = null
 )
 data class RecordingStatusResponse(val success: Boolean)
+
+data class MonaChatRequest(
+    val message: String,
+    val currentPath: String? = null,
+    val sessionId: String? = null,
+    val action: String? = null
+)
+
+data class MonaChatResponse(
+    val content: String,
+    val toolsUsed: List<String>
+)
+

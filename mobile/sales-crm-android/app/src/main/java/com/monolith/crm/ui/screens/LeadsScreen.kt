@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,6 +34,7 @@ import com.monolith.crm.ui.viewmodel.LeadsViewModel
 fun LeadsScreen(
     viewModel: LeadsViewModel,
     onLeadSelected: (LeadMetadata) -> Unit,
+    onMonaClicked: () -> Unit,
     onLogout: () -> Unit
 ) {
     Scaffold(
@@ -45,6 +47,9 @@ fun LeadsScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onMonaClicked) {
+                        Icon(Icons.Default.Send, contentDescription = "Mona Assistant", tint = CyanPrimary)
+                    }
                     IconButton(onClick = { viewModel.fetchLeads() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = Color.White)
                     }

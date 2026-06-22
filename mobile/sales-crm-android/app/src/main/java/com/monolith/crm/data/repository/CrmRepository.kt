@@ -14,6 +14,8 @@ import com.monolith.crm.data.remote.LeadMetadata
 import com.monolith.crm.data.remote.LoginRequest
 import com.monolith.crm.data.remote.LoginResponse
 import com.monolith.crm.data.remote.UploadRecordingResponse
+import com.monolith.crm.data.remote.RecordingStatusRequest
+import com.monolith.crm.data.remote.RecordingStatusResponse
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -246,6 +248,8 @@ class CrmRepository(private val context: Context) {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
     suspend fun updateRecordingStatus(
         attemptId: String,
         uploadStatus: String,
@@ -332,6 +336,24 @@ class CrmRepository(private val context: Context) {
             .remove("active_call_phone")
             .remove("active_call_start_time")
             .apply()
+    }
+
+    suspend fun chatWithMona(message: String, sessionId: String? = null, action: String? = null): Result<com.monolith.crm.data.remote.MonaChatResponse> {
+        val token = getAuthToken() ?: return Result.failure(Exception("Not authenticated"))
+        return try {
+            val response = getApiService().chatWithMona(
+                token,
+                com.monolith.crm.data.remote.MonaChatRequest(message = message, sessionId = sessionId, action = action)
+            )
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                val errorBody = response.errorBody()?.string()
+                Result.failure(Exception(errorBody?.take(200) ?: "Failed to chat with Mona"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     data class ActiveCall(val attemptId: String, val leadId: String, val phone: String, val startTime: Long)
