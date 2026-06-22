@@ -80,7 +80,7 @@ class CrmRepository(private val context: Context) {
     }
 
     fun getBaseUrl(): String {
-        return sharedPreferences.getString("base_url", "http://10.0.2.2:3000/") ?: "http://10.0.2.2:3000/"
+        return sharedPreferences.getString("base_url", "https://monolith-engine.vercel.app/") ?: "https://monolith-engine.vercel.app/"
     }
 
     fun setBaseUrl(url: String) {

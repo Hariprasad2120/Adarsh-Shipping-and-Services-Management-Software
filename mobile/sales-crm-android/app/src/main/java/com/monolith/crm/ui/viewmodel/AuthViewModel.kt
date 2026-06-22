@@ -15,7 +15,6 @@ class AuthViewModel(private val repository: CrmRepository) : ViewModel() {
     var rememberMe by mutableStateOf(repository.isRememberMeEnabled())
     var email by mutableStateOf(if (repository.isRememberMeEnabled()) repository.getRememberedEmail() else "")
     var password by mutableStateOf(if (repository.isRememberMeEnabled()) repository.getRememberedPassword() else "")
-    var baseUrl by mutableStateOf(repository.getBaseUrl())
     var isLoading by mutableStateOf(false)
     var errorMessage by mutableStateOf<String?>(null)
     var isLoggedIn by mutableStateOf(repository.getAuthToken() != null)
@@ -32,9 +31,8 @@ class AuthViewModel(private val repository: CrmRepository) : ViewModel() {
 
         isLoading = true
 
-        // Save the URL BEFORE making the API call
-        repository.setBaseUrl(baseUrl)
-        AppLogger.info("Auth", "Login attempt → $baseUrl", "Email: $email")
+        val currentBaseUrl = repository.getBaseUrl()
+        AppLogger.info("Auth", "Login attempt → $currentBaseUrl", "Email: $email")
 
         viewModelScope.launch {
             val result = repository.login(email, password)
