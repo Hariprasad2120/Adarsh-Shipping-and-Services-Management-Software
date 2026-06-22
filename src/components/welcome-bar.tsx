@@ -102,7 +102,7 @@ export function AppHeader({
 
   return (
     <>
-      <header className="sticky top-0 z-20 h-14 shrink-0 border-b border-outline-variant/60 bg-surface/90 backdrop-blur-sm flex items-center justify-between px-6 lg:px-8 xl:px-10">
+      <header className="z-20 flex h-14 shrink-0 items-center justify-between border-b border-outline-variant/60 bg-surface/90 px-6 backdrop-blur-sm lg:px-8 xl:px-10">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#00cec4]/10">
             <SectionIcon size={16} className="text-[#00cec4]" />
@@ -126,6 +126,7 @@ export function AppHeader({
             <Clock3 className="size-3.5 text-[#00a99f]" />
             {timeLabel}
           </span>
+
           <button
             type="button"
             onClick={() => router.push("/notifications")}
@@ -150,82 +151,113 @@ export function AppHeader({
       <AnimatePresence>
         {showWelcome && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
+            initial={{ y: 0 }}
+            animate={{ y: 0 }}
+            exit={{ y: "-100%" }}
+            transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
+            className="fixed inset-0 z-[9999] flex flex-col justify-end items-center bg-[#0d1117] p-8 md:p-12 lg:p-16 overflow-hidden"
           >
-            <motion.div
-              initial={{ scale: 0.92, y: 15, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.95, y: -10, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 220, damping: 22 }}
-              className="w-full max-w-md bg-surface border border-outline-variant rounded-3xl p-8 shadow-2xl relative overflow-hidden text-center card-top-accent"
-            >
-              {/* Animated Background Glow */}
+            {/* Ambient Background Glows */}
+            <div className="absolute inset-0 pointer-events-none">
+              {/* Top Cyan Glow */}
               <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                className="absolute -top-24 -left-24 w-48 h-48 bg-[#00cec4]/10 rounded-full blur-2xl pointer-events-none"
+                animate={{ 
+                  scale: [1, 1.2, 1],
+                  opacity: [0.15, 0.25, 0.15]
+                }}
+                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -top-40 left-1/4 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(0,206,196,0.3)_0%,transparent_70%)] rounded-full blur-3xl"
               />
+              {/* Bottom Orange Glow */}
               <motion.div
-                animate={{ rotate: -360 }}
-                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                className="absolute -bottom-24 -right-24 w-48 h-48 bg-[#fb923c]/5 rounded-full blur-2xl pointer-events-none"
+                animate={{ 
+                  scale: [1, 1.15, 1],
+                  opacity: [0.08, 0.15, 0.08]
+                }}
+                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -bottom-40 right-1/4 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(251,146,60,0.15)_0%,transparent_70%)] rounded-full blur-3xl"
               />
+              {/* Center Subtle Grid */}
+              <div 
+                className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
+                style={{
+                  backgroundImage: `radial-gradient(var(--color-outline) 1px, transparent 1px)`,
+                  backgroundSize: '24px 24px'
+                }}
+              />
+            </div>
 
+            {/* Welcome Content Wrapper (Bottom Positioned) */}
+            <div className="relative z-10 w-full max-w-4xl flex flex-col items-center text-center pb-12 md:pb-20">
+              
               {/* Pulsing Icon Badge */}
               <motion.div
-                initial={{ scale: 0.5, opacity: 0 }}
+                initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.15, type: "spring", stiffness: 180 }}
-                className="size-16 rounded-2xl bg-[#00cec4]/10 border border-[#00cec4]/20 flex items-center justify-center text-[#00cec4] mx-auto mb-6 shadow-[0_0_30px_rgba(0,206,196,0.15)]"
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 100, 
+                  damping: 15,
+                  delay: 0.1 
+                }}
+                className="size-16 rounded-2xl bg-[#00cec4]/10 border border-[#00cec4]/20 flex items-center justify-center text-[#00cec4] mb-6 shadow-[0_0_40px_rgba(0,206,196,0.2)]"
               >
-                <LayoutGrid className="size-8" />
+                <motion.div
+                  animate={{ scale: [0.95, 1.05, 0.95] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <LayoutGrid className="size-8" />
+                </motion.div>
               </motion.div>
 
               {/* Welcome Wording */}
               <motion.p
-                initial={{ opacity: 0, y: 5 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
-                className="text-[10px] uppercase font-bold tracking-[0.25em] text-[#00cec4] font-mono"
+                transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+                className="text-xs uppercase font-bold tracking-[0.3em] text-[#00cec4] font-mono"
               >
                 Welcome Back
               </motion.p>
               
               <motion.h2
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35 }}
-                className="text-lg font-black uppercase tracking-wider text-on-surface mt-2.5 mb-1.5"
+                transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+                className="text-3xl md:text-5xl font-black uppercase tracking-wider text-white mt-4 mb-4 select-none"
                 style={{ fontFamily: "var(--font-kiona-sans), sans-serif" }}
               >
                 {userName}
               </motion.h2>
 
+              {/* Separator Line */}
+              <motion.div
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: "80px", opacity: 0.3 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="h-[1px] bg-[#00cec4] my-2"
+              />
+
               <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.45 }}
-                className="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mt-1 mb-7"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.5, ease: "easeOut" }}
+                className="text-[11px] text-white/50 uppercase font-bold tracking-[0.25em] mt-2"
               >
                 Your secure workspace is ready
               </motion.p>
+              
+              {/* Subtle Loading Progress Bar */}
+              <div className="w-48 h-1 bg-white/10 rounded-full mt-8 overflow-hidden relative">
+                <motion.div
+                  initial={{ left: "-100%" }}
+                  animate={{ left: "100%" }}
+                  transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute inset-y-0 w-1/2 bg-[#00cec4] rounded-full"
+                />
+              </div>
 
-              {/* Action Button */}
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.55 }}
-                type="button"
-                onClick={() => setShowWelcome(false)}
-                className="w-full bg-[#00cec4] hover:bg-[#00b8af] text-white font-bold text-[10px] uppercase tracking-widest py-3 px-6 rounded-xl hover:shadow-[0_0_20px_rgba(0,206,196,0.3)] transition-all cursor-pointer shadow-md"
-              >
-                Enter Workspace
-              </motion.button>
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
