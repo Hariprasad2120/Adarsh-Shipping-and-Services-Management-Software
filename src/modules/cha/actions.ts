@@ -244,6 +244,21 @@ export async function uploadDocumentVersionAction(
   }
 }
 
+export async function deleteDocumentVersionAction(
+  jobId: string,
+  requirementId: string,
+  versionId: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const result = await chaService.deleteDocumentVersion(userId, orgId, jobId, requirementId, versionId);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to delete document version" };
+  }
+}
+
 export async function declareDocumentExceptionAction(
   jobId: string,
   requirementId: string,

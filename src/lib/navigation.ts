@@ -20,6 +20,7 @@ import {
 import { FolderIcon } from "@/components/ui/folder-icon";
 const Folder = FolderIcon as any;
 import type { Caps } from "@/lib/rbac";
+import { isNavSectionEnabled } from "@/lib/app-edition";
 
 export type SecondaryNavItem = {
   href: string;
@@ -1009,6 +1010,7 @@ export function getVisibleSections(caps: Caps) {
     const visibleItems = section.items.filter((item) => isVisible(caps, item.permission, item.hideFor));
     return { ...section, items: visibleItems };
   }).filter((section) => {
+    if (!isNavSectionEnabled(section.id)) return false;
     const canSeeSection = isVisible(caps, section.permission, section.hideFor);
     if (section.alwaysVisible) return true;
     return section.items.length > 0 || Boolean(section.permission && canSeeSection);

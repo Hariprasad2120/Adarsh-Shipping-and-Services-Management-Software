@@ -303,6 +303,59 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(jobAfterGatePass.stage).toBe("CHECKLIST_PREPARATION");
   });
 
+  it("3.5. should delete a document version, update status, and revert stage if gate fails", async () => {
+    const job = await db.chaJob.findFirstOrThrow({ where: { orgId: org.id, jobNumber: "CHA-JOB-999" } });
+    const reqs = await db.chaJobDocumentRequirement.findMany({ where: { jobId: job.id }, include: { versions: true } });
+
+    const pkReq = reqs.find((r) => r.name === "Packing List")!;
+    const currentVersion = pkReq.versions.find((v) => v.isCurrent)!;
+
+    // A. Unauthorized user deletion attempt should fail
+    const randomUser = await db.user.create({
+      data: {
+        orgId: org.id,
+        email: `random-user-${Date.now()}@example.com`,
+        passwordHash: "dummy-hash",
+        name: "Random Guy",
+        branchId: branch.id,
+      },
+    });
+
+    await expect(
+      chaService.deleteDocumentVersion(randomUser.id, org.id, job.id, pkReq.id, currentVersion.id)
+    ).rejects.toThrow("Access Denied");
+
+    // B. Authorized owner deletion should succeed
+    const result = await chaService.deleteDocumentVersion(ownerUser.id, org.id, job.id, pkReq.id, currentVersion.id);
+    expect(result.newStatus).toBe("PENDING");
+    expect(result.stageReverted).toBe(true);
+    expect(result.prevStage).toBe("CHECKLIST_PREPARATION");
+
+    // C. Check database updates
+    const updatedJob = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
+    expect(updatedJob.stage).toBe("DOCUMENT_COLLECTION");
+
+    const updatedPkReq = await db.chaJobDocumentRequirement.findUniqueOrThrow({
+      where: { id: pkReq.id },
+      include: { versions: true },
+    });
+    expect(updatedPkReq.status).toBe("PENDING");
+    expect(updatedPkReq.versions.length).toBe(0); // version deleted
+
+    // D. Re-upload to restore stage for checklist test
+    await chaService.uploadDocumentVersion(ownerUser.id, org.id, job.id, pkReq.id, {
+      fileKey: "packing_list_s3_key",
+      fileName: "packing_list.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 8192,
+    });
+    const jobRestored = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
+    expect(jobRestored.stage).toBe("CHECKLIST_PREPARATION");
+
+    // Clean up random user
+    await db.user.delete({ where: { id: randomUser.id } });
+  });
+
   it("4. should import checklist, submit for approval and handle manager actions", async () => {
     const job = await db.chaJob.findFirstOrThrow({ where: { orgId: org.id, jobNumber: "CHA-JOB-999" } });
 

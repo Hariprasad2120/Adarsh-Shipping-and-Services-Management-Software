@@ -21,7 +21,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <NotificationProvider>
         <TodoReminderAgent />
         <SessionSync />
-        <div className="flex min-h-screen overflow-x-clip bg-background text-foreground">
+        <div className="flex h-screen overflow-hidden bg-background text-foreground">
           <Sidebar caps={caps} userName={session.user.name} />
           <MainShell>
             <PageAnimator>

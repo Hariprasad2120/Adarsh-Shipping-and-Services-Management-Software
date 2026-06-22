@@ -1,3 +1,4 @@
+import { ClickableRow } from "@/components/clickable-row";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
@@ -243,7 +244,7 @@ export default async function ChaDashboard() {
               </DataTableHeader>
               <DataTableBody>
                 {myJobs.map((job) => (
-                  <DataTableRow key={job.id}>
+                  <ClickableRow key={job.id} href={`/cha/jobs/${job.id}`}>
                     <DataTableCell className="font-medium text-[#00cec4]">
                       <Link href={`/cha/jobs/${job.id}`} className="transition-colors hover:text-[#00b5ad]">
                         {job.jobNumber}
@@ -275,7 +276,7 @@ export default async function ChaDashboard() {
                         {job.priority}
                       </span>
                     </DataTableCell>
-                  </DataTableRow>
+                  </ClickableRow>
                 ))}
               </DataTableBody>
             </>

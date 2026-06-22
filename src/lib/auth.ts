@@ -29,8 +29,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
-        const user = await db.user.findUnique({
-          where: { email },
+        const normalizedEmail = email.trim().toLowerCase();
+        const user = await db.user.findFirst({
+          where: { email: { equals: normalizedEmail, mode: "insensitive" } },
           include: { roles: { include: { role: true } } },
         });
 

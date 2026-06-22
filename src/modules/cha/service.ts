@@ -665,6 +665,138 @@ export async function uploadDocumentVersion(
   return result;
 }
 
+// Delete a document version
+export async function deleteDocumentVersion(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  requirementId: string,
+  versionId: string
+) {
+  // 1. Fetch the version, requirement, and job (to verify ownership & org)
+  const version = await db.chaDocumentVersion.findFirstOrThrow({
+    where: {
+      id: versionId,
+      requirementId,
+      requirement: {
+        jobId,
+        job: getActiveChaJobWhere(orgId),
+      },
+    },
+    include: {
+      requirement: {
+        include: {
+          job: true,
+        },
+      },
+    },
+  });
+
+  // 2. Perform RBAC and context authorization checks
+  const isUploader = version.uploadedById === actorId;
+  const isPrimaryOwner = version.requirement.job.primaryOwnerId === actorId;
+  const hasDeletePermission = await can(actorId, "cha.document.delete");
+  const hasManageSettings = await can(actorId, "cha.settings.manage");
+
+  if (!isUploader && !isPrimaryOwner && !hasDeletePermission && !hasManageSettings) {
+    throw new Error("Access Denied: You are not authorized to delete this document version.");
+  }
+
+  // 3. Perform deletion and update in a transaction
+  const result = await db.$transaction(async (tx) => {
+    // Delete the version record
+    await tx.chaDocumentVersion.delete({
+      where: { id: versionId },
+    });
+
+    // Check remaining versions
+    const remainingVersions = await tx.chaDocumentVersion.findMany({
+      where: { requirementId },
+      orderBy: { uploadedAt: "desc" },
+    });
+
+    // Check if there is an exception
+    const exception = await tx.chaDocumentException.findFirst({
+      where: { requirementId },
+    });
+
+    // Recalculate status
+    let newStatus: "PENDING" | "NOT_AVAILABLE" | "UPLOADED" = "PENDING";
+    if (remainingVersions.length > 0) {
+      newStatus = "UPLOADED";
+      // If we deleted the current version, mark the latest remaining one as current
+      if (version.isCurrent) {
+        await tx.chaDocumentVersion.update({
+          where: { id: remainingVersions[0].id },
+          data: { isCurrent: true },
+        });
+      }
+    } else if (exception) {
+      newStatus = "NOT_AVAILABLE";
+    }
+
+    // Update the requirement status
+    await tx.chaJobDocumentRequirement.update({
+      where: { id: requirementId },
+      data: { status: newStatus },
+    });
+
+    // Re-verify the gate status to see if it now fails
+    const reqs = await tx.chaJobDocumentRequirement.findMany({
+      where: { jobId },
+    });
+
+    const blocking = reqs.filter(
+      (r) => r.id === requirementId ? (newStatus !== "UPLOADED" && newStatus !== "NOT_AVAILABLE" && r.isMandatory) : (r.isMandatory && r.status !== "UPLOADED" && r.status !== "NOT_AVAILABLE")
+    );
+    const gatePassed = blocking.length === 0;
+
+    let stageReverted = false;
+    let prevStage = version.requirement.job.stage;
+
+    if (!gatePassed && (prevStage === "CHECKLIST_PREPARATION" || prevStage === "CHECKLIST_APPROVAL")) {
+      await tx.chaJob.update({
+        where: { id: jobId },
+        data: { stage: "DOCUMENT_COLLECTION" },
+      });
+      stageReverted = true;
+    }
+
+    return { newStatus, stageReverted, prevStage };
+  });
+
+  // 4. Log to Audit trail
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "ChaJobDocumentRequirement",
+    entityId: requirementId,
+    event: "DOCUMENT_DELETED",
+    actorId,
+    newState: result.newStatus,
+    remarks: `Deleted document version: ${version.fileName}`,
+  });
+
+  if (result.stageReverted) {
+    await logChaAudit({
+      orgId,
+      jobId,
+      entityType: "ChaJob",
+      entityId: jobId,
+      event: "DOCUMENT_GATE_REVERTED",
+      actorId,
+      prevState: result.prevStage,
+      newState: "DOCUMENT_COLLECTION",
+      remarks: `Job stage reverted to DOCUMENT_COLLECTION due to deletion of mandatory document: ${version.requirement.name}`,
+    });
+  }
+
+  // Log mock storage removal
+  console.log(`Mock storage: deleted file ${version.fileKey} from S3/GCS`);
+
+  return result;
+}
+
 // Declare document "Not Available" with a reason
 export async function declareDocumentException(
   actorId: string,

@@ -25,6 +25,7 @@ import {
   DataTableHeader,
   DataTableRow,
 } from "@/components/data-table";
+import { ClickableRow } from "@/components/clickable-row";
 
 interface JobItem {
   id: string;
@@ -487,10 +488,9 @@ export function JobsClient({
             </DataTableHeader>
             <DataTableBody>
               {jobsData.items.map((job) => (
-                <DataTableRow
+                <ClickableRow
                   key={job.id}
-                  className="cursor-pointer"
-                  onClick={() => router.push(`/cha/jobs/${job.id}`)}
+                  href={`/cha/jobs/${job.id}`}
                 >
                   <DataTableCell className="font-medium text-[#00cec4]">{job.jobNumber}</DataTableCell>
                   <DataTableCell>
@@ -526,7 +526,7 @@ export function JobsClient({
                     </span>
                   </DataTableCell>
                   <DataTableCell className="text-on-surface-variant">{job.ownerName}</DataTableCell>
-                </DataTableRow>
+                </ClickableRow>
               ))}
             </DataTableBody>
 

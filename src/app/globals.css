@@ -829,3 +829,21 @@ html.light main .ds-dark-banner [class*="text-white/56"] {
   border-color: #00cec4 !important;
   box-shadow: 0 0 0 3px rgba(0, 206, 196, 0.12) !important;
 }
+
+/* Scoped input/select/textarea padding inside the CHA module */
+.cha-module input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.cha-module select,
+.cha-module textarea {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+.cha-module input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([class*="pl-"]),
+.cha-module select:not([class*="pl-"]),
+.cha-module textarea:not([class*="pl-"]) {
+  padding-left: 14px !important;
+}
+.cha-module input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([class*="pr-"]),
+.cha-module select:not([class*="pr-"]),
+.cha-module textarea:not([class*="pr-"]) {
+  padding-right: 14px !important;
+}

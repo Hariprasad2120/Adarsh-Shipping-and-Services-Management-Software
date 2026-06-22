@@ -35,6 +35,8 @@ interface JobWorkspaceClientProps {
   currentUserId: string;
   canDeleteJob: boolean;
   canApproveDeleteJob: boolean;
+  canDeleteDoc: boolean;
+  canManageSettings: boolean;
 }
 
 const STAGES = [
@@ -53,6 +55,8 @@ export function JobWorkspaceClient({
   currentUserId,
   canDeleteJob,
   canApproveDeleteJob,
+  canDeleteDoc,
+  canManageSettings,
 }: JobWorkspaceClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
@@ -133,6 +137,11 @@ export function JobWorkspaceClient({
   const [deleteConfirmJobNumber, setDeleteConfirmJobNumber] = useState("");
   const [deleteConfirmPhrase, setDeleteConfirmPhrase] = useState("");
   const [deleteDecisionRemarks, setDeleteDecisionRemarks] = useState("");
+  const [deleteDocModal, setDeleteDocModal] = useState<{
+    reqId: string;
+    versionId: string;
+    fileName: string;
+  } | null>(null);
 
   // Get active step index
   const activeStepIndex = STAGES.findIndex((s) => s.key === job.stage);
@@ -194,6 +203,29 @@ export function JobWorkspaceClient({
         router.refresh();
       } else {
         toast.error(res.error || "Failed to waiver requirement.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleConfirmDeleteDoc = async () => {
+    if (!deleteDocModal) return;
+    setLoading("delete-doc");
+    try {
+      const res = await actions.deleteDocumentVersionAction(
+        job.id,
+        deleteDocModal.reqId,
+        deleteDocModal.versionId
+      );
+      if (res.ok) {
+        toast.success(`Deleted ${deleteDocModal.fileName} successfully.`);
+        setDeleteDocModal(null);
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to delete file.");
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
@@ -1064,9 +1096,30 @@ export function JobWorkspaceClient({
                             <FileText size={16} className="text-green-600 shrink-0" />
                             <span className="truncate font-medium">{currentVersion.fileName}</span>
                           </div>
-                          <span className="text-[10px] text-on-surface-variant shrink-0 font-mono ds-numeric pl-2">
-                            {(currentVersion.sizeBytes / 1024).toFixed(1)} KB
-                          </span>
+                          <div className="flex items-center gap-2 shrink-0 pl-2">
+                            <span className="text-[10px] text-on-surface-variant font-mono ds-numeric">
+                              {(currentVersion.sizeBytes / 1024).toFixed(1)} KB
+                            </span>
+                            {(currentUserId === currentVersion.uploadedById ||
+                              currentUserId === job.primaryOwnerId ||
+                              canDeleteDoc ||
+                              canManageSettings) && (
+                              <button
+                                type="button"
+                                className="text-red-500 hover:text-red-700 transition-colors p-1"
+                                onClick={() =>
+                                  setDeleteDocModal({
+                                    reqId: req.id,
+                                    versionId: currentVersion.id,
+                                    fileName: currentVersion.fileName,
+                                  })
+                                }
+                                title="Delete document version"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )}
 
@@ -2368,6 +2421,41 @@ export function JobWorkspaceClient({
           </div>
         </div>
       </Modal>
+
+      {deleteDocModal && (
+        <Modal
+          open={true}
+          onClose={() => setDeleteDocModal(null)}
+          title="Delete Document Version"
+          description="Are you sure you want to permanently delete this document version?"
+          className="max-w-md"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-on-surface">
+              File: <strong className="text-on-surface-variant font-medium">{deleteDocModal.fileName}</strong>
+            </p>
+            <p className="text-xs text-red-500 font-medium">
+              This action is permanent and cannot be undone. If this is a mandatory document requirement, the workflow stage may revert to Document Collection.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteDocModal(null)}
+                disabled={loading === "delete-doc"}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmDeleteDoc}
+                disabled={loading === "delete-doc"}
+              >
+                {loading === "delete-doc" ? "Deleting..." : "Confirm Delete"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </main>
   );
 }

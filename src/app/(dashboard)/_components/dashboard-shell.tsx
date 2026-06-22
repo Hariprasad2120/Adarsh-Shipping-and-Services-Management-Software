@@ -105,7 +105,7 @@ export function DashboardShell({
       </div>
       <div
         ref={breadcrumbRef}
-        className="sticky top-[var(--dashboard-topbar-height)] z-30 w-full shrink-0 border-b border-outline-variant/35 bg-background/98 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.28)] backdrop-blur-sm"
+        className="sticky top-[var(--dashboard-topbar-height)] z-30 w-full shrink-0 bg-background/95 backdrop-blur-sm"
       >
         <AutoBreadcrumb />
       </div>
