@@ -1,19 +1,19 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
 import {
   CalendarDays,
   Clock3,
   LayoutGrid,
   Bell,
+  Menu,
   Settings,
   Search,
 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useCaps } from "@/lib/caps-context";
+import { useDashboardChrome } from "@/components/dashboard-chrome";
 import { getVisibleSections, matchesPath } from "@/lib/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -38,6 +38,7 @@ export function AppHeader({
   const pathname = usePathname();
   const router = useRouter();
   const caps = useCaps();
+  const { mobileNavId, mobileNavOpen, setMenuTrigger, toggleMobileNav } = useDashboardChrome();
   const [now, setNow] = useState<Date | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
   const firstName = useMemo(
@@ -80,12 +81,16 @@ export function AppHeader({
     ).matches;
     if (prefersReduced) return;
 
-    setShowWelcome(true);
-
+    const frameId = window.requestAnimationFrame(() => {
+      setShowWelcome(true);
+    });
     const timer = setTimeout(() => {
       setShowWelcome(false);
     }, 4500);
-    return () => clearTimeout(timer);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      clearTimeout(timer);
+    };
   }, [sessionToken]);
 
   const visibleSections = useMemo(
@@ -123,19 +128,29 @@ export function AppHeader({
       })
     : "--:--";
   const workspaceLabel = activeItem?.label ?? activeSection?.label ?? "Workspace";
-  const workspaceHref = activeItem?.href ?? activeSection?.href ?? "/dashboard";
   const canOpenSettings = Boolean(caps["admin.org.manage"]);
 
   const SectionIcon = activeSection?.icon ?? LayoutGrid;
 
   return (
     <>
-      <header className="z-20 flex h-14 shrink-0 items-center justify-between border-b border-outline-variant/60 bg-surface/90 px-6 backdrop-blur-sm lg:px-8 xl:px-10">
-        <div className="flex items-center gap-3">
+      <header className="z-20 flex h-14 shrink-0 items-center justify-between border-b border-outline-variant/60 bg-surface/90 px-4 backdrop-blur-sm sm:px-6 lg:px-8 xl:px-10">
+        <div className="flex min-w-0 items-center gap-3">
+          <button
+            ref={setMenuTrigger}
+            type="button"
+            onClick={toggleMobileNav}
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-outline-variant/60 bg-surface text-on-surface transition-colors hover:bg-surface-container-low lg:hidden"
+            aria-controls={mobileNavId}
+            aria-expanded={mobileNavOpen}
+            aria-label={mobileNavOpen ? "Close navigation menu" : "Open navigation menu"}
+          >
+            <Menu className="size-5 text-[#00cec4]" />
+          </button>
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#00cec4]/10">
             <SectionIcon size={16} className="text-[#00cec4]" />
           </div>
-          <h1 className="ds-h3 heading-icon-none text-on-surface">{workspaceLabel}</h1>
+          <h1 className="ds-h3 heading-icon-none truncate text-on-surface">{workspaceLabel}</h1>
         </div>
 
         <div className="hidden flex-1 max-w-md mx-4 xl:block">
@@ -145,7 +160,7 @@ export function AppHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-3.5">
+        <div className="flex items-center gap-2 sm:gap-3.5">
           <span className="hidden items-center gap-2 rounded-xl border border-[#bfc8c6] dark:border-[#21262d] bg-surface px-3 py-1.5 text-xs text-on-surface-variant shadow-sm lg:inline-flex">
             <CalendarDays className="size-3.5 text-[#00a99f]" />
             {dateLabel}

@@ -6,8 +6,18 @@ import { usePathname } from "next/navigation";
 import { performLogout } from "@/lib/logout";
 import { useMemo, useState, useEffect, useRef } from "react";
 import type { Caps } from "@/lib/rbac";
+import { useDashboardChrome } from "@/components/dashboard-chrome";
+import { cn } from "@/lib/utils";
 import { getActiveItemHref, getVisibleSections, matchesPath } from "@/lib/navigation";
-import { Sun, Moon, LogOut, ChevronDown, ChevronRight, ChevronLeft } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  LogOut,
+  ChevronDown,
+  ChevronRight,
+  ChevronLeft,
+  X,
+} from "lucide-react";
 
 type ThemeMode = "light" | "dark";
 
@@ -27,8 +37,6 @@ function detectTheme(): ThemeMode {
   if (root.classList.contains("light")) return "light";
   return "light";
 }
-
-
 
 function getIconColor(label: string, isActive: boolean) {
   if (isActive) return "text-[#00c4b6]";
@@ -62,33 +70,41 @@ function getIconColor(label: string, isActive: boolean) {
 }
 
 const CRM_GROUP_MAPPING: Record<string, string> = {
-  "Dashboard": "Sales",
-  "Leads": "Sales",
-  "Contacts": "Sales",
-  "Accounts": "Sales",
+  Dashboard: "Sales",
+  Leads: "Sales",
+  Contacts: "Sales",
+  Accounts: "Sales",
   "Deals Pipeline": "Sales",
-  "Forecasts": "Sales",
-  "Documents": "Sales",
-  "Campaigns": "Sales",
-  "Tasks": "Activities",
-  "Events": "Activities",
-  "Calls": "Activities",
+  Forecasts: "Sales",
+  Documents: "Sales",
+  Campaigns: "Sales",
+  Tasks: "Activities",
+  Events: "Activities",
+  Calls: "Activities",
   "Products & Services": "Inventory",
   "Price Books": "Inventory",
-  "Quotes": "Inventory",
-  "Vendors": "Inventory",
+  Quotes: "Inventory",
+  Vendors: "Inventory",
   "Support Cases": "Support",
-  "Solutions": "Support",
+  Solutions: "Support",
   "Sales Inbox": "Integrations",
   "Social Log": "Integrations",
-  "Visits": "Integrations",
+  Visits: "Integrations",
   "Lead Sources": "Integrations",
-  "Services": "Services & Projects",
-  "Projects": "Services & Projects",
+  Services: "Services & Projects",
+  Projects: "Services & Projects",
   "Feedback (VoC)": "Services & Projects",
 };
 
 const CRM_GROUP_ORDER = ["Sales", "Activities", "Inventory", "Support", "Integrations", "Services & Projects"];
+
+function getFocusableElements(container: HTMLElement) {
+  return Array.from(
+    container.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  ).filter((element) => !element.hasAttribute("disabled"));
+}
 
 export function Sidebar({
   caps,
@@ -100,6 +116,7 @@ export function Sidebar({
   enabledModuleIds?: Iterable<string>;
 }) {
   const pathname = usePathname();
+  const { closeMobileNav, isDesktop, mobileNavId, mobileNavOpen } = useDashboardChrome();
   const visibleSections = useMemo(
     () => getVisibleSections(caps, enabledModuleIds),
     [caps, enabledModuleIds],
@@ -109,6 +126,7 @@ export function Sidebar({
   const [hoveredSectionId, setHoveredSectionId] = useState<string | null>(null);
   const [flyoutPos, setFlyoutPos] = useState({ top: 0, maxHeight: 400 });
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mobileDrawerRef = useRef<HTMLElement | null>(null);
 
   const activeSectionId =
     visibleSections.find((section) => matchesPath(pathname, section.href, section.matchPaths))?.id ??
@@ -141,10 +159,14 @@ export function Sidebar({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    const saved = localStorage.getItem("sidebar-collapsed");
-    if (saved === "true") setIsCollapsed(true);
-    setTheme(detectTheme());
+    const frameId = window.requestAnimationFrame(() => {
+      setMounted(true);
+      const saved = localStorage.getItem("sidebar-collapsed");
+      if (saved === "true") setIsCollapsed(true);
+      setTheme(detectTheme());
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
   }, []);
 
   useEffect(() => {
@@ -160,7 +182,11 @@ export function Sidebar({
   useEffect(() => {
     const activeSection = visibleSections.find((s) => matchesPath(pathname, s.href, s.matchPaths));
     if (activeSection && activeSection.items.length > 0) {
-      setExpandedSections((prev) => ({ ...prev, [activeSection.id]: true }));
+      const frameId = window.requestAnimationFrame(() => {
+        setExpandedSections((prev) => ({ ...prev, [activeSection.id]: true }));
+      });
+
+      return () => window.cancelAnimationFrame(frameId);
     }
   }, [pathname, visibleSections]);
 
@@ -168,8 +194,47 @@ export function Sidebar({
     const activeGroup = activeCrmItem ? CRM_GROUP_MAPPING[activeCrmItem.label] : undefined;
     if (!activeGroup) return;
 
-    setCrmExpandedGroups((prev) => (prev[activeGroup] ? prev : { ...prev, [activeGroup]: true }));
+    const frameId = window.requestAnimationFrame(() => {
+      setCrmExpandedGroups((prev) => (prev[activeGroup] ? prev : { ...prev, [activeGroup]: true }));
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
   }, [activeCrmItem]);
+
+  useEffect(() => {
+    if (isDesktop || !mobileNavOpen) return;
+    const drawer = mobileDrawerRef.current;
+    if (!drawer) return;
+
+    const focusables = getFocusableElements(drawer);
+    (focusables[0] ?? drawer).focus();
+
+    const handleTabKey = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+
+      const currentFocusables = getFocusableElements(drawer);
+      if (currentFocusables.length === 0) {
+        event.preventDefault();
+        drawer.focus();
+        return;
+      }
+
+      const first = currentFocusables[0];
+      const last = currentFocusables[currentFocusables.length - 1];
+      const activeElement = document.activeElement as HTMLElement | null;
+
+      if (event.shiftKey && activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    drawer.addEventListener("keydown", handleTabKey);
+    return () => drawer.removeEventListener("keydown", handleTabKey);
+  }, [isDesktop, mobileNavOpen]);
 
   const setDashboardTheme = (nextTheme: ThemeMode) => {
     applyTheme(nextTheme);
@@ -204,39 +269,64 @@ export function Sidebar({
     ? visibleSections.find((s) => s.id === hoveredSectionId) ?? null
     : null;
 
-  return (
-    <>
-      <aside
-        className={`fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-outline-variant/50 bg-surface text-on-surface shadow-[0_12px_36px_-28px_rgba(15,23,42,0.28)] select-none transition-all duration-300 dark:shadow-[0_18px_42px_-30px_rgba(0,0,0,0.48)] ${
-          isCollapsed ? "w-14" : "w-57.5"
-        }`}
-      >
-        {/* Logo — fixed-height container, both images absolutely positioned so height never shifts */}
-        <div className="relative flex h-[68px] shrink-0 border-b border-outline-variant/30 overflow-hidden">
-          {/* Collapsed logomark — centered, fills sidebar width */}
-          <Image
-            src="/logo alone.png"
-            alt="Logo"
-            width={56}
-            height={56}
-            className={`absolute inset-0 m-auto object-contain transition-opacity duration-300 ease-in-out ${
-              isCollapsed ? "opacity-100" : "opacity-0 pointer-events-none"
-            }`}
-            style={{ width: 52, height: 52 }}
-          />
-          {/* Full logo — left aligned */}
-          <Image
-            src="/Logo.png"
-            alt="Adarsh Shipping & Services"
-            width={160}
-            height={48}
-            className={`absolute left-5 top-1/2 -translate-y-1/2 h-auto max-w-40 object-contain transition-opacity duration-300 ease-in-out ${
-              isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
-            }`}
-          />
+  const renderSidebarContent = ({ mobile }: { mobile: boolean }) => {
+    const collapsed = !mobile && isCollapsed;
+    const shouldUseHoverFlyout = collapsed && !mobile;
+    const handleNavigation = () => {
+      setHoveredSectionId(null);
+      if (mobile) {
+        closeMobileNav();
+      }
+    };
+
+    return (
+      <>
+        <div className="relative flex h-[68px] shrink-0 items-center overflow-hidden border-b border-outline-variant/30 px-4">
+          {mobile ? (
+            <>
+              <Image
+                src="/Logo.png"
+                alt="Adarsh Shipping & Services"
+                width={160}
+                height={48}
+                className="h-auto max-w-40 object-contain"
+              />
+              <button
+                type="button"
+                onClick={closeMobileNav}
+                className="ml-auto inline-flex size-11 items-center justify-center rounded-xl border border-outline-variant/60 bg-surface text-on-surface transition-colors hover:bg-surface-container-low"
+                aria-label="Close navigation menu"
+              >
+                <X className="size-5 text-[#00cec4]" />
+              </button>
+            </>
+          ) : (
+            <>
+              <Image
+                src="/logo alone.png"
+                alt="Logo"
+                width={56}
+                height={56}
+                className={cn(
+                  "absolute inset-0 m-auto object-contain transition-opacity duration-300 ease-in-out",
+                  isCollapsed ? "opacity-100" : "pointer-events-none opacity-0",
+                )}
+                style={{ width: 52, height: 52 }}
+              />
+              <Image
+                src="/Logo.png"
+                alt="Adarsh Shipping & Services"
+                width={160}
+                height={48}
+                className={cn(
+                  "absolute left-5 top-1/2 h-auto max-w-40 -translate-y-1/2 object-contain transition-opacity duration-300 ease-in-out",
+                  isCollapsed ? "pointer-events-none opacity-0" : "opacity-100",
+                )}
+              />
+            </>
+          )}
         </div>
 
-        {/* Nav */}
         <div className="flex w-full flex-1 flex-col gap-0 overflow-y-auto py-2 scrollbar-none [&::-webkit-scrollbar]:hidden">
           {visibleSections.map((section) => {
             const isActive = section.id === activeSectionId;
@@ -244,61 +334,68 @@ export function Sidebar({
             const activeChildHref = getActiveItemHref(pathname, section.items);
             const isExpanded = !!expandedSections[section.id];
 
-            const rowBase = `group flex w-full items-center pl-[19px] pr-3 py-2.5 border-l-2 transition-colors duration-200 ${
+            const rowBase = cn(
+              "group flex w-full items-center border-l-2 py-2.5 pl-[19px] pr-3 transition-colors duration-200",
               isActive
-                ? "bg-primary/10 text-primary border-primary"
-                : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface border-transparent"
-            }`;
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-transparent text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
+            );
 
-            const iconClass = `shrink-0 transition-transform duration-200 ${
-              isActive ? "scale-105 text-[#00c4b6]" : `${getIconColor(section.label, false)} group-hover:scale-105`
-            }`;
+            const iconClass = cn(
+              "shrink-0 transition-transform duration-200",
+              isActive ? "scale-105 text-[#00c4b6]" : `${getIconColor(section.label, false)} group-hover:scale-105`,
+            );
 
-            // Label container — slides in/out on X axis, no icon movement
-            const labelClass = `overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ease-in-out ${
-              isCollapsed ? "max-w-0 opacity-0" : "max-w-52 opacity-100"
-            }`;
+            const labelClass = mobile
+              ? "flex flex-1 items-center justify-between"
+              : cn(
+                  "overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ease-in-out",
+                  collapsed ? "max-w-0 opacity-0" : "max-w-52 opacity-100",
+                );
 
             return (
               <div key={section.id} className="space-y-0.5">
                 {section.items.length === 0 ? (
                   <Link
                     href={section.href}
-                    onMouseEnter={isCollapsed ? (e) => handleIconEnter(section.id, e) : undefined}
-                    onMouseLeave={isCollapsed ? handleIconLeave : undefined}
+                    onClick={handleNavigation}
+                    onMouseEnter={shouldUseHoverFlyout ? (e) => handleIconEnter(section.id, e) : undefined}
+                    onMouseLeave={shouldUseHoverFlyout ? handleIconLeave : undefined}
                     className={rowBase}
                   >
                     <Icon size={18} className={iconClass} />
                     <div className={labelClass}>
-                      <span className="ml-3 text-[12px] font-medium tracking-wide">{section.label}</span>
+                      <span className="ml-3 truncate text-[12px] font-medium tracking-wide">{section.label}</span>
                     </div>
                   </Link>
                 ) : (
                   <button
                     type="button"
-                    onMouseEnter={isCollapsed ? (e) => handleIconEnter(section.id, e) : undefined}
-                    onMouseLeave={isCollapsed ? handleIconLeave : undefined}
-                    onClick={() => { if (!isCollapsed) toggleSection(section.id); }}
+                    onMouseEnter={shouldUseHoverFlyout ? (e) => handleIconEnter(section.id, e) : undefined}
+                    onMouseLeave={shouldUseHoverFlyout ? handleIconLeave : undefined}
+                    onClick={() => {
+                      if (!collapsed) toggleSection(section.id);
+                    }}
                     className={rowBase}
+                    aria-expanded={isExpanded}
                   >
                     <Icon size={18} className={iconClass} />
-                    <div className={`${labelClass} flex flex-1 items-center justify-between`}>
-                      <span className="ml-3 text-[12px] font-medium tracking-wide">{section.label}</span>
+                    <div className={cn(labelClass, !mobile && "flex flex-1 items-center justify-between")}>
+                      <span className="ml-3 truncate text-[12px] font-medium tracking-wide">{section.label}</span>
                       {isExpanded ? (
-                        <ChevronDown size={14} className="shrink-0 opacity-50 mr-0" />
+                        <ChevronDown size={14} className="mr-0 shrink-0 opacity-50" />
                       ) : (
-                        <ChevronRight size={14} className="shrink-0 opacity-50 mr-0" />
+                        <ChevronRight size={14} className="mr-0 shrink-0 opacity-50" />
                       )}
                     </div>
                   </button>
                 )}
 
-                {/* Sub-items — only shown when expanded and not collapsed */}
-                {!isCollapsed && isExpanded && section.id === "crm" ? (
+                {!collapsed && isExpanded && section.id === "crm" ? (
                   <div className="space-y-1">
                     {CRM_GROUP_ORDER.map((groupTitle) => {
                       const groupItems = section.items.filter(
-                        (item) => (CRM_GROUP_MAPPING[item.label] || "Sales") === groupTitle
+                        (item) => (CRM_GROUP_MAPPING[item.label] || "Sales") === groupTitle,
                       );
                       if (groupItems.length === 0) return null;
                       const isGroupExpanded = !!crmExpandedGroups[groupTitle];
@@ -309,9 +406,12 @@ export function Sidebar({
                           <button
                             type="button"
                             onClick={() => toggleCrmGroup(groupTitle)}
-                            className={`flex w-full items-center justify-between px-2 py-1 text-[10px] font-bold tracking-wide transition-colors cursor-pointer ${
-                              hasActiveChild ? "text-primary" : "text-on-surface-variant hover:text-on-surface"
-                            }`}
+                            className={cn(
+                              "flex w-full cursor-pointer items-center justify-between px-2 py-1 text-[10px] font-bold tracking-wide transition-colors",
+                              hasActiveChild
+                                ? "text-primary"
+                                : "text-on-surface-variant hover:text-on-surface",
+                            )}
                           >
                             <span>{groupTitle}</span>
                             {isGroupExpanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
@@ -326,17 +426,22 @@ export function Sidebar({
                                   <Link
                                     key={item.href}
                                     href={item.href}
-                                    className={`group relative flex items-center pl-10 pr-3 py-1.5 text-[12px] transition-all duration-200 ${
+                                    onClick={handleNavigation}
+                                    className={cn(
+                                      "group relative flex items-center border-l-2 py-1.5 pl-10 pr-3 text-[12px] transition-all duration-200",
                                       isChildActive
-                                        ? "bg-primary/10 text-primary border-l-2 border-primary"
-                                        : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface border-l-2 border-transparent"
-                                    }`}
+                                        ? "border-primary bg-primary/10 text-primary"
+                                        : "border-transparent text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
+                                    )}
                                   >
                                     <ItemIcon
                                       size={13}
-                                      className={`shrink-0 mr-2 ${isChildActive ? "text-[#00c4b6]" : getIconColor(item.label, false)}`}
+                                      className={cn(
+                                        "mr-2 shrink-0",
+                                        isChildActive ? "text-[#00c4b6]" : getIconColor(item.label, false),
+                                      )}
                                     />
-                                    <span className="font-medium tracking-wide truncate">{item.label}</span>
+                                    <span className="truncate font-medium tracking-wide">{item.label}</span>
                                   </Link>
                                 );
                               })}
@@ -347,7 +452,9 @@ export function Sidebar({
                     })}
                   </div>
                 ) : (
-                  !isCollapsed && isExpanded && section.items.length > 0 && (
+                  !collapsed &&
+                  isExpanded &&
+                  section.items.length > 0 && (
                     <div className="space-y-0">
                       {section.items.map((item) => {
                         const ItemIcon = item.icon;
@@ -356,15 +463,20 @@ export function Sidebar({
                           <Link
                             key={item.href}
                             href={item.href}
-                            className={`group relative flex items-center pl-10 pr-3 py-2 text-[12px] transition-all duration-200 ${
+                            onClick={handleNavigation}
+                            className={cn(
+                              "group relative flex items-center border-l-2 py-2 pl-10 pr-3 text-[12px] transition-all duration-200",
                               isChildActive
-                                ? "bg-primary/10 text-primary border-l-2 border-primary"
-                                : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface border-l-2 border-transparent"
-                            }`}
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-transparent text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
+                            )}
                           >
                             <ItemIcon
                               size={14}
-                              className={`shrink-0 mr-2.5 ${isChildActive ? "text-[#00c4b6]" : getIconColor(item.label, false)}`}
+                              className={cn(
+                                "mr-2.5 shrink-0",
+                                isChildActive ? "text-[#00c4b6]" : getIconColor(item.label, false),
+                              )}
                             />
                             <span className="font-medium tracking-wide">{item.label}</span>
                           </Link>
@@ -378,25 +490,36 @@ export function Sidebar({
           })}
         </div>
 
-        {/* Footer — unified, label fades with same max-width transition */}
-        <div className="flex shrink-0 items-center border-t border-outline-variant/50 bg-surface-container-low px-3 py-3 overflow-hidden">
-          <div className="h-9 w-9 shrink-0 bg-[#00c4b6] text-white flex items-center justify-center font-bold text-sm rounded-full">
+        <div className="flex shrink-0 items-center overflow-hidden border-t border-outline-variant/50 bg-surface-container-low px-3 py-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#00c4b6] text-sm font-bold text-white">
             {userName ? userName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() : "SA"}
           </div>
-          <div className={`ml-2.5 flex min-w-0 flex-1 flex-col overflow-hidden transition-[max-width,opacity] duration-300 ease-in-out ${isCollapsed ? "max-w-0 opacity-0" : "max-w-40 opacity-100"}`}>
-            <span className="truncate text-[13px] font-bold text-on-surface leading-none whitespace-nowrap">{userName || "Site Admin"}</span>
-            <span className="mt-1 inline-block bg-[#fef3c7] text-[#d97706] text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider whitespace-nowrap w-fit">
+          <div
+            className={cn(
+              "ml-2.5 flex min-w-0 flex-1 flex-col overflow-hidden transition-[max-width,opacity] duration-300 ease-in-out",
+              collapsed ? "max-w-0 opacity-0" : "max-w-40 opacity-100",
+            )}
+          >
+            <span className="truncate whitespace-nowrap text-[13px] font-bold leading-none text-on-surface">
+              {userName || "Site Admin"}
+            </span>
+            <span className="mt-1 inline-block w-fit whitespace-nowrap rounded bg-[#fef3c7] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#d97706]">
               Admin
             </span>
           </div>
-          <div className={`flex items-center gap-1 shrink-0 overflow-hidden transition-[max-width,opacity] duration-300 ease-in-out ${isCollapsed ? "max-w-0 opacity-0" : "max-w-16 opacity-100"}`}>
+          <div
+            className={cn(
+              "flex shrink-0 items-center gap-1 overflow-hidden transition-[max-width,opacity] duration-300 ease-in-out",
+              collapsed ? "max-w-0 opacity-0" : "max-w-16 opacity-100",
+            )}
+          >
             <button
               type="button"
               onClick={toggleTheme}
               className="cursor-pointer rounded-md p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
               title={!mounted ? "Switch Theme" : theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
             >
-              {!mounted ? <div className="w-4 h-4" /> : theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              {!mounted ? <div className="h-4 w-4" /> : theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
             </button>
             <button
               type="button"
@@ -408,23 +531,34 @@ export function Sidebar({
             </button>
           </div>
         </div>
+      </>
+    );
+  };
+
+  return (
+    <>
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 hidden flex-col overflow-hidden border-r border-outline-variant/50 bg-surface text-on-surface shadow-[0_12px_36px_-28px_rgba(15,23,42,0.28)] select-none transition-all duration-300 dark:shadow-[0_18px_42px_-30px_rgba(0,0,0,0.48)] lg:flex",
+          isCollapsed ? "w-14" : "w-57.5",
+        )}
+      >
+        {renderSidebarContent({ mobile: false })}
       </aside>
 
-      {/* Bookmark toggle tab — fixed at right edge of sidebar, moves only horizontally */}
       <button
         type="button"
-        onClick={() => setIsCollapsed((v) => !v)}
-        className="fixed z-50 flex h-8 w-4 items-center justify-center rounded-r-lg border border-l-0 border-outline-variant/50 bg-surface text-on-surface-variant shadow-sm transition-[left] duration-300 hover:text-on-surface"
+        onClick={() => setIsCollapsed((value) => !value)}
+        className="fixed z-50 hidden h-8 w-4 items-center justify-center rounded-r-lg border border-l-0 border-outline-variant/50 bg-surface text-on-surface-variant shadow-sm transition-[left] duration-300 hover:text-on-surface lg:flex"
         style={{ left: isCollapsed ? "3.5rem" : "14.375rem", top: "5.5rem" }}
         title={isCollapsed ? "Expand" : "Collapse"}
       >
         {isCollapsed ? <ChevronRight size={11} /> : <ChevronLeft size={11} />}
       </button>
 
-      {/* Flyout panel — renders to the right of collapsed sidebar on icon hover */}
       {isCollapsed && hoveredSection && (
         <div
-          className="fixed z-50 ml-1 min-w-45 rounded-xl border border-outline-variant/50 bg-surface shadow-[0_8px_32px_-8px_rgba(0,0,0,0.32)] dark:shadow-[0_8px_32px_-8px_rgba(0,0,0,0.64)]"
+          className="fixed z-50 ml-1 hidden min-w-45 rounded-xl border border-outline-variant/50 bg-surface shadow-[0_8px_32px_-8px_rgba(0,0,0,0.32)] dark:shadow-[0_8px_32px_-8px_rgba(0,0,0,0.64)] lg:block"
           style={{ left: "3.5rem", top: flyoutPos.top }}
           onMouseEnter={handleFlyoutEnter}
           onMouseLeave={handleFlyoutLeave}
@@ -432,9 +566,12 @@ export function Sidebar({
           {hoveredSection.items.length === 0 ? (
             <Link
               href={hoveredSection.href}
-              className="flex items-center gap-2 px-3 py-2 text-[12px] font-medium text-on-surface transition-colors hover:bg-surface-container rounded-xl"
+              className="flex items-center gap-2 rounded-xl px-3 py-2 text-[12px] font-medium text-on-surface transition-colors hover:bg-surface-container"
             >
-              {(() => { const Icon = hoveredSection.icon; return <Icon size={13} className={getIconColor(hoveredSection.label, hoveredSection.id === activeSectionId)} />; })()}
+              {(() => {
+                const Icon = hoveredSection.icon;
+                return <Icon size={13} className={getIconColor(hoveredSection.label, hoveredSection.id === activeSectionId)} />;
+              })()}
               {hoveredSection.label}
             </Link>
           ) : hoveredSection.id === "crm" ? (
@@ -444,13 +581,13 @@ export function Sidebar({
             >
               {CRM_GROUP_ORDER.map((groupTitle) => {
                 const groupItems = hoveredSection.items.filter(
-                  (item) => (CRM_GROUP_MAPPING[item.label] || "Sales") === groupTitle
+                  (item) => (CRM_GROUP_MAPPING[item.label] || "Sales") === groupTitle,
                 );
                 if (groupItems.length === 0) return null;
                 const activeChildHref = getActiveItemHref(pathname, hoveredSection.items);
                 return (
                   <div key={groupTitle}>
-                    <div className="px-3 pt-2 pb-0.5 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant/60">
+                    <div className="px-3 pb-0.5 pt-2 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant/60">
                       {groupTitle}
                     </div>
                     {groupItems.map((item) => {
@@ -460,17 +597,18 @@ export function Sidebar({
                         <Link
                           key={item.href}
                           href={item.href}
-                          className={`flex items-center gap-2 px-3 py-1.5 text-[12px] transition-colors ${
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-1.5 text-[12px] transition-colors",
                             isChildActive
                               ? "bg-primary/10 text-primary"
-                              : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
-                          }`}
+                              : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
+                          )}
                         >
                           <ItemIcon
                             size={12}
                             className={isChildActive ? "text-[#00c4b6]" : getIconColor(item.label, false)}
                           />
-                          <span className="font-medium truncate">{item.label}</span>
+                          <span className="truncate font-medium">{item.label}</span>
                         </Link>
                       );
                     })}
@@ -491,11 +629,12 @@ export function Sidebar({
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-2.5 px-3 py-2 text-[12px] transition-colors ${
+                    className={cn(
+                      "flex items-center gap-2.5 px-3 py-2 text-[12px] transition-colors",
                       isChildActive
                         ? "bg-primary/10 text-primary"
-                        : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
-                    }`}
+                        : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
+                    )}
                   >
                     <ItemIcon
                       size={13}
@@ -509,6 +648,31 @@ export function Sidebar({
           )}
         </div>
       )}
+
+      <div
+        className={cn(
+          "fixed inset-0 z-50 bg-black/45 transition-opacity duration-200 lg:hidden",
+          mobileNavOpen ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+        onClick={closeMobileNav}
+        aria-hidden="true"
+      />
+
+      <aside
+        id={mobileNavId}
+        ref={mobileDrawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Primary navigation"
+        aria-hidden={!mobileNavOpen}
+        tabIndex={-1}
+        className={cn(
+          "fixed inset-y-2 left-2 z-[60] flex w-[min(22rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-2xl border border-outline-variant/60 bg-surface text-on-surface shadow-2xl transition-transform duration-200 ease-out lg:hidden",
+          mobileNavOpen ? "translate-x-0" : "-translate-x-[calc(100%+1rem)]",
+        )}
+      >
+        {renderSidebarContent({ mobile: true })}
+      </aside>
     </>
   );
 }

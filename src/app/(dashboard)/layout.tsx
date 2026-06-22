@@ -1,4 +1,5 @@
 import { NotificationProvider } from "@/components/notifications/notification-provider";
+import { DashboardChromeProvider } from "@/components/dashboard-chrome";
 import { Sidebar } from "@/components/sidebar";
 import { MainShell } from "@/components/main-shell";
 import { TodoReminderAgent } from "@/components/todo/todo-reminder-agent";
@@ -34,20 +35,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <NotificationProvider>
         <TodoReminderAgent />
         <SessionSync />
-        <div className="flex h-screen overflow-hidden bg-background text-foreground">
-          <Sidebar caps={caps} userName={session.user.name} enabledModuleIds={enabledModuleIds} />
-          <MainShell>
-            <PageAnimator>
-              <DashboardShell
-                userName={session.user.name}
-                sessionToken={session.user.sessionNonce}
-                enabledModuleIds={enabledModuleIds}
-              >
-                {children}
-              </DashboardShell>
-            </PageAnimator>
-          </MainShell>
-        </div>
+        <DashboardChromeProvider>
+          <div className="flex h-screen overflow-hidden bg-background text-foreground">
+            <Sidebar caps={caps} userName={session.user.name} enabledModuleIds={enabledModuleIds} />
+            <MainShell>
+              <PageAnimator>
+                <DashboardShell
+                  userName={session.user.name}
+                  sessionToken={session.user.sessionNonce}
+                  enabledModuleIds={enabledModuleIds}
+                >
+                  {children}
+                </DashboardShell>
+              </PageAnimator>
+            </MainShell>
+          </div>
+        </DashboardChromeProvider>
       </NotificationProvider>
     </CapsProvider>
   );

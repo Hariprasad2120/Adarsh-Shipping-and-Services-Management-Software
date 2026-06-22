@@ -33,4 +33,32 @@ describe("CHA dashboard shell layout safeguards", () => {
     expect(pageAnimatorSource).not.toContain("contain-[layout_paint]");
     expect(pageAnimatorSource).not.toContain("will-change-transform");
   });
+
+  it("keeps mobile navigation state in shared dashboard chrome and removes desktop offsets on small screens", () => {
+    const dashboardLayoutSource = readFileSync(
+      join(repoRoot, "src/app/(dashboard)/layout.tsx"),
+      "utf8",
+    );
+    const mainShellSource = readFileSync(
+      join(repoRoot, "src/components/main-shell.tsx"),
+      "utf8",
+    );
+    const sidebarSource = readFileSync(
+      join(repoRoot, "src/components/sidebar.tsx"),
+      "utf8",
+    );
+    const welcomeBarSource = readFileSync(
+      join(repoRoot, "src/components/welcome-bar.tsx"),
+      "utf8",
+    );
+
+    expect(dashboardLayoutSource).toContain("DashboardChromeProvider");
+    expect(mainShellSource).toContain('pl-0');
+    expect(mainShellSource).toContain('lg:pl-[var(--sidebar-width)]');
+    expect(sidebarSource).toContain('role="dialog"');
+    expect(sidebarSource).toContain('aria-modal="true"');
+    expect(sidebarSource).toContain('Close navigation menu');
+    expect(welcomeBarSource).toContain('aria-controls={mobileNavId}');
+    expect(welcomeBarSource).toContain('aria-expanded={mobileNavOpen}');
+  });
 });
