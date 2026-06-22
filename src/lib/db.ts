@@ -29,6 +29,7 @@ type PrismaClientWithDelegates = PrismaClient & {
   transactionLock?: unknown;
   crmWorkTimeLog?: unknown;
   chaTeamGroup?: unknown;
+  chaJobDeletionRequest?: unknown;
   googleChatInteractionEvent?: unknown;
 };
 
@@ -44,6 +45,7 @@ function hasRequiredDelegates(client: PrismaClient) {
     typeof delegateClient.transactionLock !== "undefined" &&
     typeof delegateClient.crmWorkTimeLog !== "undefined" &&
     typeof delegateClient.chaTeamGroup !== "undefined" &&
+    typeof delegateClient.chaJobDeletionRequest !== "undefined" &&
     typeof delegateClient.googleChatInteractionEvent !== "undefined"
   );
 }

@@ -9,14 +9,24 @@ import {
   Plus,
   Briefcase,
   X,
-  User,
   Shield,
   FilePlus,
+  ArrowRight,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createJobAction } from "@/modules/cha/actions";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableEmpty,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from "@/components/data-table";
+import { JobDeleteInlineButton } from "../_components/job-delete-inline-button";
 
 interface JobItem {
   id: string;
@@ -28,7 +38,10 @@ interface JobItem {
   stage: string;
   status: string;
   priority: string;
+  primaryOwnerId: string;
   ownerName: string;
+  assignedUserIds: string[];
+  hasActiveDeletionRequest: boolean;
   createdAt: string;
 }
 
@@ -62,6 +75,7 @@ interface JobsClientProps {
   };
   showCreateNew: boolean;
   currentUserId: string;
+  canDeleteJobs: boolean;
 }
 
 export function JobsClient({
@@ -70,6 +84,7 @@ export function JobsClient({
   options,
   showCreateNew,
   currentUserId,
+  canDeleteJobs,
 }: JobsClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -454,7 +469,7 @@ export function JobsClient({
       </div>
 
       {/* Datatable */}
-      <div className="bg-surface border border-outline-variant/30 rounded-xl shadow-sm overflow-hidden">
+      <DataTable>
         {jobsData.items.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-center text-on-surface-variant">
             <Briefcase size={48} className="text-outline-variant mb-3" />
@@ -463,58 +478,87 @@ export function JobsClient({
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="ds-table">
-                <thead>
-                  <tr>
-                    <th>Job Number</th>
-                    <th>Job Description / Title</th>
-                    <th>Customer Name</th>
-                    <th>Clearance Type</th>
-                    <th>Location Branch</th>
-                    <th>Workflow Stage</th>
-                    <th>Priority</th>
-                    <th>Primary Owner</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {jobsData.items.map((job) => (
-                    <tr
-                      key={job.id}
-                      className="ds-row-link"
-                      onClick={() => router.push(`/cha/jobs/${job.id}`)}
-                    >
-                      <td className="font-semibold text-[#00cec4]">{job.jobNumber}</td>
-                      <td className="max-w-xs truncate font-medium">{job.title}</td>
-                      <td>{job.customerName}</td>
-                      <td className="ds-label">{job.jobTypeName}</td>
-                      <td className="ds-label">{job.branchName}</td>
-                      <td>
-                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                          job.stage === "FILING"
-                            ? "bg-blue-50 text-blue-700 border border-blue-200"
-                            : job.stage === "CHECKLIST_APPROVAL"
-                            ? "bg-amber-50 text-amber-700 border border-amber-200"
-                            : job.stage === "FILED"
-                            ? "bg-green-50 text-green-700 border border-green-200"
-                            : "bg-surface-container-high text-on-surface border border-outline-variant"
-                        }`}>
-                          {job.stage.replace(/_/g, " ")}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`font-semibold text-xs ${
-                          job.priority === "HIGH" ? "text-red-500" : job.priority === "MEDIUM" ? "text-orange-400" : "text-on-surface-variant"
-                        }`}>
-                          {job.priority}
-                        </span>
-                      </td>
-                      <td className="text-xs">{job.ownerName}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTableHeader>
+              <tr>
+                <DataTableHead>Job Number</DataTableHead>
+                <DataTableHead>Job Title</DataTableHead>
+                <DataTableHead>Customer</DataTableHead>
+                <DataTableHead>Job Type</DataTableHead>
+                <DataTableHead>Current Stage</DataTableHead>
+                <DataTableHead>Priority</DataTableHead>
+                <DataTableHead>Owner</DataTableHead>
+                <DataTableHead className="w-[148px] text-right">Actions</DataTableHead>
+              </tr>
+            </DataTableHeader>
+            <DataTableBody>
+              {jobsData.items.map((job) => {
+                const canDeleteThisJob =
+                  canDeleteJobs &&
+                  (job.primaryOwnerId === currentUserId || job.assignedUserIds.includes(currentUserId));
+
+                return (
+                  <DataTableRow key={job.id}>
+                    <DataTableCell className="font-medium text-[#00cec4]">{job.jobNumber}</DataTableCell>
+                    <DataTableCell>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-on-surface">{job.title}</p>
+                        <p className="truncate text-xs text-on-surface-variant">{job.branchName}</p>
+                      </div>
+                    </DataTableCell>
+                    <DataTableCell>{job.customerName}</DataTableCell>
+                    <DataTableCell className="ds-label">{job.jobTypeName}</DataTableCell>
+                    <DataTableCell>
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${
+                        job.stage === "FILING"
+                          ? "border border-blue-200 bg-blue-50 text-blue-700"
+                          : job.stage === "CHECKLIST_APPROVAL"
+                          ? "border border-amber-200 bg-amber-50 text-amber-700"
+                          : job.stage === "FILED"
+                          ? "border border-green-200 bg-green-50 text-green-700"
+                          : "border border-outline-variant bg-surface-container-low text-on-surface"
+                      }`}>
+                        {job.stage.replace(/_/g, " ")}
+                      </span>
+                    </DataTableCell>
+                    <DataTableCell>
+                      <span className={`text-xs font-semibold uppercase tracking-[0.12em] ${
+                        job.priority === "HIGH"
+                          ? "text-red-500"
+                          : job.priority === "MEDIUM"
+                            ? "text-[#fb923c]"
+                            : "text-on-surface-variant"
+                      }`}>
+                        {job.priority}
+                      </span>
+                    </DataTableCell>
+                    <DataTableCell className="text-on-surface-variant">{job.ownerName}</DataTableCell>
+                    <DataTableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {canDeleteThisJob ? (
+                          <JobDeleteInlineButton
+                            jobId={job.id}
+                            jobNumber={job.jobNumber}
+                            compact
+                            disabled={job.hasActiveDeletionRequest}
+                            disabledLabel={job.hasActiveDeletionRequest ? "A deletion request is already pending." : undefined}
+                          />
+                        ) : null}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-1.5 px-3 text-xs"
+                          onClick={() => router.push(`/cha/jobs/${job.id}`)}
+                        >
+                          Open
+                          <ArrowRight className="size-3.5" />
+                        </Button>
+                      </div>
+                    </DataTableCell>
+                  </DataTableRow>
+                );
+              })}
+            </DataTableBody>
 
             {/* Pagination */}
             {jobsData.totalPages > 1 && (
@@ -545,7 +589,7 @@ export function JobsClient({
             )}
           </>
         )}
-      </div>
+      </DataTable>
 
       {/* New Job Modal */}
       {isModalOpen && (

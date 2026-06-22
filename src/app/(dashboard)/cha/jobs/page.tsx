@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { requirePermission } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { listJobs, ensureSettingsAndDefaults } from "@/modules/cha/service";
 import { JobsClient } from "./jobs-client";
@@ -44,13 +44,14 @@ export default async function ChaJobsPage({
   });
 
   // Query options for new job modal & filter UI
-  const [branches, customers, jobTypes, users, teamGroups, settings] = await Promise.all([
+  const [branches, customers, jobTypes, users, teamGroups, settings, canDeleteJobs] = await Promise.all([
     db.branch.findMany({ where: { orgId }, select: { id: true, name: true, code: true } }),
     db.crmAccount.findMany({ where: { orgId, type: "Customer" }, select: { id: true, name: true } }),
     db.chaJobType.findMany({ where: { orgId }, select: { id: true, name: true } }),
     db.user.findMany({ where: { orgId, active: true }, select: { id: true, name: true, email: true } }),
     db.chaTeamGroup.findMany({ where: { orgId }, select: { id: true, name: true, memberIds: true } }),
     ensureSettingsAndDefaults(orgId),
+    can(session.user.id, "cha.job.delete"),
   ]);
 
   return (
@@ -66,7 +67,10 @@ export default async function ChaJobsPage({
           stage: j.stage,
           status: j.status,
           priority: j.priority,
+          primaryOwnerId: j.primaryOwner.id,
           ownerName: j.primaryOwner.name,
+          assignedUserIds: j.assignments.map((assignment) => assignment.userId),
+          hasActiveDeletionRequest: j.deletionRequests.length > 0,
           createdAt: j.createdAt.toISOString(),
         })),
         total: jobsData.total,
@@ -96,6 +100,7 @@ export default async function ChaJobsPage({
       }}
       showCreateNew={showCreateNew}
       currentUserId={session.user.id}
+      canDeleteJobs={canDeleteJobs}
     />
   );
 }

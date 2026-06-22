@@ -1,10 +1,9 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { requirePermission } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import Link from "next/link";
 import {
-  Ship,
   FileText,
   CheckSquare,
   DollarSign,
@@ -14,8 +13,20 @@ import {
   UserCheck,
   Settings,
   TrendingUp,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableEmpty,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+  DataTableToolbar,
+} from "@/components/data-table";
+import { JobDeleteInlineButton } from "./_components/job-delete-inline-button";
 
 export default async function ChaDashboard() {
   const session = await auth();
@@ -26,6 +37,7 @@ export default async function ChaDashboard() {
 
   // Require CHA module access
   await requirePermission(session.user.id, "cha.access");
+  const canDeleteJobs = await can(session.user.id, "cha.job.delete");
 
   // Fetch KPI data
   const [
@@ -66,6 +78,13 @@ export default async function ChaDashboard() {
       include: {
         customer: { select: { name: true } },
         jobType: { select: { name: true } },
+        assignments: { select: { userId: true } },
+        primaryOwner: { select: { id: true, name: true } },
+        deletionRequests: {
+          where: { status: { in: ["PENDING", "APPROVED"] } },
+          select: { id: true },
+          take: 1,
+        },
       },
       take: 5,
       orderBy: { updatedAt: "desc" },
@@ -102,33 +121,6 @@ export default async function ChaDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/30 pb-6">
-        <div>
-          <h1 className="ds-h1 text-[#00cec4] flex items-center gap-3">
-            <span className="ds-icon-badge bg-[#00cec4]/10 text-[#00cec4] p-2 rounded-xl">
-              <Ship size={24} />
-            </span>
-            Customs House Agent (CHA) Dashboard
-          </h1>
-          <p className="text-sm text-on-surface-variant mt-1">
-            Real-time stage tracking, document gates compliance, checklist manager audits, and advance/expense accounting.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/cha/jobs?new=true">
-            <Button className="flex items-center gap-2">
-              <Plus size={16} /> New Clearance Job
-            </Button>
-          </Link>
-          <Link href="/cha/settings">
-            <Button variant="outline" className="flex items-center gap-2">
-              <Settings size={16} /> Workflow Configuration
-            </Button>
-          </Link>
-        </div>
-      </div>
-
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {/* KPI: Active Jobs */}
@@ -197,71 +189,108 @@ export default async function ChaDashboard() {
       {/* Main Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Col: Assigned to Me Jobs */}
-        <div className="lg:col-span-2 bg-[var(--color-surface)] border border-outline-variant/30 rounded-xl p-6 space-y-6">
-          <div className="flex items-center justify-between border-b border-outline-variant/30 pb-4">
-            <h2 className="ds-h2 text-on-surface flex items-center gap-2">
-              <UserCheck size={18} className="text-[#00cec4]" /> My Assigned Jobs
-            </h2>
-            <Link href="/cha/jobs" className="text-xs text-[#00cec4] hover:underline uppercase tracking-wider font-semibold">
-              View All
-            </Link>
-          </div>
-
+        <div className="lg:col-span-2">
+          <DataTable className="overflow-hidden">
+            <DataTableToolbar className="bg-surface">
+              <div className="flex items-center gap-2">
+                <UserCheck size={18} className="text-[#00cec4]" />
+                <div>
+                  <h2 className="ds-h2 text-on-surface">My Assigned Jobs</h2>
+                  <p className="text-xs text-on-surface-variant">Open or manage the jobs currently assigned to you.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link href="/cha/jobs?new=true">
+                  <Button size="sm" className="gap-2">
+                    <Plus size={14} /> New Job
+                  </Button>
+                </Link>
+                <Link href="/cha/jobs">
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    View All
+                    <ArrowRight className="size-3.5" />
+                  </Button>
+                </Link>
+                <Link href="/cha/settings">
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    <Settings size={14} /> Settings
+                  </Button>
+                </Link>
+              </div>
+            </DataTableToolbar>
           {myJobs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-8 text-center text-on-surface-variant border border-dashed border-outline-variant/50 rounded-xl">
-              <p className="text-sm font-medium">You don't have any active job assignments.</p>
-              <p className="text-xs mt-1">Operational assignments will appear here once you are mapped to a job.</p>
-            </div>
+            <table className="min-w-full w-full text-sm">
+              <DataTableBody>
+                <DataTableEmpty colSpan={6} message="You don't have any active job assignments yet." />
+              </DataTableBody>
+            </table>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="ds-table">
-                <thead>
-                  <tr>
-                    <th>Job Number</th>
-                    <th>Customer</th>
-                    <th>Job Type</th>
-                    <th>Current Stage</th>
-                    <th>Priority</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {myJobs.map((job) => (
-                    <tr
-                      key={job.id}
-                      className="ds-row-link"
-                      // Wrap in simple routing
-                    >
-                      <td className="font-semibold text-[#00cec4]">
-                        <Link href={`/cha/jobs/${job.id}`}>{job.jobNumber}</Link>
-                      </td>
-                      <td>{job.customer.name}</td>
-                      <td className="ds-label">{job.jobType.name}</td>
-                      <td>
-                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
-                          job.stage === "FILING"
-                            ? "bg-blue-50 text-blue-700 border border-blue-200"
-                            : job.stage === "CHECKLIST_APPROVAL"
-                            ? "bg-amber-50 text-amber-700 border border-amber-200"
+            <table className="min-w-full w-full text-sm">
+              <DataTableHeader>
+                <tr>
+                  <DataTableHead>Job Number</DataTableHead>
+                  <DataTableHead>Customer</DataTableHead>
+                  <DataTableHead>Job Type</DataTableHead>
+                  <DataTableHead>Current Stage</DataTableHead>
+                  <DataTableHead>Priority</DataTableHead>
+                  <DataTableHead className="text-right">Actions</DataTableHead>
+                </tr>
+              </DataTableHeader>
+              <DataTableBody>
+                {myJobs.map((job) => (
+                  <DataTableRow key={job.id}>
+                    <DataTableCell className="font-medium text-[#00cec4]">{job.jobNumber}</DataTableCell>
+                    <DataTableCell>{job.customer.name}</DataTableCell>
+                    <DataTableCell className="ds-label">{job.jobType.name}</DataTableCell>
+                    <DataTableCell>
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${
+                        job.stage === "FILING"
+                          ? "border border-blue-200 bg-blue-50 text-blue-700"
+                          : job.stage === "CHECKLIST_APPROVAL"
+                            ? "border border-amber-200 bg-amber-50 text-amber-700"
                             : job.stage === "FILED"
-                            ? "bg-green-50 text-green-700 border border-green-200"
-                            : "bg-surface-container-high text-on-surface border border-outline-variant"
-                        }`}>
-                          {job.stage.replace(/_/g, " ")}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`font-semibold text-xs ${
-                          job.priority === "HIGH" ? "text-red-500" : job.priority === "MEDIUM" ? "text-orange-400" : "text-on-surface-variant"
-                        }`}>
-                          {job.priority}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                              ? "border border-green-200 bg-green-50 text-green-700"
+                              : "border border-outline-variant bg-surface-container-low text-on-surface"
+                      }`}>
+                        {job.stage.replace(/_/g, " ")}
+                      </span>
+                    </DataTableCell>
+                    <DataTableCell>
+                      <span className={`text-xs font-semibold uppercase tracking-[0.12em] ${
+                        job.priority === "HIGH"
+                          ? "text-red-500"
+                          : job.priority === "MEDIUM"
+                            ? "text-[#fb923c]"
+                            : "text-on-surface-variant"
+                      }`}>
+                        {job.priority}
+                      </span>
+                    </DataTableCell>
+                    <DataTableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {canDeleteJobs ? (
+                          <JobDeleteInlineButton
+                            jobId={job.id}
+                            jobNumber={job.jobNumber}
+                            compact
+                            disabled={job.deletionRequests.length > 0}
+                            disabledLabel={job.deletionRequests.length > 0 ? "A deletion request is already pending." : undefined}
+                          />
+                        ) : null}
+                        <Link href={`/cha/jobs/${job.id}`}>
+                          <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-xs">
+                            Open
+                            <ArrowRight className="size-3.5" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </DataTableCell>
+                  </DataTableRow>
+                ))}
+              </DataTableBody>
+            </table>
           )}
+          </DataTable>
         </div>
 
         {/* Right Col: Timeline/Audit Feed */}

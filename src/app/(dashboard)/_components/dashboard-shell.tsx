@@ -75,38 +75,42 @@ export function DashboardShell({
     ["--dashboard-topbar-height" as string]: `${topBarHeight}px`,
     ["--dashboard-breadcrumb-height" as string]: `${breadcrumbHeight}px`,
   } as React.CSSProperties;
+  const contentPaddingClass = showBreadcrumb ? "px-6 pb-8 pt-5 lg:px-8 xl:px-10" : "px-6 py-8 lg:px-8 xl:px-10";
+  const topBarClass = showBreadcrumb
+    ? "sticky top-0 z-40 w-full shrink-0 bg-background/95 shadow-sm backdrop-blur-sm"
+    : "sticky top-0 z-40 w-full shrink-0 border-b border-outline-variant/40 bg-background/95 shadow-sm backdrop-blur-sm";
 
   const content = isPortal ? (
     <div className="flex min-h-full flex-1 flex-col bg-background text-on-surface" style={shellStyle}>
-      <div ref={topBarRef} className="sticky top-0 z-40 w-full shrink-0 border-b border-outline-variant/40 bg-background/95 shadow-sm backdrop-blur-sm">
+      <div ref={topBarRef} className={topBarClass}>
         <WelcomeBar userName={userName} sessionToken={sessionToken} />
       </div>
-      <div className="flex min-h-full w-full flex-col gap-8 px-6 py-8 lg:px-8 xl:px-10">
+      <div className={`flex min-h-full w-full flex-col gap-8 ${contentPaddingClass}`}>
         {children}
       </div>
     </div>
   ) : isCrm ? (
     <div className="flex min-h-full flex-1 flex-col bg-background text-on-surface" style={shellStyle}>
-      <div ref={topBarRef} className="sticky top-0 z-40 w-full shrink-0 border-b border-outline-variant/40 bg-background/95 shadow-sm backdrop-blur-sm">
+      <div ref={topBarRef} className={topBarClass}>
         <WelcomeBar userName={userName} sessionToken={sessionToken} />
       </div>
-      <div className="flex min-h-full w-full flex-col gap-8 px-6 py-8 lg:px-8 xl:px-10">
+      <div className={`flex min-h-full w-full flex-col gap-8 ${contentPaddingClass}`}>
         {children}
       </div>
     </div>
   ) : (
     <div className="flex min-h-full flex-1 flex-col bg-background text-on-surface" style={shellStyle}>
-      <div ref={topBarRef} className="sticky top-0 z-40 w-full shrink-0 border-b border-outline-variant/40 bg-background/95 shadow-sm backdrop-blur-sm">
+      <div ref={topBarRef} className={topBarClass}>
         <WelcomeBar userName={userName} sessionToken={sessionToken} />
       </div>
       <div
         ref={breadcrumbRef}
-        className="sticky top-[var(--dashboard-topbar-height)] z-30 w-full shrink-0 border-b border-outline-variant/35 bg-background/98 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.24)] backdrop-blur-sm"
+        className="sticky top-[var(--dashboard-topbar-height)] z-30 w-full shrink-0 border-b border-outline-variant/35 bg-background/98 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.28)] backdrop-blur-sm"
       >
         <AutoBreadcrumb />
       </div>
       <div
-        className="flex min-h-full w-full flex-col gap-8 px-6 py-8 lg:px-8 xl:px-10"
+        className={`flex min-h-full w-full flex-col gap-8 ${contentPaddingClass}`}
         style={{
           scrollPaddingTop: `calc(var(--dashboard-topbar-height) + var(--dashboard-breadcrumb-height) + 1rem)`,
         }}

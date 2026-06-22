@@ -525,8 +525,13 @@ export async function listJobs(
         customer: true,
         jobType: true,
         branch: true,
-        primaryOwner: { select: { name: true } },
-        assignments: { include: { user: { select: { name: true } } } },
+        primaryOwner: { select: { id: true, name: true } },
+        assignments: { include: { user: { select: { id: true, name: true } } } },
+        deletionRequests: {
+          where: { status: { in: ["PENDING", "APPROVED"] } },
+          select: { id: true, status: true, assignedManagerId: true },
+          take: 1,
+        },
       },
     }),
   ]);
