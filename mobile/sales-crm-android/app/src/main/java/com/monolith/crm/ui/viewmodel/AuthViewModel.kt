@@ -12,8 +12,9 @@ import kotlinx.coroutines.launch
 
 class AuthViewModel(private val repository: CrmRepository) : ViewModel() {
 
-    var email by mutableStateOf("")
-    var password by mutableStateOf("")
+    var rememberMe by mutableStateOf(repository.isRememberMeEnabled())
+    var email by mutableStateOf(if (repository.isRememberMeEnabled()) repository.getRememberedEmail() else "")
+    var password by mutableStateOf(if (repository.isRememberMeEnabled()) repository.getRememberedPassword() else "")
     var baseUrl by mutableStateOf(repository.getBaseUrl())
     var isLoading by mutableStateOf(false)
     var errorMessage by mutableStateOf<String?>(null)
@@ -40,6 +41,7 @@ class AuthViewModel(private val repository: CrmRepository) : ViewModel() {
             isLoading = false
             if (result.isSuccess) {
                 isLoggedIn = true
+                repository.saveRememberedCredentials(email, password, rememberMe)
                 AppLogger.info("Auth", "Login successful", "User: ${result.getOrNull()?.user?.name}")
                 onSuccess()
             } else {

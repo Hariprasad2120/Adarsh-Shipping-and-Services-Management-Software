@@ -1148,25 +1148,47 @@ export function EnquiryDetailClient({
 
                             {/* Expanded: recording + transcript */}
                             {isExpanded && (
-                              <div className="p-3 bg-[#0f1319] border-t border-[#1c212a]/30 space-y-3">
+                              <div className="p-3 bg-surface border-t border-outline-variant space-y-3">
                                 {recording ? (
                                   <>
                                     {/* Audio player */}
-                                    <div className="space-y-2 p-2 bg-[#11161d] rounded-lg border border-[#1c212a]/30">
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                          <span className="text-[9px] font-bold text-slate-500 uppercase">Recording:</span>
-                                          <span className="text-slate-300 text-[11px]">{recording.fileName}</span>
+                                    <div className="space-y-2 p-2 bg-surface-container-low rounded-lg border border-outline-variant/40">
+                                      <div className="flex items-center justify-between gap-3 min-w-0">
+                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                          <span className="text-[9px] font-bold text-slate-500 uppercase shrink-0">Recording:</span>
+                                          <span className="text-slate-200 text-[11px] truncate" title={recording.fileName}>
+                                            {recording.fileName}
+                                          </span>
                                         </div>
-                                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${
-                                          recording.uploadStatus === "UPLOADED" ? "bg-emerald-400/10 text-emerald-400" :
-                                          recording.uploadStatus === "UPLOADING" ? "bg-cyan-400/10 text-[#00cec4] animate-pulse" :
-                                          recording.uploadStatus === "CANCELLED" ? "bg-amber-400/10 text-amber-400" :
-                                          "bg-red-400/10 text-red-400"
-                                        }`}>
-                                          {recording.uploadStatus === "UPLOADED" ? "UPLOADED SUCCESSFULLY" : recording.uploadStatus}
-                                        </span>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${
+                                            recording.uploadStatus === "UPLOADED" ? "bg-emerald-400/10 text-emerald-400" :
+                                            recording.uploadStatus === "UPLOADING" ? "bg-cyan-400/10 text-[#00cec4] animate-pulse" :
+                                            recording.uploadStatus === "CANCELLED" ? "bg-amber-400/10 text-amber-400" :
+                                            "bg-red-400/10 text-red-400"
+                                          }`}>
+                                            {recording.uploadStatus === "UPLOADED" ? "UPLOADED SUCCESSFULLY" : recording.uploadStatus}
+                                          </span>
+                                          {recording.uploadStatus === "UPLOADED" && (
+                                            <a
+                                              href={`/api/crm/recordings/${recording.id}/download`}
+                                              className="text-[10px] text-[#00cec4] font-bold uppercase hover:underline transition-all cursor-pointer"
+                                              title="Download recording"
+                                            >
+                                              Download
+                                            </a>
+                                          )}
+                                        </div>
                                       </div>
+
+                                      {/* Audio playback component */}
+                                      {recording.uploadStatus === "UPLOADED" && (
+                                        <audio
+                                          src={`/api/crm/recordings/${recording.id}/playback`}
+                                          controls
+                                          className="w-full h-9 rounded-lg mt-1"
+                                        />
+                                      )}
 
                                       {/* Live Upload Progress Bar */}
                                       {recording.uploadStatus === "UPLOADING" && (

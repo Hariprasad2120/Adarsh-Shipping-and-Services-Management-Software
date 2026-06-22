@@ -66,4 +66,7 @@ interface CrmApiService {
         @Header("Authorization") token: String,
         @Body request: MonaChatRequest
     ): Response<MonaChatResponse>
+
+    @GET("api/mobile/crm/update")
+    suspend fun checkUpdate(): Response<AppUpdateResponse>
 }

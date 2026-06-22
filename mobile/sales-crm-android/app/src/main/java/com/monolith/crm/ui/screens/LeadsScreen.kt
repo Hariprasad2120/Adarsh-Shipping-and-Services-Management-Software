@@ -11,16 +11,18 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.monolith.crm.CrmApp
 import com.monolith.crm.data.remote.LeadMetadata
 import com.monolith.crm.ui.theme.CyanPrimary
 import com.monolith.crm.ui.theme.DarkBackground
@@ -37,6 +39,95 @@ fun LeadsScreen(
     onMonaClicked: () -> Unit,
     onLogout: () -> Unit
 ) {
+    val context = LocalContext.current
+    val repository = remember {
+        (context.applicationContext as? CrmApp)?.repository
+    }
+
+    val currentVersionCode = remember {
+        try {
+            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                packageInfo.longVersionCode
+            } else {
+                @Suppress("DEPRECATION")
+                packageInfo.versionCode.toLong()
+            }
+        } catch (_: Exception) {
+            1L
+        }
+    }
+    val currentVersionName = remember {
+        try {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0"
+        } catch (_: Exception) {
+            "1.0"
+        }
+    }
+
+    var showChangelog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(repository) {
+        repository?.let { repo ->
+            val lastViewed = repo.getLastViewedChangelogVersion()
+            if (currentVersionCode > lastViewed) {
+                showChangelog = true
+            }
+        }
+    }
+
+    if (showChangelog) {
+        AlertDialog(
+            onDismissRequest = {
+                repository?.setLastViewedChangelogVersion(currentVersionCode)
+                showChangelog = false
+            },
+            title = {
+                Text(
+                    text = "WHAT'S NEW IN V$currentVersionName (BUILD $currentVersionCode)",
+                    fontWeight = FontWeight.Black,
+                    fontSize = 14.sp,
+                    color = Color.White
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "We have updated the Monolith CRM Client to improve security and UI experience:",
+                        fontSize = 12.sp,
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
+                    listOf(
+                        "🔒 Saved corporate login credentials securely using EncryptedSharedPreferences.",
+                        "💎 Integrated 3D rotating prism wireframe logo on the login screen.",
+                        "📲 Added automated in-app updater to push silent APK updates.",
+                        "⚙️ Repositioned the debug FAB to the top-right to prevent layout blocking.",
+                        "⚠️ Reset consent terms screen automatically upon new build installations.",
+                        "🔔 Request CRM outbound and media audio permissions on terms agreement."
+                    ).forEach { item ->
+                        Text(
+                            text = "• $item",
+                            fontSize = 11.sp,
+                            color = OnSurfaceVariant
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        repository?.setLastViewedChangelogVersion(currentVersionCode)
+                        showChangelog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = CyanPrimary)
+                ) {
+                    Text("DISMISS", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                }
+            },
+            containerColor = DarkSurface
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(

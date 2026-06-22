@@ -26,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.monolith.crm.CrmApp
+import com.monolith.crm.data.repository.CrmRepository
 import com.monolith.crm.ui.theme.CyanPrimary
 import com.monolith.crm.ui.theme.DarkBackground
 import com.monolith.crm.ui.theme.DarkSurface
@@ -38,7 +40,11 @@ import com.monolith.crm.ui.theme.OnSurfaceVariant
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DebugLogOverlay() {
+fun DebugLogOverlay(repository: CrmRepository? = null) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val repo = repository ?: remember {
+        (context.applicationContext as? CrmApp)?.repository
+    }
     var isExpanded by remember { mutableStateOf(false) }
     val logs = AppLogger.logs
     val errorCount = AppLogger.errorCount
@@ -110,6 +116,57 @@ fun DebugLogOverlay() {
                         }
                     }
 
+                    // Server URL Configuration inside Debug Menu
+                    repo?.let { r ->
+                        var localBaseUrl by remember { mutableStateOf(r.getBaseUrl()) }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFF161B22))
+                                .padding(12.dp)
+                        ) {
+                            Text(
+                                "SERVER URL CONFIGURATION",
+                                color = CyanPrimary,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                OutlinedTextField(
+                                    value = localBaseUrl,
+                                    onValueChange = { localBaseUrl = it },
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedBorderColor = CyanPrimary,
+                                        unfocusedBorderColor = Color.Gray,
+                                        cursorColor = CyanPrimary
+                                    ),
+                                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 11.sp),
+                                    singleLine = true,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Button(
+                                    onClick = {
+                                        r.setBaseUrl(localBaseUrl)
+                                        AppLogger.info("Debug", "Server URL updated manually to $localBaseUrl")
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = CyanPrimary),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                    modifier = Modifier.height(36.dp)
+                                ) {
+                                    Text("SAVE", color = Color.Black, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+
                     // Log entries
                     if (logs.isEmpty()) {
                         Box(
@@ -144,9 +201,9 @@ fun DebugLogOverlay() {
         if (!isExpanded) {
             Box(
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
+                    .align(Alignment.TopEnd)
                     .padding(16.dp)
-                    .padding(bottom = 8.dp)
+                    .padding(top = 72.dp)
             ) {
                 FloatingActionButton(
                     onClick = { isExpanded = true },

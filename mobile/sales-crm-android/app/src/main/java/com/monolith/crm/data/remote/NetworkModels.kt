@@ -73,3 +73,11 @@ data class MonaChatResponse(
     val toolsUsed: List<String>
 )
 
+data class AppUpdateResponse(
+    val versionCode: Int,
+    val versionName: String,
+    val apkUrl: String,
+    val changelog: List<String>
+)
+
+

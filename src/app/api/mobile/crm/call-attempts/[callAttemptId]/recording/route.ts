@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { getMobileUser } from "@/lib/mobile-auth";
 import { mobileJson, mobileOptions } from "@/lib/mobile-cors";
 import { transcribeRecording } from "@/lib/transcription";
+import { after } from "next/server";
 
 export async function OPTIONS() {
   return mobileOptions();
@@ -117,8 +118,10 @@ export async function POST(
     });
 
     // 4. Trigger background transcription (non-blocking)
-    transcribeRecording(recording.id).catch((e) => {
-      console.error(`[Recording API] Failed to start background transcription for ${recording.id}:`, e);
+    after(() => {
+      transcribeRecording(recording.id).catch((e) => {
+        console.error(`[Recording API] Failed to start background transcription for ${recording.id}:`, e);
+      });
     });
 
     return mobileJson({

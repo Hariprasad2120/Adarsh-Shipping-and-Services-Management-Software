@@ -356,5 +356,49 @@ class CrmRepository(private val context: Context) {
         }
     }
 
+    suspend fun checkUpdate(): Result<com.monolith.crm.data.remote.AppUpdateResponse> {
+        return try {
+            val response = getApiService().checkUpdate()
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception("Failed to check for updates"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    fun saveRememberedCredentials(email: String, password: String, remember: Boolean) {
+        sharedPreferences.edit()
+            .putBoolean("remember_me", remember)
+            .putString("saved_email", if (remember) email else "")
+            .putString("saved_password", if (remember) password else "")
+            .apply()
+    }
+
+    fun isRememberMeEnabled(): Boolean = sharedPreferences.getBoolean("remember_me", false)
+    fun getRememberedEmail(): String = sharedPreferences.getString("saved_email", "") ?: ""
+    fun getRememberedPassword(): String = sharedPreferences.getString("saved_password", "") ?: ""
+
+    fun checkAndResetConsentIfNeeded(currentVersionCode: Long) {
+        val lastAcceptedVersion = sharedPreferences.getLong("last_accepted_version", 0L)
+        if (currentVersionCode > lastAcceptedVersion) {
+            setConsent(false)
+        }
+    }
+
+    fun recordConsentAccepted(versionCode: Long) {
+        sharedPreferences.edit()
+            .putBoolean("user_consent", true)
+            .putLong("last_accepted_version", versionCode)
+            .apply()
+    }
+
+    fun getLastViewedChangelogVersion(): Long = sharedPreferences.getLong("last_viewed_changelog_version", 0L)
+    fun setLastViewedChangelogVersion(versionCode: Long) {
+        sharedPreferences.edit().putLong("last_viewed_changelog_version", versionCode).apply()
+    }
+
     data class ActiveCall(val attemptId: String, val leadId: String, val phone: String, val startTime: Long)
 }
