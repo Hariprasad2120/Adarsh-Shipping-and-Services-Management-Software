@@ -24,6 +24,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
 import * as actions from "@/modules/cha/actions";
 
 interface JobWorkspaceClientProps {
@@ -32,6 +33,8 @@ interface JobWorkspaceClientProps {
   expenseCategories: string[];
   selfApprovalAllowed: boolean;
   currentUserId: string;
+  canDeleteJob: boolean;
+  canApproveDeleteJob: boolean;
 }
 
 const STAGES = [
@@ -48,6 +51,8 @@ export function JobWorkspaceClient({
   expenseCategories,
   selfApprovalAllowed,
   currentUserId,
+  canDeleteJob,
+  canApproveDeleteJob,
 }: JobWorkspaceClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
@@ -124,9 +129,25 @@ export function JobWorkspaceClient({
   const [expReviewId, setExpReviewId] = useState<string | null>(null);
   const [expReviewStatus, setExpReviewStatus] = useState<string>("");
   const [expReviewRemarks, setExpReviewRemarks] = useState("");
+  const [deleteModalMode, setDeleteModalMode] = useState<"delete" | "approve" | "reject" | null>(null);
+  const [deleteConfirmJobNumber, setDeleteConfirmJobNumber] = useState("");
+  const [deleteConfirmPhrase, setDeleteConfirmPhrase] = useState("");
+  const [deleteDecisionRemarks, setDeleteDecisionRemarks] = useState("");
 
   // Get active step index
   const activeStepIndex = STAGES.findIndex((s) => s.key === job.stage);
+  const activeDeletionRequest =
+    job.deletionRequests?.find((request: any) => ["PENDING", "APPROVED"].includes(request.status)) ?? null;
+  const pendingDeletionReview =
+    job.deletionRequests?.find(
+      (request: any) => request.status === "PENDING" && request.assignedManagerId === currentUserId
+    ) ?? null;
+  const canDirectDeleteJob =
+    canApproveDeleteJob &&
+    job.assignments?.some((assignment: any) => assignment.userId === currentUserId && assignment.responsibility === "APPROVAL");
+  const deleteInputsMatch =
+    deleteConfirmJobNumber.trim() === job.jobNumber &&
+    deleteConfirmPhrase.trim().toLowerCase() === "delete job";
 
   // Document version mock upload handler
   const handleUploadDoc = async (reqId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -286,6 +307,104 @@ export function JobWorkspaceClient({
         router.refresh();
       } else {
         toast.error(res.error || "Failed to submit review.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const resetDeletionModalState = () => {
+    setDeleteModalMode(null);
+    setDeleteConfirmJobNumber("");
+    setDeleteConfirmPhrase("");
+    setDeleteDecisionRemarks("");
+  };
+
+  const handleSubmitJobDeletion = async () => {
+    if (!deleteInputsMatch) {
+      toast.error("Enter the exact job number and confirmation phrase to continue.");
+      return;
+    }
+
+    setLoading("job-delete");
+    try {
+      const res = await actions.submitJobDeletionAction(
+        job.id,
+        deleteConfirmJobNumber,
+        deleteConfirmPhrase,
+      );
+
+      if (res.ok) {
+        const outcome = res.data.mode === "deleted"
+          ? `CHA job ${job.jobNumber} was deleted successfully.`
+          : `Deletion request submitted for ${job.jobNumber}. Manager approval is now pending.`;
+        toast.success(outcome);
+        resetDeletionModalState();
+        router.push("/cha/jobs");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to process the CHA job deletion.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleApproveDeletionRequest = async () => {
+    if (!pendingDeletionReview) return;
+    if (!deleteInputsMatch) {
+      toast.error("Enter the exact job number and confirmation phrase to continue.");
+      return;
+    }
+
+    setLoading("job-delete-approve");
+    try {
+      const res = await actions.decideJobDeletionRequestAction(
+        pendingDeletionReview.id,
+        "APPROVED",
+        deleteDecisionRemarks || undefined,
+      );
+
+      if (res.ok) {
+        toast.success(`Deletion request approved and job ${job.jobNumber} deleted.`);
+        resetDeletionModalState();
+        router.push("/cha/jobs");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to approve the deletion request.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleRejectDeletionRequest = async () => {
+    if (!pendingDeletionReview) return;
+    if (!deleteDecisionRemarks.trim()) {
+      toast.error("A rejection reason is required.");
+      return;
+    }
+
+    setLoading("job-delete-reject");
+    try {
+      const res = await actions.decideJobDeletionRequestAction(
+        pendingDeletionReview.id,
+        "REJECTED",
+        deleteDecisionRemarks,
+      );
+
+      if (res.ok) {
+        toast.success(`Deletion request for ${job.jobNumber} was rejected.`);
+        resetDeletionModalState();
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to reject the deletion request.");
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
@@ -729,8 +848,58 @@ export function JobWorkspaceClient({
               {job.status}
             </span>
           </div>
+          {canDeleteJob ? (
+            <Button
+              variant="destructive"
+              className="w-full"
+              disabled={loading !== null || Boolean(activeDeletionRequest)}
+              onClick={() => setDeleteModalMode("delete")}
+            >
+              <Trash2 className="mr-2 size-4" />
+              {activeDeletionRequest ? "Deletion Pending" : "Delete Job"}
+            </Button>
+          ) : null}
         </div>
       </div>
+
+      {activeDeletionRequest ? (
+        <div className="rounded-xl border border-[#fb923c]/35 bg-[#fb923c]/8 p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-1">
+              <span className="ds-label text-[#fb923c]">Deletion Workflow</span>
+              <p className="text-sm font-medium text-on-surface">
+                {activeDeletionRequest.status === "PENDING"
+                  ? `Deletion request is pending with ${activeDeletionRequest.assignedManager?.name || "the assigned manager"}.`
+                  : "Deletion request has been approved and is awaiting execution."}
+              </p>
+              <p className="text-xs text-on-surface-variant">
+                Requested by {activeDeletionRequest.requestedBy?.name || "Unknown"} on{" "}
+                {new Date(activeDeletionRequest.requestedAt).toLocaleString("en-IN")}
+              </p>
+            </div>
+
+            {pendingDeletionReview && canApproveDeleteJob ? (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  className="border-red-200 text-red-500 hover:bg-red-50"
+                  disabled={loading !== null}
+                  onClick={() => setDeleteModalMode("reject")}
+                >
+                  Reject Request
+                </Button>
+                <Button
+                  variant="destructive"
+                  disabled={loading !== null}
+                  onClick={() => setDeleteModalMode("approve")}
+                >
+                  Approve & Delete
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       {/* visual Stepper Display */}
       <div className="relative overflow-hidden rounded-xl border border-outline-variant/30 bg-surface p-6 shadow-sm">
@@ -2041,6 +2210,164 @@ export function JobWorkspaceClient({
           </div>
         )}
       </div>
+
+      <Modal
+        open={deleteModalMode === "delete"}
+        onClose={resetDeletionModalState}
+        title="Delete CHA Job"
+        description={
+          canDirectDeleteJob
+            ? `This will immediately remove ${job.jobNumber} from the active CHA workspace. Related records stay in history, but this action is destructive and should be used carefully.`
+            : `This will submit a manager approval request to delete ${job.jobNumber}. The job stays active until the assigned manager approves it.`
+        }
+        className="max-w-2xl"
+      >
+        <div className="space-y-5">
+          <div className="rounded-xl border border-red-200/70 bg-red-50/40 p-4 text-sm text-on-surface">
+            <p className="font-semibold text-red-600">Permanent action</p>
+            <p className="mt-1 text-on-surface-variant">
+              Deleting this job affects linked CHA workflows, audit visibility, and operational references. Enter the exact confirmation values below to continue.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="ds-label block">Type Exact Job Number</label>
+              <input
+                type="text"
+                value={deleteConfirmJobNumber}
+                onChange={(e) => setDeleteConfirmJobNumber(e.target.value)}
+                placeholder={job.jobNumber}
+                className="w-full text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="ds-label block">Type Confirmation Phrase</label>
+              <input
+                type="text"
+                value={deleteConfirmPhrase}
+                onChange={(e) => setDeleteConfirmPhrase(e.target.value)}
+                placeholder="delete job"
+                className="w-full text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="outline" onClick={resetDeletionModalState} disabled={loading !== null}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!deleteInputsMatch || loading === "job-delete"}
+              onClick={handleSubmitJobDeletion}
+            >
+              {loading === "job-delete"
+                ? "Processing..."
+                : canDirectDeleteJob
+                ? "Delete Job"
+                : "Request Deletion"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={deleteModalMode === "approve"}
+        onClose={resetDeletionModalState}
+        title="Approve Job Deletion"
+        description={`Approve the pending deletion request for ${job.jobNumber}. This will immediately soft-delete the job after approval.`}
+        className="max-w-2xl"
+      >
+        <div className="space-y-5">
+          <div className="rounded-xl border border-red-200/70 bg-red-50/40 p-4 text-sm text-on-surface">
+            <p className="font-semibold text-red-600">Manager approval required</p>
+            <p className="mt-1 text-on-surface-variant">
+              Confirm the exact job number and type <strong className="text-on-surface">delete job</strong> to execute this deletion request.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="ds-label block">Type Exact Job Number</label>
+              <input
+                type="text"
+                value={deleteConfirmJobNumber}
+                onChange={(e) => setDeleteConfirmJobNumber(e.target.value)}
+                placeholder={job.jobNumber}
+                className="w-full text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="ds-label block">Type Confirmation Phrase</label>
+              <input
+                type="text"
+                value={deleteConfirmPhrase}
+                onChange={(e) => setDeleteConfirmPhrase(e.target.value)}
+                placeholder="delete job"
+                className="w-full text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="ds-label block">Approval Note (Optional)</label>
+              <textarea
+                rows={3}
+                value={deleteDecisionRemarks}
+                onChange={(e) => setDeleteDecisionRemarks(e.target.value)}
+                placeholder="Add any execution note for the audit trail..."
+                className="w-full text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="outline" onClick={resetDeletionModalState} disabled={loading !== null}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!deleteInputsMatch || loading === "job-delete-approve"}
+              onClick={handleApproveDeletionRequest}
+            >
+              {loading === "job-delete-approve" ? "Deleting..." : "Approve & Delete"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={deleteModalMode === "reject"}
+        onClose={resetDeletionModalState}
+        title="Reject Job Deletion Request"
+        description={`Reject the pending deletion request for ${job.jobNumber}. A rejection reason is required and the job will remain active.`}
+        className="max-w-2xl"
+      >
+        <div className="space-y-5">
+          <div className="space-y-1.5">
+            <label className="ds-label block">Rejection Reason</label>
+            <textarea
+              rows={4}
+              value={deleteDecisionRemarks}
+              onChange={(e) => setDeleteDecisionRemarks(e.target.value)}
+              placeholder="Explain why this CHA job should not be deleted..."
+              className="w-full text-sm"
+            />
+          </div>
+
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="outline" onClick={resetDeletionModalState} disabled={loading !== null}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!deleteDecisionRemarks.trim() || loading === "job-delete-reject"}
+              onClick={handleRejectDeletionRequest}
+            >
+              {loading === "job-delete-reject" ? "Rejecting..." : "Reject Request"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </main>
   );
 }

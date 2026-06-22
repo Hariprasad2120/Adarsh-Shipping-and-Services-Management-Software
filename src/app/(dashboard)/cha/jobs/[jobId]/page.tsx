@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { getJobDetails } from "@/modules/cha/service";
 import { db } from "@/lib/db";
+import { can } from "@/lib/rbac";
 import { JobWorkspaceClient } from "./job-workspace-client";
 
 export default async function ChaJobWorkspacePage({
@@ -18,7 +19,11 @@ export default async function ChaJobWorkspacePage({
   const { jobId } = await params;
 
   try {
-    const job = await getJobDetails(session.user.id, orgId, jobId);
+    const [job, canDeleteJob, canApproveDeleteJob] = await Promise.all([
+      getJobDetails(session.user.id, orgId, jobId),
+      can(session.user.id, "cha.job.delete"),
+      can(session.user.id, "cha.job.delete.approve"),
+    ]);
     
     // Fetch users for assignment selections and customer advance maps
     const users = await db.user.findMany({
@@ -41,6 +46,8 @@ export default async function ChaJobWorkspacePage({
         expenseCategories={parsedExpenseCategories}
         selfApprovalAllowed={settings?.selfApprovalAllowed ?? true}
         currentUserId={session.user.id}
+        canDeleteJob={canDeleteJob}
+        canApproveDeleteJob={canApproveDeleteJob}
       />
     );
   } catch (err: any) {

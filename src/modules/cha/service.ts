@@ -101,6 +101,65 @@ export async function logChaAudit(params: {
   });
 }
 
+const CHA_DELETE_CONFIRMATION_PHRASE = "delete job";
+
+function normalizeDeleteConfirmationPhrase(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function getActiveChaJobWhere(orgId: string): Prisma.ChaJobWhereInput {
+  return { orgId, deletedAt: null };
+}
+
+function getActiveChaJobByIdWhere(orgId: string, jobId: string): Prisma.ChaJobWhereInput {
+  return { id: jobId, ...getActiveChaJobWhere(orgId) };
+}
+
+function getActorRoleNames(user: { roles?: { role: { name: string } }[]; isPlatformAdmin?: boolean }) {
+  const roleNames = user.roles?.map((entry) => entry.role.name) ?? [];
+  if (user.isPlatformAdmin) roleNames.push("PlatformAdmin");
+  return Array.from(new Set(roleNames));
+}
+
+function getAssignedDeletionManager(job: {
+  assignments: { id: string; userId: string; responsibility: string; user?: { name: string | null } }[];
+}) {
+  return [...job.assignments]
+    .filter((assignment) => assignment.responsibility === "APPROVAL")
+    .sort((a, b) => a.id.localeCompare(b.id))[0] ?? null;
+}
+
+function assertDeleteConfirmationInput(jobNumber: string, confirmationJobNumber: string, confirmationPhrase: string) {
+  if (confirmationJobNumber.trim() !== jobNumber) {
+    throw new Error("The entered job number does not match this CHA job.");
+  }
+  if (normalizeDeleteConfirmationPhrase(confirmationPhrase) !== CHA_DELETE_CONFIRMATION_PHRASE) {
+    throw new Error("The confirmation phrase must exactly match 'delete job'.");
+  }
+}
+
+function assertJobCanBeDeleted(job: {
+  deletedAt: Date | null;
+  stage: string;
+  status: string;
+  filing: { status: string | null } | null;
+  customerAdvance: { receipts: unknown[] } | null;
+  expenseRequests: { status: string }[];
+}) {
+  if (job.deletedAt) {
+    throw new Error("This CHA job has already been deleted.");
+  }
+  if (job.stage === "FILED" || job.filing?.status === "FILED" || job.status === "COMPLETED") {
+    throw new Error("Completed or filed CHA jobs cannot be deleted.");
+  }
+  if ((job.customerAdvance?.receipts.length ?? 0) > 0) {
+    throw new Error("This CHA job already has recorded advance receipts and cannot be deleted.");
+  }
+  if (job.expenseRequests.some((request) => ["PAID", "RECEIPT_ACKNOWLEDGED"].includes(request.status))) {
+    throw new Error("This CHA job has paid expense records and cannot be deleted.");
+  }
+}
+
 // Create a CHA Job
 export async function createJob(
   actorId: string,
@@ -356,13 +415,22 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
   if (!user) throw new Error("User not found");
 
   const job = await db.chaJob.findFirst({
-    where: { id: jobId, orgId },
+    where: { id: jobId, ...getActiveChaJobWhere(orgId) },
     include: {
       customer: true,
       jobType: true,
       branch: true,
       primaryOwner: { select: { id: true, name: true, email: true, designation: true } },
       assignments: { include: { user: { select: { id: true, name: true, email: true, designation: true } } } },
+      deletionRequests: {
+        orderBy: { requestedAt: "desc" },
+        take: 10,
+        include: {
+          requestedBy: { select: { id: true, name: true } },
+          assignedManager: { select: { id: true, name: true } },
+          executedBy: { select: { id: true, name: true } },
+        },
+      },
       documentRequirements: { include: { versions: { include: { uploadedBy: { select: { name: true } } } }, exception: { include: { user: { select: { name: true } } } } } },
       checklistImports: { include: { uploadedBy: { select: { name: true } }, approvals: { include: { manager: { select: { name: true } } } }, reworkNotes: { include: { author: { select: { name: true } } } }, sections: { include: { items: true } } } },
       filing: { include: { dateHistory: { include: { setBy: { select: { name: true } } } } } },
@@ -426,7 +494,7 @@ export async function listJobs(
   const pageSize = filters.pageSize || 10;
   const skip = (page - 1) * pageSize;
 
-  const where: any = { orgId };
+  const where: any = getActiveChaJobWhere(orgId);
 
   if (filters.search) {
     where.OR = [
@@ -502,7 +570,7 @@ export async function uploadDocumentVersion(
   }
 ) {
   const req = await db.chaJobDocumentRequirement.findFirstOrThrow({
-    where: { id: requirementId, jobId },
+    where: { id: requirementId, jobId, job: getActiveChaJobWhere(orgId) },
   });
 
   const result = await db.$transaction(async (tx) => {
@@ -566,8 +634,8 @@ export async function uploadDocumentVersion(
   }
 
   // If a document changes after checklist approval, flag alert
-  const job = await db.chaJob.findUniqueOrThrow({
-    where: { id: jobId },
+  const job = await db.chaJob.findFirstOrThrow({
+    where: getActiveChaJobByIdWhere(orgId, jobId),
     include: { checklistImports: { where: { status: "APPROVED" } }, assignments: { where: { responsibility: "APPROVAL" } } },
   });
 
@@ -604,6 +672,11 @@ export async function declareDocumentException(
   if (!reason.trim()) {
     throw new Error("A clear reason is required to declare a document unavailable.");
   }
+
+  await db.chaJobDocumentRequirement.findFirstOrThrow({
+    where: { id: requirementId, jobId, job: getActiveChaJobWhere(orgId) },
+    select: { id: true },
+  });
 
   const result = await db.$transaction(async (tx) => {
     // Save exception
@@ -676,6 +749,11 @@ export async function importChecklistExcel(
   fileName: string,
   fileSize: number
 ) {
+  await db.chaJob.findFirstOrThrow({
+    where: getActiveChaJobByIdWhere(orgId, jobId),
+    select: { id: true },
+  });
+
   // Check doc gate first
   const gate = await verifyDocumentGate(jobId);
   if (!gate.passed) {
@@ -805,8 +883,8 @@ export async function submitChecklistForApproval(
   jobId: string,
   importId: string
 ) {
-  const job = await db.chaJob.findUniqueOrThrow({
-    where: { id: jobId },
+  const job = await db.chaJob.findFirstOrThrow({
+    where: getActiveChaJobByIdWhere(orgId, jobId),
     include: { assignments: { where: { responsibility: "APPROVAL" } } },
   });
 
@@ -904,8 +982,8 @@ export async function checklistManagerAction(
       },
     });
 
-    const job = await tx.chaJob.findUniqueOrThrow({
-      where: { id: jobId },
+    const job = await tx.chaJob.findFirstOrThrow({
+      where: getActiveChaJobByIdWhere(orgId, jobId),
       include: {
         assignments: { where: { responsibility: "APPROVAL" } },
         primaryOwner: true,
@@ -1069,8 +1147,8 @@ export async function selfApproveChecklist(
   }
 
   const result = await db.$transaction(async (tx) => {
-    const job = await tx.chaJob.findUniqueOrThrow({
-      where: { id: jobId },
+    const job = await tx.chaJob.findFirstOrThrow({
+      where: getActiveChaJobByIdWhere(orgId, jobId),
       include: { assignments: true },
     });
 
@@ -1439,6 +1517,11 @@ export async function createExpenseRequest(
     throw new Error("An expense request must contain at least one line item.");
   }
 
+  const job = await db.chaJob.findFirstOrThrow({
+    where: getActiveChaJobByIdWhere(orgId, jobId),
+    select: { id: true, jobNumber: true },
+  });
+
   // Verify requester is not accounts-only
   const user = await db.user.findUnique({
     where: { id: actorId },
@@ -1493,10 +1576,6 @@ export async function createExpenseRequest(
     });
 
     return request;
-  });
-
-  const job = await db.chaJob.findUniqueOrThrow({
-    where: { id: jobId },
   });
 
   await logChaAudit({
@@ -1937,14 +2016,14 @@ export async function listAllExpenses(
     isUrgent?: boolean;
   }
 ) {
-  const where: any = { orgId };
+  const where: any = { orgId, job: { deletedAt: null } };
 
   if (filters.status) where.status = filters.status;
   if (filters.isUrgent !== undefined) where.isUrgent = filters.isUrgent;
   if (filters.search) {
     where.OR = [
-      { job: { jobNumber: { contains: filters.search, mode: "insensitive" } } },
-      { job: { customer: { name: { contains: filters.search, mode: "insensitive" } } } },
+      { job: { deletedAt: null, jobNumber: { contains: filters.search, mode: "insensitive" } } },
+      { job: { deletedAt: null, customer: { name: { contains: filters.search, mode: "insensitive" } } } },
       { requestedBy: { name: { contains: filters.search, mode: "insensitive" } } },
     ];
   }
@@ -1971,7 +2050,7 @@ export async function listManagerChecklistApprovals(
     where: {
       managerId: userId,
       decision: "PENDING",
-      checklistImport: { job: { orgId } },
+      checklistImport: { job: { orgId, deletedAt: null } },
     },
     include: {
       checklistImport: {
@@ -1982,4 +2061,505 @@ export async function listManagerChecklistApprovals(
       },
     },
   });
+}
+
+export async function listManagerJobDeletionRequests(userId: string, orgId: string) {
+  return db.chaJobDeletionRequest.findMany({
+    where: {
+      orgId,
+      assignedManagerId: userId,
+      status: { in: ["PENDING", "APPROVED"] },
+      job: { deletedAt: null },
+    },
+    include: {
+      job: {
+        include: {
+          customer: { select: { name: true } },
+          primaryOwner: { select: { id: true, name: true } },
+        },
+      },
+      requestedBy: { select: { id: true, name: true } },
+      assignedManager: { select: { id: true, name: true } },
+    },
+    orderBy: { requestedAt: "desc" },
+  });
+}
+
+export async function submitJobDeletion(
+  actorId: string,
+  orgId: string,
+  input: {
+    jobId: string;
+    confirmationJobNumber: string;
+    confirmationPhrase: string;
+    metadata?: Record<string, unknown>;
+  }
+) {
+  const actor = await db.user.findUniqueOrThrow({
+    where: { id: actorId },
+    include: { roles: { include: { role: true } } },
+  });
+  const actorRoleNames = getActorRoleNames(actor);
+  const [canRequestDelete, canApproveDelete] = await Promise.all([
+    can(actorId, "cha.job.delete"),
+    can(actorId, "cha.job.delete.approve"),
+  ]);
+
+  const job = await db.chaJob.findFirst({
+    where: { id: input.jobId, ...getActiveChaJobWhere(orgId) },
+    include: {
+      assignments: {
+        include: { user: { select: { id: true, name: true } } },
+      },
+      filing: { select: { status: true } },
+      customerAdvance: { include: { receipts: { select: { id: true } } } },
+      expenseRequests: { select: { status: true } },
+      deletionRequests: {
+        where: { status: { in: ["PENDING", "APPROVED"] } },
+        select: { id: true, status: true, requestedById: true, assignedManagerId: true },
+      },
+    },
+  });
+
+  if (!job) {
+    throw new Error("CHA job not found.");
+  }
+
+  const isAssignedToJob =
+    job.primaryOwnerId === actorId || job.assignments.some((assignment) => assignment.userId === actorId);
+  if (!canRequestDelete || !isAssignedToJob) {
+    await logChaAudit({
+      orgId,
+      jobId: job.id,
+      entityType: "ChaJob",
+      entityId: job.id,
+      event: "JOB_DELETE_UNAUTHORIZED_ATTEMPT",
+      actorId,
+      prevState: job.status,
+      newState: job.status,
+      remarks: "User attempted to delete or request deletion without sufficient authorisation.",
+      metadata: {
+        actorRoleNames,
+        ...input.metadata,
+      },
+    });
+    throw new Error("You are not authorized to delete or request deletion for this CHA job.");
+  }
+
+  try {
+    assertDeleteConfirmationInput(job.jobNumber, input.confirmationJobNumber, input.confirmationPhrase);
+    assertJobCanBeDeleted(job);
+  } catch (error) {
+    await logChaAudit({
+      orgId,
+      jobId: job.id,
+      entityType: "ChaJob",
+      entityId: job.id,
+      event: "JOB_DELETE_FAILED",
+      actorId,
+      prevState: job.status,
+      newState: job.status,
+      remarks: error instanceof Error ? error.message : "Deletion validation failed.",
+      metadata: {
+        actorRoleNames,
+        ...input.metadata,
+      },
+    });
+    throw error;
+  }
+
+  await logChaAudit({
+    orgId,
+    jobId: job.id,
+    entityType: "ChaJob",
+    entityId: job.id,
+    event: "JOB_DELETE_CONFIRMATION_INITIATED",
+    actorId,
+    prevState: job.status,
+    newState: job.status,
+    remarks: "Deletion confirmation submitted.",
+    metadata: {
+      actorRoleNames,
+      assignedManagerId: getAssignedDeletionManager(job)?.userId ?? null,
+      ...input.metadata,
+    },
+  });
+
+  const assignedManager = getAssignedDeletionManager(job);
+  const isAssignedManager = assignedManager?.userId === actorId;
+
+  if (isAssignedManager && canApproveDelete) {
+    await db.chaJob.update({
+      where: { id: job.id },
+      data: {
+        deletedAt: new Date(),
+        deletedById: actorId,
+        status: "CANCELLED",
+      },
+    });
+
+    await logChaAudit({
+      orgId,
+      jobId: job.id,
+      entityType: "ChaJob",
+      entityId: job.id,
+      event: "JOB_DELETED_DIRECT",
+      actorId,
+      prevState: job.status,
+      newState: "DELETED",
+      remarks: `CHA job ${job.jobNumber} deleted directly by assigned manager.`,
+      metadata: {
+        actorRoleNames,
+        assignedManagerId: assignedManager.userId,
+        ...input.metadata,
+      },
+    });
+
+    await logChaAudit({
+      orgId,
+      jobId: job.id,
+      entityType: "ChaJob",
+      entityId: job.id,
+      event: "JOB_DELETE_EXECUTED",
+      actorId,
+      prevState: job.status,
+      newState: "DELETED",
+      remarks: `CHA job ${job.jobNumber} soft-deleted immediately by the assigned manager.`,
+      metadata: {
+        actorRoleNames,
+        assignedManagerId: assignedManager.userId,
+        ...input.metadata,
+      },
+    });
+
+    return { mode: "deleted" as const };
+  }
+
+  if (!assignedManager) {
+    await logChaAudit({
+      orgId,
+      jobId: job.id,
+      entityType: "ChaJob",
+      entityId: job.id,
+      event: "JOB_DELETE_FAILED",
+      actorId,
+      prevState: job.status,
+      newState: job.status,
+      remarks: "Deletion request blocked because no approval manager is assigned to the job.",
+      metadata: {
+        actorRoleNames,
+        ...input.metadata,
+      },
+    });
+    throw new Error("No approval manager is assigned to this CHA job. Assign a manager before requesting deletion.");
+  }
+
+  if (job.deletionRequests.length > 0) {
+    await logChaAudit({
+      orgId,
+      jobId: job.id,
+      entityType: "ChaJob",
+      entityId: job.id,
+      event: "JOB_DELETE_FAILED",
+      actorId,
+      prevState: job.status,
+      newState: job.status,
+      remarks: "Deletion request blocked because another active deletion request already exists.",
+      metadata: {
+        actorRoleNames,
+        assignedManagerId: assignedManager.userId,
+        ...input.metadata,
+      },
+    });
+    throw new Error("An active deletion request already exists for this CHA job.");
+  }
+
+  const request = await db.$transaction(
+    async (tx) => {
+      const duplicate = await tx.chaJobDeletionRequest.findFirst({
+        where: {
+          jobId: job.id,
+          status: { in: ["PENDING", "APPROVED"] },
+        },
+        select: { id: true },
+      });
+      if (duplicate) {
+        throw new Error("An active deletion request already exists for this CHA job.");
+      }
+
+      return tx.chaJobDeletionRequest.create({
+        data: {
+          orgId,
+          jobId: job.id,
+          jobNumberSnapshot: job.jobNumber,
+          requestedById: actorId,
+          assignedManagerId: assignedManager.userId,
+          remarks: `Deletion requested by ${actor.name}.`,
+        },
+      });
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
+
+  await logChaAudit({
+    orgId,
+    jobId: job.id,
+    entityType: "ChaJobDeletionRequest",
+    entityId: request.id,
+    event: "JOB_DELETE_APPROVAL_REQUESTED",
+    actorId,
+    prevState: "NONE",
+    newState: "PENDING",
+    remarks: `Deletion request submitted for manager ${assignedManager.user?.name ?? assignedManager.userId}.`,
+    metadata: {
+      actorRoleNames,
+      requesterId: actorId,
+      assignedManagerId: assignedManager.userId,
+      approvalRequestId: request.id,
+      ...input.metadata,
+    },
+  });
+
+  await createNotification({
+    userId: assignedManager.userId,
+    orgId,
+    kind: "CHA_JOB_DELETION_REQUESTED",
+    title: `Delete Job Approval Needed: ${job.jobNumber}`,
+    body: `${actor.name} requested deletion for CHA job ${job.jobNumber}. Review the request before it is executed.`,
+    link: `/cha/jobs/${job.id}`,
+    priority: "important",
+  });
+
+  await db.todoTask.create({
+    data: {
+      userId: assignedManager.userId,
+      orgId,
+      title: `Review delete request for Job ${job.jobNumber}`,
+      description: `Approve or reject the deletion request raised by ${actor.name} for CHA job ${job.jobNumber}.`,
+      status: "PENDING",
+    },
+  });
+
+  return { mode: "pending" as const, requestId: request.id, assignedManagerId: assignedManager.userId };
+}
+
+export async function decideJobDeletionRequest(
+  actorId: string,
+  orgId: string,
+  input: {
+    requestId: string;
+    decision: "APPROVED" | "REJECTED";
+    remarks?: string;
+    metadata?: Record<string, unknown>;
+  }
+) {
+  const actor = await db.user.findUniqueOrThrow({
+    where: { id: actorId },
+    include: { roles: { include: { role: true } } },
+  });
+  const actorRoleNames = getActorRoleNames(actor);
+  const canApproveDelete = await can(actorId, "cha.job.delete.approve");
+  if (!canApproveDelete) {
+    await logChaAudit({
+      orgId,
+      entityType: "ChaJobDeletionRequest",
+      entityId: input.requestId,
+      event: "JOB_DELETE_UNAUTHORIZED_ATTEMPT",
+      actorId,
+      remarks: "User attempted to review a CHA deletion request without approval permission.",
+      metadata: {
+        actorRoleNames,
+        ...input.metadata,
+      },
+    });
+    throw new Error("You are not authorized to approve CHA job deletions.");
+  }
+  if (input.decision === "REJECTED" && !input.remarks?.trim()) {
+    throw new Error("A rejection remark is required when declining a deletion request.");
+  }
+
+  let result;
+  try {
+    result = await db.$transaction(
+      async (tx) => {
+        const request = await tx.chaJobDeletionRequest.findFirst({
+          where: { id: input.requestId, orgId },
+          include: {
+            requestedBy: { select: { id: true, name: true } },
+            assignedManager: { select: { id: true, name: true } },
+            job: {
+              include: {
+                assignments: true,
+                filing: { select: { status: true } },
+                customerAdvance: { include: { receipts: { select: { id: true } } } },
+                expenseRequests: { select: { status: true } },
+              },
+            },
+          },
+        });
+
+        if (!request) {
+          throw new Error("Deletion approval request not found.");
+        }
+        if (request.status !== "PENDING") {
+          throw new Error("This deletion approval request has already been actioned.");
+        }
+        if (request.assignedManagerId !== actorId) {
+          throw new Error("You are not the assigned manager for this deletion request.");
+        }
+
+        const assignedManager = getAssignedDeletionManager(request.job);
+        if (!assignedManager || assignedManager.userId !== actorId) {
+          throw new Error("The assigned approval manager on the CHA job has changed. Create a fresh deletion request.");
+        }
+
+        assertJobCanBeDeleted(request.job);
+
+        if (input.decision === "REJECTED") {
+          const rejected = await tx.chaJobDeletionRequest.update({
+            where: { id: request.id },
+            data: {
+              status: "REJECTED",
+              decidedAt: new Date(),
+              rejectionRemarks: input.remarks?.trim(),
+            },
+          });
+
+          return { request: rejected, job: request.job, requester: request.requestedBy, outcome: "rejected" as const };
+        }
+
+        const approved = await tx.chaJobDeletionRequest.update({
+          where: { id: request.id },
+          data: {
+            status: "APPROVED",
+            decidedAt: new Date(),
+            remarks: input.remarks?.trim() || request.remarks,
+          },
+        });
+
+        await tx.chaJob.update({
+          where: { id: request.job.id },
+          data: {
+            deletedAt: new Date(),
+            deletedById: actorId,
+            status: "CANCELLED",
+          },
+        });
+
+        const executed = await tx.chaJobDeletionRequest.update({
+          where: { id: request.id },
+          data: {
+            status: "EXECUTED",
+            executedAt: new Date(),
+            executedById: actorId,
+          },
+        });
+
+        return { request: executed, approvedRequest: approved, job: request.job, requester: request.requestedBy, outcome: "executed" as const };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Deletion approval decision failed.";
+    const unauthorized =
+      message.includes("assigned manager") ||
+      message.includes("not authorized");
+    await logChaAudit({
+      orgId,
+      entityType: "ChaJobDeletionRequest",
+      entityId: input.requestId,
+      event: unauthorized ? "JOB_DELETE_UNAUTHORIZED_ATTEMPT" : "JOB_DELETE_FAILED",
+      actorId,
+      remarks: message,
+      metadata: {
+        actorRoleNames,
+        decision: input.decision,
+        ...input.metadata,
+      },
+    });
+    throw error;
+  }
+
+  if (result.outcome === "rejected") {
+    await logChaAudit({
+      orgId,
+      jobId: result.job.id,
+      entityType: "ChaJobDeletionRequest",
+      entityId: result.request.id,
+      event: "JOB_DELETE_APPROVAL_REJECTED",
+      actorId,
+      prevState: "PENDING",
+      newState: "REJECTED",
+      remarks: input.remarks?.trim(),
+      metadata: {
+        actorRoleNames,
+        requesterId: result.requester.id,
+        assignedManagerId: actorId,
+        approvalRequestId: result.request.id,
+        ...input.metadata,
+      },
+    });
+
+    await createNotification({
+      userId: result.requester.id,
+      orgId,
+      kind: "CHA_JOB_DELETION_REJECTED",
+      title: `Delete Job Request Rejected: ${result.request.jobNumberSnapshot}`,
+      body: `${actor.name} rejected your deletion request for CHA job ${result.request.jobNumberSnapshot}.`,
+      link: `/cha/jobs/${result.job.id}`,
+      priority: "important",
+    });
+
+    return result.request;
+  }
+
+  await logChaAudit({
+    orgId,
+    jobId: result.job.id,
+    entityType: "ChaJobDeletionRequest",
+    entityId: result.request.id,
+    event: "JOB_DELETE_APPROVAL_APPROVED",
+    actorId,
+    prevState: "PENDING",
+    newState: "APPROVED",
+    remarks: input.remarks?.trim() || "Deletion request approved.",
+    metadata: {
+      actorRoleNames,
+      requesterId: result.requester.id,
+      assignedManagerId: actorId,
+      approvalRequestId: result.request.id,
+      ...input.metadata,
+    },
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId: result.job.id,
+    entityType: "ChaJob",
+    entityId: result.job.id,
+    event: "JOB_DELETE_EXECUTED",
+    actorId,
+    prevState: result.job.status,
+    newState: "DELETED",
+    remarks: `CHA job ${result.request.jobNumberSnapshot} deleted after manager approval.`,
+    metadata: {
+      actorRoleNames,
+      requesterId: result.requester.id,
+      assignedManagerId: actorId,
+      approvalRequestId: result.request.id,
+      ...input.metadata,
+    },
+  });
+
+  await createNotification({
+    userId: result.requester.id,
+    orgId,
+    kind: "CHA_JOB_DELETED",
+    title: `CHA Job Deleted: ${result.request.jobNumberSnapshot}`,
+    body: `${actor.name} approved and executed deletion for CHA job ${result.request.jobNumberSnapshot}.`,
+    link: "/cha/jobs",
+    priority: "important",
+  });
+
+  return result.request;
 }
