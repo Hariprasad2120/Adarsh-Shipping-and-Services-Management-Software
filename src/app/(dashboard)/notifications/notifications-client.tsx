@@ -62,7 +62,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-4 rounded-[26px] border border-outline-variant/45 bg-surface/85 px-5 py-5 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:flex-row sm:items-start sm:justify-between">
+      <div className="ds-shell-lg flex flex-col gap-4 border border-outline-variant/45 bg-surface/85 px-5 py-5 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1.5">
           <p className="text-sm text-on-surface-variant">Only your notifications appear here.</p>
         </div>
@@ -89,7 +89,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
       </div>
 
       {notifications.length === 0 ? (
-        <div className="rounded-[26px] border border-dashed border-outline-variant/60 bg-surface/70 px-6 py-14 text-center shadow-[0_18px_36px_-32px_rgba(15,23,42,0.12)] backdrop-blur-xl">
+        <div className="ds-shell-lg border border-dashed border-outline-variant/60 bg-surface/70 px-6 py-14 text-center shadow-[0_18px_36px_-32px_rgba(15,23,42,0.12)] backdrop-blur-xl">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
             <Bell className="size-6" />
           </div>
@@ -107,7 +107,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
               <article
                 key={notification.id}
                 className={cn(
-                  "group rounded-[26px] border border-outline-variant/40 bg-surface/85 px-5 py-5 backdrop-blur-xl transition-all duration-200",
+                  "ds-shell-lg group border border-outline-variant/40 bg-surface/85 px-5 py-5 backdrop-blur-xl transition-all duration-200",
                   "shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] hover:border-[#00cec4]/45 hover:shadow-[0_24px_50px_-36px_rgba(0,206,196,0.25)]",
                 )}
               >

@@ -48,3 +48,36 @@ next-env.d.ts
 next-auth.log
 /uploads
 /users.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS metadata
+Thumbs.db
+desktop.ini
+
+# pnpm (project uses npm)
+pnpm-lock.yaml
+
+# scratch / temp
+/scratch/
+/_cleanup_review/
+/docs/
+
+# sensitive data output
+/import-output/
+
+# Google service account keys
+*.json
+!package.json
+!tsconfig.json
+!next.config*.json
+
+# ngrok / Google Chat secrets
+.env.local
+credentials.json
+*service-account*.json
+ngrok.yml

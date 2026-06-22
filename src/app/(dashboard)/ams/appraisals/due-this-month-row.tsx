@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, DataTableCell, DataTableRow } from "@/components/data-table";
+import { Badge, DataTableCell, DataTablePrimaryLinkCell, DataTableRow } from "@/components/data-table";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
@@ -16,14 +16,15 @@ export type DueRow = {
 
 export function DueThisMonthRow({ row }: { row: DueRow }) {
   const href = row.appraisalId ? `/ams/appraisals/${row.appraisalId}` : `/ams/appraisals/assign/${row.employeeId}`;
+  const dueDateLabel = row.dueDate
+    ? new Intl.DateTimeFormat("en-IN", { timeZone: "UTC" }).format(new Date(row.dueDate))
+    : "-";
 
   return (
     <DataTableRow>
-      <DataTableCell className="font-medium text-on-surface-variant">
-        <Link href={href} className="inline-flex items-center gap-2 transition-colors hover:text-[#00b5ad]">
-          <span>{row.employeeName}</span>
-        </Link>
-      </DataTableCell>
+      <DataTablePrimaryLinkCell href={href} className="font-medium text-on-surface-variant">
+        <span>{row.employeeName}</span>
+      </DataTablePrimaryLinkCell>
       <DataTableCell className="text-xs text-on-surface-variant">{row.designation ?? "-"}</DataTableCell>
       <DataTableCell className="text-xs text-on-surface-variant">{row.department ?? "-"}</DataTableCell>
       <DataTableCell>
@@ -36,7 +37,7 @@ export function DueThisMonthRow({ row }: { row: DueRow }) {
         )}
       </DataTableCell>
       <DataTableCell className="text-xs text-on-surface-variant">
-        {row.dueDate ? new Date(row.dueDate).toLocaleDateString("en-IN") : "-"}
+        {dueDateLabel}
       </DataTableCell>
       <DataTableCell className="text-right">
         <Link

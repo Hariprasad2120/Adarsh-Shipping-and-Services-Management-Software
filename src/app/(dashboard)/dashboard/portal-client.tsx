@@ -139,14 +139,14 @@ export function HrmsPortalClient({
   };
 
   return (
-    <div className="pb-12">
+    <>
       <ProfileSummary
         profile={profile}
         onPunchAction={handlePunchAction}
         loading={loading}
       />
 
-      <div className="flex flex-col gap-8 px-6 py-8 lg:px-8 xl:px-10">
+      <div className="flex flex-col gap-8">
 
       <div className="border border-outline-variant bg-surface-container-low">
         <div className="grid md:grid-cols-3 divide-x divide-outline-variant">
@@ -227,6 +227,6 @@ export function HrmsPortalClient({
       </div>
 
       </div>
-    </div>
+    </>
   );
 }

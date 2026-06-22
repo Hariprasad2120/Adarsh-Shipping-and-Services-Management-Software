@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { toDisplayTitleCase } from "@/lib/text-case";
-import { Badge } from "@/components/data-table";
+import { Badge, DataTablePrimaryLinkCell } from "@/components/data-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type UserRoleName =
@@ -205,17 +205,19 @@ function SectionTable({ users }: { users: User[] }) {
               key={user.id}
               className="group transition-colors hover:bg-surface-container-low/80"
             >
-              <td className="ds-numeric px-5 py-3 text-sm text-on-surface-variant">
-                <Link href={`/hrms/employees/${user.id}`} className="block">
-                  {employeeNumberFor(user)}
-                </Link>
-              </td>
+              <DataTablePrimaryLinkCell
+                href={`/hrms/employees/${user.id}`}
+                className="ds-numeric px-0 py-0 text-sm text-on-surface-variant"
+                linkClassName="py-3"
+              >
+                {employeeNumberFor(user)}
+              </DataTablePrimaryLinkCell>
 
-              <td className="px-5 py-3">
-                <Link
-                  href={`/hrms/employees/${user.id}`}
-                  className="flex min-w-0 items-center gap-3"
-                >
+              <DataTablePrimaryLinkCell
+                href={`/hrms/employees/${user.id}`}
+                className="px-0 py-0"
+                linkClassName="min-w-0 gap-3 py-3"
+              >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#00cec4]/15 text-xs text-[#008b85]">
                     {initialsFor(user.name)}
                   </div>
@@ -229,8 +231,7 @@ function SectionTable({ users }: { users: User[] }) {
                       {user.email}
                     </p>
                   </div>
-                </Link>
-              </td>
+              </DataTablePrimaryLinkCell>
 
               <td className="px-5 py-3">
                 <div className="flex flex-wrap gap-2">
@@ -305,7 +306,7 @@ export function EmployeeList({ users }: { users: User[] }) {
   return (
     <div className="space-y-6">
       {users.length === 0 ? (
-        <Card className="rounded-[28px] border-outline-variant shadow-sm dark:border-[#00cec4]/25">
+        <Card className="ds-shell-lg border-outline-variant shadow-sm dark:border-[#00cec4]/25">
           <CardContent className="py-10 text-center text-sm text-on-surface-variant">
             No employees found.
           </CardContent>
@@ -315,7 +316,7 @@ export function EmployeeList({ users }: { users: User[] }) {
           {groupedUsers.map((section) => (
             <Card
               key={section.key}
-              className="overflow-hidden rounded-[30px] border-outline-variant shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:border-[#00cec4]/25"
+              className="ds-shell-lg overflow-hidden border-outline-variant shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:border-[#00cec4]/25"
             >
               <CardHeader className="bg-surface px-5 pb-4 pt-5">
                 <CardTitle className="w-full text-lg font-medium uppercase tracking-[0.12em] text-slate-700">
@@ -334,7 +335,7 @@ export function EmployeeList({ users }: { users: User[] }) {
           ))}
 
           {uncategorizedUsers.length > 0 ? (
-            <Card className="overflow-hidden rounded-[30px] border-outline-variant shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:border-[#00cec4]/25">
+            <Card className="ds-shell-lg overflow-hidden border-outline-variant shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:border-[#00cec4]/25">
               <CardHeader className="bg-surface px-5 pb-4 pt-5">
                 <CardTitle className="w-full text-lg font-medium uppercase tracking-[0.12em] text-slate-700">
                   Other Roles

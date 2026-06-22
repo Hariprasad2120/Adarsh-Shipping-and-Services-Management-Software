@@ -60,7 +60,7 @@ export function DealDetailWrapper({
     : "Not Scheduled";
 
   return (
-    <div className="p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-200">
+    <div className="space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-200">
       {/* ─── SPLIT VIEW LAYOUT ──────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         

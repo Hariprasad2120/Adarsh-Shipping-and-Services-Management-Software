@@ -1,7 +1,8 @@
 import { auth } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
-import { loadCaps } from "@/lib/rbac";
-import { requirePermission } from "@/lib/rbac";
+import { db } from "@/lib/db";
+import { BreadcrumbLabel } from "@/components/breadcrumb-label";
+import { can, loadCaps, requirePermission } from "@/lib/rbac";
 import { getRoles } from "@/modules/core/organisation/service";
 import { getAppraisal, computeAppraisalScore, getSelfFormTemplate } from "@/modules/ams/service";
 import { loadSelfCriteria, loadReviewerCriteria } from "@/modules/ams/criteria-cache";
@@ -11,7 +12,6 @@ import { AppraisalDetail } from "./appraisal-detail";
 import type { AppraisalSelfFormTemplate, SelfAssessmentAnswers } from "@/modules/ams/criteria-config";
 import { filterCriteriaPointsByRole, mapCriterionRowToPoint } from "@/modules/ams/form-template";
 import { resolveSelfFormTemplate } from "@/modules/ams/self-form-template";
-import type { CriterionPoint } from "@/modules/ams/types";
 
 type AppraisalDetailProps = React.ComponentProps<typeof AppraisalDetail>;
 
@@ -19,10 +19,30 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
   const session = await auth();
   if (!session) redirect("/login");
 
-  await requirePermission(session.user.id, "ams.appraisal.assign_reviewers");
-
   const { id } = await params;
   const orgId = session.user.orgId!;
+  const redirectContext = await db.appraisal.findUnique({
+    where: { id },
+    select: {
+      stage: true,
+      employee: { select: { id: true } },
+      cycle: { select: { orgId: true } },
+    },
+  });
+
+  if (!redirectContext || redirectContext.cycle.orgId !== orgId) notFound();
+  if (redirectContext.stage === "DUE_NOTIFIED") {
+    redirect(`/ams/appraisals/assign/${redirectContext.employee.id}`);
+  }
+
+  const [canAssign, canViewAll, canManageReview] = await Promise.all([
+    can(session.user.id, "ams.appraisal.assign_reviewers"),
+    can(session.user.id, "ams.appraisal.view_all"),
+    can(session.user.id, "ams.appraisal.management_review"),
+  ]);
+  if (!canAssign && !canViewAll && !canManageReview) {
+    await requirePermission(session.user.id, "ams.appraisal.assign_reviewers");
+  }
 
   // All independent — run in parallel
   const [appraisal, roles, caps, now, selfRows, reviewerRows, selfTemplate] = await Promise.all([
@@ -36,12 +56,8 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
   ]);
 
   if (!appraisal) notFound();
-  if (appraisal.stage === "DUE_NOTIFIED") {
-    redirect(`/ams/appraisals/assign/${appraisal.employee.id}`);
-  }
 
   const selfCriteria = selfRows.filter((row) => row.kind === "CATEGORY").map(mapCriterionRowToPoint);
-  const selfSupplementary: CriterionPoint[] = [];
   const resolvedSelfTemplate = resolveSelfFormTemplate(selfCriteria, selfTemplate as AppraisalSelfFormTemplate);
 
   // Filter reviewer criteria by current user's role
@@ -85,11 +101,28 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
           editCount: (appraisal.selfAssessment as { editCount?: number }).editCount ?? 0,
         }
       : null,
-    reviewerRatings: appraisal.reviewerRatings as unknown as AppraisalDetailProps["appraisal"]["reviewerRatings"],
-    managementReviews: appraisal.managementReviews as unknown as AppraisalDetailProps["appraisal"]["managementReviews"],
+    reviewerRatings: appraisal.reviewerRatings.map((row) => ({
+      id: row.id,
+      ratings: row.ratings as AppraisalDetailProps["appraisal"]["reviewerRatings"][number]["ratings"],
+      status: row.status,
+      submittedAt: row.submittedAt?.toISOString() ?? null,
+      updatedAt: row.updatedAt.toISOString(),
+      reviewer: {
+        kind: row.reviewer.kind,
+        user: { name: row.reviewer.user.name },
+      },
+    })),
+    managementReviews: appraisal.managementReviews.map((row) => ({
+      id: row.id,
+      ratings: row.ratings as AppraisalDetailProps["appraisal"]["managementReviews"][number]["ratings"],
+      proposedDates: row.proposedDates.map((date) => date.toISOString()),
+      reviewer: { name: row.reviewer.name },
+    })),
     reviewers: appraisal.reviewers.map((reviewer) => ({
       ...reviewer,
       assignedAt: reviewer.assignedAt.toISOString(),
+      submissionStatus: reviewer.ratings[0]?.status ?? null,
+      submittedAt: reviewer.ratings[0]?.submittedAt?.toISOString() ?? null,
     })),
     meeting: appraisal.meeting
       ? {
@@ -98,6 +131,7 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
           minutes: appraisal.meeting.minutes.map((minute) => ({
             ...minute,
             createdAt: minute.createdAt.toISOString(),
+            updatedAt: minute.updatedAt.toISOString(),
           })),
         }
       : null,
@@ -115,6 +149,7 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
 
   return (
     <div className="space-y-6">
+      <BreadcrumbLabel segment={id} label={appraisal.employee.name} />
       <AppraisalDetail
         appraisal={safeAppraisal}
         hrUsers={hrUsers as AppraisalDetailProps["hrUsers"]}
@@ -124,7 +159,6 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
         currentUserId={session.user.id}
         serverNow={now.toISOString()}
         selfCriteria={selfCriteria}
-        selfSupplementary={selfSupplementary}
         selfTemplate={resolvedSelfTemplate}
         reviewerCriteria={reviewerCriteria}
         scoreData={scoreData}

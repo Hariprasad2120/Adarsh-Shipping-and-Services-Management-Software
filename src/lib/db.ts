@@ -1,4 +1,4 @@
-// Trigger recompilation after schema updates: 2026-06-19-v2
+// Trigger recompilation after schema updates: 2026-06-22-v5-google-chat
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
@@ -28,6 +28,8 @@ type PrismaClientWithDelegates = PrismaClient & {
   account?: unknown;
   transactionLock?: unknown;
   crmWorkTimeLog?: unknown;
+  chaTeamGroup?: unknown;
+  googleChatInteractionEvent?: unknown;
 };
 
 function hasRequiredDelegates(client: PrismaClient) {
@@ -40,7 +42,9 @@ function hasRequiredDelegates(client: PrismaClient) {
     typeof delegateClient.crmLead !== "undefined" &&
     typeof delegateClient.account !== "undefined" &&
     typeof delegateClient.transactionLock !== "undefined" &&
-    typeof delegateClient.crmWorkTimeLog !== "undefined"
+    typeof delegateClient.crmWorkTimeLog !== "undefined" &&
+    typeof delegateClient.chaTeamGroup !== "undefined" &&
+    typeof delegateClient.googleChatInteractionEvent !== "undefined"
   );
 }
 

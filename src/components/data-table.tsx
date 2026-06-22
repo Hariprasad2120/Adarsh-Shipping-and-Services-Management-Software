@@ -1,5 +1,6 @@
 import React from "react";
-import type { HTMLAttributes, ReactNode, TableHTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react";
+import Link from "next/link";
+import type { ComponentProps, HTMLAttributes, ReactNode, TableHTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react";
 
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -87,7 +88,33 @@ export function DataTableCell({
   className,
   ...props
 }: TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-5 py-4 align-middle text-sm text-on-surface", className)} {...props} />;
+  return <td className={cn("px-5 py-2.5 align-middle text-sm text-on-surface", className)} {...props} />;
+}
+
+export function DataTablePrimaryLinkCell({
+  href,
+  className,
+  linkClassName,
+  children,
+  ...props
+}: TdHTMLAttributes<HTMLTableCellElement> & {
+  href: ComponentProps<typeof Link>["href"];
+  linkClassName?: string;
+  children: ReactNode;
+}) {
+  return (
+    <DataTableCell className={cn("p-0", className)} {...props}>
+      <Link
+        href={href}
+        className={cn(
+          "flex w-full items-center px-5 py-2.5 text-inherit transition-colors hover:text-[#00b5ad] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#00cec4]/30",
+          linkClassName,
+        )}
+      >
+        {children}
+      </Link>
+    </DataTableCell>
+  );
 }
 
 export function DataTableEmpty({

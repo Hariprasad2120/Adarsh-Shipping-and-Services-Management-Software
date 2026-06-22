@@ -37,7 +37,7 @@ export default async function CrmLeadSourcesLogsPage() {
   const logs = await getImportLogs(orgId, 100);
 
   return (
-    <div className="p-8 space-y-6 max-w-[1600px] mx-auto">
+    <div className="space-y-6 max-w-[1600px] mx-auto">
       <div className="bg-[#0f1319] border border-[#1c212a]/55 rounded-xl p-6 shadow-2xl space-y-4">
         <div className="flex items-center gap-2 text-slate-300 border-b border-[#1c212a]/20 pb-2">
           <Link

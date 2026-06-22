@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { createAccountAction, updateAccountAction } from "@/modules/crm/actions";
 import { Save, Building, Phone, Mail, MapPin, DollarSign, Notebook, User, HelpCircle, ArrowDown } from "lucide-react";
@@ -49,6 +49,8 @@ const paymentTermsList = ["Net 15", "Net 30", "Net 45", "Net 60", "Due on Receip
 
 export function AccountForm({ initialData, employees }: AccountFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect_to");
   const isEdit = !!initialData;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -206,7 +208,11 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
     if (res.ok) {
       toast.success(isEdit ? "Customer updated successfully" : "Customer created successfully");
-      router.push(isEdit ? `/crm/customers/${initialData.id}` : "/crm/customers");
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else {
+        router.push(isEdit ? `/crm/customers/${initialData.id}` : "/crm/customers");
+      }
     } else {
       toast.error(res.error);
     }

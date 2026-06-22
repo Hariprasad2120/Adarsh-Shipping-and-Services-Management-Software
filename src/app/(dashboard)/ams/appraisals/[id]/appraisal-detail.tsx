@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, CheckCircle2, Circle, ClipboardList, FileText, Info, Star, Users } from "lucide-react";
-import { CriteriaPointsView } from "@/components/ams/criteria-points-form";
+import { Info, Users } from "lucide-react";
+import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
+import { FormPreviewModal } from "@/components/ams/form-preview-modal";
 import { Button } from "@/components/ui/button";
 import type {
   AppraisalSelfFormTemplate,
@@ -23,15 +24,29 @@ type Reviewer = {
   kind: string;
   availabilityStatus: string;
   assignedAt: string;
+  submissionStatus?: string | null;
+  submittedAt?: string | null;
   user: { id: string; name: string };
 };
-type MeetingMinute = { id: string; role: string; content: string; author: { name: string }; createdAt: string };
+type MeetingMinute = { id: string; role: string; content: string; author: { name: string }; createdAt: string; updatedAt?: string };
 type Meeting = { id: string; scheduledAt: string; status: string; minutes: MeetingMinute[] } | null;
-type HikeDecision = { percent: number; amount: number; effectiveFrom: string; notes: string | null } | null;
+type HikeDecision = {
+  percent: number;
+  amount: number;
+  effectiveFrom: string;
+  notes: string | null;
+  suggestedPercent?: number | null;
+  previousSalary?: number | null;
+  finalSalary?: number | null;
+  negotiationRemarks?: string | null;
+} | null;
 
 type ReviewerRatingRow = {
   id: string;
   ratings: ReviewerRatingAnswers;
+  status?: string | null;
+  submittedAt?: string | null;
+  updatedAt?: string | null;
   overallComments?: string | null;
   reviewer: { kind: string; user: { name: string } };
 };
@@ -63,9 +78,14 @@ type ScoreData = {
   reviewerNormalized: number | null;
   managementNormalized: number | null;
   finalNormalized: number | null;
+  flooredScore: number | null;
   grade: string | null;
   gradeLabel: string | null;
   hikePercent: number | null;
+  slabLabel: string | null;
+  slabRange: string | null;
+  previousSalary: number | null;
+  projectedFinalSalary: number | null;
 } | null;
 
 type SlimUser = { id: string; name: string };
@@ -107,7 +127,6 @@ export function AppraisalDetail({
   currentUserId,
   serverNow,
   selfCriteria,
-  selfSupplementary,
   selfTemplate,
   reviewerCriteria,
   scoreData,
@@ -120,13 +139,13 @@ export function AppraisalDetail({
   currentUserId: string;
   serverNow: string;
   selfCriteria: CriterionPoint[];
-  selfSupplementary: CriterionPoint[];
   selfTemplate: AppraisalSelfFormTemplate;
   reviewerCriteria: CriterionPoint[];
   scoreData: ScoreData;
 }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [formPreviewOpen, setFormPreviewOpen] = useState(false);
   const { success, error } = useNotifications();
 
   async function api(path: string, body: object) {
@@ -170,14 +189,50 @@ export function AppraisalDetail({
               <p className="text-xs font-semibold uppercase tracking-wide opacity-70">Current Stage</p>
               <p className="text-lg font-bold mt-0.5">{appraisal.stage.replace(/_/g, " ")}</p>
             </div>
-            <div className="text-right text-sm opacity-70">
-              <p>{appraisal.cycle.name}</p>
-              <p>{appraisal.employee.designation}</p>
+            <div className="flex flex-wrap items-center justify-end gap-3 text-right text-sm opacity-70">
+              <div>
+                <p>{appraisal.cycle.name}</p>
+                <p>{appraisal.employee.designation}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-[#00cec4]/35 bg-surface text-[#008b85] hover:bg-[#00cec4]/8"
+                onClick={() => setFormPreviewOpen(true)}
+              >
+                View Forms
+              </Button>
             </div>
           </div>
         </div>
 
-        <ProgressTimeline appraisal={appraisal} />
+        <CycleProgressCard
+          stage={appraisal.stage}
+          cycleName={appraisal.cycle.name}
+          cycleYear={appraisal.cycle.year}
+          reviewers={appraisal.reviewers.map((reviewer) => ({
+            kind: reviewer.kind,
+            name: reviewer.user.name,
+            availabilityStatus: reviewer.availabilityStatus,
+            submissionStatus: reviewer.submissionStatus,
+          }))}
+          selfAssessment={
+            appraisal.selfAssessment
+              ? {
+                  submittedAt: appraisal.selfAssessment.submittedAt,
+                  editCount: appraisal.selfAssessment.editCount ?? 0,
+                }
+              : null
+          }
+          management={{
+            claimedByName: managementClaim?.user.name ?? null,
+            submitted: appraisal.managementReviews.length > 0,
+          }}
+          meeting={{
+            scheduledAt: appraisal.meeting?.scheduledAt ?? null,
+            hasMinutes: (appraisal.meeting?.minutes.length ?? 0) > 0,
+          }}
+        />
 
         <StageActions
           appraisal={appraisal}
@@ -193,10 +248,6 @@ export function AppraisalDetail({
           onAction={api}
           saving={saving}
           serverNow={serverNow}
-          selfCriteria={selfCriteria}
-          selfSupplementary={selfSupplementary}
-          selfTemplate={selfTemplate}
-          reviewerCriteria={reviewerCriteria}
           scoreData={scoreData}
         />
 
@@ -258,6 +309,32 @@ export function AppraisalDetail({
           saving={saving}
         />
       ) : null}
+
+      <FormPreviewModal
+        open={formPreviewOpen}
+        onClose={() => setFormPreviewOpen(false)}
+        title="Appraisal Forms Popup"
+        appraisee={appraisal.employee}
+        cycle={appraisal.cycle}
+        selfTemplate={selfTemplate}
+        selfCriteria={selfCriteria}
+        reviewerCriteria={reviewerCriteria}
+        selfPreview={appraisal.selfAssessment ? {
+          answers: appraisal.selfAssessment.answers,
+          editCount: appraisal.selfAssessment.editCount,
+          submittedAt: appraisal.selfAssessment.submittedAt,
+          updatedAt: appraisal.selfAssessment.submittedAt,
+        } : null}
+        reviewerPreviews={appraisal.reviewerRatings.map((row) => ({
+          id: row.id,
+          reviewerName: row.reviewer.user.name,
+          reviewerRole: row.reviewer.kind,
+          status: row.status,
+          submittedAt: row.submittedAt,
+          updatedAt: row.updatedAt,
+          answers: row.ratings,
+        }))}
+      />
     </div>
   );
 }
@@ -300,7 +377,7 @@ function UpdateReviewersCard({
   }
 
   return (
-    <div className="card-top-accent rounded-[28px] border border-outline-variant/40 bg-surface p-5 shadow-sm sm:p-6">
+    <div className="card-top-accent ds-shell-lg border border-outline-variant/40 bg-surface p-5 shadow-sm sm:p-6">
       <div className="space-y-5">
         <div className="flex items-center gap-3">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
@@ -463,8 +540,7 @@ function UpdateReviewersCard({
 function StageActions({
   appraisal, hrUsers, tlUsers, managerUsers, caps,
   isEmployee, isReviewer, myReviewer, isClaimant, canClaimManagement,
-  onAction, saving, serverNow, selfCriteria, selfSupplementary,
-  selfTemplate, reviewerCriteria, scoreData,
+  onAction, saving, serverNow, scoreData,
 }: {
   appraisal: Appraisal;
   hrUsers: SlimUser[]; tlUsers: SlimUser[]; managerUsers: SlimUser[];
@@ -477,10 +553,6 @@ function StageActions({
   onAction: (path: string, body: object) => Promise<boolean>;
   saving: boolean;
   serverNow: string;
-  selfCriteria: CriterionPoint[];
-  selfSupplementary: CriterionPoint[];
-  selfTemplate: AppraisalSelfFormTemplate;
-  reviewerCriteria: CriterionPoint[];
   scoreData: ScoreData;
 }) {
   const existingHR = appraisal.reviewers.find((reviewer) => reviewer.kind === "HR")?.userId ?? "";
@@ -493,8 +565,9 @@ function StageActions({
   const [includeManager, setIncludeManager] = useState(Boolean(existingManager));
   const [meetingDate, setMeetingDate] = useState("");
   const [hikePercent, setHikePercent] = useState(scoreData?.hikePercent != null ? String(scoreData.hikePercent) : "");
-  const [hikeAmount, setHikeAmount] = useState("");
   const [hikeEffective, setHikeEffective] = useState("");
+  const [negotiationRemarks, setNegotiationRemarks] = useState("");
+  const proposedMeetingDates = appraisal.managementReviews.flatMap((review) => review.proposedDates);
 
   const { stage } = appraisal;
   const managementClaim = appraisal.reviewers.find((r) => r.kind === "MANAGEMENT");
@@ -744,24 +817,12 @@ function StageActions({
         </Card>
       )}
 
-      {/* Reviewer ratings read view (admin / management / employee can see) */}
-      {(stage === "MANAGEMENT_REVIEW" || stage === "MEETING_PENDING" || stage === "MEETING_LIVE" || stage === "HIKE_FINALISATION" || stage === "CLOSED") &&
-        appraisal.reviewerRatings.length > 0 && (
-        <Card title="Reviewer Ratings">
-          <div className="space-y-6">
-            {appraisal.reviewerRatings.map((rr) => (
-              <div key={rr.id} className="space-y-2">
-                <p className="text-xs font-semibold text-on-surface-variant">
-                  {rr.reviewer?.user?.name} ({rr.reviewer?.kind})
-                </p>
-                <CriteriaPointsView
-                  criteria={reviewerCriteria}
-                  supplementary={[]}
-                  answers={rr.ratings}
-                />
-              </div>
-            ))}
-          </div>
+      {(stage === "MANAGEMENT_REVIEW" || stage === "MEETING_PENDING" || stage === "MEETING_LIVE" || stage === "HIKE_FINALISATION" || stage === "CLOSED") && (
+        <Card title="Forms Access">
+          <p className="text-sm text-on-surface-variant">
+            The self-assessment and reviewer forms are available in the popup window.
+            Use <strong>View Forms</strong> to open them.
+          </p>
         </Card>
       )}
 
@@ -805,22 +866,45 @@ function StageActions({
       {/* Confirm meeting */}
       {stage === "MEETING_PENDING" && caps["ams.meeting.confirm"] && !appraisal.meeting && (
         <Card title="Confirm Meeting Date">
-          <div className="flex gap-3 items-end">
-            <div className="flex-1">
-              <label className="text-xs text-on-surface-variant">Meeting Date & Time</label>
-              <Input type="datetime-local" value={meetingDate} onChange={(e) => setMeetingDate(e.target.value)}
-                className="mt-1 w-full" />
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs text-on-surface-variant">Final Meeting Date & Time</label>
+              {proposedMeetingDates.length > 0 ? (
+                <div className="mt-2 grid gap-2">
+                  {proposedMeetingDates.map((value, index) => {
+                    const isoValue = new Date(value).toISOString().slice(0, 16);
+                    const active = meetingDate === isoValue;
+                    return (
+                      <button
+                        key={`${value}:${index}`}
+                        type="button"
+                        onClick={() => setMeetingDate(isoValue)}
+                        className={`rounded-xl border px-4 py-3 text-left text-sm transition ${
+                          active
+                            ? "border-[#00cec4]/40 bg-[#00cec4]/8 text-on-surface"
+                            : "border-outline-variant/35 bg-surface text-on-surface-variant hover:border-[#00cec4]/25"
+                        }`}
+                      >
+                        {new Date(value).toLocaleString("en-IN")}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <Input type="datetime-local" value={meetingDate} onChange={(e) => setMeetingDate(e.target.value)}
+                  className="mt-1 w-full" />
+              )}
             </div>
-            <button onClick={() => onAction("meeting", { action: "confirm", scheduledAt: meetingDate })}
+            <Button onClick={() => onAction("meeting", { action: "confirm", scheduledAt: meetingDate })}
               disabled={saving || !meetingDate}
-              className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg disabled:opacity-50">
-              Confirm
-            </button>
+              className="bg-[#00cec4] text-white hover:bg-[#00b8af]">
+              Finalize Meeting Date
+            </Button>
           </div>
-          {appraisal.managementReviews.length > 0 && (
+          {proposedMeetingDates.length > 0 && (
             <div className="mt-3">
               <p className="text-xs text-on-surface-variant">Proposed dates from management:</p>
-              {appraisal.managementReviews.flatMap((mr) => mr.proposedDates).map((d, i) => (
+              {proposedMeetingDates.map((d, i) => (
                 <p key={i} className="text-sm text-on-surface">{new Date(d).toLocaleString("en-IN")}</p>
               ))}
             </div>
@@ -831,10 +915,10 @@ function StageActions({
       {stage === "MEETING_PENDING" && caps["ams.meeting.confirm"] && appraisal.meeting?.status === "SCHEDULED" && (
         <Card title="Meeting Scheduled">
           <p className="text-sm text-on-surface-variant">{new Date(appraisal.meeting.scheduledAt).toLocaleString("en-IN")}</p>
-          <button onClick={() => onAction("meeting", { action: "start" })} disabled={saving}
-            className="mt-3 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
-            Start Meeting
-          </button>
+          <Button onClick={() => onAction("meeting", { action: "start" })} disabled={saving}
+            className="mt-3 bg-[#00cec4] text-white hover:bg-[#00b8af]">
+            Open MOM Window
+          </Button>
         </Card>
       )}
 
@@ -847,7 +931,7 @@ function StageActions({
 
       {/* Finalise hike */}
       {stage === "HIKE_FINALISATION" && caps["ams.hike.finalise"] && !appraisal.hikeDecision && (
-        <Card title="Finalise Hike">
+        <Card title="Negotiation / Finalize Hike">
           {scoreData && (
             <div className="rounded-lg bg-indigo-50 border border-indigo-100 px-4 py-3 text-sm mb-4 space-y-1">
               <p className="font-semibold text-indigo-800">Computed Score</p>
@@ -856,20 +940,19 @@ function StageActions({
                 {scoreData.reviewerNormalized !== null && <p>Reviewers (70%): {scoreData.reviewerNormalized.toFixed(1)}</p>}
                 {scoreData.managementNormalized !== null && <p>Management (10%): {scoreData.managementNormalized.toFixed(1)}</p>}
                 {scoreData.finalNormalized !== null && <p className="font-semibold">Final: {scoreData.finalNormalized.toFixed(1)}</p>}
+                {scoreData.flooredScore !== null && <p>Floored score: <strong>{scoreData.flooredScore}</strong></p>}
                 {scoreData.grade && <p>Grade: <strong>{scoreData.grade}</strong>{scoreData.gradeLabel ? ` — ${scoreData.gradeLabel}` : ""}</p>}
+                {scoreData.slabLabel && <p>Increment slab: <strong>{scoreData.slabLabel}</strong>{scoreData.slabRange ? ` (${scoreData.slabRange})` : ""}</p>}
                 {scoreData.hikePercent !== null && <p>Suggested hike: <strong>{scoreData.hikePercent}%</strong></p>}
+                {scoreData.previousSalary !== null && <p>Previous salary: <strong>₹{Number(scoreData.previousSalary).toLocaleString("en-IN")}</strong></p>}
+                {scoreData.projectedFinalSalary !== null && <p>Suggested final salary: <strong>₹{Number(scoreData.projectedFinalSalary).toLocaleString("en-IN")}</strong></p>}
               </div>
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-on-surface-variant">Hike %</label>
+              <label className="text-xs text-on-surface-variant">Final Hike %</label>
               <Input type="number" value={hikePercent} onChange={(e) => setHikePercent(e.target.value)}
-                className="mt-1 w-full" />
-            </div>
-            <div>
-              <label className="text-xs text-on-surface-variant">Amount (₹)</label>
-              <Input type="number" value={hikeAmount} onChange={(e) => setHikeAmount(e.target.value)}
                 className="mt-1 w-full" />
             </div>
             <div className="col-span-2">
@@ -877,13 +960,23 @@ function StageActions({
               <Input type="date" value={hikeEffective} onChange={(e) => setHikeEffective(e.target.value)}
                 className="mt-1 w-full" />
             </div>
+            <div className="col-span-2">
+              <label className="text-xs text-on-surface-variant">Negotiation Remarks</label>
+              <textarea
+                value={negotiationRemarks}
+                onChange={(e) => setNegotiationRemarks(e.target.value)}
+                rows={3}
+                className="mt-1 w-full rounded-xl border border-outline-variant/35 bg-surface px-3 py-2 text-sm text-on-surface"
+                placeholder="Explain whether you accepted the suggested hike or negotiated a different final number."
+              />
+            </div>
           </div>
-          <button
-            onClick={() => onAction("hike", { percent: Number(hikePercent), amount: Number(hikeAmount), effectiveFrom: hikeEffective })}
-            disabled={saving || !hikePercent || !hikeAmount || !hikeEffective}
-            className="mt-3 px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg disabled:opacity-50">
-            Finalise Hike
-          </button>
+          <Button
+            onClick={() => onAction("hike", { percent: Number(hikePercent), effectiveFrom: hikeEffective, notes: negotiationRemarks })}
+            disabled={saving || !hikePercent || !hikeEffective || scoreData?.hikePercent === null}
+            className="mt-3 bg-[#00cec4] text-white hover:bg-[#00b8af]">
+            Finalize Salary
+          </Button>
         </Card>
       )}
     </div>
@@ -903,131 +996,6 @@ function DeadlineBanner({ deadline, serverNow, label }: { deadline: string; serv
 }
 
 // ─── Reviewers Panel ──────────────────────────────────────────────────────────
-
-const TIMELINE_STAGES = [
-  "DUE_NOTIFIED",
-  "REVIEWERS_ASSIGNED",
-  "SELF_ASSESSMENT_OPEN",
-  "REVIEWER_RATING",
-  "MANAGEMENT_REVIEW",
-  "MEETING_PENDING",
-  "MEETING_LIVE",
-  "HIKE_FINALISATION",
-  "CLOSED",
-] as const;
-
-function ProgressTimeline({ appraisal }: { appraisal: Appraisal }) {
-  const activeIndex = TIMELINE_STAGES.indexOf(appraisal.stage as (typeof TIMELINE_STAGES)[number]);
-  const nonManagementReviewers = appraisal.reviewers.filter((reviewer) => reviewer.kind !== "MANAGEMENT");
-  const availableCount = nonManagementReviewers.filter(
-    (reviewer) => reviewer.availabilityStatus === "AVAILABLE" || reviewer.availabilityStatus === "FORCED",
-  ).length;
-  const submittedRatings = appraisal.reviewerRatings.length;
-  const totalRatings = nonManagementReviewers.length;
-  const timelineItems = [
-    {
-      key: "REVIEWERS_ASSIGNED",
-      title: "Reviewers Assigned",
-      description:
-        nonManagementReviewers.length > 0
-          ? nonManagementReviewers
-              .map((r) => `${KIND_LABEL[r.kind] ?? r.kind}: ${r.user.name}`)
-              .join(" · ")
-          : "Reviewer chain is waiting to be assigned",
-      icon: CheckCircle2,
-    },
-    {
-      key: "SELF_ASSESSMENT_OPEN",
-      title: "Reviewer Availability Confirmed",
-      description:
-        nonManagementReviewers.length === 0
-          ? "No reviewer confirmations yet"
-          : availableCount === nonManagementReviewers.length
-            ? "All reviewers confirmed available"
-            : `${availableCount} / ${nonManagementReviewers.length} reviewers confirmed`,
-      icon: CheckCircle2,
-    },
-    {
-      key: "REVIEWER_RATING",
-      title: "Self-Assessment",
-      description: appraisal.selfAssessment?.submittedAt
-        ? `Submitted ${new Date(appraisal.selfAssessment.submittedAt).toLocaleDateString("en-IN")}`
-        : "Awaiting employee submission",
-      icon: FileText,
-    },
-    {
-      key: "MANAGEMENT_REVIEW",
-      title: "Reviewer Ratings",
-      description: `${submittedRatings} / ${Math.max(totalRatings, 1)} submitted`,
-      icon: Star,
-    },
-    {
-      key: "MEETING_PENDING",
-      title: "Management Decision",
-      description:
-        appraisal.managementReviews.length > 0 ? "Management review submitted" : "Pending management review",
-      icon: Circle,
-    },
-    {
-      key: "MEETING_LIVE",
-      title: "Meeting Scheduled",
-      description:
-        appraisal.meeting?.scheduledAt
-          ? `Scheduled ${new Date(appraisal.meeting.scheduledAt).toLocaleDateString("en-IN")}`
-          : "Tentative dates not yet proposed",
-      icon: CalendarDays,
-    },
-    {
-      key: "HIKE_FINALISATION",
-      title: "MOM Recorded",
-      description: appraisal.meeting?.minutes.length ? "Minutes captured for the discussion" : "Awaiting meeting",
-      icon: ClipboardList,
-    },
-  ] as const;
-
-  return (
-    <Card title="Cycle Progress">
-      <div className="space-y-0">
-        {timelineItems.map((item, index) => {
-          const stageIndex = TIMELINE_STAGES.indexOf(item.key);
-          const isDone = activeIndex > stageIndex;
-          const isCurrent = activeIndex === stageIndex;
-          const Icon = item.icon;
-
-          return (
-            <div
-              key={item.key}
-              className="relative flex gap-4 pb-6 last:pb-0"
-            >
-              <div className="relative flex w-8 shrink-0 justify-center">
-                {index < timelineItems.length - 1 ? (
-                  <span className="absolute top-9 h-[calc(100%-0.25rem)] w-px bg-outline-variant" />
-                ) : null}
-                <span
-                  className={`relative inline-flex h-8 w-8 items-center justify-center rounded-full border-2 ${
-                    isDone || isCurrent
-                      ? "border-emerald-500 text-emerald-500"
-                      : "border-slate-300 text-slate-300"
-                  }`}
-                >
-                  <Icon className="size-5" />
-                </span>
-              </div>
-              <div className="min-w-0 pt-0.5">
-                <p className={`text-[0.95rem] font-semibold ${isDone || isCurrent ? "text-slate-900" : "text-slate-400"}`}>
-                  {item.title}
-                </p>
-                <p className={`mt-1 text-sm ${isDone || isCurrent ? "text-on-surface-variant" : "text-slate-400"}`}>
-                  {item.description}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </Card>
-  );
-}
 
 function ReviewersPanel({
   reviewers, availabilityDeadline, selfAssessmentDeadline, reviewerRatingDeadline, stage, serverNow,
@@ -1096,7 +1064,8 @@ function MeetingSection({ meeting, onAddMinute, caps, saving }: {
   caps: Record<string, boolean>;
   saving: boolean;
 }) {
-  const [minuteRole, setMinuteRole] = useState<"HR" | "MANAGEMENT" | "EMPLOYEE">("HR");
+  const availableRoles = (["HR", "MANAGEMENT", "EMPLOYEE", ...(caps["ams.appraisal.view_all"] ? ["ADMIN"] : [])] as const);
+  const [minuteRole, setMinuteRole] = useState<(typeof availableRoles)[number]>(availableRoles[0]);
   const [minuteContent, setMinuteContent] = useState("");
 
   return (
@@ -1116,7 +1085,7 @@ function MeetingSection({ meeting, onAddMinute, caps, saving }: {
       {caps["ams.meeting.minutes"] && meeting.status !== "DONE" && (
         <div className="space-y-2 pt-3 border-t border-outline-variant/40">
           <div className="flex gap-2">
-            {(["HR", "MANAGEMENT", "EMPLOYEE"] as const).map((r) => (
+            {availableRoles.map((r) => (
               <button key={r} type="button" onClick={() => setMinuteRole(r)}
                 className={`text-xs px-2 py-1 rounded ${minuteRole === r ? "bg-indigo-600 text-white" : "bg-surface-container-high text-on-surface"}`}>
                 {r}

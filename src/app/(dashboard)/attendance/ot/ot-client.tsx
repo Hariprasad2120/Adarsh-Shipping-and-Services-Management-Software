@@ -936,7 +936,7 @@ export function OtClient({
                 <Card
                   key={item.label}
                   className={cn(
-                    "group relative overflow-hidden rounded-[26px] border bg-surface p-0 shadow-[0_18px_38px_-28px_rgba(15,23,42,0.3)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-28px_rgba(0,206,196,0.32)]",
+                    "ds-shell-lg group relative overflow-hidden border bg-surface p-0 shadow-[0_18px_38px_-28px_rgba(15,23,42,0.3)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-28px_rgba(0,206,196,0.32)]",
                     item.cardClassName
                   )}
                 >
@@ -982,7 +982,7 @@ export function OtClient({
 
           {/* Quick trigger panel */}
           <div className="grid gap-6 lg:grid-cols-3">
-            <Card className="card-top-accent rounded-[28px] border border-outline-variant/40 bg-surface shadow-sm lg:col-span-2">
+            <Card className="card-top-accent ds-shell-lg border border-outline-variant/40 bg-surface shadow-sm lg:col-span-2">
               <CardHeader className="border-b border-outline-variant/30 pb-3">
                 <CardTitle className="ds-h3 text-primary">
                   Recalculate Batch Engine
@@ -1020,7 +1020,7 @@ export function OtClient({
               </CardContent>
             </Card>
 
-            <Card className="card-top-accent rounded-[28px] border border-outline-variant/40 bg-surface shadow-sm">
+            <Card className="card-top-accent ds-shell-lg border border-outline-variant/40 bg-surface shadow-sm">
               <CardHeader className="border-b border-outline-variant/30 pb-3">
                 <CardTitle className="ds-h3 text-primary">
                   Payroll Export Status

@@ -54,7 +54,6 @@ export function ActionList({ profile, sessionUser, data }: ActionListProps) {
       value: String(data.announcements.length).padStart(2, "0"),
       note: featuredAnnouncement ? featuredAnnouncement.title : "No new broadcast",
       icon: Megaphone,
-      accent: "from-[#f0f9f6] to-[#ffffff]",
       iconColor: "text-[#0f8f85]",
     },
     {
@@ -62,7 +61,6 @@ export function ActionList({ profile, sessionUser, data }: ActionListProps) {
       value: String(data.recentTasks.length).padStart(2, "0"),
       note: nextTask ? nextTask.title : "Inbox is clear",
       icon: CheckSquare,
-      accent: "from-[#fff7ec] to-[#ffffff]",
       iconColor: "text-[#d97706]",
     },
     {
@@ -70,7 +68,6 @@ export function ActionList({ profile, sessionUser, data }: ActionListProps) {
       value: String(data.upcomingHolidays.length).padStart(2, "0"),
       note: nextHoliday ? nextHoliday.name : "Nothing scheduled",
       icon: Landmark,
-      accent: "from-[#eef4ff] to-[#ffffff]",
       iconColor: "text-[#4966d5]",
     },
   ];
@@ -84,15 +81,15 @@ export function ActionList({ profile, sessionUser, data }: ActionListProps) {
           return (
             <div
               key={card.label}
-              className={`rounded-[1.75rem] border border-[#d7e1de] bg-gradient-to-br ${card.accent} p-5 shadow-[0_12px_28px_rgba(15,23,42,0.05)]`}
+              className="rounded-[1.75rem] border border-outline-variant bg-surface p-5 shadow-sm"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">{card.label}</p>
-                  <p className="mt-4 font-display text-5xl leading-none tracking-[-0.05em] text-slate-900">{card.value}</p>
-                  <p className="mt-3 text-sm leading-relaxed text-slate-600">{card.note}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-on-surface-variant">{card.label}</p>
+                  <p className="mt-4 font-display text-5xl leading-none tracking-[-0.05em] text-on-surface">{card.value}</p>
+                  <p className="mt-3 text-sm leading-relaxed text-on-surface-variant">{card.note}</p>
                 </div>
-                <div className={`flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white ${card.iconColor}`}>
+                <div className={`flex size-12 shrink-0 items-center justify-center rounded-2xl bg-surface-container-low ${card.iconColor}`}>
                   <Icon className="size-5" />
                 </div>
               </div>
@@ -103,38 +100,38 @@ export function ActionList({ profile, sessionUser, data }: ActionListProps) {
 
       <div className="grid gap-6 xl:grid-cols-[1.35fr_0.95fr]">
         <div className="space-y-6">
-          <section className="overflow-hidden rounded-[2rem] border border-[#d8e0dd] bg-white shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
-            <div className="border-b border-[#e6ecea] bg-[linear-gradient(135deg,#f5efe2_0%,#f7fbf8_100%)] px-6 py-5">
+          <section className="overflow-hidden rounded-[2rem] border border-outline-variant bg-surface shadow-sm">
+            <div className="border-b border-outline-variant bg-surface-container-low px-6 py-5">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
                   <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#0f8f85]">
                     <Sparkles className="size-4" />
                     My feed
                   </div>
-                  <h3 className="mt-3 font-display text-3xl tracking-[-0.04em] text-slate-900">A sharper start to the day</h3>
-                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+                  <h3 className="mt-3 font-display text-3xl tracking-[-0.04em] text-on-surface">A sharper start to the day</h3>
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-on-surface-variant">
                     Welcome back, {profile?.name || sessionUser.name}. Your dashboard now surfaces the three things that matter first:
                     current attendance context, the next task in motion, and the latest company signal.
                   </p>
                 </div>
-                <div className="rounded-[1.35rem] border border-white/70 bg-white/80 px-4 py-3 text-sm text-slate-600 shadow-sm">
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Signed in as</p>
-                  <p className="mt-2 font-semibold text-slate-900">{sessionUser.email}</p>
+                <div className="rounded-[1.35rem] border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant shadow-sm">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">Signed in as</p>
+                  <p className="mt-2 font-semibold text-on-surface">{sessionUser.email}</p>
                 </div>
               </div>
             </div>
 
             <div className="grid gap-4 p-5 md:grid-cols-2">
-              <article className="rounded-[1.6rem] border border-[#dce4e1] bg-[#fcfffe] p-5">
+              <article className="rounded-[1.6rem] border border-outline-variant bg-surface p-5">
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#0f8f85]">
                   <BellRing className="size-4" />
                   Latest announcement
                 </div>
                 {featuredAnnouncement ? (
                   <>
-                    <h4 className="mt-4 text-lg font-semibold text-slate-900">{featuredAnnouncement.title}</h4>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{featuredAnnouncement.body}</p>
-                    <p className="mt-4 text-xs text-slate-400">
+                    <h4 className="mt-4 text-lg font-semibold text-on-surface">{featuredAnnouncement.title}</h4>
+                    <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">{featuredAnnouncement.body}</p>
+                    <p className="mt-4 text-xs text-on-surface-variant">
                       Posted {new Date(featuredAnnouncement.createdAt).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
@@ -143,21 +140,21 @@ export function ActionList({ profile, sessionUser, data }: ActionListProps) {
                     </p>
                   </>
                 ) : (
-                  <p className="mt-4 text-sm leading-relaxed text-slate-500">
+                  <p className="mt-4 text-sm leading-relaxed text-on-surface-variant">
                     No new company announcements are waiting for you right now.
                   </p>
                 )}
               </article>
 
-              <article className="rounded-[1.6rem] border border-[#dce4e1] bg-[#fffdf8] p-5">
+              <article className="rounded-[1.6rem] border border-outline-variant bg-surface p-5">
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#d97706]">
                   <FileClock className="size-4" />
                   Priority focus
                 </div>
                 {nextTask ? (
                   <>
-                    <h4 className="mt-4 text-lg font-semibold text-slate-900">{nextTask.title}</h4>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    <h4 className="mt-4 text-lg font-semibold text-on-surface">{nextTask.title}</h4>
+                    <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">
                       Due {new Date(nextTask.dueDate).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
@@ -169,7 +166,7 @@ export function ActionList({ profile, sessionUser, data }: ActionListProps) {
                     </div>
                   </>
                 ) : (
-                  <p className="mt-4 text-sm leading-relaxed text-slate-500">
+                  <p className="mt-4 text-sm leading-relaxed text-on-surface-variant">
                     You are fully caught up. This is a good moment to clear approvals or plan ahead.
                   </p>
                 )}
@@ -177,31 +174,31 @@ export function ActionList({ profile, sessionUser, data }: ActionListProps) {
             </div>
           </section>
 
-          <section className="rounded-[2rem] border border-[#d8e0dd] bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
+          <section className="rounded-[2rem] border border-outline-variant bg-surface p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3 border-b border-[#e7ece9] pb-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Open work</p>
-                <h3 className="mt-1 text-lg font-semibold text-slate-900">Task pipeline</h3>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant">Open work</p>
+                <h3 className="mt-1 text-lg font-semibold text-on-surface">Task pipeline</h3>
               </div>
-              <div className="rounded-full border border-[#d8e0dd] bg-[#f8fbfa] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+              <div className="rounded-full border border-outline-variant bg-surface-container-low px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-on-surface-variant">
                 {data.recentTasks.length} active
               </div>
             </div>
 
             <div className="mt-4 space-y-3">
               {data.recentTasks.length === 0 ? (
-                <div className="rounded-[1.5rem] border border-dashed border-[#d8e0dd] bg-[#fafcfb] px-4 py-8 text-center text-sm text-slate-500">
+                <div className="rounded-[1.5rem] border border-dashed border-outline-variant bg-surface-container-low px-4 py-8 text-center text-sm text-on-surface-variant">
                   No pending tasks. The board is clear.
                 </div>
               ) : (
                 data.recentTasks.map((task) => (
                   <div
                     key={task.id}
-                    className="flex flex-col gap-3 rounded-[1.4rem] border border-[#e4ebe8] bg-[#fbfcfb] px-4 py-4 md:flex-row md:items-center md:justify-between"
+                    className="flex flex-col gap-3 rounded-[1.4rem] border border-outline-variant bg-surface-container-low px-4 py-4 md:flex-row md:items-center md:justify-between"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-900">{task.title}</p>
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="text-sm font-semibold text-on-surface">{task.title}</p>
+                      <p className="mt-1 text-sm text-on-surface-variant">
                         Due {new Date(task.dueDate).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
@@ -223,7 +220,7 @@ export function ActionList({ profile, sessionUser, data }: ActionListProps) {
                       </span>
                       <button
                         type="button"
-                        className="inline-flex items-center gap-1 rounded-full border border-[#d8e0dd] bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:text-slate-900"
+                        className="inline-flex items-center gap-1 rounded-full border border-outline-variant bg-surface px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant transition hover:text-on-surface"
                       >
                         Review
                         <ArrowUpRight className="size-3.5" />
@@ -237,7 +234,7 @@ export function ActionList({ profile, sessionUser, data }: ActionListProps) {
         </div>
 
         <div className="space-y-6">
-          <section className="rounded-[2rem] border border-[#d8e0dd] bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
+          <section className="rounded-[2rem] border border-outline-variant bg-surface p-5 shadow-sm">
             <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#4966d5]">
               <Calendar className="size-4" />
               Weekly work schedule
@@ -256,13 +253,13 @@ export function ActionList({ profile, sessionUser, data }: ActionListProps) {
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-2xl bg-[#f6f8f7] text-slate-700">
+                      <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-2xl bg-surface-container-low text-on-surface">
                         <span className="text-xs font-bold">{item.day}</span>
-                        <span className="text-[10px] text-slate-400">{item.dateLabel}</span>
+                        <span className="text-[10px] text-on-surface-variant">{item.dateLabel}</span>
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-900">{item.type}</p>
-                        <p className="mt-0.5 text-sm text-slate-500">{item.hours}</p>
+                        <p className="text-sm font-semibold text-on-surface">{item.type}</p>
+                        <p className="mt-0.5 text-sm text-on-surface-variant">{item.hours}</p>
                       </div>
                     </div>
                     {item.isToday && (
@@ -276,34 +273,34 @@ export function ActionList({ profile, sessionUser, data }: ActionListProps) {
             </div>
           </section>
 
-          <section className="rounded-[2rem] border border-[#d8e0dd] bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
+          <section className="rounded-[2rem] border border-outline-variant bg-surface p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3 border-b border-[#e7ece9] pb-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Calendar watch</p>
-                <h3 className="mt-1 text-lg font-semibold text-slate-900">Upcoming holidays</h3>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant">Calendar watch</p>
+                <h3 className="mt-1 text-lg font-semibold text-on-surface">Upcoming holidays</h3>
               </div>
-              <span className="rounded-full border border-[#d8e0dd] bg-[#f8fbfa] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+              <span className="rounded-full border border-outline-variant bg-surface-container-low px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-on-surface-variant">
                 {data.upcomingHolidays.length} listed
               </span>
             </div>
 
             <div className="mt-4 space-y-3">
               {data.upcomingHolidays.length === 0 ? (
-                <div className="rounded-[1.5rem] border border-dashed border-[#d8e0dd] bg-[#fafcfb] px-4 py-8 text-center text-sm text-slate-500">
+                <div className="rounded-[1.5rem] border border-dashed border-outline-variant bg-surface-container-low px-4 py-8 text-center text-sm text-on-surface-variant">
                   No upcoming holidays on the books yet.
                 </div>
               ) : (
                 data.upcomingHolidays.map((holiday) => (
-                  <div key={holiday.id} className="flex items-center justify-between gap-3 rounded-[1.35rem] border border-[#e4ebe8] bg-[#fbfcfb] px-4 py-4">
+                  <div key={holiday.id} className="flex items-center justify-between gap-3 rounded-[1.35rem] border border-outline-variant bg-surface-container-low px-4 py-4">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">{holiday.name}</p>
-                      <p className="mt-1 text-sm text-slate-500">{holiday.holidayType}</p>
+                      <p className="text-sm font-semibold text-on-surface">{holiday.name}</p>
+                      <p className="mt-1 text-sm text-on-surface-variant">{holiday.holidayType}</p>
                     </div>
-                    <div className="rounded-2xl bg-[#f3f6ff] px-3 py-2 text-right">
+                    <div className="rounded-2xl bg-surface-container-low px-3 py-2 text-right">
                       <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#4966d5]">
                         {new Date(holiday.date).toLocaleDateString("en-US", { month: "short" })}
                       </p>
-                      <p className="text-lg font-semibold text-slate-900">
+                      <p className="text-lg font-semibold text-on-surface">
                         {new Date(holiday.date).toLocaleDateString("en-US", { day: "2-digit" })}
                       </p>
                     </div>

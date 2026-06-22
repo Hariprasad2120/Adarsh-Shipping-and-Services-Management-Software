@@ -57,65 +57,68 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
   const contacts = await listContacts(orgId, { search });
 
   return (
-    <div className="p-8 space-y-6 max-w-[1600px] mx-auto">
-      {/* Filters Bar */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-[#0f1319] p-4 rounded-xl border border-[#1c212a]/50">
-        <form method="GET" className="flex flex-1 flex-col sm:flex-row gap-3 w-full">
-          {/* Search Input */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 size-4 text-slate-500" />
-            <input
-              type="text"
-              name="search"
-              defaultValue={search}
-              placeholder="Search contacts by name, email, department..."
-              className="w-full pl-9 pr-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#00c4b6] text-white"
-            />
-          </div>
+    <div className="space-y-6 max-w-[1600px] mx-auto">
 
-          <button
-            type="submit"
-            className="px-4 py-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-200 rounded-lg text-xs font-semibold cursor-pointer"
-          >
-            Search
-          </button>
-          
-          {search && (
-            <Link
-              href="/crm/contacts"
-              className="px-3 py-1.5 text-slate-400 hover:text-white text-xs font-semibold flex items-center justify-center"
-            >
-              Reset
-            </Link>
-          )}
-        </form>
-        
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="text-xs text-slate-400 font-bold">
-            Showing {contacts.length} contacts
-          </div>
-          <Link
-            href="/crm/contacts/new"
-            className="flex items-center gap-2 bg-[#00c4b6] hover:bg-[#00b0a3] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md shadow-[#00c4b6]/10 cursor-pointer"
-          >
-            <Plus className="size-3.5" />
-            <span>Create Contact</span>
-          </Link>
-        </div>
-      </div>
+      {/* Unified Table Shell — toolbar + table in one rounded container */}
+      <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
 
-      {/* Contacts Data Table */}
-      <div className="bg-[#0f1319] border border-[#1c212a]/50 rounded-xl overflow-hidden shadow-2xl">
-        {contacts.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 space-y-4">
-            <div className="size-12 rounded-full bg-slate-800/40 text-slate-600 flex items-center justify-center mx-auto">
-              <Users className="size-6" />
+        {/* Toolbar */}
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 border-b border-outline-variant">
+          <form method="GET" className="flex flex-1 flex-col sm:flex-row gap-3 w-full">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-2.5 size-4 text-on-surface-variant" />
+              <input
+                type="text"
+                name="search"
+                defaultValue={search}
+                placeholder="Search contacts by name, email, department..."
+                className="w-full pl-9 pr-3 py-1.5 bg-surface-container-low rounded-lg text-sm text-on-surface placeholder:text-placeholder focus:outline-none"
+              />
             </div>
-            <h3 className="font-bold text-base text-white">No active contacts found</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">Create a fresh contact details record linked to an existing customer account.</p>
+
+            <button
+              type="submit"
+              className="px-4 py-1.5 bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+            >
+              Search
+            </button>
+            
+            {search && (
+              <Link
+                href="/crm/contacts"
+                className="px-3 py-1.5 text-on-surface-variant hover:text-on-surface text-xs font-semibold flex items-center justify-center"
+              >
+                Reset
+              </Link>
+            )}
+          </form>
+          
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="text-xs text-on-surface-variant font-bold">
+              Showing {contacts.length} contacts
+            </div>
             <Link
               href="/crm/contacts/new"
-              className="inline-flex items-center gap-1.5 text-[#00c4b6] hover:underline text-xs font-bold"
+              className="flex items-center gap-2 bg-[#00cec4] hover:bg-[#00b8af] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+            >
+              <Plus className="size-3.5" />
+              <span>Create Contact</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Table Content */}
+        {contacts.length === 0 ? (
+          <div className="p-12 text-center space-y-4">
+            <div className="size-12 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center mx-auto">
+              <Users className="size-6" />
+            </div>
+            <h3 className="font-bold text-base text-on-surface">No active contacts found</h3>
+            <p className="text-xs text-on-surface-variant max-w-sm mx-auto">Create a fresh contact details record linked to an existing customer account.</p>
+            <Link
+              href="/crm/contacts/new"
+              className="inline-flex items-center gap-1.5 text-[#00cec4] hover:underline text-xs font-bold"
             >
               <span>Onboard a contact</span>
               <ArrowRight className="size-3.5" />
@@ -123,81 +126,81 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm text-slate-200">
+            <table className="ds-table">
               <thead>
-                <tr className="border-b border-[#1c212a]/80 bg-[#0c0f14]/80 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  <th className="px-6 py-4">Contact Name</th>
-                  <th className="px-6 py-4">Account (Company)</th>
-                  <th className="px-6 py-4">Email</th>
-                  <th className="px-6 py-4">Phone</th>
-                  <th className="px-6 py-4">Liaison Flag</th>
-                  <th className="px-6 py-4">Owner</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                <tr>
+                  <th className="px-6 py-3">Contact Name</th>
+                  <th className="px-6 py-3">Account (Company)</th>
+                  <th className="px-6 py-3">Email</th>
+                  <th className="px-6 py-3">Phone</th>
+                  <th className="px-6 py-3">Liaison Flag</th>
+                  <th className="px-6 py-3">Owner</th>
+                  <th className="px-6 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1c212a]/30">
+              <tbody>
                 {contacts.map((contact) => (
-                  <tr key={contact.id} className="hover:bg-[#161f28]/35 transition-colors">
-                    <td className="px-6 py-4 font-bold text-white">
-                      <Link href={`/crm/contacts/${contact.id}`} className="hover:text-[#00c4b6] transition-all block">
+                  <tr key={contact.id} className="ds-row-link">
+                    <td className="px-6 py-4 font-medium">
+                      <Link href={`/crm/contacts/${contact.id}`} className="hover:text-[#00cec4] transition-colors block">
                         {contact.firstName ? `${contact.firstName} ` : ""}{contact.lastName}
                       </Link>
                       {contact.designation && (
-                        <span className="text-[11px] text-slate-400 block font-normal">{contact.designation}</span>
+                        <span className="ds-label block mt-0.5 font-normal">{contact.designation}</span>
                       )}
                     </td>
                     <td className="px-6 py-4 p-0">
                       {contact.account ? (
                         <Link
                           href={`/crm/customers/${contact.account.id}`}
-                          className="flex items-center gap-1.5 text-slate-300 hover:text-[#00c4b6] transition-all px-6 py-4 block w-full h-full"
+                          className="flex items-center gap-1.5 text-on-surface-variant hover:text-[#00cec4] transition-colors px-6 py-4 block w-full h-full"
                         >
-                          <Building className="size-3.5 text-slate-500" />
+                          <Building className="size-3.5" />
                           <span>{contact.account.name}</span>
                         </Link>
                       ) : (
                         <div className="px-6 py-4">
-                          <span className="text-slate-500 italic">No account linked</span>
+                          <span className="text-on-surface-variant italic">No account linked</span>
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-slate-300">
+                    <td className="px-6 py-4">
                       {contact.email ? (
-                        <div className="flex items-center gap-1.5 text-xs">
-                          <Mail className="size-3.5 text-slate-500" />
+                        <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
+                          <Mail className="size-3.5" />
                           <span>{contact.email}</span>
                         </div>
                       ) : (
-                        <span className="text-slate-500 italic">No email</span>
+                        <span className="text-on-surface-variant italic">No email</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {contact.phone || contact.mobile ? (
-                        <div className="flex items-center gap-1.5 text-xs text-slate-300">
-                          <Phone className="size-3.5 text-slate-500" />
+                        <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
+                          <Phone className="size-3.5" />
                           <span>{contact.phone || contact.mobile}</span>
                         </div>
                       ) : (
-                        <span className="text-slate-500 italic">No phone</span>
+                        <span className="text-on-surface-variant italic">No phone</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {contact.isDecisionMaker ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#00c4b6]/10 text-[#00c4b6]">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#00cec4]/10 text-[#00cec4]">
                           DECISION MAKER
                         </span>
                       ) : (
-                        <span className="text-slate-500 text-xs">Standard</span>
+                        <span className="text-on-surface-variant text-xs">Standard</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-xs text-slate-300 font-medium">
+                    <td className="px-6 py-4 text-xs">
                       {contact.owner.name}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Link
                           href={`/crm/contacts/${contact.id}`}
-                          className="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800/40 cursor-pointer"
+                          className="p-1.5 text-on-surface-variant hover:text-on-surface rounded hover:bg-surface-container cursor-pointer"
                           title="View Details"
                         >
                           <Eye className="size-4" />
@@ -206,7 +209,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
                           recordId={contact.id}
                           deleteAction={deleteContactAction}
                           confirmMessage="Are you sure you want to delete this contact?"
-                          className="p-1.5 text-slate-500 hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer transition-colors"
+                          className="p-1.5 text-on-surface-variant hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer transition-colors"
                         />
                       </div>
                     </td>

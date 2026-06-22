@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { getPaymentEntry } from "@/modules/accounting/service";
 import { PaymentEntryDetailClient } from "./detail-client";
-import { ArrowLeft, ShieldAlert } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import NextLink from "next/link";
 
 interface PaymentEntryDetailPageProps {
@@ -55,7 +55,6 @@ export default async function PaymentEntryDetailPage({ params }: PaymentEntryDet
           <h2 className="text-xl font-bold text-white uppercase tracking-wider">
             Payment Ref: {payment.referenceNo || `PAY-${payment.id.slice(-6).toUpperCase()}`}
           </h2>
-          <span className="text-[10px] font-mono text-slate-400 block tracking-wider mt-0.5">Voucher Reference: {payment.id}</span>
         </div>
       </div>
 

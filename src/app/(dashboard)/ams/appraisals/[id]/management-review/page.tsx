@@ -82,6 +82,9 @@ export default async function ManagementReviewPage({ params }: { params: Promise
         reviewerRatings: appraisal.reviewerRatings.map((row) => ({
           id: row.id,
           ratings: row.ratings as ReviewerRatingAnswers,
+          status: row.status,
+          submittedAt: row.submittedAt?.toISOString() ?? null,
+          updatedAt: row.updatedAt.toISOString(),
           reviewer: {
             kind: row.reviewer.kind,
             user: { name: row.reviewer.user.name },
@@ -90,6 +93,7 @@ export default async function ManagementReviewPage({ params }: { params: Promise
         currentRating: mySubmittedReview?.ratings as ManagementReviewAnswers | null,
         proposedDates: mySubmittedReview?.proposedDates.map((date) => date.toISOString()) ?? [],
         submittedAt: mySubmittedReview?.submittedAt?.toISOString() ?? null,
+        updatedAt: mySubmittedReview?.updatedAt?.toISOString() ?? null,
         submissionStatus: mySubmittedReview?.status ?? null,
       }}
       selfTemplate={resolvedSelfTemplate}

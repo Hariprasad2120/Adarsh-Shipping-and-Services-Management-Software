@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { addBusinessDays } from "@/modules/ams/due-dates";
+import { createAppraisalAuditLogCompat } from "@/modules/ams/audit-log";
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -137,8 +138,8 @@ export async function decideExtensionAction(formData: FormData): Promise<Result>
       }
 
       // Add audit log
-      await tx.appraisalAuditLog.create({
-        data: {
+      await createAppraisalAuditLogCompat(
+        {
           appraisalId: ext.appraisalId,
           actorId: session.user.id,
           fromStage: ext.appraisal.stage,
@@ -147,7 +148,8 @@ export async function decideExtensionAction(formData: FormData): Promise<Result>
             extendedUntil ? extendedUntil.toLocaleDateString("en-IN") : "N/A"
           }`,
         },
-      });
+        tx,
+      );
     });
 
     // Create notification for requester

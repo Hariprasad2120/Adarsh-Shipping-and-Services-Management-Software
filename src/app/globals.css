@@ -7,28 +7,15 @@
   --foreground: #191c1e;
   
   --color-primary: #003631;
-  --color-on-primary: #ffffff;
-  --color-primary-container: #134e48;
-  --color-on-primary-container: #87beb6;
-  
   --color-secondary: #0051d5;
-  --color-on-secondary: #ffffff;
-  --color-secondary-container: #316bf3;
-  --color-on-secondary-container: #fefcff;
-  
   --color-tertiary: #4b2500;
-  --color-on-tertiary: #ffffff;
-  --color-tertiary-container: #6c3800;
-  --color-on-tertiary-container: #ff9b40;
   
   --color-surface: #ffffff;
   --color-surface-dim: #d8dadc;
-  --color-surface-bright: #ffffff;
   --color-surface-container-lowest: #ffffff;
   --color-surface-container-low: #f2f4f6;
   --color-surface-container: #eceef0;
   --color-surface-container-high: #e6e8ea;
-  --color-surface-container-highest: #e0e3e5;
   --color-on-surface: #191c1e;
   --color-on-surface-variant: #404947;
   --color-placeholder: #8a919d;
@@ -41,6 +28,7 @@
   --radius-xl: 12px;
   --radius-2xl: 16px;
   --radius-3xl: 20px;
+  --radius-card-lg: 24px;
   --radius-full: 9999px;
 
   --text-xs: 10px;
@@ -63,6 +51,10 @@ html {
   scrollbar-color: rgba(148, 163, 184, 0.85) rgba(255, 255, 255, 0.22);
 }
 
+html.dark {
+  scrollbar-color: rgba(100, 116, 139, 0.5) rgba(13, 17, 23, 0.4);
+}
+
 body {
   -ms-overflow-style: auto;
 }
@@ -79,6 +71,12 @@ body::-webkit-scrollbar-track {
   border-left: 1px solid rgba(255, 255, 255, 0.35);
 }
 
+html.dark::-webkit-scrollbar-track,
+html.dark body::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, rgba(0, 206, 196, 0.08), rgba(13, 17, 23, 0.4));
+  border-left: 1px solid rgba(48, 54, 61, 0.5);
+}
+
 html::-webkit-scrollbar-thumb,
 body::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(226, 232, 240, 0.82));
@@ -87,6 +85,15 @@ body::-webkit-scrollbar-thumb {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.45),
     0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+html.dark::-webkit-scrollbar-thumb,
+html.dark body::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(100, 116, 139, 0.5), rgba(71, 85, 105, 0.4));
+  border: 3px solid rgba(13, 17, 23, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 html::-webkit-scrollbar-thumb:hover,
@@ -98,6 +105,15 @@ body::-webkit-scrollbar-thumb:hover {
     0 0 18px rgba(34, 211, 238, 0.22);
 }
 
+html.dark::-webkit-scrollbar-thumb:hover,
+html.dark body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(100, 116, 139, 0.7), rgba(71, 85, 105, 0.6));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(0, 206, 196, 0.2),
+    0 0 18px rgba(0, 206, 196, 0.12);
+}
+
 html::-webkit-scrollbar-thumb:active,
 body::-webkit-scrollbar-thumb:active {
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(226, 232, 240, 0.94));
@@ -106,6 +122,15 @@ body::-webkit-scrollbar-thumb:active {
     0 0 0 1px rgba(34, 211, 238, 0.22),
     0 0 24px rgba(34, 211, 238, 0.4),
     0 8px 24px rgba(34, 211, 238, 0.16);
+}
+
+html.dark::-webkit-scrollbar-thumb:active,
+html.dark body::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, rgba(100, 116, 139, 0.8), rgba(71, 85, 105, 0.7));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(0, 206, 196, 0.3),
+    0 0 24px rgba(0, 206, 196, 0.15);
 }
 
 html::-webkit-scrollbar-corner,
@@ -121,28 +146,15 @@ body::-webkit-scrollbar-corner {
   --font-mono: var(--font-geist-mono);
   
   --color-primary: var(--color-primary);
-  --color-on-primary: var(--color-on-primary);
-  --color-primary-container: var(--color-primary-container);
-  --color-on-primary-container: var(--color-on-primary-container);
-  
   --color-secondary: var(--color-secondary);
-  --color-on-secondary: var(--color-on-secondary);
-  --color-secondary-container: var(--color-secondary-container);
-  --color-on-secondary-container: var(--color-on-secondary-container);
-  
   --color-tertiary: var(--color-tertiary);
-  --color-on-tertiary: var(--color-on-tertiary);
-  --color-tertiary-container: var(--color-tertiary-container);
-  --color-on-tertiary-container: var(--color-on-tertiary-container);
   
   --color-surface: var(--color-surface);
   --color-surface-dim: var(--color-surface-dim);
-  --color-surface-bright: var(--color-surface-bright);
   --color-surface-container-lowest: var(--color-surface-container-lowest);
   --color-surface-container-low: var(--color-surface-container-low);
   --color-surface-container: var(--color-surface-container);
   --color-surface-container-high: var(--color-surface-container-high);
-  --color-surface-container-highest: var(--color-surface-container-highest);
   --color-on-surface: var(--color-on-surface);
   --color-on-surface-variant: var(--color-on-surface-variant);
   
@@ -159,28 +171,15 @@ body::-webkit-scrollbar-corner {
     --foreground: #f0f6fc;
     
     --color-primary: #00c4b6;
-    --color-on-primary: #0f1319;
-    --color-primary-container: #161f28;
-    --color-on-primary-container: #00c4b6;
-    
     --color-secondary: #38bdf8;
-    --color-on-secondary: #0f1319;
-    --color-secondary-container: #1c242c;
-    --color-on-secondary-container: #38bdf8;
-    
     --color-tertiary: #fb923c;
-    --color-on-tertiary: #0f1319;
-    --color-tertiary-container: #24201c;
-    --color-on-tertiary-container: #fb923c;
     
     --color-surface: #161b22;
     --color-surface-dim: #0d1117;
-    --color-surface-bright: #21262d;
     --color-surface-container-lowest: #0d1117;
     --color-surface-container-low: #161b22;
     --color-surface-container: #21262d;
     --color-surface-container-high: #30363d;
-    --color-surface-container-highest: #3b4252;
     --color-on-surface: #f0f6fc;
     --color-on-surface-variant: #8b949e;
     --color-placeholder: #96a0ad;
@@ -197,28 +196,15 @@ html.dark {
   --foreground: #f0f6fc;
   
   --color-primary: #00c4b6;
-  --color-on-primary: #0f1319;
-  --color-primary-container: #161f28;
-  --color-on-primary-container: #00c4b6;
-  
   --color-secondary: #38bdf8;
-  --color-on-secondary: #0f1319;
-  --color-secondary-container: #1c242c;
-  --color-on-secondary-container: #38bdf8;
-  
   --color-tertiary: #fb923c;
-  --color-on-tertiary: #0f1319;
-  --color-tertiary-container: #24201c;
-  --color-on-tertiary-container: #fb923c;
   
   --color-surface: #161b22;
   --color-surface-dim: #0d1117;
-  --color-surface-bright: #21262d;
   --color-surface-container-lowest: #0d1117;
   --color-surface-container-low: #161b22;
   --color-surface-container: #21262d;
   --color-surface-container-high: #30363d;
-  --color-surface-container-highest: #3b4252;
   --color-on-surface: #f0f6fc;
   --color-on-surface-variant: #8b949e;
   --color-placeholder: #96a0ad;
@@ -234,28 +220,15 @@ html.light {
   --foreground: #191c1e;
   
   --color-primary: #003631;
-  --color-on-primary: #ffffff;
-  --color-primary-container: #134e48;
-  --color-on-primary-container: #87beb6;
-  
   --color-secondary: #0051d5;
-  --color-on-secondary: #ffffff;
-  --color-secondary-container: #316bf3;
-  --color-on-secondary-container: #fefcff;
-  
   --color-tertiary: #4b2500;
-  --color-on-tertiary: #ffffff;
-  --color-tertiary-container: #6c3800;
-  --color-on-tertiary-container: #ff9b40;
   
   --color-surface: #ffffff;
   --color-surface-dim: #d8dadc;
-  --color-surface-bright: #ffffff;
   --color-surface-container-lowest: #ffffff;
   --color-surface-container-low: #f2f4f6;
   --color-surface-container: #eceef0;
   --color-surface-container-high: #e6e8ea;
-  --color-surface-container-highest: #e0e3e5;
   --color-on-surface: #191c1e;
   --color-on-surface-variant: #404947;
   --color-placeholder: #8a919d;
@@ -277,7 +250,9 @@ body {
 
 /* Geist body text uses its full weight scale — no global override */
 
-html.dark .bg-white {
+html.dark .bg-white,
+html.dark [class*="bg-[#ffffff]"],
+html.dark [class*="bg-[#fff]"] {
   background-color: var(--color-surface) !important;
 }
 
@@ -417,6 +392,22 @@ main textarea {
   overflow-y: auto;
 }
 
+/* Global placeholder color for both themes */
+main input::placeholder,
+main select::placeholder,
+main textarea::placeholder {
+  color: var(--color-placeholder) !important;
+}
+
+/* Default table cell colors — semantic tokens, non-!important so explicit classes win */
+main table th {
+  color: var(--color-on-surface-variant);
+}
+
+main table td {
+  color: var(--color-on-surface);
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -455,11 +446,11 @@ main textarea {
 }
 
 .card-top-accent {
-  border-top: 2px solid #00cec4;
+  box-shadow: inset 0 2px 0 #00cec4;
 }
 
 .card-top-accent-orange {
-  border-top: 2px solid #fb923c;
+  box-shadow: inset 0 2px 0 #fb923c;
 }
 
 .card-left-accent {
@@ -478,8 +469,8 @@ html.light [class*="text-[#fff]"] {
 }
 
 /* Restore white text for elements with explicitly colored backgrounds (must come after, same specificity → last wins) */
-html.light [class*="bg-[#00c4b6]"],
-html.light [class*="bg-[#00cec4]"],
+html.light [class*="bg-[#00c4b6]"]:not([class*="/"]),
+html.light [class*="bg-[#00cec4]"]:not([class*="/"]),
 html.light [class*="bg-[#ef4444]"],
 html.light [class*="bg-red-500"],
 html.light [class*="bg-red-600"],
@@ -488,8 +479,8 @@ html.light [class*="bg-red-700"] {
 }
 
 /* Ensure cyan-background buttons always keep white text regardless of theme */
-[class*="bg-[#00c4b6]"],
-[class*="bg-[#00cec4]"] {
+[class*="bg-[#00c4b6]"]:not([class*="/"]),
+[class*="bg-[#00cec4]"]:not([class*="/"]) {
   color: #ffffff !important;
 }
 
@@ -539,6 +530,11 @@ html.light [class*="bg-red-700"] {
   color: #00cec4;
 }
 
+.ds-icon-badge svg,
+.ds-icon-badge * {
+  color: inherit !important;
+}
+
 /* Form section — cyan vertical bar before heading */
 .ds-form-section > h2,
 .ds-form-section > h3,
@@ -568,25 +564,32 @@ html.light [class*="bg-red-700"] {
 /* Data table */
 .ds-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .ds-table th {
   font-size: var(--text-xs);
-  font-weight: 400;
+  font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-on-surface-variant);
   text-align: left;
   padding: 8px 12px;
   border-bottom: 1px solid var(--color-outline-variant);
+  background-color: var(--color-surface-container-low);
 }
 
 .ds-table td {
   color: var(--color-on-surface);
-  padding: 10px 12px;
+  font-weight: 400;
+  padding: 6px 12px;
   border-bottom: 1px solid var(--color-outline-variant);
   vertical-align: middle;
+}
+
+.ds-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 /* Clickable table row — full row acts as link */
@@ -607,6 +610,10 @@ html.light [class*="bg-red-700"] {
 
 .hover-cyan:hover {
   box-shadow: 0 0 0 2px rgba(0, 206, 196, 0.25);
+}
+
+.ds-shell-lg {
+  border-radius: var(--radius-card-lg);
 }
 
 /* ─── Theme Compliance Overrides ─── */
@@ -716,24 +723,15 @@ html.light main [class*="bg-[var(--color-surface)]"]::placeholder {
   color: var(--color-placeholder) !important;
 }
 
-/* Wildcard selector to safely override any hardcoded text-white colors in light mode,
-   excluding active solid backgrounds like buttons and badges */
-html.light main [class*="text-white"]:not([class*="bg-"]):not(button):not(a[class*="bg-"]):not(span[class*="bg-"]):not(div[class*="bg-"]),
-html.light main [class*="text-white/"]:not([class*="bg-"]):not(button):not(a[class*="bg-"]):not(span[class*="bg-"]):not(div[class*="bg-"]) {
-  color: var(--color-on-surface) !important;
-}
+/* (Consolidated into L409-413 — the broad html.light text-white rule covers all cases) */
 
-html.light [class*="text-slate-400"],
-html.light [class*="text-slate-500"] {
-  color: var(--color-on-surface-variant) !important;
-}
 
 
 /* Ensure colored buttons and solid badges always preserve white text in both light and dark themes */
-[class*="bg-[#00cec4]"] *,
-[class*="bg-[#00cec4]"],
-[class*="bg-[#00c4b6]"] *,
-[class*="bg-[#00c4b6]"],
+[class*="bg-[#00cec4]"]:not([class*="/"]) *,
+[class*="bg-[#00cec4]"]:not([class*="/"]),
+[class*="bg-[#00c4b6]"]:not([class*="/"]) *,
+[class*="bg-[#00c4b6]"]:not([class*="/"]),
 .bg-emerald-500,
 .bg-emerald-600,
 .bg-rose-500,
@@ -746,4 +744,88 @@ html.light [class*="text-slate-500"] {
   color: #ffffff !important;
 }
 
+/* Ensure text inside intentionally dark banners (such as Employee Cockpit) remains white/light in both themes */
+html.light main .ds-dark-banner [class*="text-white"] {
+  color: #ffffff !important;
+}
+html.light main .ds-dark-banner [class*="text-white/70"] {
+  color: rgba(255, 255, 255, 0.70) !important;
+}
+html.light main .ds-dark-banner [class*="text-white/72"] {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+html.light main .ds-dark-banner [class*="text-white/66"] {
+  color: rgba(255, 255, 255, 0.66) !important;
+}
+html.light main .ds-dark-banner [class*="text-white/56"] {
+  color: rgba(255, 255, 255, 0.56) !important;
+}
 
+/* ─── Mona AI Companion ─────────────────────────────────────────────────── */
+
+/* Prose formatting inside Mona messages */
+.mona-prose {
+  word-break: break-word;
+}
+.mona-prose strong {
+  font-weight: 600;
+}
+.mona-prose em {
+  font-style: italic;
+}
+.mona-prose .mona-code {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--color-surface-container);
+  color: #00cec4;
+}
+.mona-prose .mona-link {
+  color: #00cec4;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: opacity 0.15s;
+}
+.mona-prose .mona-link:hover {
+  opacity: 0.8;
+}
+.mona-prose .mona-nav-link {
+  font-weight: 500;
+  text-decoration: none;
+  background: rgba(0, 206, 196, 0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.mona-prose .mona-ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 6px 0;
+}
+.mona-prose .mona-li {
+  position: relative;
+  padding-left: 16px;
+  margin-bottom: 3px;
+}
+.mona-prose .mona-li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 7px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #00cec4;
+}
+.mona-prose .mona-li-num::before {
+  content: none;
+}
+
+/* Mona input — exempt from global cyan border override, uses outline-variant */
+.mona-input {
+  border-color: var(--color-outline-variant) !important;
+}
+.mona-input:focus {
+  border-color: #00cec4 !important;
+  box-shadow: 0 0 0 3px rgba(0, 206, 196, 0.12) !important;
+}

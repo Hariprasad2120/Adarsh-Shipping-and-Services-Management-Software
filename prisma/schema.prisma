@@ -66,6 +66,25 @@ model Organisation {
   transactionLock     TransactionLock?
   partnerAccounts     PartnerAccount[]
 
+  chaSettings         ChaSettings?
+  chaJobs             ChaJob[]
+  chaExpenseRequests  ChaExpenseRequest[]
+  chaAuditLogs        ChaAuditLog[]
+  chaTeamGroups       ChaTeamGroup[]
+
+  // Google Chat Integration
+  googleChatSpaces         GoogleChatSpace[]
+  googleChatSubscriptions  GoogleChatSubscription[]
+  googleChatDeliveries     GoogleChatDelivery[]
+
+  // Recruit Module
+  recruitJobOpenings    RecruitJobOpening[]
+  recruitCandidates     RecruitCandidate[]
+  recruitApplications   RecruitApplication[]
+  recruitAuditEvents    RecruitAuditEvent[]
+  recruitSettings       RecruitSetting?
+  recruitAutomationRuns RecruitAutomationRun[]
+
   @@index([slug])
 }
 
@@ -95,6 +114,8 @@ model Branch {
   vendorNotes       VendorNote[]
   recurringExpenses RecurringExpense[]
   recurringJournals RecurringJournal[]
+
+  chaJobs           ChaJob[]
 
   @@unique([orgId, code])
   @@index([orgId])
@@ -331,6 +352,35 @@ model User {
   formsCreated            Form[]                      @relation("FormCreator")
   formResponses           FormResponse[]
   communicationAuditLogs  CommunicationAuditLog[]
+
+  // Google Chat Integration
+  googleChatLink               GoogleChatUserLink?
+
+  // Recruit Module (Job Seeker)
+  recruitJobSeekerProfile      RecruitJobSeekerProfile?
+  recruitJobListings           RecruitJobListing[]
+  recruitJobMatches            RecruitJobMatch[]
+  recruitJobSeekerResumes      RecruitJobSeekerResume[]
+  recruitTailoredResumes       RecruitTailoredResume[]
+  recruitCoverLetters          RecruitCoverLetter[]
+  recruitJobSeekerApplications RecruitJobSeekerApplication[]
+  recruitJobAlerts             RecruitJobAlert[]
+  recruitCareerConversations   RecruitCareerConversation[]
+  recruitInterviewPreps        RecruitInterviewPrep[]
+  recruitPrivateShares         RecruitPrivateShare[]
+
+  // CHA Module Relations
+  chaJobsOwned                 ChaJob[]                  @relation("ChaJobPrimaryOwner")
+  chaJobAssignments            ChaJobAssignment[]
+  chaDocumentVersionsUploaded  ChaDocumentVersion[]
+  chaDocumentExceptionsCreated ChaDocumentException[]
+  chaChecklistImportsUploaded  ChaChecklistImport[]
+  chaChecklistApprovals        ChaChecklistApproval[]
+  chaChecklistReworkNotes      ChaChecklistReworkNote[]
+  chaFilingHistorySet          ChaFilingDateHistory[]
+  chaExpenseRequestsCreated    ChaExpenseRequest[]       @relation("ChaExpenseRequestedBy")
+  chaExpensePaymentsMade       ChaExpensePayment[]
+  chaExpenseQueriesCreated     ChaExpenseQuery[]         @relation("ChaExpenseQueryAuthor")
 
   @@index([orgId])
   @@index([isPlatformAdmin, active])
@@ -785,6 +835,8 @@ model AppraisalMeeting {
   scheduledAt   DateTime
   confirmedById String
   status        String   @default("SCHEDULED") // SCHEDULED | LIVE | DONE | CANCELLED
+  lockedAt      DateTime?
+  updatedAt     DateTime @updatedAt
 
   appraisal   Appraisal       @relation(fields: [appraisalId], references: [id], onDelete: Cascade)
   confirmedBy User            @relation("MeetingConfirmedBy", fields: [confirmedById], references: [id])
@@ -798,23 +850,33 @@ model MeetingMinute {
   role      String // HR | MANAGEMENT | EMPLOYEE
   content   String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   meeting AppraisalMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   author  User             @relation(fields: [authorId], references: [id])
 
+  @@unique([meetingId, authorId, role])
   @@index([meetingId])
 }
 
 model HikeDecision {
-  id            String   @id @default(cuid())
-  appraisalId   String   @unique
-  decidedById   String
-  percent       Float
-  amount        Float
-  effectiveFrom DateTime @db.Date
-  notes         String?
-  finalisedAt   DateTime @default(now())
-  slabId        String?
+  id                   String   @id @default(cuid())
+  appraisalId          String   @unique
+  decidedById          String
+  percent              Float
+  amount               Float
+  effectiveFrom        DateTime @db.Date
+  notes                String?
+  finalisedAt          DateTime @default(now())
+  slabId               String?
+  suggestedPercent     Float?
+  suggestedScore       Float?
+  suggestedFlooredScore Int?
+  suggestedGrade       String?
+  previousSalary       Float?
+  finalSalary          Float?
+  negotiationRemarks   String?
+  isLocked             Boolean  @default(true)
 
   appraisal Appraisal      @relation(fields: [appraisalId], references: [id], onDelete: Cascade)
   decidedBy User           @relation(fields: [decidedById], references: [id])
@@ -825,9 +887,13 @@ model AppraisalAuditLog {
   id          String   @id @default(cuid())
   appraisalId String
   actorId     String?
+  actorRole   String?
+  action      String?
   fromStage   String?
   toStage     String
   note        String?
+  oldValue    Json?
+  newValue    Json?
   createdAt   DateTime @default(now())
 
   appraisal Appraisal @relation(fields: [appraisalId], references: [id], onDelete: Cascade)
@@ -1250,6 +1316,8 @@ model CrmAccount {
   quotations      Quotation[]
   customerNotes   CustomerNote[]
   jobCostings     JobCosting[]
+
+  chaJobs         ChaJob[]
 
   @@index([orgId])
   @@index([ownerId])
@@ -2003,25 +2071,71 @@ model HRCaseComment {
 }
 
 model HRLetterTemplate {
-  id        String   @id @default(cuid())
-  orgId     String
-  name      String
-  content   String // rich text template with variables like {{employeeName}}
-  variables Json? // string[]
-  createdAt DateTime @default(now())
+  id                String   @id @default(cuid())
+  orgId             String
+  name              String
+  type              String   // e.g. "INITIAL_OFFER"
+  content           String   // rich text template with variables
+  variables         Json?    // string[]
+  sourceDocxPath    String?
+  previewHtml       String?
+  fieldSchema       Json?
+  editorDocument    Json?
+  sourceFileName    String?
+  isActive          Boolean  @default(false)
+  isLegalReviewed   Boolean  @default(false)
+  legalReviewedAt   DateTime?
+  legalReviewedById String?
+  version           Int      @default(1)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model HRLetterRequest {
-  id           String   @id @default(cuid())
-  orgId        String
-  userId       String
-  templateId   String
-  status       String   @default("PENDING") // PENDING | APPROVED | REJECTED
-  details      Json? // Field values collected for the request
-  approvedById String?
-  fileKey      String?
-  createdAt    DateTime @default(now())
-  user         User     @relation("LetterRequests", fields: [userId], references: [id], onDelete: Cascade)
+  id                    String    @id @default(cuid())
+  orgId                 String
+  userId                String
+  templateId            String
+  letterNumber          String    @unique
+  status                String    @default("DRAFT") // DRAFT, HR_REVIEW, LEGAL_REVIEW, MGMT_APPROVAL, READY_TO_ISSUE, ISSUED, VIEWED, ACCEPTED, DECLINED, CANCELLED, SUPERSEDED
+  details               Json?     // Field values collected for the request
+  pdfPath               String?
+  docxPath              String?
+  documentHash          String?   // SHA-256 of the generated PDF
+  expiresAt             DateTime?
+  acceptedAt            DateTime?
+  acceptanceIp          String?
+  acceptanceUserAgent   String?
+  counterSignedAt       DateTime?
+  counterSignedById     String?
+  counterSignIp         String?
+  approvedById          String?
+  issuedById            String?
+  issuedAt              DateTime?
+  auditTrail            Json?     // array of audit log entries [{timestamp, userId, userName, action, details}]
+  parentLetterId        String?   // for reissue/supersede tracking
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user                  User      @relation("LetterRequests", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model HRLetterSetting {
+  id                   String   @id @default(cuid())
+  orgId                String   @unique
+  numberingPattern     String   @default("ME/HR/{year}/{seq}")
+  probationDaysDefault Int      @default(90)
+  noticePeriodDaysDefault Int   @default(30)
+  letterValidityDaysDefault Int @default(7)
+  legalJurisdiction    String   @default("Chennai, Tamil Nadu")
+  complianceVersion    String   @default("2026.1")
+  signatoryName        String   @default("HR Manager")
+  signatoryDesignation String   @default("Manager - HR")
+  signatorySignatureUrl String? // signature image file path/key
+  companySealUrl       String?  // seal image file path/key
+  emailTemplate        String?  // custom email text
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }
 
 model TravelRequest {
@@ -3534,4 +3648,1548 @@ model CommunicationAuditLog {
   @@index([userId])
 }
 
+// ─── CHA Module Models ────────────────────────────────────────────────────────
+
+model ChaSettings {
+  id                    String       @id @default(cuid())
+  orgId                 String       @unique
+  org                   Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  jobCreatorRoles       Json?        // Role names/IDs that can create jobs
+  jobCreatorUsers       Json?        // Specific user IDs that can create jobs
+  selfApprovalAllowed   Boolean      @default(false)
+  managerApprovalPolicy String       @default("ALL") // ALL | ANY
+  expenseCategories     Json?        // List of allowed categories
+  jobNumberPrefix       String       @default("CHA")
+  jobNumberNextNum      Int          @default(1)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+}
+
+model ChaTeamGroup {
+  id        String       @id @default(cuid())
+  orgId     String
+  name      String
+  memberIds Json         // JSON array of user IDs
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, name])
+  @@index([orgId])
+}
+
+model ChaJobType {
+  id                  String                  @id @default(cuid())
+  orgId               String
+  name                String
+  documentDefinitions ChaDocumentDefinition[]
+  jobs                ChaJob[]
+
+  @@unique([orgId, name])
+  @@index([orgId])
+}
+
+model ChaDocumentDefinition {
+  id           String     @id @default(cuid())
+  jobTypeId    String
+  name         String
+  category     String
+  isMandatory  Boolean    @default(true)
+  allowedTypes Json?      // e.g. ["pdf", "jpg", "png"]
+  maxSize      Int        @default(5242880) // 5MB in bytes
+
+  jobType ChaJobType @relation(fields: [jobTypeId], references: [id], onDelete: Cascade)
+
+  @@index([jobTypeId])
+}
+
+model ChaJob {
+  id             String   @id @default(cuid())
+  orgId          String
+  jobNumber      String
+  title          String
+  customerId     String
+  customerRef    String?
+  jobTypeId      String
+  branchId       String
+  priority       String   @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
+  stage          String   @default("DOCUMENT_COLLECTION") // DOCUMENT_COLLECTION | CHECKLIST_PREPARATION | CHECKLIST_APPROVAL | FILING | FILED
+  status         String   @default("ACTIVE") // ACTIVE | ON_HOLD | CANCELLED | COMPLETED
+  primaryOwnerId String
+  remarks        String?
+  estimatedClosureDate DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  org                  Organisation                @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer             CrmAccount                  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  jobType              ChaJobType                  @relation(fields: [jobTypeId], references: [id])
+  branch               Branch                      @relation(fields: [branchId], references: [id])
+  primaryOwner         User                        @relation("ChaJobPrimaryOwner", fields: [primaryOwnerId], references: [id])
+  assignments          ChaJobAssignment[]
+  documentRequirements ChaJobDocumentRequirement[]
+  checklistImports     ChaChecklistImport[]
+  filing               ChaFiling?
+  customerAdvance      ChaCustomerAdvance?
+  expenseRequests      ChaExpenseRequest[]
+  auditLogs            ChaAuditLog[]
+
+  @@unique([orgId, jobNumber])
+  @@index([orgId, stage, status])
+  @@index([orgId, jobNumber])
+  @@index([primaryOwnerId])
+  @@index([createdAt])
+}
+
+model ChaJobAssignment {
+  id             String @id @default(cuid())
+  jobId          String
+  userId         String
+  responsibility String // DOCUMENTATION | OPERATIONS | FILING | ACCOUNTS | APPROVAL
+
+  job  ChaJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, userId, responsibility])
+  @@index([userId])
+}
+
+model ChaJobDocumentRequirement {
+  id          String   @id @default(cuid())
+  jobId       String
+  name        String
+  category    String
+  isMandatory Boolean  @default(true)
+  status      String   @default("PENDING") // PENDING | UPLOADED | NOT_AVAILABLE | REPLACED | REQUIRES_ATTENTION
+
+  job       ChaJob               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  versions  ChaDocumentVersion[]
+  exception ChaDocumentException?
+
+  @@index([jobId])
+}
+
+model ChaDocumentVersion {
+  id            String   @id @default(cuid())
+  requirementId String
+  fileKey       String
+  fileName      String
+  mimeType      String
+  sizeBytes     Int
+  checksum      String?
+  uploadedById  String
+  uploadedAt    DateTime @default(now())
+  isCurrent     Boolean  @default(true)
+
+  requirement ChaJobDocumentRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  uploadedBy  User                      @relation(fields: [uploadedById], references: [id])
+
+  @@index([requirementId])
+  @@index([uploadedById])
+}
+
+model ChaDocumentException {
+  id            String   @id @default(cuid())
+  requirementId String   @unique
+  reason        String
+  userId        String
+  createdAt     DateTime @default(now())
+  attachmentKey String?
+
+  requirement ChaJobDocumentRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  user        User                      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model ChaChecklistImport {
+  id              String   @id @default(cuid())
+  jobId           String
+  fileName        String
+  fileSize        Int
+  templateVersion String
+  status          String   @default("DRAFT") // DRAFT | VALIDATION_FAILED | READY | PENDING_APPROVAL | APPROVED | REWORK
+  uploadedById    String
+  uploadedAt      DateTime @default(now())
+  remarks         String?
+
+  job         ChaJob                   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  uploadedBy  User                     @relation(fields: [uploadedById], references: [id])
+  sections    ChaChecklistSection[]
+  approvals   ChaChecklistApproval[]
+  reworkNotes ChaChecklistReworkNote[]
+
+  @@index([jobId])
+  @@index([uploadedById])
+}
+
+model ChaChecklistSection {
+  id       String @id @default(cuid())
+  importId String
+  name     String
+  order    Int
+
+  checklistImport ChaChecklistImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+  items           ChaChecklistItem[]
+
+  @@index([importId])
+}
+
+model ChaChecklistItem {
+  id           String  @id @default(cuid())
+  sectionId    String
+  order        Int
+  identifier   String
+  question     String
+  responseType String  // TEXT | YES_NO | NUMBER | DATE
+  value        String?
+  remarks      String?
+
+  section ChaChecklistSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId])
+}
+
+model ChaChecklistApproval {
+  id         String    @id @default(cuid())
+  importId   String
+  managerId  String
+  decision   String    @default("PENDING") // PENDING | APPROVED | REWORK
+  remarks    String?
+  actionedAt DateTime?
+
+  checklistImport ChaChecklistImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+  manager         User               @relation(fields: [managerId], references: [id])
+
+  @@index([importId])
+  @@index([managerId])
+}
+
+model ChaChecklistReworkNote {
+  id        String   @id @default(cuid())
+  importId  String
+  authorId  String
+  note      String
+  createdAt DateTime @default(now())
+
+  checklistImport ChaChecklistImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+  author          User               @relation(fields: [authorId], references: [id])
+
+  @@index([importId])
+  @@index([authorId])
+}
+
+model ChaFiling {
+  id                  String                 @id @default(cuid())
+  jobId               String                 @unique
+  estimatedFilingDate DateTime?
+  actualFilingDate    DateTime?
+  filingRef           String?
+  filedBillCopyKey    String?
+  status              String                 @default("PENDING") // PENDING | OVERDUE | FILED
+  exceptionReason     String?
+  delayReason         String?
+  assignedUserId      String?
+  job                 ChaJob                 @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  dateHistory         ChaFilingDateHistory[]
+
+  @@index([estimatedFilingDate, status])
+}
+
+model ChaFilingDateHistory {
+  id                  String   @id @default(cuid())
+  filingId            String
+  estimatedFilingDate DateTime
+  setById             String
+  createdAt           DateTime @default(now())
+
+  filing ChaFiling @relation(fields: [filingId], references: [id], onDelete: Cascade)
+  setBy  User      @relation(fields: [setById], references: [id])
+
+  @@index([filingId])
+  @@index([setById])
+}
+
+model ChaCustomerAdvance {
+  id                String                      @id @default(cuid())
+  jobId             String                      @unique
+  expectedAmount    Decimal                     @default(0.0) @db.Decimal(18, 4)
+  dueDate           DateTime?
+  status            String                      @default("PENDING") // PENDING | FOLLOW_UP | PARTIALLY_RECEIVED | FULLY_RECEIVED | NOT_REQUIRED | COLLECTION_ISSUE
+  notRequiredReason String?
+  assignedUserId    String?
+  job               ChaJob                      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  receipts          ChaCustomerAdvanceReceipt[]
+}
+
+model ChaCustomerAdvanceReceipt {
+  id              String             @id @default(cuid())
+  advanceId       String
+  amount          Decimal            @db.Decimal(18, 4)
+  receivedDate    DateTime
+  paymentMethod   String
+  referenceNumber String?
+  receiptProofKey String?
+  remarks         String?
+  recordedById    String
+  createdAt       DateTime           @default(now())
+  advance         ChaCustomerAdvance @relation(fields: [advanceId], references: [id], onDelete: Cascade)
+
+  @@index([advanceId])
+}
+
+model ChaExpenseRequest {
+  id                  String                    @id @default(cuid())
+  jobId               String
+  orgId               String
+  status              String                    @default("SUBMITTED") // SUBMITTED | UNDER_REVIEW | CLARIFICATION_REQUIRED | APPROVED | READY_FOR_DISBURSEMENT | PAYMENT_DUE | URGENT_PAYMENT_REQUIRED | PAID | QUERY_RAISED | RECEIPT_ACKNOWLEDGED | REJECTED | CANCELLED
+  requestedById       String
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  isUrgent            Boolean                   @default(false)
+  urgencyReason       String?
+  urgentTargetDate    DateTime?
+  urgentRequestedAt   DateTime?
+  urgentRequestedById String?
+  job                 ChaJob                    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  org                 Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  requestedBy         User                      @relation("ChaExpenseRequestedBy", fields: [requestedById], references: [id])
+  lines               ChaExpenseLine[]
+  payments            ChaExpensePayment[]
+  queries             ChaExpenseQuery[]
+  statusHistory       ChaExpenseStatusHistory[]
+
+  @@index([jobId])
+  @@index([orgId, status])
+  @@index([requestedById])
+}
+
+model ChaExpenseLine {
+  id                    String            @id @default(cuid())
+  requestId             String
+  category              String
+  purpose               String
+  amount                Decimal           @db.Decimal(18, 4)
+  requiredDate          DateTime
+  supportingDocumentKey String?
+  remarks               String?
+  request               ChaExpenseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+}
+
+model ChaExpenseStatusHistory {
+  id           String            @id @default(cuid())
+  requestId    String
+  status       String
+  actionedById String
+  remarks      String?
+  createdAt    DateTime          @default(now())
+  request      ChaExpenseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+}
+
+model ChaExpensePayment {
+  id                   String            @id @default(cuid())
+  requestId            String
+  amountPaid           Decimal           @db.Decimal(18, 4)
+  paymentDate          DateTime
+  paymentMethod        String
+  transactionReference String
+  paymentProofKey      String?
+  remarks              String?
+  paidById             String
+  createdAt            DateTime          @default(now())
+  request              ChaExpenseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  paidBy               User              @relation(fields: [paidById], references: [id])
+
+  @@index([requestId])
+  @@index([paidById])
+}
+
+model ChaExpenseQuery {
+  id             String            @id @default(cuid())
+  requestId      String
+  authorId       String
+  queryText      String
+  resolved       Boolean           @default(false)
+  resolutionText String?
+  resolvedById   String?
+  resolvedAt     DateTime?
+  createdAt      DateTime          @default(now())
+  request        ChaExpenseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  author         User              @relation("ChaExpenseQueryAuthor", fields: [authorId], references: [id])
+
+  @@index([requestId])
+  @@index([authorId])
+}
+
+model ChaAuditLog {
+  id         String       @id @default(cuid())
+  orgId      String
+  jobId      String?
+  entityType String
+  entityId   String
+  event      String
+  actorId    String
+  timestamp  DateTime     @default(now())
+  prevState  String?
+  newState   String?
+  remarks    String?
+  metadata   Json?
+  org        Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  job        ChaJob?      @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, timestamp])
+  @@index([jobId, timestamp])
+}
+
+// ─── Recruit Module ────────────────────────────────────────────────────────────
+// All tables prefixed Recruit. Employer-side tables include orgId (tenant-scoped).
+// Job-seeker tables include ownerId (user-private). No FK from existing module tables into Recruit.
+
+model RecruitSetting {
+  id                        String   @id @default(cuid())
+  orgId                     String   @unique
+  candidateNumberFormat     String   @default("RC-{year}-{seq}")
+  applicationNumberFormat   String   @default("APP-{year}-{seq}")
+  retentionDays             Int      @default(730)
+  consentText               String?
+  maxResumeSizeBytes        Int      @default(10485760) // 10 MB
+  allowedResumeTypes        String[] @default(["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"])
+  duplicateCheckEmail       Boolean  @default(true)
+  duplicateCheckPhone       Boolean  @default(true)
+  duplicateCheckResumeHash  Boolean  @default(true)
+  duplicateCheckProfileUrl  Boolean  @default(true)
+  aiProvider                String   @default("openai")
+  aiModel                   String   @default("gpt-4o")
+  aiPromptVersion           String   @default("v1")
+  automationBatchSize       Int      @default(50)
+  jobSeekerEnabled          Boolean  @default(true)
+  allowedJobProviders       String[] @default([])
+  shareExpiryDays           Int      @default(7)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+}
+
+// ─── Employer: Job Openings ──────────────────────────────────────────────────
+
+model RecruitJobOpening {
+  id                 String   @id @default(cuid())
+  orgId              String
+  internalCode       String?
+  title              String
+  departmentId       String?
+  designationText    String?
+  branchId           String?
+  location           String?
+  employmentType     String   @default("FULL_TIME") // FULL_TIME | PART_TIME | CONTRACT | INTERNSHIP
+  workplaceType      String   @default("ONSITE") // ONSITE | HYBRID | REMOTE
+  openings           Int      @default(1)
+  priority           String   @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
+  targetJoiningDate  DateTime? @db.Date
+  hiringManagerId    String?
+  experienceMin      Float?
+  experienceMax      Float?
+  educationRequired  String?
+  mandatorySkills    String[] @default([])
+  preferredSkills    String[] @default([])
+  responsibilities   String?
+  compensationMin    Float?
+  compensationMax    Float?
+  compensationCcy    String   @default("INR")
+  sourcingChannels   String[] @default([])
+  closingDate        DateTime? @db.Date
+  status             String   @default("DRAFT")
+  // DRAFT | PENDING_APPROVAL | APPROVED | PUBLISHED | PAUSED | CLOSED | CANCELLED | ARCHIVED
+  jobDescriptionHtml String?
+  requirementsJson   Json?    // structured requirements for ATS matching
+  screeningQuestions Json?    // [{id, question, type, required}]
+  interviewPlanJson  Json?    // [{roundName, mode, panelIds, duration}]
+  approvalFlowJson   Json?    // [{approverId, status, decidedAt, note}]
+  publishedAt        DateTime?
+  closedAt           DateTime?
+  version            Int      @default(1)
+  createdById        String
+  updatedById        String?
+  deletedAt          DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  org          Organisation         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  applications RecruitApplication[]
+  versions     RecruitJobVersion[]
+
+  @@index([orgId, status])
+  @@index([orgId, departmentId])
+  @@index([orgId, branchId])
+  @@index([orgId, closingDate])
+}
+
+model RecruitJobVersion {
+  id           String   @id @default(cuid())
+  jobOpeningId String
+  version      Int
+  changeType   String   // JD_EDIT | APPROVAL_DECISION | STATUS_CHANGE
+  snapshotJson Json
+  changedById  String
+  changedAt    DateTime @default(now())
+
+  jobOpening RecruitJobOpening @relation(fields: [jobOpeningId], references: [id], onDelete: Cascade)
+
+  @@index([jobOpeningId, version])
+}
+
+// ─── Employer: Candidates ────────────────────────────────────────────────────
+
+model RecruitCandidate {
+  id                   String    @id @default(cuid())
+  orgId                String
+  candidateNumber      String
+  firstName            String
+  lastName             String
+  email                String
+  phone                String?
+  currentLocation      String?
+  preferredLocation    String?
+  currentCompany       String?
+  currentTitle         String?
+  totalExperienceYears Float?
+  relevantExpYears     Float?
+  noticePeriodDays     Int?
+  currentCompensation  Float?
+  expectedCompensation Float?
+  compensationCcy      String    @default("INR")
+  skills               String[]  @default([])
+  workAuthorization    String?
+  source               String?   // MANUAL | CSV_IMPORT | RESUME_UPLOAD | APPLICATION_FORM | EMAIL | EXTERNAL
+  sourceDetail         String?
+  consentStatus        String    @default("PENDING") // PENDING | GIVEN | WITHDRAWN
+  consentAt            DateTime?
+  consentIp            String?
+  retentionDeadline    DateTime? @db.Date
+  legalHold            Boolean   @default(false)
+  deletedAt            DateTime?
+  anonymizedAt         DateTime?
+  resumeHash           String?
+  profileUrlHash       String?
+  tags                 String[]  @default([])
+  customFields         Json?
+  ownerUserId          String?
+  createdById          String
+  updatedById          String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  org          Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  consents     RecruitCandidateConsent[]
+  resumes      RecruitCandidateResume[]
+  education    RecruitCandidateEducation[]
+  experience   RecruitCandidateExperience[]
+  skills_rel   RecruitCandidateSkill[]
+  applications RecruitApplication[]
+  notes        RecruitNote[]             @relation("CandidateNotes")
+  tags_rel     RecruitTag[]              @relation("CandidateTags")
+
+  @@unique([orgId, candidateNumber])
+  @@index([orgId, email])
+  @@index([orgId, phone])
+  @@index([orgId, resumeHash])
+  @@index([orgId, deletedAt])
+}
+
+model RecruitCandidateConsent {
+  id          String   @id @default(cuid())
+  candidateId String
+  action      String   // GIVEN | WITHDRAWN | UPDATED
+  consentText String
+  ip          String?
+  userAgent   String?
+  recordedAt  DateTime @default(now())
+
+  candidate RecruitCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+}
+
+model RecruitCandidateResume {
+  id             String   @id @default(cuid())
+  candidateId    String
+  fileKey        String
+  fileName       String
+  mimeType       String
+  sizeBytes      Int
+  resumeHash     String?
+  version        Int      @default(1)
+  isActive       Boolean  @default(true)
+  parsedStatus   String   @default("PENDING") // PENDING | PARSING | PARSED | FAILED | CONFIRMED
+  parsedJson     Json?    // structured extracted data
+  parserProvider String?
+  parserVersion  String?
+  parseConfidence Float?
+  parseError     String?
+  confirmedAt    DateTime?
+  confirmedById  String?
+  uploadedById   String
+  uploadedAt     DateTime @default(now())
+
+  candidate    RecruitCandidate     @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  screeningResults RecruitScreeningResult[]
+
+  @@index([candidateId, isActive])
+  @@index([resumeHash])
+}
+
+model RecruitCandidateEducation {
+  id           String  @id @default(cuid())
+  candidateId  String
+  institution  String
+  degree       String?
+  field        String?
+  startYear    Int?
+  endYear      Int?
+  grade        String?
+  isConfirmed  Boolean @default(false)
+
+  candidate RecruitCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+}
+
+model RecruitCandidateExperience {
+  id          String    @id @default(cuid())
+  candidateId String
+  company     String
+  title       String
+  startDate   DateTime? @db.Date
+  endDate     DateTime? @db.Date
+  isCurrent   Boolean   @default(false)
+  description String?
+  isConfirmed Boolean   @default(false)
+
+  candidate RecruitCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+}
+
+model RecruitCandidateSkill {
+  id          String @id @default(cuid())
+  candidateId String
+  skill       String
+  level       String? // BEGINNER | INTERMEDIATE | ADVANCED | EXPERT
+  isConfirmed Boolean @default(false)
+
+  candidate RecruitCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, skill])
+  @@index([candidateId])
+}
+
+// ─── Employer: Applications ──────────────────────────────────────────────────
+
+model RecruitApplication {
+  id                String   @id @default(cuid())
+  orgId             String
+  applicationNumber String
+  jobOpeningId      String
+  candidateId       String
+  stage             String   @default("NEW")
+  // NEW | RESUME_REVIEW | SCREENING | SHORTLISTED | ASSESSMENT | INTERVIEW
+  // | HIRING_MANAGER_REVIEW | OFFER_APPROVAL | OFFER_SENT | OFFER_ACCEPTED
+  // | OFFER_DECLINED | HIRED | REJECTED | WITHDRAWN | ON_HOLD | ARCHIVED
+  source            String?
+  resumeVersionId   String?
+  submissionSnapshotJson Json? // immutable snapshot when job seeker applied internally
+  concurrencyVersion Int      @default(1)
+  deletedAt         DateTime?
+  createdById       String
+  updatedById       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  org          Organisation                   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  jobOpening   RecruitJobOpening              @relation(fields: [jobOpeningId], references: [id])
+  candidate    RecruitCandidate               @relation(fields: [candidateId], references: [id])
+  stageHistory RecruitApplicationStageHistory[]
+  screeningAnswers RecruitScreeningAnswer[]
+  screeningRuns RecruitScreeningRun[]
+  interviews   RecruitInterview[]
+  assessments  RecruitAssessment[]
+  offers       RecruitOffer[]
+  notes        RecruitNote[]                  @relation("ApplicationNotes")
+
+  @@unique([orgId, applicationNumber])
+  @@unique([jobOpeningId, candidateId])
+  @@index([orgId, stage])
+  @@index([orgId, jobOpeningId])
+  @@index([orgId, candidateId])
+}
+
+model RecruitApplicationStageHistory {
+  id            String   @id @default(cuid())
+  applicationId String
+  fromStage     String?
+  toStage       String
+  actorId       String
+  reason        String?
+  metadata      Json?
+  movedAt       DateTime @default(now())
+
+  application RecruitApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, movedAt])
+}
+
+model RecruitScreeningQuestion {
+  id           String @id @default(cuid())
+  jobOpeningId String
+  question     String
+  type         String @default("TEXT") // TEXT | BOOLEAN | SCALE | MULTIPLE_CHOICE
+  options      Json?  // string[] for multiple choice
+  required     Boolean @default(false)
+  order        Int     @default(0)
+}
+
+model RecruitScreeningAnswer {
+  id            String @id @default(cuid())
+  applicationId String
+  questionId    String
+  answerText    String?
+  answerJson    Json?
+  createdAt     DateTime @default(now())
+
+  application RecruitApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, questionId])
+  @@index([applicationId])
+}
+
+// ─── Employer: AI Screening ──────────────────────────────────────────────────
+
+model RecruitScreeningRun {
+  id                String   @id @default(cuid())
+  orgId             String
+  applicationId     String
+  idempotencyKey    String   @unique // app_id + job_req_version + resume_version + rubric_version + prompt_version
+  status            String   @default("QUEUED") // QUEUED | RUNNING | COMPLETED | FAILED | CANCELLED | TIMED_OUT
+  triggeredBy       String   // MANUAL | AUTOMATION | SCHEDULE
+  triggeredById     String?
+  automationRunId   String?
+  jobReqVersion     Int
+  resumeVersionId   String?
+  rubricVersion     String
+  promptVersion     String
+  startedAt         DateTime?
+  completedAt       DateTime?
+  errorMessage      String?
+  createdAt         DateTime @default(now())
+
+  application RecruitApplication   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  result      RecruitScreeningResult?
+
+  @@index([applicationId])
+  @@index([orgId])
+}
+
+model RecruitScreeningResult {
+  id                   String   @id @default(cuid())
+  runId                String   @unique
+  resumeVersionId      String?
+  overallScore         Float
+  mandatorySkillScore  Float
+  preferredSkillScore  Float
+  experienceScore      Float
+  educationScore       Float
+  locationScore        Float
+  screeningQScore      Float
+  matchingEvidence     Json
+  missingRequirements  Json
+  uncertainties        Json
+  followUpQuestions    Json
+  summary              String
+  aiProvider           String
+  aiModel              String
+  promptVersion        String
+  rawOutputJson        Json?
+  overrideScore        Float?
+  overrideReason       String?
+  overrideById         String?
+  overrideAt           DateTime?
+  createdAt            DateTime @default(now())
+
+  run          RecruitScreeningRun    @relation(fields: [runId], references: [id], onDelete: Cascade)
+  resumeVersion RecruitCandidateResume? @relation(fields: [resumeVersionId], references: [id], onDelete: SetNull)
+
+  @@index([runId])
+  @@index([resumeVersionId])
+}
+
+// ─── Employer: Interviews ────────────────────────────────────────────────────
+
+model RecruitInterview {
+  id            String    @id @default(cuid())
+  orgId         String
+  applicationId String
+  roundName     String
+  roundNumber   Int       @default(1)
+  mode          String    @default("VIDEO") // VIDEO | IN_PERSON | PHONE
+  location      String?
+  meetingLink   String?
+  timezone      String    @default("Asia/Kolkata")
+  proposedSlots Json?     // DateTime[]
+  scheduledAt   DateTime?
+  confirmedAt   DateTime?
+  candidateConfirmed Boolean @default(false)
+  status        String    @default("SCHEDULED") // SCHEDULED | CONFIRMED | COMPLETED | CANCELLED | RESCHEDULED
+  cancelReason  String?
+  createdById   String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  application RecruitApplication  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  panel       RecruitInterviewPanel[]
+  feedback    RecruitInterviewFeedback[]
+
+  @@index([applicationId])
+  @@index([orgId, scheduledAt])
+}
+
+model RecruitInterviewPanel {
+  id          String @id @default(cuid())
+  interviewId String
+  userId      String
+  role        String @default("INTERVIEWER") // INTERVIEWER | LEAD | OBSERVER
+
+  interview RecruitInterview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  @@unique([interviewId, userId])
+  @@index([interviewId])
+}
+
+model RecruitInterviewFeedback {
+  id            String    @id @default(cuid())
+  interviewId   String
+  userId        String
+  scorecardJson Json
+  recommendation String?  // STRONG_YES | YES | MAYBE | NO | STRONG_NO
+  comments      String?
+  submittedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  interview RecruitInterview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  @@unique([interviewId, userId])
+  @@index([interviewId])
+}
+
+// ─── Employer: Assessments ───────────────────────────────────────────────────
+
+model RecruitAssessment {
+  id            String    @id @default(cuid())
+  orgId         String
+  applicationId String
+  name          String
+  type          String    @default("WRITTEN") // WRITTEN | CODING | EXTERNAL | ASSIGNMENT
+  instructions  String?
+  passThreshold Float?
+  dueDate       DateTime? @db.Date
+  externalRef   String?
+  createdById   String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  application RecruitApplication      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  attempts    RecruitAssessmentAttempt[]
+
+  @@index([applicationId])
+  @@index([orgId])
+}
+
+model RecruitAssessmentAttempt {
+  id           String    @id @default(cuid())
+  assessmentId String
+  status       String    @default("PENDING") // PENDING | IN_PROGRESS | SUBMITTED | EVALUATED | EXPIRED
+  score        Float?
+  notes        String?
+  attachments  Json?
+  evaluatorId  String?
+  startedAt    DateTime?
+  submittedAt  DateTime?
+  evaluatedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  assessment RecruitAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId])
+}
+
+// ─── Employer: Offers ────────────────────────────────────────────────────────
+
+model RecruitOffer {
+  id                  String    @id @default(cuid())
+  orgId               String
+  applicationId       String
+  offerNumber         String
+  status              String    @default("DRAFT")
+  // DRAFT | PENDING_APPROVAL | APPROVED | SENT | VIEWED | ACCEPTED | DECLINED | EXPIRED | WITHDRAWN | REVISED
+  compensationJson    Json      // {basic, hra, allowances, gross, ctc, currency}
+  proposedJoiningDate DateTime? @db.Date
+  validUntil          DateTime? @db.Date
+  conditions          String?
+  approvalFlowJson    Json?
+  candidateAccessToken String?  @unique
+  candidateTokenExpiry DateTime?
+  pdfKey              String?
+  docxKey             String?
+  revisionOf          String?
+  createdById         String
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  application RecruitApplication  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  approvals   RecruitOfferApproval[]
+
+  @@unique([orgId, offerNumber])
+  @@index([applicationId])
+  @@index([candidateAccessToken])
+  @@index([orgId])
+}
+
+model RecruitOfferApproval {
+  id         String    @id @default(cuid())
+  offerId    String
+  approverId String
+  status     String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  note       String?
+  decidedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  offer RecruitOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@index([offerId])
+}
+
+// ─── Shared Employer: Notes, Tags, Attachments ───────────────────────────────
+
+model RecruitNote {
+  id            String   @id @default(cuid())
+  orgId         String
+  candidateId   String?
+  applicationId String?
+  body          String
+  isConfidential Boolean  @default(false)
+  createdById   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  candidate   RecruitCandidate?   @relation("CandidateNotes", fields: [candidateId], references: [id], onDelete: SetNull)
+  application RecruitApplication? @relation("ApplicationNotes", fields: [applicationId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, candidateId])
+  @@index([orgId, applicationId])
+}
+
+model RecruitTag {
+  id          String   @id @default(cuid())
+  orgId       String
+  candidateId String?
+  label       String
+  color       String?
+  createdById String
+  createdAt   DateTime @default(now())
+
+  candidate RecruitCandidate? @relation("CandidateTags", fields: [candidateId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, candidateId])
+}
+
+model RecruitAttachment {
+  id            String   @id @default(cuid())
+  orgId         String
+  candidateId   String?
+  applicationId String?
+  offerId       String?
+  fileKey       String
+  fileName      String
+  mimeType      String
+  sizeBytes     Int
+  uploadedById  String
+  uploadedAt    DateTime @default(now())
+
+  @@index([orgId, candidateId])
+  @@index([orgId, applicationId])
+}
+
+// ─── Employer: Automation ────────────────────────────────────────────────────
+
+model RecruitAutomationRun {
+  id           String    @id @default(cuid())
+  orgId        String
+  trigger      String    // MANUAL | SCHEDULE | INTAKE
+  triggeredById String?
+  status       String    @default("QUEUED") // QUEUED | RUNNING | PARTIALLY_COMPLETED | COMPLETED | FAILED | CANCELLED | TIMED_OUT
+  totalItems   Int       @default(0)
+  doneItems    Int       @default(0)
+  failedItems  Int       @default(0)
+  startedAt    DateTime?
+  completedAt  DateTime?
+  errorSummary String?
+  createdAt    DateTime  @default(now())
+
+  org   Organisation               @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  items RecruitAutomationRunItem[]
+
+  @@index([orgId, createdAt])
+}
+
+model RecruitAutomationRunItem {
+  id            String   @id @default(cuid())
+  runId         String
+  applicationId String
+  status        String   @default("QUEUED") // QUEUED | RUNNING | COMPLETED | FAILED | SKIPPED
+  errorMessage  String?
+  retryCount    Int      @default(0)
+  processedAt   DateTime?
+  createdAt     DateTime @default(now())
+
+  run RecruitAutomationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([applicationId])
+}
+
+// ─── Employer: Handoff Package (read-only preview) ───────────────────────────
+
+model RecruitHandoffPackage {
+  id            String   @id @default(cuid())
+  orgId         String
+  applicationId String   @unique
+  candidateSnapshot Json // confirmed candidate data at time of hire
+  offerSnapshot     Json // accepted offer details
+  documentsJson     Json // file refs
+  sourceIds         Json // original source IDs
+  generatedAt       DateTime @default(now())
+  generatedById     String
+
+  @@index([orgId])
+}
+
+// ─── Employer: Audit Events ──────────────────────────────────────────────────
+
+model RecruitAuditEvent {
+  id            String   @id @default(cuid())
+  orgId         String
+  actorId       String
+  action        String   // e.g. recruit.candidate.created, recruit.application.stage_changed
+  entityType    String
+  entityId      String
+  correlationId String?
+  changedFields Json?
+  reason        String?
+  source        String?  // UI | API | AUTOMATION | SYSTEM
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, createdAt])
+  @@index([orgId, entityType, entityId])
+  @@index([actorId])
+}
+
+// ─── Job Seeker Workspace (user-private) ─────────────────────────────────────
+
+model RecruitJobSeekerProfile {
+  id                   String   @id @default(cuid())
+  ownerId              String   @unique
+  preferredRoles       String[] @default([])
+  preferredIndustries  String[] @default([])
+  preferredLocations   String[] @default([])
+  workplacePreference  String   @default("ANY") // REMOTE | HYBRID | ONSITE | ANY
+  employmentTypes      String[] @default([])
+  seniority            String?
+  totalExpYears        Float?
+  skills               String[] @default([])
+  workAuthorization    String?
+  noticePeriodDays     Int?
+  compensationMin      Float?
+  compensationMax      Float?
+  compensationCcy      String   @default("INR")
+  relocationOpen       Boolean  @default(false)
+  excludedCompanies    String[] @default([])
+  jobKeywords          String[] @default([])
+  alertsEnabled        Boolean  @default(true)
+  alertFrequency       String   @default("WEEKLY") // DAILY | WEEKLY | INSTANT
+  profileCompleteness  Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  owner          User                      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  searchProfiles RecruitJobSearchProfile[]
+  baseResumes    RecruitJobSeekerResume[]
+  savedJobs      RecruitSavedJob[]
+  applications   RecruitJobSeekerApplication[]
+  conversations  RecruitCareerConversation[]
+  alerts         RecruitJobAlert[]
+
+  @@index([ownerId])
+}
+
+model RecruitJobSearchProfile {
+  id              String  @id @default(cuid())
+  profileId       String
+  name            String
+  keywords        String[] @default([])
+  locations       String[] @default([])
+  workplaceTypes  String[] @default([])
+  employmentTypes String[] @default([])
+  minSalary       Float?
+  maxSalary       Float?
+  resultLimit     Int     @default(20)
+  minMatchScore   Float   @default(60)
+  enabledProviders String[] @default([])
+  isDefault       Boolean @default(false)
+  lastRunAt       DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  jsProfile  RecruitJobSeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  jobMatches RecruitJobMatch[]
+  alerts     RecruitJobAlert[]
+
+  @@index([profileId])
+}
+
+model RecruitJobListing {
+  id              String   @id @default(cuid())
+  ownerId         String
+  source          String   // INTERNAL | MANUAL | PROVIDER_NAME
+  externalId      String?
+  canonicalUrl    String?
+  title           String
+  company         String
+  location        String?
+  workplaceType   String?
+  employmentType  String?
+  seniority       String?
+  description     String?
+  salaryMin       Float?
+  salaryMax       Float?
+  salaryCcy       String?
+  postedAt        DateTime?
+  expiresAt       DateTime?
+  fetchedAt       DateTime @default(now())
+  rawProvenance   Json?
+  isDismissed     Boolean  @default(false)
+  isExpired       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  owner    User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  matches  RecruitJobMatch[]
+  savedBy  RecruitSavedJob[]
+
+  @@unique([ownerId, source, externalId])
+  @@index([ownerId])
+  @@index([ownerId, isDismissed, isExpired])
+}
+
+model RecruitSavedJob {
+  id        String   @id @default(cuid())
+  profileId String
+  listingId String
+  savedAt   DateTime @default(now())
+  notes     String?
+
+  jsProfile RecruitJobSeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  listing   RecruitJobListing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, listingId])
+  @@index([profileId])
+}
+
+model RecruitJobMatch {
+  id                   String   @id @default(cuid())
+  ownerId              String
+  searchProfileId      String
+  listingId            String
+  overallScore         Float
+  mandatorySkillMatch  Json
+  missingSkills        Json
+  experienceAlignment  String?
+  locationAlignment    String?
+  compensationAlignment String?
+  evidence             Json?
+  uncertainties        Json?
+  suggestedQuestions   Json?
+  aiProvider           String?
+  aiModel              String?
+  promptVersion        String?
+  createdAt            DateTime @default(now())
+
+  owner         User                    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  searchProfile RecruitJobSearchProfile @relation(fields: [searchProfileId], references: [id], onDelete: Cascade)
+  listing       RecruitJobListing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([searchProfileId, listingId])
+  @@index([ownerId])
+  @@index([searchProfileId])
+}
+
+model RecruitJobSeekerResume {
+  id               String    @id @default(cuid())
+  ownerId          String
+  profileId        String
+  name             String
+  fileKey          String
+  fileName         String
+  mimeType         String
+  sizeBytes        Int
+  resumeHash       String?
+  isBase           Boolean   @default(false)
+  masterProfileJson Json?
+  version          Int       @default(1)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  owner      User                    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  jsProfile  RecruitJobSeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  tailored   RecruitTailoredResume[]
+  covers     RecruitCoverLetter[]
+
+  @@index([profileId, isBase])
+  @@index([ownerId])
+}
+
+model RecruitTailoredResume {
+  id               String    @id @default(cuid())
+  ownerId          String
+  baseResumeId     String
+  targetListingId  String?
+  targetJobTitle   String?
+  targetCompany    String?
+  diffJson         Json?
+  unsupportedClaims Json?
+  ownerApproved    Boolean   @default(false)
+  approvedAt       DateTime?
+  docxKey          String?
+  pdfKey           String?
+  aiProvider       String?
+  aiModel          String?
+  promptVersion    String?
+  inputVersion     String?
+  generatedAt      DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  owner      User                   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  baseResume RecruitJobSeekerResume @relation(fields: [baseResumeId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@index([baseResumeId])
+}
+
+model RecruitCoverLetter {
+  id              String    @id @default(cuid())
+  ownerId         String
+  baseResumeId    String
+  targetListingId String?
+  targetJobTitle  String?
+  targetCompany   String?
+  tone            String    @default("PROFESSIONAL") // PROFESSIONAL | ENTHUSIASTIC | CONCISE
+  lengthPref      String    @default("MEDIUM") // SHORT | MEDIUM | LONG
+  contentText     String?
+  docxKey         String?
+  pdfKey          String?
+  version         Int       @default(1)
+  aiProvider      String?
+  aiModel         String?
+  promptVersion   String?
+  ownerApproved   Boolean   @default(false)
+  approvedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  owner      User                   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  baseResume RecruitJobSeekerResume @relation(fields: [baseResumeId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@index([baseResumeId])
+}
+
+model RecruitJobSeekerApplication {
+  id               String    @id @default(cuid())
+  ownerId          String
+  profileId        String
+  listingId        String?
+  internalJobId    String?
+  jobTitle         String
+  company          String
+  source           String?
+  applicationUrl   String?
+  resumeVersionId  String?
+  coverLetterId    String?
+  appliedAt        DateTime?
+  privateStatus    String    @default("INTERESTED")
+  // INTERESTED | SAVED | PREPARING | APPLIED | SCREENING | ASSESSMENT | INTERVIEW | OFFER | ACCEPTED | REJECTED | WITHDRAWN | NO_RESPONSE | ARCHIVED
+  publicStatus     String?   // allow-listed employer-visible status
+  followUpDate     DateTime? @db.Date
+  contactPeople    Json?
+  compensationNotes String?
+  ownerNotes       String?
+  submissionConsentGiven Boolean @default(false)
+  submissionConsentAt    DateTime?
+  consentSnapshotJson    Json?    // immutable snapshot of what was submitted
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  owner     User                    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  jsProfile RecruitJobSeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, privateStatus])
+  @@index([profileId])
+}
+
+model RecruitJobAlert {
+  id              String    @id @default(cuid())
+  ownerId         String
+  profileId       String
+  searchProfileId String
+  name            String
+  frequency       String    @default("WEEKLY") // DAILY | WEEKLY | CUSTOM
+  deliveryTime    String    @default("09:00")
+  timezone        String    @default("Asia/Kolkata")
+  maxJobs         Int       @default(10)
+  minMatchScore   Float     @default(60)
+  includeSources  String[]  @default([])
+  excludeSources  String[]  @default([])
+  autoTailorResume Boolean  @default(false)
+  emailEnabled    Boolean   @default(true)
+  inAppEnabled    Boolean   @default(true)
+  isActive        Boolean   @default(true)
+  lastDeliveredAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  owner         User                    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  jsProfile     RecruitJobSeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  searchProfile RecruitJobSearchProfile @relation(fields: [searchProfileId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, isActive])
+  @@index([frequency, lastDeliveredAt])
+}
+
+model RecruitCareerConversation {
+  id         String   @id @default(cuid())
+  ownerId    String
+  profileId  String
+  title      String?
+  deletedAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  owner     User                    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  jsProfile RecruitJobSeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  messages  RecruitCareerMessage[]
+
+  @@index([ownerId])
+  @@index([profileId])
+}
+
+model RecruitCareerMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           String   // USER | ASSISTANT
+  content        String
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  conversation RecruitCareerConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+model RecruitInterviewPrep {
+  id              String   @id @default(cuid())
+  ownerId         String
+  profileId       String
+  targetListingId String?
+  targetJobTitle  String?
+  targetCompany   String?
+  prepPackJson    Json     // {questions, outlines, starPrompts, revisionList, questionsToAsk, companyChecklist, notes}
+  aiProvider      String?
+  aiModel         String?
+  promptVersion   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+}
+
+model RecruitPrivateShare {
+  id           String    @id @default(cuid())
+  ownerId      String
+  artifactType String    // RESUME | COVER_LETTER | TAILORED_RESUME | INTERVIEW_PREP
+  artifactId   String
+  recipientNote String?
+  purpose      String?
+  token        String    @unique
+  expiresAt    DateTime
+  accessCount  Int       @default(0)
+  revokedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+// Missing back-relations on User for Job Seeker models
+// (declared via @relation name on the owner side above)
+
+// ─── Google Chat Integration ──────────────────────────────────────────────────
+
+model GoogleChatUserLink {
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  orgId                 String?
+  googleUserId          String    @unique
+  googleEmail           String?
+  googleDisplayName     String?
+  googleWorkspaceDomain String?
+  linkStatus            String    @default("active")
+  verifiedAt            DateTime?
+  linkedAt              DateTime  @default(now())
+  lastUsedAt            DateTime?
+  revokedAt             DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([googleEmail])
+  @@index([linkStatus])
+}
+
+model GoogleChatSpace {
+  id                  String    @id @default(cuid())
+  orgId               String?
+  spaceResourceName   String    @unique
+  displayName         String?
+  spaceType           String    @default("SPACE")
+  botMember           Boolean   @default(true)
+  linkedByUserId      String?
+  linkedRecordType    String?
+  linkedRecordId      String?
+  linkedRecordLabel   String?
+  notificationProfile Json?
+  quietHoursStart     String?
+  quietHoursEnd       String?
+  timezone            String    @default("Asia/Kolkata")
+  threadKeys          Json?
+  linkStatus          String    @default("active")
+  lastVerifiedAt      DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  org           Organisation?           @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  subscriptions GoogleChatSubscription[]
+  deliveries    GoogleChatDelivery[]
+
+  @@index([orgId])
+  @@index([linkedRecordType, linkedRecordId])
+  @@index([linkStatus])
+}
+
+model GoogleChatSubscription {
+  id          String   @id @default(cuid())
+  orgId       String?
+  userId      String?
+  spaceId     String?
+  eventKinds  String[]
+  channel     String   @default("DM")
+  digestMode  String   @default("immediate")
+  digestTime  String?
+  minPriority String   @default("normal")
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  org   Organisation?    @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  space GoogleChatSpace? @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([spaceId])
+  @@index([enabled])
+}
+
+model GoogleChatDelivery {
+  id                  String    @id @default(cuid())
+  orgId               String?
+  targetSpaceId       String?
+  targetUserId        String?
+  spaceResourceName   String?
+  notificationId      String?
+  eventKind           String?
+  messageResourceName String?
+  threadKey           String?
+  threadResourceName  String?
+  idempotencyKey      String    @unique
+  status              String    @default("queued")
+  attempts            Int       @default(0)
+  maxAttempts         Int       @default(3)
+  lastError           String?
+  nextAttemptAt       DateTime?
+  sentAt              DateTime?
+  payload             Json?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  org   Organisation?    @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  space GoogleChatSpace? @relation(fields: [targetSpaceId], references: [id], onDelete: SetNull)
+
+  @@index([status, nextAttemptAt])
+  @@index([orgId])
+  @@index([targetUserId])
+  @@index([notificationId])
+}
+
+model GoogleChatInteractionEvent {
+  id                String   @id @default(cuid())
+  googleEventId     String   @unique
+  spaceResourceName String
+  userResourceName  String?
+  eventType         String
+  processedAt       DateTime @default(now())
+
+  @@index([processedAt])
+}
+
+model GoogleChatLinkToken {
+  id                String    @id @default(cuid())
+  token             String    @unique
+  googleUserId      String
+  googleEmail       String?
+  googleDisplayName String?
+  spaceResourceName String?
+  orgId             String?
+  expectedDomain    String?
+  used              Boolean   @default(false)
+  usedAt            DateTime?
+  expiresAt         DateTime
+  createdAt         DateTime  @default(now())
+
+  @@index([expiresAt])
+  @@index([googleUserId])
+}
 

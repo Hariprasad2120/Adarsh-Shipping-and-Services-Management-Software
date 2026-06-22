@@ -1,6 +1,0 @@
-{
-  "name": "Rubric & Criteria Builder",
-  "description": "An interactive workspace to design, rearrange, and optimize evaluation criteria, weights, custom questions, and test them with real-time scoring previews.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

@@ -331,7 +331,7 @@ export function QuoteDetailsPage({
           <div className="p-4 sm:p-6">
             <div className="grid gap-6">
               {/* Approval action bar */}
-              <section className="rounded-3xl border border-[#dfe6f3] bg-white px-5 py-4 shadow-[0_12px_36px_rgba(15,23,42,0.05)]">
+              <section className="ds-shell-lg border border-[#dfe6f3] bg-white px-5 py-4 shadow-[0_12px_36px_rgba(15,23,42,0.05)]">
                 <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--color-on-surface-variant)" }}>
                   Workflow
                 </p>
@@ -344,7 +344,7 @@ export function QuoteDetailsPage({
                 />
               </section>
 
-              <section className="overflow-hidden rounded-3xl border border-[#dfe6f3] bg-white shadow-[0_12px_36px_rgba(15,23,42,0.05)]">
+              <section className="ds-shell-lg overflow-hidden border border-[#dfe6f3] bg-white shadow-[0_12px_36px_rgba(15,23,42,0.05)]">
                 <div className="border-b border-[#eef2f7] px-5 pt-4">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-center gap-8">
@@ -693,7 +693,7 @@ function QuotePdfPreview({ quote, displayCurrency }: { quote: QuoteDetailRecord;
 
   return (
     <div className="overflow-auto bg-[#fbfcff] p-6 sm:p-8">
-      <div className="mx-auto w-full max-w-[1120px] rounded-[28px] border border-[#dfe6f3] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-10">
+      <div className="ds-shell-lg mx-auto w-full max-w-[1120px] border border-[#dfe6f3] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-10">
         <div className="relative mx-auto max-w-[920px] border border-[#d6dde8] bg-white overflow-hidden">
           <StatusWatermark status={quote.status} />
 

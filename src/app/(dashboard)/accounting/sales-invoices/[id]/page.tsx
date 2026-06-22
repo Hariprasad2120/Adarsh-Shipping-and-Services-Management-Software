@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { getSalesInvoice } from "@/modules/accounting/service";
 import { SalesInvoiceDetailClient } from "./detail-client";
-import { ArrowLeft, ShieldAlert } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import NextLink from "next/link";
 
 interface SalesInvoiceDetailPageProps {
@@ -71,7 +71,6 @@ export default async function SalesInvoiceDetailPage({ params }: SalesInvoiceDet
         </NextLink>
         <div>
           <h2 className="text-xl font-bold text-white uppercase tracking-wider">Invoice: {invoice.invoiceNumber}</h2>
-          <span className="text-[10px] font-mono text-slate-400 block tracking-wider mt-0.5">Invoice Reference: {invoice.id}</span>
         </div>
       </div>
 

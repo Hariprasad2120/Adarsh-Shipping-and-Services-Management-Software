@@ -1,5 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { BreadcrumbLabel } from "@/components/breadcrumb-label";
 import { getNow } from "@/lib/clock";
 import { loadCaps, requirePermission } from "@/lib/rbac";
 import { toDisplayTitleCase } from "@/lib/text-case";
@@ -68,6 +69,7 @@ export default async function AssignAppraisalPage({ params }: { params: Promise<
 
   return (
     <div className="space-y-5">
+      <BreadcrumbLabel segment={employeeId} label={user.name} />
       <StartAppraisalClient
         canStartSpecial={Boolean(caps["admin.org.manage"])}
         employee={{
