@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { can, requirePermission } from "@/lib/rbac";
+import { requirePermission } from "@/lib/rbac";
 import Link from "next/link";
 import {
   FileText,
@@ -26,7 +26,6 @@ import {
   DataTableRow,
   DataTableToolbar,
 } from "@/components/data-table";
-import { JobDeleteInlineButton } from "./_components/job-delete-inline-button";
 
 export default async function ChaDashboard() {
   const session = await auth();
@@ -37,8 +36,6 @@ export default async function ChaDashboard() {
 
   // Require CHA module access
   await requirePermission(session.user.id, "cha.access");
-  const canDeleteJobs = await can(session.user.id, "cha.job.delete");
-
   // Fetch KPI data
   const [
     activeJobsCount,
@@ -219,13 +216,7 @@ export default async function ChaDashboard() {
               </div>
             </DataTableToolbar>
           {myJobs.length === 0 ? (
-            <table className="min-w-full w-full text-sm">
-              <DataTableBody>
-                <DataTableEmpty colSpan={6} message="You don't have any active job assignments yet." />
-              </DataTableBody>
-            </table>
-          ) : (
-            <table className="min-w-full w-full text-sm">
+            <>
               <DataTableHeader>
                 <tr>
                   <DataTableHead>Job Number</DataTableHead>
@@ -233,13 +224,31 @@ export default async function ChaDashboard() {
                   <DataTableHead>Job Type</DataTableHead>
                   <DataTableHead>Current Stage</DataTableHead>
                   <DataTableHead>Priority</DataTableHead>
-                  <DataTableHead className="text-right">Actions</DataTableHead>
+                </tr>
+              </DataTableHeader>
+              <DataTableBody>
+                <DataTableEmpty colSpan={5} message="You don't have any active job assignments yet." />
+              </DataTableBody>
+            </>
+          ) : (
+            <>
+              <DataTableHeader>
+                <tr>
+                  <DataTableHead>Job Number</DataTableHead>
+                  <DataTableHead>Customer</DataTableHead>
+                  <DataTableHead>Job Type</DataTableHead>
+                  <DataTableHead>Current Stage</DataTableHead>
+                  <DataTableHead>Priority</DataTableHead>
                 </tr>
               </DataTableHeader>
               <DataTableBody>
                 {myJobs.map((job) => (
                   <DataTableRow key={job.id}>
-                    <DataTableCell className="font-medium text-[#00cec4]">{job.jobNumber}</DataTableCell>
+                    <DataTableCell className="font-medium text-[#00cec4]">
+                      <Link href={`/cha/jobs/${job.id}`} className="transition-colors hover:text-[#00b5ad]">
+                        {job.jobNumber}
+                      </Link>
+                    </DataTableCell>
                     <DataTableCell>{job.customer.name}</DataTableCell>
                     <DataTableCell className="ds-label">{job.jobType.name}</DataTableCell>
                     <DataTableCell>
@@ -266,29 +275,10 @@ export default async function ChaDashboard() {
                         {job.priority}
                       </span>
                     </DataTableCell>
-                    <DataTableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {canDeleteJobs ? (
-                          <JobDeleteInlineButton
-                            jobId={job.id}
-                            jobNumber={job.jobNumber}
-                            compact
-                            disabled={job.deletionRequests.length > 0}
-                            disabledLabel={job.deletionRequests.length > 0 ? "A deletion request is already pending." : undefined}
-                          />
-                        ) : null}
-                        <Link href={`/cha/jobs/${job.id}`}>
-                          <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-xs">
-                            Open
-                            <ArrowRight className="size-3.5" />
-                          </Button>
-                        </Link>
-                      </div>
-                    </DataTableCell>
                   </DataTableRow>
                 ))}
               </DataTableBody>
-            </table>
+            </>
           )}
           </DataTable>
         </div>

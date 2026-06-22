@@ -12,6 +12,7 @@ import {
   Settings,
   Search,
 } from "lucide-react";
+import { createPortal } from "react-dom";
 import { useCaps } from "@/lib/caps-context";
 import { getVisibleSections, matchesPath } from "@/lib/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -171,7 +172,7 @@ export function AppHeader({
       </header>
 
       <AnimatePresence>
-        {showWelcome && (
+        {showWelcome && typeof document !== "undefined" && createPortal(
           <motion.div
             initial={{ y: 0 }}
             animate={{ y: 0 }}
@@ -264,7 +265,7 @@ export function AppHeader({
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.5, ease: "easeOut" }}
-                className="text-[11px] text-white/50 uppercase font-bold tracking-[0.25em] mt-2"
+                className="text-[11px] text-white/90 uppercase font-bold tracking-[0.25em] mt-2"
               >
                 Your secure workspace is ready
               </motion.p>
@@ -280,7 +281,8 @@ export function AppHeader({
               </div>
 
             </div>
-          </motion.div>
+          </motion.div>,
+          document.body
         )}
       </AnimatePresence>
     </>
