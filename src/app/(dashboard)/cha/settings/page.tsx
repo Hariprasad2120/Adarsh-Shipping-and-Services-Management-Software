@@ -56,7 +56,7 @@ export default async function ChaSettingsPage() {
   });
 
   return (
-    <main className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <div className="flex items-center justify-between border-b border-outline-variant/30 pb-4">
         <div>
           <h1 className="ds-h1 text-[#00cec4]">CHA Configuration & Settings</h1>
@@ -82,6 +82,6 @@ export default async function ChaSettingsPage() {
         jobTypes={jobTypes}
         teamGroups={teamGroups}
       />
-    </main>
+    </div>
   );
 }

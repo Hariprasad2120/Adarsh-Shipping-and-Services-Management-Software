@@ -172,7 +172,7 @@ export function ExpensesClient({
   };
 
   return (
-    <main className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-outline-variant/30 pb-4">
         <h1 className="ds-h1 text-[#00cec4] flex items-center gap-2">
@@ -521,6 +521,6 @@ export function ExpensesClient({
           })
         )}
       </div>
-    </main>
+    </div>
   );
 }

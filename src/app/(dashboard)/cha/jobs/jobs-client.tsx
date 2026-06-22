@@ -342,7 +342,7 @@ export function JobsClient({
   };
 
   return (
-    <main className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-outline-variant/30 pb-4">
         <div>
@@ -1010,6 +1010,6 @@ export function JobsClient({
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

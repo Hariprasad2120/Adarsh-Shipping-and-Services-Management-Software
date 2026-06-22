@@ -23,7 +23,7 @@ export default async function ChaReportsPage() {
   // 1. Stage Counts
   const stageCounts = await db.chaJob.groupBy({
     by: ["stage"],
-    where: { orgId },
+    where: { orgId, deletedAt: null },
     _count: { id: true },
   });
 
@@ -40,7 +40,7 @@ export default async function ChaReportsPage() {
 
   // 2. Financial Summaries
   const advances = await db.chaCustomerAdvance.findMany({
-    where: { job: { orgId } },
+    where: { job: { orgId, deletedAt: null } },
     include: { receipts: true },
   });
 
@@ -55,7 +55,7 @@ export default async function ChaReportsPage() {
   );
 
   const expenses = await db.chaExpensePayment.findMany({
-    where: { request: { orgId } },
+    where: { request: { orgId, job: { deletedAt: null } } },
   });
   const totalDisbursedExpense = expenses.reduce(
     (sum, e) => sum + Number(e.amountPaid || 0),
@@ -65,7 +65,7 @@ export default async function ChaReportsPage() {
   // 3. Delayed Filings
   const delayedFilings = await db.chaFiling.findMany({
     where: {
-      job: { orgId },
+      job: { orgId, deletedAt: null },
       status: "FILED",
       delayReason: { not: null },
     },
@@ -99,7 +99,7 @@ export default async function ChaReportsPage() {
   }));
 
   return (
-    <main className="max-w-7xl mx-auto p-6 space-y-8">
+    <div className="space-y-8">
       {/* Header */}
       <div className="border-b border-outline-variant/30 pb-4">
         <h1 className="ds-h1 text-[#00cec4] flex items-center gap-2">
@@ -268,6 +268,6 @@ export default async function ChaReportsPage() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

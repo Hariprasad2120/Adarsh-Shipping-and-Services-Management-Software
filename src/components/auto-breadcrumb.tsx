@@ -114,7 +114,7 @@ export function AutoBreadcrumb() {
   });
 
   return (
-    <div className="w-full shrink-0 bg-background px-6 py-2 lg:px-8 xl:px-10">
+    <div className="w-full shrink-0 px-6 py-2 lg:px-8 xl:px-10">
       <Breadcrumbs items={items} />
     </div>
   );
