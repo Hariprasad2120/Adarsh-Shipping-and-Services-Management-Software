@@ -69,6 +69,8 @@ pnpm-lock.yaml
 
 # sensitive data output
 /import-output/
+/public/import-output/
+
 
 # Google service account keys
 *.json
