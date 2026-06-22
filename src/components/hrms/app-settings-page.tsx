@@ -3,7 +3,7 @@
 import React from "react";
 import { SettingsServices } from "@/components/hrms/settings-services";
 
-export default function HrmsSettingsPage() {
+export function HrmsAppSettingsPage() {
   const handleFetchServices = async () => {
     const res = await fetch("/api/hrms/settings/services");
     const json = await res.json();

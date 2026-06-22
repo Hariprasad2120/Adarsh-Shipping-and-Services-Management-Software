@@ -2,6 +2,7 @@ import { NotificationProvider } from "@/components/notifications/notification-pr
 import { Sidebar } from "@/components/sidebar";
 import { MainShell } from "@/components/main-shell";
 import { TodoReminderAgent } from "@/components/todo/todo-reminder-agent";
+import { SessionSync } from "@/components/session-sync";
 import { PageAnimator } from "@/components/page-animator";
 import { auth } from "@/lib/auth";
 import { CapsProvider } from "@/lib/caps-context";
@@ -19,11 +20,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <CapsProvider value={caps}>
       <NotificationProvider>
         <TodoReminderAgent />
+        <SessionSync />
         <div className="flex min-h-screen overflow-x-clip bg-background text-foreground">
           <Sidebar caps={caps} userName={session.user.name} />
           <MainShell>
             <PageAnimator>
-              <DashboardShell userName={session.user.name} sessionToken={session.user.id}>
+              <DashboardShell userName={session.user.name} sessionToken={session.user.sessionNonce}>
                 {children}
               </DashboardShell>
             </PageAnimator>

@@ -38,7 +38,13 @@ export function HrmsSidebar({
   onChangeModule,
   permissions,
 }: HrmsSidebarProps) {
-  const isAdmin = permissions.includes("hrms.peopleplus.admin") || permissions.includes("admin.org.manage");
+  const isAdmin =
+    permissions.includes("hrms.peopleplus.admin") ||
+    permissions.includes("admin.org.manage");
+  const canManageUsers =
+    isAdmin || permissions.includes("hrms.employee.deactivate");
+  const canManageSettings =
+    isAdmin || permissions.includes("hrms.settings.manage");
 
   const items: SidebarItem[] = [
     { key: "home", label: "Home", icon: <Home className="size-5" />, visible: true },
@@ -130,7 +136,7 @@ export function HrmsSidebar({
         )}
 
         {/* Users / Account Setup */}
-        {isAdmin && (
+        {canManageUsers && (
           <button
             type="button"
             onClick={() => onChangeModule("generalservice")}
@@ -147,7 +153,7 @@ export function HrmsSidebar({
         )}
 
         {/* Settings */}
-        {isAdmin && (
+        {canManageSettings && (
           <button
             type="button"
             onClick={() => onChangeModule("okr")}

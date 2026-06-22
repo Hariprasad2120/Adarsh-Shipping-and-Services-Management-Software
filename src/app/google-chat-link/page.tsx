@@ -19,6 +19,9 @@ import { fonts } from "@/lib/design-tokens";
 
 type Phase = "loading" | "confirm" | "submitting" | "success" | "error";
 type TokenInfo = { googleEmail?: string; googleDisplayName?: string } | null;
+type LinkErrorCode =
+  | "GOOGLE_ACCOUNT_ALREADY_LINKED"
+  | "USER_ALREADY_LINKED_OTHER_GOOGLE";
 
 const STATUS_COPY = [
   "Verifying secure handoff...",
@@ -106,6 +109,8 @@ function LinkPageContent() {
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [errorMsg, setErrorMsg] = useState("");
+  const [errorCode, setErrorCode] = useState<LinkErrorCode | null>(null);
+  const [canReplace, setCanReplace] = useState(false);
   const [tokenInfo, setTokenInfo] = useState<TokenInfo>(null);
   const [attempt, setAttempt] = useState(0);
   const [statusIndex, setStatusIndex] = useState(0);
@@ -131,6 +136,8 @@ function LinkPageContent() {
     async function verifyToken() {
       setPhase("loading");
       setErrorMsg("");
+      setErrorCode(null);
+      setCanReplace(false);
 
       try {
         const response = await fetch(
@@ -138,7 +145,6 @@ function LinkPageContent() {
           {
             cache: "no-store",
             signal: controller.signal,
-            headers: { "ngrok-skip-browser-warning": "true" },
           }
         );
 
@@ -164,7 +170,7 @@ function LinkPageContent() {
       } catch (error) {
         setErrorMsg(
           controller.signal.aborted
-            ? "Verification took too long. The ngrok tunnel or local app may be asleep."
+            ? "Verification took too long. The hosted app or database may be temporarily slow."
             : error instanceof Error
               ? error.message
               : "Could not verify the link token."
@@ -188,10 +194,16 @@ function LinkPageContent() {
   )}`;
 
   const handleConfirm = async () => {
+    await submitLink(false);
+  };
+
+  const submitLink = async (replaceExisting: boolean) => {
     if (!token) return;
 
     setPhase("submitting");
     setErrorMsg("");
+    setErrorCode(null);
+    setCanReplace(false);
 
     try {
       const response = await fetch("/api/google-chat/link", {
@@ -199,15 +211,16 @@ function LinkPageContent() {
         cache: "no-store",
         headers: {
           "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true",
         },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token, replaceExisting }),
       });
 
       const payload = await readJsonSafe<{
         success?: boolean;
         error?: string;
         loginUrl?: string;
+        code?: LinkErrorCode;
+        canReplace?: boolean;
       }>(response);
 
       if (response.status === 401) {
@@ -216,6 +229,8 @@ function LinkPageContent() {
       }
 
       if (!response.ok || !payload?.success) {
+        setErrorCode(payload?.code ?? null);
+        setCanReplace(payload?.canReplace === true);
         throw new Error(payload?.error ?? "Could not complete account linking.");
       }
 
@@ -475,6 +490,15 @@ function LinkPageContent() {
                           <RefreshCw size={16} />
                           Retry Verification
                         </Button>
+                        {errorCode === "USER_ALREADY_LINKED_OTHER_GOOGLE" && canReplace ? (
+                          <Button
+                            size="lg"
+                            onClick={() => void submitLink(true)}
+                            className="h-13 w-full rounded-[16px] bg-[#00cec4] text-[#0f1319] hover:bg-[#00b8af]"
+                          >
+                            Replace Existing Google Link
+                          </Button>
+                        ) : null}
                         <Button
                           variant="outline"
                           size="lg"

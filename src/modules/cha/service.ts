@@ -466,6 +466,27 @@ export async function listJobs(
   return { total, items, page, pageSize, totalPages: Math.ceil(total / pageSize) };
 }
 
+async function advanceToChecklistPreparationIfDocumentGatePassed(jobId: string) {
+  const [job, gate] = await Promise.all([
+    db.chaJob.findUnique({
+      where: { id: jobId },
+      select: { id: true, stage: true },
+    }),
+    verifyDocumentGate(jobId),
+  ]);
+
+  if (!job || !gate.passed || job.stage !== "DOCUMENT_COLLECTION") {
+    return false;
+  }
+
+  await db.chaJob.update({
+    where: { id: jobId },
+    data: { stage: "CHECKLIST_PREPARATION" },
+  });
+
+  return true;
+}
+
 // Upload a version for a document requirement
 export async function uploadDocumentVersion(
   actorId: string,
@@ -528,6 +549,21 @@ export async function uploadDocumentVersion(
     newState: "UPLOADED",
     remarks: `Uploaded document: ${fileData.fileName}`,
   });
+
+  const advancedToChecklistPreparation = await advanceToChecklistPreparationIfDocumentGatePassed(jobId);
+  if (advancedToChecklistPreparation) {
+    await logChaAudit({
+      orgId,
+      jobId,
+      entityType: "ChaJob",
+      entityId: jobId,
+      event: "DOCUMENT_GATE_COMPLETED",
+      actorId,
+      prevState: "DOCUMENT_COLLECTION",
+      newState: "CHECKLIST_PREPARATION",
+      remarks: "All mandatory documents are now uploaded or exempted. Checklist preparation unlocked automatically.",
+    });
+  }
 
   // If a document changes after checklist approval, flag alert
   const job = await db.chaJob.findUniqueOrThrow({
@@ -596,6 +632,21 @@ export async function declareDocumentException(
     newState: "NOT_AVAILABLE",
     remarks: `Declared unavailable: ${reason}`,
   });
+
+  const advancedToChecklistPreparation = await advanceToChecklistPreparationIfDocumentGatePassed(jobId);
+  if (advancedToChecklistPreparation) {
+    await logChaAudit({
+      orgId,
+      jobId,
+      entityType: "ChaJob",
+      entityId: jobId,
+      event: "DOCUMENT_GATE_COMPLETED",
+      actorId,
+      prevState: "DOCUMENT_COLLECTION",
+      newState: "CHECKLIST_PREPARATION",
+      remarks: "All mandatory documents are now uploaded or exempted. Checklist preparation unlocked automatically.",
+    });
+  }
 
   return result;
 }

@@ -53,8 +53,30 @@ export function AppHeader({
 
   useEffect(() => {
     const storageKey = `welcome-toast:${sessionToken}`;
+
+    // Clean up stale welcome keys from previous sessions
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < window.sessionStorage.length; i++) {
+        const key = window.sessionStorage.key(i);
+        if (key && key.startsWith("welcome-toast:") && key !== storageKey) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((k) => window.sessionStorage.removeItem(k));
+    } catch {
+      // sessionStorage unavailable
+    }
+
     if (window.sessionStorage.getItem(storageKey)) return;
     window.sessionStorage.setItem(storageKey, "shown");
+
+    // Respect prefers-reduced-motion
+    const prefersReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    if (prefersReduced) return;
+
     setShowWelcome(true);
 
     const timer = setTimeout(() => {

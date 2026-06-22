@@ -685,29 +685,31 @@ export function JobWorkspaceClient({
   };
 
   return (
-    <main className="max-w-7xl mx-auto p-6 space-y-8">
+    <main className="mx-auto w-full max-w-7xl space-y-8 overflow-x-hidden">
       {/* Job Main Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/30 pb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant text-[#00cec4]">
+      <div className="grid gap-4 border-b border-outline-variant/30 pb-6 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
+        <div className="min-w-0 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-lg border border-outline-variant bg-surface-container-high px-2 py-1 text-xs font-semibold text-[var(--color-primary)]">
               {job.jobType.name}
             </span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-surface-container-low text-on-surface-variant font-mono ds-numeric">
+            <span className="rounded-lg bg-surface-container-low px-2 py-1 text-xs font-semibold text-on-surface-variant ds-numeric">
               {job.branch.name}
             </span>
           </div>
-          <h1 className="ds-h1 text-[#00cec4] mt-2 flex items-center gap-3">
-            {job.jobNumber}
-            <span className="text-sm font-normal text-on-surface-variant">| {job.title}</span>
-          </h1>
-          <p className="text-xs text-on-surface-variant mt-1">
+          <div className="space-y-2">
+            <h1 className="ds-h1 break-words text-[var(--color-primary)]">{job.jobNumber}</h1>
+            <p className="max-w-4xl text-sm text-on-surface">{job.title}</p>
+          </div>
+          <p className="text-xs text-on-surface-variant">
             Customer: <strong className="text-on-surface">{job.customer.name}</strong> • Owner:{" "}
             <strong className="text-on-surface">{job.primaryOwner.name}</strong>
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+        <div className="grid gap-3 rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 xl:w-[18rem]">
+          <div className="rounded-xl border border-outline-variant/30 bg-surface p-3">
+            <span className="ds-label block text-on-surface-variant">Workflow Stage</span>
+            <span className={`mt-2 inline-flex min-h-9 w-full items-center justify-center rounded-lg border px-3 py-2 text-center text-xs font-bold uppercase tracking-wider ${
             job.stage === "FILING"
               ? "bg-blue-50 text-blue-700 border border-blue-200"
               : job.stage === "CHECKLIST_APPROVAL"
@@ -716,28 +718,32 @@ export function JobWorkspaceClient({
               ? "bg-green-50 text-green-700 border border-green-200"
               : "bg-surface-container-high text-on-surface border border-outline-variant"
           }`}>
-            Stage: {job.stage.replace(/_/g, " ")}
-          </span>
-          <span className={`font-semibold text-xs border rounded px-3 py-1 bg-surface ${
-            job.status === "ACTIVE" ? "text-green-500 border-green-200" : "text-orange-400 border-orange-200"
-          }`}>
-            Status: {job.status}
-          </span>
+              {job.stage.replace(/_/g, " ")}
+            </span>
+          </div>
+          <div className="rounded-xl border border-outline-variant/30 bg-surface p-3">
+            <span className="ds-label block text-on-surface-variant">Job Status</span>
+            <span className={`mt-2 inline-flex min-h-9 w-full items-center justify-center rounded-lg border px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider ${
+              job.status === "ACTIVE" ? "border-green-200 text-green-500" : "border-orange-200 text-orange-400"
+            }`}>
+              {job.status}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* visual Stepper Display */}
-      <div className="relative bg-surface p-6 rounded-xl border border-outline-variant/30 shadow-sm">
-        <div className="flex items-center justify-between relative z-10">
+      <div className="relative overflow-hidden rounded-xl border border-outline-variant/30 bg-surface p-6 shadow-sm">
+        <div className="relative z-10 grid grid-cols-5 gap-2 md:gap-4">
           {STAGES.map((s, index) => {
             const isCompleted = index < activeStepIndex;
             const isActive = index === activeStepIndex;
             return (
-              <div key={s.key} className="flex flex-col items-center flex-1 relative text-center">
+              <div key={s.key} className="relative flex min-w-0 flex-col items-center text-center">
                 {/* Connector line */}
                 {index > 0 && (
                   <div
-                    className={`absolute right-1/2 left-[-50%] top-4 h-[2px] z-[-1] ${
+                    className={`absolute left-[-50%] right-1/2 top-4 z-[-1] h-[2px] ${
                       index <= activeStepIndex ? "bg-[#00cec4]" : "bg-outline-variant/40"
                     }`}
                   />
@@ -754,7 +760,7 @@ export function JobWorkspaceClient({
                 >
                   {isCompleted ? <Check size={18} /> : <span>{index + 1}</span>}
                 </div>
-                <span className={`text-[10px] uppercase font-bold tracking-wider mt-2 block ${
+                <span className={`mt-2 block min-h-8 text-[10px] font-bold uppercase tracking-wider ${
                   isActive ? "text-[#00cec4]" : "text-on-surface-variant"
                 }`}>
                   {s.label}
@@ -766,63 +772,63 @@ export function JobWorkspaceClient({
       </div>
 
       {/* Tab Controls */}
-      <div className="flex border-b border-outline-variant/30 gap-1 overflow-x-auto">
+      <div className="grid grid-cols-2 gap-1 rounded-xl border border-outline-variant/30 bg-surface-container-low p-1 lg:grid-cols-6">
         <button
           onClick={() => setActiveTab("docs")}
-          className={`px-4 py-2 text-xs uppercase tracking-wider font-bold border-b-2 transition-all ${
+          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
             activeTab === "docs"
-              ? "border-[#00cec4] text-[#00cec4]"
-              : "border-transparent text-on-surface-variant hover:text-on-surface"
+              ? "bg-surface text-[#00cec4] shadow-sm"
+              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
           }`}
         >
           Documents ({job.documentRequirements.length})
         </button>
         <button
           onClick={() => setActiveTab("checklist")}
-          className={`px-4 py-2 text-xs uppercase tracking-wider font-bold border-b-2 transition-all ${
+          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
             activeTab === "checklist"
-              ? "border-[#00cec4] text-[#00cec4]"
-              : "border-transparent text-on-surface-variant hover:text-on-surface"
+              ? "bg-surface text-[#00cec4] shadow-sm"
+              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
           }`}
         >
           Checklist
         </button>
         <button
           onClick={() => setActiveTab("filing")}
-          className={`px-4 py-2 text-xs uppercase tracking-wider font-bold border-b-2 transition-all ${
+          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
             activeTab === "filing"
-              ? "border-[#00cec4] text-[#00cec4]"
-              : "border-transparent text-on-surface-variant hover:text-on-surface"
+              ? "bg-surface text-[#00cec4] shadow-sm"
+              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
           }`}
         >
           Filing Record
         </button>
         <button
           onClick={() => setActiveTab("advances")}
-          className={`px-4 py-2 text-xs uppercase tracking-wider font-bold border-b-2 transition-all ${
+          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
             activeTab === "advances"
-              ? "border-[#00cec4] text-[#00cec4]"
-              : "border-transparent text-on-surface-variant hover:text-on-surface"
+              ? "bg-surface text-[#00cec4] shadow-sm"
+              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
           }`}
         >
           Client Advances
         </button>
         <button
           onClick={() => setActiveTab("expenses")}
-          className={`px-4 py-2 text-xs uppercase tracking-wider font-bold border-b-2 transition-all ${
+          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
             activeTab === "expenses"
-              ? "border-[#00cec4] text-[#00cec4]"
-              : "border-transparent text-on-surface-variant hover:text-on-surface"
+              ? "bg-surface text-[#00cec4] shadow-sm"
+              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
           }`}
         >
           Expenses ({job.expenseRequests.length})
         </button>
         <button
           onClick={() => setActiveTab("audit")}
-          className={`px-4 py-2 text-xs uppercase tracking-wider font-bold border-b-2 transition-all ${
+          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
             activeTab === "audit"
-              ? "border-[#00cec4] text-[#00cec4]"
-              : "border-transparent text-on-surface-variant hover:text-on-surface"
+              ? "bg-surface text-[#00cec4] shadow-sm"
+              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
           }`}
         >
           Audit History
@@ -830,7 +836,7 @@ export function JobWorkspaceClient({
       </div>
 
       {/* Tab Panels */}
-      <div className="bg-surface border border-outline-variant/30 rounded-xl p-6 shadow-sm min-h-[400px]">
+      <div className="min-h-[400px] rounded-xl border border-outline-variant/30 bg-surface p-6 shadow-sm">
         
         {/* PANEL: DOCUMENTS */}
         {activeTab === "docs" && (
@@ -907,10 +913,10 @@ export function JobWorkspaceClient({
                       )}
                     </div>
 
-                    <div className="mt-4 flex items-center justify-end gap-2 border-t border-outline-variant/20 pt-3">
+                    <div className="mt-4 space-y-3 border-t border-outline-variant/20 pt-3">
                       {/* Exception form pop */}
                       {activeDocReqId === req.id ? (
-                        <div className="w-full space-y-2 mt-2">
+                        <div className="w-full space-y-2">
                           <input
                             type="text"
                             placeholder="Enter detailed reason for exemption..."
@@ -918,7 +924,7 @@ export function JobWorkspaceClient({
                             onChange={(e) => setExceptionReason(e.target.value)}
                             className="w-full text-xs"
                           />
-                          <div className="flex justify-end gap-2">
+                          <div className="flex flex-wrap justify-end gap-2">
                             <Button
                               variant="outline"
                               size="sm"
@@ -935,31 +941,35 @@ export function JobWorkspaceClient({
                               className="text-xs py-1 h-7"
                               onClick={() => handleDeclareException(req.id)}
                             >
-                              Waive Requirement
+                              Save Exemption
                             </Button>
                           </div>
                         </div>
-                      ) : (
-                        <>
-                          {!isExempted && (
-                            <button
-                              onClick={() => setActiveDocReqId(req.id)}
-                              className="text-xs font-semibold text-on-surface-variant hover:text-[#fb923c]"
-                            >
-                              Declare Exemption
-                            </button>
-                          )}
-                          <label className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all cursor-pointer flex items-center gap-1.5">
-                            <Upload size={12} />
-                            {isUploaded ? "Upload Version" : "Upload File"}
-                            <input
-                              type="file"
-                              className="hidden"
-                              onChange={(e) => handleUploadDoc(req.id, e)}
-                            />
-                          </label>
-                        </>
-                      )}
+                      ) : null}
+
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => {
+                            setActiveDocReqId((current) => (current === req.id ? null : req.id));
+                            setExceptionReason(req.exception?.reason || "");
+                          }}
+                        >
+                          {isExempted ? "Edit Exemption" : "Declare Exemption"}
+                        </Button>
+                        <label className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#00cec4] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white transition-all hover:bg-[#00b8af]">
+                          <Upload size={12} />
+                          {isUploaded ? "Upload Version" : isExempted ? "Upload File Anyway" : "Upload File"}
+                          <input
+                            type="file"
+                            className="hidden"
+                            onChange={(e) => handleUploadDoc(req.id, e)}
+                          />
+                        </label>
+                      </div>
                     </div>
                   </div>
                 );

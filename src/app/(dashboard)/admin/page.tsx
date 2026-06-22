@@ -27,11 +27,9 @@ export default async function AdminPage() {
       label: item.label,
       icon: item.icon,
       description:
-        item.href === "/admin/org-structure"
-          ? "Maintain branches, departments, and divisions for the workspace."
-          : item.href === "/admin/roles"
-            ? "Manage roles and the permissions assigned across teams."
-            : item.href === "/admin/settings"
+        item.href === "/admin/roles"
+          ? "Manage roles and the permissions assigned across teams."
+          : item.href === "/admin/settings"
               ? "Control appraisal configuration such as reviewer availability deadlines."
               : item.href === "/admin/notifications"
                 ? "Monitor notification delivery, acknowledgement, dismissal, and resend history."

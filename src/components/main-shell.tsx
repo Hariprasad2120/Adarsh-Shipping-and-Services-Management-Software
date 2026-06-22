@@ -22,7 +22,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
 
   return (
     <main
-      className="flex min-w-0 flex-1 flex-col overflow-x-clip bg-background transition-[padding-left] duration-300"
+      className="flex min-w-0 flex-1 flex-col overflow-y-auto overflow-x-clip bg-background transition-[padding-left] duration-300"
       style={{ paddingLeft: pl }}
     >
       {children}

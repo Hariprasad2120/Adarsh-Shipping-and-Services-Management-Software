@@ -2,8 +2,9 @@
 // All renderers return cardsV2 arrays ready for the Chat API.
 
 import type { ChatCard, ChatWidget } from "@/lib/google-chat-client";
+import { getAppUrl } from "@/lib/app-url";
 
-const APP_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+const APP_URL = getAppUrl();
 const CYAN = { red: 0, green: 0.808, blue: 0.769, alpha: 1 };
 const ORANGE = { red: 0.984, green: 0.573, blue: 0.235, alpha: 1 };
 const RED = { red: 0.937, green: 0.267, blue: 0.267, alpha: 1 };

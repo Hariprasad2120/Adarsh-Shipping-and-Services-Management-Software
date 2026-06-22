@@ -87,6 +87,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     permission: [
       "hrms.employee.read",
       "hrms.employee.create",
+      "hrms.employee.deactivate",
+      "hrms.org_structure.manage",
       "hrms.workreport.submit",
       "hrms.travel.request",
       "hrms.helpdesk.read",
@@ -97,9 +99,16 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
       "hrms.documents.read",
       "hrms.salary.read",
       "hrms.hierarchy.manage",
+      "hrms.settings.manage",
     ],
     matchPaths: ["/hrms"],
     items: [
+      {
+        href: "/hrms",
+        label: "Dashboard",
+        icon: Dashboard,
+        matchPaths: ["/hrms"],
+      },
       {
         href: "/hrms/employees",
         label: "Employees",
@@ -163,6 +172,20 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/hrms/employees/new"],
       },
       {
+        href: "/hrms/users",
+        label: "User Control",
+        icon: UserMultiple,
+        permission: "hrms.employee.deactivate",
+        matchPaths: ["/hrms/users"],
+      },
+      {
+        href: "/hrms/org-structure",
+        label: "Organisation Structure",
+        icon: Group,
+        permission: "hrms.org_structure.manage",
+        matchPaths: ["/hrms/org-structure"],
+      },
+      {
         href: "/hrms/ownership",
         label: "Ownership",
         icon: UserMultiple,
@@ -189,6 +212,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         icon: Analytics,
         matchPaths: ["/hrms/payroll"],
       },
+      {
+        href: "/hrms/settings",
+        label: "HRMS Settings",
+        icon: Settings,
+        permission: "hrms.settings.manage",
+        matchPaths: ["/hrms/settings"],
+      },
     ],
   },
   {
@@ -199,6 +229,12 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     permission: "attendance.punch.self",
     matchPaths: ["/attendance"],
     items: [
+      {
+        href: "/attendance",
+        label: "Dashboard",
+        icon: Dashboard,
+        matchPaths: ["/attendance"],
+      },
       {
         href: "/attendance/punch",
         label: "My Attendance",
@@ -250,6 +286,12 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     icon: Folder,
     matchPaths: ["/ams"],
     items: [
+      {
+        href: "/ams",
+        label: "Dashboard",
+        icon: Dashboard,
+        matchPaths: ["/ams"],
+      },
       {
         href: "/ams/appraisals",
         label: "Appraisals",
@@ -337,8 +379,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     items: [
       {
         href: "/lms",
-        label: "Overview",
-        icon: View,
+        label: "Dashboard",
+        icon: Dashboard,
         matchPaths: ["/lms"],
       },
       {
@@ -766,6 +808,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     permission: ["recruit.view", "recruit.jobseeker.use"],
     matchPaths: ["/hrms/recruit"],
     items: [
+      {
+        href: "/hrms/recruit",
+        label: "Dashboard",
+        icon: Dashboard,
+        permission: ["recruit.view", "recruit.jobseeker.use"],
+        matchPaths: ["/hrms/recruit"],
+      },
       // Employer Workspace
       {
         href: "/hrms/recruit/employer",
@@ -864,11 +913,11 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     matchPaths: ["/admin"],
     items: [
       {
-        href: "/admin/org-structure",
-        label: "Organisation Structure",
-        icon: Group,
+        href: "/admin",
+        label: "Dashboard",
+        icon: Dashboard,
         permission: "admin.org.manage",
-        matchPaths: ["/admin/org-structure"],
+        matchPaths: ["/admin"],
       },
       {
         href: "/admin/roles",
@@ -883,20 +932,6 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         icon: Settings,
         permission: "admin.org.manage",
         matchPaths: ["/admin/settings"],
-      },
-      {
-        href: "/admin/hrms/users",
-        label: "HRMS User Control",
-        icon: UserMultiple,
-        permission: "admin.org.manage",
-        matchPaths: ["/admin/hrms/users"],
-      },
-      {
-        href: "/admin/hrms/settings",
-        label: "HRMS App Settings",
-        icon: Settings,
-        permission: "admin.org.manage",
-        matchPaths: ["/admin/hrms/settings"],
       },
       {
         href: "/admin/passkeys",

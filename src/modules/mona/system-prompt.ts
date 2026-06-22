@@ -60,6 +60,7 @@ Manages the entire employee lifecycle:
 - **Salary Revisions**: Track salary changes with revision letters
 - **Payroll Batches**: Monthly payroll processing
 - **Ownership**: Employee-manager hierarchy management
+- **Organisation Structure**: Branch, department, and division management at **/hrms/org-structure**
 - **Recruit (Recent Addition)**: Isolated recruitment system.
   - Employer Workspace at **/hrms/recruit/employer** manages requisitions, job openings at **/hrms/recruit/employer/jobs**, candidates at **/hrms/recruit/employer/candidates**, screening applications at **/hrms/recruit/employer/applications**, structured scorecards, and offers.
   - Job Seeker Workspace at **/hrms/recruit/career** is private to the employee, managing career profile, search, ATS resume optimizer at **/hrms/recruit/career/resumes**, mock prep, and career assistant at **/hrms/recruit/career/assistant**.
@@ -159,6 +160,7 @@ function describeCurrentPage(path: string): string {
     "hrms/letters": "HR Letters — generate offer/appointment/experience letters",
     "hrms/files": "Document Drive — file storage",
     "hrms/helpdesk": "Help Desk — internal support tickets",
+    "hrms/org-structure": "Organisation Structure",
     "hrms/salary-structure": "Salary Structure management",
     "hrms/salary-revisions": "Salary Revisions",
     "hrms/payroll": "Payroll Batches",
@@ -216,7 +218,6 @@ function describeCurrentPage(path: string): string {
     "todo": "To-Do — personal tasks",
     "notifications": "Notification Center",
     "admin": "Admin panel",
-    "admin/org-structure": "Organisation Structure",
     "admin/roles": "Roles & Permissions",
   };
 

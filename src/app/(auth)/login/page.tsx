@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { clearStaleSessionData } from "@/lib/logout";
 import {
   Anchor,
   ArrowRight,
@@ -64,6 +65,11 @@ export default function LoginPage() {
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Clear any stale session data from a previous user on mount
+  useEffect(() => {
+    clearStaleSessionData();
+  }, []);
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       setMousePos({
@@ -95,11 +101,17 @@ export default function LoginPage() {
       return;
     }
 
+    // Clear any remaining stale data from a previous user before navigating
+    clearStaleSessionData();
+
     setIsLoading(false);
     setIsAuthenticated(true);
     setTimeout(() => {
-      router.replace("/dashboard");
-      router.refresh();
+      // Full page navigation instead of client-side router — ensures:
+      // 1. Server layout runs auth() fresh with the new JWT
+      // 2. Browser doesn't serve stale RSC cache from previous user
+      // 3. New sessionNonce is picked up for welcome animation
+      window.location.replace("/dashboard");
     }, 2500);
   };
 

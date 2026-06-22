@@ -263,6 +263,9 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     const gate2 = await chaService.verifyDocumentGate(job.id);
     expect(gate2.passed).toBe(true);
     expect(gate2.blockingRequirements.length).toBe(0);
+
+    const jobAfterGatePass = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
+    expect(jobAfterGatePass.stage).toBe("CHECKLIST_PREPARATION");
   });
 
   it("4. should import checklist, submit for approval and handle manager actions", async () => {

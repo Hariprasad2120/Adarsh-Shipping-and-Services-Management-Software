@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { performLogout } from "@/lib/logout";
 import { useMemo, useState, useEffect, useRef } from "react";
 import type { Caps } from "@/lib/rbac";
 import { getActiveItemHref, getVisibleSections, matchesPath } from "@/lib/navigation";
@@ -27,6 +27,8 @@ function detectTheme(): ThemeMode {
   if (root.classList.contains("light")) return "light";
   return "light";
 }
+
+
 
 function getIconColor(label: string, isActive: boolean) {
   if (isActive) return "text-[#00c4b6]";
@@ -387,7 +389,7 @@ export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
             </button>
             <button
               type="button"
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={() => void performLogout()}
               className="cursor-pointer rounded-md p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
               title="Sign Out"
             >

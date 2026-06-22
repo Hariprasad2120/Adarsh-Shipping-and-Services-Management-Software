@@ -218,6 +218,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
   HR: [
     "hrms.employee.read", "hrms.employee.create", "hrms.employee.edit",
     "hrms.hierarchy.manage", "hrms.documents.read", "hrms.documents.upload",
+    "hrms.settings.manage",
     "hrms.peopleplus.read", "hrms.peopleplus.admin",
     "hrms.helpdesk.read", "hrms.helpdesk.manage",
     "hrms.workreport.submit", "hrms.workreport.approve", "hrms.workreport.view_all",
@@ -509,7 +510,35 @@ function matchLoginEmail(
   return null;
 }
 
-function getRoleForUser(email: string, departmentName: string, designation: string): string {
+const ROLE_OVERRIDES_BY_EMPLOYEE_NUMBER: Record<string, string> = {
+  "101": "Director",
+  "122": "Director",
+  "107": "TL",
+  "187": "Manager",
+  "189": "Management",
+  "146": "Management",
+  "183": "Employee",
+};
+
+const SEEDED_PRIMARY_ROLE_NAMES = [
+  "Admin",
+  "Management",
+  "HR",
+  "Manager",
+  "TL",
+  "Director",
+  "Employee",
+] as const;
+
+function getRoleForUser(
+  employeeNumber: string,
+  email: string,
+  departmentName: string,
+  designation: string,
+): string {
+  const override = ROLE_OVERRIDES_BY_EMPLOYEE_NUMBER[employeeNumber];
+  if (override) return override;
+
   const emailLower = email.toLowerCase();
   const deptLower = departmentName.toLowerCase();
   const desgLower = designation.toLowerCase();
@@ -526,7 +555,12 @@ function getRoleForUser(email: string, departmentName: string, designation: stri
   if (desgLower.includes("team leader")) {
     return "TL";
   }
-  if (desgLower.includes("management") || deptLower.includes("management") || deptLower.includes("directors") || desgLower.includes("consultant")) {
+  if (
+    desgLower.includes("management") ||
+    deptLower.includes("management") ||
+    deptLower.includes("directors") ||
+    desgLower.includes("consultant")
+  ) {
     return "Director";
   }
   return "Employee";
@@ -950,7 +984,21 @@ async function seedUsers(
     userMap.set(email, user.id);
     userMap.set(aggregate.employeeNumber, user.id);
 
-    const mappedRoleName = getRoleForUser(email, departmentName || "", designation || "");
+    const mappedRoleName = getRoleForUser(
+      aggregate.employeeNumber,
+      email,
+      departmentName || "",
+      designation || "",
+    );
+    await db.userRole.deleteMany({
+      where: {
+        userId: user.id,
+        role: {
+          orgId,
+          name: { in: [...SEEDED_PRIMARY_ROLE_NAMES] },
+        },
+      },
+    });
     const userRoleObj = await db.role.findFirstOrThrow({ where: { orgId, name: mappedRoleName } });
     await db.userRole.upsert({
       where: { userId_roleId: { userId: user.id, roleId: userRoleObj.id } },
