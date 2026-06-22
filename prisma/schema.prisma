@@ -3006,7 +3006,8 @@ model CrmCallRecording {
   fileName            String
   mimeType            String
   fileSize            Int
-  filePath            String                      // Path to file in secure storage
+  filePath            String?                     // Path to file in secure storage (local dev)
+  fileData            String?                     @db.Text // Base64-encoded file content (Vercel/serverless)
   durationSeconds     Float
   recordedAt          DateTime                    @default(now())
   sha256Hash          String                      @unique

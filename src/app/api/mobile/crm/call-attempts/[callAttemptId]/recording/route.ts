@@ -1,9 +1,11 @@
-import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getMobileUser } from "@/lib/mobile-auth";
+import { mobileJson, mobileOptions } from "@/lib/mobile-cors";
 import { transcribeRecording } from "@/lib/transcription";
-import fs from "fs";
-import path from "path";
+
+export async function OPTIONS() {
+  return mobileOptions();
+}
 
 export async function POST(
   request: Request,
@@ -13,7 +15,7 @@ export async function POST(
     const { callAttemptId } = await params;
     const user = await getMobileUser(request);
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return mobileJson({ error: "Unauthorized" }, 401);
     }
 
     const attempt = await db.crmCallAttempt.findFirst({
@@ -24,7 +26,7 @@ export async function POST(
     });
 
     if (!attempt) {
-      return NextResponse.json({ error: "Call attempt not found" }, { status: 404 });
+      return mobileJson({ error: "Call attempt not found" }, 404);
     }
 
     const formData = await request.formData();
@@ -39,7 +41,7 @@ export async function POST(
     const matchReason = formData.get("matchReason") as string | null;
 
     if (!file || !sha256Hash || !fileName) {
-      return NextResponse.json({ error: "Missing required fields (file, fileName, sha256Hash)" }, { status: 400 });
+      return mobileJson({ error: "Missing required fields (file, fileName, sha256Hash)" }, 400);
     }
 
     // 1. Check for duplicate upload via hash
@@ -48,12 +50,12 @@ export async function POST(
     });
 
     if (existing) {
-      return NextResponse.json({
+      return mobileJson({
         success: true,
         duplicate: true,
         message: "Recording hash already uploaded.",
         recording: existing,
-      }, { status: 200 }); // Status 200 with duplicate flag is friendly for mobile app retry logic
+      });
     }
 
     const fileSize = fileSizeStr ? parseInt(fileSizeStr) : file.size;
@@ -63,28 +65,18 @@ export async function POST(
       : new Date();
     const matchConfidence = matchConfidenceStr ? parseFloat(matchConfidenceStr) : 0.0;
 
-    // 2. Save file in private storage
-    const orgId = user.orgId || "global";
-    const uploadDir = path.join(process.cwd(), "uploads", "crm-call-recordings", orgId);
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    // Secure filename prefix with hash
-    const safeFileName = `${sha256Hash.substring(0, 8)}-${fileName.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-    const filePath = path.join(uploadDir, safeFileName);
-
+    // 2. Convert file to Base64 for database storage (Vercel-compatible — no local filesystem)
     const buffer = Buffer.from(await file.arrayBuffer());
-    fs.writeFileSync(filePath, buffer);
+    const fileData = buffer.toString("base64");
 
-    // 3. Upsert database entry (as it might have been pre-registered via status API)
+    // 3. Upsert database entry
     const recording = await db.crmCallRecording.upsert({
       where: { callAttemptId: attempt.id },
       update: {
         fileName,
         mimeType: mimeType || file.type || "audio/octet-stream",
         fileSize,
-        filePath,
+        fileData,
         durationSeconds,
         recordedAt,
         sha256Hash,
@@ -103,7 +95,7 @@ export async function POST(
         fileName,
         mimeType: mimeType || file.type || "audio/octet-stream",
         fileSize,
-        filePath,
+        fileData,
         durationSeconds,
         recordedAt,
         sha256Hash,
@@ -129,13 +121,13 @@ export async function POST(
       console.error(`[Recording API] Failed to start background transcription for ${recording.id}:`, e);
     });
 
-    return NextResponse.json({
+    return mobileJson({
       success: true,
       duplicate: false,
-      recording,
+      recording: { id: recording.id, uploadStatus: recording.uploadStatus },
     });
   } catch (error: any) {
     console.error("mobile upload recording API error:", error);
-    return NextResponse.json({ error: error.message ?? "Internal Server Error" }, { status: 500 });
+    return mobileJson({ error: error.message ?? "Internal Server Error" }, 500);
   }
 }

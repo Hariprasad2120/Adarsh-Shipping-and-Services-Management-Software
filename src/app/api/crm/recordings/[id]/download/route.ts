@@ -39,24 +39,26 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden: You cannot access this recording" }, { status: 403 });
     }
 
-    if (!fs.existsSync(recording.filePath)) {
-      return NextResponse.json({ error: "File not found on private storage" }, { status: 404 });
+    // Try serving from database (Vercel/serverless) first, then filesystem (local dev)
+    let fileBuffer: Buffer | null = null;
+
+    if (recording.fileData) {
+      fileBuffer = Buffer.from(recording.fileData, "base64");
+    } else if (recording.filePath) {
+      try {
+        if (fs.existsSync(recording.filePath)) {
+          fileBuffer = fs.readFileSync(recording.filePath);
+        }
+      } catch {
+        // fs may not be available on serverless
+      }
     }
 
-    // Write audit log
-    await db.crmCallRecordingAuditLog.create({
-      data: {
-        orgId: recording.orgId,
-        recordingId: recording.id,
-        userId: session.user.id,
-        action: "DOWNLOAD",
-        ipAddress: request.headers.get("x-forwarded-for") ?? undefined,
-        userAgent: request.headers.get("user-agent") ?? undefined,
-      },
-    });
+    if (!fileBuffer) {
+      return NextResponse.json({ error: "File not found in storage" }, { status: 404 });
+    }
 
-    const fileBuffer = fs.readFileSync(recording.filePath);
-    return new Response(fileBuffer, {
+    return new Response(new Uint8Array(fileBuffer), {
       headers: {
         "Content-Disposition": `attachment; filename="${recording.fileName}"`,
         "Content-Type": recording.mimeType || "audio/mpeg",

@@ -1,12 +1,16 @@
-import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getMobileUser } from "@/lib/mobile-auth";
+import { mobileJson, mobileOptions } from "@/lib/mobile-cors";
+
+export async function OPTIONS() {
+  return mobileOptions();
+}
 
 export async function GET(request: Request) {
   try {
     const user = await getMobileUser(request);
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return mobileJson({ error: "Unauthorized" }, 401);
     }
 
     // Admin / platform admin sees ALL org leads; regular users see only their own
@@ -38,9 +42,9 @@ export async function GET(request: Request) {
       },
     });
 
-    return NextResponse.json({ leads });
+    return mobileJson({ leads });
   } catch (error: any) {
     console.error("mobile leads API error:", error);
-    return NextResponse.json({ error: error.message ?? "Internal Server Error" }, { status: 500 });
+    return mobileJson({ error: error.message ?? "Internal Server Error" }, 500);
   }
 }

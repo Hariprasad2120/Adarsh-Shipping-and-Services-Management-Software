@@ -1,6 +1,10 @@
-import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getMobileUser } from "@/lib/mobile-auth";
+import { mobileJson, mobileOptions } from "@/lib/mobile-cors";
+
+export async function OPTIONS() {
+  return mobileOptions();
+}
 
 export async function POST(
   request: Request,
@@ -10,7 +14,7 @@ export async function POST(
     const { leadId } = await params;
     const user = await getMobileUser(request);
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return mobileJson({ error: "Unauthorized" }, 401);
     }
 
     const lead = await db.crmLead.findFirst({
@@ -21,14 +25,14 @@ export async function POST(
     });
 
     if (!lead) {
-      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+      return mobileJson({ error: "Lead not found" }, 404);
     }
 
     const body = await request.json().catch(() => ({}));
     const customerPhone = body.customerPhone || lead.mobile || lead.phone || "";
 
     if (!customerPhone) {
-      return NextResponse.json({ error: "Customer phone number is required" }, { status: 400 });
+      return mobileJson({ error: "Customer phone number is required" }, 400);
     }
 
     const attempt = await db.crmCallAttempt.create({
@@ -41,9 +45,9 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({ callAttemptId: attempt.id });
+    return mobileJson({ callAttemptId: attempt.id });
   } catch (error: any) {
     console.error("mobile call attempts API error:", error);
-    return NextResponse.json({ error: error.message ?? "Internal Server Error" }, { status: 500 });
+    return mobileJson({ error: error.message ?? "Internal Server Error" }, 500);
   }
 }

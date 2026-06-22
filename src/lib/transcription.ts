@@ -1,11 +1,5 @@
 import { db } from "@/lib/db";
 import { addTimelineEvent } from "@/modules/crm/service";
-import { exec } from "child_process";
-import { promisify } from "util";
-import fs from "fs";
-import path from "path";
-
-const execPromise = promisify(exec);
 
 /**
  * Transcription Pipeline for CRM Call Recordings
@@ -15,11 +9,13 @@ const execPromise = promisify(exec);
  * Strategy (in order of priority):
  *   1. OpenAI Whisper API — best multilingual support, auto-detects Tamil/Hindi/English
  *   2. Groq Whisper API — fast, free-tier, good multilingual support
- *   3. Local Whisper CLI — offline fallback
- *   4. Mock generator — development fallback
+ *   3. Mock generator — development fallback
  * 
  * After transcription, if the call is in Tamil/Hindi, the transcript is
  * translated to English using the same AI provider.
+ *
+ * NOTE: This module is compatible with Vercel's serverless environment.
+ * File content is read from the database (Base64 fileData) instead of the filesystem.
  */
 export async function transcribeRecording(recordingId: string) {
   console.log(`[Transcription] Starting task for recording ${recordingId}...`);
@@ -55,16 +51,39 @@ export async function transcribeRecording(recordingId: string) {
       data: { transcriptionStatus: "PROCESSING" },
     });
 
+    // Get audio buffer from DB (Base64) or fallback to filesystem for local dev
+    let audioBuffer: Buffer | null = null;
+    if (recording.fileData) {
+      audioBuffer = Buffer.from(recording.fileData, "base64");
+    } else if (recording.filePath) {
+      // Local dev fallback: try reading from filesystem
+      try {
+        const fs = await import("fs");
+        if (fs.existsSync(recording.filePath)) {
+          audioBuffer = fs.readFileSync(recording.filePath);
+        }
+      } catch {
+        // fs not available (Vercel), skip
+      }
+    }
+
     let transcriptText = "";
     let detectedLanguage = "en";
     let useFallback = true;
 
     // ── STRATEGY 1: OpenAI Whisper API ──
     const openaiKey = process.env.OPENAI_API_KEY;
-    if (useFallback && openaiKey && fs.existsSync(recording.filePath)) {
+    if (useFallback && openaiKey && audioBuffer) {
       try {
         console.log(`[Transcription] Using OpenAI Whisper API...`);
-        const result = await transcribeWithOpenAI(recording.filePath, openaiKey);
+        const result = await transcribeWithAPI(
+          audioBuffer,
+          recording.fileName,
+          recording.mimeType,
+          "https://api.openai.com/v1/audio/transcriptions",
+          openaiKey,
+          "whisper-1"
+        );
         transcriptText = result.text;
         detectedLanguage = result.language || "en";
         useFallback = false;
@@ -76,10 +95,17 @@ export async function transcribeRecording(recordingId: string) {
 
     // ── STRATEGY 2: Groq Whisper API ──
     const groqKey = process.env.GROQ_API_KEY;
-    if (useFallback && groqKey && fs.existsSync(recording.filePath)) {
+    if (useFallback && groqKey && audioBuffer) {
       try {
         console.log(`[Transcription] Using Groq Whisper API...`);
-        const result = await transcribeWithGroq(recording.filePath, groqKey);
+        const result = await transcribeWithAPI(
+          audioBuffer,
+          recording.fileName,
+          recording.mimeType,
+          "https://api.groq.com/openai/v1/audio/transcriptions",
+          groqKey,
+          "whisper-large-v3"
+        );
         transcriptText = result.text;
         detectedLanguage = result.language || "en";
         useFallback = false;
@@ -89,42 +115,7 @@ export async function transcribeRecording(recordingId: string) {
       }
     }
 
-    // ── STRATEGY 3: Local Python Whisper (multilingual) ──
-    if (useFallback && fs.existsSync(recording.filePath)) {
-      try {
-        console.log(`[Transcription] Trying local Python Whisper script...`);
-        const scriptPath = path.join(process.cwd(), "scripts", "transcribe_local.py");
-        const { stdout } = await execPromise(
-          `python "${scriptPath}" "${recording.filePath}"`,
-          { timeout: 180000 }
-        );
-        
-        const parsed = JSON.parse(stdout.trim());
-        if (parsed.success && parsed.text) {
-          transcriptText = parsed.text;
-          detectedLanguage = "auto";
-          useFallback = false;
-          console.log(`[Transcription] Local Python Whisper succeeded. ${transcriptText.length} chars.`);
-        } else {
-          console.warn(`[Transcription] Local Python Whisper script returned error:`, parsed.error);
-        }
-      } catch (e: any) {
-        console.warn(`[Transcription] Local Python Whisper script failed:`, e.message);
-        
-        // Final fallback: check if txt companion file exists anyway
-        const txtPath = recording.filePath.replace(/\.[^/.]+$/, "") + ".txt";
-        if (fs.existsSync(txtPath)) {
-          transcriptText = fs.readFileSync(txtPath, "utf-8").trim();
-          if (transcriptText) {
-            detectedLanguage = "auto";
-            useFallback = false;
-            console.log(`[Transcription] Found companion txt file. ${transcriptText.length} chars.`);
-          }
-        }
-      }
-    }
-
-    // ── STRATEGY 4: Mock Fallback (development) ──
+    // ── STRATEGY 3: Mock Fallback (development) ──
     if (useFallback) {
       console.log(`[Transcription] Using mock fallback for ${leadName}...`);
       transcriptText = generateMockTranscript(leadName, salespersonName, company, salesperson.email || "");
@@ -230,23 +221,24 @@ export async function transcribeRecording(recordingId: string) {
 }
 
 // ─────────────────────────────────────────────────────
-//  TRANSCRIPTION PROVIDERS
+//  TRANSCRIPTION PROVIDER (unified, works from Buffer)
 // ─────────────────────────────────────────────────────
 
-async function transcribeWithOpenAI(
-  filePath: string,
-  apiKey: string
+async function transcribeWithAPI(
+  audioBuffer: Buffer,
+  fileName: string,
+  mimeType: string,
+  endpoint: string,
+  apiKey: string,
+  model: string
 ): Promise<{ text: string; language: string }> {
-  const fileBuffer = fs.readFileSync(filePath);
-  const fileName = path.basename(filePath);
-
   const formData = new FormData();
-  formData.append("file", new Blob([fileBuffer]), fileName);
-  formData.append("model", "whisper-1");
+  formData.append("file", new Blob([new Uint8Array(audioBuffer)], { type: mimeType }), fileName);
+  formData.append("model", model);
   // Don't set language — let Whisper auto-detect (supports Tamil, Hindi, English)
   formData.append("response_format", "verbose_json");
 
-  const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}` },
     body: formData,
@@ -254,38 +246,7 @@ async function transcribeWithOpenAI(
 
   if (!response.ok) {
     const errText = await response.text();
-    throw new Error(`OpenAI API ${response.status}: ${errText.slice(0, 300)}`);
-  }
-
-  const data = await response.json();
-  return {
-    text: data.text || "",
-    language: data.language || "en",
-  };
-}
-
-async function transcribeWithGroq(
-  filePath: string,
-  apiKey: string
-): Promise<{ text: string; language: string }> {
-  const fileBuffer = fs.readFileSync(filePath);
-  const fileName = path.basename(filePath);
-
-  const formData = new FormData();
-  formData.append("file", new Blob([fileBuffer]), fileName);
-  formData.append("model", "whisper-large-v3");
-  formData.append("response_format", "verbose_json");
-  // Groq's Whisper supports auto language detection for Tamil/Hindi/English
-
-  const response = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}` },
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Groq API ${response.status}: ${errText.slice(0, 300)}`);
+    throw new Error(`Whisper API ${response.status}: ${errText.slice(0, 300)}`);
   }
 
   const data = await response.json();

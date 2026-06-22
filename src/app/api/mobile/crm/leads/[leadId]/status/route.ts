@@ -1,6 +1,10 @@
-import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getMobileUser } from "@/lib/mobile-auth";
+import { mobileJson, mobileOptions } from "@/lib/mobile-cors";
+
+export async function OPTIONS() {
+  return mobileOptions();
+}
 
 export async function PATCH(
   request: Request,
@@ -10,7 +14,7 @@ export async function PATCH(
     const { leadId } = await params;
     const user = await getMobileUser(request);
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return mobileJson({ error: "Unauthorized" }, 401);
     }
 
     const body = await request.json().catch(() => ({}));
@@ -18,9 +22,9 @@ export async function PATCH(
 
     const validStatuses = ["INTERESTED", "NOT_INTERESTED", "NOT_PICKED", "NOT_REACHABLE", "CONTACTED", "NEW"];
     if (!status || !validStatuses.includes(status)) {
-      return NextResponse.json(
+      return mobileJson(
         { error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` },
-        { status: 400 }
+        400
       );
     }
 
@@ -32,7 +36,7 @@ export async function PATCH(
     });
 
     if (!lead) {
-      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+      return mobileJson({ error: "Lead not found" }, 404);
     }
 
     // Build the update data
@@ -70,12 +74,12 @@ export async function PATCH(
       });
     }
 
-    return NextResponse.json({ success: true, lead: updatedLead });
+    return mobileJson({ success: true, lead: updatedLead });
   } catch (error: any) {
     console.error("mobile lead status update API error:", error);
-    return NextResponse.json(
+    return mobileJson(
       { error: error.message ?? "Internal Server Error" },
-      { status: 500 }
+      500
     );
   }
 }

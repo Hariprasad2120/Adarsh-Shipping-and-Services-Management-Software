@@ -1,6 +1,10 @@
-import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getMobileUser } from "@/lib/mobile-auth";
+import { mobileJson, mobileOptions } from "@/lib/mobile-cors";
+
+export async function OPTIONS() {
+  return mobileOptions();
+}
 
 export async function PATCH(
   request: Request,
@@ -10,7 +14,7 @@ export async function PATCH(
     const { callAttemptId } = await params;
     const user = await getMobileUser(request);
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return mobileJson({ error: "Unauthorized" }, 401);
     }
 
     const body = await request.json().catch(() => ({}));
@@ -24,7 +28,7 @@ export async function PATCH(
     });
 
     if (!attempt) {
-      return NextResponse.json({ error: "Call attempt not found" }, { status: 404 });
+      return mobileJson({ error: "Call attempt not found" }, 404);
     }
 
     const updatedAttempt = await db.crmCallAttempt.update({
@@ -36,9 +40,9 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json({ success: true, callAttempt: updatedAttempt });
+    return mobileJson({ success: true, callAttempt: updatedAttempt });
   } catch (error: any) {
     console.error("mobile complete call attempts API error:", error);
-    return NextResponse.json({ error: error.message ?? "Internal Server Error" }, { status: 500 });
+    return mobileJson({ error: error.message ?? "Internal Server Error" }, 500);
   }
 }
