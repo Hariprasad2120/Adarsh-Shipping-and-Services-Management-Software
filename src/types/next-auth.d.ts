@@ -8,6 +8,7 @@ declare module "next-auth" {
     roleIds: string[];
     /** Unique per-login identifier for session tracking (not the JWT itself). */
     sessionNonce?: string;
+    redirectPath?: string;
   }
   interface Session {
     user: {
@@ -19,6 +20,7 @@ declare module "next-auth" {
       roleIds: string[];
       /** Unique per-login identifier — safe to expose to client JS. */
       sessionNonce: string;
+      redirectPath: string;
     };
   }
 }
@@ -31,5 +33,6 @@ declare module "next-auth/jwt" {
     roleIds?: string[];
     /** Unique per-login identifier stored in the JWT for session tracking. */
     sessionNonce?: string;
+    redirectPath?: string;
   }
 }

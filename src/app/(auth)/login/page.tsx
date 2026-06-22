@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { clearStaleSessionData } from "@/lib/logout";
 import {
   Anchor,
@@ -17,6 +16,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { HarborScene3D } from "@/components/login/harbor-scene-3d";
+import { isRootControlEmail } from "@/lib/root-access";
 
 function BrandMark({ mobile = false }: { mobile?: boolean }) {
   const [logoError, setLogoError] = useState(false);
@@ -54,7 +54,6 @@ function BrandMark({ mobile = false }: { mobile?: boolean }) {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -111,7 +110,9 @@ export default function LoginPage() {
       // 1. Server layout runs auth() fresh with the new JWT
       // 2. Browser doesn't serve stale RSC cache from previous user
       // 3. New sessionNonce is picked up for welcome animation
-      window.location.replace("/dashboard");
+      const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl");
+      const fallbackTarget = isRootControlEmail(email) ? "/" : "/dashboard";
+      window.location.replace(callbackUrl || fallbackTarget);
     }, 2500);
   };
 

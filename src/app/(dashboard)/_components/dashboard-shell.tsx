@@ -29,10 +29,12 @@ export function DashboardShell({
   children,
   userName,
   sessionToken,
+  enabledModuleIds,
 }: {
   children: React.ReactNode;
   userName: string;
   sessionToken: string;
+  enabledModuleIds?: Iterable<string>;
 }) {
   const pathname = usePathname();
   const isCrm = pathname.startsWith("/crm");
@@ -83,7 +85,7 @@ export function DashboardShell({
   const content = isPortal ? (
     <div className="flex min-h-full flex-1 flex-col bg-background text-on-surface" style={shellStyle}>
       <div ref={topBarRef} className={topBarClass}>
-        <WelcomeBar userName={userName} sessionToken={sessionToken} />
+        <WelcomeBar userName={userName} sessionToken={sessionToken} enabledModuleIds={enabledModuleIds} />
       </div>
       <div className={`flex min-h-full w-full flex-col gap-8 ${contentPaddingClass}`}>
         {children}
@@ -92,7 +94,7 @@ export function DashboardShell({
   ) : isCrm ? (
     <div className="flex min-h-full flex-1 flex-col bg-background text-on-surface" style={shellStyle}>
       <div ref={topBarRef} className={topBarClass}>
-        <WelcomeBar userName={userName} sessionToken={sessionToken} />
+        <WelcomeBar userName={userName} sessionToken={sessionToken} enabledModuleIds={enabledModuleIds} />
       </div>
       <div className={`flex min-h-full w-full flex-col gap-8 ${contentPaddingClass}`}>
         {children}
@@ -101,7 +103,7 @@ export function DashboardShell({
   ) : (
     <div className="flex min-h-full flex-1 flex-col bg-background text-on-surface" style={shellStyle}>
       <div ref={topBarRef} className={topBarClass}>
-        <WelcomeBar userName={userName} sessionToken={sessionToken} />
+        <WelcomeBar userName={userName} sessionToken={sessionToken} enabledModuleIds={enabledModuleIds} />
       </div>
       <div
         ref={breadcrumbRef}

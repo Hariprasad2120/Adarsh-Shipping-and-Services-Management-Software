@@ -45,9 +45,6 @@ const MOBILE_CORS_HEADERS = {
 };
 
 function isPublicPath(pathname: string): boolean {
-  // Root landing page is public
-  if (pathname === "/") return true;
-
   for (const pub of PUBLIC_PATHS) {
     if (pathname === pub || pathname.startsWith(pub + "/")) return true;
   }
@@ -74,6 +71,8 @@ function hasSessionCookie(req: NextRequest): boolean {
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isMobileApi = pathname.startsWith("/api/mobile");
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-current-pathname", pathname);
 
   if (isMobileApi && req.method === "OPTIONS") {
     return new NextResponse(null, { status: 204, headers: MOBILE_CORS_HEADERS });
@@ -89,7 +88,11 @@ export function proxy(req: NextRequest) {
 
   // Public paths — pass through
   if (isPublicPath(pathname)) {
-    const response = NextResponse.next();
+    const response = NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
 
     if (isMobileApi) {
       Object.entries(MOBILE_CORS_HEADERS).forEach(([key, value]) => {
@@ -111,7 +114,11 @@ export function proxy(req: NextRequest) {
   }
 
   // Authenticated request — add security and cache headers
-  const response = NextResponse.next();
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 
   // Prevent browser from caching authenticated pages (Back button protection)
   response.headers.set(

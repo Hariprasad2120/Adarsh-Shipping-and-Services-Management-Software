@@ -8,6 +8,7 @@ import { buildSeedCriteriaForPhase } from "../src/modules/ams/form-template";
 import { buildDefaultSelfFormTemplate } from "../src/modules/ams/criteria-config";
 import { seedChartOfAccounts } from "../src/modules/accounting/service";
 import { getBundledDocxTemplateFiles, importDocxTemplateFile } from "../src/modules/hrms/letter-template-import";
+import { ensureSpecialAccounts } from "../src/modules/core/user/special-account-bootstrap";
 
 // ─── Database client ────────────────────────────────────────────────────────────
 
@@ -1399,6 +1400,7 @@ async function main() {
 
   // 4. Roles (depends on org + permissions)
   await seedRoles(org.id);
+  await ensureSpecialAccounts(org.id, DEFAULT_PASSWORD);
 
   // Load Excel workbook
   const filePath = path.join(process.cwd(), "docs/Employee_View_Sentence_Case.xlsx");

@@ -5,6 +5,8 @@ import { z } from "zod";
 import { cache } from "react";
 import { db } from "@/lib/db";
 import { randomUUID } from "crypto";
+import { appendFileSync } from "fs";
+import { isRootControlEmail } from "@/lib/root-access";
 
 // ─── Configuration (env-driven with safe defaults) ───────────────────────────
 
@@ -22,6 +24,24 @@ const loginSchema = z.object({
 });
 
 import Google from "next-auth/providers/google";
+
+type SessionUserPayload = {
+  id: string;
+  orgId?: string;
+  isPlatformAdmin: boolean;
+  roleIds: string[];
+  sessionNonce: string;
+  redirectPath: string;
+};
+
+type TokenPayload = {
+  id?: string;
+  orgId?: string;
+  isPlatformAdmin?: boolean;
+  roleIds?: string[];
+  sessionNonce?: string;
+  redirectPath?: string;
+};
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -83,6 +103,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           isPlatformAdmin: user.isPlatformAdmin,
           roleIds: user.roles.map((ur) => ur.roleId),
           sessionNonce,
+          redirectPath: isRootControlEmail(user.email) ? "/" : "/dashboard",
         };
       },
     }),
@@ -102,9 +123,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         try {
-          const fs = require("fs");
           const logMsg = `[${new Date().toISOString()}] Google Sign-in attempt: email=${user.email}, name=${user.name}, provider=${account.provider}, hasAccessToken=${!!account.access_token}, hasRefreshToken=${!!account.refresh_token}\n`;
-          fs.appendFileSync("next-auth.log", logMsg);
+          appendFileSync("next-auth.log", logMsg);
         } catch (e) {
           console.error("Error writing to next-auth.log", e);
         }
@@ -115,10 +135,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
         
         try {
-          const fs = require("fs");
           const logMsg = `[${new Date().toISOString()}] DB User lookup: found=${!!dbUser}, email=${dbUser?.email}, orgId=${dbUser?.orgId}, active=${dbUser?.active}\n`;
-          fs.appendFileSync("next-auth.log", logMsg);
-        } catch (e) {}
+          appendFileSync("next-auth.log", logMsg);
+        } catch {}
 
         if (!dbUser || !dbUser.orgId) return false; // Must be pre-registered by admin in database
 
@@ -161,21 +180,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     jwt({ token, user }) {
       if (user) {
+        const sessionUser = user as SessionUserPayload;
         // First-time token creation (login)
         token.id = user.id;
-        token.orgId = (user as any).orgId;
-        token.isPlatformAdmin = (user as any).isPlatformAdmin;
-        token.roleIds = (user as any).roleIds;
-        token.sessionNonce = (user as any).sessionNonce;
+        token.orgId = sessionUser.orgId;
+        token.isPlatformAdmin = sessionUser.isPlatformAdmin;
+        token.roleIds = sessionUser.roleIds;
+        token.sessionNonce = sessionUser.sessionNonce;
+        token.redirectPath = sessionUser.redirectPath;
       }
       return token;
     },
     session({ session, token }) {
-      session.user.id = token.id as string;
-      session.user.orgId = token.orgId as string | undefined;
-      session.user.isPlatformAdmin = token.isPlatformAdmin as boolean;
-      session.user.roleIds = token.roleIds as string[];
-      session.user.sessionNonce = (token.sessionNonce as string) ?? "";
+      const tokenPayload = token as TokenPayload;
+      session.user.id = tokenPayload.id ?? "";
+      session.user.orgId = tokenPayload.orgId;
+      session.user.isPlatformAdmin = tokenPayload.isPlatformAdmin ?? false;
+      session.user.roleIds = tokenPayload.roleIds ?? [];
+      session.user.sessionNonce = tokenPayload.sessionNonce ?? "";
+      session.user.redirectPath = tokenPayload.redirectPath ?? "/dashboard";
       return session;
     },
   },
@@ -184,7 +207,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Mark the session as revoked in the database when user signs out.
       // NextAuth v5 passes the token in the message for JWT strategy.
       const token =
-        "token" in message ? (message.token as any) : undefined;
+        "token" in message ? (message.token as TokenPayload | undefined) : undefined;
       if (token?.sessionNonce) {
         try {
           await db.userSession.updateMany({

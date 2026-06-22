@@ -90,9 +90,20 @@ const CRM_GROUP_MAPPING: Record<string, string> = {
 
 const CRM_GROUP_ORDER = ["Sales", "Activities", "Inventory", "Support", "Integrations", "Services & Projects"];
 
-export function Sidebar({ caps, userName }: { caps: Caps; userName: string }) {
+export function Sidebar({
+  caps,
+  userName,
+  enabledModuleIds,
+}: {
+  caps: Caps;
+  userName: string;
+  enabledModuleIds?: Iterable<string>;
+}) {
   const pathname = usePathname();
-  const visibleSections = useMemo(() => getVisibleSections(caps), [caps]);
+  const visibleSections = useMemo(
+    () => getVisibleSections(caps, enabledModuleIds),
+    [caps, enabledModuleIds],
+  );
   const [theme, setTheme] = useState<ThemeMode>("light");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hoveredSectionId, setHoveredSectionId] = useState<string | null>(null);

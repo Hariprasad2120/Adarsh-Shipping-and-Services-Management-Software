@@ -29,9 +29,11 @@ function toTitleCase(value: string) {
 export function AppHeader({
   userName,
   sessionToken,
+  enabledModuleIds,
 }: {
   userName: string;
   sessionToken: string;
+  enabledModuleIds?: Iterable<string>;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -86,7 +88,10 @@ export function AppHeader({
     return () => clearTimeout(timer);
   }, [sessionToken]);
 
-  const visibleSections = useMemo(() => getVisibleSections(caps), [caps]);
+  const visibleSections = useMemo(
+    () => getVisibleSections(caps, enabledModuleIds),
+    [caps, enabledModuleIds],
+  );
   const activeSection = useMemo(
     () =>
       visibleSections.find((section) =>

@@ -18,9 +18,10 @@ import {
   Search,
 } from "@carbon/icons-react";
 import { FolderIcon } from "@/components/ui/folder-icon";
-const Folder = FolderIcon as any;
+const Folder = FolderIcon as unknown as CarbonIconType;
 import type { Caps } from "@/lib/rbac";
 import { isNavSectionEnabled } from "@/lib/app-edition";
+import { isSectionEnabled } from "@/modules/core/organisation/module-config";
 
 export type SecondaryNavItem = {
   href: string;
@@ -1015,18 +1016,19 @@ export function getActiveItemHref(pathname: string, items: SecondaryNavItem[]) {
   return rankedMatches[0]?.href ?? null;
 }
 
-export function getVisibleSections(caps: Caps) {
+export function getVisibleSections(caps: Caps, enabledSectionIds?: Iterable<string>) {
   return NAV_SECTIONS.map((section) => {
     const visibleItems = section.items.filter((item) => isVisible(caps, item.permission, item.hideFor));
     return { ...section, items: visibleItems };
   }).filter((section) => {
     if (!isNavSectionEnabled(section.id)) return false;
+    if (!isSectionEnabled(section.id, enabledSectionIds)) return false;
     const canSeeSection = isVisible(caps, section.permission, section.hideFor);
     if (section.alwaysVisible) return true;
     return section.items.length > 0 || Boolean(section.permission && canSeeSection);
   });
 }
 
-export function getVisibleSectionById(caps: Caps, id: string) {
-  return getVisibleSections(caps).find((section) => section.id === id) ?? null;
+export function getVisibleSectionById(caps: Caps, id: string, enabledSectionIds?: Iterable<string>) {
+  return getVisibleSections(caps, enabledSectionIds).find((section) => section.id === id) ?? null;
 }
