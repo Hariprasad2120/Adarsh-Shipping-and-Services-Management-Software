@@ -289,6 +289,14 @@ export async function createJob(
     });
   }
 
+  // Trigger Google Workspace background provisioning
+  if (process.env.NODE_ENV !== "test") {
+    const { provisionJobWorkspace } = await import("@/lib/workspace-provisioning");
+    provisionJobWorkspace(result.job.id).catch((err: any) => {
+      console.error(`Workspace background provisioning failed for job ${result.job.id}:`, err);
+    });
+  }
+
   return result.job;
 }
 

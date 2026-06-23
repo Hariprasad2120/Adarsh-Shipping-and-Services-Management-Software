@@ -18,7 +18,10 @@ function base64url(input: string | Buffer): string {
   return buf.toString("base64url");
 }
 
-async function getAccessToken(): Promise<string> {
+// Simple in-memory storage for mock messages in development mode
+const mockMessagesStore: Record<string, ChatMessage[]> = {};
+
+export async function getAccessToken(): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   if (cachedToken && cachedToken.expiresAt > now + 60) {
     return cachedToken.token;
@@ -166,6 +169,45 @@ export async function sendMessage(params: {
   threadResourceName?: string;
   messageId?: string;
 }): Promise<ChatMessage> {
+  if (
+    process.env.NODE_ENV === "development" &&
+    (params.spaceResourceName.includes("mock-") || !SA_EMAIL || !PRIVATE_KEY)
+  ) {
+    const newMessage: ChatMessage = {
+      name: `${params.spaceResourceName}/messages/mock-msg-${Date.now()}`,
+      sender: {
+        name: "users/current-user",
+        displayName: "You (Dev)",
+        type: "HUMAN"
+      },
+      text: params.text || "",
+      createTime: new Date().toISOString()
+    };
+
+    if (!mockMessagesStore[params.spaceResourceName]) {
+      mockMessagesStore[params.spaceResourceName] = [];
+    }
+    mockMessagesStore[params.spaceResourceName].push(newMessage);
+
+    // Simulate bot response after a brief delay for realistic interaction
+    setTimeout(() => {
+      if (mockMessagesStore[params.spaceResourceName]) {
+        mockMessagesStore[params.spaceResourceName].push({
+          name: `${params.spaceResourceName}/messages/mock-reply-${Date.now()}`,
+          sender: {
+            name: "users/mock-bot",
+            displayName: "Workspace Bot",
+            type: "BOT"
+          },
+          text: `[Mock Bot] Message received. In development mode, actions are simulated.`,
+          createTime: new Date().toISOString()
+        });
+      }
+    }, 1000);
+
+    return newMessage;
+  }
+
   const token = await getAccessToken();
 
   const body: Record<string, unknown> = {};
@@ -262,6 +304,16 @@ export async function createDmWithUser(googleUserResourceName: string): Promise<
   name: string;
   spaceType: string;
 }> {
+  if (
+    process.env.NODE_ENV === "development" &&
+    (!SA_EMAIL || !PRIVATE_KEY || googleUserResourceName.includes("mock"))
+  ) {
+    return {
+      name: `spaces/mock-dm-${googleUserResourceName.replace("users/", "")}`,
+      spaceType: "DIRECT_MESSAGE"
+    };
+  }
+
   const token = await getAccessToken();
 
   const res = await fetch(`${CHAT_API_BASE}/spaces:findDirectMessage?name=${encodeURIComponent(googleUserResourceName)}`, {
@@ -308,4 +360,55 @@ export async function listMemberships(
   }
 
   return res.json() as Promise<{ memberships: { name: string; member?: { name: string; type: string } }[] }>;
+}
+
+// List messages in a space
+export async function listMessages(
+  spaceResourceName: string,
+  pageSize = 50
+): Promise<ChatMessage[]> {
+  if (
+    process.env.NODE_ENV === "development" &&
+    (spaceResourceName.includes("mock-") || !SA_EMAIL || !PRIVATE_KEY)
+  ) {
+    if (!mockMessagesStore[spaceResourceName]) {
+      mockMessagesStore[spaceResourceName] = [
+        {
+          name: `${spaceResourceName}/messages/mock-msg-1`,
+          sender: {
+            name: "users/mock-user-1",
+            displayName: "System Bot",
+            type: "BOT"
+          },
+          text: `🚀 *Job Space Provisioned*\n\nWelcome to the communication space. Drive folder and workspace structure have been initialized.`,
+          createTime: new Date(Date.now() - 3600000).toISOString()
+        },
+        {
+          name: `${spaceResourceName}/messages/mock-msg-2`,
+          sender: {
+            name: "users/mock-user-2",
+            displayName: "Adarsh Operations",
+            type: "HUMAN"
+          },
+          text: "Hi team, I have uploaded the draft Bill of Lading to folder '02 Job Documents'. Please review.",
+          createTime: new Date(Date.now() - 1800000).toISOString()
+        }
+      ];
+    }
+    return mockMessagesStore[spaceResourceName];
+  }
+
+  const token = await getAccessToken();
+
+  const res = await fetch(`${CHAT_API_BASE}/${spaceResourceName}/messages?pageSize=${pageSize}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Chat API listMessages failed (${res.status}): ${err}`);
+  }
+
+  const data = (await res.json()) as { messages?: ChatMessage[] };
+  return data.messages || [];
 }

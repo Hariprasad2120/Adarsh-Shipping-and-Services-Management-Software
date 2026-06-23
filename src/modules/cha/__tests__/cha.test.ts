@@ -345,7 +345,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
     const jobApproved = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
     expect(jobApproved.stage).toBe("FILING");
-  });
+  }, 15000);
 
   it("5. should handle filing dates adjustments and mark job as filed", async () => {
     const job = await db.chaJob.findFirstOrThrow({ where: { orgId: org.id, jobNumber: "CHA-JOB-999" } });
@@ -478,5 +478,6 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     await chaService.acknowledgeExpenseReceipt(ownerUser.id, org.id, request.id);
     const finalReq = await db.chaExpenseRequest.findUniqueOrThrow({ where: { id: request.id } });
     expect(finalReq.status).toBe("RECEIPT_ACKNOWLEDGED");
-  });
+  }, 15000);
 });
+

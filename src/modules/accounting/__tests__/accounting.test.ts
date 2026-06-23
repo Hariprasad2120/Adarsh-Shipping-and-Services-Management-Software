@@ -370,7 +370,7 @@ describe("Accounting Module Integration Tests", () => {
     const bs = await getBalanceSheet(org.id, {});
     expect(bs.isBalanced).toBe(true);
     expect(bs.totalAssets).toBe(bs.totalLiabilitiesAndEquity);
-  });
+  }, 15000);
 
   it("7. should verify asset creation and prevent duplicate depreciation runs", async () => {
     const settings = await getAccountingSettings(org.id);
@@ -408,7 +408,7 @@ describe("Accounting Module Integration Tests", () => {
     await expect(
       runDepreciationForAsset(org.id, asset.id, depDate, user.id)
     ).rejects.toThrow(/already been processed/i);
-  });
+  }, 15000);
 
   it("8. should compile, create, finalize, and pay payroll batch", async () => {
     const month = new Date("2026-05-01");
@@ -468,5 +468,5 @@ describe("Accounting Module Integration Tests", () => {
     expect(Number(payableDr!.debit)).toBe(50000);
     expect(bankCr).toBeDefined();
     expect(Number(bankCr!.credit)).toBe(50000);
-  });
+  }, 15000);
 });

@@ -1,343 +1,360 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useTransition } from "react";
-import { MessageSquare, Send, Plus, Smile, Pin, Trash, RefreshCw, Hash, User } from "lucide-react";
-import { useSession } from "next-auth/react";
-import {
-  listConversations,
-  listChatMessages,
-  sendMessage,
-  toggleReaction,
-  deleteMessage,
-  createConversation,
-} from "@/modules/communication/chat.service";
+import { useState, useEffect, useRef } from "react";
+import { Search, Send, Video, ExternalLink, Hash, User, Briefcase, Folder, Users, AlertCircle, RefreshCw } from "lucide-react";
+import Link from "next/link";
 
-export default function ChatPage() {
-  const { data: session } = useSession();
-  const [conversations, setConversations] = useState<any[]>([]);
-  const [activeConvoId, setActiveConvoId] = useState<string | null>(null);
+export default function MonolithMessenger() {
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Active space state
+  const [selectedSpaceId, setSelectedSpaceId] = useState<string>("");
+  const [selectedSpaceTitle, setSelectedSpaceTitle] = useState<string>("");
+  const [selectedSpaceType, setSelectedSpaceType] = useState<string>(""); // JOB or DM
+  const [selectedJob, setSelectedJob] = useState<any>(null);
+
+  // Messages timeline state
   const [messages, setMessages] = useState<any[]>([]);
-  const [body, setBody] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [newMessageText, setNewMessageText] = useState("");
+  const [sending, setSending] = useState(false);
 
-  // Create Channel Form
-  const [isCreatingChannel, setIsCreatingChannel] = useState(false);
-  const [newChannelName, setNewChannelName] = useState("");
-  const [newChannelType, setNewChannelType] = useState<"CHANNEL" | "GROUP">("CHANNEL");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const messageEndRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    fetchChannelsAndDMs();
+  }, []);
 
-  // Load Conversations
-  const reloadConversations = () => {
-    const userId = session?.user?.id;
-    const orgId = session?.user?.orgId;
-    if (userId && orgId) {
-      listConversations(userId, orgId).then((res) => {
-        setConversations(res);
-        if (res.length > 0 && !activeConvoId) {
-          setActiveConvoId(res[0].id);
-        }
-      });
+  useEffect(() => {
+    if (selectedSpaceId) {
+      fetchMessages(selectedSpaceId);
     }
-  };
+  }, [selectedSpaceId]);
 
   useEffect(() => {
-    reloadConversations();
-  }, [session]);
-
-  // Load Messages
-  const reloadMessages = () => {
-    const userId = session?.user?.id;
-    const orgId = session?.user?.orgId;
-    if (activeConvoId && userId && orgId) {
-      listChatMessages(userId, orgId, activeConvoId).then((msgs) => {
-        setMessages(msgs.reverse()); // Chronological order
-      });
-    }
-  };
-
-  useEffect(() => {
-    reloadMessages();
-  }, [activeConvoId, session]);
-
-  // Auto-scroll to bottom
-  useEffect(() => {
-    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Scroll to bottom on new messages
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Polling for new messages (every 5 seconds)
-  useEffect(() => {
-    const timer = setInterval(() => {
-      reloadMessages();
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [activeConvoId, session]);
+  const fetchChannelsAndDMs = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/communication/chat/list");
+      const data = await res.json();
+      setJobs(data.jobs || []);
+      setEmployees(data.employees || []);
 
-  const handleSend = () => {
-    const userId = session?.user?.id;
-    const orgId = session?.user?.orgId;
-    if (!body.trim() || !activeConvoId || !userId || !orgId) return;
+      // Default select channel from query parameters if available, otherwise first channel
+      const urlParams = new URLSearchParams(window.location.search);
+      const querySpaceId = urlParams.get("spaceId");
+      let selected = false;
 
-    startTransition(async () => {
-      try {
-        const msg = await sendMessage(userId, orgId, {
-          conversationId: activeConvoId,
-          body: body.trim(),
-        });
-        setBody("");
-        setMessages((prev) => [...prev, msg]);
-      } catch (err) {
-        console.error(err);
+      if (querySpaceId && data.jobs) {
+        const match = data.jobs.find((j: any) => j.spaceId === querySpaceId);
+        if (match) {
+          handleSelectSpace(match.spaceId, `JOB-${match.jobNumber} Space`, "JOB", match);
+          selected = true;
+        }
       }
-    });
-  };
 
-  const handleCreateChannel = () => {
-    const userId = session?.user?.id;
-    const orgId = session?.user?.orgId;
-    if (!newChannelName.trim() || !userId || !orgId) return;
-
-    createConversation(userId, orgId, {
-      name: newChannelName.trim(),
-      type: newChannelType,
-      isPublic: true,
-    }).then((convo) => {
-      setIsCreatingChannel(false);
-      setNewChannelName("");
-      reloadConversations();
-      setActiveConvoId(convo.id);
-    });
-  };
-
-  const handleToggleReaction = async (messageId: string, emoji: string) => {
-    const userId = session?.user?.id;
-    const orgId = session?.user?.orgId;
-    if (!userId || !orgId) return;
-    await toggleReaction(userId, orgId, messageId, emoji);
-    reloadMessages();
-  };
-
-  const handleDelete = async (messageId: string) => {
-    const userId = session?.user?.id;
-    const orgId = session?.user?.orgId;
-    if (!userId || !orgId) return;
-    if (confirm("Are you sure you want to delete this message?")) {
-      await deleteMessage(userId, orgId, messageId);
-      reloadMessages();
+      if (!selected && data.jobs && data.jobs.length > 0) {
+        handleSelectSpace(data.jobs[0].spaceId, `JOB-${data.jobs[0].jobNumber} Space`, "JOB", data.jobs[0]);
+      }
+    } catch (err) {
+      console.error("Failed to load spaces list:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const activeConvo = conversations.find((c) => c.id === activeConvoId);
+  const fetchMessages = async (spaceId: string) => {
+    setMessagesLoading(true);
+    try {
+      const res = await fetch(`/api/communication/chat/messages?spaceId=${encodeURIComponent(spaceId)}`);
+      const data = await res.json();
+      setMessages(data.messages || []);
+    } catch (err) {
+      console.error("Failed to fetch messages:", err);
+    } finally {
+      setMessagesLoading(false);
+    }
+  };
+
+  const handleSelectSpace = (spaceId: string, title: string, type: string, jobData?: any) => {
+    setSelectedSpaceId(spaceId);
+    setSelectedSpaceTitle(title);
+    setSelectedSpaceType(type);
+    setSelectedJob(jobData || null);
+    setMessages([]);
+  };
+
+  const handleSelectEmployeeDM = async (emp: any) => {
+    if (!emp.workspaceConnection?.googleUserId) {
+      alert(`${emp.name} does not have a linked Google Workspace account for messaging.`);
+      return;
+    }
+
+    setMessagesLoading(true);
+    try {
+      const res = await fetch("/api/communication/chat/dm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetGoogleUserId: emp.workspaceConnection.googleUserId })
+      });
+      const data = await res.json();
+      if (data.success && data.spaceId) {
+        handleSelectSpace(data.spaceId, emp.name, "DM", null);
+      } else {
+        alert("Failed to initialize Direct Message space.");
+      }
+    } catch (err) {
+      console.error("Error creating DM space:", err);
+    } finally {
+      setMessagesLoading(false);
+    }
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessageText.trim() || !selectedSpaceId) return;
+
+    setSending(true);
+    try {
+      const res = await fetch("/api/communication/chat/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          spaceId: selectedSpaceId,
+          text: newMessageText
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNewMessageText("");
+        fetchMessages(selectedSpaceId);
+      }
+    } catch (err) {
+      console.error("Failed to send message:", err);
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)] min-h-0">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 h-[80vh] border border-outline-variant bg-surface rounded-2xl overflow-hidden shadow-sm text-left">
       
-      {/* 1. Conversations Sidebar */}
-      <div className="w-full lg:w-64 shrink-0 flex flex-col bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl overflow-hidden min-h-0">
-        <div className="p-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-container-low)]">
-          <h3 className="ds-h3 text-white text-xs font-bold uppercase tracking-wider">
-            Conversations
-          </h3>
-          <button
-            onClick={() => setIsCreatingChannel(true)}
-            className="p-1.5 rounded-lg bg-[#00cec4]/10 text-[#00cec4] hover:bg-[#00cec4]/20 transition-all cursor-pointer"
-            title="Create Channel / Group"
-          >
-            <Plus size={14} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {conversations.map((convo) => {
-            const isActive = convo.id === activeConvoId;
-            const displayName = convo.name || convo.participants.find((p: any) => p.userId !== session?.user?.id)?.user.name || "Group Chat";
-            const latestMsg = convo.messages[0];
-
-            return (
-              <button
-                key={convo.id}
-                onClick={() => setActiveConvoId(convo.id)}
-                className={`w-full flex items-start gap-3 p-3 rounded-xl transition-all cursor-pointer text-left ${
-                  isActive
-                    ? "bg-[#00cec4]/10 text-[#00cec4]"
-                    : "text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container)] hover:text-white"
-                }`}
-              >
-                <div className="h-8 w-8 rounded-full bg-slate-800 border border-[var(--color-outline-variant)]/60 flex items-center justify-center font-bold text-[10px] text-white shrink-0">
-                  {convo.type === "CHANNEL" ? <Hash size={13} /> : <User size={13} />}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h4 className="text-white text-xs font-bold truncate leading-snug font-sans">
-                    {displayName}
-                  </h4>
-                  <p className="text-[10px] text-[var(--color-on-surface-variant)] truncate mt-0.5">
-                    {latestMsg ? `${latestMsg.sender.name}: ${latestMsg.body}` : "No messages yet"}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 2. Messages Panel */}
-      <div className="flex-1 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl overflow-hidden flex flex-col min-h-0">
-        
-        {/* Active Header */}
-        <div className="p-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-container-low)] flex justify-between items-center shrink-0">
-          <div>
-            <h3 className="text-white text-sm font-bold font-sans uppercase flex items-center gap-1.5">
-              {activeConvo?.type === "CHANNEL" ? <Hash size={15} className="text-[#00cec4]" /> : <User size={15} className="text-[#00cec4]" />}
-              {activeConvo?.name || activeConvo?.participants.find((p: any) => p.userId !== session?.user?.id)?.user.name || "Monolith Chat Room"}
-            </h3>
-            <p className="text-[10px] text-[var(--color-on-surface-variant)] uppercase tracking-wider mt-0.5">
-              {activeConvo?.participants?.length || 0} participants active
-            </p>
+      {/* Panel 1: Conversation Navigation */}
+      <div className="border-r border-outline-variant flex flex-col bg-surface-container-low h-full">
+        {/* Search bar */}
+        <div className="p-4 border-b border-outline-variant">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Filter chat..."
+              className="w-full text-xs bg-surface border border-outline-variant rounded-xl pl-8 pr-3 py-2 focus:outline-none"
+            />
+            <Search className="absolute left-2.5 top-2.5 size-4 text-on-surface-variant" />
           </div>
-          <button
-            onClick={reloadMessages}
-            className="p-2 rounded-lg bg-[var(--color-surface-container)] hover:bg-[var(--color-surface-container)]/80 text-[var(--color-on-surface-variant)] hover:text-white cursor-pointer"
-            title="Refresh Feed"
-          >
-            <RefreshCw size={13} />
-          </button>
         </div>
 
-        {/* Message Stream */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {messages.map((msg) => {
-            const isMe = msg.senderId === session?.user?.id;
-            return (
-              <div
-                key={msg.id}
-                className={`flex gap-3 max-w-[80%] ${isMe ? "ml-auto flex-row-reverse" : ""}`}
-              >
-                <div className="h-8 w-8 rounded-full bg-slate-800 border border-[var(--color-outline-variant)]/60 flex items-center justify-center font-bold text-[10px] text-white shrink-0">
-                  {msg.sender.name.split(" ").map((n: string) => n[0]).join("")}
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-white text-xs font-bold font-sans">{msg.sender.name}</span>
-                    <span className="text-[8px] text-[var(--color-on-surface-variant)] font-mono">
-                      {new Date(msg.createdAt).toLocaleTimeString()}
-                    </span>
-                  </div>
+        {/* Channels / Spaces lists */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-4">
+          {/* Job channels */}
+          <div className="space-y-1">
+            <span className="ds-label text-on-surface-variant block px-2 mb-1">Job Workspaces</span>
+            {loading ? (
+              <div className="text-[10px] text-on-surface-variant px-2">Loading...</div>
+            ) : jobs.length === 0 ? (
+              <div className="text-[10px] text-on-surface-variant px-2 italic">No active channels.</div>
+            ) : (
+              jobs.map((job) => (
+                <button
+                  key={job.id}
+                  onClick={() => handleSelectSpace(job.spaceId, `JOB-${job.jobNumber} Space`, "JOB", job)}
+                  className={`w-full flex items-center space-x-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-left transition-colors ${
+                    selectedSpaceId === job.spaceId
+                      ? "bg-[#00cec4]/15 text-[#00cec4]"
+                      : "text-on-surface hover:bg-surface-container hover:text-on-surface"
+                  }`}
+                >
+                  <Hash className="size-4 shrink-0" />
+                  <span className="truncate">JOB-{job.jobNumber}</span>
+                </button>
+              ))
+            )}
+          </div>
 
-                  <div className={`p-3.5 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap ${
-                    isMe
-                      ? "bg-[#00cec4] text-white rounded-tr-none"
-                      : "bg-[var(--color-surface-container-low)] text-white rounded-tl-none border border-[var(--color-outline-variant)]/60"
-                  }`}>
-                    {msg.body}
-                  </div>
-
-                  {/* Message Tools (Reactions, Delete) */}
-                  <div className={`flex items-center gap-1.5 ${isMe ? "justify-end" : ""}`}>
-                    <button
-                      onClick={() => handleToggleReaction(msg.id, "👍")}
-                      className="p-1 rounded bg-[var(--color-surface-container)] text-[var(--color-on-surface-variant)] hover:text-white text-[10px] cursor-pointer"
-                    >
-                      👍 {msg.reactions?.filter((r: any) => r.emoji === "👍").length || ""}
-                    </button>
-                    <button
-                      onClick={() => handleToggleReaction(msg.id, "🚀")}
-                      className="p-1 rounded bg-[var(--color-surface-container)] text-[var(--color-on-surface-variant)] hover:text-white text-[10px] cursor-pointer"
-                    >
-                      🚀 {msg.reactions?.filter((r: any) => r.emoji === "🚀").length || ""}
-                    </button>
-                    {isMe && (
-                      <button
-                        onClick={() => handleDelete(msg.id)}
-                        className="p-1 text-red-400 hover:text-red-300 rounded cursor-pointer"
-                        title="Delete message"
-                      >
-                        <Trash size={10} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          <div ref={messageEndRef} />
-          {messages.length === 0 && (
-            <div className="p-8 text-center text-xs text-[var(--color-on-surface-variant)] uppercase tracking-wider">
-              No message feeds inside this room yet. Send a hello!
-            </div>
-          )}
+          {/* Direct Messages list */}
+          <div className="space-y-1">
+            <span className="ds-label text-on-surface-variant block px-2 mb-1">Direct Messages</span>
+            {loading ? (
+              <div className="text-[10px] text-on-surface-variant px-2">Loading...</div>
+            ) : employees.length === 0 ? (
+              <div className="text-[10px] text-on-surface-variant px-2 italic">No employees found.</div>
+            ) : (
+              employees.map((emp) => (
+                <button
+                  key={emp.id}
+                  onClick={() => handleSelectEmployeeDM(emp)}
+                  className={`w-full flex items-center space-x-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-left transition-colors ${
+                    selectedSpaceTitle === emp.name
+                      ? "bg-[#00cec4]/15 text-[#00cec4]"
+                      : "text-on-surface hover:bg-surface-container hover:text-on-surface"
+                  }`}
+                >
+                  <User className="size-4 shrink-0" />
+                  <span className="truncate">{emp.name}</span>
+                </button>
+              ))
+            )}
+          </div>
         </div>
-
-        {/* Input Bar */}
-        <div className="p-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-container-low)]/40 flex items-center gap-3 shrink-0">
-          <input
-            type="text"
-            placeholder="Type message, use @name to notify employees..."
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSend();
-            }}
-            className="flex-1 text-xs text-white"
-          />
-          <button
-            disabled={isPending || !body.trim()}
-            onClick={handleSend}
-            className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] p-2.5 rounded-xl transition-all cursor-pointer disabled:opacity-50"
-          >
-            <Send size={14} />
-          </button>
-        </div>
-
       </div>
 
-      {/* 3. New Channel Creation Modal Overlay */}
-      {isCreatingChannel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-2xl p-6 shadow-2xl space-y-4">
-            <h3 className="ds-h3 text-white text-sm font-bold flex items-center gap-2">
-              <Plus size={16} className="text-[#00cec4]" />
-              New Channel / Group
-            </h3>
-            <div className="space-y-3">
+      {/* Panel 2: Active Conversation timeline */}
+      <div className="md:col-span-2 flex flex-col h-full bg-surface border-r border-outline-variant">
+        {selectedSpaceId ? (
+          <div className="flex flex-col h-full overflow-hidden">
+            {/* Space Header */}
+            <div className="p-4 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
               <div>
-                <span className="ds-label block mb-1">Name</span>
+                <h3 className="text-xs font-bold text-on-surface uppercase tracking-wider flex items-center gap-1.5">
+                  {selectedSpaceType === "JOB" ? <Hash className="size-4 text-[#00cec4]" /> : <User className="size-4 text-[#818cf8]" />}
+                  <span>{selectedSpaceTitle}</span>
+                </h3>
+                {selectedSpaceId && (
+                  selectedSpaceId.includes("mock") ? (
+                    <span className="text-[9px] font-bold text-[#fb923c] uppercase tracking-wide mt-0.5">
+                      Development Mock Space
+                    </span>
+                  ) : (
+                    <a
+                      href={`https://chat.google.com/room/${selectedSpaceId.replace("spaces/", "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[9px] font-bold text-[#00cec4] hover:underline uppercase tracking-wide mt-0.5"
+                    >
+                      <span>Open in Google Chat</span>
+                      <ExternalLink className="size-3" />
+                    </a>
+                  )
+                )}
+              </div>
+
+              {/* Chat action shortcuts */}
+              <div className="flex items-center space-x-2">
+                <Link
+                  href="/communication/meetings"
+                  className="p-1.5 border border-outline-variant rounded-xl hover:bg-surface-container transition-colors"
+                  title="Schedule Google Meet"
+                >
+                  <Video className="size-4 text-[#00cec4]" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Conversation Messages Timeline */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-surface-container-low">
+              {messagesLoading && messages.length === 0 ? (
+                <div className="text-center py-12 text-xs text-on-surface-variant">Loading timeline...</div>
+              ) : messages.length === 0 ? (
+                <div className="text-center py-12 text-xs text-on-surface-variant flex flex-col items-center">
+                  <span className="text-3xl mb-1">💬</span>
+                  <span>Timeline is empty. Send a message to start conversation.</span>
+                </div>
+              ) : (
+                messages.map((msg, idx) => (
+                  <div key={idx} className="flex flex-col text-left space-y-1 max-w-[85%]">
+                    <div className="flex items-baseline space-x-2">
+                      <span className="text-xs font-bold text-on-surface">
+                        {msg.sender?.displayName || "Google Chat User"}
+                      </span>
+                      <span className="text-[9px] text-on-surface-variant ds-numeric">
+                        {msg.createTime
+                          ? new Date(msg.createTime).toLocaleTimeString("en-IN", {
+                              hour: "2-digit",
+                              minute: "2-digit"
+                            })
+                          : ""}
+                      </span>
+                    </div>
+                    <div className="p-3 bg-surface border border-outline-variant rounded-2xl rounded-tl-none shadow-sm text-xs text-on-surface">
+                      {msg.text}
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Message Input Composer */}
+            <div className="p-3 border-t border-outline-variant bg-surface">
+              <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
                 <input
                   type="text"
-                  placeholder="e.g. general-operations"
-                  value={newChannelName}
-                  onChange={(e) => setNewChannelName(e.target.value)}
-                  className="w-full text-xs text-white"
+                  placeholder="Type message..."
+                  value={newMessageText}
+                  onChange={(e) => setNewMessageText(e.target.value)}
+                  className="flex-1 text-xs bg-surface border border-outline-variant rounded-xl px-3 py-2.5 focus:outline-none"
+                  required
                 />
-              </div>
-              <div>
-                <span className="ds-label block mb-1">Privacy Type</span>
-                <select
-                  value={newChannelType}
-                  onChange={(e: any) => setNewChannelType(e.target.value)}
-                  className="w-full text-xs bg-[var(--color-surface-container)] text-white"
+                <button
+                  type="submit"
+                  disabled={sending || !newMessageText.trim()}
+                  className="bg-[#00cec4] text-white hover:bg-[#00b8af] disabled:opacity-50 px-4 py-2.5 rounded-xl text-xs font-bold uppercase transition-all"
                 >
-                  <option value="CHANNEL">Public Channel (visible to all)</option>
-                  <option value="GROUP">Private Group (invitation required)</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 pt-3 border-t border-[var(--color-outline-variant)]/40">
-              <button
-                onClick={() => setIsCreatingChannel(false)}
-                className="px-4 py-2 text-xs text-[var(--color-on-surface-variant)] hover:text-white uppercase tracking-wider font-bold cursor-pointer"
-              >
-                Close
-              </button>
-              <button
-                onClick={handleCreateChannel}
-                className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-5 py-2 rounded-xl text-xs uppercase tracking-widest font-bold transition-all cursor-pointer"
-              >
-                Create
-              </button>
+                  <Send className="size-4" />
+                </button>
+              </form>
             </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-on-surface-variant text-xs">
+            <span className="text-4xl mb-2 animate-bounce">💬</span>
+            <span>Choose a channel or employee DM from the sidebar to chat.</span>
+          </div>
+        )}
+      </div>
+
+      {/* Panel 3: Details / Context Actions */}
+      <div className="hidden md:flex flex-col bg-surface h-full p-4 space-y-4">
+        {selectedSpaceId && selectedSpaceType === "JOB" && selectedJob ? (
+          <div className="space-y-4">
+            <h4 className="ds-h3 text-on-surface">Job Context</h4>
+            
+            <div className="card-left-accent p-3.5 rounded-xl border border-outline-variant bg-surface-container-low space-y-2">
+              <h5 className="text-xs font-bold text-on-surface">JOB-{selectedJob.jobNumber}</h5>
+              <p className="text-[10px] text-on-surface-variant leading-relaxed">{selectedJob.title}</p>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <Link
+                href={`/cha/jobs/${selectedJob.id}`}
+                className="flex items-center space-x-2 text-xs font-semibold text-on-surface hover:text-[#00cec4] transition-colors"
+              >
+                <Briefcase className="size-4 text-[#00cec4]" />
+                <span>View Job File</span>
+              </Link>
+              
+              {selectedJob.spaceId && (
+                <Link
+                  href={`/communication/drive?jobId=${selectedJob.id}`}
+                  className="flex items-center space-x-2 text-xs font-semibold text-on-surface hover:text-[#00cec4] transition-colors"
+                >
+                  <Folder className="size-4 text-[#fb923c]" />
+                  <span>Google Drive Folder</span>
+                </Link>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-12 text-xs text-on-surface-variant italic">
+            No contextual details for direct messages.
+          </div>
+        )}
+      </div>
 
     </div>
   );
