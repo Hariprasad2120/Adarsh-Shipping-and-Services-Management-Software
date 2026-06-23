@@ -92,7 +92,7 @@ export default async function TicketsPage() {
     : [];
 
   return (
-    <div className="max-w-7xl space-y-6">
+    <div className="space-y-6">
       <div className="flex justify-end">
         <TicketForm />
       </div>

@@ -11,7 +11,7 @@ export function PageAnimator({ children }: { children: React.ReactNode }) {
   return (
     <div
       key={pathname}
-      className="flex w-full flex-1 flex-col overflow-x-clip contain-[layout_paint] will-change-transform animate-page-enter"
+      className="flex w-full flex-1 flex-col overflow-x-clip animate-page-enter"
     >
       {children}
     </div>

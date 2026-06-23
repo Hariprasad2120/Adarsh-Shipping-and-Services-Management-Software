@@ -51,7 +51,7 @@ export default async function TrialBalanceReportPage({ searchParams }: TBPagePro
   const closingBalanced = Math.abs(totalCloseDr - totalCloseCr) <= 0.05;
 
   return (
-    <div className="p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/20 pb-5">

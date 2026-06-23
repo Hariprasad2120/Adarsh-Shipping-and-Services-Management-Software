@@ -212,7 +212,7 @@ export default async function OvertimePage({ searchParams }: PageProps) {
   }
 
   return (
-    <div className="max-w-7xl space-y-6">
+    <div className="space-y-6">
       <div className="space-y-1">
         <p className="text-sm font-medium text-on-surface-variant">
           {canApprove

@@ -120,7 +120,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
     : [];
 
   return (
-    <div className="max-w-7xl space-y-6">
+    <div className="space-y-6">
       <TicketDetailClient
         initialTicket={ticket}
         admins={admins}

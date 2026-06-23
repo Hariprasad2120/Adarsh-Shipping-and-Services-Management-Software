@@ -3,12 +3,14 @@ import { getOrg } from "@/modules/core/organisation/service";
 import { listUsers } from "@/modules/core/user/service";
 import { getDashboardWidgets, getMe, getTeamReportees } from "@/modules/hrms/service";
 import { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
+import { isChaEdition } from "@/lib/app-edition";
 import { redirect } from "next/navigation";
 import { HrmsPortalClient } from "./portal-client";
 
 export default async function DashboardPage() {
   const session = await auth();
   if (!session) redirect("/login");
+  if (isChaEdition()) redirect("/cha");
 
   const orgId = session.user.orgId!;
 

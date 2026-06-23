@@ -79,7 +79,7 @@ export default async function CommunicationDashboard() {
   const parsedError = parseGoogleApiError(errorState || "");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-200">
       {/* Top Welcome Panel */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between p-6 rounded-2xl border border-outline-variant bg-surface shadow-sm">
         <div>

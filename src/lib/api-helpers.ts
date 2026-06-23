@@ -3,7 +3,18 @@ import { NextResponse } from "next/server";
 
 export async function getSessionOrUnauth() {
   const session = await auth();
-  if (!session) return { session: null, error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  if (!session) {
+    return {
+      session: null,
+      error: NextResponse.json({ error: "Unauthorized" }, {
+        status: 401,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          "X-Content-Type-Options": "nosniff",
+        },
+      }),
+    };
+  }
   return { session, error: null };
 }
 

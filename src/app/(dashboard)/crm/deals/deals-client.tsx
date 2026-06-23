@@ -93,7 +93,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
   };
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200">
       {/* Mini Stats Summary Bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-[#0f1319]/55 border border-[#1c212a]/55 rounded-xl p-4">
         <div className="space-y-1">

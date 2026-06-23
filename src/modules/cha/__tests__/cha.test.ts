@@ -9,6 +9,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
   let branch: any;
   let ownerUser: any;
   let managerUser: any;
+  let otherManagerUser: any;
   let customer: any;
   let jobTypeImport: any;
 
@@ -38,6 +39,26 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       data: { orgId: org.id, name: "Manager", isSystem: true },
     });
 
+    const deletePermission = await db.permission.upsert({
+      where: { key: "cha.job.delete" },
+      update: { label: "Request/Delete CHA Jobs", group: "CHA" },
+      create: { key: "cha.job.delete", label: "Request/Delete CHA Jobs", group: "CHA" },
+    });
+    const approveDeletePermission = await db.permission.upsert({
+      where: { key: "cha.job.delete.approve" },
+      update: { label: "Approve/Delete Assigned CHA Jobs", group: "CHA" },
+      create: { key: "cha.job.delete.approve", label: "Approve/Delete Assigned CHA Jobs", group: "CHA" },
+    });
+
+    await db.rolePermission.createMany({
+      data: [
+        { roleId: employeeRole.id, permissionId: deletePermission.id },
+        { roleId: managerRole.id, permissionId: deletePermission.id },
+        { roleId: managerRole.id, permissionId: approveDeletePermission.id },
+      ],
+      skipDuplicates: true,
+    });
+
     // 4. Create Users
     ownerUser = await db.user.create({
       data: {
@@ -59,12 +80,25 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       },
     });
 
+    otherManagerUser = await db.user.create({
+      data: {
+        orgId: org.id,
+        email: `cha-other-mgr-${Date.now()}@example.com`,
+        passwordHash: "dummy-hash",
+        name: "Other Manager",
+        branchId: branch.id,
+      },
+    });
+
     // Assign roles to users
     await db.userRole.create({
       data: { userId: ownerUser.id, roleId: employeeRole.id },
     });
     await db.userRole.create({
       data: { userId: managerUser.id, roleId: managerRole.id },
+    });
+    await db.userRole.create({
+      data: { userId: otherManagerUser.id, roleId: managerRole.id },
     });
 
     // 5. Create a Customer (CrmAccount)
@@ -90,6 +124,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     await db.chaExpensePayment.deleteMany({ where: { request: { orgId } } });
     await db.chaExpenseLine.deleteMany({ where: { request: { orgId } } });
     await db.chaExpenseRequest.deleteMany({ where: { orgId } });
+    await db.chaJobDeletionRequest.deleteMany({ where: { orgId } });
     await db.chaCustomerAdvanceReceipt.deleteMany({ where: { advance: { job: { orgId } } } });
     await db.chaCustomerAdvance.deleteMany({ where: { job: { orgId } } });
     await db.chaFilingDateHistory.deleteMany({ where: { filing: { job: { orgId } } } });
@@ -263,6 +298,62 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     const gate2 = await chaService.verifyDocumentGate(job.id);
     expect(gate2.passed).toBe(true);
     expect(gate2.blockingRequirements.length).toBe(0);
+
+    const jobAfterGatePass = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
+    expect(jobAfterGatePass.stage).toBe("CHECKLIST_PREPARATION");
+  });
+
+  it("3.5. should delete a document version, update status, and revert stage if gate fails", async () => {
+    const job = await db.chaJob.findFirstOrThrow({ where: { orgId: org.id, jobNumber: "CHA-JOB-999" } });
+    const reqs = await db.chaJobDocumentRequirement.findMany({ where: { jobId: job.id }, include: { versions: true } });
+
+    const pkReq = reqs.find((r) => r.name === "Packing List")!;
+    const currentVersion = pkReq.versions.find((v) => v.isCurrent)!;
+
+    // A. Unauthorized user deletion attempt should fail
+    const randomUser = await db.user.create({
+      data: {
+        orgId: org.id,
+        email: `random-user-${Date.now()}@example.com`,
+        passwordHash: "dummy-hash",
+        name: "Random Guy",
+        branchId: branch.id,
+      },
+    });
+
+    await expect(
+      chaService.deleteDocumentVersion(randomUser.id, org.id, job.id, pkReq.id, currentVersion.id)
+    ).rejects.toThrow("Access Denied");
+
+    // B. Authorized owner deletion should succeed
+    const result = await chaService.deleteDocumentVersion(ownerUser.id, org.id, job.id, pkReq.id, currentVersion.id);
+    expect(result.newStatus).toBe("PENDING");
+    expect(result.stageReverted).toBe(true);
+    expect(result.prevStage).toBe("CHECKLIST_PREPARATION");
+
+    // C. Check database updates
+    const updatedJob = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
+    expect(updatedJob.stage).toBe("DOCUMENT_COLLECTION");
+
+    const updatedPkReq = await db.chaJobDocumentRequirement.findUniqueOrThrow({
+      where: { id: pkReq.id },
+      include: { versions: true },
+    });
+    expect(updatedPkReq.status).toBe("PENDING");
+    expect(updatedPkReq.versions.length).toBe(0); // version deleted
+
+    // D. Re-upload to restore stage for checklist test
+    await chaService.uploadDocumentVersion(ownerUser.id, org.id, job.id, pkReq.id, {
+      fileKey: "packing_list_s3_key",
+      fileName: "packing_list.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 8192,
+    });
+    const jobRestored = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
+    expect(jobRestored.stage).toBe("CHECKLIST_PREPARATION");
+
+    // Clean up random user
+    await db.user.delete({ where: { id: randomUser.id } });
   });
 
   it("4. should import checklist, submit for approval and handle manager actions", async () => {
@@ -478,6 +569,254 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     await chaService.acknowledgeExpenseReceipt(ownerUser.id, org.id, request.id);
     const finalReq = await db.chaExpenseRequest.findUniqueOrThrow({ where: { id: request.id } });
     expect(finalReq.status).toBe("RECEIPT_ACKNOWLEDGED");
+  }, 15000);
+
+  it("8. should create, reject, and audit deletion approval requests for non-managers", async () => {
+    const job = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: "CHA-DELETE-REQ-001",
+      title: "Deletion approval request job",
+      customerId: customer.id,
+      jobTypeId: jobTypeImport.id,
+      branchId: branch.id,
+      priority: "MEDIUM",
+      primaryOwnerId: managerUser.id,
+      assignments: [
+        { userId: ownerUser.id, responsibility: "OPERATIONS" },
+        { userId: managerUser.id, responsibility: "APPROVAL" },
+      ],
+    });
+
+    const pending = await chaService.submitJobDeletion(ownerUser.id, org.id, {
+      jobId: job.id,
+      confirmationJobNumber: "CHA-DELETE-REQ-001",
+      confirmationPhrase: " delete job ",
+      metadata: { source: "test" },
+    });
+
+    expect(pending.mode).toBe("pending");
+
+    await expect(
+      chaService.submitJobDeletion(ownerUser.id, org.id, {
+        jobId: job.id,
+        confirmationJobNumber: "CHA-DELETE-REQ-001",
+        confirmationPhrase: "delete job",
+      }),
+    ).rejects.toThrow("An active deletion request already exists for this CHA job.");
+
+    const pendingRequest = await db.chaJobDeletionRequest.findFirstOrThrow({
+      where: { jobId: job.id, status: "PENDING" },
+    });
+    expect(pendingRequest.assignedManagerId).toBe(managerUser.id);
+
+    await expect(
+      chaService.decideJobDeletionRequest(otherManagerUser.id, org.id, {
+        requestId: pendingRequest.id,
+        decision: "APPROVED",
+        remarks: "Attempted by wrong manager",
+      }),
+    ).rejects.toThrow("You are not the assigned manager for this deletion request.");
+
+    await chaService.decideJobDeletionRequest(managerUser.id, org.id, {
+      requestId: pendingRequest.id,
+      decision: "REJECTED",
+      remarks: "Supporting records still under review.",
+    });
+
+    const rejectedRequest = await db.chaJobDeletionRequest.findUniqueOrThrow({
+      where: { id: pendingRequest.id },
+    });
+    expect(rejectedRequest.status).toBe("REJECTED");
+    expect(rejectedRequest.rejectionRemarks).toContain("under review");
+
+    const activeJob = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
+    expect(activeJob.deletedAt).toBeNull();
+
+    const jobAuditEvents = await db.chaAuditLog.findMany({
+      where: {
+        jobId: job.id,
+        event: { in: ["JOB_DELETE_CONFIRMATION_INITIATED", "JOB_DELETE_APPROVAL_REQUESTED", "JOB_DELETE_APPROVAL_REJECTED"] },
+      },
+      orderBy: { timestamp: "asc" },
+    });
+    expect(jobAuditEvents.map((entry) => entry.event)).toEqual(
+      expect.arrayContaining([
+        "JOB_DELETE_CONFIRMATION_INITIATED",
+        "JOB_DELETE_APPROVAL_REQUESTED",
+        "JOB_DELETE_APPROVAL_REJECTED",
+      ]),
+    );
+
+    const unauthorizedAttempt = await db.chaAuditLog.findFirst({
+      where: {
+        entityId: pendingRequest.id,
+        actorId: otherManagerUser.id,
+        event: "JOB_DELETE_UNAUTHORIZED_ATTEMPT",
+      },
+    });
+    expect(unauthorizedAttempt).toBeTruthy();
+  }, 15000);
+
+  it("9. should allow the assigned manager to directly soft-delete a job", async () => {
+    const job = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: "CHA-DELETE-DIRECT-001",
+      title: "Direct deletion job",
+      customerId: customer.id,
+      jobTypeId: jobTypeImport.id,
+      branchId: branch.id,
+      priority: "LOW",
+      primaryOwnerId: ownerUser.id,
+      assignments: [
+        { userId: ownerUser.id, responsibility: "OPERATIONS" },
+        { userId: managerUser.id, responsibility: "APPROVAL" },
+      ],
+    });
+
+    await expect(
+      chaService.submitJobDeletion(otherManagerUser.id, org.id, {
+        jobId: job.id,
+        confirmationJobNumber: "CHA-DELETE-DIRECT-001",
+        confirmationPhrase: "delete job",
+      }),
+    ).rejects.toThrow("You are not authorized to delete or request deletion for this CHA job.");
+
+    const directDelete = await chaService.submitJobDeletion(managerUser.id, org.id, {
+      jobId: job.id,
+      confirmationJobNumber: "CHA-DELETE-DIRECT-001",
+      confirmationPhrase: "delete job",
+      metadata: { source: "test" },
+    });
+
+    expect(directDelete.mode).toBe("deleted");
+
+    const deletedJob = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
+    expect(deletedJob.deletedAt).not.toBeNull();
+    expect(deletedJob.deletedById).toBe(managerUser.id);
+    expect(deletedJob.status).toBe("CANCELLED");
+
+    const visibleJobs = await chaService.listJobs(ownerUser.id, org.id, { search: "CHA-DELETE-DIRECT-001" });
+    expect(visibleJobs.total).toBe(0);
+
+    const directAudit = await db.chaAuditLog.findMany({
+      where: { jobId: job.id, event: { in: ["JOB_DELETED_DIRECT", "JOB_DELETE_EXECUTED"] } },
+    });
+    expect(directAudit.map((entry) => entry.event)).toEqual(
+      expect.arrayContaining(["JOB_DELETED_DIRECT", "JOB_DELETE_EXECUTED"]),
+    );
+
+    await expect(
+      chaService.submitJobDeletion(managerUser.id, org.id, {
+        jobId: job.id,
+        confirmationJobNumber: "CHA-DELETE-DIRECT-001",
+        confirmationPhrase: "delete job",
+      }),
+    ).rejects.toThrow("CHA job not found.");
+  }, 15000);
+
+  it("10. should enforce confirmation rules, missing manager handling, and approved deletion execution", async () => {
+    const noManagerJob = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: "CHA-DELETE-NOMGR-001",
+      title: "Missing manager deletion job",
+      customerId: customer.id,
+      jobTypeId: jobTypeImport.id,
+      branchId: branch.id,
+      priority: "MEDIUM",
+      primaryOwnerId: ownerUser.id,
+      assignments: [{ userId: ownerUser.id, responsibility: "OPERATIONS" }],
+    });
+
+    await expect(
+      chaService.submitJobDeletion(ownerUser.id, org.id, {
+        jobId: noManagerJob.id,
+        confirmationJobNumber: "CHA-DELETE-NOMGR-001",
+        confirmationPhrase: "erase job",
+      }),
+    ).rejects.toThrow("The confirmation phrase must exactly match 'delete job'.");
+
+    await expect(
+      chaService.submitJobDeletion(ownerUser.id, org.id, {
+        jobId: noManagerJob.id,
+        confirmationJobNumber: "WRONG-NUMBER",
+        confirmationPhrase: "delete job",
+      }),
+    ).rejects.toThrow("The entered job number does not match this CHA job.");
+
+    const directDeleteNoMgr = await chaService.submitJobDeletion(ownerUser.id, org.id, {
+      jobId: noManagerJob.id,
+      confirmationJobNumber: "CHA-DELETE-NOMGR-001",
+      confirmationPhrase: "delete job",
+    });
+    expect(directDeleteNoMgr.mode).toBe("deleted");
+
+    const noManagerDeletedJob = await db.chaJob.findUniqueOrThrow({ where: { id: noManagerJob.id } });
+    expect(noManagerDeletedJob.deletedAt).not.toBeNull();
+    expect(noManagerDeletedJob.deletedById).toBe(ownerUser.id);
+
+    const noManagerRequestJob = await chaService.createJob(managerUser.id, org.id, {
+      jobNumber: "CHA-DELETE-NOMGR-REQ",
+      title: "Missing manager deletion request job",
+      customerId: customer.id,
+      jobTypeId: jobTypeImport.id,
+      branchId: branch.id,
+      priority: "MEDIUM",
+      primaryOwnerId: managerUser.id,
+      assignments: [{ userId: ownerUser.id, responsibility: "OPERATIONS" }],
+    });
+
+    await expect(
+      chaService.submitJobDeletion(ownerUser.id, org.id, {
+        jobId: noManagerRequestJob.id,
+        confirmationJobNumber: "CHA-DELETE-NOMGR-REQ",
+        confirmationPhrase: "delete job",
+      }),
+    ).rejects.toThrow("No approval manager is assigned to this CHA job. Assign a manager before requesting deletion.");
+
+    const approvedJob = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: "CHA-DELETE-APPROVE-001",
+      title: "Approved deletion execution job",
+      customerId: customer.id,
+      jobTypeId: jobTypeImport.id,
+      branchId: branch.id,
+      priority: "MEDIUM",
+      primaryOwnerId: managerUser.id,
+      assignments: [
+        { userId: ownerUser.id, responsibility: "OPERATIONS" },
+        { userId: managerUser.id, responsibility: "APPROVAL" },
+      ],
+    });
+
+    const requestResult = await chaService.submitJobDeletion(ownerUser.id, org.id, {
+      jobId: approvedJob.id,
+      confirmationJobNumber: "CHA-DELETE-APPROVE-001",
+      confirmationPhrase: "delete job",
+    });
+    expect(requestResult.mode).toBe("pending");
+
+    const request = await db.chaJobDeletionRequest.findFirstOrThrow({
+      where: { jobId: approvedJob.id, status: "PENDING" },
+    });
+
+    await chaService.decideJobDeletionRequest(managerUser.id, org.id, {
+      requestId: request.id,
+      decision: "APPROVED",
+      remarks: "Deletion approved by assigned manager.",
+    });
+
+    const executedRequest = await db.chaJobDeletionRequest.findUniqueOrThrow({
+      where: { id: request.id },
+    });
+    expect(executedRequest.status).toBe("EXECUTED");
+    expect(executedRequest.executedById).toBe(managerUser.id);
+
+    const deletedJob = await db.chaJob.findUniqueOrThrow({ where: { id: approvedJob.id } });
+    expect(deletedJob.deletedAt).not.toBeNull();
+    expect(deletedJob.deletedById).toBe(managerUser.id);
+
+    const approvalAudit = await db.chaAuditLog.findMany({
+      where: { jobId: approvedJob.id, event: { in: ["JOB_DELETE_APPROVAL_APPROVED", "JOB_DELETE_EXECUTED"] } },
+    });
+    expect(approvalAudit.map((entry) => entry.event)).toEqual(
+      expect.arrayContaining(["JOB_DELETE_APPROVAL_APPROVED", "JOB_DELETE_EXECUTED"]),
+    );
   }, 15000);
 });
 

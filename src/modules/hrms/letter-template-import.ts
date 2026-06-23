@@ -239,6 +239,10 @@ export async function importDocxTemplateFile(docxPath: string): Promise<Imported
 }
 
 export function getBundledDocxTemplateFiles() {
+  if (!fs.existsSync(DOCX_SOURCE_DIR)) {
+    console.warn(`DOCX source directory not found: ${DOCX_SOURCE_DIR}. Skipping template file seeding.`);
+    return [];
+  }
   return fs
     .readdirSync(DOCX_SOURCE_DIR)
     .filter((file) => file.toLowerCase().endsWith(".docx") && !file.startsWith("00_") && !file.startsWith("~$"))

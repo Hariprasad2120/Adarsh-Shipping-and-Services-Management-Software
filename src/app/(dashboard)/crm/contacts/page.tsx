@@ -57,7 +57,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
   const contacts = await listContacts(orgId, { search });
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
+    <div className="space-y-6">
 
       {/* Unified Table Shell — toolbar + table in one rounded container */}
       <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">

@@ -80,7 +80,7 @@ export function LeadDetailWrapper({
   const leadName = `${lead.firstName || ""} ${lead.lastName}`.trim();
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200">
       {/* ─── SPLIT VIEW LAYOUT ──────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         

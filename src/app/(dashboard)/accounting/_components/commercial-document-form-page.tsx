@@ -100,7 +100,7 @@ export async function CommercialDocumentFormPage({
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-8">
+    <div className="mx-auto max-w-5xl space-y-6">
       <div>
         <h2 className="ds-h1 text-white">{title}</h2>
         <p className="mt-1 text-sm text-slate-400">{description}</p>

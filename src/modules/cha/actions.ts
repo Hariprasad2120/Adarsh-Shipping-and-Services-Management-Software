@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
@@ -23,6 +24,17 @@ async function getAuthAndVerify(permission?: string) {
     await requirePermission(userId, permission);
   }
   return { userId, orgId };
+}
+
+async function getRequestMetadata() {
+  const requestHeaders = await headers();
+  return {
+    userAgent: requestHeaders.get("user-agent") ?? undefined,
+    ipAddress:
+      requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      requestHeaders.get("x-real-ip") ??
+      undefined,
+  };
 }
 
 export async function ensureSettingsAndDefaultsAction(): Promise<ActionResponse> {
@@ -85,6 +97,51 @@ export async function createJobAction(data: {
     return { ok: true, data: job };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to create CHA job" };
+  }
+}
+
+export async function submitJobDeletionAction(
+  jobId: string,
+  confirmationJobNumber: string,
+  confirmationPhrase: string
+): Promise<ActionResponse<{ mode: "deleted" | "pending"; requestId?: string; assignedManagerId?: string }>> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.delete");
+    const metadata = await getRequestMetadata();
+    const result = await chaService.submitJobDeletion(userId, orgId, {
+      jobId,
+      confirmationJobNumber,
+      confirmationPhrase,
+      metadata,
+    });
+    revalidatePath(`/cha/jobs/${jobId}`);
+    revalidatePath("/cha/jobs");
+    revalidatePath("/cha/approvals");
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to process CHA job deletion" };
+  }
+}
+
+export async function decideJobDeletionRequestAction(
+  requestId: string,
+  decision: "APPROVED" | "REJECTED",
+  remarks?: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.delete.approve");
+    const metadata = await getRequestMetadata();
+    const result = await chaService.decideJobDeletionRequest(userId, orgId, {
+      requestId,
+      decision,
+      remarks,
+      metadata,
+    });
+    revalidatePath("/cha/jobs");
+    revalidatePath("/cha/approvals");
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to action CHA deletion request" };
   }
 }
 
@@ -184,6 +241,21 @@ export async function uploadDocumentVersionAction(
     return { ok: true, data: version };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to upload document version" };
+  }
+}
+
+export async function deleteDocumentVersionAction(
+  jobId: string,
+  requirementId: string,
+  versionId: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const result = await chaService.deleteDocumentVersion(userId, orgId, jobId, requirementId, versionId);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to delete document version" };
   }
 }
 

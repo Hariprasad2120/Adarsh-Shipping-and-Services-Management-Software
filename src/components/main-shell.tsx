@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 
 export function MainShell({ children }: { children: React.ReactNode }) {
@@ -22,8 +23,8 @@ export function MainShell({ children }: { children: React.ReactNode }) {
 
   return (
     <main
-      className="flex min-w-0 flex-1 flex-col overflow-x-clip bg-background transition-[padding-left] duration-300"
-      style={{ paddingLeft: pl }}
+      className="flex min-w-0 flex-1 flex-col overflow-y-auto overflow-x-clip bg-background pl-0 transition-[padding-left] duration-300 lg:pl-[var(--sidebar-width)]"
+      style={{ ["--sidebar-width" as string]: pl } as CSSProperties}
     >
       {children}
     </main>

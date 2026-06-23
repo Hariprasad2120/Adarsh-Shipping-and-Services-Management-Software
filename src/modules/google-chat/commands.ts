@@ -15,6 +15,7 @@ import { linkSpaceToRecord, unlinkSpace, upsertSubscription, getSpaceByResource 
 import { processMessage, resetSession } from "./gateway";
 import { db } from "@/lib/db";
 import type { ResolvedChatIdentity } from "./types";
+import { getAppUrl } from "@/lib/app-url";
 
 // ─── Shared params type (all command handlers receive this) ──────────────────
 
@@ -31,6 +32,8 @@ type CommandParams = {
 export type CommandResult =
   | { type: "text"; text: string }
   | { type: "cards"; cardsV2: ChatCard[] };
+
+const APP_URL = getAppUrl();
 
 // ─── Dispatch a slash command ─────────────────────────────────────────────────
 
@@ -195,7 +198,7 @@ async function handleApprovals(params: CommandParams): Promise<CommandResult> {
 
   return {
     type: "text",
-    text: `📋 *Pending Approvals (${pendingLeaves}):*\n${lines.join("\n")}\n\nOpen Monolith to approve/reject: ${process.env.NEXTAUTH_URL}/attendance/leaves`,
+    text: `📋 *Pending Approvals (${pendingLeaves}):*\n${lines.join("\n")}\n\nOpen Monolith to approve/reject: ${APP_URL}/attendance/leaves`,
   };
 }
 

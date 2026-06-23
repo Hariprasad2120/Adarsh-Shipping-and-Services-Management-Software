@@ -143,7 +143,7 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
   const selectClass = "flex h-11 w-full rounded-xl border border-[#00cec4]/55 bg-surface px-4 py-2.5 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/15 hover:border-[#00cec4]/85 transition";
 
   return (
-    <div className="max-w-7xl space-y-6">
+    <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <p className="text-sm text-on-surface-variant dark:text-slate-400 font-medium">

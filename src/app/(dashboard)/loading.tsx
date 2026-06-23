@@ -17,7 +17,7 @@ function LoadingCard() {
 
 export default function DashboardLoading() {
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-6 py-8 animate-pulse">
+    <div className="flex w-full flex-1 flex-col gap-6 animate-pulse">
       <div className="space-y-3">
         <div className="h-8 w-56 rounded-full bg-surface-container-high" />
         <div className="h-4 w-80 max-w-full rounded-full bg-surface-container" />

@@ -78,7 +78,7 @@ export async function CommercialDocumentsPage({
   });
 
   return (
-    <div className="mx-auto max-w-[1600px] space-y-6 p-8">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 border-b border-[#1c212a]/30 pb-5 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="ds-h1 text-white">{title}</h2>

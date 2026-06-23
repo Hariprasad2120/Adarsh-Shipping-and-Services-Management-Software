@@ -1,9 +1,9 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { requirePermission } from "@/lib/rbac";
-import { listManagerChecklistApprovals } from "@/modules/cha/service";
+import { can } from "@/lib/rbac";
+import { listManagerChecklistApprovals, listManagerJobDeletionRequests } from "@/modules/cha/service";
 import Link from "next/link";
-import { CheckSquare, ArrowRight, ClipboardCheck } from "lucide-react";
+import { CheckSquare, ArrowRight, ClipboardCheck, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default async function ChaApprovalsPage() {
@@ -13,13 +13,22 @@ export default async function ChaApprovalsPage() {
   const orgId = session.user.orgId;
   if (!orgId) redirect("/setup");
 
-  // Check approval permission
-  await requirePermission(session.user.id, "cha.checklist.manager_approve");
+  const [canChecklistApprove, canDeleteApprove] = await Promise.all([
+    can(session.user.id, "cha.checklist.manager_approve"),
+    can(session.user.id, "cha.job.delete.approve"),
+  ]);
 
-  const approvals = await listManagerChecklistApprovals(session.user.id, orgId);
+  if (!canChecklistApprove && !canDeleteApprove) {
+    redirect("/cha");
+  }
+
+  const [approvals, deletionRequests] = await Promise.all([
+    canChecklistApprove ? listManagerChecklistApprovals(session.user.id, orgId) : Promise.resolve([]),
+    canDeleteApprove ? listManagerJobDeletionRequests(session.user.id, orgId) : Promise.resolve([]),
+  ]);
 
   return (
-    <main className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       {/* Page Header */}
       <div className="border-b border-outline-variant/30 pb-4">
         <h1 className="ds-h1 text-[#00cec4] flex items-center gap-2">
@@ -33,7 +42,7 @@ export default async function ChaApprovalsPage() {
         </p>
       </div>
 
-      {/* Grid List */}
+      {/* Checklist Queue */}
       <div className="bg-surface border border-outline-variant/30 rounded-xl shadow-sm overflow-hidden">
         {approvals.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-center text-on-surface-variant">
@@ -81,6 +90,63 @@ export default async function ChaApprovalsPage() {
           </div>
         )}
       </div>
-    </main>
+
+      <div className="bg-surface border border-outline-variant/30 rounded-xl shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between border-b border-outline-variant/30 px-6 py-4">
+          <div>
+            <h2 className="ds-h2 text-on-surface flex items-center gap-2">
+              <Trash2 size={18} className="text-red-500" />
+              Job Deletion Requests
+            </h2>
+            <p className="mt-1 text-xs text-on-surface-variant">
+              Direct manager review queue for destructive CHA job deletion requests.
+            </p>
+          </div>
+        </div>
+
+        {deletionRequests.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-10 text-center text-on-surface-variant">
+            <Trash2 size={42} className="text-outline-variant mb-3" />
+            <p className="text-sm font-semibold">No pending CHA deletion requests.</p>
+            <p className="text-xs mt-1">Deletion approvals assigned to you will appear here.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="ds-table">
+              <thead>
+                <tr>
+                  <th>Job Number</th>
+                  <th>Customer</th>
+                  <th>Requested By</th>
+                  <th>Requested At</th>
+                  <th>Status</th>
+                  <th className="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deletionRequests.map((request) => (
+                  <tr key={request.id} className="ds-row-link">
+                    <td className="font-semibold text-red-500">{request.jobNumberSnapshot}</td>
+                    <td>{request.job.customer.name}</td>
+                    <td>{request.requestedBy.name}</td>
+                    <td className="text-xs text-on-surface-variant">
+                      {new Date(request.requestedAt).toLocaleString("en-IN")}
+                    </td>
+                    <td className="ds-label">{request.status}</td>
+                    <td className="text-right">
+                      <Link href={`/cha/jobs/${request.jobId}`}>
+                        <Button size="sm" className="h-8 text-xs inline-flex items-center gap-1.5">
+                          Review Request <ArrowRight size={12} />
+                        </Button>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

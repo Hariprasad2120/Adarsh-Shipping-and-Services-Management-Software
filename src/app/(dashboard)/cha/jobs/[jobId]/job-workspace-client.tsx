@@ -24,6 +24,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
 import * as actions from "@/modules/cha/actions";
 
 interface JobWorkspaceClientProps {
@@ -32,6 +33,10 @@ interface JobWorkspaceClientProps {
   expenseCategories: string[];
   selfApprovalAllowed: boolean;
   currentUserId: string;
+  canDeleteJob: boolean;
+  canApproveDeleteJob: boolean;
+  canDeleteDoc: boolean;
+  canManageSettings: boolean;
 }
 
 const STAGES = [
@@ -48,6 +53,10 @@ export function JobWorkspaceClient({
   expenseCategories,
   selfApprovalAllowed,
   currentUserId,
+  canDeleteJob,
+  canApproveDeleteJob,
+  canDeleteDoc,
+  canManageSettings,
 }: JobWorkspaceClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
@@ -124,9 +133,30 @@ export function JobWorkspaceClient({
   const [expReviewId, setExpReviewId] = useState<string | null>(null);
   const [expReviewStatus, setExpReviewStatus] = useState<string>("");
   const [expReviewRemarks, setExpReviewRemarks] = useState("");
+  const [deleteModalMode, setDeleteModalMode] = useState<"delete" | "approve" | "reject" | null>(null);
+  const [deleteConfirmJobNumber, setDeleteConfirmJobNumber] = useState("");
+  const [deleteConfirmPhrase, setDeleteConfirmPhrase] = useState("");
+  const [deleteDecisionRemarks, setDeleteDecisionRemarks] = useState("");
+  const [deleteDocModal, setDeleteDocModal] = useState<{
+    reqId: string;
+    versionId: string;
+    fileName: string;
+  } | null>(null);
 
   // Get active step index
   const activeStepIndex = STAGES.findIndex((s) => s.key === job.stage);
+  const activeDeletionRequest =
+    job.deletionRequests?.find((request: any) => ["PENDING", "APPROVED"].includes(request.status)) ?? null;
+  const pendingDeletionReview =
+    job.deletionRequests?.find(
+      (request: any) => request.status === "PENDING" && request.assignedManagerId === currentUserId
+    ) ?? null;
+  const canDirectDeleteJob =
+    canApproveDeleteJob &&
+    job.assignments?.some((assignment: any) => assignment.userId === currentUserId && assignment.responsibility === "APPROVAL");
+  const deleteInputsMatch =
+    deleteConfirmJobNumber.trim() === job.jobNumber &&
+    deleteConfirmPhrase.trim().toLowerCase() === "delete job";
 
   // Document version mock upload handler
   const handleUploadDoc = async (reqId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -173,6 +203,29 @@ export function JobWorkspaceClient({
         router.refresh();
       } else {
         toast.error(res.error || "Failed to waiver requirement.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleConfirmDeleteDoc = async () => {
+    if (!deleteDocModal) return;
+    setLoading("delete-doc");
+    try {
+      const res = await actions.deleteDocumentVersionAction(
+        job.id,
+        deleteDocModal.reqId,
+        deleteDocModal.versionId
+      );
+      if (res.ok) {
+        toast.success(`Deleted ${deleteDocModal.fileName} successfully.`);
+        setDeleteDocModal(null);
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to delete file.");
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
@@ -286,6 +339,104 @@ export function JobWorkspaceClient({
         router.refresh();
       } else {
         toast.error(res.error || "Failed to submit review.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const resetDeletionModalState = () => {
+    setDeleteModalMode(null);
+    setDeleteConfirmJobNumber("");
+    setDeleteConfirmPhrase("");
+    setDeleteDecisionRemarks("");
+  };
+
+  const handleSubmitJobDeletion = async () => {
+    if (!deleteInputsMatch) {
+      toast.error("Enter the exact job number and confirmation phrase to continue.");
+      return;
+    }
+
+    setLoading("job-delete");
+    try {
+      const res = await actions.submitJobDeletionAction(
+        job.id,
+        deleteConfirmJobNumber,
+        deleteConfirmPhrase,
+      );
+
+      if (res.ok) {
+        const outcome = res.data.mode === "deleted"
+          ? `CHA job ${job.jobNumber} was deleted successfully.`
+          : `Deletion request submitted for ${job.jobNumber}. Manager approval is now pending.`;
+        toast.success(outcome);
+        resetDeletionModalState();
+        router.push("/cha/jobs");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to process the CHA job deletion.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleApproveDeletionRequest = async () => {
+    if (!pendingDeletionReview) return;
+    if (!deleteInputsMatch) {
+      toast.error("Enter the exact job number and confirmation phrase to continue.");
+      return;
+    }
+
+    setLoading("job-delete-approve");
+    try {
+      const res = await actions.decideJobDeletionRequestAction(
+        pendingDeletionReview.id,
+        "APPROVED",
+        deleteDecisionRemarks || undefined,
+      );
+
+      if (res.ok) {
+        toast.success(`Deletion request approved and job ${job.jobNumber} deleted.`);
+        resetDeletionModalState();
+        router.push("/cha/jobs");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to approve the deletion request.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleRejectDeletionRequest = async () => {
+    if (!pendingDeletionReview) return;
+    if (!deleteDecisionRemarks.trim()) {
+      toast.error("A rejection reason is required.");
+      return;
+    }
+
+    setLoading("job-delete-reject");
+    try {
+      const res = await actions.decideJobDeletionRequestAction(
+        pendingDeletionReview.id,
+        "REJECTED",
+        deleteDecisionRemarks,
+      );
+
+      if (res.ok) {
+        toast.success(`Deletion request for ${job.jobNumber} was rejected.`);
+        resetDeletionModalState();
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to reject the deletion request.");
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
@@ -685,29 +836,31 @@ export function JobWorkspaceClient({
   };
 
   return (
-    <main className="max-w-7xl mx-auto p-6 space-y-8">
+    <main className="-mt-2 w-full space-y-4 overflow-x-hidden">
       {/* Job Main Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/30 pb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant text-[#00cec4]">
+      <div className="flex flex-col gap-4 border-b border-outline-variant/30 pb-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-lg border border-outline-variant bg-surface-container-high px-2 py-1 text-xs font-semibold text-[var(--color-primary)]">
               {job.jobType.name}
             </span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-surface-container-low text-on-surface-variant font-mono ds-numeric">
+            <span className="rounded-lg bg-surface-container-low px-2 py-1 text-xs font-semibold text-on-surface-variant ds-numeric">
               {job.branch.name}
             </span>
           </div>
-          <h1 className="ds-h1 text-[#00cec4] mt-2 flex items-center gap-3">
-            {job.jobNumber}
-            <span className="text-sm font-normal text-on-surface-variant">| {job.title}</span>
-          </h1>
-          <p className="text-xs text-on-surface-variant mt-1">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h1 className="ds-h1 break-words text-[var(--color-primary)]">{job.jobNumber}</h1>
+            <p className="max-w-4xl text-sm text-on-surface">{job.title}</p>
+          </div>
+          <p className="text-xs text-on-surface-variant">
             Customer: <strong className="text-on-surface">{job.customer.name}</strong> • Owner:{" "}
             <strong className="text-on-surface">{job.primaryOwner.name}</strong>
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-end">
+          <div>
+            <span className="ds-label mb-1 block text-on-surface-variant">Workflow Stage</span>
+            <span className={`inline-flex min-h-9 min-w-52 items-center justify-center rounded-lg border px-3 py-2 text-center text-xs font-bold uppercase tracking-wider ${
             job.stage === "FILING"
               ? "bg-blue-50 text-blue-700 border border-blue-200"
               : job.stage === "CHECKLIST_APPROVAL"
@@ -716,28 +869,82 @@ export function JobWorkspaceClient({
               ? "bg-green-50 text-green-700 border border-green-200"
               : "bg-surface-container-high text-on-surface border border-outline-variant"
           }`}>
-            Stage: {job.stage.replace(/_/g, " ")}
-          </span>
-          <span className={`font-semibold text-xs border rounded px-3 py-1 bg-surface ${
-            job.status === "ACTIVE" ? "text-green-500 border-green-200" : "text-orange-400 border-orange-200"
-          }`}>
-            Status: {job.status}
-          </span>
+              {job.stage.replace(/_/g, " ")}
+            </span>
+          </div>
+          <div>
+            <span className="ds-label mb-1 block text-on-surface-variant">Job Status</span>
+            <span className={`inline-flex min-h-9 min-w-28 items-center justify-center rounded-lg border px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider ${
+              job.status === "ACTIVE" ? "border-green-200 text-green-500" : "border-orange-200 text-orange-400"
+            }`}>
+              {job.status}
+            </span>
+          </div>
+          {canDeleteJob ? (
+            <Button
+              variant="destructive"
+              className="min-h-9 w-full sm:w-auto"
+              disabled={loading !== null || Boolean(activeDeletionRequest)}
+              onClick={() => setDeleteModalMode("delete")}
+            >
+              <Trash2 className="mr-2 size-4" />
+              {activeDeletionRequest ? "Deletion Pending" : "Delete Job"}
+            </Button>
+          ) : null}
         </div>
       </div>
 
+      {activeDeletionRequest ? (
+        <div className="rounded-xl border border-[#fb923c]/35 bg-[#fb923c]/8 p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-1">
+              <span className="ds-label text-[#fb923c]">Deletion Workflow</span>
+              <p className="text-sm font-medium text-on-surface">
+                {activeDeletionRequest.status === "PENDING"
+                  ? `Deletion request is pending with ${activeDeletionRequest.assignedManager?.name || "the assigned manager"}.`
+                  : "Deletion request has been approved and is awaiting execution."}
+              </p>
+              <p className="text-xs text-on-surface-variant">
+                Requested by {activeDeletionRequest.requestedBy?.name || "Unknown"} on{" "}
+                {new Date(activeDeletionRequest.requestedAt).toLocaleString("en-IN")}
+              </p>
+            </div>
+
+            {pendingDeletionReview && canApproveDeleteJob ? (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  className="border-red-200 text-red-500 hover:bg-red-50"
+                  disabled={loading !== null}
+                  onClick={() => setDeleteModalMode("reject")}
+                >
+                  Reject Request
+                </Button>
+                <Button
+                  variant="destructive"
+                  disabled={loading !== null}
+                  onClick={() => setDeleteModalMode("approve")}
+                >
+                  Approve & Delete
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
       {/* visual Stepper Display */}
-      <div className="relative bg-surface p-6 rounded-xl border border-outline-variant/30 shadow-sm">
-        <div className="flex items-center justify-between relative z-10">
+      <div className="relative overflow-hidden rounded-xl border border-outline-variant/30 bg-surface px-4 py-3 shadow-sm sm:px-5">
+        <div className="relative z-10 grid grid-cols-5 gap-2 md:gap-4">
           {STAGES.map((s, index) => {
             const isCompleted = index < activeStepIndex;
             const isActive = index === activeStepIndex;
             return (
-              <div key={s.key} className="flex flex-col items-center flex-1 relative text-center">
+              <div key={s.key} className="relative flex min-w-0 flex-col items-center text-center">
                 {/* Connector line */}
                 {index > 0 && (
                   <div
-                    className={`absolute right-1/2 left-[-50%] top-4 h-[2px] z-[-1] ${
+                    className={`absolute left-[-50%] right-1/2 top-4 z-[-1] h-[2px] ${
                       index <= activeStepIndex ? "bg-[#00cec4]" : "bg-outline-variant/40"
                     }`}
                   />
@@ -754,7 +961,7 @@ export function JobWorkspaceClient({
                 >
                   {isCompleted ? <Check size={18} /> : <span>{index + 1}</span>}
                 </div>
-                <span className={`text-[10px] uppercase font-bold tracking-wider mt-2 block ${
+                <span className={`mt-1.5 block min-h-5 text-[10px] font-bold uppercase tracking-wider ${
                   isActive ? "text-[#00cec4]" : "text-on-surface-variant"
                 }`}>
                   {s.label}
@@ -766,63 +973,63 @@ export function JobWorkspaceClient({
       </div>
 
       {/* Tab Controls */}
-      <div className="flex border-b border-outline-variant/30 gap-1 overflow-x-auto">
+      <div className="grid grid-cols-2 gap-1 rounded-xl border border-outline-variant/30 bg-surface-container-low p-1 lg:grid-cols-6">
         <button
           onClick={() => setActiveTab("docs")}
-          className={`px-4 py-2 text-xs uppercase tracking-wider font-bold border-b-2 transition-all ${
+          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
             activeTab === "docs"
-              ? "border-[#00cec4] text-[#00cec4]"
-              : "border-transparent text-on-surface-variant hover:text-on-surface"
+              ? "bg-surface text-[#00cec4] shadow-sm"
+              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
           }`}
         >
           Documents ({job.documentRequirements.length})
         </button>
         <button
           onClick={() => setActiveTab("checklist")}
-          className={`px-4 py-2 text-xs uppercase tracking-wider font-bold border-b-2 transition-all ${
+          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
             activeTab === "checklist"
-              ? "border-[#00cec4] text-[#00cec4]"
-              : "border-transparent text-on-surface-variant hover:text-on-surface"
+              ? "bg-surface text-[#00cec4] shadow-sm"
+              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
           }`}
         >
           Checklist
         </button>
         <button
           onClick={() => setActiveTab("filing")}
-          className={`px-4 py-2 text-xs uppercase tracking-wider font-bold border-b-2 transition-all ${
+          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
             activeTab === "filing"
-              ? "border-[#00cec4] text-[#00cec4]"
-              : "border-transparent text-on-surface-variant hover:text-on-surface"
+              ? "bg-surface text-[#00cec4] shadow-sm"
+              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
           }`}
         >
           Filing Record
         </button>
         <button
           onClick={() => setActiveTab("advances")}
-          className={`px-4 py-2 text-xs uppercase tracking-wider font-bold border-b-2 transition-all ${
+          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
             activeTab === "advances"
-              ? "border-[#00cec4] text-[#00cec4]"
-              : "border-transparent text-on-surface-variant hover:text-on-surface"
+              ? "bg-surface text-[#00cec4] shadow-sm"
+              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
           }`}
         >
           Client Advances
         </button>
         <button
           onClick={() => setActiveTab("expenses")}
-          className={`px-4 py-2 text-xs uppercase tracking-wider font-bold border-b-2 transition-all ${
+          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
             activeTab === "expenses"
-              ? "border-[#00cec4] text-[#00cec4]"
-              : "border-transparent text-on-surface-variant hover:text-on-surface"
+              ? "bg-surface text-[#00cec4] shadow-sm"
+              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
           }`}
         >
           Expenses ({job.expenseRequests.length})
         </button>
         <button
           onClick={() => setActiveTab("audit")}
-          className={`px-4 py-2 text-xs uppercase tracking-wider font-bold border-b-2 transition-all ${
+          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
             activeTab === "audit"
-              ? "border-[#00cec4] text-[#00cec4]"
-              : "border-transparent text-on-surface-variant hover:text-on-surface"
+              ? "bg-surface text-[#00cec4] shadow-sm"
+              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
           }`}
         >
           Audit History
@@ -830,7 +1037,7 @@ export function JobWorkspaceClient({
       </div>
 
       {/* Tab Panels */}
-      <div className="bg-surface border border-outline-variant/30 rounded-xl p-6 shadow-sm min-h-[400px]">
+      <div className="min-h-[400px] rounded-xl border border-outline-variant/30 bg-surface p-6 shadow-sm">
         
         {/* PANEL: DOCUMENTS */}
         {activeTab === "docs" && (
@@ -889,9 +1096,30 @@ export function JobWorkspaceClient({
                             <FileText size={16} className="text-green-600 shrink-0" />
                             <span className="truncate font-medium">{currentVersion.fileName}</span>
                           </div>
-                          <span className="text-[10px] text-on-surface-variant shrink-0 font-mono ds-numeric pl-2">
-                            {(currentVersion.sizeBytes / 1024).toFixed(1)} KB
-                          </span>
+                          <div className="flex items-center gap-2 shrink-0 pl-2">
+                            <span className="text-[10px] text-on-surface-variant font-mono ds-numeric">
+                              {(currentVersion.sizeBytes / 1024).toFixed(1)} KB
+                            </span>
+                            {(currentUserId === currentVersion.uploadedById ||
+                              currentUserId === job.primaryOwnerId ||
+                              canDeleteDoc ||
+                              canManageSettings) && (
+                              <button
+                                type="button"
+                                className="text-red-500 hover:text-red-700 transition-colors p-1"
+                                onClick={() =>
+                                  setDeleteDocModal({
+                                    reqId: req.id,
+                                    versionId: currentVersion.id,
+                                    fileName: currentVersion.fileName,
+                                  })
+                                }
+                                title="Delete document version"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )}
 
@@ -907,10 +1135,10 @@ export function JobWorkspaceClient({
                       )}
                     </div>
 
-                    <div className="mt-4 flex items-center justify-end gap-2 border-t border-outline-variant/20 pt-3">
+                    <div className="mt-4 space-y-3 border-t border-outline-variant/20 pt-3">
                       {/* Exception form pop */}
                       {activeDocReqId === req.id ? (
-                        <div className="w-full space-y-2 mt-2">
+                        <div className="w-full space-y-2">
                           <input
                             type="text"
                             placeholder="Enter detailed reason for exemption..."
@@ -918,7 +1146,7 @@ export function JobWorkspaceClient({
                             onChange={(e) => setExceptionReason(e.target.value)}
                             className="w-full text-xs"
                           />
-                          <div className="flex justify-end gap-2">
+                          <div className="flex flex-wrap justify-end gap-2">
                             <Button
                               variant="outline"
                               size="sm"
@@ -935,31 +1163,35 @@ export function JobWorkspaceClient({
                               className="text-xs py-1 h-7"
                               onClick={() => handleDeclareException(req.id)}
                             >
-                              Waive Requirement
+                              Save Exemption
                             </Button>
                           </div>
                         </div>
-                      ) : (
-                        <>
-                          {!isExempted && (
-                            <button
-                              onClick={() => setActiveDocReqId(req.id)}
-                              className="text-xs font-semibold text-on-surface-variant hover:text-[#fb923c]"
-                            >
-                              Declare Exemption
-                            </button>
-                          )}
-                          <label className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all cursor-pointer flex items-center gap-1.5">
-                            <Upload size={12} />
-                            {isUploaded ? "Upload Version" : "Upload File"}
-                            <input
-                              type="file"
-                              className="hidden"
-                              onChange={(e) => handleUploadDoc(req.id, e)}
-                            />
-                          </label>
-                        </>
-                      )}
+                      ) : null}
+
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => {
+                            setActiveDocReqId((current) => (current === req.id ? null : req.id));
+                            setExceptionReason(req.exception?.reason || "");
+                          }}
+                        >
+                          {isExempted ? "Edit Exemption" : "Declare Exemption"}
+                        </Button>
+                        <label className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#00cec4] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white transition-all hover:bg-[#00b8af]">
+                          <Upload size={12} />
+                          {isUploaded ? "Upload Version" : isExempted ? "Upload File Anyway" : "Upload File"}
+                          <input
+                            type="file"
+                            className="hidden"
+                            onChange={(e) => handleUploadDoc(req.id, e)}
+                          />
+                        </label>
+                      </div>
                     </div>
                   </div>
                 );
@@ -2031,6 +2263,200 @@ export function JobWorkspaceClient({
           </div>
         )}
       </div>
+
+      <Modal
+        open={deleteModalMode === "delete"}
+        onClose={resetDeletionModalState}
+        title="Delete CHA Job"
+        description={
+          canDirectDeleteJob
+            ? `This will immediately remove ${job.jobNumber} from the active CHA workspace. Related records stay in history, but this action is destructive and should be used carefully.`
+            : `This will submit a manager approval request to delete ${job.jobNumber}. The job stays active until the assigned manager approves it.`
+        }
+        className="max-w-2xl"
+      >
+        <div className="space-y-5">
+          <div className="rounded-xl border border-red-200/70 bg-red-50/40 p-4 text-sm text-on-surface">
+            <p className="font-semibold text-red-600">Permanent action</p>
+            <p className="mt-1 text-on-surface-variant">
+              Deleting this job affects linked CHA workflows, audit visibility, and operational references. Enter the exact confirmation values below to continue.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="ds-label block">Type Exact Job Number</label>
+              <input
+                type="text"
+                value={deleteConfirmJobNumber}
+                onChange={(e) => setDeleteConfirmJobNumber(e.target.value)}
+                placeholder={job.jobNumber}
+                className="w-full text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="ds-label block">Type Confirmation Phrase</label>
+              <input
+                type="text"
+                value={deleteConfirmPhrase}
+                onChange={(e) => setDeleteConfirmPhrase(e.target.value)}
+                placeholder="delete job"
+                className="w-full text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="outline" onClick={resetDeletionModalState} disabled={loading !== null}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!deleteInputsMatch || loading === "job-delete"}
+              onClick={handleSubmitJobDeletion}
+            >
+              {loading === "job-delete"
+                ? "Processing..."
+                : canDirectDeleteJob
+                ? "Delete Job"
+                : "Request Deletion"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={deleteModalMode === "approve"}
+        onClose={resetDeletionModalState}
+        title="Approve Job Deletion"
+        description={`Approve the pending deletion request for ${job.jobNumber}. This will immediately soft-delete the job after approval.`}
+        className="max-w-2xl"
+      >
+        <div className="space-y-5">
+          <div className="rounded-xl border border-red-200/70 bg-red-50/40 p-4 text-sm text-on-surface">
+            <p className="font-semibold text-red-600">Manager approval required</p>
+            <p className="mt-1 text-on-surface-variant">
+              Confirm the exact job number and type <strong className="text-on-surface">delete job</strong> to execute this deletion request.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="ds-label block">Type Exact Job Number</label>
+              <input
+                type="text"
+                value={deleteConfirmJobNumber}
+                onChange={(e) => setDeleteConfirmJobNumber(e.target.value)}
+                placeholder={job.jobNumber}
+                className="w-full text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="ds-label block">Type Confirmation Phrase</label>
+              <input
+                type="text"
+                value={deleteConfirmPhrase}
+                onChange={(e) => setDeleteConfirmPhrase(e.target.value)}
+                placeholder="delete job"
+                className="w-full text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="ds-label block">Approval Note (Optional)</label>
+              <textarea
+                rows={3}
+                value={deleteDecisionRemarks}
+                onChange={(e) => setDeleteDecisionRemarks(e.target.value)}
+                placeholder="Add any execution note for the audit trail..."
+                className="w-full text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="outline" onClick={resetDeletionModalState} disabled={loading !== null}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!deleteInputsMatch || loading === "job-delete-approve"}
+              onClick={handleApproveDeletionRequest}
+            >
+              {loading === "job-delete-approve" ? "Deleting..." : "Approve & Delete"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={deleteModalMode === "reject"}
+        onClose={resetDeletionModalState}
+        title="Reject Job Deletion Request"
+        description={`Reject the pending deletion request for ${job.jobNumber}. A rejection reason is required and the job will remain active.`}
+        className="max-w-2xl"
+      >
+        <div className="space-y-5">
+          <div className="space-y-1.5">
+            <label className="ds-label block">Rejection Reason</label>
+            <textarea
+              rows={4}
+              value={deleteDecisionRemarks}
+              onChange={(e) => setDeleteDecisionRemarks(e.target.value)}
+              placeholder="Explain why this CHA job should not be deleted..."
+              className="w-full text-sm"
+            />
+          </div>
+
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="outline" onClick={resetDeletionModalState} disabled={loading !== null}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!deleteDecisionRemarks.trim() || loading === "job-delete-reject"}
+              onClick={handleRejectDeletionRequest}
+            >
+              {loading === "job-delete-reject" ? "Rejecting..." : "Reject Request"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {deleteDocModal && (
+        <Modal
+          open={true}
+          onClose={() => setDeleteDocModal(null)}
+          title="Delete Document Version"
+          description="Are you sure you want to permanently delete this document version?"
+          className="max-w-md"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-on-surface">
+              File: <strong className="text-on-surface-variant font-medium">{deleteDocModal.fileName}</strong>
+            </p>
+            <p className="text-xs text-red-500 font-medium">
+              This action is permanent and cannot be undone. If this is a mandatory document requirement, the workflow stage may revert to Document Collection.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteDocModal(null)}
+                disabled={loading === "delete-doc"}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmDeleteDoc}
+                disabled={loading === "delete-doc"}
+              >
+                {loading === "delete-doc" ? "Deleting..." : "Confirm Delete"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </main>
   );
 }
+  

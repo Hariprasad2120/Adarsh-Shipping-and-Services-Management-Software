@@ -12,9 +12,12 @@ const PATH_LABELS: Record<string, string> = {
   "/hrms": "HRMS",
   "/hrms/employees": "Employees",
   "/hrms/employees/new": "Onboard Employee",
+  "/hrms/users": "User Control",
+  "/hrms/org-structure": "Organisation Structure",
   "/hrms/ownership": "Ownership",
   "/hrms/salary-structure": "Salary Structure",
   "/hrms/salary-revisions": "Salary Revisions",
+  "/hrms/settings": "HRMS Settings",
   "/attendance": "Attendance",
   "/attendance/punch": "My Attendance",
   "/attendance/leaves": "Leaves",
@@ -63,7 +66,6 @@ const PATH_LABELS: Record<string, string> = {
   "/accounting/purchase-orders": "Purchase Orders",
   "/accounting/purchase-orders/new": "New Purchase Order",
   "/admin": "Admin",
-  "/admin/org-structure": "Organisation Structure",
   "/admin/roles": "Roles & Permissions",
   "/admin/settings": "Appraisal Settings",
   "/admin/passkeys": "Passkey Resets",
@@ -112,7 +114,7 @@ export function AutoBreadcrumb() {
   });
 
   return (
-    <div className="shrink-0 px-6 py-2 lg:px-8 xl:px-10">
+    <div className="w-full shrink-0 px-6 py-1.5 lg:px-8 xl:px-10">
       <Breadcrumbs items={items} />
     </div>
   );

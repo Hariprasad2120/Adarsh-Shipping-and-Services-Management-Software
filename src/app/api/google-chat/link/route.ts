@@ -93,7 +93,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    const payload = (await req.json()) as { token?: string };
+    const payload = (await req.json()) as {
+      token?: string;
+      replaceExisting?: boolean;
+    };
     const token = payload.token;
 
     if (!session?.user?.id) {
@@ -123,6 +126,7 @@ export async function POST(req: NextRequest) {
       completeLinking({
         token,
         monolithUserId: session.user.id,
+        replaceExisting: payload.replaceExisting === true,
       }),
       "Account linking",
       12000
@@ -130,9 +134,14 @@ export async function POST(req: NextRequest) {
 
     if (!result.success) {
       return NextResponse.json(
-        { success: false, error: result.error },
         {
-          status: 400,
+          success: false,
+          error: result.error,
+          code: result.code,
+          canReplace: result.canReplace,
+        },
+        {
+          status: result.code === "USER_ALREADY_LINKED_OTHER_GOOGLE" ? 409 : 400,
           headers: { "Cache-Control": "no-store" },
         }
       );

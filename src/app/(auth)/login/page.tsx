@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { clearStaleSessionData } from "@/lib/logout";
 import {
   Anchor,
   ArrowRight,
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { HarborScene3D } from "@/components/login/harbor-scene-3d";
+import { isRootControlEmail } from "@/lib/root-access";
 
 function BrandMark({ mobile = false }: { mobile?: boolean }) {
   const [logoError, setLogoError] = useState(false);
@@ -53,7 +54,6 @@ function BrandMark({ mobile = false }: { mobile?: boolean }) {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -63,6 +63,11 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Clear any stale session data from a previous user on mount
+  useEffect(() => {
+    clearStaleSessionData();
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -95,11 +100,19 @@ export default function LoginPage() {
       return;
     }
 
+    // Clear any remaining stale data from a previous user before navigating
+    clearStaleSessionData();
+
     setIsLoading(false);
     setIsAuthenticated(true);
     setTimeout(() => {
-      router.replace("/dashboard");
-      router.refresh();
+      // Full page navigation instead of client-side router — ensures:
+      // 1. Server layout runs auth() fresh with the new JWT
+      // 2. Browser doesn't serve stale RSC cache from previous user
+      // 3. New sessionNonce is picked up for welcome animation
+      const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl");
+      const fallbackTarget = isRootControlEmail(email) ? "/" : "/dashboard";
+      window.location.replace(callbackUrl || fallbackTarget);
     }, 2500);
   };
 

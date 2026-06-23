@@ -456,3 +456,27 @@ Before completing any UI work, verify:
 - [ ] No hard-coded light-only backgrounds (`bg-white`, `bg-[#fff*]`)
 - [ ] No hard-coded light-only text (`text-slate-900`, `text-gray-900`)
 - [ ] Verified in dark mode — all text readable, no invisible elements
+
+---
+
+## 15. Standard Application Page Layout
+
+To ensure a consistent, premium feel across the monolith-engine workspace, every normal workspace page must align perfectly with the shared breadcrumbs and sidebar boundaries. 
+
+### 15.1 Canonical Page Layout & Reference
+- **Source of Truth:** The HRMS Dashboard page serves as the layout and alignment reference.
+- **Outer Padding:** All standard pages MUST rely on the outer padding provided by the [DashboardShell](file:///c:/Users/SilverCloud/Documents/monolith-engine/src/app/(dashboard)/_components/dashboard-shell.tsx). The padding is responsive:
+  - **Horizontal/Vertical:** `px-6 py-8 lg:px-8 xl:px-10`
+- **Page Container Width:** Standard workspace pages, lists, and detail views MUST span the full available viewport width (`w-full`).
+  - Do NOT apply width limits like `max-w-7xl`, `max-w-[1600px]`, or `container`.
+  - Do NOT apply centering rules like `mx-auto`.
+
+### 15.2 Prohibited Duplicate Padding
+- Root containers inside dashboard subpages must NOT add page-level gutters (e.g., `p-8` or `px-6 py-8`). This prevents double padding, which makes content gutters look excessively wide.
+
+### 15.3 Allowed Layout Exceptions
+The following exceptions are approved where narrow reading constraints are necessary for usability and focus:
+1. **Forms & Detail Editors:** Pages primarily focused on data input (e.g., creating a lead, settings page, editing profile parameters) should use a constraint like `max-w-5xl` or `max-w-[1200px]` centered via `mx-auto`, but must still remove any duplicate outer padding (`p-8`).
+2. **Modals & Dialogs:** Popups and alerts maintain their specific fixed widths and padding.
+3. **Authentication Screens:** Login and registration pages use centered, constrained forms.
+4. **Reading-focused Documents:** Long-form text articles or terms of service screens.

@@ -8,6 +8,7 @@ import { buildSeedCriteriaForPhase } from "../src/modules/ams/form-template";
 import { buildDefaultSelfFormTemplate } from "../src/modules/ams/criteria-config";
 import { seedChartOfAccounts } from "../src/modules/accounting/service";
 import { getBundledDocxTemplateFiles, importDocxTemplateFile } from "../src/modules/hrms/letter-template-import";
+import { ensureSpecialAccounts } from "../src/modules/core/user/special-account-bootstrap";
 
 // ─── Database client ────────────────────────────────────────────────────────────
 
@@ -130,20 +131,6 @@ const PERMISSIONS = [
   { key: "accounting.reports.view", label: "View Financial Reports", group: "Accounting" },
   { key: "accounting.settings.manage", label: "Manage Accounting Settings", group: "Accounting" },
 
-  // Communication Hub
-  { key: "communication.mail.access", label: "Access mail inbox and threads", group: "Communication" },
-  { key: "communication.mail.send", label: "Compose and send emails", group: "Communication" },
-  { key: "communication.chat.access", label: "Access internal chat conversations", group: "Communication" },
-  { key: "communication.chat.moderator", label: "Admin moderation and channel settings", group: "Communication" },
-  { key: "communication.calendar.access", label: "Access calendar events and schedules", group: "Communication" },
-  { key: "communication.calendar.manage_resources", label: "Manage calendar resource rooms", group: "Communication" },
-  { key: "communication.files.access", label: "Access company folder drives", group: "Communication" },
-  { key: "communication.files.share_external", label: "Toggle external sharing links", group: "Communication" },
-  { key: "communication.docs.access", label: "Collaborate on documents and files", group: "Communication" },
-  { key: "communication.forms.access", label: "Access forms answers and respond", group: "Communication" },
-  { key: "communication.forms.create", label: "Create and publish forms", group: "Communication" },
-  { key: "communication.admin.manage", label: "Manage communication settings and retention", group: "Communication" },
-
   // CHA Module
   { key: "cha.access", label: "Access CHA Module", group: "CHA" },
   { key: "cha.dashboard.view", label: "View CHA Dashboard", group: "CHA" },
@@ -151,6 +138,8 @@ const PERMISSIONS = [
   { key: "cha.job.create", label: "Create CHA Jobs", group: "CHA" },
   { key: "cha.job.update", label: "Update CHA Jobs", group: "CHA" },
   { key: "cha.job.assign", label: "Assign CHA Jobs", group: "CHA" },
+  { key: "cha.job.delete", label: "Request/Delete CHA Jobs", group: "CHA" },
+  { key: "cha.job.delete.approve", label: "Approve/Delete Assigned CHA Jobs", group: "CHA" },
   { key: "cha.job.view_all", label: "View All Organisation Jobs", group: "CHA" },
   { key: "cha.document.read", label: "Read Job Documents", group: "CHA" },
   { key: "cha.document.upload", label: "Upload Job Documents", group: "CHA" },
@@ -228,7 +217,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "communication.files.access", "communication.docs.access",
     "communication.forms.access", "communication.forms.create",
     "communication.admin.manage",
-    "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.view_all", "cha.document.read",
+    "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.delete", "cha.job.delete.approve", "cha.job.view_all", "cha.document.read",
     "cha.checklist.manager_approve", "cha.filing.manage", "cha.advance.manage", "cha.expense.manage",
     "cha.expense.pay", "cha.audit.view",
     // HR Letters
@@ -237,6 +226,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
   HR: [
     "hrms.employee.read", "hrms.employee.create", "hrms.employee.edit",
     "hrms.hierarchy.manage", "hrms.documents.read", "hrms.documents.upload",
+    "hrms.settings.manage",
     "hrms.peopleplus.read", "hrms.peopleplus.admin",
     "hrms.helpdesk.read", "hrms.helpdesk.manage",
     "hrms.workreport.submit", "hrms.workreport.approve", "hrms.workreport.view_all",
@@ -290,7 +280,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "communication.chat.access", "communication.calendar.access",
     "communication.files.access", "communication.docs.access",
     "communication.forms.access", "communication.forms.create",
-    "cha.access", "cha.dashboard.view", "cha.job.read", "cha.document.read", "cha.checklist.manager_approve",
+    "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.delete", "cha.job.delete.approve", "cha.document.read", "cha.checklist.manager_approve",
     "cha.expense.manage", "cha.audit.view",
     // Recruit: hiring manager role + job seeker
     "recruit.view", "recruit.candidate.view", "recruit.resume.view",
@@ -309,10 +299,6 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "crm.access", "crm.dashboard.read", "crm.lead.read",
     "crm.contact.manage", "crm.account.manage", "crm.activity.manage",
     "lms.access", "lms.learning.self",
-    "communication.mail.access", "communication.mail.send",
-    "communication.chat.access", "communication.calendar.access",
-    "communication.files.access", "communication.docs.access",
-    "communication.forms.access",
     // Recruit: job seeker only
     "recruit.jobseeker.use", "recruit.jobseeker.profile.manage", "recruit.jobseeker.jobs.search",
     "recruit.jobseeker.resume.manage", "recruit.jobseeker.application.manage",
@@ -333,7 +319,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "communication.chat.access", "communication.calendar.access",
     "communication.files.access", "communication.docs.access",
     "communication.forms.access", "communication.admin.manage",
-    "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.view_all", "cha.document.read",
+    "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.delete", "cha.job.delete.approve", "cha.job.view_all", "cha.document.read",
     "cha.checklist.manager_approve", "cha.filing.manage", "cha.advance.manage", "cha.expense.manage",
     "cha.expense.pay", "cha.audit.view",
     // HR Letters
@@ -353,7 +339,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "communication.chat.access", "communication.calendar.access",
     "communication.files.access", "communication.docs.access",
     "communication.forms.access",
-    "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.create", "cha.job.update",
+    "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.create", "cha.job.update", "cha.job.delete",
     "cha.document.read", "cha.document.upload", "cha.document.exception", "cha.checklist.prepare",
     "cha.checklist.submit", "cha.checklist.self_approve", "cha.filing.manage", "cha.expense.request",
     "cha.audit.view",
@@ -549,7 +535,35 @@ function matchLoginEmail(
   return null;
 }
 
-function getRoleForUser(email: string, departmentName: string, designation: string): string {
+const ROLE_OVERRIDES_BY_EMPLOYEE_NUMBER: Record<string, string> = {
+  "101": "Director",
+  "122": "Director",
+  "107": "TL",
+  "187": "Manager",
+  "189": "Management",
+  "146": "Management",
+  "183": "Employee",
+};
+
+const SEEDED_PRIMARY_ROLE_NAMES = [
+  "Admin",
+  "Management",
+  "HR",
+  "Manager",
+  "TL",
+  "Director",
+  "Employee",
+] as const;
+
+function getRoleForUser(
+  employeeNumber: string,
+  email: string,
+  departmentName: string,
+  designation: string,
+): string {
+  const override = ROLE_OVERRIDES_BY_EMPLOYEE_NUMBER[employeeNumber];
+  if (override) return override;
+
   const emailLower = email.toLowerCase();
   const deptLower = departmentName.toLowerCase();
   const desgLower = designation.toLowerCase();
@@ -566,7 +580,12 @@ function getRoleForUser(email: string, departmentName: string, designation: stri
   if (desgLower.includes("team leader")) {
     return "TL";
   }
-  if (desgLower.includes("management") || deptLower.includes("management") || deptLower.includes("directors") || desgLower.includes("consultant")) {
+  if (
+    desgLower.includes("management") ||
+    deptLower.includes("management") ||
+    deptLower.includes("directors") ||
+    desgLower.includes("consultant")
+  ) {
     return "Director";
   }
   return "Employee";
@@ -990,7 +1009,21 @@ async function seedUsers(
     userMap.set(email, user.id);
     userMap.set(aggregate.employeeNumber, user.id);
 
-    const mappedRoleName = getRoleForUser(email, departmentName || "", designation || "");
+    const mappedRoleName = getRoleForUser(
+      aggregate.employeeNumber,
+      email,
+      departmentName || "",
+      designation || "",
+    );
+    await db.userRole.deleteMany({
+      where: {
+        userId: user.id,
+        role: {
+          orgId,
+          name: { in: [...SEEDED_PRIMARY_ROLE_NAMES] },
+        },
+      },
+    });
     const userRoleObj = await db.role.findFirstOrThrow({ where: { orgId, name: mappedRoleName } });
     await db.userRole.upsert({
       where: { userId_roleId: { userId: user.id, roleId: userRoleObj.id } },
@@ -1370,6 +1403,7 @@ async function main() {
 
   // 4. Roles (depends on org + permissions)
   await seedRoles(org.id);
+  await ensureSpecialAccounts(org.id, DEFAULT_PASSWORD);
 
   // Load Excel workbook
   const filePath = path.join(process.cwd(), "docs/Employee_View_Sentence_Case.xlsx");

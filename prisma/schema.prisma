@@ -66,11 +66,12 @@ model Organisation {
   transactionLock     TransactionLock?
   partnerAccounts     PartnerAccount[]
 
-  chaSettings        ChaSettings?
-  chaJobs            ChaJob[]
-  chaExpenseRequests ChaExpenseRequest[]
-  chaAuditLogs       ChaAuditLog[]
-  chaTeamGroups      ChaTeamGroup[]
+  chaSettings         ChaSettings?
+  chaJobs             ChaJob[]
+  chaJobDeletionRequests ChaJobDeletionRequest[]
+  chaExpenseRequests  ChaExpenseRequest[]
+  chaAuditLogs        ChaAuditLog[]
+  chaTeamGroups       ChaTeamGroup[]
 
   // Google Chat Integration
   googleChatSpaces        GoogleChatSpace[]
@@ -352,8 +353,12 @@ model User {
   recruitPrivateShares         RecruitPrivateShare[]
 
   // CHA Module Relations
-  chaJobsOwned                 ChaJob[]                 @relation("ChaJobPrimaryOwner")
+  chaJobsOwned                 ChaJob[]                  @relation("ChaJobPrimaryOwner")
+  chaJobsDeleted              ChaJob[]                  @relation("ChaJobDeletedBy")
   chaJobAssignments            ChaJobAssignment[]
+  chaJobDeletionRequests       ChaJobDeletionRequest[]   @relation("ChaJobDeletionRequester")
+  chaJobDeletionApprovals      ChaJobDeletionRequest[]   @relation("ChaJobDeletionManager")
+  chaJobDeletionExecutions     ChaJobDeletionRequest[]   @relation("ChaJobDeletionExecutor")
   chaDocumentVersionsUploaded  ChaDocumentVersion[]
   chaDocumentExceptionsCreated ChaDocumentException[]
   chaChecklistImportsUploaded  ChaChecklistImport[]
@@ -3205,6 +3210,8 @@ model ChaJob {
   primaryOwnerId       String
   remarks              String?
   estimatedClosureDate DateTime?
+  deletedAt            DateTime?
+  deletedById          String?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
@@ -3213,7 +3220,9 @@ model ChaJob {
   jobType              ChaJobType                  @relation(fields: [jobTypeId], references: [id])
   branch               Branch                      @relation(fields: [branchId], references: [id])
   primaryOwner         User                        @relation("ChaJobPrimaryOwner", fields: [primaryOwnerId], references: [id])
+  deletedBy            User?                       @relation("ChaJobDeletedBy", fields: [deletedById], references: [id])
   assignments          ChaJobAssignment[]
+  deletionRequests     ChaJobDeletionRequest[]
   documentRequirements ChaJobDocumentRequirement[]
   checklistImports     ChaChecklistImport[]
   filing               ChaFiling?
@@ -3223,10 +3232,39 @@ model ChaJob {
   workspaceProfile     JobWorkspaceProfile?
 
   @@unique([orgId, jobNumber])
+  @@index([orgId, deletedAt])
   @@index([orgId, stage, status])
   @@index([orgId, jobNumber])
   @@index([primaryOwnerId])
+  @@index([deletedById])
   @@index([createdAt])
+}
+
+model ChaJobDeletionRequest {
+  id                String   @id @default(cuid())
+  orgId             String
+  jobId             String
+  jobNumberSnapshot String
+  requestedById     String
+  assignedManagerId String
+  status            String   @default("PENDING") // PENDING | APPROVED | REJECTED | CANCELLED | EXECUTED
+  requestedAt       DateTime @default(now())
+  decidedAt         DateTime?
+  executedAt        DateTime?
+  executedById      String?
+  remarks           String?
+  rejectionRemarks  String?
+
+  org             Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  job             ChaJob       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  requestedBy     User         @relation("ChaJobDeletionRequester", fields: [requestedById], references: [id])
+  assignedManager User         @relation("ChaJobDeletionManager", fields: [assignedManagerId], references: [id])
+  executedBy      User?        @relation("ChaJobDeletionExecutor", fields: [executedById], references: [id])
+
+  @@index([orgId, status])
+  @@index([jobId, status])
+  @@index([assignedManagerId, status])
+  @@index([requestedById, status])
 }
 
 model ChaJobAssignment {

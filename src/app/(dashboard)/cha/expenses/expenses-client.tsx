@@ -172,7 +172,7 @@ export function ExpensesClient({
   };
 
   return (
-    <main className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-outline-variant/30 pb-4">
         <h1 className="ds-h1 text-[#00cec4] flex items-center gap-2">
@@ -203,7 +203,7 @@ export function ExpensesClient({
               placeholder="Search job #, customer, requester..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 w-full text-sm font-sans"
+              className="h-11 pl-10 pr-4 w-full text-sm font-sans"
             />
           </div>
 
@@ -521,6 +521,6 @@ export function ExpensesClient({
           })
         )}
       </div>
-    </main>
+    </div>
   );
 }

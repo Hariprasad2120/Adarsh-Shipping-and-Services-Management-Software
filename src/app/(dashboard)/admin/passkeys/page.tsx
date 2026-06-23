@@ -48,7 +48,7 @@ export default async function AdminPasskeysPage() {
   ]);
 
   return (
-    <div className="max-w-7xl space-y-6">
+    <div className="space-y-6">
       <div className="space-y-1">
         <p className="text-sm text-on-surface-variant dark:text-on-surface-variant font-medium">
           Manage user credentials reset requests or force users to register new passkeys.

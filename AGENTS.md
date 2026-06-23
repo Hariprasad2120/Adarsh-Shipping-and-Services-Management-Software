@@ -206,6 +206,7 @@ crm: #38bdf8
 - All shared component locations and variants
 - Approved exceptions (module colors, status colors, stat tones)
 - Rules for introducing new tokens
+- **Page Layout standards (Section 15) detailing the HRMS reference layout and constraints**
 
 ### Implementation Checklist
 
@@ -230,4 +231,5 @@ Every AI agent must report these checks in their final response after UI work:
 17. ✅ No `border-collapse` on tables — `ds-table` uses `border-separate` with `border-spacing: 0`
 18. ✅ No `divide-y divide-[#hex]` on `<tbody>` — `ds-table td` border-bottom handles row separators
 19. ✅ Table rounded corners verified in browser — not just class applied
+20. ✅ Page layout follows Section 15 of `design.md` (no `mx-auto`, `container`, or `max-w-*` on standard pages, no duplicate page padding)
 <!-- END:design-system -->

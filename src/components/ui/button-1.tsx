@@ -10,6 +10,7 @@ const buttonVariants = cva(
         default: "bg-[#00cec4] text-white hover:bg-[#00b8af]",
         inverse: "bg-transparent text-current hover:bg-black/10",
         outline: "border border-outline-variant/50 bg-surface text-on-surface hover:bg-surface-container-low",
+        destructive: "bg-red-500 text-white hover:bg-red-600",
       },
       size: {
         sm: "h-8 px-3 text-[var(--text-sm)]",

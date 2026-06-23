@@ -167,7 +167,13 @@ export async function verifyLinkToken(
 export async function completeLinking(params: {
   token: string;
   monolithUserId: string;
-}): Promise<{ success: boolean; error?: string }> {
+  replaceExisting?: boolean;
+}): Promise<{
+  success: boolean;
+  error?: string;
+  code?: "GOOGLE_ACCOUNT_ALREADY_LINKED" | "USER_ALREADY_LINKED_OTHER_GOOGLE";
+  canReplace?: boolean;
+}> {
   const tokenData = await verifyLinkToken(params.token);
   if (!tokenData.valid || !tokenData.googleUserId) {
     return { success: false, error: "Invalid or expired link token." };
@@ -185,14 +191,26 @@ export async function completeLinking(params: {
     where: { googleUserId: tokenData.googleUserId },
   });
   if (existingForGoogle && existingForGoogle.userId !== params.monolithUserId) {
-    return { success: false, error: "This Google account is already linked to another Monolith user." };
+    return {
+      success: false,
+      error: "This Google account is already linked to another Monolith user.",
+      code: "GOOGLE_ACCOUNT_ALREADY_LINKED",
+    };
   }
 
   const existingForUser = await db.googleChatUserLink.findUnique({
     where: { userId: params.monolithUserId },
   });
-  if (existingForUser && existingForUser.googleUserId !== tokenData.googleUserId) {
-    return { success: false, error: "Your Monolith account is already linked to a different Google account." };
+  const needsReplacement =
+    !!existingForUser && existingForUser.googleUserId !== tokenData.googleUserId;
+
+  if (needsReplacement && !params.replaceExisting) {
+    return {
+      success: false,
+      error: "Your Monolith account is already linked to a different Google account.",
+      code: "USER_ALREADY_LINKED_OTHER_GOOGLE",
+      canReplace: true,
+    };
   }
 
   await db.$transaction([
@@ -203,8 +221,31 @@ export async function completeLinking(params: {
     existingForGoogle
       ? db.googleChatUserLink.update({
           where: { id: existingForGoogle.id },
-          data: { userId: params.monolithUserId, linkStatus: "active", verifiedAt: new Date() },
+          data: {
+            userId: params.monolithUserId,
+            orgId: user.orgId ?? undefined,
+            googleEmail: tokenData.googleEmail,
+            googleDisplayName: tokenData.googleDisplayName,
+            googleWorkspaceDomain: WORKSPACE_DOMAIN || undefined,
+            linkStatus: "active",
+            verifiedAt: new Date(),
+            revokedAt: null,
+          },
         })
+      : existingForUser
+        ? db.googleChatUserLink.update({
+            where: { id: existingForUser.id },
+            data: {
+              orgId: user.orgId ?? undefined,
+              googleUserId: tokenData.googleUserId,
+              googleEmail: tokenData.googleEmail,
+              googleDisplayName: tokenData.googleDisplayName,
+              googleWorkspaceDomain: WORKSPACE_DOMAIN || undefined,
+              linkStatus: "active",
+              verifiedAt: new Date(),
+              revokedAt: null,
+            },
+          })
       : db.googleChatUserLink.create({
           data: {
             userId: params.monolithUserId,

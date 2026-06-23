@@ -194,7 +194,7 @@ export function DashboardClient({
   };
 
   return (
-    <div className="p-8 space-y-8 max-w-[1600px] mx-auto animate-in fade-in duration-200">
+    <div className="space-y-8 animate-in fade-in duration-200">
       {/* ─── Header Console ──────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/20 pb-5">
         <div>

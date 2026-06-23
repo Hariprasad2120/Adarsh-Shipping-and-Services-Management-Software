@@ -45,7 +45,7 @@ export default function ProductCataloguePage() {
     || detailedWorkflowStages[0]!;
 
   return (
-    <div className="py-8 px-4 max-w-[1600px] mx-auto space-y-16 animate-in fade-in duration-200">
+    <div className="space-y-16 animate-in fade-in duration-200">
       
       {/* 3D Animations & Print Styling Injections */}
       <style dangerouslySetInnerHTML={{ __html: `

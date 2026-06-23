@@ -146,7 +146,7 @@ export const MONOLITH_MODULES: ModuleInfo[] = [
     description: "System administration area for managing roles, permissions, branches, departments, and user accounts.",
     path: "**/admin**",
     features: [
-      "Manage organization hierarchy, departments, and branches at **/admin/org-structure**",
+      "Manage organization hierarchy, departments, and branches at **/hrms/org-structure**",
       "Configure roles and permission keys at **/admin/roles**",
       "Manage active user accounts and system configuration settings",
     ],

@@ -38,7 +38,7 @@ export default async function SlabsPage() {
   });
 
   return (
-    <div className="max-w-7xl space-y-6">
+    <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <p className="text-sm text-on-surface-variant dark:text-slate-400 font-medium">

@@ -10,6 +10,14 @@ const MANAGEMENT_ROLE_PERMISSION_KEYS = [
   "ams.appraisal.view_all",
 ] as const;
 
+const CHA_ROLE_PERMISSION_DEFAULTS: Record<string, string[]> = {
+  Admin: ["cha.job.delete", "cha.job.delete.approve"],
+  Management: ["cha.job.delete", "cha.job.delete.approve"],
+  Director: ["cha.job.delete", "cha.job.delete.approve"],
+  Manager: ["cha.job.delete", "cha.job.delete.approve"],
+  Employee: ["cha.job.delete"],
+};
+
 async function ensureManagementRole(orgId: string) {
   const existing = await db.role.findUnique({
     where: { orgId_name: { orgId, name: "Management" } },
@@ -31,6 +39,55 @@ async function ensureManagementRole(orgId: string) {
     await db.rolePermission.createMany({
       data: permissions.map((permission) => ({ roleId: role.id, permissionId: permission.id })),
     });
+  }
+}
+
+export async function syncChaRolePermissions(orgId: string) {
+  const permissionKeys = Array.from(
+    new Set(Object.values(CHA_ROLE_PERMISSION_DEFAULTS).flat()),
+  );
+  const [permissions, roles] = await Promise.all([
+    db.permission.findMany({
+      where: { key: { in: permissionKeys } },
+      select: { id: true, key: true },
+    }),
+    db.role.findMany({
+      where: { orgId, name: { in: Object.keys(CHA_ROLE_PERMISSION_DEFAULTS) } },
+      select: { id: true, name: true },
+    }),
+  ]);
+
+  if (permissions.length === 0 || roles.length === 0) return;
+
+  const permissionIdByKey = new Map(permissions.map((permission) => [permission.key, permission.id]));
+
+  for (const role of roles) {
+    const desiredPermissionIds = (CHA_ROLE_PERMISSION_DEFAULTS[role.name] ?? [])
+      .map((key) => permissionIdByKey.get(key))
+      .filter((value): value is string => Boolean(value));
+
+    if (desiredPermissionIds.length === 0) continue;
+
+    const existing = await db.rolePermission.findMany({
+      where: {
+        roleId: role.id,
+        permissionId: { in: desiredPermissionIds },
+      },
+      select: { permissionId: true },
+    });
+
+    const existingIds = new Set(existing.map((entry) => entry.permissionId));
+    const missingIds = desiredPermissionIds.filter((permissionId) => !existingIds.has(permissionId));
+
+    if (missingIds.length > 0) {
+      await db.rolePermission.createMany({
+        data: missingIds.map((permissionId) => ({
+          roleId: role.id,
+          permissionId,
+        })),
+        skipDuplicates: true,
+      });
+    }
   }
 }
 
@@ -80,6 +137,7 @@ export async function deleteDivision(id: string) {
 // Roles
 export async function getRoles(orgId: string) {
   await ensureManagementRole(orgId);
+  await syncChaRolePermissions(orgId);
   return db.role.findMany({
     where: { orgId },
     orderBy: { name: "asc" },

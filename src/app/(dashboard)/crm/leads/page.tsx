@@ -110,7 +110,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
   const leadStatuses = ["NEW", "CONTACTED", "QUALIFIED", "LOST", "ATTEMPTED_TO_CONTACT", "NOT_INTERESTED", "NOT_PICKED", "NOT_REACHABLE"];
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
+    <div className="space-y-6">
 
       {/* Unified Table Shell — toolbar + tabs + table in one rounded container */}
       <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">

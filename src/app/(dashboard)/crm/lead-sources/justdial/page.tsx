@@ -45,7 +45,7 @@ export default async function JustdialConfigPage() {
   const config = await getJustdialConfig(orgId);
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
+    <div className="space-y-6">
       <JustdialForm initialConfig={config} employees={employees} />
     </div>
   );

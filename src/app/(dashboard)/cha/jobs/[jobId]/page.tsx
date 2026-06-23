@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { getJobDetails } from "@/modules/cha/service";
 import { db } from "@/lib/db";
+import { can } from "@/lib/rbac";
+import { BreadcrumbLabel } from "@/components/breadcrumb-label";
 import { JobWorkspaceClient } from "./job-workspace-client";
 
 export default async function ChaJobWorkspacePage({
@@ -18,7 +20,13 @@ export default async function ChaJobWorkspacePage({
   const { jobId } = await params;
 
   try {
-    const job = await getJobDetails(session.user.id, orgId, jobId);
+    const [job, canDeleteJob, canApproveDeleteJob, canDeleteDoc, canManageSettings] = await Promise.all([
+      getJobDetails(session.user.id, orgId, jobId),
+      can(session.user.id, "cha.job.delete"),
+      can(session.user.id, "cha.job.delete.approve"),
+      can(session.user.id, "cha.document.delete"),
+      can(session.user.id, "cha.settings.manage"),
+    ]);
     
     // Fetch users for assignment selections and customer advance maps
     const users = await db.user.findMany({
@@ -35,13 +43,20 @@ export default async function ChaJobWorkspacePage({
       : ["Customs Duty", "Port Handling Charges", "Transportation", "Documentation charges", "Agent Commission", "Storage Fees", "Miscellaneous"];
 
     return (
-      <JobWorkspaceClient
-        job={JSON.parse(JSON.stringify(job))}
-        users={users}
-        expenseCategories={parsedExpenseCategories}
-        selfApprovalAllowed={settings?.selfApprovalAllowed ?? true}
-        currentUserId={session.user.id}
-      />
+      <>
+        <BreadcrumbLabel segment={jobId} label={job.jobNumber} />
+        <JobWorkspaceClient
+          job={JSON.parse(JSON.stringify(job))}
+          users={users}
+          expenseCategories={parsedExpenseCategories}
+          selfApprovalAllowed={settings?.selfApprovalAllowed ?? true}
+          currentUserId={session.user.id}
+          canDeleteJob={canDeleteJob}
+          canApproveDeleteJob={canApproveDeleteJob}
+          canDeleteDoc={canDeleteDoc}
+          canManageSettings={canManageSettings}
+        />
+      </>
     );
   } catch (err: any) {
     console.error("Failed to load job workspace:", err);
