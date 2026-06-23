@@ -836,10 +836,10 @@ export function JobWorkspaceClient({
   };
 
   return (
-    <main className="mx-auto w-full max-w-7xl space-y-8 overflow-x-hidden">
+    <main className="mx-auto -mt-2 w-full max-w-7xl space-y-4 overflow-x-hidden">
       {/* Job Main Header */}
-      <div className="grid gap-4 border-b border-outline-variant/30 pb-6 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
-        <div className="min-w-0 space-y-3">
+      <div className="flex flex-col gap-4 border-b border-outline-variant/30 pb-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-lg border border-outline-variant bg-surface-container-high px-2 py-1 text-xs font-semibold text-[var(--color-primary)]">
               {job.jobType.name}
@@ -848,7 +848,7 @@ export function JobWorkspaceClient({
               {job.branch.name}
             </span>
           </div>
-          <div className="space-y-2">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h1 className="ds-h1 break-words text-[var(--color-primary)]">{job.jobNumber}</h1>
             <p className="max-w-4xl text-sm text-on-surface">{job.title}</p>
           </div>
@@ -857,10 +857,10 @@ export function JobWorkspaceClient({
             <strong className="text-on-surface">{job.primaryOwner.name}</strong>
           </p>
         </div>
-        <div className="grid gap-3 rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 xl:w-[18rem]">
-          <div className="rounded-xl border border-outline-variant/30 bg-surface p-3">
-            <span className="ds-label block text-on-surface-variant">Workflow Stage</span>
-            <span className={`mt-2 inline-flex min-h-9 w-full items-center justify-center rounded-lg border px-3 py-2 text-center text-xs font-bold uppercase tracking-wider ${
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-end">
+          <div>
+            <span className="ds-label mb-1 block text-on-surface-variant">Workflow Stage</span>
+            <span className={`inline-flex min-h-9 min-w-52 items-center justify-center rounded-lg border px-3 py-2 text-center text-xs font-bold uppercase tracking-wider ${
             job.stage === "FILING"
               ? "bg-blue-50 text-blue-700 border border-blue-200"
               : job.stage === "CHECKLIST_APPROVAL"
@@ -872,9 +872,9 @@ export function JobWorkspaceClient({
               {job.stage.replace(/_/g, " ")}
             </span>
           </div>
-          <div className="rounded-xl border border-outline-variant/30 bg-surface p-3">
-            <span className="ds-label block text-on-surface-variant">Job Status</span>
-            <span className={`mt-2 inline-flex min-h-9 w-full items-center justify-center rounded-lg border px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider ${
+          <div>
+            <span className="ds-label mb-1 block text-on-surface-variant">Job Status</span>
+            <span className={`inline-flex min-h-9 min-w-28 items-center justify-center rounded-lg border px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider ${
               job.status === "ACTIVE" ? "border-green-200 text-green-500" : "border-orange-200 text-orange-400"
             }`}>
               {job.status}
@@ -883,7 +883,7 @@ export function JobWorkspaceClient({
           {canDeleteJob ? (
             <Button
               variant="destructive"
-              className="w-full"
+              className="min-h-9 w-full sm:w-auto"
               disabled={loading !== null || Boolean(activeDeletionRequest)}
               onClick={() => setDeleteModalMode("delete")}
             >
@@ -934,7 +934,7 @@ export function JobWorkspaceClient({
       ) : null}
 
       {/* visual Stepper Display */}
-      <div className="relative overflow-hidden rounded-xl border border-outline-variant/30 bg-surface p-6 shadow-sm">
+      <div className="relative overflow-hidden rounded-xl border border-outline-variant/30 bg-surface px-4 py-3 shadow-sm sm:px-5">
         <div className="relative z-10 grid grid-cols-5 gap-2 md:gap-4">
           {STAGES.map((s, index) => {
             const isCompleted = index < activeStepIndex;
@@ -961,7 +961,7 @@ export function JobWorkspaceClient({
                 >
                   {isCompleted ? <Check size={18} /> : <span>{index + 1}</span>}
                 </div>
-                <span className={`mt-2 block min-h-8 text-[10px] font-bold uppercase tracking-wider ${
+                <span className={`mt-1.5 block min-h-5 text-[10px] font-bold uppercase tracking-wider ${
                   isActive ? "text-[#00cec4]" : "text-on-surface-variant"
                 }`}>
                   {s.label}
@@ -2459,3 +2459,4 @@ export function JobWorkspaceClient({
     </main>
   );
 }
+  
