@@ -1,539 +1,421 @@
 "use client";
 
-import React, { useEffect, useState, useTransition } from "react";
-import { Mail, Send, Trash, Archive, Star, Plus, FileText, ChevronRight, User, RefreshCw } from "lucide-react";
-import { useSession, signIn } from "next-auth/react";
-import {
-  listMailThreads,
-  getMailThread,
-  sendMailMessage,
-  listMailAccounts,
-  getCommunicationProfile,
-} from "@/modules/communication/mail.service";
-import { syncGmailInbox } from "@/modules/communication/gmail-sync.service";
-import { searchGoogleContacts, disconnectGoogleAccount, searchGoogleDriveFiles } from "@/modules/communication/google-workspace.service";
+import { useState, useEffect } from "react";
+import { Search, Mail, Star, Trash, Inbox, Send, Paperclip, ExternalLink, Link2, Download, RefreshCw, Plus, AlertCircle } from "lucide-react";
+import DOMPurify from "isomorphic-dompurify";
 
-export default function MailPage() {
-  const { data: session } = useSession();
-  const [accounts, setAccounts] = useState<any[]>([]);
-  const [selectedAccountId, setSelectedAccountId] = useState<string>("");
-  const [folder, setFolder] = useState<"inbox" | "sent" | "starred" | "trash" | "archive" | "draft">("inbox");
-  const [threads, setThreads] = useState<any[]>([]);
-  const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
-  const [threadDetails, setThreadDetails] = useState<any>(null);
-  const [signature, setSignature] = useState<string>("");
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [contacts, setContacts] = useState<any[]>([]);
-  const [showContacts, setShowContacts] = useState(false);
-  const [driveFiles, setDriveFiles] = useState<any[]>([]);
-  const [showDriveSearch, setShowDriveSearch] = useState(false);
-  const [driveQuery, setDriveQuery] = useState("");
-  const [isSearchingDrive, setIsSearchingDrive] = useState(false);
-
-  const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
-
-  // Composer Form
-  const [isComposing, setIsComposing] = useState(false);
+export default function MailPortal() {
+  const [threads, setThreads] = useState<any[]>();
+  const [selectedThread, setSelectedThread] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [folder, setFolder] = useState("INBOX");
+  const [error, setError] = useState<string | null>(null);
+  
+  // Compose Mail Modal State
+  const [showCompose, setShowCompose] = useState(false);
   const [composeTo, setComposeTo] = useState("");
   const [composeSubject, setComposeSubject] = useState("");
   const [composeBody, setComposeBody] = useState("");
-  const [crmLeadId, setCrmLeadId] = useState("");
-  const [isPending, startTransition] = useTransition();
+  
+  // Job Linking State
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [selectedJobId, setSelectedJobId] = useState("");
+  const [linkCategory, setLinkCategory] = useState("02 Job Documents");
 
-  // Load Accounts & Signature
   useEffect(() => {
-    const userId = session?.user?.id;
-    const orgId = session?.user?.orgId;
-    if (userId && orgId) {
-      listMailAccounts(userId, orgId).then((accs) => {
-        setAccounts(accs);
-        if (accs.length > 0) setSelectedAccountId(accs[0].id);
-      });
-      getCommunicationProfile(userId, orgId).then((prof) => {
-        if (prof?.emailSignatureEnabled) {
-          setSignature(prof.emailSignature || "");
-        }
-      });
+    fetchThreads();
+    fetchJobs();
+  }, [folder]);
+
+  const parseGoogleApiError = (msg: string) => {
+    if (!msg) return null;
+    if (msg.includes("API has not been used") || msg.includes("SERVICE_DISABLED") || msg.includes("accessNotConfigured")) {
+      const match = msg.match(/https:\/\/console\.[^\s"'}]+/);
+      return match ? match[0] : "https://console.cloud.google.com/apis/dashboard";
     }
-  }, [session]);
+    return null;
+  };
 
-  // Hook to fetch matching Google Contacts when typing in recipient list
-  useEffect(() => {
-    const userId = session?.user?.id;
-    const orgId = session?.user?.orgId;
-    if (userId && orgId && composeTo && composeTo.length >= 2) {
-      const tokens = composeTo.split(",");
-      const query = tokens[tokens.length - 1].trim();
-      if (query.length >= 2) {
-        searchGoogleContacts(userId, orgId, query).then((res) => {
-          setContacts(res || []);
-          setShowContacts((res || []).length > 0);
-        });
-      } else {
-        setShowContacts(false);
+  const fetchThreads = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const q = folder === "STARRED" ? "is:starred" : folder === "SENT" ? "is:sent" : "label:INBOX";
+      const queryParam = searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : q ? `&q=${encodeURIComponent(q)}` : "";
+      const res = await fetch(`/api/communication/mail/list?${queryParam}`);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to load threads");
       }
-    } else {
-      setShowContacts(false);
-    }
-  }, [composeTo, session]);
-
-  // Hook to fetch matching Google Drive files when searching
-  useEffect(() => {
-    const userId = session?.user?.id;
-    const orgId = session?.user?.orgId;
-    if (userId && orgId && driveQuery && driveQuery.length >= 2) {
-      setIsSearchingDrive(true);
-      searchGoogleDriveFiles(userId, orgId, driveQuery).then((res) => {
-        setDriveFiles(res || []);
-        setIsSearchingDrive(false);
-      }).catch(() => setIsSearchingDrive(false));
-    } else {
-      setDriveFiles([]);
-    }
-  }, [driveQuery, session]);
-
-  const handleDisconnect = async () => {
-    const userId = session?.user?.id;
-    const orgId = session?.user?.orgId;
-    if (!selectedAccountId || !userId || !orgId) return;
-
-    if (confirm("Are you sure you want to disconnect this Google Account?")) {
-      try {
-        await disconnectGoogleAccount(userId, orgId, selectedAccountId);
-        const accs = await listMailAccounts(userId, orgId);
-        setAccounts(accs);
-        if (accs.length > 0) {
-          setSelectedAccountId(accs[0].id);
-        } else {
-          setSelectedAccountId("");
-        }
-      } catch (err) {
-        console.error("Disconnect error:", err);
-      }
+      setThreads(data.threads || []);
+    } catch (err: any) {
+      console.error("Failed to load threads:", err);
+      setError(err.message || "Failed to load threads.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Load Threads
-  useEffect(() => {
-    const userId = session?.user?.id;
-    const orgId = session?.user?.orgId;
-    if (userId && orgId) {
-      listMailThreads(userId, orgId, folder).then((res) => {
-        setThreads(res.threads);
-      });
+  const fetchJobs = async () => {
+    try {
+      const res = await fetch("/api/communication/mail/link");
+      const data = await res.json();
+      setJobs(data.jobs || []);
+    } catch (err) {
+      console.error("Failed to load jobs:", err);
     }
-  }, [session, folder, currentThreadId]);
+  };
 
-  // Load Thread Details
-  useEffect(() => {
-    const userId = session?.user?.id;
-    const orgId = session?.user?.orgId;
-    if (currentThreadId && userId && orgId) {
-      getMailThread(userId, orgId, currentThreadId).then((details) => {
-        setThreadDetails(details);
-      });
-    } else {
-      setThreadDetails(null);
+  const handleThreadSelect = async (threadId: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/communication/mail/thread?id=${threadId}`);
+      const data = await res.json();
+      setSelectedThread(data.thread);
+    } catch (err) {
+      console.error("Failed to load thread details:", err);
+    } finally {
+      setLoading(false);
     }
-  }, [currentThreadId, session]);
+  };
 
-  const handleSend = () => {
-    const userId = session?.user?.id;
-    const orgId = session?.user?.orgId;
-    if (!selectedAccountId || !composeTo || !composeSubject || !composeBody || !userId || !orgId) return;
-
-    startTransition(async () => {
-      try {
-        const fullBody = signature ? `${composeBody}<br/><br/>${signature}` : composeBody;
-        await sendMailMessage(userId, orgId, {
-          mailAccountId: selectedAccountId,
-          to: composeTo.split(",").map((e) => e.trim()),
+  const handleSendEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/communication/mail/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: composeTo,
           subject: composeSubject,
-          bodyHtml: fullBody,
-          linkedRecordType: crmLeadId ? "CRM_LEAD" : undefined,
-          linkedRecordId: crmLeadId || undefined,
-        });
-
-        setIsComposing(false);
+          body: composeBody,
+          threadId: selectedThread?.id
+        })
+      });
+      if (res.ok) {
+        setShowCompose(false);
         setComposeTo("");
         setComposeSubject("");
         setComposeBody("");
-        setCrmLeadId("");
-        // Reload folder
-        setFolder("sent");
-      } catch (err) {
-        console.error(err);
+        fetchThreads();
       }
-    });
+    } catch (err) {
+      console.error("Failed to send email:", err);
+    }
   };
 
-  const handleSyncGmail = () => {
-    const userId = session?.user?.id;
-    const orgId = session?.user?.orgId;
-    if (!selectedAccountId || !userId || !orgId) return;
-
-    setIsSyncing(true);
-    startTransition(async () => {
-      try {
-        const res = await syncGmailInbox(userId, orgId, selectedAccountId);
-        if (res.success) {
-          const updated = await listMailThreads(userId, orgId, folder);
-          setThreads(updated.threads);
-        }
-      } catch (err) {
-        console.error("Gmail sync error:", err);
-      } finally {
-        setIsSyncing(false);
+  const handleLinkJob = async () => {
+    if (!selectedJobId || !selectedThread) return;
+    try {
+      const res = await fetch("/api/communication/mail/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          threadId: selectedThread.id,
+          jobId: selectedJobId,
+          category: linkCategory,
+          subject: selectedThread.subject
+        })
+      });
+      if (res.ok) {
+        alert("Email successfully linked to the job!");
+        setSelectedJobId("");
       }
-    });
+    } catch (err) {
+      console.error("Failed to link job:", err);
+    }
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)] min-h-0">
-      
-      {/* 1. Folders Navigation */}
-      <div className="w-full lg:w-60 shrink-0 flex flex-col gap-4 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl p-4">
-        <div>
-          <span className="ds-label block mb-1">Mailing Account</span>
-          <select
-            value={selectedAccountId}
-            onChange={(e) => setSelectedAccountId(e.target.value)}
-            className="w-full text-xs bg-[var(--color-surface-container)] text-white"
-          >
-            {accounts.map((acc) => (
-              <option key={acc.id} value={acc.id}>
-                {acc.email} ({acc.provider === "GOOGLE" ? "Gmail" : "SMTP/IMAP"})
-              </option>
-            ))}
-            {accounts.length === 0 && <option>No Accounts Registered</option>}
-          </select>
-
-          {selectedAccount?.provider === "GOOGLE" && (
-            <div className="space-y-2">
-              <button
-                onClick={handleSyncGmail}
-                disabled={isSyncing}
-                className="mt-2 w-full py-2 bg-[#00cec4]/15 border border-[#00cec4]/35 text-[#00cec4] hover:bg-[#00cec4]/20 rounded-xl text-xs uppercase font-semibold cursor-pointer transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <RefreshCw size={12} className={isSyncing ? "animate-spin" : ""} />
-                {isSyncing ? "Syncing..." : "Sync Gmail Inbox"}
-              </button>
-              <button
-                onClick={handleDisconnect}
-                className="w-full py-2 bg-red-950/80 border border-red-400/25 text-red-400 hover:bg-red-900 rounded-xl text-xs uppercase font-semibold cursor-pointer transition-all flex items-center justify-center gap-2"
-              >
-                Disconnect Account
-              </button>
-            </div>
-          )}
-
-          {(!selectedAccount || selectedAccount.provider !== "GOOGLE") && (
-            <button
-              onClick={() => signIn("google", { callbackUrl: window.location.href })}
-              className="mt-2 w-full py-2 bg-[#161f28] border border-[var(--color-outline-variant)] hover:text-white rounded-xl text-xs uppercase font-semibold cursor-pointer text-slate-300 transition-all flex items-center justify-center gap-2"
-            >
-              <img src="https://www.google.com/favicon.ico" className="w-3.5 h-3.5 object-contain" alt="Google" />
-              Link Google Account
-            </button>
-          )}
-        </div>
-
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 h-[80vh] border border-outline-variant bg-surface rounded-2xl overflow-hidden shadow-sm">
+      {/* Folder Navigation */}
+      <div className="border-r border-outline-variant p-4 space-y-4 bg-surface-container-low">
         <button
-          onClick={() => setIsComposing(true)}
-          className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] w-full py-2.5 rounded-xl text-xs uppercase tracking-widest font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+          onClick={() => setShowCompose(true)}
+          className="w-full flex items-center justify-center space-x-2 bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
         >
-          <Plus size={14} />
-          Compose Mail
+          <Plus className="size-4" />
+          <span>Compose</span>
         </button>
 
-        <div className="flex flex-col gap-1 mt-2">
-          <span className="ds-label block mb-2 px-2">Folders</span>
-          {[
-            { key: "inbox", label: "Inbox", icon: Mail },
-            { key: "sent", label: "Sent", icon: Send },
-            { key: "starred", label: "Starred", icon: Star },
-            { key: "trash", label: "Trash", icon: Trash },
-            { key: "archive", label: "Archive", icon: Archive },
-          ].map((f) => {
-            const Icon = f.icon;
-            const isActive = folder === f.key;
-            return (
-              <button
-                key={f.key}
-                onClick={() => {
-                  setFolder(f.key as any);
-                  setCurrentThreadId(null);
-                }}
-                className={`flex items-center justify-between px-3 py-2 text-xs rounded-xl font-medium tracking-wide transition-all cursor-pointer ${
-                  isActive
-                    ? "bg-[#00cec4]/10 text-[#00cec4]"
-                    : "text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container)] hover:text-white"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Icon size={14} />
-                  <span>{f.label}</span>
-                </div>
-              </button>
-            );
-          })}
+        <div className="space-y-1">
+          <button
+            onClick={() => setFolder("INBOX")}
+            className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors ${
+              folder === "INBOX" ? "bg-primary/10 text-primary" : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+            }`}
+          >
+            <Inbox className="size-4 text-[#00cec4]" />
+            <span>Inbox</span>
+          </button>
+          <button
+            onClick={() => setFolder("STARRED")}
+            className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors ${
+              folder === "STARRED" ? "bg-primary/10 text-primary" : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+            }`}
+          >
+            <Star className="size-4 text-[#fb923c]" />
+            <span>Starred</span>
+          </button>
+          <button
+            onClick={() => setFolder("SENT")}
+            className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors ${
+              folder === "SENT" ? "bg-primary/10 text-primary" : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+            }`}
+          >
+            <Send className="size-4 text-[#818cf8]" />
+            <span>Sent</span>
+          </button>
         </div>
       </div>
 
-      {/* 2. Mail List / Thread List */}
-      <div className="flex-1 lg:max-w-md shrink-0 flex flex-col bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl overflow-hidden min-h-0">
-        <div className="p-4 border-b border-[var(--color-outline-variant)]">
-          <h3 className="ds-h3 text-white text-sm font-bold uppercase tracking-wider">
-            {folder} Threads
-          </h3>
+      {/* Threads List */}
+      <div className="md:col-span-1 border-r border-outline-variant flex flex-col h-full bg-surface">
+        <div className="p-3 border-b border-outline-variant flex items-center space-x-2">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder="Search mail..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && fetchThreads()}
+              className="w-full text-xs bg-surface border border-outline-variant rounded-xl pl-8 pr-3 py-2 focus:outline-none"
+            />
+            <Search className="absolute left-2.5 top-2.5 size-4 text-on-surface-variant" />
+          </div>
+          <button onClick={fetchThreads} className="p-2 border border-outline-variant rounded-xl hover:bg-surface-container transition-colors">
+            <RefreshCw className="size-4 text-on-surface-variant" />
+          </button>
         </div>
-        <div className="flex-1 overflow-y-auto divide-y divide-[var(--color-outline-variant)]/60">
-          {threads.map((thread) => {
-            const latestMsg = thread.messages[0];
-            const isSelected = currentThreadId === thread.id;
-            return (
+
+        <div className="flex-1 overflow-y-auto divide-y divide-outline-variant">
+          {error ? (
+            (() => {
+              const url = parseGoogleApiError(error);
+              if (url) {
+                return (
+                  <div className="p-5 text-center space-y-3">
+                    <span className="ds-icon-badge mx-auto" style={{ background: "rgba(251,146,60,0.10)", color: "#fb923c" }}>
+                      <AlertCircle size={20} />
+                    </span>
+                    <h4 className="text-xs font-bold text-on-surface uppercase tracking-wider">Gmail API Disabled</h4>
+                    <p className="text-[10px] text-on-surface-variant leading-relaxed">
+                      The Gmail API is disabled in your Google Cloud Project console. Please enable it to sync your inbox.
+                    </p>
+                    <div className="pt-1">
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex bg-[#00cec4] text-white hover:bg-[#00b8af] px-4 py-2 rounded-xl text-[10px] uppercase font-bold tracking-wider transition-all"
+                      >
+                        Enable API
+                      </a>
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div className="p-4 text-center space-y-2">
+                  <span className="text-[#fb923c] font-bold text-sm">⚠</span>
+                  <p className="text-xs font-semibold text-on-surface">Sync Issue</p>
+                  <p className="text-[10px] text-on-surface-variant leading-relaxed">{error}</p>
+                </div>
+              );
+            })()
+          ) : loading && !threads ? (
+            <div className="text-center py-8 text-xs text-on-surface-variant">Loading threads...</div>
+          ) : threads?.length === 0 ? (
+            <div className="text-center py-8 text-xs text-on-surface-variant">No threads found.</div>
+          ) : (
+            threads?.map((t) => (
               <div
-                key={thread.id}
-                onClick={() => setCurrentThreadId(thread.id)}
-                className={`p-4 transition-all cursor-pointer flex justify-between items-start gap-3 hover:bg-[var(--color-surface-container-low)]/50 ${
-                  isSelected ? "border-l-4 border-[#00cec4] bg-[var(--color-surface-container-low)]" : ""
+                key={t.id}
+                onClick={() => handleThreadSelect(t.id)}
+                className={`p-3 space-y-1 cursor-pointer transition-colors text-left ${
+                  selectedThread?.id === t.id ? "bg-surface-container" : "hover:bg-surface-container-low"
                 }`}
               >
-                <div className="min-w-0">
-                  <span className="text-[10px] text-[var(--color-on-surface-variant)] font-semibold block uppercase">
-                    {latestMsg?.from || "Unknown"}
-                  </span>
-                  <h4 className="text-white text-xs font-bold font-sans mt-0.5 truncate">
-                    {thread.subject}
-                  </h4>
-                  <p className="text-[var(--color-on-surface-variant)] text-xs truncate mt-0.5">
-                    {latestMsg?.bodyText || "No text body"}
-                  </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-on-surface truncate max-w-[120px]">{t.from.split(" <")[0]}</span>
+                  <span className="text-[10px] text-on-surface-variant ds-numeric">{t.date.split(", ")[1]?.slice(0, 11) || t.date}</span>
                 </div>
-                <div className="text-right shrink-0">
-                  <span className="text-[9px] text-[var(--color-on-surface-variant)] font-mono">
-                    {latestMsg ? new Date(latestMsg.createdAt).toLocaleDateString() : ""}
-                  </span>
-                </div>
+                <h4 className="text-xs font-semibold text-on-surface truncate max-w-[180px]">{t.subject}</h4>
+                <p className="text-[10px] text-on-surface-variant truncate max-w-[200px]">{t.snippet}</p>
               </div>
-            );
-          })}
-          {threads.length === 0 && (
-            <div className="p-8 text-center text-xs text-[var(--color-on-surface-variant)] uppercase tracking-wider">
-              No threads found in this folder
-            </div>
+            ))
           )}
         </div>
       </div>
 
-      {/* 3. Conversation Thread View / Composer */}
-      <div className="flex-1 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl overflow-hidden flex flex-col min-h-0">
-        {isComposing ? (
-          <div className="p-6 flex flex-col gap-4 flex-1 overflow-y-auto">
-            <div className="border-b border-[var(--color-outline-variant)] pb-3 flex justify-between items-center">
-              <h3 className="ds-h3 text-white text-sm font-bold flex items-center gap-2">
-                <Plus size={16} className="text-[#00cec4]" />
-                New Message
-              </h3>
-              <button
-                onClick={() => setIsComposing(false)}
-                className="text-xs text-[var(--color-on-surface-variant)] hover:text-white uppercase tracking-wider font-bold cursor-pointer"
-              >
-                Cancel
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4">
-              <div className="relative">
-              <span className="ds-label block mb-1">Recipients (comma separated)</span>
-              <input
-                type="text"
-                placeholder="name@company.com"
-                value={composeTo}
-                onChange={(e) => {
-                  setComposeTo(e.target.value);
-                  setShowContacts(true);
-                }}
-                className="w-full text-xs text-white"
-              />
-              {showContacts && (
-                <div className="absolute z-50 left-0 right-0 mt-1 bg-[var(--color-surface-container)] border border-[var(--color-outline-variant)] rounded-xl max-h-40 overflow-y-auto shadow-xl">
-                  {contacts.map((c, i) => (
-                    <div
-                      key={i}
-                      onClick={() => {
-                        const tokens = composeTo.split(",");
-                        tokens[tokens.length - 1] = ` ${c.email}`;
-                        setComposeTo(tokens.join(",").trim());
-                        setShowContacts(false);
-                      }}
-                      className="px-4 py-2 hover:bg-[#00cec4]/15 cursor-pointer text-xs text-white flex flex-col"
-                    >
-                      <span className="font-bold">{c.name || "No Name"}</span>
-                      <span className="text-[10px] text-[var(--color-on-surface-variant)]">{c.email}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
+      {/* Reading & Action Pane */}
+      <div className="md:col-span-2 flex flex-col h-full bg-surface">
+        {selectedThread ? (
+          <div className="flex flex-col h-full overflow-hidden">
+            {/* Thread Action Bar */}
+            <div className="p-3 border-b border-outline-variant bg-surface-container-low flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <span className="ds-label block mb-1">Subject</span>
-                <input
-                  type="text"
-                  placeholder="Meeting Agenda / Operational Report"
-                  value={composeSubject}
-                  onChange={(e) => setComposeSubject(e.target.value)}
-                  className="w-full text-xs text-white"
-                />
-              </div>
-
-              <div>
-                <span className="ds-label block mb-1">CRM Lead ID Link (Optional)</span>
-                <input
-                  type="text"
-                  placeholder="e.g. crm_lead_cuid"
-                  value={crmLeadId}
-                  onChange={(e) => setCrmLeadId(e.target.value)}
-                  className="w-full text-xs text-white"
-                />
-              </div>
-
-              {showDriveSearch && (
-                <div className="border border-[#00cec4]/35 bg-[var(--color-surface-container)] rounded-xl p-4 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="ds-label block text-[#00cec4]">Search Google Drive Files</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowDriveSearch(false);
-                        setDriveQuery("");
-                      }}
-                      className="text-[10px] text-[var(--color-on-surface-variant)] hover:text-white uppercase tracking-wider font-bold cursor-pointer"
-                    >
-                      Close
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Enter file name keyword (e.g. report)..."
-                    value={driveQuery}
-                    onChange={(e) => setDriveQuery(e.target.value)}
-                    className="w-full text-xs text-white"
-                  />
-                  {isSearchingDrive ? (
-                    <p className="text-[10px] text-[var(--color-on-surface-variant)] uppercase tracking-wider">Searching Drive...</p>
-                  ) : driveFiles.length > 0 ? (
-                    <div className="max-h-40 overflow-y-auto divide-y divide-[var(--color-outline-variant)]/40 border border-[var(--color-outline-variant)]/40 rounded-lg">
-                      {driveFiles.map((file, i) => (
-                        <div
-                          key={i}
-                          onClick={() => {
-                            setComposeBody(prev => prev + `\n<p><a href="${file.webViewLink}" target="_blank" style="color:#00cec4;text-decoration:underline;">Google Drive: ${file.name}</a></p>`);
-                            setShowDriveSearch(false);
-                            setDriveQuery("");
-                          }}
-                          className="p-2 hover:bg-[#00cec4]/15 cursor-pointer text-xs text-white flex flex-col gap-0.5"
-                        >
-                          <span className="font-bold truncate">{file.name}</span>
-                          <span className="text-[9px] text-[var(--color-on-surface-variant)] uppercase font-mono">{file.mimeType} {file.size ? `(${Math.round(file.size / 1024)} KB)` : ""}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : driveQuery.length >= 2 ? (
-                    <p className="text-[10px] text-[var(--color-on-surface-variant)] uppercase tracking-wider">No matching files found</p>
-                  ) : null}
-                </div>
-              )}
-
-              <div className="flex-1 flex flex-col">
-                <span className="ds-label block mb-1">Body (HTML format supported)</span>
-                <textarea
-                  rows={8}
-                  placeholder="Type your message here..."
-                  value={composeBody}
-                  onChange={(e) => setComposeBody(e.target.value)}
-                  className="w-full text-xs text-white flex-1 min-h-[200px]"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end items-center gap-3 mt-4">
-              {selectedAccount?.provider === "GOOGLE" && (
-                <button
-                  type="button"
-                  onClick={() => setShowDriveSearch(!showDriveSearch)}
-                  className="mr-auto px-4 py-2 border border-[#00cec4]/35 text-[#00cec4] hover:bg-[#00cec4]/10 rounded-xl text-xs uppercase font-semibold cursor-pointer transition-all flex items-center gap-2"
+                <h3 className="text-xs font-bold text-on-surface uppercase tracking-wide truncate max-w-[250px]">{selectedThread.subject}</h3>
+                <a
+                  href={`https://mail.google.com/mail/u/0/#inbox/${selectedThread.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[10px] font-bold text-[#00cec4] hover:underline"
                 >
-                  <img src="https://www.google.com/favicon.ico" className="w-3.5 h-3.5 object-contain" alt="Google Drive" />
-                  Attach Drive Link
+                  <span>Open Full Gmail</span>
+                  <ExternalLink className="size-3" />
+                </a>
+              </div>
+
+              {/* Link to Job Option */}
+              <div className="flex items-center space-x-2">
+                <select
+                  value={selectedJobId}
+                  onChange={(e) => setSelectedJobId(e.target.value)}
+                  className="text-xs bg-surface border border-outline-variant rounded-xl p-1.5 focus:outline-none"
+                >
+                  <option value="">Select Job...</option>
+                  {jobs.map((job) => (
+                    <option key={job.id} value={job.id}>{job.jobNumber} - {job.title}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={linkCategory}
+                  onChange={(e) => setLinkCategory(e.target.value)}
+                  className="text-xs bg-surface border border-outline-variant rounded-xl p-1.5 focus:outline-none"
+                >
+                  <option value="01 Customer KYC">KYC</option>
+                  <option value="02 Job Documents">Documents</option>
+                  <option value="03 User Uploads">Uploads</option>
+                  <option value="06 Invoices and Billing">Billing</option>
+                </select>
+
+                <button
+                  onClick={handleLinkJob}
+                  disabled={!selectedJobId}
+                  className="flex items-center space-x-1 bg-[#00cec4] text-white hover:bg-[#00b8af] disabled:opacity-50 px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all"
+                >
+                  <Link2 className="size-3.5" />
+                  <span>Link</span>
                 </button>
-              )}
-              <button
-                disabled={isPending}
-                onClick={handleSend}
-                className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-6 py-2.5 rounded-xl text-xs uppercase tracking-widest font-bold transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                <Send size={14} />
-                {isPending ? "Sending..." : "Send Message"}
-              </button>
+              </div>
             </div>
-          </div>
-        ) : threadDetails ? (
-          <div className="flex-1 flex flex-col min-h-0">
-            <div className="p-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-container-low)]">
-              <h3 className="text-white text-sm font-bold font-sans uppercase">
-                {threadDetails.subject}
-              </h3>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {threadDetails.messages.map((msg: any) => (
-                <div key={msg.id} className="card-left-accent bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)]/60 rounded-xl p-5 space-y-3">
-                  <div className="flex justify-between items-start">
+
+            {/* Conversation Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-surface-container-low">
+              {selectedThread.messages.map((msg: any) => (
+                <div key={msg.id} className="p-4 rounded-xl border border-outline-variant bg-surface space-y-3 shadow-sm text-left">
+                  <div className="flex items-start justify-between border-b border-outline-variant/30 pb-2">
                     <div>
-                      <span className="text-white text-xs font-bold flex items-center gap-1.5 font-sans">
-                        <User size={13} className="text-[#00cec4]" />
-                        {msg.from}
-                      </span>
-                      <span className="text-[9px] text-[var(--color-on-surface-variant)] uppercase tracking-wider block mt-0.5">
-                        To: {msg.to}
-                      </span>
+                      <span className="text-xs font-bold text-on-surface block">{msg.from}</span>
+                      <span className="text-[10px] text-on-surface-variant block">To: {msg.to}</span>
                     </div>
-                    <span className="text-[9px] text-[var(--color-on-surface-variant)] font-mono">
-                      {new Date(msg.createdAt).toLocaleString()}
-                    </span>
+                    <span className="text-[10px] text-on-surface-variant ds-numeric">{msg.date}</span>
                   </div>
 
-                  <div className="text-white text-xs whitespace-pre-wrap leading-relaxed border-t border-[var(--color-outline-variant)]/40 pt-3">
-                    <div dangerouslySetInnerHTML={{ __html: msg.bodyHtml }} />
-                  </div>
-
-                  {msg.attachments && msg.attachments.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-2 border-t border-[var(--color-outline-variant)]/20">
-                      {msg.attachments.map((att: any) => (
-                        <div key={att.id} className="ds-icon-badge flex items-center gap-2 px-3 py-1.5 bg-[#00cec4]/10 rounded-lg text-[#00cec4] text-[10px] font-mono">
-                          <FileText size={12} />
-                          <span>{att.fileName}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {/* Sanitized HTML Body */}
+                  <div
+                    className="text-xs text-on-surface space-y-2 overflow-x-auto whitespace-pre-line"
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(msg.bodyHtml || msg.bodyText)
+                    }}
+                  />
                 </div>
               ))}
             </div>
+
+            {/* Quick Reply Form */}
+            <div className="p-3 border-t border-outline-variant bg-surface">
+              <form onSubmit={handleSendEmail} className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  placeholder="Type reply..."
+                  value={composeBody}
+                  onChange={(e) => {
+                    setComposeBody(e.target.value);
+                    setComposeTo(selectedThread.messages[selectedThread.messages.length - 1].from);
+                    setComposeSubject(`Re: ${selectedThread.subject}`);
+                  }}
+                  className="flex-1 text-xs bg-surface border border-outline-variant rounded-xl px-3 py-2 focus:outline-none"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all"
+                >
+                  Reply
+                </button>
+              </form>
+            </div>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <Mail size={48} className="text-[var(--color-outline)] mb-3" />
-            <h4 className="text-white font-bold text-xs uppercase tracking-wider">No Thread Selected</h4>
-            <p className="text-[var(--color-on-surface-variant)] text-xs mt-1">
-              Select an email thread from the inbox index to inspect history.
-            </p>
+          <div className="flex flex-col items-center justify-center h-full text-on-surface-variant text-xs">
+            <Mail className="size-12 text-[#00cec4]/40 mb-2 animate-pulse" />
+            <span>Select an email thread to read conversation.</span>
           </div>
         )}
       </div>
 
+      {/* Compose Modal */}
+      {showCompose && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-surface border border-outline-variant rounded-xl shadow-xl overflow-hidden animate-page-enter">
+            <div className="p-4 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+              <h3 className="ds-h3 text-on-surface">Compose New Email</h3>
+              <button onClick={() => setShowCompose(false)} className="text-on-surface-variant hover:text-on-surface font-bold text-sm">✕</button>
+            </div>
+            <form onSubmit={handleSendEmail} className="p-4 space-y-3 text-left">
+              <div>
+                <label className="ds-label text-on-surface-variant block mb-1">To</label>
+                <input
+                  type="email"
+                  value={composeTo}
+                  onChange={(e) => setComposeTo(e.target.value)}
+                  className="w-full text-xs bg-surface border border-outline-variant rounded-xl px-3 py-2 focus:outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="ds-label text-on-surface-variant block mb-1">Subject</label>
+                <input
+                  type="text"
+                  value={composeSubject}
+                  onChange={(e) => setComposeSubject(e.target.value)}
+                  className="w-full text-xs bg-surface border border-outline-variant rounded-xl px-3 py-2 focus:outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="ds-label text-on-surface-variant block mb-1">Message</label>
+                <textarea
+                  value={composeBody}
+                  onChange={(e) => setComposeBody(e.target.value)}
+                  rows={6}
+                  className="w-full text-xs bg-surface border border-outline-variant rounded-xl px-3 py-2 focus:outline-none"
+                  required
+                />
+              </div>
+              <div className="pt-2 flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCompose(false)}
+                  className="px-4 py-2 border border-outline-variant rounded-xl text-xs font-semibold uppercase hover:bg-surface-container-low text-on-surface-variant transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all"
+                >
+                  Send Email
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

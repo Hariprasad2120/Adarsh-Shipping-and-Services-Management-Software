@@ -1,206 +1,312 @@
-import React from "react";
-import { Mail, MessageSquare, Send, Bell, Users, Plus, Calendar, FileText } from "lucide-react";
 import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { listThreads } from "@/lib/google-gmail-client";
+import { listUpcomingEvents } from "@/lib/google-calendar-client";
+import Link from "next/link";
+import { AlertCircle, CheckCircle2, RefreshCw, Mail, MessageSquare as ChatBubbleIcon, Calendar, Folder, Video, Settings, Search, Plus } from "lucide-react";
 
-export default async function CommunicationDashboardPage() {
+function parseGoogleApiError(errorMessage: string) {
+  if (!errorMessage) return null;
+  
+  if (
+    errorMessage.includes("API has not been used") || 
+    errorMessage.includes("SERVICE_DISABLED") || 
+    errorMessage.includes("accessNotConfigured")
+  ) {
+    const match = errorMessage.match(/https:\/\/console\.[^\s"'}]+/);
+    const activationUrl = match ? match[0] : null;
+    
+    let apiName = "Google API";
+    if (errorMessage.toLowerCase().includes("gmail")) {
+      apiName = "Gmail API";
+    } else if (errorMessage.toLowerCase().includes("calendar")) {
+      apiName = "Google Calendar API";
+    } else if (errorMessage.toLowerCase().includes("chat")) {
+      apiName = "Google Chat API";
+    } else if (errorMessage.toLowerCase().includes("drive")) {
+      apiName = "Google Drive API";
+    }
+    
+    return {
+      type: "API_DISABLED",
+      apiName,
+      activationUrl: activationUrl || "https://console.cloud.google.com/apis/dashboard"
+    };
+  }
+  
+  return null;
+}
+
+export default async function CommunicationDashboard() {
   const session = await auth();
-  if (!session) redirect("/login");
+  if (!session?.user) return null;
 
-  const orgId = session.user.orgId;
-  const userId = session.user.id;
+  const connection = await db.googleWorkspaceConnection.findUnique({
+    where: { userId: session.user.id }
+  });
 
-  // Fetch real counts from DB
-  const [
-    chatThreadsCount,
-    emailsCount,
-    eventsCount,
-    filesCount,
-    recentChatsData,
-    recentBroadcastsData,
-  ] = await Promise.all([
-    db.chatConversation.count({ where: { orgId } }),
-    db.mailMessage.count({ where: { orgId } }),
-    db.calendarEvent.count({ where: { orgId } }),
-    db.fileAsset.count({ where: { orgId } }),
-    db.chatMessage.findMany({
-      where: { orgId },
-      orderBy: { createdAt: "desc" },
-      take: 4,
-      include: {
-        sender: { select: { name: true } },
-        conversation: { select: { name: true, type: true } },
-      },
-    }),
-    db.notification.findMany({
-      where: { orgId },
-      orderBy: { lastSentAt: "desc" },
-      take: 3,
-      select: {
-        id: true,
-        title: true,
-        body: true,
-        lastSentAt: true,
-        kind: true,
-      },
-    }),
-  ]);
+  const googleEmail = connection?.googleEmail || "";
 
-  const stats = [
-    { label: "Active Chat Rooms", value: String(chatThreadsCount), icon: MessageSquare, color: "text-[#38bdf8]", bg: "bg-[#38bdf8]/10" },
-    { label: "Email Messages", value: String(emailsCount), icon: Mail, color: "text-[#00cec4]", bg: "bg-[#00cec4]/10" },
-    { label: "Calendar Events", value: String(eventsCount), icon: Calendar, color: "text-orange-400", bg: "bg-orange-500/10" },
-    { label: "Drive Storage Files", value: String(filesCount), icon: FileText, color: "text-[#22c55e]", bg: "bg-[#22c55e]/10" },
-  ];
+  let threads: any[] = [];
+  let meetings: any[] = [];
+  let errorState = null;
 
-  // Helper for displaying time ago
-  const formatTimeAgo = (date: Date) => {
-    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-    if (seconds < 60) return "Just now";
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return date.toLocaleDateString();
-  };
+  try {
+    if (connection) {
+      // Fetch Gmail threads (last 5)
+      const mailRes = await listThreads({
+        userId: session.user.id,
+        maxResults: 5
+      });
+      threads = mailRes.threads || [];
+
+      // Fetch Calendar meetings (last 5)
+      meetings = await listUpcomingEvents({
+        userId: session.user.id,
+        maxResults: 5
+      });
+    }
+  } catch (err: any) {
+    console.error("[WorkspaceHome] Failed to load workspace data:", err);
+    errorState = err.message || "Failed to load real-time Workspace data.";
+  }
+
+  // Count active job spaces
+  const activeSpacesCount = await db.jobWorkspaceProfile.count({
+    where: { orgId: session.user.orgId!, googleSpaceId: { not: null } }
+  });
+
+  const parsedError = parseGoogleApiError(errorState || "");
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-200">
-      
-      {/* Header Info */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl p-6 shadow-sm">
+    <div className="space-y-6 animate-in fade-in duration-200">
+      {/* Top Welcome Panel */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between p-6 rounded-2xl border border-outline-variant bg-surface shadow-sm">
         <div>
-          <span className="text-[10px] font-bold text-[#00cec4] uppercase tracking-widest block font-sans">
-            ENTERPRISE COMMUNICATIONS INTERFACE
-          </span>
-          <h1 className="ds-h1 text-white text-2xl font-bold mt-1 uppercase">
-            Communication Portal
-          </h1>
-          <p className="text-[var(--color-on-surface-variant)] text-xs mt-0.5">
-            Manage company email, real-time chats, planning schedules, and operational notification feeds.
+          <span className="text-[10px] uppercase font-bold tracking-widest text-[#00cec4]">Workspace Dashboard</span>
+          <h1 className="text-xl font-bold text-on-surface mt-1">Hello, {session.user.name}</h1>
+          <p className="text-xs text-on-surface-variant mt-0.5">
+            Connected via <span className="font-semibold text-on-surface">{googleEmail}</span>
           </p>
         </div>
-        <a 
-          href="/communication/mail?compose=true"
-          className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-widest font-bold transition-all flex items-center gap-2 cursor-pointer"
-        >
-          <Plus size={14} />
-          Compose Mail
-        </a>
+
+        {/* Sync Status Badge */}
+        <div className="flex items-center space-x-2 mt-4 md:mt-0 p-2 bg-surface-container-low rounded-xl border border-outline-variant">
+          <CheckCircle2 size={16} className={errorState ? "text-[#fb923c]" : "text-[#00cec4]"} />
+          <span className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">
+            API Sync: {errorState ? "Issue Detected" : "Active"}
+          </span>
+        </div>
       </div>
 
-      {/* Stats Row */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, idx) => {
-          const Icon = stat.icon;
-          return (
-            <div key={idx} className="card-top-accent bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl p-5 relative overflow-hidden">
-              <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${stat.bg}`}>
-                <Icon className={`size-5 ${stat.color}`} strokeWidth={1.8} />
-              </div>
-              <p className="mt-4 text-[2rem] font-sans font-extralight leading-none tracking-tight text-white ds-numeric">
-                {stat.value}
+      {errorState && (
+        parsedError ? (
+          <div className="flex items-start space-x-3 p-5 rounded-2xl border border-[#fb923c]/25 bg-surface shadow-md">
+            <span className="ds-icon-badge mt-0.5 shrink-0" style={{ background: "rgba(251,146,60,0.10)", color: "#fb923c" }}>
+              <AlertCircle size={20} />
+            </span>
+            <div className="text-left space-y-2">
+              <h3 className="ds-h3 text-on-surface font-bold">Google API Enabling Required</h3>
+              <p className="text-xs text-on-surface-variant max-w-xl">
+                The <span className="font-bold text-on-surface">{parsedError.apiName}</span> is not yet enabled for your Google Cloud Project. To use these workspace features, you must enable this API in the developers console.
               </p>
-              <p className="mt-1 text-sm text-[var(--color-on-surface-variant)] uppercase tracking-wider text-[10px] font-bold">{stat.label}</p>
+              <div className="pt-1.5">
+                <a
+                  href={parsedError.activationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-2 bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition-all font-semibold"
+                >
+                  <span>Enable {parsedError.apiName}</span>
+                  <span>→</span>
+                </a>
+              </div>
             </div>
-          );
-        })}
-      </div>
+          </div>
+        ) : (
+          <div className="flex items-center space-x-3 p-4 rounded-xl border border-[#fb923c]/20 bg-[#fb923c]/5 text-[#fb923c]">
+            <AlertCircle size={18} />
+            <div className="text-xs">
+              <span className="font-bold">Sync Issue: </span> {errorState}
+            </div>
+          </div>
+        )
+      )}
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* Left Side: Recent Messages */}
-        <div className="lg:col-span-7 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl p-5 space-y-4">
-          <div className="flex justify-between items-center border-b border-[var(--color-outline-variant)]/60 pb-3">
-            <h3 className="ds-h3 text-white text-sm font-bold flex items-center gap-2">
-              <MessageSquare size={16} className="text-[#00cec4]" />
-              Internal Live Chat
-            </h3>
-            <span className="text-[10px] font-mono text-[#00cec4] bg-[#00cec4]/10 px-2 py-0.5 rounded font-bold uppercase">
-              Live Connection
+      {/* Grid of Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="card-top-accent rounded-xl border border-outline-variant bg-surface p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Unread Mail</span>
+              <h2 className="text-2xl font-bold ds-numeric text-on-surface mt-1">
+                {threads.filter(t => t.isUnread).length}
+              </h2>
+            </div>
+            <span className="ds-icon-badge">
+              <span className="text-[#00cec4] font-bold text-sm">✉</span>
             </span>
           </div>
+        </div>
 
-          <div className="divide-y divide-[var(--color-outline-variant)]/60">
-            {recentChatsData.map((chat) => (
-              <a
-                key={chat.id}
-                href={`/communication/chat?id=${chat.conversationId}`}
-                className="py-3.5 flex justify-between items-start gap-4 hover:bg-[var(--color-surface-container-low)]/50 px-2 rounded-xl transition-all cursor-pointer block"
-              >
-                <div className="flex gap-3 min-w-0">
-                  <div className="h-10 w-10 rounded-full bg-slate-800 border border-[var(--color-outline-variant)] flex items-center justify-center font-bold text-xs text-white shrink-0">
-                    {chat.sender.name.split(" ").map(n => n[0]).join("")}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-white text-xs font-bold font-sans">{chat.sender.name}</span>
-                      <span className="text-[9px] text-[var(--color-on-surface-variant)] uppercase tracking-wider font-semibold">
-                        {chat.conversation.name || `${chat.conversation.type} Chat`}
-                      </span>
-                    </div>
-                    <p className="text-[var(--color-on-surface-variant)] text-xs truncate mt-0.5">
-                      {chat.body}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-1.5 shrink-0 text-right">
-                  <span className="text-[9px] text-[var(--color-on-surface-variant)] font-mono">
-                    {formatTimeAgo(chat.createdAt)}
-                  </span>
-                </div>
-              </a>
-            ))}
-            {recentChatsData.length === 0 && (
-              <div className="p-8 text-center text-xs text-[var(--color-on-surface-variant)] uppercase tracking-wider">
-                No recent chat messages found.
-              </div>
-            )}
+        <div className="card-top-accent rounded-xl border border-outline-variant bg-surface p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Job Channels</span>
+              <h2 className="text-2xl font-bold ds-numeric text-on-surface mt-1">{activeSpacesCount}</h2>
+            </div>
+            <span className="ds-icon-badge">
+              <span className="text-[#00cec4] font-bold text-sm">💬</span>
+            </span>
           </div>
         </div>
 
-        {/* Right Side: Corporate Announcements */}
-        <div className="lg:col-span-5 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl p-5 space-y-4">
-          <div className="flex justify-between items-center border-b border-[var(--color-outline-variant)]/60 pb-3">
-            <h3 className="ds-h3 text-white text-sm font-bold flex items-center gap-2">
-              <Bell size={16} className="text-orange-400" />
-              Corporate Announcements
-            </h3>
-          </div>
-
-          <div className="space-y-4">
-            {recentBroadcastsData.map((br) => (
-              <div key={br.id} className="card-left-accent-orange bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)]/60 rounded-xl p-4 space-y-2 hover:border-orange-400/40 transition-all">
-                <div className="flex justify-between items-start gap-2">
-                  <span className="px-2 py-0.5 rounded bg-orange-950 text-orange-400 border border-orange-400/25 text-[8px] font-mono font-bold tracking-widest uppercase">
-                    {br.kind.replace("COMM_", "")}
-                  </span>
-                  <span className="text-[9px] text-[var(--color-on-surface-variant)] font-mono">
-                    {formatTimeAgo(br.lastSentAt || new Date())}
-                  </span>
-                </div>
-                <h4 className="text-white font-bold text-xs font-sans tracking-wide leading-snug">
-                  {br.title}
-                </h4>
-                {br.body && (
-                  <p className="text-[var(--color-on-surface-variant)] text-[11px] leading-relaxed">
-                    {br.body}
-                  </p>
-                )}
-              </div>
-            ))}
-            {recentBroadcastsData.length === 0 && (
-              <div className="p-8 text-center text-xs text-[var(--color-on-surface-variant)] uppercase tracking-wider">
-                No announcements found.
-              </div>
-            )}
+        <div className="card-top-accent rounded-xl border border-outline-variant bg-surface p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Upcoming Meets</span>
+              <h2 className="text-2xl font-bold ds-numeric text-on-surface mt-1">{meetings.length}</h2>
+            </div>
+            <span className="ds-icon-badge">
+              <span className="text-[#00cec4] font-bold text-sm">📅</span>
+            </span>
           </div>
         </div>
 
+        <div className="card-top-accent rounded-xl border border-outline-variant bg-surface p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Workspace Health</span>
+              <h2 className="text-sm font-bold text-[#00cec4] uppercase mt-1.5">100% OK</h2>
+            </div>
+            <span className="ds-icon-badge">
+              <span className="text-[#00cec4] font-bold text-sm">♥</span>
+            </span>
+          </div>
+        </div>
       </div>
 
+      {/* Main Dashboard Panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Recent emails & chat spaces (span 2) */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Recent Emails */}
+          <div className="rounded-xl border border-outline-variant bg-surface shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-outline-variant flex items-center justify-between">
+              <h3 className="ds-h3 text-on-surface flex items-center gap-2">
+                <span>Recent Emails</span>
+              </h3>
+              <Link href="/communication/mail" className="text-xs font-semibold text-[#00cec4] uppercase tracking-wider hover:underline">
+                View Mailbox
+              </Link>
+            </div>
+            <div className="p-4">
+              {threads.length === 0 ? (
+                <div className="text-center py-6 text-on-surface-variant text-xs">No recent threads found.</div>
+              ) : (
+                <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="ds-table">
+                      <thead>
+                        <tr>
+                          <th className="px-4 py-2.5">Sender</th>
+                          <th className="px-4 py-2.5">Subject</th>
+                          <th className="px-4 py-2.5">Snippet</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {threads.map((t) => (
+                          <tr key={t.id} className="ds-row-link hover-cyan">
+                            <td className="px-4 py-3 text-xs font-medium text-on-surface truncate max-w-[120px]">
+                              {t.isUnread && <span className="inline-block w-2 h-2 rounded-full bg-[#00cec4] mr-2"></span>}
+                              {t.from.split(" <")[0]}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-on-surface truncate max-w-[200px]">{t.subject}</td>
+                            <td className="px-4 py-3 text-xs text-on-surface-variant truncate max-w-[300px]">{t.snippet}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Actions Panel */}
+          <div className="rounded-xl border border-outline-variant bg-surface p-5 shadow-sm">
+            <h3 className="ds-h3 text-on-surface mb-4">Quick Workspace Actions</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <Link href="/communication/mail" className="flex flex-col items-center p-4 rounded-xl border border-outline-variant bg-surface-container-low hover:bg-surface-container transition-colors text-center">
+                <span className="text-lg mb-1">✉</span>
+                <span className="text-xs font-semibold text-on-surface uppercase tracking-wider">Compose Mail</span>
+              </Link>
+              <Link href="/communication/chat" className="flex flex-col items-center p-4 rounded-xl border border-outline-variant bg-surface-container-low hover:bg-surface-container transition-colors text-center">
+                <span className="text-lg mb-1">💬</span>
+                <span className="text-xs font-semibold text-on-surface uppercase tracking-wider">Start Chat</span>
+              </Link>
+              <Link href="/communication/meetings" className="flex flex-col items-center p-4 rounded-xl border border-outline-variant bg-surface-container-low hover:bg-surface-container transition-colors text-center">
+                <span className="text-lg mb-1">📹</span>
+                <span className="text-xs font-semibold text-on-surface uppercase tracking-wider">New Meeting</span>
+              </Link>
+              <Link href="/communication/search" className="flex flex-col items-center p-4 rounded-xl border border-outline-variant bg-surface-container-low hover:bg-surface-container transition-colors text-center">
+                <span className="text-lg mb-1">🔎</span>
+                <span className="text-xs font-semibold text-on-surface uppercase tracking-wider">Search Hub</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Upcoming meetings & Admin Settings */}
+        <div className="space-y-6">
+          {/* Upcoming Meetings */}
+          <div className="rounded-xl border border-outline-variant bg-surface shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-outline-variant flex items-center justify-between">
+              <h3 className="ds-h3 text-on-surface">Upcoming Meetings</h3>
+            </div>
+            <div className="p-4 space-y-4">
+              {meetings.length === 0 ? (
+                <div className="text-center py-6 text-on-surface-variant text-xs">No upcoming meetings.</div>
+              ) : (
+                meetings.map((m) => (
+                  <div key={m.id} className="card-left-accent p-3 rounded-xl border border-outline-variant bg-surface-container-low space-y-2">
+                    <div className="flex items-start justify-between">
+                      <h4 className="text-xs font-bold text-on-surface truncate max-w-[150px]">{m.summary}</h4>
+                      {m.meetLink && (
+                        <a
+                          href={m.meetLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] font-bold uppercase text-[#00cec4] hover:underline"
+                        >
+                          Join Meet
+                        </a>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-on-surface-variant ds-numeric">
+                      {new Date(m.start.dateTime).toLocaleString("en-IN", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        day: "2-digit",
+                        month: "short"
+                      })}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Quick AI Help section */}
+          <div className="rounded-xl border border-outline-variant bg-surface p-5 shadow-sm space-y-3">
+            <h3 className="ds-h3 text-on-surface">Mono AI Assistant</h3>
+            <p className="text-xs text-on-surface-variant">Ask queries about shipping jobs, document verification, or compile status summaries instantly.</p>
+            <Link href="/communication/chat" className="inline-flex w-full items-center justify-center bg-[#00cec4] text-white hover:bg-[#00b8af] px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-semibold transition-all">
+              Chat with Mono AI
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

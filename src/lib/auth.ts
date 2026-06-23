@@ -112,7 +112,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
       authorization: {
         params: {
-          scope: "openid email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/contacts.readonly https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/drive.readonly",
+          scope: "openid email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/contacts.readonly https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/chat.spaces.readonly https://www.googleapis.com/auth/chat.messages",
           access_type: "offline",
           prompt: "consent",
         },
@@ -143,42 +143,39 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const tokenExpiresAt = account.expires_at
           ? new Date(account.expires_at * 1000)
-          : null;
+          : new Date(Date.now() + 3600 * 1000);
 
-        const existingAcc = await db.mailAccount.findFirst({
-          where: { userId: dbUser.id, provider: "GOOGLE", orgId: dbUser.orgId },
+        const { encryptToken } = await import("@/lib/workspace-oauth");
+        const encryptedRefreshToken = account.refresh_token ? encryptToken(account.refresh_token) : "";
+        const scopes = account.scope ? account.scope.split(" ") : [];
+
+        await db.googleWorkspaceConnection.upsert({
+          where: { userId: dbUser.id },
+          update: {
+            accessToken: account.access_token || "",
+            refreshToken: encryptedRefreshToken || undefined,
+            tokenExpiresAt,
+            googleEmail: user.email || dbUser.email,
+            googleUserId: account.providerAccountId || "",
+            scopes,
+            status: "connected",
+          },
+          create: {
+            orgId: dbUser.orgId,
+            userId: dbUser.id,
+            googleEmail: user.email || dbUser.email,
+            googleUserId: account.providerAccountId || "",
+            accessToken: account.access_token || "",
+            refreshToken: encryptedRefreshToken,
+            tokenExpiresAt,
+            scopes,
+            status: "connected",
+          },
         });
-
-        if (existingAcc) {
-          await db.mailAccount.update({
-            where: { id: existingAcc.id },
-            data: {
-              accessToken: account.access_token,
-              refreshToken: account.refresh_token || undefined,
-              tokenExpiresAt,
-              isActive: true,
-            },
-          });
-        } else {
-          await db.mailAccount.create({
-            data: {
-              orgId: dbUser.orgId,
-              userId: dbUser.id,
-              name: dbUser.name || user.name || "Google Mail",
-              email: dbUser.email,
-              provider: "GOOGLE",
-              accessToken: account.access_token,
-              refreshToken: account.refresh_token,
-              tokenExpiresAt,
-              isActive: true,
-              isDefault: false,
-            },
-          });
-        }
       }
       return true;
     },
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         const sessionUser = user as SessionUserPayload;
         // First-time token creation (login)
@@ -189,6 +186,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.sessionNonce = sessionUser.sessionNonce;
         token.redirectPath = sessionUser.redirectPath;
       }
+
+      // If logging in via Google OAuth, the user object won't have orgId or roleIds in it.
+      // We look up the corresponding database user by email and populate the token.
+      if (!token.orgId && token.email) {
+        const dbUser = await db.user.findFirst({
+          where: { email: { equals: token.email, mode: "insensitive" } },
+          include: { roles: { include: { role: true } } },
+        });
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.orgId = dbUser.orgId ?? undefined;
+          token.isPlatformAdmin = dbUser.isPlatformAdmin;
+          token.roleIds = dbUser.roles.map((ur) => ur.roleId);
+        }
+      }
+
       return token;
     },
     session({ session, token }) {

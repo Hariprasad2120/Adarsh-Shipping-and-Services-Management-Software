@@ -173,9 +173,9 @@ export default function FilesPage() {
               setBreadcrumb([]);
               setActiveFile(null);
             }}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all text-left cursor-pointer ${
+            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold tracking-wide text-left cursor-pointer hover:scale-[1.03] active:scale-[0.97] transition-all duration-150 ${
               scope === v.key
-                ? "bg-[#00cec4]/10 text-[#00cec4]"
+                ? "bg-[#00cec4]/10 text-[#00cec4] border border-[#00cec4]/25 shadow-sm"
                 : "text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container)] hover:text-white"
             }`}
           >
@@ -187,14 +187,14 @@ export default function FilesPage() {
         <div className="mt-4 pt-4 border-t border-[var(--color-outline-variant)]/40 flex flex-col gap-2">
           <button
             onClick={() => setIsCreatingFolder(true)}
-            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-[var(--color-outline-variant)]/80 text-white hover:border-[#00cec4] text-xs font-bold uppercase transition-all cursor-pointer bg-transparent"
+            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-[var(--color-outline-variant)] text-white hover:border-[#00cec4] text-xs font-bold uppercase cursor-pointer bg-transparent relative transform-gpu transition-all duration-75 active:translate-y-[4px] active:shadow-[0_2px_0_0_rgba(255,255,255,0.05)] shadow-[0_6px_0_0_rgba(255,255,255,0.05)]"
           >
             <FolderPlus size={14} />
             Create Folder
           </button>
           <button
             onClick={() => setIsUploading(true)}
-            className="w-full bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] py-2.5 rounded-xl text-xs uppercase tracking-widest font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            className="w-full bg-[#00cec4] text-white hover:bg-[#00b8af] py-2.5 rounded-xl text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-1.5 cursor-pointer relative transform-gpu transition-all duration-75 active:translate-y-[4px] active:shadow-[0_2px_0_0_#00857e] shadow-[0_6px_0_0_#00857e] border border-[#00b8af]"
           >
             <Upload size={14} />
             Upload File
@@ -235,7 +235,7 @@ export default function FilesPage() {
                   <div
                     key={f.id}
                     onClick={() => navigateToFolder(f)}
-                    className="flex items-center gap-3 p-4 bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)]/60 hover:border-[#00cec4]/40 rounded-xl cursor-pointer transition-all"
+                    className="flex items-center gap-3 p-4 bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)]/60 hover:border-[#00cec4]/40 rounded-xl cursor-pointer hover:translate-y-[-2px] hover:shadow-md transition-all duration-150 active:scale-[0.98]"
                   >
                     <Folder className="text-[#00cec4] size-5 shrink-0" />
                     <span className="text-white text-xs font-semibold truncate uppercase">{f.name}</span>
@@ -253,7 +253,7 @@ export default function FilesPage() {
                 <div
                   key={file.id}
                   onClick={() => setActiveFile(file)}
-                  className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-all ${
+                  className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer hover:translate-y-[-2px] hover:shadow-md transition-all duration-150 active:scale-[0.98] ${
                     activeFile?.id === file.id
                       ? "bg-[#00cec4]/5 border-[#00cec4]/40 text-[#00cec4]"
                       : "bg-[var(--color-surface-container-low)] border-[var(--color-outline-variant)]/60 hover:border-[#00cec4]/40 text-white"
@@ -312,7 +312,7 @@ export default function FilesPage() {
             <div className="pt-4 border-t border-[var(--color-outline-variant)]/40 space-y-3">
               <button
                 onClick={() => setIsSharing((v) => !v)}
-                className="w-full flex items-center justify-center gap-1.5 py-2 text-xs uppercase tracking-wider font-bold bg-[#00cec4]/10 text-[#00cec4] rounded-xl hover:bg-[#00cec4]/20 cursor-pointer border-0"
+                className="w-full flex items-center justify-center gap-1.5 py-2 text-xs uppercase tracking-wider font-bold bg-[#00cec4]/10 text-[#00cec4] border border-[#00cec4]/25 rounded-xl hover:bg-[#00cec4]/20 cursor-pointer hover:scale-105 active:scale-95 transition-all duration-75"
               >
                 <Share2 size={13} />
                 Share File
@@ -320,7 +320,7 @@ export default function FilesPage() {
 
               <button
                 onClick={handleGenerateLink}
-                className="w-full flex items-center justify-center gap-1.5 py-2 text-xs uppercase tracking-wider font-bold bg-[var(--color-surface-container)] hover:bg-[var(--color-surface-container)]/80 text-white rounded-xl cursor-pointer border-0"
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs uppercase tracking-wider font-bold bg-[var(--color-surface-container)] hover:bg-[#30363d] text-white border border-[var(--color-outline-variant)] rounded-xl cursor-pointer hover:scale-105 active:scale-95 transition-all duration-75"
               >
                 <LinkIcon size={13} />
                 Generate Public Link
@@ -360,7 +360,7 @@ export default function FilesPage() {
                 </select>
                 <button
                   onClick={handleShareFile}
-                  className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase cursor-pointer"
+                  className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase cursor-pointer hover:scale-105 active:scale-95 transition-transform"
                 >
                   Add share
                 </button>
@@ -370,7 +370,7 @@ export default function FilesPage() {
             <div className="pt-4 border-t border-[var(--color-outline-variant)]/40">
               <button
                 onClick={() => handleDelete(activeFile.id)}
-                className="w-full flex items-center justify-center gap-1.5 py-2 text-xs uppercase tracking-wider font-bold bg-red-950 border border-red-400/20 text-red-400 hover:bg-red-900 rounded-xl cursor-pointer"
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs uppercase tracking-wider font-bold bg-red-650 hover:bg-red-700 text-white border border-red-700 rounded-xl relative transform-gpu transition-all duration-75 active:translate-y-[4px] active:shadow-[0_2px_0_0_#7f1d1d] shadow-[0_6px_0_0_#7f1d1d] cursor-pointer"
               >
                 <Trash size={12} />
                 Delete File
@@ -401,13 +401,13 @@ export default function FilesPage() {
             <div className="flex justify-end gap-3 pt-3 border-t border-[var(--color-outline-variant)]/40">
               <button
                 onClick={() => setIsCreatingFolder(false)}
-                className="px-4 py-2 text-xs text-[var(--color-on-surface-variant)] hover:text-white uppercase tracking-wider font-bold cursor-pointer"
+                className="px-4 py-2 text-xs text-[var(--color-on-surface-variant)] hover:text-white uppercase tracking-wider font-bold cursor-pointer hover:scale-105 active:scale-95 transition-transform"
               >
                 Close
               </button>
               <button
                 onClick={handleCreateFolder}
-                className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-5 py-2 rounded-xl text-xs uppercase tracking-widest font-bold transition-all cursor-pointer"
+                className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-5 py-2.5 rounded-xl text-xs uppercase tracking-widest font-bold relative transform-gpu transition-all duration-75 active:translate-y-[4px] active:shadow-[0_2px_0_0_#00857e] shadow-[0_6px_0_0_#00857e] border border-[#00b8af] cursor-pointer"
               >
                 Create
               </button>
@@ -453,14 +453,14 @@ export default function FilesPage() {
             <div className="flex justify-end gap-3 pt-3 border-t border-[var(--color-outline-variant)]/40">
               <button
                 onClick={() => setIsUploading(false)}
-                className="px-4 py-2 text-xs text-[var(--color-on-surface-variant)] hover:text-white uppercase tracking-wider font-bold cursor-pointer"
+                className="px-4 py-2 text-xs text-[var(--color-on-surface-variant)] hover:text-white uppercase tracking-wider font-bold cursor-pointer hover:scale-105 active:scale-95 transition-transform"
               >
                 Close
               </button>
               <button
                 disabled={isPending}
                 onClick={handleUploadFile}
-                className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-5 py-2 rounded-xl text-xs uppercase tracking-widest font-bold transition-all cursor-pointer disabled:opacity-50"
+                className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-5 py-2.5 rounded-xl text-xs uppercase tracking-widest font-bold relative transform-gpu transition-all duration-75 active:translate-y-[4px] active:shadow-[0_2px_0_0_#00857e] shadow-[0_6px_0_0_#00857e] border border-[#00b8af] cursor-pointer disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none disabled:bg-[#00cec4]/50"
               >
                 {isPending ? "Uploading..." : "Upload"}
               </button>
@@ -469,6 +469,52 @@ export default function FilesPage() {
         </div>
       )}
 
+      {/* Humorous 3D Live Loader */}
+      <FileHumorLoader active={isPending} />
+
+    </div>
+  );
+}
+
+const HUMOROUS_FILE_MESSAGES = [
+  "Shredding documents for secure transmission...",
+  "Wrapping files in bubble wrap...",
+  "Compressing bits with heavy digital boots...",
+  "Running optical scanner over file contents...",
+  "Evading corporate cyber inspectors...",
+  "Bribery negotiations with file-size policies...",
+  "Whispering safety incantations to cloud storage..."
+];
+
+function FileHumorLoader({ active }: { active: boolean }) {
+  const [msgIndex, setMsgIndex] = useState(0);
+
+  useEffect(() => {
+    if (!active) return;
+    const interval = setInterval(() => {
+      setMsgIndex((prev) => (prev + 1) % HUMOROUS_FILE_MESSAGES.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [active]);
+
+  if (!active) return null;
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 animate-bounce transition-all duration-300">
+      <div className="bg-[var(--color-surface)] border-2 border-[#00cec4] rounded-2xl p-5 shadow-[0_10px_0_0_#00857e] flex items-center gap-4 max-w-sm transform hover:scale-105 transition-transform duration-200">
+        <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-[#00cec4]/10 text-[#00cec4] border border-[#00cec4]/30 shrink-0">
+          <Upload size={24} className="animate-spin text-[#00cec4]" />
+          <div className="absolute -top-1 -right-1 h-3 w-3 bg-[#00cec4] rounded-full animate-ping" />
+        </div>
+        <div>
+          <span className="text-[10px] font-bold text-[#00cec4] uppercase tracking-widest block font-sans">
+            LIVE UPLOAD ACTIVE
+          </span>
+          <p className="text-white text-xs font-semibold font-sans mt-0.5 animate-pulse">
+            {HUMOROUS_FILE_MESSAGES[msgIndex]}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
