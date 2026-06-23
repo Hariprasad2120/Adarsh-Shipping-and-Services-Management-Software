@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
 import Link from "next/link";
+import { ensureSettingsAndDefaults } from "@/modules/cha/service";
+import { DashboardCreateJob } from "@/components/cha/dashboard-create-job";
 import {
   FileText,
   CheckSquare,
@@ -45,6 +47,12 @@ export default async function ChaDashboard() {
     urgentExpensesCount,
     recentAuditLogsRaw,
     myJobs,
+    branches,
+    customers,
+    jobTypes,
+    users,
+    teamGroups,
+    settings,
   ] = await Promise.all([
     db.chaJob.count({
       where: { orgId, deletedAt: null, stage: { not: "FILED" }, status: "ACTIVE" },
@@ -87,6 +95,12 @@ export default async function ChaDashboard() {
       take: 5,
       orderBy: { updatedAt: "desc" },
     }),
+    db.branch.findMany({ where: { orgId }, select: { id: true, name: true, code: true } }),
+    db.crmAccount.findMany({ where: { orgId, type: "Customer" }, select: { id: true, name: true } }),
+    db.chaJobType.findMany({ where: { orgId }, select: { id: true, name: true } }),
+    db.user.findMany({ where: { orgId, active: true }, select: { id: true, name: true, email: true } }),
+    db.chaTeamGroup.findMany({ where: { orgId }, select: { id: true, name: true, memberIds: true } }),
+    ensureSettingsAndDefaults(orgId),
   ]);
 
   // Resolve actor names manually
@@ -198,11 +212,20 @@ export default async function ChaDashboard() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Link href="/cha/jobs?new=true">
-                  <Button size="sm" className="gap-2">
-                    <Plus size={14} /> New Job
-                  </Button>
-                </Link>
+                <DashboardCreateJob
+                  currentUserId={session.user.id}
+                  options={{
+                    branches,
+                    customers,
+                    jobTypes,
+                    users,
+                    teamGroups,
+                    settings: {
+                      jobNumberPrefix: settings.jobNumberPrefix,
+                      jobNumberNextNum: settings.jobNumberNextNum,
+                    },
+                  }}
+                />
                 <Link href="/cha/jobs">
                   <Button variant="outline" size="sm" className="gap-1.5">
                     View All

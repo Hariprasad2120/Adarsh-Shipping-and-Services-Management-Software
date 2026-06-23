@@ -579,7 +579,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       jobTypeId: jobTypeImport.id,
       branchId: branch.id,
       priority: "MEDIUM",
-      primaryOwnerId: ownerUser.id,
+      primaryOwnerId: managerUser.id,
       assignments: [
         { userId: ownerUser.id, responsibility: "OPERATIONS" },
         { userId: managerUser.id, responsibility: "APPROVAL" },
@@ -740,13 +740,35 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       }),
     ).rejects.toThrow("The entered job number does not match this CHA job.");
 
+    const directDeleteNoMgr = await chaService.submitJobDeletion(ownerUser.id, org.id, {
+      jobId: noManagerJob.id,
+      confirmationJobNumber: "CHA-DELETE-NOMGR-001",
+      confirmationPhrase: "delete job",
+    });
+    expect(directDeleteNoMgr.mode).toBe("deleted");
+
+    const noManagerDeletedJob = await db.chaJob.findUniqueOrThrow({ where: { id: noManagerJob.id } });
+    expect(noManagerDeletedJob.deletedAt).not.toBeNull();
+    expect(noManagerDeletedJob.deletedById).toBe(ownerUser.id);
+
+    const noManagerRequestJob = await chaService.createJob(managerUser.id, org.id, {
+      jobNumber: "CHA-DELETE-NOMGR-REQ",
+      title: "Missing manager deletion request job",
+      customerId: customer.id,
+      jobTypeId: jobTypeImport.id,
+      branchId: branch.id,
+      priority: "MEDIUM",
+      primaryOwnerId: managerUser.id,
+      assignments: [{ userId: ownerUser.id, responsibility: "OPERATIONS" }],
+    });
+
     await expect(
       chaService.submitJobDeletion(ownerUser.id, org.id, {
-        jobId: noManagerJob.id,
-        confirmationJobNumber: "CHA-DELETE-NOMGR-001",
+        jobId: noManagerRequestJob.id,
+        confirmationJobNumber: "CHA-DELETE-NOMGR-REQ",
         confirmationPhrase: "delete job",
       }),
-    ).rejects.toThrow("No approval manager is assigned to this CHA job.");
+    ).rejects.toThrow("No approval manager is assigned to this CHA job. Assign a manager before requesting deletion.");
 
     const approvedJob = await chaService.createJob(ownerUser.id, org.id, {
       jobNumber: "CHA-DELETE-APPROVE-001",
@@ -755,7 +777,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       jobTypeId: jobTypeImport.id,
       branchId: branch.id,
       priority: "MEDIUM",
-      primaryOwnerId: ownerUser.id,
+      primaryOwnerId: managerUser.id,
       assignments: [
         { userId: ownerUser.id, responsibility: "OPERATIONS" },
         { userId: managerUser.id, responsibility: "APPROVAL" },

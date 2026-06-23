@@ -38,7 +38,7 @@ export default async function DepartmentKpiPage() {
   });
 
   return (
-    <div className="max-w-7xl space-y-6">
+    <div className="space-y-6">
       <div className="space-y-1">
         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
           Create department-specific KPI templates, assign metrics weights, and track monthly scoring reviews.

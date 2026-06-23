@@ -836,7 +836,7 @@ export function JobWorkspaceClient({
   };
 
   return (
-    <main className="mx-auto -mt-2 w-full max-w-7xl space-y-4 overflow-x-hidden">
+    <main className="-mt-2 w-full space-y-4 overflow-x-hidden">
       {/* Job Main Header */}
       <div className="flex flex-col gap-4 border-b border-outline-variant/30 pb-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 space-y-2">

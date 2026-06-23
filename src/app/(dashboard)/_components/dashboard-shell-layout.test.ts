@@ -28,7 +28,7 @@ describe("CHA dashboard shell layout safeguards", () => {
       "utf8",
     );
 
-    expect(chaLayoutSource).toContain("max-w-7xl");
+    expect(chaLayoutSource).not.toContain("max-w-7xl");
     expect(chaLayoutSource).toContain("gap-8");
     expect(pageAnimatorSource).not.toContain("contain-[layout_paint]");
     expect(pageAnimatorSource).not.toContain("will-change-transform");

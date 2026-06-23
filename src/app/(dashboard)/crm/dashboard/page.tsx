@@ -113,7 +113,7 @@ export default async function CrmDashboardPage() {
   const calls = activities.filter(a => a.type === "CALL");
 
   return (
-    <div className="space-y-8 max-w-[1600px] mx-auto">
+    <div className="space-y-8">
       {/* Actions bar */}
       <div className="flex items-center justify-end gap-3">
         <DemoDataButton />

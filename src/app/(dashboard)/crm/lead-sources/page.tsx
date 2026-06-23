@@ -62,7 +62,7 @@ export default async function CrmLeadSourcesPage() {
   const isOffline = config?.isActive && logs.length > 0 && logs[0].status === "FAILED";
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
+    <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Source Card: Justdial */}
         <div className="lg:col-span-2 bg-[#0f1319] border border-[#1c212a]/55 rounded-xl p-6 shadow-2xl space-y-6 flex flex-col justify-between">

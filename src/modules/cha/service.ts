@@ -34,39 +34,43 @@ export async function ensureSettingsAndDefaults(orgId: string) {
     });
 
     // Create default Job Types
-    const importType = await db.chaJobType.create({
-      data: {
-        orgId,
-        name: "Import Clearance",
-      },
+    const importType = await db.chaJobType.upsert({
+      where: { orgId_name: { orgId, name: "Import Clearance" } },
+      update: {},
+      create: { orgId, name: "Import Clearance" },
     });
 
-    const exportType = await db.chaJobType.create({
-      data: {
-        orgId,
-        name: "Export Clearance",
-      },
+    const exportType = await db.chaJobType.upsert({
+      where: { orgId_name: { orgId, name: "Export Clearance" } },
+      update: {},
+      create: { orgId, name: "Export Clearance" },
     });
 
     // Create default document definitions for Import
-    await db.chaDocumentDefinition.createMany({
-      data: [
-        { jobTypeId: importType.id, name: "Bill of Lading", category: "Commercial", isMandatory: true },
-        { jobTypeId: importType.id, name: "Commercial Invoice", category: "Financial", isMandatory: true },
-        { jobTypeId: importType.id, name: "Packing List", category: "Logistics", isMandatory: true },
-        { jobTypeId: importType.id, name: "Certificate of Origin", category: "Compliance", isMandatory: false },
-      ],
-    });
+    const importDefsCount = await db.chaDocumentDefinition.count({ where: { jobTypeId: importType.id } });
+    if (importDefsCount === 0) {
+      await db.chaDocumentDefinition.createMany({
+        data: [
+          { jobTypeId: importType.id, name: "Bill of Lading", category: "Commercial", isMandatory: true },
+          { jobTypeId: importType.id, name: "Commercial Invoice", category: "Financial", isMandatory: true },
+          { jobTypeId: importType.id, name: "Packing List", category: "Logistics", isMandatory: true },
+          { jobTypeId: importType.id, name: "Certificate of Origin", category: "Compliance", isMandatory: false },
+        ],
+      });
+    }
 
     // Create default document definitions for Export
-    await db.chaDocumentDefinition.createMany({
-      data: [
-        { jobTypeId: exportType.id, name: "Shipping Bill", category: "Commercial", isMandatory: true },
-        { jobTypeId: exportType.id, name: "Commercial Invoice", category: "Financial", isMandatory: true },
-        { jobTypeId: exportType.id, name: "Packing List", category: "Logistics", isMandatory: true },
-        { jobTypeId: exportType.id, name: "Export License", category: "Compliance", isMandatory: false },
-      ],
-    });
+    const exportDefsCount = await db.chaDocumentDefinition.count({ where: { jobTypeId: exportType.id } });
+    if (exportDefsCount === 0) {
+      await db.chaDocumentDefinition.createMany({
+        data: [
+          { jobTypeId: exportType.id, name: "Shipping Bill", category: "Commercial", isMandatory: true },
+          { jobTypeId: exportType.id, name: "Commercial Invoice", category: "Financial", isMandatory: true },
+          { jobTypeId: exportType.id, name: "Packing List", category: "Logistics", isMandatory: true },
+          { jobTypeId: exportType.id, name: "Export License", category: "Compliance", isMandatory: false },
+        ],
+      });
+    }
   }
 
   return settings;
@@ -2262,9 +2266,15 @@ export async function submitJobDeletion(
     throw new Error("CHA job not found.");
   }
 
+  const isManager = actorRoleNames.includes("Manager") || canApproveDelete;
+  const isOwner = job.primaryOwnerId === actorId;
   const isAssignedToJob =
     job.primaryOwnerId === actorId || job.assignments.some((assignment) => assignment.userId === actorId);
-  if (!canRequestDelete || !isAssignedToJob) {
+
+  const isDirectDeleteAllowed = isOwner || (isManager && isAssignedToJob);
+  const isRequestDeleteAllowed = isAssignedToJob && canRequestDelete;
+
+  if (!isDirectDeleteAllowed && !isRequestDeleteAllowed) {
     await logChaAudit({
       orgId,
       jobId: job.id,
@@ -2322,10 +2332,7 @@ export async function submitJobDeletion(
     },
   });
 
-  const assignedManager = getAssignedDeletionManager(job);
-  const isAssignedManager = assignedManager?.userId === actorId;
-
-  if (isAssignedManager && canApproveDelete) {
+  if (isDirectDeleteAllowed) {
     await db.chaJob.update({
       where: { id: job.id },
       data: {
@@ -2334,6 +2341,8 @@ export async function submitJobDeletion(
         status: "CANCELLED",
       },
     });
+
+    const actorTypeRemarks = isOwner ? "job owner" : "manager";
 
     await logChaAudit({
       orgId,
@@ -2344,10 +2353,10 @@ export async function submitJobDeletion(
       actorId,
       prevState: job.status,
       newState: "DELETED",
-      remarks: `CHA job ${job.jobNumber} deleted directly by assigned manager.`,
+      remarks: `CHA job ${job.jobNumber} deleted directly by ${actorTypeRemarks}.`,
       metadata: {
         actorRoleNames,
-        assignedManagerId: assignedManager.userId,
+        assignedManagerId: getAssignedDeletionManager(job)?.userId ?? null,
         ...input.metadata,
       },
     });
@@ -2361,16 +2370,18 @@ export async function submitJobDeletion(
       actorId,
       prevState: job.status,
       newState: "DELETED",
-      remarks: `CHA job ${job.jobNumber} soft-deleted immediately by the assigned manager.`,
+      remarks: `CHA job ${job.jobNumber} soft-deleted immediately by the ${actorTypeRemarks}.`,
       metadata: {
         actorRoleNames,
-        assignedManagerId: assignedManager.userId,
+        assignedManagerId: getAssignedDeletionManager(job)?.userId ?? null,
         ...input.metadata,
       },
     });
 
     return { mode: "deleted" as const };
   }
+
+  const assignedManager = getAssignedDeletionManager(job);
 
   if (!assignedManager) {
     await logChaAudit({

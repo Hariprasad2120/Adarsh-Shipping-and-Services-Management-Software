@@ -40,7 +40,7 @@ export default async function PaymentEntryDetailPage({ params }: PaymentEntryDet
   };
 
   return (
-    <div className="p-8 space-y-6 max-w-[1200px] mx-auto animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* HEADER */}
       <div className="flex items-center gap-3 border-b border-outline-variant/20 pb-5">

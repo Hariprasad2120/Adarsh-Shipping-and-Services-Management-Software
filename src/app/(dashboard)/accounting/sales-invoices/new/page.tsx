@@ -32,7 +32,7 @@ export default async function NewSalesInvoicePage() {
   }));
 
   return (
-    <div className="p-8 space-y-6 max-w-[1200px] mx-auto animate-in fade-in duration-200">
+    <div className="mx-auto max-w-[1200px] space-y-6 animate-in fade-in duration-200">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/20 pb-5">
         <div>
           <h2 className="ds-h1 text-white">Create Sales Invoice</h2>

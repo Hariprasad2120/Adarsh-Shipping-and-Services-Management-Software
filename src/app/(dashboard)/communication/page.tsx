@@ -66,7 +66,7 @@ export default async function CommunicationDashboardPage() {
   };
 
   return (
-    <div className="py-6 px-4 max-w-[1600px] mx-auto space-y-8 animate-in fade-in duration-200">
+    <div className="space-y-8 animate-in fade-in duration-200">
       
       {/* Header Info */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl p-6 shadow-sm">

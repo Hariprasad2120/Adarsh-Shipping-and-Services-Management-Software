@@ -203,7 +203,7 @@ export function ExpensesClient({
               placeholder="Search job #, customer, requester..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 w-full text-sm font-sans"
+              className="h-11 pl-10 pr-4 w-full text-sm font-sans"
             />
           </div>
 

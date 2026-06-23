@@ -31,7 +31,7 @@ export default function ExpenseUnderdevelopmentPage() {
   ];
 
   return (
-    <div className="py-8 px-4 max-w-[1200px] mx-auto space-y-12 animate-in fade-in duration-200">
+    <div className="space-y-12 animate-in fade-in duration-200">
       
       {/* Hero Banner: Module Status */}
       <div className="bg-gradient-to-br from-orange-950/20 to-slate-900/10 border border-orange-500/35 rounded-2xl p-8 sm:p-12 text-center space-y-6 relative overflow-hidden">

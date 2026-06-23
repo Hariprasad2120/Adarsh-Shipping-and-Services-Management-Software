@@ -19,7 +19,7 @@ function LoadingRow() {
 
 export default function CrmLoading() {
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto animate-pulse">
+    <div className="space-y-6 animate-pulse">
       <div className="flex items-center justify-between border-b border-outline-variant/30 pb-5">
         <div className="space-y-2">
           <div className="h-7 w-40 rounded-full bg-surface-container-high" />

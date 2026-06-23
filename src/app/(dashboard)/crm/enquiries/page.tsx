@@ -75,7 +75,7 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
   const enquiries = await listEnquiries(orgId, { search, type });
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* Page Title Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1c212a]/30 pb-4">

@@ -189,7 +189,7 @@ export default async function CrmEfficiencyPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-[1600px] mx-auto animate-in fade-in duration-200">
+    <div className="space-y-8 animate-in fade-in duration-200">
       
       {/* ─── TITLE SECTION ─────────────────────────────────────────────── */}
       <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-4">

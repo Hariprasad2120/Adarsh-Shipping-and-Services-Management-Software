@@ -39,7 +39,7 @@ export default async function PayrollPage() {
   const settingsConfigured = !!(settings?.defaultSalaryExpenseAccountId && settings?.defaultSalaryPayableAccountId && settings?.defaultBankAccountId);
 
   return (
-    <div className="p-8 space-y-6 max-w-[1600px] mx-auto">
+    <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/20 pb-5">
         <div>
           <h2 className="ds-h1 text-white">HRMS Payroll Batches</h2>

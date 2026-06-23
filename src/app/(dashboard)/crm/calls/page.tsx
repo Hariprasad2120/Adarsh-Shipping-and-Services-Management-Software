@@ -146,7 +146,7 @@ export default async function CrmCallsPage() {
     .sort((a, b) => b.calls - a.calls);
 
   return (
-    <main className="mx-auto max-w-7xl animate-in space-y-8 p-8 fade-in duration-200 text-slate-300">
+    <main className="w-full animate-in space-y-8 fade-in duration-200 text-slate-300">
       {/* Page Heading */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>

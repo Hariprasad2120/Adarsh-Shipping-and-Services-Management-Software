@@ -32,7 +32,7 @@ export default async function ProfitLossReportPage({ searchParams }: PLPageProps
   const netProfit = pl.netProfit;
 
   return (
-    <div className="p-8 space-y-6 max-w-[1200px] mx-auto animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/20 pb-5">
