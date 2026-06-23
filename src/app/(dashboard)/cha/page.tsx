@@ -55,16 +55,16 @@ export default async function ChaDashboard() {
     settings,
   ] = await Promise.all([
     db.chaJob.count({
-      where: { orgId, deletedAt: null, stage: { not: "FILED" }, status: "ACTIVE" },
+      where: { orgId, stage: { not: "FILED" }, status: "ACTIVE" },
     }),
     db.chaChecklistImport.count({
-      where: { status: "PENDING_APPROVAL", job: { orgId, deletedAt: null } },
+      where: { status: "PENDING_APPROVAL", job: { orgId } },
     }),
     db.chaFiling.count({
-      where: { status: "PENDING", job: { orgId, deletedAt: null } },
+      where: { status: "PENDING", job: { orgId } },
     }),
     db.chaExpenseRequest.count({
-      where: { orgId, status: "URGENT_PAYMENT_REQUIRED", job: { deletedAt: null } },
+      where: { orgId, status: "URGENT_PAYMENT_REQUIRED" },
     }),
     db.chaAuditLog.findMany({
       where: { orgId },
@@ -77,7 +77,6 @@ export default async function ChaDashboard() {
     db.chaJob.findMany({
       where: {
         orgId,
-        deletedAt: null,
         status: "ACTIVE",
         assignments: { some: { userId: session.user.id } },
       },
@@ -119,7 +118,7 @@ export default async function ChaDashboard() {
   // Compute outstanding advances
   const pendingAdvances = await db.chaCustomerAdvance.findMany({
     where: {
-      job: { orgId, deletedAt: null },
+      job: { orgId },
       status: { in: ["FOLLOW_UP", "PARTIALLY_RECEIVED"] },
     },
     include: { receipts: true },

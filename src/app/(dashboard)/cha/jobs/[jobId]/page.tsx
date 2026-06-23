@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { getJobDetails } from "@/modules/cha/service";
 import { db } from "@/lib/db";
-import { can } from "@/lib/rbac";
+import { can, ForbiddenError } from "@/lib/rbac";
 import { BreadcrumbLabel } from "@/components/breadcrumb-label";
 import { JobWorkspaceClient } from "./job-workspace-client";
 
@@ -58,9 +58,12 @@ export default async function ChaJobWorkspacePage({
         />
       </>
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Failed to load job workspace:", err);
-    if (err.message.includes("Access Denied")) {
+    if (
+      err instanceof ForbiddenError ||
+      (err instanceof Error && err.message.includes("Access Denied"))
+    ) {
       return (
         <main className="max-w-4xl mx-auto p-12 text-center space-y-4">
           <div className="inline-flex p-3 rounded-full bg-red-50 text-red-500 border border-red-200">
@@ -80,6 +83,11 @@ export default async function ChaJobWorkspacePage({
         </main>
       );
     }
-    return notFound();
+
+    if (err instanceof Error && err.message === "Job not found.") {
+      return notFound();
+    }
+
+    throw err;
   }
 }
