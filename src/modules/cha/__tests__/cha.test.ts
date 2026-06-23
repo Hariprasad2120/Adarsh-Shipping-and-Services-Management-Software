@@ -159,11 +159,42 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     const jobTypes = await db.chaJobType.findMany({ where: { orgId: org.id } });
     expect(jobTypes.length).toBe(2); // Import Clearance & Export Clearance
 
+    const shipmentTypes = await db.chaShipmentType.findMany({ where: { orgId: org.id } });
+    expect(shipmentTypes.map((shipmentType) => shipmentType.name)).toEqual(
+      expect.arrayContaining(["Air", "Sea"]),
+    );
+
+    const numberingRule = await db.chaBranchNumberingRule.findUnique({
+      where: { branchId: branch.id },
+    });
+    expect(numberingRule).toBeDefined();
+    expect(numberingRule?.prefix).toContain(branch.code);
+
     jobTypeImport = jobTypes.find((jt) => jt.name === "Import Clearance");
     expect(jobTypeImport).toBeDefined();
 
     const docDefs = await db.chaDocumentDefinition.findMany({ where: { jobTypeId: jobTypeImport.id } });
     expect(docDefs.length).toBe(4); // BL, Invoice, Packing List, CO
+  });
+
+  it("1.25. should generate branch-based job numbers with isolated sequences", async () => {
+    const autoJob = await chaService.createJob(ownerUser.id, org.id, {
+      title: "Auto-numbered CHA job",
+      customerId: customer.id,
+      jobTypeId: jobTypeImport.id,
+      branchId: branch.id,
+      shipmentTypeId: (await db.chaShipmentType.findFirstOrThrow({ where: { orgId: org.id, name: "Air" } })).id,
+      priority: "LOW",
+      primaryOwnerId: ownerUser.id,
+      assignments: [],
+    });
+
+    expect(autoJob.jobNumber).toContain(branch.code);
+
+    const branchRule = await db.chaBranchNumberingRule.findUniqueOrThrow({
+      where: { branchId: branch.id },
+    });
+    expect(branchRule.currentSequence).toBeGreaterThanOrEqual(branchRule.startingSequence);
   });
 
   it("1.5. should enforce specific employee job creator restrictions", async () => {

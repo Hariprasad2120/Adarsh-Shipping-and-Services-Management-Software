@@ -671,6 +671,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/cha/reports"],
       },
       {
+        href: "/cha/customers",
+        label: "Customers",
+        icon: UserMultiple,
+        permission: "cha.customer.read",
+        matchPaths: ["/cha/customers"],
+      },
+      {
         href: "/cha/settings",
         label: "Settings",
         icon: Settings,

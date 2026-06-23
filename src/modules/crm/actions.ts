@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
-import { requirePermission } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import * as crmService from "./service";
 import { db } from "@/lib/db";
 import * as leadSourceService from "./lead-source.service";
@@ -609,7 +609,11 @@ export async function createAccountAction(formData: FormData): Promise<ActionRes
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "crm.account.manage");
+    const canManageCrmAccounts = await can(session.user.id, "crm.account.manage");
+    const canManageChaCustomers = await can(session.user.id, "cha.customer.manage");
+    if (!canManageCrmAccounts && !canManageChaCustomers) {
+      return { ok: false, error: "You are not allowed to create customer accounts." };
+    }
 
     const displayName = (formData.get("displayName") as string) || "";
     const companyName = (formData.get("companyName") as string) || "";
@@ -1062,7 +1066,11 @@ export async function updateAccountAction(accountId: string, formData: FormData)
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "crm.account.manage");
+    const canManageCrmAccounts = await can(session.user.id, "crm.account.manage");
+    const canManageChaCustomers = await can(session.user.id, "cha.customer.manage");
+    if (!canManageCrmAccounts && !canManageChaCustomers) {
+      return { ok: false, error: "You are not allowed to update customer accounts." };
+    }
 
     const displayName = (formData.get("displayName") as string) || "";
     const companyName = (formData.get("companyName") as string) || "";

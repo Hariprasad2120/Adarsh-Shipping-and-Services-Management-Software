@@ -72,6 +72,8 @@ model Organisation {
   chaExpenseRequests  ChaExpenseRequest[]
   chaAuditLogs        ChaAuditLog[]
   chaTeamGroups       ChaTeamGroup[]
+  chaBranchNumberingRules ChaBranchNumberingRule[]
+  chaShipmentTypes    ChaShipmentType[]
 
   // Google Chat Integration
   googleChatSpaces        GoogleChatSpace[]
@@ -122,7 +124,8 @@ model Branch {
   recurringExpenses RecurringExpense[]
   recurringJournals RecurringJournal[]
 
-  chaJobs ChaJob[]
+  chaJobs                ChaJob[]
+  chaBranchNumberingRule ChaBranchNumberingRule?
 
   @@unique([orgId, code])
   @@index([orgId])
@@ -3181,6 +3184,43 @@ model ChaJobType {
   @@index([orgId])
 }
 
+model ChaBranchNumberingRule {
+  id                  String       @id @default(cuid())
+  orgId               String
+  branchId            String       @unique
+  prefix              String
+  suffix              String?
+  startingSequence    Int          @default(1)
+  currentSequence     Int          @default(0)
+  numberPadding       Int          @default(4)
+  useFinancialYear    Boolean      @default(false)
+  financialYearFormat String?
+  isActive            Boolean      @default(true)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  org    Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  branch Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([orgId, isActive])
+}
+
+model ChaShipmentType {
+  id        String       @id @default(cuid())
+  orgId     String
+  name      String
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  org  Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  jobs ChaJob[]
+
+  @@unique([orgId, name])
+  @@index([orgId])
+}
+
 model ChaDocumentDefinition {
   id           String  @id @default(cuid())
   jobTypeId    String
@@ -3203,6 +3243,7 @@ model ChaJob {
   customerId           String
   customerRef          String?
   jobTypeId            String
+  shipmentTypeId       String?
   branchId             String
   priority             String    @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
   stage                String    @default("DOCUMENT_COLLECTION") // DOCUMENT_COLLECTION | CHECKLIST_PREPARATION | CHECKLIST_APPROVAL | FILING | FILED
@@ -3218,6 +3259,7 @@ model ChaJob {
   org                  Organisation                @relation(fields: [orgId], references: [id], onDelete: Cascade)
   customer             CrmAccount                  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   jobType              ChaJobType                  @relation(fields: [jobTypeId], references: [id])
+  shipmentType         ChaShipmentType?            @relation(fields: [shipmentTypeId], references: [id])
   branch               Branch                      @relation(fields: [branchId], references: [id])
   primaryOwner         User                        @relation("ChaJobPrimaryOwner", fields: [primaryOwnerId], references: [id])
   deletedBy            User?                       @relation("ChaJobDeletedBy", fields: [deletedById], references: [id])
@@ -3235,6 +3277,7 @@ model ChaJob {
   @@index([orgId, deletedAt])
   @@index([orgId, stage, status])
   @@index([orgId, jobNumber])
+  @@index([shipmentTypeId])
   @@index([primaryOwnerId])
   @@index([deletedById])
   @@index([createdAt])

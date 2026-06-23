@@ -65,12 +65,20 @@ interface JobsClientProps {
     branches: { id: string; name: string; code: string }[];
     customers: { id: string; name: string }[];
     jobTypes: { id: string; name: string }[];
+    shipmentTypes: { id: string; name: string }[];
     users: { id: string; name: string; email: string }[];
     teamGroups: { id: string; name: string; memberIds: any }[];
-    settings?: {
-      jobNumberPrefix: string;
-      jobNumberNextNum: number;
-    };
+    branchNumberingRules: {
+      branchId: string;
+      prefix: string;
+      suffix?: string | null;
+      startingSequence: number;
+      currentSequence: number;
+      numberPadding: number;
+      useFinancialYear: boolean;
+      financialYearFormat?: string | null;
+      isActive: boolean;
+    }[];
   };
   showCreateNew: boolean;
   currentUserId: string;

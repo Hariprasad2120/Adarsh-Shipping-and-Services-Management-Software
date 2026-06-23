@@ -38,9 +38,11 @@ export default async function ChaJobWorkspacePage({
       where: { orgId },
     });
 
-    const parsedExpenseCategories: string[] = settings?.expenseCategories
-      ? JSON.parse(settings.expenseCategories as string)
-      : ["Customs Duty", "Port Handling Charges", "Transportation", "Documentation charges", "Agent Commission", "Storage Fees", "Miscellaneous"];
+    const parsedExpenseCategories: string[] = Array.isArray(settings?.expenseCategories)
+      ? settings.expenseCategories.filter((item): item is string => typeof item === "string")
+      : typeof settings?.expenseCategories === "string"
+        ? JSON.parse(settings.expenseCategories as string)
+        : ["Customs Duty", "Port Handling Charges", "Transportation", "Documentation charges", "Agent Commission", "Storage Fees", "Miscellaneous"];
 
     return (
       <>

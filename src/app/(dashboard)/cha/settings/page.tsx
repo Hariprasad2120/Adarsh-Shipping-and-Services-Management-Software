@@ -28,17 +28,37 @@ export default async function ChaSettingsPage() {
   if (!availableRoles.includes("Manager")) availableRoles.push("Manager");
   if (!availableRoles.includes("Employee")) availableRoles.push("Employee");
 
-  const parsedJobCreatorRoles: string[] = settings.jobCreatorRoles
-    ? JSON.parse(settings.jobCreatorRoles as string)
-    : ["Admin", "HR", "Manager", "Employee"];
+  const parseStringArray = (value: unknown, fallback: string[] = []) => {
+    if (!value) return fallback;
+    if (Array.isArray(value)) {
+      return value.filter((item): item is string => typeof item === "string");
+    }
+    if (typeof value === "string") {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed)
+          ? parsed.filter((item): item is string => typeof item === "string")
+          : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+    return fallback;
+  };
 
-  const parsedJobCreatorUsers: string[] = settings.jobCreatorUsers
-    ? JSON.parse(settings.jobCreatorUsers as string)
-    : [];
+  const parsedJobCreatorRoles = parseStringArray(settings.jobCreatorRoles, ["Admin", "HR", "Manager", "Employee"]);
 
-  const parsedExpenseCategories: string[] = settings.expenseCategories
-    ? JSON.parse(settings.expenseCategories as string)
-    : ["Customs Duty", "Port Handling Charges", "Transportation", "Documentation charges", "Agent Commission", "Storage Fees", "Miscellaneous"];
+  const parsedJobCreatorUsers = parseStringArray(settings.jobCreatorUsers);
+
+  const parsedExpenseCategories = parseStringArray(settings.expenseCategories, [
+    "Customs Duty",
+    "Port Handling Charges",
+    "Transportation",
+    "Documentation charges",
+    "Agent Commission",
+    "Storage Fees",
+    "Miscellaneous",
+  ]);
 
   // Fetch active employees for specific employee selection dropdown/checkbox list
   const activeEmployees = await listUsersSlim(orgId, { active: true });
@@ -49,10 +69,26 @@ export default async function ChaSettingsPage() {
     orderBy: { name: "asc" },
   });
 
+  const shipmentTypes = await db.chaShipmentType.findMany({
+    where: { orgId },
+    orderBy: { name: "asc" },
+  });
+
   // Fetch team groups
   const teamGroups = await db.chaTeamGroup.findMany({
     where: { orgId },
     orderBy: { name: "asc" },
+  });
+
+  const branches = await db.branch.findMany({
+    where: { orgId },
+    select: { id: true, name: true, code: true },
+    orderBy: { name: "asc" },
+  });
+
+  const branchNumberingRules = await db.chaBranchNumberingRule.findMany({
+    where: { orgId },
+    orderBy: { branch: { name: "asc" } },
   });
 
   return (
@@ -79,7 +115,10 @@ export default async function ChaSettingsPage() {
         }}
         availableRoles={Array.from(new Set(availableRoles))}
         availableEmployees={activeEmployees}
+        branches={branches}
+        branchNumberingRules={branchNumberingRules}
         jobTypes={jobTypes}
+        shipmentTypes={shipmentTypes}
         teamGroups={teamGroups}
       />
     </div>

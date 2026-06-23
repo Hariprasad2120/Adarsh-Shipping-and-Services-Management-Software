@@ -15,7 +15,6 @@ import {
   Briefcase,
   UserCheck,
   Settings,
-  TrendingUp,
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,14 +44,15 @@ export default async function ChaDashboard() {
     pendingChecklistsCount,
     pendingFilingsCount,
     urgentExpensesCount,
-    recentAuditLogsRaw,
     myJobs,
     branches,
     customers,
     jobTypes,
+    shipmentTypes,
     users,
     teamGroups,
     settings,
+    branchNumberingRules,
   ] = await Promise.all([
     db.chaJob.count({
       where: { orgId, stage: { not: "FILED" }, status: "ACTIVE" },
@@ -65,14 +65,6 @@ export default async function ChaDashboard() {
     }),
     db.chaExpenseRequest.count({
       where: { orgId, status: "URGENT_PAYMENT_REQUIRED" },
-    }),
-    db.chaAuditLog.findMany({
-      where: { orgId },
-      take: 6,
-      orderBy: { timestamp: "desc" },
-      include: {
-        job: { select: { jobNumber: true, title: true } },
-      },
     }),
     db.chaJob.findMany({
       where: {
@@ -97,23 +89,25 @@ export default async function ChaDashboard() {
     db.branch.findMany({ where: { orgId }, select: { id: true, name: true, code: true } }),
     db.crmAccount.findMany({ where: { orgId, type: "Customer" }, select: { id: true, name: true } }),
     db.chaJobType.findMany({ where: { orgId }, select: { id: true, name: true } }),
+    db.chaShipmentType.findMany({ where: { orgId, isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     db.user.findMany({ where: { orgId, active: true }, select: { id: true, name: true, email: true } }),
     db.chaTeamGroup.findMany({ where: { orgId }, select: { id: true, name: true, memberIds: true } }),
     ensureSettingsAndDefaults(orgId),
+    db.chaBranchNumberingRule.findMany({
+      where: { orgId },
+      select: {
+        branchId: true,
+        prefix: true,
+        suffix: true,
+        startingSequence: true,
+        currentSequence: true,
+        numberPadding: true,
+        useFinancialYear: true,
+        financialYearFormat: true,
+        isActive: true,
+      },
+    }),
   ]);
-
-  // Resolve actor names manually
-  const actorIds = Array.from(new Set(recentAuditLogsRaw.map((l) => l.actorId)));
-  const actors = await db.user.findMany({
-    where: { id: { in: actorIds } },
-    select: { id: true, name: true },
-  });
-  const actorMap = new Map(actors.map((a) => [a.id, { name: a.name }]));
-
-  const recentAuditLogs = recentAuditLogsRaw.map((l) => ({
-    ...l,
-    actor: actorMap.get(l.actorId) || { name: "System" },
-  }));
 
   // Compute outstanding advances
   const pendingAdvances = await db.chaCustomerAdvance.findMany({
@@ -198,9 +192,8 @@ export default async function ChaDashboard() {
       </div>
 
       {/* Main Layout Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Col: Assigned to Me Jobs */}
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-8">
+        <div>
           <DataTable className="overflow-hidden">
             <DataTableToolbar className="bg-surface">
               <div className="flex items-center gap-2">
@@ -217,12 +210,10 @@ export default async function ChaDashboard() {
                     branches,
                     customers,
                     jobTypes,
+                    shipmentTypes,
                     users,
                     teamGroups,
-                    settings: {
-                      jobNumberPrefix: settings.jobNumberPrefix,
-                      jobNumberNextNum: settings.jobNumberNextNum,
-                    },
+                    branchNumberingRules,
                   }}
                 />
                 <Link href="/cha/jobs">
@@ -304,51 +295,6 @@ export default async function ChaDashboard() {
             </>
           )}
           </DataTable>
-        </div>
-
-        {/* Right Col: Timeline/Audit Feed */}
-        <div className="bg-[var(--color-surface)] border border-outline-variant/30 rounded-xl p-6 space-y-6">
-          <div className="flex items-center justify-between border-b border-outline-variant/30 pb-4">
-            <h2 className="ds-h2 text-on-surface flex items-center gap-2">
-              <TrendingUp size={18} className="text-[#00cec4]" /> Recent Milestones
-            </h2>
-            <Link href="/cha/reports" className="text-xs text-[#00cec4] hover:underline uppercase tracking-wider font-semibold">
-              Full Logs
-            </Link>
-          </div>
-
-          {recentAuditLogs.length === 0 ? (
-            <div className="text-center p-8 text-on-surface-variant">
-              <p className="text-sm">No recent activity logged.</p>
-            </div>
-          ) : (
-            <div className="relative pl-4 space-y-6 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-outline-variant/40">
-              {recentAuditLogs.map((log) => (
-                <div key={log.id} className="relative space-y-1">
-                  {/* Timeline Dot */}
-                  <span className="absolute -left-[13px] top-1.5 w-[10px] h-[10px] rounded-full bg-[#00cec4] border-2 border-surface shadow-[0_0_0_2px_rgba(0,206,196,0.15)]" />
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#00cec4] hover:underline">
-                      <Link href={`/cha/jobs/${log.jobId}`}>{log.job?.jobNumber || "N/A"}</Link>
-                    </span>
-                    <span className="text-[10px] text-on-surface-variant">
-                      {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                  <p className="text-xs font-semibold text-on-surface block">
-                    {log.event.replace(/_/g, " ")}
-                  </p>
-                  <p className="text-[11px] text-on-surface-variant leading-relaxed">
-                    {log.remarks}
-                  </p>
-                  <span className="text-[9px] text-on-surface-variant block">
-                    by {log.actor.name}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>

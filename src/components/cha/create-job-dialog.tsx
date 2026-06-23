@@ -3,10 +3,32 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { X, Briefcase, FilePlus, Trash2 } from "lucide-react";
+import { X, FilePlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { createJobAction } from "@/modules/cha/actions";
+import { createJobAction, createJobTypeAction, createShipmentTypeAction } from "@/modules/cha/actions";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
+
+const ADD_NEW_JOB_TYPE = "__add_new_job_type__";
+const ADD_NEW_SHIPMENT_TYPE = "__add_new_shipment_type__";
+
+function buildFinancialYearLabel(format?: string | null) {
+  const now = new Date();
+  const startYear = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+  const endYear = startYear + 1;
+  const normalized = (format || "YYYY-YY").toUpperCase();
+
+  switch (normalized) {
+    case "YYYY-YYYY":
+      return `${startYear}-${endYear}`;
+    case "YY-YY":
+      return `${String(startYear).slice(-2)}-${String(endYear).slice(-2)}`;
+    case "YYYYYY":
+      return `${startYear}${String(endYear).slice(-2)}`;
+    case "YYYY-YY":
+    default:
+      return `${startYear}-${String(endYear).slice(-2)}`;
+  }
+}
 
 interface CreateJobDialogProps {
   open: boolean;
@@ -15,12 +37,20 @@ interface CreateJobDialogProps {
     branches: { id: string; name: string; code: string }[];
     customers: { id: string; name: string }[];
     jobTypes: { id: string; name: string }[];
+    shipmentTypes: { id: string; name: string }[];
     users: { id: string; name: string; email: string }[];
     teamGroups: { id: string; name: string; memberIds: any }[];
-    settings?: {
-      jobNumberPrefix: string;
-      jobNumberNextNum: number;
-    };
+    branchNumberingRules: {
+      branchId: string;
+      prefix: string;
+      suffix?: string | null;
+      startingSequence: number;
+      currentSequence: number;
+      numberPadding: number;
+      useFinancialYear: boolean;
+      financialYearFormat?: string | null;
+      isActive: boolean;
+    }[];
   };
   currentUserId: string;
   onCreated?: () => void;
@@ -41,6 +71,7 @@ export function CreateJobDialog({
   const [newCustomerId, setNewCustomerId] = useState("");
   const [newCustomerRef, setNewCustomerRef] = useState("");
   const [newJobTypeId, setNewJobTypeId] = useState("");
+  const [newShipmentTypeId, setNewShipmentTypeId] = useState("");
   const [newBranchId, setNewBranchId] = useState("");
   const [newPriority, setNewPriority] = useState("MEDIUM");
   const [newOwnerId, setNewOwnerId] = useState(currentUserId);
@@ -63,6 +94,22 @@ export function CreateJobDialog({
 
   // Loading States
   const [creating, setCreating] = useState(false);
+  const [addingJobType, setAddingJobType] = useState(false);
+  const [addingShipmentType, setAddingShipmentType] = useState(false);
+  const [showAddJobType, setShowAddJobType] = useState(false);
+  const [showAddShipmentType, setShowAddShipmentType] = useState(false);
+  const [newJobTypeName, setNewJobTypeName] = useState("");
+  const [newShipmentTypeName, setNewShipmentTypeName] = useState("");
+  const [jobTypesList, setJobTypesList] = useState(options.jobTypes);
+  const [shipmentTypesList, setShipmentTypesList] = useState(options.shipmentTypes);
+
+  useEffect(() => {
+    setJobTypesList(options.jobTypes);
+  }, [options.jobTypes]);
+
+  useEffect(() => {
+    setShipmentTypesList(options.shipmentTypes);
+  }, [options.shipmentTypes]);
 
   // Restore draft when open changes to true
   useEffect(() => {
@@ -76,6 +123,7 @@ export function CreateJobDialog({
           setNewCustomerId(parsed.customerId || "");
           setNewCustomerRef(parsed.customerRef || "");
           setNewJobTypeId(parsed.jobTypeId || "");
+          setNewShipmentTypeId(parsed.shipmentTypeId || "");
           setNewBranchId(parsed.branchId || "");
           setNewPriority(parsed.priority || "MEDIUM");
           setNewOwnerId(parsed.ownerId || currentUserId);
@@ -105,6 +153,7 @@ export function CreateJobDialog({
       customerId: newCustomerId,
       customerRef: newCustomerRef,
       jobTypeId: newJobTypeId,
+      shipmentTypeId: newShipmentTypeId,
       branchId: newBranchId,
       priority: newPriority,
       ownerId: newOwnerId,
@@ -120,6 +169,18 @@ export function CreateJobDialog({
     : options.customers.filter((c) =>
         c.name.toLowerCase().includes(customerSearch.toLowerCase())
       );
+
+  const selectedBranchRule = options.branchNumberingRules.find((rule) => rule.branchId === newBranchId);
+  const generatedPreview = selectedBranchRule
+    ? [
+        selectedBranchRule.prefix,
+        ...(selectedBranchRule.useFinancialYear ? [buildFinancialYearLabel(selectedBranchRule.financialYearFormat)] : []),
+        String(
+          Math.max(selectedBranchRule.currentSequence + 1, selectedBranchRule.startingSequence, 1),
+        ).padStart(Math.max(selectedBranchRule.numberPadding, 1), "0"),
+        ...(selectedBranchRule.suffix?.trim() ? [selectedBranchRule.suffix.trim()] : []),
+      ].join("-")
+    : "";
 
   const parseJsonArray = (value: any): string[] => {
     if (!value) return [];
@@ -187,10 +248,11 @@ export function CreateJobDialog({
   };
 
   const handleAutoGenerateJobNumber = () => {
-    const prefix = options.settings?.jobNumberPrefix || "CHA";
-    const nextNum = options.settings?.jobNumberNextNum || 1;
-    const paddedNum = String(nextNum).padStart(4, "0");
-    setNewJobNumber(`${prefix}-${paddedNum}`);
+    if (!selectedBranchRule?.isActive) {
+      toast.error("This branch is missing an active numbering rule. Configure it in CHA Settings first.");
+      return;
+    }
+    setNewJobNumber(generatedPreview);
   };
 
   const handleRemoveAssignment = (index: number) => {
@@ -205,8 +267,12 @@ export function CreateJobDialog({
 
   const handleCreateJob = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle || !newCustomerId || !newJobTypeId || !newBranchId || !estimatedClosureDate) {
+    if (!newTitle || !newCustomerId || !newJobTypeId || !newShipmentTypeId || !newBranchId || !estimatedClosureDate) {
       toast.error("Please fill in all mandatory job attributes.");
+      return;
+    }
+    if (!selectedBranchRule?.isActive) {
+      toast.error("The selected branch is not configured for CHA job numbering yet. Please update CHA Settings.");
       return;
     }
 
@@ -220,6 +286,7 @@ export function CreateJobDialog({
         customerId: newCustomerId,
         customerRef: newCustomerRef || undefined,
         jobTypeId: newJobTypeId,
+        shipmentTypeId: newShipmentTypeId,
         branchId: newBranchId,
         priority: newPriority,
         primaryOwnerId: newOwnerId,
@@ -239,6 +306,7 @@ export function CreateJobDialog({
           setNewCustomerId("");
           setNewCustomerRef("");
           setNewJobTypeId("");
+          setNewShipmentTypeId("");
           setNewBranchId("");
           setNewRemarks("");
           setEstimatedClosureDate("");
@@ -268,7 +336,57 @@ export function CreateJobDialog({
     saveDraft();
     const currentPath = window.location.pathname + window.location.search;
     const redirectUrl = encodeURIComponent(currentPath);
-    router.push(`/crm/customers/new?redirect_to=${redirectUrl}`);
+    router.push(`/cha/customers/new?redirect_to=${redirectUrl}`);
+  };
+
+  const handleAddJobType = async () => {
+    const trimmed = newJobTypeName.trim();
+    if (!trimmed) {
+      toast.error("Enter a clearance job type name first.");
+      return;
+    }
+    setAddingJobType(true);
+    try {
+      const res = await createJobTypeAction(trimmed);
+      if (!res.ok) {
+        toast.error(res.error || "Failed to add job type.");
+        return;
+      }
+      setJobTypesList((prev) => [...prev, res.data]);
+      setNewJobTypeId(res.data.id);
+      setNewJobTypeName("");
+      setShowAddJobType(false);
+      toast.success(`Clearance job type '${trimmed}' added.`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add job type.");
+    } finally {
+      setAddingJobType(false);
+    }
+  };
+
+  const handleAddShipmentType = async () => {
+    const trimmed = newShipmentTypeName.trim();
+    if (!trimmed) {
+      toast.error("Enter a shipment type name first.");
+      return;
+    }
+    setAddingShipmentType(true);
+    try {
+      const res = await createShipmentTypeAction(trimmed);
+      if (!res.ok) {
+        toast.error(res.error || "Failed to add shipment type.");
+        return;
+      }
+      setShipmentTypesList((prev) => [...prev, res.data]);
+      setNewShipmentTypeId(res.data.id);
+      setNewShipmentTypeName("");
+      setShowAddShipmentType(false);
+      toast.success(`Shipment type '${trimmed}' added.`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add shipment type.");
+    } finally {
+      setAddingShipmentType(false);
+    }
   };
 
   return (
@@ -297,13 +415,37 @@ export function CreateJobDialog({
                 <DropdownSelect
                   required
                   value={newBranchId}
-                  onValueChange={setNewBranchId}
+                  onValueChange={(value) => {
+                    setNewBranchId(value);
+                    const nextRule = options.branchNumberingRules.find((rule) => rule.branchId === value);
+                    if (nextRule?.isActive && !newJobNumber) {
+                      const parts = [nextRule.prefix];
+                      if (nextRule.useFinancialYear) {
+                        parts.push(buildFinancialYearLabel(nextRule.financialYearFormat));
+                      }
+                      parts.push(
+                        String(Math.max(nextRule.currentSequence + 1, nextRule.startingSequence, 1)).padStart(
+                          Math.max(nextRule.numberPadding, 1),
+                          "0",
+                        ),
+                      );
+                      if (nextRule.suffix?.trim()) {
+                        parts.push(nextRule.suffix.trim());
+                      }
+                      setNewJobNumber(parts.join("-"));
+                    }
+                  }}
                   placeholder="Choose Branch Location"
                   options={options.branches.map((b) => ({
                     value: b.id,
                     label: `${b.name} (${b.code})`,
                   }))}
                 />
+                {newBranchId && !selectedBranchRule?.isActive && (
+                  <p className="text-xs text-[#fb923c]">
+                    This branch needs an active numbering rule before a job can be created.
+                  </p>
+                )}
               </div>
 
               {/* Job Number */}
@@ -328,15 +470,22 @@ export function CreateJobDialog({
                     Generate
                   </Button>
                 </div>
+                {generatedPreview ? (
+                  <p className="text-xs text-on-surface-variant">
+                    Preview: <span className="ds-numeric text-on-surface">{generatedPreview}</span>
+                  </p>
+                ) : (
+                  <p className="text-xs text-on-surface-variant">Select a branch to preview the next generated job number.</p>
+                )}
               </div>
 
-              {/* Title */}
+              {/* Description */}
               <div className="space-y-1 md:col-span-2">
-                <label className="ds-label block">Job Scope Title *</label>
-                <input
-                  type="text"
+                <label className="ds-label block">Description *</label>
+                <textarea
                   required
-                  placeholder="e.g. Import Customs Clearance of Electronic Spares"
+                  rows={4}
+                  placeholder="Describe the customs clearance work, cargo details, and any critical handling notes..."
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-xl text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)] transition-all font-sans"
@@ -395,6 +544,15 @@ export function CreateJobDialog({
                     )}
                   </div>
                 )}
+                <div className="pt-2 text-right">
+                  <button
+                    type="button"
+                    onClick={handleAddCustomerRedirect}
+                    className="text-xs font-semibold text-[#00cec4] hover:underline bg-transparent border-0 cursor-pointer"
+                  >
+                    Add New Customer
+                  </button>
+                </div>
               </div>
 
               {/* Customer Ref */}
@@ -415,13 +573,83 @@ export function CreateJobDialog({
                 <DropdownSelect
                   required
                   value={newJobTypeId}
-                  onValueChange={setNewJobTypeId}
+                  onValueChange={(value) => {
+                    if (value === ADD_NEW_JOB_TYPE) {
+                      setShowAddJobType(true);
+                      return;
+                    }
+                    setNewJobTypeId(value);
+                  }}
                   placeholder="Select Category"
-                  options={options.jobTypes.map((jt) => ({
-                    value: jt.id,
-                    label: jt.name,
-                  }))}
+                  options={[
+                    ...jobTypesList.map((jt) => ({
+                      value: jt.id,
+                      label: jt.name,
+                    })),
+                    { value: ADD_NEW_JOB_TYPE, label: "+ Add New Job Type" },
+                  ]}
                 />
+                {showAddJobType && (
+                  <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-3 space-y-2">
+                    <input
+                      type="text"
+                      value={newJobTypeName}
+                      onChange={(e) => setNewJobTypeName(e.target.value)}
+                      placeholder="e.g. Transit Clearance"
+                      className="w-full text-sm"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setShowAddJobType(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="button" size="sm" disabled={addingJobType} onClick={handleAddJobType}>
+                        {addingJobType ? "Adding..." : "Add Type"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <label className="ds-label block">Shipment Type *</label>
+                <DropdownSelect
+                  required
+                  value={newShipmentTypeId}
+                  onValueChange={(value) => {
+                    if (value === ADD_NEW_SHIPMENT_TYPE) {
+                      setShowAddShipmentType(true);
+                      return;
+                    }
+                    setNewShipmentTypeId(value);
+                  }}
+                  placeholder="Select Shipment Type"
+                  options={[
+                    ...shipmentTypesList.map((shipmentType) => ({
+                      value: shipmentType.id,
+                      label: shipmentType.name,
+                    })),
+                    { value: ADD_NEW_SHIPMENT_TYPE, label: "+ Add New Shipment Type" },
+                  ]}
+                />
+                {showAddShipmentType && (
+                  <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-3 space-y-2">
+                    <input
+                      type="text"
+                      value={newShipmentTypeName}
+                      onChange={(e) => setNewShipmentTypeName(e.target.value)}
+                      placeholder="e.g. Rail"
+                      className="w-full text-sm"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setShowAddShipmentType(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="button" size="sm" disabled={addingShipmentType} onClick={handleAddShipmentType}>
+                        {addingShipmentType ? "Adding..." : "Add Type"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Priority */}

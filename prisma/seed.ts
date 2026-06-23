@@ -154,6 +154,8 @@ const PERMISSIONS = [
   { key: "cha.expense.manage", label: "Manage/Review Job Expenses", group: "CHA" },
   { key: "cha.expense.pay", label: "Post Expense Payments", group: "CHA" },
   { key: "cha.audit.view", label: "View Job Audit Trail", group: "CHA" },
+  { key: "cha.customer.read", label: "View CHA Customers", group: "CHA" },
+  { key: "cha.customer.manage", label: "Create and edit CHA Customers", group: "CHA" },
   { key: "cha.settings.manage", label: "Manage CHA Settings", group: "CHA" },
   // HR Letters & Contracts
   { key: "hrms.letters.view_all", label: "View all organisation letters", group: "HRMS" },
@@ -219,7 +221,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "communication.admin.manage",
     "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.delete", "cha.job.delete.approve", "cha.job.view_all", "cha.document.read",
     "cha.checklist.manager_approve", "cha.filing.manage", "cha.advance.manage", "cha.expense.manage",
-    "cha.expense.pay", "cha.audit.view",
+    "cha.expense.pay", "cha.audit.view", "cha.customer.read", "cha.customer.manage",
     // HR Letters
     "hrms.letters.view_all", "hrms.letters.mgmt_approve",
   ],
@@ -265,6 +267,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "recruit.jobseeker.use", "recruit.jobseeker.profile.manage", "recruit.jobseeker.jobs.search",
     "recruit.jobseeker.resume.manage", "recruit.jobseeker.application.manage",
     "recruit.jobseeker.automation.manage", "recruit.jobseeker.artifact.share",
+    "cha.customer.read", "cha.customer.manage",
   ],
   Manager: [
     "hrms.employee.read", "hrms.documents.read",
@@ -281,7 +284,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "communication.files.access", "communication.docs.access",
     "communication.forms.access", "communication.forms.create",
     "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.delete", "cha.job.delete.approve", "cha.document.read", "cha.checklist.manager_approve",
-    "cha.expense.manage", "cha.audit.view",
+    "cha.expense.manage", "cha.audit.view", "cha.customer.read", "cha.customer.manage",
     // Recruit: hiring manager role + job seeker
     "recruit.view", "recruit.candidate.view", "recruit.resume.view",
     "recruit.application.manage", "recruit.interview.manage", "recruit.feedback.submit",
@@ -321,7 +324,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "communication.forms.access", "communication.admin.manage",
     "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.delete", "cha.job.delete.approve", "cha.job.view_all", "cha.document.read",
     "cha.checklist.manager_approve", "cha.filing.manage", "cha.advance.manage", "cha.expense.manage",
-    "cha.expense.pay", "cha.audit.view",
+    "cha.expense.pay", "cha.audit.view", "cha.customer.read", "cha.customer.manage",
     // HR Letters
     "hrms.letters.view_all", "hrms.letters.mgmt_approve",
   ],
@@ -342,7 +345,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.create", "cha.job.update", "cha.job.delete",
     "cha.document.read", "cha.document.upload", "cha.document.exception", "cha.checklist.prepare",
     "cha.checklist.submit", "cha.checklist.self_approve", "cha.filing.manage", "cha.expense.request",
-    "cha.audit.view",
+    "cha.audit.view", "cha.customer.read", "cha.customer.manage",
     // Recruit: job seeker workspace only
     "recruit.jobseeker.use", "recruit.jobseeker.profile.manage", "recruit.jobseeker.jobs.search",
     "recruit.jobseeker.resume.manage", "recruit.jobseeker.application.manage",

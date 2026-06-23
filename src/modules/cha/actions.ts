@@ -55,22 +55,38 @@ export async function updateSettingsAction(data: {
   expenseCategories: string[];
   jobNumberPrefix?: string;
   jobNumberNextNum?: number;
+  branchNumberingRules?: {
+    branchId: string;
+    prefix: string;
+    suffix?: string | null;
+    startingSequence: number;
+    currentSequence: number;
+    numberPadding: number;
+    useFinancialYear: boolean;
+    financialYearFormat?: string | null;
+    isActive: boolean;
+  }[];
 }): Promise<ActionResponse> {
   try {
     const { orgId } = await getAuthAndVerify("cha.settings.manage");
     const settings = await db.chaSettings.update({
       where: { orgId },
       data: {
-        jobCreatorRoles: JSON.stringify(data.jobCreatorRoles),
-        jobCreatorUsers: JSON.stringify(data.jobCreatorUsers),
+        jobCreatorRoles: data.jobCreatorRoles,
+        jobCreatorUsers: data.jobCreatorUsers,
         selfApprovalAllowed: data.selfApprovalAllowed,
         managerApprovalPolicy: data.managerApprovalPolicy,
-        expenseCategories: JSON.stringify(data.expenseCategories),
+        expenseCategories: data.expenseCategories,
         jobNumberPrefix: data.jobNumberPrefix,
         jobNumberNextNum: data.jobNumberNextNum,
       },
     });
+    if (data.branchNumberingRules?.length) {
+      await chaService.upsertBranchNumberingRules(orgId, data.branchNumberingRules);
+    }
     revalidatePath("/cha/settings");
+    revalidatePath("/cha/jobs");
+    revalidatePath("/cha");
     return { ok: true, data: settings };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to update settings" };
@@ -83,6 +99,7 @@ export async function createJobAction(data: {
   customerId: string;
   customerRef?: string;
   jobTypeId: string;
+  shipmentTypeId?: string;
   branchId: string;
   priority: string;
   remarks?: string;
@@ -154,6 +171,32 @@ export async function createJobTypeAction(name: string): Promise<ActionResponse>
     return { ok: true, data: jobType };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to create clearance job type" };
+  }
+}
+
+export async function createShipmentTypeAction(name: string): Promise<ActionResponse> {
+  try {
+    const { orgId } = await getAuthAndVerify("cha.settings.manage");
+    const shipmentType = await chaService.createShipmentType(orgId, name);
+    revalidatePath("/cha/settings");
+    revalidatePath("/cha/jobs");
+    revalidatePath("/cha");
+    return { ok: true, data: shipmentType };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to create shipment type" };
+  }
+}
+
+export async function deleteShipmentTypeAction(id: string): Promise<ActionResponse> {
+  try {
+    const { orgId } = await getAuthAndVerify("cha.settings.manage");
+    const shipmentType = await chaService.deleteShipmentType(orgId, id);
+    revalidatePath("/cha/settings");
+    revalidatePath("/cha/jobs");
+    revalidatePath("/cha");
+    return { ok: true, data: shipmentType };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to delete shipment type" };
   }
 }
 

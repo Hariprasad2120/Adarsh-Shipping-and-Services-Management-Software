@@ -157,6 +157,7 @@ export function JobWorkspaceClient({
   const deleteInputsMatch =
     deleteConfirmJobNumber.trim() === job.jobNumber &&
     deleteConfirmPhrase.trim().toLowerCase() === "delete job";
+  const recentMilestones = job.auditLogs?.slice(0, 4) ?? [];
 
   // Document version mock upload handler
   const handleUploadDoc = async (reqId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -844,6 +845,11 @@ export function JobWorkspaceClient({
             <span className="rounded-lg border border-outline-variant bg-surface-container-high px-2 py-1 text-xs font-semibold text-[var(--color-primary)]">
               {job.jobType.name}
             </span>
+            {job.shipmentType ? (
+              <span className="rounded-lg border border-outline-variant bg-surface-container-low px-2 py-1 text-xs font-semibold text-on-surface">
+                {job.shipmentType.name}
+              </span>
+            ) : null}
             <span className="rounded-lg bg-surface-container-low px-2 py-1 text-xs font-semibold text-on-surface-variant ds-numeric">
               {job.branch.name}
             </span>
@@ -932,6 +938,44 @@ export function JobWorkspaceClient({
           </div>
         </div>
       ) : null}
+
+      <div className="rounded-xl border border-outline-variant/30 bg-surface p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
+          <div>
+            <h2 className="ds-h2 text-on-surface">Recent Milestones</h2>
+            <p className="text-xs text-on-surface-variant">Latest activity for this job only.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab("audit")}
+            className="text-xs font-semibold text-[#00cec4] hover:underline bg-transparent border-0 cursor-pointer"
+          >
+            View Full Audit
+          </button>
+        </div>
+
+        {recentMilestones.length === 0 ? (
+          <p className="text-sm text-on-surface-variant">No milestones recorded for this job yet.</p>
+        ) : (
+          <div className="relative pl-5 space-y-4 before:absolute before:left-[8px] before:top-2 before:bottom-2 before:w-[2px] before:bg-outline-variant/40">
+            {recentMilestones.map((log: any) => (
+              <div key={log.id} className="relative space-y-1">
+                <span className="absolute -left-[17px] top-1.5 h-3 w-3 rounded-full bg-[#00cec4] border-2 border-surface" />
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-on-surface">{log.event.replace(/_/g, " ")}</p>
+                  <span className="text-[10px] text-on-surface-variant ds-numeric">
+                    {new Date(log.timestamp).toLocaleString("en-IN")}
+                  </span>
+                </div>
+                <p className="text-xs text-on-surface-variant">{log.remarks}</p>
+                <p className="text-[10px] text-on-surface-variant">
+                  by <span className="text-on-surface">{log.actor?.name || "System"}</span>
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* visual Stepper Display */}
       <div className="relative overflow-hidden rounded-xl border border-outline-variant/30 bg-surface px-4 py-3 shadow-sm sm:px-5">

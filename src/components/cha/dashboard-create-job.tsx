@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,12 +11,20 @@ interface DashboardCreateJobProps {
     branches: { id: string; name: string; code: string }[];
     customers: { id: string; name: string }[];
     jobTypes: { id: string; name: string }[];
+    shipmentTypes: { id: string; name: string }[];
     users: { id: string; name: string; email: string }[];
     teamGroups: { id: string; name: string; memberIds: any }[];
-    settings?: {
-      jobNumberPrefix: string;
-      jobNumberNextNum: number;
-    };
+    branchNumberingRules: {
+      branchId: string;
+      prefix: string;
+      suffix?: string | null;
+      startingSequence: number;
+      currentSequence: number;
+      numberPadding: number;
+      useFinancialYear: boolean;
+      financialYearFormat?: string | null;
+      isActive: boolean;
+    }[];
   };
   currentUserId: string;
 }
@@ -24,14 +32,7 @@ interface DashboardCreateJobProps {
 export function DashboardCreateJob({ options, currentUserId }: DashboardCreateJobProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isOpen, setIsOpen] = useState(false);
-
-  // Automatically open the dialog if new=true is in the query params (e.g. returning from customer draft creation)
-  useEffect(() => {
-    if (searchParams.get("new") === "true") {
-      setIsOpen(isOpen || true);
-    }
-  }, [searchParams, isOpen]);
+  const [isOpen, setIsOpen] = useState(() => searchParams.get("new") === "true");
 
   const handleCreated = () => {
     // If we've successfully created the job, we should clear new=true from query parameters if present, and refresh the route

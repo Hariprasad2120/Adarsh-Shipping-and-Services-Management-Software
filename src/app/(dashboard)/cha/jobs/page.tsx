@@ -43,14 +43,30 @@ export default async function ChaJobsPage({
     pageSize: 10,
   });
 
+  await ensureSettingsAndDefaults(orgId);
+
   // Query options for new job modal & filter UI
-  const [branches, customers, jobTypes, users, teamGroups, settings] = await Promise.all([
+  const [branches, customers, jobTypes, shipmentTypes, users, teamGroups, branchNumberingRules] = await Promise.all([
     db.branch.findMany({ where: { orgId }, select: { id: true, name: true, code: true } }),
     db.crmAccount.findMany({ where: { orgId, type: "Customer" }, select: { id: true, name: true } }),
     db.chaJobType.findMany({ where: { orgId }, select: { id: true, name: true } }),
+    db.chaShipmentType.findMany({ where: { orgId, isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     db.user.findMany({ where: { orgId, active: true }, select: { id: true, name: true, email: true } }),
     db.chaTeamGroup.findMany({ where: { orgId }, select: { id: true, name: true, memberIds: true } }),
-    ensureSettingsAndDefaults(orgId),
+    db.chaBranchNumberingRule.findMany({
+      where: { orgId },
+      select: {
+        branchId: true,
+        prefix: true,
+        suffix: true,
+        startingSequence: true,
+        currentSequence: true,
+        numberPadding: true,
+        useFinancialYear: true,
+        financialYearFormat: true,
+        isActive: true,
+      },
+    }),
   ]);
 
   return (
@@ -90,12 +106,10 @@ export default async function ChaJobsPage({
         branches,
         customers,
         jobTypes,
+        shipmentTypes,
         users,
         teamGroups,
-        settings: {
-          jobNumberPrefix: settings.jobNumberPrefix,
-          jobNumberNextNum: settings.jobNumberNextNum,
-        },
+        branchNumberingRules,
       }}
       showCreateNew={showCreateNew}
       currentUserId={session.user.id}

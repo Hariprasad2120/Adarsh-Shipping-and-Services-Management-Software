@@ -5,6 +5,145 @@ import * as XLSX from "xlsx";
 import { Prisma } from "@/generated/prisma/client";
 import { can, ForbiddenError } from "@/lib/rbac";
 
+const DEFAULT_CHA_EXPENSE_CATEGORIES = [
+  "Customs Duty",
+  "Port Handling Charges",
+  "Transportation",
+  "Documentation charges",
+  "Agent Commission",
+  "Storage Fees",
+  "Miscellaneous",
+];
+
+const DEFAULT_CHA_JOB_CREATOR_ROLES = ["Admin", "HR", "Manager", "Employee"];
+const DEFAULT_CHA_SHIPMENT_TYPES = ["Air", "Sea"];
+
+function parseStringArray(value: Prisma.JsonValue | null | undefined, fallback: string[] = []) {
+  if (!value) return fallback;
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string");
+  }
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed)
+        ? parsed.filter((item): item is string => typeof item === "string")
+        : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
+}
+
+function getFinancialYearLabel(date: Date, format?: string | null) {
+  const startYear = date.getMonth() >= 3 ? date.getFullYear() : date.getFullYear() - 1;
+  const endYear = startYear + 1;
+  const normalized = (format || "YYYY-YY").toUpperCase();
+
+  switch (normalized) {
+    case "YYYY-YYYY":
+      return `${startYear}-${endYear}`;
+    case "YY-YY":
+      return `${String(startYear).slice(-2)}-${String(endYear).slice(-2)}`;
+    case "YYYYYY":
+      return `${startYear}${String(endYear).slice(-2)}`;
+    case "YYYY-YY":
+    default:
+      return `${startYear}-${String(endYear).slice(-2)}`;
+  }
+}
+
+function buildChaJobNumberPreview(rule: {
+  prefix: string;
+  suffix?: string | null;
+  currentSequence: number;
+  startingSequence: number;
+  numberPadding: number;
+  useFinancialYear: boolean;
+  financialYearFormat?: string | null;
+}) {
+  const nextSequence = Math.max(rule.currentSequence + 1, rule.startingSequence, 1);
+  const parts = [rule.prefix.trim()];
+  if (rule.useFinancialYear) {
+    parts.push(getFinancialYearLabel(new Date(), rule.financialYearFormat));
+  }
+  parts.push(String(nextSequence).padStart(Math.max(rule.numberPadding, 1), "0"));
+  if (rule.suffix?.trim()) {
+    parts.push(rule.suffix.trim());
+  }
+  return parts.filter(Boolean).join("-");
+}
+
+async function ensureChaBranchNumberingRules(
+  orgId: string,
+  settings: { jobNumberPrefix: string | null; jobNumberNextNum: number | null },
+) {
+  const branches = await db.branch.findMany({
+    where: { orgId },
+    select: {
+      id: true,
+      code: true,
+      chaJobs: { select: { id: true } },
+      chaBranchNumberingRule: {
+        select: {
+          id: true,
+          currentSequence: true,
+          startingSequence: true,
+        },
+      },
+    },
+  });
+
+  for (const branch of branches) {
+    if (branch.chaBranchNumberingRule) {
+      const desiredStartingSequence = Math.max(branch.chaBranchNumberingRule.startingSequence, 1);
+      const desiredCurrentSequence = Math.max(branch.chaBranchNumberingRule.currentSequence, branch.chaJobs.length);
+      if (
+        desiredStartingSequence !== branch.chaBranchNumberingRule.startingSequence ||
+        desiredCurrentSequence !== branch.chaBranchNumberingRule.currentSequence
+      ) {
+        await db.chaBranchNumberingRule.update({
+          where: { id: branch.chaBranchNumberingRule.id },
+          data: {
+            startingSequence: desiredStartingSequence,
+            currentSequence: desiredCurrentSequence,
+          },
+        });
+      }
+      continue;
+    }
+
+    const basePrefix = settings.jobNumberPrefix?.trim() || "CHA";
+    const safeCode = branch.code.trim().toUpperCase();
+    const existingCount = branch.chaJobs.length;
+    const nextSequence = Math.max(settings.jobNumberNextNum || 1, existingCount + 1, 1);
+
+    await db.chaBranchNumberingRule.create({
+      data: {
+        orgId,
+        branchId: branch.id,
+        prefix: safeCode ? `${basePrefix}-${safeCode}` : basePrefix,
+        startingSequence: nextSequence,
+        currentSequence: Math.max(nextSequence - 1, existingCount),
+        numberPadding: 4,
+        useFinancialYear: false,
+        isActive: true,
+      },
+    });
+  }
+}
+
+async function ensureChaShipmentTypes(orgId: string) {
+  for (const name of DEFAULT_CHA_SHIPMENT_TYPES) {
+    await db.chaShipmentType.upsert({
+      where: { orgId_name: { orgId, name } },
+      update: { isActive: true },
+      create: { orgId, name, isActive: true },
+    });
+  }
+}
+
 // Ensure settings and defaults are created for the organisation
 export async function ensureSettingsAndDefaults(orgId: string) {
   let settings = await db.chaSettings.findUnique({
@@ -15,19 +154,11 @@ export async function ensureSettingsAndDefaults(orgId: string) {
     settings = await db.chaSettings.create({
       data: {
         orgId,
-        jobCreatorRoles: JSON.stringify(["Admin", "HR", "Manager", "Employee"]),
-        jobCreatorUsers: JSON.stringify([]),
+        jobCreatorRoles: DEFAULT_CHA_JOB_CREATOR_ROLES,
+        jobCreatorUsers: [],
         selfApprovalAllowed: true,
         managerApprovalPolicy: "ANY", // ANY | ALL
-        expenseCategories: JSON.stringify([
-          "Customs Duty",
-          "Port Handling Charges",
-          "Transportation",
-          "Documentation charges",
-          "Agent Commission",
-          "Storage Fees",
-          "Miscellaneous"
-        ]),
+        expenseCategories: DEFAULT_CHA_EXPENSE_CATEGORIES,
         jobNumberPrefix: "CHA",
         jobNumberNextNum: 1,
       },
@@ -73,6 +204,9 @@ export async function ensureSettingsAndDefaults(orgId: string) {
     }
   }
 
+  await ensureChaShipmentTypes(orgId);
+  await ensureChaBranchNumberingRules(orgId, settings);
+
   return settings;
 }
 
@@ -112,7 +246,10 @@ function normalizeDeleteConfirmationPhrase(value: string) {
 }
 
 function getActiveChaJobWhere(orgId: string): Prisma.ChaJobWhereInput {
-  return { orgId };
+  return {
+    orgId,
+    deletedAt: null,
+  };
 }
 
 function getActiveChaJobByIdWhere(orgId: string, jobId: string): Prisma.ChaJobWhereInput {
@@ -174,6 +311,7 @@ export async function createJob(
     customerId: string;
     customerRef?: string;
     jobTypeId: string;
+    shipmentTypeId?: string;
     branchId: string;
     priority: string;
     remarks?: string;
@@ -191,12 +329,8 @@ export async function createJob(
   });
   const creatorRoleNames = creatorRoles.map((ur) => ur.role.name);
 
-  const allowedRoles: string[] = settings.jobCreatorRoles
-    ? JSON.parse(settings.jobCreatorRoles as string)
-    : [];
-  const allowedUsers: string[] = settings.jobCreatorUsers
-    ? JSON.parse(settings.jobCreatorUsers as string)
-    : [];
+  const allowedRoles = parseStringArray(settings.jobCreatorRoles, DEFAULT_CHA_JOB_CREATOR_ROLES);
+  const allowedUsers = parseStringArray(settings.jobCreatorUsers);
 
   const isRoleAllowed = creatorRoleNames.some((r) => allowedRoles.includes(r));
   const isUserAllowed = allowedUsers.includes(actorId);
@@ -205,44 +339,45 @@ export async function createJob(
     throw new Error("You are not authorized to create jobs under this organisation's settings.");
   }
 
-  // Auto numbering logic:
-  let finalJobNumber = data.jobNumber?.trim();
-  if (!finalJobNumber) {
-    const nextNum = settings.jobNumberNextNum || 1;
-    const prefix = settings.jobNumberPrefix || "CHA";
-    const paddedNum = String(nextNum).padStart(4, "0");
-    finalJobNumber = `${prefix}-${paddedNum}`;
-
-    // Increment next serial number in settings
-    await db.chaSettings.update({
-      where: { orgId },
-      data: { jobNumberNextNum: nextNum + 1 },
-    });
-  } else {
-    // If the manually entered job number matches the auto-number pattern, increment nextNum
-    const prefix = settings.jobNumberPrefix || "CHA";
-    const prefixPattern = new RegExp(`^${prefix}-(\\d+)$`);
-    const match = finalJobNumber.match(prefixPattern);
-    if (match) {
-      const num = parseInt(match[1], 10);
-      if (num >= settings.jobNumberNextNum) {
-        await db.chaSettings.update({
-          where: { orgId },
-          data: { jobNumberNextNum: num + 1 },
-        });
-      }
-    }
-  }
-
-  // Validate uniqueness of finalJobNumber
-  const existingJob = await db.chaJob.findFirst({
-    where: { orgId, jobNumber: finalJobNumber },
-  });
-  if (existingJob) {
-    throw new Error(`Job number '${finalJobNumber}' already exists inside the organisation.`);
-  }
-
   const result = await db.$transaction(async (tx) => {
+    const branchRule = await tx.chaBranchNumberingRule.findFirst({
+      where: {
+        orgId,
+        branchId: data.branchId,
+      },
+    });
+
+    if (!branchRule || !branchRule.isActive) {
+      throw new Error("The selected branch does not have an active job numbering configuration. Please ask a CHA administrator to configure it in Settings.");
+    }
+
+    let finalJobNumber = data.jobNumber?.trim();
+    if (!finalJobNumber) {
+      const nextSequence = Math.max(branchRule.currentSequence + 1, branchRule.startingSequence, 1);
+      finalJobNumber = buildChaJobNumberPreview({
+        prefix: branchRule.prefix,
+        suffix: branchRule.suffix,
+        currentSequence: nextSequence - 1,
+        startingSequence: branchRule.startingSequence,
+        numberPadding: branchRule.numberPadding,
+        useFinancialYear: branchRule.useFinancialYear,
+        financialYearFormat: branchRule.financialYearFormat,
+      });
+
+      await tx.chaBranchNumberingRule.update({
+        where: { id: branchRule.id },
+        data: { currentSequence: nextSequence },
+      });
+    }
+
+    const existingJob = await tx.chaJob.findFirst({
+      where: { orgId, jobNumber: finalJobNumber },
+      select: { id: true },
+    });
+    if (existingJob) {
+      throw new Error(`Job number '${finalJobNumber}' already exists inside the organisation.`);
+    }
+
     // 1. Create Job
     const job = await tx.chaJob.create({
       data: {
@@ -252,6 +387,7 @@ export async function createJob(
         customerId: data.customerId,
         customerRef: data.customerRef,
         jobTypeId: data.jobTypeId,
+        shipmentTypeId: data.shipmentTypeId || null,
         branchId: data.branchId,
         priority: data.priority,
         stage: "DOCUMENT_COLLECTION",
@@ -312,7 +448,7 @@ export async function createJob(
     });
 
     return { job, assignmentsToCreate };
-  });
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
   // Log Audit trail & trigger notifications (out of transaction for speed, but logged)
   const now = await getNow();
@@ -334,8 +470,8 @@ export async function createJob(
       userId,
       orgId,
       kind: "CHA_JOB_ASSIGNED",
-      title: `New Job Assigned: ${finalJobNumber}`,
-      body: `You are assigned to the new customs clearance job ${finalJobNumber} (${data.title}).`,
+      title: `New Job Assigned: ${result.job.jobNumber}`,
+      body: `You are assigned to the new customs clearance job ${result.job.jobNumber} (${data.title}).`,
       link: `/cha/jobs/${result.job.id}`,
       priority: "important",
     });
@@ -345,8 +481,8 @@ export async function createJob(
       data: {
         userId,
         orgId,
-        title: `Collect documents for Job ${finalJobNumber}`,
-        description: `Check the required document slots and upload file copies for job ${finalJobNumber}.`,
+        title: `Collect documents for Job ${result.job.jobNumber}`,
+        description: `Check the required document slots and upload file copies for job ${result.job.jobNumber}.`,
         status: "PENDING",
       },
     });
@@ -395,6 +531,103 @@ export async function deleteJobType(orgId: string, id: string) {
   });
 }
 
+export async function upsertBranchNumberingRules(
+  orgId: string,
+  rules: {
+    branchId: string;
+    prefix: string;
+    suffix?: string | null;
+    startingSequence: number;
+    currentSequence: number;
+    numberPadding: number;
+    useFinancialYear: boolean;
+    financialYearFormat?: string | null;
+    isActive: boolean;
+  }[],
+) {
+  await ensureSettingsAndDefaults(orgId);
+
+  return db.$transaction(async (tx) => {
+    for (const rule of rules) {
+      const prefix = rule.prefix.trim();
+      if (!prefix) {
+        throw new Error("Each branch numbering rule must include a prefix.");
+      }
+
+      const startingSequence = Math.max(Math.floor(rule.startingSequence || 1), 1);
+      const currentSequence = Math.max(Math.floor(rule.currentSequence || 0), startingSequence - 1);
+      const numberPadding = Math.max(Math.floor(rule.numberPadding || 4), 1);
+
+      await tx.chaBranchNumberingRule.upsert({
+        where: { branchId: rule.branchId },
+        update: {
+          prefix,
+          suffix: rule.suffix?.trim() || null,
+          startingSequence,
+          currentSequence,
+          numberPadding,
+          useFinancialYear: rule.useFinancialYear,
+          financialYearFormat: rule.useFinancialYear ? (rule.financialYearFormat?.trim() || "YYYY-YY") : null,
+          isActive: rule.isActive,
+        },
+        create: {
+          orgId,
+          branchId: rule.branchId,
+          prefix,
+          suffix: rule.suffix?.trim() || null,
+          startingSequence,
+          currentSequence,
+          numberPadding,
+          useFinancialYear: rule.useFinancialYear,
+          financialYearFormat: rule.useFinancialYear ? (rule.financialYearFormat?.trim() || "YYYY-YY") : null,
+          isActive: rule.isActive,
+        },
+      });
+    }
+
+    return tx.chaBranchNumberingRule.findMany({
+      where: { orgId },
+      include: { branch: { select: { id: true, name: true, code: true } } },
+      orderBy: { branch: { name: "asc" } },
+    });
+  });
+}
+
+export async function createShipmentType(orgId: string, name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    throw new Error("Shipment type name is required.");
+  }
+
+  const existing = await db.chaShipmentType.findFirst({
+    where: { orgId, name: { equals: trimmed, mode: "insensitive" } },
+  });
+  if (existing) {
+    throw new Error(`Shipment type '${trimmed}' already exists.`);
+  }
+
+  return db.chaShipmentType.create({
+    data: {
+      orgId,
+      name: trimmed,
+      isActive: true,
+    },
+  });
+}
+
+export async function deleteShipmentType(orgId: string, id: string) {
+  const linkedJobs = await db.chaJob.count({
+    where: { orgId, shipmentTypeId: id },
+  });
+  if (linkedJobs > 0) {
+    throw new Error("Cannot delete shipment type because it is already used by existing CHA jobs.");
+  }
+
+  return db.chaShipmentType.delete({
+    where: { id },
+  });
+}
+
 // Team Groups management helpers
 export async function createTeamGroup(orgId: string, name: string, memberIds: string[]) {
   const existing = await db.chaTeamGroup.findFirst({
@@ -431,6 +664,7 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
     include: {
       customer: true,
       jobType: true,
+      shipmentType: true,
       branch: true,
       primaryOwner: { select: { id: true, name: true, email: true, designation: true } },
       assignments: { include: { user: { select: { id: true, name: true, email: true, designation: true } } } },
