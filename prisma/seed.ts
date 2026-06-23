@@ -9,6 +9,8 @@ import { buildDefaultSelfFormTemplate } from "../src/modules/ams/criteria-config
 import { seedChartOfAccounts } from "../src/modules/accounting/service";
 import { getBundledDocxTemplateFiles, importDocxTemplateFile } from "../src/modules/hrms/letter-template-import";
 import { ensureSpecialAccounts } from "../src/modules/core/user/special-account-bootstrap";
+import { ensureDefaultDocumentRequirements } from "../src/modules/cha/service";
+
 
 // ─── Database client ────────────────────────────────────────────────────────────
 
@@ -658,6 +660,7 @@ async function clearApplicationData() {
     "ChaFilingDateHistory", "ChaChecklistReworkNote", "ChaChecklistApproval",
     "ChaChecklistImport", "ChaDocumentException", "ChaDocumentVersion",
     "ChaJobAssignment", "ChaJob", "ChaTeamGroup", "ChaSettings", "ChaAuditLog",
+    "ChaDocumentRequirementItem", "ChaDocumentRequirementCategory",
     // CRM
     "CrmLeadReminder", "CrmExternalLeadSnapshot", "CrmLeadSourceJustdialConfig",
     "CrmTimelineEvent", "CrmAttachment", "CrmNote", "CrmApprovalLog",
@@ -1439,6 +1442,11 @@ async function main() {
 
   // 13. HR Letter templates & settings
   await seedLetterTemplatesAndSettings(org.id);
+
+  // 13.5. Seed default document requirements configuration
+  console.log("Seeding default document requirements...");
+  await ensureDefaultDocumentRequirements(org.id, db);
+  console.log("  Document requirements seeded.");
 
   // 14. Verify
   const passed = await verify(org.id);

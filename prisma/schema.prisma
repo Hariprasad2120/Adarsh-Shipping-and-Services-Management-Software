@@ -74,6 +74,7 @@ model Organisation {
   chaTeamGroups       ChaTeamGroup[]
   chaBranchNumberingRules ChaBranchNumberingRule[]
   chaShipmentTypes    ChaShipmentType[]
+  chaDocumentRequirementCategories ChaDocumentRequirementCategory[]
 
   // Google Chat Integration
   googleChatSpaces        GoogleChatSpace[]
@@ -3330,12 +3331,51 @@ model ChaJobDocumentRequirement {
   category    String
   isMandatory Boolean @default(true)
   status      String  @default("PENDING") // PENDING | UPLOADED | NOT_AVAILABLE | REPLACED | REQUIRES_ATTENTION
+  
+  requirementItemId String?
 
-  job       ChaJob                @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  versions  ChaDocumentVersion[]
-  exception ChaDocumentException?
+  job             ChaJob                      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  requirementItem ChaDocumentRequirementItem? @relation(fields: [requirementItemId], references: [id], onDelete: SetNull)
+  versions        ChaDocumentVersion[]
+  exception       ChaDocumentException?
 
   @@index([jobId])
+  @@index([requirementItemId])
+}
+
+model ChaDocumentRequirementCategory {
+  id          String   @id @default(cuid())
+  orgId       String
+  name        String
+  description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  org   Organisation                 @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  items ChaDocumentRequirementItem[]
+
+  @@unique([orgId, name])
+  @@index([orgId])
+}
+
+model ChaDocumentRequirementItem {
+  id                String   @id @default(cuid())
+  categoryId        String
+  name              String
+  description       String?
+  sortOrder         Int      @default(0)
+  isRequiredDefault Boolean  @default(true)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  category        ChaDocumentRequirementCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  jobRequirements ChaJobDocumentRequirement[]
+
+  @@unique([categoryId, name])
+  @@index([categoryId])
 }
 
 model ChaDocumentVersion {

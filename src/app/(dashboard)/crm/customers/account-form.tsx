@@ -209,7 +209,13 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
     if (res.ok) {
       toast.success(isEdit ? "Customer updated successfully" : "Customer created successfully");
       if (redirectTo) {
-        router.push(redirectTo);
+        const targetUrl = new URL(redirectTo, window.location.origin);
+        if (!isEdit && res.data?.id) {
+          targetUrl.searchParams.set("customerId", res.data.id);
+          targetUrl.searchParams.set("customerName", res.data.name ?? nameToSave);
+          targetUrl.searchParams.set("new", "true");
+        }
+        router.push(`${targetUrl.pathname}${targetUrl.search}`);
       } else {
         router.push(isEdit ? `/crm/customers/${initialData.id}` : "/crm/customers");
       }

@@ -91,6 +91,16 @@ export default async function ChaSettingsPage() {
     orderBy: { branch: { name: "asc" } },
   });
 
+  const documentCategories = await db.chaDocumentRequirementCategory.findMany({
+    where: { orgId },
+    include: {
+      items: {
+        orderBy: { sortOrder: "asc" },
+      },
+    },
+    orderBy: { sortOrder: "asc" },
+  });
+
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6">
       <div className="flex items-center justify-between border-b border-outline-variant/30 pb-4">
@@ -120,6 +130,7 @@ export default async function ChaSettingsPage() {
         jobTypes={jobTypes}
         shipmentTypes={shipmentTypes}
         teamGroups={teamGroups}
+        documentCategories={documentCategories}
       />
     </div>
   );

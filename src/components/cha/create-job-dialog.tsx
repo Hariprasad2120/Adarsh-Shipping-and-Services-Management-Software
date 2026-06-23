@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { X, FilePlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,9 @@ export function CreateJobDialog({
   onCreated,
 }: CreateJobDialogProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const draftRestoredRef = useRef(false);
+  const createdCustomerAppliedRef = useRef(false);
 
   // Form State
   const [newJobNumber, setNewJobNumber] = useState("");
@@ -111,38 +114,91 @@ export function CreateJobDialog({
     setShipmentTypesList(options.shipmentTypes);
   }, [options.shipmentTypes]);
 
+  useEffect(() => {
+    if (!open) {
+      draftRestoredRef.current = false;
+      createdCustomerAppliedRef.current = false;
+      return;
+    }
+
+    const mainShell = document.querySelector<HTMLElement>('[data-main-shell-scroll="true"]');
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousOverflow = document.body.style.overflow;
+    const previousPaddingRight = document.body.style.paddingRight;
+    const previousMainShellOverflow = mainShell?.style.overflow;
+    const previousMainShellOverscroll = mainShell?.style.overscrollBehavior;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+    if (mainShell) {
+      mainShell.style.overflow = "hidden";
+      mainShell.style.overscrollBehavior = "contain";
+    }
+
+    return () => {
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousOverflow;
+      document.body.style.paddingRight = previousPaddingRight;
+      if (mainShell) {
+        mainShell.style.overflow = previousMainShellOverflow || "";
+        mainShell.style.overscrollBehavior = previousMainShellOverscroll || "";
+      }
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || createdCustomerAppliedRef.current) return;
+
+    const createdCustomerId = searchParams.get("customerId");
+    const createdCustomerName = searchParams.get("customerName");
+    if (!createdCustomerId) return;
+
+    setNewCustomerId(createdCustomerId);
+    const matchedCustomer = options.customers.find((customer) => customer.id === createdCustomerId);
+    const nextCustomerName = createdCustomerName || matchedCustomer?.name || "";
+    setCustomerSearch(nextCustomerName);
+    setSelectedCustomerName(nextCustomerName);
+    setShowCustomerDropdown(false);
+    createdCustomerAppliedRef.current = true;
+  }, [open, options.customers, searchParams]);
+
   // Restore draft when open changes to true
   useEffect(() => {
-    if (open) {
-      const draft = localStorage.getItem("cha_draft_job");
-      if (draft) {
-        try {
-          const parsed = JSON.parse(draft);
-          setNewJobNumber(parsed.jobNumber || "");
-          setNewTitle(parsed.title || "");
-          setNewCustomerId(parsed.customerId || "");
-          setNewCustomerRef(parsed.customerRef || "");
-          setNewJobTypeId(parsed.jobTypeId || "");
-          setNewShipmentTypeId(parsed.shipmentTypeId || "");
-          setNewBranchId(parsed.branchId || "");
-          setNewPriority(parsed.priority || "MEDIUM");
-          setNewOwnerId(parsed.ownerId || currentUserId);
-          setNewRemarks(parsed.remarks || "");
-          setAssignments(parsed.assignments || [{ userId: currentUserId, responsibility: "OPERATIONS" }]);
-          setEstimatedClosureDate(parsed.estimatedClosureDate || "");
-          if (parsed.customerId) {
-            const cust = options.customers.find((c) => c.id === parsed.customerId);
-            if (cust) {
-              setCustomerSearch(cust.name);
-              setSelectedCustomerName(cust.name);
-            }
-          }
-        } catch (e) {
-          console.error("Failed to parse draft job", e);
-        } finally {
-          localStorage.removeItem("cha_draft_job");
+    if (!open || draftRestoredRef.current) return;
+
+    const draft = localStorage.getItem("cha_draft_job");
+    if (!draft) return;
+
+    try {
+      const parsed = JSON.parse(draft);
+      setNewJobNumber(parsed.jobNumber || "");
+      setNewTitle(parsed.title || "");
+      setNewCustomerId(parsed.customerId || "");
+      setNewCustomerRef(parsed.customerRef || "");
+      setNewJobTypeId(parsed.jobTypeId || "");
+      setNewShipmentTypeId(parsed.shipmentTypeId || "");
+      setNewBranchId(parsed.branchId || "");
+      setNewPriority(parsed.priority || "MEDIUM");
+      setNewOwnerId(parsed.ownerId || currentUserId);
+      setNewRemarks(parsed.remarks || "");
+      setAssignments(parsed.assignments || [{ userId: currentUserId, responsibility: "OPERATIONS" }]);
+      setEstimatedClosureDate(parsed.estimatedClosureDate || "");
+      if (parsed.customerId) {
+        const cust = options.customers.find((c) => c.id === parsed.customerId);
+        if (cust) {
+          setCustomerSearch(cust.name);
+          setSelectedCustomerName(cust.name);
         }
       }
+    } catch (e) {
+      console.error("Failed to parse draft job", e);
+    } finally {
+      localStorage.removeItem("cha_draft_job");
+      draftRestoredRef.current = true;
     }
   }, [open, options.customers, currentUserId]);
 
@@ -334,7 +390,11 @@ export function CreateJobDialog({
   // Dynamically set redirect path based on where we are
   const handleAddCustomerRedirect = () => {
     saveDraft();
-    const currentPath = window.location.pathname + window.location.search;
+    const params = new URLSearchParams(window.location.search);
+    params.set("new", "true");
+    params.delete("customerId");
+    params.delete("customerName");
+    const currentPath = `${window.location.pathname}?${params.toString()}`;
     const redirectUrl = encodeURIComponent(currentPath);
     router.push(`/cha/customers/new?redirect_to=${redirectUrl}`);
   };
@@ -391,7 +451,7 @@ export function CreateJobDialog({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto animate-in fade-in duration-200">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
         <div className="bg-[var(--color-surface)] border border-outline-variant/50 w-full max-w-3xl rounded-2xl shadow-xl overflow-hidden my-8">
           {/* Modal Header */}
           <div className="flex items-center justify-between bg-surface-container-low px-6 py-4.5 border-b border-outline-variant/30">
@@ -407,7 +467,10 @@ export function CreateJobDialog({
           </div>
 
           {/* Modal Form */}
-          <form onSubmit={handleCreateJob} className="p-7 space-y-6 max-h-[75vh] overflow-y-auto">
+          <form
+            onSubmit={handleCreateJob}
+            className="p-7 space-y-6 max-h-[75vh] overflow-y-auto overscroll-contain"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Branch Selection */}
               <div className="space-y-1">

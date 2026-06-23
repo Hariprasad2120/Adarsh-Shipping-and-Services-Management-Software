@@ -3,9 +3,21 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Trash2, Edit, Plus, X, Check, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { updateSettingsAction, createJobTypeAction, deleteJobTypeAction, createShipmentTypeAction, deleteShipmentTypeAction, createTeamGroupAction, deleteTeamGroupAction } from "@/modules/cha/actions";
+import {
+  updateSettingsAction,
+  createJobTypeAction,
+  deleteJobTypeAction,
+  createShipmentTypeAction,
+  deleteShipmentTypeAction,
+  createTeamGroupAction,
+  deleteTeamGroupAction,
+  upsertDocumentCategoryAction,
+  deleteDocumentCategoryAction,
+  upsertDocumentItemAction,
+  deleteDocumentItemAction,
+} from "@/modules/cha/actions";
 
 interface SettingsFormProps {
   initialSettings: {
@@ -40,6 +52,22 @@ interface SettingsFormProps {
     name: string;
     memberIds: any;
   }[];
+  documentCategories: {
+    id: string;
+    name: string;
+    description: string | null;
+    sortOrder: number;
+    isActive: boolean;
+    items: {
+      id: string;
+      categoryId: string;
+      name: string;
+      description: string | null;
+      sortOrder: number;
+      isRequiredDefault: boolean;
+      isActive: boolean;
+    }[];
+  }[];
 }
 
 export function SettingsForm({
@@ -51,6 +79,7 @@ export function SettingsForm({
   jobTypes,
   shipmentTypes,
   teamGroups,
+  documentCategories,
 }: SettingsFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -61,6 +90,34 @@ export function SettingsForm({
   const [expenseCategories, setExpenseCategories] = useState<string[]>(initialSettings.expenseCategories);
   const [categoryInput, setCategoryInput] = useState("");
   const [employeeSearch, setEmployeeSearch] = useState("");
+
+  // Document Requirements State
+  const [docCategories, setDocCategories] = useState(documentCategories || []);
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryDesc, setNewCategoryDesc] = useState("");
+  const [newCategorySort, setNewCategorySort] = useState(1);
+  const [newCategoryActive, setNewCategoryActive] = useState(true);
+
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingCategoryName, setEditingCategoryName] = useState("");
+  const [editingCategoryDesc, setEditingCategoryDesc] = useState("");
+  const [editingCategorySort, setEditingCategorySort] = useState(1);
+  const [editingCategoryActive, setEditingCategoryActive] = useState(true);
+
+  const [addingItemCategoryId, setAddingItemCategoryId] = useState<string | null>(null);
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemDesc, setNewItemDesc] = useState("");
+  const [newItemSort, setNewItemSort] = useState(1);
+  const [newItemRequired, setNewItemRequired] = useState(false);
+  const [newItemActive, setNewItemActive] = useState(true);
+
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingItemName, setEditingItemName] = useState("");
+  const [editingItemDesc, setEditingItemDesc] = useState("");
+  const [editingItemSort, setEditingItemSort] = useState(1);
+  const [editingItemRequired, setEditingItemRequired] = useState(false);
+  const [editingItemActive, setEditingItemActive] = useState(true);
 
   const [jobNumberPrefix, setJobNumberPrefix] = useState(initialSettings.jobNumberPrefix || "CHA");
   const [jobNumberNextNum, setJobNumberNextNum] = useState(initialSettings.jobNumberNextNum || 1);
@@ -331,6 +388,163 @@ export function SettingsForm({
   const filteredEmployees = availableEmployees.filter((emp) =>
     emp.name.toLowerCase().includes(employeeSearch.toLowerCase())
   );
+
+  const handleSaveCategory = async (id?: string) => {
+    const name = id ? editingCategoryName.trim() : newCategoryName.trim();
+    const description = id ? editingCategoryDesc.trim() : newCategoryDesc.trim();
+    const sortOrder = id ? editingCategorySort : newCategorySort;
+    const isActive = id ? editingCategoryActive : newCategoryActive;
+
+    if (!name) {
+      toast.error("Category name is required");
+      return;
+    }
+
+    try {
+      const res = await upsertDocumentCategoryAction({
+        id,
+        name,
+        description: description || undefined,
+        sortOrder,
+        isActive,
+      });
+
+      if (res.ok) {
+        toast.success(id ? "Category updated" : "Category created");
+        if (id) {
+          setDocCategories((prev) =>
+            prev.map((cat) =>
+              cat.id === id
+                ? { ...cat, name, description: description || null, sortOrder, isActive }
+                : cat
+            )
+          );
+          setEditingCategoryId(null);
+        } else {
+          setDocCategories((prev) => [
+            ...prev,
+            { ...res.data, items: [] },
+          ]);
+          setNewCategoryName("");
+          setNewCategoryDesc("");
+          setNewCategorySort(docCategories.length + 2);
+          setNewCategoryActive(true);
+          setIsAddingCategory(false);
+        }
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to save category");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An error occurred");
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this category? All its requirement items will be deleted as well.")) {
+      return;
+    }
+    try {
+      const res = await deleteDocumentCategoryAction(id);
+      if (res.ok) {
+        toast.success("Category deleted");
+        setDocCategories((prev) => prev.filter((cat) => cat.id !== id));
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to delete category");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An error occurred");
+    }
+  };
+
+  const handleSaveItem = async (categoryId: string, id?: string) => {
+    const name = id ? editingItemName.trim() : newItemName.trim();
+    const description = id ? editingItemDesc.trim() : newItemDesc.trim();
+    const sortOrder = id ? editingItemSort : newItemSort;
+    const isRequiredDefault = id ? editingItemRequired : newItemRequired;
+    const isActive = id ? editingItemActive : newItemActive;
+
+    if (!name) {
+      toast.error("Item name is required");
+      return;
+    }
+
+    try {
+      const res = await upsertDocumentItemAction({
+        id,
+        categoryId,
+        name,
+        description: description || undefined,
+        sortOrder,
+        isRequiredDefault,
+        isActive,
+      });
+
+      if (res.ok) {
+        toast.success(id ? "Requirement updated" : "Requirement added");
+        setDocCategories((prev) =>
+          prev.map((cat) => {
+            if (cat.id !== categoryId) return cat;
+            if (id) {
+              return {
+                ...cat,
+                items: cat.items.map((item) =>
+                  item.id === id
+                    ? { ...item, name, description: description || null, sortOrder, isRequiredDefault, isActive }
+                    : item
+                ),
+              };
+            } else {
+              return {
+                ...cat,
+                items: [...cat.items, res.data].sort((a, b) => a.sortOrder - b.sortOrder),
+              };
+            }
+          })
+        );
+        if (id) {
+          setEditingItemId(null);
+        } else {
+          setNewItemName("");
+          setNewItemDesc("");
+          setNewItemSort(1);
+          setNewItemRequired(false);
+          setNewItemActive(true);
+          setAddingItemCategoryId(null);
+        }
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to save requirement");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An error occurred");
+    }
+  };
+
+  const handleDeleteItem = async (categoryId: string, id: string) => {
+    if (!confirm("Are you sure you want to delete this requirement item?")) {
+      return;
+    }
+    try {
+      const res = await deleteDocumentItemAction(id);
+      if (res.ok) {
+        toast.success("Requirement item deleted");
+        setDocCategories((prev) =>
+          prev.map((cat) =>
+            cat.id === categoryId
+              ? { ...cat, items: cat.items.filter((item) => item.id !== id) }
+              : cat
+          )
+        );
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to delete item");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An error occurred");
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 bg-[var(--color-surface)] p-6 rounded-xl border border-outline-variant/30 shadow-sm">
@@ -927,6 +1141,506 @@ export function SettingsForm({
                 })
               )}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Document Requirements Configurator */}
+      <div className="ds-form-section space-y-4">
+        <h3 className="ds-h3 text-on-surface">Document Requirements</h3>
+        <p className="text-xs text-on-surface-variant">
+          Configure document category headings and individual required document items.
+        </p>
+
+        <div className="space-y-4 pt-2">
+          {/* Add Category Section */}
+          <div className="p-4 rounded-xl border border-outline-variant/50 bg-surface-container-low/20 space-y-4">
+            {!isAddingCategory ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="flex items-center gap-2 text-xs uppercase"
+                onClick={() => {
+                  setNewCategoryName("");
+                  setNewCategoryDesc("");
+                  setNewCategorySort(docCategories.length + 1);
+                  setNewCategoryActive(true);
+                  setIsAddingCategory(true);
+                }}
+              >
+                <Plus size={14} />
+                Add Document Category
+              </Button>
+            ) : (
+              <div className="space-y-4">
+                <h4 className="ds-h3 text-xs font-semibold text-on-surface">New Category</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="ds-label mb-1.5 block">Category Name *</label>
+                    <input
+                      type="text"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      className="w-full text-sm py-2 px-3 bg-[var(--color-surface)] border border-outline-variant/50 rounded-xl"
+                      placeholder="e.g. KYC Documents"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="ds-label mb-1.5 block">Description</label>
+                    <input
+                      type="text"
+                      value={newCategoryDesc}
+                      onChange={(e) => setNewCategoryDesc(e.target.value)}
+                      className="w-full text-sm py-2 px-3 bg-[var(--color-surface)] border border-outline-variant/50 rounded-xl"
+                      placeholder="Category description"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="ds-label mb-1.5 block">Sort Order</label>
+                    <input
+                      type="number"
+                      value={newCategorySort}
+                      onChange={(e) => setNewCategorySort(parseInt(e.target.value, 10) || 1)}
+                      className="w-full text-sm py-2 px-3 bg-[var(--color-surface)] border border-outline-variant/50 rounded-xl"
+                    />
+                  </div>
+                  <div className="flex items-end pb-3">
+                    <label className="flex items-center gap-2 text-xs text-on-surface cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newCategoryActive}
+                        onChange={(e) => setNewCategoryActive(e.target.checked)}
+                        className="w-4 h-4 rounded text-[#00cec4] focus:ring-[#00cec4]/30"
+                      />
+                      <span>Active</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="px-3 py-1.5 text-xs uppercase"
+                    onClick={() => setIsAddingCategory(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    className="px-3 py-1.5 text-xs uppercase"
+                    onClick={() => handleSaveCategory()}
+                  >
+                    Save Category
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Categories & Items List */}
+          <div className="space-y-4">
+            {docCategories.length === 0 ? (
+              <div className="p-6 rounded-xl border border-dashed border-outline-variant/30 text-center bg-surface-container-low/10">
+                <p className="text-xs text-on-surface-variant italic">No document requirements categories configured yet.</p>
+              </div>
+            ) : (
+              docCategories
+                .sort((a, b) => a.sortOrder - b.sortOrder)
+                .map((cat) => (
+                  <div
+                    key={cat.id}
+                    className="card-left-accent p-4 bg-[var(--color-surface)] border border-outline-variant/30 rounded-xl shadow-sm hover-cyan transition-all space-y-4"
+                  >
+                    {/* Category Details / Edit Form */}
+                    {editingCategoryId === cat.id ? (
+                      <div className="space-y-4 p-2 bg-surface-container-low/20 rounded-xl border border-outline-variant/20">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div>
+                            <label className="ds-label mb-1 block">Category Name *</label>
+                            <input
+                              type="text"
+                              value={editingCategoryName}
+                              onChange={(e) => setEditingCategoryName(e.target.value)}
+                              className="w-full text-sm"
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="ds-label mb-1 block">Description</label>
+                            <input
+                              type="text"
+                              value={editingCategoryDesc}
+                              onChange={(e) => setEditingCategoryDesc(e.target.value)}
+                              className="w-full text-sm"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="ds-label mb-1 block">Sort Order</label>
+                            <input
+                              type="number"
+                              value={editingCategorySort}
+                              onChange={(e) => setEditingCategorySort(parseInt(e.target.value, 10) || 1)}
+                              className="w-full text-sm"
+                            />
+                          </div>
+                          <div className="flex items-end pb-2">
+                            <label className="flex items-center gap-2 text-xs text-on-surface cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={editingCategoryActive}
+                                onChange={(e) => setEditingCategoryActive(e.target.checked)}
+                                className="w-4 h-4 rounded text-[#00cec4] focus:ring-[#00cec4]/30"
+                              />
+                              <span>Active</span>
+                            </label>
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="px-3 py-1.5 text-xs uppercase"
+                            onClick={() => setEditingCategoryId(null)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="button"
+                            className="px-3 py-1.5 text-xs uppercase"
+                            onClick={() => handleSaveCategory(cat.id)}
+                          >
+                            Save
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="ds-h3 text-xs text-on-surface font-semibold uppercase">{cat.name}</h4>
+                            <span
+                              className={`text-[9px] px-1.5 py-0.5 rounded font-semibold tracking-wide uppercase ${
+                                cat.isActive
+                                  ? "bg-[#00cec4]/10 text-[#00cec4]"
+                                  : "bg-orange-500/10 text-orange-500"
+                              }`}
+                            >
+                              {cat.isActive ? "Active" : "Inactive"}
+                            </span>
+                            <span className="text-[10px] text-on-surface-variant font-medium ds-numeric">
+                              Order: {cat.sortOrder}
+                            </span>
+                          </div>
+                          {cat.description && (
+                            <p className="text-xs text-on-surface-variant mt-1">{cat.description}</p>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingCategoryId(cat.id);
+                              setEditingCategoryName(cat.name);
+                              setEditingCategoryDesc(cat.description || "");
+                              setEditingCategorySort(cat.sortOrder);
+                              setEditingCategoryActive(cat.isActive);
+                            }}
+                            className="text-on-surface-variant hover:text-[#00cec4] transition-colors p-1"
+                            title="Edit Category"
+                          >
+                            <Edit size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCategory(cat.id)}
+                            className="text-on-surface-variant hover:text-red-500 transition-colors p-1"
+                            title="Delete Category"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Items Section inside Category */}
+                    <div className="border-t border-outline-variant/30 pt-3 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="ds-label block text-[11px] font-semibold text-on-surface-variant uppercase">
+                          Requirement Items ({cat.items.length})
+                        </span>
+                        {addingItemCategoryId !== cat.id ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="flex items-center gap-1 px-2.5 py-1 text-[10px] uppercase font-bold tracking-wide"
+                            onClick={() => {
+                              setAddingItemCategoryId(cat.id);
+                              setNewItemName("");
+                              setNewItemDesc("");
+                              setNewItemSort(cat.items.length + 1);
+                              setNewItemRequired(false);
+                              setNewItemActive(true);
+                            }}
+                          >
+                            <Plus size={10} />
+                            Add Item
+                          </Button>
+                        ) : null}
+                      </div>
+
+                      {/* Add Item form */}
+                      {addingItemCategoryId === cat.id && (
+                        <div className="p-3.5 rounded-xl border border-outline-variant/40 bg-surface-container-low/40 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-on-surface block">Add Requirement Item</span>
+                            <button
+                              type="button"
+                              onClick={() => setAddingItemCategoryId(null)}
+                              className="text-on-surface-variant hover:text-red-500 p-0.5"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="ds-label mb-1 block">Item Name *</label>
+                              <input
+                                type="text"
+                                value={newItemName}
+                                onChange={(e) => setNewItemName(e.target.value)}
+                                className="w-full text-sm"
+                                placeholder="e.g. GST Certificate"
+                              />
+                            </div>
+                            <div>
+                              <label className="ds-label mb-1 block">Description</label>
+                              <input
+                                type="text"
+                                value={newItemDesc}
+                                onChange={(e) => setNewItemDesc(e.target.value)}
+                                className="w-full text-sm"
+                                placeholder="Item description"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                              <label className="ds-label mb-1 block">Sort Order</label>
+                              <input
+                                type="number"
+                                value={newItemSort}
+                                onChange={(e) => setNewItemSort(parseInt(e.target.value, 10) || 1)}
+                                className="w-full text-sm"
+                              />
+                            </div>
+                            <div className="flex items-end pb-2">
+                              <label className="flex items-center gap-2 text-xs text-on-surface cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={newItemRequired}
+                                  onChange={(e) => setNewItemRequired(e.target.checked)}
+                                  className="w-4 h-4 rounded text-[#00cec4] focus:ring-[#00cec4]/30"
+                                />
+                                <span>Required by Default</span>
+                              </label>
+                            </div>
+                            <div className="flex items-end pb-2">
+                              <label className="flex items-center gap-2 text-xs text-on-surface cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={newItemActive}
+                                  onChange={(e) => setNewItemActive(e.target.checked)}
+                                  className="w-4 h-4 rounded text-[#00cec4] focus:ring-[#00cec4]/30"
+                                />
+                                <span>Active</span>
+                              </label>
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2 pt-1">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="px-2.5 py-1 text-[11px] uppercase"
+                              onClick={() => setAddingItemCategoryId(null)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              type="button"
+                              className="px-2.5 py-1 text-[11px] uppercase"
+                              onClick={() => handleSaveItem(cat.id)}
+                            >
+                              Add
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Items Table */}
+                      {cat.items.length > 0 ? (
+                        <div className="overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container-low/40">
+                          <table className="ds-table">
+                            <thead>
+                              <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th className="w-16">Sort</th>
+                                <th className="w-32">Req. Default</th>
+                                <th className="w-20">Status</th>
+                                <th className="text-right w-24">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {cat.items
+                                .sort((a, b) => a.sortOrder - b.sortOrder)
+                                .map((item) => {
+                                  const isItemEditing = editingItemId === item.id;
+                                  return (
+                                    <tr key={item.id}>
+                                      <td>
+                                        {isItemEditing ? (
+                                          <input
+                                            type="text"
+                                            value={editingItemName}
+                                            onChange={(e) => setEditingItemName(e.target.value)}
+                                            className="w-full text-xs py-1 px-2"
+                                          />
+                                        ) : (
+                                          <span className="font-medium text-xs text-on-surface">{item.name}</span>
+                                        )}
+                                      </td>
+                                      <td>
+                                        {isItemEditing ? (
+                                          <input
+                                            type="text"
+                                            value={editingItemDesc}
+                                            onChange={(e) => setEditingItemDesc(e.target.value)}
+                                            className="w-full text-xs py-1 px-2"
+                                          />
+                                        ) : (
+                                          <span className="text-xs text-on-surface-variant break-all">
+                                            {item.description || "—"}
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td className="ds-numeric">
+                                        {isItemEditing ? (
+                                          <input
+                                            type="number"
+                                            value={editingItemSort}
+                                            onChange={(e) => setEditingItemSort(parseInt(e.target.value, 10) || 1)}
+                                            className="w-12 text-xs py-1 px-2 text-center bg-transparent"
+                                          />
+                                        ) : (
+                                          item.sortOrder
+                                        )}
+                                      </td>
+                                      <td>
+                                        {isItemEditing ? (
+                                          <input
+                                            type="checkbox"
+                                            checked={editingItemRequired}
+                                            onChange={(e) => setEditingItemRequired(e.target.checked)}
+                                            className="w-4 h-4 text-[#00cec4]"
+                                          />
+                                        ) : (
+                                          <span
+                                            className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
+                                              item.isRequiredDefault
+                                                ? "bg-red-500/10 text-red-500"
+                                                : "bg-surface-container text-on-surface-variant"
+                                            }`}
+                                          >
+                                            {item.isRequiredDefault ? "Mandatory" : "Optional"}
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td>
+                                        {isItemEditing ? (
+                                          <input
+                                            type="checkbox"
+                                            checked={editingItemActive}
+                                            onChange={(e) => setEditingItemActive(e.target.checked)}
+                                            className="w-4 h-4 text-[#00cec4]"
+                                          />
+                                        ) : (
+                                          <span
+                                            className={`text-[9px] px-1 py-0.5 rounded font-bold uppercase ${
+                                              item.isActive
+                                                ? "bg-[#00cec4]/15 text-[#00cec4]"
+                                                : "bg-orange-500/15 text-orange-500"
+                                            }`}
+                                          >
+                                            {item.isActive ? "Active" : "Inactive"}
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td className="text-right">
+                                        <div className="flex justify-end gap-1.5">
+                                          {isItemEditing ? (
+                                            <>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleSaveItem(cat.id, item.id)}
+                                                className="text-[#00cec4] hover:text-[#00b8af] p-1"
+                                                title="Save Item"
+                                              >
+                                                <Save size={13} />
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => setEditingItemId(null)}
+                                                className="text-on-surface-variant hover:text-red-500 p-1"
+                                                title="Cancel"
+                                              >
+                                                <X size={13} />
+                                              </button>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  setEditingItemId(item.id);
+                                                  setEditingItemName(item.name);
+                                                  setEditingItemDesc(item.description || "");
+                                                  setEditingItemSort(item.sortOrder);
+                                                  setEditingItemRequired(item.isRequiredDefault);
+                                                  setEditingItemActive(item.isActive);
+                                                }}
+                                                className="text-on-surface-variant hover:text-[#00cec4] p-1"
+                                                title="Edit Item"
+                                              >
+                                                <Edit size={13} />
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleDeleteItem(cat.id, item.id)}
+                                                className="text-on-surface-variant hover:text-red-500 p-1"
+                                                title="Delete Item"
+                                              >
+                                                <Trash2 size={13} />
+                                              </button>
+                                            </>
+                                          )}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-on-surface-variant italic py-2 pl-2">No requirement items added for this category yet.</p>
+                      )}
+                    </div>
+                  </div>
+                ))
+            )}
           </div>
         </div>
       </div>

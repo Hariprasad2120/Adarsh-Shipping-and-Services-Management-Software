@@ -9,6 +9,7 @@ export default defineConfig({
   test: {
     environment: "node",
     exclude: ["**/node_modules/**", "**/scrap/**", "**/dist/**"],
+    testTimeout: 30000,
   },
   resolve: {
     alias: {

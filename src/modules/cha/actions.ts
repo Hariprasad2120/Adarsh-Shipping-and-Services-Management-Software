@@ -615,3 +615,94 @@ export async function listManagerChecklistApprovalsAction(): Promise<ActionRespo
     return { ok: false, error: err.message || "Failed to retrieve approvals queue" };
   }
 }
+
+export async function upsertDocumentCategoryAction(data: {
+  id?: string;
+  name: string;
+  description?: string;
+  sortOrder: number;
+  isActive: boolean;
+}): Promise<ActionResponse> {
+  try {
+    const { orgId } = await getAuthAndVerify("cha.settings.manage");
+    const category = await chaService.upsertDocumentCategory(orgId, data);
+    revalidatePath("/cha/settings");
+    revalidatePath("/cha/jobs");
+    revalidatePath("/cha");
+    return { ok: true, data: category };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to save category" };
+  }
+}
+
+export async function deleteDocumentCategoryAction(id: string): Promise<ActionResponse> {
+  try {
+    const { orgId } = await getAuthAndVerify("cha.settings.manage");
+    const category = await chaService.deleteDocumentCategory(orgId, id);
+    revalidatePath("/cha/settings");
+    revalidatePath("/cha/jobs");
+    revalidatePath("/cha");
+    return { ok: true, data: category };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to delete category" };
+  }
+}
+
+export async function upsertDocumentItemAction(data: {
+  id?: string;
+  categoryId: string;
+  name: string;
+  description?: string;
+  sortOrder: number;
+  isRequiredDefault: boolean;
+  isActive: boolean;
+}): Promise<ActionResponse> {
+  try {
+    const { orgId } = await getAuthAndVerify("cha.settings.manage");
+    const item = await chaService.upsertDocumentItem(orgId, data);
+    revalidatePath("/cha/settings");
+    revalidatePath("/cha/jobs");
+    revalidatePath("/cha");
+    return { ok: true, data: item };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to save document requirement" };
+  }
+}
+
+export async function deleteDocumentItemAction(id: string): Promise<ActionResponse> {
+  try {
+    const { orgId } = await getAuthAndVerify("cha.settings.manage");
+    const item = await chaService.deleteDocumentItem(orgId, id);
+    revalidatePath("/cha/settings");
+    revalidatePath("/cha/jobs");
+    revalidatePath("/cha");
+    return { ok: true, data: item };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to delete document requirement" };
+  }
+}
+
+export async function removeDocumentExceptionAction(
+  jobId: string,
+  requirementId: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.document.exception");
+    const result = await chaService.removeDocumentException(userId, orgId, jobId, requirementId);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to remove exemption" };
+  }
+}
+
+export async function proceedDocumentStageAction(jobId: string): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const result = await chaService.proceedDocumentStage(userId, orgId, jobId);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to proceed stage" };
+  }
+}

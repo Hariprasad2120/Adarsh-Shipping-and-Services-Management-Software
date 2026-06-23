@@ -69,6 +69,11 @@ export function JobWorkspaceClient({
   // Document Collection Form State
   const [exceptionReason, setExceptionReason] = useState("");
   const [activeDocReqId, setActiveDocReqId] = useState<string | null>(null);
+  
+  // Custom Document Requirements Configuration State additions
+  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
+  const [viewingVersion, setViewingVersion] = useState<any | null>(null);
+  const [proceedErrors, setProceedErrors] = useState<string[] | null>(null);
 
   // Checklist Prep Form State
   const [checklistManagerId, setChecklistManagerId] = useState(
@@ -158,7 +163,6 @@ export function JobWorkspaceClient({
     deleteConfirmJobNumber.trim() === job.jobNumber &&
     deleteConfirmPhrase.trim().toLowerCase() === "delete job";
   const recentMilestones = job.auditLogs?.slice(0, 4) ?? [];
-
   // Document version mock upload handler
   const handleUploadDoc = async (reqId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -167,6 +171,7 @@ export function JobWorkspaceClient({
     setLoading(`doc-${reqId}`);
     try {
       const mockKey = `cha/docs/${Math.random().toString(36).substring(7)}_${file.name}`;
+      const localUrl = URL.createObjectURL(file);
       const res = await actions.uploadDocumentVersionAction(job.id, reqId, {
         fileKey: mockKey,
         fileName: file.name,
@@ -175,6 +180,10 @@ export function JobWorkspaceClient({
       });
 
       if (res.ok) {
+        const versionId = res.data?.id;
+        if (versionId) {
+          setPreviewUrls((prev) => ({ ...prev, [versionId]: localUrl }));
+        }
         toast.success(`Uploaded ${file.name} successfully.`);
         router.refresh();
       } else {
@@ -212,6 +221,43 @@ export function JobWorkspaceClient({
     }
   };
 
+  // Undo document exemption (Mark as active requirement again)
+  const handleRemoveException = async (reqId: string) => {
+    setLoading(`undo-exc-${reqId}`);
+    try {
+      const res = await actions.removeDocumentExceptionAction(job.id, reqId);
+      if (res.ok) {
+        toast.success("Exemption removed. Requirement is active again.");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to remove exemption.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  // Proceed document gate validation stage advance
+  const handleProceedStage = async () => {
+    setLoading("proceed-stage");
+    setProceedErrors(null);
+    try {
+      const res = await actions.proceedDocumentStageAction(job.id);
+      if (res.ok) {
+        toast.success("Workflow stage advanced to Checklist Preparation successfully.");
+        router.refresh();
+      } else {
+        setProceedErrors(res.error ? [res.error] : ["Mandatory document requirement gating check failed."]);
+        toast.error("Document collection gate not satisfied.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
   const handleConfirmDeleteDoc = async () => {
     if (!deleteDocModal) return;
     setLoading("delete-doc");
@@ -1085,162 +1131,245 @@ export function JobWorkspaceClient({
         
         {/* PANEL: DOCUMENTS */}
         {activeTab === "docs" && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="ds-h3 text-on-surface">Required Customs Documents</h3>
-              <span className="text-xs text-on-surface-variant">
-                Upload required files or declare exceptions to pass the document gate.
-              </span>
+          <div className="space-y-8">
+            <div className="flex items-center justify-between border-b border-outline-variant/20 pb-4">
+              <div>
+                <h3 className="ds-h3 text-on-surface">Required Customs Documents</h3>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Upload required files or declare exceptions to pass the document gate.
+                </p>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {job.documentRequirements.map((req: any) => {
-                const isUploaded = req.status === "UPLOADED";
-                const isExempted = req.status === "NOT_AVAILABLE";
-                const currentVersion = req.versions.find((v: any) => v.isCurrent);
+            {/* Categories and grouped requirement slots */}
+            {(() => {
+              const groupedRequirements: Record<string, any[]> = {};
+              job.documentRequirements.forEach((req: any) => {
+                const categoryName = req.requirementItem?.category?.name || req.category || "General Documents";
+                if (!groupedRequirements[categoryName]) {
+                  groupedRequirements[categoryName] = [];
+                }
+                groupedRequirements[categoryName].push(req);
+              });
+
+              const categoryKeys = Object.keys(groupedRequirements).sort();
+
+              if (categoryKeys.length === 0) {
                 return (
-                  <div
-                    key={req.id}
-                    className={`p-4 rounded-xl border flex flex-col justify-between ${
-                      isUploaded
-                        ? "border-green-200 bg-green-50/5"
-                        : isExempted
-                        ? "border-[#fb923c]/40 bg-[#fb923c]/5"
-                        : "border-outline-variant/60"
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-sm">{req.name}</span>
-                        <div className="flex items-center gap-1.5">
-                          {req.isMandatory && (
-                            <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-50 text-red-500 border border-red-200">
-                              MANDATORY
-                            </span>
-                          )}
-                          <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
-                            isUploaded
-                              ? "bg-green-100 text-green-700"
-                              : isExempted
-                              ? "bg-orange-100 text-orange-700"
-                              : "bg-surface-container-high text-on-surface-variant"
-                          }`}>
-                            {req.status}
-                          </span>
-                        </div>
-                      </div>
-                      <span className="text-xs text-on-surface-variant block mt-1 uppercase ds-label">
-                        Category: {req.category}
-                      </span>
-
-                      {/* Display Uploaded File details */}
-                      {isUploaded && currentVersion && (
-                        <div className="mt-3 bg-surface border border-green-200/50 p-2.5 rounded-lg flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-2 truncate">
-                            <FileText size={16} className="text-green-600 shrink-0" />
-                            <span className="truncate font-medium">{currentVersion.fileName}</span>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0 pl-2">
-                            <span className="text-[10px] text-on-surface-variant font-mono ds-numeric">
-                              {(currentVersion.sizeBytes / 1024).toFixed(1)} KB
-                            </span>
-                            {(currentUserId === currentVersion.uploadedById ||
-                              currentUserId === job.primaryOwnerId ||
-                              canDeleteDoc ||
-                              canManageSettings) && (
-                              <button
-                                type="button"
-                                className="text-red-500 hover:text-red-700 transition-colors p-1"
-                                onClick={() =>
-                                  setDeleteDocModal({
-                                    reqId: req.id,
-                                    versionId: currentVersion.id,
-                                    fileName: currentVersion.fileName,
-                                  })
-                                }
-                                title="Delete document version"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Display Exception Reason */}
-                      {isExempted && req.exception && (
-                        <div className="mt-3 bg-surface border border-[#fb923c]/35 p-2.5 rounded-lg text-xs space-y-1">
-                          <p className="font-medium text-[#fb923c]">Exemption reason:</p>
-                          <p className="text-on-surface">{req.exception.reason}</p>
-                          <span className="text-[10px] text-on-surface-variant block">
-                            Declared by: {req.exception.user?.name || "N/A"}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-4 space-y-3 border-t border-outline-variant/20 pt-3">
-                      {/* Exception form pop */}
-                      {activeDocReqId === req.id ? (
-                        <div className="w-full space-y-2">
-                          <input
-                            type="text"
-                            placeholder="Enter detailed reason for exemption..."
-                            value={exceptionReason}
-                            onChange={(e) => setExceptionReason(e.target.value)}
-                            className="w-full text-xs"
-                          />
-                          <div className="flex flex-wrap justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-xs py-1 h-7"
-                              onClick={() => {
-                                setActiveDocReqId(null);
-                                setExceptionReason("");
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              size="sm"
-                              className="text-xs py-1 h-7"
-                              onClick={() => handleDeclareException(req.id)}
-                            >
-                              Save Exemption
-                            </Button>
-                          </div>
-                        </div>
-                      ) : null}
-
-                      <div className="flex flex-wrap items-center justify-end gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="text-xs"
-                          onClick={() => {
-                            setActiveDocReqId((current) => (current === req.id ? null : req.id));
-                            setExceptionReason(req.exception?.reason || "");
-                          }}
-                        >
-                          {isExempted ? "Edit Exemption" : "Declare Exemption"}
-                        </Button>
-                        <label className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#00cec4] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white transition-all hover:bg-[#00b8af]">
-                          <Upload size={12} />
-                          {isUploaded ? "Upload Version" : isExempted ? "Upload File Anyway" : "Upload File"}
-                          <input
-                            type="file"
-                            className="hidden"
-                            onChange={(e) => handleUploadDoc(req.id, e)}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  </div>
+                  <p className="text-sm text-on-surface-variant italic py-4">No document requirements configured for this job.</p>
                 );
-              })}
-            </div>
+              }
+
+              return (
+                <div className="space-y-8">
+                  {categoryKeys.map((categoryName) => {
+                    const reqs = groupedRequirements[categoryName];
+                    return (
+                      <div key={categoryName} className="space-y-4">
+                        <h4 className="ds-h2 text-xs text-[#00cec4] border-b border-outline-variant/20 pb-2 font-semibold">
+                          {categoryName}
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {reqs.map((req: any) => {
+                            const isUploaded = req.status === "UPLOADED";
+                            const isExempted = req.status === "NOT_AVAILABLE";
+                            const currentVersion = req.versions.find((v: any) => v.isCurrent);
+                            return (
+                              <div
+                                key={req.id}
+                                className={`p-4 rounded-xl border flex flex-col justify-between bg-[var(--color-surface)] ${
+                                  isUploaded
+                                    ? "card-left-accent border-outline-variant/30"
+                                    : "card-left-accent-orange border-outline-variant/30"
+                                }`}
+                              >
+                                <div>
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-semibold text-sm text-on-surface">{req.name}</span>
+                                    <div className="flex items-center gap-1.5">
+                                      {req.isMandatory && (
+                                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-50 text-red-500 border border-red-200">
+                                          MANDATORY
+                                        </span>
+                                      )}
+                                      <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                                        isUploaded
+                                          ? "bg-[#00cec4]/10 text-[#00cec4]"
+                                          : isExempted
+                                          ? "bg-orange-500/10 text-[#fb923c]"
+                                          : "bg-surface-container-high text-on-surface-variant"
+                                      }`}>
+                                        {req.status.replace(/_/g, " ")}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {req.requirementItem?.description && (
+                                    <p className="text-xs text-on-surface-variant mt-1">{req.requirementItem.description}</p>
+                                  )}
+
+                                  {/* Display Uploaded File details */}
+                                  {isUploaded && currentVersion && (
+                                    <div className="mt-3 bg-surface-container-low border border-outline-variant/30 p-2.5 rounded-lg flex items-center justify-between text-xs">
+                                      <div className="flex items-center gap-2 truncate">
+                                        <FileText size={16} className="text-[#00cec4] shrink-0" />
+                                        <span className="truncate font-medium text-on-surface">{currentVersion.fileName}</span>
+                                      </div>
+                                      <div className="flex items-center gap-2 shrink-0 pl-2">
+                                        <span className="text-[10px] text-on-surface-variant font-mono ds-numeric">
+                                          {(currentVersion.sizeBytes / 1024).toFixed(1)} KB
+                                        </span>
+                                        {(currentUserId === currentVersion.uploadedById ||
+                                          currentUserId === job.primaryOwnerId ||
+                                          canDeleteDoc ||
+                                          canManageSettings) && (
+                                          <button
+                                            type="button"
+                                            className="text-red-500 hover:text-red-700 transition-colors p-1"
+                                            onClick={() =>
+                                              setDeleteDocModal({
+                                                reqId: req.id,
+                                                versionId: currentVersion.id,
+                                                fileName: currentVersion.fileName,
+                                              })
+                                            }
+                                            title="Delete document version"
+                                          >
+                                            <Trash2 size={14} />
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Display Exception Reason */}
+                                  {isExempted && req.exception && (
+                                    <div className="mt-3 bg-surface border border-orange-500/30 p-2.5 rounded-lg text-xs space-y-1">
+                                      <p className="font-medium text-[#fb923c]">Exemption reason:</p>
+                                      <p className="text-on-surface">{req.exception.reason}</p>
+                                      <span className="text-[10px] text-on-surface-variant block">
+                                        Declared by: {req.exception.user?.name || "N/A"}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="mt-4 space-y-3 border-t border-outline-variant/20 pt-3">
+                                  {/* Exception form pop */}
+                                  {activeDocReqId === req.id ? (
+                                    <div className="w-full space-y-2">
+                                      <input
+                                        type="text"
+                                        placeholder="Enter detailed reason for exemption..."
+                                        value={exceptionReason}
+                                        onChange={(e) => setExceptionReason(e.target.value)}
+                                        className="w-full text-xs py-2 px-3 bg-[var(--color-surface)] border border-outline-variant/50 rounded-xl"
+                                      />
+                                      <div className="flex flex-wrap justify-end gap-2">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="text-xs py-1 h-7"
+                                          onClick={() => {
+                                            setActiveDocReqId(null);
+                                            setExceptionReason("");
+                                          }}
+                                        >
+                                          Cancel
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          className="text-xs py-1 h-7"
+                                          onClick={() => handleDeclareException(req.id)}
+                                        >
+                                          Save Exemption
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ) : null}
+
+                                  <div className="flex flex-wrap items-center justify-end gap-2">
+                                    {isUploaded && currentVersion && (
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-xs border-[#00cec4] text-[#00cec4] hover:bg-[#00cec4]/5"
+                                        onClick={() => setViewingVersion(currentVersion)}
+                                      >
+                                        View File
+                                      </Button>
+                                    )}
+
+                                    {isExempted ? (
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-xs text-red-500 border-red-200 hover:bg-red-50"
+                                        onClick={() => handleRemoveException(req.id)}
+                                        disabled={loading !== null}
+                                      >
+                                        Undo N/A
+                                      </Button>
+                                    ) : (
+                                      !activeDocReqId && (
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          className="text-xs"
+                                          onClick={() => {
+                                            setActiveDocReqId((current) => (current === req.id ? null : req.id));
+                                            setExceptionReason(req.exception?.reason || "");
+                                          }}
+                                        >
+                                          {req.exception ? "Edit Exemption" : "Mark as N/A"}
+                                        </Button>
+                                      )
+                                    )}
+
+                                    <label className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#00cec4] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white transition-all hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)]">
+                                      <Upload size={12} />
+                                      {isUploaded ? "Re-upload" : isExempted ? "Upload File Anyway" : "Upload File"}
+                                      <input
+                                        type="file"
+                                        className="hidden"
+                                        onChange={(e) => handleUploadDoc(req.id, e)}
+                                      />
+                                    </label>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
+            {/* Stage Proceed button for Document Collection stage */}
+            {job.stage === "DOCUMENT_COLLECTION" && (
+              <div className="pt-6 border-t border-outline-variant/30 flex flex-col items-end gap-3">
+                {proceedErrors && (
+                  <div className="w-full md:max-w-xl p-4 rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 text-xs">
+                    <p className="font-semibold uppercase tracking-wider ds-label text-orange-500 mb-1">Proceed Blocked</p>
+                    <p>{proceedErrors[0]}</p>
+                  </div>
+                )}
+                <Button
+                  onClick={handleProceedStage}
+                  disabled={loading !== null}
+                  className="w-full sm:w-auto bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] font-bold tracking-wider"
+                >
+                  {loading === "proceed-stage" ? "Advancing stage..." : "Proceed to Checklist Prep"}
+                  <ArrowRight size={14} className="ml-1.5" />
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
@@ -2500,7 +2629,71 @@ export function JobWorkspaceClient({
           </div>
         </Modal>
       )}
+
+      {viewingVersion && (
+        <Modal
+          open={true}
+          onClose={() => setViewingVersion(null)}
+          title="Document Viewer"
+          description={`Viewing file: ${viewingVersion.fileName}`}
+          className="max-w-4xl w-full"
+        >
+          <div className="h-[60vh] flex flex-col bg-surface border border-outline-variant/30 rounded-xl overflow-hidden">
+            {previewUrls[viewingVersion.id] ? (
+              viewingVersion.mimeType.startsWith("image/") ? (
+                <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
+                  <img
+                    src={previewUrls[viewingVersion.id]}
+                    alt={viewingVersion.fileName}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+              ) : (
+                <iframe
+                  src={previewUrls[viewingVersion.id]}
+                  className="w-full h-full border-0"
+                  title={viewingVersion.fileName}
+                />
+              )
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4">
+                <div className="w-16 h-16 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center">
+                  <FileText size={32} />
+                </div>
+                <div className="space-y-2 max-w-md">
+                  <h4 className="ds-h3 text-sm text-on-surface">Simulated Document Preview</h4>
+                  <p className="text-xs text-on-surface-variant leading-relaxed font-sans">
+                    This document was uploaded in a previous session. Because upload keys are mocked locally, a live preview is unavailable.
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl border border-outline-variant/40 bg-surface-container-low/50 text-left text-xs space-y-2 w-full max-w-md">
+                  <p className="font-semibold text-on-surface uppercase ds-label">File Metadata</p>
+                  <div className="grid grid-cols-2 gap-2 text-on-surface-variant">
+                    <span>Filename:</span>
+                    <span className="text-on-surface truncate font-sans">{viewingVersion.fileName}</span>
+                    <span>Size:</span>
+                    <span className="text-on-surface ds-numeric font-sans">{(viewingVersion.sizeBytes / 1024).toFixed(1)} KB</span>
+                    <span>Uploaded By:</span>
+                    <span className="text-on-surface font-sans">{viewingVersion.uploadedBy?.name || "System"}</span>
+                    <span>Uploaded At:</span>
+                    <span className="text-on-surface ds-numeric font-sans">{new Date(viewingVersion.uploadedAt).toLocaleString("en-IN")}</span>
+                  </div>
+                </div>
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toast.success(`Simulating download for: ${viewingVersion.fileName}`);
+                  }}
+                  className="inline-flex items-center justify-center bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all"
+                >
+                  Download File (Mocked)
+                </a>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
     </main>
   );
 }
-  

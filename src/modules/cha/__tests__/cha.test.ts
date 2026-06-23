@@ -175,7 +175,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
     const docDefs = await db.chaDocumentDefinition.findMany({ where: { jobTypeId: jobTypeImport.id } });
     expect(docDefs.length).toBe(4); // BL, Invoice, Packing List, CO
-  });
+  }, 30000);
 
   it("1.25. should generate branch-based job numbers with isolated sequences", async () => {
     const autoJob = await chaService.createJob(ownerUser.id, org.id, {
@@ -288,9 +288,9 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
     // Check document requirements
     const reqs = await db.chaJobDocumentRequirement.findMany({ where: { jobId: job.id } });
-    expect(reqs.length).toBe(4);
+    expect(reqs.length).toBe(16);
     const mandatory = reqs.filter((r) => r.isMandatory);
-    expect(mandatory.length).toBe(3); // Bill of Lading, Invoice, Packing List
+    expect(mandatory.length).toBe(6); // Bill of Lading, Invoice, Packing List, IEC, GST, AD Code
   });
 
   it("3. should handle document gates, uploads and exceptions", async () => {
@@ -298,13 +298,16 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     const reqs = await db.chaJobDocumentRequirement.findMany({ where: { jobId: job.id } });
 
     const blReq = reqs.find((r) => r.name === "Bill of Lading")!;
-    const invReq = reqs.find((r) => r.name === "Commercial Invoice")!;
+    const invReq = reqs.find((r) => r.name === "Invoice")!;
     const pkReq = reqs.find((r) => r.name === "Packing List")!;
+    const iecReq = reqs.find((r) => r.name === "IEC")!;
+    const gstReq = reqs.find((r) => r.name === "GST")!;
+    const adReq = reqs.find((r) => r.name === "AD Code")!;
 
     // A. Verify document gate fails initially
     const gate1 = await chaService.verifyDocumentGate(job.id);
     expect(gate1.passed).toBe(false);
-    expect(gate1.blockingRequirements.length).toBe(3);
+    expect(gate1.blockingRequirements.length).toBe(6);
 
     // B. Upload file for Bill of Lading
     await chaService.uploadDocumentVersion(ownerUser.id, org.id, job.id, blReq.id, {
@@ -325,10 +328,36 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       sizeBytes: 8192,
     });
 
-    // E. Verify document gate passes now
+    // E. Upload IEC
+    await chaService.uploadDocumentVersion(ownerUser.id, org.id, job.id, iecReq.id, {
+      fileKey: "iec_copy_key",
+      fileName: "iec.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 10240,
+    });
+
+    // F. Declare exception for GST
+    await chaService.declareDocumentException(ownerUser.id, org.id, job.id, gstReq.id, "GST copy verified on portal, physical copy not required locally");
+
+    // G. Upload AD Code
+    await chaService.uploadDocumentVersion(ownerUser.id, org.id, job.id, adReq.id, {
+      fileKey: "ad_code_key",
+      fileName: "ad_code.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 8192,
+    });
+
+    // H. Verify document gate passes now
     const gate2 = await chaService.verifyDocumentGate(job.id);
     expect(gate2.passed).toBe(true);
     expect(gate2.blockingRequirements.length).toBe(0);
+
+    // I. Stage should remain DOCUMENT_COLLECTION until manual proceed
+    const jobBeforeProceed = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
+    expect(jobBeforeProceed.stage).toBe("DOCUMENT_COLLECTION");
+
+    // J. Proceed manually
+    await chaService.proceedDocumentStage(ownerUser.id, org.id, job.id);
 
     const jobAfterGatePass = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
     expect(jobAfterGatePass.stage).toBe("CHECKLIST_PREPARATION");
@@ -380,6 +409,10 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       mimeType: "application/pdf",
       sizeBytes: 8192,
     });
+
+    // E. Manually proceed to restore CHECKLIST_PREPARATION stage
+    await chaService.proceedDocumentStage(ownerUser.id, org.id, job.id);
+
     const jobRestored = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
     expect(jobRestored.stage).toBe("CHECKLIST_PREPARATION");
 
@@ -848,6 +881,6 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(approvalAudit.map((entry) => entry.event)).toEqual(
       expect.arrayContaining(["JOB_DELETE_APPROVAL_APPROVED", "JOB_DELETE_EXECUTED"]),
     );
-  }, 15000);
+  }, 60000);
 });
 

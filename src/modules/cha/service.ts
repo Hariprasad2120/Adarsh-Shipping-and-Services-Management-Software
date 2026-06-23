@@ -18,6 +18,66 @@ const DEFAULT_CHA_EXPENSE_CATEGORIES = [
 const DEFAULT_CHA_JOB_CREATOR_ROLES = ["Admin", "HR", "Manager", "Employee"];
 const DEFAULT_CHA_SHIPMENT_TYPES = ["Air", "Sea"];
 
+export const DEFAULT_DOCUMENT_REQUIREMENTS = [
+  {
+    category: "Documents Required From Supplier",
+    sortOrder: 1,
+    items: [
+      { name: "Invoice", sortOrder: 1, isRequiredDefault: true },
+      { name: "Packing List", sortOrder: 2, isRequiredDefault: true },
+      { name: "Bill of Lading", sortOrder: 3, isRequiredDefault: true },
+      { name: "ASEAN Certificate", sortOrder: 4, isRequiredDefault: false },
+      { name: "Country of Origin", sortOrder: 5, isRequiredDefault: false },
+      { name: "Phytosanitary Certificate", sortOrder: 6, isRequiredDefault: false },
+      { name: "Fumigation Certificate", sortOrder: 7, isRequiredDefault: false },
+      { name: "Label", sortOrder: 8, isRequiredDefault: false },
+      { name: "Certificate of Analysis", sortOrder: 9, isRequiredDefault: false },
+    ],
+  },
+  {
+    category: "KYC For Customers",
+    sortOrder: 2,
+    items: [
+      { name: "IEC", sortOrder: 1, isRequiredDefault: true },
+      { name: "GST", sortOrder: 2, isRequiredDefault: true },
+      { name: "AD Code", sortOrder: 3, isRequiredDefault: true },
+      { name: "FSSAI Licence", sortOrder: 4, isRequiredDefault: false },
+      { name: "Company Address Proof", sortOrder: 5, isRequiredDefault: false },
+      { name: "Partner / Proprietor Address Proof", sortOrder: 6, isRequiredDefault: false },
+      { name: "Authorisation Letter", sortOrder: 7, isRequiredDefault: false },
+    ],
+  },
+];
+
+export async function ensureDefaultDocumentRequirements(orgId: string, tx: any = db) {
+  for (const cat of DEFAULT_DOCUMENT_REQUIREMENTS) {
+    const dbCat = await tx.chaDocumentRequirementCategory.upsert({
+      where: { orgId_name: { orgId, name: cat.category } },
+      update: {},
+      create: {
+        orgId,
+        name: cat.category,
+        sortOrder: cat.sortOrder,
+        isActive: true,
+      },
+    });
+
+    for (const item of cat.items) {
+      await tx.chaDocumentRequirementItem.upsert({
+        where: { categoryId_name: { categoryId: dbCat.id, name: item.name } },
+        update: {},
+        create: {
+          categoryId: dbCat.id,
+          name: item.name,
+          sortOrder: item.sortOrder,
+          isRequiredDefault: item.isRequiredDefault,
+          isActive: true,
+        },
+      });
+    }
+  }
+}
+
 function parseStringArray(value: Prisma.JsonValue | null | undefined, fallback: string[] = []) {
   if (!value) return fallback;
   if (Array.isArray(value)) {
@@ -206,6 +266,7 @@ export async function ensureSettingsAndDefaults(orgId: string) {
 
   await ensureChaShipmentTypes(orgId);
   await ensureChaBranchNumberingRules(orgId, settings);
+  await ensureDefaultDocumentRequirements(orgId);
 
   return settings;
 }
@@ -416,20 +477,37 @@ export async function createJob(
       })),
     });
 
-    // 3. Fetch Document Definitions for this Job Type and initialize requirements
-    const defs = await tx.chaDocumentDefinition.findMany({
-      where: { jobTypeId: data.jobTypeId },
+    // 3. Fetch active document configuration categories and items for this organization and initialize requirements
+    const categories = await tx.chaDocumentRequirementCategory.findMany({
+      where: { orgId, isActive: true },
+      include: {
+        items: {
+          where: { isActive: true },
+          orderBy: { sortOrder: "asc" },
+        },
+      },
+      orderBy: { sortOrder: "asc" },
     });
 
-    await tx.chaJobDocumentRequirement.createMany({
-      data: defs.map((d) => ({
-        jobId: job.id,
-        name: d.name,
-        category: d.category,
-        isMandatory: d.isMandatory,
-        status: "PENDING",
-      })),
-    });
+    const jobRequirementsData = [];
+    for (const cat of categories) {
+      for (const item of cat.items) {
+        jobRequirementsData.push({
+          jobId: job.id,
+          name: item.name,
+          category: cat.name,
+          isMandatory: item.isRequiredDefault,
+          status: "PENDING",
+          requirementItemId: item.id,
+        });
+      }
+    }
+
+    if (jobRequirementsData.length > 0) {
+      await tx.chaJobDocumentRequirement.createMany({
+        data: jobRequirementsData,
+      });
+    }
 
     // 4. Initialize Filing
     await tx.chaFiling.create({
@@ -677,7 +755,13 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
           executedBy: { select: { id: true, name: true } },
         },
       },
-      documentRequirements: { include: { versions: { include: { uploadedBy: { select: { name: true } } } }, exception: { include: { user: { select: { name: true } } } } } },
+      documentRequirements: {
+        include: {
+          versions: { include: { uploadedBy: { select: { name: true } } } },
+          exception: { include: { user: { select: { name: true } } } },
+          requirementItem: { include: { category: true } }
+        }
+      },
       checklistImports: { include: { uploadedBy: { select: { name: true } }, approvals: { include: { manager: { select: { name: true } } } }, reworkNotes: { include: { author: { select: { name: true } } } }, sections: { include: { items: true } } } },
       filing: { include: { dateHistory: { include: { setBy: { select: { name: true } } } } } },
       customerAdvance: { include: { receipts: true } },
@@ -869,20 +953,7 @@ export async function uploadDocumentVersion(
     remarks: `Uploaded document: ${fileData.fileName}`,
   });
 
-  const advancedToChecklistPreparation = await advanceToChecklistPreparationIfDocumentGatePassed(jobId);
-  if (advancedToChecklistPreparation) {
-    await logChaAudit({
-      orgId,
-      jobId,
-      entityType: "ChaJob",
-      entityId: jobId,
-      event: "DOCUMENT_GATE_COMPLETED",
-      actorId,
-      prevState: "DOCUMENT_COLLECTION",
-      newState: "CHECKLIST_PREPARATION",
-      remarks: "All mandatory documents are now uploaded or exempted. Checklist preparation unlocked automatically.",
-    });
-  }
+  // Auto-stage-transition removed (Proceed button handles this now)
 
   // If a document changes after checklist approval, flag alert
   const job = await db.chaJob.findFirstOrThrow({
@@ -1089,37 +1160,45 @@ export async function declareDocumentException(
     remarks: `Declared unavailable: ${reason}`,
   });
 
-  const advancedToChecklistPreparation = await advanceToChecklistPreparationIfDocumentGatePassed(jobId);
-  if (advancedToChecklistPreparation) {
-    await logChaAudit({
-      orgId,
-      jobId,
-      entityType: "ChaJob",
-      entityId: jobId,
-      event: "DOCUMENT_GATE_COMPLETED",
-      actorId,
-      prevState: "DOCUMENT_COLLECTION",
-      newState: "CHECKLIST_PREPARATION",
-      remarks: "All mandatory documents are now uploaded or exempted. Checklist preparation unlocked automatically.",
-    });
-  }
+  // Auto-stage-transition removed (Proceed button handles this now)
 
   return result;
 }
 
 // Gate check: opens Checklist Preparation only when every mandatory document is actioned
 export async function verifyDocumentGate(jobId: string) {
-  const reqs = await db.chaJobDocumentRequirement.findMany({
-    where: { jobId },
+  const job = await db.chaJob.findUniqueOrThrow({
+    where: { id: jobId },
+    include: {
+      documentRequirements: {
+        include: {
+          requirementItem: {
+            include: {
+              category: true
+            }
+          }
+        }
+      }
+    }
   });
 
-  const blocking = reqs.filter(
+  const activeReqs = job.documentRequirements.filter((req) => {
+    if (!req.requirementItemId) return true; // legacy requirement
+    const item = req.requirementItem;
+    if (item) {
+      if (!item.isActive) return false;
+      if (item.category && !item.category.isActive) return false;
+    }
+    return true;
+  });
+
+  const blocking = activeReqs.filter(
     (r) => r.isMandatory && r.status !== "UPLOADED" && r.status !== "NOT_AVAILABLE"
   );
 
   return {
     passed: blocking.length === 0,
-    blockingRequirements: blocking.map((b) => ({ id: b.id, name: b.name })),
+    blockingRequirements: blocking.map((b) => ({ id: b.id, name: b.name, category: b.category })),
   };
 }
 
@@ -2951,4 +3030,191 @@ export async function decideJobDeletionRequest(
   });
 
   return result.request;
+}
+
+// ─── Document Requirements Configuration & Workflow ──────────────────────────────
+
+export async function upsertDocumentCategory(
+  orgId: string,
+  data: { id?: string; name: string; description?: string; sortOrder: number; isActive: boolean }
+) {
+  const name = data.name.trim();
+  if (!name) throw new Error("Category name is required.");
+
+  if (data.id) {
+    const existing = await db.chaDocumentRequirementCategory.findFirst({
+      where: { orgId, name: { equals: name, mode: "insensitive" }, id: { not: data.id } },
+    });
+    if (existing) throw new Error(`Category '${name}' already exists.`);
+
+    return db.chaDocumentRequirementCategory.update({
+      where: { id: data.id },
+      data: {
+        name,
+        description: data.description || null,
+        sortOrder: data.sortOrder,
+        isActive: data.isActive,
+      },
+    });
+  } else {
+    const existing = await db.chaDocumentRequirementCategory.findFirst({
+      where: { orgId, name: { equals: name, mode: "insensitive" } },
+    });
+    if (existing) throw new Error(`Category '${name}' already exists.`);
+
+    return db.chaDocumentRequirementCategory.create({
+      data: {
+        orgId,
+        name,
+        description: data.description || null,
+        sortOrder: data.sortOrder,
+        isActive: data.isActive,
+      },
+    });
+  }
+}
+
+export async function deleteDocumentCategory(orgId: string, id: string) {
+  const category = await db.chaDocumentRequirementCategory.findFirstOrThrow({
+    where: { id, orgId },
+  });
+
+  return db.chaDocumentRequirementCategory.delete({
+    where: { id: category.id },
+  });
+}
+
+export async function upsertDocumentItem(
+  orgId: string,
+  data: { id?: string; categoryId: string; name: string; description?: string; sortOrder: number; isRequiredDefault: boolean; isActive: boolean }
+) {
+  const category = await db.chaDocumentRequirementCategory.findFirstOrThrow({
+    where: { id: data.categoryId, orgId },
+  });
+
+  const name = data.name.trim();
+  if (!name) throw new Error("Document name is required.");
+
+  if (data.id) {
+    const existing = await db.chaDocumentRequirementItem.findFirst({
+      where: { categoryId: data.categoryId, name: { equals: name, mode: "insensitive" }, id: { not: data.id } },
+    });
+    if (existing) throw new Error(`Document '${name}' already exists in this category.`);
+
+    return db.chaDocumentRequirementItem.update({
+      where: { id: data.id },
+      data: {
+        name,
+        description: data.description || null,
+        sortOrder: data.sortOrder,
+        isRequiredDefault: data.isRequiredDefault,
+        isActive: data.isActive,
+      },
+    });
+  } else {
+    const existing = await db.chaDocumentRequirementItem.findFirst({
+      where: { categoryId: data.categoryId, name: { equals: name, mode: "insensitive" } },
+    });
+    if (existing) throw new Error(`Document '${name}' already exists in this category.`);
+
+    return db.chaDocumentRequirementItem.create({
+      data: {
+        categoryId: data.categoryId,
+        name,
+        description: data.description || null,
+        sortOrder: data.sortOrder,
+        isRequiredDefault: data.isRequiredDefault,
+        isActive: data.isActive,
+      },
+    });
+  }
+}
+
+export async function deleteDocumentItem(orgId: string, id: string) {
+  const item = await db.chaDocumentRequirementItem.findFirstOrThrow({
+    where: { id, category: { orgId } },
+  });
+
+  return db.chaDocumentRequirementItem.delete({
+    where: { id: item.id },
+  });
+}
+
+export async function removeDocumentException(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  requirementId: string
+) {
+  await db.chaJobDocumentRequirement.findFirstOrThrow({
+    where: { id: requirementId, jobId, job: getActiveChaJobWhere(orgId) },
+  });
+
+  const result = await db.$transaction(async (tx) => {
+    // Delete exception
+    await tx.chaDocumentException.deleteMany({
+      where: { requirementId },
+    });
+
+    // Check remaining versions
+    const remainingVersions = await tx.chaDocumentVersion.findMany({
+      where: { requirementId },
+    });
+
+    const newStatus = remainingVersions.length > 0 ? "UPLOADED" : "PENDING";
+
+    await tx.chaJobDocumentRequirement.update({
+      where: { id: requirementId },
+      data: { status: newStatus },
+    });
+
+    return { newStatus };
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "ChaJobDocumentRequirement",
+    entityId: requirementId,
+    event: "DOCUMENT_EXCEPTION_REMOVED",
+    actorId,
+    newState: result.newStatus,
+    remarks: "Removed N/A exemption status.",
+  });
+
+  return result;
+}
+
+export async function proceedDocumentStage(actorId: string, orgId: string, jobId: string) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: getActiveChaJobByIdWhere(orgId, jobId),
+  });
+
+  if (job.stage !== "DOCUMENT_COLLECTION") {
+    throw new Error("Job is not in the Document Collection stage.");
+  }
+
+  const gate = await verifyDocumentGate(jobId);
+  if (!gate.passed) {
+    throw new Error("Cannot proceed. Mandatory documents are pending: " + gate.blockingRequirements.map(b => b.name).join(", "));
+  }
+
+  await db.chaJob.update({
+    where: { id: jobId },
+    data: { stage: "CHECKLIST_PREPARATION" },
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "ChaJob",
+    entityId: jobId,
+    event: "DOCUMENT_GATE_COMPLETED",
+    actorId,
+    prevState: "DOCUMENT_COLLECTION",
+    newState: "CHECKLIST_PREPARATION",
+    remarks: "User clicked Proceed to advance checklist preparation stage.",
+  });
+
+  return { success: true };
 }
