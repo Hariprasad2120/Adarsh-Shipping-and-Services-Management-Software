@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { invalidateRbacCache } from "@/lib/rbac";
 
 const MANAGEMENT_ROLE_PERMISSION_KEYS = [
   "hrms.employee.read",
@@ -145,7 +146,9 @@ export async function getRoles(orgId: string) {
   });
 }
 export async function createRole(orgId: string, name: string) {
-  return db.role.create({ data: { orgId, name, isSystem: false } });
+  const role = await db.role.create({ data: { orgId, name, isSystem: false } });
+  invalidateRbacCache();
+  return role;
 }
 export async function updateRolePermissions(roleId: string, permissionIds: string[]) {
   await db.rolePermission.deleteMany({ where: { roleId } });
@@ -154,9 +157,12 @@ export async function updateRolePermissions(roleId: string, permissionIds: strin
       data: permissionIds.map((permissionId) => ({ roleId, permissionId })),
     });
   }
+  invalidateRbacCache();
 }
 export async function deleteRole(id: string) {
-  return db.role.delete({ where: { id } });
+  const role = await db.role.delete({ where: { id } });
+  invalidateRbacCache();
+  return role;
 }
 
 export async function getAllPermissions() {

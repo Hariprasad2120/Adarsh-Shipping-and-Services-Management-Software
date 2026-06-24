@@ -2,10 +2,14 @@
 
 import { WelcomeBar } from "@/components/welcome-bar";
 import { AutoBreadcrumb } from "@/components/auto-breadcrumb";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { MonaProvider, useMonaChat } from "@/components/mona/mona-provider";
-import { MonaChat } from "@/components/mona/mona-chat";
+
+const MonaChat = dynamic(() => import("@/components/mona/mona-chat").then((mod) => mod.MonaChat), {
+  ssr: false,
+});
 
 /** Keyboard shortcut handler — Ctrl+M to toggle Mona */
 function MonaKeyboardShortcut() {

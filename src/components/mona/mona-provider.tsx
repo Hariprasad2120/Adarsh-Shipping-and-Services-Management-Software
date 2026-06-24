@@ -4,7 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
+  useId,
   useMemo,
   useState,
   useRef,
@@ -72,28 +72,48 @@ const WELCOME_MESSAGE: MonaChatMessage = {
   timestamp: Date.now(),
 };
 
+type MonaModelPayload = {
+  models?: MonaModel[];
+  current?: string;
+};
+
+let cachedModelPayload: MonaModelPayload | null = null;
+let modelPayloadPromise: Promise<MonaModelPayload> | null = null;
+
+function fetchModelPayload() {
+  if (cachedModelPayload) return Promise.resolve(cachedModelPayload);
+  if (modelPayloadPromise) return modelPayloadPromise;
+
+  modelPayloadPromise = fetch("/api/mona/model")
+    .then((r) => (r.ok ? r.json() : {}))
+    .then((data: MonaModelPayload) => {
+      cachedModelPayload = data;
+      return data;
+    })
+    .catch(() => ({}))
+    .finally(() => {
+      modelPayloadPromise = null;
+    });
+
+  return modelPayloadPromise;
+}
+
 export function MonaProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const reactSessionId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<MonaChatMessage[]>([WELCOME_MESSAGE]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [models, setModels] = useState<MonaModel[]>([]);
   const [currentModel, setCurrentModel] = useState("");
-  const sessionIdRef = useRef(
-    `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-  );
+  const sessionIdRef = useRef(`session-${reactSessionId}`);
   const hasLoadedInsightsRef = useRef(false);
 
-  // Fetch available models on mount
-  useEffect(() => {
-    fetch("/api/mona/model")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.models) setModels(data.models);
-        if (data.current) setCurrentModel(data.current);
-      })
-      .catch(() => {});
+  const loadModelConfig = useCallback(async () => {
+    const data = await fetchModelPayload();
+    if (data.models) setModels(data.models);
+    if (data.current) setCurrentModel(data.current);
   }, []);
 
   // Generate the welcome message with proactive insights on first open
@@ -154,15 +174,19 @@ export function MonaProvider({ children }: { children: React.ReactNode }) {
   const toggleChat = useCallback(() => {
     setIsOpen((prev) => {
       const next = !prev;
-      if (next) loadWelcomeInsights();
+      if (next) {
+        void loadModelConfig();
+        loadWelcomeInsights();
+      }
       return next;
     });
-  }, [loadWelcomeInsights]);
+  }, [loadModelConfig, loadWelcomeInsights]);
 
   const openChat = useCallback(() => {
     setIsOpen(true);
+    void loadModelConfig();
     loadWelcomeInsights();
-  }, [loadWelcomeInsights]);
+  }, [loadModelConfig, loadWelcomeInsights]);
 
   const closeChat = useCallback(() => setIsOpen(false), []);
 
@@ -215,7 +239,7 @@ export function MonaProvider({ children }: { children: React.ReactNode }) {
         setMessages((prev) =>
           prev.filter((m) => m.id !== "mona-typing").concat(monaMsg)
         );
-      } catch (err) {
+      } catch {
         setError("Failed to reach Mona. Please check your connection.");
         setMessages((prev) => prev.filter((m) => m.id !== "mona-typing"));
       } finally {
@@ -257,6 +281,10 @@ export function MonaProvider({ children }: { children: React.ReactNode }) {
       });
       const data = await res.json();
       if (data.current) {
+        cachedModelPayload = {
+          models,
+          current: data.current,
+        };
         setCurrentModel(data.current);
         setError(null);
         // Add a system notification in chat

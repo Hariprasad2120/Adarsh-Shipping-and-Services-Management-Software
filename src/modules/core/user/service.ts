@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { hash } from "bcryptjs";
 import { getNow } from "@/lib/clock";
+import { invalidateRbacCache } from "@/lib/rbac";
 import { Prisma } from "@/generated/prisma/client";
 import { syncEmployeeAppraisalSchedule } from "@/modules/ams/service";
 
@@ -171,6 +172,7 @@ export async function createUser(input: CreateUserInput) {
     priorExperienceYears: input.priorExperienceYears ?? 0,
   });
 
+  invalidateRbacCache();
   return user;
 }
 
@@ -194,6 +196,7 @@ export async function updateUserRoles(userId: string, roleIds: string[]) {
       data: roleIds.map((roleId) => ({ userId, roleId })),
     });
   }
+  invalidateRbacCache();
 }
 
 export async function updateEmploymentRecord(userId: string, data: {

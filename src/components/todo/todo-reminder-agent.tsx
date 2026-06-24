@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useEffectEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useNotifications } from "@/components/notifications/notification-provider";
 
 type UpcomingReminder = {
@@ -20,42 +20,62 @@ type TriggeredReminder = {
 
 export function TodoReminderAgent() {
   const router = useRouter();
+  const pathname = usePathname();
   const { pushToast } = useNotifications();
   const [upcomingReminders, setUpcomingReminders] = useState<UpcomingReminder[]>([]);
+  const refreshInFlightRef = useRef(false);
+  const triggerInFlightRef = useRef(false);
 
   const refreshUpcoming = useEffectEvent(async () => {
     if (typeof document !== "undefined" && document.hidden) return;
-    const res = await fetch("/api/todos/reminders/upcoming", { cache: "no-store" });
-    if (!res.ok) return;
-    const data = (await res.json()) as UpcomingReminder[];
-    setUpcomingReminders(data);
+    if (refreshInFlightRef.current) return;
+
+    refreshInFlightRef.current = true;
+    try {
+      const res = await fetch("/api/todos/reminders/upcoming", { cache: "no-store" });
+      if (!res.ok) return;
+      const data = (await res.json()) as UpcomingReminder[];
+      setUpcomingReminders(data);
+    } finally {
+      refreshInFlightRef.current = false;
+    }
   });
 
   const triggerReminders = useEffectEvent(async (taskId?: string) => {
     if (typeof document !== "undefined" && document.hidden) return;
+    if (triggerInFlightRef.current) return;
+
+    triggerInFlightRef.current = true;
     const res = await fetch("/api/todos/reminders/check", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(taskId ? { taskId } : {}),
     });
-    if (!res.ok) return;
-
-    const data = (await res.json()) as TriggeredReminder[];
-    for (const reminder of data) {
-      pushToast({
-        title: reminder.title,
-        body: reminder.body,
-        variant: "warning",
-        appearance: "light",
-        actionLabel: "Open task",
-        onAction: () => {
-          router.push(reminder.link);
-        },
-      });
+    if (!res.ok) {
+      triggerInFlightRef.current = false;
+      return;
     }
 
-    if (data.length > 0 || taskId) {
-      await refreshUpcoming();
+    try {
+      const data = (await res.json()) as TriggeredReminder[];
+      for (const reminder of data) {
+        pushToast({
+          title: reminder.title,
+          body: reminder.body,
+          variant: "warning",
+          appearance: "light",
+          actionLabel: "Open task",
+          onAction: () => {
+            router.push(reminder.link);
+          },
+        });
+      }
+
+      if (data.length > 0 || taskId) {
+        await refreshUpcoming();
+      }
+    } finally {
+      triggerInFlightRef.current = false;
     }
   });
 
@@ -63,7 +83,7 @@ export function TodoReminderAgent() {
     const timeout = window.setTimeout(() => {
       void triggerReminders();
       void refreshUpcoming();
-    }, 0);
+    }, 2400);
 
     const handleVisibilityChange = () => {
       if (typeof document !== "undefined" && !document.hidden) {
@@ -88,7 +108,7 @@ export function TodoReminderAgent() {
         document.removeEventListener("visibilitychange", handleVisibilityChange);
       }
     };
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     const timers = upcomingReminders

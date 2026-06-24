@@ -378,6 +378,8 @@ model User {
   @@index([orgId])
   @@index([isPlatformAdmin, active])
   @@index([email])
+  @@index([orgId, active, name])
+  @@index([orgId, email])
 }
 
 model UserRole {
@@ -1320,6 +1322,8 @@ model CrmAccount {
 
   @@index([orgId])
   @@index([ownerId])
+  @@index([orgId, status])
+  @@index([orgId, name])
 }
 
 model CrmDeal {
@@ -1360,6 +1364,9 @@ model CrmDeal {
   @@index([orgId])
   @@index([ownerId])
   @@index([accountId])
+  @@index([orgId, stage])
+  @@index([orgId, expectedCloseDate])
+  @@index([orgId, accountId])
 }
 
 model CrmActivity {
@@ -2604,6 +2611,7 @@ model AccountingAuditLog {
 
   @@index([orgId])
   @@index([userId])
+  @@index([orgId, timestamp])
 }
 
 model PayrollBatch {
@@ -3292,6 +3300,9 @@ model ChaJob {
   @@index([primaryOwnerId])
   @@index([deletedById])
   @@index([createdAt])
+  @@index([orgId, status, createdAt])
+  @@index([orgId, branchId, createdAt])
+  @@index([orgId, jobTypeId, createdAt])
 }
 
 model ChaJobDeletionRequest {
@@ -3584,6 +3595,7 @@ model ChaExpenseRequest {
   @@index([jobId])
   @@index([orgId, status])
   @@index([requestedById])
+  @@index([orgId, status, createdAt])
 }
 
 model ChaExpenseLine {

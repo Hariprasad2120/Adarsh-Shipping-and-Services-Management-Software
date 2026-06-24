@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Bell, CheckCircle2, Info, OctagonAlert, TriangleAlert, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button-1";
@@ -118,30 +118,39 @@ function NotificationToastCard({
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [localToasts, setLocalToasts] = useState<LocalToast[]>([]);
   const [remoteToasts, setRemoteToasts] = useState<RemoteToast[]>([]);
+  const refreshInFlightRef = useRef(false);
 
-  async function refreshRemoteToasts() {
+  const refreshRemoteToasts = useCallback(async () => {
     if (typeof document !== "undefined" && document.hidden) return;
-    const res = await fetch("/api/notifications/active", { cache: "no-store" });
-    if (!res.ok) return;
-    const data = (await res.json()) as RemoteToast[];
-    setRemoteToasts(data);
+    if (refreshInFlightRef.current) return;
 
-    if (data.length > 0) {
-      const ids = data.map((n) => n.id);
-      await fetch("/api/notifications/presented", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids }),
-      }).catch((err) => console.error("Failed to mark notifications presented", err));
+    refreshInFlightRef.current = true;
+    try {
+      const res = await fetch("/api/notifications/active", { cache: "no-store" });
+      if (!res.ok) return;
+      const data = (await res.json()) as RemoteToast[];
+      setRemoteToasts(data);
+
+      if (data.length > 0) {
+        const ids = data.map((n) => n.id);
+        await fetch("/api/notifications/presented", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids }),
+        }).catch((err) => console.error("Failed to mark notifications presented", err));
+      }
+    } finally {
+      refreshInFlightRef.current = false;
     }
-  }
+  }, []);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       void refreshRemoteToasts();
-    }, 0);
+    }, 1800);
 
     const handleVisibilityChange = () => {
       if (typeof document !== "undefined" && !document.hidden) {
@@ -161,7 +170,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         document.removeEventListener("visibilitychange", handleVisibilityChange);
       }
     };
-  }, []);
+  }, [pathname, refreshRemoteToasts]);
 
   useEffect(() => {
     const timers = localToasts
@@ -194,7 +203,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   async function postAction(url: string) {
     await fetch(url, { method: "POST" });
     await refreshRemoteToasts();
-    router.refresh();
   }
 
   const contextValue = useMemo<NotificationContextValue>(

@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { revalidateTag, unstable_cache } from "next/cache";
 import {
   TOGGLEABLE_MODULE_SECTION_IDS,
   type ToggleableModuleSectionId,
@@ -8,6 +9,7 @@ export const MODULE_SETTINGS_KEY_PREFIX = "org";
 export const ENABLED_MODULES_SETTINGS_SUFFIX = "enabled_modules";
 
 const TOGGLEABLE_MODULE_SET = new Set<string>(TOGGLEABLE_MODULE_SECTION_IDS);
+const ENABLED_MODULES_CACHE_TAG = "org:enabled-modules";
 
 function getEnabledModulesSettingKey(orgId: string) {
   return `${MODULE_SETTINGS_KEY_PREFIX}:${orgId}:${ENABLED_MODULES_SETTINGS_SUFFIX}`;
@@ -31,7 +33,27 @@ function parseStoredEnabledModules(value: string | null | undefined): Toggleable
   }
 }
 
+const getCachedEnabledModuleIds = unstable_cache(
+  async (orgId: string): Promise<ToggleableModuleSectionId[]> => {
+    const row = await db.systemSetting.findUnique({
+      where: { key: getEnabledModulesSettingKey(orgId) },
+      select: { value: true },
+    });
+
+    return parseStoredEnabledModules(row?.value);
+  },
+  ["org:enabled-modules"],
+  {
+    tags: [ENABLED_MODULES_CACHE_TAG],
+    revalidate: 300,
+  },
+);
+
 export async function getEnabledModuleIds(orgId: string): Promise<ToggleableModuleSectionId[]> {
+  return getCachedEnabledModuleIds(orgId);
+}
+
+export async function getFreshEnabledModuleIds(orgId: string): Promise<ToggleableModuleSectionId[]> {
   const row = await db.systemSetting.findUnique({
     where: { key: getEnabledModulesSettingKey(orgId) },
     select: { value: true },
@@ -55,6 +77,7 @@ export async function setEnabledModuleIds(
     },
   });
 
+  revalidateTag(ENABLED_MODULES_CACHE_TAG, "max");
   return parseStoredEnabledModules(row.value);
 }
 

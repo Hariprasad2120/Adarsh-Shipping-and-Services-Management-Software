@@ -1,10 +1,25 @@
 import { db } from "@/lib/db";
 import { cache } from "react";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { timeBlock } from "./performance";
 
 export type Caps = Record<string, boolean>;
+
+const RBAC_PERMISSIONS_TAG = "rbac:user-permissions";
+
+async function loadPermissionKeysFromDb(userId: string): Promise<string[]> {
+  const rows = await db.$queryRaw<{ key: string }[]>`
+    SELECT DISTINCT p."key"
+    FROM "UserRole" ur
+    INNER JOIN "RolePermission" rp ON rp."roleId" = ur."roleId"
+    INNER JOIN "Permission" p ON p."id" = rp."permissionId"
+    WHERE ur."userId" = ${userId}
+  `;
+
+  return rows.map((row) => row.key);
+}
 
 export class ForbiddenError extends Error {
   constructor(key: string) {
@@ -21,14 +36,39 @@ export function apiError(error: unknown) {
   return NextResponse.json({ ok: false, error: { code: "INTERNAL_ERROR", message: msg } }, { status: 500 });
 }
 
-// Load all permission keys for a user (cached per request via React cache)
+const loadCachedPermissionKeys = unstable_cache(
+  loadPermissionKeysFromDb,
+  ["rbac:user-permission-keys"],
+  {
+    tags: [RBAC_PERMISSIONS_TAG],
+    revalidate: 300,
+  },
+);
+
+export function invalidateRbacCache() {
+  try {
+    revalidateTag(RBAC_PERMISSIONS_TAG, "max");
+  } catch (error) {
+    if (!(error instanceof Error && error.message.includes("incrementalCache missing"))) {
+      throw error;
+    }
+  }
+}
+
+// Load all permission keys for a user (cached per request and across requests)
 export const loadUserPermissions = cache(async (userId: string): Promise<Set<string>> => {
   return timeBlock(`rbac:loadUserPermissions`, async () => {
-    const rows = await db.rolePermission.findMany({
-      where: { role: { userRoles: { some: { userId } } } },
-      select: { permission: { select: { key: true } } },
-    });
-    return new Set(rows.map((r) => r.permission.key));
+    let keys: string[];
+    try {
+      keys = await loadCachedPermissionKeys(userId);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("incrementalCache missing")) {
+        keys = await loadPermissionKeysFromDb(userId);
+      } else {
+        throw error;
+      }
+    }
+    return new Set(keys);
   }, 50);
 });
 

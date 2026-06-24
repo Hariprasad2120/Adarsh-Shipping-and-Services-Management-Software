@@ -14,10 +14,12 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     models: AVAILABLE_MODELS,
     current: getPreferredModel(),
   });
+  response.headers.set("Cache-Control", "private, max-age=300, stale-while-revalidate=600");
+  return response;
 }
 
 /** POST — switch model */
