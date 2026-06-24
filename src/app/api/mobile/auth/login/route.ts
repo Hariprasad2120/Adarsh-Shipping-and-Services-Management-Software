@@ -80,8 +80,8 @@ export async function POST(request: Request) {
       availableModules.push("hrms");
     }
 
-    // Validate requested module
-    const selectedModule = module || "crm"; // Default to CRM for backward compatibility
+    // Validate requested module (normalize to lowercase — Android sends UPPERCASE)
+    const selectedModule = (module || "crm").toLowerCase();
     if (!availableModules.includes(selectedModule)) {
       return mobileJson({
         error: `You don't have access to the ${selectedModule.toUpperCase()} module`,
