@@ -22,6 +22,7 @@ import {
   Check,
   X,
   MessageSquare,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
@@ -158,20 +159,16 @@ export function JobWorkspaceClient({
     deleteConfirmJobNumber.trim() === job.jobNumber &&
     deleteConfirmPhrase.trim().toLowerCase() === "delete job";
 
-  // Document version mock upload handler
+  // Document version upload handler
   const handleUploadDoc = async (reqId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setLoading(`doc-${reqId}`);
     try {
-      const mockKey = `cha/docs/${Math.random().toString(36).substring(7)}_${file.name}`;
-      const res = await actions.uploadDocumentVersionAction(job.id, reqId, {
-        fileKey: mockKey,
-        fileName: file.name,
-        mimeType: file.type || "application/octet-stream",
-        sizeBytes: file.size,
-      });
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await actions.uploadDocumentVersionAction(job.id, reqId, formData);
 
       if (res.ok) {
         toast.success(`Uploaded ${file.name} successfully.`);
@@ -1094,7 +1091,20 @@ export function JobWorkspaceClient({
                         <div className="mt-3 bg-surface border border-green-200/50 p-2.5 rounded-lg flex items-center justify-between text-xs">
                           <div className="flex items-center gap-2 truncate">
                             <FileText size={16} className="text-green-600 shrink-0" />
-                            <span className="truncate font-medium">{currentVersion.fileName}</span>
+                            {currentVersion.fileKey.startsWith("http") ? (
+                              <a
+                                href={currentVersion.fileKey}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="truncate font-medium text-[#00cec4] hover:underline flex items-center gap-1"
+                                title="Open in Google Drive"
+                              >
+                                <span className="truncate">{currentVersion.fileName}</span>
+                                <ExternalLink size={12} className="shrink-0" />
+                              </a>
+                            ) : (
+                              <span className="truncate font-medium">{currentVersion.fileName}</span>
+                            )}
                           </div>
                           <div className="flex items-center gap-2 shrink-0 pl-2">
                             <span className="text-[10px] text-on-surface-variant font-mono ds-numeric">

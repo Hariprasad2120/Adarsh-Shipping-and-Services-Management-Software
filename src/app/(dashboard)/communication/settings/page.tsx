@@ -1,7 +1,9 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { CheckCircle2, AlertTriangle, Shield, Settings, Server, RefreshCw } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Shield, Settings, Server, RefreshCw, Bell } from "lucide-react";
+import { NotificationSettings } from "./notification-settings";
+import { GoogleChatLiveViewSettings } from "../google-chat-live-view/_components/google-chat-live-view-settings";
 
 export default async function CommunicationSettings() {
   const session = await auth();
@@ -54,6 +56,16 @@ export default async function CommunicationSettings() {
     const naming = formData.get("jobSpaceNamingTemplate") as string;
     const foldersRaw = formData.get("jobFolderTemplate") as string;
 
+    const extractDriveId = (input: string) => {
+      if (!input) return null;
+      const trimmed = input.trim();
+      const match = trimmed.match(/\/folders\/([a-zA-Z0-9-_]+)/);
+      return match && match[1] ? match[1] : trimmed;
+    };
+
+    const driveIdParsed = extractDriveId(driveId);
+    const rootIdParsed = extractDriveId(rootId);
+
     const folders = foldersRaw
       ? foldersRaw.split("\n").map(f => f.trim()).filter(Boolean)
       : [];
@@ -63,8 +75,8 @@ export default async function CommunicationSettings() {
       data: {
         workspaceDomain: domain || "adarshshipping.in",
         automationUser: automation || "no-reply@adarshshipping.in",
-        sharedDriveId: driveId || null,
-        jobsRootFolderId: rootId || null,
+        sharedDriveId: driveIdParsed,
+        jobsRootFolderId: rootIdParsed,
         jobSpaceNamingTemplate: naming || "JOB-{jobNumber} | {customerName} | {serviceName}",
         jobFolderTemplate: folders
       }
@@ -135,7 +147,7 @@ export default async function CommunicationSettings() {
               </div>
             </div>
 
-            {/* Storage Directories section */}
+             {/* Storage Directories section */}
             <div className="ds-form-section space-y-4 rounded-xl border border-outline-variant bg-surface p-6 shadow-sm">
               <h2 className="ds-h2 text-on-surface flex items-center gap-2">
                 <Server size={18} className="text-[#00cec4]" />
@@ -144,30 +156,30 @@ export default async function CommunicationSettings() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="ds-label block mb-1">Google Shared Drive ID</label>
+                  <label className="ds-label block mb-1">Google Shared Drive ID or URL</label>
                   <input
                     type="text"
                     name="sharedDriveId"
                     defaultValue={settings.sharedDriveId || ""}
                     className="w-full text-xs p-2.5 bg-surface border border-outline-variant rounded-xl focus:outline-none"
-                    placeholder="0AI..."
+                    placeholder="https://drive.google.com/drive/folders/... or ID"
                   />
                   <p className="text-[10px] text-on-surface-variant mt-1">
-                    Shared Drive ID designated for corporate storage.
+                    Google Drive link or Shared Drive ID designated for corporate storage.
                   </p>
                 </div>
 
                 <div>
-                  <label className="ds-label block mb-1">Jobs Root Folder ID</label>
+                  <label className="ds-label block mb-1">Jobs Root Folder ID or URL</label>
                   <input
                     type="text"
                     name="jobsRootFolderId"
                     defaultValue={settings.jobsRootFolderId || ""}
                     className="w-full text-xs p-2.5 bg-surface border border-outline-variant rounded-xl focus:outline-none"
-                    placeholder="1fh..."
+                    placeholder="https://drive.google.com/drive/folders/... or ID"
                   />
                   <p className="text-[10px] text-on-surface-variant mt-1">
-                    Parent folder ID where new Job workspaces will be created.
+                    Google Drive link or Parent folder ID where new Job workspaces will be created.
                   </p>
                 </div>
               </div>
@@ -322,6 +334,12 @@ export default async function CommunicationSettings() {
               </div>
             )}
           </div>
+
+          {/* Chat Notification Preferences */}
+          <NotificationSettings />
+
+          {/* Experimental: Google Chat Live View toggle */}
+          <GoogleChatLiveViewSettings enabled={settings.enableGoogleChatLiveView ?? false} />
         </div>
       </div>
     </main>

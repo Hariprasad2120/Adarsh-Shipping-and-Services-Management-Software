@@ -226,17 +226,28 @@ export async function listJobsAction(filters: {
 export async function uploadDocumentVersionAction(
   jobId: string,
   requirementId: string,
-  fileData: {
-    fileKey: string;
-    fileName: string;
-    mimeType: string;
-    sizeBytes: number;
-    checksum?: string;
-  }
+  formData: FormData
 ): Promise<ActionResponse> {
   try {
     const { userId, orgId } = await getAuthAndVerify("cha.document.upload");
-    const version = await chaService.uploadDocumentVersion(userId, orgId, jobId, requirementId, fileData);
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      return { ok: false, error: "Please choose a valid file to upload." };
+    }
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const fileData = {
+      fileName: file.name,
+      mimeType: file.type || "application/octet-stream",
+      sizeBytes: file.size,
+    };
+    const version = await chaService.uploadDocumentVersion(
+      userId,
+      orgId,
+      jobId,
+      requirementId,
+      fileData,
+      buffer
+    );
     revalidatePath(`/cha/jobs/${jobId}`);
     return { ok: true, data: version };
   } catch (err: any) {

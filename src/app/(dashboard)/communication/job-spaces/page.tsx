@@ -164,7 +164,7 @@ export default async function JobSpacesDashboard() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-xs text-right">
-                        {!isSuccess && (
+                        {(!isSuccess || (isSuccess && !wp?.googleSpaceId)) && (
                           <form action={handleRetryAction}>
                             <input type="hidden" name="jobId" value={job.id} />
                             <button
@@ -172,7 +172,7 @@ export default async function JobSpacesDashboard() {
                               className="inline-flex items-center space-x-1 text-xs text-[#00cec4] hover:underline font-bold uppercase"
                             >
                               <RefreshCw className="size-3" />
-                              <span>Retry</span>
+                              <span>{isSuccess && !wp?.googleSpaceId ? "Provision Chat" : "Retry"}</span>
                             </button>
                           </form>
                         )}

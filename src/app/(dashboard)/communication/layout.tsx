@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getAuthorizationUrl } from "@/lib/workspace-oauth";
 import Link from "next/link";
 import { ArrowRight, Mail, Folder } from "lucide-react";
+import CommunicationNavbar from "./_components/communication-navbar";
 
 export default async function CommunicationLayout({
   children
@@ -105,39 +106,20 @@ export default async function CommunicationLayout({
     );
   }
 
+  // Read the experimental Google Chat Live View toggle (isolated — does not affect Chat tab or any existing feature)
+  const workspaceSettings = session.user.orgId
+    ? await db.googleWorkspaceSetting.findUnique({
+        where: { orgId: session.user.orgId },
+        select: { enableGoogleChatLiveView: true },
+      })
+    : null;
+
+  const showGoogleChatLiveView = workspaceSettings?.enableGoogleChatLiveView ?? false;
+
   // If connected, render the sub-views with standard Monolith shell wrapping layout (if navigation requires headers)
   return (
-    <div className="flex flex-col space-y-6 w-full animate-page-enter">
-      {/* Standard top navbar submenu specifically for Google Workspace components */}
-      <div className="flex items-center space-x-1 border-b border-outline-variant bg-surface px-6 py-2 -mx-6 -mt-8 mb-4">
-        <Link href="/communication" className="px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-on-surface-variant hover:text-[#00cec4] hover:bg-surface-container transition-colors">
-          Workspace Home
-        </Link>
-        <Link href="/communication/mail" className="px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-on-surface-variant hover:text-[#00cec4] hover:bg-surface-container transition-colors">
-          Mail
-        </Link>
-        <Link href="/communication/chat" className="px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-on-surface-variant hover:text-[#00cec4] hover:bg-surface-container transition-colors">
-          Chat
-        </Link>
-        <Link href="/communication/job-spaces" className="px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-on-surface-variant hover:text-[#00cec4] hover:bg-surface-container transition-colors">
-          Job Spaces
-        </Link>
-        <Link href="/communication/meetings" className="px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-on-surface-variant hover:text-[#00cec4] hover:bg-surface-container transition-colors">
-          Meetings
-        </Link>
-        <Link href="/communication/calendar" className="px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-on-surface-variant hover:text-[#00cec4] hover:bg-surface-container transition-colors">
-          Calendar
-        </Link>
-        <Link href="/communication/drive" className="px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-on-surface-variant hover:text-[#00cec4] hover:bg-surface-container transition-colors">
-          Job Drive
-        </Link>
-        <Link href="/communication/search" className="px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-on-surface-variant hover:text-[#00cec4] hover:bg-surface-container transition-colors">
-          Search
-        </Link>
-        <Link href="/communication/settings" className="px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-on-surface-variant hover:text-[#00cec4] hover:bg-surface-container transition-colors">
-          Settings
-        </Link>
-      </div>
+    <div className="flex flex-col w-full animate-page-enter">
+      <CommunicationNavbar showGoogleChatLiveView={showGoogleChatLiveView} />
 
       <div className="flex-1">
         {children}

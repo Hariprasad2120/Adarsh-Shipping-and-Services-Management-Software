@@ -139,6 +139,7 @@ async function main() {
 
     if (candidatePool.length === 0) {
       unmatchedExcel.push(excelUser);
+      console.log(`[NOT FOUND] ${excelUser.fullName}: user not found`);
       continue;
     }
 
@@ -165,7 +166,7 @@ async function main() {
     const employeeRole = employeeRoles.find((role) => role.orgId === user.orgId);
     const addEmployeeRole = !hasAnyRole && Boolean(employeeRole);
 
-    if (user.email === excelUser.email && user.active === toActive && !addEmployeeRole) {
+    if (user.email === excelUser.email && !addEmployeeRole) {
       unchanged.push({ name: user.name, email: user.email });
       continue;
     }
@@ -176,7 +177,7 @@ async function main() {
       fromEmail: user.email,
       toEmail: excelUser.email,
       fromActive: user.active,
-      toActive,
+      toActive: user.active, // Keep active state unchanged
       addEmployeeRole,
     });
   }
@@ -207,9 +208,9 @@ async function main() {
         where: { id: update.id },
         data: {
           email: update.toEmail,
-          active: update.toActive,
         },
       });
+      console.log(`[UPDATE] Mapped name "${update.name}" -> Email: "${update.toEmail}"`);
 
       if (update.addEmployeeRole) {
         const user = users.find((item) => item.id === update.id);

@@ -4,6 +4,7 @@ import { createNotification } from "@/modules/notifications/service";
 import * as XLSX from "xlsx";
 import { Prisma } from "@/generated/prisma/client";
 import { can } from "@/lib/rbac";
+import * as driveClient from "@/lib/google-drive-client";
 
 // Ensure settings and defaults are created for the organisation
 export async function ensureSettingsAndDefaults(orgId: string) {
@@ -355,7 +356,7 @@ export async function createJob(
   // Trigger Google Workspace background provisioning
   if (process.env.NODE_ENV !== "test") {
     const { provisionJobWorkspace } = await import("@/lib/workspace-provisioning");
-    provisionJobWorkspace(result.job.id).catch((err: any) => {
+    provisionJobWorkspace(result.job.id, false, actorId).catch((err: any) => {
       console.error(`Workspace background provisioning failed for job ${result.job.id}:`, err);
     });
   }
@@ -572,6 +573,19 @@ async function advanceToChecklistPreparationIfDocumentGatePassed(jobId: string) 
   return true;
 }
 
+export function getFolderNameForCategory(category: string): string {
+  const normalized = category.toLowerCase().trim();
+  if (normalized.includes("kyc")) return "01 Customer KYC";
+  if (normalized.includes("commercial")) return "02 Job Documents";
+  if (normalized.includes("logistics")) return "02 Job Documents";
+  if (normalized.includes("financial") || normalized.includes("invoice") || normalized.includes("billing")) return "06 Invoices and Billing";
+  if (normalized.includes("compliance") || normalized.includes("customs") || normalized.includes("cha")) return "05 Customs and CHA";
+  if (normalized.includes("checklist")) return "04 Checklists";
+  if (normalized.includes("user")) return "03 User Uploads";
+  if (normalized.includes("correspondence")) return "07 Correspondence";
+  return "08 Other Documents";
+}
+
 // Upload a version for a document requirement
 export async function uploadDocumentVersion(
   actorId: string,
@@ -579,16 +593,57 @@ export async function uploadDocumentVersion(
   jobId: string,
   requirementId: string,
   fileData: {
-    fileKey: string;
+    fileKey?: string;
     fileName: string;
     mimeType: string;
     sizeBytes: number;
     checksum?: string;
-  }
+  },
+  fileBuffer?: Buffer
 ) {
   const req = await db.chaJobDocumentRequirement.findFirstOrThrow({
     where: { id: requirementId, jobId, job: getActiveChaJobWhere(orgId) },
   });
+
+  let fileKey = fileData.fileKey || `cha/docs/${Math.random().toString(36).substring(7)}_${fileData.fileName}`;
+
+  if (fileBuffer) {
+    const profile = await db.jobWorkspaceProfile.findUnique({
+      where: { jobId },
+    });
+
+    let driveFolderId: string | undefined;
+    if (profile && profile.categoryFolders) {
+      const categoryFolders = profile.categoryFolders as Record<string, string>;
+      const targetFolder = getFolderNameForCategory(req.category);
+      driveFolderId = categoryFolders[targetFolder] || profile.rootFolderId || undefined;
+    }
+
+    if (driveFolderId && !driveFolderId.startsWith("mock-") && process.env.GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL) {
+      try {
+        const uploadResult = await driveClient.uploadFile({
+          name: fileData.fileName,
+          mimeType: fileData.mimeType,
+          parentFolderId: driveFolderId,
+          fileBuffer,
+        });
+        fileKey = uploadResult.webViewLink;
+      } catch (err: any) {
+        if (process.env.NODE_ENV === "production") {
+          throw new Error(`Google Drive upload failed: ${err.message || err}`);
+        } else {
+          console.warn("[Upload] Google Drive upload failed. Falling back to mock URL. Error:", err.message || err);
+          fileKey = `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
+        }
+      }
+    } else {
+      if (process.env.NODE_ENV === "production") {
+        throw new Error("Google Drive is not provisioned for this job or missing credentials. Please retry provisioning the workspace.");
+      } else {
+        fileKey = `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
+      }
+    }
+  }
 
   const result = await db.$transaction(async (tx) => {
     // Mark previous current versions as not current
@@ -601,7 +656,7 @@ export async function uploadDocumentVersion(
     const version = await tx.chaDocumentVersion.create({
       data: {
         requirementId,
-        fileKey: fileData.fileKey,
+        fileKey,
         fileName: fileData.fileName,
         mimeType: fileData.mimeType,
         sizeBytes: fileData.sizeBytes,

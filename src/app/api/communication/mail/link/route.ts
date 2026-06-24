@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
 
     if (!profile || profile.provisioningStatus !== "success") {
       try {
-        await provisionJobWorkspace(jobId);
+        await provisionJobWorkspace(jobId, false, session.user.id);
         profile = await db.jobWorkspaceProfile.findUnique({
           where: { jobId }
         });
@@ -65,6 +65,15 @@ export async function POST(req: NextRequest) {
         console.error("[MailLinkAPI] Idempotent workspace provisioning failed:", provErr);
         return NextResponse.json({ error: `Job workspace provisioning failed: ${provErr.message}` }, { status: 500 });
       }
+    }
+
+    // Get a valid access token for file uploads
+    let userAccessToken: string | undefined;
+    try {
+      const { getValidAccessToken } = require("@/lib/workspace-oauth");
+      userAccessToken = await getValidAccessToken(session.user.id);
+    } catch (e) {
+      console.warn("[MailLinkAPI] Could not get user access token:", e);
     }
 
     if (!profile || !profile.rootFolderId) {
@@ -102,7 +111,8 @@ export async function POST(req: NextRequest) {
       name: threadFileName,
       mimeType: "text/markdown",
       parentFolderId: targetFolderId,
-      fileBuffer: Buffer.from(emailContent, "utf-8")
+      fileBuffer: Buffer.from(emailContent, "utf-8"),
+      accessToken: userAccessToken
     });
 
     // 5. Download and upload message attachments if present
@@ -121,7 +131,8 @@ export async function POST(req: NextRequest) {
               name: att.name,
               mimeType: att.mimeType,
               parentFolderId: targetFolderId,
-              fileBuffer
+              fileBuffer,
+              accessToken: userAccessToken
             });
 
             uploadedAttachments.push({

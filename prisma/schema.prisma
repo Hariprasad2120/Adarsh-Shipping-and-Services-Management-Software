@@ -3086,19 +3086,21 @@ model GoogleWorkspaceConnection {
 }
 
 model GoogleWorkspaceSetting {
-  id                     String   @id @default(cuid())
-  orgId                  String   @unique
-  workspaceDomain        String   @default("adarshshipping.in")
-  automationUser         String   @default("no-reply@adarshshipping.in")
-  sharedDriveId          String?
-  jobsRootFolderId       String?
-  jobSpaceNamingTemplate String   @default("JOB-{jobNumber} | {customerName} | {serviceName}")
-  jobFolderTemplate      Json? // Array of subfolders to provision
-  pubSubTopic            String?
-  pubSubSubscription     String?
-  webhookAudience        String?
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                       String   @id @default(cuid())
+  orgId                    String   @unique
+  workspaceDomain          String   @default("adarshshipping.in")
+  automationUser           String   @default("no-reply@adarshshipping.in")
+  sharedDriveId            String?
+  jobsRootFolderId         String?
+  jobSpaceNamingTemplate   String   @default("JOB-{jobNumber} | {customerName} | {serviceName}")
+  jobFolderTemplate        Json? // Array of subfolders to provision
+  pubSubTopic              String?
+  pubSubSubscription       String?
+  webhookAudience          String?
+  // Experimental: Google Chat Live View iframe embed attempt
+  enableGoogleChatLiveView Boolean  @default(false)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
