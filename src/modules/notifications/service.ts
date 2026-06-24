@@ -220,8 +220,6 @@ export async function triggerCrmLeadReminders(userId: string) {
 }
 
 export async function listActiveUserNotifications(userId: string) {
-  await triggerCrmLeadReminders(userId);
-
   const notifications = await db.notification.findMany({
     where: {
       userId,
@@ -235,43 +233,84 @@ export async function listActiveUserNotifications(userId: string) {
     take: 5,
   });
 
-  if (notifications.length > 0) {
-    const ids = notifications.map((notification) => notification.id);
-
-    // Run the time lookup and existing-activity check in parallel rather than
-    // sequentially. Both are independent of each other.
-    const [now, existingDisplayed] = await Promise.all([
-      getNow(),
-      db.notificationActivity.findMany({
-        where: { notificationId: { in: ids }, actorId: userId, event: "DISPLAYED" },
-        select: { notificationId: true },
-      }),
-    ]);
-
-    const displayedIds = new Set(existingDisplayed.map((item) => item.notificationId));
-    const newlyDisplayed = notifications.filter((n) => !displayedIds.has(n.id));
-
-    // Fire the updateMany and all new activity inserts in parallel.
-    await Promise.all([
-      db.notification.updateMany({
-        where: { id: { in: ids }, presentedAt: null },
-        data: { presentedAt: now },
-      }),
-      ...newlyDisplayed.map((n) =>
-        recordNotificationActivity({
-          notificationId: n.id,
-          orgId: n.orgId ?? undefined,
-          actorId: userId,
-          event: "DISPLAYED",
-        })
-      ),
-    ]);
-  }
-
   return notifications.map((notification) => ({
     ...notification,
     policy: getNotificationPolicy(notification.kind),
   }));
+}
+
+export async function markNotificationsPresented(userId: string, notificationIds: string[]) {
+  if (notificationIds.length === 0) return;
+
+  const now = await getNow();
+
+  const notifications = await db.notification.findMany({
+    where: {
+      id: { in: notificationIds },
+      userId,
+      presentedAt: null,
+    },
+    select: { id: true, orgId: true },
+  });
+
+  if (notifications.length === 0) return;
+  const idsToUpdate = notifications.map((n) => n.id);
+
+  await Promise.all([
+    db.notification.updateMany({
+      where: { id: { in: idsToUpdate } },
+      data: { presentedAt: now },
+    }),
+    ...notifications.map((n) =>
+      recordNotificationActivity({
+        notificationId: n.id,
+        orgId: n.orgId ?? undefined,
+        actorId: userId,
+        event: "DISPLAYED",
+      })
+    ),
+  ]);
+}
+
+export async function triggerAllDueCrmLeadReminders() {
+  try {
+    const now = new Date();
+    const dueReminders = await db.crmLeadReminder.findMany({
+      where: {
+        status: "PENDING",
+        alertAt: { lte: now }
+      },
+      include: {
+        lead: true
+      }
+    });
+
+    for (const reminder of dueReminders) {
+      if (reminder.lead && (reminder.lead.status === "NOT_PICKED" || reminder.lead.status === "NOT_REACHABLE")) {
+        const statusLabel = reminder.lead.status === "NOT_PICKED" ? "Not Picked" : "Not Reachable";
+        await createNotification({
+          userId: reminder.userId,
+          orgId: reminder.orgId || undefined,
+          kind: "CRM_LEAD_FOLLOWUP",
+          title: `Lead Follow-up: ${reminder.lead.firstName ? reminder.lead.firstName + " " : ""}${reminder.lead.lastName}`,
+          body: `Lead is marked as ${statusLabel}. Follow-up contact needs to be established.`,
+          link: `/crm/leads/${reminder.leadId}`,
+          priority: "important",
+          requiresAck: true
+        });
+      }
+
+      await db.crmLeadReminder.update({
+        where: { id: reminder.id },
+        data: {
+          status: "TRIGGERED",
+          triggeredAt: now
+        }
+      });
+    }
+  } catch (e) {
+    console.error("[CrmLeadReminder] Failed to trigger global reminders:", e);
+  }
 }
 
 export async function listUserNotifications(userId: string, filters: NotificationFilters = {}) {

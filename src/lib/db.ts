@@ -6,7 +6,8 @@ function createPrismaClient() {
   // On Vercel serverless each function instance creates its own connection.
   // max:1 ensures we never open more connections than the instance needs.
   // For long-running containers (Docker/Railway) increase via DB_POOL_SIZE.
-  const poolSize = process.env.DB_POOL_SIZE ? Number(process.env.DB_POOL_SIZE) : 1;
+  const defaultPoolSize = process.env.NODE_ENV === "production" ? 1 : 5;
+  const poolSize = process.env.DB_POOL_SIZE ? Number(process.env.DB_POOL_SIZE) : defaultPoolSize;
   const adapter = new PrismaPg({
     connectionString: process.env.DATABASE_URL!,
     max: poolSize,

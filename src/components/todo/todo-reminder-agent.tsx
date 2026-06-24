@@ -24,6 +24,7 @@ export function TodoReminderAgent() {
   const [upcomingReminders, setUpcomingReminders] = useState<UpcomingReminder[]>([]);
 
   const refreshUpcoming = useEffectEvent(async () => {
+    if (typeof document !== "undefined" && document.hidden) return;
     const res = await fetch("/api/todos/reminders/upcoming", { cache: "no-store" });
     if (!res.ok) return;
     const data = (await res.json()) as UpcomingReminder[];
@@ -31,6 +32,7 @@ export function TodoReminderAgent() {
   });
 
   const triggerReminders = useEffectEvent(async (taskId?: string) => {
+    if (typeof document !== "undefined" && document.hidden) return;
     const res = await fetch("/api/todos/reminders/check", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -63,14 +65,28 @@ export function TodoReminderAgent() {
       void refreshUpcoming();
     }, 0);
 
+    const handleVisibilityChange = () => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        void triggerReminders();
+        void refreshUpcoming();
+      }
+    };
+
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+    }
+
     const interval = window.setInterval(() => {
       void triggerReminders();
       void refreshUpcoming();
-    }, 30000);
+    }, 60000); // 60 seconds
 
     return () => {
       window.clearTimeout(timeout);
       window.clearInterval(interval);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      }
     };
   }, []);
 

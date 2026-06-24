@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { getOrg } from "@/modules/core/organisation/service";
-import { listUsers } from "@/modules/core/user/service";
+import { listUsersForDashboard } from "@/modules/core/user/service";
 import { getDashboardWidgets, getMe, getTeamReportees } from "@/modules/hrms/service";
 import { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 import { isChaEdition } from "@/lib/app-edition";
@@ -16,17 +16,11 @@ export default async function DashboardPage() {
 
   const [org, users, profileData, dashboardData, reportees] = await Promise.all([
     getOrg(orgId),
-    listUsers(orgId, { active: true }),
+    listUsersForDashboard(orgId, { active: true }),
     getMe(session.user.id),
     getDashboardWidgets(session.user.id, orgId),
     getTeamReportees(session.user.id, orgId),
   ]);
-
-  const safeUsers = users.map((user) => {
-    const { passwordHash, ...safeUser } = user;
-    void passwordHash;
-    return safeUser;
-  });
 
   const initialProfile: UserProfile = {
     ...profileData.user,
@@ -45,7 +39,7 @@ export default async function DashboardPage() {
       }}
       departments={org?.departments ?? []}
       branches={org?.branches ?? []}
-      initialUsers={safeUsers}
+      initialUsers={users}
       initialProfile={initialProfile}
       initialWidgetsData={dashboardData as DashboardWidgetsData}
       initialReportees={reportees}

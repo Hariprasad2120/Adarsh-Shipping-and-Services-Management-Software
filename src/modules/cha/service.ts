@@ -264,9 +264,23 @@ export async function ensureSettingsAndDefaults(orgId: string) {
     }
   }
 
-  await ensureChaShipmentTypes(orgId);
-  await ensureChaBranchNumberingRules(orgId, settings);
-  await ensureDefaultDocumentRequirements(orgId);
+  // Optimized: check in parallel if the dependent defaults exist before calling full setups.
+  const [shipmentTypesCount, numberingRulesCount, branchesCount, docReqCategoriesCount] = await Promise.all([
+    db.chaShipmentType.count({ where: { orgId } }),
+    db.chaBranchNumberingRule.count({ where: { orgId } }),
+    db.branch.count({ where: { orgId } }),
+    db.chaDocumentRequirementCategory.count({ where: { orgId } }),
+  ]);
+
+  if (shipmentTypesCount === 0) {
+    await ensureChaShipmentTypes(orgId);
+  }
+  if (numberingRulesCount < branchesCount) {
+    await ensureChaBranchNumberingRules(orgId, settings);
+  }
+  if (docReqCategoriesCount === 0) {
+    await ensureDefaultDocumentRequirements(orgId);
+  }
 
   return settings;
 }

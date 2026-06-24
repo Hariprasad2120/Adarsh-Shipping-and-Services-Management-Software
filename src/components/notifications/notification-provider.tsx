@@ -122,20 +122,44 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [remoteToasts, setRemoteToasts] = useState<RemoteToast[]>([]);
 
   async function refreshRemoteToasts() {
+    if (typeof document !== "undefined" && document.hidden) return;
     const res = await fetch("/api/notifications/active", { cache: "no-store" });
     if (!res.ok) return;
     const data = (await res.json()) as RemoteToast[];
     setRemoteToasts(data);
+
+    if (data.length > 0) {
+      const ids = data.map((n) => n.id);
+      await fetch("/api/notifications/presented", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      }).catch((err) => console.error("Failed to mark notifications presented", err));
+    }
   }
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       void refreshRemoteToasts();
     }, 0);
-    const interval = setInterval(refreshRemoteToasts, 15000);
+
+    const handleVisibilityChange = () => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        void refreshRemoteToasts();
+      }
+    };
+
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+    }
+
+    const interval = setInterval(refreshRemoteToasts, 30000); // 30 seconds
     return () => {
       window.clearTimeout(timeout);
       clearInterval(interval);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      }
     };
   }, []);
 

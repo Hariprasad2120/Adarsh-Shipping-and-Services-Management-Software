@@ -195,6 +195,8 @@ model RolePermission {
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@id([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
 }
 
 // ─── Users ────────────────────────────────────────────────────────────────────
@@ -386,6 +388,8 @@ model UserRole {
   role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@id([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
 }
 
 // ─── Notifications ────────────────────────────────────────────────────────────
@@ -485,6 +489,7 @@ model TodoTask {
 
   @@index([userId, status, dueDate])
   @@index([userId, reminderEnabled, alertAt])
+  @@index([userId, status, reminderEnabled, alertAt, alertTriggeredAt])
   @@index([orgId, alertAt])
 }
 
@@ -1200,6 +1205,8 @@ model CrmLead {
   @@index([orgId])
   @@index([ownerId])
   @@index([status])
+  @@index([orgId, isConverted])
+  @@index([orgId, createdAt])
 }
 
 model CrmLeadReminder {
@@ -1217,6 +1224,7 @@ model CrmLeadReminder {
   user User    @relation("CrmLeadReminderUser", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, status, alertAt])
+  @@index([status, alertAt])
 }
 
 model CrmContact {
@@ -1382,6 +1390,7 @@ model CrmActivity {
   updatedAt   DateTime @updatedAt
 
   @@index([orgId])
+  @@index([orgId, status])
   @@index([ownerId])
   @@index([relatedToType, relatedToId])
 }
@@ -1501,6 +1510,7 @@ model CrmInvoice {
   approvalLogs CrmApprovalLog[]
 
   @@index([orgId])
+  @@index([orgId, type])
   @@index([ownerId])
   @@index([approvalStatus])
   @@index([approvedById])
@@ -3429,6 +3439,8 @@ model ChaChecklistImport {
   reworkNotes ChaChecklistReworkNote[]
 
   @@index([jobId])
+  @@index([jobId, status])
+  @@index([status])
   @@index([uploadedById])
 }
 
@@ -3503,6 +3515,7 @@ model ChaFiling {
   dateHistory         ChaFilingDateHistory[]
 
   @@index([estimatedFilingDate, status])
+  @@index([status])
 }
 
 model ChaFilingDateHistory {

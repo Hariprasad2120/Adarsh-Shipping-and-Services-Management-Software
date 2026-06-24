@@ -736,21 +736,40 @@ export async function getTeamReportees(userId: string, orgId: string) {
   const now = await getNow();
   const todayStart = toAttendanceDate(now);
 
+  const punches = reportees.length > 0
+    ? await db.attendancePunch.findMany({
+        where: {
+          userId: { in: reportees.map((r) => r.id) },
+          date: todayStart
+        }
+      })
+    : [];
+
+  const punchMap = new Map(punches.map((p) => [p.userId, p]));
+  const punchIds = punches.map((p) => p.id);
+
+  const activeBreaks = punchIds.length > 0
+    ? await db.attendanceBreak.findMany({
+        where: {
+          punchId: { in: punchIds },
+          breakEnd: null
+        }
+      })
+    : [];
+
+  const activeBreakPunchIds = new Set(activeBreaks.map((b) => b.punchId));
+
   const result = [];
   for (const emp of reportees) {
-    const punch = await db.attendancePunch.findUnique({
-      where: { userId_date: { userId: emp.id, date: todayStart } }
-    });
+    const punch = punchMap.get(emp.id);
 
     let punchStatus: "YET_TO_CHECK_IN" | "CHECKED_IN" | "ON_BREAK" | "CHECKED_OUT" = "YET_TO_CHECK_IN";
     if (punch) {
       if (punch.outAt) {
         punchStatus = "CHECKED_OUT";
       } else if (punch.inAt) {
-        const activeBreak = await db.attendanceBreak.findFirst({
-          where: { punchId: punch.id, breakEnd: null }
-        });
-        punchStatus = activeBreak ? "ON_BREAK" : "CHECKED_IN";
+        const hasActiveBreak = activeBreakPunchIds.has(punch.id);
+        punchStatus = hasActiveBreak ? "ON_BREAK" : "CHECKED_IN";
       }
     }
 

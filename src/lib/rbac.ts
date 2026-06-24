@@ -2,6 +2,8 @@ import { db } from "@/lib/db";
 import { cache } from "react";
 import { NextResponse } from "next/server";
 
+import { timeBlock } from "./performance";
+
 export type Caps = Record<string, boolean>;
 
 export class ForbiddenError extends Error {
@@ -21,17 +23,13 @@ export function apiError(error: unknown) {
 
 // Load all permission keys for a user (cached per request via React cache)
 export const loadUserPermissions = cache(async (userId: string): Promise<Set<string>> => {
-  const startedAt = performance.now();
-  try {
+  return timeBlock(`rbac:loadUserPermissions`, async () => {
     const rows = await db.rolePermission.findMany({
       where: { role: { userRoles: { some: { userId } } } },
       select: { permission: { select: { key: true } } },
     });
     return new Set(rows.map((r) => r.permission.key));
-  } finally {
-    const elapsedMs = performance.now() - startedAt;
-    console.debug(`rbac:loadUserPermissions ${elapsedMs.toFixed(1)}ms`);
-  }
+  }, 50);
 });
 
 export async function can(userId: string, permissionKey: string): Promise<boolean> {

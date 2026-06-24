@@ -84,6 +84,7 @@ export async function listUsersForDashboard(orgId: string, filters?: {
       name: true,
       email: true,
       employeeNumber: true,
+      designation: true,
       department: { select: { id: true, name: true } },
       branch: { select: { id: true, name: true } },
     },
