@@ -135,15 +135,22 @@ class CrmRepository(private val context: Context) {
         sharedPreferences.edit().putBoolean("mock_call_mode", enabled).apply()
     }
 
-    suspend fun login(email: String, password: String): Result<LoginResponse> {
+    // -- Active Module --
+    fun getActiveModule(): String = sharedPreferences.getString("active_module", "CRM") ?: "CRM"
+    fun setActiveModule(module: String) {
+        sharedPreferences.edit().putString("active_module", module).apply()
+    }
+
+    suspend fun login(email: String, password: String, module: String = "CRM"): Result<LoginResponse> {
         return try {
-            val response = getApiService().login(LoginRequest(email, password))
+            val response = getApiService().login(LoginRequest(email, password, module))
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
                 setAuthToken(body.token)
                 setUserId(body.user.id)
                 setUserName(body.user.name)
                 setUserEmail(body.user.email)
+                setActiveModule(module)
                 Result.success(body)
             } else {
                 val errorBody = response.errorBody()?.string()
@@ -410,13 +417,13 @@ class CrmRepository(private val context: Context) {
         sharedPreferences.edit().putLong("last_viewed_changelog_version", versionCode).apply()
     }
 
-    // ── Theme preference ──
+    // -- Theme preference --
     fun isDarkTheme(): Boolean = sharedPreferences.getBoolean("dark_theme", true)
     fun setDarkTheme(enabled: Boolean) {
         sharedPreferences.edit().putBoolean("dark_theme", enabled).apply()
     }
 
-    // ── Dismissed update version ──
+    // -- Dismissed update version --
     fun getDismissedUpdateVersion(): Long = sharedPreferences.getLong("dismissed_update_version", 0L)
     fun setDismissedUpdateVersion(versionCode: Long) {
         sharedPreferences.edit().putLong("dismissed_update_version", versionCode).apply()

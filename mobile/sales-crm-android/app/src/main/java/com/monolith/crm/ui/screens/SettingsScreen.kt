@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,13 +30,16 @@ import com.monolith.crm.ui.theme.CyanPrimary
 import com.monolith.crm.ui.theme.DarkBackground
 import com.monolith.crm.ui.theme.DarkSurface
 import com.monolith.crm.ui.theme.OnSurfaceVariant
+import com.monolith.crm.ui.theme.OrangeAlert
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     repository: CrmRepository,
     isDarkTheme: Boolean,
+    selectedModule: String,
     onThemeChanged: (Boolean) -> Unit,
+    onModuleSwitch: (String) -> Unit,
     onCheckUpdate: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -100,14 +104,58 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // ── App Version ──
+            // -- Module Switcher --
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        val newModule = if (selectedModule == "CRM") "HRMS" else "CRM"
+                        onModuleSwitch(newModule)
+                    }
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.SwapHoriz,
+                            contentDescription = null,
+                            tint = if (selectedModule == "CRM") CyanPrimary else OrangeAlert,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text("ACTIVE MODULE", color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
+                            Text(
+                                "Currently: $selectedModule — Tap to switch",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                    Text(
+                        selectedModule,
+                        color = if (selectedModule == "CRM") CyanPrimary else OrangeAlert,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+            }
+
+            // -- App Version --
             SettingsCard(
                 icon = Icons.Default.Info,
                 title = "APP VERSION",
                 subtitle = "v$currentVersionName (Build $currentVersionCode)"
             )
 
-            // ── Theme Toggle ──
+            // -- Theme Toggle --
             Card(
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -149,7 +197,7 @@ fun SettingsScreen(
                 }
             }
 
-            // ── Check for Update ──
+            // -- Check for Update --
             Card(
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -178,7 +226,7 @@ fun SettingsScreen(
                 }
             }
 
-            // ── Changelog ──
+            // -- Changelog --
             Card(
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -225,7 +273,7 @@ fun SettingsScreen(
                 }
             }
 
-            // ── Server URL ──
+            // -- Server URL --
             Card(
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -253,7 +301,7 @@ fun SettingsScreen(
                 }
             }
 
-            // ── App Info ──
+            // -- App Info --
             Card(
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -272,7 +320,7 @@ fun SettingsScreen(
                         letterSpacing = 1.sp
                     )
                     Text(
-                        "Sales CRM Client",
+                        "Mobile Client",
                         color = CyanPrimary,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,

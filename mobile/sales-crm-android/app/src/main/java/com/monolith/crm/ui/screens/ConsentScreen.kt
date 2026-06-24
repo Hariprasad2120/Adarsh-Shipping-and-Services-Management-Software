@@ -56,7 +56,7 @@ fun ConsentScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Notice regarding corporate call auditing and records synchronization:",
+                    text = "Notice regarding corporate CRM, HRMS, call auditing, biometric data, and location tracking:",
                     color = OrangeAlert,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -66,12 +66,21 @@ fun ConsentScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Monolith Engine CRM Mobile syncs company leads and customer communications to the central Adarsh Shipping databases. " +
+                    text = "Monolith Engine Mobile syncs company leads, HR data, and employee attendance records to the central Adarsh Shipping databases. " +
                             "By tapping 'I AGREE & PROCEED', you explicitly grant permission to the app to:\n\n" +
+                            "CRM MODULE:\n" +
                             "1. Initiate client phone connections through your device's native dialer.\n" +
                             "2. Scan your designated Call Recording storage directory after calling.\n" +
                             "3. Transcribe and sync outbound business call recording audio files automatically to the CRM server for manager review, training audits, and quality control.\n\n" +
-                            "This app only accesses audio recordings inside the folder path you explicitly select.",
+                            "HRMS MODULE:\n" +
+                            "4. Access your device camera to capture face biometric data for attendance check-in/check-out verification.\n" +
+                            "5. Store an encrypted facial descriptor (128-dimension numeric vector) on the company server for identity verification. This is NOT a photograph.\n" +
+                            "6. Access your device GPS to capture your location during check-in, check-out, and throughout working hours.\n" +
+                            "7. Run a background location tracking service during working hours (hourly intervals) and on-duty trips (5-minute intervals). This service cannot be disabled while tracking is active.\n" +
+                            "8. Detect and report mock/fake GPS locations to the administration.\n" +
+                            "9. Send offline alerts to your manager and admin if your device goes offline during active tracking.\n" +
+                            "10. Calculate travel distance and fuel reimbursement based on GPS route data during on-duty trips.\n\n" +
+                            "All data is stored securely with AES-256-GCM encryption and is accessible only to authorized HR administrators and your reporting manager.",
                     color = OnSurfaceVariant,
                     fontSize = 12.sp,
                     lineHeight = 18.sp,
@@ -95,7 +104,7 @@ fun ConsentScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "I have read and accept all of the terms, privacy notices, and corporate call tracking policies.",
+                        text = "I have read and accept all of the terms, privacy notices, corporate call tracking policies, and biometric/location data collection policies.",
                         color = OnSurface,
                         fontSize = 11.sp,
                         lineHeight = 14.sp

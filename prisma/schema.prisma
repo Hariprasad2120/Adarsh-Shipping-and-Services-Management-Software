@@ -324,6 +324,15 @@ model User {
   hrmsAuditLogs            HrmsAuditLog[]                @relation("HrmsAuditLogs")
   hrmsWorkReports          WorkReport[]                  @relation("UserWorkReports")
 
+  // HRMS Mobile Attendance & Tracking
+  mobileDevices              MobileDevice[]              @relation("UserMobileDevices")
+  faceEnrollment             EmployeeFaceEnrollment?     @relation("FaceEnrollment")
+  attendanceSessions         AttendanceSession[]         @relation("AttendanceSessions")
+  locationTrackingSessions   LocationTrackingSession[]   @relation("UserTrackingSessions")
+  trackingAlerts             TrackingAlert[]             @relation("UserTrackingAlerts")
+  fuelReimbursementClaims    FuelReimbursementClaim[]    @relation("UserFuelClaims")
+  agreementAcceptances       UserAgreementAcceptance[]   @relation("UserAgreementAcceptances")
+
   // Accounting Module Relations
   accountingAuditLogs AccountingAuditLog[]
 
@@ -1784,16 +1793,39 @@ model AttendancePermissionRequest {
 }
 
 model OnDutyRequest {
-  id           String   @id @default(cuid())
-  orgId        String
-  userId       String
-  fromDate     DateTime @db.Date
-  toDate       DateTime @db.Date
-  reason       String
-  status       String   @default("PENDING") // PENDING | APPROVED | REJECTED
-  approvedById String?
-  createdAt    DateTime @default(now())
-  user         User     @relation("OnDutyEmployee", fields: [userId], references: [id], onDelete: Cascade)
+  id              String    @id @default(cuid())
+  orgId           String
+  userId          String
+  fromDate        DateTime  @db.Date
+  toDate          DateTime  @db.Date
+  startTime       String?   // "HH:MM" 24h
+  endTime         String?   // "HH:MM" 24h
+  reason          String
+  purpose         String?   // Sales Visit, Client Meeting, Port Visit, Customs Work, etc.
+  clientReference String?   // CRM Lead / CHA Job / Customer reference
+  visitLocation   String?   // Place name
+  visitAddress    String?   // Full address
+  remarks         String?
+  attachmentUrl   String?
+  status          String    @default("PENDING") // DRAFT | PENDING | APPROVED | REJECTED | CANCELLED | ACTIVE | COMPLETED
+  approvedById    String?
+  approvedAt      DateTime?
+  rejectedReason  String?
+  startedAt       DateTime? // When employee tapped "Start On Duty"
+  completedAt     DateTime? // When employee tapped "Finish On Duty"
+  startLocation   Json?     // { lat, lng, accuracy, timestamp }
+  endLocation     Json?     // { lat, lng, accuracy, timestamp }
+  totalDistanceKm Float?    // Calculated from route points
+  routeSummary    Json?     // Array of key waypoints
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user                 User                     @relation("OnDutyEmployee", fields: [userId], references: [id], onDelete: Cascade)
+  trackingSessions     LocationTrackingSession[] @relation("OnDutyTrackingSessions")
+  fuelClaims           FuelReimbursementClaim[]  @relation("OnDutyFuelClaims")
+
+  @@index([orgId, status])
+  @@index([userId, status])
 }
 
 model BiometricDevice {
@@ -4719,4 +4751,230 @@ model GoogleChatLinkToken {
 
   @@index([expiresAt])
   @@index([googleUserId])
+}
+
+// ─── HRMS Mobile Attendance & Tracking ──────────────────────────────────────────
+
+model MobileDevice {
+  id         String    @id @default(cuid())
+  orgId      String
+  userId     String
+  deviceId   String    // Unique device identifier from native app
+  platform   String    @default("android") // android | ios | web
+  model      String?   // e.g. "Samsung Galaxy S24"
+  osVersion  String?
+  appVersion String?
+  pushToken  String?   // FCM / APNs token
+  isActive   Boolean   @default(true)
+  lastSeenAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user User @relation("UserMobileDevices", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId])
+  @@index([orgId])
+  @@index([userId, isActive])
+}
+
+model EmployeeFaceEnrollment {
+  id             String    @id @default(cuid())
+  orgId          String
+  userId         String    @unique
+  enrollmentData Json      // Encrypted face descriptor/embedding data
+  enrollmentHash String    // Hash for integrity verification
+  isActive       Boolean   @default(true)
+  enrolledAt     DateTime  @default(now())
+  enrolledVia    String    @default("mobile") // mobile | web | admin
+  resetById      String?   // Admin who last reset enrollment
+  resetAt        DateTime?
+  auditTrail     Json?     // Array of audit entries
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user User @relation("FaceEnrollment", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+}
+
+model AttendanceSession {
+  id                    String    @id @default(cuid())
+  orgId                 String
+  userId                String
+  date                  DateTime  @db.Date
+  checkInAt             DateTime
+  checkOutAt            DateTime?
+  checkInLocation       Json?     // { lat, lng, accuracy, timestamp, address }
+  checkOutLocation      Json?     // { lat, lng, accuracy, timestamp, address }
+  checkInFaceVerified   Boolean   @default(false)
+  checkOutFaceVerified  Boolean   @default(false)
+  checkInFaceConfidence Float?    // 0.0 to 1.0
+  checkOutFaceConfidence Float?
+  checkInDeviceId       String?
+  checkOutDeviceId      String?
+  checkInSource         String    @default("MOBILE") // MOBILE | BIOMETRIC | WEB | ADMIN
+  checkOutSource        String?
+  checkInIp             String?
+  checkOutIp            String?
+  trackingEnabled       Boolean   @default(false)
+  status                String    @default("ACTIVE") // ACTIVE | CLOSED | AUTO_CLOSED
+  closedReason          String?   // checkout | shift_end | admin_close | auto_close
+  workingMinutes        Int?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user             User                    @relation("AttendanceSessions", fields: [userId], references: [id], onDelete: Cascade)
+  trackingSessions LocationTrackingSession[] @relation("SessionTrackingSessions")
+
+  @@index([orgId, date])
+  @@index([userId, date])
+  @@index([userId, status])
+}
+
+model LocationTrackingSession {
+  id                  String    @id @default(cuid())
+  orgId               String
+  userId              String
+  attendanceSessionId String?
+  onDutyRequestId     String?
+  startedAt           DateTime  @default(now())
+  stoppedAt           DateTime?
+  intervalMinutes     Int       @default(60) // 60 for hourly, 5 for on-duty
+  status              String    @default("ACTIVE") // ACTIVE | PAUSED | STOPPED
+  stopReason          String?   // checkout | shift_end | on_duty_complete | admin_stop | auto_stop
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  user              User               @relation("UserTrackingSessions", fields: [userId], references: [id], onDelete: Cascade)
+  attendanceSession AttendanceSession?  @relation("SessionTrackingSessions", fields: [attendanceSessionId], references: [id], onDelete: SetNull)
+  onDutyRequest     OnDutyRequest?     @relation("OnDutyTrackingSessions", fields: [onDutyRequestId], references: [id], onDelete: SetNull)
+  locationPoints    LocationPoint[]
+  alerts            TrackingAlert[]     @relation("TrackingSessionAlerts")
+
+  @@index([orgId, status])
+  @@index([userId, status])
+}
+
+model LocationPoint {
+  id                String   @id @default(cuid())
+  trackingSessionId String
+  latitude          Float
+  longitude         Float
+  accuracy          Float?   // meters
+  altitude          Float?
+  speed             Float?   // m/s
+  bearing           Float?   // degrees
+  timestamp         DateTime
+  batteryLevel      Float?   // 0-100
+  deviceId          String?
+  networkStatus     String?  // wifi | cellular | offline
+  source            String   @default("HOURLY") // HOURLY | ON_DUTY | CHECK_IN | CHECK_OUT | MANUAL
+  isMocked          Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  trackingSession LocationTrackingSession @relation(fields: [trackingSessionId], references: [id], onDelete: Cascade)
+
+  @@index([trackingSessionId, timestamp])
+  @@index([timestamp])
+}
+
+model TrackingAlert {
+  id                  String    @id @default(cuid())
+  orgId               String
+  userId              String
+  trackingSessionId   String?
+  onDutyRequestId     String?
+  alertType           String    // OFFLINE | GPS_DISABLED | PERMISSION_DENIED | APP_KILLED | LOW_BATTERY | MOCK_DETECTED
+  lastKnownLat        Float?
+  lastKnownLng        Float?
+  lastUpdateAt        DateTime?
+  message             String?
+  resolvedAt          DateTime?
+  notifiedManagerId   String?
+  notifiedAdminId     String?
+  createdAt           DateTime  @default(now())
+
+  user            User                     @relation("UserTrackingAlerts", fields: [userId], references: [id], onDelete: Cascade)
+  trackingSession LocationTrackingSession? @relation("TrackingSessionAlerts", fields: [trackingSessionId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, alertType])
+  @@index([userId, resolvedAt])
+}
+
+model FuelReimbursementPolicy {
+  id            String    @id @default(cuid())
+  orgId         String
+  ratePerKm     Float     @default(3.75) // ₹3.75/km default
+  currency      String    @default("INR")
+  effectiveFrom DateTime  @default(now())
+  effectiveTo   DateTime?
+  isActive      Boolean   @default(true)
+  createdById   String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([orgId, isActive])
+}
+
+model FuelReimbursementClaim {
+  id              String    @id @default(cuid())
+  orgId           String
+  userId          String
+  onDutyRequestId String
+  distanceKm      Float
+  ratePerKm       Float     // Snapshot of rate at time of claim
+  amount          Float     // distanceKm × ratePerKm
+  status          String    @default("PENDING") // PENDING | APPROVED | REJECTED | PAID
+  approvedById    String?
+  approvedAt      DateTime?
+  rejectedReason  String?
+  paidAt          DateTime?
+  paidById        String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user          User          @relation("UserFuelClaims", fields: [userId], references: [id], onDelete: Cascade)
+  onDutyRequest OnDutyRequest @relation("OnDutyFuelClaims", fields: [onDutyRequestId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, status])
+  @@index([userId, status])
+}
+
+// ─── User Agreement / Consent ───────────────────────────────────────────────────
+
+model UserAgreementVersion {
+  id            String   @id @default(cuid())
+  orgId         String
+  version       Int
+  title         String
+  content       String   // Full legal text
+  contentHash   String   // SHA-256 of content for integrity
+  effectiveFrom DateTime @default(now())
+  isActive      Boolean  @default(true)
+  createdById   String
+  createdAt     DateTime @default(now())
+
+  acceptances UserAgreementAcceptance[]
+
+  @@unique([orgId, version])
+  @@index([orgId, isActive])
+}
+
+model UserAgreementAcceptance {
+  id                 String   @id @default(cuid())
+  orgId              String
+  userId             String
+  agreementVersionId String
+  acceptedAt         DateTime @default(now())
+  ipAddress          String?
+  deviceId           String?
+  userAgent          String?
+  createdAt          DateTime @default(now())
+
+  user             User                 @relation("UserAgreementAcceptances", fields: [userId], references: [id], onDelete: Cascade)
+  agreementVersion UserAgreementVersion @relation(fields: [agreementVersionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, agreementVersionId])
+  @@index([orgId])
 }

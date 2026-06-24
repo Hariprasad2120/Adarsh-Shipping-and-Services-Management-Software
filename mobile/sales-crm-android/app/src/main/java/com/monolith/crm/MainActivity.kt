@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import com.monolith.crm.data.remote.LeadMetadata
+import com.monolith.crm.hrms.ui.screens.*
+import com.monolith.crm.hrms.ui.viewmodel.*
 import com.monolith.crm.ui.components.AppLogger
 import com.monolith.crm.ui.components.DebugLogOverlay
 import com.monolith.crm.ui.screens.*
@@ -44,6 +46,14 @@ class MainActivity : ComponentActivity() {
     private val callTrackingViewModel: CallTrackingViewModel by viewModels { CallTrackingViewModelFactory(repository) }
     private val monaViewModel: MonaViewModel by viewModels { MonaViewModelFactory(repository) }
 
+    // HRMS ViewModels (lazily initialized after app starts)
+    private val hrmsViewModel: HrmsViewModel by viewModels {
+        HrmsViewModelFactory(app.hrmsRepository, applicationContext)
+    }
+    private val onDutyViewModel: OnDutyViewModel by viewModels {
+        OnDutyViewModelFactory(app.hrmsRepository, applicationContext)
+    }
+
     // Version details
     private var currentVersionCode: Long = 1L
 
@@ -54,6 +64,9 @@ class MainActivity : ComponentActivity() {
 
     // Theme state
     private var isDarkTheme by mutableStateOf(true)
+
+    // Module state
+    private var selectedModule by mutableStateOf("CRM")
 
     // Permission request launcher
     private val requestPermissionsLauncher = registerForActivityResult(
@@ -66,9 +79,11 @@ class MainActivity : ComponentActivity() {
         } else {
             permissions[android.Manifest.permission.READ_EXTERNAL_STORAGE] ?: false
         }
+        val cameraGranted = permissions[android.Manifest.permission.CAMERA] ?: false
+        val locationGranted = permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] ?: false
         AppLogger.info(
             "Permissions",
-            "Result: call=$callGranted, notifications=$notificationsGranted, audio=$audioGranted"
+            "Result: call=$callGranted, notifications=$notificationsGranted, audio=$audioGranted, camera=$cameraGranted, location=$locationGranted"
         )
     }
 
@@ -95,13 +110,18 @@ class MainActivity : ComponentActivity() {
         // Refresh AuthViewModel's state to match
         authViewModel.hasConsent = repository.hasConsent()
 
-        // Load theme preference
+        // Load theme and module preference
         isDarkTheme = repository.isDarkTheme()
+        selectedModule = repository.getActiveModule()
 
         // Try auto-login if consent was just reset but we have valid credentials
         if (authViewModel.hasConsent && !authViewModel.isLoggedIn) {
             authViewModel.tryAutoLogin {
-                leadsViewModel.fetchLeads()
+                if (selectedModule == "CRM") {
+                    leadsViewModel.fetchLeads()
+                } else {
+                    hrmsViewModel.loadDashboard()
+                }
             }
         }
 
@@ -240,6 +260,17 @@ class MainActivity : ComponentActivity() {
         repository.setDarkTheme(dark)
     }
 
+    private fun switchModule(module: String) {
+        selectedModule = module
+        repository.setActiveModule(module)
+        AppLogger.info("Module", "Switched to $module")
+        if (module == "HRMS") {
+            hrmsViewModel.loadDashboard()
+        } else {
+            leadsViewModel.fetchLeads()
+        }
+    }
+
     private fun downloadAndInstallApk(url: String) {
         isGlobalLoading = true
         loadingText = "Downloading update..."
@@ -319,6 +350,9 @@ class MainActivity : ComponentActivity() {
         var activeLeadForDetail by remember { mutableStateOf<LeadMetadata?>(null) }
         var activeLeadForOutcome by remember { mutableStateOf<LeadMetadata?>(null) }
 
+        // HRMS screen state
+        var currentHrmsScreen by remember { mutableStateOf<HrmsScreen>(HrmsScreen.Dashboard) }
+
         // Trigger automatic update check when logged in
         LaunchedEffect(authViewModel.isLoggedIn) {
             if (authViewModel.isLoggedIn) {
@@ -332,7 +366,10 @@ class MainActivity : ComponentActivity() {
                     onAccept = {
                         val neededPermissions = mutableListOf(
                             android.Manifest.permission.CALL_PHONE,
-                            android.Manifest.permission.POST_NOTIFICATIONS
+                            android.Manifest.permission.POST_NOTIFICATIONS,
+                            android.Manifest.permission.CAMERA,
+                            android.Manifest.permission.ACCESS_FINE_LOCATION,
+                            android.Manifest.permission.ACCESS_COARSE_LOCATION
                         )
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
                             neededPermissions.add(android.Manifest.permission.READ_MEDIA_AUDIO)
@@ -347,7 +384,11 @@ class MainActivity : ComponentActivity() {
                             repository.recordConsentAccepted(currentVersionCode)
                             // After consent, try auto-login so user doesn't need to re-enter credentials
                             authViewModel.tryAutoLogin {
-                                leadsViewModel.fetchLeads()
+                                if (selectedModule == "CRM") {
+                                    leadsViewModel.fetchLeads()
+                                } else {
+                                    hrmsViewModel.loadDashboard()
+                                }
                             }
                         }
                     },
@@ -357,20 +398,114 @@ class MainActivity : ComponentActivity() {
             !authViewModel.isLoggedIn -> {
                 LoginScreen(
                     viewModel = authViewModel,
+                    selectedModule = selectedModule,
+                    onModuleChanged = { module ->
+                        selectedModule = module
+                        repository.setActiveModule(module)
+                    },
                     onLoginSuccess = {
-                        isGlobalLoading = true
-                        loadingText = "Loading lead statistics..."
-                        leadsViewModel.fetchLeads()
-                        isGlobalLoading = false
+                        if (selectedModule == "CRM") {
+                            isGlobalLoading = true
+                            loadingText = "Loading lead statistics..."
+                            leadsViewModel.fetchLeads()
+                            isGlobalLoading = false
+                        } else {
+                            isGlobalLoading = true
+                            loadingText = "Loading HRMS dashboard..."
+                            hrmsViewModel.loadDashboard()
+                            isGlobalLoading = false
+                        }
                     }
                 )
             }
-            !authViewModel.hasFolderSetup -> {
+            // CRM: Folder setup (only for CRM module)
+            selectedModule == "CRM" && !authViewModel.hasFolderSetup -> {
                 FolderSetupScreen(
                     viewModel = authViewModel,
                     onSetupCompleted = { callTrackingViewModel.checkActiveCall() }
                 )
             }
+            // --- HRMS MODULE ---
+            selectedModule == "HRMS" -> {
+                when (currentHrmsScreen) {
+                    HrmsScreen.Dashboard -> {
+                        HrmsDashboardScreen(
+                            viewModel = hrmsViewModel,
+                            onNavigate = { screen -> currentHrmsScreen = screen },
+                            onSettingsClicked = { currentScreen = Screen.Settings },
+                            onLogout = {
+                                authViewModel.logout()
+                            }
+                        )
+                    }
+                    HrmsScreen.CheckIn -> {
+                        CheckInOutScreen(
+                            isCheckIn = true,
+                            viewModel = hrmsViewModel,
+                            faceNetModel = app.faceNetModel,
+                            onComplete = {
+                                hrmsViewModel.loadDashboard()
+                                currentHrmsScreen = HrmsScreen.Dashboard
+                            },
+                            onBack = { currentHrmsScreen = HrmsScreen.Dashboard }
+                        )
+                    }
+                    HrmsScreen.CheckOut -> {
+                        CheckInOutScreen(
+                            isCheckIn = false,
+                            viewModel = hrmsViewModel,
+                            faceNetModel = app.faceNetModel,
+                            onComplete = {
+                                hrmsViewModel.loadDashboard()
+                                currentHrmsScreen = HrmsScreen.Dashboard
+                            },
+                            onBack = { currentHrmsScreen = HrmsScreen.Dashboard }
+                        )
+                    }
+                    HrmsScreen.FaceEnroll -> {
+                        FaceEnrollScreen(
+                            repository = app.hrmsRepository,
+                            faceNetModel = app.faceNetModel,
+                            onComplete = {
+                                hrmsViewModel.loadDashboard()
+                                currentHrmsScreen = HrmsScreen.Dashboard
+                            },
+                            onBack = { currentHrmsScreen = HrmsScreen.Dashboard }
+                        )
+                    }
+                    HrmsScreen.OnDuty -> {
+                        OnDutyScreen(
+                            viewModel = onDutyViewModel,
+                            onBack = { currentHrmsScreen = HrmsScreen.Dashboard }
+                        )
+                    }
+                    HrmsScreen.History -> {
+                        AttendanceHistoryScreen(
+                            viewModel = hrmsViewModel,
+                            onBack = { currentHrmsScreen = HrmsScreen.Dashboard }
+                        )
+                    }
+                    HrmsScreen.Settings -> {
+                        // Handled by shared settings below
+                        currentScreen = Screen.Settings
+                        currentHrmsScreen = HrmsScreen.Dashboard
+                    }
+                }
+
+                // Show Settings overlay when requested from HRMS
+                if (currentScreen == Screen.Settings) {
+                    SettingsScreen(
+                        repository = repository,
+                        isDarkTheme = isDarkTheme,
+                        selectedModule = selectedModule,
+                        onThemeChanged = { dark -> toggleTheme(dark) },
+                        onModuleSwitch = { module -> switchModule(module) },
+                        onCheckUpdate = { checkForUpdates(forceShow = true) },
+                        onBack = { currentScreen = Screen.Dashboard }
+                    )
+                }
+            }
+            // --- CRM MODULE ---
             // Post-call outcome screen (after call completes)
             currentScreen is Screen.PostCallOutcome && activeLeadForOutcome != null -> {
                 PostCallOutcomeScreen(
@@ -462,7 +597,9 @@ class MainActivity : ComponentActivity() {
                         SettingsScreen(
                             repository = repository,
                             isDarkTheme = isDarkTheme,
+                            selectedModule = selectedModule,
                             onThemeChanged = { dark -> toggleTheme(dark) },
+                            onModuleSwitch = { module -> switchModule(module) },
                             onCheckUpdate = { checkForUpdates(forceShow = true) },
                             onBack = {
                                 currentScreen = Screen.Dashboard

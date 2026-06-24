@@ -44,13 +44,13 @@ class AuthViewModel(private val repository: CrmRepository) : ViewModel() {
                 email = savedEmail
                 password = savedPassword
                 AppLogger.info("Auth", "Attempting auto-login with saved credentials")
-                login(onSuccess)
+                login(onSuccess = onSuccess)
                 return
             }
         }
     }
 
-    fun login(onSuccess: () -> Unit) {
+    fun login(module: String = "CRM", onSuccess: () -> Unit) {
         errorMessage = null
         if (email.isBlank() || password.isBlank()) {
             errorMessage = "Please enter email and password"
@@ -61,15 +61,15 @@ class AuthViewModel(private val repository: CrmRepository) : ViewModel() {
         isLoading = true
 
         val currentBaseUrl = repository.getBaseUrl()
-        AppLogger.info("Auth", "Login attempt → $currentBaseUrl", "Email: $email")
+        AppLogger.info("Auth", "Login attempt → $currentBaseUrl", "Email: $email, Module: $module")
 
         viewModelScope.launch {
-            val result = repository.login(email, password)
+            val result = repository.login(email, password, module)
             isLoading = false
             if (result.isSuccess) {
                 isLoggedIn = true
                 repository.saveRememberedCredentials(email, password, rememberMe)
-                AppLogger.info("Auth", "Login successful", "User: ${result.getOrNull()?.user?.name}")
+                AppLogger.info("Auth", "Login successful", "User: ${result.getOrNull()?.user?.name}, Module: $module")
                 onSuccess()
             } else {
                 val error = result.exceptionOrNull()

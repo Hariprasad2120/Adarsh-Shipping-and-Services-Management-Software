@@ -7,7 +7,7 @@ import retrofit2.http.*
 
 interface CrmApiService {
 
-    @POST("api/mobile/crm/auth/login")
+    @POST("api/mobile/auth/login")
     suspend fun login(
         @Body request: LoginRequest
     ): Response<LoginResponse>

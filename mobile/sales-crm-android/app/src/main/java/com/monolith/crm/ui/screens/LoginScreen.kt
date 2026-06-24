@@ -1,9 +1,13 @@
 package com.monolith.crm.ui.screens
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -11,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -23,6 +28,7 @@ import com.monolith.crm.ui.theme.DarkBackground
 import com.monolith.crm.ui.theme.DarkSurface
 import com.monolith.crm.ui.theme.OnSurfaceVariant
 import com.monolith.crm.ui.theme.OutlineColor
+import com.monolith.crm.ui.theme.OrangeAlert
 import com.monolith.crm.ui.viewmodel.AuthViewModel
 import kotlin.math.cos
 import kotlin.math.sin
@@ -31,6 +37,8 @@ import kotlin.math.PI
 @Composable
 fun LoginScreen(
     viewModel: AuthViewModel,
+    selectedModule: String,
+    onModuleChanged: (String) -> Unit,
     onLoginSuccess: () -> Unit
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
@@ -59,20 +67,57 @@ fun LoginScreen(
                 )
 
                 Text(
-                    text = "MONOLITH ENGINE CRM",
+                    text = "MONOLITH ENGINE",
                     color = Color.White,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = "SALES FORCE CLIENT",
+                    text = "MOBILE CLIENT",
                     color = CyanPrimary,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 2.dp)
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // ── Module Selector ──
+                Text(
+                    "SELECT MODULE",
+                    color = OnSurfaceVariant,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(DarkBackground)
+                        .padding(3.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    ModuleTab(
+                        label = "CRM",
+                        isSelected = selectedModule == "CRM",
+                        color = CyanPrimary,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onModuleChanged("CRM") }
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    ModuleTab(
+                        label = "HRMS",
+                        isSelected = selectedModule == "HRMS",
+                        color = OrangeAlert,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onModuleChanged("HRMS") }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 OutlinedTextField(
                     value = viewModel.email,
@@ -81,7 +126,7 @@ fun LoginScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
-                        focusedBorderColor = CyanPrimary,
+                        focusedBorderColor = if (selectedModule == "CRM") CyanPrimary else OrangeAlert,
                         unfocusedBorderColor = OutlineColor
                     ),
                     singleLine = true,
@@ -107,7 +152,7 @@ fun LoginScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
-                        focusedBorderColor = CyanPrimary,
+                        focusedBorderColor = if (selectedModule == "CRM") CyanPrimary else OrangeAlert,
                         unfocusedBorderColor = OutlineColor
                     ),
                     singleLine = true,
@@ -125,7 +170,7 @@ fun LoginScreen(
                         checked = viewModel.rememberMe,
                         onCheckedChange = { viewModel.rememberMe = it },
                         colors = CheckboxDefaults.colors(
-                            checkedColor = CyanPrimary,
+                            checkedColor = if (selectedModule == "CRM") CyanPrimary else OrangeAlert,
                             uncheckedColor = OnSurfaceVariant,
                             checkmarkColor = DarkBackground
                         )
@@ -146,18 +191,61 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 if (viewModel.isLoading) {
-                    CircularProgressIndicator(color = CyanPrimary)
+                    CircularProgressIndicator(
+                        color = if (selectedModule == "CRM") CyanPrimary else OrangeAlert
+                    )
                 } else {
                     Button(
-                        onClick = { viewModel.login(onLoginSuccess) },
-                        colors = ButtonDefaults.buttonColors(containerColor = CyanPrimary),
+                        onClick = { viewModel.login(selectedModule, onLoginSuccess) },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (selectedModule == "CRM") CyanPrimary else OrangeAlert
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("LOGIN TO WORKSPACE", color = DarkBackground, fontWeight = FontWeight.Bold)
+                        Text(
+                            "LOGIN TO ${selectedModule}",
+                            color = DarkBackground,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ModuleTab(
+    label: String,
+    isSelected: Boolean,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val bgColor by animateColorAsState(
+        if (isSelected) color else Color.Transparent,
+        label = "tab_bg"
+    )
+    val textColor by animateColorAsState(
+        if (isSelected) DarkBackground else OnSurfaceVariant,
+        label = "tab_text"
+    )
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(bgColor)
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            label,
+            color = textColor,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Black,
+            letterSpacing = 1.sp
+        )
     }
 }
 
