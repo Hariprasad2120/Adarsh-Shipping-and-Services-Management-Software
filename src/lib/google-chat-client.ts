@@ -1,4 +1,6 @@
 import { createSign } from "crypto";
+import { getValidAccessToken } from "./workspace-oauth";
+import { db } from "@/lib/db";
 
 const SA_EMAIL = process.env.GOOGLE_CHAT_SA_EMAIL!;
 const PRIVATE_KEY = (process.env.GOOGLE_CHAT_SA_PRIVATE_KEY ?? "").replace(
@@ -6,7 +8,12 @@ const PRIVATE_KEY = (process.env.GOOGLE_CHAT_SA_PRIVATE_KEY ?? "").replace(
   "\n"
 );
 const CHAT_API_BASE = "https://chat.googleapis.com/v1";
-const SCOPES = ["https://www.googleapis.com/auth/chat.bot"];
+const SCOPES = [
+  "https://www.googleapis.com/auth/chat.bot",
+  "https://www.googleapis.com/auth/chat.app.spaces.create",
+  "https://www.googleapis.com/auth/chat.app.spaces",
+  "https://www.googleapis.com/auth/chat.app.memberships"
+];
 const SKIP_VERIFY =
   process.env.GOOGLE_CHAT_SKIP_AUTH_VERIFY === "true";
 
@@ -17,9 +24,6 @@ function base64url(input: string | Buffer): string {
   const buf = typeof input === "string" ? Buffer.from(input) : input;
   return buf.toString("base64url");
 }
-
-// Simple in-memory storage for mock messages in development mode
-const mockMessagesStore: Record<string, ChatMessage[]> = {};
 
 export async function getAccessToken(): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
@@ -122,7 +126,7 @@ export type ChatMessage = {
   text?: string;
   cardsV2?: unknown[];
   thread?: { name?: string; threadKey?: string };
-  sender?: { name: string; displayName: string; type: string };
+  sender?: { name: string; displayName: string; type: string; email?: string };
   createTime?: string;
 };
 
@@ -161,6 +165,15 @@ export type ChatButton = {
   };
 };
 
+// ─── Helper: get a user or service account token ─────────────────────────────
+async function resolveToken(userId?: string): Promise<string> {
+  if (userId) {
+    return getValidAccessToken(userId);
+  }
+  return getAccessToken();
+}
+
+// ─── Send Message ────────────────────────────────────────────────────────────
 export async function sendMessage(params: {
   spaceResourceName: string;
   text?: string;
@@ -168,47 +181,9 @@ export async function sendMessage(params: {
   threadKey?: string;
   threadResourceName?: string;
   messageId?: string;
+  userId?: string;
 }): Promise<ChatMessage> {
-  if (
-    process.env.NODE_ENV === "development" &&
-    (params.spaceResourceName.includes("mock-") || !SA_EMAIL || !PRIVATE_KEY)
-  ) {
-    const newMessage: ChatMessage = {
-      name: `${params.spaceResourceName}/messages/mock-msg-${Date.now()}`,
-      sender: {
-        name: "users/current-user",
-        displayName: "You (Dev)",
-        type: "HUMAN"
-      },
-      text: params.text || "",
-      createTime: new Date().toISOString()
-    };
-
-    if (!mockMessagesStore[params.spaceResourceName]) {
-      mockMessagesStore[params.spaceResourceName] = [];
-    }
-    mockMessagesStore[params.spaceResourceName].push(newMessage);
-
-    // Simulate bot response after a brief delay for realistic interaction
-    setTimeout(() => {
-      if (mockMessagesStore[params.spaceResourceName]) {
-        mockMessagesStore[params.spaceResourceName].push({
-          name: `${params.spaceResourceName}/messages/mock-reply-${Date.now()}`,
-          sender: {
-            name: "users/mock-bot",
-            displayName: "Workspace Bot",
-            type: "BOT"
-          },
-          text: `[Mock Bot] Message received. In development mode, actions are simulated.`,
-          createTime: new Date().toISOString()
-        });
-      }
-    }, 1000);
-
-    return newMessage;
-  }
-
-  const token = await getAccessToken();
+  const token = await resolveToken(params.userId);
 
   const body: Record<string, unknown> = {};
   if (params.text) body.text = params.text;
@@ -245,6 +220,7 @@ export async function sendMessage(params: {
   return res.json() as Promise<ChatMessage>;
 }
 
+// ─── Update Message ──────────────────────────────────────────────────────────
 export async function updateMessage(params: {
   messageName: string;
   text?: string;
@@ -283,6 +259,7 @@ export async function updateMessage(params: {
   return res.json() as Promise<ChatMessage>;
 }
 
+// ─── Get Space ───────────────────────────────────────────────────────────────
 export async function getSpace(
   spaceResourceName: string
 ): Promise<{ name: string; displayName: string; spaceType: string }> {
@@ -300,28 +277,21 @@ export async function getSpace(
   return res.json() as Promise<{ name: string; displayName: string; spaceType: string }>;
 }
 
-export async function createDmWithUser(googleUserResourceName: string): Promise<{
-  name: string;
-  spaceType: string;
-}> {
-  if (
-    process.env.NODE_ENV === "development" &&
-    (!SA_EMAIL || !PRIVATE_KEY || googleUserResourceName.includes("mock"))
-  ) {
-    return {
-      name: `spaces/mock-dm-${googleUserResourceName.replace("users/", "")}`,
-      spaceType: "DIRECT_MESSAGE"
-    };
-  }
+// ─── Create DM ───────────────────────────────────────────────────────────────
+export async function createDmWithUser(
+  googleUserResourceName: string,
+  userId?: string
+): Promise<{ name: string; spaceType: string }> {
+  const token = await resolveToken(userId);
 
-  const token = await getAccessToken();
+  // Try to find existing DM first
+  const findRes = await fetch(
+    `${CHAT_API_BASE}/spaces:findDirectMessage?name=${encodeURIComponent(googleUserResourceName)}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
 
-  const res = await fetch(`${CHAT_API_BASE}/spaces:findDirectMessage?name=${encodeURIComponent(googleUserResourceName)}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (res.ok) {
-    return res.json() as Promise<{ name: string; spaceType: string }>;
+  if (findRes.ok) {
+    return findRes.json() as Promise<{ name: string; spaceType: string }>;
   }
 
   // Create DM if it doesn't exist
@@ -345,10 +315,12 @@ export async function createDmWithUser(googleUserResourceName: string): Promise<
   return createRes.json() as Promise<{ name: string; spaceType: string }>;
 }
 
+// ─── List Memberships ────────────────────────────────────────────────────────
 export async function listMemberships(
-  spaceResourceName: string
-): Promise<{ memberships: { name: string; member?: { name: string; type: string } }[] }> {
-  const token = await getAccessToken();
+  spaceResourceName: string,
+  userId?: string
+): Promise<{ memberships: { name: string; member?: { name: string; displayName?: string; type: string; email?: string }; role?: string }[] }> {
+  const token = await resolveToken(userId);
 
   const res = await fetch(`${CHAT_API_BASE}/${spaceResourceName}/members?pageSize=100`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -359,48 +331,26 @@ export async function listMemberships(
     throw new Error(`Chat API listMemberships failed (${res.status}): ${err}`);
   }
 
-  return res.json() as Promise<{ memberships: { name: string; member?: { name: string; type: string } }[] }>;
+  return res.json() as Promise<{ memberships: { name: string; member?: { name: string; displayName?: string; type: string; email?: string }; role?: string }[] }>;
 }
 
-// List messages in a space
+// ─── List Messages ───────────────────────────────────────────────────────────
 export async function listMessages(
   spaceResourceName: string,
+  userId?: string,
   pageSize = 50
 ): Promise<ChatMessage[]> {
-  if (
-    process.env.NODE_ENV === "development" &&
-    (spaceResourceName.includes("mock-") || !SA_EMAIL || !PRIVATE_KEY)
-  ) {
-    if (!mockMessagesStore[spaceResourceName]) {
-      mockMessagesStore[spaceResourceName] = [
-        {
-          name: `${spaceResourceName}/messages/mock-msg-1`,
-          sender: {
-            name: "users/mock-user-1",
-            displayName: "System Bot",
-            type: "BOT"
-          },
-          text: `🚀 *Job Space Provisioned*\n\nWelcome to the communication space. Drive folder and workspace structure have been initialized.`,
-          createTime: new Date(Date.now() - 3600000).toISOString()
-        },
-        {
-          name: `${spaceResourceName}/messages/mock-msg-2`,
-          sender: {
-            name: "users/mock-user-2",
-            displayName: "Adarsh Operations",
-            type: "HUMAN"
-          },
-          text: "Hi team, I have uploaded the draft Bill of Lading to folder '02 Job Documents'. Please review.",
-          createTime: new Date(Date.now() - 1800000).toISOString()
-        }
-      ];
-    }
-    return mockMessagesStore[spaceResourceName];
-  }
+  const token = await resolveToken(userId);
 
-  const token = await getAccessToken();
+  // orderBy=createTime desc fetches the LATEST messages first.
+  // Without this, the API returns oldest-first, and pageSize=50 would give
+  // the first 50 messages from the space's history (potentially years old).
+  const params = new URLSearchParams({
+    pageSize: String(pageSize),
+    orderBy: "createTime desc",
+  });
 
-  const res = await fetch(`${CHAT_API_BASE}/${spaceResourceName}/messages?pageSize=${pageSize}`, {
+  const res = await fetch(`${CHAT_API_BASE}/${spaceResourceName}/messages?${params}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -410,5 +360,297 @@ export async function listMessages(
   }
 
   const data = (await res.json()) as { messages?: ChatMessage[] };
-  return data.messages || [];
+  const messages = data.messages || [];
+
+  // Reverse to chronological order (oldest first → newest last) for display
+  return messages.reverse();
+}
+
+// ─── List Spaces (all DMs + Spaces the user is a member of) ──────────────────
+export async function listSpaces(
+  userId: string
+): Promise<{ name: string; displayName?: string; spaceType: string }[]> {
+  const token = await getValidAccessToken(userId);
+
+  const dbUser = await db.user.findUnique({
+    where: { id: userId },
+    select: { orgId: true }
+  });
+  const orgId = dbUser?.orgId || "";
+
+  // Fetch the user's own Google User ID for DM name resolution
+  const connection = await db.googleWorkspaceConnection.findUnique({
+    where: { userId },
+    select: { googleUserId: true }
+  });
+  const myGoogleUserId = connection?.googleUserId;
+
+  // Paginate through all spaces from Google Chat API
+  const allApiSpaces: { name: string; displayName?: string; spaceType: string }[] = [];
+  let pageToken: string | undefined;
+
+  do {
+    const url = new URL(`${CHAT_API_BASE}/spaces`);
+    url.searchParams.set("pageSize", "200");
+    if (pageToken) url.searchParams.set("pageToken", pageToken);
+
+    const res = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Chat API listSpaces failed (${res.status}): ${err}`);
+    }
+
+    const data = (await res.json()) as { spaces?: { name: string; displayName?: string; spaceType: string }[]; nextPageToken?: string };
+    if (data.spaces) {
+      allApiSpaces.push(...data.spaces);
+    }
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+
+  // Build email/googleId lookup maps for DM name resolution
+  const allUsers = await db.user.findMany({
+    where: { orgId, active: true },
+    select: { id: true, name: true, email: true }
+  });
+  const emailToUser = new Map<string, { id: string; name: string }>();
+  for (const u of allUsers) {
+    if (u.email && u.name) emailToUser.set(u.email.toLowerCase(), { id: u.id, name: u.name });
+  }
+
+  const connections = await db.googleWorkspaceConnection.findMany({
+    select: { googleUserId: true, googleEmail: true, user: { select: { id: true, name: true, email: true } } }
+  });
+  const googleIdToUser = new Map<string, { id: string; name: string }>();
+  for (const conn of connections) {
+    if (conn.googleUserId && conn.user?.name) {
+      googleIdToUser.set(conn.googleUserId, { id: conn.user.id, name: conn.user.name });
+    }
+    if (conn.googleEmail && conn.user?.name) {
+      emailToUser.set(conn.googleEmail.toLowerCase(), { id: conn.user.id, name: conn.user.name });
+    }
+  }
+
+  // Resolve DM display names — Google Chat API returns org profile name
+  // (e.g. "Adarsh Operations") for all members on the same domain.
+  // We must ALWAYS resolve DM names from our database, never trust the API value.
+  const resolvedSpaces = await Promise.all(
+    allApiSpaces.map(async (space) => {
+      // For DMs, ALWAYS resolve the other member's real name
+      if (space.spaceType === "DIRECT_MESSAGE") {
+        try {
+          const membersData = await listMemberships(space.name, userId);
+          const otherMember = membersData.memberships?.find(
+            (m) => m.member && m.member.name !== `users/${myGoogleUserId}`
+          );
+
+          if (otherMember?.member) {
+            const otherGoogleId = otherMember.member.name?.replace("users/", "");
+            const otherEmail = otherMember.member.email?.toLowerCase();
+            let resolvedName: string | undefined;
+            let resolvedUserId: string | null = null;
+
+            // Priority 1: Match by Google User ID → Monolith User
+            if (otherGoogleId && googleIdToUser.has(otherGoogleId)) {
+              const found = googleIdToUser.get(otherGoogleId)!;
+              resolvedName = found.name;
+              resolvedUserId = found.id;
+            }
+            // Priority 2: Match by email → Monolith User
+            else if (otherEmail && emailToUser.has(otherEmail)) {
+              const found = emailToUser.get(otherEmail)!;
+              resolvedName = found.name;
+              resolvedUserId = found.id;
+            }
+            // Priority 3: Use Google profile name only if it's NOT the org name
+            else if (
+              otherMember.member.displayName &&
+              otherMember.member.displayName !== "Adarsh Operations" &&
+              otherMember.member.displayName !== space.displayName
+            ) {
+              resolvedName = otherMember.member.displayName;
+            }
+            // Priority 4: Use email username as last resort
+            else if (otherEmail) {
+              resolvedName = otherEmail.split("@")[0].replace(/[._]/g, " ")
+                .split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+            }
+
+            if (resolvedName) {
+              // Update cache with the correct name
+              await db.googleChatSpace.upsert({
+                where: { spaceResourceName: space.name },
+                update: {
+                  displayName: resolvedName,
+                  spaceType: "DIRECT_MESSAGE",
+                  linkedRecordType: resolvedUserId ? "User" : null,
+                  linkedRecordId: resolvedUserId || otherGoogleId,
+                  linkStatus: "active",
+                  lastVerifiedAt: new Date()
+                },
+                create: {
+                  orgId,
+                  spaceResourceName: space.name,
+                  displayName: resolvedName,
+                  spaceType: "DIRECT_MESSAGE",
+                  linkedRecordType: resolvedUserId ? "User" : null,
+                  linkedRecordId: resolvedUserId || otherGoogleId,
+                  linkStatus: "active",
+                  lastVerifiedAt: new Date()
+                }
+              });
+
+              return { ...space, displayName: resolvedName };
+            }
+          }
+        } catch (err) {
+          console.warn(`[GoogleChat] Failed to resolve DM name for ${space.name}:`, err);
+          // Fallback: check if we have a cached name that's NOT "Adarsh Operations"
+          const cached = await db.googleChatSpace.findUnique({
+            where: { spaceResourceName: space.name }
+          });
+          if (cached?.displayName && cached.displayName !== "Adarsh Operations") {
+            return { ...space, displayName: cached.displayName };
+          }
+        }
+
+        // If all resolution failed, keep original but never show "Adarsh Operations"
+        if (space.displayName === "Adarsh Operations") {
+          return { ...space, displayName: "Google Chat DM" };
+        }
+      }
+
+      // For non-DM spaces, cache in DB
+      if (space.name && space.spaceType !== "DIRECT_MESSAGE") {
+        await db.googleChatSpace.upsert({
+          where: { spaceResourceName: space.name },
+          update: {
+            displayName: space.displayName || null,
+            spaceType: space.spaceType,
+            linkStatus: "active",
+            lastVerifiedAt: new Date()
+          },
+          create: {
+            orgId,
+            spaceResourceName: space.name,
+            displayName: space.displayName || null,
+            spaceType: space.spaceType,
+            linkStatus: "active",
+            lastVerifiedAt: new Date()
+          }
+        });
+      }
+
+      return space;
+    })
+  );
+
+  return resolvedSpaces;
+}
+
+// ─── Create Space ────────────────────────────────────────────────────────────
+export async function createSpace(params: {
+  displayName: string;
+  spaceType?: string;
+  userId?: string;
+}): Promise<{ name: string; displayName?: string; spaceType: string }> {
+  const token = await resolveToken(params.userId);
+
+  const res = await fetch(`${CHAT_API_BASE}/spaces`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      displayName: params.displayName,
+      spaceType: params.spaceType || "SPACE"
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Chat API createSpace failed (${res.status}): ${err}`);
+  }
+
+  return res.json() as Promise<{ name: string; displayName?: string; spaceType: string }>;
+}
+
+// ─── Create Membership ───────────────────────────────────────────────────────
+export async function createMembership(params: {
+  spaceResourceName: string;
+  googleUserId: string;
+  userId?: string;
+}): Promise<{ name: string; state: string }> {
+  const token = await resolveToken(params.userId);
+
+  const res = await fetch(`${CHAT_API_BASE}/${params.spaceResourceName}/members`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      member: {
+        name: `users/${params.googleUserId}`,
+        type: "HUMAN"
+      }
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Chat API createMembership failed (${res.status}): ${err}`);
+  }
+
+  return res.json() as Promise<{ name: string; state: string }>;
+}
+
+// ─── Delete Membership ───────────────────────────────────────────────────────
+export async function deleteMembership(params: {
+  spaceResourceName: string;
+  memberResourceName: string;
+  userId?: string;
+}): Promise<{ name: string }> {
+  const token = await resolveToken(params.userId);
+
+  const res = await fetch(`${CHAT_API_BASE}/${params.memberResourceName}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Chat API deleteMembership failed (${res.status}): ${err}`);
+  }
+
+  return res.json() as Promise<{ name: string }>;
+}
+
+// ─── Update Space ────────────────────────────────────────────────────────────
+export async function updateSpace(params: {
+  spaceResourceName: string;
+  spaceBody: Record<string, unknown>;
+  updateMask: string;
+  userId?: string;
+}): Promise<{ name: string; displayName?: string; spaceType?: string }> {
+  const token = await resolveToken(params.userId);
+
+  const res = await fetch(`${CHAT_API_BASE}/${params.spaceResourceName}?updateMask=${params.updateMask}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(params.spaceBody)
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Chat API updateSpace failed (${res.status}): ${err}`);
+  }
+
+  return res.json() as Promise<{ name: string; displayName?: string; spaceType?: string }>;
 }

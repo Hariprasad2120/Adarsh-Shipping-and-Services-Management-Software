@@ -1,20 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { db } from "@/lib/db";
 import * as driveClient from "./google-drive-client";
-import { sendMessage } from "./google-chat-client";
-
-// Impersonation access token helper for bot actions
-async function getBotAccessToken(): Promise<string> {
-  // Reuse the getAccessToken logic or fetch service account tokens for chat
-  // Note: google-chat-client.ts handles access token fetch via service account
-  // We can call chat API endpoints by retrieving the access token
-  const clientFile = require("./google-chat-client");
-  // Get token helper from client file by calling getAccessToken (or simulate it)
-  // Let's call the helper to get token
-  return "";
-}
+import { sendMessage, createMembership, getAccessToken } from "./google-chat-client";
+import { getValidAccessToken } from "./workspace-oauth";
 
 // Durable provisioning helper
-export async function provisionJobWorkspace(jobId: string): Promise<void> {
+export async function provisionJobWorkspace(
+  jobId: string,
+  force = false,
+  triggeringUserId?: string
+): Promise<void> {
   const job = await db.chaJob.findUnique({
     where: { id: jobId },
     include: {
@@ -44,8 +39,56 @@ export async function provisionJobWorkspace(jobId: string): Promise<void> {
     });
   }
 
-  if (profile.provisioningStatus === "success") {
+  const isMock = profile && (
+    profile.rootFolderId?.startsWith("mock-") ||
+    profile.googleSpaceId?.startsWith("spaces/mock-")
+  );
+
+  const chatSpaceMissing = !profile.googleSpaceId;
+
+  if (profile.provisioningStatus === "success" && !force && !isMock && !chatSpaceMissing) {
     return;
+  }
+
+  // Retrieve valid access token for the triggering user or primary owner
+  let userAccessToken: string | undefined;
+  const targetTokenUserId = triggeringUserId || job.primaryOwnerId;
+  const hasConnection = await db.googleWorkspaceConnection.findUnique({
+    where: { userId: targetTokenUserId }
+  });
+
+  if (hasConnection && hasConnection.status === "connected") {
+    // Verify write permissions for Google Drive
+    const hasFullDriveScope = hasConnection.scopes.includes("https://www.googleapis.com/auth/drive") || 
+                              hasConnection.scopes.includes("https://www.googleapis.com/auth/drive.file");
+    if (!hasFullDriveScope) {
+      throw new Error("Your connected Google account lacks write permission for Google Drive. Please go to Settings, click 'Reconnect Account', and make sure to check the box for Google Drive access on the sign-in screen.");
+    }
+
+    try {
+      userAccessToken = await getValidAccessToken(targetTokenUserId);
+    } catch (err) {
+      console.warn(`[Provisioning] Failed to get valid access token for user ${targetTokenUserId}:`, err);
+    }
+  }
+
+  if (!userAccessToken && triggeringUserId && triggeringUserId !== job.primaryOwnerId) {
+    const ownerConnection = await db.googleWorkspaceConnection.findUnique({
+      where: { userId: job.primaryOwnerId }
+    });
+    if (ownerConnection && ownerConnection.status === "connected") {
+      const hasFullDriveScope = ownerConnection.scopes.includes("https://www.googleapis.com/auth/drive") || 
+                                ownerConnection.scopes.includes("https://www.googleapis.com/auth/drive.file");
+      if (!hasFullDriveScope) {
+        throw new Error("The job owner's Google account connection lacks write permission for Google Drive. Please reconnect the Google account in Settings.");
+      }
+
+      try {
+        userAccessToken = await getValidAccessToken(job.primaryOwnerId);
+      } catch (err) {
+        console.warn(`[Provisioning] Failed to get valid owner access token:`, err);
+      }
+    }
   }
 
   // Fetch Workspace Settings
@@ -54,25 +97,22 @@ export async function provisionJobWorkspace(jobId: string): Promise<void> {
   });
 
   const jobsRootFolderId = settings?.jobsRootFolderId || process.env.GOOGLE_JOBS_ROOT_FOLDER_ID;
+  const sharedDriveId = settings?.sharedDriveId || process.env.GOOGLE_SHARED_DRIVE_ID;
   const domain = settings?.workspaceDomain || process.env.GOOGLE_WORKSPACE_DOMAIN || "adarshshipping.in";
 
   try {
     // ─── 1. Provision Drive Folders ───
     let rootFolderId = profile.rootFolderId;
-    if (!rootFolderId) {
+    if (!rootFolderId || rootFolderId.startsWith("mock-")) {
       const rootFolderName = `${job.jobNumber} - ${job.customer.name}`;
       try {
         rootFolderId = await driveClient.createFolder({
           name: rootFolderName,
-          parentFolderId: jobsRootFolderId || undefined
+          parentFolderId: jobsRootFolderId || sharedDriveId || undefined,
+          accessToken: userAccessToken
         });
       } catch (err: any) {
-        if (process.env.NODE_ENV === "development" && err.message.includes("credentials for Drive are not configured")) {
-          console.warn("[Provisioning] Google Service Account credentials not set. Using dev mock root folder.");
-          rootFolderId = `mock-root-folder-${job.jobNumber}`;
-        } else {
-          throw err;
-        }
+        throw new Error(`Google Drive folder creation failed for job ${job.jobNumber}: ${err.message}`);
       }
       await db.jobWorkspaceProfile.update({
         where: { id: profile.id },
@@ -92,20 +132,20 @@ export async function provisionJobWorkspace(jobId: string): Promise<void> {
     ];
 
     let categoryFolders = (profile.categoryFolders as Record<string, string>) || {};
+    if (rootFolderId && !rootFolderId.startsWith("mock-") && Object.values(categoryFolders).some(id => id.startsWith("mock-"))) {
+      categoryFolders = {};
+    }
     for (const cat of categories) {
-      if (!categoryFolders[cat]) {
+      if (!categoryFolders[cat] || categoryFolders[cat].startsWith("mock-")) {
         let catFolderId = "";
         try {
           catFolderId = await driveClient.createFolder({
             name: cat,
-            parentFolderId: rootFolderId
+            parentFolderId: rootFolderId,
+            accessToken: userAccessToken
           });
         } catch (err: any) {
-          if (process.env.NODE_ENV === "development" && (err.message.includes("credentials") || err.message.includes("failed"))) {
-            catFolderId = `mock-cat-folder-${cat.replace(/\s+/g, "-")}`;
-          } else {
-            throw err;
-          }
+          throw new Error(`Google Drive subfolder creation failed for "${cat}" in job ${job.jobNumber}: ${err.message}`);
         }
         categoryFolders[cat] = catFolderId;
         
@@ -121,12 +161,13 @@ export async function provisionJobWorkspace(jobId: string): Promise<void> {
     let googleSpaceUrl = profile.googleSpaceUrl;
 
     if (!googleSpaceId) {
-      const spaceDisplayName = `JOB-${job.jobNumber} | ${job.customer.name} | ${job.jobType.name}`;
+      const spaceDisplayName = `JOB-${job.jobNumber} - ${job.customer.name}`;
       
+      // Use bot service account token for space creation
+      // (user OAuth tokens don't get chat.spaces scope — bot tokens have chat.bot which includes it)
       try {
-        const chatClientFile = require("./google-chat-client");
-        const botToken = await chatClientFile.getAccessToken(); // Retrieves bot access token
-
+        const botToken = await getAccessToken();
+        
         const chatRes = await fetch("https://chat.googleapis.com/v1/spaces", {
           method: "POST",
           headers: {
@@ -135,27 +176,22 @@ export async function provisionJobWorkspace(jobId: string): Promise<void> {
           },
           body: JSON.stringify({
             spaceType: "SPACE",
-            displayName: spaceDisplayName
+            displayName: spaceDisplayName,
+            customer: "customers/my_customer"
           })
         });
 
         if (!chatRes.ok) {
           const err = await chatRes.text();
-          throw new Error(`Google Chat Space provisioning failed: ${err}`);
+          throw new Error(`Chat API createSpace failed (${chatRes.status}): ${err}`);
         }
 
-        const chatData = (await chatRes.json()) as { name: string; structuredAdocUri?: string };
+        const chatData = (await chatRes.json()) as { name: string };
         googleSpaceId = chatData.name;
         const cleanSpaceId = googleSpaceId.replace("spaces/", "");
         googleSpaceUrl = `https://chat.google.com/room/${cleanSpaceId}`;
       } catch (err: any) {
-        if (process.env.NODE_ENV === "development" && (err.message.includes("credentials") || err.message.includes("failed"))) {
-          console.warn("[Provisioning] Google Service Account credentials not set. Using dev mock Chat Space.");
-          googleSpaceId = `spaces/mock-space-${job.jobNumber}`;
-          googleSpaceUrl = `https://chat.google.com/room/mock-space-${job.jobNumber}`;
-        } else {
-          throw err;
-        }
+        console.warn(`[Provisioning] Chat Space creation failed for ${job.jobNumber}: ${err.message}`);
       }
 
       await db.jobWorkspaceProfile.update({
@@ -177,27 +213,55 @@ export async function provisionJobWorkspace(jobId: string): Promise<void> {
         }
       }
 
-      if (!googleSpaceId.includes("mock-space")) {
-        for (const googleUserId of employeesToInvite) {
+      // Get the triggering user's Google ID to make them SPACE_MANAGER
+      const triggeringUserConnection = triggeringUserId ? await db.googleWorkspaceConnection.findUnique({
+        where: { userId: triggeringUserId },
+        select: { googleUserId: true }
+      }) : null;
+      const triggeringGoogleUserId = triggeringUserConnection?.googleUserId;
+
+      if (googleSpaceId) {
+        // Use bot token for memberships (requires chat.app.memberships scope)
+        let botTokenForMemberships: string | undefined;
+        try { botTokenForMemberships = await getAccessToken(); } catch {}
+
+        // Helper to add a member with a given role
+        const addMember = async (googleUserId: string, role: "ROLE_MEMBER" | "SPACE_MANAGER") => {
           try {
-            const chatClientFile = require("./google-chat-client");
-            const botToken = await chatClientFile.getAccessToken();
-            await fetch(`https://chat.googleapis.com/v1/${googleSpaceId}/members`, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${botToken}`,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                member: {
-                  name: `users/${googleUserId}`,
-                  type: "HUMAN"
-                }
-              })
-            });
+            if (botTokenForMemberships) {
+              const memberRes = await fetch(`https://chat.googleapis.com/v1/${googleSpaceId}/members`, {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${botTokenForMemberships}`,
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  member: { name: `users/${googleUserId}`, type: "HUMAN" },
+                  role
+                })
+              });
+              if (!memberRes.ok) {
+                const errText = await memberRes.text();
+                console.warn(`[Provisioning] Failed to add user ${googleUserId} (${role}): ${errText}`);
+              } else {
+                console.log(`[Provisioning] Added ${googleUserId} as ${role} to ${googleSpaceId}`);
+              }
+            }
           } catch (memberErr) {
             console.error(`Failed to add user ${googleUserId} to space ${googleSpaceId}:`, memberErr);
           }
+        };
+
+        // 1. Add triggering user as SPACE_MANAGER first
+        if (triggeringGoogleUserId) {
+          await addMember(triggeringGoogleUserId, "SPACE_MANAGER");
+          // Remove from regular members list so they don't get added twice
+          employeesToInvite.delete(triggeringGoogleUserId);
+        }
+
+        // 2. Add remaining members as regular members
+        for (const googleUserId of employeesToInvite) {
+          await addMember(googleUserId, "ROLE_MEMBER");
         }
       }
 
@@ -209,13 +273,11 @@ export async function provisionJobWorkspace(jobId: string): Promise<void> {
         `📂 *Shared Folder:* https://drive.google.com/drive/folders/${rootFolderId}\n` +
         `🔗 *Monolith Job:* ${process.env.NEXTAUTH_URL || "http://localhost:3000"}/cha/jobs/${job.id}`;
 
-      if (!googleSpaceId.includes("mock-space")) {
+      if (googleSpaceId) {
         await sendMessage({
           spaceResourceName: googleSpaceId,
           text: welcomeText
         });
-      } else {
-        console.warn(`[Provisioning] Skipping welcome message for development mock space: ${googleSpaceId}`);
       }
     }
 

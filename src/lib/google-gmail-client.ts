@@ -27,7 +27,9 @@ export type GmailMessage = {
   bodyText: string;
   labelIds: string[];
   attachments?: { id: string; name: string; mimeType: string; size: number }[];
+  listUnsubscribe?: string;
 };
+
 
 export type GmailThreadDetails = {
   id: string;
@@ -103,7 +105,7 @@ export async function listThreads(params: {
   const threads = await Promise.all(
     data.threads.slice(0, 15).map(async (t) => {
       try {
-        const threadRes = await fetch(`${GMAIL_API_BASE}/threads/${t.id}?format=minimal`, {
+        const threadRes = await fetch(`${GMAIL_API_BASE}/threads/${t.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date&metadataHeaders=To`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (!threadRes.ok) return null;
@@ -189,7 +191,8 @@ export async function getThread(userId: string, threadId: string): Promise<Gmail
       bodyHtml: html,
       bodyText: text,
       labelIds: msg.labelIds || [],
-      attachments
+      attachments,
+      listUnsubscribe: headers["list-unsubscribe"]
     };
   });
 
@@ -300,3 +303,53 @@ export async function getAttachment(params: {
   const data = (await res.json()) as { data: string };
   return Buffer.from(data.data, "base64url");
 }
+
+// List user labels
+export async function listLabels(userId: string): Promise<any> {
+  const token = await getValidAccessToken(userId);
+  const res = await fetch(`${GMAIL_API_BASE}/labels`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Gmail listLabels failed: ${err}`);
+  }
+  return res.json();
+}
+
+// Create a new user label
+export async function createLabel(userId: string, name: string): Promise<any> {
+  const token = await getValidAccessToken(userId);
+  const res = await fetch(`${GMAIL_API_BASE}/labels`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name,
+      labelListVisibility: "labelShow",
+      messageListVisibility: "show"
+    })
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Gmail createLabel failed: ${err}`);
+  }
+  return res.json();
+}
+
+// Delete a user label
+export async function deleteLabel(userId: string, labelId: string): Promise<any> {
+  const token = await getValidAccessToken(userId);
+  const res = await fetch(`${GMAIL_API_BASE}/labels/${labelId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Gmail deleteLabel failed: ${err}`);
+  }
+  return true;
+}
+

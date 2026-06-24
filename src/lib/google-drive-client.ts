@@ -1,64 +1,36 @@
-import { createSign } from "crypto";
+import { db } from "@/lib/db";
+import { getValidAccessToken } from "./workspace-oauth";
 
-const SA_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL!;
-const PRIVATE_KEY = (process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY ?? "").replace(/\\n/g, "\n");
-const DELEGATION_USER = process.env.GOOGLE_WORKSPACE_AUTOMATION_USER || "no-reply@adarshshipping.in";
-const SHARED_DRIVE_ID = process.env.GOOGLE_SHARED_DRIVE_ID!;
+const SHARED_DRIVE_ID = process.env.GOOGLE_SHARED_DRIVE_ID || "";
 
-let cachedDriveToken: { token: string; expiresAt: number } | null = null;
-
-// Obtains delegation tokens using Domain-Wide Delegation (DWD)
+/**
+ * Get a valid Drive access token by finding the first connected Google Workspace user
+ * in the org and refreshing their OAuth token. No service account needed.
+ */
 async function getDriveAccessToken(): Promise<string> {
-  const now = Math.floor(Date.now() / 1000);
-  if (cachedDriveToken && cachedDriveToken.expiresAt > now + 60) {
-    return cachedDriveToken.token;
-  }
-
-  if (!SA_EMAIL || !PRIVATE_KEY) {
-    throw new Error("Google service account credentials for Drive are not configured.");
-  }
-
-  const header = { alg: "RS256", typ: "JWT" };
-  const payload = {
-    iss: SA_EMAIL,
-    scope: "https://www.googleapis.com/auth/drive",
-    aud: "https://oauth2.googleapis.com/token",
-    iat: now,
-    exp: now + 3600,
-    sub: DELEGATION_USER
-  };
-
-  const toSign = `${Buffer.from(JSON.stringify(header)).toString("base64url")}.${Buffer.from(JSON.stringify(payload)).toString("base64url")}`;
-  const sign = createSign("RSA-SHA256");
-  sign.update(toSign);
-  const signature = sign.sign(PRIVATE_KEY).toString("base64url");
-  const jwt = `${toSign}.${signature}`;
-
-  const res = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion: jwt
-    })
+  // Find any connected Google Workspace user to act as the Drive API caller
+  const connection = await db.googleWorkspaceConnection.findFirst({
+    where: { status: "connected" },
+    orderBy: { createdAt: "asc" },
+    select: { userId: true }
   });
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Google Drive Service Account DWD failed: ${err}`);
+  if (!connection) {
+    throw new Error(
+      "No connected Google Workspace account found. Please go to Communication > Settings and link a Google account."
+    );
   }
 
-  const data = (await res.json()) as { access_token: string; expires_in: number };
-  cachedDriveToken = { token: data.access_token, expiresAt: now + data.expires_in };
-  return data.access_token;
+  return getValidAccessToken(connection.userId);
 }
 
 // Create a new folder
 export async function createFolder(params: {
   name: string;
   parentFolderId?: string;
+  accessToken?: string;
 }): Promise<string> {
-  const token = await getDriveAccessToken();
+  const token = params.accessToken || (await getDriveAccessToken());
 
   const body: any = {
     name: params.name,
@@ -94,7 +66,10 @@ export async function createFolder(params: {
 }
 
 // List files and folders in a parent folder
-export async function listFiles(parentFolderId: string): Promise<{
+export async function listFiles(
+  parentFolderId: string,
+  accessToken?: string
+): Promise<{
   id: string;
   name: string;
   mimeType: string;
@@ -102,8 +77,8 @@ export async function listFiles(parentFolderId: string): Promise<{
   webViewLink?: string;
 }[]> {
   if (
-    process.env.NODE_ENV === "development" &&
-    (parentFolderId.startsWith("mock-") || !process.env.GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL)
+    !accessToken &&
+    parentFolderId.startsWith("mock-")
   ) {
     return [
       {
@@ -137,7 +112,7 @@ export async function listFiles(parentFolderId: string): Promise<{
     ];
   }
 
-  const token = await getDriveAccessToken();
+  const token = accessToken || (await getDriveAccessToken());
 
   const url = new URL("https://www.googleapis.com/drive/v3/files");
   url.searchParams.set("q", `'${parentFolderId}' in parents and trashed = false`);
@@ -167,8 +142,9 @@ export async function uploadFile(params: {
   mimeType: string;
   parentFolderId: string;
   fileBuffer: Buffer;
+  accessToken?: string;
 }): Promise<{ id: string; webViewLink: string }> {
-  const token = await getDriveAccessToken();
+  const token = params.accessToken || (await getDriveAccessToken());
 
   const boundary = "-------314159265358979323846";
   const delimiter = `\r\n--${boundary}\r\n`;
@@ -216,13 +192,16 @@ export async function uploadFile(params: {
 }
 
 // Search files matching name query in Google Drive
-export async function searchFiles(query: string): Promise<{
+export async function searchFiles(
+  query: string,
+  accessToken?: string
+): Promise<{
   id: string;
   name: string;
   mimeType: string;
   webViewLink?: string;
 }[]> {
-  const token = await getDriveAccessToken();
+  const token = accessToken || (await getDriveAccessToken());
 
   const url = new URL("https://www.googleapis.com/drive/v3/files");
   url.searchParams.set("q", `name contains '${query.replace(/'/g, "\\'")}' and trashed = false`);

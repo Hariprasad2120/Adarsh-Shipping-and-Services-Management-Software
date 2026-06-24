@@ -40,10 +40,38 @@ export function decryptToken(encryptedText: string): string {
 // Generate the authorization URL
 export function getAuthorizationUrl(state: string): string {
   const scopes = [
+    // Gmail — full read/write/send/delete
     "https://www.googleapis.com/auth/gmail.modify",
+    "https://www.googleapis.com/auth/gmail.send",
+    "https://www.googleapis.com/auth/gmail.compose",
+    "https://www.googleapis.com/auth/gmail.labels",
+
+    // Calendar — full read/write/create/delete events
+    "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/calendar.events",
+
+    // Chat — full CRUD for spaces, memberships, messages
+    "https://www.googleapis.com/auth/chat.spaces",
+    "https://www.googleapis.com/auth/chat.spaces.create",
     "https://www.googleapis.com/auth/chat.spaces.readonly",
+    "https://www.googleapis.com/auth/chat.memberships",
+    "https://www.googleapis.com/auth/chat.memberships.readonly",
     "https://www.googleapis.com/auth/chat.messages",
+    "https://www.googleapis.com/auth/chat.messages.create",
+    "https://www.googleapis.com/auth/chat.messages.readonly",
+
+    // Drive — full read/write/create/delete files and folders
+    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/drive.file",
+
+    // Contacts — read directory for people/user lookup
+    "https://www.googleapis.com/auth/contacts.readonly",
+    "https://www.googleapis.com/auth/directory.readonly",
+
+    // Tasks — full read/write
+    "https://www.googleapis.com/auth/tasks",
+
+    // Identity
     "openid",
     "email",
     "profile"
@@ -56,7 +84,9 @@ export function getAuthorizationUrl(state: string): string {
     scope: scopes.join(" "),
     access_type: "offline",
     prompt: "consent",
-    state: state
+    state: state,
+    include_granted_scopes: "true",
+    hd: WORKSPACE_DOMAIN
   });
 
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
