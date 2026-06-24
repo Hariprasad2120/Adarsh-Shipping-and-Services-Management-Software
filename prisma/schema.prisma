@@ -360,6 +360,7 @@ model User {
 
   // CHA Module Relations
   chaJobsOwned                 ChaJob[]                  @relation("ChaJobPrimaryOwner")
+  chaJobsManaged               ChaJob[]                  @relation("ChaJobAssignedManager")
   chaJobsDeleted              ChaJob[]                  @relation("ChaJobDeletedBy")
   chaJobAssignments            ChaJobAssignment[]
   chaJobDeletionRequests       ChaJobDeletionRequest[]   @relation("ChaJobDeletionRequester")
@@ -3268,6 +3269,7 @@ model ChaJob {
   stage                String    @default("DOCUMENT_COLLECTION") // DOCUMENT_COLLECTION | CHECKLIST_PREPARATION | CHECKLIST_APPROVAL | FILING | FILED
   status               String    @default("ACTIVE") // ACTIVE | ON_HOLD | CANCELLED | COMPLETED
   primaryOwnerId       String
+  assignedManagerId    String?
   remarks              String?
   estimatedClosureDate DateTime?
   deletedAt            DateTime?
@@ -3281,6 +3283,7 @@ model ChaJob {
   shipmentType         ChaShipmentType?            @relation(fields: [shipmentTypeId], references: [id])
   branch               Branch                      @relation(fields: [branchId], references: [id])
   primaryOwner         User                        @relation("ChaJobPrimaryOwner", fields: [primaryOwnerId], references: [id])
+  assignedManager      User?                       @relation("ChaJobAssignedManager", fields: [assignedManagerId], references: [id])
   deletedBy            User?                       @relation("ChaJobDeletedBy", fields: [deletedById], references: [id])
   assignments          ChaJobAssignment[]
   deletionRequests     ChaJobDeletionRequest[]
@@ -3300,6 +3303,7 @@ model ChaJob {
   @@index([orgId, jobNumber])
   @@index([shipmentTypeId])
   @@index([primaryOwnerId])
+  @@index([assignedManagerId])
   @@index([deletedById])
   @@index([createdAt])
   @@index([orgId, status, createdAt])

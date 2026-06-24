@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
-import { listJobs, ensureSettingsAndDefaults } from "@/modules/cha/service";
+import { listJobs, ensureSettingsAndDefaults, getEligibleManagers } from "@/modules/cha/service";
 import { JobsClient } from "./jobs-client";
 
 export default async function ChaJobsPage({
@@ -46,12 +46,13 @@ export default async function ChaJobsPage({
   await ensureSettingsAndDefaults(orgId);
 
   // Query options for new job modal & filter UI
-  const [branches, customers, jobTypes, shipmentTypes, users, teamGroups, branchNumberingRules] = await Promise.all([
+  const [branches, customers, jobTypes, shipmentTypes, users, eligibleManagers, teamGroups, branchNumberingRules] = await Promise.all([
     db.branch.findMany({ where: { orgId }, select: { id: true, name: true, code: true } }),
     db.crmAccount.findMany({ where: { orgId, type: "Customer" }, select: { id: true, name: true } }),
     db.chaJobType.findMany({ where: { orgId }, select: { id: true, name: true } }),
     db.chaShipmentType.findMany({ where: { orgId, isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     db.user.findMany({ where: { orgId, active: true }, select: { id: true, name: true, email: true } }),
+    getEligibleManagers(orgId),
     db.chaTeamGroup.findMany({ where: { orgId }, select: { id: true, name: true, memberIds: true } }),
     db.chaBranchNumberingRule.findMany({
       where: { orgId },
@@ -108,6 +109,7 @@ export default async function ChaJobsPage({
         jobTypes,
         shipmentTypes,
         users,
+        managers: eligibleManagers,
         teamGroups,
         branchNumberingRules,
       }}

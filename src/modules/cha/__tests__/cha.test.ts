@@ -196,6 +196,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       shipmentTypeId: (await db.chaShipmentType.findFirstOrThrow({ where: { orgId: org.id, name: "Air" } })).id,
       priority: "LOW",
       primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
       assignments: [],
     });
 
@@ -231,6 +232,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
         branchId: branch.id,
         priority: "MEDIUM",
         primaryOwnerId: ownerUser.id,
+        assignedManagerId: managerUser.id,
         assignments: [],
       })
     ).rejects.toThrow("You are not authorized to create jobs under this organisation's settings.");
@@ -253,6 +255,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       branchId: branch.id,
       priority: "MEDIUM",
       primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
       assignments: [],
     });
 
@@ -281,6 +284,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       branchId: branch.id,
       priority: "HIGH",
       primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
       assignments: [
         { userId: ownerUser.id, responsibility: "OPERATIONS" },
         { userId: managerUser.id, responsibility: "APPROVAL" },
@@ -518,6 +522,61 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       "All checks pass."
     );
 
+    const checklistPendingOwner = await db.chaChecklist.findUniqueOrThrow({ where: { id: checklist.id } });
+    expect(checklistPendingOwner.status).toBe("JOB_OWNER_APPROVAL_PENDING");
+    expect(checklistPendingOwner.currentApprovalStage).toBe("JOB_OWNER");
+
+    // Rejection by owner
+    await chaService.submitChecklistOwnerDecision(
+      ownerUser.id,
+      org.id,
+      job.id,
+      checklist.id,
+      "REJECTED",
+      "Owner rejected because details look incomplete."
+    );
+
+    const checklistOwnerRejected = await db.chaChecklist.findUniqueOrThrow({ where: { id: checklist.id } });
+    expect(checklistOwnerRejected.status).toBe("JOB_OWNER_REJECTED");
+    expect(checklistOwnerRejected.currentApprovalStage).toBe("UPLOAD");
+
+    const jobOwnerRejected = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
+    expect(jobOwnerRejected.stage).toBe("CHECKLIST_PREPARATION");
+
+    // V3 Upload after owner rejection
+    const reuploadResult3 = await chaService.uploadChecklistFile(
+      ownerUser.id,
+      org.id,
+      job.id,
+      {
+        fileKey: "blob:checklist-v3",
+        fileName: "customs-checklist-v3.pdf",
+        mimeType: "application/pdf",
+        sizeBytes: 5120,
+      }
+    );
+    expect(reuploadResult3.fileVersion.versionNumber).toBe(3);
+
+    // V3 Internal approval
+    await chaService.submitChecklistInternalDecision(
+      managerUser.id,
+      org.id,
+      job.id,
+      checklist.id,
+      "APPROVED",
+      "All checks pass again."
+    );
+
+    // V3 Owner approval
+    await chaService.submitChecklistOwnerDecision(
+      ownerUser.id,
+      org.id,
+      job.id,
+      checklist.id,
+      "APPROVED",
+      "Owner approved v3."
+    );
+
     const checklistPendingCustomer = await db.chaChecklist.findUniqueOrThrow({ where: { id: checklist.id } });
     expect(checklistPendingCustomer.status).toBe("CUSTOMER_APPROVAL_PENDING");
 
@@ -679,6 +738,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       branchId: branch.id,
       priority: "MEDIUM",
       primaryOwnerId: managerUser.id,
+      assignedManagerId: managerUser.id,
       assignments: [
         { userId: ownerUser.id, responsibility: "OPERATIONS" },
         { userId: managerUser.id, responsibility: "APPROVAL" },
@@ -764,6 +824,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       branchId: branch.id,
       priority: "LOW",
       primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
       assignments: [
         { userId: ownerUser.id, responsibility: "OPERATIONS" },
         { userId: managerUser.id, responsibility: "APPROVAL" },
@@ -820,7 +881,13 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       branchId: branch.id,
       priority: "MEDIUM",
       primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
       assignments: [{ userId: ownerUser.id, responsibility: "OPERATIONS" }],
+    });
+
+    await db.chaJob.update({
+      where: { id: noManagerJob.id },
+      data: { assignedManagerId: null },
     });
 
     await expect(
@@ -858,7 +925,13 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       branchId: branch.id,
       priority: "MEDIUM",
       primaryOwnerId: managerUser.id,
+      assignedManagerId: managerUser.id,
       assignments: [{ userId: ownerUser.id, responsibility: "OPERATIONS" }],
+    });
+
+    await db.chaJob.update({
+      where: { id: noManagerRequestJob.id },
+      data: { assignedManagerId: null },
     });
 
     await expect(
@@ -877,6 +950,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       branchId: branch.id,
       priority: "MEDIUM",
       primaryOwnerId: managerUser.id,
+      assignedManagerId: managerUser.id,
       assignments: [
         { userId: ownerUser.id, responsibility: "OPERATIONS" },
         { userId: managerUser.id, responsibility: "APPROVAL" },

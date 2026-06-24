@@ -39,6 +39,7 @@ interface CreateJobDialogProps {
     jobTypes: { id: string; name: string }[];
     shipmentTypes: { id: string; name: string }[];
     users: { id: string; name: string; email: string }[];
+    managers?: { id: string; name: string; email: string; branchId: string | null }[];
     teamGroups: { id: string; name: string; memberIds: any }[];
     branchNumberingRules: {
       branchId: string;
@@ -78,6 +79,7 @@ export function CreateJobDialog({
   const [newBranchId, setNewBranchId] = useState("");
   const [newPriority, setNewPriority] = useState("MEDIUM");
   const [newOwnerId, setNewOwnerId] = useState(currentUserId);
+  const [newManagerId, setNewManagerId] = useState("");
   const [newRemarks, setNewRemarks] = useState("");
   const [assignments, setAssignments] = useState<{ userId: string; responsibility: string }[]>([
     { userId: currentUserId, responsibility: "OPERATIONS" },
@@ -184,6 +186,7 @@ export function CreateJobDialog({
       setNewBranchId(parsed.branchId || "");
       setNewPriority(parsed.priority || "MEDIUM");
       setNewOwnerId(parsed.ownerId || currentUserId);
+      setNewManagerId(parsed.assignedManagerId || "");
       setNewRemarks(parsed.remarks || "");
       setAssignments(parsed.assignments || [{ userId: currentUserId, responsibility: "OPERATIONS" }]);
       setEstimatedClosureDate(parsed.estimatedClosureDate || "");
@@ -213,6 +216,7 @@ export function CreateJobDialog({
       branchId: newBranchId,
       priority: newPriority,
       ownerId: newOwnerId,
+      assignedManagerId: newManagerId,
       remarks: newRemarks,
       assignments,
       estimatedClosureDate,
@@ -327,6 +331,10 @@ export function CreateJobDialog({
       toast.error("Please fill in all mandatory job attributes.");
       return;
     }
+    if (!newManagerId) {
+      toast.error("Please select an Assigned Manager.");
+      return;
+    }
     if (!selectedBranchRule?.isActive) {
       toast.error("The selected branch is not configured for CHA job numbering yet. Please update CHA Settings.");
       return;
@@ -346,6 +354,7 @@ export function CreateJobDialog({
         branchId: newBranchId,
         priority: newPriority,
         primaryOwnerId: newOwnerId,
+        assignedManagerId: newManagerId,
         assignments: validAssignments,
         remarks: newRemarks || undefined,
         estimatedClosureDate: estimatedClosureDate ? new Date(estimatedClosureDate) : undefined,
@@ -364,6 +373,7 @@ export function CreateJobDialog({
           setNewJobTypeId("");
           setNewShipmentTypeId("");
           setNewBranchId("");
+          setNewManagerId("");
           setNewRemarks("");
           setEstimatedClosureDate("");
           setCustomerSearch("");
@@ -448,6 +458,12 @@ export function CreateJobDialog({
       setAddingShipmentType(false);
     }
   };
+
+  const eligibleManagers = (options.managers || []).filter((m) => {
+    if (!newBranchId) return true;
+    return m.branchId === newBranchId;
+  });
+  const displayedManagers = eligibleManagers.length > 0 ? eligibleManagers : (options.managers || options.users || []);
 
   return (
     <>
@@ -742,6 +758,21 @@ export function CreateJobDialog({
                   options={options.users.map((u) => ({
                     value: u.id,
                     label: `${u.name} (${u.email})`,
+                  }))}
+                />
+              </div>
+
+              {/* Assigned Manager */}
+              <div className="space-y-1">
+                <label className="ds-label block">Assigned Manager *</label>
+                <DropdownSelect
+                  required
+                  value={newManagerId}
+                  onValueChange={setNewManagerId}
+                  placeholder="Select Manager"
+                  options={displayedManagers.map((m) => ({
+                    value: m.id,
+                    label: `${m.name} (${m.email})`,
                   }))}
                 />
               </div>

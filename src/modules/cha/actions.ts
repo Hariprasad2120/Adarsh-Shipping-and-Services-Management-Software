@@ -104,6 +104,7 @@ export async function createJobAction(data: {
   priority: string;
   remarks?: string;
   primaryOwnerId: string;
+  assignedManagerId: string;
   assignments: { userId: string; responsibility: string }[];
   estimatedClosureDate?: Date | string;
 }): Promise<ActionResponse> {
@@ -818,6 +819,47 @@ export async function acknowledgeDoValidityWarningAction(jobId: string): Promise
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : "Failed to acknowledge DO validity warning";
     return { ok: false, error: errMsg };
+  }
+}
+
+export async function updateJobDetailsAction(
+  jobId: string,
+  data: {
+    assignedManagerId?: string;
+    primaryOwnerId?: string;
+  }
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const result = await chaService.updateJobDetails(userId, orgId, jobId, data);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    revalidatePath("/cha/jobs");
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update job details" };
+  }
+}
+
+export async function submitChecklistOwnerDecisionAction(
+  jobId: string,
+  checklistId: string,
+  decision: "APPROVED" | "REJECTED",
+  remarks?: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const result = await chaService.submitChecklistOwnerDecision(
+      userId,
+      orgId,
+      jobId,
+      checklistId,
+      decision,
+      remarks
+    );
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to submit checklist owner decision" };
   }
 }
 

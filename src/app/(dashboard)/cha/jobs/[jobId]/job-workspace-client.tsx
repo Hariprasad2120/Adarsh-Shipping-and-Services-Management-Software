@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -40,9 +40,11 @@ interface JobWorkspaceClientProps {
   canManageSettings: boolean;
   canInternalApproveChecklist: boolean;
   canCustomerApproveChecklist: boolean;
+  canUpdateJob: boolean;
   internalApproversCount: number;
   initialTab?: string;
   focusField?: string;
+  managers?: { id: string; name: string; email: string; branchId: string | null }[];
 }
 
 const STAGES = [
@@ -82,9 +84,11 @@ export function JobWorkspaceClient({
   canManageSettings,
   canInternalApproveChecklist,
   canCustomerApproveChecklist,
+  canUpdateJob,
   internalApproversCount,
   initialTab,
   focusField,
+  managers = [],
 }: JobWorkspaceClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<WorkspaceTab>(() => {
@@ -105,6 +109,20 @@ export function JobWorkspaceClient({
 
   // Submitting States
   const [loading, setLoading] = useState<string | null>(null);
+
+  // Manager Assignment State
+  const [isEditingManager, setIsEditingManager] = useState(false);
+  const [selectedManagerId, setSelectedManagerId] = useState(job.assignedManagerId || "");
+
+  useEffect(() => {
+    setSelectedManagerId(job.assignedManagerId || "");
+  }, [job.assignedManagerId]);
+
+  const filteredManagers = useMemo(() => {
+    if (!managers) return [];
+    const branchManagers = managers.filter((m: any) => m.branchId === job.branchId);
+    return branchManagers.length > 0 ? branchManagers : managers;
+  }, [managers, job.branchId]);
 
   // Document Collection Form State
   const [exceptionReason, setExceptionReason] = useState("");
@@ -161,6 +179,7 @@ export function JobWorkspaceClient({
   const [checklistRemarks, setChecklistRemarks] = useState("");
   const [internalApprovalRemarks, setInternalApprovalRemarks] = useState("");
   const [customerApprovalRemarks, setCustomerApprovalRemarks] = useState("");
+  const [ownerApprovalRemarks, setOwnerApprovalRemarks] = useState("");
 
   // Filing Form State
   const [newEstFilingDate, setNewEstFilingDate] = useState("");
@@ -273,6 +292,14 @@ export function JobWorkspaceClient({
   const canCurrentUserCustomerApprove =
     canCustomerApproveChecklist ||
     currentCustomerApprovals.some((approval: any) => approval.assignedToId === currentUserId && approval.action === "PENDING");
+  const currentOwnerApprovals = checklistApprovals.filter(
+    (approval: any) =>
+      approval.fileVersionId === currentChecklistVersion?.id &&
+      approval.stage === "JOB_OWNER",
+  );
+  const canCurrentUserOwnerApprove =
+    job.primaryOwnerId === currentUserId ||
+    currentOwnerApprovals.some((approval: any) => approval.assignedToId === currentUserId && approval.action === "PENDING");
   const getUserName = (userId?: string | null) =>
     users.find((user) => user.id === userId)?.name || "Unknown";
   // Document version mock upload handler
@@ -583,6 +610,59 @@ export function JobWorkspaceClient({
         router.refresh();
       } else {
         toast.error(res.error || "Failed to process customer decision.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleChecklistOwnerDecision = async (decision: "APPROVED" | "REJECTED") => {
+    if (!checklistWorkflow) return;
+    if (decision === "REJECTED" && !ownerApprovalRemarks.trim()) {
+      toast.error("A rejection reason is required.");
+      return;
+    }
+
+    setLoading(`checklist-owner-${decision}`);
+    try {
+      const res = await actions.submitChecklistOwnerDecisionAction(
+        job.id,
+        checklistWorkflow.id,
+        decision,
+        ownerApprovalRemarks || undefined,
+      );
+      if (res.ok) {
+        toast.success(decision === "APPROVED" ? "Job Owner approval recorded." : "Checklist returned by owner for rework.");
+        setOwnerApprovalRemarks("");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to process job owner decision.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleUpdateManager = async () => {
+    if (!selectedManagerId) {
+      toast.error("Please select a manager.");
+      return;
+    }
+    setLoading("update-manager");
+    try {
+      const res = await actions.updateJobDetailsAction(job.id, {
+        assignedManagerId: selectedManagerId,
+      });
+      if (res.ok) {
+        toast.success("Assigned manager updated successfully.");
+        setIsEditingManager(false);
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to update manager.");
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
@@ -1101,9 +1181,28 @@ export function JobWorkspaceClient({
             <h1 className="ds-h1 break-words text-[var(--color-primary)]">{job.jobNumber}</h1>
             <p className="max-w-4xl text-sm text-on-surface">{job.title}</p>
           </div>
-          <p className="text-xs text-on-surface-variant">
-            Customer: <strong className="text-on-surface">{job.customer.name}</strong> • Owner:{" "}
-            <strong className="text-on-surface">{job.primaryOwner.name}</strong>
+          <p className="text-xs text-on-surface-variant flex flex-wrap items-center gap-1.5">
+            <span>Customer: <strong className="text-on-surface">{job.customer.name}</strong></span>
+            <span>•</span>
+            <span>Owner: <strong className="text-on-surface">{job.primaryOwner.name}</strong></span>
+            <span>•</span>
+            <span>
+              Assigned Manager:{" "}
+              {job.assignedManager ? (
+                <strong className="text-on-surface">{job.assignedManager.name}</strong>
+              ) : (
+                <span className="text-red-500 font-semibold">None (Setup Required)</span>
+              )}
+            </span>
+            {canUpdateJob && (
+              <button
+                type="button"
+                onClick={() => setIsEditingManager(true)}
+                className="ml-1 text-[#00cec4] hover:underline font-semibold text-[11px] uppercase tracking-wide cursor-pointer"
+              >
+                [Change]
+              </button>
+            )}
           </p>
         </div>
         <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-end">
@@ -1144,6 +1243,31 @@ export function JobWorkspaceClient({
           ) : null}
         </div>
       </div>
+
+      {!job.assignedManagerId && (
+        <div className="rounded-xl border border-[#fb923c]/35 bg-[#fb923c]/10 p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-1">
+              <span className="ds-label text-[#fb923c]">Job Settings Alert</span>
+              <p className="text-sm font-semibold text-on-surface">
+                No manager assigned for this job.
+              </p>
+              <p className="text-xs text-on-surface-variant">
+                An assigned manager is required to proceed with checklist upload and approval.
+              </p>
+            </div>
+            {canUpdateJob && (
+              <Button
+                variant="outline"
+                className="border-[#fb923c]/45 text-[#fb923c] hover:bg-[#fb923c]/10 shrink-0"
+                onClick={() => setIsEditingManager(true)}
+              >
+                Assign Manager
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
 
       {activeDeletionRequest ? (
         <div className="rounded-xl border border-[#fb923c]/35 bg-[#fb923c]/8 p-4">
@@ -1759,6 +1883,27 @@ export function JobWorkspaceClient({
               </div>
             ) : (
               <div className="space-y-6">
+                {!job.assignedManagerId && (
+                  <div className="bg-surface border border-[#fb923c]/40 p-5 rounded-xl flex items-start gap-3">
+                    <AlertTriangle size={24} className="text-[#fb923c] shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-bold text-sm uppercase text-[#fb923c]">Manager Assignment Required</h4>
+                      <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
+                        No manager has been assigned to this job yet. An assigned manager is mandatory to route checklist approvals and handle operational workflows.
+                      </p>
+                      {canUpdateJob && (
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingManager(true)}
+                          className="mt-2 text-xs font-semibold text-[#00cec4] hover:underline cursor-pointer uppercase tracking-wider"
+                        >
+                          Assign Manager Now →
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
                   <div className="space-y-6">
                     <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-5">
@@ -1827,20 +1972,20 @@ export function JobWorkspaceClient({
 
                       <input
                         type="file"
-                        disabled={internalApproversCount === 0}
+                        disabled={internalApproversCount === 0 || !job.assignedManagerId}
                         onChange={(e) => setChecklistFile(e.target.files?.[0] || null)}
                         className="w-full text-xs disabled:opacity-50"
                       />
                       <textarea
                         rows={2}
                         value={checklistRemarks}
-                        disabled={internalApproversCount === 0}
+                        disabled={internalApproversCount === 0 || !job.assignedManagerId}
                         onChange={(e) => setChecklistRemarks(e.target.value)}
                         placeholder="Optional upload remarks"
                         className="w-full text-xs disabled:opacity-50"
                       />
                       <div className="flex justify-end">
-                        <Button type="submit" disabled={loading === "checklist-upload" || internalApproversCount === 0} className="w-full sm:w-auto">
+                        <Button type="submit" disabled={loading === "checklist-upload" || internalApproversCount === 0 || !job.assignedManagerId} className="w-full sm:w-auto">
                           {loading === "checklist-upload" ? "Uploading..." : currentChecklistVersion ? "Reupload Checklist" : "Upload Checklist"}
                         </Button>
                       </div>
@@ -1928,15 +2073,55 @@ export function JobWorkspaceClient({
                               type="button"
                               variant="outline"
                               className="border-red-200 text-red-500 hover:bg-red-50"
-                              disabled={loading !== null}
+                              disabled={loading !== null || !job.assignedManagerId}
                               onClick={() => handleChecklistInternalDecision("REJECTED")}
                             >
                               Reject
                             </Button>
                             <Button
                               type="button"
-                              disabled={loading !== null}
+                              disabled={loading !== null || !job.assignedManagerId}
                               onClick={() => handleChecklistInternalDecision("APPROVED")}
+                            >
+                              Approve
+                            </Button>
+                          </div>
+                        </>
+                      ) : null}
+                    </div>
+
+                    <div className="rounded-xl border border-outline-variant/40 bg-surface p-5 space-y-4">
+                      <div>
+                        <span className="ds-label">Job Owner Approval</span>
+                        <p className="mt-1 text-sm text-on-surface">
+                          {checklistWorkflow?.currentApprovalStage === "JOB_OWNER"
+                            ? "Awaiting job owner approval."
+                            : "Job owner approval starts after internal approval is complete."}
+                        </p>
+                      </div>
+                      {canCurrentUserOwnerApprove && checklistWorkflow?.currentApprovalStage === "JOB_OWNER" ? (
+                        <>
+                          <textarea
+                            rows={2}
+                            value={ownerApprovalRemarks}
+                            onChange={(e) => setOwnerApprovalRemarks(e.target.value)}
+                            placeholder="Required for rejection, optional for approval"
+                            className="w-full text-xs"
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="border-red-200 text-red-500 hover:bg-red-50"
+                              disabled={loading !== null || !job.assignedManagerId}
+                              onClick={() => handleChecklistOwnerDecision("REJECTED")}
+                            >
+                              Reject
+                            </Button>
+                            <Button
+                              type="button"
+                              disabled={loading !== null || !job.assignedManagerId}
+                              onClick={() => handleChecklistOwnerDecision("APPROVED")}
                             >
                               Approve
                             </Button>
@@ -1970,14 +2155,14 @@ export function JobWorkspaceClient({
                               type="button"
                               variant="outline"
                               className="border-red-200 text-red-500 hover:bg-red-50"
-                              disabled={loading !== null}
+                              disabled={loading !== null || !job.assignedManagerId}
                               onClick={() => handleChecklistCustomerDecision("REJECTED")}
                             >
                               Reject
                             </Button>
                             <Button
                               type="button"
-                              disabled={loading !== null}
+                              disabled={loading !== null || !job.assignedManagerId}
                               onClick={() => handleChecklistCustomerDecision("APPROVED")}
                             >
                               Approve
@@ -3213,6 +3398,52 @@ export function JobWorkspaceClient({
               </div>
             );
           })()}
+        </Modal>
+      )}
+
+      {isEditingManager && (
+        <Modal
+          open={true}
+          onClose={() => setIsEditingManager(false)}
+          title="Edit Job Manager Assignment"
+          description="Update the assigned manager for this CHA job. The manager is responsible for internal approvals and deletion approvals."
+          className="max-w-md"
+        >
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <label className="ds-label block">Select Manager</label>
+              <select
+                value={selectedManagerId}
+                onChange={(e) => setSelectedManagerId(e.target.value)}
+                className="w-full text-sm rounded-xl"
+              >
+                <option value="">-- Choose Manager --</option>
+                {filteredManagers.map((m: any) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} ({m.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditingManager(false)}
+                disabled={loading !== null}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleUpdateManager}
+                disabled={loading !== null || !selectedManagerId}
+              >
+                {loading === "update-manager" ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </div>
         </Modal>
       )}
     </main>

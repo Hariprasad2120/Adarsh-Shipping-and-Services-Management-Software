@@ -538,10 +538,15 @@ export async function createJob(
     priority: string;
     remarks?: string;
     primaryOwnerId: string;
+    assignedManagerId: string;
     assignments: { userId: string; responsibility: string }[];
     estimatedClosureDate?: Date | string;
   }
 ) {
+  if (!data.assignedManagerId) {
+    throw new Error("Assigned Manager is required.");
+  }
+
   const settings = await ensureSettingsAndDefaults(orgId);
 
   // Validate creator authorization from settings
@@ -615,6 +620,7 @@ export async function createJob(
         stage: "DOCUMENT_COLLECTION",
         status: "ACTIVE",
         primaryOwnerId: data.primaryOwnerId,
+        assignedManagerId: data.assignedManagerId,
         remarks: data.remarks,
         estimatedClosureDate: data.estimatedClosureDate ? new Date(data.estimatedClosureDate) : null,
       },
@@ -699,6 +705,17 @@ export async function createJob(
     actorId,
     newState: "DOCUMENT_COLLECTION",
     remarks: `Job created with ${result.assignmentsToCreate.length} assignments`,
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId: result.job.id,
+    entityType: "ChaJob",
+    entityId: result.job.id,
+    event: "JOB_MANAGER_ASSIGNED",
+    actorId,
+    newState: "DOCUMENT_COLLECTION",
+    remarks: `Manager assigned during job creation: ${data.assignedManagerId}`,
   });
 
   // Notify concerned users
@@ -1858,6 +1875,7 @@ export async function submitChecklistInternalDecision(
     where: getActiveChaJobByIdWhere(orgId, jobId),
     include: {
       assignments: true,
+      customer: true,
       checklistWorkflow: {
         include: {
           currentFileVersion: true,
@@ -1952,41 +1970,27 @@ export async function submitChecklistInternalDecision(
       return { outcome: "PENDING_OTHERS" as const };
     }
 
-    if (checklist.customerRejectedOnce) {
-      await applyChecklistWorkflowToFiling(tx, {
-        actorId,
-        orgId,
-        jobId,
-        checklistId: checklist.id,
-        checklistStatus: "FILING_READY",
-        remarks: "Customer-rejected checklist was reworked, internally approved, and moved directly to Filing.",
-      });
-
-      return { outcome: "MOVED_TO_FILING" as const };
-    }
-
-    const customerApproverIds = await getChecklistCustomerApproverIds(orgId, internalApproverIds);
+    // Move to JOB_OWNER stage instead of CUSTOMER or FILING directly
     await tx.chaChecklist.update({
       where: { id: checklist.id },
       data: {
-        status: "CUSTOMER_APPROVAL_PENDING",
-        currentApprovalStage: "CUSTOMER",
-        customerApprovalAttempted: true,
+        status: "JOB_OWNER_APPROVAL_PENDING",
+        currentApprovalStage: "JOB_OWNER",
         updatedById: actorId,
       },
     });
 
-    await tx.chaChecklistDecision.createMany({
-      data: customerApproverIds.map((approverId) => ({
+    await tx.chaChecklistDecision.create({
+      data: {
         checklistId: checklist.id,
         fileVersionId: checklist.currentFileVersionId!,
-        stage: "CUSTOMER",
+        stage: "JOB_OWNER",
         action: "PENDING",
-        assignedToId: approverId,
-      })),
+        assignedToId: job.primaryOwnerId,
+      },
     });
 
-    return { outcome: "CUSTOMER_APPROVAL" as const, customerApproverIds };
+    return { outcome: "JOB_OWNER_APPROVAL" as const };
   });
 
   await logChaAudit({
@@ -2000,11 +2004,7 @@ export async function submitChecklistInternalDecision(
     newState:
       result.outcome === "REJECTED"
         ? "REWORK_REQUIRED"
-        : result.outcome === "CUSTOMER_APPROVAL"
-        ? "CUSTOMER_APPROVAL_PENDING"
-        : result.outcome === "MOVED_TO_FILING"
-        ? "FILING_READY"
-        : "INTERNAL_APPROVAL_PENDING",
+        : "JOB_OWNER_APPROVAL_PENDING",
     remarks: remarks || `Internal ${decision.toLowerCase()} for checklist.`,
   });
 
@@ -2017,25 +2017,15 @@ export async function submitChecklistInternalDecision(
       body: `Checklist was internally rejected.${remarks ? ` Reason: ${remarks}` : ""}`,
       link: `/cha/jobs/${jobId}`,
     });
-  } else if (result.outcome === "CUSTOMER_APPROVAL") {
+  } else if (result.outcome === "JOB_OWNER_APPROVAL") {
+    const actorUser = await db.user.findUnique({ where: { id: actorId }, select: { name: true } });
+    const approverName = actorUser?.name || "Internal Approver";
     await queueChecklistNotifications({
-      userIds: [job.primaryOwnerId, ...(result.customerApproverIds ?? [])],
+      userIds: [job.primaryOwnerId],
       orgId,
-      kind: "CHA_CHECKLIST_CUSTOMER_APPROVAL_REQUESTED",
-      title: `Customer Approval Required: ${job.jobNumber}`,
-      body: `Checklist cleared internal approval and is now pending customer approval.`,
-      link: `/cha/jobs/${jobId}`,
-    });
-  } else if (result.outcome === "MOVED_TO_FILING") {
-    const filingRecipients = job.assignments
-      .filter((assignment) => assignment.responsibility === "FILING" || assignment.responsibility === "OPERATIONS")
-      .map((assignment) => assignment.userId);
-    await queueChecklistNotifications({
-      userIds: [job.primaryOwnerId, ...filingRecipients],
-      orgId,
-      kind: "CHA_CHECKLIST_READY_FOR_FILING",
-      title: `Checklist Ready For Filing: ${job.jobNumber}`,
-      body: `Checklist rework after customer rejection has been internally approved and moved to Filing.`,
+      kind: "CHA_CHECKLIST_OWNER_APPROVAL_REQUESTED",
+      title: `Job Owner Approval Required: ${job.jobNumber}`,
+      body: `Job: ${job.jobNumber} | Customer: ${job.customer?.name || "Customer"} | File: ${checklist.currentFileVersion?.originalFileName || "Checklist"} | Approved by: ${approverName}. Click link to review checklist.`,
       link: `/cha/jobs/${jobId}`,
     });
   }
@@ -4220,4 +4210,323 @@ export async function proceedDocumentStage(actorId: string, orgId: string, jobId
   });
 
   return { success: true };
+}
+
+export async function getEligibleManagers(orgId: string) {
+  const usersWithPermission = await getUsersWithPermission(orgId, "cha.checklist.internal_approve");
+  
+  const usersWithRoles = await db.user.findMany({
+    where: {
+      orgId,
+      active: true,
+      roles: {
+        some: {
+          role: {
+            name: {
+              in: ["Admin", "Management", "Manager", "Director"],
+            },
+          },
+        },
+      },
+    },
+    select: { id: true, name: true, email: true, branchId: true },
+  });
+
+  const allEligible = new Map<string, { id: string; name: string; email: string; branchId: string | null }>();
+  
+  if (usersWithPermission.length > 0) {
+    const permUsers = await db.user.findMany({
+      where: {
+        id: { in: usersWithPermission },
+        active: true,
+      },
+      select: { id: true, name: true, email: true, branchId: true },
+    });
+    for (const u of permUsers) {
+      allEligible.set(u.id, u);
+    }
+  }
+
+  for (const u of usersWithRoles) {
+    allEligible.set(u.id, u);
+  }
+
+  if (allEligible.size === 0) {
+    const allUsers = await db.user.findMany({
+      where: { orgId, active: true },
+      select: { id: true, name: true, email: true, branchId: true },
+    });
+    for (const u of allUsers) {
+      allEligible.set(u.id, u);
+    }
+  }
+
+  return Array.from(allEligible.values());
+}
+
+export async function updateJobDetails(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  data: {
+    assignedManagerId?: string;
+    primaryOwnerId?: string;
+  }
+) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: { id: jobId, orgId },
+  });
+
+  const hasPermission = await can(actorId, "cha.job.update");
+  if (!hasPermission && !(await can(actorId, "cha.job.view_all"))) {
+    throw new ForbiddenError("cha.job.update");
+  }
+
+  const updates: any = {};
+  const audits: any[] = [];
+
+  if (data.assignedManagerId !== undefined) {
+    const prevManagerId = job.assignedManagerId;
+    if (prevManagerId !== data.assignedManagerId) {
+      updates.assignedManagerId = data.assignedManagerId || null;
+      audits.push({
+        event: "JOB_MANAGER_CHANGED",
+        remarks: `Manager changed from ${prevManagerId || "None"} to ${data.assignedManagerId || "None"}`,
+      });
+    }
+  }
+
+  if (data.primaryOwnerId !== undefined) {
+    const prevOwnerId = job.primaryOwnerId;
+    if (prevOwnerId !== data.primaryOwnerId) {
+      updates.primaryOwnerId = data.primaryOwnerId;
+      audits.push({
+        event: "JOB_OWNER_CHANGED",
+        remarks: `Owner changed from ${prevOwnerId} to ${data.primaryOwnerId}`,
+      });
+    }
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return job;
+  }
+
+  const updatedJob = await db.chaJob.update({
+    where: { id: jobId },
+    data: updates,
+  });
+
+  for (const audit of audits) {
+    await logChaAudit({
+      orgId,
+      jobId,
+      entityType: "ChaJob",
+      entityId: jobId,
+      event: audit.event,
+      actorId,
+      remarks: audit.remarks,
+    });
+  }
+
+  return updatedJob;
+}
+
+export async function submitChecklistOwnerDecision(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  checklistId: string,
+  decision: "APPROVED" | "REJECTED",
+  remarks?: string
+) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: getActiveChaJobByIdWhere(orgId, jobId),
+    include: {
+      assignments: true,
+      customer: true,
+      checklistWorkflow: {
+        include: {
+          currentFileVersion: true,
+          approvals: { orderBy: { createdAt: "asc" } },
+        },
+      },
+    },
+  });
+
+  const checklist = job.checklistWorkflow;
+  if (!checklist || checklist.id !== checklistId || !checklist.currentFileVersion) {
+    throw new Error("Checklist record not found for this job.");
+  }
+  if (checklist.currentApprovalStage !== "JOB_OWNER") {
+    throw new Error("Checklist is not awaiting job owner approval.");
+  }
+
+  const isOwner = job.primaryOwnerId === actorId;
+  const hasPermission = await can(actorId, "cha.checklist.owner_approve");
+  const isAdmin = await can(actorId, "cha.job.view_all");
+  if (!isOwner && !hasPermission && !isAdmin) {
+    throw new ForbiddenError("cha.checklist.owner_approve");
+  }
+
+  const existingPending = checklist.approvals.find(
+    (approval) =>
+      approval.fileVersionId === checklist.currentFileVersionId &&
+      approval.stage === "JOB_OWNER" &&
+      approval.action === "PENDING"
+  );
+
+  if (decision === "REJECTED" && !remarks?.trim()) {
+    throw new Error("Rejection reason is mandatory.");
+  }
+
+  const result = await db.$transaction(async (tx) => {
+    if (existingPending) {
+      await tx.chaChecklistDecision.update({
+        where: { id: existingPending.id },
+        data: {
+          action: decision,
+          actedById: actorId,
+          actedAt: new Date(),
+          remarks,
+        },
+      });
+    } else {
+      await tx.chaChecklistDecision.create({
+        data: {
+          checklistId: checklist.id,
+          fileVersionId: checklist.currentFileVersionId!,
+          stage: "JOB_OWNER",
+          action: decision,
+          assignedToId: job.primaryOwnerId,
+          actedById: actorId,
+          actedAt: new Date(),
+          remarks,
+        },
+      });
+    }
+
+    if (decision === "REJECTED") {
+      await tx.chaChecklist.update({
+        where: { id: checklist.id },
+        data: {
+          status: "JOB_OWNER_REJECTED",
+          currentApprovalStage: "UPLOAD",
+          updatedById: actorId,
+        },
+      });
+
+      await tx.chaJob.update({
+        where: { id: jobId },
+        data: { stage: "CHECKLIST_PREPARATION" },
+      });
+
+      return { outcome: "REJECTED" as const };
+    }
+
+    if (checklist.customerRejectedOnce) {
+      await applyChecklistWorkflowToFiling(tx, {
+        actorId,
+        orgId,
+        jobId,
+        checklistId: checklist.id,
+        checklistStatus: "FILING_READY",
+        remarks: "Customer-rejected checklist was reworked, approved by job owner, and moved directly to Filing.",
+      });
+
+      return { outcome: "MOVED_TO_FILING" as const };
+    }
+
+    const customerApproverIds = await getChecklistCustomerApproverIds(orgId, [job.assignedManagerId].filter(Boolean) as string[]);
+    await tx.chaChecklist.update({
+      where: { id: checklist.id },
+      data: {
+        status: "CUSTOMER_APPROVAL_PENDING",
+        currentApprovalStage: "CUSTOMER",
+        customerApprovalAttempted: true,
+        updatedById: actorId,
+      },
+    });
+
+    await tx.chaChecklistDecision.createMany({
+      data: customerApproverIds.map((approverId) => ({
+        checklistId: checklist.id,
+        fileVersionId: checklist.currentFileVersionId!,
+        stage: "CUSTOMER",
+        action: "PENDING",
+        assignedToId: approverId,
+      })),
+    });
+
+    return { outcome: "CUSTOMER_APPROVAL" as const, customerApproverIds };
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "ChaChecklist",
+    entityId: checklist.id,
+    event: decision === "APPROVED" ? "CHECKLIST_OWNER_APPROVED" : "CHECKLIST_OWNER_REJECTED",
+    actorId,
+    prevState: "JOB_OWNER_APPROVAL_PENDING",
+    newState:
+      result.outcome === "REJECTED"
+        ? "JOB_OWNER_REJECTED"
+        : result.outcome === "CUSTOMER_APPROVAL"
+        ? "CUSTOMER_APPROVAL_PENDING"
+        : "FILING_READY",
+    remarks: remarks || `Job owner ${decision.toLowerCase()} for checklist.`,
+  });
+
+  const actorUser = await db.user.findUnique({ where: { id: actorId }, select: { name: true } });
+  const actorName = actorUser?.name || "Job Owner";
+
+  if (result.outcome === "REJECTED") {
+    const recipients = new Set<string>();
+    recipients.add(checklist.createdById);
+    if (job.assignedManagerId) recipients.add(job.assignedManagerId);
+
+    await queueChecklistNotifications({
+      userIds: Array.from(recipients),
+      orgId,
+      kind: "CHA_CHECKLIST_OWNER_REJECTED",
+      title: `Checklist Rejected by Owner: ${job.jobNumber}`,
+      body: `Job: ${job.jobNumber} | Rejected by: ${actorName} | Reason: ${remarks} | Time: ${new Date().toISOString()}. Click link for rework.`,
+      link: `/cha/jobs/${jobId}`,
+    });
+  } else {
+    const recipients = new Set<string>();
+    recipients.add(checklist.createdById);
+    if (job.assignedManagerId) recipients.add(job.assignedManagerId);
+
+    if (result.outcome === "CUSTOMER_APPROVAL") {
+      for (const id of result.customerApproverIds ?? []) {
+        recipients.add(id);
+      }
+      await queueChecklistNotifications({
+        userIds: Array.from(recipients),
+        orgId,
+        kind: "CHA_CHECKLIST_CUSTOMER_APPROVAL_REQUESTED",
+        title: `Customer Approval Required: ${job.jobNumber}`,
+        body: `Checklist cleared Job Owner approval and is now pending customer approval. Approved by owner: ${actorName}.`,
+        link: `/cha/jobs/${jobId}`,
+      });
+    } else if (result.outcome === "MOVED_TO_FILING") {
+      const filingRecipients = job.assignments
+        .filter((assignment) => assignment.responsibility === "FILING" || assignment.responsibility === "OPERATIONS")
+        .map((assignment) => assignment.userId);
+      for (const id of filingRecipients) {
+        recipients.add(id);
+      }
+      await queueChecklistNotifications({
+        userIds: Array.from(recipients),
+        orgId,
+        kind: "CHA_CHECKLIST_READY_FOR_FILING",
+        title: `Checklist Ready For Filing: ${job.jobNumber}`,
+        body: `Checklist cleared Job Owner approval and moved to Filing (rework rule applied). Approved by owner: ${actorName}.`,
+        link: `/cha/jobs/${jobId}`,
+      });
+    }
+  }
+
+  return result;
 }

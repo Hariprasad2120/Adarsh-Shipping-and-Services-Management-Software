@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
-import { getJobDetails, getChecklistInternalApproverIds } from "@/modules/cha/service";
+import { getJobDetails, getChecklistInternalApproverIds, getEligibleManagers } from "@/modules/cha/service";
 import { db } from "@/lib/db";
 import { can, ForbiddenError } from "@/lib/rbac";
 import { BreadcrumbLabel } from "@/components/breadcrumb-label";
@@ -16,7 +16,9 @@ interface WorkspaceData {
   canManageSettings: boolean;
   canInternalApproveChecklist: boolean;
   canCustomerApproveChecklist: boolean;
+  canUpdateJob: boolean;
   users: { id: string; name: string; email: string }[];
+  managers: { id: string; name: string; email: string; branchId: string | null }[];
   parsedExpenseCategories: string[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   settings: any;
@@ -43,7 +45,7 @@ export default async function ChaJobWorkspacePage({
   let error: unknown = null;
 
   try {
-    const [job, canDeleteJob, canApproveDeleteJob, canDeleteDoc, canManageSettings, canInternalApproveChecklist, canCustomerApproveChecklist] = await Promise.all([
+    const [job, canDeleteJob, canApproveDeleteJob, canDeleteDoc, canManageSettings, canInternalApproveChecklist, canCustomerApproveChecklist, canUpdateJob] = await Promise.all([
       getJobDetails(session.user.id, orgId, jobId),
       can(session.user.id, "cha.job.delete"),
       can(session.user.id, "cha.job.delete.approve"),
@@ -51,6 +53,7 @@ export default async function ChaJobWorkspacePage({
       can(session.user.id, "cha.settings.manage"),
       can(session.user.id, "cha.checklist.internal_approve"),
       can(session.user.id, "cha.checklist.customer_approve"),
+      can(session.user.id, "cha.job.update"),
     ]);
     
     // Fetch users for assignment selections and customer advance maps
@@ -75,6 +78,7 @@ export default async function ChaJobWorkspacePage({
         : ["Customs Duty", "Port Handling Charges", "Transportation", "Documentation charges", "Agent Commission", "Storage Fees", "Miscellaneous"];
 
     const internalApproverIds = await getChecklistInternalApproverIds(orgId, job);
+    const eligibleManagers = await getEligibleManagers(orgId);
 
     data = {
       job,
@@ -84,7 +88,9 @@ export default async function ChaJobWorkspacePage({
       canManageSettings,
       canInternalApproveChecklist,
       canCustomerApproveChecklist,
+      canUpdateJob,
       users,
+      managers: eligibleManagers,
       parsedExpenseCategories,
       settings,
       internalApproversCount: internalApproverIds.length,
@@ -136,6 +142,7 @@ export default async function ChaJobWorkspacePage({
       <JobWorkspaceClient
         job={JSON.parse(JSON.stringify(data.job))}
         users={data.users}
+        managers={data.managers}
         expenseCategories={data.parsedExpenseCategories}
         selfApprovalAllowed={data.settings?.selfApprovalAllowed ?? true}
         currentUserId={session.user.id}
@@ -145,6 +152,7 @@ export default async function ChaJobWorkspacePage({
         canManageSettings={data.canManageSettings}
         canInternalApproveChecklist={data.canInternalApproveChecklist}
         canCustomerApproveChecklist={data.canCustomerApproveChecklist}
+        canUpdateJob={data.canUpdateJob}
         internalApproversCount={data.internalApproversCount}
         initialTab={tab}
         focusField={focus}
