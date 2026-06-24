@@ -55,13 +55,20 @@ class HrmsViewModel(
             if (result.isSuccess) {
                 val data = result.getOrNull()!!
                 dashboardData = data
+
+                // Read attendance data
                 isCheckedIn = data.attendance.isCheckedIn
                 currentSessionId = data.attendance.sessionId
                 checkInTime = data.attendance.checkInTime
                 workingMinutes = data.attendance.workingMinutes ?: 0
-                faceEnrolled = data.faceEnrolled
-                agreementAccepted = data.agreementAccepted
-                AppLogger.info("HRMS", "Dashboard loaded: checkedIn=$isCheckedIn, faceEnrolled=$faceEnrolled")
+
+                // Read from nested face object
+                faceEnrolled = data.face?.enrolled ?: false
+
+                // Read from nested agreement object
+                agreementAccepted = data.agreement?.accepted ?: false
+
+                AppLogger.info("HRMS", "Dashboard loaded: checkedIn=$isCheckedIn, faceEnrolled=$faceEnrolled, agreementAccepted=$agreementAccepted")
             } else {
                 errorMessage = result.exceptionOrNull()?.message ?: "Failed to load dashboard"
                 AppLogger.error("HRMS", "Dashboard load failed: $errorMessage")
@@ -78,7 +85,7 @@ class HrmsViewModel(
                 // Get current GPS location
                 val location = LocationHelper.getCurrentLocation(context)
                 if (location == null) {
-                    errorMessage = "Could not get GPS location. Please enable location services."
+                    errorMessage = "Could not get GPS location. Please enable location services and grant location permission."
                     isCheckingIn = false
                     return@launch
                 }
@@ -100,7 +107,9 @@ class HrmsViewModel(
                     checkInResult = "Checked in successfully at ${data.checkInTime}"
 
                     // Start working hours location tracking
-                    LocationHelper.startWorkingHoursTracking(context)
+                    if (LocationHelper.hasLocationPermission(context)) {
+                        LocationHelper.startWorkingHoursTracking(context)
+                    }
                     AppLogger.info("HRMS", "Check-in successful, tracking started")
                 } else {
                     errorMessage = result.exceptionOrNull()?.message ?: "Check-in failed"
@@ -121,7 +130,7 @@ class HrmsViewModel(
             try {
                 val location = LocationHelper.getCurrentLocation(context)
                 if (location == null) {
-                    errorMessage = "Could not get GPS location. Please enable location services."
+                    errorMessage = "Could not get GPS location. Please enable location services and grant location permission."
                     isCheckingOut = false
                     return@launch
                 }

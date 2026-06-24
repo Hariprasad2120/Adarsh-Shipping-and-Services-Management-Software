@@ -188,8 +188,8 @@ fun HrmsDashboardScreen(
                 StatusRow(
                     icon = Icons.Default.LocationOn,
                     label = "Location Tracking",
-                    value = if (viewModel.dashboardData?.trackingActive == true) "Active" else "Inactive",
-                    valueColor = if (viewModel.dashboardData?.trackingActive == true) CyanPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                    value = if (viewModel.isCheckedIn) "Active" else "Inactive",
+                    valueColor = if (viewModel.isCheckedIn) CyanPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Spacer(modifier = Modifier.height(40.dp))

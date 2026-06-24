@@ -31,18 +31,23 @@ export async function POST(request: Request) {
     if (!user.orgId) return mobileJson({ error: "No organization" }, 400);
 
     const body = await request.json();
-    const { descriptor } = body;
+    const { descriptor, livenessDetected, captureQuality } = body;
 
-    if (!descriptor || !Array.isArray(descriptor) || descriptor.length === 0) {
-      return mobileJson({ error: "Face descriptor array is required" }, 400);
+    // Allow enrollment with descriptor (biometric mode) or without (liveness-only mode)
+    let faceDescriptor: number[] | null = null;
+    if (descriptor && Array.isArray(descriptor) && descriptor.length > 0) {
+      if (!descriptor.every((v: any) => typeof v === "number")) {
+        return mobileJson({ error: "Invalid face descriptor format" }, 400);
+      }
+      faceDescriptor = descriptor;
     }
 
-    // Validate descriptor is a numeric array (face-api.js returns 128-dimensional Float32Array)
-    if (!descriptor.every((v: any) => typeof v === "number")) {
-      return mobileJson({ error: "Invalid face descriptor format" }, 400);
+    // At minimum, liveness must be detected
+    if (!livenessDetected && !faceDescriptor) {
+      return mobileJson({ error: "Face detection or liveness verification is required" }, 400);
     }
 
-    const result = await enrollFace(user.id, user.orgId, descriptor, "mobile");
+    const result = await enrollFace(user.id, user.orgId, faceDescriptor, "mobile");
     return mobileJson({ ok: true, data: result });
   } catch (error: any) {
     console.error("face enroll API error:", error);

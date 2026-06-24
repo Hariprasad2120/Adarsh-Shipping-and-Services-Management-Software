@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -383,12 +384,15 @@ class MainActivity : ComponentActivity() {
                         authViewModel.submitConsent(true) {
                             repository.recordConsentAccepted(currentVersionCode)
                             // After consent, try auto-login so user doesn't need to re-enter credentials
-                            authViewModel.tryAutoLogin {
+                            val restoredModule = authViewModel.tryAutoLogin {
                                 if (selectedModule == "CRM") {
                                     leadsViewModel.fetchLeads()
                                 } else {
                                     hrmsViewModel.loadDashboard()
                                 }
+                            }
+                            if (restoredModule != null) {
+                                selectedModule = restoredModule
                             }
                         }
                     },
@@ -427,6 +431,22 @@ class MainActivity : ComponentActivity() {
             }
             // --- HRMS MODULE ---
             selectedModule == "HRMS" -> {
+                // Back button handler for HRMS
+                BackHandler(enabled = true) {
+                    when {
+                        currentScreen == Screen.Settings -> {
+                            currentScreen = Screen.Dashboard
+                        }
+                        currentHrmsScreen != HrmsScreen.Dashboard -> {
+                            currentHrmsScreen = HrmsScreen.Dashboard
+                        }
+                        else -> {
+                            // On HRMS Dashboard, back = exit app
+                            finish()
+                        }
+                    }
+                }
+
                 when (currentHrmsScreen) {
                     HrmsScreen.Dashboard -> {
                         HrmsDashboardScreen(
@@ -486,7 +506,6 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     HrmsScreen.Settings -> {
-                        // Handled by shared settings below
                         currentScreen = Screen.Settings
                         currentHrmsScreen = HrmsScreen.Dashboard
                     }
@@ -534,6 +553,19 @@ class MainActivity : ComponentActivity() {
                 )
             }
             else -> {
+                // Back button handler for CRM module
+                BackHandler(enabled = true) {
+                    when (currentScreen) {
+                        is Screen.Settings, is Screen.MonaChat, is Screen.LeadDetails -> {
+                            activeLeadForDetail = null
+                            currentScreen = Screen.Dashboard
+                        }
+                        else -> {
+                            finish()
+                        }
+                    }
+                }
+
                 when (currentScreen) {
                     is Screen.Dashboard -> {
                         LeadsScreen(

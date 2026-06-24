@@ -177,13 +177,15 @@ class HrmsRepository(
     }
 
     suspend fun enrollFace(
-        descriptor: List<Float>,
-        captureQuality: Float?
+        descriptor: List<Float>?,
+        captureQuality: Float?,
+        livenessDetected: Boolean = true
     ): Result<FaceEnrollResultData> {
         return try {
             val request = FaceEnrollRequest(
                 descriptor = descriptor,
                 captureQuality = captureQuality,
+                livenessDetected = livenessDetected,
                 deviceInfo = getDeviceInfo()
             )
             val response = getApiService().enrollFace(getToken(), request)
@@ -364,10 +366,11 @@ class HrmsRepository(
         }
     }
 
-    suspend fun acceptAgreement(agreementId: String): Result<Boolean> {
+    suspend fun acceptAgreement(agreementVersionId: String): Result<Boolean> {
         return try {
             val request = AgreementAcceptRequest(
-                agreementId = agreementId,
+                agreementVersionId = agreementVersionId,
+                deviceId = null,
                 deviceInfo = getDeviceInfo()
             )
             val response = getApiService().acceptAgreement(getToken(), request)

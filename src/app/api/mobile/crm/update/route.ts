@@ -6,16 +6,21 @@ export async function OPTIONS() {
 
 export async function GET() {
   return mobileJson({
-    versionCode: 2,
-    versionName: "1.1",
+    versionCode: 4,
+    versionName: "3.0",
     apkUrl: "/app-release.apk",
     changelog: [
-      "Added Remember Me option to save login credentials securely.",
-      "Integrated beautiful 3D rotating prism Monolith logo animation.",
-      "Added in-app self-updater checks and automated updates.",
-      "Repositioned debug overlay FAB to avoid overlapping chat inputs.",
-      "Added URL updates directly from the debug overlay panel.",
-      "Dynamic CRM runtime permissions requested on terms acceptance."
+      "HRMS Mobile Module - Face Recognition Check-In/Check-Out",
+      "GPS location capture on attendance (working hours + on-duty)",
+      "On-Duty trip tracking with live GPS and fuel reimbursement",
+      "Face enrollment with liveness verification",
+      "User agreement acceptance and compliance tracking",
+      "Back button navigation fixed across all screens",
+      "Remember Me with auto-login and module persistence",
+      "Location permission request flow before GPS operations",
+      "Module switcher (CRM / HRMS) with saved state",
+      "Attendance history with detailed session records",
+      "Auto-update: check for updates and install from server"
     ]
   });
 }

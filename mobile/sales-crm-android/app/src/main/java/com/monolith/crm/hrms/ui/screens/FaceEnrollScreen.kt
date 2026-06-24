@@ -7,6 +7,7 @@ import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
 import android.util.Size
+import androidx.activity.compose.BackHandler
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -47,8 +48,8 @@ import java.io.ByteArrayOutputStream
 import java.util.concurrent.Executors
 
 /**
- * Face enrollment screen — captures frontal face and extracts a 128-d descriptor
- * for server-side storage and future verification.
+ * Face enrollment screen - captures frontal face and enrolls.
+ * Works with FaceNet TFLite for embedding, or liveness-only mode (ML Kit face detection).
  */
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -63,12 +64,17 @@ fun FaceEnrollScreen(
     val cameraPermission = rememberPermissionState(Manifest.permission.CAMERA)
     val scope = rememberCoroutineScope()
 
+    // Handle back button
+    BackHandler { onBack() }
+
     var faceDetected by remember { mutableStateOf(false) }
     var capturedEmbedding by remember { mutableStateOf<FloatArray?>(null) }
+    var faceDetectedCount by remember { mutableIntStateOf(0) }
     var enrolling by remember { mutableStateOf(false) }
     var enrollmentDone by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var statusText by remember { mutableStateOf("Position your face in the circle") }
+    var readyToEnroll by remember { mutableStateOf(false) }
 
     // Check existing enrollment status
     var alreadyEnrolled by remember { mutableStateOf<Boolean?>(null) }
@@ -77,13 +83,19 @@ fun FaceEnrollScreen(
         alreadyEnrolled = result.getOrNull()?.enrolled
     }
 
+    // Determine if FaceNet model is available
+    val hasFaceNet = faceNetModel != null && faceNetModel.isReady()
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Column {
                         Text("FACE ENROLLMENT", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Black)
-                        Text("BIOMETRIC SETUP", color = CyanPrimary, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        Text(
+                            if (hasFaceNet) "BIOMETRIC SETUP" else "LIVENESS VERIFICATION",
+                            color = CyanPrimary, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp
+                        )
                     }
                 },
                 navigationIcon = {
@@ -198,15 +210,24 @@ fun FaceEnrollScreen(
                                         .build()
                                         .also { analysis ->
                                             analysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
-                                                if (capturedEmbedding == null) {
+                                                if (!readyToEnroll) {
                                                     processEnrollFrame(imageProxy, faceNetModel) { detected, embedding ->
                                                         faceDetected = detected
-                                                        if (detected && embedding != null) {
-                                                            capturedEmbedding = embedding
-                                                            statusText = "Face captured! Tap ENROLL to save."
-                                                        } else if (detected) {
-                                                            statusText = "Face detected. Hold steady..."
+                                                        if (detected) {
+                                                            faceDetectedCount++
+                                                            if (embedding != null) {
+                                                                capturedEmbedding = embedding
+                                                                readyToEnroll = true
+                                                                statusText = "Face captured! Tap ENROLL to save."
+                                                            } else if (faceDetectedCount >= 5) {
+                                                                // After 5 consecutive detections without embedding, allow liveness-only enrollment
+                                                                readyToEnroll = true
+                                                                statusText = "Face verified! Tap ENROLL to save."
+                                                            } else {
+                                                                statusText = "Face detected. Hold steady... (${faceDetectedCount}/5)"
+                                                            }
                                                         } else {
+                                                            faceDetectedCount = 0
                                                             statusText = "Position your face in the circle"
                                                         }
                                                     }
@@ -235,20 +256,22 @@ fun FaceEnrollScreen(
                     Button(
                         onClick = {
                             val embedding = capturedEmbedding
-                            if (embedding != null) {
-                                enrolling = true
-                                scope.launch {
-                                    val result = repository.enrollFace(embedding.toList(), 0.95f)
-                                    enrolling = false
-                                    if (result.isSuccess) {
-                                        enrollmentDone = true
-                                    } else {
-                                        errorMessage = result.exceptionOrNull()?.message ?: "Enrollment failed"
-                                    }
+                            enrolling = true
+                            scope.launch {
+                                val result = repository.enrollFace(
+                                    descriptor = embedding?.toList(),
+                                    captureQuality = if (faceDetected) 0.95f else null,
+                                    livenessDetected = true
+                                )
+                                enrolling = false
+                                if (result.isSuccess) {
+                                    enrollmentDone = true
+                                } else {
+                                    errorMessage = result.exceptionOrNull()?.message ?: "Enrollment failed"
                                 }
                             }
                         },
-                        enabled = capturedEmbedding != null,
+                        enabled = readyToEnroll,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = CyanPrimary,
                             disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -261,11 +284,13 @@ fun FaceEnrollScreen(
                         Text("ENROLL FACE", fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 14.sp)
                     }
 
-                    if (capturedEmbedding != null) {
+                    if (readyToEnroll) {
                         Spacer(modifier = Modifier.height(8.dp))
                         TextButton(onClick = {
                             capturedEmbedding = null
                             faceDetected = false
+                            readyToEnroll = false
+                            faceDetectedCount = 0
                             statusText = "Position your face in the circle"
                         }) {
                             Text("RETAKE", color = OrangeAlert, fontWeight = FontWeight.Bold)
@@ -341,6 +366,7 @@ private fun processEnrollFrame(
                     onResult(true, null)
                 }
             } else if (faces.isNotEmpty()) {
+                // Face detected but no FaceNet model - liveness-only mode
                 onResult(true, null)
             } else {
                 onResult(false, null)

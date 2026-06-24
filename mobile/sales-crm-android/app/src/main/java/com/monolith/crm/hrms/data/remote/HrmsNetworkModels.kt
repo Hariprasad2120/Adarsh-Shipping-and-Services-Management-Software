@@ -1,29 +1,39 @@
 package com.monolith.crm.hrms.data.remote
 
 // HRMS Mobile API network models.
-// Matches the server-side API contracts from /api/mobile/hrms endpoints.
+// Matches the actual server-side API response JSON structure.
 
 // --- Dashboard ---
 
 data class HrmsDashboardResponse(
     val ok: Boolean,
-    val data: HrmsDashboardData?
+    val data: HrmsDashboardData?,
+    val error: String?
 )
 
 data class HrmsDashboardData(
     val user: DashboardUser,
     val attendance: AttendanceStatus,
-    val faceEnrolled: Boolean,
-    val agreementAccepted: Boolean,
-    val trackingActive: Boolean,
-    val onDutyActive: Boolean
+    val agreement: DashboardAgreement?,
+    val face: DashboardFace?
 )
 
 data class DashboardUser(
     val id: String,
     val name: String,
     val email: String,
-    val orgId: String?
+    val designation: String?
+)
+
+data class DashboardAgreement(
+    val required: Boolean,
+    val accepted: Boolean,
+    val version: Int?
+)
+
+data class DashboardFace(
+    val enrolled: Boolean,
+    val enrolledAt: String?
 )
 
 data class AttendanceStatus(
@@ -132,8 +142,9 @@ data class FaceEnrollmentStatus(
 )
 
 data class FaceEnrollRequest(
-    val descriptor: List<Float>,
+    val descriptor: List<Float>?,
     val captureQuality: Float?,
+    val livenessDetected: Boolean?,
     val deviceInfo: DeviceInfo?
 )
 
@@ -174,7 +185,7 @@ data class TrackingHeartbeatRequest(
     val bearing: Float?,
     val batteryLevel: Int?,
     val isMockLocation: Boolean,
-    val sessionType: String? // "WORKING_HOURS" | "ON_DUTY"
+    val sessionType: String?
 )
 
 data class TrackingHeartbeatResponse(
@@ -210,7 +221,7 @@ data class OnDutyRequestData(
 )
 
 data class OnDutyActionRequest(
-    val action: String, // "create" | "start" | "complete" | "claim_reimbursement"
+    val action: String,
     val requestId: String?,
     val purpose: String?,
     val visitLocation: String?,
@@ -244,9 +255,9 @@ data class AgreementResponse(
 )
 
 data class AgreementData(
-    val agreement: AgreementContent?,
-    val accepted: Boolean,
-    val acceptedAt: String?
+    val required: Boolean?,
+    val accepted: Boolean?,
+    val agreement: AgreementContent?
 )
 
 data class AgreementContent(
@@ -254,11 +265,12 @@ data class AgreementContent(
     val version: Int,
     val title: String,
     val content: String,
-    val effectiveDate: String
+    val effectiveFrom: String?
 )
 
 data class AgreementAcceptRequest(
-    val agreementId: String,
+    val agreementVersionId: String,
+    val deviceId: String?,
     val deviceInfo: DeviceInfo?
 )
 

@@ -53,18 +53,30 @@ export type FaceDescriptor = number[];
 export async function enrollFace(
   userId: string,
   orgId: string,
-  descriptor: FaceDescriptor,
+  descriptor: FaceDescriptor | null,
   enrolledVia: string = "mobile"
 ) {
   const now = await getNow();
 
-  // Encrypt the descriptor
-  const descriptorJson = JSON.stringify(descriptor);
-  const encrypted = encrypt(descriptorJson);
-  const descriptorHash = crypto
-    .createHash("sha256")
-    .update(descriptorJson)
-    .digest("hex");
+  // Handle liveness-only mode (no descriptor)
+  let encrypted: any;
+  let descriptorHash: string;
+
+  if (descriptor && descriptor.length > 0) {
+    const descriptorJson = JSON.stringify(descriptor);
+    encrypted = encrypt(descriptorJson);
+    descriptorHash = crypto
+      .createHash("sha256")
+      .update(descriptorJson)
+      .digest("hex");
+  } else {
+    // Liveness-only enrollment - store marker
+    encrypted = { encrypted: "liveness_only", iv: "none", tag: "none" };
+    descriptorHash = crypto
+      .createHash("sha256")
+      .update("liveness_only_" + userId)
+      .digest("hex");
+  }
 
   // Upsert enrollment (one enrollment per user)
   const enrollment = await db.employeeFaceEnrollment.upsert({

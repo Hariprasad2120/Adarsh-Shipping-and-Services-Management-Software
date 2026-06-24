@@ -1,5 +1,6 @@
 package com.monolith.crm.hrms.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -34,6 +35,15 @@ fun OnDutyScreen(
     var visitAddress by remember { mutableStateOf("") }
     var fromDate by remember { mutableStateOf("") }
     var toDate by remember { mutableStateOf("") }
+
+    // Back button: close form if open, otherwise go back
+    BackHandler {
+        if (showCreateForm) {
+            showCreateForm = false
+        } else {
+            onBack()
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.loadRequests()

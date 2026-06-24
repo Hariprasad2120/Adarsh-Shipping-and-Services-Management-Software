@@ -23,31 +23,32 @@ class AuthViewModel(private val repository: CrmRepository) : ViewModel() {
 
     /**
      * Attempt auto-login if the user previously enabled Remember Me
-     * and a valid auth token already exists. This prevents the user
-     * from having to re-enter credentials every time they open the app
-     * (especially after consent resets on new builds).
+     * and a valid auth token already exists.
      */
-    fun tryAutoLogin(onSuccess: () -> Unit) {
+    fun tryAutoLogin(onSuccess: () -> Unit): String? {
         // If we already have a valid token, we're already logged in
         if (repository.getAuthToken() != null) {
             isLoggedIn = true
-            AppLogger.info("Auth", "Auto-restored session from saved token")
+            val savedModule = repository.getActiveModule()
+            AppLogger.info("Auth", "Auto-restored session from saved token, module=$savedModule")
             onSuccess()
-            return
+            return savedModule
         }
 
         // If Remember Me is enabled and we have saved credentials, perform silent login
         if (repository.isRememberMeEnabled()) {
             val savedEmail = repository.getRememberedEmail()
             val savedPassword = repository.getRememberedPassword()
+            val savedModule = repository.getActiveModule()
             if (savedEmail.isNotBlank() && savedPassword.isNotBlank()) {
                 email = savedEmail
                 password = savedPassword
-                AppLogger.info("Auth", "Attempting auto-login with saved credentials")
-                login(onSuccess = onSuccess)
-                return
+                AppLogger.info("Auth", "Attempting auto-login with saved credentials, module=$savedModule")
+                login(module = savedModule, onSuccess = onSuccess)
+                return savedModule
             }
         }
+        return null
     }
 
     fun login(module: String = "CRM", onSuccess: () -> Unit) {
@@ -61,14 +62,16 @@ class AuthViewModel(private val repository: CrmRepository) : ViewModel() {
         isLoading = true
 
         val currentBaseUrl = repository.getBaseUrl()
-        AppLogger.info("Auth", "Login attempt → $currentBaseUrl", "Email: $email, Module: $module")
+        AppLogger.info("Auth", "Login attempt -> $currentBaseUrl", "Email: $email, Module: $module")
 
         viewModelScope.launch {
             val result = repository.login(email, password, module)
             isLoading = false
             if (result.isSuccess) {
                 isLoggedIn = true
+                // Save credentials AND the selected module for auto-login
                 repository.saveRememberedCredentials(email, password, rememberMe)
+                repository.setActiveModule(module)
                 AppLogger.info("Auth", "Login successful", "User: ${result.getOrNull()?.user?.name}, Module: $module")
                 onSuccess()
             } else {

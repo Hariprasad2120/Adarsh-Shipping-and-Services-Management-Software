@@ -41,7 +41,10 @@ export async function GET(request: Request) {
           accepted: agreementStatus.accepted,
           version: agreementStatus.agreement?.version,
         },
-        face: faceStatus,
+        face: {
+          enrolled: faceStatus.isEnrolled,
+          enrolledAt: faceStatus.enrollment?.enrolledAt ?? null,
+        },
       },
     });
   } catch (error: any) {
