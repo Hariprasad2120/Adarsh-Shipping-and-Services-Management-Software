@@ -1,8 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { db } from "@/lib/db";
 import * as chaService from "../service";
-import * as XLSX from "xlsx";
-import { Prisma } from "@/generated/prisma/client";
 
 describe("Customs House Agent (CHA) Module Integration Tests", () => {
   let org: any;
@@ -49,12 +47,24 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       update: { label: "Approve/Delete Assigned CHA Jobs", group: "CHA" },
       create: { key: "cha.job.delete.approve", label: "Approve/Delete Assigned CHA Jobs", group: "CHA" },
     });
+    const internalChecklistApprovePermission = await db.permission.upsert({
+      where: { key: "cha.checklist.internal_approve" },
+      update: { label: "Internal Approve Checklist", group: "CHA" },
+      create: { key: "cha.checklist.internal_approve", label: "Internal Approve Checklist", group: "CHA" },
+    });
+    const customerChecklistApprovePermission = await db.permission.upsert({
+      where: { key: "cha.checklist.customer_approve" },
+      update: { label: "Customer Approve Checklist", group: "CHA" },
+      create: { key: "cha.checklist.customer_approve", label: "Customer Approve Checklist", group: "CHA" },
+    });
 
     await db.rolePermission.createMany({
       data: [
         { roleId: employeeRole.id, permissionId: deletePermission.id },
         { roleId: managerRole.id, permissionId: deletePermission.id },
         { roleId: managerRole.id, permissionId: approveDeletePermission.id },
+        { roleId: managerRole.id, permissionId: internalChecklistApprovePermission.id },
+        { roleId: managerRole.id, permissionId: customerChecklistApprovePermission.id },
       ],
       skipDuplicates: true,
     });
@@ -369,8 +379,8 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     // K. Complete Additional Data before checklist preparation
     await chaService.upsertAdditionalData(ownerUser.id, org.id, job.id, {
       vesselInwardDate: new Date("2026-01-10"),
-      importGeneralManifest: 12345,
-      exportGeneralManifest: 67890,
+      importGeneralManifest: "12345",
+      exportGeneralManifest: "67890",
       deliveryOrderValidity: new Date("2026-01-15"),
     });
 
@@ -431,8 +441,8 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     await chaService.proceedDocumentStage(ownerUser.id, org.id, job.id);
     await chaService.upsertAdditionalData(ownerUser.id, org.id, job.id, {
       vesselInwardDate: new Date("2026-01-10"),
-      importGeneralManifest: 12345,
-      exportGeneralManifest: 67890,
+      importGeneralManifest: "12345",
+      exportGeneralManifest: "67890",
       deliveryOrderValidity: new Date("2026-01-15"),
     });
     await chaService.proceedAdditionalDataStage(ownerUser.id, org.id, job.id);
@@ -444,83 +454,84 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     await db.user.delete({ where: { id: randomUser.id } });
   });
 
-  it("4. should import checklist, submit for approval and handle manager actions", async () => {
+  it("4. should upload checklist, route through internal and customer approvals, and then move to filing", async () => {
     const job = await db.chaJob.findFirstOrThrow({ where: { orgId: org.id, jobNumber: "CHA-JOB-999" } });
 
-    // A. Generate a mock Excel workbook
-    const checklistData = [
-      { Section: "Basic Details", "Question Identifier": "Q1", Question: "Is IGST paid?", "Response Type": "BOOLEAN", Value: "Yes", Remarks: "Paid online" },
-      { Section: "Basic Details", "Question Identifier": "Q2", Question: "HSN code correct?", "Response Type": "BOOLEAN", Value: "Yes", Remarks: "Checked" },
-      { Section: "Port Clearance", "Question Identifier": "Q3", Question: "Container Seal matches?", "Response Type": "BOOLEAN", Value: "Yes", Remarks: "Verified" },
-    ];
-    const ws = XLSX.utils.json_to_sheet(checklistData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Checklist");
-    const excelBuffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
-
-    // B. Import checklist
-    const checklistImport = await chaService.importChecklistExcel(
+    const uploadResult = await chaService.uploadChecklistFile(
       ownerUser.id,
       org.id,
       job.id,
-      excelBuffer,
-      "checklist_draft.xlsx",
-      excelBuffer.length
+      {
+        fileKey: "blob:checklist-v1",
+        fileName: "customs-checklist-v1.pdf",
+        mimeType: "application/pdf",
+        sizeBytes: 4096,
+      }
     );
 
-    expect(checklistImport).toBeDefined();
-    expect(checklistImport.status).toBe("READY");
+    expect(uploadResult.checklist.status).toBe("INTERNAL_APPROVAL_PENDING");
+    expect(uploadResult.fileVersion.versionNumber).toBe(1);
 
     const updatedJob1 = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
-    expect(updatedJob1.stage).toBe("CHECKLIST_PREPARATION");
+    expect(updatedJob1.stage).toBe("CHECKLIST_APPROVAL");
 
-    // C. Submit checklist for approval
-    const submitted = await chaService.submitChecklistForApproval(ownerUser.id, org.id, job.id, checklistImport.id);
-    expect(submitted.status).toBe("PENDING_APPROVAL");
+    const checklist = await db.chaChecklist.findUniqueOrThrow({ where: { jobId: job.id } });
+    const internalApprovals = await db.chaChecklistDecision.findMany({
+      where: { checklistId: checklist.id, stage: "INTERNAL", fileVersionId: uploadResult.fileVersion.id },
+    });
+    expect(internalApprovals.some((approval) => approval.assignedToId === managerUser.id)).toBe(true);
 
-    const updatedJob2 = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
-    expect(updatedJob2.stage).toBe("CHECKLIST_APPROVAL");
-
-    // D. Manager reviews and requests REWORK
-    const approvals = await db.chaChecklistApproval.findMany({ where: { importId: checklistImport.id } });
-    expect(approvals.length).toBe(1);
-    expect(approvals[0].managerId).toBe(managerUser.id);
-
-    await chaService.checklistManagerAction(
+    await chaService.submitChecklistInternalDecision(
       managerUser.id,
       org.id,
       job.id,
-      checklistImport.id,
-      approvals[0].id,
-      "REWORK",
+      checklist.id,
+      "REJECTED",
       "HSN code verification proof is missing. Please re-check Q2."
     );
 
-    const checklistAfterRework = await db.chaChecklistImport.findUniqueOrThrow({ where: { id: checklistImport.id } });
-    expect(checklistAfterRework.status).toBe("REWORK");
+    const checklistAfterRework = await db.chaChecklist.findUniqueOrThrow({ where: { id: checklist.id } });
+    expect(checklistAfterRework.status).toBe("REWORK_REQUIRED");
 
     const jobAfterRework = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
     expect(jobAfterRework.stage).toBe("CHECKLIST_PREPARATION");
 
-    // E. Re-submit checklist
-    await chaService.submitChecklistForApproval(ownerUser.id, org.id, job.id, checklistImport.id);
+    const reuploadResult = await chaService.uploadChecklistFile(
+      ownerUser.id,
+      org.id,
+      job.id,
+      {
+        fileKey: "blob:checklist-v2",
+        fileName: "customs-checklist-v2.pdf",
+        mimeType: "application/pdf",
+        sizeBytes: 5120,
+      }
+    );
+    expect(reuploadResult.fileVersion.versionNumber).toBe(2);
 
-    // F. Manager approves
-    const newApprovals = await db.chaChecklistApproval.findMany({ where: { importId: checklistImport.id, decision: "PENDING" } });
-    expect(newApprovals.length).toBe(1);
-
-    await chaService.checklistManagerAction(
+    await chaService.submitChecklistInternalDecision(
       managerUser.id,
       org.id,
       job.id,
-      checklistImport.id,
-      newApprovals[0].id,
+      checklist.id,
       "APPROVED",
       "All checks pass."
     );
 
-    const checklistApproved = await db.chaChecklistImport.findUniqueOrThrow({ where: { id: checklistImport.id } });
-    expect(checklistApproved.status).toBe("APPROVED");
+    const checklistPendingCustomer = await db.chaChecklist.findUniqueOrThrow({ where: { id: checklist.id } });
+    expect(checklistPendingCustomer.status).toBe("CUSTOMER_APPROVAL_PENDING");
+
+    await chaService.submitChecklistCustomerDecision(
+      otherManagerUser.id,
+      org.id,
+      job.id,
+      checklist.id,
+      "APPROVED",
+      "Customer accepted the checklist."
+    );
+
+    const checklistApproved = await db.chaChecklist.findUniqueOrThrow({ where: { id: checklist.id } });
+    expect(checklistApproved.status).toBe("CUSTOMER_APPROVED");
 
     const jobApproved = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
     expect(jobApproved.stage).toBe("FILING");

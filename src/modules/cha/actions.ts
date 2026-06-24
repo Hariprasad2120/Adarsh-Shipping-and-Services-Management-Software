@@ -318,6 +318,20 @@ export async function declareDocumentExceptionAction(
   }
 }
 
+export async function markDocumentNotAvailableAction(
+  jobId: string,
+  requirementId: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.document.exception");
+    const exception = await chaService.markDocumentNotAvailable(userId, orgId, jobId, requirementId);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: exception };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to mark document as N/A" };
+  }
+}
+
 export async function importChecklistExcelAction(
   jobId: string,
   formData: FormData
@@ -337,12 +351,33 @@ export async function importChecklistExcelAction(
   }
 }
 
+export async function uploadChecklistFileAction(
+  jobId: string,
+  data: {
+    fileKey: string;
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+    remarks?: string;
+  }
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const checklist = await chaService.uploadChecklistFile(userId, orgId, jobId, data);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    revalidatePath("/cha/approvals");
+    return { ok: true, data: checklist };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to upload checklist file" };
+  }
+}
+
 export async function upsertAdditionalDataAction(
   jobId: string,
   data: {
     vesselInwardDate?: string | Date | null;
-    importGeneralManifest?: number | string | null;
-    exportGeneralManifest?: number | string | null;
+    importGeneralManifest?: string | null;
+    exportGeneralManifest?: string | null;
     deliveryOrderValidity?: string | Date | null;
   }
 ): Promise<ActionResponse> {
@@ -354,6 +389,40 @@ export async function upsertAdditionalDataAction(
     return { ok: true, data: additionalData };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to save additional data" };
+  }
+}
+
+export async function submitChecklistInternalDecisionAction(
+  jobId: string,
+  checklistId: string,
+  decision: "APPROVED" | "REJECTED",
+  remarks?: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const result = await chaService.submitChecklistInternalDecision(userId, orgId, jobId, checklistId, decision, remarks);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    revalidatePath("/cha/approvals");
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to process internal checklist decision" };
+  }
+}
+
+export async function submitChecklistCustomerDecisionAction(
+  jobId: string,
+  checklistId: string,
+  decision: "APPROVED" | "REJECTED",
+  remarks?: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const result = await chaService.submitChecklistCustomerDecision(userId, orgId, jobId, checklistId, decision, remarks);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    revalidatePath("/cha/approvals");
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to process customer checklist decision" };
   }
 }
 

@@ -150,6 +150,14 @@ const PERMISSIONS = [
   { key: "cha.additional_data.edit", label: "Edit CHA Additional Data", group: "CHA" },
   { key: "cha.additional_data.proceed", label: "Proceed CHA Additional Data", group: "CHA" },
   { key: "cha.do_validity.view_indicator", label: "View DO Validity Expiry Indicator", group: "CHA" },
+  { key: "cha.checklist.view", label: "View Checklist Workflow", group: "CHA" },
+  { key: "cha.checklist.upload", label: "Upload Checklist File", group: "CHA" },
+  { key: "cha.checklist.edit", label: "Edit/Reupload Checklist File", group: "CHA" },
+  { key: "cha.checklist.view_file", label: "View Checklist File", group: "CHA" },
+  { key: "cha.checklist.internal_approve", label: "Internal Approve Checklist", group: "CHA" },
+  { key: "cha.checklist.customer_approve", label: "Customer Approve Checklist", group: "CHA" },
+  { key: "cha.checklist.reject", label: "Reject Checklist", group: "CHA" },
+  { key: "cha.checklist.move_to_filing", label: "Move Checklist To Filing", group: "CHA" },
   { key: "cha.checklist.prepare", label: "Prepare Checklist", group: "CHA" },
   { key: "cha.checklist.submit", label: "Submit Checklist", group: "CHA" },
   { key: "cha.checklist.self_approve", label: "Self-Approve Checklist", group: "CHA" },
@@ -227,6 +235,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "communication.admin.manage",
     "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.delete", "cha.job.delete.approve", "cha.job.view_all", "cha.document.read",
     "cha.additional_data.view", "cha.additional_data.edit", "cha.additional_data.proceed", "cha.do_validity.view_indicator",
+    "cha.checklist.view", "cha.checklist.view_file", "cha.checklist.internal_approve", "cha.checklist.customer_approve", "cha.checklist.reject", "cha.checklist.move_to_filing",
     "cha.checklist.manager_approve", "cha.filing.manage", "cha.advance.manage", "cha.expense.manage",
     "cha.expense.pay", "cha.audit.view", "cha.customer.read", "cha.customer.manage",
     // HR Letters
@@ -292,6 +301,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "communication.forms.access", "communication.forms.create",
     "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.delete", "cha.job.delete.approve", "cha.document.read",
     "cha.additional_data.view", "cha.additional_data.proceed", "cha.do_validity.view_indicator", "cha.checklist.manager_approve",
+    "cha.checklist.view", "cha.checklist.view_file", "cha.checklist.internal_approve", "cha.checklist.customer_approve", "cha.checklist.reject", "cha.checklist.move_to_filing",
     "cha.expense.manage", "cha.audit.view", "cha.customer.read", "cha.customer.manage",
     // Recruit: hiring manager role + job seeker
     "recruit.view", "recruit.candidate.view", "recruit.resume.view",
@@ -332,6 +342,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "communication.forms.access", "communication.admin.manage",
     "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.delete", "cha.job.delete.approve", "cha.job.view_all", "cha.document.read",
     "cha.additional_data.view", "cha.additional_data.edit", "cha.additional_data.proceed", "cha.do_validity.view_indicator",
+    "cha.checklist.view", "cha.checklist.view_file", "cha.checklist.internal_approve", "cha.checklist.customer_approve", "cha.checklist.reject", "cha.checklist.move_to_filing",
     "cha.checklist.manager_approve", "cha.filing.manage", "cha.advance.manage", "cha.expense.manage",
     "cha.expense.pay", "cha.audit.view", "cha.customer.read", "cha.customer.manage",
     // HR Letters
@@ -353,7 +364,8 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "communication.forms.access",
     "cha.access", "cha.dashboard.view", "cha.job.read", "cha.job.create", "cha.job.update", "cha.job.delete",
     "cha.document.read", "cha.document.upload", "cha.document.exception",
-    "cha.additional_data.view", "cha.additional_data.edit", "cha.additional_data.proceed", "cha.do_validity.view_indicator", "cha.checklist.prepare",
+    "cha.additional_data.view", "cha.additional_data.edit", "cha.additional_data.proceed", "cha.do_validity.view_indicator",
+    "cha.checklist.view", "cha.checklist.upload", "cha.checklist.edit", "cha.checklist.view_file", "cha.checklist.prepare",
     "cha.checklist.submit", "cha.checklist.self_approve", "cha.filing.manage", "cha.expense.request",
     "cha.audit.view", "cha.customer.read", "cha.customer.manage",
     // Recruit: job seeker workspace only

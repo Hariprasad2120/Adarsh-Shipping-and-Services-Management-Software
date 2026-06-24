@@ -3286,6 +3286,7 @@ model ChaJob {
   deletionRequests     ChaJobDeletionRequest[]
   documentRequirements ChaJobDocumentRequirement[]
   additionalData       ChaJobAdditionalData?
+  checklistWorkflow    ChaChecklist?
   checklistImports     ChaChecklistImport[]
   filing               ChaFiling?
   customerAdvance      ChaCustomerAdvance?
@@ -3310,8 +3311,8 @@ model ChaJobAdditionalData {
   id                    String    @id @default(cuid())
   jobId                 String    @unique
   vesselInwardDate      DateTime?
-  importGeneralManifest Int?
-  exportGeneralManifest Int?
+  importGeneralManifest String?
+  exportGeneralManifest String?
   deliveryOrderValidity DateTime?
   status                String    @default("PENDING") // PENDING | COMPLETED
   createdById           String
@@ -3531,6 +3532,69 @@ model ChaChecklistReworkNote {
 
   @@index([importId])
   @@index([authorId])
+}
+
+model ChaChecklist {
+  id                        String   @id @default(cuid())
+  jobId                     String   @unique
+  currentFileVersionId      String?
+  status                    String   @default("PENDING_UPLOAD")
+  currentApprovalStage      String   @default("UPLOAD")
+  customerApprovalAttempted Boolean  @default(false)
+  customerRejectedOnce      Boolean  @default(false)
+  createdById               String
+  updatedById               String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  job                ChaJob                    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  currentFileVersion ChaChecklistFileVersion?  @relation("ChaChecklistCurrentVersion", fields: [currentFileVersionId], references: [id], onDelete: SetNull)
+  fileVersions       ChaChecklistFileVersion[] @relation("ChaChecklistVersions")
+  approvals          ChaChecklistDecision[]
+
+  @@index([status])
+  @@index([currentApprovalStage])
+}
+
+model ChaChecklistFileVersion {
+  id               String   @id @default(cuid())
+  checklistId      String
+  fileKey          String
+  originalFileName String
+  mimeType         String
+  fileSize         Int
+  uploadedById     String
+  uploadedAt       DateTime @default(now())
+  versionNumber    Int
+  remarks          String?
+
+  checklist            ChaChecklist            @relation("ChaChecklistVersions", fields: [checklistId], references: [id], onDelete: Cascade)
+  currentForChecklists ChaChecklist[]          @relation("ChaChecklistCurrentVersion")
+  approvals            ChaChecklistDecision[]
+
+  @@unique([checklistId, versionNumber])
+  @@index([checklistId, uploadedAt])
+}
+
+model ChaChecklistDecision {
+  id           String   @id @default(cuid())
+  checklistId  String
+  fileVersionId String
+  stage        String
+  action       String   @default("PENDING")
+  remarks      String?
+  actedById    String?
+  assignedToId String?
+  actedAt      DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  checklist   ChaChecklist            @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  fileVersion ChaChecklistFileVersion @relation(fields: [fileVersionId], references: [id], onDelete: Cascade)
+
+  @@index([checklistId, stage, action])
+  @@index([fileVersionId])
+  @@index([assignedToId, action])
 }
 
 model ChaFiling {

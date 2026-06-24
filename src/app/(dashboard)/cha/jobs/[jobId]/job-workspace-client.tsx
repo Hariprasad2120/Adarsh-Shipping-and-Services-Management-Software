@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -38,6 +38,8 @@ interface JobWorkspaceClientProps {
   canApproveDeleteJob: boolean;
   canDeleteDoc: boolean;
   canManageSettings: boolean;
+  canInternalApproveChecklist: boolean;
+  canCustomerApproveChecklist: boolean;
 }
 
 const STAGES = [
@@ -49,6 +51,22 @@ const STAGES = [
   { key: "FILED", label: "Filed / Complete" },
 ];
 
+type WorkspaceTab =
+  | "docs"
+  | "additionalData"
+  | "checklist"
+  | "filing"
+  | "advances"
+  | "expenses"
+  | "audit";
+
+function getDefaultTabForStage(stage: string): WorkspaceTab {
+  if (stage === "ADDITIONAL_DATA") return "additionalData";
+  if (stage === "CHECKLIST_PREPARATION" || stage === "CHECKLIST_APPROVAL") return "checklist";
+  if (stage === "FILING" || stage === "FILED") return "filing";
+  return "docs";
+}
+
 export function JobWorkspaceClient({
   job,
   users,
@@ -59,11 +77,20 @@ export function JobWorkspaceClient({
   canApproveDeleteJob,
   canDeleteDoc,
   canManageSettings,
+  canInternalApproveChecklist,
+  canCustomerApproveChecklist,
 }: JobWorkspaceClientProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<
-    "docs" | "additionalData" | "checklist" | "filing" | "advances" | "expenses" | "audit"
-  >("docs");
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>(() => getDefaultTabForStage(job.stage));
+
+  useEffect(() => {
+    setActiveTab((currentTab) => {
+      if (currentTab === "audit" || currentTab === "advances" || currentTab === "expenses") {
+        return currentTab;
+      }
+      return getDefaultTabForStage(job.stage);
+    });
+  }, [job.stage]);
 
   // Submitting States
   const [loading, setLoading] = useState<string | null>(null);
@@ -95,10 +122,11 @@ export function JobWorkspaceClient({
     job.additionalData?.deliveryOrderValidity ? job.additionalData.deliveryOrderValidity.slice(0, 10) : ""
   );
 
-  // Checklist Prep Form State
-  const [checklistManagerId, setChecklistManagerId] = useState(
-    job.assignments.find((a: any) => a.responsibility === "APPROVAL")?.userId || ""
-  );
+  // Checklist Workflow State
+  const [checklistFile, setChecklistFile] = useState<File | null>(null);
+  const [checklistRemarks, setChecklistRemarks] = useState("");
+  const [internalApprovalRemarks, setInternalApprovalRemarks] = useState("");
+  const [customerApprovalRemarks, setCustomerApprovalRemarks] = useState("");
 
   // Filing Form State
   const [newEstFilingDate, setNewEstFilingDate] = useState("");
@@ -192,6 +220,27 @@ export function JobWorkspaceClient({
     deleteConfirmJobNumber.trim() === job.jobNumber &&
     deleteConfirmPhrase.trim().toLowerCase() === "delete job";
   const recentMilestones = job.auditLogs?.slice(0, 4) ?? [];
+  const checklistWorkflow = job.checklistWorkflow ?? null;
+  const currentChecklistVersion = checklistWorkflow?.currentFileVersion ?? checklistWorkflow?.fileVersions?.[0] ?? null;
+  const checklistApprovals = checklistWorkflow?.approvals ?? [];
+  const currentInternalApprovals = checklistApprovals.filter(
+    (approval: any) =>
+      approval.fileVersionId === currentChecklistVersion?.id &&
+      approval.stage === "INTERNAL",
+  );
+  const currentCustomerApprovals = checklistApprovals.filter(
+    (approval: any) =>
+      approval.fileVersionId === currentChecklistVersion?.id &&
+      approval.stage === "CUSTOMER",
+  );
+  const canCurrentUserInternalApprove =
+    canInternalApproveChecklist ||
+    currentInternalApprovals.some((approval: any) => approval.assignedToId === currentUserId && approval.action === "PENDING");
+  const canCurrentUserCustomerApprove =
+    canCustomerApproveChecklist ||
+    currentCustomerApprovals.some((approval: any) => approval.assignedToId === currentUserId && approval.action === "PENDING");
+  const getUserName = (userId?: string | null) =>
+    users.find((user) => user.id === userId)?.name || "Unknown";
   // Document version mock upload handler
   const handleUploadDoc = async (reqId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -250,6 +299,25 @@ export function JobWorkspaceClient({
     }
   };
 
+  const handleMarkNotAvailable = async (reqId: string) => {
+    setLoading(`na-${reqId}`);
+    try {
+      const res = await actions.markDocumentNotAvailableAction(job.id, reqId);
+      if (res.ok) {
+        toast.success("Document requirement marked as N/A.");
+        setExceptionReason("");
+        setActiveDocReqId(null);
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to mark requirement as N/A.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   // Undo document exemption (Mark as active requirement again)
   const handleRemoveException = async (reqId: string) => {
     setLoading(`undo-exc-${reqId}`);
@@ -276,6 +344,7 @@ export function JobWorkspaceClient({
       const res = await actions.proceedDocumentStageAction(job.id);
       if (res.ok) {
         toast.success("Workflow stage advanced to Additional Data successfully.");
+        setActiveTab("additionalData");
         router.refresh();
       } else {
         setProceedErrors(res.error ? [res.error] : ["Mandatory document requirement gating check failed."]);
@@ -290,17 +359,16 @@ export function JobWorkspaceClient({
 
   const isValidManifest = (value: string) => {
     if (value === "") return false;
-    const parsed = Number(value);
-    return Number.isInteger(parsed) && parsed >= 0;
+    return /^\d+$/.test(value);
   };
 
   const handleSaveAdditionalData = async () => {
     if (importGeneralManifest !== "" && !isValidManifest(importGeneralManifest)) {
-      toast.error("IGM must be a non-negative whole number.");
+      toast.error("IGM must contain digits only.");
       return;
     }
     if (exportGeneralManifest !== "" && !isValidManifest(exportGeneralManifest)) {
-      toast.error("EGM must be a non-negative whole number.");
+      toast.error("EGM must contain digits only.");
       return;
     }
 
@@ -308,8 +376,8 @@ export function JobWorkspaceClient({
     try {
       const res = await actions.upsertAdditionalDataAction(job.id, {
         vesselInwardDate: vesselInwardDate || null,
-        importGeneralManifest: importGeneralManifest === "" ? null : Number(importGeneralManifest),
-        exportGeneralManifest: exportGeneralManifest === "" ? null : Number(exportGeneralManifest),
+        importGeneralManifest: importGeneralManifest === "" ? null : importGeneralManifest,
+        exportGeneralManifest: exportGeneralManifest === "" ? null : exportGeneralManifest,
         deliveryOrderValidity: deliveryOrderValidity || null,
       });
       if (res.ok) {
@@ -370,24 +438,35 @@ export function JobWorkspaceClient({
     }
   };
 
-  // Checklist excel parse handler
-  const handleImportChecklist = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleUploadChecklist = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const file = formData.get("file") as File;
-    if (!file || file.size === 0) {
-      toast.error("Please select a valid Excel workbook template.");
+    if (!checklistFile || checklistFile.size === 0) {
+      toast.error("Please choose a checklist file to upload.");
       return;
     }
 
-    setLoading("checklist-import");
+    setLoading("checklist-upload");
     try {
-      const res = await actions.importChecklistExcelAction(job.id, formData);
+      const localUrl = URL.createObjectURL(checklistFile);
+      const res = await actions.uploadChecklistFileAction(job.id, {
+        fileKey: localUrl,
+        fileName: checklistFile.name,
+        mimeType: checklistFile.type || "application/octet-stream",
+        sizeBytes: checklistFile.size,
+        remarks: checklistRemarks || undefined,
+      });
+
       if (res.ok) {
-        toast.success("Excel checklist successfully parsed and stored.");
+        const versionId = res.data?.fileVersion?.id;
+        if (versionId) {
+          setPreviewUrls((prev) => ({ ...prev, [versionId]: localUrl }));
+        }
+        toast.success(currentChecklistVersion ? "Checklist reuploaded for approval." : "Checklist uploaded for approval.");
+        setChecklistFile(null);
+        setChecklistRemarks("");
         router.refresh();
       } else {
-        toast.error(res.error || "Checklist import failed.");
+        toast.error(res.error || "Checklist upload failed.");
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
@@ -396,85 +475,56 @@ export function JobWorkspaceClient({
     }
   };
 
-  // Submit checklist for manager approval
-  const handleSubmitChecklistForApproval = async () => {
-    const activeChecklist = job.checklistImports.find((c: any) => c.status !== "APPROVED");
-    if (!activeChecklist) return;
-
-    setLoading("checklist-submit");
-    try {
-      const res = await actions.submitChecklistForApprovalAction(job.id, activeChecklist.id);
-      if (res.ok) {
-        toast.success("Checklist submitted for manager audit.");
-        router.refresh();
-      } else {
-        toast.error(res.error || "Submission failed.");
-      }
-    } catch (err: any) {
-      toast.error(err.message || "An unexpected error occurred.");
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  // Self Approval
-  const handleSelfApproveChecklist = async () => {
-    const activeChecklist = job.checklistImports.find((c: any) => c.status !== "APPROVED");
-    if (!activeChecklist) return;
-
-    setLoading("checklist-self");
-    try {
-      const res = await actions.selfApproveChecklistAction(job.id, activeChecklist.id, "Self-approved by owner");
-      if (res.ok) {
-        toast.success("Checklist self-approved. Workflow advanced to Filing.");
-        router.refresh();
-      } else {
-        toast.error(res.error || "Self-approval failed.");
-      }
-    } catch (err: any) {
-      toast.error(err.message || "An unexpected error occurred.");
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  // Manager action (APPROVE / REWORK)
-  const handleManagerChecklistAction = async (decision: "APPROVED" | "REWORK") => {
-    const activeChecklist = job.checklistImports.find(
-      (c: any) => c.status === "PENDING_APPROVAL"
-    );
-    if (!activeChecklist) return;
-
-    const myApprovalRecord = activeChecklist.approvals.find(
-      (a: any) => a.managerId === currentUserId && a.decision === "PENDING"
-    );
-
-    if (!myApprovalRecord) {
-      toast.error("You are not an assigned reviewer or have already review-actioned.");
+  const handleChecklistInternalDecision = async (decision: "APPROVED" | "REJECTED") => {
+    if (!checklistWorkflow) return;
+    if (decision === "REJECTED" && !internalApprovalRemarks.trim()) {
+      toast.error("A rejection reason is required.");
       return;
     }
 
-    if (decision === "REWORK" && !mgrApprovalComment.trim()) {
-      toast.error("A review note is mandatory to request a rework.");
-      return;
-    }
-
-    setLoading(`mgr-action-${decision}`);
+    setLoading(`checklist-internal-${decision}`);
     try {
-      const res = await actions.checklistManagerActionAction(
+      const res = await actions.submitChecklistInternalDecisionAction(
         job.id,
-        activeChecklist.id,
-        myApprovalRecord.id,
+        checklistWorkflow.id,
         decision,
-        mgrApprovalComment
+        internalApprovalRemarks || undefined,
       );
-
       if (res.ok) {
-        toast.success(`Checklist marked: ${decision}`);
-        setMgrApprovalComment("");
+        toast.success(decision === "APPROVED" ? "Internal approval recorded." : "Checklist returned for rework.");
+        setInternalApprovalRemarks("");
         router.refresh();
       } else {
-        toast.error(res.error || "Failed to submit review.");
+        toast.error(res.error || "Failed to process internal decision.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleChecklistCustomerDecision = async (decision: "APPROVED" | "REJECTED") => {
+    if (!checklistWorkflow) return;
+    if (decision === "REJECTED" && !customerApprovalRemarks.trim()) {
+      toast.error("A rejection reason is required.");
+      return;
+    }
+
+    setLoading(`checklist-customer-${decision}`);
+    try {
+      const res = await actions.submitChecklistCustomerDecisionAction(
+        job.id,
+        checklistWorkflow.id,
+        decision,
+        customerApprovalRemarks || undefined,
+      );
+      if (res.ok) {
+        toast.success(decision === "APPROVED" ? "Customer approval recorded." : "Checklist returned from customer for rework.");
+        setCustomerApprovalRemarks("");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to process customer decision.");
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
@@ -1343,13 +1393,19 @@ export function JobWorkspaceClient({
                                     </div>
                                   )}
 
-                                  {/* Display Exception Reason */}
+                                  {/* Display N/A / Exception status */}
                                   {isExempted && req.exception && (
                                     <div className="mt-3 bg-surface border border-orange-500/30 p-2.5 rounded-lg text-xs space-y-1">
-                                      <p className="font-medium text-[#fb923c]">Exemption reason:</p>
-                                      <p className="text-on-surface">{req.exception.reason}</p>
+                                      {req.exception.reason === "N/A" ? (
+                                        <p className="font-medium text-[#fb923c]">Marked as N/A</p>
+                                      ) : (
+                                        <>
+                                          <p className="font-medium text-[#fb923c]">Exemption reason:</p>
+                                          <p className="text-on-surface">{req.exception.reason}</p>
+                                        </>
+                                      )}
                                       <span className="text-[10px] text-on-surface-variant block">
-                                        Declared by: {req.exception.user?.name || "N/A"}
+                                        {req.exception.reason === "N/A" ? "Marked" : "Declared"} by: {req.exception.user?.name || "N/A"}
                                       </span>
                                     </div>
                                   )}
@@ -1415,18 +1471,30 @@ export function JobWorkspaceClient({
                                       </Button>
                                     ) : (
                                       !activeDocReqId && (
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          size="sm"
-                                          className="text-xs"
-                                          onClick={() => {
-                                            setActiveDocReqId((current) => (current === req.id ? null : req.id));
-                                            setExceptionReason(req.exception?.reason || "");
-                                          }}
-                                        >
-                                          {req.exception ? "Edit Exemption" : "Mark as N/A"}
-                                        </Button>
+                                        <>
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-xs"
+                                            onClick={() => {
+                                              setActiveDocReqId((current) => (current === req.id ? null : req.id));
+                                              setExceptionReason(req.exception?.reason === "N/A" ? "" : req.exception?.reason || "");
+                                            }}
+                                          >
+                                            Declare Exemption
+                                          </Button>
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-xs border-[#fb923c]/50 text-[#fb923c] hover:bg-[#fb923c]/10"
+                                            onClick={() => handleMarkNotAvailable(req.id)}
+                                            disabled={loading !== null}
+                                          >
+                                            {loading === `na-${req.id}` ? "Marking..." : "Mark as N/A"}
+                                          </Button>
+                                        </>
                                       )
                                     )}
 
@@ -1535,29 +1603,29 @@ export function JobWorkspaceClient({
                 <label className="space-y-1.5">
                   <span className="ds-label">Import General Manifest</span>
                   <input
-                    type="number"
-                    min={0}
-                    step={1}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={importGeneralManifest}
                     onChange={(e) => setImportGeneralManifest(e.target.value)}
                     disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
                     required
                     className="w-full ds-numeric"
-                    placeholder="0"
+                    placeholder="Enter IGM reference"
                   />
                 </label>
                 <label className="space-y-1.5">
                   <span className="ds-label">Export General Manifest</span>
                   <input
-                    type="number"
-                    min={0}
-                    step={1}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={exportGeneralManifest}
                     onChange={(e) => setExportGeneralManifest(e.target.value)}
                     disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
                     required
                     className="w-full ds-numeric"
-                    placeholder="0"
+                    placeholder="Enter EGM reference"
                   />
                 </label>
               </div>
@@ -1615,7 +1683,7 @@ export function JobWorkspaceClient({
         {/* PANEL: CHECKLIST */}
         {activeTab === "checklist" && (
           <div className="space-y-6">
-            <h3 className="ds-h3 text-on-surface">Excel Checklist Audit Gate</h3>
+            <h3 className="ds-h3 text-on-surface">Checklist Workflow</h3>
 
             {/* Check if gate is open */}
             {activeStepIndex < checklistStageIndex ? (
@@ -1632,149 +1700,242 @@ export function JobWorkspaceClient({
               </div>
             ) : (
               <div className="space-y-6">
-                {/* If no checklist imported */}
-                {job.checklistImports.length === 0 ? (
-                  <form onSubmit={handleImportChecklist} className="max-w-md space-y-4 border border-dashed border-outline-variant/60 p-6 rounded-xl text-center">
-                    <FolderOpen size={48} className="mx-auto text-outline-variant" />
-                    <div>
-                      <h4 className="font-semibold text-sm">Upload Checklist Workbook</h4>
-                      <p className="text-xs text-on-surface-variant mt-1">
-                        Select and upload the completed Excel audit template for custom verification.
-                      </p>
-                    </div>
-                    <input type="file" name="file" accept=".xlsx" required className="w-full text-xs" />
-                    <Button type="submit" disabled={loading === "checklist-import"} className="w-full">
-                      {loading === "checklist-import" ? "Uploading & Parsing..." : "Import Excel Checklist"}
-                    </Button>
-                  </form>
-                ) : (
-                  // If checklists exist, view the latest
-                  (() => {
-                    const activeChecklist = job.checklistImports[job.checklistImports.length - 1];
-                    const isPendingApproval = activeChecklist.status === "PENDING_APPROVAL";
-                    const isApproved = activeChecklist.status === "APPROVED";
-                    const isRework = activeChecklist.status === "REWORK";
-                    const isReady = activeChecklist.status === "READY";
-
-                    const myApproval = activeChecklist.approvals?.find(
-                      (a: any) => a.managerId === currentUserId && a.decision === "PENDING"
-                    );
-
-                    return (
-                      <div className="space-y-6">
-                        {/* Status Panel */}
-                        <div className={`p-4 rounded-xl border flex items-center justify-between ${
-                          isApproved ? "border-green-200 bg-green-50/5 text-green-700" : "border-outline-variant bg-surface-container-low"
-                        }`}>
+                <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+                  <div className="space-y-6">
+                    <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-5">
+                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                        <div className="space-y-1">
+                          <span className="ds-label">Current Checklist Status</span>
                           <div className="flex items-center gap-2">
-                            {isApproved ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
-                            <div>
-                              <p className="text-sm font-bold">Checklist Status: {activeChecklist.status}</p>
-                              <p className="text-xs text-on-surface-variant">
-                                Template Version: {activeChecklist.templateVersion} • Uploaded by: {activeChecklist.uploadedBy?.name}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Action triggers */}
-                          <div className="flex gap-2">
-                            {(isReady || isRework) && (
-                              <>
-                                {selfApprovalAllowed && (
-                                  <Button onClick={handleSelfApproveChecklist} disabled={loading !== null} variant="outline" className="text-xs h-9 px-3">
-                                    Self Approve
-                                  </Button>
-                                )}
-                                <Button onClick={handleSubmitChecklistForApproval} disabled={loading !== null} className="text-xs h-9 px-3">
-                                  Submit for Manager Review
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Rework Note */}
-                        {isRework && activeChecklist.reworkNotes?.length > 0 && (
-                          <div className="bg-red-50 border border-red-200 p-4 rounded-xl space-y-1">
-                            <span className="ds-label text-red-500 font-bold block">REWORK CORRECTION REQUESTED</span>
-                            <p className="text-xs text-on-surface leading-relaxed">
-                              "{activeChecklist.reworkNotes[activeChecklist.reworkNotes.length - 1].note}"
+                            <AlertCircle size={18} className="text-[#00cec4]" />
+                            <p className="text-sm font-semibold text-on-surface">
+                              {checklistWorkflow?.status?.replace(/_/g, " ") || "PENDING UPLOAD"}
                             </p>
-                            <span className="text-[10px] text-on-surface-variant block">
-                              Requested by: {activeChecklist.reworkNotes[activeChecklist.reworkNotes.length - 1].author?.name}
-                            </span>
                           </div>
-                        )}
-
-                        {/* Manager Review Form */}
-                        {isPendingApproval && myApproval && (
-                          <div className="border border-[#fb923c]/40 bg-[#fb923c]/5 p-5 rounded-xl space-y-4">
-                            <span className="ds-label text-[#fb923c] font-bold block">AWAITING YOUR REVIEW DECISION</span>
-                            <textarea
-                              rows={2}
-                              placeholder="Enter review remarks/rework instructions..."
-                              value={mgrApprovalComment}
-                              onChange={(e) => setMgrApprovalComment(e.target.value)}
-                              className="w-full text-xs font-sans"
-                            />
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                onClick={() => handleManagerChecklistAction("REWORK")}
-                                disabled={loading !== null}
-                                variant="outline"
-                                className="border-red-200 text-red-500 hover:bg-red-50 text-xs h-8 px-4"
-                              >
-                                Send Back for Rework
-                              </Button>
-                              <Button
-                                onClick={() => handleManagerChecklistAction("APPROVED")}
-                                disabled={loading !== null}
-                                className="text-xs h-8 px-4"
-                              >
-                                Approve Checklist
-                              </Button>
-                            </div>
+                          <p className="text-xs text-on-surface-variant">
+                            {checklistWorkflow?.customerRejectedOnce
+                              ? "Customer has already rejected once. After rework, internal approval will move this directly to Filing."
+                              : "First internal approval will route this checklist to customer approval."}
+                          </p>
+                        </div>
+                        {currentChecklistVersion ? (
+                          <div className="space-y-1 text-right">
+                            <span className="ds-label">Current Version</span>
+                            <p className="text-sm font-semibold text-on-surface ds-numeric">V{currentChecklistVersion.versionNumber}</p>
+                            <p className="text-xs text-on-surface-variant">
+                              Uploaded by {getUserName(currentChecklistVersion.uploadedById)}
+                            </p>
                           </div>
-                        )}
+                        ) : null}
+                      </div>
+                    </div>
 
-                        {/* Display questionnaire rows */}
-                        <div className="space-y-6">
-                          {activeChecklist.sections.map((section: any) => (
-                            <div key={section.id} className="space-y-3">
-                              <h4 className="ds-h3 text-[#00cec4] border-b border-outline-variant/30 pb-1.5">
-                                {section.name}
-                              </h4>
-                              <div className="overflow-x-auto">
-                                <table className="ds-table">
-                                  <thead>
-                                    <tr>
-                                      <th className="w-16">Q ID</th>
-                                      <th>Question Description</th>
-                                      <th className="w-24">Type</th>
-                                      <th className="w-32">Response Value</th>
-                                      <th>Auditor Remarks</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {section.items.map((item: any) => (
-                                      <tr key={item.id}>
-                                        <td className="font-mono text-xs text-on-surface-variant">{item.identifier}</td>
-                                        <td className="text-xs font-medium">{item.question}</td>
-                                        <td className="ds-label">{item.responseType}</td>
-                                        <td className="text-xs font-semibold text-on-surface">{item.value || "—"}</td>
-                                        <td className="text-xs text-on-surface-variant italic">{item.remarks || "—"}</td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          ))}
+                    <form onSubmit={handleUploadChecklist} className="space-y-4 rounded-xl border border-dashed border-outline-variant/60 bg-surface p-5">
+                      <div className="flex items-start gap-3">
+                        <FolderOpen size={22} className="mt-0.5 shrink-0 text-[#00cec4]" />
+                        <div>
+                          <h4 className="text-sm font-semibold text-on-surface">
+                            {currentChecklistVersion ? "Upload Corrected / Replacement Checklist" : "Upload Checklist File"}
+                          </h4>
+                          <p className="mt-1 text-xs text-on-surface-variant">
+                            Any file format is allowed here. The uploaded file will move into internal approval automatically.
+                          </p>
                         </div>
                       </div>
-                    );
-                  })()
-                )}
+                      <input
+                        type="file"
+                        onChange={(e) => setChecklistFile(e.target.files?.[0] || null)}
+                        className="w-full text-xs"
+                      />
+                      <textarea
+                        rows={2}
+                        value={checklistRemarks}
+                        onChange={(e) => setChecklistRemarks(e.target.value)}
+                        placeholder="Optional upload remarks"
+                        className="w-full text-xs"
+                      />
+                      <div className="flex justify-end">
+                        <Button type="submit" disabled={loading === "checklist-upload"} className="w-full sm:w-auto">
+                          {loading === "checklist-upload" ? "Uploading..." : currentChecklistVersion ? "Reupload Checklist" : "Upload Checklist"}
+                        </Button>
+                      </div>
+                    </form>
+
+                    {currentChecklistVersion ? (
+                      <div className="rounded-xl border border-outline-variant/40 bg-surface p-5 space-y-4">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                          <div>
+                            <span className="ds-label">Current File</span>
+                            <p className="mt-1 text-sm font-semibold text-on-surface">{currentChecklistVersion.originalFileName}</p>
+                            <p className="mt-1 text-xs text-on-surface-variant">
+                              {getUserName(currentChecklistVersion.uploadedById)} • {new Date(currentChecklistVersion.uploadedAt).toLocaleString("en-IN")}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setViewingVersion({
+                                ...currentChecklistVersion,
+                                fileName: currentChecklistVersion.originalFileName,
+                                sizeBytes: currentChecklistVersion.fileSize,
+                                uploadedBy: { name: getUserName(currentChecklistVersion.uploadedById) },
+                              })}
+                            >
+                              View
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="overflow-hidden rounded-xl border border-outline-variant/40">
+                          <table className="ds-table">
+                            <thead>
+                              <tr>
+                                <th>Version</th>
+                                <th>File</th>
+                                <th>Uploaded By</th>
+                                <th>Uploaded At</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {checklistWorkflow?.fileVersions?.map((version: any) => (
+                                <tr key={version.id}>
+                                  <td className="ds-numeric font-medium">V{version.versionNumber}</td>
+                                  <td className="text-xs text-on-surface">{version.originalFileName}</td>
+                                  <td className="text-xs text-on-surface">{getUserName(version.uploadedById)}</td>
+                                  <td className="text-xs text-on-surface ds-numeric">
+                                    {new Date(version.uploadedAt).toLocaleString("en-IN")}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="rounded-xl border border-outline-variant/40 bg-surface p-5 space-y-4">
+                      <div>
+                        <span className="ds-label">Internal Approval</span>
+                        <p className="mt-1 text-sm text-on-surface">
+                          {checklistWorkflow?.currentApprovalStage === "INTERNAL"
+                            ? "Awaiting internal review."
+                            : "Internal review is complete or not active for the current step."}
+                        </p>
+                      </div>
+                      {canCurrentUserInternalApprove && checklistWorkflow?.currentApprovalStage === "INTERNAL" ? (
+                        <>
+                          <textarea
+                            rows={2}
+                            value={internalApprovalRemarks}
+                            onChange={(e) => setInternalApprovalRemarks(e.target.value)}
+                            placeholder="Required for rejection, optional for approval"
+                            className="w-full text-xs"
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="border-red-200 text-red-500 hover:bg-red-50"
+                              disabled={loading !== null}
+                              onClick={() => handleChecklistInternalDecision("REJECTED")}
+                            >
+                              Reject
+                            </Button>
+                            <Button
+                              type="button"
+                              disabled={loading !== null}
+                              onClick={() => handleChecklistInternalDecision("APPROVED")}
+                            >
+                              Approve
+                            </Button>
+                          </div>
+                        </>
+                      ) : null}
+                    </div>
+
+                    <div className="rounded-xl border border-outline-variant/40 bg-surface p-5 space-y-4">
+                      <div>
+                        <span className="ds-label">Customer Approval</span>
+                        <p className="mt-1 text-sm text-on-surface">
+                          {checklistWorkflow?.currentApprovalStage === "CUSTOMER"
+                            ? "Awaiting customer approval."
+                            : checklistWorkflow?.customerRejectedOnce
+                            ? "Customer approval will not be requested again after rework."
+                            : "Customer approval starts after the first successful internal approval."}
+                        </p>
+                      </div>
+                      {canCurrentUserCustomerApprove && checklistWorkflow?.currentApprovalStage === "CUSTOMER" ? (
+                        <>
+                          <textarea
+                            rows={2}
+                            value={customerApprovalRemarks}
+                            onChange={(e) => setCustomerApprovalRemarks(e.target.value)}
+                            placeholder="Required for rejection, optional for approval"
+                            className="w-full text-xs"
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="border-red-200 text-red-500 hover:bg-red-50"
+                              disabled={loading !== null}
+                              onClick={() => handleChecklistCustomerDecision("REJECTED")}
+                            >
+                              Reject
+                            </Button>
+                            <Button
+                              type="button"
+                              disabled={loading !== null}
+                              onClick={() => handleChecklistCustomerDecision("APPROVED")}
+                            >
+                              Approve
+                            </Button>
+                          </div>
+                        </>
+                      ) : null}
+                    </div>
+
+                    <div className="rounded-xl border border-outline-variant/40 bg-surface p-5 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="ds-label">Approval History</span>
+                        <span className="text-[11px] text-on-surface-variant">
+                          {checklistApprovals.length} entries
+                        </span>
+                      </div>
+                      {checklistApprovals.length === 0 ? (
+                        <p className="text-xs text-on-surface-variant">No approval history recorded yet.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {checklistApprovals
+                            .slice()
+                            .reverse()
+                            .map((approval: any) => (
+                              <div key={approval.id} className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-3">
+                                <div className="flex items-center justify-between gap-3">
+                                  <p className="text-xs font-semibold text-on-surface">
+                                    {approval.stage} • {approval.action}
+                                  </p>
+                                  <span className="text-[11px] text-on-surface-variant ds-numeric">
+                                    {approval.actedAt ? new Date(approval.actedAt).toLocaleString("en-IN") : "Pending"}
+                                  </span>
+                                </div>
+                                <p className="mt-1 text-[11px] text-on-surface-variant">
+                                  Assigned to {getUserName(approval.assignedToId)}{approval.actedById ? ` • acted by ${getUserName(approval.actedById)}` : ""}
+                                </p>
+                                {approval.remarks ? (
+                                  <p className="mt-1 text-xs text-on-surface">{approval.remarks}</p>
+                                ) : null}
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -2879,19 +3040,22 @@ export function JobWorkspaceClient({
           description={`Viewing file: ${viewingVersion.fileName}`}
           className="max-w-4xl w-full"
         >
+          {(() => {
+            const previewUrl = previewUrls[viewingVersion.id] || viewingVersion.fileKey || null;
+            return (
           <div className="h-[60vh] flex flex-col bg-surface border border-outline-variant/30 rounded-xl overflow-hidden">
-            {previewUrls[viewingVersion.id] ? (
+            {previewUrl ? (
               viewingVersion.mimeType.startsWith("image/") ? (
                 <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
                   <img
-                    src={previewUrls[viewingVersion.id]}
+                    src={previewUrl}
                     alt={viewingVersion.fileName}
                     className="max-w-full max-h-full object-contain"
                   />
                 </div>
               ) : (
                 <iframe
-                  src={previewUrls[viewingVersion.id]}
+                  src={previewUrl}
                   className="w-full h-full border-0"
                   title={viewingVersion.fileName}
                 />
@@ -2933,6 +3097,8 @@ export function JobWorkspaceClient({
               </div>
             )}
           </div>
+            );
+          })()}
         </Modal>
       )}
     </main>
