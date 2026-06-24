@@ -3,7 +3,7 @@ import { getNow } from "@/lib/clock";
 import { createNotification } from "@/modules/notifications/service";
 import * as XLSX from "xlsx";
 import { Prisma } from "@/generated/prisma/client";
-import { can } from "@/lib/rbac";
+import { can, ForbiddenError } from "@/lib/rbac";
 import * as driveClient from "@/lib/google-drive-client";
 
 // Ensure settings and defaults are created for the organisation
@@ -113,7 +113,7 @@ function normalizeDeleteConfirmationPhrase(value: string) {
 }
 
 function getActiveChaJobWhere(orgId: string): Prisma.ChaJobWhereInput {
-  return { orgId, deletedAt: null };
+  return { orgId };
 }
 
 function getActiveChaJobByIdWhere(orgId: string, jobId: string): Prisma.ChaJobWhereInput {
@@ -465,7 +465,7 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
   const hasViewAll = await can(userId, "cha.job.view_all");
 
   if (!isPlatformAdmin && !isOrgAdmin && !isAssigned && !isManagerApprover && !hasViewAll) {
-    throw new Error("Access Denied: You are not assigned to this job, nor do you have organization-wide viewing rights.");
+    throw new ForbiddenError("cha.job.read");
   }
 
   // Resolve actor names manually to avoid db-level relation constraints
@@ -2220,14 +2220,14 @@ export async function listAllExpenses(
     isUrgent?: boolean;
   }
 ) {
-  const where: any = { orgId, job: { deletedAt: null } };
+  const where: any = { orgId };
 
   if (filters.status) where.status = filters.status;
   if (filters.isUrgent !== undefined) where.isUrgent = filters.isUrgent;
   if (filters.search) {
     where.OR = [
-      { job: { deletedAt: null, jobNumber: { contains: filters.search, mode: "insensitive" } } },
-      { job: { deletedAt: null, customer: { name: { contains: filters.search, mode: "insensitive" } } } },
+      { job: { jobNumber: { contains: filters.search, mode: "insensitive" } } },
+      { job: { customer: { name: { contains: filters.search, mode: "insensitive" } } } },
       { requestedBy: { name: { contains: filters.search, mode: "insensitive" } } },
     ];
   }
@@ -2254,7 +2254,7 @@ export async function listManagerChecklistApprovals(
     where: {
       managerId: userId,
       decision: "PENDING",
-      checklistImport: { job: { orgId, deletedAt: null } },
+      checklistImport: { job: { orgId } },
     },
     include: {
       checklistImport: {
@@ -2273,7 +2273,6 @@ export async function listManagerJobDeletionRequests(userId: string, orgId: stri
       orgId,
       assignedManagerId: userId,
       status: { in: ["PENDING", "APPROVED"] },
-      job: { deletedAt: null },
     },
     include: {
       job: {
