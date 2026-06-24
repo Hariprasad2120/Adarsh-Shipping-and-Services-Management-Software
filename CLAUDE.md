@@ -33,4 +33,10 @@ Before creating, editing, or reviewing any frontend UI:
 - **Never use `divide-y`** on `<tbody>` — `ds-table td` border-bottom handles separation
 - **Never use `font-bold` or `font-semibold`** on ordinary `<td>` — only `font-medium` on name columns
 - **Read `design.md` Section 7.1** for the canonical table wrapper hierarchy
+
+## CHA Workflow Note
+
+- CHA jobs must pass Document Collection, then complete Additional Data, then proceed to Checklist Preparation.
+- Additional Data requires Vessel Inward Date, IGM, EGM, and Delivery Order Validity.
+- Delivery Order Validity warnings appear in the persistent header for expired values or values expiring within four calendar days.
 <!-- END:design-system-reference -->

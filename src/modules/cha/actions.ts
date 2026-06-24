@@ -337,6 +337,38 @@ export async function importChecklistExcelAction(
   }
 }
 
+export async function upsertAdditionalDataAction(
+  jobId: string,
+  data: {
+    vesselInwardDate?: string | Date | null;
+    importGeneralManifest?: number | string | null;
+    exportGeneralManifest?: number | string | null;
+    deliveryOrderValidity?: string | Date | null;
+  }
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const additionalData = await chaService.upsertAdditionalData(userId, orgId, jobId, data);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    revalidatePath("/cha/jobs");
+    return { ok: true, data: additionalData };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to save additional data" };
+  }
+}
+
+export async function proceedAdditionalDataAction(jobId: string): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const result = await chaService.proceedAdditionalDataStage(userId, orgId, jobId);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    revalidatePath("/cha/jobs");
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to complete additional data" };
+  }
+}
+
 export async function submitChecklistForApprovalAction(
   jobId: string,
   importId: string

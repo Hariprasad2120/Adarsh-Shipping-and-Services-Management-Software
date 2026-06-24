@@ -22,6 +22,7 @@ import {
   Check,
   X,
   MessageSquare,
+  Database,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
@@ -41,6 +42,7 @@ interface JobWorkspaceClientProps {
 
 const STAGES = [
   { key: "DOCUMENT_COLLECTION", label: "Doc Collection" },
+  { key: "ADDITIONAL_DATA", label: "Additional Data" },
   { key: "CHECKLIST_PREPARATION", label: "Checklist Prep" },
   { key: "CHECKLIST_APPROVAL", label: "Checklist Approval" },
   { key: "FILING", label: "Filing Stage" },
@@ -60,7 +62,7 @@ export function JobWorkspaceClient({
 }: JobWorkspaceClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "docs" | "checklist" | "filing" | "advances" | "expenses" | "audit"
+    "docs" | "additionalData" | "checklist" | "filing" | "advances" | "expenses" | "audit"
   >("docs");
 
   // Submitting States
@@ -74,6 +76,24 @@ export function JobWorkspaceClient({
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
   const [viewingVersion, setViewingVersion] = useState<any | null>(null);
   const [proceedErrors, setProceedErrors] = useState<string[] | null>(null);
+
+  // Additional Data Form State
+  const [vesselInwardDate, setVesselInwardDate] = useState(
+    job.additionalData?.vesselInwardDate ? job.additionalData.vesselInwardDate.slice(0, 10) : ""
+  );
+  const [importGeneralManifest, setImportGeneralManifest] = useState(
+    job.additionalData?.importGeneralManifest !== null && job.additionalData?.importGeneralManifest !== undefined
+      ? String(job.additionalData.importGeneralManifest)
+      : ""
+  );
+  const [exportGeneralManifest, setExportGeneralManifest] = useState(
+    job.additionalData?.exportGeneralManifest !== null && job.additionalData?.exportGeneralManifest !== undefined
+      ? String(job.additionalData.exportGeneralManifest)
+      : ""
+  );
+  const [deliveryOrderValidity, setDeliveryOrderValidity] = useState(
+    job.additionalData?.deliveryOrderValidity ? job.additionalData.deliveryOrderValidity.slice(0, 10) : ""
+  );
 
   // Checklist Prep Form State
   const [checklistManagerId, setChecklistManagerId] = useState(
@@ -150,6 +170,15 @@ export function JobWorkspaceClient({
 
   // Get active step index
   const activeStepIndex = STAGES.findIndex((s) => s.key === job.stage);
+  const checklistStageIndex = STAGES.findIndex((s) => s.key === "CHECKLIST_PREPARATION");
+  const filingStageIndex = STAGES.findIndex((s) => s.key === "FILING");
+  const additionalDataComplete = Boolean(
+    vesselInwardDate &&
+    deliveryOrderValidity &&
+    importGeneralManifest !== "" &&
+    exportGeneralManifest !== ""
+  );
+  const additionalDataLocked = job.stage === "FILING" || job.stage === "FILED";
   const activeDeletionRequest =
     job.deletionRequests?.find((request: any) => ["PENDING", "APPROVED"].includes(request.status)) ?? null;
   const pendingDeletionReview =
@@ -246,7 +275,7 @@ export function JobWorkspaceClient({
     try {
       const res = await actions.proceedDocumentStageAction(job.id);
       if (res.ok) {
-        toast.success("Workflow stage advanced to Checklist Preparation successfully.");
+        toast.success("Workflow stage advanced to Additional Data successfully.");
         router.refresh();
       } else {
         setProceedErrors(res.error ? [res.error] : ["Mandatory document requirement gating check failed."]);
@@ -258,6 +287,66 @@ export function JobWorkspaceClient({
       setLoading(null);
     }
   };
+
+  const isValidManifest = (value: string) => {
+    if (value === "") return false;
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed >= 0;
+  };
+
+  const handleSaveAdditionalData = async () => {
+    if (importGeneralManifest !== "" && !isValidManifest(importGeneralManifest)) {
+      toast.error("IGM must be a non-negative whole number.");
+      return;
+    }
+    if (exportGeneralManifest !== "" && !isValidManifest(exportGeneralManifest)) {
+      toast.error("EGM must be a non-negative whole number.");
+      return;
+    }
+
+    setLoading("additional-data-save");
+    try {
+      const res = await actions.upsertAdditionalDataAction(job.id, {
+        vesselInwardDate: vesselInwardDate || null,
+        importGeneralManifest: importGeneralManifest === "" ? null : Number(importGeneralManifest),
+        exportGeneralManifest: exportGeneralManifest === "" ? null : Number(exportGeneralManifest),
+        deliveryOrderValidity: deliveryOrderValidity || null,
+      });
+      if (res.ok) {
+        toast.success("Additional Data saved successfully.");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to save Additional Data.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleProceedAdditionalData = async () => {
+    if (!additionalDataComplete || !isValidManifest(importGeneralManifest) || !isValidManifest(exportGeneralManifest)) {
+      toast.error("Complete Vessel Inward Date, IGM, EGM, and DO Validity before proceeding.");
+      return;
+    }
+
+    setLoading("additional-data-proceed");
+    try {
+      const res = await actions.proceedAdditionalDataAction(job.id);
+      if (res.ok) {
+        toast.success("Workflow stage advanced to Checklist Preparation successfully.");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to complete Additional Data.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   const handleConfirmDeleteDoc = async () => {
     if (!deleteDocModal) return;
     setLoading("delete-doc");
@@ -915,6 +1004,8 @@ export function JobWorkspaceClient({
             <span className={`inline-flex min-h-9 min-w-52 items-center justify-center rounded-lg border px-3 py-2 text-center text-xs font-bold uppercase tracking-wider ${
             job.stage === "FILING"
               ? "bg-blue-50 text-blue-700 border border-blue-200"
+              : job.stage === "ADDITIONAL_DATA"
+              ? "border-[#fb923c]/35 bg-[#fb923c]/10 text-[#fb923c]"
               : job.stage === "CHECKLIST_APPROVAL"
               ? "bg-amber-50 text-amber-700 border border-amber-200"
               : job.stage === "FILED"
@@ -1025,7 +1116,7 @@ export function JobWorkspaceClient({
 
       {/* visual Stepper Display */}
       <div className="relative overflow-hidden rounded-xl border border-outline-variant/30 bg-surface px-4 py-3 shadow-sm sm:px-5">
-        <div className="relative z-10 grid grid-cols-5 gap-2 md:gap-4">
+        <div className="relative z-10 grid grid-cols-6 gap-2 md:gap-4">
           {STAGES.map((s, index) => {
             const isCompleted = index < activeStepIndex;
             const isActive = index === activeStepIndex;
@@ -1063,7 +1154,7 @@ export function JobWorkspaceClient({
       </div>
 
       {/* Tab Controls */}
-      <div className="grid grid-cols-2 gap-1 rounded-xl border border-outline-variant/30 bg-surface-container-low p-1 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-1 rounded-xl border border-outline-variant/30 bg-surface-container-low p-1 lg:grid-cols-7">
         <button
           onClick={() => setActiveTab("docs")}
           className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
@@ -1073,6 +1164,16 @@ export function JobWorkspaceClient({
           }`}
         >
           Documents ({job.documentRequirements.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("additionalData")}
+          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
+            activeTab === "additionalData"
+              ? "bg-surface text-[#00cec4] shadow-sm"
+              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
+          }`}
+        >
+          Additional Data
         </button>
         <button
           onClick={() => setActiveTab("checklist")}
@@ -1365,11 +1466,149 @@ export function JobWorkspaceClient({
                   disabled={loading !== null}
                   className="w-full sm:w-auto bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] font-bold tracking-wider"
                 >
-                  {loading === "proceed-stage" ? "Advancing stage..." : "Proceed to Checklist Prep"}
+                  {loading === "proceed-stage" ? "Advancing stage..." : "Proceed to Additional Data"}
                   <ArrowRight size={14} className="ml-1.5" />
                 </Button>
               </div>
             )}
+          </div>
+        )}
+
+        {/* PANEL: ADDITIONAL DATA */}
+        {activeTab === "additionalData" && (
+          <div className="space-y-6">
+            <div className="flex flex-col gap-3 border-b border-outline-variant/20 pb-4 md:flex-row md:items-start md:justify-between">
+              <div>
+                <h3 className="ds-h3 text-on-surface">CHA Additional Data</h3>
+                <p className="mt-1 text-xs text-on-surface-variant">
+                  Capture manifest and delivery-order validity details before checklist preparation.
+                </p>
+              </div>
+              <span
+                className={`inline-flex min-h-8 items-center rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider ${
+                  additionalDataComplete
+                    ? "border-[#00cec4]/40 bg-[#00cec4]/10 text-[#00cec4]"
+                    : "border-[#fb923c]/40 bg-[#fb923c]/10 text-[#fb923c]"
+                }`}
+              >
+                {additionalDataComplete ? "Complete" : "Pending"}
+              </span>
+            </div>
+
+            {job.stage === "DOCUMENT_COLLECTION" ? (
+              <div className="flex items-start gap-3 rounded-xl border border-[#fb923c]/40 bg-surface p-4">
+                <AlertTriangle size={22} className="mt-0.5 shrink-0 text-[#fb923c]" />
+                <div>
+                  <h4 className="text-sm font-bold uppercase tracking-wide text-[#fb923c]">DOCUMENT GATE REQUIRED</h4>
+                  <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">
+                    Complete Document Collection before saving or completing Additional Data.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="ds-form-section space-y-4">
+              <h3>Additional Data Fields</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <label className="space-y-1.5">
+                  <span className="ds-label">Vessel Inward Date</span>
+                  <input
+                    type="date"
+                    value={vesselInwardDate}
+                    onChange={(e) => setVesselInwardDate(e.target.value)}
+                    disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
+                    required
+                    className="w-full"
+                  />
+                </label>
+                <label className="space-y-1.5">
+                  <span className="ds-label">Delivery Order Validity</span>
+                  <input
+                    type="date"
+                    value={deliveryOrderValidity}
+                    onChange={(e) => setDeliveryOrderValidity(e.target.value)}
+                    disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
+                    required
+                    className="w-full"
+                  />
+                </label>
+                <label className="space-y-1.5">
+                  <span className="ds-label">Import General Manifest</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={importGeneralManifest}
+                    onChange={(e) => setImportGeneralManifest(e.target.value)}
+                    disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
+                    required
+                    className="w-full ds-numeric"
+                    placeholder="0"
+                  />
+                </label>
+                <label className="space-y-1.5">
+                  <span className="ds-label">Export General Manifest</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={exportGeneralManifest}
+                    onChange={(e) => setExportGeneralManifest(e.target.value)}
+                    disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
+                    required
+                    className="w-full ds-numeric"
+                    placeholder="0"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 rounded-xl border border-outline-variant/40 bg-surface-container-low p-4 md:grid-cols-4">
+              <div>
+                <span className="ds-label">Status</span>
+                <p className="mt-1 text-sm font-medium text-on-surface">{job.additionalData?.status ?? "PENDING"}</p>
+              </div>
+              <div>
+                <span className="ds-label">Last Updated</span>
+                <p className="mt-1 text-sm text-on-surface ds-numeric">
+                  {job.additionalData?.updatedAt
+                    ? new Date(job.additionalData.updatedAt).toLocaleDateString("en-IN")
+                    : "Not saved"}
+                </p>
+              </div>
+              <div>
+                <span className="ds-label">IGM</span>
+                <p className="mt-1 text-sm text-on-surface ds-numeric">{importGeneralManifest || "Pending"}</p>
+              </div>
+              <div>
+                <span className="ds-label">EGM</span>
+                <p className="mt-1 text-sm text-on-surface ds-numeric">{exportGeneralManifest || "Pending"}</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 border-t border-outline-variant/30 pt-4 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading !== null || job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
+                onClick={handleSaveAdditionalData}
+                className="w-full sm:w-auto"
+              >
+                <Database className="mr-2 size-4" />
+                {loading === "additional-data-save" ? "Saving..." : "Save Additional Data"}
+              </Button>
+              {job.stage === "ADDITIONAL_DATA" ? (
+                <Button
+                  type="button"
+                  disabled={loading !== null || !additionalDataComplete}
+                  onClick={handleProceedAdditionalData}
+                  className="w-full sm:w-auto"
+                >
+                  {loading === "additional-data-proceed" ? "Completing..." : "Proceed to Checklist Prep"}
+                  <ArrowRight size={14} className="ml-1.5" />
+                </Button>
+              ) : null}
+            </div>
           </div>
         )}
 
@@ -1379,13 +1618,15 @@ export function JobWorkspaceClient({
             <h3 className="ds-h3 text-on-surface">Excel Checklist Audit Gate</h3>
 
             {/* Check if gate is open */}
-            {activeStepIndex === 0 ? (
+            {activeStepIndex < checklistStageIndex ? (
               <div className="bg-surface border border-[#fb923c]/40 p-6 rounded-xl flex items-start gap-3">
                 <AlertTriangle size={24} className="text-[#fb923c] shrink-0 mt-0.5" />
                 <div>
                   <h4 className="font-bold text-sm text-[#fb923c]">CHECKLIST PREPARATION NOT AVAILABLE</h4>
                   <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
-                    You must complete the Document Collection stage first. Make sure all mandatory documents (Bill of Lading, Invoice, Packing List) are uploaded or exempted.
+                    {job.stage === "DOCUMENT_COLLECTION"
+                      ? "Complete Document Collection first. Make sure all mandatory documents are uploaded or exempted."
+                      : "Complete the Additional Data process first. Vessel Inward Date, IGM, EGM, and DO Validity are required."}
                   </p>
                 </div>
               </div>
@@ -1544,7 +1785,7 @@ export function JobWorkspaceClient({
           <div className="space-y-6">
             <h3 className="ds-h3 text-on-surface">Customs Submission Filing Details</h3>
 
-            {activeStepIndex < 3 ? (
+            {activeStepIndex < filingStageIndex ? (
               <div className="bg-surface border border-outline-variant p-6 rounded-xl flex items-start gap-3">
                 <AlertTriangle size={24} className="text-[#fb923c] shrink-0" />
                 <div>

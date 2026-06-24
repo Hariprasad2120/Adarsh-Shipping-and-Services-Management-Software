@@ -14,6 +14,14 @@
 
 ---
 
+## 1.1 CHA Workflow Notes
+
+- CHA jobs move from Document Collection to Additional Data before Checklist Preparation.
+- Additional Data captures Vessel Inward Date, IGM, EGM, and Delivery Order Validity; all four fields are required before checklist import is available.
+- Delivery Order Validity warnings use orange alert treatment in the persistent dashboard header when expiry is within four calendar days, and destructive treatment only for expired status labels.
+
+---
+
 ## 2. Token Source Files
 
 | File | Role |

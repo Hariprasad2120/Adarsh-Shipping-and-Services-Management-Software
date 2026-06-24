@@ -356,11 +356,28 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     const jobBeforeProceed = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
     expect(jobBeforeProceed.stage).toBe("DOCUMENT_COLLECTION");
 
-    // J. Proceed manually
+    // J. Proceed manually to Additional Data
     await chaService.proceedDocumentStage(ownerUser.id, org.id, job.id);
 
-    const jobAfterGatePass = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
-    expect(jobAfterGatePass.stage).toBe("CHECKLIST_PREPARATION");
+    const jobAfterGatePass = await db.chaJob.findUniqueOrThrow({
+      where: { id: job.id },
+      include: { additionalData: true },
+    });
+    expect(jobAfterGatePass.stage).toBe("ADDITIONAL_DATA");
+    expect(jobAfterGatePass.additionalData?.status).toBe("PENDING");
+
+    // K. Complete Additional Data before checklist preparation
+    await chaService.upsertAdditionalData(ownerUser.id, org.id, job.id, {
+      vesselInwardDate: new Date("2026-01-10"),
+      importGeneralManifest: 12345,
+      exportGeneralManifest: 67890,
+      deliveryOrderValidity: new Date("2026-01-15"),
+    });
+
+    await chaService.proceedAdditionalDataStage(ownerUser.id, org.id, job.id);
+
+    const jobAfterAdditionalData = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
+    expect(jobAfterAdditionalData.stage).toBe("CHECKLIST_PREPARATION");
   });
 
   it("3.5. should delete a document version, update status, and revert stage if gate fails", async () => {
@@ -410,8 +427,15 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       sizeBytes: 8192,
     });
 
-    // E. Manually proceed to restore CHECKLIST_PREPARATION stage
+    // E. Manually proceed and complete Additional Data to restore CHECKLIST_PREPARATION stage
     await chaService.proceedDocumentStage(ownerUser.id, org.id, job.id);
+    await chaService.upsertAdditionalData(ownerUser.id, org.id, job.id, {
+      vesselInwardDate: new Date("2026-01-10"),
+      importGeneralManifest: 12345,
+      exportGeneralManifest: 67890,
+      deliveryOrderValidity: new Date("2026-01-15"),
+    });
+    await chaService.proceedAdditionalDataStage(ownerUser.id, org.id, job.id);
 
     const jobRestored = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
     expect(jobRestored.stage).toBe("CHECKLIST_PREPARATION");

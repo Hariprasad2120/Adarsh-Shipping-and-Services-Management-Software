@@ -10,6 +10,7 @@ import {
   Menu,
   Settings,
   Search,
+  AlertTriangle,
 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useCaps } from "@/lib/caps-context";
@@ -26,6 +27,15 @@ function toTitleCase(value: string) {
     .join(" ");
 }
 
+type DoValidityWarning = {
+  jobId: string;
+  jobNumber: string;
+  customerName: string;
+  deliveryOrderValidity: string;
+  daysUntilExpiry: number;
+  severity: "expired" | "expiring";
+};
+
 export function AppHeader({
   userName,
   sessionToken,
@@ -41,6 +51,7 @@ export function AppHeader({
   const { mobileNavId, mobileNavOpen, setMenuTrigger, toggleMobileNav } = useDashboardChrome();
   const [now, setNow] = useState<Date | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [doWarnings, setDoWarnings] = useState<DoValidityWarning[]>([]);
   const firstName = useMemo(
     () => toTitleCase(userName.split(" ")[0] || "there"),
     [userName],
@@ -51,6 +62,28 @@ export function AppHeader({
     const timer = window.setInterval(() => setNow(new Date()), 1000);
     return () => {
       window.clearTimeout(initialTick);
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadDoWarnings() {
+      try {
+        const response = await fetch("/api/cha/do-validity/expiring", { cache: "no-store" });
+        if (!response.ok) return;
+        const warnings = (await response.json()) as DoValidityWarning[];
+        if (!cancelled) setDoWarnings(Array.isArray(warnings) ? warnings : []);
+      } catch {
+        if (!cancelled) setDoWarnings([]);
+      }
+    }
+
+    loadDoWarnings();
+    const timer = window.setInterval(loadDoWarnings, 5 * 60 * 1000);
+    return () => {
+      cancelled = true;
       window.clearInterval(timer);
     };
   }, []);
@@ -129,6 +162,7 @@ export function AppHeader({
     : "--:--";
   const workspaceLabel = activeItem?.label ?? activeSection?.label ?? "Workspace";
   const canOpenSettings = Boolean(caps["admin.org.manage"]);
+  const expiredDoCount = doWarnings.filter((warning) => warning.severity === "expired").length;
 
   const SectionIcon = activeSection?.icon ?? LayoutGrid;
 
@@ -169,6 +203,43 @@ export function AppHeader({
             <Clock3 className="size-3.5 text-[#00a99f]" />
             {timeLabel}
           </span>
+
+          {doWarnings.length > 0 ? (
+            <div className="group relative">
+              <button
+                type="button"
+                onClick={() => router.push(`/cha/jobs/${doWarnings[0].jobId}`)}
+                className="relative inline-flex min-h-9 items-center gap-2 rounded-full border border-[#fb923c]/45 bg-[#fb923c]/10 px-3 py-2 text-xs font-bold uppercase tracking-wide text-[#fb923c] shadow-sm transition-all hover:bg-[#fb923c]/15 hover:shadow-[0_0_0_3px_rgba(251,146,60,0.18)] motion-safe:animate-pulse"
+                title="Delivery Order validity warnings"
+              >
+                <AlertTriangle className="size-4" />
+                <span className="ds-numeric">{doWarnings.length}</span>
+              </button>
+              <div className="pointer-events-none absolute right-0 top-full z-30 mt-2 hidden w-80 rounded-xl border border-outline-variant/60 bg-surface p-3 text-left shadow-lg group-hover:block">
+                <div className="mb-2 flex items-center justify-between border-b border-outline-variant/40 pb-2">
+                  <span className="ds-label text-[#fb923c]">DO Validity</span>
+                  <span className="text-[11px] text-on-surface-variant">
+                    {expiredDoCount > 0 ? `${expiredDoCount} expired` : "Expiring soon"}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {doWarnings.slice(0, 5).map((warning) => (
+                    <div key={warning.jobId} className="rounded-lg bg-surface-container-low p-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-xs font-semibold text-on-surface">{warning.jobNumber}</span>
+                        <span className={`text-[10px] font-bold uppercase ${
+                          warning.severity === "expired" ? "text-red-500" : "text-[#fb923c]"
+                        }`}>
+                          {warning.severity === "expired" ? "Expired" : `${warning.daysUntilExpiry}d left`}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 truncate text-[11px] text-on-surface-variant">{warning.customerName}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           <button
             type="button"

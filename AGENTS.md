@@ -133,6 +133,12 @@ Wrap each logical form section in `.ds-form-section`. The `h2/h3/h4` directly in
 </table>
 ```
 
+### CHA Additional Data Workflow
+
+- CHA jobs move from Document Collection to Additional Data before Checklist Preparation.
+- Additional Data requires Vessel Inward Date, Import General Manifest, Export General Manifest, and Delivery Order Validity before checklist import is available.
+- Delivery Order Validity warnings appear in the persistent header for expired values or values expiring within four calendar days.
+
 Rules:
 - Table always full-width (`w-full` — already applied by `.ds-table`)
 - Column headers (`th`) are `UPPERCASE` automatically

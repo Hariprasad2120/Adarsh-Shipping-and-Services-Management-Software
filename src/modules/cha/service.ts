@@ -331,6 +331,36 @@ function getActiveChaJobByIdWhere(orgId: string, jobId: string): Prisma.ChaJobWh
   return { id: jobId, ...getActiveChaJobWhere(orgId) };
 }
 
+function isAdditionalDataComplete(data: {
+  vesselInwardDate: Date | null;
+  importGeneralManifest: number | null;
+  exportGeneralManifest: number | null;
+  deliveryOrderValidity: Date | null;
+} | null | undefined) {
+  return Boolean(
+    data?.vesselInwardDate &&
+    data.deliveryOrderValidity &&
+    data.importGeneralManifest !== null &&
+    data.importGeneralManifest !== undefined &&
+    data.importGeneralManifest >= 0 &&
+    data.exportGeneralManifest !== null &&
+    data.exportGeneralManifest !== undefined &&
+    data.exportGeneralManifest >= 0,
+  );
+}
+
+async function assertCanAccessAdditionalData(actorId: string, job: {
+  primaryOwnerId: string;
+  assignments: { userId: string }[];
+}, permissionKey: string) {
+  const isConcernedUser = job.primaryOwnerId === actorId || job.assignments.some((assignment) => assignment.userId === actorId);
+  const hasPermission = await can(actorId, permissionKey);
+  const hasViewAll = await can(actorId, "cha.job.view_all");
+  if (!isConcernedUser && !hasPermission && !hasViewAll) {
+    throw new ForbiddenError(permissionKey);
+  }
+}
+
 function getActorRoleNames(user: { roles?: { role: { name: string } }[]; isPlatformAdmin?: boolean }) {
   const roleNames = user.roles?.map((entry) => entry.role.name) ?? [];
   if (user.isPlatformAdmin) roleNames.push("PlatformAdmin");
@@ -776,6 +806,7 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
           requirementItem: { include: { category: true } }
         }
       },
+      additionalData: true,
       checklistImports: { include: { uploadedBy: { select: { name: true } }, approvals: { include: { manager: { select: { name: true } } } }, reworkNotes: { include: { author: { select: { name: true } } } }, sections: { include: { items: true } } } },
       filing: { include: { dateHistory: { include: { setBy: { select: { name: true } } } } } },
       customerAdvance: { include: { receipts: true } },
@@ -881,27 +912,6 @@ export async function listJobs(
   ]);
 
   return { total, items, page, pageSize, totalPages: Math.ceil(total / pageSize) };
-}
-
-async function advanceToChecklistPreparationIfDocumentGatePassed(jobId: string) {
-  const [job, gate] = await Promise.all([
-    db.chaJob.findUnique({
-      where: { id: jobId },
-      select: { id: true, stage: true },
-    }),
-    verifyDocumentGate(jobId),
-  ]);
-
-  if (!job || !gate.passed || job.stage !== "DOCUMENT_COLLECTION") {
-    return false;
-  }
-
-  await db.chaJob.update({
-    where: { id: jobId },
-    data: { stage: "CHECKLIST_PREPARATION" },
-  });
-
-  return true;
 }
 
 // Upload a version for a document requirement
@@ -1083,9 +1093,9 @@ export async function deleteDocumentVersion(
     const gatePassed = blocking.length === 0;
 
     let stageReverted = false;
-    let prevStage = version.requirement.job.stage;
+    const prevStage = version.requirement.job.stage;
 
-    if (!gatePassed && (prevStage === "CHECKLIST_PREPARATION" || prevStage === "CHECKLIST_APPROVAL")) {
+    if (!gatePassed && (prevStage === "ADDITIONAL_DATA" || prevStage === "CHECKLIST_PREPARATION" || prevStage === "CHECKLIST_APPROVAL")) {
       await tx.chaJob.update({
         where: { id: jobId },
         data: { stage: "DOCUMENT_COLLECTION" },
@@ -1216,6 +1226,257 @@ export async function verifyDocumentGate(jobId: string) {
   };
 }
 
+export async function upsertAdditionalData(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  data: {
+    vesselInwardDate?: Date | string | null;
+    importGeneralManifest?: number | string | null;
+    exportGeneralManifest?: number | string | null;
+    deliveryOrderValidity?: Date | string | null;
+  }
+) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: getActiveChaJobByIdWhere(orgId, jobId),
+    include: { assignments: true, additionalData: true },
+  });
+  await assertCanAccessAdditionalData(actorId, job, "cha.additional_data.edit");
+
+  if (job.stage === "DOCUMENT_COLLECTION") {
+    throw new Error("Complete document collection before entering Additional Data.");
+  }
+  if (["FILING", "FILED"].includes(job.stage)) {
+    throw new Error("Additional Data cannot be edited after the job has moved to filing.");
+  }
+
+  const importGeneralManifest =
+    data.importGeneralManifest === null || data.importGeneralManifest === undefined || data.importGeneralManifest === ""
+      ? null
+      : Number(data.importGeneralManifest);
+  const exportGeneralManifest =
+    data.exportGeneralManifest === null || data.exportGeneralManifest === undefined || data.exportGeneralManifest === ""
+      ? null
+      : Number(data.exportGeneralManifest);
+
+  if (importGeneralManifest !== null && (!Number.isInteger(importGeneralManifest) || importGeneralManifest < 0)) {
+    throw new Error("Import General Manifest (IGM) must be a non-negative whole number.");
+  }
+  if (exportGeneralManifest !== null && (!Number.isInteger(exportGeneralManifest) || exportGeneralManifest < 0)) {
+    throw new Error("Export General Manifest (EGM) must be a non-negative whole number.");
+  }
+
+  const vesselInwardDate = data.vesselInwardDate ? new Date(data.vesselInwardDate) : null;
+  const deliveryOrderValidity = data.deliveryOrderValidity ? new Date(data.deliveryOrderValidity) : null;
+
+  if (vesselInwardDate && Number.isNaN(vesselInwardDate.getTime())) {
+    throw new Error("Vessel Inward Date is invalid.");
+  }
+  if (deliveryOrderValidity && Number.isNaN(deliveryOrderValidity.getTime())) {
+    throw new Error("Delivery Order (DO) Validity is invalid.");
+  }
+
+  const nextStatus = isAdditionalDataComplete({
+    vesselInwardDate,
+    importGeneralManifest,
+    exportGeneralManifest,
+    deliveryOrderValidity,
+  }) ? "COMPLETED" : "PENDING";
+  const wasCompleted = job.additionalData?.status === "COMPLETED";
+
+  const additionalData = await db.chaJobAdditionalData.upsert({
+    where: { jobId },
+    update: {
+      vesselInwardDate,
+      importGeneralManifest,
+      exportGeneralManifest,
+      deliveryOrderValidity,
+      status: nextStatus,
+      updatedById: actorId,
+      ...(nextStatus === "COMPLETED"
+        ? { completedById: wasCompleted ? job.additionalData?.completedById ?? actorId : actorId, completedAt: wasCompleted ? job.additionalData?.completedAt ?? new Date() : new Date() }
+        : { completedById: null, completedAt: null }),
+    },
+    create: {
+      jobId,
+      vesselInwardDate,
+      importGeneralManifest,
+      exportGeneralManifest,
+      deliveryOrderValidity,
+      status: nextStatus,
+      createdById: actorId,
+      updatedById: actorId,
+      completedById: nextStatus === "COMPLETED" ? actorId : null,
+      completedAt: nextStatus === "COMPLETED" ? new Date() : null,
+    },
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "ChaJobAdditionalData",
+    entityId: additionalData.id,
+    event: job.additionalData ? "ADDITIONAL_DATA_UPDATED" : "ADDITIONAL_DATA_CREATED",
+    actorId,
+    prevState: job.additionalData?.status ?? "NONE",
+    newState: additionalData.status,
+    remarks: `Additional Data ${job.additionalData ? "updated" : "created"} for job ${job.jobNumber}.`,
+  });
+
+  return additionalData;
+}
+
+export async function proceedAdditionalDataStage(actorId: string, orgId: string, jobId: string) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: getActiveChaJobByIdWhere(orgId, jobId),
+    include: { assignments: true, additionalData: true },
+  });
+  await assertCanAccessAdditionalData(actorId, job, "cha.additional_data.proceed");
+
+  if (job.stage !== "ADDITIONAL_DATA") {
+    throw new Error("Job is not in the Additional Data stage.");
+  }
+  if (!isAdditionalDataComplete(job.additionalData)) {
+    throw new Error("Cannot proceed. Vessel inward date, IGM, EGM, and DO validity are required.");
+  }
+
+  const result = await db.$transaction(async (tx) => {
+    const additionalData = await tx.chaJobAdditionalData.update({
+      where: { jobId },
+      data: {
+        status: "COMPLETED",
+        completedById: actorId,
+        completedAt: new Date(),
+        updatedById: actorId,
+      },
+    });
+    const updatedJob = await tx.chaJob.update({
+      where: { id: jobId },
+      data: { stage: "CHECKLIST_PREPARATION" },
+    });
+    return { additionalData, updatedJob };
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "ChaJob",
+    entityId: jobId,
+    event: "ADDITIONAL_DATA_COMPLETED",
+    actorId,
+    prevState: "ADDITIONAL_DATA",
+    newState: "CHECKLIST_PREPARATION",
+    remarks: "Additional Data completed and workflow advanced to Checklist Preparation.",
+  });
+
+  return result;
+}
+
+export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: string) {
+  const now = await getNow();
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+
+  const threshold = new Date(today);
+  threshold.setDate(threshold.getDate() + 4);
+  threshold.setHours(23, 59, 59, 999);
+
+  const canViewAll = await can(actorId, "cha.job.view_all");
+  const canViewIndicator = await can(actorId, "cha.do_validity.view_indicator");
+
+  const jobs = await db.chaJob.findMany({
+    where: {
+      ...getActiveChaJobWhere(orgId),
+      status: "ACTIVE",
+      stage: { not: "FILED" },
+      additionalData: {
+        status: "COMPLETED",
+        deliveryOrderValidity: { lte: threshold },
+      },
+      ...(canViewAll || canViewIndicator
+        ? {}
+        : {
+            OR: [
+              { primaryOwnerId: actorId },
+              { assignments: { some: { userId: actorId } } },
+            ],
+          }),
+    },
+    include: {
+      additionalData: true,
+      customer: { select: { name: true } },
+    },
+    orderBy: {
+      additionalData: {
+        deliveryOrderValidity: "asc",
+      },
+    },
+    take: 20,
+  });
+
+  const warnings = jobs
+    .filter((job) => job.additionalData?.deliveryOrderValidity)
+    .map((job) => {
+      const validity = job.additionalData!.deliveryOrderValidity!;
+      const validityDay = new Date(validity);
+      validityDay.setHours(0, 0, 0, 0);
+      const daysUntilExpiry = Math.ceil((validityDay.getTime() - today.getTime()) / 86_400_000);
+      const severity = daysUntilExpiry < 0 ? "expired" : "expiring";
+
+      return {
+        jobId: job.id,
+        jobNumber: job.jobNumber,
+        title: job.title,
+        customerName: job.customer.name,
+        stage: job.stage,
+        deliveryOrderValidity: validity,
+        daysUntilExpiry,
+        severity,
+      };
+    });
+
+  for (const warning of warnings) {
+    const kind = warning.severity === "expired" ? "CHA_DO_VALIDITY_EXPIRED" : "CHA_DO_VALIDITY_EXPIRING";
+    const existing = await db.notification.findFirst({
+      where: {
+        userId: actorId,
+        kind,
+        link: `/cha/jobs/${warning.jobId}`,
+        dismissedAt: null,
+        acknowledgedAt: null,
+      },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      await createNotification({
+        userId: actorId,
+        orgId,
+        kind,
+        title: warning.severity === "expired"
+          ? `DO validity expired: ${warning.jobNumber}`
+          : `DO validity expiring: ${warning.jobNumber}`,
+        body: `${warning.customerName} delivery order validity ${
+          warning.severity === "expired" ? "expired" : "expires"
+        } on ${warning.deliveryOrderValidity.toLocaleDateString("en-IN")}.`,
+        link: `/cha/jobs/${warning.jobId}`,
+        payload: {
+          jobId: warning.jobId,
+          jobNumber: warning.jobNumber,
+          deliveryOrderValidity: warning.deliveryOrderValidity.toISOString(),
+          daysUntilExpiry: warning.daysUntilExpiry,
+          severity: warning.severity,
+        },
+        source: "CHA",
+        variant: warning.severity === "expired" ? "destructive" : "warning",
+        priority: "important",
+      });
+    }
+  }
+
+  return warnings;
+}
+
 // Parse and validate Excel checklist
 export async function importChecklistExcel(
   actorId: string,
@@ -1225,9 +1486,9 @@ export async function importChecklistExcel(
   fileName: string,
   fileSize: number
 ) {
-  await db.chaJob.findFirstOrThrow({
+  const job = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
-    select: { id: true },
+    include: { additionalData: true },
   });
 
   // Check doc gate first
@@ -1238,6 +1499,13 @@ export async function importChecklistExcel(
         .map((r) => r.name)
         .join(", ")}`
     );
+  }
+
+  if (job.stage === "DOCUMENT_COLLECTION") {
+    throw new Error("Cannot import checklist. Complete Document Collection and Additional Data first.");
+  }
+  if (job.stage === "ADDITIONAL_DATA" && !isAdditionalDataComplete(job.additionalData)) {
+    throw new Error("Cannot import checklist. Complete the Additional Data process first.");
   }
 
   const workbook = XLSX.read(fileBuffer, { type: "buffer" });
@@ -3102,7 +3370,7 @@ export async function upsertDocumentItem(
   orgId: string,
   data: { id?: string; categoryId: string; name: string; description?: string; sortOrder: number; isRequiredDefault: boolean; isActive: boolean }
 ) {
-  const category = await db.chaDocumentRequirementCategory.findFirstOrThrow({
+  await db.chaDocumentRequirementCategory.findFirstOrThrow({
     where: { id: data.categoryId, orgId },
   });
 
@@ -3213,9 +3481,24 @@ export async function proceedDocumentStage(actorId: string, orgId: string, jobId
     throw new Error("Cannot proceed. Mandatory documents are pending: " + gate.blockingRequirements.map(b => b.name).join(", "));
   }
 
-  await db.chaJob.update({
-    where: { id: jobId },
-    data: { stage: "CHECKLIST_PREPARATION" },
+  await db.$transaction(async (tx) => {
+    await tx.chaJob.update({
+      where: { id: jobId },
+      data: { stage: "ADDITIONAL_DATA" },
+    });
+
+    await tx.chaJobAdditionalData.upsert({
+      where: { jobId },
+      update: {
+        status: "PENDING",
+        updatedById: actorId,
+      },
+      create: {
+        jobId,
+        status: "PENDING",
+        createdById: actorId,
+      },
+    });
   });
 
   await logChaAudit({
@@ -3226,8 +3509,8 @@ export async function proceedDocumentStage(actorId: string, orgId: string, jobId
     event: "DOCUMENT_GATE_COMPLETED",
     actorId,
     prevState: "DOCUMENT_COLLECTION",
-    newState: "CHECKLIST_PREPARATION",
-    remarks: "User clicked Proceed to advance checklist preparation stage.",
+    newState: "ADDITIONAL_DATA",
+    remarks: "Document gate completed; workflow advanced to Additional Data.",
   });
 
   return { success: true };

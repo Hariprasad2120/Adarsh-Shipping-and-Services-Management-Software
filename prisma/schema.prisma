@@ -3285,6 +3285,7 @@ model ChaJob {
   assignments          ChaJobAssignment[]
   deletionRequests     ChaJobDeletionRequest[]
   documentRequirements ChaJobDocumentRequirement[]
+  additionalData       ChaJobAdditionalData?
   checklistImports     ChaChecklistImport[]
   filing               ChaFiling?
   customerAdvance      ChaCustomerAdvance?
@@ -3303,6 +3304,27 @@ model ChaJob {
   @@index([orgId, status, createdAt])
   @@index([orgId, branchId, createdAt])
   @@index([orgId, jobTypeId, createdAt])
+}
+
+model ChaJobAdditionalData {
+  id                    String    @id @default(cuid())
+  jobId                 String    @unique
+  vesselInwardDate      DateTime?
+  importGeneralManifest Int?
+  exportGeneralManifest Int?
+  deliveryOrderValidity DateTime?
+  status                String    @default("PENDING") // PENDING | COMPLETED
+  createdById           String
+  updatedById           String?
+  completedById         String?
+  completedAt           DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  job ChaJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([deliveryOrderValidity, status])
 }
 
 model ChaJobDeletionRequest {
