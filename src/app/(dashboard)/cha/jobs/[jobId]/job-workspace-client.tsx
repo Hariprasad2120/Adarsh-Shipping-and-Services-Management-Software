@@ -1801,20 +1801,46 @@ export function JobWorkspaceClient({
                           </p>
                         </div>
                       </div>
+
+                      {internalApproversCount === 0 && (
+                        <div className="bg-surface border border-red-500/40 p-4 rounded-xl flex items-start gap-3">
+                          <AlertTriangle size={20} className="text-red-500 shrink-0 mt-0.5" />
+                          <div>
+                            <h4 className="font-bold text-xs uppercase text-red-500">No Internal Approvers Configured</h4>
+                            <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
+                              There are no active internal checklist approvers configured for this job. 
+                              Please assign an employee with the <span className="font-medium text-on-surface">Approval</span> responsibility in the job settings, 
+                              or verify that the job owner has a manager or team lead configured in HRMS.
+                            </p>
+                            {canManageSettings && (
+                              <button
+                                type="button"
+                                onClick={() => router.push("/cha/settings")}
+                                className="mt-2 text-xs font-semibold text-[#00cec4] hover:underline cursor-pointer"
+                              >
+                                Go to Settings →
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       <input
                         type="file"
+                        disabled={internalApproversCount === 0}
                         onChange={(e) => setChecklistFile(e.target.files?.[0] || null)}
-                        className="w-full text-xs"
+                        className="w-full text-xs disabled:opacity-50"
                       />
                       <textarea
                         rows={2}
                         value={checklistRemarks}
+                        disabled={internalApproversCount === 0}
                         onChange={(e) => setChecklistRemarks(e.target.value)}
                         placeholder="Optional upload remarks"
-                        className="w-full text-xs"
+                        className="w-full text-xs disabled:opacity-50"
                       />
                       <div className="flex justify-end">
-                        <Button type="submit" disabled={loading === "checklist-upload"} className="w-full sm:w-auto">
+                        <Button type="submit" disabled={loading === "checklist-upload" || internalApproversCount === 0} className="w-full sm:w-auto">
                           {loading === "checklist-upload" ? "Uploading..." : currentChecklistVersion ? "Reupload Checklist" : "Upload Checklist"}
                         </Button>
                       </div>
@@ -1881,7 +1907,9 @@ export function JobWorkspaceClient({
                       <div>
                         <span className="ds-label">Internal Approval</span>
                         <p className="mt-1 text-sm text-on-surface">
-                          {checklistWorkflow?.currentApprovalStage === "INTERNAL"
+                          {!checklistWorkflow
+                            ? "Checklist upload will start the internal review process."
+                            : checklistWorkflow.currentApprovalStage === "INTERNAL"
                             ? "Awaiting internal review."
                             : "Internal review is complete or not active for the current step."}
                         </p>
