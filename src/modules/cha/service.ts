@@ -1,7 +1,6 @@
 import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
-import { createNotification } from "@/modules/notifications/service";
-import { getUsersWithPermission } from "@/modules/notifications/service";
+import { createNotification, getUsersWithPermission, recordNotificationActivity } from "@/modules/notifications/service";
 import * as XLSX from "xlsx";
 import { Prisma } from "@/generated/prisma/client";
 import { can, ForbiddenError } from "@/lib/rbac";
@@ -370,14 +369,38 @@ async function assertCanAccessChecklist(actorId: string, job: {
   }
 }
 
-async function getChecklistInternalApproverIds(orgId: string, job: {
+export async function getChecklistInternalApproverIds(orgId: string, job: {
+  id?: string;
+  primaryOwnerId?: string;
   assignments: { userId: string; responsibility: string }[];
 }) {
   const assignedApprovers = job.assignments
     .filter((assignment) => assignment.responsibility === "APPROVAL")
     .map((assignment) => assignment.userId);
   const permissionApprovers = await getUsersWithPermission(orgId, "cha.checklist.internal_approve");
-  return Array.from(new Set([...assignedApprovers, ...permissionApprovers]));
+
+  const ownerManagerIds: string[] = [];
+  const ownerTlIds: string[] = [];
+
+  let primaryOwnerId = job.primaryOwnerId;
+  if (!primaryOwnerId && job.id) {
+    const jobRecord = await db.chaJob.findUnique({
+      where: { id: job.id },
+      select: { primaryOwnerId: true },
+    });
+    primaryOwnerId = jobRecord?.primaryOwnerId;
+  }
+
+  if (primaryOwnerId) {
+    const owner = await db.user.findUnique({
+      where: { id: primaryOwnerId },
+      select: { managerId: true, tlId: true },
+    });
+    if (owner?.managerId) ownerManagerIds.push(owner.managerId);
+    if (owner?.tlId) ownerTlIds.push(owner.tlId);
+  }
+
+  return Array.from(new Set([...assignedApprovers, ...permissionApprovers, ...ownerManagerIds, ...ownerTlIds]));
 }
 
 async function getChecklistCustomerApproverIds(orgId: string, fallbackIds: string[]) {
@@ -1569,6 +1592,8 @@ export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: 
       };
     });
 
+  const activeWarnings: typeof warnings = [];
+
   for (const warning of warnings) {
     const kind = warning.severity === "expired" ? "CHA_DO_VALIDITY_EXPIRED" : "CHA_DO_VALIDITY_EXPIRING";
     const existing = await db.notification.findFirst({
@@ -1576,13 +1601,24 @@ export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: 
         userId: actorId,
         kind,
         link: `/cha/jobs/${warning.jobId}`,
-        dismissedAt: null,
-        acknowledgedAt: null,
       },
-      select: { id: true },
+      orderBy: { createdAt: "desc" },
     });
 
-    if (!existing) {
+    let shouldCreate = true;
+    let isAcknowledgedOrDismissed = false;
+
+    if (existing) {
+      const payload = existing.payload as Record<string, any> | null;
+      if (payload && payload.deliveryOrderValidity === warning.deliveryOrderValidity.toISOString()) {
+        shouldCreate = false;
+        if (existing.dismissedAt !== null || existing.acknowledgedAt !== null) {
+          isAcknowledgedOrDismissed = true;
+        }
+      }
+    }
+
+    if (shouldCreate) {
       await createNotification({
         userId: actorId,
         orgId,
@@ -1606,9 +1642,66 @@ export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: 
         priority: "important",
       });
     }
+
+    if (!isAcknowledgedOrDismissed) {
+      activeWarnings.push(warning);
+    }
   }
 
-  return warnings;
+  return activeWarnings;
+}
+
+export async function acknowledgeDeliveryOrderValidityWarning(
+  actorId: string,
+  orgId: string,
+  jobId: string
+) {
+  const now = await getNow();
+  const notifications = await db.notification.findMany({
+    where: {
+      userId: actorId,
+      orgId,
+      link: `/cha/jobs/${jobId}`,
+      kind: { in: ["CHA_DO_VALIDITY_EXPIRED", "CHA_DO_VALIDITY_EXPIRING"] },
+      dismissedAt: null,
+      acknowledgedAt: null,
+    },
+  });
+
+  if (notifications.length > 0) {
+    const ids = notifications.map((n) => n.id);
+    await db.notification.updateMany({
+      where: { id: { in: ids } },
+      data: {
+        acknowledgedAt: now,
+        readAt: now,
+      },
+    });
+
+    for (const id of ids) {
+      await recordNotificationActivity({
+        notificationId: id,
+        orgId,
+        actorId,
+        event: "ACKNOWLEDGED",
+      });
+    }
+  }
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "CHA_JOB",
+    entityId: jobId,
+    event: "DO_VALIDITY_ACKNOWLEDGED",
+    actorId,
+    remarks: `User acknowledged Delivery Order Validity warning.`,
+    metadata: {
+      acknowledgedAt: now.toISOString(),
+    },
+  });
+
+  return { ok: true };
 }
 
 export async function uploadChecklistFile(

@@ -40,6 +40,9 @@ interface JobWorkspaceClientProps {
   canManageSettings: boolean;
   canInternalApproveChecklist: boolean;
   canCustomerApproveChecklist: boolean;
+  internalApproversCount: number;
+  initialTab?: string;
+  focusField?: string;
 }
 
 const STAGES = [
@@ -79,9 +82,17 @@ export function JobWorkspaceClient({
   canManageSettings,
   canInternalApproveChecklist,
   canCustomerApproveChecklist,
+  internalApproversCount,
+  initialTab,
+  focusField,
 }: JobWorkspaceClientProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>(() => getDefaultTabForStage(job.stage));
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>(() => {
+    if (initialTab && ["docs", "additionalData", "checklist", "filing", "advances", "expenses", "audit"].includes(initialTab)) {
+      return initialTab as WorkspaceTab;
+    }
+    return getDefaultTabForStage(job.stage);
+  });
 
   useEffect(() => {
     setActiveTab((currentTab) => {
@@ -103,6 +114,29 @@ export function JobWorkspaceClient({
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
   const [viewingVersion, setViewingVersion] = useState<any | null>(null);
   const [proceedErrors, setProceedErrors] = useState<string[] | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(true);
+
+  useEffect(() => {
+    if (viewingVersion) {
+      setLoadingPreview(true);
+    }
+  }, [viewingVersion?.id]);
+
+  useEffect(() => {
+    if (initialTab && ["docs", "additionalData", "checklist", "filing", "advances", "expenses", "audit"].includes(initialTab)) {
+      setActiveTab(initialTab as WorkspaceTab);
+    }
+    if (focusField === "deliveryOrderValidity") {
+      const timer = setTimeout(() => {
+        const input = document.getElementById("deliveryOrderValidity");
+        if (input) {
+          input.scrollIntoView({ behavior: "smooth", block: "center" });
+          input.focus();
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [initialTab, focusField]);
 
   // Additional Data Form State
   const [vesselInwardDate, setVesselInwardDate] = useState(
@@ -394,16 +428,40 @@ export function JobWorkspaceClient({
   };
 
   const handleProceedAdditionalData = async () => {
-    if (!additionalDataComplete || !isValidManifest(importGeneralManifest) || !isValidManifest(exportGeneralManifest)) {
+    if (!vesselInwardDate || !deliveryOrderValidity || importGeneralManifest === "" || exportGeneralManifest === "") {
       toast.error("Complete Vessel Inward Date, IGM, EGM, and DO Validity before proceeding.");
+      return;
+    }
+
+    if (importGeneralManifest !== "" && !isValidManifest(importGeneralManifest)) {
+      toast.error("IGM must contain digits only.");
+      return;
+    }
+    if (exportGeneralManifest !== "" && !isValidManifest(exportGeneralManifest)) {
+      toast.error("EGM must contain digits only.");
       return;
     }
 
     setLoading("additional-data-proceed");
     try {
+      // Auto-save Additional Data first
+      const saveRes = await actions.upsertAdditionalDataAction(job.id, {
+        vesselInwardDate: vesselInwardDate || null,
+        importGeneralManifest: importGeneralManifest === "" ? null : importGeneralManifest,
+        exportGeneralManifest: exportGeneralManifest === "" ? null : exportGeneralManifest,
+        deliveryOrderValidity: deliveryOrderValidity || null,
+      });
+
+      if (!saveRes.ok) {
+        toast.error(saveRes.error || "Failed to auto-save Additional Data.");
+        setLoading(null);
+        return;
+      }
+
+      // Succeeded to save, now proceed!
       const res = await actions.proceedAdditionalDataAction(job.id);
       if (res.ok) {
-        toast.success("Workflow stage advanced to Checklist Preparation successfully.");
+        toast.success("Additional Data saved and workflow advanced to Checklist Preparation.");
         router.refresh();
       } else {
         toast.error(res.error || "Failed to complete Additional Data.");
@@ -1452,7 +1510,7 @@ export function JobWorkspaceClient({
                                         variant="outline"
                                         size="sm"
                                         className="text-xs border-[#00cec4] text-[#00cec4] hover:bg-[#00cec4]/5"
-                                        onClick={() => setViewingVersion(currentVersion)}
+                                        onClick={() => setViewingVersion({ ...currentVersion, type: 'document' })}
                                       >
                                         View File
                                       </Button>
@@ -1592,6 +1650,7 @@ export function JobWorkspaceClient({
                 <label className="space-y-1.5">
                   <span className="ds-label">Delivery Order Validity</span>
                   <input
+                    id="deliveryOrderValidity"
                     type="date"
                     value={deliveryOrderValidity}
                     onChange={(e) => setDeliveryOrderValidity(e.target.value)}
@@ -1672,7 +1731,7 @@ export function JobWorkspaceClient({
                   onClick={handleProceedAdditionalData}
                   className="w-full sm:w-auto"
                 >
-                  {loading === "additional-data-proceed" ? "Completing..." : "Proceed to Checklist Prep"}
+                  {loading === "additional-data-proceed" ? "Saving and Proceeding..." : "Proceed to Checklist Prep"}
                   <ArrowRight size={14} className="ml-1.5" />
                 </Button>
               ) : null}
@@ -1778,6 +1837,7 @@ export function JobWorkspaceClient({
                               size="sm"
                               onClick={() => setViewingVersion({
                                 ...currentChecklistVersion,
+                                type: 'checklist',
                                 fileName: currentChecklistVersion.originalFileName,
                                 sizeBytes: currentChecklistVersion.fileSize,
                                 uploadedBy: { name: getUserName(currentChecklistVersion.uploadedById) },
@@ -3042,61 +3102,87 @@ export function JobWorkspaceClient({
         >
           {(() => {
             const previewUrl = previewUrls[viewingVersion.id] || viewingVersion.fileKey || null;
+            const targetUrl = previewUrl?.startsWith("blob:")
+              ? previewUrl
+              : (viewingVersion.type === "checklist"
+                  ? `/api/cha/checklist-files/${viewingVersion.id}`
+                  : `/api/cha/documents/${viewingVersion.id}`);
+
+            const downloadUrl = previewUrl?.startsWith("blob:")
+              ? previewUrl
+              : (viewingVersion.type === "checklist"
+                  ? `/api/cha/checklist-files/${viewingVersion.id}?download=true`
+                  : `/api/cha/documents/${viewingVersion.id}?download=true`);
+
+            const isImage = viewingVersion.mimeType.startsWith("image/");
+            const isPdf = viewingVersion.mimeType === "application/pdf";
+            const canPreview = isImage || isPdf;
+
             return (
-          <div className="h-[60vh] flex flex-col bg-surface border border-outline-variant/30 rounded-xl overflow-hidden">
-            {previewUrl ? (
-              viewingVersion.mimeType.startsWith("image/") ? (
-                <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
-                  <img
-                    src={previewUrl}
-                    alt={viewingVersion.fileName}
-                    className="max-w-full max-h-full object-contain"
-                  />
-                </div>
-              ) : (
-                <iframe
-                  src={previewUrl}
-                  className="w-full h-full border-0"
-                  title={viewingVersion.fileName}
-                />
-              )
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4">
-                <div className="w-16 h-16 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center">
-                  <FileText size={32} />
-                </div>
-                <div className="space-y-2 max-w-md">
-                  <h4 className="ds-h3 text-sm text-on-surface">Simulated Document Preview</h4>
-                  <p className="text-xs text-on-surface-variant leading-relaxed font-sans">
-                    This document was uploaded in a previous session. Because upload keys are mocked locally, a live preview is unavailable.
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl border border-outline-variant/40 bg-surface-container-low/50 text-left text-xs space-y-2 w-full max-w-md">
-                  <p className="font-semibold text-on-surface uppercase ds-label">File Metadata</p>
-                  <div className="grid grid-cols-2 gap-2 text-on-surface-variant">
-                    <span>Filename:</span>
-                    <span className="text-on-surface truncate font-sans">{viewingVersion.fileName}</span>
-                    <span>Size:</span>
-                    <span className="text-on-surface ds-numeric font-sans">{(viewingVersion.sizeBytes / 1024).toFixed(1)} KB</span>
-                    <span>Uploaded By:</span>
-                    <span className="text-on-surface font-sans">{viewingVersion.uploadedBy?.name || "System"}</span>
-                    <span>Uploaded At:</span>
-                    <span className="text-on-surface ds-numeric font-sans">{new Date(viewingVersion.uploadedAt).toLocaleString("en-IN")}</span>
+              <div className="relative h-[60vh] flex flex-col bg-surface border border-outline-variant/30 rounded-xl overflow-hidden">
+                {canPreview ? (
+                  <>
+                    {loadingPreview && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface/80 backdrop-blur-[1px] z-10 gap-3">
+                        <div className="w-8 h-8 rounded-full border-2 border-t-[#00cec4] border-r-transparent border-b-[#00cec4] border-l-transparent animate-spin" />
+                        <span className="text-xs text-on-surface-variant font-sans">Loading preview...</span>
+                      </div>
+                    )}
+                    {isImage ? (
+                      <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
+                        <img
+                          src={targetUrl}
+                          alt={viewingVersion.fileName}
+                          className="max-w-full max-h-full object-contain"
+                          onLoad={() => setLoadingPreview(false)}
+                          onError={() => setLoadingPreview(false)}
+                        />
+                      </div>
+                    ) : (
+                      <iframe
+                        src={targetUrl}
+                        className="w-full h-full border-0"
+                        title={viewingVersion.fileName}
+                        onLoad={() => setLoadingPreview(false)}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4">
+                    <div className="w-16 h-16 rounded-xl bg-[#00cec4]/10 text-[#00cec4] flex items-center justify-center">
+                      <FileText size={32} />
+                    </div>
+                    <div className="space-y-2 max-w-md">
+                      <h4 className="ds-h3 text-sm text-on-surface">Preview Unavailable</h4>
+                      <p className="text-xs text-on-surface-variant leading-relaxed font-sans">
+                        Word, Excel, or binary formats cannot be previewed directly in the browser. You can download this file to view it locally.
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-xl border border-outline-variant/40 bg-surface-container-low/50 text-left text-xs space-y-2 w-full max-w-md">
+                      <p className="font-semibold text-on-surface uppercase ds-label">File Details</p>
+                      <div className="grid grid-cols-2 gap-2 text-on-surface-variant">
+                        <span>Filename:</span>
+                        <span className="text-on-surface truncate font-sans">{viewingVersion.fileName}</span>
+                        <span>Size:</span>
+                        <span className="text-on-surface ds-numeric font-sans">{(viewingVersion.sizeBytes / 1024).toFixed(1)} KB</span>
+                        <span>Uploaded By:</span>
+                        <span className="text-on-surface font-sans">{viewingVersion.uploadedBy?.name || "System"}</span>
+                        <span>Uploaded At:</span>
+                        <span className="text-on-surface ds-numeric font-sans">
+                          {viewingVersion.uploadedAt ? new Date(viewingVersion.uploadedAt).toLocaleString("en-IN") : "N/A"}
+                        </span>
+                      </div>
+                    </div>
+                    <a
+                      href={downloadUrl}
+                      download={previewUrl?.startsWith("blob:") ? viewingVersion.fileName : undefined}
+                      className="inline-flex items-center justify-center bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all font-medium"
+                    >
+                      Download File
+                    </a>
                   </div>
-                </div>
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    toast.success(`Simulating download for: ${viewingVersion.fileName}`);
-                  }}
-                  className="inline-flex items-center justify-center bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all"
-                >
-                  Download File (Mocked)
-                </a>
+                )}
               </div>
-            )}
-          </div>
             );
           })()}
         </Modal>

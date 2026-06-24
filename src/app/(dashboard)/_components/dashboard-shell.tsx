@@ -91,7 +91,7 @@ export function DashboardShell({
       <div ref={topBarRef} className={topBarClass}>
         <WelcomeBar userName={userName} sessionToken={sessionToken} enabledModuleIds={enabledModuleIds} />
       </div>
-      <div className={`flex min-h-full w-full flex-col gap-8 ${contentPaddingClass}`}>
+      <div className={`flex flex-1 w-full flex-col gap-8 ${contentPaddingClass}`}>
         {children}
       </div>
     </div>
@@ -100,7 +100,7 @@ export function DashboardShell({
       <div ref={topBarRef} className={topBarClass}>
         <WelcomeBar userName={userName} sessionToken={sessionToken} enabledModuleIds={enabledModuleIds} />
       </div>
-      <div className={`flex min-h-full w-full flex-col gap-8 ${contentPaddingClass}`}>
+      <div className={`flex flex-1 w-full flex-col gap-8 ${contentPaddingClass}`}>
         {children}
       </div>
     </div>
@@ -116,7 +116,7 @@ export function DashboardShell({
         <AutoBreadcrumb />
       </div>
       <div
-        className={`flex min-h-full w-full flex-col gap-8 ${contentPaddingClass}`}
+        className={`flex flex-1 w-full flex-col gap-8 ${contentPaddingClass}`}
         style={{
           scrollPaddingTop: `calc(var(--dashboard-topbar-height) + var(--dashboard-breadcrumb-height) + 1rem)`,
         }}

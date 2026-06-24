@@ -12,6 +12,8 @@ import {
   Search,
   AlertTriangle,
 } from "lucide-react";
+import { acknowledgeDoValidityWarningAction } from "@/modules/cha/actions";
+import { toast } from "sonner";
 import { createPortal } from "react-dom";
 import { useCaps } from "@/lib/caps-context";
 import { useDashboardChrome } from "@/components/dashboard-chrome";
@@ -66,6 +68,8 @@ export function AppHeader({
     };
   }, []);
 
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -86,7 +90,7 @@ export function AppHeader({
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, []);
+  }, [refreshTrigger]);
 
   useEffect(() => {
     const storageKey = `welcome-toast:${sessionToken}`;
@@ -166,6 +170,27 @@ export function AppHeader({
 
   const SectionIcon = activeSection?.icon ?? LayoutGrid;
 
+  const handleLeaveAsIs = async (jobId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const res = await acknowledgeDoValidityWarningAction(jobId);
+      if (res.ok) {
+        toast.success("Warning acknowledged.");
+        setRefreshTrigger((prev) => prev + 1);
+      } else {
+        toast.error(res.error || "Failed to acknowledge warning.");
+      }
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "An error occurred.";
+      toast.error(errMsg);
+    }
+  };
+
+  const handleUpdateDate = (jobId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/cha/jobs/${jobId}?tab=additionalData&focus=deliveryOrderValidity`);
+  };
+
   return (
     <>
       <header className="z-20 flex h-14 shrink-0 items-center justify-between border-b border-outline-variant/60 bg-surface/90 px-4 backdrop-blur-sm sm:px-6 lg:px-8 xl:px-10">
@@ -208,32 +233,63 @@ export function AppHeader({
             <div className="group relative">
               <button
                 type="button"
-                onClick={() => router.push(`/cha/jobs/${doWarnings[0].jobId}`)}
-                className="relative inline-flex min-h-9 items-center gap-2 rounded-full border border-[#fb923c]/45 bg-[#fb923c]/10 px-3 py-2 text-xs font-bold uppercase tracking-wide text-[#fb923c] shadow-sm transition-all hover:bg-[#fb923c]/15 hover:shadow-[0_0_0_3px_rgba(251,146,60,0.18)] motion-safe:animate-pulse"
+                onClick={() => router.push(`/cha/jobs/${doWarnings[0].jobId}?tab=additionalData`)}
+                className={`relative inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide shadow-sm transition-all border ${
+                  expiredDoCount > 0
+                    ? "border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/15 hover:shadow-[0_0_0_3px_rgba(239,68,68,0.18)] animate-pulse-red"
+                    : "border-[#fb923c]/45 bg-[#fb923c]/10 text-[#fb923c] hover:bg-[#fb923c]/15 hover:shadow-[0_0_0_3px_rgba(251,146,60,0.18)] animate-pulse-orange"
+                }`}
                 title="Delivery Order validity warnings"
               >
                 <AlertTriangle className="size-4" />
                 <span className="ds-numeric">{doWarnings.length}</span>
               </button>
-              <div className="pointer-events-none absolute right-0 top-full z-30 mt-2 hidden w-80 rounded-xl border border-outline-variant/60 bg-surface p-3 text-left shadow-lg group-hover:block">
-                <div className="mb-2 flex items-center justify-between border-b border-outline-variant/40 pb-2">
-                  <span className="ds-label text-[#fb923c]">DO Validity</span>
-                  <span className="text-[11px] text-on-surface-variant">
-                    {expiredDoCount > 0 ? `${expiredDoCount} expired` : "Expiring soon"}
+              <div className="pointer-events-auto absolute right-0 top-full z-30 mt-2 hidden w-80 rounded-xl border border-outline-variant/60 bg-surface p-3.5 text-left shadow-lg group-hover:block">
+                <div className="mb-3 flex items-center justify-between border-b border-outline-variant/40 pb-2">
+                  <span className="ds-label text-[#fb923c] font-semibold">DO Validity Warnings</span>
+                  <span className="text-[10px] uppercase font-bold text-on-surface-variant font-mono">
+                    {expiredDoCount > 0 ? `${expiredDoCount} expired` : `${doWarnings.length} pending`}
                   </span>
                 </div>
-                <div className="space-y-2">
-                  {doWarnings.slice(0, 5).map((warning) => (
-                    <div key={warning.jobId} className="rounded-lg bg-surface-container-low p-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="truncate text-xs font-semibold text-on-surface">{warning.jobNumber}</span>
-                        <span className={`text-[10px] font-bold uppercase ${
-                          warning.severity === "expired" ? "text-red-500" : "text-[#fb923c]"
+                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                  {doWarnings.map((warning) => (
+                    <div
+                      key={warning.jobId}
+                      onClick={() => router.push(`/cha/jobs/${warning.jobId}`)}
+                      className="cursor-pointer rounded-xl border border-outline-variant/40 bg-surface-container-low p-2.5 space-y-2.5 transition-colors hover:bg-surface-container"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="truncate text-xs font-semibold text-on-surface tracking-wide">{warning.jobNumber}</span>
+                        <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${
+                          warning.severity === "expired"
+                            ? "bg-red-500/10 text-red-500 border border-red-500/20"
+                            : "bg-orange-500/10 text-[#fb923c] border border-orange-500/20"
                         }`}>
                           {warning.severity === "expired" ? "Expired" : `${warning.daysUntilExpiry}d left`}
                         </span>
                       </div>
-                      <p className="mt-0.5 truncate text-[11px] text-on-surface-variant">{warning.customerName}</p>
+                      <div>
+                        <p className="truncate text-[10px] text-on-surface-variant font-medium">{warning.customerName}</p>
+                        <p className="text-[9px] text-on-surface-variant/80 font-sans mt-0.5">
+                          Expires: {new Date(warning.deliveryOrderValidity).toLocaleDateString("en-IN")}
+                        </p>
+                      </div>
+                      <div className="flex gap-2 pt-1 border-t border-outline-variant/20">
+                        <button
+                          type="button"
+                          onClick={(e) => handleLeaveAsIs(warning.jobId, e)}
+                          className="flex-1 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant hover:text-on-surface bg-surface-container border border-outline-variant/30 hover:bg-surface-container-high py-1 px-1.5 rounded-lg transition-all cursor-pointer"
+                        >
+                          Leave As Is
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => handleUpdateDate(warning.jobId, e)}
+                          className="flex-1 text-[10px] font-bold uppercase tracking-wider text-white bg-[#00cec4] hover:bg-[#00b8af] py-1 px-1.5 rounded-lg transition-all cursor-pointer"
+                        >
+                          Update Date
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

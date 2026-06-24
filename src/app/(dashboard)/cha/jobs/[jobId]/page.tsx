@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
-import { getJobDetails } from "@/modules/cha/service";
+import { getJobDetails, getChecklistInternalApproverIds } from "@/modules/cha/service";
 import { db } from "@/lib/db";
 import { can, ForbiddenError } from "@/lib/rbac";
 import { BreadcrumbLabel } from "@/components/breadcrumb-label";
@@ -20,12 +20,15 @@ interface WorkspaceData {
   parsedExpenseCategories: string[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   settings: any;
+  internalApproversCount: number;
 }
 
 export default async function ChaJobWorkspacePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ jobId: string }>;
+  searchParams: Promise<{ tab?: string; focus?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -34,6 +37,7 @@ export default async function ChaJobWorkspacePage({
   if (!orgId) redirect("/setup");
 
   const { jobId } = await params;
+  const { tab, focus } = await searchParams;
 
   let data: WorkspaceData | null = null;
   let error: unknown = null;
@@ -70,6 +74,8 @@ export default async function ChaJobWorkspacePage({
         ? JSON.parse(settings.expenseCategories as string)
         : ["Customs Duty", "Port Handling Charges", "Transportation", "Documentation charges", "Agent Commission", "Storage Fees", "Miscellaneous"];
 
+    const internalApproverIds = await getChecklistInternalApproverIds(orgId, job);
+
     data = {
       job,
       canDeleteJob,
@@ -81,6 +87,7 @@ export default async function ChaJobWorkspacePage({
       users,
       parsedExpenseCategories,
       settings,
+      internalApproversCount: internalApproverIds.length,
     };
   } catch (err: unknown) {
     error = err;
@@ -138,6 +145,9 @@ export default async function ChaJobWorkspacePage({
         canManageSettings={data.canManageSettings}
         canInternalApproveChecklist={data.canInternalApproveChecklist}
         canCustomerApproveChecklist={data.canCustomerApproveChecklist}
+        internalApproversCount={data.internalApproversCount}
+        initialTab={tab}
+        focusField={focus}
       />
     </>
   );

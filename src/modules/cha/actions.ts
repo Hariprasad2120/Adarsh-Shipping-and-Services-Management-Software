@@ -807,3 +807,17 @@ export async function proceedDocumentStageAction(jobId: string): Promise<ActionR
     return { ok: false, error: err.message || "Failed to proceed stage" };
   }
 }
+
+export async function acknowledgeDoValidityWarningAction(jobId: string): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const result = await chaService.acknowledgeDeliveryOrderValidityWarning(userId, orgId, jobId);
+    revalidatePath("/cha/jobs");
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : "Failed to acknowledge DO validity warning";
+    return { ok: false, error: errMsg };
+  }
+}
+
