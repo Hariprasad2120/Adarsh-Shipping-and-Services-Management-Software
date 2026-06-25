@@ -87,6 +87,8 @@ type EdgeDraft = {
 
 const NODE_WIDTH = 272;
 const NODE_HEIGHT = 136;
+const MIN_ZOOM = 0.45;
+const MAX_ZOOM = 2.2;
 
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -230,6 +232,91 @@ function buildValidation(nodes: NodeDraft[], edges: EdgeDraft[]) {
   return { errors, warnings };
 }
 
+function serializeWorkflowSnapshot(nodes: NodeDraft[], edges: EdgeDraft[]) {
+  return JSON.stringify({
+    nodes: nodes.map((node) => ({
+      ...node,
+      checklistItems: [...node.checklistItems].sort((a, b) => a.sortOrder - b.sortOrder),
+    })).sort((a, b) => a.key.localeCompare(b.key)),
+    edges: [...edges]
+      .map((edge) => ({ sourceKey: edge.sourceKey, targetKey: edge.targetKey, label: edge.label || null }))
+      .sort((a, b) => `${a.sourceKey}:${a.targetKey}`.localeCompare(`${b.sourceKey}:${b.targetKey}`)),
+  });
+}
+
+function expandChecklistNodesForCanvas(rawNodes: any[], rawEdges: any[]) {
+  const expandedNodes: NodeDraft[] = [];
+  const remappedEdges: EdgeDraft[] = [];
+  const bridgeMap = new Map<string, { firstKey: string; lastKey: string }>();
+
+  for (const [index, rawNode] of rawNodes.entries()) {
+    const normalizedNode = normalizeNode(rawNode, index);
+    const activeChecklistItems = normalizedNode.checklistItems.filter((item) => item.isActive);
+    const shouldExpand =
+      normalizedNode.category !== "CHECKLIST_ITEM" &&
+      activeChecklistItems.length > 0;
+
+    if (!shouldExpand) {
+      expandedNodes.push(normalizedNode);
+      continue;
+    }
+
+    const orderedItems = [...normalizedNode.checklistItems].sort((a, b) => a.sortOrder - b.sortOrder);
+    const checklistNodes = orderedItems.map((item, itemIndex) => {
+      const itemKey = `${normalizedNode.key}_item_${itemIndex + 1}`;
+      return {
+        ...normalizedNode,
+        id: createId("node"),
+        key: itemKey,
+        name: item.label || `${normalizedNode.name} Item ${itemIndex + 1}`,
+        description: item.description || normalizedNode.description,
+        category: "CHECKLIST_ITEM",
+        isStart: normalizedNode.isStart && itemIndex === 0,
+        positionX: normalizedNode.positionX + itemIndex * (NODE_WIDTH + 48),
+        positionY: normalizedNode.positionY,
+        checklistItems: [{ ...item, sortOrder: 1 }],
+        photoRequirements: itemIndex === 0 ? normalizedNode.photoRequirements : [],
+      } satisfies NodeDraft;
+    });
+
+    for (let itemIndex = 0; itemIndex < checklistNodes.length - 1; itemIndex += 1) {
+      remappedEdges.push({
+        id: createId("edge"),
+        sourceKey: checklistNodes[itemIndex].key,
+        targetKey: checklistNodes[itemIndex + 1].key,
+        label: "Checklist Sequence",
+      });
+    }
+
+    bridgeMap.set(normalizedNode.key, {
+      firstKey: checklistNodes[0].key,
+      lastKey: checklistNodes[checklistNodes.length - 1].key,
+    });
+    expandedNodes.push(...checklistNodes);
+  }
+
+  const edgeSignatures = new Set<string>();
+  for (const edge of [...rawEdges, ...remappedEdges]) {
+    const sourceKey = bridgeMap.get(edge.sourceKey)?.lastKey ?? edge.sourceKey;
+    const targetKey = bridgeMap.get(edge.targetKey)?.firstKey ?? edge.targetKey;
+    if (!sourceKey || !targetKey || sourceKey === targetKey) continue;
+    const signature = `${sourceKey}:${targetKey}:${edge.label || ""}`;
+    if (edgeSignatures.has(signature)) continue;
+    edgeSignatures.add(signature);
+    remappedEdges.push({
+      id: edge.id || createId("edge"),
+      sourceKey,
+      targetKey,
+      label: edge.label || null,
+    });
+  }
+
+  return {
+    nodes: expandedNodes,
+    edges: remappedEdges,
+  };
+}
+
 export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsClientProps) {
   const router = useRouter();
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -240,6 +327,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
   const [nodes, setNodes] = useState<NodeDraft[]>([]);
   const [edges, setEdges] = useState<EdgeDraft[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [newNodeName, setNewNodeName] = useState("");
@@ -251,13 +339,22 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
   const [connectingSourceKey, setConnectingSourceKey] = useState<string | null>(null);
   const [connectionCursor, setConnectionCursor] = useState({ x: 0, y: 0 });
   const [hoveredTargetKey, setHoveredTargetKey] = useState<string | null>(null);
+  const [loadedSnapshot, setLoadedSnapshot] = useState("");
 
   const selectedNode = useMemo(
     () => nodes.find((node) => node.id === selectedNodeId) ?? null,
     [nodes, selectedNodeId],
   );
+  const selectedEdge = useMemo(
+    () => edges.find((edge) => edge.id === selectedEdgeId) ?? null,
+    [edges, selectedEdgeId],
+  );
 
   const validation = useMemo(() => buildValidation(nodes, edges), [nodes, edges]);
+  const hasUnsavedChanges = useMemo(
+    () => serializeWorkflowSnapshot(nodes, edges) !== loadedSnapshot,
+    [edges, loadedSnapshot, nodes],
+  );
 
   const screenToCanvas = (clientX: number, clientY: number) => {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -281,12 +378,15 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
       return;
     }
     const latest = result.data.versions?.[0];
+    const expanded = expandChecklistNodesForCanvas(latest?.nodes || [], latest?.edges || []);
     setActiveVersion(latest || null);
-    setNodes((latest?.nodes || []).map(normalizeNode));
-    setEdges((latest?.edges || []).map((edge: any) => ({ id: edge.id || createId("edge"), ...edge })));
+    setNodes(expanded.nodes);
+    setEdges(expanded.edges);
     setSelectedNodeId(null);
+    setSelectedEdgeId(null);
     setZoom(1);
     setPan({ x: 0, y: 0 });
+    setLoadedSnapshot(serializeWorkflowSnapshot(expanded.nodes, expanded.edges));
   };
 
   useEffect(() => {
@@ -388,6 +488,87 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
     setNewNodeName("");
   };
 
+  const handleAddChecklistNode = () => {
+    if (activeVersion?.isPublished) {
+      toast.error("Published versions are read-only. Fork a new draft first.");
+      return;
+    }
+    const baseName = newNodeName.trim() || "Checklist Item";
+    const keyBase = slugify(baseName);
+    const duplicateCount = nodes.filter((node) => node.key.startsWith(keyBase)).length;
+    const node: NodeDraft = {
+      id: createId("node"),
+      key: duplicateCount === 0 ? keyBase : `${keyBase}_${duplicateCount + 1}`,
+      name: baseName,
+      description: "",
+      category: "CHECKLIST_ITEM",
+      isActive: true,
+      isStart: nodes.every((entry) => !entry.isStart),
+      positionX: 120 - Math.round(pan.x / zoom),
+      positionY: 180 - Math.round(pan.y / zoom),
+      slaDuration: 2,
+      slaUnit: "BUSINESS_DAYS",
+      commentsRequired: false,
+      canBeSkipped: false,
+      canBeRevisited: true,
+      requireAllMandatoryChecklistItems: true,
+      requireMandatoryPhotos: false,
+      allowedRoles: ["Admin", "Manager", "Employee"],
+      checklistItems: [
+        {
+          id: createId("item"),
+          label: baseName,
+          description: "",
+          isMandatory: true,
+          requiresRemarks: false,
+          allowsUpload: false,
+          minUploads: 0,
+          maxUploads: null,
+          acceptedFileTypes: [],
+          deadlineDuration: 2,
+          deadlineUnit: "BUSINESS_DAYS",
+          delayRemarksRequired: true,
+          sortOrder: 1,
+          isActive: true,
+        },
+      ],
+      photoRequirements: [],
+    };
+    setNodes((prev) => [...prev, node]);
+    setSelectedNodeId(node.id);
+    setSelectedEdgeId(null);
+    setNewNodeName("");
+    setNewNodeCategory("CHECKLIST_ITEM");
+  };
+
+  const fitCanvasView = () => {
+    if (nodes.length === 0 || !canvasRef.current) {
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+      return;
+    }
+    const rect = canvasRef.current.getBoundingClientRect();
+    const activeNodes = nodes.filter((node) => node.isActive);
+    const sourceNodes = activeNodes.length > 0 ? activeNodes : nodes;
+    const minX = Math.min(...sourceNodes.map((node) => node.positionX));
+    const minY = Math.min(...sourceNodes.map((node) => node.positionY));
+    const maxX = Math.max(...sourceNodes.map((node) => node.positionX + NODE_WIDTH));
+    const maxY = Math.max(...sourceNodes.map((node) => node.positionY + NODE_HEIGHT));
+    const width = Math.max(maxX - minX, NODE_WIDTH);
+    const height = Math.max(maxY - minY, NODE_HEIGHT);
+    const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.min((rect.width - 96) / width, (rect.height - 96) / height)));
+    setZoom(Number(nextZoom.toFixed(2)));
+    setPan({
+      x: Math.round((rect.width - width * nextZoom) / 2 - minX * nextZoom),
+      y: Math.round((rect.height - height * nextZoom) / 2 - minY * nextZoom),
+    });
+  };
+
+  const resetCanvasView = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
+
   const updateSelectedNode = (updater: (node: NodeDraft) => NodeDraft) => {
     if (!selectedNodeId) return;
     setNodes((prev) => prev.map((node) => (node.id === selectedNodeId ? updater(node) : node)));
@@ -486,6 +667,46 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
     return true;
   };
 
+  const deleteSelectedEdge = async () => {
+    if (!selectedEdge || activeVersion?.isPublished) {
+      return;
+    }
+    if (!window.confirm(`Delete connector from ${selectedEdge.sourceKey} to ${selectedEdge.targetKey}?`)) {
+      return;
+    }
+    const nextEdges = edges.filter((edge) => edge.id !== selectedEdge.id);
+    setEdges(nextEdges);
+    setSelectedEdgeId(null);
+
+    const template = templates.find((entry) => entry.id === selectedTemplateId);
+    const result = await actions.saveFilingWorkflowDraftAction(selectedTemplateId, {
+      name: template?.name || "Filing Workflow",
+      description: template?.description || "",
+      nodes,
+      edges: nextEdges,
+    });
+    if (!result.ok) {
+      toast.error(result.error || "Failed to persist connector deletion.");
+      return;
+    }
+    toast.success("Connector deleted.");
+    if (selectedTemplateId) {
+      await loadTemplateDetails(selectedTemplateId);
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.key === "Delete" || event.key === "Backspace") && selectedEdgeId && !activeVersion?.isPublished) {
+        event.preventDefault();
+        void deleteSelectedEdge();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeVersion?.isPublished, selectedEdgeId, deleteSelectedEdge]);
+
   const publishWorkflow = async () => {
     if (!activeVersion) return;
     if (validation.errors.length > 0) {
@@ -578,6 +799,11 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
               </Button>
             </>
           )}
+          {hasUnsavedChanges ? (
+            <Badge variant="warning">UNSAVED CHANGES</Badge>
+          ) : (
+            <Badge variant="secondary">SYNCED</Badge>
+          )}
         </div>
       </div>
 
@@ -600,6 +826,10 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
                 <Button className="w-full" onClick={handleAddNode} disabled={activeVersion?.isPublished}>
                   <Plus size={16} />
                   Add Configurable Node
+                </Button>
+                <Button variant="outline" className="w-full" onClick={handleAddChecklistNode} disabled={activeVersion?.isPublished}>
+                  <Plus size={16} />
+                  Add Checklist Node
                 </Button>
               </CardContent>
             </Card>
@@ -638,15 +868,36 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
             <div className="flex items-center justify-between border-b border-outline-variant px-4 py-3">
               <div>
                 <p className="ds-label">Canvas</p>
-                <p className="text-sm text-on-surface-variant">Drag nodes, connect valid handles, and use the properties panel to manage checklist structure.</p>
+                <p className="text-sm text-on-surface-variant">Drag nodes, connect valid handles, zoom with wheel or controls, and keep checklist items as standalone workflow nodes.</p>
               </div>
-              <div className="flex items-center gap-1 rounded-xl border border-outline-variant bg-surface p-1">
-                <Button variant="outline" mode="icon" size="sm" onClick={() => setZoom((value) => Math.max(0.5, Number((value - 0.1).toFixed(2))))} aria-label="Zoom out">
-                  <ZoomOut size={15} />
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {selectedEdge ? (
+                  <div className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-1.5">
+                    <span className="text-xs text-on-surface-variant">
+                      {selectedEdge.sourceKey} → {selectedEdge.targetKey}
+                    </span>
+                    <Button variant="outline" size="sm" onClick={() => void deleteSelectedEdge()} disabled={activeVersion?.isPublished}>
+                      <Trash2 size={14} />
+                      Delete Connector
+                    </Button>
+                  </div>
+                ) : null}
+                <div className="flex items-center gap-1 rounded-xl border border-outline-variant bg-surface p-1">
+                  <Button variant="outline" mode="icon" size="sm" onClick={() => setZoom((value) => Math.max(MIN_ZOOM, Number((value - 0.1).toFixed(2))))} aria-label="Zoom out">
+                    <ZoomOut size={15} />
+                  </Button>
+                  <span className="min-w-14 text-center text-xs text-on-surface-variant ds-numeric">{Math.round(zoom * 100)}%</span>
+                  <Button variant="outline" mode="icon" size="sm" onClick={() => setZoom((value) => Math.min(MAX_ZOOM, Number((value + 0.1).toFixed(2))))} aria-label="Zoom in">
+                    <ZoomIn size={15} />
+                  </Button>
+                </div>
+                <Button variant="outline" size="sm" onClick={fitCanvasView}>
+                  <Workflow size={14} />
+                  Fit View
                 </Button>
-                <span className="min-w-14 text-center text-xs text-on-surface-variant ds-numeric">{Math.round(zoom * 100)}%</span>
-                <Button variant="outline" mode="icon" size="sm" onClick={() => setZoom((value) => Math.min(1.8, Number((value + 0.1).toFixed(2))))} aria-label="Zoom in">
-                  <ZoomIn size={15} />
+                <Button variant="outline" size="sm" onClick={resetCanvasView}>
+                  <RefreshCw size={14} />
+                  Reset View
                 </Button>
               </div>
             </div>
@@ -655,12 +906,34 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
               ref={canvasRef}
               className="relative flex-1 overflow-hidden bg-surface-container-low"
               style={{ backgroundImage: "radial-gradient(var(--color-outline-variant) 1px, transparent 1px)", backgroundSize: "24px 24px" }}
-              onMouseDown={(event) => {
-                if (event.target === event.currentTarget) {
-                  setSelectedNodeId(null);
-                  setIsPanning(true);
-                  setPanStart({ x: event.clientX - pan.x, y: event.clientY - pan.y });
+              onWheel={(event) => {
+                event.preventDefault();
+                if (event.ctrlKey || event.metaKey || event.altKey) {
+                  const rect = canvasRef.current?.getBoundingClientRect();
+                  if (!rect) return;
+                  const pointerX = event.clientX - rect.left;
+                  const pointerY = event.clientY - rect.top;
+                  const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Number((zoom + (event.deltaY < 0 ? 0.08 : -0.08)).toFixed(2))));
+                  const scaleRatio = nextZoom / zoom;
+                  setPan((current) => ({
+                    x: Math.round(pointerX - (pointerX - current.x) * scaleRatio),
+                    y: Math.round(pointerY - (pointerY - current.y) * scaleRatio),
+                  }));
+                  setZoom(nextZoom);
+                  return;
                 }
+                setPan((current) => ({
+                  x: current.x - event.deltaX,
+                  y: current.y - event.deltaY,
+                }));
+              }}
+              onMouseDown={(event) => {
+                // Node buttons and connect handles call stopPropagation so they never reach here.
+                // Everything else (canvas bg, inner transform div, SVG) should pan.
+                setSelectedNodeId(null);
+                setSelectedEdgeId(null);
+                setIsPanning(true);
+                setPanStart({ x: event.clientX - pan.x, y: event.clientY - pan.y });
               }}
             >
               <div
@@ -686,12 +959,20 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
                     const endY = target.positionY + NODE_HEIGHT / 2;
                     const curve = Math.max(80, Math.abs(endX - startX) / 2);
                     return (
-                      <g key={edge.id} className="text-[#00cec4]">
+                      <g
+                        key={edge.id}
+                        className={selectedEdgeId === edge.id ? "text-[#fb923c]" : "text-[#00cec4]"}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSelectedNodeId(null);
+                          setSelectedEdgeId(edge.id);
+                        }}
+                      >
                         <path
                           d={`M ${startX} ${startY} C ${startX + curve} ${startY}, ${endX - curve} ${endY}, ${endX} ${endY}`}
                           fill="none"
                           stroke="currentColor"
-                          strokeWidth="2"
+                          strokeWidth={selectedEdgeId === edge.id ? "3" : "2"}
                           markerEnd="url(#filing-arrow)"
                         />
                       </g>
@@ -731,6 +1012,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
                       onMouseDown={(event) => {
                         event.stopPropagation();
                         if (activeVersion?.isPublished) return;
+                        setSelectedEdgeId(null);
                         const coords = screenToCanvas(event.clientX, event.clientY);
                         setDraggingNodeId(node.id);
                         setDragOffset({ x: coords.x - node.positionX, y: coords.y - node.positionY });
@@ -874,11 +1156,28 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
               <div className="ds-form-section space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="ds-h3 text-on-surface">Checklist Items</h3>
-                  <Button variant="outline" size="sm" onClick={addChecklistItem}>
-                    <Plus size={14} />
-                    Add Item
-                  </Button>
+                  {selectedNode.category === "CHECKLIST_ITEM" ? (
+                    selectedNode.checklistItems.length === 0 ? (
+                      <Button variant="outline" size="sm" onClick={addChecklistItem}>
+                        <Plus size={14} />
+                        Add Item
+                      </Button>
+                    ) : (
+                      <Badge variant="success">STANDALONE CHECKLIST NODE</Badge>
+                    )
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={handleAddChecklistNode}>
+                      <Plus size={14} />
+                      Add Checklist Node
+                    </Button>
+                  )}
                 </div>
+
+                {selectedNode.category !== "CHECKLIST_ITEM" ? (
+                  <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+                    Checklist items should be modeled as separate nodes. Use <span className="font-medium text-on-surface">Add Checklist Node</span> for new workflow checks.
+                  </div>
+                ) : null}
 
                 {selectedNode.checklistItems.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-6 text-sm text-on-surface-variant">
@@ -1055,6 +1354,16 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
                     </div>
                   ) : null}
                 </div>
+              </div>
+            </div>
+          ) : selectedEdge ? (
+            <div className="flex h-full items-center justify-center p-8 text-center">
+              <div className="space-y-3">
+                <Link2 size={28} className="mx-auto text-[#00cec4]" />
+                <h2 className="ds-h3 text-on-surface">CONNECTOR SELECTED</h2>
+                <p className="max-w-xs text-sm text-on-surface-variant">
+                  {selectedEdge.sourceKey} routes into {selectedEdge.targetKey}. Use the canvas toolbar or your keyboard to delete this connector.
+                </p>
               </div>
             </div>
           ) : (

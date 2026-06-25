@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-06-25T05:02:56.406Z",
+  "generatedAt": "2026-06-25T11:59:36.870Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
     "version": "0.1.0"
   },
   "stats": {
-    "totalAppRoutes": 197,
-    "totalApiRoutes": 167,
-    "totalPrismaModels": 237,
+    "totalAppRoutes": 201,
+    "totalApiRoutes": 172,
+    "totalPrismaModels": 256,
     "totalModuleServices": 70,
     "totalComponents": 89
   },
@@ -416,6 +416,24 @@
       "type": "page"
     },
     {
+      "route": "/cha/customers/new",
+      "filePath": "src/app/(dashboard)/cha/customers/new/page.tsx",
+      "module": "cha",
+      "type": "page"
+    },
+    {
+      "route": "/cha/customers",
+      "filePath": "src/app/(dashboard)/cha/customers/page.tsx",
+      "module": "cha",
+      "type": "page"
+    },
+    {
+      "route": "/cha/customers/[id]/edit",
+      "filePath": "src/app/(dashboard)/cha/customers/[id]/edit/page.tsx",
+      "module": "cha",
+      "type": "page"
+    },
+    {
       "route": "/cha/expenses",
       "filePath": "src/app/(dashboard)/cha/expenses/page.tsx",
       "module": "cha",
@@ -448,6 +466,12 @@
     {
       "route": "/cha/reports",
       "filePath": "src/app/(dashboard)/cha/reports/page.tsx",
+      "module": "cha",
+      "type": "page"
+    },
+    {
+      "route": "/cha/settings/filing-workflows",
+      "filePath": "src/app/(dashboard)/cha/settings/filing-workflows/page.tsx",
       "module": "cha",
       "type": "page"
     },
@@ -1485,6 +1509,30 @@
       "methods": []
     },
     {
+      "path": "/api/cha/checklist-files/[id]",
+      "filePath": "src/app/api/cha/checklist-files/[id]/route.ts",
+      "module": "cha",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/cha/do-validity/expiring",
+      "filePath": "src/app/api/cha/do-validity/expiring/route.ts",
+      "module": "cha",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/cha/documents/[id]",
+      "filePath": "src/app/api/cha/documents/[id]/route.ts",
+      "module": "cha",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
       "path": "/api/communication/chat/check-new",
       "filePath": "src/app/api/communication/chat/check-new/route.ts",
       "module": "communication",
@@ -1671,6 +1719,14 @@
     {
       "path": "/api/cron/appraisal-trigger",
       "filePath": "src/app/api/cron/appraisal-trigger/route.ts",
+      "module": "cron",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/cron/crm-reminders",
+      "filePath": "src/app/api/cron/crm-reminders/route.ts",
       "module": "cron",
       "methods": [
         "GET"
@@ -2255,6 +2311,14 @@
       ]
     },
     {
+      "path": "/api/notifications/presented",
+      "filePath": "src/app/api/notifications/presented/route.ts",
+      "module": "notifications",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
       "path": "/api/notifications/read-all",
       "filePath": "src/app/api/notifications/read-all/route.ts",
       "module": "notifications",
@@ -2682,6 +2746,10 @@
         "chaExpenseRequests",
         "chaAuditLogs",
         "chaTeamGroups",
+        "chaBranchNumberingRules",
+        "chaShipmentTypes",
+        "chaDocumentRequirementCategories",
+        "filingWorkflowTemplates",
         "googleChatSpaces",
         "googleChatSubscriptions",
         "googleChatDeliveries",
@@ -2746,6 +2814,10 @@
         "ChaExpenseRequest",
         "ChaAuditLog",
         "ChaTeamGroup",
+        "ChaBranchNumberingRule",
+        "ChaShipmentType",
+        "ChaDocumentRequirementCategory",
+        "FilingWorkflowTemplate",
         "GoogleChatSpace",
         "GoogleChatSubscription",
         "GoogleChatDelivery",
@@ -2787,7 +2859,8 @@
         "vendorNotes",
         "recurringExpenses",
         "recurringJournals",
-        "chaJobs"
+        "chaJobs",
+        "chaBranchNumberingRule"
       ],
       "relations": [
         "Organisation",
@@ -2808,7 +2881,8 @@
         "VendorNote",
         "RecurringExpense",
         "RecurringJournal",
-        "ChaJob"
+        "ChaJob",
+        "ChaBranchNumberingRule"
       ],
       "module": "core"
     },
@@ -3037,6 +3111,7 @@
         "recruitInterviewPreps",
         "recruitPrivateShares",
         "chaJobsOwned",
+        "chaJobsManaged",
         "chaJobsDeleted",
         "chaJobAssignments",
         "chaJobDeletionRequests",
@@ -3050,7 +3125,10 @@
         "chaFilingHistorySet",
         "chaExpenseRequestsCreated",
         "chaExpensePaymentsMade",
-        "chaExpenseQueriesCreated"
+        "chaExpenseQueriesCreated",
+        "filingNodeRuns",
+        "filingAttachments",
+        "filingSection49Flags"
       ],
       "relations": [
         "Organisation",
@@ -3156,7 +3234,10 @@
         "ChaFilingDateHistory",
         "ChaExpenseRequest",
         "ChaExpensePayment",
-        "ChaExpenseQuery"
+        "ChaExpenseQuery",
+        "FilingNodeRun",
+        "FilingAttachment",
+        "FilingSection49Flag"
       ],
       "module": "core"
     },
@@ -6475,11 +6556,60 @@
         "id",
         "orgId",
         "name",
+        "movementDirection",
+        "manifestRequirement",
+        "customManifestLabel",
+        "isManifestMandatory",
+        "manifestHelpText",
+        "isActive",
         "documentDefinitions",
         "jobs"
       ],
       "relations": [
         "ChaDocumentDefinition",
+        "ChaJob"
+      ],
+      "module": "cha"
+    },
+    {
+      "name": "ChaBranchNumberingRule",
+      "fields": [
+        "id",
+        "orgId",
+        "branchId",
+        "prefix",
+        "suffix",
+        "startingSequence",
+        "currentSequence",
+        "numberPadding",
+        "useFinancialYear",
+        "financialYearFormat",
+        "isActive",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "branch"
+      ],
+      "relations": [
+        "Organisation",
+        "Branch"
+      ],
+      "module": "cha"
+    },
+    {
+      "name": "ChaShipmentType",
+      "fields": [
+        "id",
+        "orgId",
+        "name",
+        "isActive",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "jobs"
+      ],
+      "relations": [
+        "Organisation",
         "ChaJob"
       ],
       "module": "cha"
@@ -6511,11 +6641,13 @@
         "customerId",
         "customerRef",
         "jobTypeId",
+        "shipmentTypeId",
         "branchId",
         "priority",
         "stage",
         "status",
         "primaryOwnerId",
+        "assignedManagerId",
         "remarks",
         "estimatedClosureDate",
         "deletedAt",
@@ -6525,14 +6657,20 @@
         "org",
         "customer",
         "jobType",
+        "shipmentType",
         "branch",
         "primaryOwner",
+        "assignedManager",
         "deletedBy",
         "assignments",
         "deletionRequests",
         "documentRequirements",
+        "additionalData",
+        "checklistWorkflow",
         "checklistImports",
         "filing",
+        "filingWorkflowInstance",
+        "filingSection49Flag",
         "customerAdvance",
         "expenseRequests",
         "auditLogs",
@@ -6542,17 +6680,46 @@
         "Organisation",
         "CrmAccount",
         "ChaJobType",
+        "ChaShipmentType",
         "Branch",
         "User",
         "ChaJobAssignment",
         "ChaJobDeletionRequest",
         "ChaJobDocumentRequirement",
+        "ChaJobAdditionalData",
+        "ChaChecklist",
         "ChaChecklistImport",
         "ChaFiling",
+        "FilingWorkflowInstance",
+        "FilingSection49Flag",
         "ChaCustomerAdvance",
         "ChaExpenseRequest",
         "ChaAuditLog",
         "JobWorkspaceProfile"
+      ],
+      "module": "cha"
+    },
+    {
+      "name": "ChaJobAdditionalData",
+      "fields": [
+        "id",
+        "jobId",
+        "vesselInwardDate",
+        "importGeneralManifest",
+        "exportGeneralManifest",
+        "customManifestValue",
+        "deliveryOrderValidity",
+        "status",
+        "createdById",
+        "updatedById",
+        "completedById",
+        "completedAt",
+        "createdAt",
+        "updatedAt",
+        "job"
+      ],
+      "relations": [
+        "ChaJob"
       ],
       "module": "cha"
     },
@@ -6610,14 +6777,58 @@
         "category",
         "isMandatory",
         "status",
+        "requirementItemId",
         "job",
+        "requirementItem",
         "versions",
         "exception"
       ],
       "relations": [
         "ChaJob",
+        "ChaDocumentRequirementItem",
         "ChaDocumentVersion",
         "ChaDocumentException"
+      ],
+      "module": "cha"
+    },
+    {
+      "name": "ChaDocumentRequirementCategory",
+      "fields": [
+        "id",
+        "orgId",
+        "name",
+        "description",
+        "sortOrder",
+        "isActive",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "items"
+      ],
+      "relations": [
+        "Organisation",
+        "ChaDocumentRequirementItem"
+      ],
+      "module": "cha"
+    },
+    {
+      "name": "ChaDocumentRequirementItem",
+      "fields": [
+        "id",
+        "categoryId",
+        "name",
+        "description",
+        "sortOrder",
+        "isRequiredDefault",
+        "isActive",
+        "createdAt",
+        "updatedAt",
+        "category",
+        "jobRequirements"
+      ],
+      "relations": [
+        "ChaDocumentRequirementCategory",
+        "ChaJobDocumentRequirement"
       ],
       "module": "cha"
     },
@@ -6758,6 +6969,78 @@
       "module": "cha"
     },
     {
+      "name": "ChaChecklist",
+      "fields": [
+        "id",
+        "jobId",
+        "currentFileVersionId",
+        "status",
+        "currentApprovalStage",
+        "customerApprovalAttempted",
+        "customerRejectedOnce",
+        "createdById",
+        "updatedById",
+        "createdAt",
+        "updatedAt",
+        "job",
+        "currentFileVersion",
+        "fileVersions",
+        "approvals"
+      ],
+      "relations": [
+        "ChaJob",
+        "ChaChecklistFileVersion",
+        "ChaChecklistDecision"
+      ],
+      "module": "cha"
+    },
+    {
+      "name": "ChaChecklistFileVersion",
+      "fields": [
+        "id",
+        "checklistId",
+        "fileKey",
+        "originalFileName",
+        "mimeType",
+        "fileSize",
+        "uploadedById",
+        "uploadedAt",
+        "versionNumber",
+        "remarks",
+        "checklist",
+        "currentForChecklists",
+        "approvals"
+      ],
+      "relations": [
+        "ChaChecklist",
+        "ChaChecklistDecision"
+      ],
+      "module": "cha"
+    },
+    {
+      "name": "ChaChecklistDecision",
+      "fields": [
+        "id",
+        "checklistId",
+        "fileVersionId",
+        "stage",
+        "action",
+        "remarks",
+        "actedById",
+        "assignedToId",
+        "actedAt",
+        "createdAt",
+        "updatedAt",
+        "checklist",
+        "fileVersion"
+      ],
+      "relations": [
+        "ChaChecklist",
+        "ChaChecklistFileVersion"
+      ],
+      "module": "cha"
+    },
+    {
       "name": "ChaFiling",
       "fields": [
         "id",
@@ -6765,6 +7048,9 @@
         "estimatedFilingDate",
         "actualFilingDate",
         "filingRef",
+        "filingShipmentType",
+        "billOfEntryNumber",
+        "shippingBillNumber",
         "filedBillCopyKey",
         "status",
         "exceptionReason",
@@ -8164,6 +8450,281 @@
       "module": "google-chat"
     },
     {
+      "name": "FilingWorkflowTemplate",
+      "fields": [
+        "id",
+        "orgId",
+        "name",
+        "description",
+        "isActive",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "versions",
+        "instances"
+      ],
+      "relations": [
+        "Organisation",
+        "FilingWorkflowVersion",
+        "FilingWorkflowInstance"
+      ],
+      "module": "core"
+    },
+    {
+      "name": "FilingWorkflowVersion",
+      "fields": [
+        "id",
+        "templateId",
+        "versionNumber",
+        "isPublished",
+        "isActive",
+        "createdById",
+        "createdAt",
+        "updatedAt",
+        "template",
+        "nodes",
+        "edges",
+        "instances"
+      ],
+      "relations": [
+        "FilingWorkflowTemplate",
+        "FilingWorkflowNode",
+        "FilingWorkflowEdge",
+        "FilingWorkflowInstance"
+      ],
+      "module": "core"
+    },
+    {
+      "name": "FilingWorkflowNode",
+      "fields": [
+        "id",
+        "versionId",
+        "key",
+        "name",
+        "description",
+        "category",
+        "isActive",
+        "positionX",
+        "positionY",
+        "isStart",
+        "slaDuration",
+        "slaUnit",
+        "commentsRequired",
+        "canBeSkipped",
+        "canBeRevisited",
+        "requireAllMandatoryChecklistItems",
+        "requireMandatoryPhotos",
+        "allowedRoles",
+        "version",
+        "checklistItems",
+        "photoRequirements",
+        "nodeRuns"
+      ],
+      "relations": [
+        "FilingWorkflowVersion",
+        "FilingChecklistItem",
+        "FilingPhotoRequirement",
+        "FilingNodeRun"
+      ],
+      "module": "core"
+    },
+    {
+      "name": "FilingWorkflowEdge",
+      "fields": [
+        "id",
+        "versionId",
+        "sourceKey",
+        "targetKey",
+        "label",
+        "version"
+      ],
+      "relations": [
+        "FilingWorkflowVersion"
+      ],
+      "module": "core"
+    },
+    {
+      "name": "FilingChecklistItem",
+      "fields": [
+        "id",
+        "nodeId",
+        "label",
+        "description",
+        "isMandatory",
+        "requiresRemarks",
+        "allowsUpload",
+        "minUploads",
+        "maxUploads",
+        "acceptedFileTypes",
+        "deadlineDuration",
+        "deadlineUnit",
+        "delayRemarksRequired",
+        "hasPhotoRequirement",
+        "sortOrder",
+        "isActive",
+        "node",
+        "responses",
+        "attachments"
+      ],
+      "relations": [
+        "FilingWorkflowNode",
+        "FilingChecklistResponse",
+        "FilingAttachment"
+      ],
+      "module": "core"
+    },
+    {
+      "name": "FilingPhotoRequirement",
+      "fields": [
+        "id",
+        "nodeId",
+        "label",
+        "description",
+        "isMandatory",
+        "minPhotos",
+        "maxPhotos",
+        "acceptedFileTypes",
+        "isVisibleInTimeline",
+        "node",
+        "attachments"
+      ],
+      "relations": [
+        "FilingWorkflowNode",
+        "FilingAttachment"
+      ],
+      "module": "core"
+    },
+    {
+      "name": "FilingWorkflowInstance",
+      "fields": [
+        "id",
+        "jobId",
+        "templateId",
+        "versionId",
+        "status",
+        "currentNodeKey",
+        "createdAt",
+        "updatedAt",
+        "job",
+        "template",
+        "version",
+        "nodeRuns",
+        "responses",
+        "attachments"
+      ],
+      "relations": [
+        "ChaJob",
+        "FilingWorkflowTemplate",
+        "FilingWorkflowVersion",
+        "FilingNodeRun",
+        "FilingChecklistResponse",
+        "FilingAttachment"
+      ],
+      "module": "core"
+    },
+    {
+      "name": "FilingNodeRun",
+      "fields": [
+        "id",
+        "instanceId",
+        "nodeId",
+        "nodeKey",
+        "status",
+        "startedAt",
+        "completedAt",
+        "slaDueDate",
+        "completedById",
+        "remarks",
+        "instance",
+        "node",
+        "completedBy",
+        "responses",
+        "attachments"
+      ],
+      "relations": [
+        "FilingWorkflowInstance",
+        "FilingWorkflowNode",
+        "User",
+        "FilingChecklistResponse",
+        "FilingAttachment"
+      ],
+      "module": "core"
+    },
+    {
+      "name": "FilingChecklistResponse",
+      "fields": [
+        "id",
+        "instanceId",
+        "nodeRunId",
+        "checklistItemId",
+        "isChecked",
+        "remarks",
+        "fileKey",
+        "dueAt",
+        "completedAt",
+        "delayRemarks",
+        "delayRemarkedAt",
+        "overdueLoggedAt",
+        "updatedAt",
+        "instance",
+        "nodeRun",
+        "checklistItem"
+      ],
+      "relations": [
+        "FilingWorkflowInstance",
+        "FilingNodeRun",
+        "FilingChecklistItem"
+      ],
+      "module": "core"
+    },
+    {
+      "name": "FilingAttachment",
+      "fields": [
+        "id",
+        "instanceId",
+        "nodeRunId",
+        "photoRequirementId",
+        "checklistItemId",
+        "fileKey",
+        "fileName",
+        "fileSize",
+        "fileType",
+        "uploadedById",
+        "uploadedAt",
+        "instance",
+        "nodeRun",
+        "photoRequirement",
+        "checklistItem",
+        "uploadedBy"
+      ],
+      "relations": [
+        "FilingWorkflowInstance",
+        "FilingNodeRun",
+        "FilingPhotoRequirement",
+        "FilingChecklistItem",
+        "User"
+      ],
+      "module": "core"
+    },
+    {
+      "name": "FilingSection49Flag",
+      "fields": [
+        "id",
+        "jobId",
+        "isEnabled",
+        "remarks",
+        "toggledById",
+        "updatedAt",
+        "job",
+        "toggledBy"
+      ],
+      "relations": [
+        "ChaJob",
+        "User"
+      ],
+      "module": "core"
+    },
+    {
       "name": "MobileDevice",
       "fields": [
         "id",
@@ -8747,6 +9308,9 @@
         "submitJobDeletionAction",
         "decideJobDeletionRequestAction",
         "createJobTypeAction",
+        "updateJobTypeManifestConfigAction",
+        "createShipmentTypeAction",
+        "deleteShipmentTypeAction",
         "deleteJobTypeAction",
         "createTeamGroupAction",
         "deleteTeamGroupAction",
@@ -8755,7 +9319,13 @@
         "uploadDocumentVersionAction",
         "deleteDocumentVersionAction",
         "declareDocumentExceptionAction",
+        "markDocumentNotAvailableAction",
         "importChecklistExcelAction",
+        "uploadChecklistFileAction",
+        "upsertAdditionalDataAction",
+        "submitChecklistInternalDecisionAction",
+        "submitChecklistCustomerDecisionAction",
+        "proceedAdditionalDataAction",
         "submitChecklistForApprovalAction",
         "checklistManagerActionAction",
         "selfApproveChecklistAction",
@@ -8772,7 +9342,27 @@
         "raisePaymentQueryAction",
         "resolvePaymentQueryAction",
         "listAllExpensesAction",
-        "listManagerChecklistApprovalsAction"
+        "listManagerChecklistApprovalsAction",
+        "upsertDocumentCategoryAction",
+        "deleteDocumentCategoryAction",
+        "upsertDocumentItemAction",
+        "deleteDocumentItemAction",
+        "removeDocumentExceptionAction",
+        "proceedDocumentStageAction",
+        "acknowledgeDoValidityWarningAction",
+        "updateJobDetailsAction",
+        "submitChecklistOwnerDecisionAction",
+        "saveFilingWorkflowDraftAction",
+        "publishFilingWorkflowAction",
+        "getFilingWorkflowDetailsAction",
+        "getFilingWorkflowInstanceAction",
+        "startFilingWorkflowAction",
+        "completeFilingNodeAction",
+        "toggleFilingSection49Action",
+        "getFilingSection49Action",
+        "uploadFilingAttachmentAction",
+        "upsertFilingShipmentDetailsAction",
+        "deleteFilingAttachmentAction"
       ]
     },
     {
@@ -8780,20 +9370,36 @@
       "fileName": "service.ts",
       "filePath": "src/modules/cha/service.ts",
       "exportedFunctions": [
+        "ensureDefaultDocumentRequirements",
         "ensureSettingsAndDefaults",
         "logChaAudit",
+        "getChecklistInternalApproverIds",
         "createJob",
         "createJobType",
+        "updateJobTypeManifestConfig",
         "deleteJobType",
+        "upsertBranchNumberingRules",
+        "createShipmentType",
+        "deleteShipmentType",
         "createTeamGroup",
         "deleteTeamGroup",
+        "listJobTypesForSelection",
+        "listJobTypesForSettings",
         "getJobDetails",
         "listJobs",
         "getFolderNameForCategory",
         "uploadDocumentVersion",
         "deleteDocumentVersion",
         "declareDocumentException",
+        "markDocumentNotAvailable",
         "verifyDocumentGate",
+        "upsertAdditionalData",
+        "proceedAdditionalDataStage",
+        "listDeliveryOrderValidityWarnings",
+        "acknowledgeDeliveryOrderValidityWarning",
+        "uploadChecklistFile",
+        "submitChecklistInternalDecision",
+        "submitChecklistCustomerDecision",
         "importChecklistExcel",
         "submitChecklistForApproval",
         "checklistManagerAction",
@@ -8814,7 +9420,30 @@
         "listManagerChecklistApprovals",
         "listManagerJobDeletionRequests",
         "submitJobDeletion",
-        "decideJobDeletionRequest"
+        "decideJobDeletionRequest",
+        "upsertDocumentCategory",
+        "deleteDocumentCategory",
+        "upsertDocumentItem",
+        "deleteDocumentItem",
+        "removeDocumentException",
+        "proceedDocumentStage",
+        "getEligibleManagers",
+        "updateJobDetails",
+        "submitChecklistOwnerDecision",
+        "ensureDefaultFilingWorkflows",
+        "calculateSlaDueDate",
+        "listFilingWorkflows",
+        "getFilingWorkflowDetails",
+        "saveFilingWorkflowDraft",
+        "publishFilingWorkflow",
+        "getFilingWorkflowInstance",
+        "startFilingWorkflow",
+        "completeFilingNode",
+        "toggleFilingSection49",
+        "getFilingSection49",
+        "uploadFilingAttachment",
+        "upsertFilingShipmentDetails",
+        "deleteFilingAttachment"
       ]
     },
     {
@@ -8844,6 +9473,7 @@
       "filePath": "src/modules/core/organisation/module-settings.ts",
       "exportedFunctions": [
         "getEnabledModuleIds",
+        "getFreshEnabledModuleIds",
         "setEnabledModuleIds",
         "getEnabledModuleIdSet"
       ]
@@ -9455,6 +10085,8 @@
         "notifyMany",
         "triggerCrmLeadReminders",
         "listActiveUserNotifications",
+        "markNotificationsPresented",
+        "triggerAllDueCrmLeadReminders",
         "listUserNotifications",
         "listAdminNotifications",
         "markNotificationRead",
@@ -10037,9 +10669,9 @@
       "components": 0
     },
     "cha": {
-      "appRoutes": 8,
-      "apiRoutes": 0,
-      "prismaModels": 25,
+      "appRoutes": 12,
+      "apiRoutes": 3,
+      "prismaModels": 33,
       "serviceFiles": 3,
       "components": 2
     },
@@ -10053,7 +10685,7 @@
     "core": {
       "appRoutes": 2,
       "apiRoutes": 0,
-      "prismaModels": 45,
+      "prismaModels": 56,
       "serviceFiles": 5,
       "components": 0
     },
@@ -10066,7 +10698,7 @@
     },
     "cron": {
       "appRoutes": 0,
-      "apiRoutes": 5,
+      "apiRoutes": 6,
       "prismaModels": 0,
       "serviceFiles": 0,
       "components": 0
@@ -10150,7 +10782,7 @@
     },
     "notifications": {
       "appRoutes": 1,
-      "apiRoutes": 8,
+      "apiRoutes": 9,
       "prismaModels": 2,
       "serviceFiles": 2,
       "components": 1

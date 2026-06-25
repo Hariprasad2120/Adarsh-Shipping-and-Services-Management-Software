@@ -20,6 +20,7 @@ const DEFAULT_CHA_JOB_CREATOR_ROLES = ["Admin", "HR", "Manager", "Employee"];
 const DEFAULT_CHA_SHIPMENT_TYPES = ["Air", "Sea"];
 const DEFAULT_IMPORT_MANIFEST_HELP = "Enter the Import General Manifest number.";
 const DEFAULT_EXPORT_MANIFEST_HELP = "Enter the Export General Manifest number.";
+const LEGACY_MANIFEST_REQUIREMENT: ChaManifestRequirement = "BOTH";
 
 type ChaMovementDirection = "IMPORT" | "EXPORT" | "BOTH" | "OTHER";
 type ChaManifestRequirement = "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM";
@@ -33,6 +34,46 @@ type ChaJobTypeManifestConfigInput = {
   manifestHelpText?: string | null;
   isActive?: boolean;
 };
+
+type ChaManifestSchemaState = {
+  jobTypeManifestConfig: boolean;
+  customManifestValue: boolean;
+};
+
+type CompatibleChaJobType = {
+  id: string;
+  orgId: string;
+  name: string;
+  movementDirection: ChaMovementDirection | null;
+  manifestRequirement: ChaManifestRequirement | null;
+  customManifestLabel: string | null;
+  isManifestMandatory: boolean;
+  manifestHelpText: string | null;
+  isActive: boolean;
+};
+
+type CompatibleAdditionalData = {
+  id?: string;
+  jobId?: string;
+  vesselInwardDate: Date | null;
+  importGeneralManifest: string | null;
+  exportGeneralManifest: string | null;
+  customManifestValue: string | null;
+  deliveryOrderValidity: Date | null;
+  status?: string | null;
+  createdById?: string | null;
+  updatedById?: string | null;
+  completedById?: string | null;
+  completedAt?: Date | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
+
+// Migration 20260625143000 is permanently applied — columns always present.
+const chaManifestSchemaStatePromise: Promise<ChaManifestSchemaState> = Promise.resolve({
+  jobTypeManifestConfig: true,
+  customManifestValue: true,
+});
 
 export const DEFAULT_DOCUMENT_REQUIREMENTS = [
   {
@@ -110,6 +151,115 @@ function parseStringArray(value: Prisma.JsonValue | null | undefined, fallback: 
     }
   }
   return fallback;
+}
+
+function getChaManifestSchemaState() {
+  return chaManifestSchemaStatePromise;
+}
+
+function getChaJobTypeSelect(includeManifestConfig: boolean): Prisma.ChaJobTypeSelect {
+  return includeManifestConfig
+    ? {
+        id: true,
+        orgId: true,
+        name: true,
+        movementDirection: true,
+        manifestRequirement: true,
+        customManifestLabel: true,
+        isManifestMandatory: true,
+        manifestHelpText: true,
+        isActive: true,
+      }
+    : {
+        id: true,
+        orgId: true,
+        name: true,
+      };
+}
+
+function normalizeCompatibleJobType(
+  jobType: { id: string; orgId: string; name: string } & Partial<CompatibleChaJobType>,
+  hasManifestConfigColumns: boolean,
+): CompatibleChaJobType {
+  if (hasManifestConfigColumns) {
+    return {
+      id: jobType.id,
+      orgId: jobType.orgId,
+      name: jobType.name,
+      movementDirection: jobType.movementDirection ?? null,
+      manifestRequirement: jobType.manifestRequirement ?? null,
+      customManifestLabel: jobType.customManifestLabel ?? null,
+      isManifestMandatory: jobType.isManifestMandatory ?? false,
+      manifestHelpText: jobType.manifestHelpText ?? null,
+      isActive: jobType.isActive ?? true,
+    };
+  }
+
+  return {
+    id: jobType.id,
+    orgId: jobType.orgId,
+    name: jobType.name,
+    movementDirection: null,
+    manifestRequirement: LEGACY_MANIFEST_REQUIREMENT,
+    customManifestLabel: null,
+    isManifestMandatory: true,
+    manifestHelpText: null,
+    isActive: true,
+  };
+}
+
+function getAdditionalDataSelect(includeCustomManifestValue: boolean): Prisma.ChaJobAdditionalDataSelect {
+  return includeCustomManifestValue
+    ? {
+        id: true,
+        jobId: true,
+        vesselInwardDate: true,
+        importGeneralManifest: true,
+        exportGeneralManifest: true,
+        customManifestValue: true,
+        deliveryOrderValidity: true,
+        status: true,
+        createdById: true,
+        updatedById: true,
+        completedById: true,
+        completedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      }
+    : {
+        id: true,
+        jobId: true,
+        vesselInwardDate: true,
+        importGeneralManifest: true,
+        exportGeneralManifest: true,
+        deliveryOrderValidity: true,
+        status: true,
+        createdById: true,
+        updatedById: true,
+        completedById: true,
+        completedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      };
+}
+
+function normalizeCompatibleAdditionalData(
+  additionalData: ({
+    vesselInwardDate: Date | null;
+    importGeneralManifest: string | null;
+    exportGeneralManifest: string | null;
+    deliveryOrderValidity: Date | null;
+  } & Partial<CompatibleAdditionalData>) | null | undefined,
+  hasCustomManifestValueColumn: boolean,
+): CompatibleAdditionalData | null {
+  if (!additionalData) {
+    return null;
+  }
+
+  return {
+    ...additionalData,
+    customManifestValue: hasCustomManifestValueColumn ? additionalData.customManifestValue ?? null : null,
+  };
 }
 
 function getFinancialYearLabel(date: Date, format?: string | null) {
@@ -222,6 +372,7 @@ async function ensureChaShipmentTypes(orgId: string) {
 
 // Ensure settings and defaults are created for the organisation
 export async function ensureSettingsAndDefaults(orgId: string) {
+  const manifestSchema = await getChaManifestSchemaState();
   let settings = await db.chaSettings.findUnique({
     where: { orgId },
   });
@@ -243,41 +394,53 @@ export async function ensureSettingsAndDefaults(orgId: string) {
     // Create default Job Types
     const importType = await db.chaJobType.upsert({
       where: { orgId_name: { orgId, name: "Import Clearance" } },
-      update: {
-        movementDirection: "IMPORT",
-        manifestRequirement: "IGM",
-        isManifestMandatory: true,
-        manifestHelpText: DEFAULT_IMPORT_MANIFEST_HELP,
-        isActive: true,
-      },
+      update: manifestSchema.jobTypeManifestConfig
+        ? {
+            movementDirection: "IMPORT",
+            manifestRequirement: "IGM",
+            isManifestMandatory: true,
+            manifestHelpText: DEFAULT_IMPORT_MANIFEST_HELP,
+            isActive: true,
+          }
+        : {},
       create: {
         orgId,
         name: "Import Clearance",
-        movementDirection: "IMPORT",
-        manifestRequirement: "IGM",
-        isManifestMandatory: true,
-        manifestHelpText: DEFAULT_IMPORT_MANIFEST_HELP,
-        isActive: true,
+        ...(manifestSchema.jobTypeManifestConfig
+          ? {
+              movementDirection: "IMPORT",
+              manifestRequirement: "IGM",
+              isManifestMandatory: true,
+              manifestHelpText: DEFAULT_IMPORT_MANIFEST_HELP,
+              isActive: true,
+            }
+          : {}),
       },
     });
 
     const exportType = await db.chaJobType.upsert({
       where: { orgId_name: { orgId, name: "Export Clearance" } },
-      update: {
-        movementDirection: "EXPORT",
-        manifestRequirement: "EGM",
-        isManifestMandatory: true,
-        manifestHelpText: DEFAULT_EXPORT_MANIFEST_HELP,
-        isActive: true,
-      },
+      update: manifestSchema.jobTypeManifestConfig
+        ? {
+            movementDirection: "EXPORT",
+            manifestRequirement: "EGM",
+            isManifestMandatory: true,
+            manifestHelpText: DEFAULT_EXPORT_MANIFEST_HELP,
+            isActive: true,
+          }
+        : {},
       create: {
         orgId,
         name: "Export Clearance",
-        movementDirection: "EXPORT",
-        manifestRequirement: "EGM",
-        isManifestMandatory: true,
-        manifestHelpText: DEFAULT_EXPORT_MANIFEST_HELP,
-        isActive: true,
+        ...(manifestSchema.jobTypeManifestConfig
+          ? {
+              movementDirection: "EXPORT",
+              manifestRequirement: "EGM",
+              isManifestMandatory: true,
+              manifestHelpText: DEFAULT_EXPORT_MANIFEST_HELP,
+              isActive: true,
+            }
+          : {}),
       },
     });
 
@@ -326,35 +489,37 @@ export async function ensureSettingsAndDefaults(orgId: string) {
     await ensureDefaultDocumentRequirements(orgId);
   }
 
-  await db.chaJobType.updateMany({
-    where: {
-      orgId,
-      name: "Import Clearance",
-      OR: [{ movementDirection: null }, { manifestRequirement: null }],
-    },
-    data: {
-      movementDirection: "IMPORT",
-      manifestRequirement: "IGM",
-      isManifestMandatory: true,
-      manifestHelpText: DEFAULT_IMPORT_MANIFEST_HELP,
-      isActive: true,
-    },
-  });
+  if (manifestSchema.jobTypeManifestConfig) {
+    await db.chaJobType.updateMany({
+      where: {
+        orgId,
+        name: "Import Clearance",
+        OR: [{ movementDirection: null }, { manifestRequirement: null }],
+      },
+      data: {
+        movementDirection: "IMPORT",
+        manifestRequirement: "IGM",
+        isManifestMandatory: true,
+        manifestHelpText: DEFAULT_IMPORT_MANIFEST_HELP,
+        isActive: true,
+      },
+    });
 
-  await db.chaJobType.updateMany({
-    where: {
-      orgId,
-      name: "Export Clearance",
-      OR: [{ movementDirection: null }, { manifestRequirement: null }],
-    },
-    data: {
-      movementDirection: "EXPORT",
-      manifestRequirement: "EGM",
-      isManifestMandatory: true,
-      manifestHelpText: DEFAULT_EXPORT_MANIFEST_HELP,
-      isActive: true,
-    },
-  });
+    await db.chaJobType.updateMany({
+      where: {
+        orgId,
+        name: "Export Clearance",
+        OR: [{ movementDirection: null }, { manifestRequirement: null }],
+      },
+      data: {
+        movementDirection: "EXPORT",
+        manifestRequirement: "EGM",
+        isManifestMandatory: true,
+        manifestHelpText: DEFAULT_EXPORT_MANIFEST_HELP,
+        isActive: true,
+      },
+    });
+  }
 
   await ensureDefaultFilingWorkflows(orgId);
 
@@ -461,17 +626,58 @@ async function assertCanAccessChecklist(actorId: string, job: {
   }
 }
 
-export async function getChecklistInternalApproverIds(orgId: string, job: {
+async function getChecklistConcernedUserIds(job: {
+  id?: string;
+  primaryOwnerId?: string;
+  assignedManagerId?: string | null;
+  assignments: { userId: string; responsibility?: string | null }[];
+}) {
+  const concernedUserIds = new Set<string>();
+
+  if (job.primaryOwnerId) {
+    concernedUserIds.add(job.primaryOwnerId);
+  }
+
+  if (job.assignedManagerId) {
+    concernedUserIds.add(job.assignedManagerId);
+  }
+
+  for (const assignment of job.assignments) {
+    if (assignment.userId) {
+      concernedUserIds.add(assignment.userId);
+    }
+  }
+
+  let primaryOwnerId = job.primaryOwnerId;
+  if (!primaryOwnerId && job.id) {
+    const jobRecord = await db.chaJob.findUnique({
+      where: { id: job.id },
+      select: { primaryOwnerId: true },
+    });
+    primaryOwnerId = jobRecord?.primaryOwnerId;
+    if (primaryOwnerId) {
+      concernedUserIds.add(primaryOwnerId);
+    }
+  }
+
+  if (primaryOwnerId) {
+    const owner = await db.user.findUnique({
+      where: { id: primaryOwnerId },
+      select: { managerId: true, tlId: true },
+    });
+    if (owner?.managerId) concernedUserIds.add(owner.managerId);
+    if (owner?.tlId) concernedUserIds.add(owner.tlId);
+  }
+
+  return Array.from(concernedUserIds);
+}
+
+export async function getChecklistInternalApproverIds(_orgId: string, job: {
   id?: string;
   primaryOwnerId?: string;
   assignedManagerId?: string | null;
   assignments: { userId: string; responsibility: string }[];
 }) {
-  const assignedApprovers = job.assignments
-    .filter((assignment) => assignment.responsibility === "APPROVAL")
-    .map((assignment) => assignment.userId);
-  const permissionApprovers = await getUsersWithPermission(orgId, "cha.checklist.internal_approve");
-
   const ownerManagerIds: string[] = [];
   const ownerTlIds: string[] = [];
 
@@ -500,12 +706,75 @@ export async function getChecklistInternalApproverIds(orgId: string, job: {
     if (owner?.tlId) ownerTlIds.push(owner.tlId);
   }
 
-  return Array.from(new Set([...assignedApprovers, ...permissionApprovers, ...ownerManagerIds, ...ownerTlIds]));
+  return Array.from(new Set([...ownerManagerIds, ...ownerTlIds].filter(Boolean)));
 }
 
-async function getChecklistCustomerApproverIds(orgId: string, fallbackIds: string[]) {
-  const permissionApprovers = await getUsersWithPermission(orgId, "cha.checklist.customer_approve");
-  return Array.from(new Set(permissionApprovers.length > 0 ? permissionApprovers : fallbackIds));
+async function getChecklistCustomerApproverIds(job: {
+  id?: string;
+  primaryOwnerId?: string;
+  assignedManagerId?: string | null;
+  assignments: { userId: string; responsibility?: string | null }[];
+}) {
+  return getChecklistConcernedUserIds(job);
+}
+
+async function getChecklistApprovalActorSummary(actorId: string) {
+  const actor = await db.user.findUnique({
+    where: { id: actorId },
+    include: {
+      roles: {
+        include: {
+          role: { select: { name: true } },
+        },
+      },
+    },
+  });
+
+  return {
+    actorName: actor?.name || "Unknown User",
+    actorRoles: actor ? getActorRoleNames(actor) : [],
+  };
+}
+
+async function logChecklistApprovalAudit(params: {
+  orgId: string;
+  jobId: string;
+  jobNumber: string;
+  checklistId: string;
+  actorId: string;
+  approvalType: "CUSTOMER_APPROVAL" | "INTERNAL_APPROVAL";
+  event: string;
+  prevState: string;
+  newState: string;
+  source: string;
+  remarks?: string;
+}) {
+  const actedAt = await getNow();
+  const { actorName, actorRoles } = await getChecklistApprovalActorSummary(params.actorId);
+
+  await logChaAudit({
+    orgId: params.orgId,
+    jobId: params.jobId,
+    entityType: "ChaChecklist",
+    entityId: params.checklistId,
+    event: params.event,
+    actorId: params.actorId,
+    prevState: params.prevState,
+    newState: params.newState,
+    remarks: params.remarks,
+    metadata: {
+      jobNumber: params.jobNumber,
+      checklistId: params.checklistId,
+      approvalType: params.approvalType,
+      approvedByUserId: params.actorId,
+      approvedByUserName: actorName,
+      userRole: actorRoles.join(", ") || "Unassigned",
+      timestamp: actedAt.toISOString(),
+      previousStatus: params.prevState,
+      newStatus: params.newState,
+      sourcePageAction: params.source,
+    },
+  });
 }
 
 async function queueChecklistNotifications(params: {
@@ -814,6 +1083,7 @@ export async function createJob(
     throw new Error("Assigned Manager is required.");
   }
 
+  const manifestSchema = await getChaManifestSchemaState();
   const settings = await ensureSettingsAndDefaults(orgId);
 
   // Validate creator authorization from settings
@@ -835,7 +1105,7 @@ export async function createJob(
 
   const result = await db.$transaction(async (tx) => {
     const selectedJobType = await tx.chaJobType.findFirst({
-      where: { id: data.jobTypeId, orgId, isActive: true },
+      where: manifestSchema.jobTypeManifestConfig ? { id: data.jobTypeId, orgId, isActive: true } : { id: data.jobTypeId, orgId },
       select: { id: true },
     });
     if (!selectedJobType) {
@@ -1273,8 +1543,36 @@ export async function deleteTeamGroup(orgId: string, id: string) {
   });
 }
 
+export async function listJobTypesForSelection(orgId: string) {
+  const manifestSchema = await getChaManifestSchemaState();
+  const jobTypes = await db.chaJobType.findMany({
+    where: manifestSchema.jobTypeManifestConfig ? { orgId, isActive: true } : { orgId },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+
+  return jobTypes;
+}
+
+export async function listJobTypesForSettings(orgId: string) {
+  const manifestSchema = await getChaManifestSchemaState();
+  const jobTypes = await db.chaJobType.findMany({
+    where: { orgId },
+    select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig),
+    orderBy: { name: "asc" },
+  });
+
+  return jobTypes.map((jobType) =>
+    normalizeCompatibleJobType(
+      jobType as { id: string; orgId: string; name: string } & Partial<CompatibleChaJobType>,
+      manifestSchema.jobTypeManifestConfig,
+    ),
+  );
+}
+
 // Get Job Details with access policies
 export async function getJobDetails(userId: string, orgId: string, jobId: string) {
+  const manifestSchema = await getChaManifestSchemaState();
   const user = await db.user.findUnique({
     where: { id: userId },
     include: { roles: { include: { role: true } } },
@@ -1285,7 +1583,7 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
     where: { id: jobId, ...getActiveChaJobWhere(orgId) },
     include: {
       customer: true,
-      jobType: true,
+      jobType: { select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig) },
       shipmentType: true,
       branch: true,
       primaryOwner: { select: { id: true, name: true, email: true, designation: true } },
@@ -1307,7 +1605,7 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
           requirementItem: { include: { category: true } }
         }
       },
-      additionalData: true,
+      additionalData: { select: getAdditionalDataSelect(manifestSchema.customManifestValue) },
       checklistWorkflow: {
         include: {
           currentFileVersion: true,
@@ -1331,10 +1629,22 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
   const normalizedJob = backfilledManagerAssignment
     ? {
         ...job,
+        jobType: normalizeCompatibleJobType(
+          job.jobType as { id: string; orgId: string; name: string } & Partial<CompatibleChaJobType>,
+          manifestSchema.jobTypeManifestConfig,
+        ),
+        additionalData: normalizeCompatibleAdditionalData(job.additionalData, manifestSchema.customManifestValue),
         assignedManagerId: backfilledManagerAssignment.userId,
         assignedManager: backfilledManagerAssignment.user ?? job.assignedManager,
       }
-    : job;
+    : {
+        ...job,
+        jobType: normalizeCompatibleJobType(
+          job.jobType as { id: string; orgId: string; name: string } & Partial<CompatibleChaJobType>,
+          manifestSchema.jobTypeManifestConfig,
+        ),
+        additionalData: normalizeCompatibleAdditionalData(job.additionalData, manifestSchema.customManifestValue),
+      };
 
   // Gated Gearing check:
   const isPlatformAdmin = user.isPlatformAdmin;
@@ -1383,6 +1693,7 @@ export async function listJobs(
     pageSize?: number;
   }
 ) {
+  const manifestSchema = await getChaManifestSchemaState();
   const page = filters.page || 1;
   const pageSize = filters.pageSize || 10;
   const skip = (page - 1) * pageSize;
@@ -1416,7 +1727,7 @@ export async function listJobs(
       orderBy: { createdAt: "desc" },
       include: {
         customer: true,
-        jobType: true,
+        jobType: { select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig) },
         branch: true,
         primaryOwner: { select: { id: true, name: true } },
         assignments: { include: { user: { select: { id: true, name: true } } } },
@@ -1429,7 +1740,19 @@ export async function listJobs(
     }),
   ]);
 
-  return { total, items, page, pageSize, totalPages: Math.ceil(total / pageSize) };
+  return {
+    total,
+    items: items.map((item) => ({
+      ...item,
+      jobType: normalizeCompatibleJobType(
+        item.jobType as { id: string; orgId: string; name: string } & Partial<CompatibleChaJobType>,
+        manifestSchema.jobTypeManifestConfig,
+      ),
+    })),
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  };
 }
 
 async function advanceToChecklistPreparationIfDocumentGatePassed(jobId: string) {
@@ -1870,10 +2193,23 @@ export async function upsertAdditionalData(
     deliveryOrderValidity?: Date | string | null;
   }
 ) {
-  const job = await db.chaJob.findFirstOrThrow({
+  const manifestSchema = await getChaManifestSchemaState();
+  const rawJob = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
-    include: { assignments: true, additionalData: true, jobType: true },
+    include: {
+      assignments: true,
+      additionalData: { select: getAdditionalDataSelect(manifestSchema.customManifestValue) },
+      jobType: { select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig) },
+    },
   });
+  const job = {
+    ...rawJob,
+    additionalData: normalizeCompatibleAdditionalData(rawJob.additionalData, manifestSchema.customManifestValue),
+    jobType: normalizeCompatibleJobType(
+      rawJob.jobType as { id: string; orgId: string; name: string } & Partial<CompatibleChaJobType>,
+      manifestSchema.jobTypeManifestConfig,
+    ),
+  };
   await assertCanAccessAdditionalData(actorId, job, "cha.additional_data.edit");
 
   if (job.stage === "DOCUMENT_COLLECTION") {
@@ -1935,7 +2271,7 @@ export async function upsertAdditionalData(
       vesselInwardDate,
       importGeneralManifest,
       exportGeneralManifest,
-      customManifestValue,
+      ...(manifestSchema.customManifestValue ? { customManifestValue } : {}),
       deliveryOrderValidity,
       status: nextStatus,
       updatedById: actorId,
@@ -1948,7 +2284,7 @@ export async function upsertAdditionalData(
       vesselInwardDate,
       importGeneralManifest,
       exportGeneralManifest,
-      customManifestValue,
+      ...(manifestSchema.customManifestValue ? { customManifestValue } : {}),
       deliveryOrderValidity,
       status: nextStatus,
       createdById: actorId,
@@ -2016,10 +2352,23 @@ export async function upsertAdditionalData(
 }
 
 export async function proceedAdditionalDataStage(actorId: string, orgId: string, jobId: string) {
-  const job = await db.chaJob.findFirstOrThrow({
+  const manifestSchema = await getChaManifestSchemaState();
+  const rawJob = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
-    include: { assignments: true, additionalData: true, jobType: true },
+    include: {
+      assignments: true,
+      additionalData: { select: getAdditionalDataSelect(manifestSchema.customManifestValue) },
+      jobType: { select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig) },
+    },
   });
+  const job = {
+    ...rawJob,
+    additionalData: normalizeCompatibleAdditionalData(rawJob.additionalData, manifestSchema.customManifestValue),
+    jobType: normalizeCompatibleJobType(
+      rawJob.jobType as { id: string; orgId: string; name: string } & Partial<CompatibleChaJobType>,
+      manifestSchema.jobTypeManifestConfig,
+    ),
+  };
   await assertCanAccessAdditionalData(actorId, job, "cha.additional_data.proceed");
 
   if (job.stage !== "ADDITIONAL_DATA") {
@@ -2410,9 +2759,8 @@ export async function submitChecklistInternalDecision(
   }
 
   const internalApproverIds = await getChecklistInternalApproverIds(orgId, job);
-  const hasPermission = await can(actorId, "cha.checklist.internal_approve");
-  if (!internalApproverIds.includes(actorId) && !hasPermission && !(await can(actorId, "cha.job.view_all"))) {
-    throw new ForbiddenError("cha.checklist.internal_approve");
+  if (!internalApproverIds.includes(actorId)) {
+    throw new Error("Only the assigned Manager or Team Lead can internally approve this checklist.");
   }
 
   const pendingApprovals = checklist.approvals.filter(
@@ -2430,7 +2778,7 @@ export async function submitChecklistInternalDecision(
         data: {
           action: decision,
           actedById: actorId,
-          actedAt: new Date(),
+          actedAt: await getNow(),
           remarks,
         },
       });
@@ -2443,7 +2791,7 @@ export async function submitChecklistInternalDecision(
           action: decision,
           assignedToId: actorId,
           actedById: actorId,
-          actedAt: new Date(),
+          actedAt: await getNow(),
           remarks,
         },
       });
@@ -2474,53 +2822,67 @@ export async function submitChecklistInternalDecision(
         stage: "INTERNAL",
       },
     });
-    const settings = await tx.chaSettings.findUniqueOrThrow({ where: { orgId } });
-    const policySatisfied =
-      settings.managerApprovalPolicy === "ANY"
-        ? approvals.some((approval) => approval.action === "APPROVED")
-        : internalApproverIds.every((approverId) =>
-            approvals.some((approval) => approval.assignedToId === approverId && approval.action === "APPROVED"),
-          );
+    const policySatisfied = internalApproverIds.some((approverId) =>
+      approvals.some((approval) => approval.assignedToId === approverId && approval.action === "APPROVED"),
+    );
 
     if (!policySatisfied) {
       return { outcome: "PENDING_OTHERS" as const };
     }
 
-    // Move to JOB_OWNER stage instead of CUSTOMER or FILING directly
+    if (checklist.customerRejectedOnce) {
+      await applyChecklistWorkflowToFiling(tx, {
+        actorId,
+        orgId,
+        jobId,
+        checklistId: checklist.id,
+        checklistStatus: "FILING_READY",
+        remarks: "Customer-rejected checklist was reworked, internally approved, and moved directly to Filing.",
+      });
+
+      return { outcome: "MOVED_TO_FILING" as const };
+    }
+
+    const customerApproverIds = await getChecklistCustomerApproverIds(job);
     await tx.chaChecklist.update({
       where: { id: checklist.id },
       data: {
-        status: "JOB_OWNER_APPROVAL_PENDING",
-        currentApprovalStage: "JOB_OWNER",
+        status: "CUSTOMER_APPROVAL_PENDING",
+        currentApprovalStage: "CUSTOMER",
+        customerApprovalAttempted: true,
         updatedById: actorId,
       },
     });
 
-    await tx.chaChecklistDecision.create({
-      data: {
+    await tx.chaChecklistDecision.createMany({
+      data: customerApproverIds.map((approverId) => ({
         checklistId: checklist.id,
         fileVersionId: checklist.currentFileVersionId!,
-        stage: "JOB_OWNER",
+        stage: "CUSTOMER",
         action: "PENDING",
-        assignedToId: job.primaryOwnerId,
-      },
+        assignedToId: approverId,
+      })),
     });
 
-    return { outcome: "JOB_OWNER_APPROVAL" as const };
+    return { outcome: "CUSTOMER_APPROVAL" as const, customerApproverIds };
   });
 
-  await logChaAudit({
+  await logChecklistApprovalAudit({
     orgId,
     jobId,
-    entityType: "ChaChecklist",
-    entityId: checklist.id,
+    jobNumber: job.jobNumber,
+    checklistId: checklist.id,
     event: decision === "APPROVED" ? "CHECKLIST_INTERNAL_APPROVED" : "CHECKLIST_INTERNAL_REJECTED",
     actorId,
+    approvalType: "INTERNAL_APPROVAL",
     prevState: "INTERNAL_APPROVAL_PENDING",
     newState:
       result.outcome === "REJECTED"
         ? "REWORK_REQUIRED"
-        : "JOB_OWNER_APPROVAL_PENDING",
+        : result.outcome === "MOVED_TO_FILING"
+        ? "FILING_READY"
+        : "CUSTOMER_APPROVAL_PENDING",
+    source: "/cha/jobs/[jobId]::submitChecklistInternalDecision",
     remarks: remarks || `Internal ${decision.toLowerCase()} for checklist.`,
   });
 
@@ -2533,15 +2895,26 @@ export async function submitChecklistInternalDecision(
       body: `Checklist was internally rejected.${remarks ? ` Reason: ${remarks}` : ""}`,
       link: `/cha/jobs/${jobId}`,
     });
-  } else if (result.outcome === "JOB_OWNER_APPROVAL") {
-    const actorUser = await db.user.findUnique({ where: { id: actorId }, select: { name: true } });
-    const approverName = actorUser?.name || "Internal Approver";
+  } else if (result.outcome === "CUSTOMER_APPROVAL") {
+    const { actorName: approverName } = await getChecklistApprovalActorSummary(actorId);
     await queueChecklistNotifications({
-      userIds: [job.primaryOwnerId],
+      userIds: result.customerApproverIds ?? [],
       orgId,
-      kind: "CHA_CHECKLIST_OWNER_APPROVAL_REQUESTED",
-      title: `Job Owner Approval Required: ${job.jobNumber}`,
-      body: `Job: ${job.jobNumber} | Customer: ${job.customer?.name || "Customer"} | File: ${checklist.currentFileVersion?.originalFileName || "Checklist"} | Approved by: ${approverName}. Click link to review checklist.`,
+      kind: "CHA_CHECKLIST_CUSTOMER_APPROVAL_REQUESTED",
+      title: `Customer Approval Required: ${job.jobNumber}`,
+      body: `Job: ${job.jobNumber} | Customer: ${job.customer?.name || "Customer"} | File: ${checklist.currentFileVersion?.originalFileName || "Checklist"} | Internally approved by: ${approverName}.`,
+      link: `/cha/jobs/${jobId}`,
+    });
+  } else if (result.outcome === "MOVED_TO_FILING") {
+    const filingRecipients = job.assignments
+      .filter((assignment) => assignment.responsibility === "FILING" || assignment.responsibility === "OPERATIONS")
+      .map((assignment) => assignment.userId);
+    await queueChecklistNotifications({
+      userIds: [job.primaryOwnerId, ...filingRecipients],
+      orgId,
+      kind: "CHA_CHECKLIST_READY_FOR_FILING",
+      title: `Checklist Ready For Filing: ${job.jobNumber}`,
+      body: `Checklist was internally approved after customer rework and moved directly to Filing.`,
       link: `/cha/jobs/${jobId}`,
     });
   }
@@ -2578,10 +2951,9 @@ export async function submitChecklistCustomerDecision(
     throw new Error("Checklist is not awaiting customer approval.");
   }
 
-  const customerApproverIds = await getChecklistCustomerApproverIds(orgId, []);
-  const hasPermission = await can(actorId, "cha.checklist.customer_approve");
-  if (!customerApproverIds.includes(actorId) && !hasPermission && !(await can(actorId, "cha.job.view_all"))) {
-    throw new ForbiddenError("cha.checklist.customer_approve");
+  const customerApproverIds = await getChecklistCustomerApproverIds(job);
+  if (!customerApproverIds.includes(actorId)) {
+    throw new Error("Only a concerned job user can customer-approve this checklist.");
   }
 
   const existingPending = checklist.approvals.find(
@@ -2599,7 +2971,7 @@ export async function submitChecklistCustomerDecision(
         data: {
           action: decision,
           actedById: actorId,
-          actedAt: new Date(),
+          actedAt: await getNow(),
           remarks,
         },
       });
@@ -2612,7 +2984,7 @@ export async function submitChecklistCustomerDecision(
           action: decision,
           assignedToId: actorId,
           actedById: actorId,
-          actedAt: new Date(),
+          actedAt: await getNow(),
           remarks,
         },
       });
@@ -2650,15 +3022,17 @@ export async function submitChecklistCustomerDecision(
     return { outcome: "APPROVED" as const };
   });
 
-  await logChaAudit({
+  await logChecklistApprovalAudit({
     orgId,
     jobId,
-    entityType: "ChaChecklist",
-    entityId: checklist.id,
+    jobNumber: job.jobNumber,
+    checklistId: checklist.id,
     event: decision === "APPROVED" ? "CHECKLIST_CUSTOMER_APPROVED" : "CHECKLIST_CUSTOMER_REJECTED",
     actorId,
+    approvalType: "CUSTOMER_APPROVAL",
     prevState: "CUSTOMER_APPROVAL_PENDING",
     newState: decision === "APPROVED" ? "CUSTOMER_APPROVED" : "CUSTOMER_REWORK_REQUIRED",
+    source: "/cha/jobs/[jobId]::submitChecklistCustomerDecision",
     remarks: remarks || `Customer ${decision.toLowerCase()} checklist.`,
   });
 
@@ -2698,10 +3072,22 @@ export async function importChecklistExcel(
   fileName: string,
   fileSize: number
 ) {
-  const job = await db.chaJob.findFirstOrThrow({
+  const manifestSchema = await getChaManifestSchemaState();
+  const rawJob = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
-    include: { additionalData: true, jobType: true },
+    include: {
+      additionalData: { select: getAdditionalDataSelect(manifestSchema.customManifestValue) },
+      jobType: { select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig) },
+    },
   });
+  const job = {
+    ...rawJob,
+    additionalData: normalizeCompatibleAdditionalData(rawJob.additionalData, manifestSchema.customManifestValue),
+    jobType: normalizeCompatibleJobType(
+      rawJob.jobType as { id: string; orgId: string; name: string } & Partial<CompatibleChaJobType>,
+      manifestSchema.jobTypeManifestConfig,
+    ),
+  };
 
   // Check doc gate first
   const gate = await verifyDocumentGate(jobId);
@@ -4977,7 +5363,7 @@ export async function submitChecklistOwnerDecision(
       return { outcome: "MOVED_TO_FILING" as const };
     }
 
-    const customerApproverIds = await getChecklistCustomerApproverIds(orgId, [job.assignedManagerId].filter(Boolean) as string[]);
+    const customerApproverIds = await getChecklistCustomerApproverIds(job);
     await tx.chaChecklist.update({
       where: { id: checklist.id },
       data: {
@@ -5077,90 +5463,66 @@ export async function submitChecklistOwnerDecision(
 const DEFAULT_FILING_WORKFLOW_SEED = {
   nodes: [
     {
-      key: "first_check",
-      name: "First Check",
-      description: "Default seeded start node for initial customs verification.",
-      category: "CHECK",
+      key: "workflow_start",
+      name: "Workflow Start",
+      description: "Entry point for the published filing workflow.",
+      category: "START",
       isStart: true,
       positionX: 120,
-      positionY: 220,
-      allowedRoles: ["Admin", "Manager", "Employee"],
-      checklistItems: [
-        "Bill of Entry (BE) Copy",
-        "Goods Registration",
-        "Examination",
-        "Chartered Engineer",
-        "Group Forward",
-        "Assessment",
-        "Duty",
-        "Out of Charge (OOC)",
-        "Delivery",
-      ],
-    },
-    {
-      key: "second_check",
-      name: "Second Check",
-      description: "Default seeded review hub before branching to RMS, Open Bill, or Amendment.",
-      category: "CHECK",
-      isStart: false,
-      positionX: 420,
-      positionY: 220,
+      positionY: 180,
       allowedRoles: ["Admin", "Manager", "Employee"],
       checklistItems: [],
     },
     {
-      key: "rms",
-      name: "RMS",
-      description: "Default seeded RMS branch. Fully editable after seeding.",
-      category: "CHECK",
-      isStart: false,
-      positionX: 760,
-      positionY: 80,
-      allowedRoles: ["Admin", "Manager", "Employee"],
-      checklistItems: [
-        "Goods Registration",
-        "Duty",
-        "Out of Charge (OOC)",
-        "Delivery",
-      ],
-    },
-    {
-      key: "open_bill",
-      name: "Open Bill",
-      description: "Default seeded Open Bill branch. Fully editable after seeding.",
-      category: "CHECK",
-      isStart: false,
-      positionX: 760,
-      positionY: 260,
-      allowedRoles: ["Admin", "Manager", "Employee"],
-      checklistItems: [
-        "Assessment",
-        "Goods Registration",
-        "Examination",
-        "Duty",
-        "Out of Charge (OOC)",
-        "Delivery",
-      ],
-    },
-    {
-      key: "amendment",
-      name: "Amendment",
-      description: "Default seeded amendment node. Checklist items remain fully configurable.",
-      category: "CHECK",
+      key: "document_readiness",
+      name: "Document Readiness",
+      description: "Standalone checklist node for validating that the required filing documents are ready.",
+      category: "CHECKLIST_ITEM",
       isStart: false,
       positionX: 420,
-      positionY: 460,
+      positionY: 180,
+      allowedRoles: ["Admin", "Manager", "Employee"],
+      checklistItems: ["Document Readiness"],
+    },
+    {
+      key: "compliance_review",
+      name: "Compliance Review",
+      description: "Standalone checklist node for final filing compliance verification.",
+      category: "CHECKLIST_ITEM",
+      isStart: false,
+      positionX: 760,
+      positionY: 180,
+      allowedRoles: ["Admin", "Manager", "Employee"],
+      checklistItems: ["Compliance Review"],
+    },
+    {
+      key: "filing_submission",
+      name: "Filing Submission",
+      description: "Standalone checklist node for final filing submission readiness.",
+      category: "CHECKLIST_ITEM",
+      isStart: false,
+      positionX: 1100,
+      positionY: 180,
+      allowedRoles: ["Admin", "Manager", "Employee"],
+      checklistItems: ["Filing Submission"],
+    },
+    {
+      key: "workflow_complete",
+      name: "Workflow Complete",
+      description: "Marks the end of the default filing workflow path.",
+      category: "END",
+      isStart: false,
+      positionX: 1440,
+      positionY: 180,
       allowedRoles: ["Admin", "Manager", "Employee"],
       checklistItems: [],
     },
   ],
   edges: [
-    { sourceKey: "first_check", targetKey: "second_check" },
-    { sourceKey: "second_check", targetKey: "rms" },
-    { sourceKey: "second_check", targetKey: "open_bill" },
-    { sourceKey: "second_check", targetKey: "amendment" },
-    { sourceKey: "amendment", targetKey: "first_check" },
-    { sourceKey: "amendment", targetKey: "second_check" },
+    { sourceKey: "workflow_start", targetKey: "document_readiness" },
+    { sourceKey: "document_readiness", targetKey: "compliance_review" },
+    { sourceKey: "compliance_review", targetKey: "filing_submission" },
+    { sourceKey: "filing_submission", targetKey: "workflow_complete" },
   ],
 } as const;
 
@@ -6489,4 +6851,3 @@ export async function deleteFilingAttachment(
 
   return true;
 }
-

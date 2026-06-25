@@ -622,28 +622,38 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       "All checks pass."
     );
 
-    const checklistPendingOwner = await db.chaChecklist.findUniqueOrThrow({ where: { id: checklist.id } });
-    expect(checklistPendingOwner.status).toBe("JOB_OWNER_APPROVAL_PENDING");
-    expect(checklistPendingOwner.currentApprovalStage).toBe("JOB_OWNER");
+    const checklistPendingCustomer = await db.chaChecklist.findUniqueOrThrow({ where: { id: checklist.id } });
+    expect(checklistPendingCustomer.status).toBe("CUSTOMER_APPROVAL_PENDING");
+    expect(checklistPendingCustomer.currentApprovalStage).toBe("CUSTOMER");
 
-    // Rejection by owner
-    await chaService.submitChecklistOwnerDecision(
+    await expect(
+      chaService.submitChecklistCustomerDecision(
+        otherManagerUser.id,
+        org.id,
+        job.id,
+        checklist.id,
+        "APPROVED",
+        "Outsider should not be able to customer-approve.",
+      )
+    ).rejects.toThrow(/Only a concerned job user can customer-approve/);
+
+    await chaService.submitChecklistCustomerDecision(
       ownerUser.id,
       org.id,
       job.id,
       checklist.id,
       "REJECTED",
-      "Owner rejected because details look incomplete."
+      "Customer requested one more correction."
     );
 
-    const checklistOwnerRejected = await db.chaChecklist.findUniqueOrThrow({ where: { id: checklist.id } });
-    expect(checklistOwnerRejected.status).toBe("JOB_OWNER_REJECTED");
-    expect(checklistOwnerRejected.currentApprovalStage).toBe("UPLOAD");
+    const checklistCustomerRejected = await db.chaChecklist.findUniqueOrThrow({ where: { id: checklist.id } });
+    expect(checklistCustomerRejected.status).toBe("CUSTOMER_REWORK_REQUIRED");
+    expect(checklistCustomerRejected.currentApprovalStage).toBe("UPLOAD");
 
-    const jobOwnerRejected = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
-    expect(jobOwnerRejected.stage).toBe("CHECKLIST_PREPARATION");
+    const jobCustomerRejected = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
+    expect(jobCustomerRejected.stage).toBe("CHECKLIST_PREPARATION");
 
-    // V3 Upload after owner rejection
+    // V3 Upload after customer rejection
     const reuploadResult3 = await chaService.uploadChecklistFile(
       ownerUser.id,
       org.id,
@@ -667,30 +677,8 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       "All checks pass again."
     );
 
-    // V3 Owner approval
-    await chaService.submitChecklistOwnerDecision(
-      ownerUser.id,
-      org.id,
-      job.id,
-      checklist.id,
-      "APPROVED",
-      "Owner approved v3."
-    );
-
-    const checklistPendingCustomer = await db.chaChecklist.findUniqueOrThrow({ where: { id: checklist.id } });
-    expect(checklistPendingCustomer.status).toBe("CUSTOMER_APPROVAL_PENDING");
-
-    await chaService.submitChecklistCustomerDecision(
-      otherManagerUser.id,
-      org.id,
-      job.id,
-      checklist.id,
-      "APPROVED",
-      "Customer accepted the checklist."
-    );
-
     const checklistApproved = await db.chaChecklist.findUniqueOrThrow({ where: { id: checklist.id } });
-    expect(checklistApproved.status).toBe("CUSTOMER_APPROVED");
+    expect(checklistApproved.status).toBe("FILING_READY");
 
     const jobApproved = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
     expect(jobApproved.stage).toBe("FILING");

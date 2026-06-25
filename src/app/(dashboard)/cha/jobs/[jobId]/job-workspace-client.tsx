@@ -205,7 +205,6 @@ export function JobWorkspaceClient({
   const [checklistRemarks, setChecklistRemarks] = useState("");
   const [internalApprovalRemarks, setInternalApprovalRemarks] = useState("");
   const [customerApprovalRemarks, setCustomerApprovalRemarks] = useState("");
-  const [ownerApprovalRemarks, setOwnerApprovalRemarks] = useState("");
 
   // Filing Form State
   const [newEstFilingDate, setNewEstFilingDate] = useState("");
@@ -374,22 +373,20 @@ export function JobWorkspaceClient({
       approval.fileVersionId === currentChecklistVersion?.id &&
       approval.stage === "CUSTOMER",
   );
+  const approvedInternalDecision =
+    currentInternalApprovals.find((approval: any) => approval.action === "APPROVED") ?? null;
+  const approvedCustomerDecision =
+    currentCustomerApprovals.find((approval: any) => approval.action === "APPROVED") ?? null;
   const canCurrentUserInternalApprove =
     canInternalApproveChecklist ||
     currentInternalApprovals.some((approval: any) => approval.assignedToId === currentUserId && approval.action === "PENDING");
   const canCurrentUserCustomerApprove =
     canCustomerApproveChecklist ||
     currentCustomerApprovals.some((approval: any) => approval.assignedToId === currentUserId && approval.action === "PENDING");
-  const currentOwnerApprovals = checklistApprovals.filter(
-    (approval: any) =>
-      approval.fileVersionId === currentChecklistVersion?.id &&
-      approval.stage === "JOB_OWNER",
-  );
-  const canCurrentUserOwnerApprove =
-    job.primaryOwnerId === currentUserId ||
-    currentOwnerApprovals.some((approval: any) => approval.assignedToId === currentUserId && approval.action === "PENDING");
   const getUserName = (userId?: string | null) =>
     users.find((user) => user.id === userId)?.name || "Unknown";
+  const getInternalApproverRole = (approval: any) =>
+    approval?.assignedToId === job.assignedManagerId ? "Manager" : "TL";
 
   // Document version upload handler
   const handleUploadDoc = async (reqId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -717,35 +714,6 @@ export function JobWorkspaceClient({
         router.refresh();
       } else {
         toast.error(res.error || "Failed to process customer decision.");
-      }
-    } catch (err: any) {
-      toast.error(err.message || "An unexpected error occurred.");
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  const handleChecklistOwnerDecision = async (decision: "APPROVED" | "REJECTED") => {
-    if (!checklistWorkflow) return;
-    if (decision === "REJECTED" && !ownerApprovalRemarks.trim()) {
-      toast.error("A rejection reason is required.");
-      return;
-    }
-
-    setLoading(`checklist-owner-${decision}`);
-    try {
-      const res = await actions.submitChecklistOwnerDecisionAction(
-        job.id,
-        checklistWorkflow.id,
-        decision,
-        ownerApprovalRemarks || undefined,
-      );
-      if (res.ok) {
-        toast.success(decision === "APPROVED" ? "Job Owner approval recorded." : "Checklist returned by owner for rework.");
-        setOwnerApprovalRemarks("");
-        router.refresh();
-      } else {
-        toast.error(res.error || "Failed to process job owner decision.");
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
@@ -2386,9 +2354,9 @@ export function JobWorkspaceClient({
                   <div className="bg-surface border border-[#fb923c]/40 p-5 rounded-xl flex items-start gap-3">
                     <AlertTriangle size={24} className="text-[#fb923c] shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="font-bold text-sm uppercase text-[#fb923c]">Manager Assignment Required</h4>
+                      <h4 className="font-bold text-sm uppercase text-[#fb923c]">Manager Assignment Recommended</h4>
                       <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
-                        No manager has been assigned to this job yet. An assigned manager is mandatory to route checklist approvals and handle operational workflows.
+                        No manager has been assigned to this job yet. Internal approval can still route through the primary owner&apos;s Manager or TL if configured in HRMS, but assigning a manager keeps responsibility explicit.
                       </p>
                       {canUpdateJob && (
                         <button
@@ -2418,7 +2386,7 @@ export function JobWorkspaceClient({
                           <p className="text-xs text-on-surface-variant">
                             {checklistWorkflow?.customerRejectedOnce
                               ? "Customer has already rejected once. After rework, internal approval will move this directly to Filing."
-                              : "First internal approval will route this checklist to customer approval."}
+                              : "Internal approval now completes when either the assigned Manager or TL approves, then routes to concerned job users for customer approval."}
                           </p>
                         </div>
                         {currentChecklistVersion ? (
@@ -2471,20 +2439,20 @@ export function JobWorkspaceClient({
 
                       <input
                         type="file"
-                        disabled={internalApproversCount === 0 || !job.assignedManagerId}
+                        disabled={internalApproversCount === 0}
                         onChange={(e) => setChecklistFile(e.target.files?.[0] || null)}
                         className="w-full text-xs disabled:opacity-50"
                       />
                       <textarea
                         rows={2}
                         value={checklistRemarks}
-                        disabled={internalApproversCount === 0 || !job.assignedManagerId}
+                        disabled={internalApproversCount === 0}
                         onChange={(e) => setChecklistRemarks(e.target.value)}
                         placeholder="Optional upload remarks"
                         className="w-full text-xs disabled:opacity-50"
                       />
                       <div className="flex justify-end">
-                        <Button type="submit" disabled={loading === "checklist-upload" || internalApproversCount === 0 || !job.assignedManagerId} className="w-full sm:w-auto">
+                        <Button type="submit" disabled={loading === "checklist-upload" || internalApproversCount === 0} className="w-full sm:w-auto">
                           {loading === "checklist-upload" ? "Uploading..." : currentChecklistVersion ? "Reupload Checklist" : "Upload Checklist"}
                         </Button>
                       </div>
@@ -2553,10 +2521,17 @@ export function JobWorkspaceClient({
                         <p className="mt-1 text-sm text-on-surface">
                           {!checklistWorkflow
                             ? "Checklist upload will start the internal review process."
+                            : approvedInternalDecision
+                            ? `Approved by ${getUserName(approvedInternalDecision.actedById || approvedInternalDecision.assignedToId)} (${getInternalApproverRole(approvedInternalDecision)}) on ${approvedInternalDecision.actedAt ? new Date(approvedInternalDecision.actedAt).toLocaleString("en-IN") : "Pending"}`
                             : checklistWorkflow.currentApprovalStage === "INTERNAL"
-                            ? "Awaiting internal review."
-                            : "Internal review is complete or not active for the current step."}
+                            ? "Pending: Manager or TL approval required."
+                            : "Internal approval has not been completed for the current file version yet."}
                         </p>
+                        {checklistWorkflow?.currentApprovalStage === "INTERNAL" && !approvedInternalDecision ? (
+                          <p className="mt-1 text-xs text-on-surface-variant">
+                            Pending approvers: {Array.from(new Set(currentInternalApprovals.filter((approval: any) => approval.action === "PENDING").map((approval: any) => `${getUserName(approval.assignedToId)} (${getInternalApproverRole(approval)})`))).join(", ") || "Manager or TL"}
+                          </p>
+                        ) : null}
                       </div>
                       {canCurrentUserInternalApprove && checklistWorkflow?.currentApprovalStage === "INTERNAL" ? (
                         <>
@@ -2572,55 +2547,15 @@ export function JobWorkspaceClient({
                               type="button"
                               variant="outline"
                               className="border-red-200 text-red-500 hover:bg-red-50"
-                              disabled={loading !== null || !job.assignedManagerId}
+                              disabled={loading !== null}
                               onClick={() => handleChecklistInternalDecision("REJECTED")}
                             >
                               Reject
                             </Button>
                             <Button
                               type="button"
-                              disabled={loading !== null || !job.assignedManagerId}
+                              disabled={loading !== null}
                               onClick={() => handleChecklistInternalDecision("APPROVED")}
-                            >
-                              Approve
-                            </Button>
-                          </div>
-                        </>
-                      ) : null}
-                    </div>
-
-                    <div className="rounded-xl border border-outline-variant/40 bg-surface p-5 space-y-4">
-                      <div>
-                        <span className="ds-label">Job Owner Approval</span>
-                        <p className="mt-1 text-sm text-on-surface">
-                          {checklistWorkflow?.currentApprovalStage === "JOB_OWNER"
-                            ? "Awaiting job owner approval."
-                            : "Job owner approval starts after internal approval is complete."}
-                        </p>
-                      </div>
-                      {canCurrentUserOwnerApprove && checklistWorkflow?.currentApprovalStage === "JOB_OWNER" ? (
-                        <>
-                          <textarea
-                            rows={2}
-                            value={ownerApprovalRemarks}
-                            onChange={(e) => setOwnerApprovalRemarks(e.target.value)}
-                            placeholder="Required for rejection, optional for approval"
-                            className="w-full text-xs"
-                          />
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className="border-red-200 text-red-500 hover:bg-red-50"
-                              disabled={loading !== null || !job.assignedManagerId}
-                              onClick={() => handleChecklistOwnerDecision("REJECTED")}
-                            >
-                              Reject
-                            </Button>
-                            <Button
-                              type="button"
-                              disabled={loading !== null || !job.assignedManagerId}
-                              onClick={() => handleChecklistOwnerDecision("APPROVED")}
                             >
                               Approve
                             </Button>
@@ -2633,12 +2568,19 @@ export function JobWorkspaceClient({
                       <div>
                         <span className="ds-label">Customer Approval</span>
                         <p className="mt-1 text-sm text-on-surface">
-                          {checklistWorkflow?.currentApprovalStage === "CUSTOMER"
-                            ? "Awaiting customer approval."
+                          {approvedCustomerDecision
+                            ? `Approved by ${getUserName(approvedCustomerDecision.actedById || approvedCustomerDecision.assignedToId)} on behalf of concerned job users on ${approvedCustomerDecision.actedAt ? new Date(approvedCustomerDecision.actedAt).toLocaleString("en-IN") : "Pending"}`
+                            : checklistWorkflow?.currentApprovalStage === "CUSTOMER"
+                            ? "Pending: concerned job user approval required."
                             : checklistWorkflow?.customerRejectedOnce
                             ? "Customer approval will not be requested again after rework."
                             : "Customer approval starts after the first successful internal approval."}
                         </p>
+                        {checklistWorkflow?.currentApprovalStage === "CUSTOMER" && !approvedCustomerDecision ? (
+                          <p className="mt-1 text-xs text-on-surface-variant">
+                            Pending approvers: {Array.from(new Set(currentCustomerApprovals.filter((approval: any) => approval.action === "PENDING").map((approval: any) => getUserName(approval.assignedToId)))).join(", ") || "Concerned job users"}
+                          </p>
+                        ) : null}
                       </div>
                       {canCurrentUserCustomerApprove && checklistWorkflow?.currentApprovalStage === "CUSTOMER" ? (
                         <>
@@ -2654,14 +2596,14 @@ export function JobWorkspaceClient({
                               type="button"
                               variant="outline"
                               className="border-red-200 text-red-500 hover:bg-red-50"
-                              disabled={loading !== null || !job.assignedManagerId}
+                              disabled={loading !== null}
                               onClick={() => handleChecklistCustomerDecision("REJECTED")}
                             >
                               Reject
                             </Button>
                             <Button
                               type="button"
-                              disabled={loading !== null || !job.assignedManagerId}
+                              disabled={loading !== null}
                               onClick={() => handleChecklistCustomerDecision("APPROVED")}
                             >
                               Approve
