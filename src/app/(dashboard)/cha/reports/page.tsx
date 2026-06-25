@@ -20,12 +20,41 @@ export default async function ChaReportsPage() {
   // Require audit view permission
   await requirePermission(session.user.id, "cha.audit.view");
 
-  // 1. Stage Counts
-  const stageCounts = await db.chaJob.groupBy({
-    by: ["stage"],
-    where: { orgId, deletedAt: null },
-    _count: { id: true },
-  });
+  // Parallelize all independent queries
+  const [stageCounts, advances, expenses, delayedFilings, auditLogsRaw] = await Promise.all([
+    db.chaJob.groupBy({
+      by: ["stage"],
+      where: { orgId, deletedAt: null },
+      _count: { id: true },
+    }),
+    db.chaCustomerAdvance.findMany({
+      where: { job: { orgId, deletedAt: null } },
+      include: { receipts: true },
+    }),
+    db.chaExpensePayment.findMany({
+      where: { request: { orgId, job: { deletedAt: null } } },
+    }),
+    db.chaFiling.findMany({
+      where: {
+        job: { orgId, deletedAt: null },
+        status: "FILED",
+        delayReason: { not: null },
+      },
+      include: {
+        job: { include: { customer: true } },
+      },
+      orderBy: { actualFilingDate: "desc" },
+      take: 10,
+    }),
+    db.chaAuditLog.findMany({
+      where: { orgId },
+      orderBy: { timestamp: "desc" },
+      include: {
+        job: { select: { jobNumber: true } },
+      },
+      take: 15,
+    }),
+  ]);
 
   const stageMap: Record<string, number> = {
     DOCUMENT_COLLECTION: 0,
@@ -38,12 +67,6 @@ export default async function ChaReportsPage() {
     stageMap[sc.stage] = sc._count.id;
   });
 
-  // 2. Financial Summaries
-  const advances = await db.chaCustomerAdvance.findMany({
-    where: { job: { orgId, deletedAt: null } },
-    include: { receipts: true },
-  });
-
   const totalExpectedAdvance = advances.reduce(
     (sum, a) => sum + Number(a.expectedAmount || 0),
     0
@@ -54,37 +77,10 @@ export default async function ChaReportsPage() {
     0
   );
 
-  const expenses = await db.chaExpensePayment.findMany({
-    where: { request: { orgId, job: { deletedAt: null } } },
-  });
   const totalDisbursedExpense = expenses.reduce(
     (sum, e) => sum + Number(e.amountPaid || 0),
     0
   );
-
-  // 3. Delayed Filings
-  const delayedFilings = await db.chaFiling.findMany({
-    where: {
-      job: { orgId, deletedAt: null },
-      status: "FILED",
-      delayReason: { not: null },
-    },
-    include: {
-      job: { include: { customer: true } },
-    },
-    orderBy: { actualFilingDate: "desc" },
-    take: 10,
-  });
-
-  // 4. Latest Audit Logs
-  const auditLogsRaw = await db.chaAuditLog.findMany({
-    where: { orgId },
-    orderBy: { timestamp: "desc" },
-    include: {
-      job: { select: { jobNumber: true } },
-    },
-    take: 15,
-  });
 
   const actorIds = Array.from(new Set(auditLogsRaw.map((l) => l.actorId)));
   const actors = await db.user.findMany({

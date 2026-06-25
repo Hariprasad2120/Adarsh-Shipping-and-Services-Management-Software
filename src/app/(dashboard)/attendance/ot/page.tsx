@@ -62,8 +62,8 @@ export default async function OvertimePage({ searchParams }: PageProps) {
   // If user is admin/manager, load all admin data
   let adminData = null;
   if (canApprove) {
-    // 1. Fetch Stats
-    const [approvedOt, lopRecords, pendingCount] = await Promise.all([
+    // Parallelize all independent admin queries; derive totalLopDays from lopRecordsDb to avoid double fetch
+    const [approvedOt, pendingCount, otRecords, holidays, lopRecordsDb, otSettings, employees, branches] = await Promise.all([
       db.otRecord.findMany({
         where: {
           user: { orgId },
@@ -76,15 +76,6 @@ export default async function OvertimePage({ searchParams }: PageProps) {
           compOffDays: true,
         },
       }),
-      db.employeeLop.findMany({
-        where: {
-          user: { orgId },
-          payrollMonth: startOfMonth,
-        },
-        select: {
-          lopDays: true,
-        },
-      }),
       db.otRecord.count({
         where: {
           user: { orgId },
@@ -92,74 +83,82 @@ export default async function OvertimePage({ searchParams }: PageProps) {
           approvalStatus: { in: ["PENDING", "PENDING_MANAGER"] },
         },
       }),
+      db.otRecord.findMany({
+        where: {
+          user: { orgId },
+          date: { gte: startOfMonth, lte: endOfMonth },
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              employeeNumber: true,
+              department: { select: { name: true } },
+              employmentRecord: { select: { ctc: true } },
+            },
+          },
+        },
+        orderBy: [
+          { user: { name: "asc" } },
+          { date: "asc" },
+        ],
+      }),
+      db.holiday.findMany({
+        where: {
+          orgId,
+          date: {
+            gte: new Date(currentYear, 0, 1),
+            lte: new Date(currentYear, 11, 31),
+          },
+        },
+        include: {
+          branch: { select: { name: true } },
+        },
+        orderBy: { date: "asc" },
+      }),
+      db.employeeLop.findMany({
+        where: {
+          user: { orgId },
+          payrollMonth: startOfMonth,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              employeeNumber: true,
+              department: { select: { name: true } },
+            },
+          },
+        },
+        orderBy: { user: { name: "asc" } },
+      }),
+      db.otSettings.findUnique({
+        where: { orgId },
+      }),
+      db.user.findMany({
+        where: { orgId, active: true, isPlatformAdmin: false },
+        select: {
+          id: true,
+          name: true,
+          employeeNumber: true,
+          department: { select: { name: true } },
+          employmentRecord: { select: { ctc: true } },
+        },
+        orderBy: { name: "asc" },
+      }),
+      db.branch.findMany({
+        where: { orgId },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      }),
     ]);
 
     const totalOtHours = approvedOt.reduce((acc, r) => acc + r.otHours, 0);
     const totalOtAmount = approvedOt.reduce((acc, r) => acc + r.otAmount, 0);
     const totalCompOffDays = approvedOt.reduce((acc, r) => acc + r.compOffDays, 0);
-    const totalLopDays = lopRecords.reduce((acc, r) => acc + r.lopDays, 0);
-
-    // 2. Fetch OT Records
-    const otRecords = await db.otRecord.findMany({
-      where: {
-        user: { orgId },
-        date: { gte: startOfMonth, lte: endOfMonth },
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            employeeNumber: true,
-            department: { select: { name: true } },
-            employmentRecord: { select: { ctc: true } },
-          },
-        },
-      },
-      orderBy: [
-        { user: { name: "asc" } },
-        { date: "asc" },
-      ],
-    });
-
-    // 3. Fetch Holidays for the current year
-    const holidays = await db.holiday.findMany({
-      where: {
-        orgId,
-        date: {
-          gte: new Date(currentYear, 0, 1),
-          lte: new Date(currentYear, 11, 31),
-        },
-      },
-      include: {
-        branch: { select: { name: true } },
-      },
-      orderBy: { date: "asc" },
-    });
-
-    // 4. Fetch LOP Records
-    const lopRecordsDb = await db.employeeLop.findMany({
-      where: {
-        user: { orgId },
-        payrollMonth: startOfMonth,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            employeeNumber: true,
-            department: { select: { name: true } },
-          },
-        },
-      },
-      orderBy: { user: { name: "asc" } },
-    });
-
-    // 5. Fetch Settings
-    const otSettings = await db.otSettings.findUnique({
-      where: { orgId },
-    });
+    const totalLopDays = lopRecordsDb.reduce((acc, r) => acc + r.lopDays, 0);
 
     const settings = otSettings || {
       id: "global",
@@ -173,26 +172,6 @@ export default async function OvertimePage({ searchParams }: PageProps) {
         { minHours: 11, compOffDays: 1.5 },
       ],
     };
-
-    // 6. Active Employees
-    const employees = await db.user.findMany({
-      where: { orgId, active: true, isPlatformAdmin: false },
-      select: {
-        id: true,
-        name: true,
-        employeeNumber: true,
-        department: { select: { name: true } },
-        employmentRecord: { select: { ctc: true } },
-      },
-      orderBy: { name: "asc" },
-    });
-
-    // 7. Branches
-    const branches = await db.branch.findMany({
-      where: { orgId },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    });
 
     adminData = {
       stats: {

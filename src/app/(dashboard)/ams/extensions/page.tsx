@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { loadCaps } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import { ExtensionsClient } from "./extensions-client";
 import { Calendar } from "lucide-react";
@@ -7,15 +8,6 @@ import { Calendar } from "lucide-react";
 export const metadata = {
   title: "Deadline Extensions | AMS | Adarsh Shipping",
 };
-
-async function checkIsAdmin(userId: string): Promise<boolean> {
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    include: { roles: { include: { role: true } } },
-  });
-  const roles = user?.roles.map((r) => r.role.name) ?? [];
-  return roles.some((r) => ["Admin", "HR", "Management", "Director"].includes(r));
-}
 
 export default async function ExtensionsPage() {
   const session = await auth();
@@ -30,7 +22,12 @@ export default async function ExtensionsPage() {
     );
   }
 
-  const isAdmin = await checkIsAdmin(session.user.id);
+  const caps = await loadCaps(session.user.id);
+  const isAdmin = Boolean(
+    caps["ams.cycle.manage"] ||
+    caps["ams.appraisal.assign_reviewers"] ||
+    caps["ams.appraisal.management_review"]
+  );
 
   // Fetch extension requests
   const requests = await db.appraisalExtensionRequest.findMany({

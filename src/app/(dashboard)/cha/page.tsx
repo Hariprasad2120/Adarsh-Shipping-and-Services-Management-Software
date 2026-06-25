@@ -6,7 +6,9 @@ import { requirePermission } from "@/lib/rbac";
 import Link from "next/link";
 import { ensureSettingsAndDefaults } from "@/modules/cha/service";
 import { listJobTypesForSelection } from "@/modules/cha/service";
+import { listDeliveryOrderValidityWarnings } from "@/modules/cha/service";
 import { DashboardCreateJob } from "@/components/cha/dashboard-create-job";
+import { JobValidityWarningIndicator } from "./_components/job-validity-warning-indicator";
 import {
   FileText,
   CheckSquare,
@@ -54,6 +56,8 @@ export default async function ChaDashboard() {
     teamGroups,
     settings,
     branchNumberingRules,
+    pendingAdvances,
+    validityWarnings,
   ] = await Promise.all([
     db.chaJob.count({
       where: { orgId, stage: { not: "FILED" }, status: "ACTIVE" },
@@ -108,22 +112,36 @@ export default async function ChaDashboard() {
         isActive: true,
       },
     }),
+    db.chaCustomerAdvance.findMany({
+      where: {
+        job: { orgId },
+        status: { in: ["FOLLOW_UP", "PARTIALLY_RECEIVED"] },
+      },
+      include: { receipts: true },
+    }),
+    listDeliveryOrderValidityWarnings(session.user.id, orgId),
   ]);
-
-  // Compute outstanding advances
-  const pendingAdvances = await db.chaCustomerAdvance.findMany({
-    where: {
-      job: { orgId },
-      status: { in: ["FOLLOW_UP", "PARTIALLY_RECEIVED"] },
-    },
-    include: { receipts: true },
-  });
 
   const totalOutstandingAdvance = pendingAdvances.reduce((sum, adv) => {
     const expected = Number(adv.expectedAmount || 0);
     const received = adv.receipts.reduce((tot, r) => tot + Number(r.amount), 0);
     return sum + Math.max(0, expected - received);
   }, 0);
+
+  const validityWarningMap = new Map(
+    validityWarnings.map((warning) => [
+      warning.jobId,
+      {
+        severity: warning.severity as "expired" | "expiring",
+        daysUntilExpiry: warning.daysUntilExpiry,
+        deliveryOrderValidity: warning.deliveryOrderValidity.toISOString(),
+        message:
+          warning.severity === "expired"
+            ? `Delivery Order Validity expired on ${warning.deliveryOrderValidity.toLocaleDateString("en-IN")}.`
+            : `Delivery Order Validity is expiring in ${warning.daysUntilExpiry} day(s) on ${warning.deliveryOrderValidity.toLocaleDateString("en-IN")}.`,
+      },
+    ]),
+  );
 
   return (
     <div className="space-y-8">
@@ -260,9 +278,17 @@ export default async function ChaDashboard() {
                 {myJobs.map((job) => (
                   <ClickableRow key={job.id} href={`/cha/jobs/${job.id}`}>
                     <DataTableCell className="font-medium text-[#00cec4]">
-                      <Link href={`/cha/jobs/${job.id}`} className="transition-colors hover:text-[#00b5ad]">
-                        {job.jobNumber}
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link href={`/cha/jobs/${job.id}`} className="transition-colors hover:text-[#00b5ad]">
+                          {job.jobNumber}
+                        </Link>
+                        {validityWarningMap.get(job.id) ? (
+                          <JobValidityWarningIndicator
+                            jobId={job.id}
+                            warning={validityWarningMap.get(job.id)!}
+                          />
+                        ) : null}
+                      </div>
                     </DataTableCell>
                     <DataTableCell>{job.customer.name}</DataTableCell>
                     <DataTableCell className="ds-label">{job.jobType.name}</DataTableCell>

@@ -53,7 +53,7 @@ export async function listUsers(orgId: string, filters?: {
   return db.user.findMany({
     where,
     orderBy: { name: "asc" },
-    ...(filters?.take !== undefined ? { take: filters.take } : {}),
+    ...(filters?.take !== undefined ? { take: filters.take } : { take: 200 }),
     ...(filters?.skip !== undefined ? { skip: filters.skip } : {}),
     include: {
       branch: true,

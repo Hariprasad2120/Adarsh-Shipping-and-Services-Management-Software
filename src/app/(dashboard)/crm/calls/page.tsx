@@ -45,83 +45,88 @@ export default async function CrmCallsPage() {
     );
   }
 
-  // Load KPI metrics
-  const attemptsCount = await db.crmCallAttempt.count({ where: { orgId } });
-  const recordingsCount = await db.crmCallRecording.count({ where: { orgId } });
-  const transcriptAggregate = await db.crmCallTranscript.aggregate({
-    _avg: { qualityScore: true },
-    where: { orgId },
-  });
+  // Parallelize all independent queries
+  const [
+    attemptsCount,
+    recordingsCount,
+    transcriptAggregate,
+    pendingReviewsCount,
+    callsWithoutRecording,
+    pendingReviewList,
+    lowQualityList,
+    activeSalespeople,
+  ] = await Promise.all([
+    db.crmCallAttempt.count({ where: { orgId } }),
+    db.crmCallRecording.count({ where: { orgId } }),
+    db.crmCallTranscript.aggregate({
+      _avg: { qualityScore: true },
+      where: { orgId },
+    }),
+    db.crmCallRecording.count({
+      where: { orgId, reviews: { none: {} } },
+    }),
+    db.crmCallAttempt.findMany({
+      where: { orgId, recordings: { none: {} } },
+      include: {
+        lead: { select: { firstName: true, lastName: true, company: true } },
+        salesperson: { select: { name: true } },
+      },
+      take: 5,
+      orderBy: { callStartedAt: "desc" },
+    }),
+    db.crmCallRecording.findMany({
+      where: { orgId, reviews: { none: {} } },
+      include: {
+        callAttempt: {
+          include: {
+            lead: { select: { firstName: true, lastName: true, company: true } },
+            salesperson: { select: { name: true } },
+          },
+        },
+        transcript: { select: { qualityScore: true } },
+      },
+      take: 5,
+      orderBy: { recordedAt: "desc" },
+    }),
+    db.crmCallRecording.findMany({
+      where: {
+        orgId,
+        OR: [
+          { transcript: { qualityScore: { lt: 70 } } },
+          { reviews: { some: { rating: { lte: 2 } } } },
+        ],
+      },
+      include: {
+        callAttempt: {
+          include: {
+            lead: { select: { firstName: true, lastName: true, company: true } },
+            salesperson: { select: { name: true } },
+          },
+        },
+        transcript: { select: { qualityScore: true, summary: true } },
+      },
+      take: 5,
+      orderBy: { recordedAt: "desc" },
+    }),
+    db.user.findMany({
+      where: { orgId, active: true },
+      select: {
+        id: true,
+        name: true,
+        crmCallAttempts: {
+          select: {
+            id: true,
+            status: true,
+            lead: { select: { isConverted: true } },
+          },
+        },
+        crmCallReviews: { select: { rating: true } },
+        crmCallAuditLogs: { select: { id: true } },
+      },
+    }),
+  ]);
+
   const avgQuality = transcriptAggregate._avg.qualityScore ? Math.round(transcriptAggregate._avg.qualityScore) : 0;
-
-  const pendingReviewsCount = await db.crmCallRecording.count({
-    where: { orgId, reviews: { none: {} } },
-  });
-
-  // Query details tables
-  const callsWithoutRecording = await db.crmCallAttempt.findMany({
-    where: { orgId, recordings: { none: {} } },
-    include: {
-      lead: { select: { firstName: true, lastName: true, company: true } },
-      salesperson: { select: { name: true } },
-    },
-    take: 5,
-    orderBy: { callStartedAt: "desc" },
-  });
-
-  const pendingReviewList = await db.crmCallRecording.findMany({
-    where: { orgId, reviews: { none: {} } },
-    include: {
-      callAttempt: {
-        include: {
-          lead: { select: { firstName: true, lastName: true, company: true } },
-          salesperson: { select: { name: true } },
-        },
-      },
-      transcript: { select: { qualityScore: true } },
-    },
-    take: 5,
-    orderBy: { recordedAt: "desc" },
-  });
-
-  const lowQualityList = await db.crmCallRecording.findMany({
-    where: {
-      orgId,
-      OR: [
-        { transcript: { qualityScore: { lt: 70 } } },
-        { reviews: { some: { rating: { lte: 2 } } } },
-      ],
-    },
-    include: {
-      callAttempt: {
-        include: {
-          lead: { select: { firstName: true, lastName: true, company: true } },
-          salesperson: { select: { name: true } },
-        },
-      },
-      transcript: { select: { qualityScore: true, summary: true } },
-    },
-    take: 5,
-    orderBy: { recordedAt: "desc" },
-  });
-
-  // Query and process salesperson ranking stats
-  const activeSalespeople = await db.user.findMany({
-    where: { orgId, active: true },
-    select: {
-      id: true,
-      name: true,
-      crmCallAttempts: {
-        select: {
-          id: true,
-          status: true,
-          lead: { select: { isConverted: true } },
-        },
-      },
-      crmCallReviews: { select: { rating: true } },
-      crmCallAuditLogs: { select: { id: true } },
-    },
-  });
 
   const salespersonRankings = activeSalespeople
     .map((sp) => {

@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-06-25T13:33:57.882Z
+> Generated at: 2026-06-25T14:54:48.290Z
 > Version: 0.1.0
 
 ## Codebase Statistics

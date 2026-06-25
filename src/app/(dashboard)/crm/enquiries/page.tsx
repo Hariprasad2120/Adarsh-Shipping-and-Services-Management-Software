@@ -58,21 +58,19 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
   const search = awaitedParams.search || "";
   const type = awaitedParams.type || "all";
 
-  // Fetch all INTERESTED and FOLLOW_UP leads for counting
-  const allEnquiriesCount = await db.crmLead.count({
-    where: { orgId, isConverted: false, status: { in: ["INTERESTED", "FOLLOW_UP"] } }
-  });
-
-  const perishableCount = await db.crmLead.count({
-    where: { orgId, isConverted: false, status: { in: ["INTERESTED", "FOLLOW_UP"] }, isPerishable: true }
-  });
-
-  const futureFollowCount = await db.crmLead.count({
-    where: { orgId, isConverted: false, status: { in: ["INTERESTED", "FOLLOW_UP"] }, isFutureFollowUp: true }
-  });
-
-  // Fetch active enquiries based on type and search
-  const enquiries = await listEnquiries(orgId, { search, type });
+  // Parallelize all independent queries
+  const [allEnquiriesCount, perishableCount, futureFollowCount, enquiries] = await Promise.all([
+    db.crmLead.count({
+      where: { orgId, isConverted: false, status: { in: ["INTERESTED", "FOLLOW_UP"] } }
+    }),
+    db.crmLead.count({
+      where: { orgId, isConverted: false, status: { in: ["INTERESTED", "FOLLOW_UP"] }, isPerishable: true }
+    }),
+    db.crmLead.count({
+      where: { orgId, isConverted: false, status: { in: ["INTERESTED", "FOLLOW_UP"] }, isFutureFollowUp: true }
+    }),
+    listEnquiries(orgId, { search, type }),
+  ]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">

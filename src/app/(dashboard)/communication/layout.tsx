@@ -20,10 +20,18 @@ export default async function CommunicationLayout({
     );
   }
 
-  // Check if user has an active Google Workspace Connection
-  const connection = await db.googleWorkspaceConnection.findUnique({
-    where: { userId: session.user.id }
-  });
+  // Parallelize workspace connection and settings fetch
+  const [connection, workspaceSettings] = await Promise.all([
+    db.googleWorkspaceConnection.findUnique({
+      where: { userId: session.user.id },
+    }),
+    session.user.orgId
+      ? db.googleWorkspaceSetting.findUnique({
+          where: { orgId: session.user.orgId },
+          select: { enableGoogleChatLiveView: true },
+        })
+      : Promise.resolve(null),
+  ]);
 
   const isConnected = connection && connection.status === "connected";
 
@@ -106,14 +114,6 @@ export default async function CommunicationLayout({
       </main>
     );
   }
-
-  // Read the experimental Google Chat Live View toggle (isolated — does not affect Chat tab or any existing feature)
-  const workspaceSettings = session.user.orgId
-    ? await db.googleWorkspaceSetting.findUnique({
-        where: { orgId: session.user.orgId },
-        select: { enableGoogleChatLiveView: true },
-      })
-    : null;
 
   const showGoogleChatLiveView = workspaceSettings?.enableGoogleChatLiveView ?? false;
 

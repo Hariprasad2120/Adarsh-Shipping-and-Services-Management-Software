@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
-import { listJobs, ensureSettingsAndDefaults, getEligibleManagers, listJobTypesForSelection } from "@/modules/cha/service";
+import { listJobs, ensureSettingsAndDefaults, getEligibleManagers, listJobTypesForSelection, listDeliveryOrderValidityWarnings } from "@/modules/cha/service";
 import { JobsClient } from "./jobs-client";
 
 export default async function ChaJobsPage({
@@ -30,23 +30,33 @@ export default async function ChaJobsPage({
   const page = typeof params.page === "string" ? parseInt(params.page, 10) : 1;
   const showCreateNew = params.new === "true";
 
-  // Query jobs list
-  const jobsData = await listJobs(session.user.id, orgId, {
-    search,
-    stage,
-    status,
-    priority,
-    branchId,
-    jobTypeId,
-    assignedToMe,
-    page,
-    pageSize: 10,
-  });
-
-  await ensureSettingsAndDefaults(orgId);
-
-  // Query options for new job modal & filter UI
-  const [branches, customers, jobTypes, shipmentTypes, users, eligibleManagers, teamGroups, branchNumberingRules] = await Promise.all([
+  // All queries are independent — run in parallel
+  const [
+    jobsData,
+    validityWarnings,
+    ,
+    branches,
+    customers,
+    jobTypes,
+    shipmentTypes,
+    users,
+    eligibleManagers,
+    teamGroups,
+    branchNumberingRules,
+  ] = await Promise.all([
+    listJobs(session.user.id, orgId, {
+      search,
+      stage,
+      status,
+      priority,
+      branchId,
+      jobTypeId,
+      assignedToMe,
+      page,
+      pageSize: 10,
+    }),
+    listDeliveryOrderValidityWarnings(session.user.id, orgId),
+    ensureSettingsAndDefaults(orgId),
     db.branch.findMany({ where: { orgId }, select: { id: true, name: true, code: true } }),
     db.crmAccount.findMany({ where: { orgId, type: "Customer" }, select: { id: true, name: true } }),
     listJobTypesForSelection(orgId),
@@ -70,6 +80,21 @@ export default async function ChaJobsPage({
     }),
   ]);
 
+  const validityWarningMap = new Map(
+    validityWarnings.map((warning) => [
+      warning.jobId,
+      {
+        severity: warning.severity as "expired" | "expiring",
+        daysUntilExpiry: warning.daysUntilExpiry,
+        deliveryOrderValidity: warning.deliveryOrderValidity.toISOString(),
+        message:
+          warning.severity === "expired"
+            ? `Delivery Order Validity expired on ${warning.deliveryOrderValidity.toLocaleDateString("en-IN")}.`
+            : `Delivery Order Validity is expiring in ${warning.daysUntilExpiry} day(s) on ${warning.deliveryOrderValidity.toLocaleDateString("en-IN")}.`,
+      },
+    ]),
+  );
+
   return (
     <JobsClient
       jobsData={{
@@ -87,6 +112,7 @@ export default async function ChaJobsPage({
           ownerName: j.primaryOwner.name,
           assignedUserIds: j.assignments.map((assignment) => assignment.userId),
           hasActiveDeletionRequest: j.deletionRequests.length > 0,
+          deliveryOrderWarning: validityWarningMap.get(j.id) || null,
           createdAt: j.createdAt.toISOString(),
         })),
         total: jobsData.total,

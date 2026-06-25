@@ -11,27 +11,56 @@ export default async function BankingPage() {
 
   const orgId = session.user.orgId!;
 
-  // Fetch bank and cash accounts
-  const bankAccounts = await db.account.findMany({
-    where: {
-      orgId,
-      isGroup: false,
-      isActive: true,
-      accountType: { in: ["BANK", "CASH"] },
-    },
-    include: {
-      glEntries: {
-        where: { isCancelled: false },
-        select: { debit: true, credit: true },
+  // Parallelize all independent queries; use groupBy for balances to avoid loading all GL entries
+  const [bankAccounts, balanceSums, transactions, allAccounts] = await Promise.all([
+    db.account.findMany({
+      where: {
+        orgId,
+        isGroup: false,
+        isActive: true,
+        accountType: { in: ["BANK", "CASH"] },
       },
-    },
-  });
+      select: {
+        id: true,
+        accountCode: true,
+        accountName: true,
+        accountType: true,
+        openingDebit: true,
+        openingCredit: true,
+      },
+    }),
+    db.generalLedgerEntry.groupBy({
+      by: ["accountId"],
+      where: {
+        orgId,
+        isCancelled: false,
+        account: { accountType: { in: ["BANK", "CASH"] } },
+      },
+      _sum: { debit: true, credit: true },
+    }),
+    db.generalLedgerEntry.findMany({
+      where: {
+        orgId,
+        isCancelled: false,
+        account: {
+          accountType: { in: ["BANK", "CASH"] },
+        },
+      },
+      orderBy: [{ postingDate: "desc" }, { createdAt: "desc" }],
+      take: 50,
+      include: {
+        account: { select: { accountName: true, accountCode: true } },
+      },
+    }),
+    listAccounts(orgId),
+  ]);
 
+  const balanceMap = new Map(balanceSums.map((b) => [b.accountId, b._sum]));
   const accountsWithBalances = bankAccounts.map((acc) => {
-    let balance = Number(acc.openingDebit) - Number(acc.openingCredit);
-    acc.glEntries.forEach((entry) => {
-      balance += Number(entry.debit) - Number(entry.credit);
-    });
+    const sums = balanceMap.get(acc.id);
+    const balance =
+      Number(acc.openingDebit) - Number(acc.openingCredit) +
+      Number(sums?.debit ?? 0) - Number(sums?.credit ?? 0);
     return {
       id: acc.id,
       accountCode: acc.accountCode,
@@ -40,25 +69,6 @@ export default async function BankingPage() {
       balance,
     };
   });
-
-  // Fetch recent transactions for bank/cash accounts
-  const transactions = await db.generalLedgerEntry.findMany({
-    where: {
-      orgId,
-      isCancelled: false,
-      account: {
-        accountType: { in: ["BANK", "CASH"] },
-      },
-    },
-    orderBy: [{ postingDate: "desc" }, { createdAt: "desc" }],
-    take: 50,
-    include: {
-      account: { select: { accountName: true, accountCode: true } },
-    },
-  });
-
-  // Fetch all active leaf accounts for the transfer dropdown
-  const allAccounts = await listAccounts(orgId);
   const leafAccounts = allAccounts
     .filter((a) => !a.isGroup && a.isActive)
     .map((a) => ({
