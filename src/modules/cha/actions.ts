@@ -911,6 +911,7 @@ export async function saveFilingWorkflowDraftAction(
   data: {
     name: string;
     description?: string;
+    clearanceTypeId?: string | null;
     nodes: any[];
     edges: any[];
   }

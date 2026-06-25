@@ -1114,7 +1114,81 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     );
   }, 60000);
 
-  it("11. should verify visual filing workflow and Section 49 lifecycle", async () => {
+  it("11. should seed the configurable default filing workflow with vertical first-check and branch paths", async () => {
+    await db.filingWorkflowTemplate.deleteMany({ where: { orgId: org.id } });
+
+    await chaService.ensureDefaultFilingWorkflows(org.id);
+
+    const workflows = await chaService.listFilingWorkflows(org.id);
+    expect(workflows).toHaveLength(1);
+
+    const activeVersion = workflows[0].versions.find((version: any) => version.isActive);
+    expect(activeVersion).toBeDefined();
+    if (!activeVersion) {
+      throw new Error("Active filing workflow version was not created.");
+    }
+
+    const nodeNames = activeVersion.nodes.map((node: any) => node.name);
+    expect(nodeNames).toEqual(expect.arrayContaining([
+      "Bill of Entry",
+      "Goods Registration",
+      "Examination",
+      "CE",
+      "Group Forward",
+      "Assessment",
+      "Duty",
+      "OOC",
+      "Delivery",
+      "Amendment",
+    ]));
+
+    const firstCheckNodes = activeVersion.nodes.filter((node: any) => node.sectionKey === "first_check");
+    expect(firstCheckNodes).toHaveLength(9);
+    expect(firstCheckNodes.every((node: any) => node.checklistItems.length === 1)).toBe(true);
+
+    const rmsNodes = activeVersion.nodes.filter((node: any) => node.branchKey === "rms");
+    const openBillNodes = activeVersion.nodes.filter((node: any) => node.branchKey === "open_bill");
+    expect(rmsNodes.map((node: any) => node.name)).toEqual([
+      "Goods Registration",
+      "Duty",
+      "Assessment",
+      "OOC",
+      "Delivery",
+    ]);
+    expect(openBillNodes.map((node: any) => node.name)).toEqual([
+      "Assessment",
+      "Goods Registration",
+      "Examination",
+      "Duty",
+      "OOC",
+      "Delivery",
+    ]);
+
+    expect(activeVersion.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceKey: "first_check_delivery",
+          targetKey: "second_check_rms_goods_registration",
+          label: "RMS Path",
+        }),
+        expect.objectContaining({
+          sourceKey: "first_check_delivery",
+          targetKey: "second_check_open_bill_assessment",
+          label: "Open Bill Path",
+        }),
+        expect.objectContaining({
+          sourceKey: "second_check_rms_delivery",
+          targetKey: "amendment",
+        }),
+        expect.objectContaining({
+          sourceKey: "second_check_open_bill_delivery",
+          targetKey: "amendment",
+        }),
+      ]),
+    );
+  }, 30000);
+
+  it("12. should verify visual filing workflow and Section 49 lifecycle", async () => {
     // Delete any default templates to ensure only the custom one is active
     await db.filingWorkflowTemplate.deleteMany({ where: { orgId: org.id } });
 

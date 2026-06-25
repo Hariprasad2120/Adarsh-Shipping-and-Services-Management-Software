@@ -3242,6 +3242,7 @@ model ChaJobType {
   manifestHelpText    String?
   isActive            Boolean                 @default(true)
   documentDefinitions ChaDocumentDefinition[]
+  filingWorkflowTemplates FilingWorkflowTemplate[]
   jobs                ChaJob[]
 
   @@unique([orgId, name])
@@ -4972,17 +4973,20 @@ model GoogleChatLinkToken {
 model FilingWorkflowTemplate {
   id          String                   @id @default(cuid())
   orgId       String
+  clearanceTypeId String?
   name        String
   description String?
   isActive    Boolean                  @default(true)
   createdAt   DateTime                 @default(now())
   updatedAt   DateTime                 @updatedAt
   org         Organisation             @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  clearanceType ChaJobType?            @relation(fields: [clearanceTypeId], references: [id], onDelete: SetNull)
   versions    FilingWorkflowVersion[]
   instances   FilingWorkflowInstance[]
 
   @@unique([orgId, name])
   @@index([orgId])
+  @@index([clearanceTypeId])
 }
 
 model FilingWorkflowVersion {
@@ -5010,6 +5014,12 @@ model FilingWorkflowNode {
   name                              String
   description                       String?
   category                          String?
+  nodeType                          String                   @default("CHECKLIST_NODE")
+  sectionKey                        String?
+  sectionName                       String?
+  branchKey                         String?
+  branchName                        String?
+  sortOrder                         Int                      @default(0)
   isActive                          Boolean                  @default(true)
   positionX                         Float                    @default(0)
   positionY                         Float                    @default(0)
@@ -5019,6 +5029,8 @@ model FilingWorkflowNode {
   commentsRequired                  Boolean                  @default(false)
   canBeSkipped                      Boolean                  @default(false)
   canBeRevisited                    Boolean                  @default(true)
+  approvalRequired                  Boolean                  @default(false)
+  approvalRoles                     String[]
   requireAllMandatoryChecklistItems Boolean                  @default(true)
   requireMandatoryPhotos            Boolean                  @default(true)
   allowedRoles                      String[]

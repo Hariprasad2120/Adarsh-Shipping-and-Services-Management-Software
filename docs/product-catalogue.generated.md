@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-06-25T13:08:29.834Z
+> Generated at: 2026-06-25T13:33:57.882Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -585,7 +585,7 @@
 | CommunicationAuditEvent | core | 8 | User, Organisation |
 | ChaSettings | cha | 12 | Organisation |
 | ChaTeamGroup | cha | 7 | Organisation |
-| ChaJobType | cha | 11 | ChaDocumentDefinition, ChaJob |
+| ChaJobType | cha | 12 | ChaDocumentDefinition, FilingWorkflowTemplate, ChaJob |
 | ChaBranchNumberingRule | cha | 15 | Organisation, Branch |
 | ChaShipmentType | cha | 8 | Organisation, ChaJob |
 | ChaDocumentDefinition | cha | 8 | ChaJobType |
@@ -665,9 +665,9 @@
 | GoogleChatDelivery | google-chat | 22 | Organisation, GoogleChatSpace |
 | GoogleChatInteractionEvent | google-chat | 6 | — |
 | GoogleChatLinkToken | google-chat | 12 | — |
-| FilingWorkflowTemplate | core | 10 | Organisation, FilingWorkflowVersion, FilingWorkflowInstance |
+| FilingWorkflowTemplate | core | 12 | Organisation, ChaJobType, FilingWorkflowVersion, FilingWorkflowInstance |
 | FilingWorkflowVersion | core | 12 | FilingWorkflowTemplate, FilingWorkflowNode, FilingWorkflowEdge, FilingWorkflowInstance |
-| FilingWorkflowNode | core | 22 | FilingWorkflowVersion, FilingChecklistItem, FilingPhotoRequirement, FilingNodeRun |
+| FilingWorkflowNode | core | 30 | FilingWorkflowVersion, FilingChecklistItem, FilingPhotoRequirement, FilingNodeRun |
 | FilingWorkflowEdge | core | 6 | FilingWorkflowVersion |
 | FilingChecklistItem | core | 19 | FilingWorkflowNode, FilingChecklistResponse, FilingAttachment |
 | FilingPhotoRequirement | core | 11 | FilingWorkflowNode, FilingAttachment |

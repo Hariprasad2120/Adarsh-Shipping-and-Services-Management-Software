@@ -2838,6 +2838,11 @@ export function JobWorkspaceClient({
                             <div>
                               <span className="ds-label block text-on-surface-variant">Active Checking Stage</span>
                               <h3 className="ds-h3 text-[#00cec4]">{activeNodeRun.node.name}</h3>
+                              {(activeNodeRun.node.sectionName || activeNodeRun.node.branchName) && (
+                                <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                                  {[activeNodeRun.node.sectionName, activeNodeRun.node.branchName].filter(Boolean).join(" / ")}
+                                </p>
+                              )}
                               {activeNodeRun.node.description && (
                                 <p className="text-xs text-on-surface-variant mt-1">{activeNodeRun.node.description}</p>
                               )}
@@ -3187,7 +3192,9 @@ export function JobWorkspaceClient({
                                       const targetNode = targetNodesMap.get(edge.targetKey);
                                       return (
                                         <option key={edge.targetKey} value={edge.targetKey}>
-                                          {targetNode?.name || edge.targetKey} {edge.label ? `(${edge.label})` : ""}
+                                          {[targetNode?.sectionName, targetNode?.branchName, targetNode?.name || edge.targetKey]
+                                            .filter(Boolean)
+                                            .join(" / ")} {edge.label ? `(${edge.label})` : ""}
                                         </option>
                                       );
                                     })}
@@ -3273,6 +3280,11 @@ export function JobWorkspaceClient({
                                     Started: {new Date(run.startedAt).toLocaleString("en-IN")}
                                     {run.completedAt && ` • Finished: ${new Date(run.completedAt).toLocaleString("en-IN")}`}
                                   </p>
+                                  {(run.node?.sectionName || run.node?.branchName) && (
+                                    <p className="text-[10px] uppercase tracking-[0.12em] text-on-surface-variant">
+                                      {[run.node?.sectionName, run.node?.branchName].filter(Boolean).join(" / ")}
+                                    </p>
+                                  )}
                                   {run.completedBy && (
                                     <p className="text-[10px] text-on-surface-variant">
                                       Completed by: <strong className="text-on-surface">{run.completedBy.name}</strong>

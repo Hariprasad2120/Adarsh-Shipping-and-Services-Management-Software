@@ -26,6 +26,11 @@ export default async function FilingWorkflowsPage() {
     where: { orgId },
     select: { name: true },
   });
+  const jobTypes = await db.chaJobType.findMany({
+    where: { orgId, isActive: true },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
 
   const availableRoles = roles.map((r) => r.name);
   if (!availableRoles.includes("Admin")) availableRoles.push("Admin");
@@ -36,6 +41,7 @@ export default async function FilingWorkflowsPage() {
     <WorkflowsClient
       initialTemplates={JSON.parse(JSON.stringify(templates))}
       availableRoles={availableRoles}
+      availableJobTypes={jobTypes}
     />
   );
 }

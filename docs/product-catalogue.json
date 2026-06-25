@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-25T13:08:29.834Z",
+  "generatedAt": "2026-06-25T13:33:57.882Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -6563,10 +6563,12 @@
         "manifestHelpText",
         "isActive",
         "documentDefinitions",
+        "filingWorkflowTemplates",
         "jobs"
       ],
       "relations": [
         "ChaDocumentDefinition",
+        "FilingWorkflowTemplate",
         "ChaJob"
       ],
       "module": "cha"
@@ -8454,17 +8456,20 @@
       "fields": [
         "id",
         "orgId",
+        "clearanceTypeId",
         "name",
         "description",
         "isActive",
         "createdAt",
         "updatedAt",
         "org",
+        "clearanceType",
         "versions",
         "instances"
       ],
       "relations": [
         "Organisation",
+        "ChaJobType",
         "FilingWorkflowVersion",
         "FilingWorkflowInstance"
       ],
@@ -8503,6 +8508,12 @@
         "name",
         "description",
         "category",
+        "nodeType",
+        "sectionKey",
+        "sectionName",
+        "branchKey",
+        "branchName",
+        "sortOrder",
         "isActive",
         "positionX",
         "positionY",
@@ -8512,6 +8523,8 @@
         "commentsRequired",
         "canBeSkipped",
         "canBeRevisited",
+        "approvalRequired",
+        "approvalRoles",
         "requireAllMandatoryChecklistItems",
         "requireMandatoryPhotos",
         "allowedRoles",

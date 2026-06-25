@@ -5492,71 +5492,416 @@ export async function submitChecklistOwnerDecision(
 
 // ─── Configurable Filing Workflow blueprint services ────────────────────────
 
+const DEFAULT_WORKFLOW_ROLES = ["Admin", "Manager", "Employee"] as const;
+
+function buildDefaultWorkflowNode(input: {
+  key: string;
+  name: string;
+  description: string;
+  sectionKey: string;
+  sectionName: string;
+  branchKey?: string | null;
+  branchName?: string | null;
+  sortOrder: number;
+  isStart?: boolean;
+}) {
+  return {
+    key: input.key,
+    name: input.name,
+    description: input.description,
+    category: input.branchName ? `${input.sectionName} / ${input.branchName}` : input.sectionName,
+    nodeType: "CHECKLIST_NODE",
+    sectionKey: input.sectionKey,
+    sectionName: input.sectionName,
+    branchKey: input.branchKey ?? null,
+    branchName: input.branchName ?? null,
+    sortOrder: input.sortOrder,
+    isStart: input.isStart ?? false,
+    positionX: 120,
+    positionY: 120 + (input.sortOrder - 1) * 180,
+    allowedRoles: [...DEFAULT_WORKFLOW_ROLES],
+    approvalRequired: false,
+    approvalRoles: [] as string[],
+    checklistItems: [input.name],
+  };
+}
+
 const DEFAULT_FILING_WORKFLOW_SEED = {
   nodes: [
-    {
-      key: "workflow_start",
-      name: "Workflow Start",
-      description: "Entry point for the published filing workflow.",
-      category: "START",
+    buildDefaultWorkflowNode({
+      key: "first_check_bill_of_entry",
+      name: "Bill of Entry",
+      description: "Verify bill of entry readiness before customs processing begins.",
+      sectionKey: "first_check",
+      sectionName: "First Check",
+      sortOrder: 1,
       isStart: true,
-      positionX: 120,
-      positionY: 180,
-      allowedRoles: ["Admin", "Manager", "Employee"],
-      checklistItems: [],
-    },
-    {
-      key: "document_readiness",
-      name: "Document Readiness",
-      description: "Standalone checklist node for validating that the required filing documents are ready.",
-      category: "CHECKLIST_ITEM",
-      isStart: false,
-      positionX: 420,
-      positionY: 180,
-      allowedRoles: ["Admin", "Manager", "Employee"],
-      checklistItems: ["Document Readiness"],
-    },
-    {
-      key: "compliance_review",
-      name: "Compliance Review",
-      description: "Standalone checklist node for final filing compliance verification.",
-      category: "CHECKLIST_ITEM",
-      isStart: false,
-      positionX: 760,
-      positionY: 180,
-      allowedRoles: ["Admin", "Manager", "Employee"],
-      checklistItems: ["Compliance Review"],
-    },
-    {
-      key: "filing_submission",
-      name: "Filing Submission",
-      description: "Standalone checklist node for final filing submission readiness.",
-      category: "CHECKLIST_ITEM",
-      isStart: false,
-      positionX: 1100,
-      positionY: 180,
-      allowedRoles: ["Admin", "Manager", "Employee"],
-      checklistItems: ["Filing Submission"],
-    },
-    {
-      key: "workflow_complete",
-      name: "Workflow Complete",
-      description: "Marks the end of the default filing workflow path.",
-      category: "END",
-      isStart: false,
-      positionX: 1440,
-      positionY: 180,
-      allowedRoles: ["Admin", "Manager", "Employee"],
-      checklistItems: [],
-    },
+    }),
+    buildDefaultWorkflowNode({
+      key: "first_check_goods_registration",
+      name: "Goods Registration",
+      description: "Register goods in the filing sequence.",
+      sectionKey: "first_check",
+      sectionName: "First Check",
+      sortOrder: 2,
+    }),
+    buildDefaultWorkflowNode({
+      key: "first_check_examination",
+      name: "Examination",
+      description: "Complete the examination checkpoint.",
+      sectionKey: "first_check",
+      sectionName: "First Check",
+      sortOrder: 3,
+    }),
+    buildDefaultWorkflowNode({
+      key: "first_check_ce",
+      name: "CE",
+      description: "Handle CE verification as its own workflow node.",
+      sectionKey: "first_check",
+      sectionName: "First Check",
+      sortOrder: 4,
+    }),
+    buildDefaultWorkflowNode({
+      key: "first_check_group_forward",
+      name: "Group Forward",
+      description: "Advance the filing through the group-forward checkpoint.",
+      sectionKey: "first_check",
+      sectionName: "First Check",
+      sortOrder: 5,
+    }),
+    buildDefaultWorkflowNode({
+      key: "first_check_assessment",
+      name: "Assessment",
+      description: "Assessment must be completed as a standalone workflow node.",
+      sectionKey: "first_check",
+      sectionName: "First Check",
+      sortOrder: 6,
+    }),
+    buildDefaultWorkflowNode({
+      key: "first_check_duty",
+      name: "Duty",
+      description: "Review duty obligations before proceeding.",
+      sectionKey: "first_check",
+      sectionName: "First Check",
+      sortOrder: 7,
+    }),
+    buildDefaultWorkflowNode({
+      key: "first_check_ooc",
+      name: "OOC",
+      description: "Out of Charge confirmation for the first-check path.",
+      sectionKey: "first_check",
+      sectionName: "First Check",
+      sortOrder: 8,
+    }),
+    buildDefaultWorkflowNode({
+      key: "first_check_delivery",
+      name: "Delivery",
+      description: "Delivery closes the first-check vertical sequence.",
+      sectionKey: "first_check",
+      sectionName: "First Check",
+      sortOrder: 9,
+    }),
+    buildDefaultWorkflowNode({
+      key: "second_check_rms_goods_registration",
+      name: "Goods Registration",
+      description: "RMS branch goods registration step.",
+      sectionKey: "second_check",
+      sectionName: "Second Check",
+      branchKey: "rms",
+      branchName: "RMS",
+      sortOrder: 10,
+    }),
+    buildDefaultWorkflowNode({
+      key: "second_check_rms_duty",
+      name: "Duty",
+      description: "RMS branch duty step.",
+      sectionKey: "second_check",
+      sectionName: "Second Check",
+      branchKey: "rms",
+      branchName: "RMS",
+      sortOrder: 11,
+    }),
+    buildDefaultWorkflowNode({
+      key: "second_check_rms_assessment",
+      name: "Assessment",
+      description: "RMS branch assessment step.",
+      sectionKey: "second_check",
+      sectionName: "Second Check",
+      branchKey: "rms",
+      branchName: "RMS",
+      sortOrder: 12,
+    }),
+    buildDefaultWorkflowNode({
+      key: "second_check_rms_ooc",
+      name: "OOC",
+      description: "RMS branch OOC step.",
+      sectionKey: "second_check",
+      sectionName: "Second Check",
+      branchKey: "rms",
+      branchName: "RMS",
+      sortOrder: 13,
+    }),
+    buildDefaultWorkflowNode({
+      key: "second_check_rms_delivery",
+      name: "Delivery",
+      description: "RMS branch delivery step.",
+      sectionKey: "second_check",
+      sectionName: "Second Check",
+      branchKey: "rms",
+      branchName: "RMS",
+      sortOrder: 14,
+    }),
+    buildDefaultWorkflowNode({
+      key: "second_check_open_bill_assessment",
+      name: "Assessment",
+      description: "Open Bill branch assessment step.",
+      sectionKey: "second_check",
+      sectionName: "Second Check",
+      branchKey: "open_bill",
+      branchName: "Open Bill",
+      sortOrder: 15,
+    }),
+    buildDefaultWorkflowNode({
+      key: "second_check_open_bill_goods_registration",
+      name: "Goods Registration",
+      description: "Open Bill branch goods registration step.",
+      sectionKey: "second_check",
+      sectionName: "Second Check",
+      branchKey: "open_bill",
+      branchName: "Open Bill",
+      sortOrder: 16,
+    }),
+    buildDefaultWorkflowNode({
+      key: "second_check_open_bill_examination",
+      name: "Examination",
+      description: "Open Bill branch examination step.",
+      sectionKey: "second_check",
+      sectionName: "Second Check",
+      branchKey: "open_bill",
+      branchName: "Open Bill",
+      sortOrder: 17,
+    }),
+    buildDefaultWorkflowNode({
+      key: "second_check_open_bill_duty",
+      name: "Duty",
+      description: "Open Bill branch duty step.",
+      sectionKey: "second_check",
+      sectionName: "Second Check",
+      branchKey: "open_bill",
+      branchName: "Open Bill",
+      sortOrder: 18,
+    }),
+    buildDefaultWorkflowNode({
+      key: "second_check_open_bill_ooc",
+      name: "OOC",
+      description: "Open Bill branch OOC step.",
+      sectionKey: "second_check",
+      sectionName: "Second Check",
+      branchKey: "open_bill",
+      branchName: "Open Bill",
+      sortOrder: 19,
+    }),
+    buildDefaultWorkflowNode({
+      key: "second_check_open_bill_delivery",
+      name: "Delivery",
+      description: "Open Bill branch delivery step.",
+      sectionKey: "second_check",
+      sectionName: "Second Check",
+      branchKey: "open_bill",
+      branchName: "Open Bill",
+      sortOrder: 20,
+    }),
+    buildDefaultWorkflowNode({
+      key: "amendment",
+      name: "Amendment",
+      description: "Configurable amendment step that can be reached from either branch or via added reconnections.",
+      sectionKey: "amendment",
+      sectionName: "Amendment",
+      sortOrder: 21,
+    }),
   ],
   edges: [
-    { sourceKey: "workflow_start", targetKey: "document_readiness" },
-    { sourceKey: "document_readiness", targetKey: "compliance_review" },
-    { sourceKey: "compliance_review", targetKey: "filing_submission" },
-    { sourceKey: "filing_submission", targetKey: "workflow_complete" },
+    { sourceKey: "first_check_bill_of_entry", targetKey: "first_check_goods_registration" },
+    { sourceKey: "first_check_goods_registration", targetKey: "first_check_examination" },
+    { sourceKey: "first_check_examination", targetKey: "first_check_ce" },
+    { sourceKey: "first_check_ce", targetKey: "first_check_group_forward" },
+    { sourceKey: "first_check_group_forward", targetKey: "first_check_assessment" },
+    { sourceKey: "first_check_assessment", targetKey: "first_check_duty" },
+    { sourceKey: "first_check_duty", targetKey: "first_check_ooc" },
+    { sourceKey: "first_check_ooc", targetKey: "first_check_delivery" },
+    { sourceKey: "first_check_delivery", targetKey: "second_check_rms_goods_registration", label: "RMS Path" },
+    { sourceKey: "first_check_delivery", targetKey: "second_check_open_bill_assessment", label: "Open Bill Path" },
+    { sourceKey: "second_check_rms_goods_registration", targetKey: "second_check_rms_duty" },
+    { sourceKey: "second_check_rms_duty", targetKey: "second_check_rms_assessment" },
+    { sourceKey: "second_check_rms_assessment", targetKey: "second_check_rms_ooc" },
+    { sourceKey: "second_check_rms_ooc", targetKey: "second_check_rms_delivery" },
+    { sourceKey: "second_check_rms_delivery", targetKey: "amendment" },
+    { sourceKey: "second_check_open_bill_assessment", targetKey: "second_check_open_bill_goods_registration" },
+    { sourceKey: "second_check_open_bill_goods_registration", targetKey: "second_check_open_bill_examination" },
+    { sourceKey: "second_check_open_bill_examination", targetKey: "second_check_open_bill_duty" },
+    { sourceKey: "second_check_open_bill_duty", targetKey: "second_check_open_bill_ooc" },
+    { sourceKey: "second_check_open_bill_ooc", targetKey: "second_check_open_bill_delivery" },
+    { sourceKey: "second_check_open_bill_delivery", targetKey: "amendment" },
   ],
 } as const;
+
+function normalizeWorkflowNodeDraft(node: any, nodeIndex: number) {
+  const rawCategory = typeof node.category === "string" ? node.category : "CHECK";
+  const derivedNodeType =
+    typeof node.nodeType === "string" && node.nodeType.trim()
+      ? node.nodeType.trim().toUpperCase()
+      : rawCategory === "START" || rawCategory === "END"
+        ? rawCategory
+        : "CHECKLIST_NODE";
+  return {
+    ...node,
+    key: typeof node.key === "string" && node.key.trim()
+      ? node.key.trim()
+      : `${String(node.name || "node").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "node"}_${nodeIndex + 1}`,
+    name: typeof node.name === "string" ? node.name : `Node ${nodeIndex + 1}`,
+    description: typeof node.description === "string" ? node.description : null,
+    category: rawCategory,
+    nodeType: derivedNodeType,
+    sectionKey: typeof node.sectionKey === "string" && node.sectionKey.trim() ? node.sectionKey.trim() : null,
+    sectionName: typeof node.sectionName === "string" && node.sectionName.trim() ? node.sectionName.trim() : null,
+    branchKey: typeof node.branchKey === "string" && node.branchKey.trim() ? node.branchKey.trim() : null,
+    branchName: typeof node.branchName === "string" && node.branchName.trim() ? node.branchName.trim() : null,
+    sortOrder: Number.isFinite(Number(node.sortOrder)) ? Math.max(1, Number(node.sortOrder)) : nodeIndex + 1,
+    isActive: node.isActive !== false,
+    positionX: Number(node.positionX ?? 0),
+    positionY: Number(node.positionY ?? 0),
+    isStart: !!node.isStart,
+    slaDuration: node.slaDuration !== undefined ? Math.max(1, Number(node.slaDuration)) : 2,
+    slaUnit: node.slaUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : "BUSINESS_DAYS",
+    commentsRequired: !!node.commentsRequired,
+    canBeSkipped: !!node.canBeSkipped,
+    canBeRevisited: node.canBeRevisited !== undefined ? !!node.canBeRevisited : true,
+    approvalRequired: !!node.approvalRequired,
+    approvalRoles: Array.isArray(node.approvalRoles)
+      ? node.approvalRoles.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
+      : [],
+    requireAllMandatoryChecklistItems: node.requireAllMandatoryChecklistItems !== undefined ? !!node.requireAllMandatoryChecklistItems : true,
+    requireMandatoryPhotos: node.requireMandatoryPhotos !== undefined ? !!node.requireMandatoryPhotos : true,
+    allowedRoles: Array.isArray(node.allowedRoles)
+      ? node.allowedRoles.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
+      : ["Admin", "Manager", "Employee"],
+    checklistItems: (node.checklistItems || []).map((item: any, itemIndex: number) => normalizeFilingChecklistItem(item, itemIndex)),
+    photoRequirements: (node.photoRequirements || []).map((photo: any) => ({
+      label: typeof photo.label === "string" ? photo.label : "",
+      description: typeof photo.description === "string" ? photo.description : null,
+      isMandatory: photo.isMandatory !== undefined ? !!photo.isMandatory : true,
+      minPhotos: Math.max(Number(photo.minPhotos ?? 1), 0),
+      maxPhotos: photo.maxPhotos === undefined || photo.maxPhotos === null ? null : Math.max(Number(photo.maxPhotos), 0),
+      acceptedFileTypes: Array.isArray(photo.acceptedFileTypes)
+        ? photo.acceptedFileTypes.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
+        : ["image/jpeg", "image/png", "application/pdf"],
+      isVisibleInTimeline: photo.isVisibleInTimeline !== undefined ? !!photo.isVisibleInTimeline : true,
+    })),
+  };
+}
+
+function expandLegacyChecklistNodes(nodes: any[], edges: any[]) {
+  const expandedNodes: any[] = [];
+  const expandedEdges: { sourceKey: string; targetKey: string; label: string | null }[] = [];
+  const bridgeMap = new Map<string, { firstKey: string; lastKey: string }>();
+
+  for (const [index, rawNode] of nodes.entries()) {
+    const normalizedNode = normalizeWorkflowNodeDraft(rawNode, index);
+    const activeChecklistItems = normalizedNode.checklistItems.filter((item: any) => item.isActive !== false);
+    const shouldExpand =
+      normalizedNode.nodeType !== "START" &&
+      normalizedNode.nodeType !== "END" &&
+      activeChecklistItems.length > 1;
+
+    if (!shouldExpand) {
+      expandedNodes.push({
+        ...normalizedNode,
+        checklistItems:
+          normalizedNode.checklistItems.length > 0
+            ? normalizedNode.checklistItems
+            : normalizedNode.nodeType === "CHECKLIST_NODE"
+              ? [normalizeFilingChecklistItem({ label: normalizedNode.name }, 0)]
+              : [],
+      });
+      continue;
+    }
+
+    const orderedItems = [...normalizedNode.checklistItems].sort((a: any, b: any) => a.sortOrder - b.sortOrder);
+    const splitNodes = orderedItems.map((item: any, itemIndex: number) => ({
+      ...normalizedNode,
+      key: `${normalizedNode.key}_${slugify(item.label || `item_${itemIndex + 1}`)}`,
+      name: item.label || `${normalizedNode.name} ${itemIndex + 1}`,
+      description: item.description || normalizedNode.description,
+      nodeType: "CHECKLIST_NODE",
+      sortOrder: normalizedNode.sortOrder + itemIndex,
+      isStart: normalizedNode.isStart && itemIndex === 0,
+      checklistItems: [{ ...item, sortOrder: 1 }],
+      photoRequirements: itemIndex === 0 ? normalizedNode.photoRequirements : [],
+      positionX: normalizedNode.positionX,
+      positionY: normalizedNode.positionY + itemIndex * 180,
+    }));
+
+    bridgeMap.set(normalizedNode.key, {
+      firstKey: splitNodes[0].key,
+      lastKey: splitNodes[splitNodes.length - 1].key,
+    });
+    expandedNodes.push(...splitNodes);
+
+    for (let itemIndex = 0; itemIndex < splitNodes.length - 1; itemIndex += 1) {
+      expandedEdges.push({
+        sourceKey: splitNodes[itemIndex].key,
+        targetKey: splitNodes[itemIndex + 1].key,
+        label: "Checklist Sequence",
+      });
+    }
+  }
+
+  for (const edge of edges || []) {
+    const sourceKey = bridgeMap.get(edge.sourceKey)?.lastKey ?? edge.sourceKey;
+    const targetKey = bridgeMap.get(edge.targetKey)?.firstKey ?? edge.targetKey;
+    if (!sourceKey || !targetKey || sourceKey === targetKey) continue;
+    expandedEdges.push({
+      sourceKey,
+      targetKey,
+      label: edge.label || null,
+    });
+  }
+
+  return {
+    nodes: expandedNodes.map((node, index) => ({ ...node, sortOrder: index + 1 })),
+    edges: expandedEdges,
+  };
+}
+
+async function getHolidayIsoSet(orgId?: string) {
+  if (!orgId) {
+    return new Set<string>();
+  }
+  const holidays = await db.holiday.findMany({ where: { orgId } });
+  return new Set(holidays.map((h) => h.date.toISOString().split("T")[0]));
+}
+
+function countBusinessDaysSince(dueAt: Date, now: Date, holidayIsoSet: Set<string>) {
+  if (dueAt.getTime() >= now.getTime()) {
+    return 0;
+  }
+
+  const cursor = new Date(dueAt);
+  cursor.setHours(0, 0, 0, 0);
+  const end = new Date(now);
+  end.setHours(0, 0, 0, 0);
+
+  let businessDays = 0;
+  while (cursor.getTime() < end.getTime()) {
+    cursor.setDate(cursor.getDate() + 1);
+    const day = cursor.getDay();
+    const iso = cursor.toISOString().split("T")[0];
+    if (day !== 0 && !holidayIsoSet.has(iso)) {
+      businessDays += 1;
+    }
+  }
+  return businessDays;
+}
 
 function normalizeFilingChecklistItem(item: any, idx: number) {
   const allowsUpload = !!item.allowsUpload;
@@ -5582,6 +5927,11 @@ function normalizeFilingChecklistItem(item: any, idx: number) {
     sortOrder: item.sortOrder !== undefined ? Number(item.sortOrder) : idx + 1,
     isActive: item.isActive !== undefined ? !!item.isActive : true,
   };
+}
+
+function slugify(value: string) {
+  const normalized = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  return normalized || "node";
 }
 
 function validateFilingWorkflowDraft(data: { nodes: any[]; edges: any[] }) {
@@ -5623,6 +5973,9 @@ function validateFilingWorkflowDraft(data: { nodes: any[]; edges: any[] }) {
       errors.push(`Node "${node.key || "untitled"}" must have a name.`);
     }
     const checklistItems = (node.checklistItems || []).filter((item: any) => item.isActive !== false);
+    if ((node.nodeType ?? "CHECKLIST_NODE") === "CHECKLIST_NODE" && checklistItems.length === 0) {
+      errors.push(`Checklist node "${node.name || node.key}" must have at least one active checklist item.`);
+    }
     for (const item of checklistItems) {
       if (!item.label || !String(item.label).trim()) {
         errors.push(`Checklist items in node "${node.name || node.key}" must have a name.`);
@@ -5654,7 +6007,7 @@ function validateFilingWorkflowDraft(data: { nodes: any[]; edges: any[] }) {
       if (
         source &&
         target &&
-        target.positionX <= source.positionX &&
+        target.positionY <= source.positionY &&
         source.canBeRevisited !== true &&
         target.canBeRevisited !== true
       ) {
@@ -5797,7 +6150,7 @@ export async function ensureDefaultFilingWorkflows(orgId: string) {
       data: {
         orgId,
         name: "Default Filing Workflow",
-        description: "Default seeded filing workflow. All nodes, checklist items, and routes remain editable after publishing.",
+        description: "Default configurable filing workflow with First Check, Second Check branches, and Amendment routing.",
         isActive: true,
       },
     });
@@ -5813,13 +6166,19 @@ export async function ensureDefaultFilingWorkflows(orgId: string) {
     });
 
     for (const [nodeIndex, node] of DEFAULT_FILING_WORKFLOW_SEED.nodes.entries()) {
-      await tx.filingWorkflowNode.create({
+      const createdNode = await tx.filingWorkflowNode.create({
         data: {
           versionId: version.id,
           key: node.key,
           name: node.name,
           description: node.description,
           category: node.category,
+          nodeType: node.nodeType,
+          sectionKey: node.sectionKey,
+          sectionName: node.sectionName,
+          branchKey: node.branchKey,
+          branchName: node.branchName,
+          sortOrder: node.sortOrder,
           isActive: true,
           isStart: node.isStart,
           positionX: node.positionX,
@@ -5829,41 +6188,52 @@ export async function ensureDefaultFilingWorkflows(orgId: string) {
           commentsRequired: false,
           canBeSkipped: false,
           canBeRevisited: true,
+          approvalRequired: false,
+          approvalRoles: [],
           requireAllMandatoryChecklistItems: true,
           requireMandatoryPhotos: false,
           allowedRoles: [...node.allowedRoles],
-          checklistItems: {
-            create: node.checklistItems.map((label, checklistIndex) => ({
-              label,
-              description: null,
-              isMandatory: true,
-              requiresRemarks: false,
-              allowsUpload: false,
-              minUploads: 0,
-              maxUploads: null,
-              acceptedFileTypes: [],
-              deadlineDuration: 2,
-              deadlineUnit: "BUSINESS_DAYS",
-              delayRemarksRequired: true,
-              hasPhotoRequirement: false,
-              sortOrder: checklistIndex + 1,
-              isActive: true,
-            })),
-          },
-          photoRequirements: nodeIndex === 0
-            ? {
-                create: [
-                  {
-                    label: "Filed Document Set",
-                    isMandatory: false,
-                    minPhotos: 0,
-                    acceptedFileTypes: ["image/jpeg", "image/png", "application/pdf"],
-                  },
-                ],
-              }
-            : undefined,
         },
       });
+
+      if (node.checklistItems.length > 0) {
+        await tx.filingChecklistItem.createMany({
+          data: node.checklistItems.map((label, checklistIndex) => ({
+            nodeId: createdNode.id,
+            label,
+            description: null,
+            isMandatory: true,
+            requiresRemarks: false,
+            allowsUpload: false,
+            minUploads: 0,
+            maxUploads: null,
+            acceptedFileTypes: [],
+            deadlineDuration: 2,
+            deadlineUnit: "BUSINESS_DAYS",
+            delayRemarksRequired: true,
+            hasPhotoRequirement: false,
+            sortOrder: checklistIndex + 1,
+            isActive: true,
+          })),
+        });
+      }
+
+      if (nodeIndex === 0) {
+        await tx.filingPhotoRequirement.createMany({
+          data: [
+            {
+              nodeId: createdNode.id,
+              label: "Filed Document Set",
+              description: null,
+              isMandatory: false,
+              minPhotos: 0,
+              maxPhotos: null,
+              acceptedFileTypes: ["image/jpeg", "image/png", "application/pdf"],
+              isVisibleInTimeline: true,
+            },
+          ],
+        });
+      }
     }
 
     await tx.filingWorkflowEdge.createMany({
@@ -5871,9 +6241,10 @@ export async function ensureDefaultFilingWorkflows(orgId: string) {
         versionId: version.id,
         sourceKey: edge.sourceKey,
         targetKey: edge.targetKey,
+        label: "label" in edge ? edge.label ?? null : null,
       })),
     });
-  });
+  }, { timeout: 20000 });
 }
 
 export async function calculateSlaDueDate(startDate: Date, duration: number, unit: string, orgId?: string): Promise<Date> {
@@ -5885,8 +6256,7 @@ export async function calculateSlaDueDate(startDate: Date, duration: number, uni
 
   // BUSINESS_DAYS: Exclude Sundays at minimum
   let added = 0;
-  const holidays = orgId ? await db.holiday.findMany({ where: { orgId } }) : [];
-  const holidayStrings = new Set(holidays.map((h) => h.date.toISOString().split("T")[0]));
+  const holidayStrings = await getHolidayIsoSet(orgId);
 
   while (added < duration) {
     result.setDate(result.getDate() + 1);
@@ -5903,10 +6273,17 @@ export async function listFilingWorkflows(orgId: string) {
   return db.filingWorkflowTemplate.findMany({
     where: { orgId },
     include: {
+      clearanceType: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
       versions: {
         orderBy: { versionNumber: "desc" },
         include: {
           nodes: {
+            orderBy: { sortOrder: "asc" },
             include: {
               checklistItems: { orderBy: { sortOrder: "asc" } },
               photoRequirements: true,
@@ -5924,10 +6301,17 @@ export async function getFilingWorkflowDetails(userId: string, orgId: string, te
   return db.filingWorkflowTemplate.findFirstOrThrow({
     where: { id: templateId, orgId },
     include: {
+      clearanceType: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
       versions: {
         orderBy: { versionNumber: "desc" },
         include: {
           nodes: {
+            orderBy: { sortOrder: "asc" },
             include: {
               checklistItems: { orderBy: { sortOrder: "asc" } },
               photoRequirements: true,
@@ -5947,35 +6331,31 @@ export async function saveFilingWorkflowDraft(
   data: {
     name: string;
     description?: string;
+    clearanceTypeId?: string | null;
     nodes: any[];
     edges: any[];
   }
 ) {
-  const normalizedNodes = (data.nodes || []).map((node: any, nodeIndex: number) => ({
-    ...node,
-    key: typeof node.key === "string" && node.key.trim()
-      ? node.key.trim()
-      : `${String(node.name || "node").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "node"}_${nodeIndex + 1}`,
-    isActive: node.isActive !== false,
-    checklistItems: (node.checklistItems || []).map((item: any, itemIndex: number) => normalizeFilingChecklistItem(item, itemIndex)),
-    photoRequirements: (node.photoRequirements || []).map((photo: any) => ({
-      label: typeof photo.label === "string" ? photo.label : "",
-      description: typeof photo.description === "string" ? photo.description : null,
-      isMandatory: photo.isMandatory !== undefined ? !!photo.isMandatory : true,
-      minPhotos: Math.max(Number(photo.minPhotos ?? 1), 0),
-      maxPhotos: photo.maxPhotos === undefined || photo.maxPhotos === null ? null : Math.max(Number(photo.maxPhotos), 0),
-      acceptedFileTypes: Array.isArray(photo.acceptedFileTypes)
-        ? photo.acceptedFileTypes.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
-        : ["image/jpeg", "image/png", "application/pdf"],
-      isVisibleInTimeline: photo.isVisibleInTimeline !== undefined ? !!photo.isVisibleInTimeline : true,
-    })),
-  }));
+  const normalizedDraft = expandLegacyChecklistNodes(data.nodes || [], data.edges || []);
+  const normalizedNodes = normalizedDraft.nodes.map((node: any, nodeIndex: number) =>
+    normalizeWorkflowNodeDraft({ ...node, sortOrder: node.sortOrder ?? nodeIndex + 1 }, nodeIndex),
+  );
 
-  const normalizedEdges = (data.edges || []).map((edge: any) => ({
+  const normalizedEdges = (normalizedDraft.edges || []).map((edge: any) => ({
     sourceKey: edge.sourceKey,
     targetKey: edge.targetKey,
     label: edge.label || null,
   }));
+
+  if (data.clearanceTypeId) {
+    const clearanceType = await db.chaJobType.findFirst({
+      where: { id: data.clearanceTypeId, orgId },
+      select: { id: true },
+    });
+    if (!clearanceType) {
+      throw new Error("The selected clearance type is invalid for this organisation.");
+    }
+  }
 
   let template;
   if (templateId) {
@@ -5992,6 +6372,7 @@ export async function saveFilingWorkflowDraft(
     template = await db.filingWorkflowTemplate.create({
       data: {
         orgId,
+        clearanceTypeId: data.clearanceTypeId || null,
         name: data.name,
         description: data.description,
         isActive: true,
@@ -6028,6 +6409,7 @@ export async function saveFilingWorkflowDraft(
       data: {
         name: data.name,
         description: data.description,
+        clearanceTypeId: data.clearanceTypeId || null,
       },
     });
 
@@ -6044,6 +6426,12 @@ export async function saveFilingWorkflowDraft(
           name: n.name,
           description: n.description,
           category: n.category,
+          nodeType: n.nodeType,
+          sectionKey: n.sectionKey,
+          sectionName: n.sectionName,
+          branchKey: n.branchKey,
+          branchName: n.branchName,
+          sortOrder: n.sortOrder,
           isActive: n.isActive !== false,
           positionX: n.positionX || 0,
           positionY: n.positionY || 0,
@@ -6053,6 +6441,8 @@ export async function saveFilingWorkflowDraft(
           commentsRequired: !!n.commentsRequired,
           canBeSkipped: !!n.canBeSkipped,
           canBeRevisited: n.canBeRevisited !== undefined ? !!n.canBeRevisited : true,
+          approvalRequired: !!n.approvalRequired,
+          approvalRoles: n.approvalRoles || [],
           requireAllMandatoryChecklistItems: n.requireAllMandatoryChecklistItems !== undefined ? !!n.requireAllMandatoryChecklistItems : true,
           requireMandatoryPhotos: n.requireMandatoryPhotos !== undefined ? !!n.requireMandatoryPhotos : true,
           allowedRoles: n.allowedRoles || ["Admin", "Manager", "Employee"],
@@ -6191,6 +6581,7 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
       version: {
         include: {
           nodes: {
+            orderBy: { sortOrder: "asc" },
             include: {
               checklistItems: { orderBy: { sortOrder: "asc" } },
               photoRequirements: true,
@@ -6239,6 +6630,7 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
 
   await syncOverdueFilingItems(orgId, jobId);
   const now = await getNow();
+  const holidayIsoSet = await getHolidayIsoSet(orgId);
 
   instance = await db.filingWorkflowInstance.findUnique({
     where: { jobId },
@@ -6247,6 +6639,7 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
       version: {
         include: {
           nodes: {
+            orderBy: { sortOrder: "asc" },
             include: {
               checklistItems: { orderBy: { sortOrder: "asc" } },
               photoRequirements: true,
@@ -6288,10 +6681,7 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
       checklistItemId: response.checklistItemId,
       label: response.checklistItem.label,
       dueAt: response.dueAt,
-      daysDelayed: Math.max(
-        1,
-        Math.ceil((now.getTime() - response.dueAt!.getTime()) / (1000 * 60 * 60 * 24)),
-      ),
+      daysDelayed: Math.max(1, countBusinessDaysSince(response.dueAt!, now, holidayIsoSet)),
       delayRemarks: response.delayRemarks,
       delayRemarkedAt: response.delayRemarkedAt,
     }));
@@ -6313,31 +6703,78 @@ export async function startFilingWorkflow(userId: string, orgId: string, jobId: 
     return getFilingWorkflowInstance(orgId, jobId);
   }
 
-  let activeVersion = await db.filingWorkflowVersion.findFirst({
-    where: { template: { orgId }, isActive: true, isPublished: true },
+  const job = await db.chaJob.findFirstOrThrow({
+    where: { id: jobId, orgId, deletedAt: null },
+    select: { jobTypeId: true },
+  });
+
+  let activeVersion = (await db.filingWorkflowVersion.findMany({
+    where: {
+      template: {
+        orgId,
+        OR: [
+          { clearanceTypeId: job.jobTypeId },
+          { clearanceTypeId: null },
+        ],
+      },
+      isActive: true,
+      isPublished: true,
+    },
     include: {
-      template: true,
+      template: {
+        include: {
+          clearanceType: {
+            select: { id: true, name: true },
+          },
+        },
+      },
       nodes: {
         include: {
           checklistItems: true,
         },
       },
     },
-  });
+    orderBy: [{ versionNumber: "desc" }],
+  })).sort((left, right) => {
+    const leftScoped = left.template.clearanceTypeId === job.jobTypeId ? 1 : 0;
+    const rightScoped = right.template.clearanceTypeId === job.jobTypeId ? 1 : 0;
+    return rightScoped - leftScoped;
+  })[0];
 
   if (!activeVersion) {
     await ensureDefaultFilingWorkflows(orgId);
-    activeVersion = await db.filingWorkflowVersion.findFirst({
-      where: { template: { orgId }, isActive: true, isPublished: true },
+    activeVersion = (await db.filingWorkflowVersion.findMany({
+      where: {
+        template: {
+          orgId,
+          OR: [
+            { clearanceTypeId: job.jobTypeId },
+            { clearanceTypeId: null },
+          ],
+        },
+        isActive: true,
+        isPublished: true,
+      },
       include: {
-        template: true,
+        template: {
+          include: {
+            clearanceType: {
+              select: { id: true, name: true },
+            },
+          },
+        },
         nodes: {
           include: {
             checklistItems: true,
           },
         },
       },
-    });
+      orderBy: [{ versionNumber: "desc" }],
+    })).sort((left, right) => {
+      const leftScoped = left.template.clearanceTypeId === job.jobTypeId ? 1 : 0;
+      const rightScoped = right.template.clearanceTypeId === job.jobTypeId ? 1 : 0;
+      return rightScoped - leftScoped;
+    })[0] ?? null;
   }
 
   if (!activeVersion) {
