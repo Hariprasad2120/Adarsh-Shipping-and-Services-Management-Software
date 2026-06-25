@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Bell, CheckCircle2, Info, OctagonAlert, TriangleAlert, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button-1";
@@ -118,7 +118,6 @@ function NotificationToastCard({
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname();
   const [localToasts, setLocalToasts] = useState<LocalToast[]>([]);
   const [remoteToasts, setRemoteToasts] = useState<RemoteToast[]>([]);
   const refreshInFlightRef = useRef(false);
@@ -170,7 +169,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         document.removeEventListener("visibilitychange", handleVisibilityChange);
       }
     };
-  }, [pathname, refreshRemoteToasts]);
+  }, [refreshRemoteToasts]);
 
   useEffect(() => {
     const timers = localToasts

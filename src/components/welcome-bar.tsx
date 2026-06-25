@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, memo, useState } from "react";
 import {
   CalendarDays,
   Clock3,
@@ -29,6 +29,48 @@ function toTitleCase(value: string) {
     .join(" ");
 }
 
+const ClockDisplay = memo(function ClockDisplay() {
+  const [now, setNow] = useState<Date | null>(null);
+
+  useEffect(() => {
+    const initialTick = window.setTimeout(() => setNow(new Date()), 0);
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    return () => {
+      window.clearTimeout(initialTick);
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  const dateLabel = now
+    ? now.toLocaleDateString("en-IN", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : "Loading date";
+  const timeLabel = now
+    ? now.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+    : "--:--";
+
+  return (
+    <>
+      <span className="hidden items-center gap-2 rounded-xl border border-[#bfc8c6] dark:border-[#21262d] bg-surface px-3 py-1.5 text-xs text-on-surface-variant shadow-sm lg:inline-flex">
+        <CalendarDays className="size-3.5 text-[#00a99f]" />
+        {dateLabel}
+      </span>
+      <span className="hidden items-center gap-2 rounded-xl border border-[#bfc8c6] dark:border-[#21262d] bg-surface px-3 py-1.5 text-xs tabular-nums text-on-surface shadow-sm md:inline-flex">
+        <Clock3 className="size-3.5 text-[#00a99f]" />
+        {timeLabel}
+      </span>
+    </>
+  );
+});
+
 type DoValidityWarning = {
   jobId: string;
   jobNumber: string;
@@ -51,22 +93,12 @@ export function AppHeader({
   const router = useRouter();
   const caps = useCaps();
   const { mobileNavId, mobileNavOpen, setMenuTrigger, toggleMobileNav } = useDashboardChrome();
-  const [now, setNow] = useState<Date | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
   const [doWarnings, setDoWarnings] = useState<DoValidityWarning[]>([]);
   const firstName = useMemo(
     () => toTitleCase(userName.split(" ")[0] || "there"),
     [userName],
   );
-
-  useEffect(() => {
-    const initialTick = window.setTimeout(() => setNow(new Date()), 0);
-    const timer = window.setInterval(() => setNow(new Date()), 1000);
-    return () => {
-      window.clearTimeout(initialTick);
-      window.clearInterval(timer);
-    };
-  }, []);
 
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -149,21 +181,6 @@ export function AppHeader({
     [activeSection, pathname],
   );
 
-  const dateLabel = now
-    ? now.toLocaleDateString("en-IN", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
-    : "Loading date";
-  const timeLabel = now
-    ? now.toLocaleTimeString("en-IN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      })
-    : "--:--";
   const workspaceLabel = activeItem?.label ?? activeSection?.label ?? "Workspace";
   const canOpenSettings = Boolean(caps["admin.org.manage"]);
   const expiredDoCount = doWarnings.filter((warning) => warning.severity === "expired").length;
@@ -220,14 +237,7 @@ export function AppHeader({
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3.5">
-          <span className="hidden items-center gap-2 rounded-xl border border-[#bfc8c6] dark:border-[#21262d] bg-surface px-3 py-1.5 text-xs text-on-surface-variant shadow-sm lg:inline-flex">
-            <CalendarDays className="size-3.5 text-[#00a99f]" />
-            {dateLabel}
-          </span>
-          <span className="hidden items-center gap-2 rounded-xl border border-[#bfc8c6] dark:border-[#21262d] bg-surface px-3 py-1.5 text-xs tabular-nums text-on-surface shadow-sm md:inline-flex">
-            <Clock3 className="size-3.5 text-[#00a99f]" />
-            {timeLabel}
-          </span>
+          <ClockDisplay />
 
           {doWarnings.length > 0 ? (
             <div className="group relative">

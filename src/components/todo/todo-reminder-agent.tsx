@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useNotifications } from "@/components/notifications/notification-provider";
 
 type UpcomingReminder = {
@@ -20,7 +20,6 @@ type TriggeredReminder = {
 
 export function TodoReminderAgent() {
   const router = useRouter();
-  const pathname = usePathname();
   const { pushToast } = useNotifications();
   const [upcomingReminders, setUpcomingReminders] = useState<UpcomingReminder[]>([]);
   const refreshInFlightRef = useRef(false);
@@ -108,7 +107,7 @@ export function TodoReminderAgent() {
         document.removeEventListener("visibilitychange", handleVisibilityChange);
       }
     };
-  }, [pathname]);
+  }, []);
 
   useEffect(() => {
     const timers = upcomingReminders
