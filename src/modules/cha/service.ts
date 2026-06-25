@@ -1605,59 +1605,70 @@ export async function listJobTypesForSettings(orgId: string) {
 // Get Job Details with access policies
 export async function getJobDetails(userId: string, orgId: string, jobId: string) {
   const manifestSchema = await getChaManifestSchemaState();
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    include: { roles: { include: { role: true } } },
-  });
+
+  // Fetch user and job in parallel — neither depends on the other
+  const [user, job] = await Promise.all([
+    db.user.findUnique({
+      where: { id: userId },
+      include: { roles: { include: { role: true } } },
+    }),
+    db.chaJob.findFirst({
+      where: { id: jobId, ...getActiveChaJobWhere(orgId) },
+      include: {
+        customer: true,
+        jobType: { select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig) },
+        shipmentType: true,
+        branch: true,
+        primaryOwner: { select: { id: true, name: true, email: true, designation: true } },
+        assignedManager: { select: { id: true, name: true, email: true, designation: true } },
+        assignments: { include: { user: { select: { id: true, name: true, email: true, designation: true } } } },
+        deletionRequests: {
+          orderBy: { requestedAt: "desc" },
+          take: 10,
+          include: {
+            requestedBy: { select: { id: true, name: true } },
+            assignedManager: { select: { id: true, name: true } },
+            executedBy: { select: { id: true, name: true } },
+          },
+        },
+        documentRequirements: {
+          include: {
+            versions: { include: { uploadedBy: { select: { name: true } } } },
+            exception: { include: { user: { select: { name: true } } } },
+            requirementItem: { include: { category: true } }
+          }
+        },
+        additionalData: { select: getAdditionalDataSelect(manifestSchema.customManifestValue) },
+        checklistWorkflow: {
+          include: {
+            currentFileVersion: true,
+            fileVersions: { orderBy: { versionNumber: "desc" } },
+            approvals: { orderBy: { createdAt: "asc" } },
+          },
+        },
+        checklistImports: { include: { uploadedBy: { select: { name: true } }, approvals: { include: { manager: { select: { name: true } } } }, reworkNotes: { include: { author: { select: { name: true } } } }, sections: { include: { items: true } } } },
+        filing: { include: { dateHistory: { include: { setBy: { select: { name: true } } } } } },
+        customerAdvance: { include: { receipts: true } },
+        expenseRequests: { include: { requestedBy: { select: { name: true } }, lines: true, payments: { include: { paidBy: { select: { name: true } } } }, queries: { include: { author: { select: { name: true } } } }, statusHistory: true } },
+        auditLogs: { orderBy: { timestamp: "desc" }, take: 100 },
+      },
+    }),
+  ]);
+
   if (!user) throw new Error("User not found");
+  if (!job) throw new Error("Job not found.");
 
-  const job = await db.chaJob.findFirst({
-    where: { id: jobId, ...getActiveChaJobWhere(orgId) },
-    include: {
-      customer: true,
-      jobType: { select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig) },
-      shipmentType: true,
-      branch: true,
-      primaryOwner: { select: { id: true, name: true, email: true, designation: true } },
-      assignedManager: { select: { id: true, name: true, email: true, designation: true } },
-      assignments: { include: { user: { select: { id: true, name: true, email: true, designation: true } } } },
-      deletionRequests: {
-        orderBy: { requestedAt: "desc" },
-        take: 10,
-        include: {
-          requestedBy: { select: { id: true, name: true } },
-          assignedManager: { select: { id: true, name: true } },
-          executedBy: { select: { id: true, name: true } },
-        },
-      },
-      documentRequirements: {
-        include: {
-          versions: { include: { uploadedBy: { select: { name: true } } } },
-          exception: { include: { user: { select: { name: true } } } },
-          requirementItem: { include: { category: true } }
-        }
-      },
-      additionalData: { select: getAdditionalDataSelect(manifestSchema.customManifestValue) },
-      checklistWorkflow: {
-        include: {
-          currentFileVersion: true,
-          fileVersions: { orderBy: { versionNumber: "desc" } },
-          approvals: { orderBy: { createdAt: "asc" } },
-        },
-      },
-      checklistImports: { include: { uploadedBy: { select: { name: true } }, approvals: { include: { manager: { select: { name: true } } } }, reworkNotes: { include: { author: { select: { name: true } } } }, sections: { include: { items: true } } } },
-      filing: { include: { dateHistory: { include: { setBy: { select: { name: true } } } } } },
-      customerAdvance: { include: { receipts: true } },
-      expenseRequests: { include: { requestedBy: { select: { name: true } }, lines: true, payments: { include: { paidBy: { select: { name: true } } } }, queries: { include: { author: { select: { name: true } } } }, statusHistory: true } },
-      auditLogs: { orderBy: { timestamp: "desc" } },
-    },
-  });
+  // Parallelize backfill (may do a DB write), access check, and actor lookup
+  const actorIds = Array.from(new Set(job.auditLogs.map((l) => l.actorId)));
+  const [backfilledManagerAssignment, hasViewAll, actors] = await Promise.all([
+    backfillAssignedManagerFromApprovalAssignment(job),
+    can(userId, "cha.job.view_all"),
+    db.user.findMany({
+      where: { id: { in: actorIds } },
+      select: { id: true, name: true },
+    }),
+  ]);
 
-  if (!job) {
-    throw new Error("Job not found.");
-  }
-
-  const backfilledManagerAssignment = await backfillAssignedManagerFromApprovalAssignment(job);
   const normalizedJob = backfilledManagerAssignment
     ? {
         ...job,
@@ -1678,26 +1689,18 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
         additionalData: normalizeCompatibleAdditionalData(job.additionalData, manifestSchema.customManifestValue),
       };
 
-  // Gated Gearing check:
+  // Gated access check
   const isPlatformAdmin = user.isPlatformAdmin;
   const isOrgAdmin = user.roles.some((r) => r.role.name === "Admin" || r.role.name === "Management" || r.role.name === "Director");
   const isAssigned = normalizedJob.assignments.some((a) => a.userId === userId);
   const isAssignedManager = normalizedJob.assignedManagerId === userId;
   const isManagerApprover = normalizedJob.assignments.some((a) => a.userId === userId && a.responsibility === "APPROVAL");
-  const hasViewAll = await can(userId, "cha.job.view_all");
 
   if (!isPlatformAdmin && !isOrgAdmin && !isAssigned && !isAssignedManager && !isManagerApprover && !hasViewAll) {
     throw new ForbiddenError("cha.job.read");
   }
 
-  // Resolve actor names manually to avoid db-level relation constraints
-  const actorIds = Array.from(new Set(job.auditLogs.map((l) => l.actorId)));
-  const actors = await db.user.findMany({
-    where: { id: { in: actorIds } },
-    select: { id: true, name: true },
-  });
   const actorMap = new Map(actors.map((a) => [a.id, { name: a.name }]));
-
   const auditLogsWithActor = job.auditLogs.map((log) => ({
     ...log,
     actor: actorMap.get(log.actorId) || { name: "System" },
@@ -5155,24 +5158,25 @@ export async function proceedDocumentStage(actorId: string, orgId: string, jobId
 }
 
 export async function getEligibleManagers(orgId: string) {
-  const usersWithPermission = await getUsersWithPermission(orgId, "cha.checklist.internal_approve");
-  
-  const usersWithRoles = await db.user.findMany({
-    where: {
-      orgId,
-      active: true,
-      roles: {
-        some: {
-          role: {
-            name: {
-              in: ["Admin", "Management", "Manager", "Director"],
+  const [usersWithPermission, usersWithRoles] = await Promise.all([
+    getUsersWithPermission(orgId, "cha.checklist.internal_approve"),
+    db.user.findMany({
+      where: {
+        orgId,
+        active: true,
+        roles: {
+          some: {
+            role: {
+              name: {
+                in: ["Admin", "Management", "Manager", "Director"],
+              },
             },
           },
         },
       },
-    },
-    select: { id: true, name: true, email: true, branchId: true },
-  });
+      select: { id: true, name: true, email: true, branchId: true },
+    }),
+  ]);
 
   const allEligible = new Map<string, { id: string; name: string; email: string; branchId: string | null }>();
   

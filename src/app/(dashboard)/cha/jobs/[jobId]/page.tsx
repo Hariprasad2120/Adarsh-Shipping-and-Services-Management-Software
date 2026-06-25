@@ -45,7 +45,20 @@ export default async function ChaJobWorkspacePage({
   let error: unknown = null;
 
   try {
-    const [job, canDeleteJob, canApproveDeleteJob, canDeleteDoc, canManageSettings, canInternalApproveChecklist, canCustomerApproveChecklist, canUpdateJob] = await Promise.all([
+    // dbUsers, settings, eligibleManagers don't depend on job — run everything in parallel
+    const [
+      job,
+      canDeleteJob,
+      canApproveDeleteJob,
+      canDeleteDoc,
+      canManageSettings,
+      canInternalApproveChecklist,
+      canCustomerApproveChecklist,
+      canUpdateJob,
+      dbUsers,
+      settings,
+      eligibleManagers,
+    ] = await Promise.all([
       getJobDetails(session.user.id, orgId, jobId),
       can(session.user.id, "cha.job.delete"),
       can(session.user.id, "cha.job.delete.approve"),
@@ -54,22 +67,16 @@ export default async function ChaJobWorkspacePage({
       can(session.user.id, "cha.checklist.internal_approve"),
       can(session.user.id, "cha.checklist.customer_approve"),
       can(session.user.id, "cha.job.update"),
+      db.user.findMany({ where: { orgId, active: true }, select: { id: true, name: true, email: true } }),
+      db.chaSettings.findUnique({ where: { orgId } }),
+      getEligibleManagers(orgId),
     ]);
-    
-    // Fetch users for assignment selections and customer advance maps
-    const dbUsers = await db.user.findMany({
-      where: { orgId, active: true },
-      select: { id: true, name: true, email: true },
-    });
+
     const users = dbUsers.map((u) => ({
       id: u.id,
       name: u.name ?? "Unknown",
       email: u.email ?? "",
     }));
-
-    const settings = await db.chaSettings.findUnique({
-      where: { orgId },
-    });
 
     const parsedExpenseCategories: string[] = Array.isArray(settings?.expenseCategories)
       ? settings.expenseCategories.filter((item): item is string => typeof item === "string")
@@ -77,8 +84,8 @@ export default async function ChaJobWorkspacePage({
         ? JSON.parse(settings.expenseCategories as string)
         : ["Customs Duty", "Port Handling Charges", "Transportation", "Documentation charges", "Agent Commission", "Storage Fees", "Miscellaneous"];
 
+    // internalApproverIds depends on job — runs after getJobDetails resolves
     const internalApproverIds = await getChecklistInternalApproverIds(orgId, job);
-    const eligibleManagers = await getEligibleManagers(orgId);
 
     data = {
       job,
