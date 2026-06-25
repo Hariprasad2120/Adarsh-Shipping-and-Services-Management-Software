@@ -33,6 +33,7 @@ export interface CatalogueModule {
   integrations: string[];
   ctaLabel: string;
   lifecycleGuide: LifecycleGuide;
+  status: "Implemented" | "Partial" | "Planned";
 }
 
 export interface ProblemItem {
@@ -196,6 +197,7 @@ export const modules: CatalogueModule[] = [
     exampleWorkflow: "Employee slot is scheduled -> reviewers confirmed -> self-assessment submitted -> manager scores submitted -> appraisal meeting logged -> CTC updated.",
     integrations: ["HRMS Salary Sheets", "Timeline Reminders", "System Notifications"],
     ctaLabel: "Launch Appraisals Center",
+    status: "Implemented",
     lifecycleGuide: {
       summary: "End-to-end performance appraisal governance and cycle management.",
       fullProcessExplanation: "The Appraisal Management System (AMS) manages the performance lifecycle of employees. It links join dates to evaluation schedules, coordinates multi-rater feedback (Self, Peers, TL, and Manager), aggregates scores, guides managers through calibration and proposed increment meetings, and directly updates the HRMS employment CTC record upon final approval.",
@@ -275,6 +277,7 @@ export const modules: CatalogueModule[] = [
     exampleWorkflow: "HR onboards a new logistics executive -> system generates designation permissions -> new employee receives onboarding checklist directly.",
     integrations: ["Attendance Engine", "AMS (Asset Handover)", "Ledger Module"],
     ctaLabel: "Configure Directory",
+    status: "Implemented",
     lifecycleGuide: {
       summary: "Enterprise identity registry and organizational structure manager.",
       fullProcessExplanation: "The HRMS Module establishes the organization's physical and permissions hierarchy. It structures legal branches and department trees, manages user credentials and permission groups, maintains digital document vaults for compliance checks, and tracks employee remuneration historical revisions (CTC structures) that directly feed into operational calculations like overtime payouts.",
@@ -335,6 +338,7 @@ export const modules: CatalogueModule[] = [
     exampleWorkflow: "Pre-sales captures a freight inquiry -> sales exec schedules callback reminder -> quotation is prepared and sent for approvals.",
     integrations: ["HRMS Staff Matrix", "Quotation Approval Queue", "Billing & Ledger Engine"],
     ctaLabel: "Launch CRM Dashboard",
+    status: "Implemented",
     lifecycleGuide: {
       summary: "Inbound sales lead converter, quote engine, and customer pipeline tracker.",
       fullProcessExplanation: "The CRM Module manages customer acquisitions. Raw leads are imported and routed to pre-sales. Unreachable contacts trigger a 2-hour cooldown period before retrying. Interested leads convert to Customer Profiles and Enquiry files. Reps compile ocean/air freight quotes using Price Books. Managers approve or reject quotations, and accepted invoices automatically update general ledger records.",
@@ -403,6 +407,7 @@ export const modules: CatalogueModule[] = [
     exampleWorkflow: "HR schedules appraisal notice -> system broadcasts email templates -> employees get dashboard notifications.",
     integrations: ["HRMS Directory", "AMS Appraisals", "Notifications Feed"],
     ctaLabel: "Open Communication Portal",
+    status: "Implemented",
     lifecycleGuide: {
       summary: "Centralized corporate messaging, email broadcasts, and alert feeds.",
       fullProcessExplanation: "The Communication Module organizes internal messages and announcements. It maps employee contacts, manages email dispatch loops, tracks unread alerts, and routes support messages.",
@@ -455,6 +460,7 @@ export const modules: CatalogueModule[] = [
     exampleWorkflow: "Employee submits travel receipt -> system reads parameters -> manager approves -> balance is posted.",
     integrations: ["HRMS Travel Sheets", "General Ledger Accounts", "Document Drives"],
     ctaLabel: "Review Development Progress",
+    status: "Planned",
     lifecycleGuide: {
       summary: "Automated claim auditing, approval loops, and ledger bookkeeping.",
       fullProcessExplanation: "The Expense Module handles employee financial requests. It scans invoices, checks limits, routes claims for approval, and posts approved amounts to general ledger accounts.",
@@ -509,6 +515,7 @@ export const modules: CatalogueModule[] = [
     exampleWorkflow: "Employee logs punch at biometric terminal -> check-in recorded -> overtime calculated after 8-hour shift threshold.",
     integrations: ["Biometric Terminals", "HRMS Salary Sheets", "Payroll Exporter"],
     ctaLabel: "Check Live Punch Registry",
+    status: "Implemented",
     lifecycleGuide: {
       summary: "Biometric synchronization, timesheet calculator, and overtime rate processor.",
       fullProcessExplanation: "The Attendance Engine matches physical biometric logs with digital timesheets. It downloads logs from terminals, matches punches against shift profiles, resolves missing check-outs, and calculates overtime using minute-rate CTC coefficients.",
@@ -576,6 +583,7 @@ export const modules: CatalogueModule[] = [
     exampleWorkflow: "New developer starts onboarding -> Admin assigns tagged laptop -> handover condition receipt is stored on employee profile.",
     integrations: ["HRMS Employee Files", "Finance General Ledger", "Procurement Registry"],
     ctaLabel: "Manage Asset Register",
+    status: "Implemented",
     lifecycleGuide: {
       summary: "Inventory allocation tracker, service manager, and asset depreciation engine.",
       fullProcessExplanation: "The Asset Module tracks fixed assets. It monitors inventory, handles employee allocations, logs maintenance histories, and calculates monthly straight-line depreciation to update balance sheets.",
@@ -636,6 +644,7 @@ export const modules: CatalogueModule[] = [
     exampleWorkflow: "Approved invoice generated -> system posts receivable and revenue journal records -> payment entry closes invoice balance.",
     integrations: ["CRM Invoices", "Asset Depreciation Logs", "Payroll Batches"],
     ctaLabel: "Open Chart of Accounts",
+    status: "Partial",
     lifecycleGuide: {
       summary: "General ledger tracker, transaction analyzer, and financial reporter.",
       fullProcessExplanation: "The Accounting Module records operational activities. Transactions are posted to the general ledger, balances are reconciled, and real-time financial statements (trial balance, cash flow, P&L) are generated.",
@@ -696,6 +705,7 @@ export const modules: CatalogueModule[] = [
     exampleWorkflow: "Sales rep hired -> system auto-assigns 'CRM Fundamentals' course -> manager approves completion certificate.",
     integrations: ["HRMS Profiles", "Performance Appraisals Cycle"],
     ctaLabel: "Launch Course Catalog",
+    status: "Partial",
     lifecycleGuide: {
       summary: "Training path manager, assignment portal, and skills directory.",
       fullProcessExplanation: "The Learning Management System (LMS) manages training and onboarding. Courses are assigned to designations, progress is monitored, assignments are graded, and verified skill badges are logged in employee profiles.",

@@ -19,6 +19,8 @@
     "fix:employee-org": "npx tsx scripts/fix-employee-org-structure.ts",
     "integrate:mails": "npx tsx scripts/bulk-integrate-emails.ts",
     "seed:comm-panels": "npx tsx scripts/seed-communication-panels.ts",
+    "catalogue:update": "npx tsx scripts/update-product-catalogue.ts",
+    "catalogue:check": "npx tsx scripts/check-product-catalogue.ts",
     "test": "vitest run"
   },
   "dependencies": {

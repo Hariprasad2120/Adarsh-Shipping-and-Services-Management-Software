@@ -290,3 +290,34 @@ Use grep/read/glob when you need exact line numbers, current file contents, or v
 
 When significant new code is added, run `/graphify . --update` to incrementally update the graph without full rebuild.
 <!-- END:graphify -->
+
+<!-- BEGIN:product-catalogue -->
+# Product Catalogue Update Rule
+
+Before completing any Monolith Engine task that adds, modifies, or removes features, routes, API endpoints, or database models, the product catalogue **MUST** be updated.
+
+## Steps
+
+1. After finishing code changes, run: `npm run catalogue:update`
+2. Verify the catalogue is current: `npm run catalogue:check`
+3. If the manual feature registry needs updates (new features, status changes), edit `docs/product-feature-registry.json`
+
+## Key Files
+
+| File | Purpose |
+|---|---|
+| `PRODUCT_CATALOGUE.md` | Master product reference (manually maintained) |
+| `docs/product-feature-registry.json` | Manual feature/status registry (manually maintained) |
+| `docs/product-catalogue.json` | Auto-generated machine-readable catalogue |
+| `docs/product-catalogue.generated.md` | Auto-generated human-readable catalogue |
+| `scripts/update-product-catalogue.ts` | Scanner script |
+| `scripts/check-product-catalogue.ts` | Validation script |
+| `src/lib/catalogue-data.ts` | In-app catalogue data for `/product-catalogue` page |
+
+## Rule
+
+No feature change is considered complete unless:
+1. `npm run catalogue:update` has been run successfully
+2. `npm run catalogue:check` shows 0 errors
+3. If adding new modules/features, `docs/product-feature-registry.json` is updated
+<!-- END:product-catalogue -->

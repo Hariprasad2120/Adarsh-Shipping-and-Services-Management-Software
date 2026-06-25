@@ -899,6 +899,39 @@ export function LettersView() {
                 {isLegal && selectedRequest.status === "LEGAL_REVIEW" ? <Button type="button" onClick={() => handleWorkflowTransition(selectedRequest.id, "LEGAL_APPROVE")}>Approve Legal</Button> : null}
                 {isManagement && selectedRequest.status === "MGMT_APPROVAL" ? <Button type="button" onClick={() => handleWorkflowTransition(selectedRequest.id, "MGMT_APPROVE")}>Approve Mgmt</Button> : null}
                 {isHR && selectedRequest.status === "READY_TO_ISSUE" ? <Button type="button" onClick={() => handleWorkflowTransition(selectedRequest.id, "ISSUE")}>Issue</Button> : null}
+                {(selectedRequest.status === "ISSUED" || selectedRequest.status === "ACCEPTED") && selectedRequest.pdfPath ? (
+                  <>
+                    <a href={`/${selectedRequest.pdfPath}`} download className="inline-flex">
+                      <Button type="button" variant="outline">
+                        <Save className="size-4" />
+                        <span>Download PDF</span>
+                      </Button>
+                    </a>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch("/api/hrms/letters/share-mail", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ letterRequestId: selectedRequest.id }),
+                          });
+                          const json = await response.json();
+                          if (!json.ok) throw new Error(json.error?.message || json.error || "Failed to prepare email");
+                          // Open communication module mail composer
+                          window.open(json.data.composerLink, "_blank");
+                          toast.success("Opening mail composer...");
+                        } catch (error: any) {
+                          toast.error(error.message || "Failed to share via mail");
+                        }
+                      }}
+                    >
+                      <Send className="size-4" />
+                      <span>Share via Mail</span>
+                    </Button>
+                  </>
+                ) : null}
               </div>
             </div>
           </div>

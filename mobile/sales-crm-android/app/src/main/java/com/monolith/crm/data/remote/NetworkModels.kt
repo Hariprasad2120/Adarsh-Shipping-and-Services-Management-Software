@@ -1,6 +1,6 @@
 package com.monolith.crm.data.remote
 
-data class LoginRequest(val email: String, val password: String)
+data class LoginRequest(val email: String, val password: String, val module: String = "CRM")
 data class UserMetadata(val id: String, val email: String, val name: String, val orgId: String?, val roles: List<String>)
 data class LoginResponse(val token: String, val user: UserMetadata)
 

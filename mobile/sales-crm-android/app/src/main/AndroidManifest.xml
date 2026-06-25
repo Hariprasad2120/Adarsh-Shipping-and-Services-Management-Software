@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Existing permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -9,11 +10,30 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!-- HRMS: Camera (face capture for check-in/out/enrollment) -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- HRMS: Location (GPS tracking, check-in/out location capture) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <!-- HRMS: Foreground Service (persistent location tracking) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Optional hardware features -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.front" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+
     <application
         android:name=".CrmApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="Monolith CRM"
+        android:label="Monolith Mobile"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MonolithSalesCRM"
@@ -28,6 +48,12 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- HRMS: Location Tracking Foreground Service -->
+        <service
+            android:name=".hrms.service.LocationTrackingService"
+            android:foregroundServiceType="location"
+            android:exported="false" />
         
         <activity
             android:name=".MainActivity"

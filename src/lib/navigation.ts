@@ -215,6 +215,24 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/hrms/payroll"],
       },
       {
+        href: "/hrms/tracking",
+        label: "Employee Tracking",
+        icon: Analytics,
+        matchPaths: ["/hrms/tracking"],
+      },
+      {
+        href: "/hrms/on-duty-admin",
+        label: "On-Duty Management",
+        icon: Calendar,
+        matchPaths: ["/hrms/on-duty-admin"],
+      },
+      {
+        href: "/hrms/reimbursement",
+        label: "Fuel Reimbursement",
+        icon: Report,
+        matchPaths: ["/hrms/reimbursement"],
+      },
+      {
         href: "/hrms/settings",
         label: "HRMS Settings",
         icon: Settings,

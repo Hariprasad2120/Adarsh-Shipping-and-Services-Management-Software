@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as LucideIcons from "lucide-react";
@@ -15,11 +15,44 @@ import {
   ctaContent
 } from "@/lib/catalogue-data";
 
+const STATUS_BADGE: Record<string, { label: string; bg: string; text: string; border: string }> = {
+  Implemented: { label: "IMPLEMENTED", bg: "bg-emerald-950/40", text: "text-emerald-400", border: "border-emerald-400/25" },
+  Partial: { label: "PARTIAL", bg: "bg-amber-950/40", text: "text-amber-400", border: "border-amber-400/25" },
+  Planned: { label: "PLANNED", bg: "bg-blue-950/40", text: "text-blue-400", border: "border-blue-400/25" },
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const s = STATUS_BADGE[status] || STATUS_BADGE.Planned!;
+  return (
+    <span className={`text-[8px] font-bold font-mono tracking-widest uppercase px-2 py-0.5 rounded border ${s.bg} ${s.text} ${s.border}`}>
+      {s.label}
+    </span>
+  );
+}
+
 export default function ProductCataloguePage() {
   const router = useRouter();
   const [activeModuleTab, setActiveModuleTab] = useState<string>("ams");
   const [activeStageId, setActiveStageId] = useState<string>("due_notified");
   const [viewMode, setViewMode] = useState<"timeline" | "blueprint">("timeline");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  // Filter modules based on search and status
+  const filteredModules = useMemo(() => {
+    return modules.filter((m) => {
+      const matchesStatus = statusFilter === "all" || m.status === statusFilter;
+      if (!matchesStatus) return false;
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        m.name.toLowerCase().includes(q) ||
+        m.shortDescription.toLowerCase().includes(q) ||
+        m.keyFeatures.some((f) => f.toLowerCase().includes(q)) ||
+        m.lifecycleGuide.functions.some((fn) => fn.name.toLowerCase().includes(q))
+      );
+    });
+  }, [searchQuery, statusFilter]);
 
   const activeModule = modules.find((m) => m.id === activeModuleTab) || modules[0]!;
 
@@ -125,6 +158,83 @@ export default function ProductCataloguePage() {
           Export Technical Brochure
         </button>
       </div>
+
+      {/* Search & Filter Bar */}
+      <div className="no-print flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+        <div className="relative flex-1">
+          <LucideIcons.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)]" />
+          <input
+            type="text"
+            placeholder="Search modules, features, functions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 rounded-xl text-xs bg-[var(--color-surface)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] placeholder:text-[var(--color-placeholder)] focus:outline-none"
+          />
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {["all", "Implemented", "Partial", "Planned"].map((f) => (
+            <button
+              key={f}
+              onClick={() => setStatusFilter(f)}
+              className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer border ${
+                statusFilter === f
+                  ? f === "Implemented" ? "bg-emerald-950/40 text-emerald-400 border-emerald-400/40"
+                  : f === "Partial" ? "bg-amber-950/40 text-amber-400 border-amber-400/40"
+                  : f === "Planned" ? "bg-blue-950/40 text-blue-400 border-blue-400/40"
+                  : "bg-[#00cec4]/15 text-[#00cec4] border-[#00cec4]"
+                  : "bg-[var(--color-surface)] text-[var(--color-on-surface-variant)] border-[var(--color-outline-variant)]/60 hover:text-[var(--color-on-surface)] hover:border-[#00cec4]/40"
+              }`}
+            >
+              {f === "all" ? "All Modules" : f}
+            </button>
+          ))}
+          {filteredModules.length !== modules.length && (
+            <span className="text-[9px] text-[var(--color-on-surface-variant)] font-mono">
+              {filteredModules.length}/{modules.length} modules
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Module Status Grid */}
+      {(searchQuery || statusFilter !== "all") && (
+        <div className="no-print grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredModules.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => {
+                setActiveModuleTab(m.id);
+                setSearchQuery("");
+                setStatusFilter("all");
+                const firstStage = detailedWorkflowStages.find((s) => s.moduleId === m.id);
+                if (firstStage) setActiveStageId(firstStage.stageId);
+                document.getElementById("interactive-timelines")?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="cursor-pointer text-left p-4 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl hover:border-[#00cec4]/40 transition-all group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  {renderIcon(m.iconName, 16, "text-[#00cec4]")}
+                  <span className="text-[10px] font-bold text-[var(--color-on-surface)] uppercase tracking-wider">
+                    {m.name.replace(" MODULE", "").replace(" SYSTEM", "")}
+                  </span>
+                </div>
+                <StatusBadge status={m.status} />
+              </div>
+              <p className="text-[var(--color-on-surface-variant)] text-[10px] leading-relaxed line-clamp-2">
+                {m.shortDescription}
+              </p>
+              <div className="flex flex-wrap gap-1 mt-2">
+                {m.keyFeatures.slice(0, 2).map((f, i) => (
+                  <span key={i} className="text-[7px] font-mono text-[#00cec4] border border-[#00cec4]/20 bg-[#00cec4]/5 px-1.5 py-0.5 rounded">
+                    {f.length > 35 ? f.slice(0, 32) + "…" : f}
+                  </span>
+                ))}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ─── SECTION 1: HERO & CORE ENGINE VISUALIZER ─── */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-4">
@@ -328,11 +438,14 @@ export default function ProductCataloguePage() {
                     : "bg-[var(--color-surface)] border-[var(--color-outline-variant)]/60 text-[var(--color-on-surface-variant)] hover:text-white hover:border-[#00cec4]/40"
                 }`}
               >
-                <div className="flex items-center gap-2.5 text-xs uppercase tracking-wide">
+                <div className="flex items-center gap-2.5 text-xs uppercase tracking-wide flex-1 min-w-0">
                   {renderIcon(m.iconName, 14)}
-                  <span>{m.name.replace(" MODULE", "").replace(" SYSTEM", "")}</span>
+                  <span className="truncate">{m.name.replace(" MODULE", "").replace(" SYSTEM", "")}</span>
                 </div>
-                <LucideIcons.ChevronRight size={12} className={activeModuleTab === m.id ? "text-[#00cec4]" : "text-slate-600"} />
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <StatusBadge status={m.status} />
+                  <LucideIcons.ChevronRight size={12} className={activeModuleTab === m.id ? "text-[#00cec4]" : "text-slate-600"} />
+                </div>
               </button>
             ))}
           </div>

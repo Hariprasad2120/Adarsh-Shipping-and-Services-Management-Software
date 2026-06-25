@@ -66,16 +66,16 @@ model Organisation {
   transactionLock     TransactionLock?
   partnerAccounts     PartnerAccount[]
 
-  chaSettings         ChaSettings?
-  chaJobs             ChaJob[]
-  chaJobDeletionRequests ChaJobDeletionRequest[]
-  chaExpenseRequests  ChaExpenseRequest[]
-  chaAuditLogs        ChaAuditLog[]
-  chaTeamGroups       ChaTeamGroup[]
-  chaBranchNumberingRules ChaBranchNumberingRule[]
-  chaShipmentTypes    ChaShipmentType[]
+  chaSettings                      ChaSettings?
+  chaJobs                          ChaJob[]
+  chaJobDeletionRequests           ChaJobDeletionRequest[]
+  chaExpenseRequests               ChaExpenseRequest[]
+  chaAuditLogs                     ChaAuditLog[]
+  chaTeamGroups                    ChaTeamGroup[]
+  chaBranchNumberingRules          ChaBranchNumberingRule[]
+  chaShipmentTypes                 ChaShipmentType[]
   chaDocumentRequirementCategories ChaDocumentRequirementCategory[]
-  filingWorkflowTemplates FilingWorkflowTemplate[]
+  filingWorkflowTemplates          FilingWorkflowTemplate[]
 
   // Google Chat Integration
   googleChatSpaces        GoogleChatSpace[]
@@ -331,6 +331,15 @@ model User {
   hrmsAuditLogs            HrmsAuditLog[]                @relation("HrmsAuditLogs")
   hrmsWorkReports          WorkReport[]                  @relation("UserWorkReports")
 
+  // HRMS Mobile Attendance & Tracking
+  mobileDevices            MobileDevice[]            @relation("UserMobileDevices")
+  faceEnrollment           EmployeeFaceEnrollment?   @relation("FaceEnrollment")
+  attendanceSessions       AttendanceSession[]       @relation("AttendanceSessions")
+  locationTrackingSessions LocationTrackingSession[] @relation("UserTrackingSessions")
+  trackingAlerts           TrackingAlert[]           @relation("UserTrackingAlerts")
+  fuelReimbursementClaims  FuelReimbursementClaim[]  @relation("UserFuelClaims")
+  agreementAcceptances     UserAgreementAcceptance[] @relation("UserAgreementAcceptances")
+
   // Accounting Module Relations
   accountingAuditLogs AccountingAuditLog[]
 
@@ -360,13 +369,13 @@ model User {
   recruitPrivateShares         RecruitPrivateShare[]
 
   // CHA Module Relations
-  chaJobsOwned                 ChaJob[]                  @relation("ChaJobPrimaryOwner")
-  chaJobsManaged               ChaJob[]                  @relation("ChaJobAssignedManager")
-  chaJobsDeleted              ChaJob[]                  @relation("ChaJobDeletedBy")
+  chaJobsOwned                 ChaJob[]                 @relation("ChaJobPrimaryOwner")
+  chaJobsManaged               ChaJob[]                 @relation("ChaJobAssignedManager")
+  chaJobsDeleted               ChaJob[]                 @relation("ChaJobDeletedBy")
   chaJobAssignments            ChaJobAssignment[]
-  chaJobDeletionRequests       ChaJobDeletionRequest[]   @relation("ChaJobDeletionRequester")
-  chaJobDeletionApprovals      ChaJobDeletionRequest[]   @relation("ChaJobDeletionManager")
-  chaJobDeletionExecutions     ChaJobDeletionRequest[]   @relation("ChaJobDeletionExecutor")
+  chaJobDeletionRequests       ChaJobDeletionRequest[]  @relation("ChaJobDeletionRequester")
+  chaJobDeletionApprovals      ChaJobDeletionRequest[]  @relation("ChaJobDeletionManager")
+  chaJobDeletionExecutions     ChaJobDeletionRequest[]  @relation("ChaJobDeletionExecutor")
   chaDocumentVersionsUploaded  ChaDocumentVersion[]
   chaDocumentExceptionsCreated ChaDocumentException[]
   chaChecklistImportsUploaded  ChaChecklistImport[]
@@ -1810,16 +1819,39 @@ model AttendancePermissionRequest {
 }
 
 model OnDutyRequest {
-  id           String   @id @default(cuid())
-  orgId        String
-  userId       String
-  fromDate     DateTime @db.Date
-  toDate       DateTime @db.Date
-  reason       String
-  status       String   @default("PENDING") // PENDING | APPROVED | REJECTED
-  approvedById String?
-  createdAt    DateTime @default(now())
-  user         User     @relation("OnDutyEmployee", fields: [userId], references: [id], onDelete: Cascade)
+  id              String    @id @default(cuid())
+  orgId           String
+  userId          String
+  fromDate        DateTime  @db.Date
+  toDate          DateTime  @db.Date
+  startTime       String? // "HH:MM" 24h
+  endTime         String? // "HH:MM" 24h
+  reason          String
+  purpose         String? // Sales Visit, Client Meeting, Port Visit, Customs Work, etc.
+  clientReference String? // CRM Lead / CHA Job / Customer reference
+  visitLocation   String? // Place name
+  visitAddress    String? // Full address
+  remarks         String?
+  attachmentUrl   String?
+  status          String    @default("PENDING") // DRAFT | PENDING | APPROVED | REJECTED | CANCELLED | ACTIVE | COMPLETED
+  approvedById    String?
+  approvedAt      DateTime?
+  rejectedReason  String?
+  startedAt       DateTime? // When employee tapped "Start On Duty"
+  completedAt     DateTime? // When employee tapped "Finish On Duty"
+  startLocation   Json? // { lat, lng, accuracy, timestamp }
+  endLocation     Json? // { lat, lng, accuracy, timestamp }
+  totalDistanceKm Float? // Calculated from route points
+  routeSummary    Json? // Array of key waypoints
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user             User                      @relation("OnDutyEmployee", fields: [userId], references: [id], onDelete: Cascade)
+  trackingSessions LocationTrackingSession[] @relation("OnDutyTrackingSessions")
+  fuelClaims       FuelReimbursementClaim[]  @relation("OnDutyFuelClaims")
+
+  @@index([orgId, status])
+  @@index([userId, status])
 }
 
 model BiometricDevice {
@@ -3217,19 +3249,19 @@ model ChaJobType {
 }
 
 model ChaBranchNumberingRule {
-  id                  String       @id @default(cuid())
+  id                  String   @id @default(cuid())
   orgId               String
-  branchId            String       @unique
+  branchId            String   @unique
   prefix              String
   suffix              String?
-  startingSequence    Int          @default(1)
-  currentSequence     Int          @default(0)
-  numberPadding       Int          @default(4)
-  useFinancialYear    Boolean      @default(false)
+  startingSequence    Int      @default(1)
+  currentSequence     Int      @default(0)
+  numberPadding       Int      @default(4)
+  useFinancialYear    Boolean  @default(false)
   financialYearFormat String?
-  isActive            Boolean      @default(true)
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   org    Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   branch Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
@@ -3239,12 +3271,12 @@ model ChaBranchNumberingRule {
 }
 
 model ChaShipmentType {
-  id        String       @id @default(cuid())
+  id        String   @id @default(cuid())
   orgId     String
   name      String
-  isActive  Boolean      @default(true)
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   org  Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   jobs ChaJob[]
@@ -3289,27 +3321,27 @@ model ChaJob {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  org                  Organisation                @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  customer             CrmAccount                  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  jobType              ChaJobType                  @relation(fields: [jobTypeId], references: [id])
-  shipmentType         ChaShipmentType?            @relation(fields: [shipmentTypeId], references: [id])
-  branch               Branch                      @relation(fields: [branchId], references: [id])
-  primaryOwner         User                        @relation("ChaJobPrimaryOwner", fields: [primaryOwnerId], references: [id])
-  assignedManager      User?                       @relation("ChaJobAssignedManager", fields: [assignedManagerId], references: [id])
-  deletedBy            User?                       @relation("ChaJobDeletedBy", fields: [deletedById], references: [id])
-  assignments          ChaJobAssignment[]
-  deletionRequests     ChaJobDeletionRequest[]
-  documentRequirements ChaJobDocumentRequirement[]
-  additionalData       ChaJobAdditionalData?
-  checklistWorkflow    ChaChecklist?
-  checklistImports     ChaChecklistImport[]
-  filing               ChaFiling?
+  org                    Organisation                @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer               CrmAccount                  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  jobType                ChaJobType                  @relation(fields: [jobTypeId], references: [id])
+  shipmentType           ChaShipmentType?            @relation(fields: [shipmentTypeId], references: [id])
+  branch                 Branch                      @relation(fields: [branchId], references: [id])
+  primaryOwner           User                        @relation("ChaJobPrimaryOwner", fields: [primaryOwnerId], references: [id])
+  assignedManager        User?                       @relation("ChaJobAssignedManager", fields: [assignedManagerId], references: [id])
+  deletedBy              User?                       @relation("ChaJobDeletedBy", fields: [deletedById], references: [id])
+  assignments            ChaJobAssignment[]
+  deletionRequests       ChaJobDeletionRequest[]
+  documentRequirements   ChaJobDocumentRequirement[]
+  additionalData         ChaJobAdditionalData?
+  checklistWorkflow      ChaChecklist?
+  checklistImports       ChaChecklistImport[]
+  filing                 ChaFiling?
   filingWorkflowInstance FilingWorkflowInstance?
   filingSection49Flag    FilingSection49Flag?
-  customerAdvance      ChaCustomerAdvance?
-  expenseRequests      ChaExpenseRequest[]
-  auditLogs            ChaAuditLog[]
-  workspaceProfile     JobWorkspaceProfile?
+  customerAdvance        ChaCustomerAdvance?
+  expenseRequests        ChaExpenseRequest[]
+  auditLogs              ChaAuditLog[]
+  workspaceProfile       JobWorkspaceProfile?
 
   @@unique([orgId, jobNumber])
   @@index([orgId, deletedAt])
@@ -3348,14 +3380,14 @@ model ChaJobAdditionalData {
 }
 
 model ChaJobDeletionRequest {
-  id                String   @id @default(cuid())
+  id                String    @id @default(cuid())
   orgId             String
   jobId             String
   jobNumberSnapshot String
   requestedById     String
   assignedManagerId String
-  status            String   @default("PENDING") // PENDING | APPROVED | REJECTED | CANCELLED | EXECUTED
-  requestedAt       DateTime @default(now())
+  status            String    @default("PENDING") // PENDING | APPROVED | REJECTED | CANCELLED | EXECUTED
+  requestedAt       DateTime  @default(now())
   decidedAt         DateTime?
   executedAt        DateTime?
   executedById      String?
@@ -3394,7 +3426,7 @@ model ChaJobDocumentRequirement {
   category    String
   isMandatory Boolean @default(true)
   status      String  @default("PENDING") // PENDING | UPLOADED | NOT_AVAILABLE | REPLACED | REQUIRES_ATTENTION
-  
+
   requirementItemId String?
 
   job             ChaJob                      @relation(fields: [jobId], references: [id], onDelete: Cascade)
@@ -3587,8 +3619,8 @@ model ChaChecklistFileVersion {
   versionNumber    Int
   remarks          String?
 
-  checklist            ChaChecklist            @relation("ChaChecklistVersions", fields: [checklistId], references: [id], onDelete: Cascade)
-  currentForChecklists ChaChecklist[]          @relation("ChaChecklistCurrentVersion")
+  checklist            ChaChecklist           @relation("ChaChecklistVersions", fields: [checklistId], references: [id], onDelete: Cascade)
+  currentForChecklists ChaChecklist[]         @relation("ChaChecklistCurrentVersion")
   approvals            ChaChecklistDecision[]
 
   @@unique([checklistId, versionNumber])
@@ -3596,17 +3628,17 @@ model ChaChecklistFileVersion {
 }
 
 model ChaChecklistDecision {
-  id           String   @id @default(cuid())
-  checklistId  String
+  id            String    @id @default(cuid())
+  checklistId   String
   fileVersionId String
-  stage        String
-  action       String   @default("PENDING")
-  remarks      String?
-  actedById    String?
-  assignedToId String?
-  actedAt      DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  stage         String
+  action        String    @default("PENDING")
+  remarks       String?
+  actedById     String?
+  assignedToId  String?
+  actedAt       DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   checklist   ChaChecklist            @relation(fields: [checklistId], references: [id], onDelete: Cascade)
   fileVersion ChaChecklistFileVersion @relation(fields: [fileVersionId], references: [id], onDelete: Cascade)
@@ -4938,14 +4970,14 @@ model GoogleChatLinkToken {
 // ─── Filing Workflow Blueprint Models ────────────────────────────────────────
 
 model FilingWorkflowTemplate {
-  id          String                  @id @default(cuid())
+  id          String                   @id @default(cuid())
   orgId       String
   name        String
   description String?
-  isActive    Boolean                 @default(true)
-  createdAt   DateTime                @default(now())
-  updatedAt   DateTime                @updatedAt
-  org         Organisation            @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  isActive    Boolean                  @default(true)
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+  org         Organisation             @relation(fields: [orgId], references: [id], onDelete: Cascade)
   versions    FilingWorkflowVersion[]
   instances   FilingWorkflowInstance[]
 
@@ -4972,28 +5004,28 @@ model FilingWorkflowVersion {
 }
 
 model FilingWorkflowNode {
-  id                               String                  @id @default(cuid())
-  versionId                        String
-  key                              String
-  name                             String
-  description                      String?
-  category                         String?
-  isActive                         Boolean                 @default(true)
-  positionX                        Float                   @default(0)
-  positionY                        Float                   @default(0)
-  isStart                          Boolean                 @default(false)
-  slaDuration                      Int                     @default(2)
-  slaUnit                          String                  @default("BUSINESS_DAYS")
-  commentsRequired                 Boolean                 @default(false)
-  canBeSkipped                     Boolean                 @default(false)
-  canBeRevisited                   Boolean                 @default(true)
-  requireAllMandatoryChecklistItems Boolean                 @default(true)
-  requireMandatoryPhotos           Boolean                 @default(true)
-  allowedRoles                     String[]
-  version                          FilingWorkflowVersion   @relation(fields: [versionId], references: [id], onDelete: Cascade)
-  checklistItems                   FilingChecklistItem[]
-  photoRequirements                FilingPhotoRequirement[]
-  nodeRuns                         FilingNodeRun[]
+  id                                String                   @id @default(cuid())
+  versionId                         String
+  key                               String
+  name                              String
+  description                       String?
+  category                          String?
+  isActive                          Boolean                  @default(true)
+  positionX                         Float                    @default(0)
+  positionY                         Float                    @default(0)
+  isStart                           Boolean                  @default(false)
+  slaDuration                       Int                      @default(2)
+  slaUnit                           String                   @default("BUSINESS_DAYS")
+  commentsRequired                  Boolean                  @default(false)
+  canBeSkipped                      Boolean                  @default(false)
+  canBeRevisited                    Boolean                  @default(true)
+  requireAllMandatoryChecklistItems Boolean                  @default(true)
+  requireMandatoryPhotos            Boolean                  @default(true)
+  allowedRoles                      String[]
+  version                           FilingWorkflowVersion    @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  checklistItems                    FilingChecklistItem[]
+  photoRequirements                 FilingPhotoRequirement[]
+  nodeRuns                          FilingNodeRun[]
 
   @@unique([versionId, key])
   @@index([versionId])
@@ -5012,41 +5044,41 @@ model FilingWorkflowEdge {
 }
 
 model FilingChecklistItem {
-  id                  String                    @id @default(cuid())
-  nodeId              String
-  label               String
-  description         String?
-  isMandatory         Boolean                   @default(true)
-  requiresRemarks     Boolean                   @default(false)
-  allowsUpload        Boolean                   @default(false)
-  minUploads          Int                       @default(0)
-  maxUploads          Int?
-  acceptedFileTypes   String[]
-  deadlineDuration    Int                       @default(2)
-  deadlineUnit        String                    @default("BUSINESS_DAYS")
-  delayRemarksRequired Boolean                  @default(true)
-  hasPhotoRequirement Boolean                   @default(false)
-  sortOrder           Int                       @default(0)
-  isActive            Boolean                   @default(true)
-  node                FilingWorkflowNode        @relation(fields: [nodeId], references: [id], onDelete: Cascade)
-  responses           FilingChecklistResponse[]
-  attachments         FilingAttachment[]        @relation("FilingChecklistItemUploads")
+  id                   String                    @id @default(cuid())
+  nodeId               String
+  label                String
+  description          String?
+  isMandatory          Boolean                   @default(true)
+  requiresRemarks      Boolean                   @default(false)
+  allowsUpload         Boolean                   @default(false)
+  minUploads           Int                       @default(0)
+  maxUploads           Int?
+  acceptedFileTypes    String[]
+  deadlineDuration     Int                       @default(2)
+  deadlineUnit         String                    @default("BUSINESS_DAYS")
+  delayRemarksRequired Boolean                   @default(true)
+  hasPhotoRequirement  Boolean                   @default(false)
+  sortOrder            Int                       @default(0)
+  isActive             Boolean                   @default(true)
+  node                 FilingWorkflowNode        @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  responses            FilingChecklistResponse[]
+  attachments          FilingAttachment[]        @relation("FilingChecklistItemUploads")
 
   @@index([nodeId])
 }
 
 model FilingPhotoRequirement {
-  id                 String             @id @default(cuid())
-  nodeId             String
-  label              String
-  description        String?
-  isMandatory        Boolean            @default(true)
-  minPhotos          Int                @default(1)
-  maxPhotos          Int?
-  acceptedFileTypes  String[]
+  id                  String             @id @default(cuid())
+  nodeId              String
+  label               String
+  description         String?
+  isMandatory         Boolean            @default(true)
+  minPhotos           Int                @default(1)
+  maxPhotos           Int?
+  acceptedFileTypes   String[]
   isVisibleInTimeline Boolean            @default(true)
-  node               FilingWorkflowNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
-  attachments        FilingAttachment[]
+  node                FilingWorkflowNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  attachments         FilingAttachment[]
 
   @@index([nodeId])
 }
@@ -5073,21 +5105,21 @@ model FilingWorkflowInstance {
 }
 
 model FilingNodeRun {
-  id             String                  @id @default(cuid())
-  instanceId     String
-  nodeId         String
-  nodeKey        String
-  status         String                  @default("ACTIVE")
-  startedAt      DateTime                @default(now())
-  completedAt    DateTime?
-  slaDueDate     DateTime?
-  completedById  String?
-  remarks        String?
-  instance       FilingWorkflowInstance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  node           FilingWorkflowNode      @relation(fields: [nodeId], references: [id])
-  completedBy    User?                   @relation(fields: [completedById], references: [id])
-  responses      FilingChecklistResponse[]
-  attachments    FilingAttachment[]
+  id            String                    @id @default(cuid())
+  instanceId    String
+  nodeId        String
+  nodeKey       String
+  status        String                    @default("ACTIVE")
+  startedAt     DateTime                  @default(now())
+  completedAt   DateTime?
+  slaDueDate    DateTime?
+  completedById String?
+  remarks       String?
+  instance      FilingWorkflowInstance    @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  node          FilingWorkflowNode        @relation(fields: [nodeId], references: [id])
+  completedBy   User?                     @relation(fields: [completedById], references: [id])
+  responses     FilingChecklistResponse[]
+  attachments   FilingAttachment[]
 
   @@index([instanceId])
   @@index([nodeId])
@@ -5095,11 +5127,11 @@ model FilingNodeRun {
 }
 
 model FilingChecklistResponse {
-  id              String              @id @default(cuid())
+  id              String                 @id @default(cuid())
   instanceId      String
   nodeRunId       String?
   checklistItemId String
-  isChecked       Boolean             @default(false)
+  isChecked       Boolean                @default(false)
   remarks         String?
   fileKey         String?
   dueAt           DateTime?
@@ -5107,10 +5139,10 @@ model FilingChecklistResponse {
   delayRemarks    String?
   delayRemarkedAt DateTime?
   overdueLoggedAt DateTime?
-  updatedAt       DateTime            @updatedAt
+  updatedAt       DateTime               @updatedAt
   instance        FilingWorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  nodeRun         FilingNodeRun?      @relation(fields: [nodeRunId], references: [id], onDelete: Cascade)
-  checklistItem   FilingChecklistItem @relation(fields: [checklistItemId], references: [id])
+  nodeRun         FilingNodeRun?         @relation(fields: [nodeRunId], references: [id], onDelete: Cascade)
+  checklistItem   FilingChecklistItem    @relation(fields: [checklistItemId], references: [id])
 
   @@unique([instanceId, checklistItemId])
   @@index([instanceId])
@@ -5152,4 +5184,230 @@ model FilingSection49Flag {
   toggledBy   User     @relation(fields: [toggledById], references: [id])
 
   @@index([jobId])
+}
+
+// ─── HRMS Mobile Attendance & Tracking ──────────────────────────────────────────
+
+model MobileDevice {
+  id         String   @id @default(cuid())
+  orgId      String
+  userId     String
+  deviceId   String // Unique device identifier from native app
+  platform   String   @default("android") // android | ios | web
+  model      String? // e.g. "Samsung Galaxy S24"
+  osVersion  String?
+  appVersion String?
+  pushToken  String? // FCM / APNs token
+  isActive   Boolean  @default(true)
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation("UserMobileDevices", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId])
+  @@index([orgId])
+  @@index([userId, isActive])
+}
+
+model EmployeeFaceEnrollment {
+  id             String    @id @default(cuid())
+  orgId          String
+  userId         String    @unique
+  enrollmentData Json // Encrypted face descriptor/embedding data
+  enrollmentHash String // Hash for integrity verification
+  isActive       Boolean   @default(true)
+  enrolledAt     DateTime  @default(now())
+  enrolledVia    String    @default("mobile") // mobile | web | admin
+  resetById      String? // Admin who last reset enrollment
+  resetAt        DateTime?
+  auditTrail     Json? // Array of audit entries
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user User @relation("FaceEnrollment", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+}
+
+model AttendanceSession {
+  id                     String    @id @default(cuid())
+  orgId                  String
+  userId                 String
+  date                   DateTime  @db.Date
+  checkInAt              DateTime
+  checkOutAt             DateTime?
+  checkInLocation        Json? // { lat, lng, accuracy, timestamp, address }
+  checkOutLocation       Json? // { lat, lng, accuracy, timestamp, address }
+  checkInFaceVerified    Boolean   @default(false)
+  checkOutFaceVerified   Boolean   @default(false)
+  checkInFaceConfidence  Float? // 0.0 to 1.0
+  checkOutFaceConfidence Float?
+  checkInDeviceId        String?
+  checkOutDeviceId       String?
+  checkInSource          String    @default("MOBILE") // MOBILE | BIOMETRIC | WEB | ADMIN
+  checkOutSource         String?
+  checkInIp              String?
+  checkOutIp             String?
+  trackingEnabled        Boolean   @default(false)
+  status                 String    @default("ACTIVE") // ACTIVE | CLOSED | AUTO_CLOSED
+  closedReason           String? // checkout | shift_end | admin_close | auto_close
+  workingMinutes         Int?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  user             User                      @relation("AttendanceSessions", fields: [userId], references: [id], onDelete: Cascade)
+  trackingSessions LocationTrackingSession[] @relation("SessionTrackingSessions")
+
+  @@index([orgId, date])
+  @@index([userId, date])
+  @@index([userId, status])
+}
+
+model LocationTrackingSession {
+  id                  String    @id @default(cuid())
+  orgId               String
+  userId              String
+  attendanceSessionId String?
+  onDutyRequestId     String?
+  startedAt           DateTime  @default(now())
+  stoppedAt           DateTime?
+  intervalMinutes     Int       @default(60) // 60 for hourly, 5 for on-duty
+  status              String    @default("ACTIVE") // ACTIVE | PAUSED | STOPPED
+  stopReason          String? // checkout | shift_end | on_duty_complete | admin_stop | auto_stop
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  user              User               @relation("UserTrackingSessions", fields: [userId], references: [id], onDelete: Cascade)
+  attendanceSession AttendanceSession? @relation("SessionTrackingSessions", fields: [attendanceSessionId], references: [id], onDelete: SetNull)
+  onDutyRequest     OnDutyRequest?     @relation("OnDutyTrackingSessions", fields: [onDutyRequestId], references: [id], onDelete: SetNull)
+  locationPoints    LocationPoint[]
+  alerts            TrackingAlert[]    @relation("TrackingSessionAlerts")
+
+  @@index([orgId, status])
+  @@index([userId, status])
+}
+
+model LocationPoint {
+  id                String   @id @default(cuid())
+  trackingSessionId String
+  latitude          Float
+  longitude         Float
+  accuracy          Float? // meters
+  altitude          Float?
+  speed             Float? // m/s
+  bearing           Float? // degrees
+  timestamp         DateTime
+  batteryLevel      Float? // 0-100
+  deviceId          String?
+  networkStatus     String? // wifi | cellular | offline
+  source            String   @default("HOURLY") // HOURLY | ON_DUTY | CHECK_IN | CHECK_OUT | MANUAL
+  isMocked          Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  trackingSession LocationTrackingSession @relation(fields: [trackingSessionId], references: [id], onDelete: Cascade)
+
+  @@index([trackingSessionId, timestamp])
+  @@index([timestamp])
+}
+
+model TrackingAlert {
+  id                String    @id @default(cuid())
+  orgId             String
+  userId            String
+  trackingSessionId String?
+  onDutyRequestId   String?
+  alertType         String // OFFLINE | GPS_DISABLED | PERMISSION_DENIED | APP_KILLED | LOW_BATTERY | MOCK_DETECTED
+  lastKnownLat      Float?
+  lastKnownLng      Float?
+  lastUpdateAt      DateTime?
+  message           String?
+  resolvedAt        DateTime?
+  notifiedManagerId String?
+  notifiedAdminId   String?
+  createdAt         DateTime  @default(now())
+
+  user            User                     @relation("UserTrackingAlerts", fields: [userId], references: [id], onDelete: Cascade)
+  trackingSession LocationTrackingSession? @relation("TrackingSessionAlerts", fields: [trackingSessionId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, alertType])
+  @@index([userId, resolvedAt])
+}
+
+model FuelReimbursementPolicy {
+  id            String    @id @default(cuid())
+  orgId         String
+  ratePerKm     Float     @default(3.75) // ₹3.75/km default
+  currency      String    @default("INR")
+  effectiveFrom DateTime  @default(now())
+  effectiveTo   DateTime?
+  isActive      Boolean   @default(true)
+  createdById   String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([orgId, isActive])
+}
+
+model FuelReimbursementClaim {
+  id              String    @id @default(cuid())
+  orgId           String
+  userId          String
+  onDutyRequestId String
+  distanceKm      Float
+  ratePerKm       Float // Snapshot of rate at time of claim
+  amount          Float // distanceKm × ratePerKm
+  status          String    @default("PENDING") // PENDING | APPROVED | REJECTED | PAID
+  approvedById    String?
+  approvedAt      DateTime?
+  rejectedReason  String?
+  paidAt          DateTime?
+  paidById        String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user          User          @relation("UserFuelClaims", fields: [userId], references: [id], onDelete: Cascade)
+  onDutyRequest OnDutyRequest @relation("OnDutyFuelClaims", fields: [onDutyRequestId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, status])
+  @@index([userId, status])
+}
+
+// ─── User Agreement / Consent ───────────────────────────────────────────────────
+
+model UserAgreementVersion {
+  id            String   @id @default(cuid())
+  orgId         String
+  version       Int
+  title         String
+  content       String // Full legal text
+  contentHash   String // SHA-256 of content for integrity
+  effectiveFrom DateTime @default(now())
+  isActive      Boolean  @default(true)
+  createdById   String
+  createdAt     DateTime @default(now())
+
+  acceptances UserAgreementAcceptance[]
+
+  @@unique([orgId, version])
+  @@index([orgId, isActive])
+}
+
+model UserAgreementAcceptance {
+  id                 String   @id @default(cuid())
+  orgId              String
+  userId             String
+  agreementVersionId String
+  acceptedAt         DateTime @default(now())
+  ipAddress          String?
+  deviceId           String?
+  userAgent          String?
+  createdAt          DateTime @default(now())
+
+  user             User                 @relation("UserAgreementAcceptances", fields: [userId], references: [id], onDelete: Cascade)
+  agreementVersion UserAgreementVersion @relation(fields: [agreementVersionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, agreementVersionId])
+  @@index([orgId])
 }
