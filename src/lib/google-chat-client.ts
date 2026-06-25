@@ -378,12 +378,13 @@ export async function listSpaces(
   });
   const orgId = dbUser?.orgId || "";
 
-  // Fetch the user's own Google User ID for DM name resolution
+  // Fetch the user's own Google identity for DM name resolution
   const connection = await db.googleWorkspaceConnection.findUnique({
     where: { userId },
-    select: { googleUserId: true }
+    select: { googleUserId: true, googleEmail: true }
   });
   const myGoogleUserId = connection?.googleUserId;
+  const myGoogleEmail = connection?.googleEmail?.toLowerCase();
 
   // Paginate through all spaces from Google Chat API
   const allApiSpaces: { name: string; displayName?: string; spaceType: string }[] = [];
@@ -442,9 +443,13 @@ export async function listSpaces(
       if (space.spaceType === "DIRECT_MESSAGE") {
         try {
           const membersData = await listMemberships(space.name, userId);
-          const otherMember = membersData.memberships?.find(
-            (m) => m.member && m.member.name !== `users/${myGoogleUserId}`
-          );
+          // Identify the "other" member by excluding the calling user by both googleUserId and email
+          const otherMember = membersData.memberships?.find((m) => {
+            if (!m.member) return false;
+            if (myGoogleUserId && m.member.name === `users/${myGoogleUserId}`) return false;
+            if (myGoogleEmail && m.member.email?.toLowerCase() === myGoogleEmail) return false;
+            return true;
+          });
 
           if (otherMember?.member) {
             const otherGoogleId = otherMember.member.name?.replace("users/", "");
@@ -507,16 +512,30 @@ export async function listSpaces(
           }
         } catch (err) {
           console.warn(`[GoogleChat] Failed to resolve DM name for ${space.name}:`, err);
-          // Fallback: check if we have a cached name that's NOT "Adarsh Operations"
-          const cached = await db.googleChatSpace.findUnique({
-            where: { spaceResourceName: space.name }
-          });
-          if (cached?.displayName && cached.displayName !== "Adarsh Operations") {
-            return { ...space, displayName: cached.displayName };
-          }
+          const badDisplayNames = new Set(["Adarsh Operations", "Google Chat DM", "Google User"]);
+          try {
+            const cached = await db.googleChatSpace.findUnique({
+              where: { spaceResourceName: space.name },
+              select: { displayName: true }
+            });
+            if (cached?.displayName && !badDisplayNames.has(cached.displayName)) {
+              return { ...space, displayName: cached.displayName };
+            }
+          } catch { /* ignore cache lookup error */ }
         }
 
-        // If all resolution failed, keep original but never show "Adarsh Operations"
+        // All resolution failed — try DB cache before falling back to a generic label
+        try {
+          const cached = await db.googleChatSpace.findUnique({
+            where: { spaceResourceName: space.name },
+            select: { displayName: true }
+          });
+          const badDisplayNames = new Set(["Adarsh Operations", "Google Chat DM", "Google User"]);
+          if (cached?.displayName && !badDisplayNames.has(cached.displayName)) {
+            return { ...space, displayName: cached.displayName };
+          }
+        } catch { /* ignore cache lookup error */ }
+
         if (space.displayName === "Adarsh Operations") {
           return { ...space, displayName: "Google Chat DM" };
         }

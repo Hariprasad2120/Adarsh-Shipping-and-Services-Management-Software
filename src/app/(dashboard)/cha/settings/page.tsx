@@ -1,13 +1,10 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/rbac";
-import { ensureSettingsAndDefaults } from "@/modules/cha/service";
+import { ensureSettingsAndDefaults, listJobTypesForSettings } from "@/modules/cha/service";
 import { db } from "@/lib/db";
 import { listUsersSlim } from "@/modules/core/user/service";
 import { SettingsForm } from "./settings-form";
-
-const MOVEMENT_DIRECTIONS = new Set(["IMPORT", "EXPORT", "BOTH", "OTHER"] as const);
-const MANIFEST_REQUIREMENTS = new Set(["IGM", "EGM", "BOTH", "NONE", "CUSTOM"] as const);
 
 export default async function ChaSettingsPage() {
   const session = await auth();
@@ -67,19 +64,7 @@ export default async function ChaSettingsPage() {
   const activeEmployees = await listUsersSlim(orgId, { active: true });
 
   // Fetch job types for customization
-  const jobTypes = await db.chaJobType.findMany({
-    where: { orgId },
-    orderBy: { name: "asc" },
-  });
-  const normalizedJobTypes = jobTypes.map((jobType) => ({
-    ...jobType,
-    movementDirection: MOVEMENT_DIRECTIONS.has(jobType.movementDirection as never)
-      ? (jobType.movementDirection as "IMPORT" | "EXPORT" | "BOTH" | "OTHER")
-      : null,
-    manifestRequirement: MANIFEST_REQUIREMENTS.has(jobType.manifestRequirement as never)
-      ? (jobType.manifestRequirement as "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM")
-      : null,
-  }));
+  const normalizedJobTypes = await listJobTypesForSettings(orgId);
 
   const shipmentTypes = await db.chaShipmentType.findMany({
     where: { orgId },

@@ -244,10 +244,92 @@ function serializeWorkflowSnapshot(nodes: NodeDraft[], edges: EdgeDraft[]) {
   });
 }
 
+function autoArrangeNodes(nodes: NodeDraft[], edges: EdgeDraft[]) {
+  if (nodes.length === 0) {
+    return nodes;
+  }
+
+  const nodeMap = new Map(nodes.map((node) => [node.key, node]));
+  const incoming = new Map<string, number>();
+  const outgoing = new Map<string, string[]>();
+
+  for (const node of nodes) {
+    incoming.set(node.key, 0);
+    outgoing.set(node.key, []);
+  }
+
+  for (const edge of edges) {
+    if (!nodeMap.has(edge.sourceKey) || !nodeMap.has(edge.targetKey)) continue;
+    outgoing.get(edge.sourceKey)?.push(edge.targetKey);
+    incoming.set(edge.targetKey, (incoming.get(edge.targetKey) ?? 0) + 1);
+  }
+
+  const queue = nodes
+    .filter((node) => node.isStart || (incoming.get(node.key) ?? 0) === 0)
+    .sort((a, b) => a.positionY - b.positionY || a.name.localeCompare(b.name))
+    .map((node) => node.key);
+  const levelMap = new Map<string, number>();
+  const visited = new Set<string>();
+
+  while (queue.length > 0) {
+    const key = queue.shift()!;
+    if (visited.has(key)) continue;
+    visited.add(key);
+    const currentLevel = levelMap.get(key) ?? 0;
+
+    for (const nextKey of outgoing.get(key) ?? []) {
+      const nextLevel = Math.max(levelMap.get(nextKey) ?? 0, currentLevel + 1);
+      levelMap.set(nextKey, nextLevel);
+      incoming.set(nextKey, Math.max(0, (incoming.get(nextKey) ?? 0) - 1));
+      if ((incoming.get(nextKey) ?? 0) === 0) {
+        queue.push(nextKey);
+      }
+    }
+  }
+
+  // Preserve cyclic graphs by placing any unvisited nodes after the discovered layers.
+  const maxLevel = Math.max(0, ...Array.from(levelMap.values()));
+  let overflowLevel = maxLevel + 1;
+  for (const node of nodes) {
+    if (!levelMap.has(node.key)) {
+      levelMap.set(node.key, overflowLevel);
+      overflowLevel += 1;
+    }
+  }
+
+  const grouped = new Map<number, NodeDraft[]>();
+  for (const node of nodes) {
+    const level = levelMap.get(node.key) ?? 0;
+    const bucket = grouped.get(level) ?? [];
+    bucket.push(node);
+    grouped.set(level, bucket);
+  }
+
+  const HORIZONTAL_GAP = 360;
+  const VERTICAL_GAP = 220;
+  const START_X = 120;
+  const START_Y = 120;
+
+  return nodes.map((node) => {
+    const level = levelMap.get(node.key) ?? 0;
+    const siblings = (grouped.get(level) ?? [])
+      .slice()
+      .sort((a, b) => a.positionY - b.positionY || a.name.localeCompare(b.name));
+    const rowIndex = siblings.findIndex((entry) => entry.key === node.key);
+    return {
+      ...node,
+      positionX: START_X + level * HORIZONTAL_GAP,
+      positionY: START_Y + Math.max(0, rowIndex) * VERTICAL_GAP,
+    };
+  });
+}
+
 function expandChecklistNodesForCanvas(rawNodes: any[], rawEdges: any[]) {
   const expandedNodes: NodeDraft[] = [];
-  const remappedEdges: EdgeDraft[] = [];
+  const generatedEdges: EdgeDraft[] = [];
+  const finalEdges: EdgeDraft[] = [];
   const bridgeMap = new Map<string, { firstKey: string; lastKey: string }>();
+  let didExpand = false;
 
   for (const [index, rawNode] of rawNodes.entries()) {
     const normalizedNode = normalizeNode(rawNode, index);
@@ -260,6 +342,7 @@ function expandChecklistNodesForCanvas(rawNodes: any[], rawEdges: any[]) {
       expandedNodes.push(normalizedNode);
       continue;
     }
+    didExpand = true;
 
     const orderedItems = [...normalizedNode.checklistItems].sort((a, b) => a.sortOrder - b.sortOrder);
     const checklistNodes = orderedItems.map((item, itemIndex) => {
@@ -280,7 +363,7 @@ function expandChecklistNodesForCanvas(rawNodes: any[], rawEdges: any[]) {
     });
 
     for (let itemIndex = 0; itemIndex < checklistNodes.length - 1; itemIndex += 1) {
-      remappedEdges.push({
+      generatedEdges.push({
         id: createId("edge"),
         sourceKey: checklistNodes[itemIndex].key,
         targetKey: checklistNodes[itemIndex + 1].key,
@@ -296,14 +379,14 @@ function expandChecklistNodesForCanvas(rawNodes: any[], rawEdges: any[]) {
   }
 
   const edgeSignatures = new Set<string>();
-  for (const edge of [...rawEdges, ...remappedEdges]) {
+  for (const edge of [...generatedEdges, ...rawEdges]) {
     const sourceKey = bridgeMap.get(edge.sourceKey)?.lastKey ?? edge.sourceKey;
     const targetKey = bridgeMap.get(edge.targetKey)?.firstKey ?? edge.targetKey;
     if (!sourceKey || !targetKey || sourceKey === targetKey) continue;
     const signature = `${sourceKey}:${targetKey}:${edge.label || ""}`;
     if (edgeSignatures.has(signature)) continue;
     edgeSignatures.add(signature);
-    remappedEdges.push({
+    finalEdges.push({
       id: edge.id || createId("edge"),
       sourceKey,
       targetKey,
@@ -313,7 +396,8 @@ function expandChecklistNodesForCanvas(rawNodes: any[], rawEdges: any[]) {
 
   return {
     nodes: expandedNodes,
-    edges: remappedEdges,
+    edges: finalEdges,
+    didExpand,
   };
 }
 
@@ -379,14 +463,15 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
     }
     const latest = result.data.versions?.[0];
     const expanded = expandChecklistNodesForCanvas(latest?.nodes || [], latest?.edges || []);
+    const arrangedNodes = expanded.didExpand ? autoArrangeNodes(expanded.nodes, expanded.edges) : expanded.nodes;
     setActiveVersion(latest || null);
-    setNodes(expanded.nodes);
+    setNodes(arrangedNodes);
     setEdges(expanded.edges);
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
     setZoom(1);
     setPan({ x: 0, y: 0 });
-    setLoadedSnapshot(serializeWorkflowSnapshot(expanded.nodes, expanded.edges));
+    setLoadedSnapshot(serializeWorkflowSnapshot(arrangedNodes, expanded.edges));
   };
 
   useEffect(() => {
@@ -567,6 +652,16 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
   const resetCanvasView = () => {
     setZoom(1);
     setPan({ x: 0, y: 0 });
+  };
+
+  const applyAutoArrange = () => {
+    const arrangedNodes = autoArrangeNodes(nodes, edges);
+    setNodes(arrangedNodes);
+    setSelectedEdgeId(null);
+    setSelectedNodeId(null);
+    requestAnimationFrame(() => {
+      fitCanvasView();
+    });
   };
 
   const updateSelectedNode = (updater: (node: NodeDraft) => NodeDraft) => {
@@ -895,6 +990,10 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
                   <Workflow size={14} />
                   Fit View
                 </Button>
+                <Button variant="outline" size="sm" onClick={applyAutoArrange}>
+                  <Workflow size={14} />
+                  Auto Arrange
+                </Button>
                 <Button variant="outline" size="sm" onClick={resetCanvasView}>
                   <RefreshCw size={14} />
                   Reset View
@@ -908,24 +1007,28 @@ export function WorkflowsClient({ initialTemplates, availableRoles }: WorkflowsC
               style={{ backgroundImage: "radial-gradient(var(--color-outline-variant) 1px, transparent 1px)", backgroundSize: "24px 24px" }}
               onWheel={(event) => {
                 event.preventDefault();
-                if (event.ctrlKey || event.metaKey || event.altKey) {
-                  const rect = canvasRef.current?.getBoundingClientRect();
-                  if (!rect) return;
-                  const pointerX = event.clientX - rect.left;
-                  const pointerY = event.clientY - rect.top;
-                  const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Number((zoom + (event.deltaY < 0 ? 0.08 : -0.08)).toFixed(2))));
-                  const scaleRatio = nextZoom / zoom;
+                const rect = canvasRef.current?.getBoundingClientRect();
+                if (!rect) return;
+
+                if (event.shiftKey) {
                   setPan((current) => ({
-                    x: Math.round(pointerX - (pointerX - current.x) * scaleRatio),
-                    y: Math.round(pointerY - (pointerY - current.y) * scaleRatio),
+                    x: current.x - event.deltaY,
+                    y: current.y,
                   }));
-                  setZoom(nextZoom);
                   return;
                 }
+
+                const pointerX = event.clientX - rect.left;
+                const pointerY = event.clientY - rect.top;
+                const zoomStep = event.ctrlKey || event.metaKey || event.altKey ? 0.14 : 0.08;
+                const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Number((zoom + (event.deltaY < 0 ? zoomStep : -zoomStep)).toFixed(2))));
+                const scaleRatio = nextZoom / zoom;
+
                 setPan((current) => ({
-                  x: current.x - event.deltaX,
-                  y: current.y - event.deltaY,
+                  x: Math.round(pointerX - (pointerX - current.x) * scaleRatio),
+                  y: Math.round(pointerY - (pointerY - current.y) * scaleRatio),
                 }));
+                setZoom(nextZoom);
               }}
               onMouseDown={(event) => {
                 // Node buttons and connect handles call stopPropagation so they never reach here.

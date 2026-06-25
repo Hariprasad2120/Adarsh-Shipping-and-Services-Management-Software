@@ -60,13 +60,23 @@ export async function GET(req: NextRequest) {
         const senderId = msg.sender?.name?.replace("users/", "");
         const isMe = senderId === myGoogleId;
 
+        // Detect @mention via structured annotations (most reliable)
+        const hasMention = myGoogleId
+          ? (msg.annotations || []).some(
+              (a: any) =>
+                a.type === "USER_MENTION" &&
+                a.userMention?.user?.name === `users/${myGoogleId}`
+            )
+          : false;
+
         return {
           spaceId,
           latestMessageName: msg.name,
           latestTime: msg.createTime,
           senderDisplayName: msg.sender?.displayName || "Unknown",
           snippet: (msg.text || msg.formattedText || "").slice(0, 100),
-          isMe
+          isMe,
+          hasMention,
         };
       } catch {
         return null;

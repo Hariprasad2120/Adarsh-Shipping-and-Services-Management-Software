@@ -626,6 +626,38 @@ async function assertCanAccessChecklist(actorId: string, job: {
   }
 }
 
+async function assertCanAccessFiling(actorId: string, job: {
+  id?: string;
+  primaryOwnerId?: string | null;
+  assignedManagerId?: string | null;
+  assignments: { userId: string }[];
+}, permissionKey = "cha.filing.manage") {
+  const concernedUserIds = new Set<string>();
+
+  if (job.primaryOwnerId) {
+    concernedUserIds.add(job.primaryOwnerId);
+  }
+
+  if (job.assignedManagerId) {
+    concernedUserIds.add(job.assignedManagerId);
+  }
+
+  for (const assignment of job.assignments) {
+    if (assignment.userId) {
+      concernedUserIds.add(assignment.userId);
+    }
+  }
+
+  const hasPermission =
+    (await can(actorId, permissionKey)) ||
+    (await can(actorId, "cha.job.update")) ||
+    (await can(actorId, "cha.job.view_all"));
+
+  if (!concernedUserIds.has(actorId) && !hasPermission) {
+    throw new ForbiddenError(permissionKey);
+  }
+}
+
 async function getChecklistConcernedUserIds(job: {
   id?: string;
   primaryOwnerId?: string;
@@ -6151,11 +6183,64 @@ export async function publishFilingWorkflow(userId: string, orgId: string, versi
   return result;
 }
 
-export async function getFilingWorkflowInstance(orgId: string, jobId: string) {
+export async function getFilingWorkflowInstance(orgId: string, jobId: string): Promise<any> {
+  let instance = await db.filingWorkflowInstance.findUnique({
+    where: { jobId },
+    include: {
+      template: true,
+      version: {
+        include: {
+          nodes: {
+            include: {
+              checklistItems: { orderBy: { sortOrder: "asc" } },
+              photoRequirements: true,
+            },
+          },
+          edges: true,
+        },
+      },
+      nodeRuns: {
+        orderBy: { startedAt: "desc" },
+        include: {
+          node: {
+            include: {
+              checklistItems: { orderBy: { sortOrder: "asc" } },
+              photoRequirements: true,
+            },
+          },
+          completedBy: { select: { name: true } },
+          attachments: { include: { uploadedBy: { select: { name: true } }, checklistItem: true } },
+        },
+      },
+      responses: {
+        include: { checklistItem: true },
+      },
+      attachments: {
+        include: { photoRequirement: true, checklistItem: true, uploadedBy: { select: { name: true } } },
+      },
+    },
+  });
+
+  if (!instance) {
+    const job = await db.chaJob.findFirst({
+      where: { id: jobId, orgId, deletedAt: null },
+      select: {
+        stage: true,
+        primaryOwnerId: true,
+      },
+    });
+
+    if (job?.stage === "FILING") {
+      return startFilingWorkflow(job.primaryOwnerId, orgId, jobId);
+    }
+
+    return null;
+  }
+
   await syncOverdueFilingItems(orgId, jobId);
   const now = await getNow();
 
-  const instance = await db.filingWorkflowInstance.findUnique({
+  instance = await db.filingWorkflowInstance.findUnique({
     where: { jobId },
     include: {
       template: true,
@@ -6219,7 +6304,7 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string) {
   };
 }
 
-export async function startFilingWorkflow(userId: string, orgId: string, jobId: string) {
+export async function startFilingWorkflow(userId: string, orgId: string, jobId: string): Promise<any> {
   let instance = await db.filingWorkflowInstance.findUnique({
     where: { jobId },
   });
@@ -6321,6 +6406,22 @@ export async function completeFilingNode(
     nextNodeKey?: string | null;
   }
 ) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: { id: jobId, orgId },
+    select: {
+      id: true,
+      primaryOwnerId: true,
+      assignedManagerId: true,
+      assignments: {
+        select: {
+          userId: true,
+        },
+      },
+    },
+  });
+
+  await assertCanAccessFiling(userId, job);
+
   return db.$transaction(async (tx) => {
     const nodeRun = await tx.filingNodeRun.findUniqueOrThrow({
       where: { id: nodeRunId },
@@ -6614,7 +6715,19 @@ export async function toggleFilingSection49(
 ) {
   const job = await db.chaJob.findFirstOrThrow({
     where: { id: jobId, orgId },
+    select: {
+      id: true,
+      primaryOwnerId: true,
+      assignedManagerId: true,
+      assignments: {
+        select: {
+          userId: true,
+        },
+      },
+    },
   });
+
+  await assertCanAccessFiling(userId, job);
 
   const existingFlag = await db.filingSection49Flag.findUnique({
     where: { jobId },
@@ -6668,9 +6781,37 @@ export async function uploadFilingAttachment(
   fileData: { fileName: string; mimeType: string; sizeBytes: number },
   fileBuffer?: Buffer
 ) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: { id: jobId, orgId },
+    select: {
+      id: true,
+      primaryOwnerId: true,
+      assignedManagerId: true,
+      assignments: {
+        select: {
+          userId: true,
+        },
+      },
+    },
+  });
+
+  await assertCanAccessFiling(actorId, job);
+
   const instance = await db.filingWorkflowInstance.findUniqueOrThrow({
     where: { jobId },
   });
+
+  const nodeRun = await db.filingNodeRun.findFirst({
+    where: {
+      id: nodeRunId,
+      instanceId: instance.id,
+    },
+    select: { id: true },
+  });
+
+  if (!nodeRun) {
+    throw new Error("Filing workflow step not found for this job.");
+  }
 
   const profile = await db.jobWorkspaceProfile.findUnique({
     where: { jobId },
@@ -6737,8 +6878,20 @@ export async function upsertFilingShipmentDetails(
 ) {
   const job = await db.chaJob.findFirstOrThrow({
     where: { id: jobId, orgId },
-    include: { filing: true },
+    select: {
+      id: true,
+      primaryOwnerId: true,
+      assignedManagerId: true,
+      filing: true,
+      assignments: {
+        select: {
+          userId: true,
+        },
+      },
+    },
   });
+
+  await assertCanAccessFiling(userId, job);
 
   const filingShipmentType = data.filingShipmentType.trim();
   const billOfEntryNumber = data.billOfEntryNumber?.trim() || null;
@@ -6750,14 +6903,6 @@ export async function upsertFilingShipmentDetails(
 
   if (billOfEntryNumber && shippingBillNumber) {
     throw new Error("Bill of Entry and Shipping Bill numbers cannot both be set.");
-  }
-
-  if (filingShipmentType.toUpperCase() === "IMPORT" && shippingBillNumber) {
-    throw new Error("Shipping Bill Number is not allowed for import shipment type.");
-  }
-
-  if (filingShipmentType.toUpperCase() === "EXPORT" && billOfEntryNumber) {
-    throw new Error("Bill of Entry Number is not allowed for export shipment type.");
   }
 
   const previous = job.filing;
@@ -6831,9 +6976,36 @@ export async function deleteFilingAttachment(
   jobId: string,
   attachmentId: string
 ) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: { id: jobId, orgId },
+    select: {
+      id: true,
+      primaryOwnerId: true,
+      assignedManagerId: true,
+      assignments: {
+        select: {
+          userId: true,
+        },
+      },
+    },
+  });
+
+  await assertCanAccessFiling(actorId, job);
+
   const attachment = await db.filingAttachment.findUniqueOrThrow({
     where: { id: attachmentId },
+    include: {
+      instance: {
+        select: {
+          jobId: true,
+        },
+      },
+    },
   });
+
+  if (attachment.instance.jobId !== jobId) {
+    throw new Error("Attachment does not belong to this job.");
+  }
 
   await db.filingAttachment.delete({
     where: { id: attachmentId },

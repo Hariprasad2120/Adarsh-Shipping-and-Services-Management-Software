@@ -1207,7 +1207,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(instance.status).toBe("ACTIVE");
     expect(instance.currentNodeKey).toBe("node_start");
 
-    const activeRun = instance.nodeRuns.find((run) => run.status === "ACTIVE")!;
+    const activeRun = instance.nodeRuns.find((run: any) => run.status === "ACTIVE")!;
     expect(activeRun).toBeDefined();
     expect(activeRun.nodeKey).toBe("node_start");
 
@@ -1258,7 +1258,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
     const instanceAfterFirstNode = await chaService.getFilingWorkflowInstance(org.id, job.id);
     expect(instanceAfterFirstNode?.currentNodeKey).toBe("node_second");
-    const activeRun2 = instanceAfterFirstNode?.nodeRuns.find((run) => run.status === "ACTIVE")!;
+    const activeRun2 = instanceAfterFirstNode?.nodeRuns.find((run: any) => run.status === "ACTIVE")!;
     expect(activeRun2.nodeKey).toBe("node_second");
 
     // H. Test double-back transition: Move back from node_second to node_start
@@ -1280,7 +1280,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
     const instanceDoubleBack = await chaService.getFilingWorkflowInstance(org.id, job.id);
     expect(instanceDoubleBack?.currentNodeKey).toBe("node_start");
-    const activeRun3 = instanceDoubleBack?.nodeRuns.find((run) => run.status === "ACTIVE")!;
+    const activeRun3 = instanceDoubleBack?.nodeRuns.find((run: any) => run.status === "ACTIVE")!;
     expect(activeRun3.nodeKey).toBe("node_start");
 
     // I. Test transition to complete (File bill copy)
@@ -1301,7 +1301,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     });
 
     const instanceRestored = await chaService.getFilingWorkflowInstance(org.id, job.id);
-    const activeRun4 = instanceRestored?.nodeRuns.find((run) => run.status === "ACTIVE")!;
+    const activeRun4 = instanceRestored?.nodeRuns.find((run: any) => run.status === "ACTIVE")!;
     
     // Complete the workflow at node_second (pass nextNodeKey as null / undefined since no subsequent nodes)
     await chaService.completeFilingNode(managerUser.id, org.id, job.id, activeRun4.id, {

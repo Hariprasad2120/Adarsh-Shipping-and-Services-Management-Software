@@ -2,6 +2,11 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac";
 
+function getDriveFileId(fileKey: string): string | null {
+  const match = fileKey.match(/\/file\/d\/([^/]+)\//);
+  return match ? match[1] : null;
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -53,10 +58,23 @@ export async function GET(
 
     const filename = fileVersion.originalFileName;
     const mimeType = fileVersion.mimeType || "application/octet-stream";
+    const fileKey = fileVersion.fileKey || "";
 
     const { searchParams } = new URL(request.url);
     const forceDownload = searchParams.get("download") === "true";
 
+    // Serve real file from Google Drive when fileKey is a Drive URL
+    if (fileKey.startsWith("https://drive.google.com/")) {
+      const fileId = getDriveFileId(fileKey);
+      if (fileId) {
+        const driveUrl = forceDownload
+          ? `https://drive.google.com/uc?export=download&id=${fileId}`
+          : `https://drive.google.com/file/d/${fileId}/preview`;
+        return Response.redirect(driveUrl, 302);
+      }
+    }
+
+    // Dev/mock fallback — synthetic content for placeholder keys
     let contentBuffer: Buffer;
     if (mimeType === "application/pdf") {
       contentBuffer = Buffer.from(
@@ -83,7 +101,6 @@ export async function GET(
     const headers = new Headers();
     headers.set("Content-Type", mimeType);
     headers.set("Content-Length", contentBuffer.length.toString());
-
     headers.set("Content-Security-Policy", "default-src 'self'; frame-ancestors 'self';");
     headers.set("X-Frame-Options", "SAMEORIGIN");
     headers.set("X-Content-Type-Options", "nosniff");

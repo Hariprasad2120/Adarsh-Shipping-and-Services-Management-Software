@@ -3,26 +3,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps, prefer-const, @typescript-eslint/no-require-imports, react-hooks/immutability, react-hooks/set-state-in-effect */
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { 
-  Search, Send, Video, ExternalLink, Hash, User, Briefcase, Folder, Users, 
-  AlertCircle, RefreshCw, Mail, Phone, Clock, ArrowRight, Shield, Plus, 
+import {
+  Search, Send, Video, ExternalLink, Hash, User, Briefcase, Folder, Users,
+  AlertCircle, RefreshCw, Mail, Phone, Clock, ArrowRight, Shield, Plus,
   ChevronDown, Check, X, Star, Info, MessageSquare, Paperclip, Bell,
-  Smile, Bold, Italic, Code, Trash2, Edit2, Pin, ChevronRight, Sparkles
+  Smile, Bold, Italic, Code, Trash2, Edit2, Pin, ChevronRight, Sparkles, AtSign
 } from "lucide-react";
 import Link from "next/link";
+import { useChatContext } from "../_components/chat-provider";
 
 export default function MonolithMessenger() {
-  const [jobs, setJobs] = useState<any[]>([]);
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [googleSpaces, setGoogleSpaces] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Active space state
-  const [selectedSpaceId, setSelectedSpaceId] = useState<string>("");
-  const [selectedSpaceTitle, setSelectedSpaceTitle] = useState<string>("");
-  const [selectedSpaceType, setSelectedSpaceType] = useState<string>(""); // JOB, DM, SPACE
-  const [selectedJob, setSelectedJob] = useState<any>(null);
-  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  const ctx = useChatContext();
+  const {
+    jobs, employees, googleSpaces, chatLoading: loading,
+    selectedSpaceId, selectedSpaceTitle, selectedSpaceType,
+    selectedJob, selectedEmployee,
+    messagesBySpace,
+    selectSpace, clearSelection,
+  } = ctx;
 
   // Messages timeline state
   const [messages, setMessages] = useState<any[]>([]);
@@ -60,35 +58,17 @@ export default function MonolithMessenger() {
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
   const [messageReactions, setMessageReactions] = useState<Record<string, string[]>>({});
 
-  // Unread tracking & SSE state
-  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  // SSE + polling state (per active space only — cross-space tracking is in ChatProvider)
   const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "reconnecting" | "disconnected" | "auth_error">("connecting");
   const sseRef = useRef<EventSource | null>(null);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const spacePollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const crossSpacePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevMessageCountRef = useRef<number>(0);
-
-  // Track last activity time per space for sorting (most recent first)
-  const [spaceLastActivity, setSpaceLastActivity] = useState<Record<string, number>>({});
 
   // In-app toast notifications
   const [chatToasts, setChatToasts] = useState<{ id: string; sender: string; snippet: string; spaceId: string; spaceName: string; time: number }[]>([]);
 
-  // Cross-space polling state: track last known message per space
-  const lastKnownMessageRef = useRef<Record<string, string>>({});
-  const crossSpaceBatchRef = useRef<number>(0);
-
-  // Notification preferences (persisted in localStorage)
-  const [desktopNotificationsEnabled, setDesktopNotificationsEnabled] = useState(false);
-
-  // Load notification preferences from localStorage
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("monolith_chat_desktop_notif");
-      if (stored === "true") setDesktopNotificationsEnabled(true);
-    } catch {}
-  }, []);
+  // Desktop notification preference lives in ChatProvider context
+  const desktopNotificationsEnabled = ctx.desktopNotifEnabled;
 
   // Modals state
   const [showNewChatModal, setShowNewChatModal] = useState(false);
@@ -118,53 +98,14 @@ export default function MonolithMessenger() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  // Mirrors messages state so side-effects can compare outside a state updater
+  const messagesRef = useRef<any[]>([]);
 
 
-  const fetchChannelsAndDMs = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/communication/chat/list");
-      const data = await res.json();
-      setJobs(data.jobs || []);
-      setEmployees(data.employees || []);
-      setGoogleSpaces(data.googleSpaces || []);
-
-      // Default select space from url query or first available
-      const urlParams = new URLSearchParams(window.location.search);
-      const querySpaceId = urlParams.get("spaceId");
-      let selected = false;
-
-      if (querySpaceId && data.jobs) {
-        const match = data.jobs.find((j: any) => j.spaceId === querySpaceId);
-        if (match) {
-          handleSelectSpace(match.spaceId, `job-${match.jobNumber}`, "JOB", match, null);
-          selected = true;
-        }
-      }
-
-      if (!selected && data.jobs && data.jobs.length > 0) {
-        handleSelectSpace(data.jobs[0].spaceId, `job-${data.jobs[0].jobNumber}`, "JOB", data.jobs[0], null);
-        selected = true;
-      }
-
-      if (!selected && data.googleSpaces && data.googleSpaces.length > 0) {
-        const firstSpace = data.googleSpaces[0];
-        const isDM = firstSpace.spaceType === "DIRECT_MESSAGE";
-        handleSelectSpace(
-          firstSpace.name,
-          firstSpace.displayName || (isDM ? "Google DM" : "Group Space"),
-          isDM ? "DM" : "SPACE",
-          null,
-          null
-        );
-        selected = true;
-      }
-    } catch (err) {
-      console.error("Failed to load spaces list:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Thin wrapper kept for compatibility with handleLeaveSpace / handleCreateSpace
+  const fetchChannelsAndDMs = useCallback(async () => {
+    await ctx.refreshSpaces();
+  }, [ctx]);
 
   const handleSyncGoogleAccount = async () => {
     setSyncing(true);
@@ -175,7 +116,7 @@ export default function MonolithMessenger() {
       });
       const data = await res.json();
       if (data.success) {
-        await fetchChannelsAndDMs();
+        await ctx.refreshSpaces();
         setSyncToast({ message: `Synced ${data.count} spaces from Google Workspace`, type: "success" });
         setTimeout(() => setSyncToast(null), 4000);
       } else {
@@ -204,6 +145,7 @@ export default function MonolithMessenger() {
       const res = await fetch(fetchUrl);
       const data = await res.json();
       const msgs = data.messages || [];
+      messagesRef.current = msgs;
       setMessages(msgs);
       // Set the baseline count so the FIRST new message is properly detected
       prevMessageCountRef.current = msgs.length;
@@ -239,20 +181,11 @@ export default function MonolithMessenger() {
     }
   };
 
-  // Request notification permission on mount
+  // Request notification permission on mount (gated — only if not yet asked)
   useEffect(() => {
-    // Request notification permission proactively
     if (typeof Notification !== "undefined" && Notification.permission === "default") {
       Notification.requestPermission();
     }
-    // Restore document title when tab regains focus
-    const handleVisibility = () => {
-      if (!document.hidden) {
-        document.title = "Communication — Monolith";
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, []);
 
   // Add in-app toast notification helper
@@ -265,183 +198,90 @@ export default function MonolithMessenger() {
     }, 5000);
   }, []);
 
-  // Helper to resolve space name from DM entries or spaces
+  // Helper to resolve space name — uses context data, kept for in-page toast naming
   const resolveSpaceName = useCallback((spaceId: string) => {
-    // Check googleSpaces for a good display name
     const space = googleSpaces.find((s: any) => s.name === spaceId);
     if (space?.displayName && !["Adarsh Operations", "Google Chat DM", "Google User"].includes(space.displayName)) {
       return space.displayName;
     }
-    // Check if it's a job space
     const job = jobs.find((j: any) => j.spaceId === spaceId);
     if (job) return `JOB-${job.jobNumber}`;
     return "Chat";
   }, [googleSpaces, jobs]);
 
-  // ── Refs to hold latest data for cross-space polling (avoids stale closures & infinite loops) ──
-  const googleSpacesRef = useRef(googleSpaces);
-  const jobsRef = useRef(jobs);
-  const selectedSpaceIdRef = useRef(selectedSpaceId);
-  const desktopNotifRef = useRef(desktopNotificationsEnabled);
-  useEffect(() => { googleSpacesRef.current = googleSpaces; }, [googleSpaces]);
-  useEffect(() => { jobsRef.current = jobs; }, [jobs]);
-  useEffect(() => { selectedSpaceIdRef.current = selectedSpaceId; }, [selectedSpaceId]);
-  useEffect(() => { desktopNotifRef.current = desktopNotificationsEnabled; }, [desktopNotificationsEnabled]);
-
-  // ── 1. Initial load + 30s spaces poll (runs ONCE) ──
+  // ── Auto-select first space once ChatProvider data is ready ──
+  const hasAutoSelectedRef = useRef(false);
   useEffect(() => {
-    fetchChannelsAndDMs();
+    if (loading || hasAutoSelectedRef.current) return;
+    if (jobs.length === 0 && googleSpaces.length === 0) return;
+    // Provider restored a selection from sessionStorage — don't override
+    if (selectedSpaceId) { hasAutoSelectedRef.current = true; return; }
+    hasAutoSelectedRef.current = true;
 
-    // Poll spaces list every 30 seconds for new conversations/DMs
-    spacePollTimerRef.current = setInterval(async () => {
-      try {
-        const res = await fetch("/api/communication/chat/list");
-        const data = await res.json();
-        setJobs(data.jobs || []);
-        setEmployees(data.employees || []);
-        setGoogleSpaces(data.googleSpaces || []);
-      } catch {}
-    }, 30000);
+    const urlParams = new URLSearchParams(window.location.search);
+    const querySpaceId = urlParams.get("spaceId");
 
-    return () => {
-      if (spacePollTimerRef.current) clearInterval(spacePollTimerRef.current);
-    };
-  }, []);
-
-  // ── 2. Cross-space polling for new messages (runs ONCE, reads refs for latest data) ──
-  // Seed baseline message IDs on initial load (after a delay to let list API finish)
-  useEffect(() => {
-    const seedTimer = setTimeout(async () => {
-      try {
-        const currentSpaces = googleSpacesRef.current;
-        const currentJobs = jobsRef.current;
-        const allSpaceIds = currentSpaces.map((s: any) => s.name).filter(Boolean);
-        const jobSpaceIds = currentJobs.map((j: any) => j.spaceId).filter(Boolean);
-        const allIds = [...new Set([...allSpaceIds, ...jobSpaceIds])];
-        // Seed in batches of 10
-        for (let i = 0; i < allIds.length; i += 10) {
-          const batch = allIds.slice(i, i + 10);
-          try {
-            const res = await fetch(`/api/communication/chat/check-new?spaces=${batch.join(",")}`);
-            if (res.ok) {
-              const data = await res.json();
-              for (const item of (data.results || [])) {
-                if (item?.latestMessageName) {
-                  lastKnownMessageRef.current[item.spaceId] = item.latestMessageName;
-                }
-              }
-            }
-          } catch {}
-        }
-        console.log(`[CrossPoll] Seeded baseline for ${Object.keys(lastKnownMessageRef.current).length} spaces`);
-      } catch {}
-    }, 8000); // Wait 8s for list API to finish
-
-    crossSpacePollRef.current = setInterval(async () => {
-      try {
-        const currentSpaces = googleSpacesRef.current;
-        const currentJobs = jobsRef.current;
-        const activeSpaceId = selectedSpaceIdRef.current;
-
-        // Get all DM + Space resource names (excluding the currently active one)
-        // Prioritize DM spaces first for faster notification
-        const dmSpaceIds = currentSpaces
-          .filter((s: any) => s.name && s.name !== activeSpaceId && s.spaceType === "DIRECT_MESSAGE")
-          .map((s: any) => s.name);
-        const otherSpaceIds = currentSpaces
-          .filter((s: any) => s.name && s.name !== activeSpaceId && s.spaceType !== "DIRECT_MESSAGE")
-          .map((s: any) => s.name);
-        const jobSpaceIds = currentJobs
-          .filter((j: any) => j.spaceId && j.spaceId !== activeSpaceId)
-          .map((j: any) => j.spaceId);
-        
-        // DMs first, then other spaces — ensures DMs are checked every cycle
-        const allIds = [...new Set([...dmSpaceIds, ...jobSpaceIds, ...otherSpaceIds])];
-        if (allIds.length === 0) return;
-
-        // Batch size 10, faster rotation
-        const batchSize = 10;
-        const startIdx = (crossSpaceBatchRef.current * batchSize) % allIds.length;
-        const batch = allIds.slice(startIdx, startIdx + batchSize);
-        crossSpaceBatchRef.current++;
-
-        const res = await fetch(`/api/communication/chat/check-new?spaces=${batch.join(",")}`);
-        if (!res.ok) return;
-        const data = await res.json();
-
-        for (const item of (data.results || [])) {
-          if (!item || item.isMe) continue;
-
-          const prevMsg = lastKnownMessageRef.current[item.spaceId];
-          if (prevMsg && prevMsg === item.latestMessageName) continue;
-
-          // First time seeing this space — just record the message ID, don't notify
-          if (!prevMsg) {
-            lastKnownMessageRef.current[item.spaceId] = item.latestMessageName;
-            continue;
-          }
-
-          // NEW MESSAGE detected in a non-active space!
-          lastKnownMessageRef.current[item.spaceId] = item.latestMessageName;
-
-          const spaceName = resolveSpaceName(item.spaceId);
-
-          // Update unread count
-          setUnreadCounts(prev => ({
-            ...prev,
-            [item.spaceId]: (prev[item.spaceId] || 0) + 1
-          }));
-
-          // Update activity time for sidebar reordering
-          setSpaceLastActivity(prev => ({
-            ...prev,
-            [item.spaceId]: new Date(item.latestTime || Date.now()).getTime()
-          }));
-
-          // Show in-app toast
-          showChatToast(
-            item.senderDisplayName || spaceName,
-            item.snippet || "New message",
-            item.spaceId,
-            spaceName
-          );
-
-          // Desktop notification only if enabled
-          if (desktopNotifRef.current && typeof Notification !== "undefined" && Notification.permission === "granted") {
-            const notif = new Notification(`${item.senderDisplayName || spaceName}`, {
-              body: item.snippet?.slice(0, 120) || "New message",
-              icon: "/favicon.ico",
-              tag: `chat-${item.spaceId}-${Date.now()}`,
-            });
-            notif.onclick = () => { window.focus(); notif.close(); };
-          }
-
-          // Flash document title
-          if (document.hidden) {
-            document.title = `💬 ${spaceName} — New message`;
-          }
-
-          // Refresh spaces list so sidebar updates immediately
-          try {
-            const listRes = await fetch("/api/communication/chat/list");
-            if (listRes.ok) {
-              const listData = await listRes.json();
-              setJobs(listData.jobs || []);
-              setEmployees(listData.employees || []);
-              setGoogleSpaces(listData.googleSpaces || []);
-            }
-          } catch {}
-        }
-      } catch {
-        // Silent fail
+    if (querySpaceId) {
+      const match = jobs.find((j: any) => j.spaceId === querySpaceId);
+      if (match) {
+        handleSelectSpace(match.spaceId, `job-${match.jobNumber}`, "JOB", match, null);
+        return;
       }
-    }, 8000);
+    }
+    if (jobs.length > 0) {
+      handleSelectSpace(jobs[0].spaceId, `job-${jobs[0].jobNumber}`, "JOB", jobs[0], null);
+      return;
+    }
+    if (googleSpaces.length > 0) {
+      const s = googleSpaces[0];
+      const isDM = s.spaceType === "DIRECT_MESSAGE";
+      handleSelectSpace(s.name, s.displayName || (isDM ? "Google DM" : "Group Space"), isDM ? "DM" : "SPACE", null, null);
+    }
+  }, [loading, jobs.length, googleSpaces.length]);
 
-    return () => {
-      clearTimeout(seedTimer);
-      if (crossSpacePollRef.current) clearInterval(crossSpacePollRef.current);
-    };
-  }, []);
+  // On mount with a provider-restored selection, seed messages from cache immediately
+  const didSeedOnMountRef = useRef(false);
+  useEffect(() => {
+    if (didSeedOnMountRef.current) return;
+    if (!selectedSpaceId) return;
+    didSeedOnMountRef.current = true;
+    const cached = messagesBySpace[selectedSpaceId] ?? [];
+    if (cached.length > 0) {
+      setMessages(cached);
+      prevMessageCountRef.current = cached.length;
+    } else {
+      setMessagesLoading(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSpaceId]);
+
+  // Keep messagesRef in sync so side-effects can compare without being inside a state updater
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  // Write-through: keep provider message cache current so warm navigation restores instantly
+  useEffect(() => {
+    if (selectedSpaceId && messages.length > 0) ctx.cacheMessages(selectedSpaceId, messages);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, selectedSpaceId]);
+
+  // Cross-space polling + seeding now live in ChatProvider (persistent across navigation).
+  // Drain any toasts queued by the provider and display them in-page.
+  useEffect(() => {
+    if (ctx.pendingToasts.length === 0) return;
+    const toastsToAdd = ctx.pendingToasts;
+    ctx.drainToasts();
+    setChatToasts(prev => {
+      const combined = [...prev, ...toastsToAdd];
+      return combined.slice(-5);
+    });
+    toastsToAdd.forEach(t => {
+      setTimeout(() => {
+        setChatToasts(prev => prev.filter(x => x.id !== t.id));
+      }, 5000);
+    });
+  }, [ctx.pendingToasts]);
 
   // Silent message poll — doesn't show loading spinner, used for live updates
   const silentPollMessages = async (spaceId: string, spaceType?: string, spaceTitle?: string) => {
@@ -455,47 +295,46 @@ export default function MonolithMessenger() {
       const res = await fetch(fetchUrl);
       const data = await res.json();
       const newMsgs = data.messages || [];
-      setMessages((prev) => {
-        const prevNames = prev.map((m: any) => m.name).join(",");
-        const newNames = newMsgs.map((m: any) => m.name).join(",");
-        if (prevNames !== newNames || newMsgs.length !== prev.length) {
-          // Track activity time
-          if (newMsgs.length > 0) {
-            const latestMsg = newMsgs[newMsgs.length - 1];
-            setSpaceLastActivity((prev) => ({
-              ...prev,
-              [spaceId]: new Date(latestMsg.createTime || Date.now()).getTime()
-            }));
-          }
 
-          // New messages arrived — notify for incoming from others
-          if (newMsgs.length > prevMessageCountRef.current && prevMessageCountRef.current > 0) {
-            const latestMsg = newMsgs[newMsgs.length - 1];
-            if (latestMsg && !latestMsg.isMe) {
-              const senderName = latestMsg.sender?.displayName || latestMsg.senderName || "New message";
-              // In-app toast notification (always)
-              showChatToast(senderName, latestMsg.text?.slice(0, 100) || "New message", spaceId, selectedSpaceTitle || "Chat");
+      // Compare against ref — avoids calling setState-from-provider inside a state updater
+      const prev = messagesRef.current;
+      const prevNames = prev.map((m: any) => m.name).join(",");
+      const newNames = newMsgs.map((m: any) => m.name).join(",");
+      const changed = prevNames !== newNames || newMsgs.length !== prev.length;
 
-              // Desktop notification only if enabled in settings
-              if (desktopNotificationsEnabled && typeof Notification !== "undefined" && Notification.permission === "granted") {
-                const notif = new Notification(senderName, {
-                  body: latestMsg.text?.slice(0, 120) || "New message",
-                  icon: "/favicon.ico",
-                  tag: `chat-${spaceId}-${Date.now()}`,
-                });
-                notif.onclick = () => { window.focus(); notif.close(); };
-              }
-              // Update document title when tab is hidden
-              if (document.hidden) {
-                document.title = `💬 New message — Monolith`;
-              }
+      if (changed) {
+        // Activity bump — outside state updater so it doesn't trigger setState-in-render
+        if (newMsgs.length > 0) {
+          const latestMsg = newMsgs[newMsgs.length - 1];
+          ctx.bumpActivity(spaceId, new Date(latestMsg.createTime || Date.now()).getTime());
+        }
+
+        // New messages arrived — notify for incoming from others
+        if (newMsgs.length > prevMessageCountRef.current && prevMessageCountRef.current > 0) {
+          const latestMsg = newMsgs[newMsgs.length - 1];
+          if (latestMsg && !latestMsg.isMe) {
+            const senderName = latestMsg.sender?.displayName || latestMsg.senderName || "New message";
+            showChatToast(senderName, latestMsg.text?.slice(0, 100) || "New message", spaceId, selectedSpaceTitle || "Chat");
+
+            if (desktopNotificationsEnabled && typeof Notification !== "undefined" && Notification.permission === "granted") {
+              const notif = new Notification(senderName, {
+                body: latestMsg.text?.slice(0, 120) || "New message",
+                icon: "/favicon.ico",
+                tag: `chat-${latestMsg.name || spaceId}`,
+              });
+              notif.onclick = () => { window.focus(); notif.close(); };
+            }
+            if (document.hidden) {
+              document.title = `💬 New message — Monolith`;
             }
           }
-          prevMessageCountRef.current = newMsgs.length;
-          return newMsgs;
         }
-        return prev;
-      });
+
+        prevMessageCountRef.current = newMsgs.length;
+        messagesRef.current = newMsgs;
+        setMessages(newMsgs);
+      }
+
       setConnectionStatus("connected");
     } catch {
       // Silent fail — don't disturb the user
@@ -510,15 +349,17 @@ export default function MonolithMessenger() {
     const currentType = selectedSpaceType;
     const currentTitle = selectedSpaceTitle;
 
-    fetchMessages(selectedSpaceId, currentType, currentTitle);
+    // Use cached messages immediately (no spinner) — silent refresh if cache exists
+    const cached = messagesBySpace[selectedSpaceId] ?? [];
+    if (cached.length > 0) {
+      messagesRef.current = cached;
+      setMessages(cached);
+      prevMessageCountRef.current = cached.length;
+      silentPollMessages(selectedSpaceId, currentType, currentTitle);
+    } else {
+      fetchMessages(selectedSpaceId, currentType, currentTitle);
+    }
     fetchSpaceDetails(selectedSpaceId);
-
-    // Clear unread for active space
-    setUnreadCounts((prev) => {
-      const next = { ...prev };
-      delete next[selectedSpaceId];
-      return next;
-    });
 
     // ── 1. Reliable polling (guaranteed to work) ──
     if (pollTimerRef.current) clearInterval(pollTimerRef.current);
@@ -546,43 +387,36 @@ export default function MonolithMessenger() {
         try {
           const data = JSON.parse(event.data);
           const newMsgs = data.messages || [];
-          setMessages((prev) => {
-            const prevNames = prev.map((m: any) => m.name).join(",");
-            const newNames = newMsgs.map((m: any) => m.name).join(",");
-            if (prevNames !== newNames || newMsgs.length !== prev.length) {
-              if (newMsgs.length > prevMessageCountRef.current && prevMessageCountRef.current > 0) {
-                const latestMsg = newMsgs[newMsgs.length - 1];
-                if (latestMsg && !latestMsg.isMe) {
-                  const senderName = latestMsg.sender?.displayName || latestMsg.senderName || "New message";
-                  // In-app toast
-                  showChatToast(senderName, latestMsg.text?.slice(0, 100) || "New message", selectedSpaceId, currentTitle || "Chat");
-                  // Desktop notification only if enabled
-                  if (desktopNotificationsEnabled && typeof Notification !== "undefined" && Notification.permission === "granted") {
-                    new Notification(senderName, {
-                      body: latestMsg.text?.slice(0, 120) || "New message",
-                      icon: "/favicon.ico",
-                      tag: `chat-${selectedSpaceId}-${Date.now()}`,
-                    });
-                  }
+
+          // Compare outside state updater to avoid setState-in-render across providers
+          const prev = messagesRef.current;
+          const prevNames = prev.map((m: any) => m.name).join(",");
+          const newNames = newMsgs.map((m: any) => m.name).join(",");
+          if (prevNames !== newNames || newMsgs.length !== prev.length) {
+            if (newMsgs.length > prevMessageCountRef.current && prevMessageCountRef.current > 0) {
+              const latestMsg = newMsgs[newMsgs.length - 1];
+              if (latestMsg && !latestMsg.isMe) {
+                const senderName = latestMsg.sender?.displayName || latestMsg.senderName || "New message";
+                showChatToast(senderName, latestMsg.text?.slice(0, 100) || "New message", selectedSpaceId, currentTitle || "Chat");
+                if (desktopNotificationsEnabled && typeof Notification !== "undefined" && Notification.permission === "granted") {
+                  new Notification(senderName, {
+                    body: latestMsg.text?.slice(0, 120) || "New message",
+                    icon: "/favicon.ico",
+                    tag: `chat-${latestMsg.name || selectedSpaceId}`,
+                  });
                 }
+                ctx.bumpActivity(selectedSpaceId, new Date(latestMsg.createTime || Date.now()).getTime());
               }
-              prevMessageCountRef.current = newMsgs.length;
-              return newMsgs;
             }
-            return prev;
-          });
+            prevMessageCountRef.current = newMsgs.length;
+            messagesRef.current = newMsgs;
+            setMessages(newMsgs);
+          }
         } catch { /* ignore parse errors */ }
       });
 
       sse.addEventListener("spaces:updated", () => {
-        fetch("/api/communication/chat/list")
-          .then((res) => res.json())
-          .then((data) => {
-            setJobs(data.jobs || []);
-            setEmployees(data.employees || []);
-            setGoogleSpaces(data.googleSpaces || []);
-          })
-          .catch(() => {});
+        ctx.refreshSpaces();
       });
 
       sse.addEventListener("sync:status", (event) => {
@@ -629,16 +463,15 @@ export default function MonolithMessenger() {
     if (selectedSpaceId) {
       setDrafts((prev) => ({ ...prev, [selectedSpaceId]: newMessageText }));
     }
-    setSelectedSpaceId(spaceId);
-    setSelectedSpaceTitle(title);
-    setSelectedSpaceType(type);
-    setSelectedJob(jobData || null);
-    setSelectedEmployee(empData || null);
-    setMessages([]);
+    // Seed from cache for instant warm-nav; triggers fetch+poll via selectedSpaceId effect
+    const cached = messagesBySpace[spaceId] ?? [];
+    setMessages(cached);
+    setMessagesLoading(cached.length === 0);
     setShowCaretDropdown(false);
-
-    // Restore draft for the new channel
     setNewMessageText(drafts[spaceId] || "");
+
+    // Lift selection into provider (persists across navigation + sessionStorage)
+    selectSpace(spaceId, title, type, jobData, empData);
   };
 
   const handleSelectEmployeeDM = async (emp: any) => {
@@ -712,6 +545,8 @@ export default function MonolithMessenger() {
               : m
           )
         );
+        // Move this space to top of recent list
+        ctx.bumpActivity(selectedSpaceId);
       } else {
         // Send failed — mark optimistic message as failed
         setMessages((prev) =>
@@ -775,7 +610,7 @@ export default function MonolithMessenger() {
       if (data.success) {
         alert("You have left the space.");
         fetchChannelsAndDMs();
-        setSelectedSpaceId("");
+        clearSelection();
       } else {
         alert("Failed to leave space.");
       }
@@ -1034,14 +869,12 @@ export default function MonolithMessenger() {
 
   // Sort helper: spaces with recent activity first, then unread first
   const activitySort = (a: string, b: string) => {
-    const aUnread = unreadCounts[a] || 0;
-    const bUnread = unreadCounts[b] || 0;
-    // Unread first
+    const aUnread = ctx.unreadCounts[a] || 0;
+    const bUnread = ctx.unreadCounts[b] || 0;
     if (aUnread > 0 && bUnread === 0) return -1;
     if (bUnread > 0 && aUnread === 0) return 1;
-    // Then by last activity time
-    const aTime = spaceLastActivity[a] || 0;
-    const bTime = spaceLastActivity[b] || 0;
+    const aTime = ctx.spaceLastActivity[a] || 0;
+    const bTime = ctx.spaceLastActivity[b] || 0;
     return bTime - aTime;
   };
 
@@ -1105,8 +938,8 @@ export default function MonolithMessenger() {
     }
     
     // If we have unread counts for this space, show it regardless of name resolution
-    const hasUnread = (unreadCounts[space.name] || 0) > 0;
-    const hasKnownActivity = (spaceLastActivity[space.name] || 0) > 0;
+    const hasUnread = (ctx.unreadCounts[space.name] || 0) > 0;
+    const hasKnownActivity = (ctx.spaceLastActivity[space.name] || 0) > 0;
     
     if (displayName) {
       dmEntries.push({
@@ -1155,16 +988,18 @@ export default function MonolithMessenger() {
       {chatToasts.length > 0 && (
         <div className="absolute top-2 right-4 z-[100] flex flex-col gap-2 pointer-events-none" style={{ maxWidth: "340px" }}>
           {chatToasts.map((toast) => (
-            <button
+            <div
               key={toast.id}
+              role="button"
+              tabIndex={0}
               onClick={() => {
-                // Determine space type from the spaces data
                 const space = googleSpaces.find((s: any) => s.name === toast.spaceId);
                 const job = jobs.find((j: any) => j.spaceId === toast.spaceId);
                 const spaceType = job ? "JOB" : space?.spaceType === "DIRECT_MESSAGE" ? "DM" : "SPACE";
                 handleSelectSpace(toast.spaceId, toast.spaceName, spaceType, job || null, null);
                 setChatToasts(prev => prev.filter(t => t.id !== toast.id));
               }}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.currentTarget.click(); }}
               className="pointer-events-auto flex items-start gap-3 bg-surface border border-[#00cec4]/30 rounded-xl px-4 py-3 shadow-lg backdrop-blur-sm animate-in slide-in-from-right duration-300 hover:border-[#00cec4]/60 hover:shadow-xl transition-all cursor-pointer text-left w-full"
             >
               <div className="shrink-0 mt-0.5">
@@ -1186,7 +1021,7 @@ export default function MonolithMessenger() {
               >
                 <X className="size-3" />
               </button>
-            </button>
+            </div>
           ))}
         </div>
       )}
@@ -1327,7 +1162,7 @@ export default function MonolithMessenger() {
                   <>
                     {filteredDMs.map((entry) => {
                       const isSelected = selectedSpaceId === entry.spaceId;
-                      const unreadCount = unreadCounts[entry.spaceId] || 0;
+                      const unreadCount = ctx.unreadCounts[entry.spaceId] || 0;
                       return (
                         <button
                           key={entry.spaceId}
@@ -1350,6 +1185,11 @@ export default function MonolithMessenger() {
                           {unreadCount > 0 && !isSelected && (
                             <span className="flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-[#00cec4] text-white text-[9px] font-bold px-1">
                               {unreadCount > 99 ? "99+" : unreadCount}
+                            </span>
+                          )}
+                          {ctx.mentionSpaces.has(entry.spaceId) && !isSelected && (
+                            <span className="flex items-center justify-center size-[18px] rounded-full bg-[#fb923c] text-white text-[9px] font-bold shrink-0" title="You were mentioned">
+                              <AtSign className="size-2.5" />
                             </span>
                           )}
                           {starredSpaces.has(entry.spaceId) && <Star className={`size-3 ${isSelected ? "text-white" : "text-[#fb923c]"} fill-current`} />}
@@ -1384,7 +1224,7 @@ export default function MonolithMessenger() {
                   filteredJobs.map((job) => {
                     const isSelected = selectedSpaceId === job.spaceId;
                     const channelName = cleanJobChannelName(job.jobNumber, job.title);
-                    const unreadCount = unreadCounts[job.spaceId] || 0;
+                    const unreadCount = ctx.unreadCounts[job.spaceId] || 0;
                     return (
                       <button
                         key={job.id}
@@ -1402,6 +1242,11 @@ export default function MonolithMessenger() {
                         {unreadCount > 0 && !isSelected && (
                           <span className="flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-[#00cec4] text-white text-[9px] font-bold px-1">
                             {unreadCount > 99 ? "99+" : unreadCount}
+                          </span>
+                        )}
+                        {ctx.mentionSpaces.has(job.spaceId) && !isSelected && (
+                          <span className="flex items-center justify-center size-[18px] rounded-full bg-[#fb923c] text-white text-[9px] font-bold shrink-0" title="You were mentioned">
+                            <AtSign className="size-2.5" />
                           </span>
                         )}
                         {starredSpaces.has(job.spaceId) && <Star className={`size-3 ${isSelected ? "text-white" : "text-[#fb923c]"} fill-current`} />}
@@ -1441,7 +1286,7 @@ export default function MonolithMessenger() {
                 ) : (
                   filteredSpaces.map((space) => {
                     const isSelected = selectedSpaceId === space.name;
-                    const unreadCount = unreadCounts[space.name] || 0;
+                    const unreadCount = ctx.unreadCounts[space.name] || 0;
                     return (
                       <button
                         key={space.name}
@@ -1459,6 +1304,11 @@ export default function MonolithMessenger() {
                         {unreadCount > 0 && !isSelected && (
                           <span className="flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-[#00cec4] text-white text-[9px] font-bold px-1">
                             {unreadCount > 99 ? "99+" : unreadCount}
+                          </span>
+                        )}
+                        {ctx.mentionSpaces.has(space.name) && !isSelected && (
+                          <span className="flex items-center justify-center size-[18px] rounded-full bg-[#fb923c] text-white text-[9px] font-bold shrink-0" title="You were mentioned">
+                            <AtSign className="size-2.5" />
                           </span>
                         )}
                         {starredSpaces.has(space.name) && <Star className={`size-3 ${isSelected ? "text-white" : "text-[#fb923c]"} fill-current`} />}

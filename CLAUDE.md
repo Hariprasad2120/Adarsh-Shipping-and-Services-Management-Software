@@ -1,5 +1,7 @@
 @AGENTS.md
 
+Always use Graphify when analyzing this codebase, especially before making architectural changes, tracing dependencies, modifying workflows, or understanding module relationships.
+
 <!-- BEGIN:design-system-reference -->
 # Mandatory: Design System
 

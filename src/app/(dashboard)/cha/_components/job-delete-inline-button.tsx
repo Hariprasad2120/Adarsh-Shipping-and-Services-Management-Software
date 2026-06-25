@@ -100,7 +100,16 @@ export function JobDeleteInlineButton({
       >
         <div className="space-y-5">
           <div className="rounded-2xl border border-red-200/70 bg-red-50/70 p-4 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
-            Deleting this job will either delete it immediately if you are the assigned approval manager, or create a deletion approval request for the assigned manager.
+            <p className="font-semibold">Type these exact values to continue:</p>
+            <p className="mt-1">
+              Job number: <strong>{jobNumber}</strong>
+            </p>
+            <p>
+              Confirmation phrase: <strong>delete job</strong>
+            </p>
+            <p className="mt-2">
+              Deleting this job will either delete it immediately if you are the assigned approval manager, or create a deletion approval request for the assigned manager.
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -119,6 +128,9 @@ export function JobDeleteInlineButton({
               onChange={(event) => setConfirmationPhrase(event.target.value)}
               placeholder="delete job"
             />
+            <p className="text-xs text-on-surface-variant">
+              Enter exactly: <strong className="text-on-surface">delete job</strong>
+            </p>
           </div>
 
           <div className="flex items-center justify-end gap-3">

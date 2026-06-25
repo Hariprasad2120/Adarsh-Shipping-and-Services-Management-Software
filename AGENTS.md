@@ -244,6 +244,7 @@ Every AI agent must report these checks in their final response after UI work:
 # Codebase Analysis — graphify
 
 This project has a pre-built knowledge graph at `graphify-out/graph.json` (4351 nodes, 10640 edges, 244 communities).
+Always use Graphify when analyzing this codebase, especially before making architectural changes, tracing dependencies, modifying workflows, or understanding module relationships.
 
 ## Session Start Protocol
 

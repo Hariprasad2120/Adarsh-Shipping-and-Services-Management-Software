@@ -4,6 +4,7 @@ import { getAuthorizationUrl } from "@/lib/workspace-oauth";
 import Link from "next/link";
 import { ArrowRight, Mail, Folder } from "lucide-react";
 import CommunicationNavbar from "./_components/communication-navbar";
+import { ChatProvider } from "./_components/chat-provider";
 
 export default async function CommunicationLayout({
   children
@@ -121,9 +122,11 @@ export default async function CommunicationLayout({
     <div className="flex flex-col w-full animate-page-enter">
       <CommunicationNavbar showGoogleChatLiveView={showGoogleChatLiveView} />
 
-      <div className="flex-1">
-        {children}
-      </div>
+      <ChatProvider>
+        <div className="flex-1">
+          {children}
+        </div>
+      </ChatProvider>
     </div>
   );
 }

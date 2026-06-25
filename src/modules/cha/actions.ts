@@ -989,7 +989,7 @@ export async function completeFilingNodeAction(
   }
 ): Promise<ActionResponse> {
   try {
-    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const { userId, orgId } = await getAuthAndVerify();
     const result = await chaService.completeFilingNode(userId, orgId, jobId, nodeRunId, data);
     revalidatePath(`/cha/jobs/${jobId}`);
     return { ok: true, data: result };
@@ -1004,7 +1004,7 @@ export async function toggleFilingSection49Action(
   remarks?: string
 ): Promise<ActionResponse> {
   try {
-    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const { userId, orgId } = await getAuthAndVerify();
     const result = await chaService.toggleFilingSection49(userId, orgId, jobId, isEnabled, remarks);
     revalidatePath(`/cha/jobs/${jobId}`);
     return { ok: true, data: result };
@@ -1033,7 +1033,7 @@ export async function uploadFilingAttachmentAction(
   formData: FormData
 ): Promise<ActionResponse> {
   try {
-    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const { userId, orgId } = await getAuthAndVerify();
     const file = formData.get("file");
     if (!(file instanceof File) || file.size === 0) {
       return { ok: false, error: "Please select a valid photo / file upload." };
@@ -1070,7 +1070,7 @@ export async function upsertFilingShipmentDetailsAction(
   },
 ): Promise<ActionResponse> {
   try {
-    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const { userId, orgId } = await getAuthAndVerify();
     const result = await chaService.upsertFilingShipmentDetails(userId, orgId, jobId, data);
     revalidatePath(`/cha/jobs/${jobId}`);
     return { ok: true, data: result };
@@ -1084,7 +1084,7 @@ export async function deleteFilingAttachmentAction(
   attachmentId: string
 ): Promise<ActionResponse> {
   try {
-    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const { userId, orgId } = await getAuthAndVerify();
     const result = await chaService.deleteFilingAttachment(userId, orgId, jobId, attachmentId);
     revalidatePath(`/cha/jobs/${jobId}`);
     return { ok: true, data: result };

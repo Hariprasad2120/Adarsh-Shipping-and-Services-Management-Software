@@ -150,7 +150,7 @@ export async function GET(req: NextRequest) {
       await pollSpaces();
 
       // Set up intervals
-      const msgInterval = setInterval(pollMessages, 8000);
+      const msgInterval = setInterval(pollMessages, 3000);
       const spaceInterval = setInterval(pollSpaces, 60000);
       const heartbeatInterval = setInterval(heartbeat, 15000);
 

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
 import Link from "next/link";
 import { ensureSettingsAndDefaults } from "@/modules/cha/service";
+import { listJobTypesForSelection } from "@/modules/cha/service";
 import { DashboardCreateJob } from "@/components/cha/dashboard-create-job";
 import {
   FileText,
@@ -88,7 +89,7 @@ export default async function ChaDashboard() {
     }),
     db.branch.findMany({ where: { orgId }, select: { id: true, name: true, code: true } }),
     db.crmAccount.findMany({ where: { orgId, type: "Customer" }, select: { id: true, name: true } }),
-    db.chaJobType.findMany({ where: { orgId, isActive: true }, select: { id: true, name: true } }),
+    listJobTypesForSelection(orgId),
     db.chaShipmentType.findMany({ where: { orgId, isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     db.user.findMany({ where: { orgId, active: true }, select: { id: true, name: true, email: true } }),
     db.chaTeamGroup.findMany({ where: { orgId }, select: { id: true, name: true, memberIds: true } }),

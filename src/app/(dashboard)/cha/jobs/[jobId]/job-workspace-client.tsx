@@ -212,9 +212,9 @@ export function JobWorkspaceClient({
   const [actualFilingDate, setActualFilingDate] = useState("");
   const [delayReason, setDelayReason] = useState("");
   const [filedBillCopyFile, setFiledBillCopyFile] = useState<File | null>(null);
-  const [filingShipmentType, setFilingShipmentType] = useState(job.filing?.filingShipmentType || "");
   const [billOfEntryNumber, setBillOfEntryNumber] = useState(job.filing?.billOfEntryNumber || "");
   const [shippingBillNumber, setShippingBillNumber] = useState(job.filing?.shippingBillNumber || "");
+  const filingShipmentType = job.shipmentType?.name?.trim() || job.filing?.filingShipmentType || "";
 
   // --- FILING WORKFLOW RUNNER STATES ---
   const [filingInstance, setFilingInstance] = useState<any>(null);
@@ -227,10 +227,9 @@ export function JobWorkspaceClient({
   const [section49Remarks, setSection49Remarks] = useState("");
 
   useEffect(() => {
-    setFilingShipmentType(job.filing?.filingShipmentType || "");
     setBillOfEntryNumber(job.filing?.billOfEntryNumber || "");
     setShippingBillNumber(job.filing?.shippingBillNumber || "");
-  }, [job.filing?.filingShipmentType, job.filing?.billOfEntryNumber, job.filing?.shippingBillNumber]);
+  }, [job.filing?.billOfEntryNumber, job.filing?.shippingBillNumber]);
 
   const outgoingEdges = useMemo(() => {
     if (!filingInstance || !activeNodeRun) return [];
@@ -244,9 +243,49 @@ export function JobWorkspaceClient({
 
   const overdueChecklistItems = useMemo(() => filingInstance?.overdueItems || [], [filingInstance]);
   const overdueChecklistCount = overdueChecklistItems.length;
-  const shipmentTypeUpper = filingShipmentType.trim().toUpperCase();
-  const beDisabled = shipmentTypeUpper === "EXPORT" || (!!shippingBillNumber.trim() && shipmentTypeUpper !== "IMPORT");
-  const sbDisabled = shipmentTypeUpper === "IMPORT" || (!!billOfEntryNumber.trim() && shipmentTypeUpper !== "EXPORT");
+  const activeChecklistItems = useMemo(
+    () => activeNodeRun?.node?.checklistItems?.filter((item: any) => item.isActive !== false) || [],
+    [activeNodeRun],
+  );
+  const checklistAttachmentsByItem = useMemo(() => {
+    const map = new Map<string, any[]>();
+    const attachments =
+      filingInstance?.attachments?.filter((attachment: any) => attachment.nodeRunId === activeNodeRun?.id && attachment.checklistItemId) || [];
+
+    for (const attachment of attachments) {
+      const itemId = attachment.checklistItemId;
+      if (!map.has(itemId)) {
+        map.set(itemId, []);
+      }
+      map.get(itemId)?.push(attachment);
+    }
+
+    return map;
+  }, [activeNodeRun?.id, filingInstance?.attachments]);
+  const currentChecklistItemIndex = useMemo(() => {
+    if (activeChecklistItems.length === 0) return -1;
+
+    const getAttachmentCount = (itemId: string) => checklistAttachmentsByItem.get(itemId)?.length || 0;
+    const isItemReady = (item: any) => {
+      const resp = checklistResponses[item.id];
+      if (!resp?.isChecked) return false;
+      if (item.requiresRemarks && !resp.remarks?.trim()) return false;
+
+      const overdueMeta = overdueChecklistItems.find((entry: any) => entry.checklistItemId === item.id);
+      if (overdueMeta && item.delayRemarksRequired && !resp.delayRemarks?.trim()) return false;
+
+      if (item.allowsUpload && (item.minUploads || 0) > 0 && getAttachmentCount(item.id) < item.minUploads) {
+        return false;
+      }
+
+      return true;
+    };
+
+    const firstPendingIndex = activeChecklistItems.findIndex((item: any) => !isItemReady(item));
+    return firstPendingIndex === -1 ? activeChecklistItems.length - 1 : firstPendingIndex;
+  }, [activeChecklistItems, checklistAttachmentsByItem, checklistResponses, overdueChecklistItems]);
+  const beDisabled = !!shippingBillNumber.trim();
+  const sbDisabled = !!billOfEntryNumber.trim();
 
 
   // Customer Advance Form State
@@ -385,6 +424,13 @@ export function JobWorkspaceClient({
     currentCustomerApprovals.some((approval: any) => approval.assignedToId === currentUserId && approval.action === "PENDING");
   const getUserName = (userId?: string | null) =>
     users.find((user) => user.id === userId)?.name || "Unknown";
+  const pendingCustomerApproverNames = Array.from(
+    new Set(
+      currentCustomerApprovals
+        .filter((approval: any) => approval.action === "PENDING")
+        .map((approval: any) => getUserName(approval.assignedToId)),
+    ),
+  );
   const getInternalApproverRole = (approval: any) =>
     approval?.assignedToId === job.assignedManagerId ? "Manager" : "TL";
 
@@ -968,7 +1014,7 @@ export function JobWorkspaceClient({
 
   useEffect(() => {
     if (activeTab === "filing" && activeStepIndex >= filingStageIndex) {
-      loadFilingData();
+      void loadFilingData();
     }
   }, [activeTab, activeStepIndex, filingStageIndex]);
 
@@ -1002,7 +1048,7 @@ export function JobWorkspaceClient({
 
     // Validate all mandatory checklist items are checked if requireAllMandatoryChecklistItems is true
     if (activeNodeRun.node.requireAllMandatoryChecklistItems) {
-      for (const item of activeNodeRun.node.checklistItems) {
+      for (const item of activeChecklistItems) {
         if (item.isMandatory) {
           const resp = checklistResponses[item.id];
           if (!resp || !resp.isChecked) {
@@ -1014,7 +1060,7 @@ export function JobWorkspaceClient({
     }
 
     // Validate checklist items requiring remarks have remarks
-    for (const item of activeNodeRun.node.checklistItems) {
+    for (const item of activeChecklistItems) {
       const resp = checklistResponses[item.id];
       if (item.requiresRemarks && resp?.isChecked && !resp.remarks?.trim()) {
         toast.error(`Remarks are required for checklist item "${item.label}".`);
@@ -1045,13 +1091,16 @@ export function JobWorkspaceClient({
 
     setLoading("filing-complete");
     try {
-      const responsesList = Object.entries(checklistResponses).map(([itemId, val]) => ({
-        checklistItemId: itemId,
-        isChecked: val.isChecked,
-        remarks: val.remarks || undefined,
-        fileKey: val.fileKey || undefined,
-        delayRemarks: val.delayRemarks || undefined,
-      }));
+      const responsesList = activeChecklistItems.map((item: any) => {
+        const val = checklistResponses[item.id] || { isChecked: false, remarks: "", fileKey: undefined, delayRemarks: "" };
+        return {
+          checklistItemId: item.id,
+          isChecked: val.isChecked,
+          remarks: val.remarks || undefined,
+          fileKey: val.fileKey || undefined,
+          delayRemarks: val.delayRemarks || undefined,
+        };
+      });
 
       const res = await actions.completeFilingNodeAction(job.id, activeNodeRun.id, {
         remarks: nodeRemarks,
@@ -2578,7 +2627,8 @@ export function JobWorkspaceClient({
                         </p>
                         {checklistWorkflow?.currentApprovalStage === "CUSTOMER" && !approvedCustomerDecision ? (
                           <p className="mt-1 text-xs text-on-surface-variant">
-                            Pending approvers: {Array.from(new Set(currentCustomerApprovals.filter((approval: any) => approval.action === "PENDING").map((approval: any) => getUserName(approval.assignedToId)))).join(", ") || "Concerned job users"}
+                            Eligible approvers: any concerned user linked to this job, including the job owner.
+                            {pendingCustomerApproverNames.length > 0 ? ` Current linked users: ${pendingCustomerApproverNames.join(", ")}` : ""}
                           </p>
                         ) : null}
                       </div>
@@ -2730,25 +2780,11 @@ export function JobWorkspaceClient({
                   <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div className="space-y-1">
                       <label className="ds-label block">Shipment Type</label>
-                      <select
+                      <input
                         value={filingShipmentType}
-                        onChange={(e) => {
-                          const next = e.target.value;
-                          setFilingShipmentType(next);
-                          if (next.toUpperCase() === "IMPORT") {
-                            setShippingBillNumber("");
-                          }
-                          if (next.toUpperCase() === "EXPORT") {
-                            setBillOfEntryNumber("");
-                          }
-                        }}
+                        readOnly
                         className="w-full text-xs"
-                      >
-                        <option value="">Select shipment type</option>
-                        <option value="IMPORT">Import</option>
-                        <option value="EXPORT">Export</option>
-                        <option value="EITHER">Either</option>
-                      </select>
+                      />
                     </div>
                     <div className="space-y-1">
                       <label className="ds-label block">Bill Of Entry Number</label>
@@ -2757,7 +2793,6 @@ export function JobWorkspaceClient({
                         value={billOfEntryNumber}
                         disabled={beDisabled}
                         onChange={(e) => setBillOfEntryNumber(e.target.value)}
-                        placeholder="Import reference"
                         className="w-full text-xs disabled:opacity-50"
                       />
                     </div>
@@ -2768,14 +2803,13 @@ export function JobWorkspaceClient({
                         value={shippingBillNumber}
                         disabled={sbDisabled}
                         onChange={(e) => setShippingBillNumber(e.target.value)}
-                        placeholder="Export reference"
                         className="w-full text-xs disabled:opacity-50"
                       />
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                     <p className="text-xs text-on-surface-variant">
-                      Import enables BE. Export enables SB. In Either mode, entering one field disables the other.
+                      Shipment type is set automatically from the shipment type selected when the job was created. Once you start typing either Bill of Entry or Shipping Bill, the other field is greyed out.
                     </p>
                     <Button onClick={handleSaveFilingShipmentDetails} disabled={loading === "filing-shipment-save"} className="text-xs h-9">
                       {loading === "filing-shipment-save" ? "Saving..." : "Save Shipment Details"}
@@ -2785,19 +2819,11 @@ export function JobWorkspaceClient({
 
                 {!filingInstance ? (
                   <div className="card-top-accent rounded-xl bg-surface border border-outline-variant/30 p-6 space-y-4 shadow-sm">
-                    <h4 className="ds-h3 text-on-surface">Filing Blueprint Workflow Not Started</h4>
+                    <h4 className="ds-h3 text-on-surface">Filing Blueprint Workflow Initializing</h4>
                     <p className="text-xs text-on-surface-variant leading-relaxed">
-                      Initialize the active published filing workflow to track configurable customs checks, deadlines, and graph transitions for this job.
+                      The active published filing workflow starts automatically once the job reaches Filing. If this panel is still empty, refresh the tab after the workflow initializes.
                     </p>
-                    <div className="flex justify-start">
-                      <Button
-                        onClick={handleStartFilingWorkflow}
-                        disabled={loading === "filing-start"}
-                        className="bg-[#00cec4] text-white hover:bg-[#00b8af]"
-                      >
-                        {loading === "filing-start" ? "Starting Workflow..." : "Start Filing Workflow"}
-                      </Button>
-                    </div>
+                    {loading === "filing-load" ? <p className="text-xs text-on-surface-variant">Loading filing workflow...</p> : null}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
@@ -2843,48 +2869,76 @@ export function JobWorkspaceClient({
                               <div className="space-y-3">
                                 <h4 className="ds-label text-on-surface">Stage Checklist Verification</h4>
                                 <div className="space-y-3.5">
-                                  {activeNodeRun.node.checklistItems.map((item: any) => {
+                                  {activeChecklistItems.map((item: any, index: number) => {
                                     const resp = checklistResponses[item.id] || { isChecked: false, remarks: "", fileKey: undefined, delayRemarks: "" };
                                     const overdueMeta = overdueChecklistItems.find((entry: any) => entry.checklistItemId === item.id);
-                                    const checklistItemAttachments = filingInstance.attachments?.filter(
-                                      (attachment: any) => attachment.nodeRunId === activeNodeRun.id && attachment.checklistItemId === item.id
-                                    ) || [];
+                                    const checklistItemAttachments = checklistAttachmentsByItem.get(item.id) || [];
+                                    const isCurrentItem = index === currentChecklistItemIndex;
+                                    const isCompletedItem =
+                                      resp.isChecked &&
+                                      (!item.requiresRemarks || !!resp.remarks?.trim()) &&
+                                      (!overdueMeta || !item.delayRemarksRequired || !!resp.delayRemarks?.trim()) &&
+                                      (!(item.allowsUpload && (item.minUploads || 0) > 0) || checklistItemAttachments.length >= item.minUploads);
+                                    const isLockedItem = index > currentChecklistItemIndex;
                                     return (
                                       <div
                                         key={item.id}
                                         className={`p-3.5 rounded-xl border space-y-3 ${
-                                          overdueMeta
+                                          isLockedItem
+                                            ? "border-outline-variant/25 bg-surface-container-low/20 opacity-70"
+                                            : overdueMeta
                                             ? "border-[#fb923c]/45 bg-[#fb923c]/10"
                                             : "border-outline-variant/35 bg-surface-container-low/40"
                                         }`}
                                       >
-                                        <div className="flex items-start gap-3">
-                                          <input
-                                            type="checkbox"
-                                            id={`check-${item.id}`}
-                                            checked={resp.isChecked}
-                                            onChange={(e) => {
-                                              setChecklistResponses((prev) => ({
-                                                ...prev,
-                                                [item.id]: {
-                                                  ...prev[item.id],
-                                                  isChecked: e.target.checked,
-                                                },
-                                              }));
-                                            }}
-                                            className="mt-1 rounded border-outline-variant/60 text-[#00cec4] focus:ring-[#00cec4]/30"
-                                          />
-                                          <div className="flex-1 min-w-0">
-                                            <label htmlFor={`check-${item.id}`} className="text-xs font-semibold text-on-surface block cursor-pointer">
-                                              {item.label} {item.isMandatory && <span className="text-red-500 font-bold">*</span>}
-                                            </label>
-                                            {item.description && (
-                                              <p className="text-[11px] text-on-surface-variant mt-0.5 leading-relaxed">{item.description}</p>
-                                            )}
+                                        <div className="flex items-start justify-between gap-3">
+                                          <div className="flex items-start gap-3">
+                                            <input
+                                              type="checkbox"
+                                              id={`check-${item.id}`}
+                                              checked={resp.isChecked}
+                                              disabled={isLockedItem}
+                                              onChange={(e) => {
+                                                setChecklistResponses((prev) => ({
+                                                  ...prev,
+                                                  [item.id]: {
+                                                    ...prev[item.id],
+                                                    isChecked: e.target.checked,
+                                                  },
+                                                }));
+                                              }}
+                                              className="mt-1 rounded border-outline-variant/60 text-[#00cec4] focus:ring-[#00cec4]/30"
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                              <label htmlFor={`check-${item.id}`} className="text-xs font-semibold text-on-surface block cursor-pointer">
+                                                {item.label} {item.isMandatory && <span className="text-red-500 font-bold">*</span>}
+                                              </label>
+                                              {item.description && (
+                                                <p className="text-[11px] text-on-surface-variant mt-0.5 leading-relaxed">{item.description}</p>
+                                              )}
+                                            </div>
+                                          </div>
+                                          <div className="shrink-0 text-right">
+                                            <div className="ds-label text-on-surface-variant">Item {index + 1} of {activeChecklistItems.length}</div>
+                                            <div className="mt-1 text-[11px] text-on-surface-variant">
+                                              {item.deadlineDuration || 2} {item.deadlineUnit === "HOURS" ? "HR" : item.deadlineUnit === "DAYS" ? "DAY" : "BD"}
+                                            </div>
                                           </div>
                                         </div>
 
-                                        {overdueMeta && (
+                                        {isLockedItem && (
+                                          <div className="rounded-xl border border-outline-variant/25 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
+                                            Complete the current checklist item first to unlock this step.
+                                          </div>
+                                        )}
+
+                                        {!isLockedItem && !isCurrentItem && isCompletedItem && (
+                                          <div className="rounded-xl border border-outline-variant/25 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
+                                            Completed and ready. You can move to the next checklist item.
+                                          </div>
+                                        )}
+
+                                        {!isLockedItem && overdueMeta && (
                                           <div className="rounded-xl border border-[#fb923c]/35 bg-surface px-3 py-2 text-xs text-on-surface">
                                             <div className="flex flex-wrap items-center gap-3">
                                               <span className="font-semibold text-[#fb923c] uppercase tracking-wide">Overdue</span>
@@ -2913,7 +2967,7 @@ export function JobWorkspaceClient({
                                         )}
 
                                         {/* Optional or required remarks */}
-                                        {resp.isChecked && item.requiresRemarks && (
+                                        {!isLockedItem && resp.isChecked && item.requiresRemarks && (
                                           <div className="pl-6 space-y-1">
                                             <label className="text-[10px] uppercase font-bold text-on-surface-variant block ds-label">Remarks / Notes *</label>
                                             <input
@@ -2936,17 +2990,35 @@ export function JobWorkspaceClient({
                                         )}
 
                                         {/* Optional or required uploads */}
-                                        {resp.isChecked && item.allowsUpload && (
+                                        {!isLockedItem && resp.isChecked && item.allowsUpload && (
                                           <div className="pl-6 space-y-2">
-                                            <label className="text-[10px] uppercase font-bold text-on-surface-variant block ds-label">Supporting File / Photo</label>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                              <label className="text-[10px] uppercase font-bold text-on-surface-variant block ds-label">Supporting File / Photo</label>
+                                              <span className="text-[11px] text-on-surface-variant ds-numeric">
+                                                Uploaded {checklistItemAttachments.length} / Minimum {item.minUploads || 0}
+                                              </span>
+                                            </div>
+                                            <label
+                                              htmlFor={`checklist-item-upload-${item.id}`}
+                                              className="flex min-h-28 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-outline-variant/50 bg-surface px-4 py-4 text-sm text-on-surface transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/40"
+                                            >
+                                              <span className="ds-icon-badge shrink-0">
+                                                <Upload size={18} />
+                                              </span>
+                                              <span className="min-w-0">
+                                                <span className="block font-medium text-on-surface">Upload supporting files for this checklist item</span>
+                                                <span className="mt-1 block text-xs text-on-surface-variant">
+                                                  Add images or documents here. This upload counts toward this checklist item directly.
+                                                </span>
+                                              </span>
+                                            </label>
                                               <input
+                                                id={`checklist-item-upload-${item.id}`}
                                                 type="file"
                                                 onChange={(e) => handleUploadChecklistItemFile(item.id, e)}
                                                 disabled={loading === `checklist-item-file-${item.id}`}
-                                                className="text-xs max-w-xs"
+                                                className="hidden"
                                               />
-                                            </div>
                                             {checklistItemAttachments.length > 0 && (
                                               <div className="space-y-1">
                                                 {checklistItemAttachments.map((attachment: any) => (
@@ -3004,12 +3076,29 @@ export function JobWorkspaceClient({
 
                                         {/* Upload Input */}
                                         {(!pr.maxPhotos || reqAttachments.length < pr.maxPhotos) && (
-                                          <input
-                                            type="file"
-                                            disabled={loading === `filing-photo-${pr.id}`}
-                                            onChange={(e) => handleUploadFilingPhoto(pr.id, e)}
-                                            className="text-xs"
-                                          />
+                                          <>
+                                            <label
+                                              htmlFor={`photo-requirement-upload-${pr.id}`}
+                                              className="flex min-h-28 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-outline-variant/50 bg-surface-container-low/35 px-4 py-4 text-sm text-on-surface transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/55"
+                                            >
+                                              <span className="ds-icon-badge shrink-0">
+                                                <Upload size={18} />
+                                              </span>
+                                              <span className="min-w-0">
+                                                <span className="block font-medium text-on-surface">Upload required image or document</span>
+                                                <span className="mt-1 block text-xs text-on-surface-variant">
+                                                  This upload is counted against the requirement above, not the checklist item upload count.
+                                                </span>
+                                              </span>
+                                            </label>
+                                            <input
+                                              id={`photo-requirement-upload-${pr.id}`}
+                                              type="file"
+                                              disabled={loading === `filing-photo-${pr.id}`}
+                                              onChange={(e) => handleUploadFilingPhoto(pr.id, e)}
+                                              className="hidden"
+                                            />
+                                          </>
                                         )}
 
                                         {/* Uploaded Attachments list */}
@@ -3970,7 +4059,11 @@ export function JobWorkspaceClient({
           <div className="rounded-xl border border-red-200/70 bg-red-50/40 p-4 text-sm text-on-surface">
             <p className="font-semibold text-red-600">Permanent action</p>
             <p className="mt-1 text-on-surface-variant">
-              Deleting this job affects linked CHA workflows, audit visibility, and operational references. Enter the exact confirmation values below to continue.
+              Deleting this job affects linked CHA workflows, audit visibility, and operational references.
+            </p>
+            <p className="mt-3 text-on-surface-variant">
+              Type the exact job number <strong className="text-on-surface">{job.jobNumber}</strong> and the confirmation phrase{" "}
+              <strong className="text-on-surface">delete job</strong> to continue.
             </p>
           </div>
 
@@ -3994,6 +4087,9 @@ export function JobWorkspaceClient({
                 placeholder="delete job"
                 className="w-full text-sm"
               />
+              <p className="text-xs text-on-surface-variant">
+                Enter exactly: <strong className="text-on-surface">delete job</strong>
+              </p>
             </div>
           </div>
 

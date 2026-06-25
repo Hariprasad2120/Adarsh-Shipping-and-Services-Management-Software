@@ -68,6 +68,7 @@ export function CreateJobDialog({
   const searchParams = useSearchParams();
   const draftRestoredRef = useRef(false);
   const createdCustomerAppliedRef = useRef(false);
+  const autoAddedManagerIdRef = useRef<string>("");
 
   // Form State
   const [newJobNumber, setNewJobNumber] = useState("");
@@ -176,6 +177,8 @@ export function CreateJobDialog({
   // Restore draft when open changes to true, or reset to defaults
   useEffect(() => {
     if (!open || draftRestoredRef.current) return;
+
+    autoAddedManagerIdRef.current = "";
 
     const draft = localStorage.getItem("cha_draft_job");
     if (!draft) {
@@ -840,7 +843,23 @@ export function CreateJobDialog({
                 <DropdownSelect
                   required
                   value={newManagerId}
-                  onValueChange={setNewManagerId}
+                  onValueChange={(value) => {
+                    const prevAutoId = autoAddedManagerIdRef.current;
+                    setNewManagerId(value);
+                    setAssignments((prev) => {
+                      // Remove the previously auto-added manager entry (if any)
+                      const without = prevAutoId
+                        ? prev.filter((a) => a.userId !== prevAutoId)
+                        : prev;
+                      // Don't duplicate if already manually assigned
+                      if (without.some((a) => a.userId === value)) {
+                        autoAddedManagerIdRef.current = "";
+                        return without;
+                      }
+                      autoAddedManagerIdRef.current = value;
+                      return [...without, { userId: value, responsibility: "APPROVAL" }];
+                    });
+                  }}
                   placeholder="Select Manager"
                   options={displayedManagers.map((m) => ({
                     value: m.id,
