@@ -1,5 +1,7 @@
 package com.monolith.crm.hrms.data.remote
 
+import com.google.gson.annotations.SerializedName
+
 // HRMS Mobile API network models.
 // Matches the actual server-side API response JSON structure.
 
@@ -45,7 +47,9 @@ data class AttendanceStatus(
 )
 
 data class LocationData(
+    @SerializedName(value = "latitude", alternate = ["lat"])
     val latitude: Double,
+    @SerializedName(value = "longitude", alternate = ["lng"])
     val longitude: Double,
     val accuracy: Float?,
     val address: String?

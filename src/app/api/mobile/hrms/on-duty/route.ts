@@ -57,7 +57,15 @@ export async function POST(request: Request) {
 
     // Start Trip
     if (action === "start") {
-      const { requestId, location } = body;
+      let { requestId, location } = body;
+      if (!location && (body.latitude !== undefined) && (body.longitude !== undefined)) {
+        location = {
+          lat: body.latitude,
+          lng: body.longitude,
+          accuracy: body.accuracy,
+          timestamp: body.timestamp || new Date().toISOString(),
+        };
+      }
       if (!requestId) return mobileJson({ error: "Request ID required" }, 400);
       if (!location?.lat || !location?.lng) return mobileJson({ error: "Location required" }, 400);
 
@@ -67,7 +75,15 @@ export async function POST(request: Request) {
 
     // Complete Trip
     if (action === "complete") {
-      const { requestId, location } = body;
+      let { requestId, location } = body;
+      if (!location && (body.latitude !== undefined) && (body.longitude !== undefined)) {
+        location = {
+          lat: body.latitude,
+          lng: body.longitude,
+          accuracy: body.accuracy,
+          timestamp: body.timestamp || new Date().toISOString(),
+        };
+      }
       if (!requestId) return mobileJson({ error: "Request ID required" }, 400);
       if (!location?.lat || !location?.lng) return mobileJson({ error: "Location required" }, 400);
 

@@ -18,10 +18,28 @@ export async function POST(request: Request) {
     if (!user.orgId) return mobileJson({ error: "No organization" }, 400);
 
     const body = await request.json();
-    const { location, faceDescriptor, deviceId } = body;
+    let { location, faceDescriptor, deviceId } = body;
+
+    // DEBUG: log incoming body keys for diagnosis
+    console.log("[check-in] body keys:", Object.keys(body));
+    console.log("[check-in] location:", location, "| latitude:", body.latitude, "| longitude:", body.longitude);
+
+    // Fallback: If location is not provided but latitude/longitude are present at root level
+    if (!location && (body.latitude !== undefined) && (body.longitude !== undefined)) {
+      location = {
+        lat: body.latitude,
+        lng: body.longitude,
+        accuracy: body.accuracy,
+        altitude: body.altitude,
+        speed: body.speed,
+        bearing: body.bearing,
+        timestamp: body.timestamp || new Date().toISOString(),
+      };
+    }
 
     // Validate required fields
-    if (!location?.lat || !location?.lng) {
+    if (location?.lat == null || location?.lng == null) {
+      console.log("[check-in] FAILED validation — location:", JSON.stringify(location));
       return mobileJson({ error: "Location data is required for check-in" }, 400);
     }
 

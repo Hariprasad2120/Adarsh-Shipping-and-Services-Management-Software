@@ -55,7 +55,20 @@ export async function POST(request: Request) {
     if (!user.orgId) return mobileJson({ error: "No organization" }, 400);
 
     const body = await request.json();
-    const { location, batteryLevel, deviceId, networkStatus, isMocked, source } = body;
+    let { location, batteryLevel, deviceId, networkStatus, isMocked, source } = body;
+
+    // Fallback: If location is not provided but latitude/longitude are present at root level
+    if (!location && (body.latitude !== undefined) && (body.longitude !== undefined)) {
+      location = {
+        lat: body.latitude,
+        lng: body.longitude,
+        accuracy: body.accuracy,
+        altitude: body.altitude,
+        speed: body.speed,
+        bearing: body.bearing,
+        timestamp: body.timestamp || new Date().toISOString(),
+      };
+    }
 
     if (!location?.lat || !location?.lng) {
       return mobileJson({ error: "Location data is required" }, 400);

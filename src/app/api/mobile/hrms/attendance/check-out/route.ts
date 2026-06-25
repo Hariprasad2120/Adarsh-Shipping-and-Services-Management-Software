@@ -17,13 +17,26 @@ export async function POST(request: Request) {
     if (!user.orgId) return mobileJson({ error: "No organization" }, 400);
 
     const body = await request.json();
-    const { sessionId, location, faceDescriptor, deviceId } = body;
+    let { sessionId, location, faceDescriptor, deviceId } = body;
+
+    // Fallback: If location is not provided but latitude/longitude are present at root level
+    if (!location && (body.latitude !== undefined) && (body.longitude !== undefined)) {
+      location = {
+        lat: body.latitude,
+        lng: body.longitude,
+        accuracy: body.accuracy,
+        altitude: body.altitude,
+        speed: body.speed,
+        bearing: body.bearing,
+        timestamp: body.timestamp || new Date().toISOString(),
+      };
+    }
 
     if (!sessionId) {
       return mobileJson({ error: "Session ID is required" }, 400);
     }
 
-    if (!location?.lat || !location?.lng) {
+    if (location?.lat == null || location?.lng == null) {
       return mobileJson({ error: "Location data is required for check-out" }, 400);
     }
 
