@@ -104,6 +104,11 @@ export function CreateJobDialog({
   const [showAddJobType, setShowAddJobType] = useState(false);
   const [showAddShipmentType, setShowAddShipmentType] = useState(false);
   const [newJobTypeName, setNewJobTypeName] = useState("");
+  const [newJobTypeMovementDirection, setNewJobTypeMovementDirection] = useState<"IMPORT" | "EXPORT" | "BOTH" | "OTHER">("IMPORT");
+  const [newJobTypeManifestRequirement, setNewJobTypeManifestRequirement] = useState<"IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM">("IGM");
+  const [newJobTypeCustomManifestLabel, setNewJobTypeCustomManifestLabel] = useState("");
+  const [newJobTypeManifestMandatory, setNewJobTypeManifestMandatory] = useState(true);
+  const [newJobTypeManifestHelpText, setNewJobTypeManifestHelpText] = useState("");
   const [newShipmentTypeName, setNewShipmentTypeName] = useState("");
   const [jobTypesList, setJobTypesList] = useState(options.jobTypes);
   const [shipmentTypesList, setShipmentTypesList] = useState(options.shipmentTypes);
@@ -168,12 +173,30 @@ export function CreateJobDialog({
     createdCustomerAppliedRef.current = true;
   }, [open, options.customers, searchParams]);
 
-  // Restore draft when open changes to true
+  // Restore draft when open changes to true, or reset to defaults
   useEffect(() => {
     if (!open || draftRestoredRef.current) return;
 
     const draft = localStorage.getItem("cha_draft_job");
-    if (!draft) return;
+    if (!draft) {
+      setNewJobNumber("");
+      setNewTitle("");
+      setNewCustomerId("");
+      setNewCustomerRef("");
+      setNewJobTypeId("");
+      setNewShipmentTypeId("");
+      setNewBranchId("");
+      setNewPriority("MEDIUM");
+      setNewOwnerId(currentUserId);
+      setNewManagerId("");
+      setNewRemarks("");
+      setAssignments([{ userId: currentUserId, responsibility: "OPERATIONS" }]);
+      setEstimatedClosureDate("");
+      setCustomerSearch("");
+      setSelectedCustomerName("");
+      draftRestoredRef.current = true;
+      return;
+    }
 
     try {
       const parsed = JSON.parse(draft);
@@ -417,7 +440,15 @@ export function CreateJobDialog({
     }
     setAddingJobType(true);
     try {
-      const res = await createJobTypeAction(trimmed);
+      const res = await createJobTypeAction({
+        name: trimmed,
+        movementDirection: newJobTypeMovementDirection,
+        manifestRequirement: newJobTypeManifestRequirement,
+        customManifestLabel: newJobTypeManifestRequirement === "CUSTOM" ? newJobTypeCustomManifestLabel : null,
+        isManifestMandatory: newJobTypeManifestMandatory,
+        manifestHelpText: newJobTypeManifestHelpText || null,
+        isActive: true,
+      });
       if (!res.ok) {
         toast.error(res.error || "Failed to add job type.");
         return;
@@ -425,6 +456,11 @@ export function CreateJobDialog({
       setJobTypesList((prev) => [...prev, res.data]);
       setNewJobTypeId(res.data.id);
       setNewJobTypeName("");
+      setNewJobTypeMovementDirection("IMPORT");
+      setNewJobTypeManifestRequirement("IGM");
+      setNewJobTypeCustomManifestLabel("");
+      setNewJobTypeManifestMandatory(true);
+      setNewJobTypeManifestHelpText("");
       setShowAddJobType(false);
       toast.success(`Clearance job type '${trimmed}' added.`);
     } catch (err: any) {
@@ -496,23 +532,6 @@ export function CreateJobDialog({
                   value={newBranchId}
                   onValueChange={(value) => {
                     setNewBranchId(value);
-                    const nextRule = options.branchNumberingRules.find((rule) => rule.branchId === value);
-                    if (nextRule?.isActive && !newJobNumber) {
-                      const parts = [nextRule.prefix];
-                      if (nextRule.useFinancialYear) {
-                        parts.push(buildFinancialYearLabel(nextRule.financialYearFormat));
-                      }
-                      parts.push(
-                        String(Math.max(nextRule.currentSequence + 1, nextRule.startingSequence, 1)).padStart(
-                          Math.max(nextRule.numberPadding, 1),
-                          "0",
-                        ),
-                      );
-                      if (nextRule.suffix?.trim()) {
-                        parts.push(nextRule.suffix.trim());
-                      }
-                      setNewJobNumber(parts.join("-"));
-                    }
                   }}
                   placeholder="Choose Branch Location"
                   options={options.branches.map((b) => ({
@@ -677,6 +696,59 @@ export function CreateJobDialog({
                       placeholder="e.g. Transit Clearance"
                       className="w-full text-sm"
                     />
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                      <label className="space-y-1">
+                        <span className="ds-label block">Movement Direction</span>
+                        <select
+                          value={newJobTypeMovementDirection}
+                          onChange={(e) => setNewJobTypeMovementDirection(e.target.value as "IMPORT" | "EXPORT" | "BOTH" | "OTHER")}
+                          className="w-full text-sm"
+                        >
+                          <option value="IMPORT">Import</option>
+                          <option value="EXPORT">Export</option>
+                          <option value="BOTH">Both</option>
+                          <option value="OTHER">Other / Custom</option>
+                        </select>
+                      </label>
+                      <label className="space-y-1">
+                        <span className="ds-label block">Manifest Requirement</span>
+                        <select
+                          value={newJobTypeManifestRequirement}
+                          onChange={(e) => setNewJobTypeManifestRequirement(e.target.value as "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM")}
+                          className="w-full text-sm"
+                        >
+                          <option value="IGM">IGM</option>
+                          <option value="EGM">EGM</option>
+                          <option value="BOTH">Both</option>
+                          <option value="NONE">None</option>
+                          <option value="CUSTOM">Custom</option>
+                        </select>
+                      </label>
+                    </div>
+                    {newJobTypeManifestRequirement === "CUSTOM" ? (
+                      <input
+                        type="text"
+                        value={newJobTypeCustomManifestLabel}
+                        onChange={(e) => setNewJobTypeCustomManifestLabel(e.target.value)}
+                        placeholder="Custom manifest label"
+                        className="w-full text-sm"
+                      />
+                    ) : null}
+                    <input
+                      type="text"
+                      value={newJobTypeManifestHelpText}
+                      onChange={(e) => setNewJobTypeManifestHelpText(e.target.value)}
+                      placeholder="Help text / placeholder"
+                      className="w-full text-sm"
+                    />
+                    <label className="flex items-center gap-2 text-xs text-on-surface-variant">
+                      <input
+                        type="checkbox"
+                        checked={newJobTypeManifestMandatory}
+                        onChange={(e) => setNewJobTypeManifestMandatory(e.target.checked)}
+                      />
+                      Manifest field is mandatory
+                    </label>
                     <div className="flex justify-end gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setShowAddJobType(false)}>
                         Cancel

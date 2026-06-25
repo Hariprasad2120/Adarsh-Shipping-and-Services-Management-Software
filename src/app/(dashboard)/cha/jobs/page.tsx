@@ -49,7 +49,7 @@ export default async function ChaJobsPage({
   const [branches, customers, jobTypes, shipmentTypes, users, eligibleManagers, teamGroups, branchNumberingRules] = await Promise.all([
     db.branch.findMany({ where: { orgId }, select: { id: true, name: true, code: true } }),
     db.crmAccount.findMany({ where: { orgId, type: "Customer" }, select: { id: true, name: true } }),
-    db.chaJobType.findMany({ where: { orgId }, select: { id: true, name: true } }),
+    db.chaJobType.findMany({ where: { orgId, isActive: true }, select: { id: true, name: true } }),
     db.chaShipmentType.findMany({ where: { orgId, isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     db.user.findMany({ where: { orgId, active: true }, select: { id: true, name: true, email: true } }),
     getEligibleManagers(orgId),

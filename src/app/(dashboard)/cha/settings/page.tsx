@@ -6,6 +6,9 @@ import { db } from "@/lib/db";
 import { listUsersSlim } from "@/modules/core/user/service";
 import { SettingsForm } from "./settings-form";
 
+const MOVEMENT_DIRECTIONS = new Set(["IMPORT", "EXPORT", "BOTH", "OTHER"] as const);
+const MANIFEST_REQUIREMENTS = new Set(["IGM", "EGM", "BOTH", "NONE", "CUSTOM"] as const);
+
 export default async function ChaSettingsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -68,6 +71,15 @@ export default async function ChaSettingsPage() {
     where: { orgId },
     orderBy: { name: "asc" },
   });
+  const normalizedJobTypes = jobTypes.map((jobType) => ({
+    ...jobType,
+    movementDirection: MOVEMENT_DIRECTIONS.has(jobType.movementDirection as never)
+      ? (jobType.movementDirection as "IMPORT" | "EXPORT" | "BOTH" | "OTHER")
+      : null,
+    manifestRequirement: MANIFEST_REQUIREMENTS.has(jobType.manifestRequirement as never)
+      ? (jobType.manifestRequirement as "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM")
+      : null,
+  }));
 
   const shipmentTypes = await db.chaShipmentType.findMany({
     where: { orgId },
@@ -127,7 +139,7 @@ export default async function ChaSettingsPage() {
         availableEmployees={activeEmployees}
         branches={branches}
         branchNumberingRules={branchNumberingRules}
-        jobTypes={jobTypes}
+        jobTypes={normalizedJobTypes}
         shipmentTypes={shipmentTypes}
         teamGroups={teamGroups}
         documentCategories={documentCategories}

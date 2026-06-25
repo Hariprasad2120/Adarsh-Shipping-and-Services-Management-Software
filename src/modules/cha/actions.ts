@@ -163,15 +163,46 @@ export async function decideJobDeletionRequestAction(
   }
 }
 
-export async function createJobTypeAction(name: string): Promise<ActionResponse> {
+export async function createJobTypeAction(data: {
+  name: string;
+  movementDirection: "IMPORT" | "EXPORT" | "BOTH" | "OTHER";
+  manifestRequirement: "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM";
+  customManifestLabel?: string | null;
+  isManifestMandatory: boolean;
+  manifestHelpText?: string | null;
+  isActive?: boolean;
+}): Promise<ActionResponse> {
   try {
-    const { orgId } = await getAuthAndVerify("cha.settings.manage");
-    const jobType = await chaService.createJobType(orgId, name);
+    const { userId, orgId } = await getAuthAndVerify("cha.settings.manage");
+    const jobType = await chaService.createJobType(userId, orgId, data);
     revalidatePath("/cha/settings");
     revalidatePath("/cha/jobs");
     return { ok: true, data: jobType };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to create clearance job type" };
+  }
+}
+
+export async function updateJobTypeManifestConfigAction(
+  id: string,
+  data: {
+    name: string;
+    movementDirection: "IMPORT" | "EXPORT" | "BOTH" | "OTHER";
+    manifestRequirement: "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM";
+    customManifestLabel?: string | null;
+    isManifestMandatory: boolean;
+    manifestHelpText?: string | null;
+    isActive?: boolean;
+  },
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.settings.manage");
+    const jobType = await chaService.updateJobTypeManifestConfig(userId, orgId, id, data);
+    revalidatePath("/cha/settings");
+    revalidatePath("/cha/jobs");
+    return { ok: true, data: jobType };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update clearance job type" };
   }
 }
 
@@ -390,6 +421,7 @@ export async function upsertAdditionalDataAction(
     vesselInwardDate?: string | Date | null;
     importGeneralManifest?: string | null;
     exportGeneralManifest?: string | null;
+    customManifestValue?: string | null;
     deliveryOrderValidity?: string | Date | null;
   }
 ): Promise<ActionResponse> {
@@ -873,4 +905,192 @@ export async function submitChecklistOwnerDecisionAction(
     return { ok: false, error: err.message || "Failed to submit checklist owner decision" };
   }
 }
+
+export async function saveFilingWorkflowDraftAction(
+  templateId: string | null,
+  data: {
+    name: string;
+    description?: string;
+    nodes: any[];
+    edges: any[];
+  }
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.settings.manage");
+    const draft = await chaService.saveFilingWorkflowDraft(userId, orgId, templateId, data);
+    return { ok: true, data: draft };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to save workflow draft" };
+  }
+}
+
+export async function publishFilingWorkflowAction(
+  versionId: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.settings.manage");
+    const version = await chaService.publishFilingWorkflow(userId, orgId, versionId);
+    return { ok: true, data: version };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to publish workflow version" };
+  }
+}
+
+export async function getFilingWorkflowDetailsAction(
+  templateId: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const details = await chaService.getFilingWorkflowDetails(userId, orgId, templateId);
+    return { ok: true, data: details };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to retrieve workflow details" };
+  }
+}
+
+export async function getFilingWorkflowInstanceAction(
+  jobId: string
+): Promise<ActionResponse> {
+  try {
+    const { orgId } = await getAuthAndVerify();
+    const instance = await chaService.getFilingWorkflowInstance(orgId, jobId);
+    return { ok: true, data: instance };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch filing workflow instance" };
+  }
+}
+
+export async function startFilingWorkflowAction(
+  jobId: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const instance = await chaService.startFilingWorkflow(userId, orgId, jobId);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: instance };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to start filing workflow" };
+  }
+}
+
+export async function completeFilingNodeAction(
+  jobId: string,
+  nodeRunId: string,
+  data: {
+    remarks?: string;
+    checklistItemResponses: {
+      checklistItemId: string;
+      isChecked: boolean;
+      remarks?: string;
+      fileKey?: string;
+      delayRemarks?: string;
+    }[];
+    nextNodeKey?: string | null;
+  }
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const result = await chaService.completeFilingNode(userId, orgId, jobId, nodeRunId, data);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to complete filing step" };
+  }
+}
+
+export async function toggleFilingSection49Action(
+  jobId: string,
+  isEnabled: boolean,
+  remarks?: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const result = await chaService.toggleFilingSection49(userId, orgId, jobId, isEnabled, remarks);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to toggle Section 49 status" };
+  }
+}
+
+export async function getFilingSection49Action(
+  jobId: string
+): Promise<ActionResponse> {
+  try {
+    const { orgId } = await getAuthAndVerify();
+    const result = await chaService.getFilingSection49(orgId, jobId);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to get Section 49 status" };
+  }
+}
+
+export async function uploadFilingAttachmentAction(
+  jobId: string,
+  nodeRunId: string,
+  photoRequirementId: string | null,
+  checklistItemId: string | null,
+  formData: FormData
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      return { ok: false, error: "Please select a valid photo / file upload." };
+    }
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const fileData = {
+      fileName: file.name,
+      mimeType: file.type || "application/octet-stream",
+      sizeBytes: file.size,
+    };
+    const attachment = await chaService.uploadFilingAttachment(
+      userId,
+      orgId,
+      jobId,
+      nodeRunId,
+      photoRequirementId,
+      checklistItemId,
+      fileData,
+      buffer
+    );
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: attachment };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to upload filing attachment" };
+  }
+}
+
+export async function upsertFilingShipmentDetailsAction(
+  jobId: string,
+  data: {
+    filingShipmentType: string;
+    billOfEntryNumber?: string | null;
+    shippingBillNumber?: string | null;
+  },
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const result = await chaService.upsertFilingShipmentDetails(userId, orgId, jobId, data);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update filing shipment details" };
+  }
+}
+
+export async function deleteFilingAttachmentAction(
+  jobId: string,
+  attachmentId: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const result = await chaService.deleteFilingAttachment(userId, orgId, jobId, attachmentId);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to delete filing attachment" };
+  }
+}
+
 

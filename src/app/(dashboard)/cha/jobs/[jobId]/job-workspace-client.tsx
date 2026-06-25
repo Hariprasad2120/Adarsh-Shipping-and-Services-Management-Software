@@ -125,6 +125,26 @@ export function JobWorkspaceClient({
     return branchManagers.length > 0 ? branchManagers : managers;
   }, [managers, job.branchId]);
 
+
+  const doValidityWarning = useMemo(() => {
+    if (!job.additionalData?.deliveryOrderValidity) return null;
+    const validityDate = new Date(job.additionalData.deliveryOrderValidity);
+    const now = new Date();
+    const validityDateStripped = new Date(validityDate.getFullYear(), validityDate.getMonth(), validityDate.getDate());
+    const nowStripped = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    const diffTime = validityDateStripped.getTime() - nowStripped.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+      return { type: "EXPIRED", message: `Delivery Order Validity expired on ${validityDate.toLocaleDateString("en-IN")}.` };
+    } else if (diffDays <= 4) {
+      return { type: "EXPIRING", message: `Delivery Order Validity is expiring in ${diffDays} day(s) on ${validityDate.toLocaleDateString("en-IN")}.` };
+    }
+    return null;
+  }, [job.additionalData?.deliveryOrderValidity]);
+
+
   // Document Collection Form State
   const [exceptionReason, setExceptionReason] = useState("");
   const [activeDocReqId, setActiveDocReqId] = useState<string | null>(null);
@@ -171,6 +191,11 @@ export function JobWorkspaceClient({
       ? String(job.additionalData.exportGeneralManifest)
       : ""
   );
+  const [customManifestValue, setCustomManifestValue] = useState(
+    job.additionalData?.customManifestValue !== null && job.additionalData?.customManifestValue !== undefined
+      ? String(job.additionalData.customManifestValue)
+      : ""
+  );
   const [deliveryOrderValidity, setDeliveryOrderValidity] = useState(
     job.additionalData?.deliveryOrderValidity ? job.additionalData.deliveryOrderValidity.slice(0, 10) : ""
   );
@@ -188,6 +213,42 @@ export function JobWorkspaceClient({
   const [actualFilingDate, setActualFilingDate] = useState("");
   const [delayReason, setDelayReason] = useState("");
   const [filedBillCopyFile, setFiledBillCopyFile] = useState<File | null>(null);
+  const [filingShipmentType, setFilingShipmentType] = useState(job.filing?.filingShipmentType || "");
+  const [billOfEntryNumber, setBillOfEntryNumber] = useState(job.filing?.billOfEntryNumber || "");
+  const [shippingBillNumber, setShippingBillNumber] = useState(job.filing?.shippingBillNumber || "");
+
+  // --- FILING WORKFLOW RUNNER STATES ---
+  const [filingInstance, setFilingInstance] = useState<any>(null);
+  const [activeNodeRun, setActiveNodeRun] = useState<any>(null);
+  const [checklistResponses, setChecklistResponses] = useState<Record<string, { isChecked: boolean; remarks?: string; fileKey?: string; delayRemarks?: string }>>({});
+  const [nodeRemarks, setNodeRemarks] = useState("");
+  const [selectedNextNodeKey, setSelectedNextNodeKey] = useState<string>("");
+  const [section49Flag, setSection49Flag] = useState<any>(null);
+  const [showSection49Modal, setShowSection49Modal] = useState(false);
+  const [section49Remarks, setSection49Remarks] = useState("");
+
+  useEffect(() => {
+    setFilingShipmentType(job.filing?.filingShipmentType || "");
+    setBillOfEntryNumber(job.filing?.billOfEntryNumber || "");
+    setShippingBillNumber(job.filing?.shippingBillNumber || "");
+  }, [job.filing?.filingShipmentType, job.filing?.billOfEntryNumber, job.filing?.shippingBillNumber]);
+
+  const outgoingEdges = useMemo(() => {
+    if (!filingInstance || !activeNodeRun) return [];
+    return filingInstance.version?.edges?.filter((e: any) => e.sourceKey === activeNodeRun.nodeKey) || [];
+  }, [filingInstance, activeNodeRun]);
+
+  const targetNodesMap = useMemo(() => {
+    if (!filingInstance) return new Map();
+    return new Map(filingInstance.version?.nodes?.map((n: any) => [n.key, n]) || []);
+  }, [filingInstance]);
+
+  const overdueChecklistItems = useMemo(() => filingInstance?.overdueItems || [], [filingInstance]);
+  const overdueChecklistCount = overdueChecklistItems.length;
+  const shipmentTypeUpper = filingShipmentType.trim().toUpperCase();
+  const beDisabled = shipmentTypeUpper === "EXPORT" || (!!shippingBillNumber.trim() && shipmentTypeUpper !== "IMPORT");
+  const sbDisabled = shipmentTypeUpper === "IMPORT" || (!!billOfEntryNumber.trim() && shipmentTypeUpper !== "EXPORT");
+
 
   // Customer Advance Form State
   const [expectedAdvance, setExpectedAdvance] = useState(
@@ -254,11 +315,37 @@ export function JobWorkspaceClient({
   const activeStepIndex = STAGES.findIndex((s) => s.key === job.stage);
   const checklistStageIndex = STAGES.findIndex((s) => s.key === "CHECKLIST_PREPARATION");
   const filingStageIndex = STAGES.findIndex((s) => s.key === "FILING");
+  const manifestRequirement = job.jobType?.manifestRequirement || null;
+  const manifestMovementDirection = job.jobType?.movementDirection || null;
+  const customManifestLabel = job.jobType?.customManifestLabel || "Custom Manifest";
+  const manifestLabel =
+    manifestRequirement === "IGM"
+      ? "IGM Number"
+      : manifestRequirement === "EGM"
+        ? "EGM Number"
+        : manifestRequirement === "BOTH"
+          ? "IGM + EGM"
+          : manifestRequirement === "CUSTOM"
+            ? customManifestLabel
+            : manifestRequirement === "NONE"
+              ? "None"
+              : "Not Configured";
+  const manifestConfigMissing =
+    !manifestMovementDirection ||
+    !manifestRequirement ||
+    (manifestRequirement === "CUSTOM" && !job.jobType?.customManifestLabel);
+  const requiresIgm = manifestRequirement === "IGM" || manifestRequirement === "BOTH";
+  const requiresEgm = manifestRequirement === "EGM" || manifestRequirement === "BOTH";
+  const requiresCustomManifest = manifestRequirement === "CUSTOM";
+  const manifestMandatory = job.jobType?.isManifestMandatory ?? false;
   const additionalDataComplete = Boolean(
     vesselInwardDate &&
     deliveryOrderValidity &&
-    importGeneralManifest !== "" &&
-    exportGeneralManifest !== ""
+    (!manifestMandatory || manifestRequirement === "NONE" || (
+      (!requiresIgm || importGeneralManifest !== "") &&
+      (!requiresEgm || exportGeneralManifest !== "") &&
+      (!requiresCustomManifest || customManifestValue !== "")
+    ))
   );
   const additionalDataLocked = job.stage === "FILING" || job.stage === "FILED";
   const activeDeletionRequest =
@@ -422,6 +509,10 @@ export function JobWorkspaceClient({
   };
 
   const handleSaveAdditionalData = async () => {
+    if (manifestConfigMissing) {
+      toast.error("This clearance type is missing manifest configuration. Update it in CHA settings before continuing.");
+      return;
+    }
     if (importGeneralManifest !== "" && !isValidManifest(importGeneralManifest)) {
       toast.error("IGM must contain digits only.");
       return;
@@ -437,6 +528,7 @@ export function JobWorkspaceClient({
         vesselInwardDate: vesselInwardDate || null,
         importGeneralManifest: importGeneralManifest === "" ? null : importGeneralManifest,
         exportGeneralManifest: exportGeneralManifest === "" ? null : exportGeneralManifest,
+        customManifestValue: customManifestValue === "" ? null : customManifestValue,
         deliveryOrderValidity: deliveryOrderValidity || null,
       });
       if (res.ok) {
@@ -453,8 +545,24 @@ export function JobWorkspaceClient({
   };
 
   const handleProceedAdditionalData = async () => {
-    if (!vesselInwardDate || !deliveryOrderValidity || importGeneralManifest === "" || exportGeneralManifest === "") {
-      toast.error("Complete Vessel Inward Date, IGM, EGM, and DO Validity before proceeding.");
+    if (manifestConfigMissing) {
+      toast.error("This clearance type is missing manifest configuration. Update it in CHA settings before continuing.");
+      return;
+    }
+    if (!vesselInwardDate || !deliveryOrderValidity) {
+      toast.error("Complete Vessel Inward Date and DO Validity before proceeding.");
+      return;
+    }
+    if (manifestMandatory && requiresIgm && importGeneralManifest === "") {
+      toast.error("IGM Number is required before proceeding.");
+      return;
+    }
+    if (manifestMandatory && requiresEgm && exportGeneralManifest === "") {
+      toast.error("EGM Number is required before proceeding.");
+      return;
+    }
+    if (manifestMandatory && requiresCustomManifest && customManifestValue === "") {
+      toast.error(`${customManifestLabel} is required before proceeding.`);
       return;
     }
 
@@ -474,6 +582,7 @@ export function JobWorkspaceClient({
         vesselInwardDate: vesselInwardDate || null,
         importGeneralManifest: importGeneralManifest === "" ? null : importGeneralManifest,
         exportGeneralManifest: exportGeneralManifest === "" ? null : exportGeneralManifest,
+        customManifestValue: customManifestValue === "" ? null : customManifestValue,
         deliveryOrderValidity: deliveryOrderValidity || null,
       });
 
@@ -834,6 +943,290 @@ export function JobWorkspaceClient({
     }
   };
 
+  // --- FILING WORKFLOW RUNNER HANDLERS ---
+  const loadFilingData = async () => {
+    setLoading("filing-load");
+    try {
+      const [instanceRes, section49Res] = await Promise.all([
+        actions.getFilingWorkflowInstanceAction(job.id),
+        actions.getFilingSection49Action(job.id)
+      ]);
+      if (instanceRes.ok) {
+        setFilingInstance(instanceRes.data);
+        const activeRun = instanceRes.data?.activeNodeRun || instanceRes.data?.nodeRuns?.find((r: any) => r.status === "ACTIVE");
+        setActiveNodeRun(activeRun || null);
+
+        if (activeRun) {
+          const initialResponses: Record<string, { isChecked: boolean; remarks?: string; fileKey?: string; delayRemarks?: string }> = {};
+          const activeNodeItemIds = activeRun.node.checklistItems.map((item: any) => item.id);
+          const currentResponses = instanceRes.data.responses?.filter(
+            (r: any) => activeNodeItemIds.includes(r.checklistItemId)
+          ) || [];
+
+          activeRun.node.checklistItems.forEach((item: any) => {
+            const match = currentResponses.find((r: any) => r.checklistItemId === item.id);
+            initialResponses[item.id] = {
+              isChecked: match ? match.isChecked : false,
+              remarks: match ? (match.remarks || "") : "",
+              fileKey: match ? (match.fileKey || undefined) : undefined,
+              delayRemarks: match ? (match.delayRemarks || "") : "",
+            };
+          });
+          setChecklistResponses(initialResponses);
+
+          const edges = instanceRes.data.version?.edges || [];
+          const outgoing = edges.filter((e: any) => e.sourceKey === activeRun.nodeKey);
+          if (outgoing.length === 1) {
+            setSelectedNextNodeKey(outgoing[0].targetKey);
+          } else {
+            setSelectedNextNodeKey("");
+          }
+        } else {
+          setChecklistResponses({});
+          setSelectedNextNodeKey("");
+        }
+
+        setNodeRemarks("");
+      }
+      if (section49Res.ok) {
+        setSection49Flag(section49Res.data);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load Filing workflow details.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "filing" && activeStepIndex >= filingStageIndex) {
+      loadFilingData();
+    }
+  }, [activeTab, activeStepIndex, filingStageIndex]);
+
+  const handleStartFilingWorkflow = async () => {
+    setLoading("filing-start");
+    try {
+      const res = await actions.startFilingWorkflowAction(job.id);
+      if (res.ok) {
+        toast.success("Filing workflow initialized.");
+        await loadFilingData();
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to start filing workflow.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleCompleteFilingNode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeNodeRun) return;
+
+    // Validate that comments are entered if commentsRequired is true
+    if (activeNodeRun.node.commentsRequired && !nodeRemarks.trim()) {
+      toast.error(`Comments are mandatory to complete stage: ${activeNodeRun.node.name}.`);
+      return;
+    }
+
+    // Validate all mandatory checklist items are checked if requireAllMandatoryChecklistItems is true
+    if (activeNodeRun.node.requireAllMandatoryChecklistItems) {
+      for (const item of activeNodeRun.node.checklistItems) {
+        if (item.isMandatory) {
+          const resp = checklistResponses[item.id];
+          if (!resp || !resp.isChecked) {
+            toast.error(`Mandatory checklist item "${item.label}" must be checked.`);
+            return;
+          }
+        }
+      }
+    }
+
+    // Validate checklist items requiring remarks have remarks
+    for (const item of activeNodeRun.node.checklistItems) {
+      const resp = checklistResponses[item.id];
+      if (item.requiresRemarks && resp?.isChecked && !resp.remarks?.trim()) {
+        toast.error(`Remarks are required for checklist item "${item.label}".`);
+        return;
+      }
+      const matchingOverdue = overdueChecklistItems.find((entry: any) => entry.checklistItemId === item.id);
+      if (matchingOverdue && resp?.isChecked && item.delayRemarksRequired && !resp.delayRemarks?.trim()) {
+        toast.error(`Delay remarks are required for overdue checklist item "${item.label}".`);
+        return;
+      }
+    }
+
+    // Validate mandatory photo uploads if requireMandatoryPhotos is true
+    if (activeNodeRun.node.requireMandatoryPhotos) {
+      const currentAttachments = filingInstance?.attachments?.filter(
+        (a: any) => a.nodeRunId === activeNodeRun.id
+      ) || [];
+      for (const pr of activeNodeRun.node.photoRequirements) {
+        if (pr.isMandatory) {
+          const uploadedCount = currentAttachments.filter((a: any) => a.photoRequirementId === pr.id).length;
+          if (uploadedCount < pr.minPhotos) {
+            toast.error(`Mandatory photo upload "${pr.label}" requires at least ${pr.minPhotos} photo(s). Uploaded ${uploadedCount}.`);
+            return;
+          }
+        }
+      }
+    }
+
+    setLoading("filing-complete");
+    try {
+      const responsesList = Object.entries(checklistResponses).map(([itemId, val]) => ({
+        checklistItemId: itemId,
+        isChecked: val.isChecked,
+        remarks: val.remarks || undefined,
+        fileKey: val.fileKey || undefined,
+        delayRemarks: val.delayRemarks || undefined,
+      }));
+
+      const res = await actions.completeFilingNodeAction(job.id, activeNodeRun.id, {
+        remarks: nodeRemarks,
+        checklistItemResponses: responsesList,
+        nextNodeKey: selectedNextNodeKey || null,
+      });
+
+      if (res.ok) {
+        toast.success(`Completed stage: ${activeNodeRun.node.name}`);
+        await loadFilingData();
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to finalize filing stage.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleUploadFilingPhoto = async (photoRequirementId: string | null, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeNodeRun) return;
+
+    setLoading(`filing-photo-${photoRequirementId || "general"}`);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await actions.uploadFilingAttachmentAction(job.id, activeNodeRun.id, photoRequirementId, null, formData);
+
+      if (res.ok) {
+        toast.success(`Uploaded ${file.name} successfully.`);
+        await loadFilingData();
+      } else {
+        toast.error(res.error || "Upload failed.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleDeleteFilingPhoto = async (attachmentId: string) => {
+    setLoading(`filing-delete-${attachmentId}`);
+    try {
+      const res = await actions.deleteFilingAttachmentAction(job.id, attachmentId);
+      if (res.ok) {
+        toast.success("Attachment deleted successfully.");
+        await loadFilingData();
+      } else {
+        toast.error(res.error || "Delete failed.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleToggleSection49 = async () => {
+    setLoading("section49-toggle");
+    try {
+      const nextState = !section49Flag?.isEnabled;
+      const res = await actions.toggleFilingSection49Action(job.id, nextState, section49Remarks);
+      if (res.ok) {
+        toast.success(`Section 49 status updated: ${nextState ? "Enabled" : "Disabled"}`);
+        setSection49Remarks("");
+        setShowSection49Modal(false);
+        await loadFilingData();
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to update Section 49 status.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleUploadChecklistItemFile = async (checklistItemId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeNodeRun) return;
+
+    setLoading(`checklist-item-file-${checklistItemId}`);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await actions.uploadFilingAttachmentAction(job.id, activeNodeRun.id, null, checklistItemId, formData);
+      if (res.ok) {
+        const fileKey = res.data.fileKey;
+        setChecklistResponses((prev) => ({
+          ...prev,
+          [checklistItemId]: {
+            ...prev[checklistItemId],
+            isChecked: true,
+            fileKey,
+          },
+        }));
+        toast.success(`Uploaded ${file.name} for checklist item.`);
+        await loadFilingData();
+      } else {
+        toast.error(res.error || "Upload failed.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleSaveFilingShipmentDetails = async () => {
+    if (!filingShipmentType.trim()) {
+      toast.error("Shipment type is required.");
+      return;
+    }
+    if (billOfEntryNumber.trim() && shippingBillNumber.trim()) {
+      toast.error("Bill of Entry Number and Shipping Bill Number cannot both be filled.");
+      return;
+    }
+
+    setLoading("filing-shipment-save");
+    try {
+      const res = await actions.upsertFilingShipmentDetailsAction(job.id, {
+        filingShipmentType,
+        billOfEntryNumber: billOfEntryNumber.trim() || null,
+        shippingBillNumber: shippingBillNumber.trim() || null,
+      });
+      if (res.ok) {
+        toast.success("Filing shipment details saved.");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to save filing shipment details.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   // Customer Advance update expected terms
   const handleUpdateAdvanceExpected = async () => {
     if (expectedAdvance <= 0) {
@@ -1159,6 +1552,49 @@ export function JobWorkspaceClient({
 
   return (
     <main className="-mt-2 w-full space-y-4 overflow-x-hidden">
+      {/* PERSISTENT HEADER WARNINGS */}
+      {doValidityWarning && (
+        <div className="rounded-xl border border-orange-500/40 bg-orange-500/10 p-4 flex items-center justify-between gap-3 text-orange-600">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={20} className="shrink-0 text-orange-500" />
+            <div>
+              <span className="ds-label text-orange-500">Delivery Order Validity Alert</span>
+              <p className="text-sm font-semibold text-on-surface">{doValidityWarning.message}</p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            className="border-orange-500/40 text-orange-600 hover:bg-orange-500/10 text-xs shrink-0 h-8"
+            onClick={async () => {
+              const res = await actions.acknowledgeDoValidityWarningAction(job.id);
+              if (res.ok) {
+                toast.success("Warning acknowledged.");
+                router.refresh();
+              } else {
+                toast.error(res.error || "Failed to acknowledge warning.");
+              }
+            }}
+          >
+            Acknowledge
+          </Button>
+        </div>
+      )}
+
+      {section49Flag?.isEnabled && (
+        <div className="rounded-xl border border-orange-500/40 bg-orange-500/10 p-4 flex items-center gap-3 text-orange-600">
+          <AlertTriangle size={20} className="shrink-0 text-orange-500" />
+          <div>
+            <span className="ds-label text-orange-500">Section 49 Bond Active</span>
+            <p className="text-sm font-semibold text-on-surface">
+              Section 49 has been activated for this customs clearance job.
+            </p>
+            {section49Flag.remarks && (
+              <p className="text-xs text-on-surface-variant mt-0.5">Remarks: {section49Flag.remarks}</p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Job Main Header */}
       <div className="flex flex-col gap-4 border-b border-outline-variant/30 pb-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 space-y-2">
@@ -1768,8 +2204,30 @@ export function JobWorkspaceClient({
               </div>
             ) : null}
 
+            {manifestConfigMissing ? (
+              <div className="flex items-start gap-3 rounded-xl border border-[#fb923c]/40 bg-surface p-4">
+                <AlertTriangle size={22} className="mt-0.5 shrink-0 text-[#fb923c]" />
+                <div>
+                  <h4 className="text-sm font-bold uppercase tracking-wide text-[#fb923c]">Manifest Configuration Required</h4>
+                  <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">
+                    This clearance type is missing manifest configuration. Please update it in CHA settings before continuing.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
             <div className="ds-form-section space-y-4">
               <h3>Additional Data Fields</h3>
+              <div className="grid grid-cols-1 gap-3 rounded-xl border border-outline-variant/40 bg-surface-container-low p-4 md:grid-cols-2">
+                <div>
+                  <span className="ds-label">Clearance Type</span>
+                  <p className="mt-1 text-sm font-medium text-on-surface">{job.jobType?.name || "Unknown"}</p>
+                </div>
+                <div>
+                  <span className="ds-label">Required Manifest</span>
+                  <p className="mt-1 text-sm font-medium text-on-surface">{manifestLabel}</p>
+                </div>
+              </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <label className="space-y-1.5">
                   <span className="ds-label">Vessel Inward Date</span>
@@ -1794,34 +2252,52 @@ export function JobWorkspaceClient({
                     className="w-full"
                   />
                 </label>
-                <label className="space-y-1.5">
-                  <span className="ds-label">Import General Manifest</span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={importGeneralManifest}
-                    onChange={(e) => setImportGeneralManifest(e.target.value)}
-                    disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
-                    required
-                    className="w-full ds-numeric"
-                    placeholder="Enter IGM reference"
-                  />
-                </label>
-                <label className="space-y-1.5">
-                  <span className="ds-label">Export General Manifest</span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={exportGeneralManifest}
-                    onChange={(e) => setExportGeneralManifest(e.target.value)}
-                    disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
-                    required
-                    className="w-full ds-numeric"
-                    placeholder="Enter EGM reference"
-                  />
-                </label>
+                {requiresIgm ? (
+                  <label className="space-y-1.5">
+                    <span className="ds-label">IGM Number</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={importGeneralManifest}
+                      onChange={(e) => setImportGeneralManifest(e.target.value)}
+                      disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked || manifestConfigMissing}
+                      required={manifestMandatory}
+                      className="w-full ds-numeric"
+                      placeholder={job.jobType?.manifestHelpText || "Enter IGM reference"}
+                    />
+                  </label>
+                ) : null}
+                {requiresEgm ? (
+                  <label className="space-y-1.5">
+                    <span className="ds-label">EGM Number</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={exportGeneralManifest}
+                      onChange={(e) => setExportGeneralManifest(e.target.value)}
+                      disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked || manifestConfigMissing}
+                      required={manifestMandatory}
+                      className="w-full ds-numeric"
+                      placeholder={job.jobType?.manifestHelpText || "Enter EGM reference"}
+                    />
+                  </label>
+                ) : null}
+                {requiresCustomManifest ? (
+                  <label className="space-y-1.5">
+                    <span className="ds-label">{customManifestLabel}</span>
+                    <input
+                      type="text"
+                      value={customManifestValue}
+                      onChange={(e) => setCustomManifestValue(e.target.value)}
+                      disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked || manifestConfigMissing}
+                      required={manifestMandatory}
+                      className="w-full"
+                      placeholder={job.jobType?.manifestHelpText || `Enter ${customManifestLabel}`}
+                    />
+                  </label>
+                ) : null}
               </div>
             </div>
 
@@ -1839,12 +2315,22 @@ export function JobWorkspaceClient({
                 </p>
               </div>
               <div>
-                <span className="ds-label">IGM</span>
-                <p className="mt-1 text-sm text-on-surface ds-numeric">{importGeneralManifest || "Pending"}</p>
+                <span className="ds-label">{requiresCustomManifest ? customManifestLabel : "Manifest"}</span>
+                <p className="mt-1 text-sm text-on-surface ds-numeric">
+                  {requiresCustomManifest
+                    ? customManifestValue || "Pending"
+                    : requiresIgm && requiresEgm
+                      ? `${importGeneralManifest || "IGM Pending"} / ${exportGeneralManifest || "EGM Pending"}`
+                      : requiresIgm
+                        ? importGeneralManifest || "Pending"
+                        : requiresEgm
+                          ? exportGeneralManifest || "Pending"
+                          : "Not Required"}
+                </p>
               </div>
               <div>
-                <span className="ds-label">EGM</span>
-                <p className="mt-1 text-sm text-on-surface ds-numeric">{exportGeneralManifest || "Pending"}</p>
+                <span className="ds-label">Direction</span>
+                <p className="mt-1 text-sm text-on-surface">{manifestMovementDirection || "Not Configured"}</p>
               </div>
             </div>
 
@@ -1852,7 +2338,7 @@ export function JobWorkspaceClient({
               <Button
                 type="button"
                 variant="outline"
-                disabled={loading !== null || job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
+                disabled={loading !== null || job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked || manifestConfigMissing}
                 onClick={handleSaveAdditionalData}
                 className="w-full sm:w-auto"
               >
@@ -1862,7 +2348,7 @@ export function JobWorkspaceClient({
               {job.stage === "ADDITIONAL_DATA" ? (
                 <Button
                   type="button"
-                  disabled={loading !== null || !additionalDataComplete}
+                  disabled={loading !== null || !additionalDataComplete || manifestConfigMissing}
                   onClick={handleProceedAdditionalData}
                   className="w-full sm:w-auto"
                 >
@@ -1888,7 +2374,9 @@ export function JobWorkspaceClient({
                   <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
                     {job.stage === "DOCUMENT_COLLECTION"
                       ? "Complete Document Collection first. Make sure all mandatory documents are uploaded or exempted."
-                      : "Complete the Additional Data process first. Vessel Inward Date, IGM, EGM, and DO Validity are required."}
+                      : manifestConfigMissing
+                        ? "This clearance type is missing manifest configuration. Update it in CHA settings before continuing."
+                        : `Complete the Additional Data process first. Vessel Inward Date, ${manifestLabel}, and DO Validity are required.`}
                   </p>
                 </div>
               </div>
@@ -2225,174 +2713,576 @@ export function JobWorkspaceClient({
           </div>
         )}
 
-        {/* PANEL: FILING */}
         {activeTab === "filing" && (
           <div className="space-y-6">
-            <h3 className="ds-h3 text-on-surface">Customs Submission Filing Details</h3>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-outline-variant/30 pb-3">
+              <h3 className="ds-h3 text-on-surface">Customs Submission Filing Details</h3>
+              
+              {/* Global Section 49 Button / Trigger */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-on-surface-variant font-medium uppercase tracking-wider ds-label">Section 49 Bond:</span>
+                <span className={`px-2 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider ${
+                  section49Flag?.isEnabled ? "bg-orange-500/10 text-orange-600 border border-orange-500/20 animate-pulse" : "bg-surface-container-high text-on-surface-variant border border-outline-variant"
+                }`}>
+                  {section49Flag?.isEnabled ? "Active" : "Inactive"}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSection49Remarks("");
+                    setShowSection49Modal(true);
+                  }}
+                  className="text-xs h-8 border-[#00cec4] text-[#00cec4] hover:bg-[#00cec4]/10"
+                >
+                  {section49Flag?.isEnabled ? "Deactivate" : "Activate"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Display DO warnings and active flags inside the tab if any */}
+            {doValidityWarning && (
+              <div className="bg-surface border border-[#fb923c]/45 p-4 rounded-xl flex items-start gap-3">
+                <AlertTriangle size={20} className="text-[#fb923c] shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-xs uppercase text-[#fb923c] tracking-wider">Delivery Order Validity Notice</h4>
+                  <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
+                    {doValidityWarning.message}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {overdueChecklistCount > 0 && (
+              <div className="card-left-accent-orange rounded-xl border border-[#fb923c]/45 bg-surface p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle size={20} className="mt-0.5 shrink-0 text-[#fb923c]" />
+                  <div className="space-y-1">
+                    <h4 className="ds-h3 text-[#fb923c]">OVERDUE FILING CHECKLIST ITEMS</h4>
+                    <p className="text-sm text-on-surface">
+                      {overdueChecklistCount} Filing checklist item{overdueChecklistCount > 1 ? "s are" : " is"} overdue.
+                    </p>
+                    <p className="text-xs text-on-surface-variant">
+                      Delay remarks are required before overdue items can be completed.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {activeStepIndex < filingStageIndex ? (
               <div className="bg-surface border border-outline-variant p-6 rounded-xl flex items-start gap-3">
-                <AlertTriangle size={24} className="text-[#fb923c] shrink-0" />
+                <AlertTriangle size={24} className="text-[#fb923c] shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-sm text-[#fb923c]">FILING STAGE PREPARATION LOCKED</h4>
+                  <h4 className="font-bold text-sm text-[#fb923c] uppercase tracking-wider">Filing Stage Locked</h4>
                   <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
-                    Clearance files can only be submitted to customs after the checklist is approved.
+                    Clearance files can only be submitted to customs after the checklist is approved. Complete all prior checklist preparation and approvals.
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Left col: Current filing status */}
-                <div className="space-y-6">
-                  <div className="bg-surface border border-outline-variant/40 p-5 rounded-xl space-y-4">
-                    <div className="flex items-center justify-between border-b border-outline-variant/30 pb-2">
-                      <span className="ds-label">Estimated Date</span>
-                      <span className="font-mono text-xs font-bold">
-                        {job.filing.estimatedFilingDate
-                          ? new Date(job.filing.estimatedFilingDate).toDateString()
-                          : "Not Scheduled"}
-                      </span>
+              // Filing visual runner dashboard
+              <div className="space-y-6">
+                <div className="ds-form-section rounded-xl border border-outline-variant/40 bg-surface p-5">
+                  <h3 className="ds-h3 text-on-surface">SHIPMENT DETAILS</h3>
+                  <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div className="space-y-1">
+                      <label className="ds-label block">Shipment Type</label>
+                      <select
+                        value={filingShipmentType}
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          setFilingShipmentType(next);
+                          if (next.toUpperCase() === "IMPORT") {
+                            setShippingBillNumber("");
+                          }
+                          if (next.toUpperCase() === "EXPORT") {
+                            setBillOfEntryNumber("");
+                          }
+                        }}
+                        className="w-full text-xs"
+                      >
+                        <option value="">Select shipment type</option>
+                        <option value="IMPORT">Import</option>
+                        <option value="EXPORT">Export</option>
+                        <option value="EITHER">Either</option>
+                      </select>
                     </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="ds-label">Actual Filing Date</span>
-                      <span className="font-mono text-xs font-bold text-green-600">
-                        {job.filing.actualFilingDate
-                          ? new Date(job.filing.actualFilingDate).toDateString()
-                          : "Awaiting Filing"}
-                      </span>
+                    <div className="space-y-1">
+                      <label className="ds-label block">Bill Of Entry Number</label>
+                      <input
+                        type="text"
+                        value={billOfEntryNumber}
+                        disabled={beDisabled}
+                        onChange={(e) => setBillOfEntryNumber(e.target.value)}
+                        placeholder="Import reference"
+                        className="w-full text-xs disabled:opacity-50"
+                      />
                     </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="ds-label">Bill Ref ID</span>
-                      <span className="font-mono text-xs font-bold">
-                        {job.filing.filingRef || "—"}
-                      </span>
+                    <div className="space-y-1">
+                      <label className="ds-label block">Shipping Bill Number</label>
+                      <input
+                        type="text"
+                        value={shippingBillNumber}
+                        disabled={sbDisabled}
+                        onChange={(e) => setShippingBillNumber(e.target.value)}
+                        placeholder="Export reference"
+                        className="w-full text-xs disabled:opacity-50"
+                      />
                     </div>
                   </div>
-
-                  {/* Date adjustment */}
-                  {job.filing.status !== "FILED" && (
-                    <div className="p-5 border border-outline-variant/50 rounded-xl space-y-4">
-                      <span className="ds-label block">Reschedule Filing Timeline</span>
-                      <div className="flex gap-2">
-                        <input
-                          type="date"
-                          value={newEstFilingDate}
-                          onChange={(e) => setNewEstFilingDate(e.target.value)}
-                          className="text-xs"
-                        />
-                        <Button onClick={handleAdjustEstDate} disabled={loading !== null} className="text-xs h-9">
-                          Reschedule
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Rescheduling History */}
-                  <div className="space-y-3">
-                    <span className="ds-label block">Timeline Adjustments Audit</span>
-                    {job.filing.dateHistory?.length === 0 ? (
-                      <p className="text-xs text-on-surface-variant">No date revisions recorded.</p>
-                    ) : (
-                      <div className="space-y-2 max-h-40 overflow-y-auto">
-                        {job.filing.dateHistory.map((h: any) => (
-                          <div key={h.id} className="text-[11px] p-2 bg-surface-container-low border border-outline-variant/40 rounded flex items-center justify-between">
-                            <span>Adjusted: {new Date(h.estimatedFilingDate).toDateString()}</span>
-                            <span className="text-on-surface-variant font-mono">by {h.setBy?.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-xs text-on-surface-variant">
+                      Import enables BE. Export enables SB. In Either mode, entering one field disables the other.
+                    </p>
+                    <Button onClick={handleSaveFilingShipmentDetails} disabled={loading === "filing-shipment-save"} className="text-xs h-9">
+                      {loading === "filing-shipment-save" ? "Saving..." : "Save Shipment Details"}
+                    </Button>
                   </div>
                 </div>
 
-                {/* Right col: Form to mark as filed */}
-                <div>
-                  {job.filing.status === "FILED" ? (
-                    <div className="border border-green-200 bg-green-50/5 p-6 rounded-xl space-y-4">
-                      <h4 className="font-bold text-sm text-green-700 flex items-center gap-2">
-                        <CheckCircle2 size={18} /> CUSTOMS SUBMISSION COMPLETE
-                      </h4>
-                      <p className="text-xs text-on-surface-variant">
-                        Clearance file is registered. Reference number: <strong className="text-on-surface">{job.filing.filingRef}</strong>
-                      </p>
-                      {job.filing.delayReason && (
-                        <div className="bg-surface border border-red-200 p-3 rounded-lg text-xs space-y-1">
-                          <p className="font-medium text-red-600">Delay Explanation justification:</p>
-                          <p className="text-on-surface">{job.filing.delayReason}</p>
+                {!filingInstance ? (
+                  <div className="card-top-accent rounded-xl bg-surface border border-outline-variant/30 p-6 space-y-4 shadow-sm">
+                    <h4 className="ds-h3 text-on-surface">Filing Blueprint Workflow Not Started</h4>
+                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                      Initialize the active published filing workflow to track configurable customs checks, deadlines, and graph transitions for this job.
+                    </p>
+                    <div className="flex justify-start">
+                      <Button
+                        onClick={handleStartFilingWorkflow}
+                        disabled={loading === "filing-start"}
+                        className="bg-[#00cec4] text-white hover:bg-[#00b8af]"
+                      >
+                        {loading === "filing-start" ? "Starting Workflow..." : "Start Filing Workflow"}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+                    
+                    {/* Left Column: Active Step details and form */}
+                    <div className="space-y-6">
+                      {activeNodeRun ? (
+                        <div className="card-top-accent rounded-xl bg-surface border border-outline-variant/30 p-5 space-y-6 shadow-sm">
+                          
+                          {/* Node Header */}
+                          <div className="flex flex-col gap-2 border-b border-outline-variant/30 pb-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                              <span className="ds-label block text-on-surface-variant">Active Checking Stage</span>
+                              <h3 className="ds-h3 text-[#00cec4]">{activeNodeRun.node.name}</h3>
+                              {activeNodeRun.node.description && (
+                                <p className="text-xs text-on-surface-variant mt-1">{activeNodeRun.node.description}</p>
+                              )}
+                              {overdueChecklistCount > 0 && (
+                                <p className="mt-2 text-xs font-semibold text-[#fb923c]">
+                                  {overdueChecklistCount} overdue checklist item{overdueChecklistCount > 1 ? "s" : ""} in this active stage.
+                                </p>
+                              )}
+                            </div>
+                            {activeNodeRun.slaDueDate && (
+                              <div className="text-left">
+                                <span className="ds-label block text-on-surface-variant">SLA Due Date</span>
+                                <span className={`text-xs font-semibold ds-numeric ${
+                                  new Date(activeNodeRun.slaDueDate).getTime() < new Date().getTime()
+                                    ? "text-red-500 font-bold"
+                                    : "text-on-surface"
+                                }`}>
+                                  {new Date(activeNodeRun.slaDueDate).toLocaleDateString("en-IN")}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Node run completion form */}
+                          <form onSubmit={handleCompleteFilingNode} className="space-y-6">
+                            
+                            {/* Checklist Items */}
+                            {activeNodeRun.node.checklistItems?.length > 0 && (
+                              <div className="space-y-3">
+                                <h4 className="ds-label text-on-surface">Stage Checklist Verification</h4>
+                                <div className="space-y-3.5">
+                                  {activeNodeRun.node.checklistItems.map((item: any) => {
+                                    const resp = checklistResponses[item.id] || { isChecked: false, remarks: "", fileKey: undefined, delayRemarks: "" };
+                                    const overdueMeta = overdueChecklistItems.find((entry: any) => entry.checklistItemId === item.id);
+                                    const checklistItemAttachments = filingInstance.attachments?.filter(
+                                      (attachment: any) => attachment.nodeRunId === activeNodeRun.id && attachment.checklistItemId === item.id
+                                    ) || [];
+                                    return (
+                                      <div
+                                        key={item.id}
+                                        className={`p-3.5 rounded-xl border space-y-3 ${
+                                          overdueMeta
+                                            ? "border-[#fb923c]/45 bg-[#fb923c]/10"
+                                            : "border-outline-variant/35 bg-surface-container-low/40"
+                                        }`}
+                                      >
+                                        <div className="flex items-start gap-3">
+                                          <input
+                                            type="checkbox"
+                                            id={`check-${item.id}`}
+                                            checked={resp.isChecked}
+                                            onChange={(e) => {
+                                              setChecklistResponses((prev) => ({
+                                                ...prev,
+                                                [item.id]: {
+                                                  ...prev[item.id],
+                                                  isChecked: e.target.checked,
+                                                },
+                                              }));
+                                            }}
+                                            className="mt-1 rounded border-outline-variant/60 text-[#00cec4] focus:ring-[#00cec4]/30"
+                                          />
+                                          <div className="flex-1 min-w-0">
+                                            <label htmlFor={`check-${item.id}`} className="text-xs font-semibold text-on-surface block cursor-pointer">
+                                              {item.label} {item.isMandatory && <span className="text-red-500 font-bold">*</span>}
+                                            </label>
+                                            {item.description && (
+                                              <p className="text-[11px] text-on-surface-variant mt-0.5 leading-relaxed">{item.description}</p>
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        {overdueMeta && (
+                                          <div className="rounded-xl border border-[#fb923c]/35 bg-surface px-3 py-2 text-xs text-on-surface">
+                                            <div className="flex flex-wrap items-center gap-3">
+                                              <span className="font-semibold text-[#fb923c] uppercase tracking-wide">Overdue</span>
+                                              <span className="ds-numeric">Due: {new Date(overdueMeta.dueAt).toLocaleDateString("en-IN")}</span>
+                                              <span className="ds-numeric">{overdueMeta.daysDelayed} day(s) delayed</span>
+                                            </div>
+                                            <div className="mt-2 space-y-1">
+                                              <label className="ds-label block text-[#fb923c]">Delay Remarks *</label>
+                                              <textarea
+                                                rows={2}
+                                                value={resp.delayRemarks || ""}
+                                                onChange={(e) => {
+                                                  setChecklistResponses((prev) => ({
+                                                    ...prev,
+                                                    [item.id]: {
+                                                      ...prev[item.id],
+                                                      delayRemarks: e.target.value,
+                                                    },
+                                                  }));
+                                                }}
+                                                placeholder="Explain why this checklist item crossed its deadline..."
+                                                className="w-full text-xs"
+                                              />
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {/* Optional or required remarks */}
+                                        {resp.isChecked && item.requiresRemarks && (
+                                          <div className="pl-6 space-y-1">
+                                            <label className="text-[10px] uppercase font-bold text-on-surface-variant block ds-label">Remarks / Notes *</label>
+                                            <input
+                                              type="text"
+                                              required
+                                              value={resp.remarks || ""}
+                                              onChange={(e) => {
+                                                setChecklistResponses((prev) => ({
+                                                  ...prev,
+                                                  [item.id]: {
+                                                    ...prev[item.id],
+                                                    remarks: e.target.value,
+                                                  },
+                                                }));
+                                              }}
+                                              placeholder="Enter required verification details..."
+                                              className="w-full text-xs"
+                                            />
+                                          </div>
+                                        )}
+
+                                        {/* Optional or required uploads */}
+                                        {resp.isChecked && item.allowsUpload && (
+                                          <div className="pl-6 space-y-2">
+                                            <label className="text-[10px] uppercase font-bold text-on-surface-variant block ds-label">Supporting File / Photo</label>
+                                            <div className="flex items-center gap-2">
+                                              <input
+                                                type="file"
+                                                onChange={(e) => handleUploadChecklistItemFile(item.id, e)}
+                                                disabled={loading === `checklist-item-file-${item.id}`}
+                                                className="text-xs max-w-xs"
+                                              />
+                                            </div>
+                                            {checklistItemAttachments.length > 0 && (
+                                              <div className="space-y-1">
+                                                {checklistItemAttachments.map((attachment: any) => (
+                                                  <div key={attachment.id} className="flex items-center justify-between rounded-lg bg-surface px-2 py-1 text-xs">
+                                                    <a
+                                                      href={attachment.fileKey}
+                                                      target="_blank"
+                                                      rel="noreferrer"
+                                                      className="flex items-center gap-1 font-semibold text-[#00cec4] hover:underline"
+                                                    >
+                                                      <ExternalLink size={11} /> {attachment.fileName}
+                                                    </a>
+                                                    <Button
+                                                      type="button"
+                                                      variant="outline"
+                                                      size="sm"
+                                                      onClick={() => handleDeleteFilingPhoto(attachment.id)}
+                                                      className="h-7 text-[10px]"
+                                                    >
+                                                      Remove
+                                                    </Button>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Node Photo / File Upload Requirements */}
+                            {activeNodeRun.node.photoRequirements?.length > 0 && (
+                              <div className="space-y-4 border-t border-outline-variant/30 pt-4">
+                                <h4 className="ds-label text-on-surface">Required Photograph / Document Uploads</h4>
+                                <div className="space-y-4">
+                                  {activeNodeRun.node.photoRequirements.map((pr: any) => {
+                                    const reqAttachments = filingInstance.attachments?.filter(
+                                      (a: any) => a.nodeRunId === activeNodeRun.id && a.photoRequirementId === pr.id
+                                    ) || [];
+                                    return (
+                                      <div key={pr.id} className="p-4 rounded-xl border border-dashed border-outline-variant/60 bg-surface space-y-3">
+                                        <div>
+                                          <h5 className="text-xs font-semibold text-on-surface">
+                                            {pr.label} {pr.isMandatory && <span className="text-red-500 font-bold">*</span>}
+                                          </h5>
+                                          {pr.description && <p className="text-[11px] text-on-surface-variant mt-0.5">{pr.description}</p>}
+                                          <p className="text-[10px] text-on-surface-variant ds-numeric mt-1 font-mono">
+                                            (Requires: min {pr.minPhotos} {pr.maxPhotos ? `max ${pr.maxPhotos}` : ""})
+                                          </p>
+                                        </div>
+
+                                        {/* Upload Input */}
+                                        {(!pr.maxPhotos || reqAttachments.length < pr.maxPhotos) && (
+                                          <input
+                                            type="file"
+                                            disabled={loading === `filing-photo-${pr.id}`}
+                                            onChange={(e) => handleUploadFilingPhoto(pr.id, e)}
+                                            className="text-xs"
+                                          />
+                                        )}
+
+                                        {/* Uploaded Attachments list */}
+                                        {reqAttachments.length > 0 && (
+                                          <div className="overflow-hidden rounded-xl border border-outline-variant/30">
+                                            <table className="ds-table">
+                                              <thead>
+                                                <tr>
+                                                  <th>File Name</th>
+                                                  <th>Size</th>
+                                                  <th>Uploaded By</th>
+                                                  <th className="w-16">Actions</th>
+                                                </tr>
+                                              </thead>
+                                              <tbody>
+                                                {reqAttachments.map((a: any) => (
+                                                  <tr key={a.id}>
+                                                    <td className="truncate max-w-[200px] text-xs font-medium text-on-surface">
+                                                      <a href={a.fileKey} target="_blank" rel="noreferrer" className="text-[#00cec4] hover:underline flex items-center gap-1 font-semibold">
+                                                        <ExternalLink size={12} className="shrink-0" /> {a.fileName}
+                                                      </a>
+                                                    </td>
+                                                    <td className="ds-numeric text-xs font-mono">{(a.fileSize / 1024).toFixed(1)} KB</td>
+                                                    <td className="text-xs">{a.uploadedBy?.name || "Unknown"}</td>
+                                                    <td>
+                                                      <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleDeleteFilingPhoto(a.id)}
+                                                        disabled={loading === `filing-delete-${a.id}`}
+                                                        className="text-red-500 hover:text-red-600 hover:bg-red-50 p-1 h-7"
+                                                      >
+                                                        Delete
+                                                      </Button>
+                                                    </td>
+                                                  </tr>
+                                                ))}
+                                              </tbody>
+                                            </table>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Allowed Roles Notice */}
+                            {activeNodeRun.node.allowedRoles?.length > 0 && (
+                              <div className="border-t border-outline-variant/30 pt-3 text-[11px] text-on-surface-variant flex items-center gap-1">
+                                <ShieldCheck size={14} className="text-[#00cec4]" />
+                                <span>Can only be processed by users with roles: <strong>{activeNodeRun.node.allowedRoles.join(", ")}</strong></span>
+                              </div>
+                            )}
+
+                            {/* Node run comments */}
+                            <div className="space-y-1.5 border-t border-outline-variant/30 pt-4">
+                              <label className="ds-label text-on-surface block">
+                                Completion Comments / Remarks {activeNodeRun.node.commentsRequired && <span className="text-red-500 font-bold">*</span>}
+                              </label>
+                              <textarea
+                                rows={3}
+                                value={nodeRemarks}
+                                onChange={(e) => setNodeRemarks(e.target.value)}
+                                placeholder="Provide checklist execution remarks or check outcome..."
+                                className="w-full text-xs font-sans"
+                                required={activeNodeRun.node.commentsRequired}
+                              />
+                            </div>
+
+                            {/* Transitions dropdown */}
+                            <div className="border-t border-outline-variant/30 pt-4">
+                              {outgoingEdges.length > 0 ? (
+                                <div className="space-y-1.5 max-w-sm">
+                                  <label className="ds-label text-on-surface block">Select Next Workflow Stage *</label>
+                                  <select
+                                    value={selectedNextNodeKey}
+                                    onChange={(e) => setSelectedNextNodeKey(e.target.value)}
+                                    required
+                                    className="w-full text-xs"
+                                  >
+                                    <option value="">-- Choose Next Stage --</option>
+                                    {outgoingEdges.map((edge: any) => {
+                                      const targetNode = targetNodesMap.get(edge.targetKey);
+                                      return (
+                                        <option key={edge.targetKey} value={edge.targetKey}>
+                                          {targetNode?.name || edge.targetKey} {edge.label ? `(${edge.label})` : ""}
+                                        </option>
+                                      );
+                                    })}
+                                  </select>
+                                </div>
+                              ) : (
+                                <div className="rounded-xl bg-[#00cec4]/10 border border-[#00cec4]/20 p-3 text-xs text-on-surface-variant">
+                                  Completing this node will finalize the Filing workflow and transition the job stage to <strong>FILED</strong>.
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Complete Action Button */}
+                            <div className="flex justify-end gap-2 border-t border-outline-variant/30 pt-4">
+                              <Button
+                                type="submit"
+                                disabled={loading !== null}
+                                className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-5 py-2.5 rounded-xl text-sm uppercase tracking-wide transition-all font-semibold"
+                              >
+                                {loading === "filing-complete" ? "Completing Stage..." : outgoingEdges.length > 0 ? "Complete & Move to Next Stage" : "Complete & File Customs Bill"}
+                              </Button>
+                            </div>
+                          </form>
+                        </div>
+                      ) : (
+                        // No active runs but filing instance exists (Filing completed)
+                        <div className="rounded-xl border border-green-200 bg-green-50/5 p-6 space-y-4 shadow-sm">
+                          <div className="flex items-center gap-2 text-green-700">
+                            <CheckCircle2 size={24} className="shrink-0" />
+                            <h4 className="font-bold text-base uppercase tracking-wide">Customs Filing Workflow Complete</h4>
+                          </div>
+                          <p className="text-xs text-on-surface-variant max-w-xl">
+                            All blueprint checklist checks have been completed and the customs submission has been filed. The job stage is updated to <strong>FILED</strong>.
+                          </p>
+                          <div className="grid grid-cols-2 gap-4 rounded-xl border border-outline-variant/30 bg-surface-container-low p-4 text-xs max-w-md">
+                            <div>
+                              <span className="ds-label block text-on-surface-variant">Actual Filing Date</span>
+                              <span className="font-medium text-on-surface ds-numeric font-mono">
+                                {job.filing.actualFilingDate ? new Date(job.filing.actualFilingDate).toLocaleDateString("en-IN") : "Completed"}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="ds-label block text-on-surface-variant">Filing Reference ID</span>
+                              <span className="font-medium text-on-surface ds-numeric font-mono">{job.filing.filingRef || "Completed"}</span>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
-                  ) : (
-                    <form onSubmit={handleMarkAsFiled} className="border border-outline-variant p-5 rounded-xl space-y-4">
-                      <span className="ds-label block text-on-surface">Mark Customs Clearance Filed</span>
 
-                      <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-bold tracking-wide block">Filing Reference Number (BOE/SB Ref) *</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="e.g. BOE-8871212"
-                          value={filingRef}
-                          onChange={(e) => setFilingRef(e.target.value)}
-                          className="w-full text-xs"
-                        />
+                    {/* Right Column: Timeline / History log */}
+                    <div className="space-y-6">
+                      <div className="rounded-xl border border-outline-variant/40 bg-surface p-5 space-y-4 shadow-sm">
+                        <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
+                          <h4 className="ds-label block text-on-surface">Execution Blueprint Timeline</h4>
+                          <span className="text-[10px] text-on-surface-variant font-medium ds-numeric font-mono">
+                            {filingInstance.nodeRuns?.length || 0} run(s)
+                          </span>
+                        </div>
+
+                        {filingInstance.nodeRuns?.length === 0 ? (
+                          <p className="text-xs text-on-surface-variant italic">No workflow checks executed yet.</p>
+                        ) : (
+                          <div className="relative pl-5 space-y-5 before:absolute before:left-[8px] before:top-2 before:bottom-2 before:w-[2px] before:bg-outline-variant/40">
+                            {filingInstance.nodeRuns.map((run: any) => {
+                              const isCurrent = run.status === "ACTIVE";
+                              return (
+                                <div key={run.id} className="relative space-y-1 text-xs">
+                                  <span className={`absolute -left-[21px] top-1.5 h-3.5 w-3.5 rounded-full border-2 border-surface ${
+                                    isCurrent ? "bg-[#00cec4] animate-pulse" : "bg-outline-variant"
+                                  }`} />
+                                  <div className="flex flex-wrap items-center justify-between gap-1">
+                                    <span className={`font-semibold ${isCurrent ? "text-[#00cec4]" : "text-on-surface"}`}>
+                                      {run.node?.name || run.nodeKey}
+                                    </span>
+                                    <span className={`text-[10px] font-medium uppercase px-1.5 py-0.5 rounded-md ${
+                                      isCurrent ? "bg-[#00cec4]/10 text-[#00cec4]" : "bg-surface-container-high text-on-surface-variant"
+                                    }`}>
+                                      {run.status}
+                                    </span>
+                                  </div>
+                                  <p className="text-[10px] text-on-surface-variant ds-numeric font-mono">
+                                    Started: {new Date(run.startedAt).toLocaleString("en-IN")}
+                                    {run.completedAt && ` • Finished: ${new Date(run.completedAt).toLocaleString("en-IN")}`}
+                                  </p>
+                                  {run.completedBy && (
+                                    <p className="text-[10px] text-on-surface-variant">
+                                      Completed by: <strong className="text-on-surface">{run.completedBy.name}</strong>
+                                    </p>
+                                  )}
+                                  {run.remarks && (
+                                    <p className="text-on-surface-variant bg-surface-container-low p-2 rounded-lg mt-1 font-sans text-xs italic">
+                                      "{run.remarks}"
+                                    </p>
+                                  )}
+                                  
+                                  {/* Attachments for this run */}
+                                  {run.attachments?.length > 0 && (
+                                    <div className="mt-1.5 space-y-1 pl-1">
+                                      <span className="text-[9px] uppercase tracking-wide font-bold text-on-surface-variant block ds-label">Attachments</span>
+                                      <div className="space-y-1">
+                                        {run.attachments.map((att: any) => (
+                                          <a
+                                            key={att.id}
+                                            href={att.fileKey}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="text-[#00cec4] hover:underline flex items-center gap-1 text-[11px] font-medium"
+                                          >
+                                            <ExternalLink size={10} className="shrink-0" />
+                                            <span className="truncate max-w-[150px]">{att.fileName}</span>
+                                          </a>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
+                    </div>
 
-                      <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-bold tracking-wide block">Actual Date Filed *</label>
-                        <input
-                          type="date"
-                          required
-                          value={actualFilingDate}
-                          onChange={(e) => setActualFilingDate(e.target.value)}
-                          className="w-full text-xs"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-bold tracking-wide block">Upload Filed Bill copy *</label>
-                        <input
-                          type="file"
-                          required
-                          onChange={(e) => setFiledBillCopyFile(e.target.files?.[0] || null)}
-                          className="w-full text-xs"
-                        />
-                      </div>
-
-                      {/* If delayed, make reason input visible and required */}
-                      {(() => {
-                        const est = job.filing.estimatedFilingDate ? new Date(job.filing.estimatedFilingDate) : null;
-                        const act = actualFilingDate ? new Date(actualFilingDate) : null;
-                        const isDelayed = est && act && act.getTime() > est.getTime();
-
-                        if (isDelayed) {
-                          return (
-                            <div className="space-y-1 border-l-2 border-red-500 pl-3 bg-red-50/20 p-2 rounded">
-                              <label className="text-[10px] uppercase font-bold tracking-wide text-red-500 block">
-                                Justification Delay Reason (REQUIRED) *
-                              </label>
-                              <textarea
-                                required
-                                rows={3}
-                                placeholder="Explain why the clearance filing date exceeded the committed estimated date..."
-                                value={delayReason}
-                                onChange={(e) => setDelayReason(e.target.value)}
-                                className="w-full text-xs font-sans border-red-200"
-                              />
-                            </div>
-                          );
-                        }
-                        return null;
-                      })()}
-
-                      <Button type="submit" disabled={loading !== null} className="w-full">
-                        Submit Filing Confirmation
-                      </Button>
-                    </form>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -3452,6 +4342,53 @@ export function JobWorkspaceClient({
                 disabled={loading !== null || !selectedManagerId}
               >
                 {loading === "update-manager" ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+      {showSection49Modal && (
+        <Modal
+          open={showSection49Modal}
+          onClose={() => {
+            setShowSection49Modal(false);
+            setSection49Remarks("");
+          }}
+          title={`${section49Flag?.isEnabled ? "Deactivate" : "Activate"} Section 49`}
+          description={`Toggle Section 49 customs bond filing status for job ${job.jobNumber}.`}
+          className="max-w-md"
+        >
+          <div className="space-y-4 pt-2">
+            <p className="text-xs text-on-surface-variant font-sans">
+              Are you sure you want to {section49Flag?.isEnabled ? "deactivate" : "activate"} Section 49 customs bond filing status? This change will be logged in the audit trail.
+            </p>
+            <div className="space-y-1.5">
+              <span className="ds-label">Remarks / Explanation *</span>
+              <textarea
+                rows={3}
+                value={section49Remarks}
+                onChange={(e) => setSection49Remarks(e.target.value)}
+                placeholder="Provide justification or remarks for this status change..."
+                className="w-full text-xs font-sans"
+                required
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowSection49Modal(false);
+                  setSection49Remarks("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={loading !== null || !section49Remarks.trim()}
+                onClick={handleToggleSection49}
+                className="bg-[#00cec4] text-white hover:bg-[#00b8af]"
+              >
+                {loading === "section49-toggle" ? "Updating..." : "Confirm Change"}
               </Button>
             </div>
           </div>

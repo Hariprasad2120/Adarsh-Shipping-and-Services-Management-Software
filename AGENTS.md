@@ -239,3 +239,54 @@ Every AI agent must report these checks in their final response after UI work:
 19. ✅ Table rounded corners verified in browser — not just class applied
 20. ✅ Page layout follows Section 15 of `design.md` (no `mx-auto`, `container`, or `max-w-*` on standard pages, no duplicate page padding)
 <!-- END:design-system -->
+
+<!-- BEGIN:graphify -->
+# Codebase Analysis — graphify
+
+This project has a pre-built knowledge graph at `graphify-out/graph.json` (4351 nodes, 10640 edges, 244 communities).
+
+## Session Start Protocol
+
+At the start of every new session, check if `graphify-out/graph.json` exists. If it does:
+1. Silently confirm the graph is available
+2. Notify the user: "Knowledge graph available (`graphify-out/graph.json`). Ask me anything about the codebase architecture."
+3. Be ready to answer structural questions from the graph without re-scanning files
+
+## When to Use graphify
+
+Use `graphify query "<question>"` (via the Skill tool with `skill: "graphify"`) instead of grep/glob/read when the question is:
+- "What calls X?" / "What does X depend on?"
+- "Which modules touch Y?"
+- "How does data flow through Z?"
+- "What is the relationship between A and B?"
+- "Where is concept X implemented?"
+- Cross-cutting questions that span multiple files or modules
+
+Use grep/read/glob when you need exact line numbers, current file contents, or verifying whether specific code exists now.
+
+## Key Architecture Facts (from graph)
+
+- `requirePermission()` — 478 edges, touches every module. Single RBAC gate. Its absence on any route/action is a bug.
+- `getSessionOrUnauth()` — 189 edges. Primary session check.
+- `ok()` / `err()` — Result-type wrappers used across all server actions.
+- `getNow` — 142 edges. Centralized time source (used instead of `new Date()` for testability).
+- `can()` — 88 edges. Capability check (distinct from `requirePermission`).
+
+## Community Map (top modules)
+
+| Community | Module |
+|-----------|--------|
+| CHA Filing Actions / CHA Service Layer | Customs House Agent filing workflow |
+| Google Workspace Services | Gmail, Calendar, Drive, Chat integration |
+| AMS Audit Logs / AMS Appraisals Service | Annual Management System |
+| Accounting Service / Accounting Actions | Finance & accounting |
+| CRM Contacts UI / CRM Deals Pipeline | Sales CRM |
+| HRMS Dashboard Portal / HRMS Letters | Human Resources |
+| Biometric Attendance | Attendance tracking |
+| Android Mobile Components / Android API Client | Mobile CRM app |
+| Identity & Auth / RBAC Permissions | Auth + permissions |
+
+## Updating the Graph
+
+When significant new code is added, run `/graphify . --update` to incrementally update the graph without full rebuild.
+<!-- END:graphify -->

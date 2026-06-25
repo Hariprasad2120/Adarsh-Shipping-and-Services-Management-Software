@@ -18,6 +18,21 @@ const DEFAULT_CHA_EXPENSE_CATEGORIES = [
 
 const DEFAULT_CHA_JOB_CREATOR_ROLES = ["Admin", "HR", "Manager", "Employee"];
 const DEFAULT_CHA_SHIPMENT_TYPES = ["Air", "Sea"];
+const DEFAULT_IMPORT_MANIFEST_HELP = "Enter the Import General Manifest number.";
+const DEFAULT_EXPORT_MANIFEST_HELP = "Enter the Export General Manifest number.";
+
+type ChaMovementDirection = "IMPORT" | "EXPORT" | "BOTH" | "OTHER";
+type ChaManifestRequirement = "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM";
+
+type ChaJobTypeManifestConfigInput = {
+  name: string;
+  movementDirection: ChaMovementDirection;
+  manifestRequirement: ChaManifestRequirement;
+  customManifestLabel?: string | null;
+  isManifestMandatory: boolean;
+  manifestHelpText?: string | null;
+  isActive?: boolean;
+};
 
 export const DEFAULT_DOCUMENT_REQUIREMENTS = [
   {
@@ -228,14 +243,42 @@ export async function ensureSettingsAndDefaults(orgId: string) {
     // Create default Job Types
     const importType = await db.chaJobType.upsert({
       where: { orgId_name: { orgId, name: "Import Clearance" } },
-      update: {},
-      create: { orgId, name: "Import Clearance" },
+      update: {
+        movementDirection: "IMPORT",
+        manifestRequirement: "IGM",
+        isManifestMandatory: true,
+        manifestHelpText: DEFAULT_IMPORT_MANIFEST_HELP,
+        isActive: true,
+      },
+      create: {
+        orgId,
+        name: "Import Clearance",
+        movementDirection: "IMPORT",
+        manifestRequirement: "IGM",
+        isManifestMandatory: true,
+        manifestHelpText: DEFAULT_IMPORT_MANIFEST_HELP,
+        isActive: true,
+      },
     });
 
     const exportType = await db.chaJobType.upsert({
       where: { orgId_name: { orgId, name: "Export Clearance" } },
-      update: {},
-      create: { orgId, name: "Export Clearance" },
+      update: {
+        movementDirection: "EXPORT",
+        manifestRequirement: "EGM",
+        isManifestMandatory: true,
+        manifestHelpText: DEFAULT_EXPORT_MANIFEST_HELP,
+        isActive: true,
+      },
+      create: {
+        orgId,
+        name: "Export Clearance",
+        movementDirection: "EXPORT",
+        manifestRequirement: "EGM",
+        isManifestMandatory: true,
+        manifestHelpText: DEFAULT_EXPORT_MANIFEST_HELP,
+        isActive: true,
+      },
     });
 
     // Create default document definitions for Import
@@ -282,6 +325,38 @@ export async function ensureSettingsAndDefaults(orgId: string) {
   if (docReqCategoriesCount === 0) {
     await ensureDefaultDocumentRequirements(orgId);
   }
+
+  await db.chaJobType.updateMany({
+    where: {
+      orgId,
+      name: "Import Clearance",
+      OR: [{ movementDirection: null }, { manifestRequirement: null }],
+    },
+    data: {
+      movementDirection: "IMPORT",
+      manifestRequirement: "IGM",
+      isManifestMandatory: true,
+      manifestHelpText: DEFAULT_IMPORT_MANIFEST_HELP,
+      isActive: true,
+    },
+  });
+
+  await db.chaJobType.updateMany({
+    where: {
+      orgId,
+      name: "Export Clearance",
+      OR: [{ movementDirection: null }, { manifestRequirement: null }],
+    },
+    data: {
+      movementDirection: "EXPORT",
+      manifestRequirement: "EGM",
+      isManifestMandatory: true,
+      manifestHelpText: DEFAULT_EXPORT_MANIFEST_HELP,
+      isActive: true,
+    },
+  });
+
+  await ensureDefaultFilingWorkflows(orgId);
 
   return settings;
 }
@@ -336,14 +411,30 @@ function isAdditionalDataComplete(data: {
   vesselInwardDate: Date | null;
   importGeneralManifest: string | null;
   exportGeneralManifest: string | null;
+  customManifestValue?: string | null;
   deliveryOrderValidity: Date | null;
-} | null | undefined) {
-  return Boolean(
-    data?.vesselInwardDate &&
-    data.deliveryOrderValidity &&
-    data.importGeneralManifest?.trim() &&
-    data.exportGeneralManifest?.trim(),
-  );
+} | null | undefined, manifestConfig?: { manifestRequirement: ChaManifestRequirement; isManifestMandatory: boolean } | null) {
+  const hasBaseFields = Boolean(data?.vesselInwardDate && data.deliveryOrderValidity);
+  if (!hasBaseFields) return false;
+  if (!data) return false;
+
+  if (!manifestConfig || !manifestConfig.isManifestMandatory) {
+    return hasBaseFields;
+  }
+
+  switch (manifestConfig.manifestRequirement) {
+    case "IGM":
+      return Boolean(data.importGeneralManifest?.trim());
+    case "EGM":
+      return Boolean(data.exportGeneralManifest?.trim());
+    case "BOTH":
+      return Boolean(data.importGeneralManifest?.trim() && data.exportGeneralManifest?.trim());
+    case "CUSTOM":
+      return Boolean(data.customManifestValue?.trim());
+    case "NONE":
+    default:
+      return true;
+  }
 }
 
 async function assertCanAccessAdditionalData(actorId: string, job: {
@@ -373,6 +464,7 @@ async function assertCanAccessChecklist(actorId: string, job: {
 export async function getChecklistInternalApproverIds(orgId: string, job: {
   id?: string;
   primaryOwnerId?: string;
+  assignedManagerId?: string | null;
   assignments: { userId: string; responsibility: string }[];
 }) {
   const assignedApprovers = job.assignments
@@ -384,12 +476,19 @@ export async function getChecklistInternalApproverIds(orgId: string, job: {
   const ownerTlIds: string[] = [];
 
   let primaryOwnerId = job.primaryOwnerId;
-  if (!primaryOwnerId && job.id) {
+  let assignedManagerId = job.assignedManagerId;
+
+  if ((!primaryOwnerId || assignedManagerId === undefined) && job.id) {
     const jobRecord = await db.chaJob.findUnique({
       where: { id: job.id },
-      select: { primaryOwnerId: true },
+      select: { primaryOwnerId: true, assignedManagerId: true },
     });
-    primaryOwnerId = jobRecord?.primaryOwnerId;
+    if (!primaryOwnerId) primaryOwnerId = jobRecord?.primaryOwnerId;
+    if (assignedManagerId === undefined) assignedManagerId = jobRecord?.assignedManagerId;
+  }
+
+  if (assignedManagerId) {
+    ownerManagerIds.push(assignedManagerId);
   }
 
   if (primaryOwnerId) {
@@ -486,11 +585,49 @@ function getActorRoleNames(user: { roles?: { role: { name: string } }[]; isPlatf
 }
 
 function getAssignedDeletionManager(job: {
+  assignedManagerId?: string | null;
   assignments: { id: string; userId: string; responsibility: string; user?: { name: string | null } }[];
 }) {
+  if (job.assignedManagerId === null) {
+    return null;
+  }
+  if (job.assignedManagerId) {
+    return (
+      job.assignments.find(
+        (assignment) => assignment.userId === job.assignedManagerId && assignment.responsibility === "APPROVAL",
+      ) ?? {
+        id: job.assignedManagerId,
+        userId: job.assignedManagerId,
+        responsibility: "APPROVAL",
+      }
+    );
+  }
+
   return [...job.assignments]
     .filter((assignment) => assignment.responsibility === "APPROVAL")
     .sort((a, b) => a.id.localeCompare(b.id))[0] ?? null;
+}
+
+async function backfillAssignedManagerFromApprovalAssignment(job: {
+  id: string;
+  assignedManagerId?: string | null;
+  assignments: { userId: string; responsibility: string; user?: unknown }[];
+}) {
+  if (job.assignedManagerId) {
+    return null;
+  }
+
+  const approvalAssignment = job.assignments.find((assignment) => assignment.responsibility === "APPROVAL");
+  if (!approvalAssignment) {
+    return null;
+  }
+
+  await db.chaJob.update({
+    where: { id: job.id },
+    data: { assignedManagerId: approvalAssignment.userId },
+  });
+
+  return approvalAssignment;
 }
 
 function assertDeleteConfirmationInput(jobNumber: string, confirmationJobNumber: string, confirmationPhrase: string) {
@@ -522,6 +659,135 @@ function assertJobCanBeDeleted(job: {
   if (job.expenseRequests.some((request) => ["PAID", "RECEIPT_ACKNOWLEDGED"].includes(request.status))) {
     throw new Error("This CHA job has paid expense records and cannot be deleted.");
   }
+}
+
+function normalizeJobTypeManifestConfig(input: ChaJobTypeManifestConfigInput) {
+  const name = input.name.trim();
+  const movementDirection = input.movementDirection;
+  const manifestRequirement = input.manifestRequirement;
+  const customManifestLabel = input.customManifestLabel?.trim() || null;
+  const manifestHelpText = input.manifestHelpText?.trim() || null;
+  const isManifestMandatory = Boolean(input.isManifestMandatory);
+  const isActive = input.isActive ?? true;
+
+  if (!name) {
+    throw new Error("Clearance type name is required.");
+  }
+
+  if (!["IMPORT", "EXPORT", "BOTH", "OTHER"].includes(movementDirection)) {
+    throw new Error("Movement direction must be configured.");
+  }
+
+  if (!["IGM", "EGM", "BOTH", "NONE", "CUSTOM"].includes(manifestRequirement)) {
+    throw new Error("Manifest requirement must be configured.");
+  }
+
+  if (manifestRequirement === "CUSTOM" && !customManifestLabel) {
+    throw new Error("Custom manifest label is required when manifest requirement is custom.");
+  }
+
+  if (isActive && !manifestRequirement) {
+    throw new Error("Active clearance types must define manifest behavior.");
+  }
+
+  return {
+    name,
+    movementDirection,
+    manifestRequirement,
+    customManifestLabel,
+    isManifestMandatory,
+    manifestHelpText:
+      manifestHelpText ||
+      (manifestRequirement === "IGM"
+        ? DEFAULT_IMPORT_MANIFEST_HELP
+        : manifestRequirement === "EGM"
+          ? DEFAULT_EXPORT_MANIFEST_HELP
+          : null),
+    isActive,
+  };
+}
+
+function isJobTypeManifestConfigured(jobType: {
+  movementDirection?: string | null;
+  manifestRequirement?: string | null;
+  customManifestLabel?: string | null;
+}) {
+  if (!jobType.movementDirection || !jobType.manifestRequirement) {
+    return false;
+  }
+  if (jobType.manifestRequirement === "CUSTOM" && !jobType.customManifestLabel?.trim()) {
+    return false;
+  }
+  return true;
+}
+
+function getManifestRequirementLabel(jobType: {
+  manifestRequirement?: string | null;
+  customManifestLabel?: string | null;
+}) {
+  switch (jobType.manifestRequirement) {
+    case "IGM":
+      return "IGM Number";
+    case "EGM":
+      return "EGM Number";
+    case "BOTH":
+      return "IGM + EGM";
+    case "NONE":
+      return "None";
+    case "CUSTOM":
+      return jobType.customManifestLabel?.trim() || "Custom Manifest";
+    default:
+      return "Not Configured";
+  }
+}
+
+function validateJobTypeManifestConfiguration(jobType: {
+  name: string;
+  movementDirection?: string | null;
+  manifestRequirement?: string | null;
+  customManifestLabel?: string | null;
+  manifestHelpText?: string | null;
+  isManifestMandatory?: boolean | null;
+}) {
+  if (!isJobTypeManifestConfigured(jobType)) {
+    throw new Error(
+      `Clearance type "${jobType.name}" is missing manifest configuration. Please update it in CHA settings before continuing.`,
+    );
+  }
+
+  return {
+    movementDirection: jobType.movementDirection as ChaMovementDirection,
+    manifestRequirement: jobType.manifestRequirement as ChaManifestRequirement,
+    customManifestLabel: jobType.customManifestLabel?.trim() || null,
+    manifestHelpText: jobType.manifestHelpText?.trim() || null,
+    isManifestMandatory: Boolean(jobType.isManifestMandatory),
+    manifestLabel: getManifestRequirementLabel(jobType),
+  };
+}
+
+function buildArchivedChaJobNumber(jobNumber: string, jobId: string) {
+  return `${jobNumber}__deleted__${jobId}`;
+}
+
+async function archiveDeletedChaJobNumber(
+  tx: Prisma.TransactionClient,
+  job: { id: string; jobNumber: string; deletedAt: Date | null },
+) {
+  if (!job.deletedAt) {
+    return job.jobNumber;
+  }
+
+  const archivedJobNumber = buildArchivedChaJobNumber(job.jobNumber, job.id);
+  if (job.jobNumber === archivedJobNumber) {
+    return archivedJobNumber;
+  }
+
+  await tx.chaJob.update({
+    where: { id: job.id },
+    data: { jobNumber: archivedJobNumber },
+  });
+
+  return archivedJobNumber;
 }
 
 // Create a CHA Job
@@ -568,6 +834,14 @@ export async function createJob(
   }
 
   const result = await db.$transaction(async (tx) => {
+    const selectedJobType = await tx.chaJobType.findFirst({
+      where: { id: data.jobTypeId, orgId, isActive: true },
+      select: { id: true },
+    });
+    if (!selectedJobType) {
+      throw new Error("The selected clearance type is inactive or unavailable.");
+    }
+
     const branchRule = await tx.chaBranchNumberingRule.findFirst({
       where: {
         orgId,
@@ -600,10 +874,13 @@ export async function createJob(
 
     const existingJob = await tx.chaJob.findFirst({
       where: { orgId, jobNumber: finalJobNumber },
-      select: { id: true },
+      select: { id: true, jobNumber: true, deletedAt: true },
     });
-    if (existingJob) {
+    if (existingJob && !existingJob.deletedAt) {
       throw new Error(`Job number '${finalJobNumber}' already exists inside the organisation.`);
+    }
+    if (existingJob?.deletedAt) {
+      await archiveDeletedChaJobNumber(tx, existingJob);
     }
 
     // 1. Create Job
@@ -636,6 +913,12 @@ export async function createJob(
     if (!ownerAssignmentPresent) {
       assignmentsToCreate.push({ userId: data.primaryOwnerId, responsibility: "OPERATIONS" });
     }
+    const managerAssignmentPresent = assignmentsToCreate.some(
+      (a) => a.userId === data.assignedManagerId && a.responsibility === "APPROVAL"
+    );
+    if (!managerAssignmentPresent) {
+      assignmentsToCreate.push({ userId: data.assignedManagerId, responsibility: "APPROVAL" });
+    }
 
     await tx.chaJobAssignment.createMany({
       data: assignmentsToCreate.map((a) => ({
@@ -643,6 +926,7 @@ export async function createJob(
         userId: a.userId,
         responsibility: a.responsibility,
       })),
+      skipDuplicates: true,
     });
 
     // 3. Fetch active document configuration categories and items for this organization and initialize requirements
@@ -756,19 +1040,101 @@ export async function createJob(
 }
 
 // Clearance Job Types management helpers
-export async function createJobType(orgId: string, name: string) {
+export async function createJobType(
+  actorId: string,
+  orgId: string,
+  data: ChaJobTypeManifestConfigInput,
+) {
+  const normalized = normalizeJobTypeManifestConfig(data);
   const existing = await db.chaJobType.findFirst({
-    where: { orgId, name: { equals: name, mode: "insensitive" } },
+    where: { orgId, name: { equals: normalized.name, mode: "insensitive" } },
   });
   if (existing) {
-    throw new Error(`Clearance job type '${name}' already exists.`);
+    throw new Error(`Clearance job type '${normalized.name}' already exists.`);
   }
-  return db.chaJobType.create({
+
+  const jobType = await db.chaJobType.create({
     data: {
       orgId,
-      name,
+      ...normalized,
     },
   });
+
+  await logChaAudit({
+    orgId,
+    entityType: "ChaJobType",
+    entityId: jobType.id,
+    event: "CHA_JOB_TYPE_MANIFEST_CONFIG_CREATED",
+    actorId,
+    newState: JSON.stringify({
+      movementDirection: jobType.movementDirection,
+      manifestRequirement: jobType.manifestRequirement,
+      customManifestLabel: jobType.customManifestLabel,
+      isManifestMandatory: jobType.isManifestMandatory,
+      manifestHelpText: jobType.manifestHelpText,
+      isActive: jobType.isActive,
+    }),
+    remarks: `Manifest configuration created for clearance type "${jobType.name}".`,
+  });
+
+  return jobType;
+}
+
+export async function updateJobTypeManifestConfig(
+  actorId: string,
+  orgId: string,
+  id: string,
+  data: ChaJobTypeManifestConfigInput,
+) {
+  const existing = await db.chaJobType.findFirstOrThrow({
+    where: { id, orgId },
+  });
+  const normalized = normalizeJobTypeManifestConfig(data);
+
+  const duplicate = await db.chaJobType.findFirst({
+    where: {
+      orgId,
+      id: { not: id },
+      name: { equals: normalized.name, mode: "insensitive" },
+    },
+  });
+  if (duplicate) {
+    throw new Error(`Clearance job type '${normalized.name}' already exists.`);
+  }
+
+  const jobType = await db.chaJobType.update({
+    where: { id },
+    data: normalized,
+  });
+
+  await logChaAudit({
+    orgId,
+    entityType: "ChaJobType",
+    entityId: jobType.id,
+    event: "CHA_JOB_TYPE_MANIFEST_CONFIG_UPDATED",
+    actorId,
+    prevState: JSON.stringify({
+      name: existing.name,
+      movementDirection: existing.movementDirection,
+      manifestRequirement: existing.manifestRequirement,
+      customManifestLabel: existing.customManifestLabel,
+      isManifestMandatory: existing.isManifestMandatory,
+      manifestHelpText: existing.manifestHelpText,
+      isActive: existing.isActive,
+    }),
+    newState: JSON.stringify({
+      name: jobType.name,
+      movementDirection: jobType.movementDirection,
+      manifestRequirement: jobType.manifestRequirement,
+      customManifestLabel: jobType.customManifestLabel,
+      isManifestMandatory: jobType.isManifestMandatory,
+      manifestHelpText: jobType.manifestHelpText,
+      isActive: jobType.isActive,
+    }),
+    remarks: `Manifest configuration updated for clearance type "${jobType.name}".`,
+  });
+
+  return jobType;
 }
 
 export async function deleteJobType(orgId: string, id: string) {
@@ -923,6 +1289,7 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
       shipmentType: true,
       branch: true,
       primaryOwner: { select: { id: true, name: true, email: true, designation: true } },
+      assignedManager: { select: { id: true, name: true, email: true, designation: true } },
       assignments: { include: { user: { select: { id: true, name: true, email: true, designation: true } } } },
       deletionRequests: {
         orderBy: { requestedAt: "desc" },
@@ -960,14 +1327,24 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
     throw new Error("Job not found.");
   }
 
+  const backfilledManagerAssignment = await backfillAssignedManagerFromApprovalAssignment(job);
+  const normalizedJob = backfilledManagerAssignment
+    ? {
+        ...job,
+        assignedManagerId: backfilledManagerAssignment.userId,
+        assignedManager: backfilledManagerAssignment.user ?? job.assignedManager,
+      }
+    : job;
+
   // Gated Gearing check:
   const isPlatformAdmin = user.isPlatformAdmin;
   const isOrgAdmin = user.roles.some((r) => r.role.name === "Admin" || r.role.name === "Management" || r.role.name === "Director");
-  const isAssigned = job.assignments.some((a) => a.userId === userId);
-  const isManagerApprover = job.assignments.some((a) => a.userId === userId && a.responsibility === "APPROVAL");
+  const isAssigned = normalizedJob.assignments.some((a) => a.userId === userId);
+  const isAssignedManager = normalizedJob.assignedManagerId === userId;
+  const isManagerApprover = normalizedJob.assignments.some((a) => a.userId === userId && a.responsibility === "APPROVAL");
   const hasViewAll = await can(userId, "cha.job.view_all");
 
-  if (!isPlatformAdmin && !isOrgAdmin && !isAssigned && !isManagerApprover && !hasViewAll) {
+  if (!isPlatformAdmin && !isOrgAdmin && !isAssigned && !isAssignedManager && !isManagerApprover && !hasViewAll) {
     throw new ForbiddenError("cha.job.read");
   }
 
@@ -985,7 +1362,7 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
   }));
 
   return {
-    ...job,
+    ...normalizedJob,
     auditLogs: auditLogsWithActor,
   };
 }
@@ -1489,12 +1866,13 @@ export async function upsertAdditionalData(
     vesselInwardDate?: Date | string | null;
     importGeneralManifest?: string | null;
     exportGeneralManifest?: string | null;
+    customManifestValue?: string | null;
     deliveryOrderValidity?: Date | string | null;
   }
 ) {
   const job = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
-    include: { assignments: true, additionalData: true },
+    include: { assignments: true, additionalData: true, jobType: true },
   });
   await assertCanAccessAdditionalData(actorId, job, "cha.additional_data.edit");
 
@@ -1505,8 +1883,10 @@ export async function upsertAdditionalData(
     throw new Error("Additional Data cannot be edited after the job has moved to filing.");
   }
 
+  const manifestConfig = validateJobTypeManifestConfiguration(job.jobType);
   const importGeneralManifest = data.importGeneralManifest?.trim() ? data.importGeneralManifest.trim() : null;
   const exportGeneralManifest = data.exportGeneralManifest?.trim() ? data.exportGeneralManifest.trim() : null;
+  const customManifestValue = data.customManifestValue?.trim() ? data.customManifestValue.trim() : null;
 
   if (importGeneralManifest !== null && !/^\d+$/.test(importGeneralManifest)) {
     throw new Error("Import General Manifest (IGM) must contain digits only.");
@@ -1525,12 +1905,28 @@ export async function upsertAdditionalData(
     throw new Error("Delivery Order (DO) Validity is invalid.");
   }
 
+  if (manifestConfig.isManifestMandatory) {
+    if (manifestConfig.manifestRequirement === "IGM" && !importGeneralManifest) {
+      throw new Error("IGM Number is required for this clearance type.");
+    }
+    if (manifestConfig.manifestRequirement === "EGM" && !exportGeneralManifest) {
+      throw new Error("EGM Number is required for this clearance type.");
+    }
+    if (manifestConfig.manifestRequirement === "BOTH" && (!importGeneralManifest || !exportGeneralManifest)) {
+      throw new Error("Both IGM and EGM numbers are required for this clearance type.");
+    }
+    if (manifestConfig.manifestRequirement === "CUSTOM" && !customManifestValue) {
+      throw new Error(`${manifestConfig.manifestLabel} is required for this clearance type.`);
+    }
+  }
+
   const nextStatus = isAdditionalDataComplete({
     vesselInwardDate,
     importGeneralManifest,
     exportGeneralManifest,
+    customManifestValue,
     deliveryOrderValidity,
-  }) ? "COMPLETED" : "PENDING";
+  }, manifestConfig) ? "COMPLETED" : "PENDING";
   const wasCompleted = job.additionalData?.status === "COMPLETED";
 
   const additionalData = await db.chaJobAdditionalData.upsert({
@@ -1539,6 +1935,7 @@ export async function upsertAdditionalData(
       vesselInwardDate,
       importGeneralManifest,
       exportGeneralManifest,
+      customManifestValue,
       deliveryOrderValidity,
       status: nextStatus,
       updatedById: actorId,
@@ -1551,6 +1948,7 @@ export async function upsertAdditionalData(
       vesselInwardDate,
       importGeneralManifest,
       exportGeneralManifest,
+      customManifestValue,
       deliveryOrderValidity,
       status: nextStatus,
       createdById: actorId,
@@ -1572,21 +1970,64 @@ export async function upsertAdditionalData(
     remarks: `Additional Data ${job.additionalData ? "updated" : "created"} for job ${job.jobNumber}.`,
   });
 
+  if ((job.additionalData?.importGeneralManifest ?? null) !== importGeneralManifest) {
+    await logChaAudit({
+      orgId,
+      jobId,
+      entityType: "ChaJobAdditionalData",
+      entityId: additionalData.id,
+      event: "CHA_JOB_IGM_UPDATED",
+      actorId,
+      prevState: job.additionalData?.importGeneralManifest ?? undefined,
+      newState: importGeneralManifest ?? undefined,
+      remarks: `IGM number updated for clearance type "${job.jobType.name}".`,
+    });
+  }
+
+  if ((job.additionalData?.exportGeneralManifest ?? null) !== exportGeneralManifest) {
+    await logChaAudit({
+      orgId,
+      jobId,
+      entityType: "ChaJobAdditionalData",
+      entityId: additionalData.id,
+      event: "CHA_JOB_EGM_UPDATED",
+      actorId,
+      prevState: job.additionalData?.exportGeneralManifest ?? undefined,
+      newState: exportGeneralManifest ?? undefined,
+      remarks: `EGM number updated for clearance type "${job.jobType.name}".`,
+    });
+  }
+
+  if ((job.additionalData?.customManifestValue ?? null) !== customManifestValue) {
+    await logChaAudit({
+      orgId,
+      jobId,
+      entityType: "ChaJobAdditionalData",
+      entityId: additionalData.id,
+      event: "CHA_JOB_CUSTOM_MANIFEST_UPDATED",
+      actorId,
+      prevState: job.additionalData?.customManifestValue ?? undefined,
+      newState: customManifestValue ?? undefined,
+      remarks: `${manifestConfig.manifestLabel} updated for clearance type "${job.jobType.name}".`,
+    });
+  }
+
   return additionalData;
 }
 
 export async function proceedAdditionalDataStage(actorId: string, orgId: string, jobId: string) {
   const job = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
-    include: { assignments: true, additionalData: true },
+    include: { assignments: true, additionalData: true, jobType: true },
   });
   await assertCanAccessAdditionalData(actorId, job, "cha.additional_data.proceed");
 
   if (job.stage !== "ADDITIONAL_DATA") {
     throw new Error("Job is not in the Additional Data stage.");
   }
-  if (!isAdditionalDataComplete(job.additionalData)) {
-    throw new Error("Cannot proceed. Vessel inward date, IGM, EGM, and DO validity are required.");
+  const manifestConfig = validateJobTypeManifestConfiguration(job.jobType);
+  if (!isAdditionalDataComplete(job.additionalData, manifestConfig)) {
+    throw new Error(`Cannot proceed. Vessel inward date, ${manifestConfig.manifestLabel}, and DO validity are required.`);
   }
 
   const result = await db.$transaction(async (tx) => {
@@ -2259,7 +2700,7 @@ export async function importChecklistExcel(
 ) {
   const job = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
-    include: { additionalData: true },
+    include: { additionalData: true, jobType: true },
   });
 
   // Check doc gate first
@@ -2275,7 +2716,8 @@ export async function importChecklistExcel(
   if (job.stage === "DOCUMENT_COLLECTION") {
     throw new Error("Cannot import checklist. Complete Document Collection and Additional Data first.");
   }
-  if (job.stage === "ADDITIONAL_DATA" && !isAdditionalDataComplete(job.additionalData)) {
+  const manifestConfig = validateJobTypeManifestConfiguration(job.jobType);
+  if (job.stage === "ADDITIONAL_DATA" && !isAdditionalDataComplete(job.additionalData, manifestConfig)) {
     throw new Error("Cannot import checklist. Complete the Additional Data process first.");
   }
 
@@ -3639,6 +4081,11 @@ export async function submitJobDeletion(
     throw new Error("CHA job not found.");
   }
 
+  const backfilledManagerAssignment = await backfillAssignedManagerFromApprovalAssignment(job);
+  if (backfilledManagerAssignment) {
+    job.assignedManagerId = backfilledManagerAssignment.userId;
+  }
+
   const isManager = actorRoleNames.includes("Manager") || canApproveDelete;
   const isOwner = job.primaryOwnerId === actorId;
   const isAssignedToJob =
@@ -3709,6 +4156,7 @@ export async function submitJobDeletion(
     await db.chaJob.update({
       where: { id: job.id },
       data: {
+        jobNumber: buildArchivedChaJobNumber(job.jobNumber, job.id),
         deletedAt: new Date(),
         deletedById: actorId,
         status: "CANCELLED",
@@ -3961,6 +4409,7 @@ export async function decideJobDeletionRequest(
         await tx.chaJob.update({
           where: { id: request.job.id },
           data: {
+            jobNumber: buildArchivedChaJobNumber(request.job.jobNumber, request.job.id),
             deletedAt: new Date(),
             deletedById: actorId,
             status: "CANCELLED",
@@ -4386,9 +4835,26 @@ export async function updateJobDetails(
     return job;
   }
 
-  const updatedJob = await db.chaJob.update({
-    where: { id: jobId },
-    data: updates,
+  const updatedJob = await db.$transaction(async (tx) => {
+    const updated = await tx.chaJob.update({
+      where: { id: jobId },
+      data: updates,
+    });
+
+    if (updates.assignedManagerId) {
+      await tx.chaJobAssignment.createMany({
+        data: [
+          {
+            jobId,
+            userId: updates.assignedManagerId,
+            responsibility: "APPROVAL",
+          },
+        ],
+        skipDuplicates: true,
+      });
+    }
+
+    return updated;
   });
 
   for (const audit of audits) {
@@ -4605,3 +5071,1422 @@ export async function submitChecklistOwnerDecision(
 
   return result;
 }
+
+// ─── Configurable Filing Workflow blueprint services ────────────────────────
+
+const DEFAULT_FILING_WORKFLOW_SEED = {
+  nodes: [
+    {
+      key: "first_check",
+      name: "First Check",
+      description: "Default seeded start node for initial customs verification.",
+      category: "CHECK",
+      isStart: true,
+      positionX: 120,
+      positionY: 220,
+      allowedRoles: ["Admin", "Manager", "Employee"],
+      checklistItems: [
+        "Bill of Entry (BE) Copy",
+        "Goods Registration",
+        "Examination",
+        "Chartered Engineer",
+        "Group Forward",
+        "Assessment",
+        "Duty",
+        "Out of Charge (OOC)",
+        "Delivery",
+      ],
+    },
+    {
+      key: "second_check",
+      name: "Second Check",
+      description: "Default seeded review hub before branching to RMS, Open Bill, or Amendment.",
+      category: "CHECK",
+      isStart: false,
+      positionX: 420,
+      positionY: 220,
+      allowedRoles: ["Admin", "Manager", "Employee"],
+      checklistItems: [],
+    },
+    {
+      key: "rms",
+      name: "RMS",
+      description: "Default seeded RMS branch. Fully editable after seeding.",
+      category: "CHECK",
+      isStart: false,
+      positionX: 760,
+      positionY: 80,
+      allowedRoles: ["Admin", "Manager", "Employee"],
+      checklistItems: [
+        "Goods Registration",
+        "Duty",
+        "Out of Charge (OOC)",
+        "Delivery",
+      ],
+    },
+    {
+      key: "open_bill",
+      name: "Open Bill",
+      description: "Default seeded Open Bill branch. Fully editable after seeding.",
+      category: "CHECK",
+      isStart: false,
+      positionX: 760,
+      positionY: 260,
+      allowedRoles: ["Admin", "Manager", "Employee"],
+      checklistItems: [
+        "Assessment",
+        "Goods Registration",
+        "Examination",
+        "Duty",
+        "Out of Charge (OOC)",
+        "Delivery",
+      ],
+    },
+    {
+      key: "amendment",
+      name: "Amendment",
+      description: "Default seeded amendment node. Checklist items remain fully configurable.",
+      category: "CHECK",
+      isStart: false,
+      positionX: 420,
+      positionY: 460,
+      allowedRoles: ["Admin", "Manager", "Employee"],
+      checklistItems: [],
+    },
+  ],
+  edges: [
+    { sourceKey: "first_check", targetKey: "second_check" },
+    { sourceKey: "second_check", targetKey: "rms" },
+    { sourceKey: "second_check", targetKey: "open_bill" },
+    { sourceKey: "second_check", targetKey: "amendment" },
+    { sourceKey: "amendment", targetKey: "first_check" },
+    { sourceKey: "amendment", targetKey: "second_check" },
+  ],
+} as const;
+
+function normalizeFilingChecklistItem(item: any, idx: number) {
+  const allowsUpload = !!item.allowsUpload;
+  const acceptedFileTypes = Array.isArray(item.acceptedFileTypes)
+    ? item.acceptedFileTypes.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
+    : [];
+
+  return {
+    label: typeof item.label === "string" ? item.label : "",
+    description: typeof item.description === "string" ? item.description : null,
+    isMandatory: item.isMandatory !== undefined ? !!item.isMandatory : true,
+    requiresRemarks: !!item.requiresRemarks,
+    allowsUpload,
+    minUploads: allowsUpload ? Math.max(Number(item.minUploads ?? 0), 0) : 0,
+    maxUploads: allowsUpload && item.maxUploads !== undefined && item.maxUploads !== null
+      ? Math.max(Number(item.maxUploads), 0)
+      : null,
+    acceptedFileTypes,
+    deadlineDuration: Math.max(Number(item.deadlineDuration ?? 2), 1),
+    deadlineUnit: item.deadlineUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : "BUSINESS_DAYS",
+    delayRemarksRequired: item.delayRemarksRequired !== undefined ? !!item.delayRemarksRequired : true,
+    hasPhotoRequirement: !!item.hasPhotoRequirement,
+    sortOrder: item.sortOrder !== undefined ? Number(item.sortOrder) : idx + 1,
+    isActive: item.isActive !== undefined ? !!item.isActive : true,
+  };
+}
+
+function validateFilingWorkflowDraft(data: { nodes: any[]; edges: any[] }) {
+  const activeNodes = (data.nodes || []).filter((node) => node.isActive !== false);
+  const nodeKeys = new Set(activeNodes.map((node) => node.key));
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  if (activeNodes.length === 0) {
+    errors.push("The workflow must have at least one active node.");
+  }
+
+  const startNodes = activeNodes.filter((node) => node.isStart);
+  if (startNodes.length !== 1) {
+    errors.push(startNodes.length === 0 ? "The workflow must have one start node." : "The workflow can only have one start node.");
+  }
+
+  const edgeSet = new Set<string>();
+  for (const edge of data.edges || []) {
+    if (!edge.sourceKey || !edge.targetKey) {
+      errors.push("Edges must have both a source node and a target node.");
+      continue;
+    }
+    if (edge.sourceKey === edge.targetKey) {
+      errors.push(`Node "${edge.sourceKey}" cannot connect to itself.`);
+    }
+    if (!nodeKeys.has(edge.sourceKey) || !nodeKeys.has(edge.targetKey)) {
+      errors.push(`Edge ${edge.sourceKey} -> ${edge.targetKey} references an inactive or missing node.`);
+    }
+    const signature = `${edge.sourceKey}::${edge.targetKey}`;
+    if (edgeSet.has(signature)) {
+      errors.push(`Duplicate edge detected for ${edge.sourceKey} -> ${edge.targetKey}.`);
+    }
+    edgeSet.add(signature);
+  }
+
+  for (const node of activeNodes) {
+    if (!node.name || !String(node.name).trim()) {
+      errors.push(`Node "${node.key || "untitled"}" must have a name.`);
+    }
+    const checklistItems = (node.checklistItems || []).filter((item: any) => item.isActive !== false);
+    for (const item of checklistItems) {
+      if (!item.label || !String(item.label).trim()) {
+        errors.push(`Checklist items in node "${node.name || node.key}" must have a name.`);
+      }
+      if (Number(item.deadlineDuration ?? 2) <= 0) {
+        errors.push(`Checklist item "${item.label || "Untitled"}" in node "${node.name || node.key}" must have a valid SLA duration.`);
+      }
+      if (item.allowsUpload) {
+        const minUploads = Number(item.minUploads ?? 0);
+        const maxUploads = item.maxUploads === null || item.maxUploads === undefined ? null : Number(item.maxUploads);
+        if (minUploads < 0) {
+          errors.push(`Checklist item "${item.label || "Untitled"}" cannot require a negative minimum upload count.`);
+        }
+        if (maxUploads !== null && maxUploads < minUploads) {
+          errors.push(`Checklist item "${item.label || "Untitled"}" cannot have max uploads lower than min uploads.`);
+        }
+      }
+    }
+  }
+
+  if (startNodes.length === 1) {
+    const adjacency = new Map<string, string[]>();
+    for (const node of activeNodes) adjacency.set(node.key, []);
+    for (const edge of data.edges || []) {
+      if (!adjacency.has(edge.sourceKey)) continue;
+      adjacency.get(edge.sourceKey)!.push(edge.targetKey);
+      const target = activeNodes.find((node) => node.key === edge.targetKey);
+      const source = activeNodes.find((node) => node.key === edge.sourceKey);
+      if (
+        source &&
+        target &&
+        target.positionX <= source.positionX &&
+        source.canBeRevisited !== true &&
+        target.canBeRevisited !== true
+      ) {
+        warnings.push(`Back-transition detected from "${source.name}" to "${target.name}".`);
+      }
+    }
+
+    const seen = new Set<string>([startNodes[0].key]);
+    const queue = [startNodes[0].key];
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      for (const next of adjacency.get(current) || []) {
+        if (!seen.has(next)) {
+          seen.add(next);
+          queue.push(next);
+        }
+      }
+    }
+
+    const unreachable = activeNodes.filter((node) => !seen.has(node.key));
+    if (unreachable.length > 0) {
+      errors.push(`Disconnected active nodes: ${unreachable.map((node) => node.name).join(", ")}.`);
+    }
+  }
+
+  return { errors, warnings };
+}
+
+async function createFilingNodeRunWithResponses(
+  tx: Prisma.TransactionClient,
+  params: {
+    instanceId: string;
+    node: {
+      id: string;
+      key: string;
+      checklistItems: Array<{ id: string; deadlineDuration: number; deadlineUnit: string; isActive: boolean }>;
+    };
+    startedAt: Date;
+    orgId: string;
+  },
+) {
+  const nodeRun = await tx.filingNodeRun.create({
+    data: {
+      instanceId: params.instanceId,
+      nodeId: params.node.id,
+      nodeKey: params.node.key,
+      status: "ACTIVE",
+      startedAt: params.startedAt,
+    },
+  });
+
+  const activeItems = params.node.checklistItems.filter((item) => item.isActive !== false);
+  for (const item of activeItems) {
+    const dueAt = await calculateSlaDueDate(params.startedAt, item.deadlineDuration || 2, item.deadlineUnit || "BUSINESS_DAYS", params.orgId);
+    await tx.filingChecklistResponse.upsert({
+      where: {
+        instanceId_checklistItemId: {
+          instanceId: params.instanceId,
+          checklistItemId: item.id,
+        },
+      },
+      create: {
+        instanceId: params.instanceId,
+        nodeRunId: nodeRun.id,
+        checklistItemId: item.id,
+        isChecked: false,
+        dueAt,
+      },
+      update: {
+        nodeRunId: nodeRun.id,
+        dueAt,
+        completedAt: null,
+        delayRemarks: null,
+        delayRemarkedAt: null,
+        fileKey: null,
+      },
+    });
+  }
+
+  return nodeRun;
+}
+
+async function syncOverdueFilingItems(orgId: string, jobId: string) {
+  const now = await getNow();
+  const instance = await db.filingWorkflowInstance.findUnique({
+    where: { jobId },
+    include: {
+      job: {
+        select: {
+          primaryOwnerId: true,
+        },
+      },
+      responses: {
+        where: {
+          isChecked: false,
+          dueAt: { not: null, lt: now },
+          overdueLoggedAt: null,
+        },
+        include: {
+          checklistItem: { include: { node: true } },
+        },
+      },
+    },
+  });
+
+  if (!instance || instance.responses.length === 0) {
+    return;
+  }
+
+  for (const response of instance.responses) {
+    await db.filingChecklistResponse.update({
+      where: { id: response.id },
+      data: { overdueLoggedAt: now },
+    });
+
+    await logChaAudit({
+      orgId,
+      jobId,
+      entityType: "FilingChecklistResponse",
+      entityId: response.id,
+      event: "FILING_CHECKLIST_ITEM_OVERDUE",
+      actorId: instance.job.primaryOwnerId,
+      remarks: `Checklist item "${response.checklistItem.label}" in node "${response.checklistItem.node.name}" is overdue.`,
+      metadata: {
+        dueAt: response.dueAt,
+      },
+    });
+  }
+}
+
+export async function ensureDefaultFilingWorkflows(orgId: string) {
+  const existingCount = await db.filingWorkflowTemplate.count({ where: { orgId } });
+  if (existingCount > 0) return;
+
+  const firstUser = await db.user.findFirst({ where: { orgId } });
+  const createdById = firstUser?.id || "system";
+
+  await db.$transaction(async (tx) => {
+    const template = await tx.filingWorkflowTemplate.create({
+      data: {
+        orgId,
+        name: "Default Filing Workflow",
+        description: "Default seeded filing workflow. All nodes, checklist items, and routes remain editable after publishing.",
+        isActive: true,
+      },
+    });
+
+    const version = await tx.filingWorkflowVersion.create({
+      data: {
+        templateId: template.id,
+        versionNumber: 1,
+        isPublished: true,
+        isActive: true,
+        createdById,
+      },
+    });
+
+    for (const [nodeIndex, node] of DEFAULT_FILING_WORKFLOW_SEED.nodes.entries()) {
+      await tx.filingWorkflowNode.create({
+        data: {
+          versionId: version.id,
+          key: node.key,
+          name: node.name,
+          description: node.description,
+          category: node.category,
+          isActive: true,
+          isStart: node.isStart,
+          positionX: node.positionX,
+          positionY: node.positionY,
+          slaDuration: 2,
+          slaUnit: "BUSINESS_DAYS",
+          commentsRequired: false,
+          canBeSkipped: false,
+          canBeRevisited: true,
+          requireAllMandatoryChecklistItems: true,
+          requireMandatoryPhotos: false,
+          allowedRoles: [...node.allowedRoles],
+          checklistItems: {
+            create: node.checklistItems.map((label, checklistIndex) => ({
+              label,
+              description: null,
+              isMandatory: true,
+              requiresRemarks: false,
+              allowsUpload: false,
+              minUploads: 0,
+              maxUploads: null,
+              acceptedFileTypes: [],
+              deadlineDuration: 2,
+              deadlineUnit: "BUSINESS_DAYS",
+              delayRemarksRequired: true,
+              hasPhotoRequirement: false,
+              sortOrder: checklistIndex + 1,
+              isActive: true,
+            })),
+          },
+          photoRequirements: nodeIndex === 0
+            ? {
+                create: [
+                  {
+                    label: "Filed Document Set",
+                    isMandatory: false,
+                    minPhotos: 0,
+                    acceptedFileTypes: ["image/jpeg", "image/png", "application/pdf"],
+                  },
+                ],
+              }
+            : undefined,
+        },
+      });
+    }
+
+    await tx.filingWorkflowEdge.createMany({
+      data: DEFAULT_FILING_WORKFLOW_SEED.edges.map((edge) => ({
+        versionId: version.id,
+        sourceKey: edge.sourceKey,
+        targetKey: edge.targetKey,
+      })),
+    });
+  });
+}
+
+export async function calculateSlaDueDate(startDate: Date, duration: number, unit: string, orgId?: string): Promise<Date> {
+  const result = new Date(startDate);
+  if (unit === "CALENDAR_DAYS") {
+    result.setDate(result.getDate() + duration);
+    return result;
+  }
+
+  // BUSINESS_DAYS: Exclude Sundays at minimum
+  let added = 0;
+  const holidays = orgId ? await db.holiday.findMany({ where: { orgId } }) : [];
+  const holidayStrings = new Set(holidays.map((h) => h.date.toISOString().split("T")[0]));
+
+  while (added < duration) {
+    result.setDate(result.getDate() + 1);
+    const dow = result.getDay(); // 0 = Sunday
+    const iso = result.toISOString().split("T")[0];
+    if (dow !== 0 && !holidayStrings.has(iso)) {
+      added++;
+    }
+  }
+  return result;
+}
+
+export async function listFilingWorkflows(orgId: string) {
+  return db.filingWorkflowTemplate.findMany({
+    where: { orgId },
+    include: {
+      versions: {
+        orderBy: { versionNumber: "desc" },
+        include: {
+          nodes: {
+            include: {
+              checklistItems: { orderBy: { sortOrder: "asc" } },
+              photoRequirements: true,
+            },
+          },
+          edges: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getFilingWorkflowDetails(userId: string, orgId: string, templateId: string) {
+  return db.filingWorkflowTemplate.findFirstOrThrow({
+    where: { id: templateId, orgId },
+    include: {
+      versions: {
+        orderBy: { versionNumber: "desc" },
+        include: {
+          nodes: {
+            include: {
+              checklistItems: { orderBy: { sortOrder: "asc" } },
+              photoRequirements: true,
+            },
+          },
+          edges: true,
+        },
+      },
+    },
+  });
+}
+
+export async function saveFilingWorkflowDraft(
+  userId: string,
+  orgId: string,
+  templateId: string | null,
+  data: {
+    name: string;
+    description?: string;
+    nodes: any[];
+    edges: any[];
+  }
+) {
+  const normalizedNodes = (data.nodes || []).map((node: any, nodeIndex: number) => ({
+    ...node,
+    key: typeof node.key === "string" && node.key.trim()
+      ? node.key.trim()
+      : `${String(node.name || "node").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "node"}_${nodeIndex + 1}`,
+    isActive: node.isActive !== false,
+    checklistItems: (node.checklistItems || []).map((item: any, itemIndex: number) => normalizeFilingChecklistItem(item, itemIndex)),
+    photoRequirements: (node.photoRequirements || []).map((photo: any) => ({
+      label: typeof photo.label === "string" ? photo.label : "",
+      description: typeof photo.description === "string" ? photo.description : null,
+      isMandatory: photo.isMandatory !== undefined ? !!photo.isMandatory : true,
+      minPhotos: Math.max(Number(photo.minPhotos ?? 1), 0),
+      maxPhotos: photo.maxPhotos === undefined || photo.maxPhotos === null ? null : Math.max(Number(photo.maxPhotos), 0),
+      acceptedFileTypes: Array.isArray(photo.acceptedFileTypes)
+        ? photo.acceptedFileTypes.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
+        : ["image/jpeg", "image/png", "application/pdf"],
+      isVisibleInTimeline: photo.isVisibleInTimeline !== undefined ? !!photo.isVisibleInTimeline : true,
+    })),
+  }));
+
+  const normalizedEdges = (data.edges || []).map((edge: any) => ({
+    sourceKey: edge.sourceKey,
+    targetKey: edge.targetKey,
+    label: edge.label || null,
+  }));
+
+  let template;
+  if (templateId) {
+    template = await db.filingWorkflowTemplate.findFirstOrThrow({
+      where: { id: templateId, orgId },
+    });
+  } else {
+    const existing = await db.filingWorkflowTemplate.findUnique({
+      where: { orgId_name: { orgId, name: data.name } },
+    });
+    if (existing) {
+      throw new Error(`A template with name "${data.name}" already exists.`);
+    }
+    template = await db.filingWorkflowTemplate.create({
+      data: {
+        orgId,
+        name: data.name,
+        description: data.description,
+        isActive: true,
+      },
+    });
+  }
+
+  const latestVersion = await db.filingWorkflowVersion.findFirst({
+    where: { templateId: template.id },
+    orderBy: { versionNumber: "desc" },
+  });
+
+  let draftVersion;
+  if (latestVersion && !latestVersion.isPublished) {
+    draftVersion = latestVersion;
+  } else {
+    const nextVerNum = latestVersion ? latestVersion.versionNumber + 1 : 1;
+    draftVersion = await db.filingWorkflowVersion.create({
+      data: {
+        templateId: template.id,
+        versionNumber: nextVerNum,
+        isPublished: false,
+        isActive: false,
+        createdById: userId,
+      },
+    });
+  }
+
+  const versionId = draftVersion.id;
+
+  await db.$transaction(async (tx) => {
+    await tx.filingWorkflowTemplate.update({
+      where: { id: template.id },
+      data: {
+        name: data.name,
+        description: data.description,
+      },
+    });
+
+    await tx.filingWorkflowEdge.deleteMany({ where: { versionId } });
+    await tx.filingChecklistItem.deleteMany({ where: { node: { versionId } } });
+    await tx.filingPhotoRequirement.deleteMany({ where: { node: { versionId } } });
+    await tx.filingWorkflowNode.deleteMany({ where: { versionId } });
+
+    for (const n of normalizedNodes) {
+      const node = await tx.filingWorkflowNode.create({
+        data: {
+          versionId,
+          key: n.key,
+          name: n.name,
+          description: n.description,
+          category: n.category,
+          isActive: n.isActive !== false,
+          positionX: n.positionX || 0,
+          positionY: n.positionY || 0,
+          isStart: !!n.isStart,
+          slaDuration: n.slaDuration !== undefined ? n.slaDuration : 2,
+          slaUnit: n.slaUnit || "BUSINESS_DAYS",
+          commentsRequired: !!n.commentsRequired,
+          canBeSkipped: !!n.canBeSkipped,
+          canBeRevisited: n.canBeRevisited !== undefined ? !!n.canBeRevisited : true,
+          requireAllMandatoryChecklistItems: n.requireAllMandatoryChecklistItems !== undefined ? !!n.requireAllMandatoryChecklistItems : true,
+          requireMandatoryPhotos: n.requireMandatoryPhotos !== undefined ? !!n.requireMandatoryPhotos : true,
+          allowedRoles: n.allowedRoles || ["Admin", "Manager", "Employee"],
+        },
+      });
+
+      if (n.checklistItems?.length) {
+        await tx.filingChecklistItem.createMany({
+          data: n.checklistItems.map((item: any, idx: number) => ({
+            nodeId: node.id,
+            label: item.label,
+            description: item.description,
+            isMandatory: item.isMandatory !== undefined ? !!item.isMandatory : true,
+            requiresRemarks: !!item.requiresRemarks,
+            allowsUpload: !!item.allowsUpload,
+            minUploads: item.minUploads !== undefined ? item.minUploads : 0,
+            maxUploads: item.maxUploads !== undefined ? item.maxUploads : null,
+            acceptedFileTypes: item.acceptedFileTypes || [],
+            deadlineDuration: item.deadlineDuration !== undefined ? item.deadlineDuration : 2,
+            deadlineUnit: item.deadlineUnit || "BUSINESS_DAYS",
+            delayRemarksRequired: item.delayRemarksRequired !== undefined ? !!item.delayRemarksRequired : true,
+            hasPhotoRequirement: !!item.hasPhotoRequirement,
+            sortOrder: item.sortOrder !== undefined ? item.sortOrder : idx,
+            isActive: item.isActive !== undefined ? !!item.isActive : true,
+          })),
+        });
+      }
+
+      if (n.photoRequirements?.length) {
+        await tx.filingPhotoRequirement.createMany({
+          data: n.photoRequirements.map((pr: any) => ({
+            nodeId: node.id,
+            label: pr.label,
+            description: pr.description,
+            isMandatory: pr.isMandatory !== undefined ? !!pr.isMandatory : true,
+            minPhotos: pr.minPhotos !== undefined ? pr.minPhotos : 1,
+            maxPhotos: pr.maxPhotos !== undefined ? pr.maxPhotos : null,
+            acceptedFileTypes: pr.acceptedFileTypes || ["image/jpeg", "image/png", "application/pdf"],
+            isVisibleInTimeline: pr.isVisibleInTimeline !== undefined ? !!pr.isVisibleInTimeline : true,
+          })),
+        });
+      }
+    }
+
+    if (normalizedEdges.length) {
+      await tx.filingWorkflowEdge.createMany({
+        data: normalizedEdges.map((e: any) => ({
+          versionId,
+          sourceKey: e.sourceKey,
+          targetKey: e.targetKey,
+          label: e.label || null,
+        })),
+      });
+    }
+  });
+
+  await logChaAudit({
+    orgId,
+    entityType: "FilingWorkflowTemplate",
+    entityId: template.id,
+    event: "FILING_WORKFLOW_DRAFT_SAVED",
+    actorId: userId,
+    remarks: `Saved draft version ${draftVersion.versionNumber} for template ${template.name}`,
+  });
+
+  return draftVersion;
+}
+
+export async function publishFilingWorkflow(userId: string, orgId: string, versionId: string) {
+  const version = await db.filingWorkflowVersion.findUniqueOrThrow({
+    where: { id: versionId },
+    include: {
+      template: true,
+      nodes: {
+        include: {
+          checklistItems: true,
+          photoRequirements: true,
+        },
+      },
+      edges: true,
+    },
+  });
+
+  if (version.template.orgId !== orgId) {
+    throw new Error("Access Denied: Template belongs to another organisation.");
+  }
+
+  if (version.isPublished) {
+    throw new Error("This version is already published.");
+  }
+
+  const validation = validateFilingWorkflowDraft({
+    nodes: version.nodes.map((node) => ({
+      ...node,
+      checklistItems: node.checklistItems,
+    })),
+    edges: version.edges,
+  });
+
+  if (validation.errors.length > 0) {
+    throw new Error(`Validation Failed: ${validation.errors.join(" ")}`);
+  }
+
+  const result = await db.$transaction(async (tx) => {
+    await tx.filingWorkflowVersion.updateMany({
+      where: { templateId: version.templateId, isActive: true },
+      data: { isActive: false },
+    });
+
+    return tx.filingWorkflowVersion.update({
+      where: { id: versionId },
+      data: {
+        isPublished: true,
+        isActive: true,
+      },
+    });
+  });
+
+  await logChaAudit({
+    orgId,
+    entityType: "FilingWorkflowVersion",
+    entityId: versionId,
+    event: "FILING_WORKFLOW_PUBLISHED",
+    actorId: userId,
+    remarks: `Published version ${version.versionNumber} for template ${version.template.name}`,
+  });
+
+  return result;
+}
+
+export async function getFilingWorkflowInstance(orgId: string, jobId: string) {
+  await syncOverdueFilingItems(orgId, jobId);
+  const now = await getNow();
+
+  const instance = await db.filingWorkflowInstance.findUnique({
+    where: { jobId },
+    include: {
+      template: true,
+      version: {
+        include: {
+          nodes: {
+            include: {
+              checklistItems: { orderBy: { sortOrder: "asc" } },
+              photoRequirements: true,
+            },
+          },
+          edges: true,
+        },
+      },
+      nodeRuns: {
+        orderBy: { startedAt: "desc" },
+        include: {
+          node: {
+            include: {
+              checklistItems: { orderBy: { sortOrder: "asc" } },
+              photoRequirements: true,
+            },
+          },
+          completedBy: { select: { name: true } },
+          attachments: { include: { uploadedBy: { select: { name: true } }, checklistItem: true } },
+        },
+      },
+      responses: {
+        include: { checklistItem: true },
+      },
+      attachments: {
+        include: { photoRequirement: true, checklistItem: true, uploadedBy: { select: { name: true } } },
+      },
+    },
+  });
+
+  if (!instance) {
+    return null;
+  }
+
+  const activeNodeRun = instance.nodeRuns.find((run) => run.status === "ACTIVE") ?? null;
+  const overdueItems = instance.responses
+    .filter((response) => response.nodeRunId === activeNodeRun?.id && !response.isChecked && response.dueAt && response.dueAt.getTime() < now.getTime())
+    .map((response) => ({
+      checklistItemId: response.checklistItemId,
+      label: response.checklistItem.label,
+      dueAt: response.dueAt,
+      daysDelayed: Math.max(
+        1,
+        Math.ceil((now.getTime() - response.dueAt!.getTime()) / (1000 * 60 * 60 * 24)),
+      ),
+      delayRemarks: response.delayRemarks,
+      delayRemarkedAt: response.delayRemarkedAt,
+    }));
+
+  return {
+    ...instance,
+    activeNodeRun,
+    overdueItems,
+    overdueCount: overdueItems.length,
+  };
+}
+
+export async function startFilingWorkflow(userId: string, orgId: string, jobId: string) {
+  let instance = await db.filingWorkflowInstance.findUnique({
+    where: { jobId },
+  });
+
+  if (instance) {
+    return getFilingWorkflowInstance(orgId, jobId);
+  }
+
+  let activeVersion = await db.filingWorkflowVersion.findFirst({
+    where: { template: { orgId }, isActive: true, isPublished: true },
+    include: {
+      template: true,
+      nodes: {
+        include: {
+          checklistItems: true,
+        },
+      },
+    },
+  });
+
+  if (!activeVersion) {
+    await ensureDefaultFilingWorkflows(orgId);
+    activeVersion = await db.filingWorkflowVersion.findFirst({
+      where: { template: { orgId }, isActive: true, isPublished: true },
+      include: {
+        template: true,
+        nodes: {
+          include: {
+            checklistItems: true,
+          },
+        },
+      },
+    });
+  }
+
+  if (!activeVersion) {
+    throw new Error("No active published filing workflow template found for this organisation.");
+  }
+
+  const startNode = activeVersion.nodes.find((n) => n.isStart && n.isActive);
+  if (!startNode) {
+    throw new Error("Filing workflow template does not have a start node.");
+  }
+
+  instance = await db.$transaction(async (tx) => {
+    const inst = await tx.filingWorkflowInstance.create({
+      data: {
+        jobId,
+        templateId: activeVersion.templateId,
+        versionId: activeVersion.id,
+        currentNodeKey: startNode.key,
+        status: "ACTIVE",
+      },
+    });
+
+    const startedAt = await getNow();
+    const slaDueDate = await calculateSlaDueDate(startedAt, startNode.slaDuration, startNode.slaUnit, orgId);
+    const nodeRun = await createFilingNodeRunWithResponses(tx, {
+      instanceId: inst.id,
+      node: startNode,
+      startedAt,
+      orgId,
+    });
+    await tx.filingNodeRun.update({
+      where: { id: nodeRun.id },
+      data: { slaDueDate },
+    });
+
+    return inst;
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "FilingWorkflowInstance",
+    entityId: instance.id,
+    event: "FILING_WORKFLOW_STARTED",
+    actorId: userId,
+    remarks: `Filing workflow started for job using template: ${activeVersion.template.name}`,
+  });
+
+  return getFilingWorkflowInstance(orgId, jobId);
+}
+
+export async function completeFilingNode(
+  userId: string,
+  orgId: string,
+  jobId: string,
+  nodeRunId: string,
+  data: {
+    remarks?: string;
+    checklistItemResponses: {
+      checklistItemId: string;
+      isChecked: boolean;
+      remarks?: string;
+      fileKey?: string;
+      delayRemarks?: string;
+    }[];
+    nextNodeKey?: string | null;
+  }
+) {
+  return db.$transaction(async (tx) => {
+    const nodeRun = await tx.filingNodeRun.findUniqueOrThrow({
+      where: { id: nodeRunId },
+      include: {
+        node: {
+          include: {
+            checklistItems: true,
+            photoRequirements: true,
+          },
+        },
+        instance: {
+          include: {
+            version: {
+              include: {
+                edges: true,
+                nodes: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const node = nodeRun.node;
+    const instance = nodeRun.instance;
+    const now = await getNow();
+    const startedAt = nodeRun.startedAt ?? now;
+
+    if (nodeRun.status !== "ACTIVE") {
+      throw new Error("This node execution has already been finalized.");
+    }
+
+    if (node.allowedRoles && node.allowedRoles.length > 0) {
+      const userRoles = await tx.userRole.findMany({
+        where: { userId },
+        include: { role: true },
+      });
+      const roleNames = userRoles.map((ur) => ur.role.name);
+      const isAllowed = roleNames.some((r) => node.allowedRoles.includes(r));
+      const userObj = await tx.user.findUnique({ where: { id: userId } });
+      if (!isAllowed && !userObj?.isPlatformAdmin) {
+        throw new Error(`Forbidden: Only users with roles (${node.allowedRoles.join(", ")}) can perform this check.`);
+      }
+    }
+
+    if (node.commentsRequired && (!data.remarks || !data.remarks.trim())) {
+      throw new Error(`Remarks/Comments are required to complete stage: ${node.name}.`);
+    }
+
+    const responsesMap = new Map(data.checklistItemResponses.map((r) => [r.checklistItemId, r]));
+    const existingResponses = await tx.filingChecklistResponse.findMany({
+      where: {
+        instanceId: instance.id,
+        nodeRunId: nodeRun.id,
+      },
+    });
+    const existingResponsesMap = new Map(existingResponses.map((response) => [response.checklistItemId, response]));
+    const activeChecklistItems = node.checklistItems.filter((item) => item.isActive !== false);
+
+    for (const item of activeChecklistItems) {
+      const res = responsesMap.get(item.id);
+      if (node.requireAllMandatoryChecklistItems && item.isMandatory) {
+        if (!res || !res.isChecked) {
+          throw new Error(`Mandatory checklist item "${item.label}" must be completed.`);
+        }
+      }
+      if (item.requiresRemarks && res?.isChecked && (!res.remarks || !res.remarks.trim())) {
+        throw new Error(`Remarks are required for checklist item "${item.label}".`);
+      }
+      const dueAt =
+        existingResponsesMap.get(item.id)?.dueAt ??
+        await calculateSlaDueDate(startedAt, item.deadlineDuration || 2, item.deadlineUnit || "BUSINESS_DAYS", orgId);
+      if (
+        res?.isChecked &&
+        item.delayRemarksRequired &&
+        dueAt.getTime() < now.getTime() &&
+        (!res.delayRemarks || !res.delayRemarks.trim())
+      ) {
+        throw new Error(`Delay remarks are required for overdue checklist item "${item.label}".`);
+      }
+    }
+
+    const attachments = await tx.filingAttachment.findMany({
+      where: { instanceId: instance.id, nodeRunId: nodeRun.id },
+    });
+
+    for (const item of activeChecklistItems) {
+      const itemUploads = attachments.filter((attachment) => attachment.checklistItemId === item.id);
+      if (item.allowsUpload) {
+        if (item.minUploads > 0 && itemUploads.length < item.minUploads) {
+          throw new Error(`Checklist item "${item.label}" requires at least ${item.minUploads} upload(s).`);
+        }
+        if (item.maxUploads !== null && item.maxUploads !== undefined && itemUploads.length > item.maxUploads) {
+          throw new Error(`Checklist item "${item.label}" exceeds the maximum allowed uploads.`);
+        }
+      }
+    }
+
+    for (const res of data.checklistItemResponses) {
+      const existing = existingResponsesMap.get(res.checklistItemId);
+      const dueAt =
+        existing?.dueAt ??
+        await calculateSlaDueDate(
+          startedAt,
+          node.checklistItems.find((item) => item.id === res.checklistItemId)?.deadlineDuration || 2,
+          node.checklistItems.find((item) => item.id === res.checklistItemId)?.deadlineUnit || "BUSINESS_DAYS",
+          orgId,
+        );
+      await tx.filingChecklistResponse.upsert({
+        where: {
+          instanceId_checklistItemId: {
+            instanceId: instance.id,
+            checklistItemId: res.checklistItemId,
+          },
+        },
+        create: {
+          instanceId: instance.id,
+          nodeRunId: nodeRun.id,
+          checklistItemId: res.checklistItemId,
+          isChecked: res.isChecked,
+          remarks: res.remarks,
+          fileKey: res.fileKey,
+          dueAt,
+          completedAt: res.isChecked ? now : null,
+          delayRemarks: res.delayRemarks,
+          delayRemarkedAt: res.delayRemarks?.trim() ? now : null,
+        },
+        update: {
+          nodeRunId: nodeRun.id,
+          isChecked: res.isChecked,
+          remarks: res.remarks,
+          fileKey: res.fileKey,
+          dueAt,
+          completedAt: res.isChecked ? now : null,
+          delayRemarks: res.delayRemarks,
+          delayRemarkedAt: res.delayRemarks?.trim() ? now : null,
+        },
+      });
+
+      const item = node.checklistItems.find((checklistItem) => checklistItem.id === res.checklistItemId);
+      if (item && res.isChecked) {
+        const isOverdue = dueAt.getTime() < now.getTime();
+        await logChaAudit({
+          orgId,
+          jobId,
+          entityType: "FilingChecklistResponse",
+          entityId: `${instance.id}:${res.checklistItemId}`,
+          event: isOverdue ? "FILING_CHECKLIST_ITEM_COMPLETED_OVERDUE" : "FILING_CHECKLIST_ITEM_COMPLETED",
+          actorId: userId,
+          remarks: `Checklist item "${item.label}" completed in node "${node.name}".`,
+          metadata: {
+            node: node.name,
+            dueAt,
+            completedAt: now,
+            delayRemarks: res.delayRemarks ?? null,
+          },
+        });
+      }
+    }
+
+    if (node.requireMandatoryPhotos) {
+      for (const pr of node.photoRequirements) {
+        if (pr.isMandatory) {
+          const prCount = attachments.filter((a) => a.photoRequirementId === pr.id).length;
+          if (prCount < pr.minPhotos) {
+            throw new Error(`Mandatory photo upload "${pr.label}" requires at least ${pr.minPhotos} image(s). Uploaded ${prCount}.`);
+          }
+        }
+      }
+    }
+
+    await tx.filingNodeRun.update({
+      where: { id: nodeRunId },
+      data: {
+        status: "COMPLETED",
+        completedAt: now,
+        completedById: userId,
+        remarks: data.remarks,
+      },
+    });
+
+    const nextNodeKey = data.nextNodeKey;
+
+    if (nextNodeKey) {
+      const allowedEdges = instance.version.edges.filter(
+        (e) => e.sourceKey === node.key && e.targetKey === nextNodeKey
+      );
+      if (allowedEdges.length === 0) {
+        throw new Error(`Invalid Transition: No edge exists between "${node.name}" and node key "${nextNodeKey}".`);
+      }
+
+      const pastRuns = await tx.filingNodeRun.findMany({
+        where: { instanceId: instance.id, nodeKey: nextNodeKey, status: "COMPLETED" },
+      });
+      const isDoubleBack = pastRuns.length > 0;
+
+      const targetNode = instance.version.nodes.find((n) => n.key === nextNodeKey && n.isActive)!;
+      const nextStartedAt = await getNow();
+      const nextSlaDueDate = await calculateSlaDueDate(nextStartedAt, targetNode.slaDuration, targetNode.slaUnit, orgId);
+      const nextNodeRun = await createFilingNodeRunWithResponses(tx, {
+        instanceId: instance.id,
+        node: {
+          ...targetNode,
+          checklistItems: await tx.filingChecklistItem.findMany({
+            where: { nodeId: targetNode.id },
+          }),
+        },
+        startedAt: nextStartedAt,
+        orgId,
+      });
+      await tx.filingNodeRun.update({
+        where: { id: nextNodeRun.id },
+        data: { slaDueDate: nextSlaDueDate },
+      });
+
+      await tx.filingWorkflowInstance.update({
+        where: { id: instance.id },
+        data: { currentNodeKey: nextNodeKey },
+      });
+
+      await tx.chaAuditLog.create({
+        data: {
+          orgId,
+          jobId,
+          entityType: "FilingWorkflowInstance",
+          entityId: instance.id,
+          event: isDoubleBack ? "FILING_DOUBLE_BACK_TRANSITION" : "FILING_TRANSITION",
+          actorId: userId,
+          prevState: node.key,
+          newState: nextNodeKey,
+          remarks: `Transition from "${node.name}" to "${targetNode.name}". ${isDoubleBack ? "Double-back run." : ""}`,
+        },
+      });
+
+    } else {
+      const pastRuns = await tx.filingNodeRun.findMany({
+        where: { instanceId: instance.id, status: "COMPLETED" },
+      });
+      const completedNodeKeys = new Set(pastRuns.map((r) => r.nodeKey));
+
+      const outEdges = instance.version.edges.filter((e) => e.sourceKey === node.key);
+      const forwardOutEdges = outEdges.filter((e) => !completedNodeKeys.has(e.targetKey));
+
+      if (forwardOutEdges.length > 0) {
+        throw new Error(`Select the next stage. Connected transitions are available.`);
+      }
+
+      await tx.filingWorkflowInstance.update({
+        where: { id: instance.id },
+        data: { status: "COMPLETED", currentNodeKey: null },
+      });
+
+      await tx.chaJob.update({
+        where: { id: jobId },
+        data: { stage: "FILED" },
+      });
+
+      const existingFiling = await tx.chaFiling.findUnique({ where: { jobId } });
+      if (existingFiling) {
+        await tx.chaFiling.update({
+          where: { id: existingFiling.id },
+          data: { status: "FILED", actualFilingDate: new Date(), filingRef: `BLUEPRINT-${instance.id.substring(0, 8).toUpperCase()}` },
+        });
+      }
+
+      await tx.chaAuditLog.create({
+        data: {
+          orgId,
+          jobId,
+          entityType: "FilingWorkflowInstance",
+          entityId: instance.id,
+          event: "FILING_WORKFLOW_COMPLETED",
+          actorId: userId,
+          prevState: node.key,
+          newState: "FILED",
+          remarks: `Completed all checklist nodes. Workflow is successfully finished.`,
+        },
+      });
+    }
+
+    return true;
+  });
+}
+
+export async function toggleFilingSection49(
+  userId: string,
+  orgId: string,
+  jobId: string,
+  isEnabled: boolean,
+  remarks?: string
+) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: { id: jobId, orgId },
+  });
+
+  const existingFlag = await db.filingSection49Flag.findUnique({
+    where: { jobId },
+  });
+
+  const oldValue = existingFlag ? existingFlag.isEnabled : false;
+
+  const result = await db.filingSection49Flag.upsert({
+    where: { jobId },
+    create: {
+      jobId,
+      isEnabled,
+      remarks,
+      toggledById: userId,
+    },
+    update: {
+      isEnabled,
+      remarks,
+      toggledById: userId,
+    },
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "FilingSection49Flag",
+    entityId: result.id,
+    event: "FILING_SECTION49_TOGGLED",
+    actorId: userId,
+    prevState: String(oldValue),
+    newState: String(isEnabled),
+    remarks: `Section 49 toggled from ${oldValue} to ${isEnabled}. Remarks: ${remarks || "None"}`,
+  });
+
+  return result;
+}
+
+export async function getFilingSection49(orgId: string, jobId: string) {
+  return db.filingSection49Flag.findUnique({
+    where: { jobId },
+  });
+}
+
+export async function uploadFilingAttachment(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  nodeRunId: string,
+  photoRequirementId: string | null,
+  checklistItemId: string | null,
+  fileData: { fileName: string; mimeType: string; sizeBytes: number },
+  fileBuffer?: Buffer
+) {
+  const instance = await db.filingWorkflowInstance.findUniqueOrThrow({
+    where: { jobId },
+  });
+
+  const profile = await db.jobWorkspaceProfile.findUnique({
+    where: { jobId },
+  });
+
+  let driveFolderId = "root";
+  if (profile) {
+    const categoryFolders = (profile.categoryFolders as Record<string, string>) || {};
+    driveFolderId = categoryFolders["03 Filing Documents"] || categoryFolders["02 Job Documents"] || profile.rootFolderId || "root";
+  }
+
+  let fileKey = `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
+
+  if (fileBuffer && process.env.GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL) {
+    try {
+      const uploadResult = await driveClient.uploadFile({
+        name: fileData.fileName,
+        mimeType: fileData.mimeType,
+        parentFolderId: driveFolderId,
+        fileBuffer,
+      });
+      fileKey = uploadResult.webViewLink;
+    } catch (err: any) {
+      console.warn("[Upload] Google Drive upload failed for Filing. Falling back to mock URL. Error:", err.message || err);
+    }
+  }
+
+  const attachment = await db.filingAttachment.create({
+    data: {
+      instanceId: instance.id,
+      nodeRunId,
+      photoRequirementId,
+      checklistItemId,
+      fileKey,
+      fileName: fileData.fileName,
+      fileSize: fileData.sizeBytes,
+      fileType: fileData.mimeType,
+      uploadedById: actorId,
+    },
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "FilingAttachment",
+    entityId: attachment.id,
+    event: checklistItemId ? "FILING_CHECKLIST_FILE_UPLOADED" : "FILING_PHOTO_UPLOADED",
+    actorId,
+    remarks: `Uploaded file: ${fileData.fileName} for node run ${nodeRunId}`,
+  });
+
+  return attachment;
+}
+
+export async function upsertFilingShipmentDetails(
+  userId: string,
+  orgId: string,
+  jobId: string,
+  data: {
+    filingShipmentType: string;
+    billOfEntryNumber?: string | null;
+    shippingBillNumber?: string | null;
+  },
+) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: { id: jobId, orgId },
+    include: { filing: true },
+  });
+
+  const filingShipmentType = data.filingShipmentType.trim();
+  const billOfEntryNumber = data.billOfEntryNumber?.trim() || null;
+  const shippingBillNumber = data.shippingBillNumber?.trim() || null;
+
+  if (!filingShipmentType) {
+    throw new Error("Shipment type is required.");
+  }
+
+  if (billOfEntryNumber && shippingBillNumber) {
+    throw new Error("Bill of Entry and Shipping Bill numbers cannot both be set.");
+  }
+
+  if (filingShipmentType.toUpperCase() === "IMPORT" && shippingBillNumber) {
+    throw new Error("Shipping Bill Number is not allowed for import shipment type.");
+  }
+
+  if (filingShipmentType.toUpperCase() === "EXPORT" && billOfEntryNumber) {
+    throw new Error("Bill of Entry Number is not allowed for export shipment type.");
+  }
+
+  const previous = job.filing;
+  const filing = previous
+    ? await db.chaFiling.update({
+        where: { jobId },
+        data: {
+          filingShipmentType,
+          billOfEntryNumber,
+          shippingBillNumber,
+        },
+      })
+    : await db.chaFiling.create({
+        data: {
+          jobId,
+          filingShipmentType,
+          billOfEntryNumber,
+          shippingBillNumber,
+          status: "PENDING",
+        },
+      });
+
+  if (previous?.filingShipmentType !== filingShipmentType) {
+    await logChaAudit({
+      orgId,
+      jobId,
+      entityType: "ChaFiling",
+      entityId: filing.id,
+      event: "FILING_SHIPMENT_TYPE_CHANGED",
+      actorId: userId,
+      prevState: previous?.filingShipmentType ?? undefined,
+      newState: filingShipmentType,
+      remarks: `Shipment type updated to ${filingShipmentType}.`,
+    });
+  }
+
+  if ((previous?.billOfEntryNumber ?? null) !== billOfEntryNumber) {
+    await logChaAudit({
+      orgId,
+      jobId,
+      entityType: "ChaFiling",
+      entityId: filing.id,
+      event: "FILING_BE_NUMBER_CHANGED",
+      actorId: userId,
+      prevState: previous?.billOfEntryNumber ?? undefined,
+      newState: billOfEntryNumber ?? undefined,
+      remarks: billOfEntryNumber ? `Bill of Entry Number updated to ${billOfEntryNumber}.` : "Bill of Entry Number cleared.",
+    });
+  }
+
+  if ((previous?.shippingBillNumber ?? null) !== shippingBillNumber) {
+    await logChaAudit({
+      orgId,
+      jobId,
+      entityType: "ChaFiling",
+      entityId: filing.id,
+      event: "FILING_SB_NUMBER_CHANGED",
+      actorId: userId,
+      prevState: previous?.shippingBillNumber ?? undefined,
+      newState: shippingBillNumber ?? undefined,
+      remarks: shippingBillNumber ? `Shipping Bill Number updated to ${shippingBillNumber}.` : "Shipping Bill Number cleared.",
+    });
+  }
+
+  return filing;
+}
+
+export async function deleteFilingAttachment(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  attachmentId: string
+) {
+  const attachment = await db.filingAttachment.findUniqueOrThrow({
+    where: { id: attachmentId },
+  });
+
+  await db.filingAttachment.delete({
+    where: { id: attachmentId },
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "FilingAttachment",
+    entityId: attachmentId,
+    event: "FILING_PHOTO_DELETED",
+    actorId,
+    remarks: `Deleted photo: ${attachment.fileName}`,
+  });
+
+  return true;
+}
+

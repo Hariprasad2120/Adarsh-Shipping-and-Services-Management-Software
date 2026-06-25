@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   updateSettingsAction,
   createJobTypeAction,
+  updateJobTypeManifestConfigAction,
   deleteJobTypeAction,
   createShipmentTypeAction,
   deleteShipmentTypeAction,
@@ -45,7 +46,16 @@ interface SettingsFormProps {
     financialYearFormat: string | null;
     isActive: boolean;
   }[];
-  jobTypes: { id: string; name: string }[];
+  jobTypes: {
+    id: string;
+    name: string;
+    movementDirection: "IMPORT" | "EXPORT" | "BOTH" | "OTHER" | null;
+    manifestRequirement: "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM" | null;
+    customManifestLabel: string | null;
+    isManifestMandatory: boolean;
+    manifestHelpText: string | null;
+    isActive: boolean;
+  }[];
   shipmentTypes: { id: string; name: string; isActive: boolean }[];
   teamGroups: {
     id: string;
@@ -123,7 +133,13 @@ export function SettingsForm({
   const [jobNumberNextNum, setJobNumberNextNum] = useState(initialSettings.jobNumberNextNum || 1);
   const [jobTypesList, setJobTypesList] = useState(jobTypes || []);
   const [newJobTypeName, setNewJobTypeName] = useState("");
+  const [newJobTypeMovementDirection, setNewJobTypeMovementDirection] = useState<"IMPORT" | "EXPORT" | "BOTH" | "OTHER">("IMPORT");
+  const [newJobTypeManifestRequirement, setNewJobTypeManifestRequirement] = useState<"IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM">("IGM");
+  const [newJobTypeCustomManifestLabel, setNewJobTypeCustomManifestLabel] = useState("");
+  const [newJobTypeManifestMandatory, setNewJobTypeManifestMandatory] = useState(true);
+  const [newJobTypeManifestHelpText, setNewJobTypeManifestHelpText] = useState("");
   const [addingJobType, setAddingJobType] = useState(false);
+  const [savingJobTypeId, setSavingJobTypeId] = useState<string | null>(null);
   const [shipmentTypesList, setShipmentTypesList] = useState(shipmentTypes || []);
   const [newShipmentTypeName, setNewShipmentTypeName] = useState("");
   const [addingShipmentType, setAddingShipmentType] = useState(false);
@@ -263,10 +279,23 @@ export function SettingsForm({
     if (!trimmed) return;
     setAddingJobType(true);
     try {
-      const res = await createJobTypeAction(trimmed);
+      const res = await createJobTypeAction({
+        name: trimmed,
+        movementDirection: newJobTypeMovementDirection,
+        manifestRequirement: newJobTypeManifestRequirement,
+        customManifestLabel: newJobTypeManifestRequirement === "CUSTOM" ? newJobTypeCustomManifestLabel : null,
+        isManifestMandatory: newJobTypeManifestMandatory,
+        manifestHelpText: newJobTypeManifestHelpText || null,
+        isActive: true,
+      });
       if (res.ok) {
         setJobTypesList((prev) => [...prev, res.data]);
         setNewJobTypeName("");
+        setNewJobTypeMovementDirection("IMPORT");
+        setNewJobTypeManifestRequirement("IGM");
+        setNewJobTypeCustomManifestLabel("");
+        setNewJobTypeManifestMandatory(true);
+        setNewJobTypeManifestHelpText("");
         toast.success(`Clearance job type '${trimmed}' added.`);
       } else {
         toast.error(res.error || "Failed to add job type.");
@@ -275,6 +304,56 @@ export function SettingsForm({
       toast.error(err.message || "An error occurred.");
     } finally {
       setAddingJobType(false);
+    }
+  };
+
+  const handleJobTypeFieldChange = (
+    id: string,
+    field:
+      | "name"
+      | "movementDirection"
+      | "manifestRequirement"
+      | "customManifestLabel"
+      | "manifestHelpText"
+      | "isManifestMandatory"
+      | "isActive",
+    value: string | boolean | null,
+  ) => {
+    setJobTypesList((prev) =>
+      prev.map((jt) =>
+        jt.id === id
+          ? {
+              ...jt,
+              [field]: value,
+              ...(field === "manifestRequirement" && value !== "CUSTOM" ? { customManifestLabel: null } : {}),
+            }
+          : jt,
+      ),
+    );
+  };
+
+  const handleSaveJobType = async (jobType: (typeof jobTypesList)[number]) => {
+    setSavingJobTypeId(jobType.id);
+    try {
+      const res = await updateJobTypeManifestConfigAction(jobType.id, {
+        name: jobType.name,
+        movementDirection: (jobType.movementDirection || "OTHER") as "IMPORT" | "EXPORT" | "BOTH" | "OTHER",
+        manifestRequirement: (jobType.manifestRequirement || "NONE") as "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM",
+        customManifestLabel: jobType.customManifestLabel,
+        isManifestMandatory: jobType.isManifestMandatory,
+        manifestHelpText: jobType.manifestHelpText,
+        isActive: jobType.isActive,
+      });
+      if (res.ok) {
+        setJobTypesList((prev) => prev.map((jt) => (jt.id === jobType.id ? res.data : jt)));
+        toast.success(`Clearance job type '${jobType.name}' updated.`);
+      } else {
+        toast.error(res.error || "Failed to update clearance job type.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An error occurred.");
+    } finally {
+      setSavingJobTypeId(null);
     }
   };
 
@@ -842,6 +921,24 @@ export function SettingsForm({
         </div>
       </div>
 
+      {/* Filing Workflows Section */}
+      <div className="ds-form-section space-y-4">
+        <h3 className="ds-h3 text-on-surface">Configurable Filing Workflows</h3>
+        <p className="text-xs text-on-surface-variant">
+          Configure a non-linear, node-based blueprint filing workflow for Customs submissions.
+        </p>
+        <div className="pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="border-[#00cec4] text-[#00cec4] hover:bg-[#00cec4]/10"
+            onClick={() => router.push("/cha/settings/filing-workflows")}
+          >
+            Manage Filing Workflows →
+          </Button>
+        </div>
+      </div>
+
       {/* Expense Categories Section */}
       <div className="ds-form-section space-y-4">
         <h3 className="ds-h3 text-on-surface">Job Expense Categories</h3>
@@ -916,47 +1013,194 @@ export function SettingsForm({
         </p>
 
         <div className="space-y-3 pt-2">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Type new Clearance Job Type (e.g. Transit Clearance)"
-              value={newJobTypeName}
-              onChange={(e) => setNewJobTypeName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleAddJobType();
-                }
-              }}
-              className="w-full text-sm py-2.5 px-3 bg-[var(--color-surface)] border border-outline-variant/50 rounded-xl focus:outline-none focus:border-[#00cec4]"
-            />
-            <Button
-              type="button"
-              disabled={addingJobType}
-              onClick={handleAddJobType}
-              className="px-4 text-xs uppercase"
-            >
-              Add Type
-            </Button>
+          <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-4 space-y-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <label className="space-y-1.5 md:col-span-2">
+                <span className="ds-label">Clearance Type Name</span>
+                <input
+                  type="text"
+                  placeholder="Type new Clearance Job Type (e.g. Re-Export)"
+                  value={newJobTypeName}
+                  onChange={(e) => setNewJobTypeName(e.target.value)}
+                  className="w-full text-sm py-2.5 px-3 bg-[var(--color-surface)] border border-outline-variant/50 rounded-xl focus:outline-none focus:border-[#00cec4]"
+                />
+              </label>
+              <label className="space-y-1.5">
+                <span className="ds-label">Movement Direction</span>
+                <select
+                  value={newJobTypeMovementDirection}
+                  onChange={(e) => setNewJobTypeMovementDirection(e.target.value as "IMPORT" | "EXPORT" | "BOTH" | "OTHER")}
+                  className="w-full text-sm py-2.5 px-3 bg-[var(--color-surface)] border border-outline-variant/50 rounded-xl"
+                >
+                  <option value="IMPORT">Import</option>
+                  <option value="EXPORT">Export</option>
+                  <option value="BOTH">Both</option>
+                  <option value="OTHER">Other / Custom</option>
+                </select>
+              </label>
+              <label className="space-y-1.5">
+                <span className="ds-label">Manifest Requirement</span>
+                <select
+                  value={newJobTypeManifestRequirement}
+                  onChange={(e) => setNewJobTypeManifestRequirement(e.target.value as "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM")}
+                  className="w-full text-sm py-2.5 px-3 bg-[var(--color-surface)] border border-outline-variant/50 rounded-xl"
+                >
+                  <option value="IGM">IGM</option>
+                  <option value="EGM">EGM</option>
+                  <option value="BOTH">Both</option>
+                  <option value="NONE">None</option>
+                  <option value="CUSTOM">Custom</option>
+                </select>
+              </label>
+              {newJobTypeManifestRequirement === "CUSTOM" ? (
+                <label className="space-y-1.5 md:col-span-2">
+                  <span className="ds-label">Custom Manifest Label</span>
+                  <input
+                    type="text"
+                    placeholder="e.g. Transshipment Manifest Number"
+                    value={newJobTypeCustomManifestLabel}
+                    onChange={(e) => setNewJobTypeCustomManifestLabel(e.target.value)}
+                    className="w-full text-sm py-2.5 px-3 bg-[var(--color-surface)] border border-outline-variant/50 rounded-xl"
+                  />
+                </label>
+              ) : null}
+              <label className="space-y-1.5 md:col-span-2">
+                <span className="ds-label">Help Text / Placeholder</span>
+                <input
+                  type="text"
+                  placeholder="Guidance shown on the checklist page"
+                  value={newJobTypeManifestHelpText}
+                  onChange={(e) => setNewJobTypeManifestHelpText(e.target.value)}
+                  className="w-full text-sm py-2.5 px-3 bg-[var(--color-surface)] border border-outline-variant/50 rounded-xl"
+                />
+              </label>
+              <label className="flex items-center gap-2 text-xs text-on-surface-variant md:col-span-2">
+                <input
+                  type="checkbox"
+                  checked={newJobTypeManifestMandatory}
+                  onChange={(e) => setNewJobTypeManifestMandatory(e.target.checked)}
+                />
+                Manifest field is mandatory
+              </label>
+            </div>
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                disabled={addingJobType}
+                onClick={handleAddJobType}
+                className="px-4 text-xs uppercase"
+              >
+                Add Type
+              </Button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 min-h-[80px] bg-surface-container-low rounded-xl border border-outline-variant/20">
+          <div className="grid grid-cols-1 gap-3 p-3 min-h-[80px] bg-surface-container-low rounded-xl border border-outline-variant/20">
             {jobTypesList.length === 0 ? (
-              <p className="text-xs text-on-surface-variant italic col-span-2 self-center text-center">No clearance job types added yet.</p>
+              <p className="text-xs text-on-surface-variant italic self-center text-center">No clearance job types added yet.</p>
             ) : (
               jobTypesList.map((jt) => (
                 <div
                   key={jt.id}
-                  className="flex items-center justify-between p-3 rounded-xl bg-[var(--color-surface)] border border-outline-variant/30 text-on-surface text-sm font-semibold shadow-sm hover:border-[#00cec4] transition-all"
+                  className="rounded-xl bg-[var(--color-surface)] border border-outline-variant/30 p-4 shadow-sm space-y-3"
                 >
-                  <span className="uppercase tracking-wide text-xs">{jt.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteJobType(jt.id, jt.name)}
-                    className="text-on-surface-variant hover:text-red-500 transition-colors focus:outline-none p-1"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <span className="ds-label">Clearance Type</span>
+                      <input
+                        type="text"
+                        value={jt.name}
+                        onChange={(e) => handleJobTypeFieldChange(jt.id, "name", e.target.value)}
+                        className="w-full text-sm py-2 px-3 bg-surface border border-outline-variant/50 rounded-xl"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteJobType(jt.id, jt.name)}
+                      className="text-on-surface-variant hover:text-red-500 transition-colors focus:outline-none p-1"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <label className="space-y-1">
+                      <span className="ds-label">Movement Direction</span>
+                      <select
+                        value={jt.movementDirection || "OTHER"}
+                        onChange={(e) => handleJobTypeFieldChange(jt.id, "movementDirection", e.target.value)}
+                        className="w-full text-sm py-2 px-3 bg-surface border border-outline-variant/50 rounded-xl"
+                      >
+                        <option value="IMPORT">Import</option>
+                        <option value="EXPORT">Export</option>
+                        <option value="BOTH">Both</option>
+                        <option value="OTHER">Other / Custom</option>
+                      </select>
+                    </label>
+                    <label className="space-y-1">
+                      <span className="ds-label">Manifest Requirement</span>
+                      <select
+                        value={jt.manifestRequirement || "NONE"}
+                        onChange={(e) => handleJobTypeFieldChange(jt.id, "manifestRequirement", e.target.value)}
+                        className="w-full text-sm py-2 px-3 bg-surface border border-outline-variant/50 rounded-xl"
+                      >
+                        <option value="IGM">IGM</option>
+                        <option value="EGM">EGM</option>
+                        <option value="BOTH">Both</option>
+                        <option value="NONE">None</option>
+                        <option value="CUSTOM">Custom</option>
+                      </select>
+                    </label>
+                    {jt.manifestRequirement === "CUSTOM" ? (
+                      <label className="space-y-1 md:col-span-2">
+                        <span className="ds-label">Custom Manifest Label</span>
+                        <input
+                          type="text"
+                          value={jt.customManifestLabel || ""}
+                          onChange={(e) => handleJobTypeFieldChange(jt.id, "customManifestLabel", e.target.value)}
+                          className="w-full text-sm py-2 px-3 bg-surface border border-outline-variant/50 rounded-xl"
+                        />
+                      </label>
+                    ) : null}
+                    <label className="space-y-1 md:col-span-2">
+                      <span className="ds-label">Help Text / Placeholder</span>
+                      <input
+                        type="text"
+                        value={jt.manifestHelpText || ""}
+                        onChange={(e) => handleJobTypeFieldChange(jt.id, "manifestHelpText", e.target.value)}
+                        className="w-full text-sm py-2 px-3 bg-surface border border-outline-variant/50 rounded-xl"
+                      />
+                    </label>
+                    <label className="flex items-center gap-2 text-xs text-on-surface-variant">
+                      <input
+                        type="checkbox"
+                        checked={jt.isManifestMandatory}
+                        onChange={(e) => handleJobTypeFieldChange(jt.id, "isManifestMandatory", e.target.checked)}
+                      />
+                      Manifest field is mandatory
+                    </label>
+                    <label className="flex items-center gap-2 text-xs text-on-surface-variant">
+                      <input
+                        type="checkbox"
+                        checked={jt.isActive}
+                        onChange={(e) => handleJobTypeFieldChange(jt.id, "isActive", e.target.checked)}
+                      />
+                      Active
+                    </label>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 rounded-xl border border-outline-variant/20 bg-surface-container-low px-3 py-2">
+                    <div className="text-xs text-on-surface-variant">
+                      Required Manifest: <span className="font-medium text-on-surface">{jt.manifestRequirement === "CUSTOM" ? jt.customManifestLabel || "Custom Manifest" : jt.manifestRequirement || "Not Configured"}</span>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => handleSaveJobType(jt)}
+                      disabled={savingJobTypeId === jt.id}
+                      className="text-xs uppercase"
+                    >
+                      {savingJobTypeId === jt.id ? "Saving..." : "Save Config"}
+                    </Button>
+                  </div>
                 </div>
               ))
             )}

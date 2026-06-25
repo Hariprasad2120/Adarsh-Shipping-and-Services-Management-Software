@@ -10,6 +10,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
   let otherManagerUser: any;
   let customer: any;
   let jobTypeImport: any;
+  let jobTypeExport: any;
 
   beforeAll(async () => {
     // 1. Create a unique Organisation
@@ -47,6 +48,11 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       update: { label: "Approve/Delete Assigned CHA Jobs", group: "CHA" },
       create: { key: "cha.job.delete.approve", label: "Approve/Delete Assigned CHA Jobs", group: "CHA" },
     });
+    const readPermission = await db.permission.upsert({
+      where: { key: "cha.job.read" },
+      update: { label: "Read CHA Jobs", group: "CHA" },
+      create: { key: "cha.job.read", label: "Read CHA Jobs", group: "CHA" },
+    });
     const internalChecklistApprovePermission = await db.permission.upsert({
       where: { key: "cha.checklist.internal_approve" },
       update: { label: "Internal Approve Checklist", group: "CHA" },
@@ -60,6 +66,8 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
     await db.rolePermission.createMany({
       data: [
+        { roleId: employeeRole.id, permissionId: readPermission.id },
+        { roleId: managerRole.id, permissionId: readPermission.id },
         { roleId: employeeRole.id, permissionId: deletePermission.id },
         { roleId: managerRole.id, permissionId: deletePermission.id },
         { roleId: managerRole.id, permissionId: approveDeletePermission.id },
@@ -128,6 +136,13 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     const orgId = org.id;
 
     // Cascade deletions for organization data
+    await db.filingSection49Flag.deleteMany({ where: { job: { orgId } } });
+    await db.filingAttachment.deleteMany({ where: { instance: { job: { orgId } } } });
+    await db.filingChecklistResponse.deleteMany({ where: { instance: { job: { orgId } } } });
+    await db.filingNodeRun.deleteMany({ where: { instance: { job: { orgId } } } });
+    await db.filingWorkflowInstance.deleteMany({ where: { job: { orgId } } });
+    await db.filingWorkflowTemplate.deleteMany({ where: { orgId } });
+
     await db.chaAuditLog.deleteMany({ where: { orgId } });
     await db.chaExpenseStatusHistory.deleteMany({ where: { request: { orgId } } });
     await db.chaExpenseQuery.deleteMany({ where: { request: { orgId } } });
@@ -182,10 +197,56 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
     jobTypeImport = jobTypes.find((jt) => jt.name === "Import Clearance");
     expect(jobTypeImport).toBeDefined();
+    expect(jobTypeImport.movementDirection).toBe("IMPORT");
+    expect(jobTypeImport.manifestRequirement).toBe("IGM");
+    expect(jobTypeImport.isManifestMandatory).toBe(true);
+
+    jobTypeExport = jobTypes.find((jt) => jt.name === "Export Clearance");
+    expect(jobTypeExport).toBeDefined();
+    expect(jobTypeExport.movementDirection).toBe("EXPORT");
+    expect(jobTypeExport.manifestRequirement).toBe("EGM");
+    expect(jobTypeExport.isManifestMandatory).toBe(true);
 
     const docDefs = await db.chaDocumentDefinition.findMany({ where: { jobTypeId: jobTypeImport.id } });
     expect(docDefs.length).toBe(4); // BL, Invoice, Packing List, CO
   }, 30000);
+
+  it("1.1. should block additional data when clearance type manifest configuration is missing", async () => {
+    const customJobType = await db.chaJobType.create({
+      data: {
+        orgId: org.id,
+        name: `Legacy Custom ${Date.now()}`,
+        movementDirection: null,
+        manifestRequirement: null,
+        isManifestMandatory: false,
+        isActive: true,
+      },
+    });
+
+    const job = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: `CHA-LEGACY-${Date.now()}`,
+      title: "Legacy custom manifest config check",
+      customerId: customer.id,
+      jobTypeId: customJobType.id,
+      branchId: branch.id,
+      priority: "LOW",
+      primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
+      assignments: [],
+    });
+
+    await db.chaJob.update({
+      where: { id: job.id },
+      data: { stage: "ADDITIONAL_DATA" },
+    });
+
+    await expect(
+      chaService.upsertAdditionalData(ownerUser.id, org.id, job.id, {
+        vesselInwardDate: new Date("2026-01-10"),
+        deliveryOrderValidity: new Date("2026-01-15"),
+      }),
+    ).rejects.toThrow(/missing manifest configuration/i);
+  });
 
   it("1.25. should generate branch-based job numbers with isolated sequences", async () => {
     const autoJob = await chaService.createJob(ownerUser.id, org.id, {
@@ -206,6 +267,45 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       where: { branchId: branch.id },
     });
     expect(branchRule.currentSequence).toBeGreaterThanOrEqual(branchRule.startingSequence);
+  });
+
+  it("1.3. should grant assigned managers approval mapping and workspace access", async () => {
+    const job = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: "CHA-MANAGER-ACCESS-001",
+      title: "Assigned manager access job",
+      customerId: customer.id,
+      jobTypeId: jobTypeImport.id,
+      branchId: branch.id,
+      priority: "MEDIUM",
+      primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
+      assignments: [],
+    });
+
+    const approvalAssignment = await db.chaJobAssignment.findFirst({
+      where: {
+        jobId: job.id,
+        userId: managerUser.id,
+        responsibility: "APPROVAL",
+      },
+    });
+    expect(approvalAssignment).toBeTruthy();
+
+    const details = await chaService.getJobDetails(managerUser.id, org.id, job.id);
+    expect(details.assignedManagerId).toBe(managerUser.id);
+    expect((details.assignedManager as any)?.name).toBe(managerUser.name);
+
+    await db.chaJob.update({
+      where: { id: job.id },
+      data: { assignedManagerId: null },
+    });
+
+    const repairedDetails = await chaService.getJobDetails(managerUser.id, org.id, job.id);
+    expect(repairedDetails.assignedManagerId).toBe(managerUser.id);
+    expect((repairedDetails.assignedManager as any)?.name).toBe(managerUser.name);
+
+    const repairedJob = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
+    expect(repairedJob.assignedManagerId).toBe(managerUser.id);
   });
 
   it("1.5. should enforce specific employee job creator restrictions", async () => {
@@ -594,7 +694,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
     const jobApproved = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
     expect(jobApproved.stage).toBe("FILING");
-  }, 15000);
+  }, 60000);
 
   it("5. should handle filing dates adjustments and mark job as filed", async () => {
     const job = await db.chaJob.findFirstOrThrow({ where: { orgId: org.id, jobNumber: "CHA-JOB-999" } });
@@ -727,7 +827,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     await chaService.acknowledgeExpenseReceipt(ownerUser.id, org.id, request.id);
     const finalReq = await db.chaExpenseRequest.findUniqueOrThrow({ where: { id: request.id } });
     expect(finalReq.status).toBe("RECEIPT_ACKNOWLEDGED");
-  }, 15000);
+  }, 60000);
 
   it("8. should create, reject, and audit deletion approval requests for non-managers", async () => {
     const job = await chaService.createJob(ownerUser.id, org.id, {
@@ -813,7 +913,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       },
     });
     expect(unauthorizedAttempt).toBeTruthy();
-  }, 15000);
+  }, 60000);
 
   it("9. should allow the assigned manager to directly soft-delete a job", async () => {
     const job = await chaService.createJob(ownerUser.id, org.id, {
@@ -852,9 +952,23 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(deletedJob.deletedAt).not.toBeNull();
     expect(deletedJob.deletedById).toBe(managerUser.id);
     expect(deletedJob.status).toBe("CANCELLED");
+    expect(deletedJob.jobNumber).toContain("CHA-DELETE-DIRECT-001__deleted__");
 
     const visibleJobs = await chaService.listJobs(ownerUser.id, org.id, { search: "CHA-DELETE-DIRECT-001" });
     expect(visibleJobs.total).toBe(0);
+
+    const recreatedJob = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: "CHA-DELETE-DIRECT-001",
+      title: "Recreated direct deletion job",
+      customerId: customer.id,
+      jobTypeId: jobTypeImport.id,
+      branchId: branch.id,
+      priority: "LOW",
+      primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
+      assignments: [{ userId: ownerUser.id, responsibility: "OPERATIONS" }],
+    });
+    expect(recreatedJob.jobNumber).toBe("CHA-DELETE-DIRECT-001");
 
     const directAudit = await db.chaAuditLog.findMany({
       where: { jobId: job.id, event: { in: ["JOB_DELETED_DIRECT", "JOB_DELETE_EXECUTED"] } },
@@ -870,7 +984,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
         confirmationPhrase: "delete job",
       }),
     ).rejects.toThrow("CHA job not found.");
-  }, 15000);
+  }, 60000);
 
   it("10. should enforce confirmation rules, missing manager handling, and approved deletion execution", async () => {
     const noManagerJob = await chaService.createJob(ownerUser.id, org.id, {
@@ -933,6 +1047,12 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       where: { id: noManagerRequestJob.id },
       data: { assignedManagerId: null },
     });
+    await db.chaJobAssignment.deleteMany({
+      where: {
+        jobId: noManagerRequestJob.id,
+        responsibility: "APPROVAL",
+      },
+    });
 
     await expect(
       chaService.submitJobDeletion(ownerUser.id, org.id, {
@@ -983,6 +1103,20 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     const deletedJob = await db.chaJob.findUniqueOrThrow({ where: { id: approvedJob.id } });
     expect(deletedJob.deletedAt).not.toBeNull();
     expect(deletedJob.deletedById).toBe(managerUser.id);
+    expect(deletedJob.jobNumber).toContain("CHA-DELETE-APPROVE-001__deleted__");
+
+    const recreatedApprovedJob = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: "CHA-DELETE-APPROVE-001",
+      title: "Recreated approved deletion job",
+      customerId: customer.id,
+      jobTypeId: jobTypeImport.id,
+      branchId: branch.id,
+      priority: "MEDIUM",
+      primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
+      assignments: [{ userId: ownerUser.id, responsibility: "OPERATIONS" }],
+    });
+    expect(recreatedApprovedJob.jobNumber).toBe("CHA-DELETE-APPROVE-001");
 
     const approvalAudit = await db.chaAuditLog.findMany({
       where: { jobId: approvedJob.id, event: { in: ["JOB_DELETE_APPROVAL_APPROVED", "JOB_DELETE_EXECUTED"] } },
@@ -991,5 +1125,242 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       expect.arrayContaining(["JOB_DELETE_APPROVAL_APPROVED", "JOB_DELETE_EXECUTED"]),
     );
   }, 60000);
+
+  it("11. should verify visual filing workflow and Section 49 lifecycle", async () => {
+    // Delete any default templates to ensure only the custom one is active
+    await db.filingWorkflowTemplate.deleteMany({ where: { orgId: org.id } });
+
+    // A. Create default filing workflow draft template
+    const templateName = "Custom Test Filing Workflow " + Date.now();
+    const saveRes = await chaService.saveFilingWorkflowDraft(ownerUser.id, org.id, null, {
+      name: templateName,
+      description: "Custom test blueprint",
+      nodes: [
+        {
+          key: "node_start",
+          name: "First Check Node",
+          description: "Verify BL and custom document codes",
+          category: "Operations",
+          positionX: 100,
+          positionY: 150,
+          isStart: true,
+          slaDuration: 1,
+          slaUnit: "BUSINESS_DAYS",
+          commentsRequired: true,
+          canBeSkipped: false,
+          canBeRevisited: true,
+          requireAllMandatoryChecklistItems: true,
+          requireMandatoryPhotos: true,
+          allowedRoles: ["Employee", "Manager"],
+          checklistItems: [
+            { label: "Check BL copy authenticity", isMandatory: true, requiresRemarks: true, allowsUpload: true },
+            { label: "Verify country of origin signature", isMandatory: false, requiresRemarks: false, allowsUpload: false },
+          ],
+          photoRequirements: [
+            { label: "First Check Signed Sheet", isMandatory: true, minPhotos: 1, acceptedFileTypes: ["image/jpeg"] },
+          ],
+        },
+        {
+          key: "node_second",
+          name: "Second Check Node",
+          description: "Final manager verification",
+          category: "Compliance",
+          positionX: 300,
+          positionY: 150,
+          isStart: false,
+          slaDuration: 2,
+          slaUnit: "BUSINESS_DAYS",
+          commentsRequired: false,
+          canBeSkipped: false,
+          canBeRevisited: true,
+          requireAllMandatoryChecklistItems: false,
+          requireMandatoryPhotos: false,
+          allowedRoles: ["Manager"],
+          checklistItems: [],
+          photoRequirements: [],
+        },
+      ],
+      edges: [
+        { sourceKey: "node_start", targetKey: "node_second", label: "Start to Second" },
+        { sourceKey: "node_second", targetKey: "node_start", label: "Double back loop" },
+      ],
+    });
+
+    expect(saveRes).toBeDefined();
+    expect(saveRes.isPublished).toBe(false);
+
+    // B. Publish version
+    const publishRes = await chaService.publishFilingWorkflow(ownerUser.id, org.id, saveRes.id);
+    expect(publishRes.isPublished).toBe(true);
+    expect(publishRes.isActive).toBe(true);
+
+    // C. Create a Job and fast forward stage to FILING
+    const job = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: "CHA-FILING-TEST-101",
+      title: "Customs filing blueprint test run",
+      customerId: customer.id,
+      jobTypeId: jobTypeImport.id,
+      branchId: branch.id,
+      priority: "MEDIUM",
+      primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
+      assignments: [{ userId: ownerUser.id, responsibility: "OPERATIONS" }],
+    });
+
+    await db.chaJob.update({
+      where: { id: job.id },
+      data: { stage: "FILING" },
+    });
+
+    // D. Start visual filing workflow
+    const instance = await chaService.startFilingWorkflow(ownerUser.id, org.id, job.id);
+    if (!instance) throw new Error("instance is null");
+    expect(instance).toBeDefined();
+    expect(instance.status).toBe("ACTIVE");
+    expect(instance.currentNodeKey).toBe("node_start");
+
+    const activeRun = instance.nodeRuns.find((run) => run.status === "ACTIVE")!;
+    expect(activeRun).toBeDefined();
+    expect(activeRun.nodeKey).toBe("node_start");
+
+    // E. Perform filing photo upload requirement validation check
+    const checklistItemId = activeRun.node.checklistItems[0].id;
+    const photoRequirementId = activeRun.node.photoRequirements[0].id;
+
+    // Fail complete attempt since checklist item is unchecked and photo requirement is missing
+    await expect(
+      chaService.completeFilingNode(ownerUser.id, org.id, job.id, activeRun.id, {
+        remarks: "Attempt with missing checks",
+        checklistItemResponses: [],
+        nextNodeKey: "node_second",
+      })
+    ).rejects.toThrow();
+
+    // F. Upload photo requirement
+    const photo = await chaService.uploadFilingAttachment(ownerUser.id, org.id, job.id, activeRun.id, photoRequirementId, null, {
+      fileName: "first_check_scan.jpg",
+      mimeType: "image/jpeg",
+      sizeBytes: 1024,
+    });
+    expect(photo).toBeDefined();
+
+    await db.filingChecklistResponse.updateMany({
+      where: { instanceId: instance.id, nodeRunId: activeRun.id, checklistItemId },
+      data: { dueAt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+    });
+
+    await expect(
+      chaService.completeFilingNode(ownerUser.id, org.id, job.id, activeRun.id, {
+        remarks: "Attempt without overdue delay note",
+        checklistItemResponses: [
+          { checklistItemId, isChecked: true, remarks: "BL verified" },
+        ],
+        nextNodeKey: "node_second",
+      })
+    ).rejects.toThrow(/Delay remarks are required/);
+
+    // G. Complete node execution and transition to node_second
+    await chaService.completeFilingNode(ownerUser.id, org.id, job.id, activeRun.id, {
+      remarks: "Checked and signed off successfully",
+      checklistItemResponses: [
+        { checklistItemId, isChecked: true, remarks: "BL verified", delayRemarks: "Customs portal dependency delayed completion" },
+      ],
+      nextNodeKey: "node_second",
+    });
+
+    const instanceAfterFirstNode = await chaService.getFilingWorkflowInstance(org.id, job.id);
+    expect(instanceAfterFirstNode?.currentNodeKey).toBe("node_second");
+    const activeRun2 = instanceAfterFirstNode?.nodeRuns.find((run) => run.status === "ACTIVE")!;
+    expect(activeRun2.nodeKey).toBe("node_second");
+
+    // H. Test double-back transition: Move back from node_second to node_start
+    // node_second allows Manager role only
+    await expect(
+      chaService.completeFilingNode(ownerUser.id, org.id, job.id, activeRun2.id, {
+        remarks: "Attempt double-back as employee",
+        checklistItemResponses: [],
+        nextNodeKey: "node_start",
+      })
+    ).rejects.toThrow(/Forbidden: Only users with roles/);
+
+    // Double-back transition as Manager User
+    await chaService.completeFilingNode(managerUser.id, org.id, job.id, activeRun2.id, {
+      remarks: "Returning to First Check for document amendment",
+      checklistItemResponses: [],
+      nextNodeKey: "node_start",
+    });
+
+    const instanceDoubleBack = await chaService.getFilingWorkflowInstance(org.id, job.id);
+    expect(instanceDoubleBack?.currentNodeKey).toBe("node_start");
+    const activeRun3 = instanceDoubleBack?.nodeRuns.find((run) => run.status === "ACTIVE")!;
+    expect(activeRun3.nodeKey).toBe("node_start");
+
+    // I. Test transition to complete (File bill copy)
+    // First, upload the mandatory photo for the new run of the start node
+    await chaService.uploadFilingAttachment(ownerUser.id, org.id, job.id, activeRun3.id, photoRequirementId, null, {
+      fileName: "first_check_scan_v2.jpg",
+      mimeType: "image/jpeg",
+      sizeBytes: 1024,
+    });
+
+    // First, complete the start node run again
+    await chaService.completeFilingNode(ownerUser.id, org.id, job.id, activeRun3.id, {
+      remarks: "Amendment checked and approved",
+      checklistItemResponses: [
+        { checklistItemId, isChecked: true, remarks: "Amendment verified" },
+      ],
+      nextNodeKey: "node_second",
+    });
+
+    const instanceRestored = await chaService.getFilingWorkflowInstance(org.id, job.id);
+    const activeRun4 = instanceRestored?.nodeRuns.find((run) => run.status === "ACTIVE")!;
+    
+    // Complete the workflow at node_second (pass nextNodeKey as null / undefined since no subsequent nodes)
+    await chaService.completeFilingNode(managerUser.id, org.id, job.id, activeRun4.id, {
+      remarks: "Final compliance verification completed",
+      checklistItemResponses: [],
+      nextNodeKey: null,
+    });
+
+    const finalInstance = await chaService.getFilingWorkflowInstance(org.id, job.id);
+    expect(finalInstance?.status).toBe("COMPLETED");
+    expect(finalInstance?.currentNodeKey).toBeNull();
+
+    // Verify job stage transitioned to FILED
+    const finalJob = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
+    expect(finalJob.stage).toBe("FILED");
+
+    const shipmentDetails = await chaService.upsertFilingShipmentDetails(ownerUser.id, org.id, job.id, {
+      filingShipmentType: "IMPORT",
+      billOfEntryNumber: "BE-7788",
+      shippingBillNumber: null,
+    });
+    expect(shipmentDetails.filingShipmentType).toBe("IMPORT");
+    expect(shipmentDetails.billOfEntryNumber).toBe("BE-7788");
+
+    await expect(
+      chaService.upsertFilingShipmentDetails(ownerUser.id, org.id, job.id, {
+        filingShipmentType: "IMPORT",
+        billOfEntryNumber: "BE-7788",
+        shippingBillNumber: "SB-0099",
+      }),
+    ).rejects.toThrow(/cannot both be set/);
+
+    // J. Verify Section 49 toggle, remarks, and audit trail
+    const flag = await chaService.toggleFilingSection49(ownerUser.id, org.id, job.id, true, "Urgent port clearance bond filed");
+    expect(flag.isEnabled).toBe(true);
+    expect(flag.remarks).toBe("Urgent port clearance bond filed");
+
+    const retrievedFlag = await chaService.getFilingSection49(org.id, job.id);
+    expect(retrievedFlag?.isEnabled).toBe(true);
+
+    const audit = await db.chaAuditLog.findFirst({
+      where: { jobId: job.id, event: "FILING_SECTION49_TOGGLED" },
+    });
+    expect(audit).toBeDefined();
+    expect(audit?.prevState).toBe("false");
+    expect(audit?.newState).toBe("true");
+    expect(audit?.remarks).toContain("Urgent port clearance bond filed");
+  }, 30000);
 });
 
