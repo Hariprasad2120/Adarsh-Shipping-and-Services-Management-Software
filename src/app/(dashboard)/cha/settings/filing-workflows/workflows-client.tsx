@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  Link2,
   Plus,
   RefreshCw,
   Save,
@@ -95,7 +94,7 @@ type EdgeDraft = {
 };
 
 const NODE_WIDTH = 272;
-const NODE_HEIGHT = 136;
+const NODE_HEIGHT = 154;
 const MIN_ZOOM = 0.45;
 const MAX_ZOOM = 2.2;
 
@@ -262,6 +261,262 @@ function serializeWorkflowSnapshot(nodes: NodeDraft[], edges: EdgeDraft[]) {
       .map((edge) => ({ sourceKey: edge.sourceKey, targetKey: edge.targetKey, label: edge.label || null }))
       .sort((a, b) => `${a.sourceKey}:${a.targetKey}`.localeCompare(`${b.sourceKey}:${b.targetKey}`)),
   });
+}
+
+function createChecklistItemDraft(label: string, sortOrder = 1): ChecklistItemDraft {
+  return {
+    id: createId("item"),
+    label,
+    description: "",
+    isMandatory: true,
+    requiresRemarks: false,
+    allowsUpload: false,
+    minUploads: 0,
+    maxUploads: null,
+    acceptedFileTypes: [],
+    deadlineDuration: 2,
+    deadlineUnit: "BUSINESS_DAYS",
+    delayRemarksRequired: true,
+    sortOrder,
+    isActive: true,
+  };
+}
+
+function createStageUploadSlot(label: string): PhotoRequirementDraft {
+  return {
+    id: createId("photo"),
+    label: `${label} upload`,
+    description: "Upload stage-level proof, bill copy, screenshot, or supporting document if required for this main filing stage.",
+    isMandatory: false,
+    minPhotos: 0,
+    maxPhotos: null,
+    acceptedFileTypes: ["image/jpeg", "image/png", "application/pdf"],
+    isVisibleInTimeline: true,
+  };
+}
+
+function createWorkflowStageNode(
+  name: string,
+  key: string,
+  order: number,
+  x: number,
+  y: number,
+  isStart = false,
+): NodeDraft {
+  return {
+    id: createId("node"),
+    key,
+    name,
+    description: "Main filing stage. Use upload slots below to decide whether proof/photo/document upload is optional or mandatory.",
+    category: "MAIN_STAGE",
+    nodeType: "SECTION",
+    sectionKey: key,
+    sectionName: name,
+    branchKey: "",
+    branchName: "",
+    sortOrder: order,
+    isActive: true,
+    isStart,
+    positionX: x,
+    positionY: y,
+    slaDuration: 2,
+    slaUnit: "BUSINESS_DAYS",
+    commentsRequired: false,
+    canBeSkipped: false,
+    canBeRevisited: true,
+    approvalRequired: false,
+    approvalRoles: [],
+    requireAllMandatoryChecklistItems: true,
+    requireMandatoryPhotos: false,
+    allowedRoles: [],
+    checklistItems: [],
+    photoRequirements: [createStageUploadSlot(name)],
+  };
+}
+
+function createWorkflowChecklistNode(
+  label: string,
+  key: string,
+  order: number,
+  x: number,
+  y: number,
+  sectionName: string,
+  sectionKey: string,
+  branchName = "",
+  branchKey = "",
+): NodeDraft {
+  return {
+    id: createId("node"),
+    key,
+    name: label,
+    description: "Standalone configurable checklist node. It can be rerouted, delayed, revisited, or branched independently.",
+    category: "CHECKLIST_ITEM",
+    nodeType: "CHECKLIST_NODE",
+    sectionKey,
+    sectionName,
+    branchKey,
+    branchName,
+    sortOrder: order,
+    isActive: true,
+    isStart: false,
+    positionX: x,
+    positionY: y,
+    slaDuration: 2,
+    slaUnit: "BUSINESS_DAYS",
+    commentsRequired: false,
+    canBeSkipped: false,
+    canBeRevisited: true,
+    approvalRequired: false,
+    approvalRoles: [],
+    requireAllMandatoryChecklistItems: true,
+    requireMandatoryPhotos: false,
+    allowedRoles: [],
+    checklistItems: [createChecklistItemDraft(label, 1)],
+    photoRequirements: [],
+  };
+}
+
+function connectNodes(sourceKey: string, targetKey: string, label?: string): EdgeDraft {
+  return {
+    id: createId("edge"),
+    sourceKey,
+    targetKey,
+    label: label || null,
+  };
+}
+
+function buildChaFilingBlueprintDraft() {
+  const nodes: NodeDraft[] = [];
+  const edges: EdgeDraft[] = [];
+  const firstCheckItems = [
+    "Bill of Entry",
+    "Goods Registration",
+    "Examination",
+    "CE",
+    "Group Forward",
+    "Assessment",
+    "Duty",
+    "OOC",
+    "Delivery",
+  ];
+  const rmsItems = ["Goods Registration", "Duty", "Assessment", "OOC", "Delivery"];
+  const openBillItems = ["Assessment", "Goods Registration", "Examination", "Duty", "OOC", "Delivery"];
+
+  const leftX = 120;
+  const branchX = 500;
+  const yStart = 120;
+  const rowGap = 190;
+  let order = 1;
+
+  const firstCheck = createWorkflowStageNode("First Check", "first_check", order++, leftX, yStart, true);
+  nodes.push(firstCheck);
+
+  let previousKey = firstCheck.key;
+  firstCheckItems.forEach((label, index) => {
+    const key = `first_check_${slugify(label)}`;
+    const node = createWorkflowChecklistNode(label, key, order++, leftX, yStart + (index + 1) * rowGap, "First Check", "first_check");
+    nodes.push(node);
+    edges.push(connectNodes(previousKey, key, index === 0 ? "Start First Check" : "Next"));
+    previousKey = key;
+  });
+
+  const secondCheckY = yStart + (firstCheckItems.length + 1) * rowGap + 80;
+  const secondCheck = createWorkflowStageNode("Second Check", "second_check", order++, leftX, secondCheckY);
+  nodes.push(secondCheck);
+  edges.push(connectNodes(previousKey, secondCheck.key, "Move to Second Check"));
+
+  const rmsStageY = secondCheckY + rowGap;
+  const rmsStage = createWorkflowStageNode("RMS", "second_check_rms", order++, leftX, rmsStageY);
+  rmsStage.category = "BRANCH";
+  rmsStage.sectionKey = "second_check";
+  rmsStage.sectionName = "Second Check";
+  rmsStage.branchKey = "rms";
+  rmsStage.branchName = "RMS";
+  nodes.push(rmsStage);
+  edges.push(connectNodes(secondCheck.key, rmsStage.key, "RMS Path"));
+
+  let rmsPreviousKey = rmsStage.key;
+  rmsItems.forEach((label, index) => {
+    const key = `second_check_rms_${slugify(label)}`;
+    const node = createWorkflowChecklistNode(label, key, order++, leftX, rmsStageY + (index + 1) * rowGap, "Second Check", "second_check", "RMS", "rms");
+    nodes.push(node);
+    edges.push(connectNodes(rmsPreviousKey, key, index === 0 ? "Start RMS" : "Next"));
+    rmsPreviousKey = key;
+  });
+
+  const openBillStage = createWorkflowStageNode("Open Bill", "second_check_open_bill", order++, branchX, rmsStageY);
+  openBillStage.category = "BRANCH";
+  openBillStage.sectionKey = "second_check";
+  openBillStage.sectionName = "Second Check";
+  openBillStage.branchKey = "open_bill";
+  openBillStage.branchName = "Open Bill";
+  nodes.push(openBillStage);
+  edges.push(connectNodes(secondCheck.key, openBillStage.key, "Open Bill Path"));
+
+  let openBillPreviousKey = openBillStage.key;
+  openBillItems.forEach((label, index) => {
+    const key = `second_check_open_bill_${slugify(label)}`;
+    const node = createWorkflowChecklistNode(label, key, order++, branchX, rmsStageY + (index + 1) * rowGap, "Second Check", "second_check", "Open Bill", "open_bill");
+    nodes.push(node);
+    edges.push(connectNodes(openBillPreviousKey, key, index === 0 ? "Start Open Bill" : "Next"));
+    openBillPreviousKey = key;
+  });
+
+  const amendmentY = Math.max(
+    rmsStageY + (rmsItems.length + 2) * rowGap,
+    rmsStageY + (openBillItems.length + 2) * rowGap,
+  );
+  const amendment = createWorkflowStageNode("Amendment", "amendment", order++, Math.round((leftX + branchX) / 2), amendmentY);
+  amendment.description = "Future amendment flow placeholder. Add checklist nodes below this stage when amendment processing rules are finalized.";
+  nodes.push(amendment);
+  edges.push(connectNodes(rmsPreviousKey, amendment.key, "RMS Complete"));
+  edges.push(connectNodes(openBillPreviousKey, amendment.key, "Open Bill Complete"));
+
+  return { nodes, edges };
+}
+
+function getConnectorPath(source: NodeDraft, target: NodeDraft) {
+  const sourceCenterX = source.positionX + NODE_WIDTH / 2;
+  const sourceCenterY = source.positionY + NODE_HEIGHT / 2;
+  const targetCenterX = target.positionX + NODE_WIDTH / 2;
+  const targetCenterY = target.positionY + NODE_HEIGHT / 2;
+  const isBackRoute = target.positionY <= source.positionY;
+  const isSideRoute = Math.abs(targetCenterX - sourceCenterX) > NODE_WIDTH && Math.abs(targetCenterY - sourceCenterY) < NODE_HEIGHT * 1.4;
+
+  if (isBackRoute || isSideRoute) {
+    const startX = targetCenterX < sourceCenterX ? source.positionX : source.positionX + NODE_WIDTH;
+    const startY = sourceCenterY;
+    const endX = targetCenterX < sourceCenterX ? target.positionX + NODE_WIDTH : target.positionX;
+    const endY = targetCenterY;
+    const controlOffset = Math.max(120, Math.abs(endX - startX) / 2);
+    const c1x = startX + (endX > startX ? controlOffset : -controlOffset);
+    const c2x = endX - (endX > startX ? controlOffset : -controlOffset);
+    return {
+      path: `M ${startX} ${startY} C ${c1x} ${startY}, ${c2x} ${endY}, ${endX} ${endY}`,
+      labelX: (startX + endX) / 2,
+      labelY: (startY + endY) / 2 - 12,
+      isBackRoute,
+    };
+  }
+
+  const startX = sourceCenterX;
+  const startY = source.positionY + NODE_HEIGHT;
+  const endX = targetCenterX;
+  const endY = target.positionY;
+  const curve = Math.max(90, Math.abs(endY - startY) / 2);
+  return {
+    path: `M ${startX} ${startY} C ${startX} ${startY + curve}, ${endX} ${endY - curve}, ${endX} ${endY}`,
+    labelX: (startX + endX) / 2,
+    labelY: (startY + endY) / 2,
+    isBackRoute,
+  };
+}
+
+function describeNodeType(node: NodeDraft) {
+  if (node.nodeType === "SECTION" && node.category === "MAIN_STAGE") return "MAIN STAGE";
+  if (node.category === "BRANCH") return "BRANCH";
+  if (node.category === "CHECKLIST_ITEM") return "CHECKLIST";
+  return node.nodeType.replace(/_/g, " ");
 }
 
 function autoArrangeNodes(nodes: NodeDraft[], edges: EdgeDraft[]) {
@@ -494,10 +749,10 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
           prev.map((node) =>
             node.id === draggingNodeId
               ? {
-                  ...node,
-                  positionX: Math.round(coords.x - dragOffset.x),
-                  positionY: Math.round(coords.y - dragOffset.y),
-                }
+                ...node,
+                positionX: Math.round(coords.x - dragOffset.x),
+                positionY: Math.round(coords.y - dragOffset.y),
+              }
               : node,
           ),
         );
@@ -550,58 +805,24 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       toast.error("Published versions are read-only. Fork a new draft first.");
       return;
     }
-    const baseName = newNodeName.trim() || "New Filing Node";
+    const baseName = newNodeName.trim() || "New Main Stage";
     const keyBase = slugify(baseName);
     const duplicateCount = nodes.filter((node) => node.key.startsWith(keyBase)).length;
-    const node: NodeDraft = {
-      id: createId("node"),
-      key: duplicateCount === 0 ? keyBase : `${keyBase}_${duplicateCount + 1}`,
-      name: baseName,
-      description: "",
-      category: newNodeCategory.trim() || "CHECK",
-      nodeType: "CHECKLIST_NODE",
-      sectionKey: "",
-      sectionName: "",
-      branchKey: "",
-      branchName: "",
-      sortOrder: nodes.length + 1,
-      isActive: true,
-      isStart: nodes.every((entry) => !entry.isStart),
-      positionX: 120 - Math.round(pan.x / zoom),
-      positionY: 120 - Math.round(pan.y / zoom),
-      slaDuration: 2,
-      slaUnit: "BUSINESS_DAYS",
-      commentsRequired: false,
-      canBeSkipped: false,
-      canBeRevisited: true,
-      approvalRequired: false,
-      approvalRoles: [],
-      requireAllMandatoryChecklistItems: true,
-      requireMandatoryPhotos: false,
-      allowedRoles: ["Admin", "Manager", "Employee"],
-      checklistItems: [
-        {
-          id: createId("item"),
-          label: baseName,
-          description: "",
-          isMandatory: true,
-          requiresRemarks: false,
-          allowsUpload: false,
-          minUploads: 0,
-          maxUploads: null,
-          acceptedFileTypes: [],
-          deadlineDuration: 2,
-          deadlineUnit: "BUSINESS_DAYS",
-          delayRemarksRequired: true,
-          sortOrder: 1,
-          isActive: true,
-        },
-      ],
-      photoRequirements: [],
-    };
+    const key = duplicateCount === 0 ? keyBase : `${keyBase}_${duplicateCount + 1}`;
+    const node = createWorkflowStageNode(
+      baseName,
+      key,
+      nodes.length + 1,
+      120 - Math.round(pan.x / zoom),
+      120 - Math.round(pan.y / zoom),
+      nodes.every((entry) => !entry.isStart),
+    );
+    node.category = newNodeCategory.trim() || "MAIN_STAGE";
     setNodes((prev) => [...prev, node]);
     setSelectedNodeId(node.id);
+    setSelectedEdgeId(null);
     setNewNodeName("");
+    setNewNodeCategory("MAIN_STAGE");
   };
 
   const handleAddChecklistNode = () => {
@@ -612,52 +833,17 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     const baseName = newNodeName.trim() || "Checklist Item";
     const keyBase = slugify(baseName);
     const duplicateCount = nodes.filter((node) => node.key.startsWith(keyBase)).length;
-    const node: NodeDraft = {
-      id: createId("node"),
-      key: duplicateCount === 0 ? keyBase : `${keyBase}_${duplicateCount + 1}`,
-      name: baseName,
-      description: "",
-      category: "CHECKLIST_ITEM",
-      nodeType: "CHECKLIST_NODE",
-      sectionKey: "",
-      sectionName: "",
-      branchKey: "",
-      branchName: "",
-      sortOrder: nodes.length + 1,
-      isActive: true,
-      isStart: nodes.every((entry) => !entry.isStart),
-      positionX: 120 - Math.round(pan.x / zoom),
-      positionY: 180 - Math.round(pan.y / zoom),
-      slaDuration: 2,
-      slaUnit: "BUSINESS_DAYS",
-      commentsRequired: false,
-      canBeSkipped: false,
-      canBeRevisited: true,
-      approvalRequired: false,
-      approvalRoles: [],
-      requireAllMandatoryChecklistItems: true,
-      requireMandatoryPhotos: false,
-      allowedRoles: ["Admin", "Manager", "Employee"],
-      checklistItems: [
-        {
-          id: createId("item"),
-          label: baseName,
-          description: "",
-          isMandatory: true,
-          requiresRemarks: false,
-          allowsUpload: false,
-          minUploads: 0,
-          maxUploads: null,
-          acceptedFileTypes: [],
-          deadlineDuration: 2,
-          deadlineUnit: "BUSINESS_DAYS",
-          delayRemarksRequired: true,
-          sortOrder: 1,
-          isActive: true,
-        },
-      ],
-      photoRequirements: [],
-    };
+    const key = duplicateCount === 0 ? keyBase : `${keyBase}_${duplicateCount + 1}`;
+    const node = createWorkflowChecklistNode(
+      baseName,
+      key,
+      nodes.length + 1,
+      120 - Math.round(pan.x / zoom),
+      180 - Math.round(pan.y / zoom),
+      "",
+      "",
+    );
+    node.isStart = nodes.every((entry) => !entry.isStart);
     setNodes((prev) => [...prev, node]);
     setSelectedNodeId(node.id);
     setSelectedEdgeId(null);
@@ -706,6 +892,29 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
   const updateSelectedNode = (updater: (node: NodeDraft) => NodeDraft) => {
     if (!selectedNodeId) return;
     setNodes((prev) => prev.map((node) => (node.id === selectedNodeId ? updater(node) : node)));
+  };
+
+  const updateSelectedEdge = (updater: (edge: EdgeDraft) => EdgeDraft) => {
+    if (!selectedEdgeId) return;
+    setEdges((prev) => prev.map((edge) => (edge.id === selectedEdgeId ? updater(edge) : edge)));
+  };
+
+  const loadChaBlueprintDraft = () => {
+    if (activeVersion?.isPublished) {
+      toast.error("Published versions are read-only. Fork a new draft first.");
+      return;
+    }
+    if (hasUnsavedChanges && !window.confirm("Replace the current draft canvas with the editable CHA blueprint starter? Unsaved canvas changes will be overwritten.")) {
+      return;
+    }
+    const blueprint = buildChaFilingBlueprintDraft();
+    setNodes(blueprint.nodes);
+    setEdges(blueprint.edges);
+    setSelectedNodeId(null);
+    setSelectedEdgeId(null);
+    setZoom(0.78);
+    setPan({ x: 60, y: 20 });
+    toast.success("Editable CHA filing blueprint loaded.");
   };
 
   const addChecklistItem = () => {
@@ -962,20 +1171,28 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
           <div className="space-y-5 p-5">
             <Card className="card-left-accent">
               <CardHeader>
-                <CardTitle>Node Palette</CardTitle>
+                <CardTitle>Blueprint Palette</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="rounded-xl border border-outline-variant bg-surface p-3 text-xs text-on-surface-variant">
+                  Load the CHA starter as editable nodes only. After loading, every stage, checklist, deadline, upload slot, and connector can be changed.
+                  <span className="mt-2 block">Processor roles are empty by default, so anyone with job access can work the filing node. Available roles: {availableRoles.length || 0}.</span>
+                </div>
+                <Button className="w-full" onClick={loadChaBlueprintDraft} disabled={activeVersion?.isPublished}>
+                  <Workflow size={16} />
+                  Load CHA Filing Blueprint
+                </Button>
                 <div className="space-y-1.5">
                   <label className="ds-label block">Node Name</label>
                   <input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="First Check" className="w-full text-sm" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="ds-label block">Category</label>
-                  <input value={newNodeCategory} onChange={(event) => setNewNodeCategory(event.target.value)} placeholder="CHECK" className="w-full text-sm" />
+                  <input value={newNodeCategory} onChange={(event) => setNewNodeCategory(event.target.value)} placeholder="MAIN_STAGE" className="w-full text-sm" />
                 </div>
-                <Button className="w-full" onClick={handleAddNode} disabled={activeVersion?.isPublished}>
+                <Button variant="outline" className="w-full" onClick={handleAddNode} disabled={activeVersion?.isPublished}>
                   <Plus size={16} />
-                  Add Workflow Node
+                  Add Main Stage Node
                 </Button>
                 <Button variant="outline" className="w-full" onClick={handleAddChecklistNode} disabled={activeVersion?.isPublished}>
                   <Plus size={16} />
@@ -1018,7 +1235,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
             <div className="flex items-center justify-between border-b border-outline-variant px-4 py-3">
               <div>
                 <p className="ds-label">Canvas</p>
-                <p className="text-sm text-on-surface-variant">Drag nodes, connect valid handles, zoom with wheel or controls, and keep checklist items as standalone workflow nodes.</p>
+                <p className="text-sm text-on-surface-variant">Blueprint mode: drag nodes, connect handles, zoom with wheel, branch RMS/Open Bill, and route back to any passed stage when required.</p>
               </div>
               <div className="flex flex-wrap items-center justify-end gap-2">
                 {selectedEdge ? (
@@ -1059,7 +1276,12 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
             <div
               ref={canvasRef}
               className="relative flex-1 overflow-hidden bg-surface-container-low"
-              style={{ backgroundImage: "radial-gradient(var(--color-outline-variant) 1px, transparent 1px)", backgroundSize: "24px 24px" }}
+              style={{
+                backgroundColor: "var(--color-surface-container-low)",
+                backgroundImage:
+                  "linear-gradient(rgba(0,206,196,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(0,206,196,0.08) 1px, transparent 1px), radial-gradient(rgba(0,206,196,0.28) 1px, transparent 1px)",
+                backgroundSize: "48px 48px, 48px 48px, 12px 12px",
+              }}
               onWheel={(event) => {
                 event.preventDefault();
                 const rect = canvasRef.current?.getBoundingClientRect();
@@ -1111,15 +1333,12 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     const source = nodes.find((node) => node.key === edge.sourceKey);
                     const target = nodes.find((node) => node.key === edge.targetKey);
                     if (!source || !target) return null;
-                    const startX = source.positionX + NODE_WIDTH / 2;
-                    const startY = source.positionY + NODE_HEIGHT;
-                    const endX = target.positionX + NODE_WIDTH / 2;
-                    const endY = target.positionY;
-                    const curve = Math.max(80, Math.abs(endY - startY) / 2);
+                    const connector = getConnectorPath(source, target);
+                    const selected = selectedEdgeId === edge.id;
                     return (
                       <g
                         key={edge.id}
-                        className={selectedEdgeId === edge.id ? "text-[#fb923c]" : "text-[#00cec4]"}
+                        className={selected ? "text-[#fb923c]" : connector.isBackRoute ? "text-[#fb923c]" : "text-[#00cec4]"}
                         onClick={(event) => {
                           event.stopPropagation();
                           setSelectedNodeId(null);
@@ -1127,12 +1346,28 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                         }}
                       >
                         <path
-                          d={`M ${startX} ${startY} C ${startX} ${startY + curve}, ${endX} ${endY - curve}, ${endX} ${endY}`}
+                          d={connector.path}
+                          fill="none"
+                          stroke="transparent"
+                          strokeWidth="16"
+                          className="cursor-pointer"
+                        />
+                        <path
+                          d={connector.path}
                           fill="none"
                           stroke="currentColor"
-                          strokeWidth={selectedEdgeId === edge.id ? "3" : "2"}
+                          strokeWidth={selected ? "3" : "2"}
+                          strokeDasharray={connector.isBackRoute ? "8 7" : undefined}
                           markerEnd="url(#filing-arrow)"
+                          className="drop-shadow-sm"
                         />
+                        {edge.label ? (
+                          <foreignObject x={connector.labelX - 70} y={connector.labelY - 12} width="140" height="28" className="pointer-events-none overflow-visible">
+                            <div className="truncate rounded-full border border-outline-variant bg-surface/95 px-2 py-1 text-center text-[10px] uppercase tracking-[0.1em] text-on-surface-variant shadow-sm">
+                              {edge.label}
+                            </div>
+                          </foreignObject>
+                        ) : null}
                       </g>
                     );
                   })}
@@ -1162,9 +1397,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     <button
                       key={node.id}
                       type="button"
-                      className={`absolute rounded-xl border bg-surface p-4 text-left shadow-sm transition-all ${
-                        selected ? "border-[#00cec4] shadow-[0_0_0_3px_rgba(0,206,196,0.18)]" : "border-outline-variant hover:shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
-                      } ${node.isActive ? "" : "opacity-55"}`}
+                      className={`absolute rounded-2xl border bg-surface/95 p-4 text-left shadow-sm backdrop-blur transition-all ${selected ? "border-[#00cec4] shadow-[0_0_0_3px_rgba(0,206,196,0.18),0_18px_42px_-28px_rgba(0,206,196,0.75)]" : "border-outline-variant hover:border-[#00cec4]/60 hover:shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
+                        } ${node.isActive ? "" : "opacity-55"}`}
                       style={{ left: node.positionX, top: node.positionY, width: NODE_WIDTH, height: NODE_HEIGHT }}
                       onClick={() => setSelectedNodeId(node.id)}
                       onMouseDown={(event) => {
@@ -1179,18 +1413,37 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                       <div
                         data-handle-role="target"
                         data-node-key={node.key}
-                        className={`absolute left-[126px] -top-2 h-4 w-4 rounded-full border-2 ${
-                          hoveredTargetKey === node.key ? "border-[#00cec4] bg-[#00cec4]/20" : "border-outline bg-surface"
-                        }`}
+                        title="Drop connector here"
+                        className={`absolute left-[126px] -top-2 h-4 w-4 rounded-full border-2 ${hoveredTargetKey === node.key ? "border-[#00cec4] bg-[#00cec4]/20" : "border-outline bg-surface"
+                          }`}
+                      />
+                      <div
+                        data-handle-role="target"
+                        data-node-key={node.key}
+                        title="Drop connector here"
+                        className={`absolute -left-2 top-[68px] h-4 w-4 rounded-full border-2 ${hoveredTargetKey === node.key ? "border-[#00cec4] bg-[#00cec4]/20" : "border-outline bg-surface"
+                          }`}
                       />
                       <div
                         data-node-key={node.key}
-                        className="absolute bottom-[-8px] left-[126px] h-4 w-4 rounded-full border-2 border-[#00cec4] bg-surface"
+                        title="Drag to connect"
+                        className="absolute bottom-[-8px] left-[126px] h-4 w-4 rounded-full border-2 border-[#00cec4] bg-surface shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
                         onMouseDown={(event) => {
                           event.stopPropagation();
                           if (activeVersion?.isPublished || !node.isActive) return;
                           setConnectingSourceKey(node.key);
                           setConnectionCursor({ x: node.positionX + NODE_WIDTH / 2, y: node.positionY + NODE_HEIGHT });
+                        }}
+                      />
+                      <div
+                        data-node-key={node.key}
+                        title="Drag to connect"
+                        className="absolute -right-2 top-[68px] h-4 w-4 rounded-full border-2 border-[#00cec4] bg-surface shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
+                        onMouseDown={(event) => {
+                          event.stopPropagation();
+                          if (activeVersion?.isPublished || !node.isActive) return;
+                          setConnectingSourceKey(node.key);
+                          setConnectionCursor({ x: node.positionX + NODE_WIDTH, y: node.positionY + NODE_HEIGHT / 2 });
                         }}
                       />
 
@@ -1204,6 +1457,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                         <div className="flex shrink-0 flex-col items-end gap-1">
                           {node.isStart ? <Badge variant="success">START</Badge> : null}
                           {node.branchName ? <Badge variant="secondary">{node.branchName.toUpperCase()}</Badge> : null}
+                          {node.photoRequirements.length > 0 ? <Badge variant="secondary">{node.photoRequirements.length} UPLOAD</Badge> : null}
                           {!node.isActive ? <Badge variant="secondary">INACTIVE</Badge> : null}
                         </div>
                       </div>
@@ -1211,7 +1465,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                         {node.description || "No stage description configured."}
                       </p>
                       <div className="mt-4 flex items-center justify-between border-t border-outline-variant pt-3 text-xs text-on-surface-variant">
-                        <span>{node.nodeType}</span>
+                        <span>{describeNodeType(node)}</span>
                         <span className="ds-numeric">{node.slaDuration} {node.slaUnit === "BUSINESS_DAYS" ? "BD" : "CD"}</span>
                       </div>
                     </button>
@@ -1373,6 +1627,21 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     />
                   </div>
                 ) : null}
+                <div className="space-y-1.5">
+                  <label className="ds-label block">Allowed Processor Roles</label>
+                  <input
+                    value={selectedNode.allowedRoles.join(", ")}
+                    onChange={(event) => updateSelectedNode((node) => ({
+                      ...node,
+                      allowedRoles: event.target.value.split(",").map((value) => value.trim()).filter(Boolean),
+                    }))}
+                    className="w-full text-sm"
+                    placeholder="Leave empty so anyone concerned with the job can process it"
+                  />
+                  <p className="text-xs text-on-surface-variant">
+                    Empty means anyone who can access the job can complete this node.
+                  </p>
+                </div>
               </div>
 
               <div className="ds-form-section space-y-4">
@@ -1567,6 +1836,36 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                           <input type="number" min={0} value={photo.minPhotos} onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, minPhotos: Math.max(0, Number(event.target.value || 0)) }))} className="w-full text-sm ds-numeric" placeholder="Min uploads" />
                           <input type="number" min={photo.minPhotos} value={photo.maxPhotos ?? ""} onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, maxPhotos: event.target.value ? Math.max(current.minPhotos, Number(event.target.value)) : null }))} className="w-full text-sm ds-numeric" placeholder="Max uploads" />
                         </div>
+                        <div className="grid grid-cols-2 gap-3 text-sm text-on-surface">
+                          <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2">
+                            <input
+                              type="checkbox"
+                              checked={photo.isMandatory}
+                              onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, isMandatory: event.target.checked, minPhotos: event.target.checked && current.minPhotos === 0 ? 1 : current.minPhotos }))}
+                            />
+                            <span>Mandatory</span>
+                          </label>
+                          <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2">
+                            <input
+                              type="checkbox"
+                              checked={photo.isVisibleInTimeline}
+                              onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, isVisibleInTimeline: event.target.checked }))}
+                            />
+                            <span>Timeline</span>
+                          </label>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="ds-label block">Accepted File Types</label>
+                          <input
+                            value={photo.acceptedFileTypes.join(", ")}
+                            onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({
+                              ...current,
+                              acceptedFileTypes: event.target.value.split(",").map((value) => value.trim()).filter(Boolean),
+                            }))}
+                            className="w-full text-sm"
+                            placeholder="image/jpeg, image/png, application/pdf"
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1579,13 +1878,45 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
               </div>
             </div>
           ) : selectedEdge ? (
-            <div className="flex h-full items-center justify-center p-8 text-center">
-              <div className="space-y-3">
-                <Link2 size={28} className="mx-auto text-[#00cec4]" />
-                <h2 className="ds-h3 text-on-surface">CONNECTOR SELECTED</h2>
-                <p className="max-w-xs text-sm text-on-surface-variant">
-                  {selectedEdge.sourceKey} routes into {selectedEdge.targetKey}. Use the canvas toolbar or your keyboard to delete this connector.
-                </p>
+            <div className="space-y-6 p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="ds-label">Selected Connector</p>
+                  <h2 className="ds-h2 text-on-surface">Route Settings</h2>
+                </div>
+                <Button
+                  variant="outline"
+                  mode="icon"
+                  size="sm"
+                  onClick={() => void deleteSelectedEdge()}
+                  disabled={activeVersion?.isPublished}
+                  aria-label="Delete connector"
+                >
+                  <Trash2 size={15} />
+                </Button>
+              </div>
+
+              <div className="ds-form-section space-y-4">
+                <h3 className="ds-h3 text-on-surface">Connector</h3>
+                <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-sm text-on-surface">
+                  <div className="ds-label text-on-surface-variant">From</div>
+                  <div className="mt-1 break-all ds-numeric">{selectedEdge.sourceKey}</div>
+                  <div className="mt-3 ds-label text-on-surface-variant">To</div>
+                  <div className="mt-1 break-all ds-numeric">{selectedEdge.targetKey}</div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="ds-label block">Connector Label</label>
+                  <input
+                    value={selectedEdge.label || ""}
+                    onChange={(event) => updateSelectedEdge((edge) => ({ ...edge, label: event.target.value || null }))}
+                    className="w-full text-sm"
+                    placeholder="Example: RMS Path, Recheck BE, Next"
+                    disabled={activeVersion?.isPublished}
+                  />
+                </div>
+                <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
+                  Backward connectors are allowed. Use them for cases like Examination returning to Bill of Entry upload, then routing forward again.
+                </div>
               </div>
             </div>
           ) : (

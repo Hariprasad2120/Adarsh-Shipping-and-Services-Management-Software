@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CreateJobDialog } from "@/components/cha/create-job-dialog";
+import { JobValidityWarningIndicator } from "@/app/(dashboard)/cha/_components/job-validity-warning-indicator";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import {
   DataTable,
@@ -41,6 +42,12 @@ interface JobItem {
   ownerName: string;
   assignedUserIds: string[];
   hasActiveDeletionRequest: boolean;
+  deliveryOrderWarning?: {
+    severity: "expired" | "expiring";
+    daysUntilExpiry: number;
+    deliveryOrderValidity: string;
+    message: string;
+  } | null;
   createdAt: string;
 }
 
@@ -288,7 +295,17 @@ export function JobsClient({
                 key={job.id}
                 href={`/cha/jobs/${job.id}`}
               >
-                <DataTableCell className="font-medium text-[#00cec4]">{job.jobNumber}</DataTableCell>
+                <DataTableCell className="font-medium text-[#00cec4]">
+                  <div className="flex items-center gap-2">
+                    <span>{job.jobNumber}</span>
+                    {job.deliveryOrderWarning ? (
+                      <JobValidityWarningIndicator
+                        jobId={job.id}
+                        warning={job.deliveryOrderWarning}
+                      />
+                    ) : null}
+                  </div>
+                </DataTableCell>
                 <DataTableCell>
                   <div className="min-w-0">
                     <p className="truncate font-medium text-on-surface">{job.title}</p>

@@ -6423,7 +6423,7 @@ export async function saveFilingWorkflowDraft(
     await tx.filingWorkflowNode.deleteMany({ where: { versionId } });
 
     for (const n of normalizedNodes) {
-      const node = await tx.filingWorkflowNode.create({
+      await tx.filingWorkflowNode.create({
         data: {
           versionId,
           key: n.key,
@@ -6450,45 +6450,49 @@ export async function saveFilingWorkflowDraft(
           requireAllMandatoryChecklistItems: n.requireAllMandatoryChecklistItems !== undefined ? !!n.requireAllMandatoryChecklistItems : true,
           requireMandatoryPhotos: n.requireMandatoryPhotos !== undefined ? !!n.requireMandatoryPhotos : true,
           allowedRoles: n.allowedRoles || ["Admin", "Manager", "Employee"],
+          ...(n.checklistItems?.length
+            ? {
+                checklistItems: {
+                  createMany: {
+                    data: n.checklistItems.map((item: any, idx: number) => ({
+                      label: item.label,
+                      description: item.description,
+                      isMandatory: item.isMandatory !== undefined ? !!item.isMandatory : true,
+                      requiresRemarks: !!item.requiresRemarks,
+                      allowsUpload: !!item.allowsUpload,
+                      minUploads: item.minUploads !== undefined ? item.minUploads : 0,
+                      maxUploads: item.maxUploads !== undefined ? item.maxUploads : null,
+                      acceptedFileTypes: item.acceptedFileTypes || [],
+                      deadlineDuration: item.deadlineDuration !== undefined ? item.deadlineDuration : 2,
+                      deadlineUnit: item.deadlineUnit || "BUSINESS_DAYS",
+                      delayRemarksRequired: item.delayRemarksRequired !== undefined ? !!item.delayRemarksRequired : true,
+                      hasPhotoRequirement: !!item.hasPhotoRequirement,
+                      sortOrder: item.sortOrder !== undefined ? item.sortOrder : idx,
+                      isActive: item.isActive !== undefined ? !!item.isActive : true,
+                    })),
+                  },
+                },
+              }
+            : {}),
+          ...(n.photoRequirements?.length
+            ? {
+                photoRequirements: {
+                  createMany: {
+                    data: n.photoRequirements.map((pr: any) => ({
+                      label: pr.label,
+                      description: pr.description,
+                      isMandatory: pr.isMandatory !== undefined ? !!pr.isMandatory : true,
+                      minPhotos: pr.minPhotos !== undefined ? pr.minPhotos : 1,
+                      maxPhotos: pr.maxPhotos !== undefined ? pr.maxPhotos : null,
+                      acceptedFileTypes: pr.acceptedFileTypes || ["image/jpeg", "image/png", "application/pdf"],
+                      isVisibleInTimeline: pr.isVisibleInTimeline !== undefined ? !!pr.isVisibleInTimeline : true,
+                    })),
+                  },
+                },
+              }
+            : {}),
         },
       });
-
-      if (n.checklistItems?.length) {
-        await tx.filingChecklistItem.createMany({
-          data: n.checklistItems.map((item: any, idx: number) => ({
-            nodeId: node.id,
-            label: item.label,
-            description: item.description,
-            isMandatory: item.isMandatory !== undefined ? !!item.isMandatory : true,
-            requiresRemarks: !!item.requiresRemarks,
-            allowsUpload: !!item.allowsUpload,
-            minUploads: item.minUploads !== undefined ? item.minUploads : 0,
-            maxUploads: item.maxUploads !== undefined ? item.maxUploads : null,
-            acceptedFileTypes: item.acceptedFileTypes || [],
-            deadlineDuration: item.deadlineDuration !== undefined ? item.deadlineDuration : 2,
-            deadlineUnit: item.deadlineUnit || "BUSINESS_DAYS",
-            delayRemarksRequired: item.delayRemarksRequired !== undefined ? !!item.delayRemarksRequired : true,
-            hasPhotoRequirement: !!item.hasPhotoRequirement,
-            sortOrder: item.sortOrder !== undefined ? item.sortOrder : idx,
-            isActive: item.isActive !== undefined ? !!item.isActive : true,
-          })),
-        });
-      }
-
-      if (n.photoRequirements?.length) {
-        await tx.filingPhotoRequirement.createMany({
-          data: n.photoRequirements.map((pr: any) => ({
-            nodeId: node.id,
-            label: pr.label,
-            description: pr.description,
-            isMandatory: pr.isMandatory !== undefined ? !!pr.isMandatory : true,
-            minPhotos: pr.minPhotos !== undefined ? pr.minPhotos : 1,
-            maxPhotos: pr.maxPhotos !== undefined ? pr.maxPhotos : null,
-            acceptedFileTypes: pr.acceptedFileTypes || ["image/jpeg", "image/png", "application/pdf"],
-            isVisibleInTimeline: pr.isVisibleInTimeline !== undefined ? !!pr.isVisibleInTimeline : true,
-          })),
-        });
-      }
     }
 
     if (normalizedEdges.length) {
@@ -6501,7 +6505,7 @@ export async function saveFilingWorkflowDraft(
         })),
       });
     }
-  });
+  }, { timeout: 20000 });
 
   await logChaAudit({
     orgId,
