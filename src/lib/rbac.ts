@@ -9,6 +9,12 @@ export type Caps = Record<string, boolean>;
 
 const RBAC_PERMISSIONS_TAG = "rbac:user-permissions";
 
+// Process-level in-memory cache — shared across all concurrent requests in the same
+// Node process. Eliminates thundering herd when unstable_cache TTL expires and multiple
+// simultaneous requests (page + API routes) all miss the cross-request cache at once.
+const permMemCache = new Map<string, { keys: string[]; expiresAt: number }>();
+const PERM_MEM_TTL = 5 * 60 * 1000; // 5 minutes, matches unstable_cache revalidate
+
 async function loadPermissionKeysFromDb(userId: string): Promise<string[]> {
   const rows = await db.$queryRaw<{ key: string }[]>`
     SELECT DISTINCT p."key"
@@ -45,7 +51,28 @@ const loadCachedPermissionKeys = unstable_cache(
   },
 );
 
+async function loadPermissionKeys(userId: string): Promise<string[]> {
+  const now = Date.now();
+  const hit = permMemCache.get(userId);
+  if (hit && hit.expiresAt > now) return hit.keys;
+
+  let keys: string[];
+  try {
+    keys = await loadCachedPermissionKeys(userId);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("incrementalCache missing")) {
+      keys = await loadPermissionKeysFromDb(userId);
+    } else {
+      throw error;
+    }
+  }
+
+  permMemCache.set(userId, { keys, expiresAt: now + PERM_MEM_TTL });
+  return keys;
+}
+
 export function invalidateRbacCache() {
+  permMemCache.clear();
   try {
     revalidateTag(RBAC_PERMISSIONS_TAG, "max");
   } catch (error) {
@@ -55,19 +82,10 @@ export function invalidateRbacCache() {
   }
 }
 
-// Load all permission keys for a user (cached per request and across requests)
+// Load all permission keys for a user (in-memory cache → unstable_cache → DB)
 export const loadUserPermissions = cache(async (userId: string): Promise<Set<string>> => {
   return timeBlock(`rbac:loadUserPermissions`, async () => {
-    let keys: string[];
-    try {
-      keys = await loadCachedPermissionKeys(userId);
-    } catch (error) {
-      if (error instanceof Error && error.message.includes("incrementalCache missing")) {
-        keys = await loadPermissionKeysFromDb(userId);
-      } else {
-        throw error;
-      }
-    }
+    const keys = await loadPermissionKeys(userId);
     return new Set(keys);
   }, 50);
 });

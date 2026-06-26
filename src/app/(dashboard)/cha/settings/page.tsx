@@ -16,11 +16,32 @@ export default async function ChaSettingsPage() {
   // Check RBAC permission for settings management
   await requirePermission(session.user.id, "cha.settings.manage");
 
-  const settings = await ensureSettingsAndDefaults(orgId);
-  const roles = await db.role.findMany({
-    where: { orgId },
-    select: { name: true },
-  });
+  // All 9 data fetches are independent — run in parallel
+  const [
+    settings,
+    roles,
+    activeEmployees,
+    normalizedJobTypes,
+    shipmentTypes,
+    teamGroups,
+    branches,
+    branchNumberingRules,
+    documentCategories,
+  ] = await Promise.all([
+    ensureSettingsAndDefaults(orgId),
+    db.role.findMany({ where: { orgId }, select: { name: true } }),
+    listUsersSlim(orgId, { active: true }),
+    listJobTypesForSettings(orgId),
+    db.chaShipmentType.findMany({ where: { orgId }, orderBy: { name: "asc" } }),
+    db.chaTeamGroup.findMany({ where: { orgId }, orderBy: { name: "asc" } }),
+    db.branch.findMany({ where: { orgId }, select: { id: true, name: true, code: true }, orderBy: { name: "asc" } }),
+    db.chaBranchNumberingRule.findMany({ where: { orgId }, orderBy: { branch: { name: "asc" } } }),
+    db.chaDocumentRequirementCategory.findMany({
+      where: { orgId },
+      include: { items: { orderBy: { sortOrder: "asc" } } },
+      orderBy: { sortOrder: "asc" },
+    }),
+  ]);
 
   const availableRoles = roles.map((r) => r.name);
   if (!availableRoles.includes("Admin")) availableRoles.push("Admin");
@@ -47,9 +68,7 @@ export default async function ChaSettingsPage() {
   };
 
   const parsedJobCreatorRoles = parseStringArray(settings.jobCreatorRoles, ["Admin", "HR", "Manager", "Employee"]);
-
   const parsedJobCreatorUsers = parseStringArray(settings.jobCreatorUsers);
-
   const parsedExpenseCategories = parseStringArray(settings.expenseCategories, [
     "Customs Duty",
     "Port Handling Charges",
@@ -59,44 +78,6 @@ export default async function ChaSettingsPage() {
     "Storage Fees",
     "Miscellaneous",
   ]);
-
-  // Fetch active employees for specific employee selection dropdown/checkbox list
-  const activeEmployees = await listUsersSlim(orgId, { active: true });
-
-  // Fetch job types for customization
-  const normalizedJobTypes = await listJobTypesForSettings(orgId);
-
-  const shipmentTypes = await db.chaShipmentType.findMany({
-    where: { orgId },
-    orderBy: { name: "asc" },
-  });
-
-  // Fetch team groups
-  const teamGroups = await db.chaTeamGroup.findMany({
-    where: { orgId },
-    orderBy: { name: "asc" },
-  });
-
-  const branches = await db.branch.findMany({
-    where: { orgId },
-    select: { id: true, name: true, code: true },
-    orderBy: { name: "asc" },
-  });
-
-  const branchNumberingRules = await db.chaBranchNumberingRule.findMany({
-    where: { orgId },
-    orderBy: { branch: { name: "asc" } },
-  });
-
-  const documentCategories = await db.chaDocumentRequirementCategory.findMany({
-    where: { orgId },
-    include: {
-      items: {
-        orderBy: { sortOrder: "asc" },
-      },
-    },
-    orderBy: { sortOrder: "asc" },
-  });
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6">

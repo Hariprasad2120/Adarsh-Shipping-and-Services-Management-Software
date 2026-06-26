@@ -1607,8 +1607,9 @@ export async function listJobTypesForSettings(orgId: string) {
 export async function getJobDetails(userId: string, orgId: string, jobId: string) {
   const manifestSchema = await getChaManifestSchemaState();
 
-  // Fetch user and job in parallel — neither depends on the other
-  const [user, job] = await Promise.all([
+  // auditLogs and expenseRequests are pulled into explicit parallel queries so Prisma
+  // can fetch them concurrently with the main job query instead of sequentially.
+  const [user, job, rawAuditLogs, expenseRequests] = await Promise.all([
     db.user.findUnique({
       where: { id: userId },
       include: { roles: { include: { role: true } } },
@@ -1650,8 +1651,21 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
         checklistImports: { include: { uploadedBy: { select: { name: true } }, approvals: { include: { manager: { select: { name: true } } } }, reworkNotes: { include: { author: { select: { name: true } } } }, sections: { include: { items: true } } } },
         filing: { include: { dateHistory: { include: { setBy: { select: { name: true } } } } } },
         customerAdvance: { include: { receipts: true } },
-        expenseRequests: { include: { requestedBy: { select: { name: true } }, lines: true, payments: { include: { paidBy: { select: { name: true } } } }, queries: { include: { author: { select: { name: true } } } }, statusHistory: true } },
-        auditLogs: { orderBy: { timestamp: "desc" }, take: 100 },
+      },
+    }),
+    db.chaAuditLog.findMany({
+      where: { jobId },
+      orderBy: { timestamp: "desc" },
+      take: 100,
+    }),
+    db.chaExpenseRequest.findMany({
+      where: { jobId },
+      include: {
+        requestedBy: { select: { name: true } },
+        lines: true,
+        payments: { include: { paidBy: { select: { name: true } } } },
+        queries: { include: { author: { select: { name: true } } } },
+        statusHistory: true,
       },
     }),
   ]);
@@ -1660,7 +1674,7 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
   if (!job) throw new Error("Job not found.");
 
   // Parallelize backfill (may do a DB write), access check, and actor lookup
-  const actorIds = Array.from(new Set(job.auditLogs.map((l) => l.actorId)));
+  const actorIds = Array.from(new Set(rawAuditLogs.map((l) => l.actorId)));
   const [backfilledManagerAssignment, hasViewAll, actors] = await Promise.all([
     backfillAssignedManagerFromApprovalAssignment(job),
     can(userId, "cha.job.view_all"),
@@ -1702,7 +1716,7 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
   }
 
   const actorMap = new Map(actors.map((a) => [a.id, { name: a.name }]));
-  const auditLogsWithActor = job.auditLogs.map((log) => ({
+  const auditLogsWithActor = rawAuditLogs.map((log) => ({
     ...log,
     actor: actorMap.get(log.actorId) || { name: "System" },
   }));
@@ -1710,6 +1724,7 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
   return {
     ...normalizedJob,
     auditLogs: auditLogsWithActor,
+    expenseRequests,
   };
 }
 
@@ -2448,16 +2463,18 @@ export async function proceedAdditionalDataStage(actorId: string, orgId: string,
 }
 
 export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: string) {
-  const now = await getNow();
+  // Run getNow + both permission checks in parallel — neither depends on the other
+  const [now, canViewAll, canViewIndicator] = await Promise.all([
+    getNow(),
+    can(actorId, "cha.job.view_all"),
+    can(actorId, "cha.do_validity.view_indicator"),
+  ]);
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
 
   const threshold = new Date(today);
   threshold.setDate(threshold.getDate() + 4);
   threshold.setHours(23, 59, 59, 999);
-
-  const canViewAll = await can(actorId, "cha.job.view_all");
-  const canViewIndicator = await can(actorId, "cha.do_validity.view_indicator");
 
   const jobs = await db.chaJob.findMany({
     where: {
