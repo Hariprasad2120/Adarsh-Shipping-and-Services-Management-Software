@@ -54,8 +54,10 @@ function hasRequiredDelegates(client: PrismaClient) {
 const existingPrisma = globalForPrisma.prisma;
 const shouldRefreshPrisma = existingPrisma && !hasRequiredDelegates(existingPrisma);
 
+// When refreshing due to stale delegates, save the new client to the global
+// so subsequent module evaluations reuse it instead of creating new connections.
 export const db = shouldRefreshPrisma
-  ? createPrismaClient()
+  ? (() => { const c = createPrismaClient(); if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = c; return c; })()
   : (existingPrisma ?? createPrismaClient());
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;

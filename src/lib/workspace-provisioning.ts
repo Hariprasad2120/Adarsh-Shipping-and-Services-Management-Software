@@ -225,8 +225,8 @@ export async function provisionJobWorkspace(
         let botTokenForMemberships: string | undefined;
         try { botTokenForMemberships = await getAccessToken(); } catch {}
 
-        // Helper to add a member with a given role
-        const addMember = async (googleUserId: string, role: "ROLE_MEMBER" | "SPACE_MANAGER") => {
+        // Helper to add a member with a given role ("ROLE_MEMBER" | "ROLE_MANAGER" per Google Chat API)
+        const addMember = async (googleUserId: string, role: "ROLE_MEMBER" | "ROLE_MANAGER") => {
           try {
             if (botTokenForMemberships) {
               const memberRes = await fetch(`https://chat.googleapis.com/v1/${googleSpaceId}/members`, {
@@ -252,9 +252,9 @@ export async function provisionJobWorkspace(
           }
         };
 
-        // 1. Add triggering user as SPACE_MANAGER first
+        // 1. Add triggering user as ROLE_MANAGER first
         if (triggeringGoogleUserId) {
-          await addMember(triggeringGoogleUserId, "SPACE_MANAGER");
+          await addMember(triggeringGoogleUserId, "ROLE_MANAGER");
           // Remove from regular members list so they don't get added twice
           employeesToInvite.delete(triggeringGoogleUserId);
         }

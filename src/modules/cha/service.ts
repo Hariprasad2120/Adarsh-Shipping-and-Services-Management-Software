@@ -1115,14 +1115,15 @@ export async function createJob(
     throw new Error("Assigned Manager is required.");
   }
 
-  const manifestSchema = await getChaManifestSchemaState();
-  const settings = await ensureSettingsAndDefaults(orgId);
-
-  // Validate creator authorization from settings
-  const creatorRoles = await db.userRole.findMany({
-    where: { userId: actorId },
-    include: { role: true },
-  });
+  // Fetch schema state, settings, and creator roles in parallel — avoids expensive ensureSettingsAndDefaults on every creation
+  const [manifestSchema, settings, creatorRoles] = await Promise.all([
+    getChaManifestSchemaState(),
+    db.chaSettings.findUnique({ where: { orgId } }),
+    db.userRole.findMany({ where: { userId: actorId }, include: { role: true } }),
+  ]);
+  if (!settings) {
+    throw new Error("CHA settings have not been initialized. Please open the CHA Settings page to complete setup.");
+  }
   const creatorRoleNames = creatorRoles.map((ur) => ur.role.name);
 
   const allowedRoles = parseStringArray(settings.jobCreatorRoles, DEFAULT_CHA_JOB_CREATOR_ROLES);
@@ -1280,55 +1281,55 @@ export async function createJob(
     });
 
     return { job, assignmentsToCreate };
-  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
 
-  // Log Audit trail & trigger notifications (out of transaction for speed, but logged)
-  await logChaAudit({
-    orgId,
-    jobId: result.job.id,
-    entityType: "ChaJob",
-    entityId: result.job.id,
-    event: "JOB_CREATED",
-    actorId,
-    newState: "DOCUMENT_COLLECTION",
-    remarks: `Job created with ${result.assignmentsToCreate.length} assignments`,
-  });
-
-  await logChaAudit({
-    orgId,
-    jobId: result.job.id,
-    entityType: "ChaJob",
-    entityId: result.job.id,
-    event: "JOB_MANAGER_ASSIGNED",
-    actorId,
-    newState: "DOCUMENT_COLLECTION",
-    remarks: `Manager assigned during job creation: ${data.assignedManagerId}`,
-  });
-
-  // Notify concerned users
+  // Log audit events and send notifications in parallel
   const uniqueUserIds = Array.from(new Set(result.assignmentsToCreate.map((a) => a.userId)));
-  for (const userId of uniqueUserIds) {
-    await createNotification({
-      userId,
+  await Promise.all([
+    logChaAudit({
       orgId,
-      kind: "CHA_JOB_ASSIGNED",
-      title: `New Job Assigned: ${result.job.jobNumber}`,
-      body: `You are assigned to the new customs clearance job ${result.job.jobNumber} (${data.title}).`,
-      link: `/cha/jobs/${result.job.id}`,
-      priority: "important",
-    });
-
-    // Create Todo task for document collection
-    await db.todoTask.create({
-      data: {
-        userId,
-        orgId,
-        title: `Collect documents for Job ${result.job.jobNumber}`,
-        description: `Check the required document slots and upload file copies for job ${result.job.jobNumber}.`,
-        status: "PENDING",
-      },
-    });
-  }
+      jobId: result.job.id,
+      entityType: "ChaJob",
+      entityId: result.job.id,
+      event: "JOB_CREATED",
+      actorId,
+      newState: "DOCUMENT_COLLECTION",
+      remarks: `Job created with ${result.assignmentsToCreate.length} assignments`,
+    }),
+    logChaAudit({
+      orgId,
+      jobId: result.job.id,
+      entityType: "ChaJob",
+      entityId: result.job.id,
+      event: "JOB_MANAGER_ASSIGNED",
+      actorId,
+      newState: "DOCUMENT_COLLECTION",
+      remarks: `Manager assigned during job creation: ${data.assignedManagerId}`,
+    }),
+    // Notify all assigned users and create todos in parallel
+    ...uniqueUserIds.map((userId) =>
+      Promise.all([
+        createNotification({
+          userId,
+          orgId,
+          kind: "CHA_JOB_ASSIGNED",
+          title: `New Job Assigned: ${result.job.jobNumber}`,
+          body: `You are assigned to the new customs clearance job ${result.job.jobNumber} (${data.title}).`,
+          link: `/cha/jobs/${result.job.id}`,
+          priority: "important",
+        }),
+        db.todoTask.create({
+          data: {
+            userId,
+            orgId,
+            title: `Collect documents for Job ${result.job.jobNumber}`,
+            description: `Check the required document slots and upload file copies for job ${result.job.jobNumber}.`,
+            status: "PENDING",
+          },
+        }),
+      ])
+    ),
+  ]);
 
   // Trigger Google Workspace background provisioning
   if (process.env.NODE_ENV !== "test") {
@@ -2509,18 +2510,32 @@ export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: 
       };
     });
 
+  if (warnings.length === 0) return [];
+
+  // Batch fetch all existing DO validity notifications in one query (eliminates N+1)
+  const existingNotifications = await db.notification.findMany({
+    where: {
+      userId: actorId,
+      kind: { in: ["CHA_DO_VALIDITY_EXPIRED", "CHA_DO_VALIDITY_EXPIRING"] },
+      link: { in: warnings.map((w) => `/cha/jobs/${w.jobId}`) },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  // Build lookup: "kind:link" -> latest notification
+  const notifMap = new Map<string, typeof existingNotifications[0]>();
+  for (const notif of existingNotifications) {
+    const key = `${notif.kind}:${notif.link}`;
+    if (!notifMap.has(key)) notifMap.set(key, notif);
+  }
+
   const activeWarnings: typeof warnings = [];
+  const notificationsToCreate: Parameters<typeof createNotification>[0][] = [];
 
   for (const warning of warnings) {
     const kind = warning.severity === "expired" ? "CHA_DO_VALIDITY_EXPIRED" : "CHA_DO_VALIDITY_EXPIRING";
-    const existing = await db.notification.findFirst({
-      where: {
-        userId: actorId,
-        kind,
-        link: `/cha/jobs/${warning.jobId}`,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const link = `/cha/jobs/${warning.jobId}`;
+    const existing = notifMap.get(`${kind}:${link}`);
 
     let shouldCreate = true;
     let isAcknowledgedOrDismissed = false;
@@ -2536,7 +2551,7 @@ export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: 
     }
 
     if (shouldCreate) {
-      await createNotification({
+      notificationsToCreate.push({
         userId: actorId,
         orgId,
         kind,
@@ -2546,7 +2561,7 @@ export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: 
         body: `${warning.customerName} delivery order validity ${
           warning.severity === "expired" ? "expired" : "expires"
         } on ${warning.deliveryOrderValidity.toLocaleDateString("en-IN")}.`,
-        link: `/cha/jobs/${warning.jobId}`,
+        link,
         payload: {
           jobId: warning.jobId,
           jobNumber: warning.jobNumber,
@@ -2563,6 +2578,11 @@ export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: 
     if (!isAcknowledgedOrDismissed) {
       activeWarnings.push(warning);
     }
+  }
+
+  // Create all new notifications in parallel
+  if (notificationsToCreate.length > 0) {
+    await Promise.all(notificationsToCreate.map((n) => createNotification(n)));
   }
 
   return activeWarnings;
@@ -6121,25 +6141,28 @@ async function syncOverdueFilingItems(orgId: string, jobId: string) {
     return;
   }
 
-  for (const response of instance.responses) {
-    await db.filingChecklistResponse.update({
-      where: { id: response.id },
-      data: { overdueLoggedAt: now },
-    });
+  // Batch update all overdue items in one query, then log in parallel
+  await db.filingChecklistResponse.updateMany({
+    where: { id: { in: instance.responses.map((r) => r.id) } },
+    data: { overdueLoggedAt: now },
+  });
 
-    await logChaAudit({
-      orgId,
-      jobId,
-      entityType: "FilingChecklistResponse",
-      entityId: response.id,
-      event: "FILING_CHECKLIST_ITEM_OVERDUE",
-      actorId: instance.job.primaryOwnerId,
-      remarks: `Checklist item "${response.checklistItem.label}" in node "${response.checklistItem.node.name}" is overdue.`,
-      metadata: {
-        dueAt: response.dueAt,
-      },
-    });
-  }
+  await Promise.all(
+    instance.responses.map((response) =>
+      logChaAudit({
+        orgId,
+        jobId,
+        entityType: "FilingChecklistResponse",
+        entityId: response.id,
+        event: "FILING_CHECKLIST_ITEM_OVERDUE",
+        actorId: instance.job.primaryOwnerId,
+        remarks: `Checklist item "${response.checklistItem.label}" in node "${response.checklistItem.node.name}" is overdue.`,
+        metadata: {
+          dueAt: response.dueAt,
+        },
+      })
+    )
+  );
 }
 
 export async function ensureDefaultFilingWorkflows(orgId: string) {
@@ -6417,14 +6440,16 @@ export async function saveFilingWorkflowDraft(
       },
     });
 
+    // Delete dependent records before parent nodes (FK order matters)
     await tx.filingWorkflowEdge.deleteMany({ where: { versionId } });
     await tx.filingChecklistItem.deleteMany({ where: { node: { versionId } } });
     await tx.filingPhotoRequirement.deleteMany({ where: { node: { versionId } } });
     await tx.filingWorkflowNode.deleteMany({ where: { versionId } });
 
-    for (const n of normalizedNodes) {
-      await tx.filingWorkflowNode.create({
-        data: {
+    if (normalizedNodes.length > 0) {
+      // Batch create all nodes in one round trip instead of N sequential creates
+      await tx.filingWorkflowNode.createMany({
+        data: normalizedNodes.map((n: any) => ({
           versionId,
           key: n.key,
           name: n.name,
@@ -6450,49 +6475,56 @@ export async function saveFilingWorkflowDraft(
           requireAllMandatoryChecklistItems: n.requireAllMandatoryChecklistItems !== undefined ? !!n.requireAllMandatoryChecklistItems : true,
           requireMandatoryPhotos: n.requireMandatoryPhotos !== undefined ? !!n.requireMandatoryPhotos : true,
           allowedRoles: n.allowedRoles || ["Admin", "Manager", "Employee"],
-          ...(n.checklistItems?.length
-            ? {
-                checklistItems: {
-                  createMany: {
-                    data: n.checklistItems.map((item: any, idx: number) => ({
-                      label: item.label,
-                      description: item.description,
-                      isMandatory: item.isMandatory !== undefined ? !!item.isMandatory : true,
-                      requiresRemarks: !!item.requiresRemarks,
-                      allowsUpload: !!item.allowsUpload,
-                      minUploads: item.minUploads !== undefined ? item.minUploads : 0,
-                      maxUploads: item.maxUploads !== undefined ? item.maxUploads : null,
-                      acceptedFileTypes: item.acceptedFileTypes || [],
-                      deadlineDuration: item.deadlineDuration !== undefined ? item.deadlineDuration : 2,
-                      deadlineUnit: item.deadlineUnit || "BUSINESS_DAYS",
-                      delayRemarksRequired: item.delayRemarksRequired !== undefined ? !!item.delayRemarksRequired : true,
-                      hasPhotoRequirement: !!item.hasPhotoRequirement,
-                      sortOrder: item.sortOrder !== undefined ? item.sortOrder : idx,
-                      isActive: item.isActive !== undefined ? !!item.isActive : true,
-                    })),
-                  },
-                },
-              }
-            : {}),
-          ...(n.photoRequirements?.length
-            ? {
-                photoRequirements: {
-                  createMany: {
-                    data: n.photoRequirements.map((pr: any) => ({
-                      label: pr.label,
-                      description: pr.description,
-                      isMandatory: pr.isMandatory !== undefined ? !!pr.isMandatory : true,
-                      minPhotos: pr.minPhotos !== undefined ? pr.minPhotos : 1,
-                      maxPhotos: pr.maxPhotos !== undefined ? pr.maxPhotos : null,
-                      acceptedFileTypes: pr.acceptedFileTypes || ["image/jpeg", "image/png", "application/pdf"],
-                      isVisibleInTimeline: pr.isVisibleInTimeline !== undefined ? !!pr.isVisibleInTimeline : true,
-                    })),
-                  },
-                },
-              }
-            : {}),
-        },
+        })),
       });
+
+      // Look up created node IDs by key in one query
+      const createdNodes = await tx.filingWorkflowNode.findMany({
+        where: { versionId },
+        select: { id: true, key: true },
+      });
+      const nodeKeyToId = new Map(createdNodes.map((n) => [n.key, n.id]));
+
+      // Batch create all checklist items across all nodes
+      const allChecklistItems = normalizedNodes.flatMap((n: any) =>
+        (n.checklistItems || []).map((item: any, idx: number) => ({
+          nodeId: nodeKeyToId.get(n.key)!,
+          label: item.label,
+          description: item.description,
+          isMandatory: item.isMandatory !== undefined ? !!item.isMandatory : true,
+          requiresRemarks: !!item.requiresRemarks,
+          allowsUpload: !!item.allowsUpload,
+          minUploads: item.minUploads !== undefined ? item.minUploads : 0,
+          maxUploads: item.maxUploads !== undefined ? item.maxUploads : null,
+          acceptedFileTypes: item.acceptedFileTypes || [],
+          deadlineDuration: item.deadlineDuration !== undefined ? item.deadlineDuration : 2,
+          deadlineUnit: item.deadlineUnit || "BUSINESS_DAYS",
+          delayRemarksRequired: item.delayRemarksRequired !== undefined ? !!item.delayRemarksRequired : true,
+          hasPhotoRequirement: !!item.hasPhotoRequirement,
+          sortOrder: item.sortOrder !== undefined ? item.sortOrder : idx,
+          isActive: item.isActive !== undefined ? !!item.isActive : true,
+        }))
+      );
+      if (allChecklistItems.length > 0) {
+        await tx.filingChecklistItem.createMany({ data: allChecklistItems });
+      }
+
+      // Batch create all photo requirements across all nodes
+      const allPhotoRequirements = normalizedNodes.flatMap((n: any) =>
+        (n.photoRequirements || []).map((pr: any) => ({
+          nodeId: nodeKeyToId.get(n.key)!,
+          label: pr.label,
+          description: pr.description,
+          isMandatory: pr.isMandatory !== undefined ? !!pr.isMandatory : true,
+          minPhotos: pr.minPhotos !== undefined ? pr.minPhotos : 1,
+          maxPhotos: pr.maxPhotos !== undefined ? pr.maxPhotos : null,
+          acceptedFileTypes: pr.acceptedFileTypes || ["image/jpeg", "image/png", "application/pdf"],
+          isVisibleInTimeline: pr.isVisibleInTimeline !== undefined ? !!pr.isVisibleInTimeline : true,
+        }))
+      );
+      if (allPhotoRequirements.length > 0) {
+        await tx.filingPhotoRequirement.createMany({ data: allPhotoRequirements });
+      }
     }
 
     if (normalizedEdges.length) {
@@ -6581,44 +6613,51 @@ export async function publishFilingWorkflow(userId: string, orgId: string, versi
   return result;
 }
 
-export async function getFilingWorkflowInstance(orgId: string, jobId: string): Promise<any> {
-  let instance = await db.filingWorkflowInstance.findUnique({
-    where: { jobId },
+const FILING_WORKFLOW_INSTANCE_INCLUDE = {
+  template: true,
+  version: {
     include: {
-      template: true,
-      version: {
+      nodes: {
+        orderBy: { sortOrder: "asc" as const },
         include: {
-          nodes: {
-            orderBy: { sortOrder: "asc" },
-            include: {
-              checklistItems: { orderBy: { sortOrder: "asc" } },
-              photoRequirements: true,
-            },
-          },
-          edges: true,
+          checklistItems: { orderBy: { sortOrder: "asc" as const } },
+          photoRequirements: true,
         },
       },
-      nodeRuns: {
-        orderBy: { startedAt: "desc" },
-        include: {
-          node: {
-            include: {
-              checklistItems: { orderBy: { sortOrder: "asc" } },
-              photoRequirements: true,
-            },
-          },
-          completedBy: { select: { name: true } },
-          attachments: { include: { uploadedBy: { select: { name: true } }, checklistItem: true } },
-        },
-      },
-      responses: {
-        include: { checklistItem: true },
-      },
-      attachments: {
-        include: { photoRequirement: true, checklistItem: true, uploadedBy: { select: { name: true } } },
-      },
+      edges: true,
     },
-  });
+  },
+  nodeRuns: {
+    orderBy: { startedAt: "desc" as const },
+    include: {
+      node: {
+        include: {
+          checklistItems: { orderBy: { sortOrder: "asc" as const } },
+          photoRequirements: true,
+        },
+      },
+      completedBy: { select: { name: true } },
+      attachments: { include: { uploadedBy: { select: { name: true } }, checklistItem: true } },
+    },
+  },
+  responses: {
+    include: { checklistItem: true },
+  },
+  attachments: {
+    include: { photoRequirement: true, checklistItem: true, uploadedBy: { select: { name: true } } },
+  },
+} as const;
+
+export async function getFilingWorkflowInstance(orgId: string, jobId: string): Promise<any> {
+  // Fetch instance, now, and holiday set in parallel — single DB round trip
+  const [instance, now, holidayIsoSet] = await Promise.all([
+    db.filingWorkflowInstance.findUnique({
+      where: { jobId },
+      include: FILING_WORKFLOW_INSTANCE_INCLUDE,
+    }),
+    getNow(),
+    getHolidayIsoSet(orgId),
+  ]);
 
   if (!instance) {
     const job = await db.chaJob.findFirst({
@@ -6636,51 +6675,8 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
     return null;
   }
 
-  await syncOverdueFilingItems(orgId, jobId);
-  const now = await getNow();
-  const holidayIsoSet = await getHolidayIsoSet(orgId);
-
-  instance = await db.filingWorkflowInstance.findUnique({
-    where: { jobId },
-    include: {
-      template: true,
-      version: {
-        include: {
-          nodes: {
-            orderBy: { sortOrder: "asc" },
-            include: {
-              checklistItems: { orderBy: { sortOrder: "asc" } },
-              photoRequirements: true,
-            },
-          },
-          edges: true,
-        },
-      },
-      nodeRuns: {
-        orderBy: { startedAt: "desc" },
-        include: {
-          node: {
-            include: {
-              checklistItems: { orderBy: { sortOrder: "asc" } },
-              photoRequirements: true,
-            },
-          },
-          completedBy: { select: { name: true } },
-          attachments: { include: { uploadedBy: { select: { name: true } }, checklistItem: true } },
-        },
-      },
-      responses: {
-        include: { checklistItem: true },
-      },
-      attachments: {
-        include: { photoRequirement: true, checklistItem: true, uploadedBy: { select: { name: true } } },
-      },
-    },
-  });
-
-  if (!instance) {
-    return null;
-  }
+  // Fire-and-forget: mark overdue items without blocking the response
+  syncOverdueFilingItems(orgId, jobId).catch(() => {});
 
   const activeNodeRun = instance.nodeRuns.find((run) => run.status === "ACTIVE") ?? null;
   const overdueItems = instance.responses

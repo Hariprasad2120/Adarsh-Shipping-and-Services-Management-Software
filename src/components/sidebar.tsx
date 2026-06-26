@@ -289,6 +289,7 @@ export function Sidebar({
                 alt="Adarsh Shipping & Services"
                 width={160}
                 height={48}
+                priority
                 className="h-auto max-w-40 object-contain"
               />
               <button
@@ -318,6 +319,7 @@ export function Sidebar({
                 alt="Adarsh Shipping & Services"
                 width={160}
                 height={48}
+                priority
                 className={cn(
                   "absolute left-5 top-1/2 h-auto max-w-40 -translate-y-1/2 object-contain transition-opacity duration-300 ease-in-out",
                   isCollapsed ? "pointer-events-none opacity-0" : "opacity-100",
