@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -92,6 +92,7 @@ export function JobWorkspaceClient({
   managers = [],
 }: JobWorkspaceClientProps) {
   const router = useRouter();
+  const [, startRefreshTransition] = useTransition();
   const [activeTab, setActiveTab] = useState<WorkspaceTab>(() => {
     if (initialTab && ["docs", "additionalData", "checklist", "filing", "advances", "expenses", "audit"].includes(initialTab)) {
       return initialTab as WorkspaceTab;
@@ -110,6 +111,7 @@ export function JobWorkspaceClient({
 
   // Submitting States
   const [loading, setLoading] = useState<string | null>(null);
+  const [documentRequirements, setDocumentRequirements] = useState<any[]>(job.documentRequirements);
 
   // Manager Assignment State
   const [isEditingManager, setIsEditingManager] = useState(false);
@@ -118,6 +120,10 @@ export function JobWorkspaceClient({
   useEffect(() => {
     setSelectedManagerId(job.assignedManagerId || "");
   }, [job.assignedManagerId]);
+
+  useEffect(() => {
+    setDocumentRequirements(job.documentRequirements);
+  }, [job.documentRequirements]);
 
   const filteredManagers = useMemo(() => {
     if (!managers) return [];
@@ -433,6 +439,12 @@ export function JobWorkspaceClient({
   );
   const getInternalApproverRole = (approval: any) =>
     approval?.assignedToId === job.assignedManagerId ? "Manager" : "TL";
+  const currentUserName = users.find((user) => user.id === currentUserId)?.name || "You";
+  const refreshJobInBackground = () => {
+    startRefreshTransition(() => {
+      router.refresh();
+    });
+  };
 
   // Document version upload handler
   const handleUploadDoc = async (reqId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -447,12 +459,36 @@ export function JobWorkspaceClient({
       const res = await actions.uploadDocumentVersionAction(job.id, reqId, formData);
 
       if (res.ok) {
-        const versionId = res.data?.id;
+        const version = res.data;
+        const versionId = version?.id;
         if (versionId) {
           setPreviewUrls((prev) => ({ ...prev, [versionId]: localUrl }));
         }
+        setDocumentRequirements((current) =>
+          current.map((req) =>
+            req.id === reqId
+              ? {
+                  ...req,
+                  status: "UPLOADED",
+                  exception: null,
+                  versions: [
+                    {
+                      ...version,
+                      fileKey: version?.fileKey || localUrl,
+                      fileName: version?.fileName || file.name,
+                      mimeType: version?.mimeType || file.type || "application/octet-stream",
+                      sizeBytes: version?.sizeBytes || file.size,
+                      uploadedById: version?.uploadedById || currentUserId,
+                      isCurrent: true,
+                    },
+                    ...req.versions.map((existing: any) => ({ ...existing, isCurrent: false })),
+                  ],
+                }
+              : req,
+          ),
+        );
         toast.success(`Uploaded ${file.name} successfully.`);
-        router.refresh();
+        refreshJobInBackground();
       } else {
         toast.error(res.error || "Upload failed.");
       }
@@ -474,10 +510,26 @@ export function JobWorkspaceClient({
     try {
       const res = await actions.declareDocumentExceptionAction(job.id, reqId, exceptionReason);
       if (res.ok) {
+        setDocumentRequirements((current) =>
+          current.map((req) =>
+            req.id === reqId
+              ? {
+                  ...req,
+                  status: "NOT_AVAILABLE",
+                  exception: {
+                    ...(req.exception || {}),
+                    ...(res.data || {}),
+                    reason: exceptionReason,
+                    user: { name: currentUserName },
+                  },
+                }
+              : req,
+          ),
+        );
         toast.success("Document requirement exempted.");
         setExceptionReason("");
         setActiveDocReqId(null);
-        router.refresh();
+        refreshJobInBackground();
       } else {
         toast.error(res.error || "Failed to waiver requirement.");
       }
@@ -493,10 +545,26 @@ export function JobWorkspaceClient({
     try {
       const res = await actions.markDocumentNotAvailableAction(job.id, reqId);
       if (res.ok) {
+        setDocumentRequirements((current) =>
+          current.map((req) =>
+            req.id === reqId
+              ? {
+                  ...req,
+                  status: "NOT_AVAILABLE",
+                  exception: {
+                    ...(req.exception || {}),
+                    ...(res.data || {}),
+                    reason: "N/A",
+                    user: { name: currentUserName },
+                  },
+                }
+              : req,
+          ),
+        );
         toast.success("Document requirement marked as N/A.");
         setExceptionReason("");
         setActiveDocReqId(null);
-        router.refresh();
+        refreshJobInBackground();
       } else {
         toast.error(res.error || "Failed to mark requirement as N/A.");
       }
@@ -513,8 +581,19 @@ export function JobWorkspaceClient({
     try {
       const res = await actions.removeDocumentExceptionAction(job.id, reqId);
       if (res.ok) {
+        setDocumentRequirements((current) =>
+          current.map((req) =>
+            req.id === reqId
+              ? {
+                  ...req,
+                  status: res.data?.newStatus || (req.versions?.length ? "UPLOADED" : "PENDING"),
+                  exception: null,
+                }
+              : req,
+          ),
+        );
         toast.success("Exemption removed. Requirement is active again.");
-        router.refresh();
+        refreshJobInBackground();
       } else {
         toast.error(res.error || "Failed to remove exemption.");
       }
@@ -534,7 +613,7 @@ export function JobWorkspaceClient({
       if (res.ok) {
         toast.success("Workflow stage advanced to Additional Data successfully.");
         setActiveTab("additionalData");
-        router.refresh();
+        refreshJobInBackground();
       } else {
         setProceedErrors(res.error ? [res.error] : ["Mandatory document requirement gating check failed."]);
         toast.error("Document collection gate not satisfied.");
@@ -1001,6 +1080,8 @@ export function JobWorkspaceClient({
         }
 
         setNodeRemarks("");
+      } else {
+        toast.error(instanceRes.error || "Failed to load filing workflow. Check that a workflow is published in CHA Settings.");
       }
       if (section49Res.ok) {
         setSection49Flag(section49Res.data);
@@ -1846,7 +1927,7 @@ export function JobWorkspaceClient({
               : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
           }`}
         >
-          Documents ({job.documentRequirements.length})
+          Documents ({documentRequirements.length})
         </button>
         <button
           onClick={() => setActiveTab("additionalData")}
@@ -1928,7 +2009,7 @@ export function JobWorkspaceClient({
             {/* Categories and grouped requirement slots */}
             {(() => {
               const groupedRequirements: Record<string, any[]> = {};
-              job.documentRequirements.forEach((req: any) => {
+              documentRequirements.forEach((req: any) => {
                 const categoryName = req.requirementItem?.category?.name || req.category || "General Documents";
                 if (!groupedRequirements[categoryName]) {
                   groupedRequirements[categoryName] = [];
@@ -2819,11 +2900,27 @@ export function JobWorkspaceClient({
 
                 {!filingInstance ? (
                   <div className="card-top-accent rounded-xl bg-surface border border-outline-variant/30 p-6 space-y-4 shadow-sm">
-                    <h4 className="ds-h3 text-on-surface">Filing Blueprint Workflow Initializing</h4>
-                    <p className="text-xs text-on-surface-variant leading-relaxed">
-                      The active published filing workflow starts automatically once the job reaches Filing. If this panel is still empty, refresh the tab after the workflow initializes.
-                    </p>
-                    {loading === "filing-load" ? <p className="text-xs text-on-surface-variant">Loading filing workflow...</p> : null}
+                    <h4 className="ds-h3 text-on-surface">Filing Workflow</h4>
+                    {loading === "filing-load" ? (
+                      <p className="text-xs text-on-surface-variant">Loading filing workflow...</p>
+                    ) : (
+                      <>
+                        <p className="text-xs text-on-surface-variant leading-relaxed">
+                          No active filing workflow instance found. Ensure a workflow is published in{" "}
+                          <a href="/cha/settings/filing-workflows" className="text-[#00cec4] underline underline-offset-2">
+                            CHA Settings → Filing Workflows
+                          </a>
+                          , then start the workflow below.
+                        </p>
+                        <Button
+                          onClick={handleStartFilingWorkflow}
+                          disabled={loading === "filing-start"}
+                          className="text-xs h-9"
+                        >
+                          {loading === "filing-start" ? "Starting..." : "Start Filing Workflow"}
+                        </Button>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">

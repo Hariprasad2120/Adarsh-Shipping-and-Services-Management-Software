@@ -62,7 +62,7 @@ type NodeDraft = {
   name: string;
   description: string;
   category: string;
-  nodeType: "CHECKLIST_NODE" | "START" | "END" | "DECISION" | "SECTION";
+  nodeType: "CHECKLIST_NODE" | "START" | "END" | "DECISION" | "SECTION" | "NOTIFICATION";
   sectionKey: string;
   sectionName: string;
   branchKey: string;
@@ -195,6 +195,9 @@ function buildValidation(nodes: NodeDraft[], edges: EdgeDraft[]) {
     if (node.nodeType === "CHECKLIST_NODE" && activeItems.length === 0) {
       errors.push(`Checklist node ${node.name || node.key} must have at least one active checklist item.`);
     }
+    if (node.nodeType === "NOTIFICATION" && activeItems.length > 0) {
+      warnings.push(`Notification node ${node.name || node.key} ignores checklist items.`);
+    }
     for (const item of activeItems) {
       if (!item.label.trim()) {
         errors.push(`Checklist items in ${node.name || node.key} must have a name.`);
@@ -220,6 +223,15 @@ function buildValidation(nodes: NodeDraft[], edges: EdgeDraft[]) {
       errors.push(`Duplicate edge ${edge.sourceKey} -> ${edge.targetKey}.`);
     }
     edgeSet.add(signature);
+  }
+
+  for (const node of activeNodes) {
+    if (node.nodeType === "NOTIFICATION") {
+      const outgoingCount = edges.filter((edge) => edge.sourceKey === node.key).length;
+      if (outgoingCount > 1) {
+        errors.push(`Notification node ${node.name || node.key} can have at most one outgoing edge.`);
+      }
+    }
   }
 
   if (startNodes.length === 1) {
@@ -372,6 +384,44 @@ function createWorkflowChecklistNode(
     requireMandatoryPhotos: false,
     allowedRoles: [],
     checklistItems: [createChecklistItemDraft(label, 1)],
+    photoRequirements: [],
+  };
+}
+
+function createWorkflowNotificationNode(
+  name: string,
+  key: string,
+  order: number,
+  x: number,
+  y: number,
+): NodeDraft {
+  return {
+    id: createId("node"),
+    key,
+    name,
+    description: "Automatically notifies the job owner, assigned manager, and all assigned users, then moves to the next connected node.",
+    category: "NOTIFICATION",
+    nodeType: "NOTIFICATION",
+    sectionKey: "",
+    sectionName: "",
+    branchKey: "",
+    branchName: "",
+    sortOrder: order,
+    isActive: true,
+    isStart: false,
+    positionX: x,
+    positionY: y,
+    slaDuration: 1,
+    slaUnit: "BUSINESS_DAYS",
+    commentsRequired: false,
+    canBeSkipped: false,
+    canBeRevisited: true,
+    approvalRequired: false,
+    approvalRoles: [],
+    requireAllMandatoryChecklistItems: false,
+    requireMandatoryPhotos: false,
+    allowedRoles: [],
+    checklistItems: [],
     photoRequirements: [],
   };
 }
@@ -851,6 +901,30 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     setNewNodeCategory("CHECKLIST_ITEM");
   };
 
+  const handleAddNotificationNode = () => {
+    if (activeVersion?.isPublished) {
+      toast.error("Published versions are read-only. Fork a new draft first.");
+      return;
+    }
+    const baseName = newNodeName.trim() || "Notification";
+    const keyBase = slugify(baseName);
+    const duplicateCount = nodes.filter((node) => node.key.startsWith(keyBase)).length;
+    const key = duplicateCount === 0 ? keyBase : `${keyBase}_${duplicateCount + 1}`;
+    const node = createWorkflowNotificationNode(
+      baseName,
+      key,
+      nodes.length + 1,
+      120 - Math.round(pan.x / zoom),
+      180 - Math.round(pan.y / zoom),
+    );
+    node.isStart = nodes.every((entry) => !entry.isStart);
+    setNodes((prev) => [...prev, node]);
+    setSelectedNodeId(node.id);
+    setSelectedEdgeId(null);
+    setNewNodeName("");
+    setNewNodeCategory("NOTIFICATION");
+  };
+
   const fitCanvasView = () => {
     if (nodes.length === 0 || !canvasRef.current) {
       setZoom(1);
@@ -1198,6 +1272,10 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                   <Plus size={16} />
                   Add Checklist Node
                 </Button>
+                <Button variant="outline" className="w-full" onClick={handleAddNotificationNode} disabled={activeVersion?.isPublished}>
+                  <Plus size={16} />
+                  Add Notification Node
+                </Button>
               </CardContent>
             </Card>
 
@@ -1456,6 +1534,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1">
                           {node.isStart ? <Badge variant="success">START</Badge> : null}
+                          {node.nodeType === "NOTIFICATION" ? <Badge variant="warning">NOTIFY</Badge> : null}
                           {node.branchName ? <Badge variant="secondary">{node.branchName.toUpperCase()}</Badge> : null}
                           {node.photoRequirements.length > 0 ? <Badge variant="secondary">{node.photoRequirements.length} UPLOAD</Badge> : null}
                           {!node.isActive ? <Badge variant="secondary">INACTIVE</Badge> : null}
@@ -1524,6 +1603,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     >
                       <option value="START">Start</option>
                       <option value="CHECKLIST_NODE">Checklist Node</option>
+                      <option value="NOTIFICATION">Notification</option>
                       <option value="DECISION">Decision</option>
                       <option value="SECTION">Section</option>
                       <option value="END">End</option>
@@ -1642,6 +1722,11 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     Empty means anyone who can access the job can complete this node.
                   </p>
                 </div>
+                {selectedNode.nodeType === "NOTIFICATION" ? (
+                  <div className="rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+                    This node runs automatically. When the workflow enters it, the job owner, assigned manager, and all assigned users receive a notification, then the workflow advances through its single connected path.
+                  </div>
+                ) : null}
               </div>
 
               <div className="ds-form-section space-y-4">
@@ -1664,7 +1749,13 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                   )}
                 </div>
 
-                {selectedNode.nodeType !== "CHECKLIST_NODE" ? (
+                {selectedNode.nodeType === "NOTIFICATION" ? (
+                  <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+                    Notification nodes do not use checklist items. Use the node name as the notification title and the description as the message body.
+                  </div>
+                ) : null}
+
+                {selectedNode.nodeType !== "CHECKLIST_NODE" && selectedNode.nodeType !== "NOTIFICATION" ? (
                   <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
                     Checklist items should be modeled as separate nodes. Use <span className="font-medium text-on-surface">Add Checklist Node</span> for new workflow checks.
                   </div>

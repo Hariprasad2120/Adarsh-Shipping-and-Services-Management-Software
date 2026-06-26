@@ -1424,5 +1424,299 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(audit?.newState).toBe("true");
     expect(audit?.remarks).toContain("Urgent port clearance bond filed");
   }, 30000);
+
+  it("13. should switch active filing templates by scope and refresh untouched job instances", async () => {
+    await chaService.ensureSettingsAndDefaults(org.id);
+    const importJobType = await db.chaJobType.findFirstOrThrow({
+      where: { orgId: org.id, name: "Import Clearance" },
+    });
+
+    await db.filingWorkflowTemplate.deleteMany({ where: { orgId: org.id } });
+
+    const legacyDraft = await chaService.saveFilingWorkflowDraft(ownerUser.id, org.id, null, {
+      name: `Legacy Filing Workflow ${Date.now()}`,
+      description: "Legacy workflow",
+      nodes: [
+        {
+          key: "legacy_start",
+          name: "Legacy Start",
+          description: "Old starting stage",
+          category: "Operations",
+          positionX: 100,
+          positionY: 100,
+          isStart: true,
+          slaDuration: 1,
+          slaUnit: "BUSINESS_DAYS",
+          commentsRequired: false,
+          canBeSkipped: false,
+          canBeRevisited: true,
+          requireAllMandatoryChecklistItems: true,
+          requireMandatoryPhotos: false,
+          allowedRoles: ["Employee"],
+          checklistItems: [
+            { label: "Legacy checklist", isMandatory: true, requiresRemarks: false, allowsUpload: false },
+          ],
+          photoRequirements: [],
+        },
+        {
+          key: "legacy_finish",
+          name: "Legacy Finish",
+          description: "Old final stage",
+          category: "Operations",
+          positionX: 300,
+          positionY: 100,
+          isStart: false,
+          slaDuration: 1,
+          slaUnit: "BUSINESS_DAYS",
+          commentsRequired: false,
+          canBeSkipped: false,
+          canBeRevisited: true,
+          requireAllMandatoryChecklistItems: true,
+          requireMandatoryPhotos: false,
+          allowedRoles: ["Employee"],
+          checklistItems: [],
+          photoRequirements: [],
+        },
+      ],
+      edges: [{ sourceKey: "legacy_start", targetKey: "legacy_finish", label: "Next" }],
+    });
+    const legacyPublished = await chaService.publishFilingWorkflow(ownerUser.id, org.id, legacyDraft.id);
+
+    const existingJob = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: `CHA-FILING-LEGACY-${Date.now()}`,
+      title: "Legacy workflow job",
+      customerId: customer.id,
+      jobTypeId: importJobType.id,
+      branchId: branch.id,
+      priority: "MEDIUM",
+      primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
+      assignments: [{ userId: ownerUser.id, responsibility: "OPERATIONS" }],
+    });
+
+    await db.chaJob.update({
+      where: { id: existingJob.id },
+      data: { stage: "FILING" },
+    });
+
+    const startedLegacyInstance = await chaService.startFilingWorkflow(ownerUser.id, org.id, existingJob.id);
+    expect(startedLegacyInstance.versionId).toBe(legacyPublished.id);
+    expect(startedLegacyInstance.currentNodeKey).toBe("legacy_start");
+
+    const replacementDraft = await chaService.saveFilingWorkflowDraft(ownerUser.id, org.id, null, {
+      name: `Replacement Filing Workflow ${Date.now()}`,
+      description: "Replacement workflow",
+      nodes: [
+        {
+          key: "replacement_start",
+          name: "Replacement Start",
+          description: "New starting stage",
+          category: "Compliance",
+          positionX: 100,
+          positionY: 100,
+          isStart: true,
+          slaDuration: 2,
+          slaUnit: "BUSINESS_DAYS",
+          commentsRequired: false,
+          canBeSkipped: false,
+          canBeRevisited: true,
+          requireAllMandatoryChecklistItems: true,
+          requireMandatoryPhotos: false,
+          allowedRoles: ["Employee"],
+          checklistItems: [
+            { label: "Replacement checklist", isMandatory: true, requiresRemarks: false, allowsUpload: false },
+          ],
+          photoRequirements: [],
+        },
+        {
+          key: "replacement_finish",
+          name: "Replacement Finish",
+          description: "New final stage",
+          category: "Compliance",
+          positionX: 320,
+          positionY: 100,
+          isStart: false,
+          slaDuration: 2,
+          slaUnit: "BUSINESS_DAYS",
+          commentsRequired: false,
+          canBeSkipped: false,
+          canBeRevisited: true,
+          requireAllMandatoryChecklistItems: true,
+          requireMandatoryPhotos: false,
+          allowedRoles: ["Employee"],
+          checklistItems: [],
+          photoRequirements: [],
+        },
+      ],
+      edges: [{ sourceKey: "replacement_start", targetKey: "replacement_finish", label: "Continue" }],
+    });
+    const replacementPublished = await chaService.publishFilingWorkflow(ownerUser.id, org.id, replacementDraft.id);
+
+    const workflows = await chaService.listFilingWorkflows(org.id);
+    const legacyTemplate = workflows.find((workflow: any) => workflow.id === legacyPublished.templateId);
+    const replacementTemplate = workflows.find((workflow: any) => workflow.id === replacementPublished.templateId);
+    expect(legacyTemplate?.isActive).toBe(false);
+    expect(replacementTemplate?.isActive).toBe(true);
+
+    const refreshedInstance = await chaService.getFilingWorkflowInstance(org.id, existingJob.id);
+    expect(refreshedInstance.versionId).toBe(replacementPublished.id);
+    expect(refreshedInstance.currentNodeKey).toBe("replacement_start");
+    expect(refreshedInstance.activeNodeRun?.node?.name).toBe("Replacement Start");
+
+    const newJob = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: `CHA-FILING-NEW-${Date.now()}`,
+      title: "Replacement workflow job",
+      customerId: customer.id,
+      jobTypeId: importJobType.id,
+      branchId: branch.id,
+      priority: "MEDIUM",
+      primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
+      assignments: [{ userId: ownerUser.id, responsibility: "OPERATIONS" }],
+    });
+
+    await db.chaJob.update({
+      where: { id: newJob.id },
+      data: { stage: "FILING" },
+    });
+
+    const startedReplacementInstance = await chaService.startFilingWorkflow(ownerUser.id, org.id, newJob.id);
+    expect(startedReplacementInstance.versionId).toBe(replacementPublished.id);
+    expect(startedReplacementInstance.currentNodeKey).toBe("replacement_start");
+  }, 30000);
+
+  it("14. should auto-send notifications from notification nodes and advance to the next stage", async () => {
+    await chaService.ensureSettingsAndDefaults(org.id);
+    const importJobType = await db.chaJobType.findFirstOrThrow({
+      where: { orgId: org.id, name: "Import Clearance" },
+    });
+
+    await db.filingWorkflowTemplate.deleteMany({ where: { orgId: org.id } });
+
+    const workflowDraft = await chaService.saveFilingWorkflowDraft(ownerUser.id, org.id, null, {
+      name: `Notification Filing Workflow ${Date.now()}`,
+      description: "Workflow with an automatic notification step",
+      nodes: [
+        {
+          key: "start_check",
+          name: "Start Check",
+          description: "Initial filing review",
+          category: "CHECKLIST_ITEM",
+          positionX: 100,
+          positionY: 100,
+          isStart: true,
+          slaDuration: 1,
+          slaUnit: "BUSINESS_DAYS",
+          commentsRequired: false,
+          canBeSkipped: false,
+          canBeRevisited: true,
+          requireAllMandatoryChecklistItems: true,
+          requireMandatoryPhotos: false,
+          allowedRoles: ["Employee", "Manager"],
+          checklistItems: [
+            { label: "Review filing packet", isMandatory: true, requiresRemarks: false, allowsUpload: false },
+          ],
+          photoRequirements: [],
+        },
+        {
+          key: "notify_team",
+          name: "Notify Filing Team",
+          description: "The filing workflow has reached the stakeholder alert point.",
+          category: "NOTIFICATION",
+          nodeType: "NOTIFICATION",
+          positionX: 100,
+          positionY: 280,
+          isStart: false,
+          slaDuration: 1,
+          slaUnit: "BUSINESS_DAYS",
+          commentsRequired: false,
+          canBeSkipped: false,
+          canBeRevisited: true,
+          requireAllMandatoryChecklistItems: false,
+          requireMandatoryPhotos: false,
+          allowedRoles: [],
+          checklistItems: [],
+          photoRequirements: [],
+        },
+        {
+          key: "final_check",
+          name: "Final Check",
+          description: "Continue after notification",
+          category: "CHECKLIST_ITEM",
+          positionX: 100,
+          positionY: 460,
+          isStart: false,
+          slaDuration: 1,
+          slaUnit: "BUSINESS_DAYS",
+          commentsRequired: false,
+          canBeSkipped: false,
+          canBeRevisited: true,
+          requireAllMandatoryChecklistItems: true,
+          requireMandatoryPhotos: false,
+          allowedRoles: ["Employee", "Manager"],
+          checklistItems: [
+            { label: "Finalize customs step", isMandatory: true, requiresRemarks: false, allowsUpload: false },
+          ],
+          photoRequirements: [],
+        },
+      ],
+      edges: [
+        { sourceKey: "start_check", targetKey: "notify_team", label: "Notify stakeholders" },
+        { sourceKey: "notify_team", targetKey: "final_check", label: "Continue filing" },
+      ],
+    });
+
+    await chaService.publishFilingWorkflow(ownerUser.id, org.id, workflowDraft.id);
+
+    const job = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: `CHA-FILING-NOTIFY-${Date.now()}`,
+      title: "Notification node workflow job",
+      customerId: customer.id,
+      jobTypeId: importJobType.id,
+      branchId: branch.id,
+      priority: "MEDIUM",
+      primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
+      assignments: [
+        { userId: ownerUser.id, responsibility: "OPERATIONS" },
+        { userId: otherManagerUser.id, responsibility: "DOCUMENTATION" },
+      ],
+    });
+
+    await db.chaJob.update({
+      where: { id: job.id },
+      data: { stage: "FILING" },
+    });
+
+    const startedInstance = await chaService.startFilingWorkflow(ownerUser.id, org.id, job.id);
+    const startRun = startedInstance.nodeRuns.find((run: any) => run.status === "ACTIVE");
+    expect(startRun?.nodeKey).toBe("start_check");
+
+    await chaService.completeFilingNode(ownerUser.id, org.id, job.id, startRun.id, {
+      remarks: "Initial filing review done",
+      checklistItemResponses: [
+        { checklistItemId: startRun.node.checklistItems[0].id, isChecked: true },
+      ],
+      nextNodeKey: "notify_team",
+    });
+
+    const progressedInstance = await chaService.getFilingWorkflowInstance(org.id, job.id);
+    expect(progressedInstance.currentNodeKey).toBe("final_check");
+    expect(progressedInstance.activeNodeRun?.nodeKey).toBe("final_check");
+
+    const notifications = await db.notification.findMany({
+      where: {
+        orgId: org.id,
+        kind: "CHA_FILING_WORKFLOW_NODE",
+        link: `/cha/jobs/${job.id}`,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    expect(notifications.map((notification) => notification.userId).sort()).toEqual(
+      [ownerUser.id, managerUser.id, otherManagerUser.id].sort(),
+    );
+    expect(notifications.every((notification) => notification.title === "Notify Filing Team")).toBe(true);
+  }, 30000);
 });
 

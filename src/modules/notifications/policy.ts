@@ -320,6 +320,18 @@ export const NOTIFICATION_POLICIES: Record<string, NotificationPolicy> = {
     emailByDefault: true,
     labels: { open: "File Bill", acknowledge: "Acknowledge" },
   },
+  CHA_FILING_WORKFLOW_NODE: {
+    source: "CHA",
+    variant: "info",
+    appearance: "light",
+    priority: "important",
+    requiresAck: false,
+    resendable: true,
+    allowDismiss: true,
+    autoFadeMs: null,
+    emailByDefault: false,
+    labels: { open: "Open Job" },
+  },
   CHA_EXPENSE_SUBMITTED: {
     source: "CHA",
     variant: "info",

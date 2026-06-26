@@ -21,6 +21,7 @@ const DEFAULT_CHA_SHIPMENT_TYPES = ["Air", "Sea"];
 const DEFAULT_IMPORT_MANIFEST_HELP = "Enter the Import General Manifest number.";
 const DEFAULT_EXPORT_MANIFEST_HELP = "Enter the Export General Manifest number.";
 const LEGACY_MANIFEST_REQUIREMENT: ChaManifestRequirement = "BOTH";
+const FILING_WORKFLOW_NOTIFICATION_KIND = "CHA_FILING_WORKFLOW_NODE";
 
 type ChaMovementDirection = "IMPORT" | "EXPORT" | "BOTH" | "OTHER";
 type ChaManifestRequirement = "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM";
@@ -1472,7 +1473,7 @@ export async function upsertBranchNumberingRules(
 ) {
   await ensureSettingsAndDefaults(orgId);
 
-  return db.$transaction(async (tx) => {
+  const result = await db.$transaction(async (tx) => {
     for (const rule of rules) {
       const prefix = rule.prefix.trim();
       if (!prefix) {
@@ -1516,6 +1517,8 @@ export async function upsertBranchNumberingRules(
       orderBy: { branch: { name: "asc" } },
     });
   });
+
+  return result;
 }
 
 export async function createShipmentType(orgId: string, name: string) {
@@ -5852,6 +5855,7 @@ function expandLegacyChecklistNodes(nodes: any[], edges: any[]) {
     const shouldExpand =
       normalizedNode.nodeType !== "START" &&
       normalizedNode.nodeType !== "END" &&
+      normalizedNode.nodeType !== "NOTIFICATION" &&
       activeChecklistItems.length > 1;
 
     if (!shouldExpand) {
@@ -6010,12 +6014,21 @@ function validateFilingWorkflowDraft(data: { nodes: any[]; edges: any[] }) {
   }
 
   for (const node of activeNodes) {
+    if ((node.nodeType ?? "CHECKLIST_NODE") === "NOTIFICATION") {
+      const outgoingCount = (data.edges || []).filter((edge) => edge.sourceKey === node.key).length;
+      if (outgoingCount > 1) {
+        errors.push(`Notification node "${node.name || node.key}" can have at most one outgoing edge because it advances automatically.`);
+      }
+    }
     if (!node.name || !String(node.name).trim()) {
       errors.push(`Node "${node.key || "untitled"}" must have a name.`);
     }
     const checklistItems = (node.checklistItems || []).filter((item: any) => item.isActive !== false);
     if ((node.nodeType ?? "CHECKLIST_NODE") === "CHECKLIST_NODE" && checklistItems.length === 0) {
       errors.push(`Checklist node "${node.name || node.key}" must have at least one active checklist item.`);
+    }
+    if ((node.nodeType ?? "CHECKLIST_NODE") === "NOTIFICATION" && checklistItems.length > 0) {
+      warnings.push(`Notification node "${node.name || node.key}" ignores checklist items. Remove them for clarity.`);
     }
     for (const item of checklistItems) {
       if (!item.label || !String(item.label).trim()) {
@@ -6129,6 +6142,211 @@ async function createFilingNodeRunWithResponses(
   }
 
   return nodeRun;
+}
+
+async function notifyConcernedUsersForFilingNode(params: {
+  orgId: string;
+  jobId: string;
+  nodeRunId: string;
+  nodeKey: string;
+  nodeName: string;
+  nodeDescription?: string | null;
+  startedAt: Date;
+}) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: { id: params.jobId, orgId: params.orgId, deletedAt: null },
+    select: {
+      id: true,
+      jobNumber: true,
+      title: true,
+      primaryOwnerId: true,
+      assignedManagerId: true,
+      assignments: {
+        select: { userId: true },
+      },
+    },
+  });
+
+  const recipientIds = Array.from(new Set([
+    job.primaryOwnerId,
+    job.assignedManagerId,
+    ...job.assignments.map((assignment) => assignment.userId),
+  ].filter((value): value is string => typeof value === "string" && value.length > 0)));
+
+  if (recipientIds.length === 0) {
+    return;
+  }
+
+  const title = params.nodeName.trim() || `Filing workflow notification for ${job.jobNumber || "job"}`;
+  const body = [
+    params.nodeDescription?.trim(),
+    job.jobNumber ? `Job: ${job.jobNumber}` : null,
+    job.title ? `Title: ${job.title}` : null,
+  ].filter(Boolean).join("\n");
+  const link = `/cha/jobs/${params.jobId}`;
+
+  await Promise.all(recipientIds.map(async (userId) => {
+    const existing = await db.notification.findFirst({
+      where: {
+        orgId: params.orgId,
+        userId,
+        kind: FILING_WORKFLOW_NOTIFICATION_KIND,
+        title,
+        link,
+        createdAt: { gte: params.startedAt },
+      },
+      select: { id: true },
+    });
+
+    if (existing) {
+      return;
+    }
+
+    await createNotification({
+      userId,
+      orgId: params.orgId,
+      actorId: job.primaryOwnerId,
+      kind: FILING_WORKFLOW_NOTIFICATION_KIND,
+      title,
+      body: body || `Workflow notification triggered for ${job.jobNumber || "this filing job"}.`,
+      link,
+      payload: {
+        jobId: params.jobId,
+        nodeKey: params.nodeKey,
+        nodeRunId: params.nodeRunId,
+      },
+    });
+  }));
+}
+
+async function resolveNotificationWorkflowNodes(orgId: string, jobId: string) {
+  while (true) {
+    const instance = await db.filingWorkflowInstance.findUnique({
+      where: { jobId },
+      include: FILING_WORKFLOW_INSTANCE_INCLUDE,
+    });
+
+    if (!instance) {
+      return null;
+    }
+
+    const activeNodeRun = instance.nodeRuns.find((run) => run.status === "ACTIVE") ?? null;
+    if (!activeNodeRun || activeNodeRun.node.nodeType !== "NOTIFICATION") {
+      return instance;
+    }
+
+    const outgoingEdges = instance.version.edges.filter((edge) => edge.sourceKey === activeNodeRun.nodeKey);
+    if (outgoingEdges.length > 1) {
+      throw new Error(`Notification node "${activeNodeRun.node.name}" has multiple outgoing transitions. Keep it to one automatic continuation.`);
+    }
+
+    const nextNodeKey = outgoingEdges[0]?.targetKey ?? null;
+    await notifyConcernedUsersForFilingNode({
+      orgId,
+      jobId,
+      nodeRunId: activeNodeRun.id,
+      nodeKey: activeNodeRun.nodeKey,
+      nodeName: activeNodeRun.node.name,
+      nodeDescription: activeNodeRun.node.description,
+      startedAt: activeNodeRun.startedAt,
+    });
+
+    await db.$transaction(async (tx) => {
+      const now = await getNow();
+
+      await tx.filingNodeRun.update({
+        where: { id: activeNodeRun.id },
+        data: {
+          status: "COMPLETED",
+          completedAt: now,
+          remarks: activeNodeRun.remarks || "Notification dispatched automatically.",
+        },
+      });
+
+      if (nextNodeKey) {
+        const targetNode = instance.version.nodes.find((node) => node.key === nextNodeKey && node.isActive);
+        if (!targetNode) {
+          throw new Error(`Notification node "${activeNodeRun.node.name}" points to a missing or inactive next node.`);
+        }
+
+        const nextStartedAt = await getNow();
+        const nextSlaDueDate = await calculateSlaDueDate(nextStartedAt, targetNode.slaDuration, targetNode.slaUnit, orgId);
+        const nextNodeRun = await createFilingNodeRunWithResponses(tx, {
+          instanceId: instance.id,
+          node: {
+            ...targetNode,
+            checklistItems: await tx.filingChecklistItem.findMany({
+              where: { nodeId: targetNode.id },
+            }),
+          },
+          startedAt: nextStartedAt,
+          orgId,
+        });
+
+        await tx.filingNodeRun.update({
+          where: { id: nextNodeRun.id },
+          data: { slaDueDate: nextSlaDueDate },
+        });
+
+        await tx.filingWorkflowInstance.update({
+          where: { id: instance.id },
+          data: { currentNodeKey: nextNodeKey },
+        });
+
+        await tx.chaAuditLog.create({
+          data: {
+            orgId,
+            jobId,
+            entityType: "FilingWorkflowInstance",
+            entityId: instance.id,
+            event: "FILING_NOTIFICATION_NODE_TRIGGERED",
+            actorId: "system",
+            prevState: activeNodeRun.nodeKey,
+            newState: nextNodeKey,
+            remarks: `Notification node "${activeNodeRun.node.name}" auto-notified the concerned users and advanced the workflow.`,
+          },
+        });
+
+        return;
+      }
+
+      await tx.filingWorkflowInstance.update({
+        where: { id: instance.id },
+        data: { status: "COMPLETED", currentNodeKey: null },
+      });
+
+      await tx.chaJob.update({
+        where: { id: jobId },
+        data: { stage: "FILED" },
+      });
+
+      const existingFiling = await tx.chaFiling.findUnique({ where: { jobId } });
+      if (existingFiling) {
+        await tx.chaFiling.update({
+          where: { id: existingFiling.id },
+          data: {
+            status: "FILED",
+            actualFilingDate: now,
+            filingRef: existingFiling.filingRef || `BLUEPRINT-${instance.id.substring(0, 8).toUpperCase()}`,
+          },
+        });
+      }
+
+      await tx.chaAuditLog.create({
+        data: {
+          orgId,
+          jobId,
+          entityType: "FilingWorkflowInstance",
+          entityId: instance.id,
+          event: "FILING_NOTIFICATION_NODE_TRIGGERED",
+          actorId: "system",
+          prevState: activeNodeRun.nodeKey,
+          newState: "FILED",
+          remarks: `Notification node "${activeNodeRun.node.name}" auto-notified the concerned users and completed the workflow.`,
+        },
+      });
+    });
+  }
 }
 
 async function syncOverdueFilingItems(orgId: string, jobId: string) {
@@ -6604,6 +6822,20 @@ export async function publishFilingWorkflow(userId: string, orgId: string, versi
   }
 
   const result = await db.$transaction(async (tx) => {
+    await tx.filingWorkflowTemplate.updateMany({
+      where: {
+        orgId,
+        clearanceTypeId: version.template.clearanceTypeId,
+        id: { not: version.templateId },
+      },
+      data: { isActive: false },
+    });
+
+    await tx.filingWorkflowTemplate.update({
+      where: { id: version.templateId },
+      data: { isActive: true },
+    });
+
     await tx.filingWorkflowVersion.updateMany({
       where: { templateId: version.templateId, isActive: true },
       data: { isActive: false },
@@ -6628,6 +6860,92 @@ export async function publishFilingWorkflow(userId: string, orgId: string, versi
   });
 
   return result;
+}
+
+async function findActivePublishedFilingWorkflowVersionForJob(orgId: string, jobTypeId: string | null) {
+  const include = {
+    template: {
+      include: {
+        clearanceType: {
+          select: { id: true, name: true },
+        },
+      },
+    },
+    nodes: {
+      include: {
+        checklistItems: true,
+        photoRequirements: true,
+      },
+    },
+    edges: true,
+  } as const;
+
+  if (jobTypeId) {
+    const scopedVersion = await db.filingWorkflowVersion.findFirst({
+      where: {
+        isActive: true,
+        isPublished: true,
+        template: {
+          orgId,
+          isActive: true,
+          clearanceTypeId: jobTypeId,
+        },
+      },
+      include,
+      orderBy: [{ versionNumber: "desc" }, { updatedAt: "desc" }],
+    });
+
+    if (scopedVersion) {
+      return scopedVersion;
+    }
+  }
+
+  return db.filingWorkflowVersion.findFirst({
+    where: {
+      isActive: true,
+      isPublished: true,
+      template: {
+        orgId,
+        isActive: true,
+        clearanceTypeId: null,
+      },
+    },
+    include,
+    orderBy: [{ versionNumber: "desc" }, { updatedAt: "desc" }],
+  });
+}
+
+function hasMaterialFilingWorkflowProgress(instance: {
+  status: string;
+  nodeRuns: Array<{ status: string }>;
+  responses: Array<{
+    isChecked: boolean;
+    remarks?: string | null;
+    fileKey?: string | null;
+    delayRemarks?: string | null;
+    completedAt?: Date | null;
+  }>;
+  attachments: Array<unknown>;
+}) {
+  if (instance.status !== "ACTIVE") {
+    return true;
+  }
+
+  if (instance.nodeRuns.some((run) => run.status === "COMPLETED")) {
+    return true;
+  }
+
+  if (instance.attachments.length > 0) {
+    return true;
+  }
+
+  return instance.responses.some((response) =>
+    response.isChecked ||
+    Boolean(response.completedAt) ||
+    Boolean(response.fileKey) ||
+    Boolean(response.remarks?.trim()) ||
+    Boolean(response.delayRemarks?.trim()),
+  );
 }
 
 const FILING_WORKFLOW_INSTANCE_INCLUDE = {
@@ -6665,7 +6983,77 @@ const FILING_WORKFLOW_INSTANCE_INCLUDE = {
   },
 } as const;
 
+async function refreshFilingWorkflowInstanceToLatestVersion(
+  orgId: string,
+  jobId: string,
+  instance: Prisma.FilingWorkflowInstanceGetPayload<{ include: typeof FILING_WORKFLOW_INSTANCE_INCLUDE }>,
+  latestVersion: NonNullable<Awaited<ReturnType<typeof findActivePublishedFilingWorkflowVersionForJob>>>,
+) {
+  if (instance.versionId === latestVersion.id) {
+    return instance;
+  }
+
+  if (hasMaterialFilingWorkflowProgress(instance)) {
+    return instance;
+  }
+
+  const startNode = latestVersion.nodes.find((node) => node.isStart && node.isActive);
+  if (!startNode) {
+    return instance;
+  }
+
+  await db.$transaction(async (tx) => {
+    await tx.filingAttachment.deleteMany({ where: { instanceId: instance.id } });
+    await tx.filingChecklistResponse.deleteMany({ where: { instanceId: instance.id } });
+    await tx.filingNodeRun.deleteMany({ where: { instanceId: instance.id } });
+
+    await tx.filingWorkflowInstance.update({
+      where: { id: instance.id },
+      data: {
+        templateId: latestVersion.templateId,
+        versionId: latestVersion.id,
+        currentNodeKey: startNode.key,
+        status: "ACTIVE",
+      },
+    });
+
+    const restartedAt = await getNow();
+    const slaDueDate = await calculateSlaDueDate(restartedAt, startNode.slaDuration, startNode.slaUnit, orgId);
+    const nodeRun = await createFilingNodeRunWithResponses(tx, {
+      instanceId: instance.id,
+      node: startNode,
+      startedAt: restartedAt,
+      orgId,
+    });
+    await tx.filingNodeRun.update({
+      where: { id: nodeRun.id },
+      data: { slaDueDate },
+    });
+
+    await tx.chaAuditLog.create({
+      data: {
+        orgId,
+        jobId,
+        entityType: "FilingWorkflowInstance",
+        entityId: instance.id,
+        event: "FILING_WORKFLOW_TEMPLATE_REFRESHED",
+        actorId: "system",
+        prevState: instance.versionId,
+        newState: latestVersion.id,
+        remarks: `Workflow instance refreshed to latest published template: ${latestVersion.template.name}.`,
+      },
+    });
+  });
+
+  return db.filingWorkflowInstance.findUniqueOrThrow({
+    where: { jobId },
+    include: FILING_WORKFLOW_INSTANCE_INCLUDE,
+  });
+}
+
 export async function getFilingWorkflowInstance(orgId: string, jobId: string): Promise<any> {
+  await resolveNotificationWorkflowNodes(orgId, jobId);
+
   // Fetch instance, now, and holiday set in parallel — single DB round trip
   const [instance, now, holidayIsoSet] = await Promise.all([
     db.filingWorkflowInstance.findUnique({
@@ -6692,11 +7080,24 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
     return null;
   }
 
+  const job = await db.chaJob.findFirst({
+    where: { id: jobId, orgId, deletedAt: null },
+    select: { jobTypeId: true },
+  });
+
+  let resolvedInstance = instance;
+  if (job) {
+    const latestVersion = await findActivePublishedFilingWorkflowVersionForJob(orgId, job.jobTypeId);
+    if (latestVersion) {
+      resolvedInstance = await refreshFilingWorkflowInstanceToLatestVersion(orgId, jobId, instance, latestVersion);
+    }
+  }
+
   // Fire-and-forget: mark overdue items without blocking the response
   syncOverdueFilingItems(orgId, jobId).catch(() => {});
 
-  const activeNodeRun = instance.nodeRuns.find((run) => run.status === "ACTIVE") ?? null;
-  const overdueItems = instance.responses
+  const activeNodeRun = resolvedInstance.nodeRuns.find((run) => run.status === "ACTIVE") ?? null;
+  const overdueItems = resolvedInstance.responses
     .filter((response) => response.nodeRunId === activeNodeRun?.id && !response.isChecked && response.dueAt && response.dueAt.getTime() < now.getTime())
     .map((response) => ({
       checklistItemId: response.checklistItemId,
@@ -6708,7 +7109,7 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
     }));
 
   return {
-    ...instance,
+    ...resolvedInstance,
     activeNodeRun,
     overdueItems,
     overdueCount: overdueItems.length,
@@ -6729,73 +7130,11 @@ export async function startFilingWorkflow(userId: string, orgId: string, jobId: 
     select: { jobTypeId: true },
   });
 
-  let activeVersion = (await db.filingWorkflowVersion.findMany({
-    where: {
-      template: {
-        orgId,
-        OR: [
-          { clearanceTypeId: job.jobTypeId },
-          { clearanceTypeId: null },
-        ],
-      },
-      isActive: true,
-      isPublished: true,
-    },
-    include: {
-      template: {
-        include: {
-          clearanceType: {
-            select: { id: true, name: true },
-          },
-        },
-      },
-      nodes: {
-        include: {
-          checklistItems: true,
-        },
-      },
-    },
-    orderBy: [{ versionNumber: "desc" }],
-  })).sort((left, right) => {
-    const leftScoped = left.template.clearanceTypeId === job.jobTypeId ? 1 : 0;
-    const rightScoped = right.template.clearanceTypeId === job.jobTypeId ? 1 : 0;
-    return rightScoped - leftScoped;
-  })[0];
+  let activeVersion = await findActivePublishedFilingWorkflowVersionForJob(orgId, job.jobTypeId);
 
   if (!activeVersion) {
     await ensureDefaultFilingWorkflows(orgId);
-    activeVersion = (await db.filingWorkflowVersion.findMany({
-      where: {
-        template: {
-          orgId,
-          OR: [
-            { clearanceTypeId: job.jobTypeId },
-            { clearanceTypeId: null },
-          ],
-        },
-        isActive: true,
-        isPublished: true,
-      },
-      include: {
-        template: {
-          include: {
-            clearanceType: {
-              select: { id: true, name: true },
-            },
-          },
-        },
-        nodes: {
-          include: {
-            checklistItems: true,
-          },
-        },
-      },
-      orderBy: [{ versionNumber: "desc" }],
-    })).sort((left, right) => {
-      const leftScoped = left.template.clearanceTypeId === job.jobTypeId ? 1 : 0;
-      const rightScoped = right.template.clearanceTypeId === job.jobTypeId ? 1 : 0;
-      return rightScoped - leftScoped;
-    })[0] ?? null;
+    activeVersion = await findActivePublishedFilingWorkflowVersionForJob(orgId, job.jobTypeId);
   }
 
   if (!activeVersion) {
@@ -6880,7 +7219,7 @@ export async function completeFilingNode(
 
   await assertCanAccessFiling(userId, job);
 
-  return db.$transaction(async (tx) => {
+  const result = await db.$transaction(async (tx) => {
     const nodeRun = await tx.filingNodeRun.findUniqueOrThrow({
       where: { id: nodeRunId },
       include: {
@@ -7162,6 +7501,9 @@ export async function completeFilingNode(
 
     return true;
   });
+
+  await getFilingWorkflowInstance(orgId, jobId);
+  return result;
 }
 
 export async function toggleFilingSection49(
