@@ -25,7 +25,6 @@ const CHA_BLOCKED_ROUTE_PREFIXES = [
 const CHA_BLOCKED_API_PREFIXES = [
   "/api/google-chat",
   "/api/hrms",
-  "/api/mona",
   "/api/recruit",
 ];
 
