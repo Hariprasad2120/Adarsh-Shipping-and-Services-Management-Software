@@ -761,6 +761,21 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     };
   };
 
+  const applyTemplateData = (data: any) => {
+    const latest = data.versions?.[0];
+    const expanded = expandChecklistNodesForCanvas(latest?.nodes || [], latest?.edges || []);
+    const arrangedNodes = expanded.didExpand ? autoArrangeNodes(expanded.nodes, expanded.edges) : expanded.nodes;
+    setSelectedClearanceTypeId(data.clearanceType?.id || data.clearanceTypeId || "");
+    setActiveVersion(latest || null);
+    setNodes(arrangedNodes);
+    setEdges(expanded.edges);
+    setSelectedNodeId(null);
+    setSelectedEdgeId(null);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+    setLoadedSnapshot(serializeWorkflowSnapshot(arrangedNodes, expanded.edges));
+  };
+
   const loadTemplateDetails = async (templateId: string) => {
     const result = await actions.getFilingWorkflowDetailsAction(templateId);
     if (!result.ok) {
@@ -771,18 +786,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       toast.error("Failed to load workflow details.");
       return;
     }
-    const latest = result.data.versions?.[0];
-    const expanded = expandChecklistNodesForCanvas(latest?.nodes || [], latest?.edges || []);
-    const arrangedNodes = expanded.didExpand ? autoArrangeNodes(expanded.nodes, expanded.edges) : expanded.nodes;
-    setSelectedClearanceTypeId(result.data.clearanceType?.id || result.data.clearanceTypeId || "");
-    setActiveVersion(latest || null);
-    setNodes(arrangedNodes);
-    setEdges(expanded.edges);
-    setSelectedNodeId(null);
-    setSelectedEdgeId(null);
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-    setLoadedSnapshot(serializeWorkflowSnapshot(arrangedNodes, expanded.edges));
+    applyTemplateData(result.data);
   };
 
   useEffect(() => {
@@ -1081,7 +1085,12 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       return false;
     }
     toast.success("Draft saved.");
-    await loadTemplateDetails(selectedTemplateId);
+    // Use data returned by save action directly — avoids a second round trip
+    if (result.data) {
+      applyTemplateData(result.data);
+    } else {
+      await loadTemplateDetails(selectedTemplateId);
+    }
     return true;
   };
 
@@ -1109,7 +1118,9 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       return;
     }
     toast.success("Connector deleted.");
-    if (selectedTemplateId) {
+    if (result.data) {
+      applyTemplateData(result.data);
+    } else if (selectedTemplateId) {
       await loadTemplateDetails(selectedTemplateId);
     }
   };
@@ -1136,8 +1147,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     if (!saved) {
       return;
     }
-    const latest = await actions.getFilingWorkflowDetailsAction(selectedTemplateId!);
-    const versionId = latest.ok ? latest.data?.versions?.[0]?.id : activeVersion.id;
+    // activeVersion is updated by saveDraft -> applyTemplateData; use it directly
+    const versionId = activeVersion.id;
     const result = await actions.publishFilingWorkflowAction(versionId);
     if (!result.ok) {
       toast.error(result.error || "Failed to publish workflow.");
@@ -1167,7 +1178,11 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       return;
     }
     toast.success("New draft created from published version.");
-    await loadTemplateDetails(selectedTemplateId);
+    if (result.data) {
+      applyTemplateData(result.data);
+    } else {
+      await loadTemplateDetails(selectedTemplateId);
+    }
   };
 
   return (

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-28T15:46:14.204Z",
+  "generatedAt": "2026-06-28T16:13:51.178Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -9409,6 +9409,7 @@
         "upsertAdditionalData",
         "proceedAdditionalDataStage",
         "listDeliveryOrderValidityWarnings",
+        "createDeliveryOrderNotifications",
         "acknowledgeDeliveryOrderValidityWarning",
         "uploadChecklistFile",
         "submitChecklistInternalDecision",

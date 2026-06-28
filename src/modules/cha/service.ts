@@ -2465,8 +2465,20 @@ export async function proceedAdditionalDataStage(actorId: string, orgId: string,
   return result;
 }
 
-export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: string) {
-  // Run getNow + both permission checks in parallel — neither depends on the other
+type DoValidityWarning = {
+  jobId: string;
+  jobNumber: string;
+  title: string;
+  customerName: string;
+  stage: string;
+  deliveryOrderValidity: Date;
+  daysUntilExpiry: number;
+  severity: "expired" | "expiring";
+};
+
+// Read-only: returns warnings without creating any notifications.
+// Notification creation runs in a separate background job (createDeliveryOrderNotifications).
+export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: string): Promise<DoValidityWarning[]> {
   const [now, canViewAll, canViewIndicator] = await Promise.all([
     getNow(),
     can(actorId, "cha.job.view_all"),
@@ -2509,14 +2521,14 @@ export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: 
     take: 20,
   });
 
-  const warnings = jobs
+  return jobs
     .filter((job) => job.additionalData?.deliveryOrderValidity)
     .map((job) => {
       const validity = job.additionalData!.deliveryOrderValidity!;
       const validityDay = new Date(validity);
       validityDay.setHours(0, 0, 0, 0);
       const daysUntilExpiry = Math.ceil((validityDay.getTime() - today.getTime()) / 86_400_000);
-      const severity = daysUntilExpiry < 0 ? "expired" : "expiring";
+      const severity: "expired" | "expiring" = daysUntilExpiry < 0 ? "expired" : "expiring";
 
       return {
         jobId: job.id,
@@ -2529,10 +2541,14 @@ export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: 
         severity,
       };
     });
+}
 
-  if (warnings.length === 0) return [];
+// Separate mutation: creates/deduplicates DO validity notifications.
+// Call from a background scheduler, not from polling GET endpoints.
+export async function createDeliveryOrderNotifications(actorId: string, orgId: string): Promise<void> {
+  const warnings = await listDeliveryOrderValidityWarnings(actorId, orgId);
+  if (warnings.length === 0) return;
 
-  // Batch fetch all existing DO validity notifications in one query (eliminates N+1)
   const existingNotifications = await db.notification.findMany({
     where: {
       userId: actorId,
@@ -2542,14 +2558,12 @@ export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: 
     orderBy: { createdAt: "desc" },
   });
 
-  // Build lookup: "kind:link" -> latest notification
   const notifMap = new Map<string, typeof existingNotifications[0]>();
   for (const notif of existingNotifications) {
     const key = `${notif.kind}:${notif.link}`;
     if (!notifMap.has(key)) notifMap.set(key, notif);
   }
 
-  const activeWarnings: typeof warnings = [];
   const notificationsToCreate: Parameters<typeof createNotification>[0][] = [];
 
   for (const warning of warnings) {
@@ -2558,15 +2572,10 @@ export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: 
     const existing = notifMap.get(`${kind}:${link}`);
 
     let shouldCreate = true;
-    let isAcknowledgedOrDismissed = false;
-
     if (existing) {
       const payload = existing.payload as Record<string, any> | null;
       if (payload && payload.deliveryOrderValidity === warning.deliveryOrderValidity.toISOString()) {
         shouldCreate = false;
-        if (existing.dismissedAt !== null || existing.acknowledgedAt !== null) {
-          isAcknowledgedOrDismissed = true;
-        }
       }
     }
 
@@ -2594,18 +2603,11 @@ export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: 
         priority: "important",
       });
     }
-
-    if (!isAcknowledgedOrDismissed) {
-      activeWarnings.push(warning);
-    }
   }
 
-  // Create all new notifications in parallel
   if (notificationsToCreate.length > 0) {
     await Promise.all(notificationsToCreate.map((n) => createNotification(n)));
   }
-
-  return activeWarnings;
 }
 
 export async function acknowledgeDeliveryOrderValidityWarning(
@@ -6541,17 +6543,18 @@ export async function listFilingWorkflows(orgId: string) {
           name: true,
         },
       },
+      // Only the latest version — callers that need full node/edge data call getFilingWorkflowDetails
       versions: {
         orderBy: { versionNumber: "desc" },
-        include: {
-          nodes: {
-            orderBy: { sortOrder: "asc" },
-            include: {
-              checklistItems: { orderBy: { sortOrder: "asc" } },
-              photoRequirements: true,
-            },
-          },
-          edges: true,
+        take: 1,
+        select: {
+          id: true,
+          versionNumber: true,
+          isPublished: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+          createdById: true,
         },
       },
     },
@@ -6569,8 +6572,10 @@ export async function getFilingWorkflowDetails(userId: string, orgId: string, te
           name: true,
         },
       },
+      // Only the latest version with full node/edge data
       versions: {
         orderBy: { versionNumber: "desc" },
+        take: 1,
         include: {
           nodes: {
             orderBy: { sortOrder: "asc" },
@@ -6783,7 +6788,27 @@ export async function saveFilingWorkflowDraft(
     remarks: `Saved draft version ${draftVersion.versionNumber} for template ${template.name}`,
   });
 
-  return draftVersion;
+  // Return full detail so caller doesn't need a separate getFilingWorkflowDetails round trip
+  return db.filingWorkflowTemplate.findFirstOrThrow({
+    where: { id: template.id, orgId },
+    include: {
+      clearanceType: { select: { id: true, name: true } },
+      versions: {
+        orderBy: { versionNumber: "desc" },
+        take: 1,
+        include: {
+          nodes: {
+            orderBy: { sortOrder: "asc" },
+            include: {
+              checklistItems: { orderBy: { sortOrder: "asc" } },
+              photoRequirements: true,
+            },
+          },
+          edges: true,
+        },
+      },
+    },
+  });
 }
 
 export async function publishFilingWorkflow(userId: string, orgId: string, versionId: string) {

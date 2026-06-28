@@ -1122,7 +1122,9 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     const workflows = await chaService.listFilingWorkflows(org.id);
     expect(workflows).toHaveLength(1);
 
-    const activeVersion = workflows[0].versions.find((version: any) => version.isActive);
+    // listFilingWorkflows returns summary only; fetch full details for node/edge assertions
+    const details = await chaService.getFilingWorkflowDetails("system", org.id, workflows[0].id);
+    const activeVersion = details.versions.find((version: any) => version.isActive);
     expect(activeVersion).toBeDefined();
     if (!activeVersion) {
       throw new Error("Active filing workflow version was not created.");
@@ -1249,10 +1251,11 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     });
 
     expect(saveRes).toBeDefined();
-    expect(saveRes.isPublished).toBe(false);
+    const savedDraftVersion = saveRes.versions?.[0];
+    expect(savedDraftVersion?.isPublished).toBe(false);
 
     // B. Publish version
-    const publishRes = await chaService.publishFilingWorkflow(ownerUser.id, org.id, saveRes.id);
+    const publishRes = await chaService.publishFilingWorkflow(ownerUser.id, org.id, savedDraftVersion!.id);
     expect(publishRes.isPublished).toBe(true);
     expect(publishRes.isActive).toBe(true);
 

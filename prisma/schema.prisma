@@ -5014,6 +5014,8 @@ model FilingWorkflowVersion {
 
   @@unique([templateId, versionNumber])
   @@index([templateId])
+  @@index([templateId, versionNumber])
+  @@index([templateId, isPublished])
 }
 
 model FilingWorkflowNode {
@@ -5123,6 +5125,7 @@ model FilingWorkflowInstance {
   @@index([jobId])
   @@index([templateId])
   @@index([versionId])
+  @@index([status])
 }
 
 model FilingNodeRun {
