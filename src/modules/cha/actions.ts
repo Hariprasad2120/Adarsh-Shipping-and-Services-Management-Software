@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
+import { tracePerformance } from "@/lib/performance";
 import * as chaService from "./service";
 
 type ActionResponse<T = any> = { ok: true; data: T } | { ok: false; error: string };
@@ -918,7 +919,9 @@ export async function saveFilingWorkflowDraftAction(
 ): Promise<ActionResponse> {
   try {
     const { userId, orgId } = await getAuthAndVerify("cha.settings.manage");
-    const draft = await chaService.saveFilingWorkflowDraft(userId, orgId, templateId, data);
+    const draft = await tracePerformance("action:saveFilingWorkflowDraftAction", () =>
+      chaService.saveFilingWorkflowDraft(userId, orgId, templateId, data),
+    );
     return { ok: true, data: draft };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to save workflow draft" };
@@ -942,7 +945,9 @@ export async function getFilingWorkflowDetailsAction(
 ): Promise<ActionResponse> {
   try {
     const { userId, orgId } = await getAuthAndVerify();
-    const details = await chaService.getFilingWorkflowDetails(userId, orgId, templateId);
+    const details = await tracePerformance("action:getFilingWorkflowDetailsAction", () =>
+      chaService.getFilingWorkflowDetails(userId, orgId, templateId),
+    );
     return { ok: true, data: details };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to retrieve workflow details" };
