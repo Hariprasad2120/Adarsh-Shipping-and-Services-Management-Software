@@ -3,6 +3,7 @@
 import { Fragment, useState, useTransition, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DataTable, DataTableBody, DataTableCell, DataTableEmpty, DataTableHead, DataTableHeader, DataTableRow } from "@/components/data-table";
@@ -16,6 +17,9 @@ import {
   bulkDecideOtRecordsAction,
   adjustOtRecordAction,
   saveOtSettingsAction,
+  saveWorkingCalendarAction,
+  saveShiftAction,
+  assignEmployeeShiftAction,
   saveHolidayAction,
   deleteHolidayAction,
   saveLopRecordAction,
@@ -38,6 +42,34 @@ type LegacyOTEntry = {
   };
 };
 
+type ShiftOption = {
+  id: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+  expectedWorkingMinutes: number;
+  graceBeforeStartMins: number;
+  graceAfterEndMins: number;
+  minOvertimeMinutes: number;
+  workingDays: string;
+  breakRules: Array<{ start: string; end: string }> | null;
+  isActive: boolean;
+  isDefault: boolean;
+};
+
+type WorkingCalendarState = {
+  id?: string;
+  orgId?: string;
+  workStart: string;
+  workEnd: string;
+  graceBeforeStartMins: number;
+  graceAfterEndMins: number;
+  defaultWorkingMinutes: number;
+  minOvertimeMinutes: number;
+  workingDays: string;
+  breaks: Array<{ start: string; end: string }>;
+};
+
 interface AdminData {
   stats: {
     totalOtHours: number;
@@ -57,8 +89,34 @@ interface AdminData {
     otAmount: number;
     compOffDays: number;
     earlyLeavingMins: number;
+    firstPunchAt: string | null;
+    lastPunchAt: string | null;
+    totalPunchCount: number;
+    workedMinutes: number;
+    expectedMinutes: number;
+    differenceMinutes: number;
+    calculationStatus: string;
+    calculationRemarks: string | null;
+    calculationDetails?: {
+      events?: Array<{
+        punchedAt: string;
+        source: string;
+        eventType: string;
+        status?: string | null;
+        notes?: string | null;
+      }>;
+      lateMinutes?: number;
+      breakMinutes?: number;
+    } | null;
+    usedOrgFallback: boolean;
     approvalStatus: string;
     rejectionRemarks: string | null;
+    shift?: {
+      id: string;
+      name: string;
+      startTime: string;
+      endTime: string;
+    } | null;
     user: {
       id: string;
       name: string;
@@ -95,12 +153,24 @@ interface AdminData {
     graceMinutes: number;
     compOffSlabs: Array<{ minHours: number; compOffDays: number }>;
   };
+  workingCalendar: WorkingCalendarState | null;
+  shifts: ShiftOption[];
   employees: Array<{
     id: string;
     name: string;
     employeeNumber: number | null;
     department: { name: string } | null;
     employmentRecord?: { ctc: number | null } | null;
+    hrmsShiftAssignments?: Array<{
+      shift: {
+        id: string;
+        name: string;
+        startTime: string;
+        endTime: string;
+      };
+      startDate: string;
+      endDate: string | null;
+    }>;
   }>;
   branches: Array<{
     id: string;
@@ -182,6 +252,9 @@ export function OtClient({
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "PENDING" | "PENDING_MANAGER" | "APPROVED" | "REJECTED">("ALL");
+  const [shiftFilter, setShiftFilter] = useState<"ALL" | string>("ALL");
+  const [dateFromFilter, setDateFromFilter] = useState("");
+  const [dateToFilter, setDateToFilter] = useState("");
   const [expandedUsers, setExpandedUsers] = useState<Record<string, boolean>>({});
   const [selectedRecordIds, setSelectedRecordIds] = useState<Record<string, boolean>>({});
 
@@ -199,6 +272,34 @@ export function OtClient({
   const [slabs, setSlabs] = useState(otSettings.compOffSlabs || []);
   const [newSlabMinHours, setNewSlabMinHours] = useState("");
   const [newSlabDays, setNewSlabDays] = useState("");
+  const [workingCalendar, setWorkingCalendar] = useState<WorkingCalendarState>(adminData?.workingCalendar || {
+    workStart: "09:30",
+    workEnd: "17:30",
+    graceBeforeStartMins: 0,
+    graceAfterEndMins: 15,
+    defaultWorkingMinutes: 480,
+    minOvertimeMinutes: 0,
+    workingDays: "1,2,3,4,5,6",
+    breaks: [{ start: "13:00", end: "14:00" }],
+  });
+  const [shifts, setShifts] = useState<ShiftOption[]>(adminData?.shifts || []);
+  const [shiftForm, setShiftForm] = useState<ShiftOption>({
+    id: "",
+    name: "",
+    startTime: "09:30",
+    endTime: "17:30",
+    expectedWorkingMinutes: 480,
+    graceBeforeStartMins: 0,
+    graceAfterEndMins: 15,
+    minOvertimeMinutes: 0,
+    workingDays: "1,2,3,4,5,6",
+    breakRules: [{ start: "13:00", end: "14:00" }],
+    isActive: true,
+    isDefault: false,
+  });
+  const [shiftAssignmentUserId, setShiftAssignmentUserId] = useState("");
+  const [shiftAssignmentShiftId, setShiftAssignmentShiftId] = useState("");
+  const [shiftAssignmentStartDate, setShiftAssignmentStartDate] = useState(new Date().toISOString().slice(0, 10));
 
   // Adjustment Modal states
   const [adjustingRecord, setAdjustingRecord] = useState<any | null>(null);
@@ -230,7 +331,46 @@ export function OtClient({
     updated: number;
     skipped: number;
     errors: string[];
+    recalculationDeferred?: boolean;
+    touchedMonths?: string[];
   } | null>(null);
+
+  const loadImportedRows = (headers: string[], rows: Record<string, string>[], sourceLabel: string) => {
+    setCsvHeaders(headers);
+    setCsvRows(rows);
+
+    const autoMap: Record<string, string> = {
+      employeeNumber: "",
+      employeeName: "",
+      officialEmail: "",
+      attendanceDate: "",
+      checkIn: "",
+      checkOut: "",
+      totalHours: ""
+    };
+
+    headers.forEach((h) => {
+      const clean = h.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (clean.includes("empid") || clean.includes("employeeid") || clean.includes("employeeno") || clean.includes("employeenumber")) {
+        autoMap.employeeNumber = h;
+      } else if ((clean.includes("name") || clean.includes("employeename")) && !autoMap.employeeName) {
+        autoMap.employeeName = h;
+      } else if (clean.includes("email")) {
+        autoMap.officialEmail = h;
+      } else if (clean === "date" || clean.includes("attendancedate") || clean.includes("attendance")) {
+        autoMap.attendanceDate = h;
+      } else if (clean.includes("firstin") || clean.includes("checkin") || clean.includes("clockin") || clean.includes("timein")) {
+        autoMap.checkIn = h;
+      } else if (clean.includes("lastout") || clean.includes("checkout") || clean.includes("clockout") || clean.includes("timeout")) {
+        autoMap.checkOut = h;
+      } else if (clean.includes("totalhours") || clean.includes("hoursworked") || clean.includes("workedhours")) {
+        autoMap.totalHours = h;
+      }
+    });
+
+    setImportMappings(autoMap);
+    toast.success(`Loaded ${rows.length} rows from ${sourceLabel}`);
+  };
 
   // Pure JavaScript CSV tokenizer
   const parseCsvText = (text: string): string[][] => {
@@ -274,6 +414,49 @@ export function OtClient({
       }
     }
     return lines;
+  };
+
+  const parseExcelAttendanceRows = async (file: File) => {
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: "array" });
+    const preferredSheet =
+      workbook.SheetNames.find((name) => /early_late report\(hours\)/i.test(name)) ||
+      workbook.SheetNames[0];
+
+    if (!preferredSheet) {
+      throw new Error("No worksheet found in the uploaded Excel file.");
+    }
+
+    const worksheet = workbook.Sheets[preferredSheet];
+    const rawRows = XLSX.utils.sheet_to_json<(string | number | null)[]>(worksheet, {
+      header: 1,
+      defval: "",
+      raw: false,
+    });
+
+    const headerRowIndex = rawRows.findIndex((row) => {
+      const cols = row.slice(0, 7).map((cell) => String(cell ?? "").trim().toLowerCase());
+      return cols[0] === "employee id" && cols[3] === "date";
+    });
+
+    if (headerRowIndex === -1) {
+      throw new Error("Could not find the expected A-G attendance header row in the Excel file.");
+    }
+
+    const headers = rawRows[headerRowIndex]!.slice(0, 7).map((cell) => String(cell ?? "").trim());
+    const parsedRows = rawRows
+      .slice(headerRowIndex + 1)
+      .map((row) => row.slice(0, 7).map((cell) => String(cell ?? "").trim()))
+      .filter((row) => row.some((cell) => cell !== ""))
+      .map((row) => {
+        const obj: Record<string, string> = {};
+        headers.forEach((header, index) => {
+          obj[header] = row[index] || "";
+        });
+        return obj;
+      });
+
+    loadImportedRows(headers, parsedRows, `${file.name} (${preferredSheet})`);
   };
 
   const overviewCards = [
@@ -337,6 +520,14 @@ export function OtClient({
     setCsvFileName(file.name);
     setImportSummary(null);
 
+    const lowerName = file.name.toLowerCase();
+    if (lowerName.endsWith(".xls") || lowerName.endsWith(".xlsx")) {
+      void parseExcelAttendanceRows(file).catch((error: unknown) => {
+        toast.error(error instanceof Error ? error.message : "Failed to read Excel file");
+      });
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
@@ -349,8 +540,6 @@ export function OtClient({
       }
       
       const headers = parsedLines[0]!;
-      setCsvHeaders(headers);
-      
       const dataLines = parsedLines.slice(1);
       const rows = dataLines.map((line) => {
         const obj: Record<string, string> = {};
@@ -359,39 +548,7 @@ export function OtClient({
         });
         return obj;
       });
-      setCsvRows(rows);
-      
-      // Auto map matching header names
-      const autoMap: Record<string, string> = {
-        employeeNumber: "",
-        employeeName: "",
-        officialEmail: "",
-        attendanceDate: "",
-        checkIn: "",
-        checkOut: "",
-        totalHours: ""
-      };
-      
-      headers.forEach((h) => {
-        const clean = h.toLowerCase().replace(/[^a-z0-9]/g, "");
-        if (clean.includes("empid") || clean.includes("employeeno") || clean.includes("employeenumber") || clean.includes("id")) {
-          autoMap.employeeNumber = h;
-        } else if (clean.includes("name") || clean.includes("employeename")) {
-          autoMap.employeeName = h;
-        } else if (clean.includes("email")) {
-          autoMap.officialEmail = h;
-        } else if (clean.includes("date") || clean.includes("attendance")) {
-          autoMap.attendanceDate = h;
-        } else if (clean.includes("checkin") || clean.includes("in") || clean.includes("timein") || clean.includes("start")) {
-          autoMap.checkIn = h;
-        } else if (clean.includes("checkout") || clean.includes("out") || clean.includes("timeout") || clean.includes("end")) {
-          autoMap.checkOut = h;
-        } else if (clean.includes("hours") || clean.includes("worked") || clean.includes("total")) {
-          autoMap.totalHours = h;
-        }
-      });
-      setImportMappings(autoMap);
-      toast.success(`Loaded ${rows.length} rows from CSV`);
+      loadImportedRows(headers, rows, file.name);
     };
     reader.readAsText(file);
   };
@@ -411,7 +568,7 @@ export function OtClient({
         return;
       }
       toast.success(`Recalculated OT for ${res.data?.processed || 0} punches.`);
-      window.location.reload();
+      router.refresh();
     });
   };
 
@@ -427,7 +584,7 @@ export function OtClient({
         return;
       }
       toast.success(`Successfully cleared: ${res.data?.deletedOtCount || 0} OT records and ${res.data?.deletedPunchesCount || 0} imported punches.`);
-      window.location.reload();
+      router.refresh();
     });
   };
 
@@ -647,6 +804,76 @@ export function OtClient({
     setSlabs(updated);
   };
 
+  const handleSaveWorkingCalendar = (e: FormEvent) => {
+    e.preventDefault();
+    startTransition(async () => {
+      const res = await saveWorkingCalendarAction(workingCalendar);
+      if (!res.ok) {
+        toast.error(res.error || "Failed to save working hours");
+        return;
+      }
+      toast.success("Organisation working hours updated");
+      router.refresh();
+    });
+  };
+
+  const resetShiftForm = () => {
+    setShiftForm({
+      id: "",
+      name: "",
+      startTime: "09:30",
+      endTime: "17:30",
+      expectedWorkingMinutes: 480,
+      graceBeforeStartMins: 0,
+      graceAfterEndMins: 15,
+      minOvertimeMinutes: 0,
+      workingDays: workingCalendar.workingDays,
+      breakRules: workingCalendar.breaks,
+      isActive: true,
+      isDefault: false,
+    });
+  };
+
+  const handleSaveShift = (e: FormEvent) => {
+    e.preventDefault();
+    startTransition(async () => {
+      const res = await saveShiftAction({
+        ...shiftForm,
+        id: shiftForm.id || undefined,
+        breakRules: shiftForm.breakRules || [],
+      });
+      if (!res.ok) {
+        toast.error(res.error || "Failed to save shift");
+        return;
+      }
+      toast.success(shiftForm.id ? "Shift updated" : "Shift created");
+      resetShiftForm();
+      router.refresh();
+    });
+  };
+
+  const handleAssignShift = (e: FormEvent) => {
+    e.preventDefault();
+    if (!shiftAssignmentUserId || !shiftAssignmentShiftId || !shiftAssignmentStartDate) {
+      toast.error("Employee, shift, and start date are required");
+      return;
+    }
+
+    startTransition(async () => {
+      const res = await assignEmployeeShiftAction({
+        userId: shiftAssignmentUserId,
+        shiftId: shiftAssignmentShiftId,
+        startDate: shiftAssignmentStartDate,
+      });
+      if (!res.ok) {
+        toast.error(res.error || "Failed to assign shift");
+        return;
+      }
+      toast.success("Shift assignment updated");
+      router.refresh();
+    });
+  };
+
   // Dynamic Payroll Row Compilation
   const payrollRows = adminData
     ? adminData.employees.map((emp) => {
@@ -703,7 +930,13 @@ export function OtClient({
     const matchesSearch = rec.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       String(rec.user.employeeNumber || "").includes(searchTerm);
     const matchesStatus = statusFilter === "ALL" || rec.approvalStatus === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesShift = shiftFilter === "ALL"
+      || rec.shift?.id === shiftFilter
+      || (shiftFilter === "__ORG_FALLBACK__" && rec.usedOrgFallback);
+    const dateValue = rec.date.slice(0, 10);
+    const matchesDateFrom = !dateFromFilter || dateValue >= dateFromFilter;
+    const matchesDateTo = !dateToFilter || dateValue <= dateToFilter;
+    return matchesSearch && matchesStatus && matchesShift && matchesDateFrom && matchesDateTo;
   });
 
   const selectableRecords = filteredRecords.filter(
@@ -711,40 +944,8 @@ export function OtClient({
   );
   const allSelectableChecked = selectableRecords.length > 0 && selectableRecords.every((r) => !!selectedRecordIds[r.id]);
 
-  const groupedRecords = filteredRecords.reduce((acc, record) => {
-    const userId = record.userId;
-    if (!acc[userId]) {
-      acc[userId] = {
-        user: record.user,
-        records: [],
-        totalOtHours: 0,
-        totalOtAmount: 0,
-        totalCompOffDays: 0,
-        totalEarlyLeavingMins: 0,
-        pendingCount: 0,
-      };
-    }
-    acc[userId].records.push(record);
-    acc[userId].totalOtHours += record.otHours;
-    acc[userId].totalOtAmount += record.otAmount;
-    acc[userId].totalCompOffDays += record.compOffDays;
-    acc[userId].totalEarlyLeavingMins += record.earlyLeavingMins;
-    if (record.approvalStatus === "PENDING" || record.approvalStatus === "PENDING_MANAGER") {
-      acc[userId].pendingCount++;
-    }
-    return acc;
-  }, {} as Record<string, {
-    user: any;
-    records: any[];
-    totalOtHours: number;
-    totalOtAmount: number;
-    totalCompOffDays: number;
-    totalEarlyLeavingMins: number;
-    pendingCount: number;
-  }>);
-
-  const toggleUserExpand = (userId: string) => {
-    setExpandedUsers((prev) => ({ ...prev, [userId]: !prev[userId] }));
+  const toggleUserExpand = (recordId: string) => {
+    setExpandedUsers((prev) => ({ ...prev, [recordId]: !prev[recordId] }));
   };
 
   const handleSelectRecord = (id: string, val: boolean) => {
@@ -1091,15 +1292,40 @@ export function OtClient({
       {activeTab === "records" && (
         <div className="space-y-4 animate-in fade-in duration-300">
           {/* Controls Bar */}
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-on-surface-variant" />
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="relative sm:col-span-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-on-surface-variant" />
+                <input
+                  type="text"
+                  placeholder="Search employee name or ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full rounded-lg border border-outline-variant bg-surface pl-9 pr-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-[#00cec4]"
+                />
+              </div>
+              <select
+                value={shiftFilter}
+                onChange={(e) => setShiftFilter(e.target.value)}
+                className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+              >
+                <option value="ALL">All shifts</option>
+                <option value="__ORG_FALLBACK__">Org fallback</option>
+                {shifts.map((shift) => (
+                  <option key={shift.id} value={shift.id}>{shift.name}</option>
+                ))}
+              </select>
               <input
-                type="text"
-                placeholder="Search employee name or ID..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg border border-outline-variant bg-surface pl-9 pr-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-[#00cec4]"
+                type="date"
+                value={dateFromFilter}
+                onChange={(e) => setDateFromFilter(e.target.value)}
+                className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+              />
+              <input
+                type="date"
+                value={dateToFilter}
+                onChange={(e) => setDateToFilter(e.target.value)}
+                className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
               />
             </div>
 
@@ -1193,52 +1419,40 @@ export function OtClient({
                     aria-label="Select all visible records"
                   />
                 </DataTableHead>
-                <DataTableHead>Employee</DataTableHead>
-                <DataTableHead>Department</DataTableHead>
-                <DataTableHead className="text-right">OT Hours</DataTableHead>
-                <DataTableHead className="text-right">Payout</DataTableHead>
-                <DataTableHead className="text-right">Comp-Offs</DataTableHead>
-                <DataTableHead className="text-right">Pending</DataTableHead>
+                <DataTableHead>Employee / Date</DataTableHead>
+                <DataTableHead>Shift Used</DataTableHead>
+                <DataTableHead>First / Last Punch</DataTableHead>
+                <DataTableHead className="text-right">Worked</DataTableHead>
+                <DataTableHead className="text-right">Expected</DataTableHead>
+                <DataTableHead className="text-right">OT</DataTableHead>
+                <DataTableHead>Status</DataTableHead>
                 <DataTableHead className="w-14 text-right">View</DataTableHead>
               </DataTableRow>
             </DataTableHeader>
             <DataTableBody>
-              {Object.keys(groupedRecords).length === 0 ? (
-                <DataTableEmpty colSpan={8} message="No matching overtime records found." className="py-16 text-sm font-medium" />
+              {filteredRecords.length === 0 ? (
+                <DataTableEmpty colSpan={9} message="No matching overtime records found." className="py-16 text-sm font-medium" />
               ) : (
-                Object.keys(groupedRecords).map((userId) => {
-                  const group = groupedRecords[userId]!;
-                  const isExpanded = !!expandedUsers[userId];
-                  const pendingRecords = group.records.filter(
-                    (r) => r.approvalStatus === "PENDING" || r.approvalStatus === "PENDING_MANAGER"
-                  );
-                  const allGroupPendingSelected =
-                    pendingRecords.length > 0 && pendingRecords.every((r) => !!selectedRecordIds[r.id]);
+                filteredRecords.map((rec) => {
+                  const isExpanded = !!expandedUsers[rec.id];
+                  const canSelect = rec.approvalStatus === "PENDING" || rec.approvalStatus === "PENDING_MANAGER";
+                  const timelineEvents = rec.calculationDetails?.events || [];
 
                   return (
-                    <Fragment key={userId}>
+                    <Fragment key={rec.id}>
                       <DataTableRow
                         className="cursor-pointer border-l-2 border-l-transparent hover:border-l-[#00cec4]/60"
-                        onClick={() => toggleUserExpand(userId)}
+                        onClick={() => toggleUserExpand(rec.id)}
                       >
                         <DataTableCell className="w-12">
-                          {pendingRecords.length > 0 ? (
+                          {canSelect ? (
                             <input
                               type="checkbox"
-                              checked={allGroupPendingSelected}
-                              onChange={(e) => {
-                                const checked = e.target.checked;
-                                setSelectedRecordIds((prev) => {
-                                  const copy = { ...prev };
-                                  pendingRecords.forEach((record) => {
-                                    copy[record.id] = checked;
-                                  });
-                                  return copy;
-                                });
-                              }}
+                              checked={!!selectedRecordIds[rec.id]}
+                              onChange={(e) => handleSelectRecord(rec.id, e.target.checked)}
                               onClick={(e) => e.stopPropagation()}
                               className="h-4 w-4 rounded border-outline-variant text-[#00cec4] focus:ring-[#00cec4]"
-                              aria-label={`Select pending records for ${group.user.name}`}
+                              aria-label={`Select ${rec.user.name} ${formatOtDate(rec.date)}`}
                             />
                           ) : (
                             <div className="w-4" />
@@ -1247,43 +1461,62 @@ export function OtClient({
                         <DataTableCell>
                           <div className="flex min-w-0 items-center gap-3">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#00cec4]/12 text-xs font-semibold text-[#008b84]">
-                              {getInitials(group.user.name)}
+                              {getInitials(rec.user.name)}
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
-                                <p className="truncate font-semibold text-on-surface">{group.user.name}</p>
-                                {group.user.employeeNumber ? (
+                                <p className="truncate font-semibold text-on-surface">{rec.user.name}</p>
+                                {rec.user.employeeNumber ? (
                                   <span className="rounded-full bg-surface-container-low px-2 py-0.5 text-[11px] font-medium text-on-surface-variant">
-                                    #{group.user.employeeNumber}
+                                    #{rec.user.employeeNumber}
                                   </span>
                                 ) : null}
                               </div>
                               <p className="truncate text-xs text-on-surface-variant">
-                                {group.records.length} record{group.records.length === 1 ? "" : "s"} this month
+                                {formatOtDate(rec.date)} • {rec.user.department?.name || "No Department"}
                               </p>
                             </div>
                           </div>
                         </DataTableCell>
                         <DataTableCell className="text-on-surface-variant">
-                          {group.user.department?.name || "No Department"}
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium text-on-surface">
+                              {rec.shift?.name || "Organisation Working Hours"}
+                            </p>
+                            <p className="text-xs">
+                              {rec.shift ? `${rec.shift.startTime} - ${rec.shift.endTime}` : `${workingCalendar.workStart} - ${workingCalendar.workEnd}`}
+                            </p>
+                          </div>
                         </DataTableCell>
-                        <DataTableCell className="text-right font-semibold text-on-surface">
-                          {group.totalOtHours.toFixed(1)} hrs
-                        </DataTableCell>
-                        <DataTableCell className="text-right font-semibold text-emerald-600">
-                          ₹{group.totalOtAmount.toFixed(0)}
-                        </DataTableCell>
-                        <DataTableCell className="text-right font-semibold text-[#00a89f]">
-                          {group.totalCompOffDays.toFixed(1)} d
+                        <DataTableCell className="text-on-surface-variant">
+                          <div className="space-y-1 text-xs">
+                            <div>In: <span className="ds-numeric text-on-surface">{rec.firstPunchAt ? new Date(rec.firstPunchAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "—"}</span></div>
+                            <div>Out: <span className="ds-numeric text-on-surface">{rec.lastPunchAt ? new Date(rec.lastPunchAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "—"}</span></div>
+                          </div>
                         </DataTableCell>
                         <DataTableCell className="text-right">
-                          {group.pendingCount > 0 ? (
-                            <span className="inline-flex rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
-                              {group.pendingCount} pending
-                            </span>
-                          ) : (
-                            <span className="text-xs text-on-surface-variant">0</span>
-                          )}
+                          <div className="ds-numeric font-medium text-on-surface">{(rec.workedMinutes / 60).toFixed(2)}h</div>
+                          <div className="text-xs text-on-surface-variant">{rec.totalPunchCount} punches</div>
+                        </DataTableCell>
+                        <DataTableCell className="text-right">
+                          <div className="ds-numeric font-medium text-on-surface">{(rec.expectedMinutes / 60).toFixed(2)}h</div>
+                          <div className="text-xs text-on-surface-variant">{rec.usedOrgFallback ? "Org fallback" : "Assigned shift"}</div>
+                        </DataTableCell>
+                        <DataTableCell className="text-right">
+                          <div className="ds-numeric font-semibold text-on-surface">{rec.otHours.toFixed(2)}h</div>
+                          <div className="text-xs text-emerald-600">₹{rec.otAmount.toFixed(0)}</div>
+                        </DataTableCell>
+                        <DataTableCell>
+                          <span className={cn(
+                            "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                            rec.calculationStatus === "VALID"
+                              ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700"
+                              : rec.calculationStatus === "NO_OVERTIME"
+                              ? "border-outline-variant bg-surface-container-low text-on-surface-variant"
+                              : "border-amber-500/20 bg-amber-500/10 text-amber-700"
+                          )}>
+                            {rec.calculationStatus.replace(/_/g, " ")}
+                          </span>
                         </DataTableCell>
                         <DataTableCell className="text-right">
                           {isExpanded ? (
@@ -1296,182 +1529,111 @@ export function OtClient({
 
                       {isExpanded ? (
                         <DataTableRow className="hover:bg-transparent">
-                          <DataTableCell colSpan={8} className="bg-surface-container-low/40 px-4 py-4">
-                            {/* Rate Review Banner */}
-                            {(() => {
-                              const firstRec = group.records[0];
-                              const ctc = firstRec?.user?.employmentRecord?.ctc || 0;
-                              const standardHours = otSettings.standardHours || 8.0;
-                              const minSalary = getMinuteSalary(ctc, firstRec?.date || new Date().toISOString(), standardHours);
-                              const daysInMonth = new Date(new Date(selectedMonth + "-01").getFullYear(), new Date(selectedMonth + "-01").getMonth() + 1, 0).getDate() || 30;
-                              const monthlyGross = ctc ? ctc / 12 : 0;
-                              return (
-                                <div className="mb-3 flex flex-wrap gap-4 items-center justify-between rounded-xl border border-outline-variant bg-surface px-4 py-3 text-xs select-none">
-                                  <div>
-                                    <span className="font-semibold text-on-surface">Rate Review: </span>
-                                    <span className="text-on-surface-variant font-medium">
-                                      Gross Salary: <span className="font-semibold font-mono text-on-surface">{ctc ? `₹${monthlyGross.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mo` : "N/A"}</span> | 
-                                      Days in Month: <span className="font-semibold font-mono text-on-surface">{daysInMonth}</span> | 
-                                      Minute Salary: <span className="font-semibold font-mono text-emerald-600">₹{minSalary.toFixed(4)}/min</span>
-                                    </span>
+                          <DataTableCell colSpan={9} className="bg-surface-container-low/40 px-4 py-4">
+                            <div className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+                              <div className="space-y-3 rounded-xl border border-outline-variant/50 bg-surface p-4">
+                                <h4 className="ds-h3 text-primary">Calculation Summary</h4>
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                  <div className="rounded-xl bg-surface-container-low p-3">
+                                    <div className="ds-label">Difference From Expected</div>
+                                    <div className="ds-numeric mt-1 text-lg text-on-surface">{(rec.differenceMinutes / 60).toFixed(2)}h</div>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-on-surface text-[10px] uppercase tracking-wider text-on-surface-variant/75">OT Multiplier:</span>
-                                    <span className="rounded-full bg-[#00cec4]/10 border border-[#00cec4]/20 px-2 py-0.5 font-bold font-mono text-[#009d96] dark:text-[#00cec4]">
-                                      {otSettings.otRate}x
-                                    </span>
+                                  <div className="rounded-xl bg-surface-container-low p-3">
+                                    <div className="ds-label">Early / Late Flags</div>
+                                    <div className="mt-1 text-sm text-on-surface">
+                                      {rec.earlyLeavingMins > 0 ? `${rec.earlyLeavingMins} mins early out` : "No early departure"}
+                                    </div>
                                   </div>
                                 </div>
-                              );
-                            })()}
-                            <DataTable className="rounded-xl border-outline-variant/40 bg-surface shadow-none" tableClassName="text-xs">
-                              <DataTableHeader className="bg-surface-container-low/70">
-                                <DataTableRow className="hover:bg-transparent">
-                                  <DataTableHead className="w-12">
-                                    <input
-                                      type="checkbox"
-                                      checked={allGroupPendingSelected}
-                                      onChange={(e) => {
-                                        const checked = e.target.checked;
-                                        setSelectedRecordIds((prev) => {
-                                          const copy = { ...prev };
-                                          pendingRecords.forEach((record) => {
-                                            copy[record.id] = checked;
-                                          });
-                                          return copy;
-                                        });
-                                      }}
-                                      className="h-4 w-4 rounded border-outline-variant text-[#00cec4] focus:ring-[#00cec4]"
-                                      aria-label={`Select detailed records for ${group.user.name}`}
-                                    />
-                                  </DataTableHead>
-                                  <DataTableHead>Date</DataTableHead>
-                                  <DataTableHead>Type</DataTableHead>
-                                  <DataTableHead>Worked</DataTableHead>
-                                  <DataTableHead className="text-right">OT Hours</DataTableHead>
-                                  <DataTableHead className="text-right">OT Payout</DataTableHead>
-                                  <DataTableHead className="text-right">Comp-Off</DataTableHead>
-                                  <DataTableHead className="text-right">Early Leaving</DataTableHead>
-                                  <DataTableHead>Status</DataTableHead>
-                                  <DataTableHead className="text-right">Actions</DataTableHead>
-                                </DataTableRow>
-                              </DataTableHeader>
-                              <DataTableBody>
-                                {group.records.map((rec) => (
-                                  <DataTableRow key={rec.id}>
-                                    <DataTableCell className="w-12">
-                                      {rec.approvalStatus === "PENDING" || rec.approvalStatus === "PENDING_MANAGER" ? (
-                                        <input
-                                          type="checkbox"
-                                          checked={!!selectedRecordIds[rec.id]}
-                                          onChange={(e) => handleSelectRecord(rec.id, e.target.checked)}
-                                          className="h-4 w-4 rounded border-outline-variant text-[#00cec4] focus:ring-[#00cec4]"
-                                          aria-label={`Select record for ${formatOtDate(rec.date)}`}
-                                        />
-                                      ) : (
-                                        <div className="w-4" />
-                                      )}
-                                    </DataTableCell>
-                                    <DataTableCell className="font-medium text-on-surface">
-                                      {formatOtDate(rec.date)}
-                                    </DataTableCell>
-                                    <DataTableCell>
-                                      <span className={cn(
-                                        "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
-                                        rec.dayType === "WORKING_DAY"
-                                          ? "border-outline-variant bg-surface-container-low text-on-surface-variant"
-                                          : rec.dayType === "HOLIDAY"
-                                          ? "border-rose-500/20 bg-rose-500/10 text-rose-700"
-                                          : "border-sky-500/20 bg-sky-500/10 text-sky-700"
-                                      )}>
-                                        {rec.dayType.replace("_", " ")}
-                                      </span>
-                                    </DataTableCell>
-                                    <DataTableCell className="text-on-surface-variant">
-                                      {rec.hoursWorked.toFixed(1)} hrs
-                                    </DataTableCell>
-                                    <DataTableCell className="text-right font-semibold text-on-surface">
-                                      {rec.otHours.toFixed(2)} hrs
-                                    </DataTableCell>
-                                    <DataTableCell className="text-right font-semibold text-emerald-600">
-                                      ₹{rec.otAmount.toFixed(0)}
-                                    </DataTableCell>
-                                    <DataTableCell className="text-right font-semibold text-[#00a89f]">
-                                      {rec.compOffDays.toFixed(1)} d
-                                    </DataTableCell>
-                                    <DataTableCell className="text-right font-medium text-amber-700">
-                                      {rec.earlyLeavingMins > 0 ? `${rec.earlyLeavingMins} mins` : "—"}
-                                    </DataTableCell>
-                                    <DataTableCell>
-                                      <span className={cn(
-                                        "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold capitalize",
-                                        rec.approvalStatus === "APPROVED"
-                                          ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700"
-                                          : rec.approvalStatus === "REJECTED"
-                                          ? "border-rose-500/20 bg-rose-500/10 text-rose-700"
-                                          : rec.approvalStatus === "PENDING_MANAGER"
-                                          ? "border-sky-500/20 bg-sky-500/10 text-sky-700"
-                                          : "border-amber-500/20 bg-amber-500/10 text-amber-700"
-                                      )}>
-                                        {rec.approvalStatus === "PENDING_MANAGER" ? "referred to manager" : rec.approvalStatus.toLowerCase()}
-                                      </span>
-                                      {rec.rejectionRemarks ? (
-                                        <p className="mt-1 text-[11px] italic text-on-surface-variant">{rec.rejectionRemarks}</p>
-                                      ) : null}
-                                    </DataTableCell>
-                                    <DataTableCell className="text-right">
-                                      <div className="inline-flex gap-1.5">
-                                        <Button
-                                          size="sm"
-                                          title="Adjust Values"
-                                          onClick={() => {
-                                            setAdjustingRecord(rec);
-                                          setAdjustedMins(Math.round(rec.otHours * 60));
-                                          setAdjustedEarlyMins(rec.earlyLeavingMins);
-                                          setAdjustedCompOff(rec.compOffDays);
-                                        }}
-                                        className="h-7 w-7 p-0 bg-transparent border border-outline-variant hover:bg-surface-container-high dark:hover:bg-slate-800 text-on-surface-variant flex items-center justify-center rounded"
-                                      >
-                                        <Sliders className="size-3.5" />
-                                      </Button>
- 
-                                          {(rec.approvalStatus === "PENDING" || rec.approvalStatus === "PENDING_MANAGER") && (
-                                            <>
-                                              <Button
-                                                size="sm"
-                                                title="Force Approve"
-                                            onClick={() => handleDecideRecord(rec.id, "APPROVED")}
-                                            className="h-7 w-7 p-0 bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center rounded"
-                                          >
-                                            <Check className="size-3.5" />
-                                          </Button>
-                                          <Button
-                                            size="sm"
-                                            title="Send to Manager"
-                                            onClick={() => handleDecideRecord(rec.id, "PENDING_MANAGER")}
-                                            className="h-7 w-7 p-0 bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center rounded"
-                                          >
-                                            <User className="size-3.5" />
-                                          </Button>
-                                          <Button
-                                            size="sm"
-                                            title="Reject"
-                                            onClick={() => {
-                                              const remarks = prompt("Reason for rejection:");
-                                              if (remarks !== null) handleDecideRecord(rec.id, "REJECTED", remarks);
-                                            }}
-                                            className="h-7 w-7 p-0 bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center rounded"
-                                          >
-                                            <X className="size-3.5" />
-                                              </Button>
-                                            </>
-                                          )}
+                                <div className="rounded-xl border border-outline-variant/50 bg-surface-container-low p-3 text-sm text-on-surface-variant">
+                                  <p><span className="ds-label">Remarks</span></p>
+                                  <p className="mt-1 text-on-surface">{rec.calculationRemarks || "No calculation remarks."}</p>
+                                </div>
+                              </div>
+
+                              <div className="space-y-3 rounded-xl border border-outline-variant/50 bg-surface p-4">
+                                <h4 className="ds-h3 text-primary">All Punch Records</h4>
+                                {timelineEvents.length === 0 ? (
+                                  <div className="rounded-xl border border-outline-variant/50 bg-surface-container-low p-4 text-sm text-on-surface-variant">
+                                    No raw punch timeline is available for this record.
+                                  </div>
+                                ) : (
+                                  <div className="space-y-2">
+                                    {timelineEvents.map((event, index) => (
+                                      <div key={`${event.punchedAt}-${index}`} className="card-left-accent rounded-xl border border-outline-variant/40 bg-surface-container-low/60 p-3">
+                                        <div className="flex items-center justify-between gap-3">
+                                          <div>
+                                            <p className="text-sm font-medium text-on-surface">{event.eventType.replace(/_/g, " ")}</p>
+                                            <p className="text-xs text-on-surface-variant">{event.source.toUpperCase()}</p>
+                                          </div>
+                                          <div className="text-right">
+                                            <p className="ds-numeric text-sm text-on-surface">
+                                              {new Date(event.punchedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                                            </p>
+                                            <p className="text-xs text-on-surface-variant">{event.status || "VALID"}</p>
+                                          </div>
+                                        </div>
+                                        {event.notes ? <p className="mt-2 text-xs text-on-surface-variant">{event.notes}</p> : null}
                                       </div>
-                                    </DataTableCell>
-                                  </DataTableRow>
-                                ))}
-                              </DataTableBody>
-                            </DataTable>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-outline-variant/50 bg-surface px-4 py-3">
+                              <div className="flex flex-wrap items-center gap-3 text-xs text-on-surface-variant">
+                                <span className="rounded-full bg-surface-container-low px-2 py-1">Punches: <span className="ds-numeric text-on-surface">{rec.totalPunchCount}</span></span>
+                                <span className="rounded-full bg-surface-container-low px-2 py-1">Comp-Off: <span className="ds-numeric text-on-surface">{rec.compOffDays.toFixed(1)}</span></span>
+                                <span className="rounded-full bg-surface-container-low px-2 py-1">Approval: <span className="text-on-surface">{rec.approvalStatus}</span></span>
+                              </div>
+                              <div className="inline-flex gap-1.5">
+                                <Button
+                                  size="sm"
+                                  title="Adjust Values"
+                                  onClick={() => {
+                                    setAdjustingRecord(rec);
+                                    setAdjustedMins(Math.round(rec.otHours * 60));
+                                    setAdjustedEarlyMins(rec.earlyLeavingMins);
+                                    setAdjustedCompOff(rec.compOffDays);
+                                  }}
+                                  className="h-8 w-8 p-0 bg-transparent border border-outline-variant hover:bg-surface-container-high text-on-surface-variant flex items-center justify-center rounded"
+                                >
+                                  <Sliders className="size-3.5" />
+                                </Button>
+                                {(rec.approvalStatus === "PENDING" || rec.approvalStatus === "PENDING_MANAGER") && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      title="Force Approve"
+                                      onClick={() => handleDecideRecord(rec.id, "APPROVED")}
+                                      className="h-8 w-8 p-0 bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center rounded"
+                                    >
+                                      <Check className="size-3.5" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      title="Send to Manager"
+                                      onClick={() => handleDecideRecord(rec.id, "PENDING_MANAGER")}
+                                      className="h-8 w-8 p-0 bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center rounded"
+                                    >
+                                      <User className="size-3.5" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      title="Reject"
+                                      onClick={() => {
+                                        const remarks = prompt("Reason for rejection:");
+                                        if (remarks !== null) handleDecideRecord(rec.id, "REJECTED", remarks);
+                                      }}
+                                      className="h-8 w-8 p-0 bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center rounded"
+                                    >
+                                      <X className="size-3.5" />
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
                           </DataTableCell>
                         </DataTableRow>
                       ) : null}
@@ -1794,46 +1956,249 @@ export function OtClient({
 
       {/* Settings Tab */}
       {activeTab === "settings" && (
-        <div className="grid gap-6 lg:grid-cols-3 animate-in fade-in duration-300">
-          <div className="lg:col-span-2 space-y-4">
-            <Card className="relative overflow-hidden border border-outline-variant/60 bg-surface shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#00cec4] after:absolute after:inset-y-0 after:right-0 after:w-1 after:bg-[#00cec4]/45">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] animate-in fade-in duration-300">
+          <div className="space-y-4">
+            <Card className="relative overflow-hidden border border-outline-variant/60 bg-surface shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#00cec4]">
               <CardHeader className="pb-3 border-b border-outline-variant/60">
-                <CardTitle className="text-base font-semibold text-on-surface">
-                  Interactive Weekend & Holiday Comp-Off Slabs
-                </CardTitle>
-                <p className="mt-1 text-sm text-on-surface-variant">
-                  Configure compensation slabs for comp-off days granted based on worked hours on weekends and holidays.
-                </p>
+                <CardTitle className="text-base font-semibold text-on-surface">Organisation Working Hours</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSaveWorkingCalendar} className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="ds-label">Working Start</label>
+                    <input type="time" value={workingCalendar.workStart} onChange={(e) => setWorkingCalendar({ ...workingCalendar, workStart: e.target.value })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="ds-label">Working End</label>
+                    <input type="time" value={workingCalendar.workEnd} onChange={(e) => setWorkingCalendar({ ...workingCalendar, workEnd: e.target.value })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="ds-label">Grace Before Start</label>
+                    <input type="number" value={workingCalendar.graceBeforeStartMins} onChange={(e) => setWorkingCalendar({ ...workingCalendar, graceBeforeStartMins: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="ds-label">Grace After End</label>
+                    <input type="number" value={workingCalendar.graceAfterEndMins} onChange={(e) => setWorkingCalendar({ ...workingCalendar, graceAfterEndMins: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="ds-label">Default Working Minutes</label>
+                    <input type="number" value={workingCalendar.defaultWorkingMinutes} onChange={(e) => setWorkingCalendar({ ...workingCalendar, defaultWorkingMinutes: parseInt(e.target.value, 10) || 480 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="ds-label">Minimum OT Minutes</label>
+                    <input type="number" value={workingCalendar.minOvertimeMinutes} onChange={(e) => setWorkingCalendar({ ...workingCalendar, minOvertimeMinutes: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="ds-label">Weekly Working Days</label>
+                    <input type="text" value={workingCalendar.workingDays} onChange={(e) => setWorkingCalendar({ ...workingCalendar, workingDays: e.target.value })} placeholder="1,2,3,4,5,6" className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="ds-label">Default Break Window</label>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <input type="time" value={workingCalendar.breaks[0]?.start || ""} onChange={(e) => setWorkingCalendar({ ...workingCalendar, breaks: [{ start: e.target.value, end: workingCalendar.breaks[0]?.end || "14:00" }] })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                      <input type="time" value={workingCalendar.breaks[0]?.end || ""} onChange={(e) => setWorkingCalendar({ ...workingCalendar, breaks: [{ start: workingCalendar.breaks[0]?.start || "13:00", end: e.target.value }] })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Button type="submit" disabled={isPending} className="w-full bg-[#00cec4] hover:bg-[#00b2a9] text-white">
+                      {isPending ? "Saving working hours..." : "Save Organisation Hours"}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card className="relative overflow-hidden border border-outline-variant/60 bg-surface shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#00cec4]">
+              <CardHeader className="pb-3 border-b border-outline-variant/60">
+                <CardTitle className="text-base font-semibold text-on-surface">Shift Management</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <form onSubmit={handleSaveShift} className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="ds-label">Shift Name</label>
+                    <input type="text" value={shiftForm.name} onChange={(e) => setShiftForm({ ...shiftForm, name: e.target.value })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="ds-label">Start Time</label>
+                    <input type="time" value={shiftForm.startTime} onChange={(e) => setShiftForm({ ...shiftForm, startTime: e.target.value })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="ds-label">End Time</label>
+                    <input type="time" value={shiftForm.endTime} onChange={(e) => setShiftForm({ ...shiftForm, endTime: e.target.value })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="ds-label">Expected Minutes</label>
+                    <input type="number" value={shiftForm.expectedWorkingMinutes} onChange={(e) => setShiftForm({ ...shiftForm, expectedWorkingMinutes: parseInt(e.target.value, 10) || 480 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="ds-label">Minimum OT Minutes</label>
+                    <input type="number" value={shiftForm.minOvertimeMinutes} onChange={(e) => setShiftForm({ ...shiftForm, minOvertimeMinutes: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="ds-label">Grace Before Start</label>
+                    <input type="number" value={shiftForm.graceBeforeStartMins} onChange={(e) => setShiftForm({ ...shiftForm, graceBeforeStartMins: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="ds-label">Grace After End</label>
+                    <input type="number" value={shiftForm.graceAfterEndMins} onChange={(e) => setShiftForm({ ...shiftForm, graceAfterEndMins: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="ds-label">Working Days</label>
+                    <input type="text" value={shiftForm.workingDays} onChange={(e) => setShiftForm({ ...shiftForm, workingDays: e.target.value })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="sm:col-span-2 flex items-center gap-5">
+                    <label className="flex items-center gap-2 text-sm text-on-surface">
+                      <input type="checkbox" checked={shiftForm.isActive} onChange={(e) => setShiftForm({ ...shiftForm, isActive: e.target.checked })} />
+                      Active
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-on-surface">
+                      <input type="checkbox" checked={shiftForm.isDefault} onChange={(e) => setShiftForm({ ...shiftForm, isDefault: e.target.checked })} />
+                      Default shift
+                    </label>
+                  </div>
+                  <div className="sm:col-span-2 flex gap-3">
+                    <Button type="submit" disabled={isPending} className="bg-[#00cec4] hover:bg-[#00b2a9] text-white">
+                      {shiftForm.id ? "Update Shift" : "Create Shift"}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={resetShiftForm}>
+                      Reset
+                    </Button>
+                  </div>
+                </form>
+
+                <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface">
+                  <div className="overflow-x-auto">
+                    <table className="ds-table">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Window</th>
+                          <th>Expected</th>
+                          <th>Status</th>
+                          <th>Default</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {shifts.map((shift) => (
+                          <tr key={shift.id} className="ds-row-link" onClick={() => setShiftForm({ ...shift, breakRules: shift.breakRules || [] })}>
+                            <td className="font-medium">{shift.name}</td>
+                            <td className="ds-numeric">{shift.startTime} - {shift.endTime}</td>
+                            <td className="ds-numeric">{shift.expectedWorkingMinutes} mins</td>
+                            <td>{shift.isActive ? "ACTIVE" : "INACTIVE"}</td>
+                            <td>{shift.isDefault ? "YES" : "NO"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="relative overflow-hidden border border-outline-variant/60 bg-surface shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#00cec4]">
+              <CardHeader className="pb-3 border-b border-outline-variant/60">
+                <CardTitle className="text-base font-semibold text-on-surface">Employee Shift Assignment</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAssignShift} className="grid gap-4 sm:grid-cols-3">
+                  <select value={shiftAssignmentUserId} onChange={(e) => setShiftAssignmentUserId(e.target.value)} className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm">
+                    <option value="">Select employee</option>
+                    {adminData?.employees.map((employee) => (
+                      <option key={employee.id} value={employee.id}>{employee.name}</option>
+                    ))}
+                  </select>
+                  <select value={shiftAssignmentShiftId} onChange={(e) => setShiftAssignmentShiftId(e.target.value)} className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm">
+                    <option value="">Select shift</option>
+                    {shifts.filter((shift) => shift.isActive).map((shift) => (
+                      <option key={shift.id} value={shift.id}>{shift.name}</option>
+                    ))}
+                  </select>
+                  <input type="date" value={shiftAssignmentStartDate} onChange={(e) => setShiftAssignmentStartDate(e.target.value)} className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  <div className="sm:col-span-3">
+                    <Button type="submit" disabled={isPending} className="bg-[#00cec4] hover:bg-[#00b2a9] text-white">
+                      Save Shift Assignment
+                    </Button>
+                  </div>
+                </form>
+
+                <div className="mt-4 overflow-hidden rounded-xl border border-outline-variant bg-surface">
+                  <div className="overflow-x-auto">
+                    <table className="ds-table">
+                      <thead>
+                        <tr>
+                          <th>Employee</th>
+                          <th>Current Shift</th>
+                          <th>Effective From</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {adminData?.employees.map((employee) => {
+                          const assignment = employee.hrmsShiftAssignments?.[0];
+                          return (
+                            <tr key={employee.id}>
+                              <td className="font-medium">{employee.name}</td>
+                              <td>{assignment?.shift.name || "Organisation Working Hours"}</td>
+                              <td className="ds-numeric">{assignment?.startDate ? new Date(assignment.startDate).toLocaleDateString("en-IN") : "—"}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-4">
+            <Card className="relative overflow-hidden border border-outline-variant/60 bg-surface shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#00cec4]">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold text-on-surface">OT Rate & Comp-Off Rules</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSaveSettings} className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="ds-label">Standard Shift Hours</label>
+                    <input type="number" step="0.5" required value={otSettings.standardHours} onChange={(e) => setOtSettings({ ...otSettings, standardHours: parseFloat(e.target.value) || 8.0 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="ds-label">OT Multiplier</label>
+                    <input type="number" step="0.1" required value={otSettings.otRate} onChange={(e) => setOtSettings({ ...otSettings, otRate: parseFloat(e.target.value) || 1.5 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="ds-label">Legacy Grace Minutes</label>
+                    <input type="number" required value={otSettings.graceMinutes} onChange={(e) => setOtSettings({ ...otSettings, graceMinutes: parseInt(e.target.value, 10) || 15 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </div>
+                  <Button type="submit" disabled={isPending} className="w-full bg-[#00cec4] hover:bg-[#00b2a9] text-white">
+                    {isPending ? "Saving..." : "Save OT Rate Rules"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card className="relative overflow-hidden border border-outline-variant/60 bg-surface shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#00cec4]">
+              <CardHeader className="pb-3 border-b border-outline-variant/60">
+                <CardTitle className="text-base font-semibold text-on-surface">Comp-Off Slabs</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 {slabs.length === 0 ? (
-                  <div className="py-16 text-center text-sm text-on-surface-variant">
-                    No compensation slabs defined. Defaulting to standard settings.
-                  </div>
+                  <div className="py-16 text-center text-sm text-on-surface-variant">No compensation slabs defined.</div>
                 ) : (
                   <DataTable className="rounded-none border-0 shadow-none">
                     <DataTableHeader>
                       <DataTableRow className="hover:bg-transparent">
                         <DataTableHead>Minimum Worked Hours</DataTableHead>
-                        <DataTableHead className="text-right">Comp-Off Days Granted</DataTableHead>
+                        <DataTableHead className="text-right">Comp-Off Days</DataTableHead>
                         <DataTableHead className="text-right">Action</DataTableHead>
                       </DataTableRow>
                     </DataTableHeader>
                     <DataTableBody>
                       {slabs.map((slab, index) => (
                         <DataTableRow key={index}>
-                          <DataTableCell className="font-medium text-on-surface">
-                            If employee works &gt;= <span className="font-semibold">{slab.minHours} hours</span>
-                          </DataTableCell>
-                          <DataTableCell className="text-right font-semibold text-[#00a89f]">
-                            {slab.compOffDays} days
-                          </DataTableCell>
+                          <DataTableCell>If employee works &gt;= <span className="font-semibold">{slab.minHours} hours</span></DataTableCell>
+                          <DataTableCell className="text-right font-semibold text-[#00a89f]">{slab.compOffDays} days</DataTableCell>
                           <DataTableCell className="text-right">
-                            <Button
-                              size="sm"
-                              onClick={() => handleRemoveSlab(index)}
-                              className="h-7 w-7 p-0 bg-transparent border border-rose-200 hover:bg-rose-500/10 text-rose-500 inline-flex items-center justify-center rounded"
-                            >
+                            <Button size="sm" onClick={() => handleRemoveSlab(index)} className="h-7 w-7 p-0 bg-transparent border border-rose-200 hover:bg-rose-500/10 text-rose-500 inline-flex items-center justify-center rounded">
                               <Trash className="size-3.5" />
                             </Button>
                           </DataTableCell>
@@ -1842,113 +2207,14 @@ export function OtClient({
                     </DataTableBody>
                   </DataTable>
                 )}
-                
-                {/* Slab Adder Form */}
                 <div className="flex items-center gap-3 border-t border-outline-variant/60 bg-surface-container-low/40 p-4">
                   <div className="flex flex-1 gap-2">
-                    <input
-                      type="number"
-                      placeholder="Min hours worked (e.g. 8)"
-                      value={newSlabMinHours}
-                      onChange={(e) => setNewSlabMinHours(e.target.value)}
-                      className="flex-1 rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant"
-                    />
-                    <input
-                      type="number"
-                      step="0.5"
-                      placeholder="Comp-off days (e.g. 1.0)"
-                      value={newSlabDays}
-                      onChange={(e) => setNewSlabDays(e.target.value)}
-                      className="flex-1 rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant"
-                    />
+                    <input type="number" placeholder="Min hours worked" value={newSlabMinHours} onChange={(e) => setNewSlabMinHours(e.target.value)} className="flex-1 rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant" />
+                    <input type="number" step="0.5" placeholder="Comp-off days" value={newSlabDays} onChange={(e) => setNewSlabDays(e.target.value)} className="flex-1 rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant" />
                   </div>
-                  <Button
-                    onClick={handleAddSlab}
-                    className="flex h-9 items-center gap-1 bg-[#00cec4] px-3 text-sm text-white hover:bg-[#00b2a9]"
-                  >
-                    <Plus className="size-3.5" /> Add Slab
+                  <Button onClick={handleAddSlab} className="flex h-9 items-center gap-1 bg-[#00cec4] px-3 text-sm text-white hover:bg-[#00b2a9]">
+                    <Plus className="size-3.5" /> Add
                   </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div>
-            <Card className="relative overflow-hidden border border-outline-variant/60 bg-surface shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#00cec4] after:absolute after:inset-y-0 after:right-0 after:w-1 after:bg-[#00cec4]/45">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-on-surface">Global Settings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSaveSettings} className="space-y-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold uppercase tracking-[0.14em] text-on-surface-variant">Standard Shift Hours</label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      required
-                      value={otSettings.standardHours}
-                      onChange={(e) => setOtSettings({ ...otSettings, standardHours: parseFloat(e.target.value) || 8.0 })}
-                      className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm font-medium text-on-surface"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold uppercase tracking-[0.14em] text-on-surface-variant">OT Hourly Rate Multiplier / Standard Base</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      required
-                      value={otSettings.otRate}
-                      onChange={(e) => setOtSettings({ ...otSettings, otRate: parseFloat(e.target.value) || 1.5 })}
-                      className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm font-medium text-on-surface"
-                    />
-                    <p className="text-xs leading-relaxed text-on-surface-variant">
-                      If employees have no CTC set in employment contracts, this value is multiplied by ₹100 as fallback rate.
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold uppercase tracking-[0.14em] text-on-surface-variant">Grace Period (Minutes)</label>
-                    <input
-                      type="number"
-                      required
-                      value={otSettings.graceMinutes}
-                      onChange={(e) => setOtSettings({ ...otSettings, graceMinutes: parseInt(e.target.value, 10) || 15 })}
-                      className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm font-medium text-on-surface"
-                    />
-                    <p className="text-xs leading-relaxed text-on-surface-variant">
-                      Overtime calculation threshold. Overtime minutes start accumulating strictly after standard shift hours + grace limit.
-                    </p>
-                  </div>
-                  <Button type="submit" disabled={isPending} className="w-full bg-[#00cec4] hover:bg-[#00b2a9] text-white">
-                    {isPending ? "Saving parameters..." : "Save Config Details"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <Card className="relative mt-4 overflow-hidden border border-outline-variant/60 bg-surface shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#00cec4] after:absolute after:inset-y-0 after:right-0 after:w-1 after:bg-[#00cec4]/45">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-on-surface">OT & Comp-Off Active Policies</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm leading-relaxed text-on-surface-variant">
-                <div className="space-y-1 pb-2 border-b border-outline-variant/40">
-                  <h5 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface">1. Weekend Saturday Rules</h5>
-                  <p>Only the 1st and 3rd Saturdays of a calendar month are treated as official working days. The 2nd, 4th, and 5th Saturdays are weekly off-days (holiday/weekend).</p>
-                </div>
-                <div className="space-y-1 pb-2 border-b border-outline-variant/40">
-                  <h5 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface">2. CTC Overtime Rate Policy</h5>
-                  <p>Calculated dynamically: <code>Annual CTC / 12 / (Working Days * Shift Hours)</code>. Falls back to standard multiplier rate (base rate * ₹100) if contracting CTC data is missing.</p>
-                </div>
-                <div className="space-y-1 pb-2 border-b border-outline-variant/40">
-                  <h5 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface">3. Grace Period Thresholds</h5>
-                  <p>Overtime minutes only accumulate once hours worked exceed standard shift hours + grace period minutes. Early departure logs trigger if check-out occurs prior to standard shift boundaries.</p>
-                </div>
-                <div className="space-y-1 pb-2 border-b border-outline-variant/40">
-                  <h5 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface">4. Weekend / Holiday Comp-Off Slabs</h5>
-                  <p>Working on weekly offs or official calendar holidays grants days of Comp-Off according to the configured hours-to-days slabs (e.g. &gt;= 8.0 hours worked grants 1.0 day).</p>
-                </div>
-                <div className="space-y-1">
-                  <h5 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface">5. Regularization Penalty</h5>
-                  <p>If a punch is modified/corrected via Attendance Regularization request approval rather than pure biometric scanning, computed Overtime hours/amounts and Comp-off days are penalised by 75% (only 25% credited).</p>
                 </div>
               </CardContent>
             </Card>
@@ -1961,20 +2227,20 @@ export function OtClient({
         <div className="space-y-6 animate-in fade-in duration-300">
           <div className="grid gap-6 lg:grid-cols-3">
             <Card className="border-0 shadow-sm bg-surface lg:col-span-2">
-              <CardHeader className="pb-3 border-b border-outline-variant/60">
-                <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">
-                  Upload CSV Attendance Punch Log
-                </CardTitle>
-                <p className="text-xs text-on-surface-variant/60 font-semibold mt-1">
-                  Upload a raw punch card log in CSV format. Align columns with database variables, match employees, and recalculate OT instantly.
-                </p>
-              </CardHeader>
+                <CardHeader className="pb-3 border-b border-outline-variant/60">
+                  <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">
+                  Upload Attendance Punch Log
+                  </CardTitle>
+                  <p className="text-xs text-on-surface-variant/60 font-semibold mt-1">
+                  Upload a raw punch card log in CSV, XLS, or XLSX format. For your Early/Late workbook, columns A-G are imported and the remaining columns are ignored.
+                  </p>
+                </CardHeader>
               <CardContent className="p-6 space-y-6">
                 {/* Upload File Input */}
                 <div className="border-2 border-dashed border-outline-variant/60 hover:border-[#00cec4]/50 rounded-2xl p-8 text-center transition bg-surface-container-high/20 dark:bg-slate-900/10 cursor-pointer relative">
                   <input
                     type="file"
-                    accept=".csv"
+                    accept=".csv,.xls,.xlsx"
                     onChange={handleCsvFileUpload}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
@@ -1983,9 +2249,9 @@ export function OtClient({
                       <Download className="size-6 rotate-180 text-[#00cec4]" />
                     </div>
                     <div className="text-sm font-bold text-on-surface dark:text-slate-200">
-                      {csvFileName ? `Selected File: ${csvFileName}` : "Drag & Drop CSV file or click to select"}
+                      {csvFileName ? `Selected File: ${csvFileName}` : "Drag & Drop CSV/Excel file or click to select"}
                     </div>
-                    <p className="text-xs text-on-surface-variant/60">CSV format only. Files should contain employee credentials and clock entries.</p>
+                    <p className="text-xs text-on-surface-variant/60">Supports `.csv`, `.xls`, and `.xlsx`. Early/Late Excel imports use only columns A-G.</p>
                   </div>
                 </div>
 
@@ -1993,7 +2259,7 @@ export function OtClient({
                 {csvHeaders.length > 0 && (
                   <div className="space-y-4 border border-outline-variant/60 rounded-xl p-4 bg-surface">
                     <h4 className="text-sm font-black text-on-surface dark:text-white flex items-center gap-1.5">
-                      <Sliders className="size-4 text-[#00cec4]" /> Map CSV Columns to Attendance Variables
+                      <Sliders className="size-4 text-[#00cec4]" /> Map Imported Columns to Attendance Variables
                     </h4>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-1">
@@ -2114,6 +2380,10 @@ export function OtClient({
                               return;
                             }
                             setImportSummary(res.data || null);
+                            if (res.data?.recalculationDeferred) {
+                              toast.success(`Import completed: ${res.data?.imported || 0} inserted, ${res.data?.updated || 0} updated. Run Recompute Month OT Records next.`);
+                              return;
+                            }
                             toast.success(`Import completed: ${res.data?.imported || 0} inserted, ${res.data?.updated || 0} updated`);
                           });
                         }}
@@ -2144,10 +2414,13 @@ export function OtClient({
                     • Dates will be parsed and normalized to Asia/Kolkata timezone (IST) midnight boundaries. Supported formats include standard ISO (`YYYY-MM-DD`) and slash formats (`DD-MM-YYYY` or `DD/MM/YYYY`).
                   </p>
                   <p>
+                    • Early/Late Excel uploads automatically read the worksheet header row after the report date range and import only columns `A-G`: Employee Id, Employee Name, Email ID, Date, First In, Last Out, and Total Hours.
+                  </p>
+                  <p>
                     • Check-in and check-out values support 24-hour time strings (`18:30:00`) or meridiem-tagged time strings (`06:30 PM`).
                   </p>
                   <p>
-                    • Processing runs recalculations immediately for all imported records, mapping OT rate details and holiday comp-off credits automatically.
+                    • Smaller imports recalculate OT inline. Large imports return the punch import summary first and let you run <span className="ds-numeric">Recompute Month OT Records</span> separately for a faster and more reliable result.
                   </p>
                 </CardContent>
               </Card>
@@ -2174,6 +2447,12 @@ export function OtClient({
                         <div className="text-[10px] text-on-surface-variant/60 font-bold">Skipped</div>
                       </div>
                     </div>
+
+                    {importSummary.recalculationDeferred ? (
+                      <div className="rounded-xl border border-[#fb923c]/35 bg-[#fb923c]/10 p-3 text-xs font-semibold text-[#fb923c]">
+                        Large file import completed without inline OT recalculation to avoid the page hanging. Use <span className="ds-numeric">Recompute Month OT Records</span> for {importSummary.touchedMonths?.join(", ") || selectedMonth}.
+                      </div>
+                    ) : null}
 
                     {importSummary.errors.length > 0 && (
                       <div className="space-y-1">

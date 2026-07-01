@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-01T06:39:19.454Z",
+  "generatedAt": "2026-07-01T08:38:08.780Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -8,7 +8,7 @@
   "stats": {
     "totalAppRoutes": 201,
     "totalApiRoutes": 172,
-    "totalPrismaModels": 256,
+    "totalPrismaModels": 257,
     "totalModuleServices": 70,
     "totalComponents": 89
   },
@@ -2718,6 +2718,8 @@
         "biometricSyncLogs",
         "workingCalendar",
         "otSettings",
+        "attendancePunchEvents",
+        "shifts",
         "accounts",
         "fiscalYears",
         "journalEntries",
@@ -2786,6 +2788,8 @@
         "BiometricSyncLog",
         "WorkingCalendar",
         "OtSettings",
+        "AttendancePunchEvent",
+        "Shift",
         "Account",
         "FiscalYear",
         "JournalEntry",
@@ -3017,6 +3021,7 @@
         "documents",
         "todoTasks",
         "punches",
+        "punchEvents",
         "leaveBalances",
         "leaveRequests",
         "leaveApprovals",
@@ -3143,6 +3148,7 @@
         "Document",
         "TodoTask",
         "AttendancePunch",
+        "AttendancePunchEvent",
         "LeaveBalance",
         "LeaveRequest",
         "OTEntry",
@@ -3433,6 +3439,30 @@
         "user"
       ],
       "relations": [
+        "User"
+      ],
+      "module": "attendance"
+    },
+    {
+      "name": "AttendancePunchEvent",
+      "fields": [
+        "id",
+        "orgId",
+        "userId",
+        "attendanceDate",
+        "punchedAt",
+        "source",
+        "eventType",
+        "status",
+        "deviceId",
+        "notes",
+        "metadata",
+        "createdAt",
+        "org",
+        "user"
+      ],
+      "relations": [
+        "Organisation",
         "User"
       ],
       "module": "attendance"
@@ -3882,6 +3912,10 @@
         "workEnd",
         "timezone",
         "graceMinutes",
+        "graceBeforeStartMins",
+        "graceAfterEndMins",
+        "defaultWorkingMinutes",
+        "minOvertimeMinutes",
         "workingDays",
         "breaks",
         "org"
@@ -3913,6 +3947,7 @@
         "id",
         "userId",
         "date",
+        "shiftId",
         "dayType",
         "hoursWorked",
         "otHours",
@@ -3920,16 +3955,28 @@
         "otAmount",
         "compOffDays",
         "earlyLeavingMins",
+        "firstPunchAt",
+        "lastPunchAt",
+        "totalPunchCount",
+        "workedMinutes",
+        "expectedMinutes",
+        "differenceMinutes",
+        "calculationStatus",
+        "calculationRemarks",
+        "calculationDetails",
+        "usedOrgFallback",
         "approvalStatus",
         "approvedById",
         "approvedBy",
         "rejectionRemarks",
         "createdAt",
         "updatedAt",
-        "user"
+        "user",
+        "shift"
       ],
       "relations": [
-        "User"
+        "User",
+        "Shift"
       ],
       "module": "hrms"
     },
@@ -4810,11 +4857,24 @@
         "name",
         "startTime",
         "endTime",
+        "expectedWorkingMinutes",
+        "graceBeforeStartMins",
+        "graceAfterEndMins",
+        "minOvertimeMinutes",
         "workingDays",
-        "assignments"
+        "breakRules",
+        "isActive",
+        "isDefault",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "assignments",
+        "otRecords"
       ],
       "relations": [
-        "ShiftAssignment"
+        "Organisation",
+        "ShiftAssignment",
+        "OtRecord"
       ],
       "module": "attendance"
     },
@@ -10673,7 +10733,7 @@
     "attendance": {
       "appRoutes": 7,
       "apiRoutes": 10,
-      "prismaModels": 8,
+      "prismaModels": 9,
       "serviceFiles": 1,
       "components": 0
     },

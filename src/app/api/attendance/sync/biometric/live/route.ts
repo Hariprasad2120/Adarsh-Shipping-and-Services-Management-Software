@@ -13,7 +13,7 @@ import {
 import { attendanceDateFromParts, getAttendanceDayBounds, getAttendanceDateParts, getEsslDayWindow } from "@/lib/attendance-date";
 import { intimateAdminsOffline, createNotification } from "@/modules/notifications/service";
 import { getNow } from "@/lib/clock";
-import { calculateOtForPunch } from "@/lib/ot";
+import { calculateOtForPunch, replaceAttendancePunchEventsForDate } from "@/lib/ot";
 import mssql from "mssql";
 
 type LiveStatus = "IN" | "OUT" | "NOT_ARRIVED" | "IDLE";
@@ -483,6 +483,13 @@ export async function POST(req: NextRequest) {
               biometricSynced: true,
             },
           });
+
+          await replaceAttendancePunchEventsForDate(hrmsId, orgId, attendanceDate, sortedPunches.map((event) => ({
+            punchedAt: event.time,
+            source: "biometric",
+            eventType: event.dir === "out" ? "CHECK_OUT" : "CHECK_IN",
+            metadata: { importedFrom: actualTable, deviceName: event.deviceName },
+          })));
 
           await calculateOtForPunch(hrmsId, attendanceDate);
         }

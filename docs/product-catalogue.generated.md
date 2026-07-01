@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-01T06:39:19.454Z
+> Generated at: 2026-07-01T08:38:08.780Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -9,7 +9,7 @@
 |---|---|
 | App Routes (Pages) | 201 |
 | API Routes | 172 |
-| Prisma Models | 256 |
+| Prisma Models | 257 |
 | Module Service Files | 70 |
 | UI Components | 89 |
 
@@ -20,7 +20,7 @@
 | accounting | 32 | 0 | 18 | 6 | 0 |
 | admin | 9 | 6 | 0 | 0 | 0 |
 | ams | 18 | 17 | 17 | 11 | 3 |
-| attendance | 7 | 10 | 8 | 1 | 0 |
+| attendance | 7 | 10 | 9 | 1 | 0 |
 | auth | 0 | 1 | 0 | 0 | 0 |
 | cha | 12 | 3 | 33 | 3 | 2 |
 | communication | 11 | 18 | 2 | 1 | 0 |
@@ -430,14 +430,14 @@
 
 | Model | Module | Fields | Relations |
 |---|---|---|---|
-| Organisation | core | 73 | Branch, Department, Division, Role, User, AppraisalCycle, AppraisalSchedule, AppraisalCriterion, AppraisalSelfTemplate, OrgAppraisalSettings, LeaveType, Holiday, Notification, NotificationActivity, TodoTask, Announcement, CrmApprovalLog, CrmWorkTimeLog, BiometricSyncLog, WorkingCalendar, OtSettings, Account, FiscalYear, JournalEntry, GeneralLedgerEntry, SalesInvoice, PurchaseInvoice, PaymentEntry, CustomerLedgerEntry, SupplierLedgerEntry, AccountingSettings, AccountingAuditLog, PayrollBatch, Asset, AssetDepreciationEntry, JobCosting, Quotation, CustomerNote, VendorNote, RecurringExpense, RecurringJournal, TransactionLock, PartnerAccount, ChaSettings, ChaJob, ChaJobDeletionRequest, ChaExpenseRequest, ChaAuditLog, ChaTeamGroup, ChaBranchNumberingRule, ChaShipmentType, ChaDocumentRequirementCategory, FilingWorkflowTemplate, GoogleChatSpace, GoogleChatSubscription, GoogleChatDelivery, GoogleWorkspaceConnection, GoogleWorkspaceSetting, JobWorkspaceProfile, CommunicationAuditEvent, RecruitJobOpening, RecruitCandidate, RecruitApplication, RecruitAuditEvent, RecruitSetting, RecruitAutomationRun |
+| Organisation | core | 75 | Branch, Department, Division, Role, User, AppraisalCycle, AppraisalSchedule, AppraisalCriterion, AppraisalSelfTemplate, OrgAppraisalSettings, LeaveType, Holiday, Notification, NotificationActivity, TodoTask, Announcement, CrmApprovalLog, CrmWorkTimeLog, BiometricSyncLog, WorkingCalendar, OtSettings, AttendancePunchEvent, Shift, Account, FiscalYear, JournalEntry, GeneralLedgerEntry, SalesInvoice, PurchaseInvoice, PaymentEntry, CustomerLedgerEntry, SupplierLedgerEntry, AccountingSettings, AccountingAuditLog, PayrollBatch, Asset, AssetDepreciationEntry, JobCosting, Quotation, CustomerNote, VendorNote, RecurringExpense, RecurringJournal, TransactionLock, PartnerAccount, ChaSettings, ChaJob, ChaJobDeletionRequest, ChaExpenseRequest, ChaAuditLog, ChaTeamGroup, ChaBranchNumberingRule, ChaShipmentType, ChaDocumentRequirementCategory, FilingWorkflowTemplate, GoogleChatSpace, GoogleChatSubscription, GoogleChatDelivery, GoogleWorkspaceConnection, GoogleWorkspaceSetting, JobWorkspaceProfile, CommunicationAuditEvent, RecruitJobOpening, RecruitCandidate, RecruitApplication, RecruitAuditEvent, RecruitSetting, RecruitAutomationRun |
 | Branch | core | 24 | Organisation, User, Holiday, Account, JournalEntry, GeneralLedgerEntry, SalesInvoice, PurchaseInvoice, PaymentEntry, CustomerLedgerEntry, SupplierLedgerEntry, Asset, JobCosting, Quotation, CustomerNote, VendorNote, RecurringExpense, RecurringJournal, ChaJob, ChaBranchNumberingRule |
 | Department | core | 7 | Organisation, Division, User |
 | Division | core | 7 | Organisation, Department, User |
 | Role | core | 8 | Organisation, RolePermission, UserRole, AppraisalCriterion |
 | Permission | core | 5 | RolePermission |
 | RolePermission | core | 4 | Role, Permission |
-| User | core | 156 | Organisation, Branch, Department, Division, User, UserRole, Notification, NotificationActivity, EmploymentRecord, Document, TodoTask, AttendancePunch, LeaveBalance, LeaveRequest, OTEntry, OtRecord, AttendanceRegularization, EmployeeLop, BiometricSyncLog, Appraisal, AppraisalReviewer, ManagementReview, AppraisalMeeting, MeetingMinute, HikeDecision, AppraisalSchedule, AppraisalExtensionRequest, MeetingReschedule, CrmTicket, CrmTicketComment, PasskeyResetRequest, SecurityEvent, UserSession, CrmInvoice, CrmApprovalLog, CrmLead, CrmContact, CrmAccount, CrmDeal, CrmActivity, CrmVendor, CrmProject, CrmNote, CrmAttachment, CrmTimelineEvent, CrmLeadSourceJustdialConfig, CrmExternalLeadSnapshot, CrmLeadReminder, CrmWorkTimeLog, EmployeePreference, EmployeeContact, ShiftAssignment, AttendancePermissionRequest, OnDutyRequest, TimesheetSubmission, Goal, EmployeeSkill, PerformanceFeedback, SalaryRevisionLetter, CourseEnrollment, SurveyResponse, HRCase, HRLetterRequest, TravelRequest, HrmsTask, HrmsAuditLog, WorkReport, MobileDevice, EmployeeFaceEnrollment, AttendanceSession, LocationTrackingSession, TrackingAlert, FuelReimbursementClaim, UserAgreementAcceptance, AccountingAuditLog, CrmCallAttempt, CrmCallReview, CrmCallRecordingAuditLog, GoogleWorkspaceConnection, CommunicationAuditEvent, GoogleChatUserLink, RecruitJobSeekerProfile, RecruitJobListing, RecruitJobMatch, RecruitJobSeekerResume, RecruitTailoredResume, RecruitCoverLetter, RecruitJobSeekerApplication, RecruitJobAlert, RecruitCareerConversation, RecruitInterviewPrep, RecruitPrivateShare, ChaJob, ChaJobAssignment, ChaJobDeletionRequest, ChaDocumentVersion, ChaDocumentException, ChaChecklistImport, ChaChecklistApproval, ChaChecklistReworkNote, ChaFilingDateHistory, ChaExpenseRequest, ChaExpensePayment, ChaExpenseQuery, FilingNodeRun, FilingAttachment, FilingSection49Flag |
+| User | core | 157 | Organisation, Branch, Department, Division, User, UserRole, Notification, NotificationActivity, EmploymentRecord, Document, TodoTask, AttendancePunch, AttendancePunchEvent, LeaveBalance, LeaveRequest, OTEntry, OtRecord, AttendanceRegularization, EmployeeLop, BiometricSyncLog, Appraisal, AppraisalReviewer, ManagementReview, AppraisalMeeting, MeetingMinute, HikeDecision, AppraisalSchedule, AppraisalExtensionRequest, MeetingReschedule, CrmTicket, CrmTicketComment, PasskeyResetRequest, SecurityEvent, UserSession, CrmInvoice, CrmApprovalLog, CrmLead, CrmContact, CrmAccount, CrmDeal, CrmActivity, CrmVendor, CrmProject, CrmNote, CrmAttachment, CrmTimelineEvent, CrmLeadSourceJustdialConfig, CrmExternalLeadSnapshot, CrmLeadReminder, CrmWorkTimeLog, EmployeePreference, EmployeeContact, ShiftAssignment, AttendancePermissionRequest, OnDutyRequest, TimesheetSubmission, Goal, EmployeeSkill, PerformanceFeedback, SalaryRevisionLetter, CourseEnrollment, SurveyResponse, HRCase, HRLetterRequest, TravelRequest, HrmsTask, HrmsAuditLog, WorkReport, MobileDevice, EmployeeFaceEnrollment, AttendanceSession, LocationTrackingSession, TrackingAlert, FuelReimbursementClaim, UserAgreementAcceptance, AccountingAuditLog, CrmCallAttempt, CrmCallReview, CrmCallRecordingAuditLog, GoogleWorkspaceConnection, CommunicationAuditEvent, GoogleChatUserLink, RecruitJobSeekerProfile, RecruitJobListing, RecruitJobMatch, RecruitJobSeekerResume, RecruitTailoredResume, RecruitCoverLetter, RecruitJobSeekerApplication, RecruitJobAlert, RecruitCareerConversation, RecruitInterviewPrep, RecruitPrivateShare, ChaJob, ChaJobAssignment, ChaJobDeletionRequest, ChaDocumentVersion, ChaDocumentException, ChaChecklistImport, ChaChecklistApproval, ChaChecklistReworkNote, ChaFilingDateHistory, ChaExpenseRequest, ChaExpensePayment, ChaExpenseQuery, FilingNodeRun, FilingAttachment, FilingSection49Flag |
 | UserRole | core | 4 | User, Role |
 | Notification | notifications | 26 | Organisation, User, Notification, NotificationActivity |
 | NotificationActivity | notifications | 10 | Notification, Organisation, User |
@@ -447,6 +447,7 @@
 | EmploymentRecord | hrms | 17 | User |
 | Document | core | 6 | User |
 | AttendancePunch | attendance | 12 | User |
+| AttendancePunchEvent | attendance | 14 | Organisation, User |
 | LeaveType | hrms | 6 | — |
 | LeaveBalance | hrms | 7 | User, LeaveType |
 | LeaveRequest | hrms | 14 | User, LeaveType |
@@ -468,9 +469,9 @@
 | OrgAppraisalSettings | ams | 4 | — |
 | SystemClock | core | 3 | — |
 | BiometricSyncLog | core | 10 | Organisation, User |
-| WorkingCalendar | core | 9 | Organisation |
+| WorkingCalendar | core | 13 | Organisation |
 | OtSettings | hrms | 7 | Organisation |
-| OtRecord | hrms | 17 | User |
+| OtRecord | hrms | 29 | User, Shift |
 | AttendanceRegularization | attendance | 13 | User |
 | EmployeeLop | hrms | 9 | User |
 | SystemSetting | core | 3 | — |
@@ -505,7 +506,7 @@
 | ServiceDefinition | core | 8 | ServiceForm |
 | ServiceForm | core | 8 | ServiceDefinition, CustomField |
 | CustomField | core | 7 | ServiceForm |
-| Shift | attendance | 7 | ShiftAssignment |
+| Shift | attendance | 18 | Organisation, ShiftAssignment, OtRecord |
 | ShiftAssignment | attendance | 7 | Shift, User |
 | AttendanceBreak | attendance | 5 | — |
 | AttendancePermissionRequest | attendance | 11 | User |

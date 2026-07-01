@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { notify } from "@/lib/notify";
 import { getNow } from "@/lib/clock";
 import { notifyMany, getUsersWithPermission } from "@/modules/notifications/service";
-import { calculateOtForPunch } from "@/lib/ot";
+import { appendAttendancePunchEvent, calculateOtForPunch } from "@/lib/ot";
 import { getAttendanceMonthBounds, toAttendanceDate } from "@/lib/attendance-date";
 
 // ─── Punch ────────────────────────────────────────────────────────────────────
@@ -10,11 +10,23 @@ import { getAttendanceMonthBounds, toAttendanceDate } from "@/lib/attendance-dat
 export async function punchIn(userId: string, date: Date) {
   const now = await getNow();
   const attendanceDate = toAttendanceDate(date);
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { orgId: true },
+  });
   const punch = await db.attendancePunch.upsert({
     where: { userId_date: { userId, date: attendanceDate } },
     update: { inAt: now },
     create: { userId, date: attendanceDate, inAt: now, source: "web" },
   });
+  if (user?.orgId) {
+    await appendAttendancePunchEvent(userId, user.orgId, attendanceDate, {
+      punchedAt: now,
+      source: "web",
+      eventType: "CHECK_IN",
+      metadata: { origin: "attendance.service.punchIn" },
+    });
+  }
   await calculateOtForPunch(userId, attendanceDate);
   return punch;
 }
@@ -22,11 +34,23 @@ export async function punchIn(userId: string, date: Date) {
 export async function punchOut(userId: string, date: Date) {
   const now = await getNow();
   const attendanceDate = toAttendanceDate(date);
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { orgId: true },
+  });
   const punch = await db.attendancePunch.upsert({
     where: { userId_date: { userId, date: attendanceDate } },
     update: { outAt: now },
     create: { userId, date: attendanceDate, outAt: now, source: "web" },
   });
+  if (user?.orgId) {
+    await appendAttendancePunchEvent(userId, user.orgId, attendanceDate, {
+      punchedAt: now,
+      source: "web",
+      eventType: "CHECK_OUT",
+      metadata: { origin: "attendance.service.punchOut" },
+    });
+  }
   await calculateOtForPunch(userId, attendanceDate);
   return punch;
 }

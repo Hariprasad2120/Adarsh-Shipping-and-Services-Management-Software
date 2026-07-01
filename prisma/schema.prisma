@@ -36,11 +36,13 @@ model Organisation {
   todoTasks              TodoTask[]
   announcements          Announcement[]
 
-  crmApprovalLogs   CrmApprovalLog[]
-  crmWorkTimeLogs   CrmWorkTimeLog[]
-  biometricSyncLogs BiometricSyncLog[]
-  workingCalendar   WorkingCalendar?
-  otSettings        OtSettings?
+  crmApprovalLogs       CrmApprovalLog[]
+  crmWorkTimeLogs       CrmWorkTimeLog[]
+  biometricSyncLogs     BiometricSyncLog[]
+  workingCalendar       WorkingCalendar?
+  otSettings            OtSettings?
+  attendancePunchEvents AttendancePunchEvent[]
+  shifts                Shift[]
 
   // Accounting Module Relations
   accounts            Account[]
@@ -253,6 +255,7 @@ model User {
 
   // Attendance & OT
   punches                 AttendancePunch[]
+  punchEvents             AttendancePunchEvent[]
   leaveBalances           LeaveBalance[]
   leaveRequests           LeaveRequest[]             @relation("LeaveRequester")
   leaveApprovals          LeaveRequest[]             @relation("LeaveApprover")
@@ -583,6 +586,28 @@ model AttendancePunch {
 
   @@unique([userId, date])
   @@index([userId, date])
+}
+
+model AttendancePunchEvent {
+  id             String   @id @default(cuid())
+  orgId          String
+  userId         String
+  attendanceDate DateTime @db.Date
+  punchedAt      DateTime
+  source         String   @default("web") // web | biometric | mobile | import | manual
+  eventType      String   @default("PUNCH") // CHECK_IN | CHECK_OUT | BREAK_OUT | BREAK_IN | PUNCH | CORRECTION
+  status         String? // VALID | DUPLICATE | IGNORED | NEEDS_REVIEW
+  deviceId       String?
+  notes          String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  org  Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, attendanceDate])
+  @@index([userId, attendanceDate, punchedAt])
+  @@index([userId, punchedAt])
 }
 
 model LeaveType {
@@ -948,14 +973,18 @@ model BiometricSyncLog {
 }
 
 model WorkingCalendar {
-  id           String @id @default("global")
-  orgId        String @unique
-  workStart    String @default("09:00")
-  workEnd      String @default("18:00")
-  timezone     String @default("Asia/Kolkata")
-  graceMinutes Int    @default(15)
-  workingDays  String @default("1,2,3,4,5,6") // Monday to Saturday
-  breaks       Json? // e.g. Lunch break start/end
+  id                    String @id @default("global")
+  orgId                 String @unique
+  workStart             String @default("09:00")
+  workEnd               String @default("18:00")
+  timezone              String @default("Asia/Kolkata")
+  graceMinutes          Int    @default(15)
+  graceBeforeStartMins  Int    @default(0)
+  graceAfterEndMins     Int    @default(15)
+  defaultWorkingMinutes Int    @default(480)
+  minOvertimeMinutes    Int    @default(0)
+  workingDays           String @default("1,2,3,4,5,6") // Monday to Saturday
+  breaks                Json? // e.g. Lunch break start/end
 
   org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
 }
@@ -972,28 +1001,41 @@ model OtSettings {
 }
 
 model OtRecord {
-  id               String   @id @default(cuid())
-  userId           String
-  date             DateTime @db.Date
-  dayType          String   @default("WORKING_DAY") // WORKING_DAY | HOLIDAY | WEEKEND
-  hoursWorked      Float
-  otHours          Float    @default(0)
-  otRatePerHour    Float    @default(0)
-  otAmount         Float    @default(0)
-  compOffDays      Float    @default(0)
-  earlyLeavingMins Int      @default(0)
-  approvalStatus   String   @default("PENDING") // PENDING | APPROVED | REJECTED
-  approvedById     String?
-  approvedBy       User?    @relation("OtApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
-  rejectionRemarks String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                 String    @id @default(cuid())
+  userId             String
+  date               DateTime  @db.Date
+  shiftId            String?
+  dayType            String    @default("WORKING_DAY") // WORKING_DAY | HOLIDAY | WEEKEND
+  hoursWorked        Float
+  otHours            Float     @default(0)
+  otRatePerHour      Float     @default(0)
+  otAmount           Float     @default(0)
+  compOffDays        Float     @default(0)
+  earlyLeavingMins   Int       @default(0)
+  firstPunchAt       DateTime?
+  lastPunchAt        DateTime?
+  totalPunchCount    Int       @default(0)
+  workedMinutes      Int       @default(0)
+  expectedMinutes    Int       @default(0)
+  differenceMinutes  Int       @default(0)
+  calculationStatus  String    @default("VALID") // VALID | MISSING_CHECK_IN | MISSING_CHECK_OUT | INSUFFICIENT_PUNCHES | NEEDS_REVIEW | NO_OVERTIME | MISSING_CONFIGURATION
+  calculationRemarks String?
+  calculationDetails Json?
+  usedOrgFallback    Boolean   @default(false)
+  approvalStatus     String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  approvedById       String?
+  approvedBy         User?     @relation("OtApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  rejectionRemarks   String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  user User @relation("EmployeeOtRecords", fields: [userId], references: [id], onDelete: Cascade)
+  user  User   @relation("EmployeeOtRecords", fields: [userId], references: [id], onDelete: Cascade)
+  shift Shift? @relation(fields: [shiftId], references: [id], onDelete: SetNull)
 
   @@unique([userId, date])
   @@index([userId, date])
   @@index([approvalStatus])
+  @@index([shiftId])
 }
 
 model AttendanceRegularization {
@@ -1782,13 +1824,28 @@ model CustomField {
 }
 
 model Shift {
-  id          String            @id @default(cuid())
-  orgId       String
-  name        String
-  startTime   String // "HH:MM"
-  endTime     String // "HH:MM"
-  workingDays String // "1,2,3,4,5"
+  id                     String   @id @default(cuid())
+  orgId                  String
+  name                   String
+  startTime              String // "HH:MM"
+  endTime                String // "HH:MM"
+  expectedWorkingMinutes Int      @default(480)
+  graceBeforeStartMins   Int      @default(0)
+  graceAfterEndMins      Int      @default(15)
+  minOvertimeMinutes     Int      @default(0)
+  workingDays            String   @default("1,2,3,4,5")
+  breakRules             Json?
+  isActive               Boolean  @default(true)
+  isDefault              Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  org         Organisation      @relation(fields: [orgId], references: [id], onDelete: Cascade)
   assignments ShiftAssignment[]
+  otRecords   OtRecord[]
+
+  @@unique([orgId, name])
+  @@index([orgId, isActive])
 }
 
 model ShiftAssignment {
@@ -1799,6 +1856,9 @@ model ShiftAssignment {
   endDate   DateTime? @db.Date
   shift     Shift     @relation(fields: [shiftId], references: [id], onDelete: Cascade)
   user      User      @relation("UserShiftAssignments", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startDate, endDate])
+  @@index([shiftId, startDate])
 }
 
 model AttendanceBreak {
@@ -3239,18 +3299,18 @@ model ChaTeamGroup {
 }
 
 model ChaJobType {
-  id                  String                  @id @default(cuid())
-  orgId               String
-  name                String
-  movementDirection   String?
-  manifestRequirement String?
-  customManifestLabel String?
-  isManifestMandatory Boolean                 @default(false)
-  manifestHelpText    String?
-  isActive            Boolean                 @default(true)
-  documentDefinitions ChaDocumentDefinition[]
+  id                      String                   @id @default(cuid())
+  orgId                   String
+  name                    String
+  movementDirection       String?
+  manifestRequirement     String?
+  customManifestLabel     String?
+  isManifestMandatory     Boolean                  @default(false)
+  manifestHelpText        String?
+  isActive                Boolean                  @default(true)
+  documentDefinitions     ChaDocumentDefinition[]
   filingWorkflowTemplates FilingWorkflowTemplate[]
-  jobs                ChaJob[]
+  jobs                    ChaJob[]
 
   @@unique([orgId, name])
   @@index([orgId])
@@ -4980,18 +5040,18 @@ model GoogleChatLinkToken {
 // ─── Filing Workflow Blueprint Models ────────────────────────────────────────
 
 model FilingWorkflowTemplate {
-  id          String                   @id @default(cuid())
-  orgId       String
+  id              String                   @id @default(cuid())
+  orgId           String
   clearanceTypeId String?
-  name        String
-  description String?
-  isActive    Boolean                  @default(true)
-  createdAt   DateTime                 @default(now())
-  updatedAt   DateTime                 @updatedAt
-  org         Organisation             @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  clearanceType ChaJobType?            @relation(fields: [clearanceTypeId], references: [id], onDelete: SetNull)
-  versions    FilingWorkflowVersion[]
-  instances   FilingWorkflowInstance[]
+  name            String
+  description     String?
+  isActive        Boolean                  @default(true)
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+  org             Organisation             @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  clearanceType   ChaJobType?              @relation(fields: [clearanceTypeId], references: [id], onDelete: SetNull)
+  versions        FilingWorkflowVersion[]
+  instances       FilingWorkflowInstance[]
 
   @@unique([orgId, name])
   @@index([orgId])

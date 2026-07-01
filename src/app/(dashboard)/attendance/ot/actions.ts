@@ -291,6 +291,15 @@ export async function adjustOtRecordAction(
       },
     });
 
+    await db.hrmsAuditLog.create({
+      data: {
+        orgId: session.user.orgId!,
+        userId: session.user.id,
+        action: "ATTENDANCE_OT_OVERRIDE_APPLIED",
+        details: { recordId, adjustedMins, earlyMins, compOffDays },
+      },
+    });
+
     revalidatePath("/attendance/ot");
     return { ok: true };
   } catch (err: any) {
@@ -365,10 +374,226 @@ export async function saveOtSettingsAction(data: {
       },
     });
 
+    await db.hrmsAuditLog.create({
+      data: {
+        orgId,
+        userId: session.user.id,
+        action: "ATTENDANCE_OT_SETTINGS_UPDATED",
+        details: settings,
+      },
+    });
+
     revalidatePath("/attendance/ot");
     return { ok: true, data: settings };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to save OT settings" };
+  }
+}
+
+export async function saveWorkingCalendarAction(data: {
+  workStart: string;
+  workEnd: string;
+  graceBeforeStartMins: number;
+  graceAfterEndMins: number;
+  defaultWorkingMinutes: number;
+  minOvertimeMinutes: number;
+  workingDays: string;
+  breaks: Array<{ start: string; end: string }>;
+}) {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const isAuthorized = (await can(session.user.id, "attendance.ot.approve")) || (await can(session.user.id, "attendance.punch.manage"));
+    if (!isAuthorized) return { ok: false, error: "Forbidden" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Organisation not found" };
+
+    const existing = await db.workingCalendar.findUnique({ where: { orgId } });
+    const calendar = await db.workingCalendar.upsert({
+      where: { orgId },
+      update: {
+        workStart: data.workStart,
+        workEnd: data.workEnd,
+        graceBeforeStartMins: data.graceBeforeStartMins,
+        graceAfterEndMins: data.graceAfterEndMins,
+        defaultWorkingMinutes: data.defaultWorkingMinutes,
+        minOvertimeMinutes: data.minOvertimeMinutes,
+        workingDays: data.workingDays,
+        breaks: data.breaks,
+      },
+      create: {
+        orgId,
+        workStart: data.workStart,
+        workEnd: data.workEnd,
+        graceMinutes: data.graceAfterEndMins,
+        graceBeforeStartMins: data.graceBeforeStartMins,
+        graceAfterEndMins: data.graceAfterEndMins,
+        defaultWorkingMinutes: data.defaultWorkingMinutes,
+        minOvertimeMinutes: data.minOvertimeMinutes,
+        workingDays: data.workingDays,
+        breaks: data.breaks,
+      },
+    });
+
+    await db.hrmsAuditLog.create({
+      data: {
+        orgId,
+        userId: session.user.id,
+        action: "ATTENDANCE_WORKING_CALENDAR_UPDATED",
+        details: {
+          before: existing,
+          after: calendar,
+        },
+      },
+    });
+
+    revalidatePath("/attendance/ot");
+    return { ok: true, data: calendar };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to save working calendar" };
+  }
+}
+
+export async function saveShiftAction(data: {
+  id?: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+  expectedWorkingMinutes: number;
+  graceBeforeStartMins: number;
+  graceAfterEndMins: number;
+  minOvertimeMinutes: number;
+  workingDays: string;
+  breakRules: Array<{ start: string; end: string }>;
+  isActive: boolean;
+  isDefault: boolean;
+}) {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const isAuthorized = (await can(session.user.id, "attendance.ot.approve")) || (await can(session.user.id, "attendance.punch.manage"));
+    if (!isAuthorized) return { ok: false, error: "Forbidden" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Organisation not found" };
+
+    const existing = data.id ? await db.shift.findUnique({ where: { id: data.id } }) : null;
+
+    if (data.isDefault) {
+      await db.shift.updateMany({
+        where: { orgId, isDefault: true },
+        data: { isDefault: false },
+      });
+    }
+
+    const payload = {
+      orgId,
+      name: data.name,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      expectedWorkingMinutes: data.expectedWorkingMinutes,
+      graceBeforeStartMins: data.graceBeforeStartMins,
+      graceAfterEndMins: data.graceAfterEndMins,
+      minOvertimeMinutes: data.minOvertimeMinutes,
+      workingDays: data.workingDays,
+      breakRules: data.breakRules,
+      isActive: data.isActive,
+      isDefault: data.isDefault,
+    };
+
+    const shift = data.id
+      ? await db.shift.update({
+          where: { id: data.id },
+          data: payload,
+        })
+      : await db.shift.create({
+          data: payload,
+        });
+
+    await db.hrmsAuditLog.create({
+      data: {
+        orgId,
+        userId: session.user.id,
+        action: data.id ? "ATTENDANCE_SHIFT_UPDATED" : "ATTENDANCE_SHIFT_CREATED",
+        details: {
+          before: existing,
+          after: shift,
+        },
+      },
+    });
+
+    revalidatePath("/attendance/ot");
+    return { ok: true, data: shift };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to save shift" };
+  }
+}
+
+export async function assignEmployeeShiftAction(data: {
+  userId: string;
+  shiftId: string;
+  startDate: string;
+}) {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const isAuthorized = (await can(session.user.id, "attendance.ot.approve")) || (await can(session.user.id, "attendance.punch.manage"));
+    if (!isAuthorized) return { ok: false, error: "Forbidden" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Organisation not found" };
+
+    const startDate = new Date(data.startDate);
+    const previousAssignments = await db.shiftAssignment.findMany({
+      where: {
+        userId: data.userId,
+        OR: [{ endDate: null }, { endDate: { gte: startDate } }],
+      },
+    });
+
+    const previousDay = new Date(startDate);
+    previousDay.setUTCDate(previousDay.getUTCDate() - 1);
+
+    await db.shiftAssignment.updateMany({
+      where: {
+        userId: data.userId,
+        OR: [{ endDate: null }, { endDate: { gte: startDate } }],
+      },
+      data: { endDate: previousDay },
+    });
+
+    const assignment = await db.shiftAssignment.create({
+      data: {
+        userId: data.userId,
+        shiftId: data.shiftId,
+        startDate,
+      },
+      include: {
+        shift: true,
+        user: { select: { name: true } },
+      },
+    });
+
+    await db.hrmsAuditLog.create({
+      data: {
+        orgId,
+        userId: session.user.id,
+        action: "ATTENDANCE_SHIFT_ASSIGNED",
+        details: {
+          previousAssignments,
+          assignment,
+        },
+      },
+    });
+
+    revalidatePath("/attendance/ot");
+    return { ok: true, data: assignment };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to assign shift" };
   }
 }
 
@@ -774,6 +999,8 @@ export async function importAttendanceDataAction(
     let updated = 0;
     let skipped = 0;
     const errors: string[] = [];
+    const touchedMonths = new Set<string>();
+    const shouldRecalculateInline = rows.length <= 150;
 
     const { calculateOtForPunch } = await import("@/lib/ot");
 
@@ -832,6 +1059,7 @@ export async function importAttendanceDataAction(
         const month = attendanceDate.getMonth() + 1;
         const day = attendanceDate.getDate();
         const normalizedDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+        touchedMonths.add(`${normalizedDate.getUTCFullYear()}-${String(normalizedDate.getUTCMonth() + 1).padStart(2, "0")}`);
 
         // Parse check-in/out
         const rawIn = row[mapping.checkIn || ""];
@@ -853,8 +1081,7 @@ export async function importAttendanceDataAction(
         let workingHours = null;
         const rawHours = row[mapping.totalHours || ""];
         if (rawHours) {
-          const parsedHours = parseFloat(String(rawHours).replace(/,/g, ""));
-          if (!isNaN(parsedHours)) workingHours = parsedHours;
+          workingHours = parseWorkingHours(rawHours);
         }
 
         if (checkIn && checkOut && !workingHours) {
@@ -888,8 +1115,51 @@ export async function importAttendanceDataAction(
           },
         });
 
-        // Recalculate calculations
-        await calculateOtForPunch(matchedEmp.id, normalizedDate);
+        await db.attendancePunchEvent.deleteMany({
+          where: {
+            userId: matchedEmp.id,
+            orgId,
+            attendanceDate: normalizedDate,
+            source: "import",
+          },
+        });
+
+        const importedEvents = [
+          checkIn
+            ? {
+                orgId,
+                userId: matchedEmp.id,
+                attendanceDate: normalizedDate,
+                punchedAt: checkIn,
+                source: "import",
+                eventType: "CHECK_IN",
+                status: "VALID",
+                metadata: { importedRow: index + 2 },
+              }
+            : null,
+          checkOut
+            ? {
+                orgId,
+                userId: matchedEmp.id,
+                attendanceDate: normalizedDate,
+                punchedAt: checkOut,
+                source: "import",
+                eventType: "CHECK_OUT",
+                status: "VALID",
+                metadata: { importedRow: index + 2 },
+              }
+            : null,
+        ].filter(Boolean);
+
+        if (importedEvents.length > 0) {
+          await db.attendancePunchEvent.createMany({
+            data: importedEvents as any[],
+          });
+        }
+
+        if (shouldRecalculateInline) {
+          await calculateOtForPunch(matchedEmp.id, normalizedDate);
+        }
 
         if (existing) updated++;
         else imported++;
@@ -909,11 +1179,32 @@ export async function importAttendanceDataAction(
         updated,
         skipped,
         errors,
+        recalculationDeferred: !shouldRecalculateInline,
+        touchedMonths: Array.from(touchedMonths).sort(),
       },
     };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to import attendance data" };
   }
+}
+
+function parseWorkingHours(value: unknown): number | null {
+  const raw = String(value ?? "").trim();
+  if (!raw || raw === "-") return null;
+
+  if (/^\d{1,2}:\d{2}(?::\d{2})?$/.test(raw)) {
+    const [hoursPart, minutesPart, secondsPart] = raw.split(":");
+    const hours = parseInt(hoursPart ?? "0", 10);
+    const minutes = parseInt(minutesPart ?? "0", 10);
+    const seconds = parseInt(secondsPart ?? "0", 10);
+    if ([hours, minutes, seconds].some((part) => Number.isNaN(part))) {
+      return null;
+    }
+    return Math.round((hours + minutes / 60 + seconds / 3600) * 100) / 100;
+  }
+
+  const parsed = parseFloat(raw.replace(/,/g, ""));
+  return Number.isNaN(parsed) ? null : parsed;
 }
 
 function parseTimeStr(date: Date, val: string): Date | null {
@@ -974,12 +1265,21 @@ export async function clearMonthOtRecordsAction(monthStr: string) {
       },
     });
 
+    const deletedPunchEvents = await db.attendancePunchEvent.deleteMany({
+      where: {
+        orgId,
+        attendanceDate: { gte: startOfMonth, lte: endOfMonth },
+        source: "import",
+      },
+    });
+
     revalidatePath("/attendance/ot");
     return {
       ok: true,
       data: {
         deletedOtCount: deletedOt.count,
         deletedPunchesCount: deletedPunches.count,
+        deletedPunchEventsCount: deletedPunchEvents.count,
       },
     };
   } catch (err: any) {

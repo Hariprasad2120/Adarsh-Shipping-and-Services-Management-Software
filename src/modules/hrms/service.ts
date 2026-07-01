@@ -4,6 +4,7 @@ import { notifyMany, getUsersWithPermission } from "@/modules/notifications/serv
 import { getNow } from "@/lib/clock";
 import { loadUserPermissions } from "@/lib/rbac";
 import { getAttendanceMonthBounds, toAttendanceDate } from "@/lib/attendance-date";
+import { appendAttendancePunchEvent, calculateOtForPunch } from "@/lib/ot";
 
 // ─── Core & Dashboard ──────────────────────────────────────────────────────────
 
@@ -177,6 +178,14 @@ export async function punchAction(
       update: { inAt: now, source },
       create: { userId, date: todayStart, inAt: now, source },
     });
+    await appendAttendancePunchEvent(userId, orgId, todayStart, {
+      punchedAt: now,
+      source: source.toLowerCase(),
+      eventType: "CHECK_IN",
+      notes: note ?? null,
+      deviceId: deviceId ?? null,
+      metadata: { action },
+    });
   } else {
     if (!punch || !punch.inAt) {
       throw new Error("You must check in first");
@@ -196,6 +205,14 @@ export async function punchAction(
         where: { id: punch.id },
         data: { outAt: now },
       });
+      await appendAttendancePunchEvent(userId, orgId, todayStart, {
+        punchedAt: now,
+        source: source.toLowerCase(),
+        eventType: "CHECK_OUT",
+        notes: note ?? null,
+        deviceId: deviceId ?? null,
+        metadata: { action },
+      });
     } else if (action === "START_BREAK") {
       const activeBreak = await db.attendanceBreak.findFirst({
         where: { punchId: punch.id, breakEnd: null },
@@ -205,6 +222,14 @@ export async function punchAction(
       }
       await db.attendanceBreak.create({
         data: { punchId: punch.id, breakStart: now },
+      });
+      await appendAttendancePunchEvent(userId, orgId, todayStart, {
+        punchedAt: now,
+        source: source.toLowerCase(),
+        eventType: "BREAK_OUT",
+        notes: note ?? null,
+        deviceId: deviceId ?? null,
+        metadata: { action },
       });
     } else if (action === "RESUME_WORK") {
       const activeBreak = await db.attendanceBreak.findFirst({
@@ -218,6 +243,14 @@ export async function punchAction(
         where: { id: activeBreak.id },
         data: { breakEnd: now, durationMinutes: diffMins },
       });
+      await appendAttendancePunchEvent(userId, orgId, todayStart, {
+        punchedAt: now,
+        source: source.toLowerCase(),
+        eventType: "BREAK_IN",
+        notes: note ?? null,
+        deviceId: deviceId ?? null,
+        metadata: { action },
+      });
     }
   }
 
@@ -230,6 +263,8 @@ export async function punchAction(
       details: JSON.stringify({ note, deviceId, timestamp: now.toISOString() }),
     },
   });
+
+  await calculateOtForPunch(userId, todayStart);
 
   return punch;
 }

@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { getEsslConfig, punchTable, buildDeviceDirMap, resolveDirection, esslDateToUtc, testEsslConnection } from "@/lib/essl";
 import { attendanceDateFromParts, getEsslMonthWindow, toAttendanceDateString } from "@/lib/attendance-date";
 import { intimateAdminsOffline, resolveOfflineNotifications } from "@/modules/notifications/service";
-import { calculateOtForPunch } from "@/lib/ot";
+import { calculateOtForPunch, replaceAttendancePunchEventsForDate } from "@/lib/ot";
 import mssql from "mssql";
 import { z } from "zod";
 
@@ -290,6 +290,13 @@ export async function POST(req: NextRequest) {
             biometricSynced: true,
           },
         });
+
+        await replaceAttendancePunchEventsForDate(hrmsId, orgId, attendanceDate, dayPunches.map((event) => ({
+          punchedAt: event.time,
+          source: "biometric",
+          eventType: event.dir === "out" ? "CHECK_OUT" : "CHECK_IN",
+          metadata: { importedFrom: actualTable },
+        })));
 
         // Recalculate OT and Comp-Off for this punch
         await calculateOtForPunch(hrmsId, attendanceDate);

@@ -7,6 +7,8 @@
 import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
 import { isWorkingTime, calendarFromDb, type WorkingCalendarConfig } from "@/lib/working-hours";
+import { appendAttendancePunchEvent, calculateOtForPunch } from "@/lib/ot";
+import { toAttendanceDate } from "@/lib/attendance-date";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -61,7 +63,7 @@ async function getWorkingCalendar(orgId: string): Promise<WorkingCalendarConfig>
 
 export async function checkIn(params: CheckInParams) {
   const now = await getNow();
-  const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayDate = toAttendanceDate(now);
 
   // Check for existing active session
   const existingSession = await db.attendanceSession.findFirst({
@@ -128,6 +130,18 @@ export async function checkIn(params: CheckInParams) {
       status: "PRESENT",
     },
   });
+  await appendAttendancePunchEvent(params.userId, params.orgId, todayDate, {
+    punchedAt: now,
+    source: (params.source ?? "MOBILE").toLowerCase(),
+    eventType: "CHECK_IN",
+    deviceId: params.deviceId ?? null,
+    metadata: {
+      origin: "mobile-attendance.checkIn",
+      faceVerified: params.faceVerified,
+      location: params.location,
+    },
+  });
+  await calculateOtForPunch(params.userId, todayDate);
 
   // Create location tracking session for hourly tracking during working hours
   const calendar = await getWorkingCalendar(params.orgId);
@@ -234,6 +248,18 @@ export async function checkOut(params: CheckOutParams) {
       outAt: now,
     },
   });
+  await appendAttendancePunchEvent(params.userId, params.orgId, session.date, {
+    punchedAt: now,
+    source: (params.source ?? "MOBILE").toLowerCase(),
+    eventType: "CHECK_OUT",
+    deviceId: params.deviceId ?? null,
+    metadata: {
+      origin: "mobile-attendance.checkOut",
+      faceVerified: params.faceVerified,
+      location: params.location,
+    },
+  });
+  await calculateOtForPunch(params.userId, session.date);
 
   // Stop all active tracking sessions
   await db.locationTrackingSession.updateMany({
@@ -363,7 +389,7 @@ export async function getAttendanceHistory(userId: string, orgId: string, page =
  * so the mobile app can start hourly tracking.
  */
 export async function createSessionFromBiometric(userId: string, orgId: string, punchTime: Date) {
-  const todayDate = new Date(punchTime.getFullYear(), punchTime.getMonth(), punchTime.getDate());
+  const todayDate = toAttendanceDate(punchTime);
 
   const existingSession = await db.attendanceSession.findFirst({
     where: { userId, orgId, date: todayDate, status: "ACTIVE" },

@@ -6,6 +6,7 @@ import { OtClient } from "./ot-client";
 import { Clock } from "lucide-react";
 import { getOTEntries } from "@/modules/attendance/service";
 import { getNow } from "@/lib/clock";
+import { ensureAttendanceConfiguration } from "@/lib/ot";
 
 export const metadata = {
   title: "Overtime Management | Attendance | Adarsh Shipping",
@@ -62,8 +63,9 @@ export default async function OvertimePage({ searchParams }: PageProps) {
   // If user is admin/manager, load all admin data
   let adminData = null;
   if (canApprove) {
+    await ensureAttendanceConfiguration(orgId);
     // Parallelize all independent admin queries; derive totalLopDays from lopRecordsDb to avoid double fetch
-    const [approvedOt, pendingCount, otRecords, holidays, lopRecordsDb, otSettings, employees, branches] = await Promise.all([
+    const [approvedOt, pendingCount, otRecords, holidays, lopRecordsDb, otSettings, workingCalendar, shifts, employees, branches] = await Promise.all([
       db.otRecord.findMany({
         where: {
           user: { orgId },
@@ -96,6 +98,14 @@ export default async function OvertimePage({ searchParams }: PageProps) {
               employeeNumber: true,
               department: { select: { name: true } },
               employmentRecord: { select: { ctc: true } },
+            },
+          },
+          shift: {
+            select: {
+              id: true,
+              name: true,
+              startTime: true,
+              endTime: true,
             },
           },
         },
@@ -137,6 +147,13 @@ export default async function OvertimePage({ searchParams }: PageProps) {
       db.otSettings.findUnique({
         where: { orgId },
       }),
+      db.workingCalendar.findUnique({
+        where: { orgId },
+      }),
+      db.shift.findMany({
+        where: { orgId },
+        orderBy: [{ isDefault: "desc" }, { startTime: "asc" }, { name: "asc" }],
+      }),
       db.user.findMany({
         where: { orgId, active: true, isPlatformAdmin: false },
         select: {
@@ -145,6 +162,23 @@ export default async function OvertimePage({ searchParams }: PageProps) {
           employeeNumber: true,
           department: { select: { name: true } },
           employmentRecord: { select: { ctc: true } },
+          hrmsShiftAssignments: {
+            where: {
+              OR: [{ endDate: null }, { endDate: { gte: startOfMonth } }],
+            },
+            orderBy: { startDate: "desc" },
+            take: 1,
+            include: {
+              shift: {
+                select: {
+                  id: true,
+                  name: true,
+                  startTime: true,
+                  endTime: true,
+                },
+              },
+            },
+          },
         },
         orderBy: { name: "asc" },
       }),
@@ -187,6 +221,8 @@ export default async function OvertimePage({ searchParams }: PageProps) {
       settings,
       employees,
       branches,
+      workingCalendar,
+      shifts,
     };
   }
 
