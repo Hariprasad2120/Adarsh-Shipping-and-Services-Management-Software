@@ -35,8 +35,22 @@ export function JobValidityWarningIndicator({
       : `/cha/jobs/${jobId}`;
 
   const openLabel = warning.severity === "expired" ? "Update Validity" : "Review Job";
-  const toneClass = "border-red-600/70 bg-red-600 text-white";
-  const panelToneClass = "border-red-700 bg-red-600 text-white";
+  const toneClass =
+    warning.severity === "expired"
+      ? "border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/15"
+      : "border-[#fb923c]/45 bg-[#fb923c]/10 text-[#fb923c] hover:bg-[#fb923c]/15";
+  const panelToneClass =
+    warning.severity === "expired"
+      ? "border-red-500/40 bg-red-500/10 text-red-400"
+      : "border-[#fb923c]/45 bg-[#fb923c]/10 text-[#fb923c]";
+  const iconBadgeToneClass =
+    warning.severity === "expired"
+      ? "border-red-500/20 bg-red-500/10 text-red-400"
+      : "border-[#fb923c]/20 bg-[#fb923c]/10 text-[#fb923c]";
+  const actionButtonClass =
+    warning.severity === "expired"
+      ? "h-8 flex-1 border border-red-500/25 bg-red-500/12 text-red-500 hover:bg-red-500/18 hover:text-red-600 text-xs"
+      : "h-8 flex-1 border border-[#fb923c]/25 bg-[#fb923c]/12 text-[#fb923c] hover:bg-[#fb923c]/18 hover:text-[#f97316] text-xs";
 
   const syncPanelPosition = () => {
     const rect = triggerRef.current?.getBoundingClientRect();
@@ -110,7 +124,7 @@ export function JobValidityWarningIndicator({
       onBlur={() => setIsOpen(false)}
     >
       <span
-        className={`inline-flex h-7 w-7 items-center justify-center rounded-lg border ${toneClass} shadow-[0_0_0_1px_rgba(127,29,29,0.24)] transition-transform hover:scale-105 focus:scale-105`}
+        className={`inline-flex h-7 w-7 items-center justify-center rounded-lg border shadow-sm transition-transform hover:scale-105 focus:scale-105 ${toneClass}`}
         aria-label="Delivery order validity warning"
       >
         <AlertTriangle size={14} />
@@ -126,17 +140,17 @@ export function JobValidityWarningIndicator({
           onMouseEnter={() => setIsOpen(true)}
           onMouseLeave={() => setIsOpen(false)}
         >
-          <div className={`rounded-xl border p-4 shadow-[0_24px_48px_-20px_rgba(127,29,29,0.65)] ${panelToneClass}`}>
+          <div className={`rounded-xl border p-4 shadow-lg ${panelToneClass}`}>
           <div className="flex items-start gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/12 text-white">
+            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${iconBadgeToneClass}`}>
               <AlertTriangle size={16} />
             </span>
             <div className="min-w-0 space-y-1">
-              <p className="ds-label text-white/80">
+              <p className="ds-label">
                 {warning.severity === "expired" ? "DO Validity Expired" : "DO Validity Expiring"}
               </p>
-              <p className="text-sm text-white">{warning.message}</p>
-              <p className="text-xs text-white/80">
+              <p className="text-sm text-on-surface">{warning.message}</p>
+              <p className="text-xs text-on-surface-variant">
                 Validity date: {new Date(warning.deliveryOrderValidity).toLocaleDateString("en-IN")}
               </p>
             </div>
@@ -146,7 +160,7 @@ export function JobValidityWarningIndicator({
             <Button
               type="button"
               size="sm"
-              className="h-8 flex-1 border border-white/30 bg-white text-red-700 hover:bg-white/90 hover:text-red-800 text-xs"
+              className={actionButtonClass}
               onClick={handleOpen}
             >
               <ArrowUpRight size={13} />
@@ -156,7 +170,7 @@ export function JobValidityWarningIndicator({
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 flex-1 border-white/30 bg-transparent text-white hover:bg-white/12 hover:text-white text-xs"
+              className="h-8 flex-1 border-outline-variant/50 bg-surface text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface text-xs"
               disabled={acknowledging}
               onClick={handleAcknowledge}
             >

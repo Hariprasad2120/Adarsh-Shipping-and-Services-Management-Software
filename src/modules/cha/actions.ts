@@ -119,6 +119,18 @@ export async function createJobAction(data: {
   }
 }
 
+export async function getNextJobNumberPreviewAction(
+  branchId: string,
+): Promise<ActionResponse<string | null>> {
+  try {
+    const { orgId } = await getAuthAndVerify("cha.job.create");
+    const preview = await chaService.getNextChaJobNumberPreview(orgId, branchId);
+    return { ok: true, data: preview };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to load the next CHA job number preview" };
+  }
+}
+
 export async function submitJobDeletionAction(
   jobId: string,
   confirmationJobNumber: string,

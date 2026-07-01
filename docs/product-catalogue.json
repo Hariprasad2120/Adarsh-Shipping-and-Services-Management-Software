@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-28T16:13:51.178Z",
+  "generatedAt": "2026-07-01T06:39:19.454Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -9318,6 +9318,7 @@
         "ensureSettingsAndDefaultsAction",
         "updateSettingsAction",
         "createJobAction",
+        "getNextJobNumberPreviewAction",
         "submitJobDeletionAction",
         "decideJobDeletionRequestAction",
         "createJobTypeAction",
@@ -9384,6 +9385,7 @@
       "filePath": "src/modules/cha/service.ts",
       "exportedFunctions": [
         "ensureDefaultDocumentRequirements",
+        "getNextChaJobNumberPreview",
         "ensureSettingsAndDefaults",
         "logChaAudit",
         "getChecklistInternalApproverIds",

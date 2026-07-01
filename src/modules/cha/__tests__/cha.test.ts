@@ -269,6 +269,99 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(branchRule.currentSequence).toBeGreaterThanOrEqual(branchRule.startingSequence);
   });
 
+  it("1.26. should advance the branch sequence when a user submits the current generated number", async () => {
+    await chaService.ensureSettingsAndDefaults(org.id);
+
+    const branchRuleBefore = await db.chaBranchNumberingRule.findFirstOrThrow({
+      where: { branchId: branch.id, orgId: org.id },
+    });
+    const localJobType = await db.chaJobType.findFirstOrThrow({
+      where: { orgId: org.id, isActive: true },
+    });
+    const localShipmentType = await db.chaShipmentType.findFirstOrThrow({
+      where: { orgId: org.id, name: "Air" },
+    });
+
+    const expectedGeneratedNumber = await chaService.getNextChaJobNumberPreview(org.id, branch.id);
+    expect(expectedGeneratedNumber).toBeTruthy();
+
+    const job = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: expectedGeneratedNumber!,
+      title: "Client-generated number should still advance sequence",
+      customerId: customer.id,
+      jobTypeId: localJobType.id,
+      branchId: branch.id,
+      shipmentTypeId: localShipmentType.id,
+      priority: "LOW",
+      primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
+      assignments: [],
+    });
+
+    expect(job.jobNumber).toBe(expectedGeneratedNumber);
+
+    const branchRuleAfter = await db.chaBranchNumberingRule.findFirstOrThrow({
+      where: { branchId: branch.id, orgId: org.id },
+    });
+    expect(branchRuleAfter.currentSequence).toBe(branchRuleBefore.currentSequence + 1);
+  });
+
+  it("1.27. should skip an already-existing generated number and advance to the next available sequence", async () => {
+    await chaService.ensureSettingsAndDefaults(org.id);
+
+    const localJobType = await db.chaJobType.findFirstOrThrow({
+      where: { orgId: org.id, isActive: true },
+    });
+    const localShipmentType = await db.chaShipmentType.findFirstOrThrow({
+      where: { orgId: org.id, name: "Air" },
+    });
+
+    await db.chaBranchNumberingRule.updateMany({
+      where: { branchId: branch.id, orgId: org.id },
+      data: {
+        prefix: "CHA",
+        suffix: null,
+        startingSequence: 1,
+        currentSequence: 0,
+        numberPadding: 4,
+        useFinancialYear: false,
+        financialYearFormat: null,
+        isActive: true,
+      },
+    });
+
+    await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: "CHA-0001",
+      title: "Existing sequence anchor",
+      customerId: customer.id,
+      jobTypeId: localJobType.id,
+      branchId: branch.id,
+      shipmentTypeId: localShipmentType.id,
+      priority: "LOW",
+      primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
+      assignments: [],
+    });
+
+    const preview = await chaService.getNextChaJobNumberPreview(org.id, branch.id);
+    expect(preview).toBe("CHA-0002");
+
+    const autoJob = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: "CHA-0001",
+      title: "Stale generated number should be advanced",
+      customerId: customer.id,
+      jobTypeId: localJobType.id,
+      branchId: branch.id,
+      shipmentTypeId: localShipmentType.id,
+      priority: "LOW",
+      primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
+      assignments: [],
+    });
+
+    expect(autoJob.jobNumber).toBe("CHA-0002");
+  });
+
   it("1.3. should grant assigned managers approval mapping and workspace access", async () => {
     const job = await chaService.createJob(ownerUser.id, org.id, {
       jobNumber: "CHA-MANAGER-ACCESS-001",

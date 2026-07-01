@@ -5,7 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { X, FilePlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { createJobAction, createJobTypeAction, createShipmentTypeAction } from "@/modules/cha/actions";
+import {
+  createJobAction,
+  createJobTypeAction,
+  createShipmentTypeAction,
+  getNextJobNumberPreviewAction,
+} from "@/modules/cha/actions";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 
 const ADD_NEW_JOB_TYPE = "__add_new_job_type__";
@@ -69,6 +74,7 @@ export function CreateJobDialog({
   const draftRestoredRef = useRef(false);
   const createdCustomerAppliedRef = useRef(false);
   const autoAddedManagerIdRef = useRef<string>("");
+  const previousGeneratedPreviewRef = useRef("");
 
   // Form State
   const [newJobNumber, setNewJobNumber] = useState("");
@@ -100,6 +106,8 @@ export function CreateJobDialog({
 
   // Loading States
   const [creating, setCreating] = useState(false);
+  const [jobNumberPreview, setJobNumberPreview] = useState("");
+  const [jobNumberPreviewLoading, setJobNumberPreviewLoading] = useState(false);
   const [addingJobType, setAddingJobType] = useState(false);
   const [addingShipmentType, setAddingShipmentType] = useState(false);
   const [showAddJobType, setShowAddJobType] = useState(false);
@@ -257,7 +265,7 @@ export function CreateJobDialog({
       );
 
   const selectedBranchRule = options.branchNumberingRules.find((rule) => rule.branchId === newBranchId);
-  const generatedPreview = selectedBranchRule
+  const fallbackGeneratedPreview = selectedBranchRule
     ? [
         selectedBranchRule.prefix,
         ...(selectedBranchRule.useFinancialYear ? [buildFinancialYearLabel(selectedBranchRule.financialYearFormat)] : []),
@@ -267,6 +275,7 @@ export function CreateJobDialog({
         ...(selectedBranchRule.suffix?.trim() ? [selectedBranchRule.suffix.trim()] : []),
       ].join("-")
     : "";
+  const generatedPreview = jobNumberPreview || fallbackGeneratedPreview;
 
   const parseJsonArray = (value: any): string[] => {
     if (!value) return [];
@@ -294,6 +303,48 @@ export function CreateJobDialog({
     : (options.teamGroups || []).filter((g) =>
         g.name.toLowerCase().includes(teamSearch.toLowerCase())
       );
+
+  const refreshGeneratedPreview = async (branchId: string) => {
+    setJobNumberPreviewLoading(true);
+    try {
+      const response = await getNextJobNumberPreviewAction(branchId);
+      if (!response.ok) {
+        setJobNumberPreview("");
+        toast.error(response.error || "Failed to load the next generated job number.");
+        return;
+      }
+      setJobNumberPreview(response.data || "");
+    } catch (err: any) {
+      setJobNumberPreview("");
+      toast.error(err.message || "Failed to load the next generated job number.");
+    } finally {
+      setJobNumberPreviewLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!open || !newBranchId) {
+      setJobNumberPreview("");
+      setJobNumberPreviewLoading(false);
+      return;
+    }
+
+    void refreshGeneratedPreview(newBranchId);
+  }, [open, newBranchId]);
+
+  useEffect(() => {
+    if (!open || !generatedPreview) {
+      previousGeneratedPreviewRef.current = generatedPreview;
+      return;
+    }
+
+    const previousGeneratedPreview = previousGeneratedPreviewRef.current;
+    if (!newJobNumber || newJobNumber === previousGeneratedPreview) {
+      setNewJobNumber(generatedPreview);
+    }
+
+    previousGeneratedPreviewRef.current = generatedPreview;
+  }, [open, generatedPreview, newJobNumber]);
 
   const handleAddTeamUser = (u: { id: string; name: string }) => {
     if (assignments.some((a) => a.userId === u.id)) {
@@ -333,12 +384,19 @@ export function CreateJobDialog({
     setShowTeamDropdown(false);
   };
 
-  const handleAutoGenerateJobNumber = () => {
+  const handleAutoGenerateJobNumber = async () => {
     if (!selectedBranchRule?.isActive) {
       toast.error("This branch is missing an active numbering rule. Configure it in CHA Settings first.");
       return;
     }
-    setNewJobNumber(generatedPreview);
+
+    const preview = generatedPreview || fallbackGeneratedPreview;
+    if (!preview) {
+      await refreshGeneratedPreview(newBranchId);
+      return;
+    }
+
+    setNewJobNumber(preview);
   };
 
   const handleRemoveAssignment = (index: number) => {
@@ -565,10 +623,10 @@ export function CreateJobDialog({
                     variant="outline"
                     size="sm"
                     onClick={handleAutoGenerateJobNumber}
-                    disabled={!newBranchId}
+                    disabled={!newBranchId || jobNumberPreviewLoading}
                     className="text-xs shrink-0 rounded-xl"
                   >
-                    Generate
+                    {jobNumberPreviewLoading ? "Loading..." : "Generate"}
                   </Button>
                 </div>
                 {generatedPreview ? (

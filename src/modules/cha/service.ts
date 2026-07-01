@@ -302,6 +302,115 @@ function buildChaJobNumberPreview(rule: {
   return parts.filter(Boolean).join("-");
 }
 
+function buildChaJobNumberForSequence(rule: {
+  prefix: string;
+  suffix?: string | null;
+  numberPadding: number;
+  useFinancialYear: boolean;
+  financialYearFormat?: string | null;
+}, sequence: number) {
+  const parts = [rule.prefix.trim()];
+  if (rule.useFinancialYear) {
+    parts.push(getFinancialYearLabel(new Date(), rule.financialYearFormat));
+  }
+  parts.push(String(sequence).padStart(Math.max(rule.numberPadding, 1), "0"));
+  if (rule.suffix?.trim()) {
+    parts.push(rule.suffix.trim());
+  }
+  return parts.filter(Boolean).join("-");
+}
+
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function parseChaJobNumberSequence(jobNumber: string, rule: {
+  prefix: string;
+  suffix?: string | null;
+  useFinancialYear: boolean;
+  financialYearFormat?: string | null;
+}) {
+  const financialYearPart = rule.useFinancialYear
+    ? `-${escapeRegex(getFinancialYearLabel(new Date(), rule.financialYearFormat))}`
+    : "";
+  const suffixPart = rule.suffix?.trim()
+    ? `-${escapeRegex(rule.suffix.trim())}`
+    : "";
+  const regex = new RegExp(
+    `^${escapeRegex(rule.prefix.trim())}${financialYearPart}-(\\d+)${suffixPart}$`,
+    "i",
+  );
+  const match = regex.exec(jobNumber.trim());
+  if (!match) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(match[1] || "", 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+async function getNextAvailableChaJobNumber(
+  client: Pick<Prisma.TransactionClient, "chaJob">,
+  orgId: string,
+  rule: {
+    prefix: string;
+    suffix?: string | null;
+    currentSequence: number;
+    startingSequence: number;
+    numberPadding: number;
+    useFinancialYear: boolean;
+    financialYearFormat?: string | null;
+  },
+) {
+  let sequence = Math.max(rule.currentSequence + 1, rule.startingSequence, 1);
+
+  while (true) {
+    const jobNumber = buildChaJobNumberForSequence(rule, sequence);
+    const existingJob = await client.chaJob.findFirst({
+      where: {
+        orgId,
+        jobNumber,
+      },
+      select: { id: true },
+    });
+
+    if (!existingJob) {
+      return { sequence, jobNumber };
+    }
+
+    sequence += 1;
+  }
+}
+
+export async function getNextChaJobNumberPreview(
+  orgId: string,
+  branchId: string,
+) {
+  const branchRule = await db.chaBranchNumberingRule.findFirst({
+    where: {
+      orgId,
+      branchId,
+    },
+    select: {
+      prefix: true,
+      suffix: true,
+      currentSequence: true,
+      startingSequence: true,
+      numberPadding: true,
+      useFinancialYear: true,
+      financialYearFormat: true,
+      isActive: true,
+    },
+  });
+
+  if (!branchRule || !branchRule.isActive) {
+    return null;
+  }
+
+  const nextAvailable = await getNextAvailableChaJobNumber(db, orgId, branchRule);
+  return nextAvailable.jobNumber;
+}
+
 async function ensureChaBranchNumberingRules(
   orgId: string,
   settings: { jobNumberPrefix: string | null; jobNumberNextNum: number | null },
@@ -1157,22 +1266,23 @@ export async function createJob(
       throw new Error("The selected branch does not have an active job numbering configuration. Please ask a CHA administrator to configure it in Settings.");
     }
 
+    const nextAvailableAutoNumber = await getNextAvailableChaJobNumber(tx, orgId, branchRule);
+
     let finalJobNumber = data.jobNumber?.trim();
-    if (!finalJobNumber) {
-      const nextSequence = Math.max(branchRule.currentSequence + 1, branchRule.startingSequence, 1);
-      finalJobNumber = buildChaJobNumberPreview({
-        prefix: branchRule.prefix,
-        suffix: branchRule.suffix,
-        currentSequence: nextSequence - 1,
-        startingSequence: branchRule.startingSequence,
-        numberPadding: branchRule.numberPadding,
-        useFinancialYear: branchRule.useFinancialYear,
-        financialYearFormat: branchRule.financialYearFormat,
-      });
+    const providedSequence = finalJobNumber
+      ? parseChaJobNumberSequence(finalJobNumber, branchRule)
+      : null;
+    const shouldAdvanceSequence =
+      !finalJobNumber ||
+      finalJobNumber === nextAvailableAutoNumber.jobNumber ||
+      (providedSequence !== null && providedSequence <= nextAvailableAutoNumber.sequence);
+
+    if (shouldAdvanceSequence) {
+      finalJobNumber = nextAvailableAutoNumber.jobNumber;
 
       await tx.chaBranchNumberingRule.update({
         where: { id: branchRule.id },
-        data: { currentSequence: nextSequence },
+        data: { currentSequence: nextAvailableAutoNumber.sequence },
       });
     }
 
