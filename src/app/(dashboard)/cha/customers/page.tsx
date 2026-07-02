@@ -36,13 +36,7 @@ export default async function ChaCustomersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-outline-variant/30 pb-4">
-        <div>
-          <h1 className="ds-h1 text-[#00cec4]">CHA Customers</h1>
-          <p className="text-sm text-on-surface-variant mt-1">
-            Shared customer records used by both CHA and CRM.
-          </p>
-        </div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end border-b border-outline-variant/30 pb-4">
         {(canManageChaCustomers || canManageCrmAccounts) && (
           <Link href="/cha/customers/new">
             <Button>New Customer</Button>

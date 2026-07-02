@@ -6,7 +6,6 @@ import {
   TrendingUp,
   AlertTriangle,
   DollarSign,
-  Activity,
   FileText,
 } from "lucide-react";
 
@@ -96,19 +95,6 @@ export default async function ChaReportsPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="border-b border-outline-variant/30 pb-4">
-        <h1 className="ds-h1 text-[#00cec4] flex items-center gap-2">
-          <span className="ds-icon-badge bg-[#00cec4]/10 text-[#00cec4] p-1.5 rounded-xl">
-            <Activity size={20} />
-          </span>
-          Clearance Analytics & Reports
-        </h1>
-        <p className="text-sm text-on-surface-variant mt-1">
-          Perform timeline auditing, compile financial balances, and track workflow stage bottlenecks.
-        </p>
-      </div>
-
       {/* Grid: Financial & General Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Card: Client Advances */}

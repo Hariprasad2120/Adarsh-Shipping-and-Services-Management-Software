@@ -1155,9 +1155,6 @@ function assertJobCanBeDeleted(job: {
   if (job.deletedAt) {
     throw new Error("This CHA job has already been deleted.");
   }
-  if (job.stage === "FILED" || job.filing?.status === "FILED" || job.status === "COMPLETED") {
-    throw new Error("Completed or filed CHA jobs cannot be deleted.");
-  }
   if ((job.customerAdvance?.receipts.length ?? 0) > 0) {
     throw new Error("This CHA job already has recorded advance receipts and cannot be deleted.");
   }
@@ -1987,6 +1984,7 @@ export async function listJobs(
     branchId?: string;
     jobTypeId?: string;
     assignedToMe?: boolean;
+    jobGroup?: "ACTIVE" | "COMPLETED";
     page?: number;
     pageSize?: number;
   }
@@ -1996,14 +1994,19 @@ export async function listJobs(
   const pageSize = filters.pageSize || 10;
   const skip = (page - 1) * pageSize;
 
-  const where: any = getActiveChaJobWhere(orgId);
+  const where: Prisma.ChaJobWhereInput = {
+    ...getActiveChaJobWhere(orgId),
+    AND: [],
+  };
 
   if (filters.search) {
-    where.OR = [
-      { jobNumber: { contains: filters.search, mode: "insensitive" } },
-      { title: { contains: filters.search, mode: "insensitive" } },
-      { customer: { name: { contains: filters.search, mode: "insensitive" } } },
-    ];
+    where.AND?.push({
+      OR: [
+        { jobNumber: { contains: filters.search, mode: "insensitive" } },
+        { title: { contains: filters.search, mode: "insensitive" } },
+        { customer: { name: { contains: filters.search, mode: "insensitive" } } },
+      ],
+    });
   }
 
   if (filters.stage) where.stage = filters.stage;
@@ -2012,8 +2015,34 @@ export async function listJobs(
   if (filters.branchId) where.branchId = filters.branchId;
   if (filters.jobTypeId) where.jobTypeId = filters.jobTypeId;
 
+  if (filters.jobGroup === "ACTIVE") {
+    where.AND?.push({
+      NOT: {
+        OR: [
+          { stage: "FILED" },
+          { status: "COMPLETED" },
+          { filing: { is: { status: "FILED" } } },
+        ],
+      },
+    });
+  }
+
+  if (filters.jobGroup === "COMPLETED") {
+    where.AND?.push({
+      OR: [
+        { stage: "FILED" },
+        { status: "COMPLETED" },
+        { filing: { is: { status: "FILED" } } },
+      ],
+    });
+  }
+
   if (filters.assignedToMe) {
     where.assignments = { some: { userId } };
+  }
+
+  if (!where.AND?.length) {
+    delete where.AND;
   }
 
   const [total, items] = await Promise.all([

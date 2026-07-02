@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { X, FilePlus, Trash2 } from "lucide-react";
+import { X, FilePlus, Trash2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   createJobAction,
@@ -556,6 +556,48 @@ export function CreateJobDialog({
     }
   };
 
+  const handleDemoFill = () => {
+    const branch = options.branches[0];
+    const customer = options.customers[0];
+    const jobType = jobTypesList[0];
+    const shipmentType = shipmentTypesList[0];
+
+    if (!branch || !customer || !jobType || !shipmentType) {
+      toast.error("Not enough reference data (branch/customer/job type/shipment type) to demo fill.");
+      return;
+    }
+
+    const manager = (options.managers || []).find((m) => m.branchId === branch.id) || (options.managers || [])[0];
+
+    setNewBranchId(branch.id);
+    setNewTitle("Demo clearance job — sample cargo shipment for testing.");
+    setNewCustomerId(customer.id);
+    setCustomerSearch(customer.name);
+    setSelectedCustomerName(customer.name);
+    setShowCustomerDropdown(false);
+    setNewCustomerRef("PO-DEMO-0001");
+    setNewJobTypeId(jobType.id);
+    setNewShipmentTypeId(shipmentType.id);
+    setNewPriority("MEDIUM");
+
+    const closure = new Date();
+    closure.setDate(closure.getDate() + 14);
+    setEstimatedClosureDate(closure.toISOString().slice(0, 10));
+    setNewRemarks("Demo remarks: auto-filled for testing purposes.");
+
+    const nextAssignments = [{ userId: newOwnerId || currentUserId, responsibility: "OPERATIONS" }];
+    if (manager) {
+      setNewManagerId(manager.id);
+      autoAddedManagerIdRef.current = manager.id;
+      if (manager.id !== (newOwnerId || currentUserId)) {
+        nextAssignments.push({ userId: manager.id, responsibility: "APPROVAL" });
+      }
+    }
+    setAssignments(nextAssignments);
+
+    toast.success("Demo data filled in.");
+  };
+
   const eligibleManagers = (options.managers || []).filter((m) => {
     if (!newBranchId) return true;
     return m.branchId === newBranchId;
@@ -571,12 +613,17 @@ export function CreateJobDialog({
             <h2 className="ds-h2 text-on-surface flex items-center gap-2 m-0 border-0 pb-0">
               <FilePlus className="text-[#00cec4]" size={20} /> Initialize Customs Clearance Job
             </h2>
-            <button
-              onClick={() => onOpenChange(false)}
-              className="text-on-surface-variant hover:text-on-surface p-1 cursor-pointer bg-transparent border-0"
-            >
-              <X size={18} />
-            </button>
+            <div className="flex items-center gap-3">
+              <Button type="button" variant="outline" size="sm" onClick={handleDemoFill} className="rounded-xl">
+                <Sparkles size={14} className="mr-1.5" /> Demo Fill
+              </Button>
+              <button
+                onClick={() => onOpenChange(false)}
+                className="text-on-surface-variant hover:text-on-surface p-1 cursor-pointer bg-transparent border-0"
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Modal Form */}

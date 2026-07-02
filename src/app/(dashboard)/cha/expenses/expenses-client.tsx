@@ -173,19 +173,6 @@ export function ExpensesClient({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="border-b border-outline-variant/30 pb-4">
-        <h1 className="ds-h1 text-[#00cec4] flex items-center gap-2">
-          <span className="ds-icon-badge bg-[#00cec4]/10 text-[#00cec4] p-1.5 rounded-xl">
-            <CreditCard size={20} />
-          </span>
-          Accounts Expense Disbursement Panel
-        </h1>
-        <p className="text-sm text-on-surface-variant mt-1">
-          Review, query, audit, and post bank payouts for job-linked customs duty and operational expenses.
-        </p>
-      </div>
-
       {/* Filters */}
       <div className="bg-surface border border-outline-variant/30 p-5 rounded-xl space-y-4 shadow-sm">
         <div className="flex items-center gap-2 text-[#00cec4]">

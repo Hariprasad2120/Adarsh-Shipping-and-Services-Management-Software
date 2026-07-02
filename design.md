@@ -488,3 +488,8 @@ The following exceptions are approved where narrow reading constraints are neces
 2. **Modals & Dialogs:** Popups and alerts maintain their specific fixed widths and padding.
 3. **Authentication Screens:** Login and registration pages use centered, constrained forms.
 4. **Reading-focused Documents:** Long-form text articles or terms of service screens.
+
+### 15.4 Page Heading Ownership
+- The persistent top header (`AppHeader` / `WelcomeBar`, `src/components/welcome-bar.tsx`) already renders the current page's title as `workspaceLabel`, sourced from the matched nav item in `src/lib/navigation.ts`.
+- Standard workspace pages MUST NOT repeat this as an in-page `<h1>` (e.g. a "Clearance Jobs Catalog" heading on `/cha/jobs` duplicating the "Jobs" top-header title). Remove the redundant `ds-h1` + description block from the page body; keep any action buttons (Create, Filters, etc.) in that row, right-aligned.
+- Exceptions: identifier headings that are not the page name (e.g. a job number on a job detail page), and sub-view headings nested under a settings page that the top header does not distinguish (e.g. a workflow builder title under `/cha/settings/filing-workflows`).

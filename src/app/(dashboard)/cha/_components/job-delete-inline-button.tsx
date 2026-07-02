@@ -70,8 +70,9 @@ export function JobDeleteInlineButton({
       );
       resetState();
       router.refresh();
-    } catch (error: any) {
-      toast.error(error?.message || "An unexpected error occurred.");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "An unexpected error occurred.";
+      toast.error(message);
       setSubmitting(false);
     }
   };
@@ -100,12 +101,12 @@ export function JobDeleteInlineButton({
       >
         <div className="space-y-5">
           <div className="rounded-2xl border border-red-200/70 bg-red-50/70 p-4 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
-            <p className="font-semibold">Type these exact values to continue:</p>
+            <p>Type these exact values to continue:</p>
             <p className="mt-1">
-              Job number: <strong>{jobNumber}</strong>
+              Job number: <span className="text-on-surface">{jobNumber}</span>
             </p>
             <p>
-              Confirmation phrase: <strong>delete job</strong>
+              Confirmation phrase: <span className="text-on-surface">delete job</span>
             </p>
             <p className="mt-2">
               Deleting this job will either delete it immediately if you are the assigned approval manager, or create a deletion approval request for the assigned manager.
@@ -129,7 +130,7 @@ export function JobDeleteInlineButton({
               placeholder="delete job"
             />
             <p className="text-xs text-on-surface-variant">
-              Enter exactly: <strong className="text-on-surface">delete job</strong>
+              Enter exactly: <span className="text-on-surface">delete job</span>
             </p>
           </div>
 

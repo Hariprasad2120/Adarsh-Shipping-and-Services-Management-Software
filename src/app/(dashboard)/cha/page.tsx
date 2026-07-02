@@ -63,13 +63,13 @@ export default async function ChaDashboard() {
       where: { orgId, stage: { not: "FILED" }, status: "ACTIVE" },
     }),
     db.chaChecklistImport.count({
-      where: { status: "PENDING_APPROVAL", job: { orgId } },
+      where: { status: "PENDING_APPROVAL", job: { orgId, deletedAt: null } },
     }),
     db.chaFiling.count({
-      where: { status: "PENDING", job: { orgId } },
+      where: { status: "PENDING", job: { orgId, deletedAt: null } },
     }),
     db.chaExpenseRequest.count({
-      where: { orgId, status: "URGENT_PAYMENT_REQUIRED" },
+      where: { orgId, status: "URGENT_PAYMENT_REQUIRED", job: { deletedAt: null } },
     }),
     db.chaJob.findMany({
       where: {
@@ -120,7 +120,7 @@ export default async function ChaDashboard() {
     }),
     db.chaCustomerAdvance.findMany({
       where: {
-        job: { orgId },
+        job: { orgId, deletedAt: null },
         status: { in: ["FOLLOW_UP", "PARTIALLY_RECEIVED"] },
       },
       include: { receipts: true },

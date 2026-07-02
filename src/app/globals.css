@@ -674,6 +674,24 @@ html.light [class*="bg-red-700"] {
   border-bottom: none;
 }
 
+.cha-jobs-table-shell {
+  border-color: rgba(191, 200, 198, 0.26);
+}
+
+.cha-jobs-table th,
+.cha-jobs-table td {
+  border-bottom-color: rgba(191, 200, 198, 0.18);
+}
+
+html.dark .cha-jobs-table-shell {
+  border-color: rgba(139, 148, 158, 0.16);
+}
+
+html.dark .cha-jobs-table th,
+html.dark .cha-jobs-table td {
+  border-bottom-color: rgba(139, 148, 158, 0.12);
+}
+
 /* Clickable table row — full row acts as link */
 .ds-row-link {
   cursor: pointer;

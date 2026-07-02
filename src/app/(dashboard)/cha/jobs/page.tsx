@@ -27,12 +27,14 @@ export default async function ChaJobsPage({
   const branchId = typeof params.branchId === "string" ? params.branchId : undefined;
   const jobTypeId = typeof params.jobTypeId === "string" ? params.jobTypeId : undefined;
   const assignedToMe = params.assignedToMe === "true";
-  const page = typeof params.page === "string" ? parseInt(params.page, 10) : 1;
+  const activePage = typeof params.activePage === "string" ? parseInt(params.activePage, 10) : 1;
+  const completedPage = typeof params.completedPage === "string" ? parseInt(params.completedPage, 10) : 1;
   const showCreateNew = params.new === "true";
 
   // All queries are independent — run in parallel
   const [
-    jobsData,
+    activeJobsData,
+    completedJobsData,
     validityWarnings,
     ,
     branches,
@@ -52,7 +54,20 @@ export default async function ChaJobsPage({
       branchId,
       jobTypeId,
       assignedToMe,
-      page,
+      jobGroup: "ACTIVE",
+      page: activePage,
+      pageSize: 10,
+    }),
+    listJobs(session.user.id, orgId, {
+      search,
+      stage,
+      status,
+      priority,
+      branchId,
+      jobTypeId,
+      assignedToMe,
+      jobGroup: "COMPLETED",
+      page: completedPage,
       pageSize: 10,
     }),
     listDeliveryOrderValidityWarnings(session.user.id, orgId),
@@ -97,8 +112,8 @@ export default async function ChaJobsPage({
 
   return (
     <JobsClient
-      jobsData={{
-        items: jobsData.items.map((j) => ({
+      activeJobsData={{
+        items: activeJobsData.items.map((j) => ({
           id: j.id,
           jobNumber: j.jobNumber,
           title: j.title,
@@ -118,10 +133,36 @@ export default async function ChaJobsPage({
           deliveryOrderWarning: validityWarningMap.get(j.id) || null,
           createdAt: j.createdAt.toISOString(),
         })),
-        total: jobsData.total,
-        page: jobsData.page,
-        pageSize: jobsData.pageSize,
-        totalPages: jobsData.totalPages,
+        total: activeJobsData.total,
+        page: activeJobsData.page,
+        pageSize: activeJobsData.pageSize,
+        totalPages: activeJobsData.totalPages,
+      }}
+      completedJobsData={{
+        items: completedJobsData.items.map((j) => ({
+          id: j.id,
+          jobNumber: j.jobNumber,
+          title: j.title,
+          customerName: j.customer.name,
+          jobTypeName: j.jobType.name,
+          movementDirection: j.jobType.movementDirection,
+          branchName: j.branch.name,
+          stage: j.stage,
+          status: j.status,
+          priority: j.priority,
+          primaryOwnerId: j.primaryOwner.id,
+          ownerName: j.primaryOwner.name,
+          billOfEntryNumber: j.filing?.billOfEntryNumber || null,
+          shippingBillNumber: j.filing?.shippingBillNumber || null,
+          assignedUserIds: j.assignments.map((assignment) => assignment.userId),
+          hasActiveDeletionRequest: j.deletionRequests.length > 0,
+          deliveryOrderWarning: validityWarningMap.get(j.id) || null,
+          createdAt: j.createdAt.toISOString(),
+        })),
+        total: completedJobsData.total,
+        page: completedJobsData.page,
+        pageSize: completedJobsData.pageSize,
+        totalPages: completedJobsData.totalPages,
       }}
       filters={{
         search,

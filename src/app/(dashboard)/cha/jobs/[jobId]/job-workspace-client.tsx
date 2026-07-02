@@ -19,6 +19,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import * as actions from "@/modules/cha/actions";
 
@@ -119,8 +120,6 @@ export function JobWorkspaceClient({
     }
     return getDefaultTabForStage(job.stage);
   });
-  const [showMilestones, setShowMilestones] = useState(false);
-
   useEffect(() => {
     setActiveTab((currentTab) => {
       if (currentTab === "audit" || currentTab === "advances" || currentTab === "expenses") {
@@ -428,7 +427,6 @@ export function JobWorkspaceClient({
   const deleteInputsMatch =
     deleteConfirmJobNumber.trim() === job.jobNumber &&
     deleteConfirmPhrase.trim().toLowerCase() === "delete job";
-  const recentMilestones = job.auditLogs?.slice(0, 4) ?? [];
   const checklistWorkflow = job.checklistWorkflow ?? null;
   const currentChecklistVersion = checklistWorkflow?.currentFileVersion ?? checklistWorkflow?.fileVersions?.[0] ?? null;
   const checklistApprovals = checklistWorkflow?.approvals ?? [];
@@ -984,7 +982,6 @@ export function JobWorkspaceClient({
         toast.success(outcome);
         resetDeletionModalState();
         router.push("/cha/jobs");
-        router.refresh();
       } else {
         toast.error(res.error || "Failed to process the CHA job deletion.");
       }
@@ -1014,7 +1011,6 @@ export function JobWorkspaceClient({
         toast.success(`Deletion request approved and job ${job.jobNumber} deleted.`);
         resetDeletionModalState();
         router.push("/cha/jobs");
-        router.refresh();
       } else {
         toast.error(res.error || "Failed to approve the deletion request.");
       }
@@ -1837,23 +1833,23 @@ export function JobWorkspaceClient({
               <p className="max-w-4xl truncate text-sm font-medium text-on-surface">{job.title}</p>
             </div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-on-surface-variant">
-              <span>Customer: <strong className="text-on-surface">{job.customer.name}</strong></span>
+              <span>Customer: <span className="text-on-surface">{job.customer.name}</span></span>
               <span className="text-outline">•</span>
-              <span>Owner: <strong className="text-on-surface">{job.primaryOwner.name}</strong></span>
+              <span>Owner: <span className="text-on-surface">{job.primaryOwner.name}</span></span>
               <span className="text-outline">•</span>
               <span>
                 Manager:{" "}
                 {job.assignedManager ? (
-                  <strong className="text-on-surface">{job.assignedManager.name}</strong>
+                  <span className="text-on-surface">{job.assignedManager.name}</span>
                 ) : (
-                  <span className="font-semibold text-red-500">Not assigned</span>
+                  <span className="text-red-500">Not assigned</span>
                 )}
               </span>
               {canUpdateJob ? (
                 <button
                   type="button"
                   onClick={() => setIsEditingManager(true)}
-                  className="text-[11px] font-bold uppercase tracking-wide text-[#00cec4] hover:underline"
+                  className="ds-label text-[#00cec4] hover:underline"
                 >
                   Change
                 </button>
@@ -1864,13 +1860,13 @@ export function JobWorkspaceClient({
           <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:items-center">
             <div className="rounded-2xl border border-outline-variant/40 bg-surface-container-low px-3 py-2">
               <span className="ds-label block text-[9px] text-on-surface-variant">Stage</span>
-              <span className="mt-0.5 block whitespace-nowrap text-xs font-bold uppercase tracking-wide text-on-surface">
+              <span className="mt-0.5 block whitespace-nowrap text-xs uppercase tracking-wide text-on-surface">
                 {job.stage.replace(/_/g, " ")}
               </span>
             </div>
             <div className="rounded-2xl border border-outline-variant/40 bg-surface-container-low px-3 py-2">
               <span className="ds-label block text-[9px] text-on-surface-variant">Progress</span>
-              <span className="mt-0.5 block text-xs font-bold text-[#00cec4] ds-numeric">{stageProgress}%</span>
+              <span className="mt-0.5 block text-xs text-[#00cec4] ds-numeric">{stageProgress}%</span>
             </div>
             {canDeleteJob ? (
               <Button
@@ -1904,7 +1900,7 @@ export function JobWorkspaceClient({
                   >
                     {isCompleted ? <Check size={13} /> : index + 1}
                   </span>
-                  <span className={`whitespace-nowrap text-[10px] font-bold uppercase tracking-wide ${isActive ? "text-[#00cec4]" : "text-on-surface-variant"}`}>
+                  <span className={`whitespace-nowrap text-[10px] uppercase tracking-wide ${isActive ? "text-[#00cec4]" : "text-on-surface-variant"}`}>
                     {stage.label}
                   </span>
                   {index < STAGES.length - 1 ? <span className="h-px w-5 bg-outline-variant/50" /> : null}
@@ -1979,61 +1975,6 @@ export function JobWorkspaceClient({
         </div>
       ) : null}
 
-      <section className="rounded-2xl border border-outline-variant/30 bg-surface shadow-sm">
-        <button
-          type="button"
-          onClick={() => setShowMilestones((value) => !value)}
-          className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left"
-        >
-          <div className="min-w-0">
-            <h2 className="ds-h3 text-on-surface">Recent Milestones</h2>
-            <p className="truncate text-[11px] text-on-surface-variant">
-              {recentMilestones[0]?.remarks || "Latest activity for this job only."}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="rounded-full border border-outline-variant bg-surface-container-low px-2 py-0.5 text-[10px] font-bold text-on-surface-variant ds-numeric">
-              {recentMilestones.length} latest
-            </span>
-            <span className="text-xs font-semibold text-[#00cec4]">{showMilestones ? "Hide" : "Show"}</span>
-          </div>
-        </button>
-
-        {showMilestones ? (
-          <div className="border-t border-outline-variant/20 px-4 py-3">
-            <div className="mb-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setActiveTab("audit")}
-                className="text-xs font-semibold text-[#00cec4] hover:underline"
-              >
-                View Full Audit
-              </button>
-            </div>
-            {recentMilestones.length === 0 ? (
-              <p className="text-sm text-on-surface-variant">No milestones recorded for this job yet.</p>
-            ) : (
-              <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-                {recentMilestones.map((log: any) => (
-                  <div key={log.id} className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-xs font-semibold text-on-surface">{log.event.replace(/_/g, " ")}</p>
-                      <span className="text-[10px] text-on-surface-variant ds-numeric">
-                        {new Date(log.timestamp).toLocaleString("en-IN")}
-                      </span>
-                    </div>
-                    <p className="mt-1 line-clamp-2 text-xs text-on-surface-variant">{log.remarks}</p>
-                    <p className="mt-1 text-[10px] text-on-surface-variant">
-                      by <span className="text-on-surface">{log.actor?.name || "System"}</span>
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : null}
-      </section>
-
       {/* Sticky Compact Tab Controls */}
       <nav className="sticky top-0 z-20 -mx-1 overflow-x-auto border-y border-outline-variant/25 bg-surface/95 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-surface/85">
         <div className="flex min-w-max items-center gap-1">
@@ -2106,9 +2047,9 @@ export function JobWorkspaceClient({
                     const reqs = groupedRequirements[categoryName];
                     return (
                       <div key={categoryName} className="space-y-4">
-                        <h4 className="ds-h2 text-xs text-[#00cec4] border-b border-outline-variant/20 pb-2 font-semibold">
+                        <h3 className="ds-h3 border-b border-outline-variant/20 pb-2 text-on-surface">
                           {categoryName}
-                        </h4>
+                        </h3>
                         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                           {reqs.map((req: any) => {
                             const isUploaded = req.status === "UPLOADED";
@@ -4301,38 +4242,45 @@ export function JobWorkspaceClient({
       >
         <div className="space-y-4">
           <div className="rounded-2xl border border-red-200/70 bg-red-50/40 p-4 text-sm text-on-surface">
-            <p className="font-semibold text-red-600">Permanent action</p>
+            <p className="text-red-600">Permanent action</p>
             <p className="mt-1 text-on-surface-variant">
               Deleting this job affects linked CHA workflows, audit visibility, and operational references.
             </p>
             <p className="mt-3 text-on-surface-variant">
-              Type the exact job number <strong className="text-on-surface">{job.jobNumber}</strong> and the confirmation phrase{" "}
-              <strong className="text-on-surface">delete job</strong> to continue.
+              Type the exact job number{" "}
+              <span className="inline-flex rounded-md bg-surface-container px-2 py-0.5 text-on-surface ds-numeric">
+                {job.jobNumber}
+              </span>{" "}
+              and the confirmation phrase{" "}
+              <span className="inline-flex rounded-md bg-surface-container px-2 py-0.5 text-on-surface">
+                delete job
+              </span>{" "}
+              to continue.
             </p>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-1.5">
               <label className="ds-label block">Type Exact Job Number</label>
-              <input
+              <Input
                 type="text"
                 value={deleteConfirmJobNumber}
                 onChange={(e) => setDeleteConfirmJobNumber(e.target.value)}
                 placeholder={job.jobNumber}
-                className="w-full text-sm"
+                className="text-sm"
               />
             </div>
             <div className="space-y-1.5">
               <label className="ds-label block">Type Confirmation Phrase</label>
-              <input
+              <Input
                 type="text"
                 value={deleteConfirmPhrase}
                 onChange={(e) => setDeleteConfirmPhrase(e.target.value)}
                 placeholder="delete job"
-                className="w-full text-sm"
+                className="text-sm"
               />
               <p className="text-xs text-on-surface-variant">
-                Enter exactly: <strong className="text-on-surface">delete job</strong>
+                Enter exactly: <span className="text-on-surface">delete job</span>
               </p>
             </div>
           </div>
@@ -4365,31 +4313,31 @@ export function JobWorkspaceClient({
       >
         <div className="space-y-4">
           <div className="rounded-2xl border border-red-200/70 bg-red-50/40 p-4 text-sm text-on-surface">
-            <p className="font-semibold text-red-600">Manager approval required</p>
+            <p className="text-red-600">Manager approval required</p>
             <p className="mt-1 text-on-surface-variant">
-              Confirm the exact job number and type <strong className="text-on-surface">delete job</strong> to execute this deletion request.
+              Confirm the exact job number and type <span className="text-on-surface">delete job</span> to execute this deletion request.
             </p>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-1.5">
               <label className="ds-label block">Type Exact Job Number</label>
-              <input
+              <Input
                 type="text"
                 value={deleteConfirmJobNumber}
                 onChange={(e) => setDeleteConfirmJobNumber(e.target.value)}
                 placeholder={job.jobNumber}
-                className="w-full text-sm"
+                className="text-sm"
               />
             </div>
             <div className="space-y-1.5">
               <label className="ds-label block">Type Confirmation Phrase</label>
-              <input
+              <Input
                 type="text"
                 value={deleteConfirmPhrase}
                 onChange={(e) => setDeleteConfirmPhrase(e.target.value)}
                 placeholder="delete job"
-                className="w-full text-sm"
+                className="text-sm"
               />
             </div>
             <div className="space-y-1.5">
@@ -4399,7 +4347,7 @@ export function JobWorkspaceClient({
                 value={deleteDecisionRemarks}
                 onChange={(e) => setDeleteDecisionRemarks(e.target.value)}
                 placeholder="Add any execution note for the audit trail..."
-                className="w-full text-sm"
+                className="w-full rounded-xl border border-[#00cec4]/55 bg-surface px-4 py-3 text-sm text-on-surface placeholder:text-[var(--color-placeholder)] hover:border-[#00cec4]/85 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/15"
               />
             </div>
           </div>
@@ -4434,7 +4382,7 @@ export function JobWorkspaceClient({
               value={deleteDecisionRemarks}
               onChange={(e) => setDeleteDecisionRemarks(e.target.value)}
               placeholder="Explain why this CHA job should not be deleted..."
-              className="w-full text-sm"
+              className="w-full rounded-xl border border-[#00cec4]/55 bg-surface px-4 py-3 text-sm text-on-surface placeholder:text-[var(--color-placeholder)] hover:border-[#00cec4]/85 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
           </div>
 

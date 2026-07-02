@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { can } from "@/lib/rbac";
 import { listManagerChecklistApprovals, listManagerJobDeletionRequests } from "@/modules/cha/service";
 import Link from "next/link";
-import { CheckSquare, ArrowRight, ClipboardCheck, Trash2 } from "lucide-react";
+import { CheckSquare, ArrowRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default async function ChaApprovalsPage() {
@@ -29,19 +29,6 @@ export default async function ChaApprovalsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="border-b border-outline-variant/30 pb-4">
-        <h1 className="ds-h1 text-[#00cec4] flex items-center gap-2">
-          <span className="ds-icon-badge bg-[#00cec4]/10 text-[#00cec4] p-1.5 rounded-xl">
-            <ClipboardCheck size={20} />
-          </span>
-          Checklist Approvals Queue
-        </h1>
-        <p className="text-sm text-on-surface-variant mt-1">
-          Review and audit questionnaire responses parsed from client clearance Excel templates before custom filings.
-        </p>
-      </div>
-
       {/* Checklist Queue */}
       <div className="bg-surface border border-outline-variant/30 rounded-xl shadow-sm overflow-hidden">
         {approvals.length === 0 ? (

@@ -81,15 +81,6 @@ export default async function ChaSettingsPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6">
-      <div className="flex items-center justify-between border-b border-outline-variant/30 pb-4">
-        <div>
-          <h1 className="ds-h1 text-[#00cec4]">CHA Configuration & Settings</h1>
-          <p className="text-sm text-on-surface-variant mt-1">
-            Manage operational workflows, approval gates, and disbursement rules for the Custom House Agent module.
-          </p>
-        </div>
-      </div>
-
       <SettingsForm
         initialSettings={{
           id: settings.id,
