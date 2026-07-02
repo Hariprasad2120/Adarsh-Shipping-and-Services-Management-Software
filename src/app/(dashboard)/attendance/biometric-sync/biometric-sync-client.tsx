@@ -39,6 +39,7 @@ const Spinner = ({ className }: { className?: string }) => (
 interface SyncStatus {
   configured: boolean;
   connected?: boolean;
+  statusMessage?: string | null;
   lastSync: string | null;
   lastSyncMonth: string | null;
   logs: SyncLogEntry[];
@@ -1031,15 +1032,15 @@ export function BiometricSyncClient() {
                   : !status?.configured
                     ? "Not Configured"
                     : !status?.connected
-                      ? "Not Connected"
+                      ? "Runtime Unreachable"
                       : "eSSL DB Connected"}
               </div>
               <p className="mt-1.5 text-[10px] leading-relaxed text-on-surface-variant/80 dark:text-slate-500">
-                {!status?.configured
+                {status?.statusMessage ?? (!status?.configured
                   ? "Set ESSL_DB_* vars in .env"
                   : !status?.connected
-                    ? "eSSL database host is offline"
-                    : "ESSL_DB_SERVER / ESSL_DB_NAME set"}
+                    ? "This runtime cannot reach the configured eSSL host."
+                    : "ESSL_DB_SERVER / ESSL_DB_NAME set")}
               </p>
             </div>
 
@@ -1107,7 +1108,7 @@ export function BiometricSyncClient() {
                   !status?.configured
                     ? "eSSL database not configured — add ESSL_DB_* to .env"
                     : !status?.connected
-                      ? "eSSL database offline — cannot sync"
+                      ? (status.statusMessage ?? "Current runtime cannot reach eSSL — cannot sync")
                       : undefined
                 }
                 className="inline-flex items-center gap-2 bg-[#00cec4] text-slate-950 rounded-xl px-5 py-2.5 text-sm font-bold hover:bg-[#00c4b6] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg"

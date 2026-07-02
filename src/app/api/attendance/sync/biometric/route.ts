@@ -27,14 +27,20 @@ export async function GET() {
   const config = getEsslConfig();
   const configured = !!config;
   let connected = false;
+  let statusMessage: string | null = null;
 
   if (config) {
     connected = await testEsslConnection(config);
     if (!connected) {
       await intimateAdminsOffline(session!.user.orgId ?? "", "eSSL database host is unreachable.");
+      statusMessage =
+        "This server runtime cannot reach the eSSL database host. Live sync is unavailable until network access is restored.";
     } else {
       await resolveOfflineNotifications(session!.user.orgId ?? "");
+      statusMessage = "Current runtime can reach the configured eSSL database.";
     }
+  } else {
+    statusMessage = "Set ESSL_DB_* variables in this runtime to enable live biometric sync.";
   }
 
   const dbLogs = await db.biometricSyncLog.findMany({
@@ -92,6 +98,7 @@ export async function GET() {
   return ok({
     configured,
     connected,
+    statusMessage,
     lastSync,
     lastSyncMonth,
     logs,
@@ -120,7 +127,8 @@ export async function POST(req: NextRequest) {
   // Fast connection test to fail early if host is offline
   const connected = await testEsslConnection(config);
   if (!connected) {
-    const errorMsg = "Biometric sync failed: eSSL database host is offline or unreachable.";
+    const errorMsg =
+      "Biometric sync failed: this server runtime cannot reach the eSSL database host.";
     await db.biometricSyncLog.create({
       data: {
         orgId,

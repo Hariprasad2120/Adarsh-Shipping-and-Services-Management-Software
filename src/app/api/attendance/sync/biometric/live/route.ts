@@ -184,7 +184,7 @@ async function fetchTodayEsslSnapshot(orgId: string, nowClock: Date) {
     const fallback = await buildDbFallbackSnapshot(orgId, nowClock);
     return {
       ...fallback,
-      message: "eSSL database is not configured. Showing local attendance records.",
+      message: "eSSL is not configured in this runtime. Showing local attendance records.",
     };
   }
 
@@ -193,7 +193,7 @@ async function fetchTodayEsslSnapshot(orgId: string, nowClock: Date) {
     const fallback = await buildDbFallbackSnapshot(orgId, nowClock);
     return {
       ...fallback,
-      message: "eSSL is offline. Showing the latest local attendance records.",
+      message: "This server runtime cannot reach eSSL. Showing the latest local attendance records.",
     };
   }
 
@@ -324,7 +324,8 @@ export async function POST(req: NextRequest) {
 
   const connected = await testEsslConnection(config);
   if (!connected) {
-    const errorMessage = "Live biometric sync failed: eSSL database host is offline or unreachable.";
+    const errorMessage =
+      "Live biometric sync failed: this server runtime cannot reach the eSSL database host.";
     await db.biometricSyncLog.create({
       data: {
         orgId,

@@ -18,6 +18,11 @@ interface PageProps {
 
 type OtClientProps = React.ComponentProps<typeof OtClient>;
 
+function toIsoString(value: Date | string | null | undefined) {
+  if (!value) return null;
+  return value instanceof Date ? value.toISOString() : value;
+}
+
 export default async function OvertimePage({ searchParams }: PageProps) {
   const session = await auth();
   if (!session) redirect("/login");
@@ -215,11 +220,29 @@ export default async function OvertimePage({ searchParams }: PageProps) {
         totalLopDays,
         pendingCount,
       },
-      otRecords,
-      holidays,
+      otRecords: otRecords.map((record) => ({
+        ...record,
+        date: record.date.toISOString(),
+        firstPunchAt: toIsoString(record.firstPunchAt),
+        lastPunchAt: toIsoString(record.lastPunchAt),
+        user: {
+          ...record.user,
+        },
+      })),
+      holidays: holidays.map((holiday) => ({
+        ...holiday,
+        date: holiday.date.toISOString(),
+      })),
       lopRecords: lopRecordsDb,
       settings,
-      employees,
+      employees: employees.map((employee) => ({
+        ...employee,
+        hrmsShiftAssignments: employee.hrmsShiftAssignments.map((assignment) => ({
+          ...assignment,
+          startDate: assignment.startDate.toISOString(),
+          endDate: toIsoString(assignment.endDate),
+        })),
+      })),
       branches,
       workingCalendar,
       shifts,

@@ -14,6 +14,10 @@ import {
   Save,
   Trash2,
   Workflow,
+  X,
+  PanelLeft,
+  PanelRight,
+  Settings2,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
@@ -28,7 +32,19 @@ interface WorkflowsClientProps {
   availableJobTypes: { id: string; name: string }[];
 }
 
-type ChecklistItemDraft = {
+type ValidityUnit = "BUSINESS_DAYS" | "CALENDAR_DAYS";
+
+type DocumentValidityDraft = {
+  documentType: string;
+  requiresValidity: boolean;
+  validityDuration: number | null;
+  validityUnit: ValidityUnit;
+  warningBeforeDuration: number | null;
+  warningBeforeUnit: ValidityUnit;
+  notifyBeforeExpiry: boolean;
+};
+
+type ChecklistItemDraft = DocumentValidityDraft & {
   id: string;
   label: string;
   description: string;
@@ -39,13 +55,13 @@ type ChecklistItemDraft = {
   maxUploads: number | null;
   acceptedFileTypes: string[];
   deadlineDuration: number;
-  deadlineUnit: "BUSINESS_DAYS" | "CALENDAR_DAYS";
+  deadlineUnit: ValidityUnit;
   delayRemarksRequired: boolean;
   sortOrder: number;
   isActive: boolean;
 };
 
-type PhotoRequirementDraft = {
+type PhotoRequirementDraft = DocumentValidityDraft & {
   id: string;
   label: string;
   description: string;
@@ -54,6 +70,19 @@ type PhotoRequirementDraft = {
   maxPhotos: number | null;
   acceptedFileTypes: string[];
   isVisibleInTimeline: boolean;
+};
+
+type DocumentRuleOptions = Partial<DocumentValidityDraft> & {
+  allowsUpload?: boolean;
+  minUploads?: number;
+  maxUploads?: number | null;
+  acceptedFileTypes?: string[];
+  description?: string;
+  isMandatory?: boolean;
+  requiresRemarks?: boolean;
+  delayRemarksRequired?: boolean;
+  deadlineDuration?: number;
+  deadlineUnit?: ValidityUnit;
 };
 
 type NodeDraft = {
@@ -107,8 +136,25 @@ function slugify(value: string) {
   return normalized || "node";
 }
 
+function normalizeValidityUnit(value: any): ValidityUnit {
+  return value === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : "BUSINESS_DAYS";
+}
+
+function normalizeDocumentValidity(item: any): DocumentValidityDraft {
+  return {
+    documentType: item.documentType || "",
+    requiresValidity: !!item.requiresValidity,
+    validityDuration: item.validityDuration === null || item.validityDuration === undefined || item.validityDuration === "" ? null : Math.max(1, Number(item.validityDuration)),
+    validityUnit: normalizeValidityUnit(item.validityUnit),
+    warningBeforeDuration: item.warningBeforeDuration === null || item.warningBeforeDuration === undefined || item.warningBeforeDuration === "" ? null : Math.max(1, Number(item.warningBeforeDuration)),
+    warningBeforeUnit: normalizeValidityUnit(item.warningBeforeUnit),
+    notifyBeforeExpiry: !!item.notifyBeforeExpiry,
+  };
+}
+
 function normalizeChecklistItem(item: any, index: number): ChecklistItemDraft {
   return {
+    ...normalizeDocumentValidity(item),
     id: item.id || createId("item"),
     label: item.label || "",
     description: item.description || "",
@@ -119,7 +165,7 @@ function normalizeChecklistItem(item: any, index: number): ChecklistItemDraft {
     maxUploads: item.maxUploads === null || item.maxUploads === undefined ? null : Number(item.maxUploads),
     acceptedFileTypes: Array.isArray(item.acceptedFileTypes) ? item.acceptedFileTypes : [],
     deadlineDuration: Number(item.deadlineDuration ?? 2),
-    deadlineUnit: item.deadlineUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : "BUSINESS_DAYS",
+    deadlineUnit: normalizeValidityUnit(item.deadlineUnit),
     delayRemarksRequired: item.delayRemarksRequired !== false,
     sortOrder: Number(item.sortOrder ?? index + 1),
     isActive: item.isActive !== false,
@@ -128,6 +174,7 @@ function normalizeChecklistItem(item: any, index: number): ChecklistItemDraft {
 
 function normalizePhotoRequirement(item: any): PhotoRequirementDraft {
   return {
+    ...normalizeDocumentValidity(item),
     id: item.id || createId("photo"),
     label: item.label || "",
     description: item.description || "",
@@ -275,34 +322,49 @@ function serializeWorkflowSnapshot(nodes: NodeDraft[], edges: EdgeDraft[]) {
   });
 }
 
-function createChecklistItemDraft(label: string, sortOrder = 1): ChecklistItemDraft {
+function createDocumentValidityDraft(options: DocumentRuleOptions = {}): DocumentValidityDraft {
   return {
+    documentType: options.documentType || "",
+    requiresValidity: !!options.requiresValidity,
+    validityDuration: options.validityDuration ?? null,
+    validityUnit: options.validityUnit || "BUSINESS_DAYS",
+    warningBeforeDuration: options.warningBeforeDuration ?? null,
+    warningBeforeUnit: options.warningBeforeUnit || "BUSINESS_DAYS",
+    notifyBeforeExpiry: !!options.notifyBeforeExpiry,
+  };
+}
+
+function createChecklistItemDraft(label: string, sortOrder = 1, options: DocumentRuleOptions = {}): ChecklistItemDraft {
+  return {
+    ...createDocumentValidityDraft(options),
     id: createId("item"),
     label,
-    description: "",
-    isMandatory: true,
-    requiresRemarks: false,
-    allowsUpload: false,
-    minUploads: 0,
-    maxUploads: null,
-    acceptedFileTypes: [],
-    deadlineDuration: 2,
-    deadlineUnit: "BUSINESS_DAYS",
-    delayRemarksRequired: true,
+    description: options.description || "",
+    isMandatory: options.isMandatory !== false,
+    requiresRemarks: !!options.requiresRemarks,
+    allowsUpload: !!options.allowsUpload,
+    minUploads: Number(options.minUploads ?? 0),
+    maxUploads: options.maxUploads ?? null,
+    acceptedFileTypes: options.acceptedFileTypes || [],
+    deadlineDuration: Number(options.deadlineDuration ?? 2),
+    deadlineUnit: options.deadlineUnit || "BUSINESS_DAYS",
+    delayRemarksRequired: options.delayRemarksRequired !== false,
     sortOrder,
     isActive: true,
   };
 }
 
-function createStageUploadSlot(label: string): PhotoRequirementDraft {
+function createStageUploadSlot(label: string, options: DocumentRuleOptions = {}): PhotoRequirementDraft {
+  const requiresUpload = options.allowsUpload !== false;
   return {
+    ...createDocumentValidityDraft(options),
     id: createId("photo"),
-    label: `${label} upload`,
-    description: "Upload stage-level proof, bill copy, screenshot, or supporting document if required for this main filing stage.",
-    isMandatory: false,
-    minPhotos: 0,
-    maxPhotos: null,
-    acceptedFileTypes: ["image/jpeg", "image/png", "application/pdf"],
+    label,
+    description: options.description || "Upload supporting document, photo, or proof for this workflow node.",
+    isMandatory: options.isMandatory !== false,
+    minPhotos: Number(options.minUploads ?? (requiresUpload ? 1 : 0)),
+    maxPhotos: options.maxUploads ?? null,
+    acceptedFileTypes: options.acceptedFileTypes || ["image/jpeg", "image/png", "application/pdf"],
     isVisibleInTimeline: true,
   };
 }
@@ -314,18 +376,30 @@ function createWorkflowStageNode(
   x: number,
   y: number,
   isStart = false,
+  options: {
+    description?: string;
+    category?: string;
+    nodeType?: NodeDraft["nodeType"];
+    sectionKey?: string;
+    sectionName?: string;
+    branchKey?: string;
+    branchName?: string;
+    canBeSkipped?: boolean;
+    requireMandatoryPhotos?: boolean;
+    photoRequirements?: PhotoRequirementDraft[];
+  } = {},
 ): NodeDraft {
   return {
     id: createId("node"),
     key,
     name,
-    description: "Main filing stage. Use upload slots below to decide whether proof/photo/document upload is optional or mandatory.",
-    category: "MAIN_STAGE",
-    nodeType: "SECTION",
-    sectionKey: key,
-    sectionName: name,
-    branchKey: "",
-    branchName: "",
+    description: options.description || "Configurable filing workflow node.",
+    category: options.category || "MAIN_STAGE",
+    nodeType: options.nodeType || "SECTION",
+    sectionKey: options.sectionKey ?? key,
+    sectionName: options.sectionName ?? name,
+    branchKey: options.branchKey || "",
+    branchName: options.branchName || "",
     sortOrder: order,
     isActive: true,
     isStart,
@@ -334,15 +408,15 @@ function createWorkflowStageNode(
     slaDuration: 2,
     slaUnit: "BUSINESS_DAYS",
     commentsRequired: false,
-    canBeSkipped: false,
+    canBeSkipped: !!options.canBeSkipped,
     canBeRevisited: true,
     approvalRequired: false,
     approvalRoles: [],
     requireAllMandatoryChecklistItems: true,
-    requireMandatoryPhotos: false,
+    requireMandatoryPhotos: !!options.requireMandatoryPhotos,
     allowedRoles: [],
     checklistItems: [],
-    photoRequirements: [createStageUploadSlot(name)],
+    photoRequirements: options.photoRequirements || [],
   };
 }
 
@@ -356,12 +430,17 @@ function createWorkflowChecklistNode(
   sectionKey: string,
   branchName = "",
   branchKey = "",
+  options: DocumentRuleOptions & {
+    nodeDescription?: string;
+    canBeSkipped?: boolean;
+    photoRequirements?: PhotoRequirementDraft[];
+  } = {},
 ): NodeDraft {
   return {
     id: createId("node"),
     key,
     name: label,
-    description: "Standalone configurable checklist node. It can be rerouted, delayed, revisited, or branched independently.",
+    description: options.nodeDescription || options.description || "Standalone configurable checklist node. It can be rerouted, delayed, revisited, or branched independently.",
     category: "CHECKLIST_ITEM",
     nodeType: "CHECKLIST_NODE",
     sectionKey,
@@ -373,18 +452,18 @@ function createWorkflowChecklistNode(
     isStart: false,
     positionX: x,
     positionY: y,
-    slaDuration: 2,
-    slaUnit: "BUSINESS_DAYS",
+    slaDuration: Number(options.deadlineDuration ?? 2),
+    slaUnit: options.deadlineUnit || "BUSINESS_DAYS",
     commentsRequired: false,
-    canBeSkipped: false,
+    canBeSkipped: !!options.canBeSkipped,
     canBeRevisited: true,
     approvalRequired: false,
     approvalRoles: [],
-    requireAllMandatoryChecklistItems: true,
-    requireMandatoryPhotos: false,
+    requireAllMandatoryChecklistItems: options.isMandatory === false ? false : true,
+    requireMandatoryPhotos: !!options.allowsUpload,
     allowedRoles: [],
-    checklistItems: [createChecklistItemDraft(label, 1)],
-    photoRequirements: [],
+    checklistItems: [createChecklistItemDraft(label, 1, options)],
+    photoRequirements: options.photoRequirements || (options.allowsUpload ? [createStageUploadSlot(`${label} document`, options)] : []),
   };
 }
 
@@ -438,89 +517,358 @@ function connectNodes(sourceKey: string, targetKey: string, label?: string): Edg
 function buildChaFilingBlueprintDraft() {
   const nodes: NodeDraft[] = [];
   const edges: EdgeDraft[] = [];
-  const firstCheckItems = [
-    "Bill of Entry",
-    "Goods Registration",
-    "Examination",
-    "CE",
-    "Group Forward",
-    "Assessment",
-    "Duty",
-    "OOC",
-    "Delivery",
-  ];
-  const rmsItems = ["Goods Registration", "Duty", "Assessment", "OOC", "Delivery"];
-  const openBillItems = ["Assessment", "Goods Registration", "Examination", "Duty", "OOC", "Delivery"];
-
-  const leftX = 120;
-  const branchX = 500;
-  const yStart = 120;
-  const rowGap = 190;
   let order = 1;
 
-  const firstCheck = createWorkflowStageNode("First Check", "first_check", order++, leftX, yStart, true);
-  nodes.push(firstCheck);
+  const centerX = 520;
+  const firstCheckX = 120;
+  const secondCheckX = 860;
+  const rmsX = 640;
+  const openBillX = 1080;
+  const startY = 120;
+  const rowGap = 190;
 
-  let previousKey = firstCheck.key;
-  firstCheckItems.forEach((label, index) => {
-    const key = `first_check_${slugify(label)}`;
-    const node = createWorkflowChecklistNode(label, key, order++, leftX, yStart + (index + 1) * rowGap, "First Check", "first_check");
+  const pdfAndImageTypes = ["application/pdf", "image/jpeg", "image/png"];
+  const imageAndReportTypes = ["image/jpeg", "image/png", "application/pdf"];
+  const eWayBillTypes = ["application/pdf", "image/jpeg", "image/png"];
+
+  const addEdge = (sourceKey: string, targetKey: string, label?: string) => {
+    edges.push(connectNodes(sourceKey, targetKey, label));
+  };
+
+  const addStage = (
+    name: string,
+    key: string,
+    x: number,
+    y: number,
+    isStart = false,
+    options: Parameters<typeof createWorkflowStageNode>[6] = {},
+  ) => {
+    const node = createWorkflowStageNode(name, key, order++, x, y, isStart, options);
     nodes.push(node);
-    edges.push(connectNodes(previousKey, key, index === 0 ? "Start First Check" : "Next"));
-    previousKey = key;
+    return node;
+  };
+
+  const addChecklist = (
+    label: string,
+    key: string,
+    x: number,
+    y: number,
+    sectionName: string,
+    sectionKey: string,
+    branchName = "",
+    branchKey = "",
+    options: Parameters<typeof createWorkflowChecklistNode>[9] = {},
+  ) => {
+    const node = createWorkflowChecklistNode(label, key, order++, x, y, sectionName, sectionKey, branchName, branchKey, options);
+    nodes.push(node);
+    return node;
+  };
+
+  const addSequentialChecklistPath = (
+    entries: Array<{
+      label: string;
+      key: string;
+      options?: Parameters<typeof createWorkflowChecklistNode>[9];
+    }>,
+    x: number,
+    startYForPath: number,
+    sectionName: string,
+    sectionKey: string,
+    branchName = "",
+    branchKey = "",
+    sourceKey: string,
+    firstEdgeLabel: string,
+  ) => {
+    let previousKey = sourceKey;
+    let lastKey = sourceKey;
+    entries.forEach((entry, index) => {
+      const node = addChecklist(
+        entry.label,
+        entry.key,
+        x,
+        startYForPath + index * rowGap,
+        sectionName,
+        sectionKey,
+        branchName,
+        branchKey,
+        entry.options || {},
+      );
+      addEdge(previousKey, node.key, index === 0 ? firstEdgeLabel : "Next");
+      previousKey = node.key;
+      lastKey = node.key;
+    });
+    return lastKey;
+  };
+
+  const examinationOptions: Parameters<typeof createWorkflowChecklistNode>[9] = {
+    allowsUpload: true,
+    minUploads: 2,
+    acceptedFileTypes: imageAndReportTypes,
+    documentType: "Examination Photos + CE/Lab Reports",
+    requiresValidity: true,
+    validityDuration: null,
+    validityUnit: "CALENDAR_DAYS",
+    warningBeforeDuration: 1,
+    warningBeforeUnit: "CALENDAR_DAYS",
+    notifyBeforeExpiry: true,
+    description: "Upload examination photos and CE/Lab report file. A validity date must be captured and expiry warning/notification should run before validity ends.",
+    nodeDescription: "Examination requires photos and a CE/Lab report file. Validity date and expiry notifications are configurable on this node.",
+    photoRequirements: [
+      createStageUploadSlot("Examination photos", {
+        allowsUpload: true,
+        isMandatory: true,
+        minUploads: 1,
+        acceptedFileTypes: ["image/jpeg", "image/png"],
+        documentType: "Examination Photos",
+        description: "Upload one or more examination photos.",
+      }),
+      createStageUploadSlot("CE/Lab report file", {
+        allowsUpload: true,
+        isMandatory: true,
+        minUploads: 1,
+        acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
+        documentType: "CE/Lab Reports",
+        requiresValidity: true,
+        validityDuration: null,
+        validityUnit: "CALENDAR_DAYS",
+        warningBeforeDuration: 1,
+        warningBeforeUnit: "CALENDAR_DAYS",
+        notifyBeforeExpiry: true,
+        description: "Upload CE or lab report and capture its validity date for warning/notification.",
+      }),
+    ],
+  };
+
+  const dutyOptionalOptions: Parameters<typeof createWorkflowChecklistNode>[9] = {
+    isMandatory: false,
+    canBeSkipped: true,
+    description: "Duty is optional in this workflow. Users can proceed even if this checklist is not checked.",
+    nodeDescription: "Optional duty node. It is configured as skippable and not mandatory.",
+  };
+
+  const oocDocumentOptions: Parameters<typeof createWorkflowChecklistNode>[9] = {
+    allowsUpload: true,
+    minUploads: 1,
+    acceptedFileTypes: pdfAndImageTypes,
+    documentType: "OOC Document",
+    description: "Upload the Out of Charge document before completing this node.",
+    nodeDescription: "OOC requires document upload.",
+    photoRequirements: [
+      createStageUploadSlot("OOC document", {
+        allowsUpload: true,
+        isMandatory: true,
+        minUploads: 1,
+        acceptedFileTypes: pdfAndImageTypes,
+        documentType: "OOC Document",
+        description: "Upload OOC document.",
+      }),
+    ],
+  };
+
+  const deliveryEWayBillOptions: Parameters<typeof createWorkflowChecklistNode>[9] = {
+    allowsUpload: true,
+    minUploads: 1,
+    acceptedFileTypes: eWayBillTypes,
+    documentType: "E-Way Bill",
+    requiresValidity: true,
+    validityDuration: null,
+    validityUnit: "CALENDAR_DAYS",
+    warningBeforeDuration: 1,
+    warningBeforeUnit: "CALENDAR_DAYS",
+    notifyBeforeExpiry: true,
+    description: "Upload E-Way Bill and capture validity date. Warning and notification should run before expiry.",
+    nodeDescription: "Delivery requires E-Way Bill upload with validity tracking and expiry notification.",
+    photoRequirements: [
+      createStageUploadSlot("E-Way Bill", {
+        allowsUpload: true,
+        isMandatory: true,
+        minUploads: 1,
+        acceptedFileTypes: eWayBillTypes,
+        documentType: "E-Way Bill",
+        requiresValidity: true,
+        validityDuration: null,
+        validityUnit: "CALENDAR_DAYS",
+        warningBeforeDuration: 1,
+        warningBeforeUnit: "CALENDAR_DAYS",
+        notifyBeforeExpiry: true,
+        description: "Upload E-Way Bill and capture validity date for warning/notification.",
+      }),
+    ],
+  };
+
+  const requiredDocumentOptions = (documentType: string, description: string): Parameters<typeof createWorkflowChecklistNode>[9] => ({
+    allowsUpload: true,
+    minUploads: 1,
+    acceptedFileTypes: pdfAndImageTypes,
+    documentType,
+    description,
+    nodeDescription: `${documentType} upload is mandatory for this node.`,
+    photoRequirements: [
+      createStageUploadSlot(documentType, {
+        allowsUpload: true,
+        isMandatory: true,
+        minUploads: 1,
+        acceptedFileTypes: pdfAndImageTypes,
+        documentType,
+        description,
+      }),
+    ],
   });
 
-  const secondCheckY = yStart + (firstCheckItems.length + 1) * rowGap + 80;
-  const secondCheck = createWorkflowStageNode("Second Check", "second_check", order++, leftX, secondCheckY);
-  nodes.push(secondCheck);
-  edges.push(connectNodes(previousKey, secondCheck.key, "Move to Second Check"));
-
-  const rmsStageY = secondCheckY + rowGap;
-  const rmsStage = createWorkflowStageNode("RMS", "second_check_rms", order++, leftX, rmsStageY);
-  rmsStage.category = "BRANCH";
-  rmsStage.sectionKey = "second_check";
-  rmsStage.sectionName = "Second Check";
-  rmsStage.branchKey = "rms";
-  rmsStage.branchName = "RMS";
-  nodes.push(rmsStage);
-  edges.push(connectNodes(secondCheck.key, rmsStage.key, "RMS Path"));
-
-  let rmsPreviousKey = rmsStage.key;
-  rmsItems.forEach((label, index) => {
-    const key = `second_check_rms_${slugify(label)}`;
-    const node = createWorkflowChecklistNode(label, key, order++, leftX, rmsStageY + (index + 1) * rowGap, "Second Check", "second_check", "RMS", "rms");
-    nodes.push(node);
-    edges.push(connectNodes(rmsPreviousKey, key, index === 0 ? "Start RMS" : "Next"));
-    rmsPreviousKey = key;
-  });
-
-  const openBillStage = createWorkflowStageNode("Open Bill", "second_check_open_bill", order++, branchX, rmsStageY);
-  openBillStage.category = "BRANCH";
-  openBillStage.sectionKey = "second_check";
-  openBillStage.sectionName = "Second Check";
-  openBillStage.branchKey = "open_bill";
-  openBillStage.branchName = "Open Bill";
-  nodes.push(openBillStage);
-  edges.push(connectNodes(secondCheck.key, openBillStage.key, "Open Bill Path"));
-
-  let openBillPreviousKey = openBillStage.key;
-  openBillItems.forEach((label, index) => {
-    const key = `second_check_open_bill_${slugify(label)}`;
-    const node = createWorkflowChecklistNode(label, key, order++, branchX, rmsStageY + (index + 1) * rowGap, "Second Check", "second_check", "Open Bill", "open_bill");
-    nodes.push(node);
-    edges.push(connectNodes(openBillPreviousKey, key, index === 0 ? "Start Open Bill" : "Next"));
-    openBillPreviousKey = key;
-  });
-
-  const amendmentY = Math.max(
-    rmsStageY + (rmsItems.length + 2) * rowGap,
-    rmsStageY + (openBillItems.length + 2) * rowGap,
+  const billOfEntry = addChecklist(
+    "Bill of Entry",
+    "bill_of_entry",
+    centerX,
+    startY,
+    "Bill of Entry",
+    "bill_of_entry",
+    "",
+    "",
+    {
+      description: "Complete Bill of Entry first. After this, the user chooses First Check or Second Check.",
+      nodeDescription: "First stage of the filing workflow. Once completed, the user chooses whether the job follows First Check or Second Check.",
+    },
   );
-  const amendment = createWorkflowStageNode("Amendment", "amendment", order++, Math.round((leftX + branchX) / 2), amendmentY);
-  amendment.description = "Future amendment flow placeholder. Add checklist nodes below this stage when amendment processing rules are finalized.";
-  nodes.push(amendment);
-  edges.push(connectNodes(rmsPreviousKey, amendment.key, "RMS Complete"));
-  edges.push(connectNodes(openBillPreviousKey, amendment.key, "Open Bill Complete"));
+  billOfEntry.isStart = true;
+
+  const checkTypeDecision = addStage("Choose Check Type", "choose_check_type", centerX, startY + rowGap, false, {
+    category: "DECISION",
+    nodeType: "DECISION",
+    sectionKey: "routing",
+    sectionName: "Routing",
+    description: "User decision point: choose whether this filing needs First Check or Second Check.",
+  });
+  addEdge(billOfEntry.key, checkTypeDecision.key, "After Bill of Entry");
+
+  const firstCheckStage = addStage("First Check", "first_check", firstCheckX, startY + rowGap * 2, false, {
+    sectionKey: "first_check",
+    sectionName: "First Check",
+    description: "First Check workflow path selected by the user after Bill of Entry.",
+  });
+  addEdge(checkTypeDecision.key, firstCheckStage.key, "First Check");
+
+  const firstCheckLastKey = addSequentialChecklistPath(
+    [
+      { label: "BE Copy Generation", key: "first_check_be_copy_generation" },
+      { label: "Goods Registration", key: "first_check_goods_registration" },
+      { label: "Examination", key: "first_check_examination", options: examinationOptions },
+      { label: "Group Forward", key: "first_check_group_forward" },
+      { label: "Assessment", key: "first_check_assessment" },
+      { label: "Duty", key: "first_check_duty", options: dutyOptionalOptions },
+      { label: "OOC", key: "first_check_ooc", options: oocDocumentOptions },
+      { label: "Delivery", key: "first_check_delivery", options: deliveryEWayBillOptions },
+    ],
+    firstCheckX,
+    startY + rowGap * 3,
+    "First Check",
+    "first_check",
+    "",
+    "",
+    firstCheckStage.key,
+    "Start First Check",
+  );
+
+  const secondCheckStage = addStage("Second Check", "second_check", secondCheckX, startY + rowGap * 2, false, {
+    sectionKey: "second_check",
+    sectionName: "Second Check",
+    description: "Second Check workflow path selected by the user after Bill of Entry.",
+  });
+  addEdge(checkTypeDecision.key, secondCheckStage.key, "Second Check");
+
+  const secondCheckDecision = addStage("Choose Second Check Category", "choose_second_check_category", secondCheckX, startY + rowGap * 3, false, {
+    category: "DECISION",
+    nodeType: "DECISION",
+    sectionKey: "second_check",
+    sectionName: "Second Check",
+    description: "User decision point under Second Check: choose RMS or Open Bill.",
+  });
+  addEdge(secondCheckStage.key, secondCheckDecision.key, "Choose RMS/Open Bill");
+
+  const rmsStage = addStage("RMS", "second_check_rms", rmsX, startY + rowGap * 4, false, {
+    category: "BRANCH",
+    sectionKey: "second_check",
+    sectionName: "Second Check",
+    branchKey: "rms",
+    branchName: "RMS",
+    description: "RMS branch under Second Check. Only OOC and Delivery are required here.",
+  });
+  addEdge(secondCheckDecision.key, rmsStage.key, "RMS");
+
+  const rmsLastKey = addSequentialChecklistPath(
+    [
+      { label: "OOC", key: "second_check_rms_ooc", options: requiredDocumentOptions("RMS OOC Document", "Upload RMS OOC document.") },
+      { label: "Delivery", key: "second_check_rms_delivery", options: requiredDocumentOptions("RMS Delivery Document", "Upload delivery document for RMS.") },
+    ],
+    rmsX,
+    startY + rowGap * 5,
+    "Second Check",
+    "second_check",
+    "RMS",
+    "rms",
+    rmsStage.key,
+    "Start RMS",
+  );
+
+  const openBillStage = addStage("Open Bill", "second_check_open_bill", openBillX, startY + rowGap * 4, false, {
+    category: "BRANCH",
+    sectionKey: "second_check",
+    sectionName: "Second Check",
+    branchKey: "open_bill",
+    branchName: "Open Bill",
+    description: "Open Bill branch under Second Check.",
+  });
+  addEdge(secondCheckDecision.key, openBillStage.key, "Open Bill");
+
+  const openBillLastKey = addSequentialChecklistPath(
+    [
+      { label: "Assessment", key: "second_check_open_bill_assessment" },
+      { label: "Goods Registration", key: "second_check_open_bill_goods_registration" },
+      { label: "Examination", key: "second_check_open_bill_examination", options: examinationOptions },
+      { label: "Duty", key: "second_check_open_bill_duty", options: dutyOptionalOptions },
+      { label: "OOC", key: "second_check_open_bill_ooc", options: oocDocumentOptions },
+      { label: "Delivery", key: "second_check_open_bill_delivery", options: deliveryEWayBillOptions },
+    ],
+    openBillX,
+    startY + rowGap * 5,
+    "Second Check",
+    "second_check",
+    "Open Bill",
+    "open_bill",
+    openBillStage.key,
+    "Start Open Bill",
+  );
+
+  const amendmentDecisionY = startY + rowGap * 12;
+  const amendmentDecision = addStage("Amendment Required?", "amendment_required", centerX, amendmentDecisionY, false, {
+    category: "DECISION",
+    nodeType: "DECISION",
+    sectionKey: "amendment",
+    sectionName: "Amendment",
+    description: "Optional decision point. User can skip amendment or proceed to amendment when required.",
+  });
+  addEdge(firstCheckLastKey, amendmentDecision.key, "First Check Complete");
+  addEdge(rmsLastKey, amendmentDecision.key, "RMS Complete");
+  addEdge(openBillLastKey, amendmentDecision.key, "Open Bill Complete");
+
+  const amendment = addStage("Amendment", "amendment", centerX, amendmentDecisionY + rowGap, false, {
+    category: "OPTIONAL_STAGE",
+    sectionKey: "amendment",
+    sectionName: "Amendment",
+    canBeSkipped: true,
+    description: "Optional amendment workflow placeholder. Add configurable amendment checklist nodes only when amendment is required.",
+  });
+
+  const completed = addStage("Filing Complete", "filing_complete", centerX, amendmentDecisionY + rowGap * 2, false, {
+    category: "END",
+    nodeType: "END",
+    sectionKey: "completed",
+    sectionName: "Completed",
+    description: "End of the filing workflow.",
+  });
+
+  addEdge(amendmentDecision.key, amendment.key, "Do Amendment");
+  addEdge(amendmentDecision.key, completed.key, "Skip Amendment");
+  addEdge(amendment.key, completed.key, "Amendment Complete");
 
   return { nodes, edges };
 }
@@ -713,6 +1061,8 @@ function expandChecklistNodesForCanvas(rawNodes: any[], rawEdges: any[]) {
 export function WorkflowsClient({ initialTemplates, availableRoles, availableJobTypes }: WorkflowsClientProps) {
   const router = useRouter();
   const canvasRef = useRef<HTMLDivElement>(null);
+  const capturedPointerElementRef = useRef<HTMLElement | null>(null);
+  const bodyInteractionStyleRef = useRef<{ userSelect: string; cursor: string } | null>(null);
 
   const [templates, setTemplates] = useState(initialTemplates);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(initialTemplates[0]?.id || null);
@@ -734,6 +1084,9 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
   const [connectionCursor, setConnectionCursor] = useState({ x: 0, y: 0 });
   const [hoveredTargetKey, setHoveredTargetKey] = useState<string | null>(null);
   const [loadedSnapshot, setLoadedSnapshot] = useState("");
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [propertiesOpen, setPropertiesOpen] = useState(false);
+  const [validationOpen, setValidationOpen] = useState(false);
 
   const selectedNode = useMemo(
     () => nodes.find((node) => node.id === selectedNodeId) ?? null,
@@ -761,6 +1114,47 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     };
   };
 
+  const lockDocumentInteraction = (cursor = "grabbing") => {
+    if (typeof document === "undefined" || bodyInteractionStyleRef.current) return;
+    bodyInteractionStyleRef.current = {
+      userSelect: document.body.style.userSelect,
+      cursor: document.body.style.cursor,
+    };
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = cursor;
+  };
+
+  const unlockDocumentInteraction = () => {
+    if (typeof document === "undefined" || !bodyInteractionStyleRef.current) return;
+    document.body.style.userSelect = bodyInteractionStyleRef.current.userSelect;
+    document.body.style.cursor = bodyInteractionStyleRef.current.cursor;
+    bodyInteractionStyleRef.current = null;
+  };
+
+  const capturePointer = (element: HTMLElement | null, pointerId: number) => {
+    if (!element) return;
+    try {
+      element.setPointerCapture(pointerId);
+      capturedPointerElementRef.current = element;
+    } catch {
+      capturedPointerElementRef.current = null;
+    }
+  };
+
+  const releaseCapturedPointer = (pointerId: number) => {
+    const element = capturedPointerElementRef.current;
+    if (!element) return;
+    try {
+      if (element.hasPointerCapture(pointerId)) {
+        element.releasePointerCapture(pointerId);
+      }
+    } catch {
+      // Pointer capture may already be released by the browser.
+    } finally {
+      capturedPointerElementRef.current = null;
+    }
+  };
+
   const applyTemplateData = (data: any) => {
     const latest = data.versions?.[0];
     const expanded = expandChecklistNodesForCanvas(latest?.nodes || [], latest?.edges || []);
@@ -771,6 +1165,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     setEdges(expanded.edges);
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
+    setPropertiesOpen(false);
     setZoom(1);
     setPan({ x: 0, y: 0 });
     setLoadedSnapshot(serializeWorkflowSnapshot(arrangedNodes, expanded.edges));
@@ -796,7 +1191,11 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
   }, [selectedTemplateId]);
 
   useEffect(() => {
-    const handleMove = (event: MouseEvent) => {
+    const handleMove = (event: PointerEvent) => {
+      if (draggingNodeId || isPanning || connectingSourceKey) {
+        event.preventDefault();
+      }
+
       if (draggingNodeId) {
         const coords = screenToCanvas(event.clientX, event.clientY);
         setNodes((prev) =>
@@ -823,7 +1222,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       }
     };
 
-    const handleUp = (event: MouseEvent) => {
+    const handleUp = (event: PointerEvent) => {
       if (connectingSourceKey) {
         const target = (document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null)?.closest("[data-handle-role='target']") as HTMLElement | null;
         const targetKey = target?.dataset.nodeKey || null;
@@ -844,13 +1243,27 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       setIsPanning(false);
       setConnectingSourceKey(null);
       setHoveredTargetKey(null);
+      releaseCapturedPointer(event.pointerId);
+      unlockDocumentInteraction();
     };
 
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseup", handleUp);
+    const cancelInteraction = (event: PointerEvent) => {
+      setDraggingNodeId(null);
+      setIsPanning(false);
+      setConnectingSourceKey(null);
+      setHoveredTargetKey(null);
+      releaseCapturedPointer(event.pointerId);
+      unlockDocumentInteraction();
+    };
+
+    window.addEventListener("pointermove", handleMove, { passive: false });
+    window.addEventListener("pointerup", handleUp);
+    window.addEventListener("pointercancel", cancelInteraction);
     return () => {
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("mouseup", handleUp);
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerup", handleUp);
+      window.removeEventListener("pointercancel", cancelInteraction);
+      unlockDocumentInteraction();
     };
   }, [connectingSourceKey, dragOffset.x, dragOffset.y, draggingNodeId, edges, isPanning, nodes, panStart.x, panStart.y, zoom, pan.x, pan.y]);
 
@@ -875,6 +1288,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     setNodes((prev) => [...prev, node]);
     setSelectedNodeId(node.id);
     setSelectedEdgeId(null);
+    setPropertiesOpen(true);
     setNewNodeName("");
     setNewNodeCategory("MAIN_STAGE");
   };
@@ -901,6 +1315,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     setNodes((prev) => [...prev, node]);
     setSelectedNodeId(node.id);
     setSelectedEdgeId(null);
+    setPropertiesOpen(true);
     setNewNodeName("");
     setNewNodeCategory("CHECKLIST_ITEM");
   };
@@ -925,6 +1340,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     setNodes((prev) => [...prev, node]);
     setSelectedNodeId(node.id);
     setSelectedEdgeId(null);
+    setPropertiesOpen(true);
     setNewNodeName("");
     setNewNodeCategory("NOTIFICATION");
   };
@@ -990,6 +1406,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     setEdges(blueprint.edges);
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
+    setPropertiesOpen(false);
     setZoom(0.78);
     setPan({ x: 60, y: 20 });
     toast.success("Editable CHA filing blueprint loaded.");
@@ -1000,22 +1417,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       ...node,
       checklistItems: [
         ...node.checklistItems,
-        {
-          id: createId("item"),
-          label: "New Checklist Item",
-          description: "",
-          isMandatory: true,
-          requiresRemarks: false,
-          allowsUpload: false,
-          minUploads: 0,
-          maxUploads: null,
-          acceptedFileTypes: [],
-          deadlineDuration: 2,
-          deadlineUnit: "BUSINESS_DAYS",
-          delayRemarksRequired: true,
-          sortOrder: node.checklistItems.length + 1,
-          isActive: true,
-        },
+        createChecklistItemDraft("New Checklist Item", node.checklistItems.length + 1),
       ],
     }));
   };
@@ -1049,16 +1451,12 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       ...node,
       photoRequirements: [
         ...node.photoRequirements,
-        {
-          id: createId("photo"),
-          label: "Stage Upload Slot",
-          description: "",
+        createStageUploadSlot("Stage Upload Slot", {
+          allowsUpload: true,
           isMandatory: false,
-          minPhotos: 0,
-          maxPhotos: null,
+          minUploads: 0,
           acceptedFileTypes: ["image/jpeg", "image/png", "application/pdf"],
-          isVisibleInTimeline: true,
-        },
+        }),
       ],
     }));
   };
@@ -1104,6 +1502,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     const nextEdges = edges.filter((edge) => edge.id !== selectedEdge.id);
     setEdges(nextEdges);
     setSelectedEdgeId(null);
+    setPropertiesOpen(false);
 
     const template = templates.find((entry) => entry.id === selectedTemplateId);
     const result = await actions.saveFilingWorkflowDraftAction(selectedTemplateId, {
@@ -1186,15 +1585,15 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
   };
 
   return (
-    <div className="flex h-[calc(100vh-10rem)] w-full flex-col overflow-hidden rounded-3xl border border-outline-variant bg-surface shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-outline-variant bg-surface px-5 py-4">
+    <div className="flex h-[calc(100vh-6rem)] w-full flex-col overflow-hidden rounded-3xl border border-outline-variant bg-surface shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant bg-surface px-4 py-3">
         <div className="flex items-start gap-3">
           <Button variant="outline" mode="icon" size="sm" onClick={() => router.push("/cha/settings")} aria-label="Back to CHA settings">
             <ArrowLeft size={16} />
           </Button>
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="ds-h1 text-on-surface">FILING WORKFLOW BLUEPRINT</h1>
+              <h1 className="ds-h2 text-on-surface">FILING WORKFLOW BLUEPRINT</h1>
               <Badge variant={activeVersion?.isPublished ? "success" : "warning"}>
                 {activeVersion ? `${activeVersion.isPublished ? "PUBLISHED" : "DRAFT"} V${activeVersion.versionNumber}` : "NO VERSION"}
               </Badge>
@@ -1209,7 +1608,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
           <select
             value={selectedTemplateId || ""}
             onChange={(event) => setSelectedTemplateId(event.target.value)}
-            className="min-w-52 text-sm"
+            className="min-w-44 text-sm"
           >
             {templates.map((template) => (
               <option key={template.id} value={template.id}>
@@ -1220,7 +1619,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
           <select
             value={selectedClearanceTypeId}
             onChange={(event) => setSelectedClearanceTypeId(event.target.value)}
-            className="min-w-52 text-sm"
+            className="min-w-44 text-sm"
             disabled={activeVersion?.isPublished}
           >
             <option value="">All Clearance Types</option>
@@ -1255,9 +1654,21 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <aside className="w-[310px] shrink-0 overflow-y-auto border-r border-outline-variant bg-surface-container-low">
-          <div className="space-y-5 p-5">
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+        <aside
+          data-canvas-ui="true"
+          className={`absolute inset-y-0 left-0 z-40 w-[min(330px,calc(100%-1rem))] shrink-0 overflow-y-auto border-r border-outline-variant bg-surface-container-low shadow-2xl transition-transform duration-200 ${paletteOpen ? "translate-x-0" : "pointer-events-none -translate-x-full"}`}
+        >
+          <div className="space-y-5 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="ds-label">Tools</p>
+                <h2 className="ds-h3 text-on-surface">Workflow Palette</h2>
+              </div>
+              <Button variant="outline" mode="icon" size="sm" onClick={() => setPaletteOpen(false)} aria-label="Close workflow palette">
+                <X size={15} />
+              </Button>
+            </div>
             <Card className="card-left-accent">
               <CardHeader>
                 <CardTitle>Blueprint Palette</CardTitle>
@@ -1331,6 +1742,23 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 <p className="text-sm text-on-surface-variant">Blueprint mode: drag nodes, connect handles, zoom with wheel, branch RMS/Open Bill, and route back to any passed stage when required.</p>
               </div>
               <div className="flex flex-wrap items-center justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={() => setPaletteOpen(true)}>
+                  <PanelLeft size={14} />
+                  Tools
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPropertiesOpen(true)}
+                  disabled={!selectedNode && !selectedEdge}
+                >
+                  <PanelRight size={14} />
+                  Properties
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setValidationOpen((value) => !value)}>
+                  <Settings2 size={14} />
+                  Checks {validation.errors.length > 0 ? `(${validation.errors.length})` : ""}
+                </Button>
                 {selectedEdge ? (
                   <div className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-1.5">
                     <span className="text-xs text-on-surface-variant">
@@ -1368,12 +1796,13 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
 
             <div
               ref={canvasRef}
-              className="relative flex-1 overflow-hidden bg-surface-container-low"
+              className="relative flex-1 overflow-hidden bg-surface-container-low select-none cursor-grab active:cursor-grabbing"
               style={{
                 backgroundColor: "var(--color-surface-container-low)",
                 backgroundImage:
                   "linear-gradient(rgba(0,206,196,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(0,206,196,0.08) 1px, transparent 1px), radial-gradient(rgba(0,206,196,0.28) 1px, transparent 1px)",
                 backgroundSize: "48px 48px, 48px 48px, 12px 12px",
+                touchAction: "none",
               }}
               onWheel={(event) => {
                 event.preventDefault();
@@ -1400,13 +1829,17 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 }));
                 setZoom(nextZoom);
               }}
-              onMouseDown={(event) => {
-                // Node buttons and connect handles call stopPropagation so they never reach here.
-                // Everything else (canvas bg, inner transform div, SVG) should pan.
+              onPointerDown={(event) => {
+                const target = event.target as HTMLElement;
+                if (target.closest("[data-canvas-ui='true'], input, textarea, select, button")) return;
+                event.preventDefault();
                 setSelectedNodeId(null);
                 setSelectedEdgeId(null);
+                setPropertiesOpen(false);
                 setIsPanning(true);
                 setPanStart({ x: event.clientX - pan.x, y: event.clientY - pan.y });
+                lockDocumentInteraction("grabbing");
+                capturePointer(event.currentTarget, event.pointerId);
               }}
             >
               <div
@@ -1416,7 +1849,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                   transformOrigin: "0 0",
                 }}
               >
-                <svg className="absolute inset-0 h-[2800px] w-[2800px] overflow-visible">
+                <svg className="absolute inset-0 h-[8000px] w-[8000px] overflow-visible">
                   <defs>
                     <marker id="filing-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                       <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
@@ -1436,6 +1869,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                           event.stopPropagation();
                           setSelectedNodeId(null);
                           setSelectedEdgeId(edge.id);
+                          setPropertiesOpen(true);
                         }}
                       >
                         <path
@@ -1493,14 +1927,19 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                       className={`absolute rounded-2xl border bg-surface/95 p-4 text-left shadow-sm backdrop-blur transition-all ${selected ? "border-[#00cec4] shadow-[0_0_0_3px_rgba(0,206,196,0.18),0_18px_42px_-28px_rgba(0,206,196,0.75)]" : "border-outline-variant hover:border-[#00cec4]/60 hover:shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
                         } ${node.isActive ? "" : "opacity-55"}`}
                       style={{ left: node.positionX, top: node.positionY, width: NODE_WIDTH, height: NODE_HEIGHT }}
-                      onClick={() => setSelectedNodeId(node.id)}
-                      onMouseDown={(event) => {
+                      onClick={() => { setSelectedNodeId(node.id); setSelectedEdgeId(null); setPropertiesOpen(true); }}
+                      onPointerDown={(event) => {
+                        event.preventDefault();
                         event.stopPropagation();
                         if (activeVersion?.isPublished) return;
                         setSelectedEdgeId(null);
+                        setSelectedNodeId(node.id);
+                        setPropertiesOpen(true);
                         const coords = screenToCanvas(event.clientX, event.clientY);
                         setDraggingNodeId(node.id);
                         setDragOffset({ x: coords.x - node.positionX, y: coords.y - node.positionY });
+                        lockDocumentInteraction("grabbing");
+                        capturePointer(event.currentTarget, event.pointerId);
                       }}
                     >
                       <div
@@ -1521,22 +1960,34 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                         data-node-key={node.key}
                         title="Drag to connect"
                         className="absolute bottom-[-8px] left-[126px] h-4 w-4 rounded-full border-2 border-[#00cec4] bg-surface shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
-                        onMouseDown={(event) => {
+                        onPointerDown={(event) => {
+                          event.preventDefault();
                           event.stopPropagation();
                           if (activeVersion?.isPublished || !node.isActive) return;
+                          setSelectedNodeId(node.id);
+                          setSelectedEdgeId(null);
+                          setPropertiesOpen(false);
                           setConnectingSourceKey(node.key);
                           setConnectionCursor({ x: node.positionX + NODE_WIDTH / 2, y: node.positionY + NODE_HEIGHT });
+                          lockDocumentInteraction("crosshair");
+                          capturePointer(event.currentTarget, event.pointerId);
                         }}
                       />
                       <div
                         data-node-key={node.key}
                         title="Drag to connect"
                         className="absolute -right-2 top-[68px] h-4 w-4 rounded-full border-2 border-[#00cec4] bg-surface shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
-                        onMouseDown={(event) => {
+                        onPointerDown={(event) => {
+                          event.preventDefault();
                           event.stopPropagation();
                           if (activeVersion?.isPublished || !node.isActive) return;
+                          setSelectedNodeId(node.id);
+                          setSelectedEdgeId(null);
+                          setPropertiesOpen(false);
                           setConnectingSourceKey(node.key);
                           setConnectionCursor({ x: node.positionX + NODE_WIDTH, y: node.positionY + NODE_HEIGHT / 2 });
+                          lockDocumentInteraction("crosshair");
+                          capturePointer(event.currentTarget, event.pointerId);
                         }}
                       />
 
@@ -1570,9 +2021,59 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
           </div>
         </main>
 
-        <aside className="w-[420px] shrink-0 overflow-y-auto border-l border-outline-variant bg-surface">
+        {validationOpen ? (
+          <div
+            data-canvas-ui="true"
+            className="absolute bottom-4 left-4 z-30 max-h-[45%] w-[min(420px,calc(100%-2rem))] overflow-y-auto rounded-2xl border border-outline-variant bg-surface/95 p-4 shadow-2xl backdrop-blur"
+          >
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="ds-label">Publish Checks</p>
+                <h3 className="ds-h3 text-on-surface">Validation</h3>
+              </div>
+              <Button variant="outline" mode="icon" size="sm" onClick={() => setValidationOpen(false)} aria-label="Close validation panel">
+                <X size={15} />
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {validation.errors.length === 0 && validation.warnings.length === 0 ? (
+                <p className="text-sm text-on-surface-variant">No blocking validation issues in the current draft.</p>
+              ) : null}
+              {validation.errors.map((message) => (
+                <div key={message} className="card-left-accent-orange rounded-xl bg-surface-container-low p-3 text-sm text-on-surface">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle size={16} className="mt-0.5 text-[#fb923c]" />
+                    <span>{message}</span>
+                  </div>
+                </div>
+              ))}
+              {validation.warnings.map((message) => (
+                <div key={message} className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-sm text-on-surface-variant">
+                  <div className="flex items-start gap-2">
+                    <Workflow size={16} className="mt-0.5 text-[#00cec4]" />
+                    <span>{message}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <aside
+          data-canvas-ui="true"
+          className={`absolute inset-y-0 right-0 z-40 w-[min(430px,calc(100%-1rem))] shrink-0 overflow-y-auto border-l border-outline-variant bg-surface shadow-2xl transition-transform duration-200 ${propertiesOpen && (selectedNode || selectedEdge) ? "translate-x-0" : "pointer-events-none translate-x-full"}`}
+        >
+          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant bg-surface/95 px-4 py-3 backdrop-blur">
+            <div>
+              <p className="ds-label">Properties</p>
+              <p className="text-sm font-semibold text-on-surface">{selectedNode?.name || (selectedEdge ? "Connector" : "Nothing selected")}</p>
+            </div>
+            <Button variant="outline" mode="icon" size="sm" onClick={() => setPropertiesOpen(false)} aria-label="Close properties">
+              <X size={15} />
+            </Button>
+          </div>
           {selectedNode ? (
-            <div className="space-y-6 p-5">
+            <div className="space-y-5 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="ds-label">Selected Node</p>
@@ -1587,6 +2088,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     setNodes((prev) => prev.filter((node) => node.id !== selectedNode.id));
                     setEdges((prev) => prev.filter((edge) => edge.sourceKey !== selectedNode.key && edge.targetKey !== selectedNode.key));
                     setSelectedNodeId(null);
+                    setPropertiesOpen(false);
                   }}
                   aria-label="Delete node"
                 >
@@ -1906,6 +2408,84 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                             </div>
                           </div>
                         ) : null}
+
+                        <div className="rounded-xl border border-outline-variant bg-surface p-3">
+                          <div className="space-y-1.5">
+                            <label className="ds-label block">Document Type</label>
+                            <input
+                              value={item.documentType}
+                              onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, documentType: event.target.value }))}
+                              className="w-full text-sm"
+                              placeholder="Example: E-Way Bill, OOC Document, CE/Lab Report"
+                            />
+                          </div>
+                          <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-on-surface">
+                            <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2">
+                              <input
+                                type="checkbox"
+                                checked={item.requiresValidity}
+                                onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, requiresValidity: event.target.checked }))}
+                              />
+                              <span>Validity Required</span>
+                            </label>
+                            <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2">
+                              <input
+                                type="checkbox"
+                                checked={item.notifyBeforeExpiry}
+                                onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, notifyBeforeExpiry: event.target.checked }))}
+                              />
+                              <span>Expiry Notification</span>
+                            </label>
+                          </div>
+                          {item.requiresValidity ? (
+                            <div className="mt-3 grid grid-cols-2 gap-3">
+                              <div className="space-y-1.5">
+                                <label className="ds-label block">Validity Duration</label>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={item.validityDuration ?? ""}
+                                  onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, validityDuration: event.target.value ? Math.max(1, Number(event.target.value)) : null }))}
+                                  className="w-full text-sm ds-numeric"
+                                  placeholder="Set during filing"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="ds-label block">Validity Unit</label>
+                                <select
+                                  value={item.validityUnit}
+                                  onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, validityUnit: event.target.value as ValidityUnit }))}
+                                  className="w-full text-sm"
+                                >
+                                  <option value="BUSINESS_DAYS">Business Days</option>
+                                  <option value="CALENDAR_DAYS">Calendar Days</option>
+                                </select>
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="ds-label block">Warn Before</label>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={item.warningBeforeDuration ?? ""}
+                                  onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, warningBeforeDuration: event.target.value ? Math.max(1, Number(event.target.value)) : null }))}
+                                  className="w-full text-sm ds-numeric"
+                                  placeholder="1"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="ds-label block">Warning Unit</label>
+                                <select
+                                  value={item.warningBeforeUnit}
+                                  onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, warningBeforeUnit: event.target.value as ValidityUnit }))}
+                                  className="w-full text-sm"
+                                >
+                                  <option value="BUSINESS_DAYS">Business Days</option>
+                                  <option value="CALENDAR_DAYS">Calendar Days</option>
+                                </select>
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1971,6 +2551,83 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                             className="w-full text-sm"
                             placeholder="image/jpeg, image/png, application/pdf"
                           />
+                        </div>
+                        <div className="rounded-xl border border-outline-variant bg-surface p-3">
+                          <div className="space-y-1.5">
+                            <label className="ds-label block">Document Type</label>
+                            <input
+                              value={photo.documentType}
+                              onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, documentType: event.target.value }))}
+                              className="w-full text-sm"
+                              placeholder="Example: E-Way Bill, OOC Document, CE/Lab Report"
+                            />
+                          </div>
+                          <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-on-surface">
+                            <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2">
+                              <input
+                                type="checkbox"
+                                checked={photo.requiresValidity}
+                                onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, requiresValidity: event.target.checked }))}
+                              />
+                              <span>Validity Required</span>
+                            </label>
+                            <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2">
+                              <input
+                                type="checkbox"
+                                checked={photo.notifyBeforeExpiry}
+                                onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, notifyBeforeExpiry: event.target.checked }))}
+                              />
+                              <span>Expiry Notification</span>
+                            </label>
+                          </div>
+                          {photo.requiresValidity ? (
+                            <div className="mt-3 grid grid-cols-2 gap-3">
+                              <div className="space-y-1.5">
+                                <label className="ds-label block">Validity Duration</label>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={photo.validityDuration ?? ""}
+                                  onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, validityDuration: event.target.value ? Math.max(1, Number(event.target.value)) : null }))}
+                                  className="w-full text-sm ds-numeric"
+                                  placeholder="Set during filing"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="ds-label block">Validity Unit</label>
+                                <select
+                                  value={photo.validityUnit}
+                                  onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, validityUnit: event.target.value as ValidityUnit }))}
+                                  className="w-full text-sm"
+                                >
+                                  <option value="BUSINESS_DAYS">Business Days</option>
+                                  <option value="CALENDAR_DAYS">Calendar Days</option>
+                                </select>
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="ds-label block">Warn Before</label>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={photo.warningBeforeDuration ?? ""}
+                                  onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, warningBeforeDuration: event.target.value ? Math.max(1, Number(event.target.value)) : null }))}
+                                  className="w-full text-sm ds-numeric"
+                                  placeholder="1"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="ds-label block">Warning Unit</label>
+                                <select
+                                  value={photo.warningBeforeUnit}
+                                  onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, warningBeforeUnit: event.target.value as ValidityUnit }))}
+                                  className="w-full text-sm"
+                                >
+                                  <option value="BUSINESS_DAYS">Business Days</option>
+                                  <option value="CALENDAR_DAYS">Calendar Days</option>
+                                </select>
+                              </div>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     </div>

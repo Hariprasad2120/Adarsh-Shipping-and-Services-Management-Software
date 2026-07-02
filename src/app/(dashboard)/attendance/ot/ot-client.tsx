@@ -200,7 +200,14 @@ function getInitials(name: string) {
     .join("") || "?";
 }
 
-function formatOtDate(date: string) {
+function toDateOnlyValue(date: Date | string) {
+  if (date instanceof Date) {
+    return date.toISOString().slice(0, 10);
+  }
+  return date.slice(0, 10);
+}
+
+function formatOtDate(date: Date | string) {
   return new Date(date).toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
@@ -933,7 +940,7 @@ export function OtClient({
     const matchesShift = shiftFilter === "ALL"
       || rec.shift?.id === shiftFilter
       || (shiftFilter === "__ORG_FALLBACK__" && rec.usedOrgFallback);
-    const dateValue = rec.date.slice(0, 10);
+    const dateValue = toDateOnlyValue(rec.date);
     const matchesDateFrom = !dateFromFilter || dateValue >= dateFromFilter;
     const matchesDateTo = !dateToFilter || dateValue <= dateToFilter;
     return matchesSearch && matchesStatus && matchesShift && matchesDateFrom && matchesDateTo;

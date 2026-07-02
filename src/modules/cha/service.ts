@@ -83,7 +83,7 @@ export const DEFAULT_DOCUMENT_REQUIREMENTS = [
     items: [
       { name: "Invoice", sortOrder: 1, isRequiredDefault: true },
       { name: "Packing List", sortOrder: 2, isRequiredDefault: true },
-      { name: "Bill of Lading", sortOrder: 3, isRequiredDefault: true },
+      { name: "Bill of Landing", sortOrder: 3, isRequiredDefault: true },
       { name: "ASEAN Certificate", sortOrder: 4, isRequiredDefault: false },
       { name: "Country of Origin", sortOrder: 5, isRequiredDefault: false },
       { name: "Phytosanitary Certificate", sortOrder: 6, isRequiredDefault: false },
@@ -1284,6 +1284,10 @@ export async function createJob(
         where: { id: branchRule.id },
         data: { currentSequence: nextAvailableAutoNumber.sequence },
       });
+    }
+
+    if (!finalJobNumber) {
+      throw new Error("Failed to determine a CHA job number for this branch.");
     }
 
     const existingJob = await tx.chaJob.findFirst({
