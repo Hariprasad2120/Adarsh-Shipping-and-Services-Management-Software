@@ -76,6 +76,22 @@ scripts/    Import, bootstrap, and maintenance scripts
 docs/       Product and feature documentation
 ```
 
+## CHA Production Edition
+
+Set `APP_EDITION=cha` to run only the CHA production surface.
+
+```bash
+npm install
+npm run db:generate
+npm run db:migrate:deploy
+npm run build
+npm run start
+```
+
+Optional test admin bootstrap: `npm run db:bootstrap:cha-admin`
+
+Related docs: [CHA_PRODUCTION_SCOPE.md](CHA_PRODUCTION_SCOPE.md), [DEPLOYMENT.md](DEPLOYMENT.md), [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md), [SECURITY.md](SECURITY.md), [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md), [TESTING.md](TESTING.md)
+
 ## Notes
 
 - This repository should contain source code, docs, and intentionally versioned assets only.
