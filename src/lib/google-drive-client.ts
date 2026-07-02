@@ -65,6 +65,31 @@ export async function createFolder(params: {
   return data.id;
 }
 
+// Check whether a folder/file still exists (and isn't trashed) in Drive.
+// Used to self-heal when a previously-provisioned folder was deleted by a user.
+export async function folderExists(id: string, accessToken?: string): Promise<boolean> {
+  if (!id || id.startsWith("mock-")) return false;
+
+  const token = accessToken || (await getDriveAccessToken());
+
+  const url = new URL(`https://www.googleapis.com/drive/v3/files/${id}`);
+  url.searchParams.set("fields", "id,trashed");
+  url.searchParams.set("supportsAllDrives", "true");
+
+  const res = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (res.status === 404) return false;
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Drive folderExists check failed: ${err}`);
+  }
+
+  const data = (await res.json()) as { id: string; trashed?: boolean };
+  return !data.trashed;
+}
+
 // List files and folders in a parent folder
 export async function listFiles(
   parentFolderId: string,

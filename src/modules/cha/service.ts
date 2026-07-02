@@ -5,6 +5,7 @@ import * as XLSX from "xlsx";
 import { Prisma } from "@/generated/prisma/client";
 import { can, ForbiddenError } from "@/lib/rbac";
 import * as driveClient from "@/lib/google-drive-client";
+import { ensureJobCategoryFolder } from "@/lib/workspace-provisioning";
 
 const DEFAULT_CHA_EXPENSE_CATEGORIES = [
   "Customs Duty",
@@ -2140,7 +2141,7 @@ async function getOrCreateFilingNodeFolder(
   const folderMapKey = `Filing Documents/${nodeKey}`;
 
   const existing = categoryFolders[folderMapKey];
-  if (existing && !existing.startsWith("mock-")) {
+  if (existing && !existing.startsWith("mock-") && (await driveClient.folderExists(existing).catch(() => false))) {
     return existing;
   }
 
@@ -2183,15 +2184,20 @@ export async function uploadDocumentVersion(
   let fileKey = fileData.fileKey || `cha/docs/${Math.random().toString(36).substring(7)}_${fileData.fileName}`;
 
   if (fileBuffer) {
-    const profile = await db.jobWorkspaceProfile.findUnique({
-      where: { jobId },
-    });
-
-    const driveFolderId = resolveDriveFolderForCategory(
-      profile?.categoryFolders as Record<string, string> | undefined,
-      profile?.rootFolderId,
-      req.category,
-    );
+    // Verifies (and transparently recreates) the job's root and category
+    // folders if either was deleted from Drive after the job was created.
+    let driveFolderId: string | undefined;
+    try {
+      driveFolderId = await ensureJobCategoryFolder(jobId, req.category, actorId);
+    } catch (err: any) {
+      console.warn(`[Upload] Drive folder self-heal failed for job ${jobId}, category "${req.category}":`, err.message || err);
+      const profile = await db.jobWorkspaceProfile.findUnique({ where: { jobId } });
+      driveFolderId = resolveDriveFolderForCategory(
+        profile?.categoryFolders as Record<string, string> | undefined,
+        profile?.rootFolderId,
+        req.category,
+      );
+    }
 
     if (driveFolderId && !driveFolderId.startsWith("mock-")) {
       try {
@@ -8611,15 +8617,20 @@ export async function uploadFilingAttachment(
     throw new Error("Filing workflow step not found for this job.");
   }
 
-  const profile = await db.jobWorkspaceProfile.findUnique({
-    where: { jobId },
-  });
-
-  const filingRootFolderId = resolveDriveFolderForCategory(
-    profile?.categoryFolders as Record<string, string> | undefined,
-    profile?.rootFolderId,
-    "Filing Documents",
-  );
+  // Verifies (and transparently recreates) the job's root and "Filing
+  // Documents" folder if either was deleted from Drive after the job was created.
+  let filingRootFolderId: string | undefined;
+  try {
+    filingRootFolderId = await ensureJobCategoryFolder(jobId, "Filing Documents", actorId);
+  } catch (err: any) {
+    console.warn(`[Upload] Drive folder self-heal failed for job ${jobId}, "Filing Documents":`, err.message || err);
+    const profile = await db.jobWorkspaceProfile.findUnique({ where: { jobId } });
+    filingRootFolderId = resolveDriveFolderForCategory(
+      profile?.categoryFolders as Record<string, string> | undefined,
+      profile?.rootFolderId,
+      "Filing Documents",
+    );
+  }
 
   let fileKey = `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
 

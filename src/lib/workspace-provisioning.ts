@@ -4,6 +4,137 @@ import * as driveClient from "./google-drive-client";
 import { sendMessage, createMembership, getAccessToken } from "./google-chat-client";
 import { getValidAccessToken } from "./workspace-oauth";
 
+type JobForDrive = {
+  id: string;
+  orgId: string;
+  primaryOwnerId: string;
+};
+
+// Resolve a Drive-scoped OAuth access token to act as, preferring the
+// triggering user's connection and falling back to the job's primary owner.
+// Shared by full provisioning and the lighter-weight self-heal path below.
+async function resolveJobDriveAccessToken(
+  job: JobForDrive,
+  triggeringUserId?: string
+): Promise<string | undefined> {
+  let userAccessToken: string | undefined;
+  const targetTokenUserId = triggeringUserId || job.primaryOwnerId;
+  const hasConnection = await db.googleWorkspaceConnection.findUnique({
+    where: { userId: targetTokenUserId }
+  });
+
+  if (hasConnection && hasConnection.status === "connected") {
+    const hasFullDriveScope = hasConnection.scopes.includes("https://www.googleapis.com/auth/drive") ||
+                              hasConnection.scopes.includes("https://www.googleapis.com/auth/drive.file");
+    if (!hasFullDriveScope) {
+      throw new Error("Your connected Google account lacks write permission for Google Drive. Please go to Settings, click 'Reconnect Account', and make sure to check the box for Google Drive access on the sign-in screen.");
+    }
+
+    try {
+      userAccessToken = await getValidAccessToken(targetTokenUserId);
+    } catch (err) {
+      console.warn(`[Provisioning] Failed to get valid access token for user ${targetTokenUserId}:`, err);
+    }
+  }
+
+  if (!userAccessToken && triggeringUserId && triggeringUserId !== job.primaryOwnerId) {
+    const ownerConnection = await db.googleWorkspaceConnection.findUnique({
+      where: { userId: job.primaryOwnerId }
+    });
+    if (ownerConnection && ownerConnection.status === "connected") {
+      const hasFullDriveScope = ownerConnection.scopes.includes("https://www.googleapis.com/auth/drive") ||
+                                ownerConnection.scopes.includes("https://www.googleapis.com/auth/drive.file");
+      if (!hasFullDriveScope) {
+        throw new Error("The job owner's Google account connection lacks write permission for Google Drive. Please reconnect the Google account in Settings.");
+      }
+
+      try {
+        userAccessToken = await getValidAccessToken(job.primaryOwnerId);
+      } catch (err) {
+        console.warn(`[Provisioning] Failed to get valid owner access token:`, err);
+      }
+    }
+  }
+
+  return userAccessToken;
+}
+
+// Fail-safe used right before an upload: confirms the job's root folder and
+// one specific category subfolder still exist in Drive, and transparently
+// recreates whichever one was deleted by a user. Much cheaper than a full
+// provisionJobWorkspace() call since it only touches the folder(s) actually
+// needed for this upload (1-2 Drive API calls), not the whole category list
+// or the Chat space.
+export async function ensureJobCategoryFolder(
+  jobId: string,
+  category: string,
+  triggeringUserId?: string
+): Promise<string | undefined> {
+  const job = await db.chaJob.findUnique({
+    where: { id: jobId },
+    include: { customer: true }
+  });
+  if (!job) return undefined;
+
+  let profile = await db.jobWorkspaceProfile.findUnique({ where: { jobId } });
+  if (!profile) return undefined;
+
+  let userAccessToken: string | undefined;
+  try {
+    userAccessToken = await resolveJobDriveAccessToken(job, triggeringUserId);
+  } catch (err) {
+    console.warn(`[Drive self-heal] Could not resolve access token for job ${job.jobNumber}:`, err);
+    return profile.rootFolderId || undefined;
+  }
+
+  const settings = await db.googleWorkspaceSetting.findUnique({ where: { orgId: job.orgId } });
+  const jobsRootFolderId = settings?.jobsRootFolderId || process.env.GOOGLE_JOBS_ROOT_FOLDER_ID;
+  const sharedDriveId = settings?.sharedDriveId || process.env.GOOGLE_SHARED_DRIVE_ID;
+
+  let rootFolderId = profile.rootFolderId;
+  let categoryFolders = (profile.categoryFolders as Record<string, string>) || {};
+
+  const rootStillExists = rootFolderId && !rootFolderId.startsWith("mock-")
+    ? await driveClient.folderExists(rootFolderId, userAccessToken).catch(() => false)
+    : false;
+
+  if (!rootStillExists) {
+    // The whole job folder was deleted (or never provisioned) — recreate it,
+    // and drop any cached subfolder ids since their parent is gone too.
+    rootFolderId = await driveClient.createFolder({
+      name: `${job.jobNumber} - ${job.customer.name}`,
+      parentFolderId: jobsRootFolderId || sharedDriveId || undefined,
+      accessToken: userAccessToken
+    });
+    categoryFolders = {};
+    profile = await db.jobWorkspaceProfile.update({
+      where: { id: profile.id },
+      data: { rootFolderId, categoryFolders, provisioningStatus: "success", lastError: null }
+    });
+  }
+
+  const existingCategoryFolderId = categoryFolders[category];
+  const categoryStillExists = existingCategoryFolderId && !existingCategoryFolderId.startsWith("mock-")
+    ? await driveClient.folderExists(existingCategoryFolderId, userAccessToken).catch(() => false)
+    : false;
+
+  if (!categoryStillExists) {
+    const newCategoryFolderId = await driveClient.createFolder({
+      name: category,
+      parentFolderId: rootFolderId || undefined,
+      accessToken: userAccessToken
+    });
+    categoryFolders = { ...categoryFolders, [category]: newCategoryFolderId };
+    await db.jobWorkspaceProfile.update({
+      where: { id: profile.id },
+      data: { categoryFolders }
+    });
+    return newCategoryFolderId;
+  }
+
+  return existingCategoryFolderId;
+}
+
 // Durable provisioning helper
 export async function provisionJobWorkspace(
   jobId: string,
@@ -50,46 +181,7 @@ export async function provisionJobWorkspace(
     return;
   }
 
-  // Retrieve valid access token for the triggering user or primary owner
-  let userAccessToken: string | undefined;
-  const targetTokenUserId = triggeringUserId || job.primaryOwnerId;
-  const hasConnection = await db.googleWorkspaceConnection.findUnique({
-    where: { userId: targetTokenUserId }
-  });
-
-  if (hasConnection && hasConnection.status === "connected") {
-    // Verify write permissions for Google Drive
-    const hasFullDriveScope = hasConnection.scopes.includes("https://www.googleapis.com/auth/drive") || 
-                              hasConnection.scopes.includes("https://www.googleapis.com/auth/drive.file");
-    if (!hasFullDriveScope) {
-      throw new Error("Your connected Google account lacks write permission for Google Drive. Please go to Settings, click 'Reconnect Account', and make sure to check the box for Google Drive access on the sign-in screen.");
-    }
-
-    try {
-      userAccessToken = await getValidAccessToken(targetTokenUserId);
-    } catch (err) {
-      console.warn(`[Provisioning] Failed to get valid access token for user ${targetTokenUserId}:`, err);
-    }
-  }
-
-  if (!userAccessToken && triggeringUserId && triggeringUserId !== job.primaryOwnerId) {
-    const ownerConnection = await db.googleWorkspaceConnection.findUnique({
-      where: { userId: job.primaryOwnerId }
-    });
-    if (ownerConnection && ownerConnection.status === "connected") {
-      const hasFullDriveScope = ownerConnection.scopes.includes("https://www.googleapis.com/auth/drive") || 
-                                ownerConnection.scopes.includes("https://www.googleapis.com/auth/drive.file");
-      if (!hasFullDriveScope) {
-        throw new Error("The job owner's Google account connection lacks write permission for Google Drive. Please reconnect the Google account in Settings.");
-      }
-
-      try {
-        userAccessToken = await getValidAccessToken(job.primaryOwnerId);
-      } catch (err) {
-        console.warn(`[Provisioning] Failed to get valid owner access token:`, err);
-      }
-    }
-  }
+  const userAccessToken = await resolveJobDriveAccessToken(job, triggeringUserId);
 
   // Fetch Workspace Settings
   const settings = await db.googleWorkspaceSetting.findUnique({
