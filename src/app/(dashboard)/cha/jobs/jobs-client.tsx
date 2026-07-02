@@ -28,18 +28,23 @@ import {
 } from "@/components/data-table";
 import { ClickableRow } from "@/components/clickable-row";
 
+type MovementDirection = "IMPORT" | "EXPORT" | "BOTH" | "OTHER" | null;
+
 interface JobItem {
   id: string;
   jobNumber: string;
   title: string;
   customerName: string;
   jobTypeName: string;
+  movementDirection: MovementDirection;
   branchName: string;
   stage: string;
   status: string;
   priority: string;
   primaryOwnerId: string;
   ownerName: string;
+  billOfEntryNumber: string | null;
+  shippingBillNumber: string | null;
   assignedUserIds: string[];
   hasActiveDeletionRequest: boolean;
   deliveryOrderWarning?: {
@@ -49,6 +54,26 @@ interface JobItem {
     message: string;
   } | null;
   createdAt: string;
+}
+
+function formatJobDate(value: string) {
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function getFilingReference(job: JobItem) {
+  if (job.movementDirection === "IMPORT") {
+    return job.billOfEntryNumber;
+  }
+
+  if (job.movementDirection === "EXPORT") {
+    return job.shippingBillNumber;
+  }
+
+  return job.billOfEntryNumber || job.shippingBillNumber;
 }
 
 interface JobsClientProps {
@@ -157,7 +182,7 @@ export function JobsClient({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-outline-variant/30 pb-4 gap-4">
         <div>
-          <h1 className="ds-h1 text-[#00cec4]">Clearance Jobs Catalog</h1>
+          <h1 className="ds-h1 text-on-surface">Clearance Jobs Catalog</h1>
           <p className="text-sm text-on-surface-variant mt-1">
             Access active import and export custom jobs, check milestones, and coordinate workflows.
           </p>
@@ -169,9 +194,11 @@ export function JobsClient({
 
       {/* Filter panel */}
       <div className="bg-surface border border-outline-variant/30 p-5 rounded-xl space-y-4 shadow-sm">
-        <div className="flex items-center gap-2 text-[#00cec4]">
-          <Filter size={16} />
-          <span className="ds-label tracking-wider font-semibold">Search & Filters</span>
+        <div className="flex items-center gap-2 text-on-surface">
+          <span className="ds-icon-badge">
+            <Filter size={16} />
+          </span>
+          <span className="ds-label">Search & Filters</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -272,6 +299,8 @@ export function JobsClient({
             <DataTableHead>Job Title</DataTableHead>
             <DataTableHead>Customer</DataTableHead>
             <DataTableHead>Job Type</DataTableHead>
+            <DataTableHead>BOE / SB Number</DataTableHead>
+            <DataTableHead>Created On</DataTableHead>
             <DataTableHead>Current Stage</DataTableHead>
             <DataTableHead>Priority</DataTableHead>
             <DataTableHead>Owner</DataTableHead>
@@ -280,7 +309,7 @@ export function JobsClient({
         <DataTableBody>
           {jobsData.items.length === 0 ? (
             <DataTableEmpty
-              colSpan={7}
+              colSpan={9}
               message={
                 <div className="flex flex-col items-center justify-center p-12 text-center text-on-surface-variant">
                   <Briefcase size={48} className="text-outline-variant mb-3" />
@@ -314,6 +343,12 @@ export function JobsClient({
                 </DataTableCell>
                 <DataTableCell>{job.customerName}</DataTableCell>
                 <DataTableCell className="ds-label">{job.jobTypeName}</DataTableCell>
+                <DataTableCell className="ds-numeric text-on-surface-variant">
+                  {getFilingReference(job) || "Pending"}
+                </DataTableCell>
+                <DataTableCell className="text-on-surface-variant">
+                  {formatJobDate(job.createdAt)}
+                </DataTableCell>
                 <DataTableCell>
                   <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${
                     job.stage === "FILING"
@@ -348,7 +383,7 @@ export function JobsClient({
         {jobsData.totalPages > 1 && (
           <tfoot>
             <tr>
-              <td colSpan={7} className="p-0">
+              <td colSpan={9} className="p-0">
                 <div className="flex items-center justify-between border-t border-outline-variant/30 px-6 py-4">
                   <span className="text-xs text-on-surface-variant">
                     Showing Page <strong className="text-on-surface">{jobsData.page}</strong> of{" "}

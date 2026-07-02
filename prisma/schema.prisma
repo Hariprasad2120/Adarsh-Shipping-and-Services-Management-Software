@@ -3308,6 +3308,7 @@ model ChaJobType {
   isManifestMandatory     Boolean                  @default(false)
   manifestHelpText        String?
   isActive                Boolean                  @default(true)
+  filingFlowCategory      String?                  // IMPORT_BE | EXPORT_SB | CUSTOM — maps this clearance type to a filing flow
   documentDefinitions     ChaDocumentDefinition[]
   filingWorkflowTemplates FilingWorkflowTemplate[]
   jobs                    ChaJob[]
@@ -5061,22 +5062,24 @@ model GoogleChatLinkToken {
 // ─── Filing Workflow Blueprint Models ────────────────────────────────────────
 
 model FilingWorkflowTemplate {
-  id              String                   @id @default(cuid())
-  orgId           String
-  clearanceTypeId String?
-  name            String
-  description     String?
-  isActive        Boolean                  @default(true)
-  createdAt       DateTime                 @default(now())
-  updatedAt       DateTime                 @updatedAt
-  org             Organisation             @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  clearanceType   ChaJobType?              @relation(fields: [clearanceTypeId], references: [id], onDelete: SetNull)
-  versions        FilingWorkflowVersion[]
-  instances       FilingWorkflowInstance[]
+  id                 String                   @id @default(cuid())
+  orgId              String
+  clearanceTypeId    String?
+  filingFlowCategory String?                  // IMPORT_BE | EXPORT_SB | CUSTOM — the flow category this template belongs to
+  name               String
+  description        String?
+  isActive           Boolean                  @default(true)
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+  org                Organisation             @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  clearanceType      ChaJobType?              @relation(fields: [clearanceTypeId], references: [id], onDelete: SetNull)
+  versions           FilingWorkflowVersion[]
+  instances          FilingWorkflowInstance[]
 
   @@unique([orgId, name])
   @@index([orgId])
   @@index([clearanceTypeId])
+  @@index([orgId, filingFlowCategory])
 }
 
 model FilingWorkflowVersion {

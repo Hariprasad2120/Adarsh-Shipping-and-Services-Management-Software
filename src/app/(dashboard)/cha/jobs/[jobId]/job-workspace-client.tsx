@@ -10,18 +10,11 @@ import {
   AlertTriangle,
   FolderOpen,
   ArrowRight,
-  History,
-  TrendingUp,
-  CreditCard,
-  DollarSign,
-  FileCode,
   ShieldCheck,
   AlertCircle,
   Plus,
   Trash2,
   Check,
-  X,
-  MessageSquare,
   Database,
   ExternalLink,
 } from "lucide-react";
@@ -105,7 +98,6 @@ export function JobWorkspaceClient({
   job,
   users,
   expenseCategories,
-  selfApprovalAllowed,
   currentUserId,
   canDeleteJob,
   canApproveDeleteJob,
@@ -127,6 +119,7 @@ export function JobWorkspaceClient({
     }
     return getDefaultTabForStage(job.stage);
   });
+  const [showMilestones, setShowMilestones] = useState(false);
 
   useEffect(() => {
     setActiveTab((currentTab) => {
@@ -182,6 +175,9 @@ export function JobWorkspaceClient({
   // Document Collection Form State
   const [exceptionReason, setExceptionReason] = useState("");
   const [activeDocReqId, setActiveDocReqId] = useState<string | null>(null);
+  const [isCustomDocumentModalOpen, setIsCustomDocumentModalOpen] = useState(false);
+  const [customDocumentName, setCustomDocumentName] = useState("");
+  const [customDocumentFile, setCustomDocumentFile] = useState<File | null>(null);
   
   // Custom Document Requirements Configuration State additions
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
@@ -538,6 +534,48 @@ export function JobWorkspaceClient({
         refreshJobInBackground();
       } else {
         toast.error(res.error || "Upload failed.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleCreateCustomDocument = async () => {
+    if (!customDocumentName.trim()) {
+      toast.error("Enter a custom document name.");
+      return;
+    }
+
+    if (!customDocumentFile) {
+      toast.error("Choose a file to upload.");
+      return;
+    }
+
+    setLoading("custom-doc-upload");
+    try {
+      const localUrl = URL.createObjectURL(customDocumentFile);
+      const formData = new FormData();
+      formData.append("name", customDocumentName.trim());
+      formData.append("file", customDocumentFile);
+
+      const res = await actions.createJobCustomDocumentUploadAction(job.id, formData);
+      if (res.ok) {
+        const createdRequirement = res.data;
+        const currentVersion = createdRequirement?.versions?.find((version: any) => version.isCurrent) || createdRequirement?.versions?.[0];
+        if (currentVersion?.id) {
+          setPreviewUrls((prev) => ({ ...prev, [currentVersion.id]: localUrl }));
+        }
+        setDocumentRequirements((current) => [...current, createdRequirement]);
+        setCustomDocumentName("");
+        setCustomDocumentFile(null);
+        setIsCustomDocumentModalOpen(false);
+        toast.success("Custom document uploaded successfully.");
+        refreshJobInBackground();
+      } else {
+        URL.revokeObjectURL(localUrl);
+        toast.error(res.error || "Failed to upload custom document.");
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
@@ -1731,11 +1769,22 @@ export function JobWorkspaceClient({
     }
   };
 
+  const stageProgress = activeStepIndex >= 0 ? Math.round(((activeStepIndex + 1) / STAGES.length) * 100) : 0;
+  const workspaceTabs: { key: WorkspaceTab; label: string; count?: number }[] = [
+    { key: "docs", label: "Documents", count: documentRequirements.length },
+    { key: "additionalData", label: "Additional Data" },
+    { key: "checklist", label: "Checklist" },
+    { key: "filing", label: "Filing" },
+    { key: "advances", label: "Advances" },
+    { key: "expenses", label: "Expenses", count: job.expenseRequests?.length || 0 },
+    { key: "audit", label: "Audit" },
+  ];
+
   return (
-    <main className="-mt-2 w-full space-y-4 overflow-x-hidden">
+    <main className="w-full space-y-3 overflow-x-hidden pb-4">
       {/* PERSISTENT HEADER WARNINGS */}
       {doValidityWarning && (
-        <div className="rounded-xl border border-orange-500/40 bg-orange-500/10 p-4 flex items-center justify-between gap-3 text-orange-600">
+        <div className="rounded-2xl border border-orange-500/40 bg-orange-500/10 p-4 flex items-center justify-between gap-3 text-orange-600">
           <div className="flex items-center gap-2">
             <AlertTriangle size={20} className="shrink-0 text-orange-500" />
             <div>
@@ -1761,91 +1810,113 @@ export function JobWorkspaceClient({
         </div>
       )}
 
-      {/* Job Main Header */}
-      <div className="flex flex-col gap-4 border-b border-outline-variant/30 pb-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0 space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-lg border border-outline-variant bg-surface-container-high px-2 py-1 text-xs font-semibold text-[var(--color-primary)]">
-              {job.jobType.name}
-            </span>
-            {job.shipmentType ? (
-              <span className="rounded-lg border border-outline-variant bg-surface-container-low px-2 py-1 text-xs font-semibold text-on-surface">
-                {job.shipmentType.name}
+      {/* Compact Job Header */}
+      <section className="rounded-2xl border border-outline-variant/30 bg-surface shadow-sm">
+        <div className="flex flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0 space-y-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="rounded-md border border-outline-variant bg-surface-container-high px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--color-primary)]">
+                {job.jobType.name}
               </span>
-            ) : null}
-            <span className="rounded-lg bg-surface-container-low px-2 py-1 text-xs font-semibold text-on-surface-variant ds-numeric">
-              {job.branch.name}
-            </span>
+              {job.shipmentType ? (
+                <span className="rounded-md border border-outline-variant bg-surface-container-low px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-on-surface">
+                  {job.shipmentType.name}
+                </span>
+              ) : null}
+              <span className="rounded-md bg-surface-container-low px-2 py-0.5 text-[10px] font-semibold text-on-surface-variant ds-numeric">
+                {job.branch.name}
+              </span>
+              <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                job.status === "ACTIVE" ? "border-green-200 text-green-600" : "border-orange-200 text-orange-500"
+              }`}>
+                {job.status}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
+              <h1 className="ds-h1 ds-numeric text-on-surface">{job.jobNumber}</h1>
+              <p className="max-w-4xl truncate text-sm font-medium text-on-surface">{job.title}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-on-surface-variant">
+              <span>Customer: <strong className="text-on-surface">{job.customer.name}</strong></span>
+              <span className="text-outline">•</span>
+              <span>Owner: <strong className="text-on-surface">{job.primaryOwner.name}</strong></span>
+              <span className="text-outline">•</span>
+              <span>
+                Manager:{" "}
+                {job.assignedManager ? (
+                  <strong className="text-on-surface">{job.assignedManager.name}</strong>
+                ) : (
+                  <span className="font-semibold text-red-500">Not assigned</span>
+                )}
+              </span>
+              {canUpdateJob ? (
+                <button
+                  type="button"
+                  onClick={() => setIsEditingManager(true)}
+                  className="text-[11px] font-bold uppercase tracking-wide text-[#00cec4] hover:underline"
+                >
+                  Change
+                </button>
+              ) : null}
+            </div>
           </div>
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h1 className="ds-h1 break-words text-[var(--color-primary)]">{job.jobNumber}</h1>
-            <p className="max-w-4xl text-sm text-on-surface">{job.title}</p>
-          </div>
-          <p className="text-xs text-on-surface-variant flex flex-wrap items-center gap-1.5">
-            <span>Customer: <strong className="text-on-surface">{job.customer.name}</strong></span>
-            <span>•</span>
-            <span>Owner: <strong className="text-on-surface">{job.primaryOwner.name}</strong></span>
-            <span>•</span>
-            <span>
-              Assigned Manager:{" "}
-              {job.assignedManager ? (
-                <strong className="text-on-surface">{job.assignedManager.name}</strong>
-              ) : (
-                <span className="text-red-500 font-semibold">None (Setup Required)</span>
-              )}
-            </span>
-            {canUpdateJob && (
-              <button
-                type="button"
-                onClick={() => setIsEditingManager(true)}
-                className="ml-1 text-[#00cec4] hover:underline font-semibold text-[11px] uppercase tracking-wide cursor-pointer"
+
+          <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:items-center">
+            <div className="rounded-2xl border border-outline-variant/40 bg-surface-container-low px-3 py-2">
+              <span className="ds-label block text-[9px] text-on-surface-variant">Stage</span>
+              <span className="mt-0.5 block whitespace-nowrap text-xs font-bold uppercase tracking-wide text-on-surface">
+                {job.stage.replace(/_/g, " ")}
+              </span>
+            </div>
+            <div className="rounded-2xl border border-outline-variant/40 bg-surface-container-low px-3 py-2">
+              <span className="ds-label block text-[9px] text-on-surface-variant">Progress</span>
+              <span className="mt-0.5 block text-xs font-bold text-[#00cec4] ds-numeric">{stageProgress}%</span>
+            </div>
+            {canDeleteJob ? (
+              <Button
+                variant="destructive"
+                className="col-span-2 min-h-9 sm:col-span-1"
+                disabled={loading !== null || Boolean(activeDeletionRequest)}
+                onClick={() => setDeleteModalMode("delete")}
               >
-                [Change]
-              </button>
-            )}
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-end">
-          <div>
-            <span className="ds-label mb-1 block text-on-surface-variant">Workflow Stage</span>
-            <span className={`inline-flex min-h-9 min-w-52 items-center justify-center rounded-lg border px-3 py-2 text-center text-xs font-bold uppercase tracking-wider ${
-            job.stage === "FILING"
-              ? "bg-blue-50 text-blue-700 border border-blue-200"
-              : job.stage === "ADDITIONAL_DATA"
-              ? "border-[#fb923c]/35 bg-[#fb923c]/10 text-[#fb923c]"
-              : job.stage === "CHECKLIST_APPROVAL"
-              ? "bg-amber-50 text-amber-700 border border-amber-200"
-              : job.stage === "FILED"
-              ? "bg-green-50 text-green-700 border border-green-200"
-              : "bg-surface-container-high text-on-surface border border-outline-variant"
-          }`}>
-              {job.stage.replace(/_/g, " ")}
-            </span>
+                <Trash2 className="mr-2 size-4" />
+                {activeDeletionRequest ? "Deletion Pending" : "Delete"}
+              </Button>
+            ) : null}
           </div>
-          <div>
-            <span className="ds-label mb-1 block text-on-surface-variant">Job Status</span>
-            <span className={`inline-flex min-h-9 min-w-28 items-center justify-center rounded-lg border px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider ${
-              job.status === "ACTIVE" ? "border-green-200 text-green-500" : "border-orange-200 text-orange-400"
-            }`}>
-              {job.status}
-            </span>
-          </div>
-          {canDeleteJob ? (
-            <Button
-              variant="destructive"
-              className="min-h-9 w-full sm:w-auto"
-              disabled={loading !== null || Boolean(activeDeletionRequest)}
-              onClick={() => setDeleteModalMode("delete")}
-            >
-              <Trash2 className="mr-2 size-4" />
-              {activeDeletionRequest ? "Deletion Pending" : "Delete Job"}
-            </Button>
-          ) : null}
         </div>
-      </div>
+
+        <div className="border-t border-outline-variant/25 px-4 py-2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            {STAGES.map((stage, index) => {
+              const isCompleted = index < activeStepIndex;
+              const isActive = index === activeStepIndex;
+              return (
+                <div key={stage.key} className="flex min-w-fit items-center gap-2">
+                  <span
+                    className={`flex size-6 items-center justify-center rounded-full border text-[10px] font-bold ${
+                      isCompleted
+                        ? "border-[#00cec4] bg-[#00cec4] text-white"
+                        : isActive
+                          ? "border-[#00cec4] bg-surface text-[#00cec4] shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
+                          : "border-outline-variant bg-surface text-on-surface-variant"
+                    }`}
+                  >
+                    {isCompleted ? <Check size={13} /> : index + 1}
+                  </span>
+                  <span className={`whitespace-nowrap text-[10px] font-bold uppercase tracking-wide ${isActive ? "text-[#00cec4]" : "text-on-surface-variant"}`}>
+                    {stage.label}
+                  </span>
+                  {index < STAGES.length - 1 ? <span className="h-px w-5 bg-outline-variant/50" /> : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
       {!job.assignedManagerId && (
-        <div className="rounded-xl border border-[#fb923c]/35 bg-[#fb923c]/10 p-4">
+        <div className="rounded-2xl border border-[#fb923c]/35 bg-[#fb923c]/10 p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="space-y-1">
               <span className="ds-label text-[#fb923c]">Job Settings Alert</span>
@@ -1870,7 +1941,7 @@ export function JobWorkspaceClient({
       )}
 
       {activeDeletionRequest ? (
-        <div className="rounded-xl border border-[#fb923c]/35 bg-[#fb923c]/8 p-4">
+        <div className="rounded-2xl border border-[#fb923c]/35 bg-[#fb923c]/8 p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="space-y-1">
               <span className="ds-label text-[#fb923c]">Deletion Workflow</span>
@@ -1908,163 +1979,91 @@ export function JobWorkspaceClient({
         </div>
       ) : null}
 
-      <div className="rounded-xl border border-outline-variant/30 bg-surface p-5 shadow-sm space-y-4">
-        <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
-          <div>
-            <h2 className="ds-h2 text-on-surface">Recent Milestones</h2>
-            <p className="text-xs text-on-surface-variant">Latest activity for this job only.</p>
+      <section className="rounded-2xl border border-outline-variant/30 bg-surface shadow-sm">
+        <button
+          type="button"
+          onClick={() => setShowMilestones((value) => !value)}
+          className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left"
+        >
+          <div className="min-w-0">
+            <h2 className="ds-h3 text-on-surface">Recent Milestones</h2>
+            <p className="truncate text-[11px] text-on-surface-variant">
+              {recentMilestones[0]?.remarks || "Latest activity for this job only."}
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setActiveTab("audit")}
-            className="text-xs font-semibold text-[#00cec4] hover:underline bg-transparent border-0 cursor-pointer"
-          >
-            View Full Audit
-          </button>
-        </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="rounded-full border border-outline-variant bg-surface-container-low px-2 py-0.5 text-[10px] font-bold text-on-surface-variant ds-numeric">
+              {recentMilestones.length} latest
+            </span>
+            <span className="text-xs font-semibold text-[#00cec4]">{showMilestones ? "Hide" : "Show"}</span>
+          </div>
+        </button>
 
-        {recentMilestones.length === 0 ? (
-          <p className="text-sm text-on-surface-variant">No milestones recorded for this job yet.</p>
-        ) : (
-          <div className="relative pl-5 space-y-4 before:absolute before:left-[8px] before:top-2 before:bottom-2 before:w-[2px] before:bg-outline-variant/40">
-            {recentMilestones.map((log: any) => (
-              <div key={log.id} className="relative space-y-1">
-                <span className="absolute -left-[17px] top-1.5 h-3 w-3 rounded-full bg-[#00cec4] border-2 border-surface" />
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs font-semibold text-on-surface">{log.event.replace(/_/g, " ")}</p>
-                  <span className="text-[10px] text-on-surface-variant ds-numeric">
-                    {new Date(log.timestamp).toLocaleString("en-IN")}
-                  </span>
-                </div>
-                <p className="text-xs text-on-surface-variant">{log.remarks}</p>
-                <p className="text-[10px] text-on-surface-variant">
-                  by <span className="text-on-surface">{log.actor?.name || "System"}</span>
-                </p>
+        {showMilestones ? (
+          <div className="border-t border-outline-variant/20 px-4 py-3">
+            <div className="mb-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setActiveTab("audit")}
+                className="text-xs font-semibold text-[#00cec4] hover:underline"
+              >
+                View Full Audit
+              </button>
+            </div>
+            {recentMilestones.length === 0 ? (
+              <p className="text-sm text-on-surface-variant">No milestones recorded for this job yet.</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                {recentMilestones.map((log: any) => (
+                  <div key={log.id} className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-on-surface">{log.event.replace(/_/g, " ")}</p>
+                      <span className="text-[10px] text-on-surface-variant ds-numeric">
+                        {new Date(log.timestamp).toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                    <p className="mt-1 line-clamp-2 text-xs text-on-surface-variant">{log.remarks}</p>
+                    <p className="mt-1 text-[10px] text-on-surface-variant">
+                      by <span className="text-on-surface">{log.actor?.name || "System"}</span>
+                    </p>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </div>
+        ) : null}
+      </section>
 
-      {/* visual Stepper Display */}
-      <div className="relative overflow-hidden rounded-xl border border-outline-variant/30 bg-surface px-4 py-3 shadow-sm sm:px-5">
-        <div className="relative z-10 grid grid-cols-6 gap-2 md:gap-4">
-          {STAGES.map((s, index) => {
-            const isCompleted = index < activeStepIndex;
-            const isActive = index === activeStepIndex;
+      {/* Sticky Compact Tab Controls */}
+      <nav className="sticky top-0 z-20 -mx-1 overflow-x-auto border-y border-outline-variant/25 bg-surface/95 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-surface/85">
+        <div className="flex min-w-max items-center gap-1">
+          {workspaceTabs.map((tab) => {
+            const isActive = activeTab === tab.key;
             return (
-              <div key={s.key} className="relative flex min-w-0 flex-col items-center text-center">
-                {/* Connector line */}
-                {index > 0 && (
-                  <div
-                    className={`absolute left-[-50%] right-1/2 top-4 z-[-1] h-[2px] ${
-                      index <= activeStepIndex ? "bg-[#00cec4]" : "bg-outline-variant/40"
-                    }`}
-                  />
-                )}
-
-                <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all ${
-                    isCompleted
-                      ? "bg-[#00cec4] border-[#00cec4] text-white"
-                      : isActive
-                      ? "bg-surface border-[#00cec4] text-[#00cec4] shadow-[0_0_0_4px_rgba(0,206,196,0.15)]"
-                      : "bg-surface border-outline-variant text-on-surface-variant"
-                  }`}
-                >
-                  {isCompleted ? <Check size={18} /> : <span>{index + 1}</span>}
-                </div>
-                <span className={`mt-1.5 block min-h-5 text-[10px] font-bold uppercase tracking-wider ${
-                  isActive ? "text-[#00cec4]" : "text-on-surface-variant"
-                }`}>
-                  {s.label}
-                </span>
-              </div>
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={`rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-wide transition-all ${
+                  isActive
+                    ? "bg-[#00cec4]/10 text-[#00cec4] shadow-[inset_0_0_0_1px_rgba(0,206,196,0.35)]"
+                    : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
+                }`}
+              >
+                {tab.label}
+                {tab.count !== undefined ? <span className="ml-1 ds-numeric">({tab.count})</span> : null}
+              </button>
             );
           })}
         </div>
-      </div>
-
-      {/* Tab Controls */}
-      <div className="grid grid-cols-2 gap-1 rounded-xl border border-outline-variant/30 bg-surface-container-low p-1 lg:grid-cols-7">
-        <button
-          onClick={() => setActiveTab("docs")}
-          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
-            activeTab === "docs"
-              ? "bg-surface text-[#00cec4] shadow-sm"
-              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
-          }`}
-        >
-          Documents ({documentRequirements.length})
-        </button>
-        <button
-          onClick={() => setActiveTab("additionalData")}
-          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
-            activeTab === "additionalData"
-              ? "bg-surface text-[#00cec4] shadow-sm"
-              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
-          }`}
-        >
-          Additional Data
-        </button>
-        <button
-          onClick={() => setActiveTab("checklist")}
-          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
-            activeTab === "checklist"
-              ? "bg-surface text-[#00cec4] shadow-sm"
-              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
-          }`}
-        >
-          Checklist
-        </button>
-        <button
-          onClick={() => setActiveTab("filing")}
-          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
-            activeTab === "filing"
-              ? "bg-surface text-[#00cec4] shadow-sm"
-              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
-          }`}
-        >
-          Filing Record
-        </button>
-        <button
-          onClick={() => setActiveTab("advances")}
-          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
-            activeTab === "advances"
-              ? "bg-surface text-[#00cec4] shadow-sm"
-              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
-          }`}
-        >
-          Client Advances
-        </button>
-        <button
-          onClick={() => setActiveTab("expenses")}
-          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
-            activeTab === "expenses"
-              ? "bg-surface text-[#00cec4] shadow-sm"
-              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
-          }`}
-        >
-          Expenses ({job.expenseRequests.length})
-        </button>
-        <button
-          onClick={() => setActiveTab("audit")}
-          className={`rounded-lg px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
-            activeTab === "audit"
-              ? "bg-surface text-[#00cec4] shadow-sm"
-              : "text-on-surface-variant hover:bg-surface hover:text-on-surface"
-          }`}
-        >
-          Audit History
-        </button>
-      </div>
+      </nav>
 
       {/* Tab Panels */}
-      <div className="min-h-[400px] rounded-xl border border-outline-variant/30 bg-surface p-6 shadow-sm">
+      <div className="min-h-[320px] rounded-2xl border border-outline-variant/30 bg-surface p-3 shadow-sm sm:p-4">
         
         {/* PANEL: DOCUMENTS */}
         {activeTab === "docs" && (
-          <div className="space-y-8">
+          <div className="space-y-4">
             <div className="flex items-center justify-between border-b border-outline-variant/20 pb-4">
               <div>
                 <h3 className="ds-h3 text-on-surface">Required Customs Documents</h3>
@@ -2072,6 +2071,14 @@ export function JobWorkspaceClient({
                   Upload required files or declare exceptions to pass the document gate. Workflow-uploaded files, Section 49, and Extension documents also appear here with source and validity tracking.
                 </p>
               </div>
+              <Button
+                type="button"
+                onClick={() => setIsCustomDocumentModalOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Plus size={14} />
+                Add Custom Document
+              </Button>
             </div>
 
             {/* Categories and grouped requirement slots */}
@@ -2094,7 +2101,7 @@ export function JobWorkspaceClient({
               }
 
               return (
-                <div className="space-y-8">
+                <div className="space-y-4">
                   {categoryKeys.map((categoryName) => {
                     const reqs = groupedRequirements[categoryName];
                     return (
@@ -2102,7 +2109,7 @@ export function JobWorkspaceClient({
                         <h4 className="ds-h2 text-xs text-[#00cec4] border-b border-outline-variant/20 pb-2 font-semibold">
                           {categoryName}
                         </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                           {reqs.map((req: any) => {
                             const isUploaded = req.status === "UPLOADED";
                             const isExempted = req.status === "NOT_AVAILABLE";
@@ -2111,7 +2118,7 @@ export function JobWorkspaceClient({
                             return (
                               <div
                                 key={req.id}
-                                className={`p-4 rounded-xl border flex flex-col justify-between bg-[var(--color-surface)] ${
+                                className={`p-4 rounded-2xl border flex flex-col justify-between bg-[var(--color-surface)] ${
                                   isUploaded
                                     ? "card-left-accent border-outline-variant/30"
                                     : "card-left-accent-orange border-outline-variant/30"
@@ -2255,7 +2262,7 @@ export function JobWorkspaceClient({
                                         placeholder="Enter detailed reason for exemption..."
                                         value={exceptionReason}
                                         onChange={(e) => setExceptionReason(e.target.value)}
-                                        className="w-full text-xs py-2 px-3 bg-[var(--color-surface)] border border-outline-variant/50 rounded-xl"
+                                        className="w-full text-xs py-2 px-3 bg-[var(--color-surface)] border border-outline-variant/50 rounded-2xl"
                                       />
                                       <div className="flex flex-wrap justify-end gap-2">
                                         <Button
@@ -2357,9 +2364,9 @@ export function JobWorkspaceClient({
 
             {/* Stage Proceed button for Document Collection stage */}
             {job.stage === "DOCUMENT_COLLECTION" && (
-              <div className="pt-6 border-t border-outline-variant/30 flex flex-col items-end gap-3">
+              <div className="pt-4 border-t border-outline-variant/30 flex flex-col items-end gap-3">
                 {proceedErrors && (
-                  <div className="w-full md:max-w-xl p-4 rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 text-xs">
+                  <div className="w-full md:max-w-xl p-4 rounded-2xl border border-orange-500/30 bg-orange-500/10 text-orange-500 text-xs">
                     <p className="font-semibold uppercase tracking-wider ds-label text-orange-500 mb-1">Proceed Blocked</p>
                     <p>{proceedErrors[0]}</p>
                   </div>
@@ -2379,7 +2386,7 @@ export function JobWorkspaceClient({
 
         {/* PANEL: ADDITIONAL DATA */}
         {activeTab === "additionalData" && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="flex flex-col gap-3 border-b border-outline-variant/20 pb-4 md:flex-row md:items-start md:justify-between">
               <div>
                 <h3 className="ds-h3 text-on-surface">CHA Additional Data</h3>
@@ -2399,7 +2406,7 @@ export function JobWorkspaceClient({
             </div>
 
             {job.stage === "DOCUMENT_COLLECTION" ? (
-              <div className="flex items-start gap-3 rounded-xl border border-[#fb923c]/40 bg-surface p-4">
+              <div className="flex items-start gap-3 rounded-2xl border border-[#fb923c]/40 bg-surface p-4">
                 <AlertTriangle size={22} className="mt-0.5 shrink-0 text-[#fb923c]" />
                 <div>
                   <h4 className="text-sm font-bold uppercase tracking-wide text-[#fb923c]">DOCUMENT GATE REQUIRED</h4>
@@ -2411,7 +2418,7 @@ export function JobWorkspaceClient({
             ) : null}
 
             {manifestConfigMissing ? (
-              <div className="flex items-start gap-3 rounded-xl border border-[#fb923c]/40 bg-surface p-4">
+              <div className="flex items-start gap-3 rounded-2xl border border-[#fb923c]/40 bg-surface p-4">
                 <AlertTriangle size={22} className="mt-0.5 shrink-0 text-[#fb923c]" />
                 <div>
                   <h4 className="text-sm font-bold uppercase tracking-wide text-[#fb923c]">Manifest Configuration Required</h4>
@@ -2423,8 +2430,8 @@ export function JobWorkspaceClient({
             ) : null}
 
             <div className="ds-form-section space-y-4">
-              <h3>Additional Data Fields</h3>
-              <div className="grid grid-cols-1 gap-3 rounded-xl border border-outline-variant/40 bg-surface-container-low p-4 md:grid-cols-2">
+              <h3 className="ds-h3 text-on-surface">Additional Data Fields</h3>
+              <div className="grid grid-cols-1 gap-3 rounded-2xl border border-outline-variant/40 bg-surface-container-low p-4 md:grid-cols-2">
                 <div>
                   <span className="ds-label">Clearance Type</span>
                   <p className="mt-1 text-sm font-medium text-on-surface">{job.jobType?.name || "Unknown"}</p>
@@ -2507,7 +2514,7 @@ export function JobWorkspaceClient({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 rounded-xl border border-outline-variant/40 bg-surface-container-low p-4 md:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 rounded-2xl border border-outline-variant/40 bg-surface-container-low p-4 md:grid-cols-4">
               <div>
                 <span className="ds-label">Status</span>
                 <p className="mt-1 text-sm font-medium text-on-surface">{job.additionalData?.status ?? "PENDING"}</p>
@@ -2568,12 +2575,12 @@ export function JobWorkspaceClient({
 
         {/* PANEL: CHECKLIST */}
         {activeTab === "checklist" && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <h3 className="ds-h3 text-on-surface">Checklist Workflow</h3>
 
             {/* Check if gate is open */}
             {activeStepIndex < checklistStageIndex ? (
-              <div className="bg-surface border border-[#fb923c]/40 p-6 rounded-xl flex items-start gap-3">
+              <div className="bg-surface border border-[#fb923c]/40 p-4 rounded-2xl flex items-start gap-3">
                 <AlertTriangle size={24} className="text-[#fb923c] shrink-0 mt-0.5" />
                 <div>
                   <h4 className="font-bold text-sm text-[#fb923c]">CHECKLIST PREPARATION NOT AVAILABLE</h4>
@@ -2587,9 +2594,9 @@ export function JobWorkspaceClient({
                 </div>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {!job.assignedManagerId && (
-                  <div className="bg-surface border border-[#fb923c]/40 p-5 rounded-xl flex items-start gap-3">
+                  <div className="bg-surface border border-[#fb923c]/40 p-4 rounded-2xl flex items-start gap-3">
                     <AlertTriangle size={24} className="text-[#fb923c] shrink-0 mt-0.5" />
                     <div>
                       <h4 className="font-bold text-sm uppercase text-[#fb923c]">Manager Assignment Recommended</h4>
@@ -2609,9 +2616,9 @@ export function JobWorkspaceClient({
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-                  <div className="space-y-6">
-                    <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-5">
+                <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-outline-variant/40 bg-surface-container-low p-4">
                       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                         <div className="space-y-1">
                           <span className="ds-label">Current Checklist Status</span>
@@ -2639,7 +2646,7 @@ export function JobWorkspaceClient({
                       </div>
                     </div>
 
-                    <form onSubmit={handleUploadChecklist} className="space-y-4 rounded-xl border border-dashed border-outline-variant/60 bg-surface p-5">
+                    <form onSubmit={handleUploadChecklist} className="space-y-4 rounded-2xl border border-dashed border-outline-variant/60 bg-surface p-4">
                       <div className="flex items-start gap-3">
                         <FolderOpen size={22} className="mt-0.5 shrink-0 text-[#00cec4]" />
                         <div>
@@ -2653,7 +2660,7 @@ export function JobWorkspaceClient({
                       </div>
 
                       {internalApproversCount === 0 && (
-                        <div className="bg-surface border border-red-500/40 p-4 rounded-xl flex items-start gap-3">
+                        <div className="bg-surface border border-red-500/40 p-4 rounded-2xl flex items-start gap-3">
                           <AlertTriangle size={20} className="text-red-500 shrink-0 mt-0.5" />
                           <div>
                             <h4 className="font-bold text-xs uppercase text-red-500">No Internal Approvers Configured</h4>
@@ -2697,7 +2704,7 @@ export function JobWorkspaceClient({
                     </form>
 
                     {currentChecklistVersion ? (
-                      <div className="rounded-xl border border-outline-variant/40 bg-surface p-5 space-y-4">
+                      <div className="rounded-2xl border border-outline-variant/40 bg-surface p-4 space-y-4">
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                           <div>
                             <span className="ds-label">Current File</span>
@@ -2724,7 +2731,7 @@ export function JobWorkspaceClient({
                           </div>
                         </div>
 
-                        <div className="overflow-hidden rounded-xl border border-outline-variant/40">
+                        <div className="overflow-hidden rounded-2xl border border-outline-variant/40">
                           <table className="ds-table">
                             <thead>
                               <tr>
@@ -2752,8 +2759,8 @@ export function JobWorkspaceClient({
                     ) : null}
                   </div>
 
-                  <div className="space-y-6">
-                    <div className="rounded-xl border border-outline-variant/40 bg-surface p-5 space-y-4">
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-outline-variant/40 bg-surface p-4 space-y-4">
                       <div>
                         <span className="ds-label">Internal Approval</span>
                         <p className="mt-1 text-sm text-on-surface">
@@ -2802,7 +2809,7 @@ export function JobWorkspaceClient({
                       ) : null}
                     </div>
 
-                    <div className="rounded-xl border border-outline-variant/40 bg-surface p-5 space-y-4">
+                    <div className="rounded-2xl border border-outline-variant/40 bg-surface p-4 space-y-4">
                       <div>
                         <span className="ds-label">Customer Approval</span>
                         <p className="mt-1 text-sm text-on-surface">
@@ -2852,7 +2859,7 @@ export function JobWorkspaceClient({
                       ) : null}
                     </div>
 
-                    <div className="rounded-xl border border-outline-variant/40 bg-surface p-5 space-y-4">
+                    <div className="rounded-2xl border border-outline-variant/40 bg-surface p-4 space-y-4">
                       <div className="flex items-center justify-between">
                         <span className="ds-label">Approval History</span>
                         <span className="text-[11px] text-on-surface-variant">
@@ -2867,7 +2874,7 @@ export function JobWorkspaceClient({
                             .slice()
                             .reverse()
                             .map((approval: any) => (
-                              <div key={approval.id} className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-3">
+                              <div key={approval.id} className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-3">
                                 <div className="flex items-center justify-between gap-3">
                                   <p className="text-xs font-semibold text-on-surface">
                                     {approval.stage} • {approval.action}
@@ -2895,14 +2902,14 @@ export function JobWorkspaceClient({
         )}
 
         {activeTab === "filing" && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="border-b border-outline-variant/30 pb-3">
               <h3 className="ds-h3 text-on-surface">Customs Submission Filing Details</h3>
             </div>
 
             {/* Display DO warnings and active flags inside the tab if any */}
             {doValidityWarning && (
-              <div className="bg-surface border border-[#fb923c]/45 p-4 rounded-xl flex items-start gap-3">
+              <div className="bg-surface border border-[#fb923c]/45 p-4 rounded-2xl flex items-start gap-3">
                 <AlertTriangle size={20} className="text-[#fb923c] shrink-0 mt-0.5" />
                 <div>
                   <h4 className="font-bold text-xs uppercase text-[#fb923c] tracking-wider">Delivery Order Validity Notice</h4>
@@ -2914,7 +2921,7 @@ export function JobWorkspaceClient({
             )}
 
             {overdueChecklistCount > 0 && (
-              <div className="card-left-accent-orange rounded-xl border border-[#fb923c]/45 bg-surface p-4">
+              <div className="card-left-accent-orange rounded-2xl border border-[#fb923c]/45 bg-surface p-4">
                 <div className="flex items-start gap-3">
                   <AlertTriangle size={20} className="mt-0.5 shrink-0 text-[#fb923c]" />
                   <div className="space-y-1">
@@ -2931,7 +2938,7 @@ export function JobWorkspaceClient({
             )}
 
             {activeStepIndex < filingStageIndex ? (
-              <div className="bg-surface border border-outline-variant p-6 rounded-xl flex items-start gap-3">
+              <div className="bg-surface border border-outline-variant p-4 rounded-2xl flex items-start gap-3">
                 <AlertTriangle size={24} className="text-[#fb923c] shrink-0 mt-0.5" />
                 <div>
                   <h4 className="font-bold text-sm text-[#fb923c] uppercase tracking-wider">Filing Stage Locked</h4>
@@ -2942,8 +2949,8 @@ export function JobWorkspaceClient({
               </div>
             ) : (
               // Filing visual runner dashboard
-              <div className="space-y-6">
-                <div className="ds-form-section rounded-xl border border-outline-variant/40 bg-surface p-5">
+              <div className="space-y-4">
+                <div className="ds-form-section rounded-2xl border border-outline-variant/40 bg-surface p-4">
                   <h3 className="ds-h3 text-on-surface">SHIPMENT DETAILS</h3>
                   <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div className="space-y-1">
@@ -2986,7 +2993,7 @@ export function JobWorkspaceClient({
                 </div>
 
                 {!filingInstance ? (
-                  <div className="card-top-accent rounded-xl bg-surface border border-outline-variant/30 p-6 space-y-4 shadow-sm">
+                  <div className="card-top-accent rounded-2xl bg-surface border border-outline-variant/30 p-4 space-y-4 shadow-sm">
                     <h4 className="ds-h3 text-on-surface">Filing Workflow</h4>
                     {loading === "filing-load" ? (
                       <p className="text-xs text-on-surface-variant">Loading filing workflow...</p>
@@ -3010,12 +3017,12 @@ export function JobWorkspaceClient({
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
                     
                     {/* Left Column: Active Step details and form */}
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                       {activeNodeRun ? (
-                        <div className="card-top-accent rounded-xl bg-surface border border-outline-variant/30 p-5 space-y-6 shadow-sm">
+                        <div className="card-top-accent rounded-2xl bg-surface border border-outline-variant/30 p-4 space-y-4 shadow-sm">
                           
                           {/* Node Header */}
                           <div className="flex flex-col gap-2 border-b border-outline-variant/30 pb-3 sm:flex-row sm:items-start sm:justify-between">
@@ -3063,7 +3070,7 @@ export function JobWorkspaceClient({
                           </div>
 
                           {/* Node run completion form */}
-                          <form onSubmit={handleCompleteFilingNode} className="space-y-6">
+                          <form onSubmit={handleCompleteFilingNode} className="space-y-4">
                             
                             {/* Checklist Items */}
                             {activeNodeRun.node.checklistItems?.length > 0 && (
@@ -3084,7 +3091,7 @@ export function JobWorkspaceClient({
                                     return (
                                       <div
                                         key={item.id}
-                                        className={`p-3.5 rounded-xl border space-y-3 ${
+                                        className={`p-3.5 rounded-2xl border space-y-3 ${
                                           isLockedItem
                                             ? "border-outline-variant/25 bg-surface-container-low/20 opacity-70"
                                             : overdueMeta
@@ -3128,19 +3135,19 @@ export function JobWorkspaceClient({
                                         </div>
 
                                         {isLockedItem && (
-                                          <div className="rounded-xl border border-outline-variant/25 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
+                                          <div className="rounded-2xl border border-outline-variant/25 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
                                             Complete the current checklist item first to unlock this step.
                                           </div>
                                         )}
 
                                         {!isLockedItem && !isCurrentItem && isCompletedItem && (
-                                          <div className="rounded-xl border border-outline-variant/25 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
+                                          <div className="rounded-2xl border border-outline-variant/25 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
                                             Completed and ready. You can move to the next checklist item.
                                           </div>
                                         )}
 
                                         {!isLockedItem && overdueMeta && (
-                                          <div className="rounded-xl border border-[#fb923c]/35 bg-surface px-3 py-2 text-xs text-on-surface">
+                                          <div className="rounded-2xl border border-[#fb923c]/35 bg-surface px-3 py-2 text-xs text-on-surface">
                                             <div className="flex flex-wrap items-center gap-3">
                                               <span className="font-semibold text-[#fb923c] uppercase tracking-wide">Overdue</span>
                                               <span className="ds-numeric">Due: {new Date(overdueMeta.dueAt).toLocaleDateString("en-IN")}</span>
@@ -3201,7 +3208,7 @@ export function JobWorkspaceClient({
                                             </div>
                                             <label
                                               htmlFor={`checklist-item-upload-${item.id}`}
-                                              className="flex min-h-28 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-outline-variant/50 bg-surface px-4 py-4 text-sm text-on-surface transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/40"
+                                              className="flex min-h-20 cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-outline-variant/50 bg-surface px-4 py-4 text-sm text-on-surface transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/40"
                                             >
                                               <span className="ds-icon-badge shrink-0">
                                                 <Upload size={18} />
@@ -3264,7 +3271,7 @@ export function JobWorkspaceClient({
                                       (a: any) => a.nodeRunId === activeNodeRun.id && a.photoRequirementId === pr.id
                                     ) || [];
                                     return (
-                                      <div key={pr.id} className="p-4 rounded-xl border border-dashed border-outline-variant/60 bg-surface space-y-3">
+                                      <div key={pr.id} className="p-4 rounded-2xl border border-dashed border-outline-variant/60 bg-surface space-y-3">
                                         <div>
                                           <h5 className="text-xs font-semibold text-on-surface">
                                             {pr.label} {pr.isMandatory && <span className="text-red-500 font-bold">*</span>}
@@ -3280,7 +3287,7 @@ export function JobWorkspaceClient({
                                           <>
                                             <label
                                               htmlFor={`photo-requirement-upload-${pr.id}`}
-                                              className="flex min-h-28 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-outline-variant/50 bg-surface-container-low/35 px-4 py-4 text-sm text-on-surface transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/55"
+                                              className="flex min-h-20 cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-outline-variant/50 bg-surface-container-low/35 px-4 py-4 text-sm text-on-surface transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/55"
                                             >
                                               <span className="ds-icon-badge shrink-0">
                                                 <Upload size={18} />
@@ -3304,7 +3311,7 @@ export function JobWorkspaceClient({
 
                                         {/* Uploaded Attachments list */}
                                         {reqAttachments.length > 0 && (
-                                          <div className="overflow-hidden rounded-xl border border-outline-variant/30">
+                                          <div className="overflow-hidden rounded-2xl border border-outline-variant/30">
                                             <table className="ds-table">
                                               <thead>
                                                 <tr>
@@ -3387,7 +3394,7 @@ export function JobWorkspaceClient({
                                             key={edge.targetKey}
                                             type="button"
                                             onClick={() => setSelectedNextNodeKey(edge.targetKey)}
-                                            className={`rounded-xl border px-4 py-3 text-left transition ${
+                                            className={`rounded-2xl border px-4 py-3 text-left transition ${
                                               isSelected
                                                 ? "border-[#00cec4] bg-[#00cec4]/10 shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
                                                 : "border-outline-variant bg-surface hover:border-[#00cec4]/55 hover:bg-surface-container-low"
@@ -3426,7 +3433,7 @@ export function JobWorkspaceClient({
                                   </div>
                                 )
                               ) : (
-                                <div className="rounded-xl bg-[#00cec4]/10 border border-[#00cec4]/20 p-3 text-xs text-on-surface-variant">
+                                <div className="rounded-2xl bg-[#00cec4]/10 border border-[#00cec4]/20 p-3 text-xs text-on-surface-variant">
                                   Completing this node will finalize the Filing workflow and transition the job stage to <strong>FILED</strong>.
                                 </div>
                               )}
@@ -3437,7 +3444,7 @@ export function JobWorkspaceClient({
                               <Button
                                 type="submit"
                                 disabled={loading !== null}
-                                className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-5 py-2.5 rounded-xl text-sm uppercase tracking-wide transition-all font-semibold"
+                                className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-5 py-2.5 rounded-2xl text-sm uppercase tracking-wide transition-all font-semibold"
                               >
                                 {loading === "filing-complete" ? "Completing Stage..." : outgoingEdges.length > 0 ? "Complete & Move to Next Stage" : "Complete & File Customs Bill"}
                               </Button>
@@ -3446,7 +3453,7 @@ export function JobWorkspaceClient({
                         </div>
                       ) : (
                         // No active runs but filing instance exists (Filing completed)
-                        <div className="rounded-xl border border-green-200 bg-green-50/5 p-6 space-y-4 shadow-sm">
+                        <div className="rounded-2xl border border-green-200 bg-green-50/5 p-4 space-y-4 shadow-sm">
                           <div className="flex items-center gap-2 text-green-700">
                             <CheckCircle2 size={24} className="shrink-0" />
                             <h4 className="font-bold text-base uppercase tracking-wide">Customs Filing Workflow Complete</h4>
@@ -3454,7 +3461,7 @@ export function JobWorkspaceClient({
                           <p className="text-xs text-on-surface-variant max-w-xl">
                             All blueprint checklist checks have been completed and the customs submission has been filed. The job stage is updated to <strong>FILED</strong>.
                           </p>
-                          <div className="grid grid-cols-2 gap-4 rounded-xl border border-outline-variant/30 bg-surface-container-low p-4 text-xs max-w-md">
+                          <div className="grid grid-cols-2 gap-4 rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 text-xs max-w-md">
                             <div>
                               <span className="ds-label block text-on-surface-variant">Actual Filing Date</span>
                               <span className="font-medium text-on-surface ds-numeric font-mono">
@@ -3471,8 +3478,8 @@ export function JobWorkspaceClient({
                     </div>
 
                     {/* Right Column: Timeline / History log */}
-                    <div className="space-y-6">
-                      <div className="rounded-xl border border-outline-variant/40 bg-surface p-5 space-y-4 shadow-sm">
+                    <div className="space-y-4">
+                      <div className="rounded-2xl border border-outline-variant/40 bg-surface p-4 space-y-4 shadow-sm">
                         <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
                           <h4 className="ds-label block text-on-surface">Execution Blueprint Timeline</h4>
                           <span className="text-[10px] text-on-surface-variant font-medium ds-numeric font-mono">
@@ -3483,7 +3490,7 @@ export function JobWorkspaceClient({
                         {filingInstance.nodeRuns?.length === 0 ? (
                           <p className="text-xs text-on-surface-variant italic">No workflow checks executed yet.</p>
                         ) : (
-                          <div className="relative pl-5 space-y-5 before:absolute before:left-[8px] before:top-2 before:bottom-2 before:w-[2px] before:bg-outline-variant/40">
+                          <div className="relative pl-5 space-y-4 before:absolute before:left-[8px] before:top-2 before:bottom-2 before:w-[2px] before:bg-outline-variant/40">
                             {filingInstance.nodeRuns.map((run: any) => {
                               const isCurrent = run.status === "ACTIVE";
                               return (
@@ -3558,7 +3565,7 @@ export function JobWorkspaceClient({
 
         {/* PANEL: ADVANCES */}
         {activeTab === "advances" && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="ds-h3 text-on-surface">Client Advance Collections</h3>
               <span className={`text-xs font-bold uppercase tracking-wider ${
@@ -3568,10 +3575,10 @@ export function JobWorkspaceClient({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               {/* Expected settings */}
-              <div className="space-y-6">
-                <div className="border border-outline-variant p-5 rounded-xl space-y-4">
+              <div className="space-y-4">
+                <div className="border border-outline-variant p-4 rounded-2xl space-y-4">
                   <span className="ds-label block text-on-surface">Billing expected terms</span>
 
                   <div className="space-y-1">
@@ -3626,7 +3633,7 @@ export function JobWorkspaceClient({
 
                 {/* Waive advance drawer */}
                 {showWaiveAdvance && (
-                  <div className="border border-red-200 bg-red-50/5 p-4 rounded-xl space-y-3">
+                  <div className="border border-red-200 bg-red-50/5 p-4 rounded-2xl space-y-3">
                     <span className="ds-label text-red-500 block">Exempt / Waive Advance Requirement</span>
                     <input
                       type="text"
@@ -3648,10 +3655,10 @@ export function JobWorkspaceClient({
               </div>
 
               {/* Receipts details */}
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Form to add receipts */}
                 {job.customerAdvance.status !== "NOT_REQUIRED" && job.customerAdvance.status !== "FULLY_RECEIVED" && (
-                  <form onSubmit={handleRecordAdvanceReceipt} className="border border-outline-variant p-5 rounded-xl space-y-4">
+                  <form onSubmit={handleRecordAdvanceReceipt} className="border border-outline-variant p-4 rounded-2xl space-y-4">
                     <span className="ds-label block text-on-surface">Record Received Receipt</span>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -3728,7 +3735,7 @@ export function JobWorkspaceClient({
                   ) : (
                     <div className="space-y-2">
                       {job.customerAdvance.receipts.map((r: any) => (
-                        <div key={r.id} className="p-3 bg-surface-container-low border border-outline-variant/40 rounded-xl flex items-center justify-between text-xs">
+                        <div key={r.id} className="p-3 bg-surface-container-low border border-outline-variant/40 rounded-2xl flex items-center justify-between text-xs">
                           <div>
                             <span className="font-bold text-[#00cec4] block">₹{Number(r.amount).toLocaleString("en-IN")}</span>
                             <span className="text-[10px] text-on-surface-variant block uppercase mt-0.5">
@@ -3750,14 +3757,14 @@ export function JobWorkspaceClient({
 
         {/* PANEL: EXPENSES */}
         {activeTab === "expenses" && (
-          <div className="space-y-8">
+          <div className="space-y-4">
             {/* Create expense request */}
-            <div className="border border-outline-variant p-6 rounded-xl space-y-6 bg-surface-container-low/20">
+            <div className="border border-outline-variant p-4 rounded-2xl space-y-4 bg-surface-container-low/20">
               <h3 className="ds-h3 text-on-surface">New Clearance Expense Request</h3>
 
-              <form onSubmit={handleCreateExpenseRequest} className="space-y-6">
+              <form onSubmit={handleCreateExpenseRequest} className="space-y-4">
                 {/* Urgent switch */}
-                <div className="flex flex-col md:flex-row gap-4 md:items-center justify-between p-4 border border-outline-variant/60 rounded-xl bg-surface">
+                <div className="flex flex-col md:flex-row gap-4 md:items-center justify-between p-4 border border-outline-variant/60 rounded-2xl bg-surface">
                   <label className="flex items-start space-x-3 cursor-pointer">
                     <input
                       type="checkbox"
@@ -3903,7 +3910,7 @@ export function JobWorkspaceClient({
                     return (
                       <div
                         key={req.id}
-                        className={`p-5 rounded-xl border space-y-4 transition-all ${
+                        className={`p-4 rounded-2xl border space-y-4 transition-all ${
                           req.isUrgent
                             ? "border-red-200 bg-red-50/5"
                             : "border-outline-variant"
@@ -4039,7 +4046,7 @@ export function JobWorkspaceClient({
 
                         {/* Escalation dialog popup */}
                         {escRequestId === req.id && (
-                          <div className="p-4 border border-[#fb923c]/40 bg-[#fb923c]/5 rounded-xl space-y-3">
+                          <div className="p-4 border border-[#fb923c]/40 bg-[#fb923c]/5 rounded-2xl space-y-3">
                             <span className="ds-label text-[#fb923c] font-bold block">Escalate Request to Urgent</span>
                             <input
                               type="text"
@@ -4061,7 +4068,7 @@ export function JobWorkspaceClient({
 
                         {/* Review Action Drawer Popup */}
                         {expReviewId === req.id && (
-                          <div className="p-4 border border-outline-variant/60 bg-surface rounded-xl space-y-3">
+                          <div className="p-4 border border-outline-variant/60 bg-surface rounded-2xl space-y-3">
                             <span className="ds-label block text-on-surface">Administrative Expense Review</span>
                             <div className="grid grid-cols-2 gap-3">
                               <select
@@ -4097,7 +4104,7 @@ export function JobWorkspaceClient({
 
                         {/* Post Payout Form Popup */}
                         {payRequestId === req.id && (
-                          <form onSubmit={handlePostExpensePayment} className="p-4 border border-[#00cec4]/40 bg-[#00cec4]/5 rounded-xl space-y-4">
+                          <form onSubmit={handlePostExpensePayment} className="p-4 border border-[#00cec4]/40 bg-[#00cec4]/5 rounded-2xl space-y-4">
                             <span className="ds-label text-[#00cec4] block">Post Payment Disbursement Confirmation</span>
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                               <div>
@@ -4157,7 +4164,7 @@ export function JobWorkspaceClient({
 
                         {/* Query Form Popup */}
                         {queryRequestId === req.id && (
-                          <div className="p-4 border border-[#fb923c]/40 bg-[#fb923c]/5 rounded-xl space-y-3">
+                          <div className="p-4 border border-[#fb923c]/40 bg-[#fb923c]/5 rounded-2xl space-y-3">
                             <span className="ds-label text-[#fb923c] font-bold block">Raise Payment Discrepancy Query</span>
                             <input
                               type="text"
@@ -4244,13 +4251,13 @@ export function JobWorkspaceClient({
 
         {/* PANEL: AUDIT LOGS */}
         {activeTab === "audit" && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <h3 className="ds-h3 text-on-surface">Job Auditing History Trail</h3>
             
             {job.auditLogs?.length === 0 ? (
               <p className="text-xs text-on-surface-variant">No audit log records for this clearance.</p>
             ) : (
-              <div className="relative pl-6 space-y-6 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-outline-variant/40">
+              <div className="relative pl-6 space-y-4 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-outline-variant/40">
                 {job.auditLogs.map((log: any) => (
                   <div key={log.id} className="relative space-y-1 text-xs">
                     {/* Dot */}
@@ -4292,8 +4299,8 @@ export function JobWorkspaceClient({
         }
         className="max-w-2xl"
       >
-        <div className="space-y-5">
-          <div className="rounded-xl border border-red-200/70 bg-red-50/40 p-4 text-sm text-on-surface">
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-red-200/70 bg-red-50/40 p-4 text-sm text-on-surface">
             <p className="font-semibold text-red-600">Permanent action</p>
             <p className="mt-1 text-on-surface-variant">
               Deleting this job affects linked CHA workflows, audit visibility, and operational references.
@@ -4356,8 +4363,8 @@ export function JobWorkspaceClient({
         description={`Approve the pending deletion request for ${job.jobNumber}. This will immediately soft-delete the job after approval.`}
         className="max-w-2xl"
       >
-        <div className="space-y-5">
-          <div className="rounded-xl border border-red-200/70 bg-red-50/40 p-4 text-sm text-on-surface">
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-red-200/70 bg-red-50/40 p-4 text-sm text-on-surface">
             <p className="font-semibold text-red-600">Manager approval required</p>
             <p className="mt-1 text-on-surface-variant">
               Confirm the exact job number and type <strong className="text-on-surface">delete job</strong> to execute this deletion request.
@@ -4419,7 +4426,7 @@ export function JobWorkspaceClient({
         description={`Reject the pending deletion request for ${job.jobNumber}. A rejection reason is required and the job will remain active.`}
         className="max-w-2xl"
       >
-        <div className="space-y-5">
+        <div className="space-y-4">
           <div className="space-y-1.5">
             <label className="ds-label block">Rejection Reason</label>
             <textarea
@@ -4481,6 +4488,78 @@ export function JobWorkspaceClient({
         </Modal>
       )}
 
+      {isCustomDocumentModalOpen && (
+        <Modal
+          open={true}
+          onClose={() => {
+            if (loading === "custom-doc-upload") return;
+            setIsCustomDocumentModalOpen(false);
+            setCustomDocumentName("");
+            setCustomDocumentFile(null);
+          }}
+          title="Add Custom Document"
+          description="Create a temporary document slot for this job only and upload the file immediately."
+          className="max-w-xl"
+        >
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 text-xs text-on-surface-variant">
+              This custom document name is job-specific and will appear only inside <strong className="text-on-surface">this CHA job</strong>, under the <strong className="text-on-surface">User Uploads</strong> section.
+            </div>
+
+            <div className="space-y-4">
+              <label className="space-y-1.5">
+                <span className="ds-label">Custom Document Name</span>
+                <input
+                  type="text"
+                  value={customDocumentName}
+                  onChange={(e) => setCustomDocumentName(e.target.value)}
+                  placeholder="Example: Supplier Email Approval"
+                  maxLength={120}
+                  className="w-full rounded-2xl border border-outline-variant/40 bg-surface px-3 py-2.5 text-sm text-on-surface"
+                />
+              </label>
+
+              <label className="space-y-1.5">
+                <span className="ds-label">File Upload</span>
+                <input
+                  type="file"
+                  onChange={(e) => setCustomDocumentFile(e.target.files?.[0] || null)}
+                  className="w-full rounded-2xl border border-outline-variant/40 bg-surface px-3 py-2.5 text-sm text-on-surface"
+                />
+              </label>
+
+              {customDocumentFile ? (
+                <div className="rounded-2xl border border-outline-variant/30 bg-surface p-3 text-xs text-on-surface-variant">
+                  Selected file: <strong className="text-on-surface">{customDocumentFile.name}</strong>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-outline-variant/20 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsCustomDocumentModalOpen(false);
+                  setCustomDocumentName("");
+                  setCustomDocumentFile(null);
+                }}
+                disabled={loading === "custom-doc-upload"}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleCreateCustomDocument}
+                disabled={loading === "custom-doc-upload"}
+              >
+                {loading === "custom-doc-upload" ? "Uploading..." : "Create And Upload"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {viewingVersion && (
         <Modal
           open={true}
@@ -4508,7 +4587,7 @@ export function JobWorkspaceClient({
             const canPreview = isImage || isPdf;
 
             return (
-              <div className="relative h-[60vh] flex flex-col bg-surface border border-outline-variant/30 rounded-xl overflow-hidden">
+              <div className="relative h-[60vh] flex flex-col bg-surface border border-outline-variant/30 rounded-2xl overflow-hidden">
                 {canPreview ? (
                   <>
                     {loadingPreview && (
@@ -4537,8 +4616,8 @@ export function JobWorkspaceClient({
                     )}
                   </>
                 ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4">
-                    <div className="w-16 h-16 rounded-xl bg-[#00cec4]/10 text-[#00cec4] flex items-center justify-center">
+                  <div className="flex-1 flex flex-col items-center justify-center p-4 text-center space-y-4">
+                    <div className="w-16 h-16 rounded-2xl bg-[#00cec4]/10 text-[#00cec4] flex items-center justify-center">
                       <FileText size={32} />
                     </div>
                     <div className="space-y-2 max-w-md">
@@ -4547,7 +4626,7 @@ export function JobWorkspaceClient({
                         Word, Excel, or binary formats cannot be previewed directly in the browser. You can download this file to view it locally.
                       </p>
                     </div>
-                    <div className="p-4 rounded-xl border border-outline-variant/40 bg-surface-container-low/50 text-left text-xs space-y-2 w-full max-w-md">
+                    <div className="p-4 rounded-2xl border border-outline-variant/40 bg-surface-container-low/50 text-left text-xs space-y-2 w-full max-w-md">
                       <p className="font-semibold text-on-surface uppercase ds-label">File Details</p>
                       <div className="grid grid-cols-2 gap-2 text-on-surface-variant">
                         <span>Filename:</span>
@@ -4565,7 +4644,7 @@ export function JobWorkspaceClient({
                     <a
                       href={downloadUrl}
                       download={previewUrl?.startsWith("blob:") ? viewingVersion.fileName : undefined}
-                      className="inline-flex items-center justify-center bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all font-medium"
+                      className="inline-flex items-center justify-center bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-2xl text-xs uppercase tracking-wide transition-all font-medium"
                     >
                       Download File
                     </a>
@@ -4591,7 +4670,7 @@ export function JobWorkspaceClient({
               <select
                 value={selectedManagerId}
                 onChange={(e) => setSelectedManagerId(e.target.value)}
-                className="w-full text-sm rounded-xl"
+                className="w-full text-sm rounded-2xl"
               >
                 <option value="">-- Choose Manager --</option>
                 {filteredManagers.map((m: any) => (

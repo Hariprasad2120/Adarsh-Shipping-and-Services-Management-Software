@@ -34,6 +34,7 @@ type ChaJobTypeManifestConfigInput = {
   isManifestMandatory: boolean;
   manifestHelpText?: string | null;
   isActive?: boolean;
+  filingFlowCategory?: string | null;
 };
 
 type ChaManifestSchemaState = {
@@ -51,6 +52,7 @@ type CompatibleChaJobType = {
   isManifestMandatory: boolean;
   manifestHelpText: string | null;
   isActive: boolean;
+  filingFlowCategory: string | null;
 };
 
 type CompatibleAdditionalData = {
@@ -258,11 +260,13 @@ function getChaJobTypeSelect(includeManifestConfig: boolean): Prisma.ChaJobTypeS
         isManifestMandatory: true,
         manifestHelpText: true,
         isActive: true,
+        filingFlowCategory: true,
       }
     : {
         id: true,
         orgId: true,
         name: true,
+        filingFlowCategory: true,
       };
 }
 
@@ -281,6 +285,7 @@ function normalizeCompatibleJobType(
       isManifestMandatory: jobType.isManifestMandatory ?? false,
       manifestHelpText: jobType.manifestHelpText ?? null,
       isActive: jobType.isActive ?? true,
+      filingFlowCategory: jobType.filingFlowCategory ?? null,
     };
   }
 
@@ -294,6 +299,7 @@ function normalizeCompatibleJobType(
     isManifestMandatory: true,
     manifestHelpText: null,
     isActive: true,
+    filingFlowCategory: null,
   };
 }
 
@@ -1189,6 +1195,12 @@ function normalizeJobTypeManifestConfig(input: ChaJobTypeManifestConfigInput) {
     throw new Error("Active clearance types must define manifest behavior.");
   }
 
+  const validFlowCategories = ["IMPORT_BE", "EXPORT_SB", "CUSTOM"];
+  const filingFlowCategory =
+    input.filingFlowCategory && validFlowCategories.includes(input.filingFlowCategory)
+      ? input.filingFlowCategory
+      : null;
+
   return {
     name,
     movementDirection,
@@ -1203,6 +1215,7 @@ function normalizeJobTypeManifestConfig(input: ChaJobTypeManifestConfigInput) {
           ? DEFAULT_EXPORT_MANIFEST_HELP
           : null),
     isActive,
+    filingFlowCategory,
   };
 }
 
@@ -1643,6 +1656,35 @@ export async function updateJobTypeManifestConfig(
   return jobType;
 }
 
+export async function updateJobTypeFilingFlowCategory(
+  actorId: string,
+  orgId: string,
+  id: string,
+  filingFlowCategory: string | null,
+) {
+  const validCategories = ["IMPORT_BE", "EXPORT_SB", "CUSTOM", null];
+  if (!validCategories.includes(filingFlowCategory)) {
+    throw new Error(`Invalid filing flow category "${filingFlowCategory}". Use IMPORT_BE, EXPORT_SB, CUSTOM, or null.`);
+  }
+
+  const jobType = await db.chaJobType.update({
+    where: { id },
+    data: { filingFlowCategory },
+  });
+
+  await logChaAudit({
+    orgId,
+    entityType: "ChaJobType",
+    entityId: jobType.id,
+    event: "CHA_JOB_TYPE_FILING_FLOW_CATEGORY_UPDATED",
+    actorId,
+    newState: JSON.stringify({ filingFlowCategory }),
+    remarks: `Filing flow category for "${jobType.name}" set to ${filingFlowCategory ?? "unset"}.`,
+  });
+
+  return jobType;
+}
+
 export async function deleteJobType(orgId: string, id: string) {
   const count = await db.chaJob.count({
     where: { orgId, jobTypeId: id },
@@ -1985,6 +2027,12 @@ export async function listJobs(
         customer: true,
         jobType: { select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig) },
         branch: true,
+        filing: {
+          select: {
+            billOfEntryNumber: true,
+            shippingBillNumber: true,
+          },
+        },
         primaryOwner: { select: { id: true, name: true } },
         assignments: { include: { user: { select: { id: true, name: true } } } },
         deletionRequests: {
@@ -2194,6 +2242,125 @@ export async function uploadDocumentVersion(
   }
 
   return result;
+}
+
+export async function createJobCustomDocumentRequirementAndUpload(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  data: {
+    name: string;
+    fileData: {
+      fileName: string;
+      mimeType: string;
+      sizeBytes: number;
+      checksum?: string;
+    };
+    fileBuffer?: Buffer;
+  },
+) {
+  const trimmedName = data.name.trim();
+  if (!trimmedName) {
+    throw new Error("A custom document name is required.");
+  }
+
+  await db.chaJob.findFirstOrThrow({
+    where: getActiveChaJobByIdWhere(orgId, jobId),
+    select: { id: true },
+  });
+
+  const existingRequirement = await db.chaJobDocumentRequirement.findFirst({
+    where: {
+      jobId,
+      requirementItemId: null,
+      name: { equals: trimmedName, mode: "insensitive" },
+    },
+    select: { id: true },
+  });
+
+  if (existingRequirement) {
+    throw new Error("A custom document with this name already exists for this job.");
+  }
+
+  const requirement = await db.chaJobDocumentRequirement.create({
+    data: {
+      jobId,
+      name: trimmedName,
+      category: "User Uploads",
+      isMandatory: false,
+      status: "PENDING",
+      requirementItemId: null,
+    },
+  });
+
+  try {
+    await logChaAudit({
+      orgId,
+      jobId,
+      entityType: "ChaJobDocumentRequirement",
+      entityId: requirement.id,
+      event: "CUSTOM_DOCUMENT_REQUIREMENT_CREATED",
+      actorId,
+      newState: "PENDING",
+      remarks: `Created a job-specific custom document slot: ${trimmedName}`,
+    });
+
+    await uploadDocumentVersion(
+      actorId,
+      orgId,
+      jobId,
+      requirement.id,
+      data.fileData,
+      data.fileBuffer,
+      null,
+    );
+  } catch (error) {
+    const versionsCount = await db.chaDocumentVersion.count({
+      where: { requirementId: requirement.id },
+    });
+
+    if (versionsCount === 0) {
+      await db.chaDocumentException.deleteMany({
+        where: { requirementId: requirement.id },
+      });
+      await db.chaJobDocumentRequirement.delete({
+        where: { id: requirement.id },
+      });
+    }
+
+    throw error;
+  }
+
+  return db.chaJobDocumentRequirement.findUniqueOrThrow({
+    where: { id: requirement.id },
+    include: {
+      requirementItem: {
+        include: {
+          category: true,
+        },
+      },
+      versions: {
+        include: {
+          uploadedBy: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+      exception: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  });
 }
 
 // Delete a document version
@@ -6894,23 +7061,37 @@ async function syncOverdueFilingItems(orgId: string, jobId: string) {
 }
 
 export async function ensureDefaultFilingWorkflows(orgId: string) {
-  const existingCount = await db.filingWorkflowTemplate.count({ where: { orgId } });
-  if (existingCount > 0) return;
-
   const firstUser = await db.user.findFirst({ where: { orgId } });
   const createdById = firstUser?.id || "system";
-  const draft = await saveFilingWorkflowDraft(createdById, orgId, null, {
-    name: "Default Filing Workflow",
-    description:
-      "Default configurable filing workflow with First Check, Second Check, RMS/Open Bill decisions, configurable uploads, validity tracking, and optional amendment handling.",
-    nodes: [...DEFAULT_FILING_WORKFLOW_SEED.nodes] as unknown as any[],
-    edges: [...DEFAULT_FILING_WORKFLOW_SEED.edges] as unknown as any[],
+
+  // Remove legacy category-specific templates that have no active job instances.
+  const legacyTemplates = await db.filingWorkflowTemplate.findMany({
+    where: { orgId, filingFlowCategory: { not: null } },
+    select: { id: true, _count: { select: { instances: true } } },
   });
-  const versionId = draft.versions?.[0]?.id;
-  if (!versionId) {
-    throw new Error("Failed to create the default filing workflow draft.");
+  const safeToDelete = legacyTemplates.filter((t) => t._count.instances === 0).map((t) => t.id);
+  if (safeToDelete.length > 0) {
+    await db.filingWorkflowTemplate.deleteMany({ where: { id: { in: safeToDelete } } });
   }
-  await publishFilingWorkflow(createdById, orgId, versionId);
+
+  const catchAllExists = await db.filingWorkflowTemplate.findFirst({
+    where: { orgId, clearanceTypeId: null, filingFlowCategory: null },
+    select: { id: true },
+  });
+  if (!catchAllExists) {
+    const draft = await saveFilingWorkflowDraft(createdById, orgId, null, {
+      name: "Default Filing Workflow",
+      description:
+        "Default configurable CHA filing workflow covering both Import and Export. Includes First Check, Second Check (RMS / Open Bill), configurable uploads, validity tracking, and optional amendment handling.",
+      filingFlowCategory: null,
+      nodes: [...DEFAULT_FILING_WORKFLOW_SEED.nodes] as unknown as any[],
+      edges: [...DEFAULT_FILING_WORKFLOW_SEED.edges] as unknown as any[],
+    });
+    const versionId = draft.versions?.[0]?.id;
+    if (versionId) {
+      await publishFilingWorkflow(createdById, orgId, versionId);
+    }
+  }
 }
 
 export async function calculateSlaDueDate(startDate: Date, duration: number, unit: string, orgId?: string): Promise<Date> {
@@ -6943,6 +7124,7 @@ export async function listFilingWorkflows(orgId: string) {
         select: {
           id: true,
           name: true,
+          filingFlowCategory: true,
         },
       },
       // Only the latest version — callers that need full node/edge data call getFilingWorkflowDetails
@@ -7001,6 +7183,7 @@ export async function saveFilingWorkflowDraft(
     name: string;
     description?: string;
     clearanceTypeId?: string | null;
+    filingFlowCategory?: string | null;
     nodes: any[];
     edges: any[];
   }
@@ -7042,6 +7225,7 @@ export async function saveFilingWorkflowDraft(
       data: {
         orgId,
         clearanceTypeId: data.clearanceTypeId || null,
+        filingFlowCategory: data.filingFlowCategory || null,
         name: data.name,
         description: data.description,
         isActive: true,
@@ -7079,6 +7263,7 @@ export async function saveFilingWorkflowDraft(
         name: data.name,
         description: data.description,
         clearanceTypeId: data.clearanceTypeId || null,
+        filingFlowCategory: data.filingFlowCategory !== undefined ? (data.filingFlowCategory || null) : undefined,
       },
     });
 
@@ -7313,7 +7498,7 @@ async function findActivePublishedFilingWorkflowVersionForJob(orgId: string, job
     template: {
       include: {
         clearanceType: {
-          select: { id: true, name: true },
+          select: { id: true, name: true, filingFlowCategory: true },
         },
       },
     },
@@ -7326,6 +7511,38 @@ async function findActivePublishedFilingWorkflowVersionForJob(orgId: string, job
     edges: true,
   } as const;
 
+  // Step 1: if job has a clearance type, resolve its filingFlowCategory
+  let filingFlowCategory: string | null = null;
+  if (jobTypeId) {
+    const jobType = await db.chaJobType.findUnique({
+      where: { id: jobTypeId },
+      select: { filingFlowCategory: true },
+    });
+    filingFlowCategory = jobType?.filingFlowCategory ?? null;
+  }
+
+  // Step 2: find template by filingFlowCategory (highest priority)
+  if (filingFlowCategory) {
+    const categoryVersion = await db.filingWorkflowVersion.findFirst({
+      where: {
+        isActive: true,
+        isPublished: true,
+        template: {
+          orgId,
+          isActive: true,
+          filingFlowCategory,
+          clearanceTypeId: null,
+        },
+      },
+      include,
+      orderBy: [{ versionNumber: "desc" }, { updatedAt: "desc" }],
+    });
+    if (categoryVersion) {
+      return categoryVersion;
+    }
+  }
+
+  // Step 3: find template scoped to this specific clearance type
   if (jobTypeId) {
     const scopedVersion = await db.filingWorkflowVersion.findFirst({
       where: {
@@ -7340,12 +7557,12 @@ async function findActivePublishedFilingWorkflowVersionForJob(orgId: string, job
       include,
       orderBy: [{ versionNumber: "desc" }, { updatedAt: "desc" }],
     });
-
     if (scopedVersion) {
       return scopedVersion;
     }
   }
 
+  // Step 4: fall back to the generic catch-all template (no category, no clearance type)
   return db.filingWorkflowVersion.findFirst({
     where: {
       isActive: true,
@@ -7354,6 +7571,7 @@ async function findActivePublishedFilingWorkflowVersionForJob(orgId: string, job
         orgId,
         isActive: true,
         clearanceTypeId: null,
+        filingFlowCategory: null,
       },
     },
     include,

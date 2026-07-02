@@ -79,7 +79,13 @@ export default async function ChaDashboard() {
       },
       include: {
         customer: { select: { name: true } },
-        jobType: { select: { name: true } },
+        jobType: { select: { name: true, movementDirection: true } },
+        filing: {
+          select: {
+            billOfEntryNumber: true,
+            shippingBillNumber: true,
+          },
+        },
         assignments: { select: { userId: true } },
         primaryOwner: { select: { id: true, name: true } },
         deletionRequests: {
@@ -255,12 +261,14 @@ export default async function ChaDashboard() {
                   <DataTableHead>Job Number</DataTableHead>
                   <DataTableHead>Customer</DataTableHead>
                   <DataTableHead>Job Type</DataTableHead>
+                  <DataTableHead>BOE / SB Number</DataTableHead>
+                  <DataTableHead>Created On</DataTableHead>
                   <DataTableHead>Current Stage</DataTableHead>
                   <DataTableHead>Priority</DataTableHead>
                 </tr>
               </DataTableHeader>
               <DataTableBody>
-                <DataTableEmpty colSpan={5} message="You don't have any active job assignments yet." />
+                <DataTableEmpty colSpan={7} message="You don't have any active job assignments yet." />
               </DataTableBody>
             </>
           ) : (
@@ -270,6 +278,8 @@ export default async function ChaDashboard() {
                   <DataTableHead>Job Number</DataTableHead>
                   <DataTableHead>Customer</DataTableHead>
                   <DataTableHead>Job Type</DataTableHead>
+                  <DataTableHead>BOE / SB Number</DataTableHead>
+                  <DataTableHead>Created On</DataTableHead>
                   <DataTableHead>Current Stage</DataTableHead>
                   <DataTableHead>Priority</DataTableHead>
                 </tr>
@@ -292,6 +302,20 @@ export default async function ChaDashboard() {
                     </DataTableCell>
                     <DataTableCell>{job.customer.name}</DataTableCell>
                     <DataTableCell className="ds-label">{job.jobType.name}</DataTableCell>
+                    <DataTableCell className="ds-numeric text-on-surface-variant">
+                      {job.jobType.movementDirection === "IMPORT"
+                        ? job.filing?.billOfEntryNumber || "Pending"
+                        : job.jobType.movementDirection === "EXPORT"
+                          ? job.filing?.shippingBillNumber || "Pending"
+                          : job.filing?.billOfEntryNumber || job.filing?.shippingBillNumber || "Pending"}
+                    </DataTableCell>
+                    <DataTableCell className="text-on-surface-variant">
+                      {job.createdAt.toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </DataTableCell>
                     <DataTableCell>
                       <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${
                         job.stage === "FILING"

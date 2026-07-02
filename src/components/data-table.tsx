@@ -31,11 +31,13 @@ export function DataTable({
   );
 
   return (
-    <div className={cn("w-full overflow-x-auto rounded-2xl border border-outline-variant/40 bg-surface text-on-surface shadow-sm", className)}>
+    <div className={cn("w-full overflow-hidden rounded-xl border border-outline-variant bg-surface text-on-surface shadow-sm", className)}>
       {toolbar}
-      <table className={cn("min-w-full w-full text-sm", tableClassName)} {...props}>
-        {otherChildren}
-      </table>
+      <div className="overflow-x-auto">
+        <table className={cn("ds-table min-w-full w-full text-sm", tableClassName)} {...props}>
+          {otherChildren}
+        </table>
+      </div>
     </div>
   );
 }
@@ -59,7 +61,7 @@ export function DataTableBody({
   className,
   ...props
 }: HTMLAttributes<HTMLTableSectionElement>) {
-  return <tbody className={cn("divide-y divide-outline-variant/30", className)} {...props} />;
+  return <tbody className={className} {...props} />;
 }
 
 export function DataTableRow({
@@ -88,7 +90,7 @@ export function DataTableCell({
   className,
   ...props
 }: TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-5 py-2.5 align-middle text-sm text-on-surface", className)} {...props} />;
+  return <td className={cn("px-5 py-2.5 align-middle text-sm font-normal text-on-surface", className)} {...props} />;
 }
 
 export function DataTablePrimaryLinkCell({

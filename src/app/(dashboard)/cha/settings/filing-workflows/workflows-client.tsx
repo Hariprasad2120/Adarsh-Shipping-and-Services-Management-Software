@@ -91,13 +91,7 @@ type NodeDraft = {
   name: string;
   description: string;
   category: string;
-  nodeType:
-    | "CHECKLIST_NODE"
-    | "START"
-    | "END"
-    | "DECISION"
-    | "SECTION"
-    | "NOTIFICATION";
+  nodeType: "CHECKLIST_NODE" | "START" | "END" | "DECISION" | "SECTION" | "NOTIFICATION";
   sectionKey: string;
   sectionName: string;
   branchKey: string;
@@ -138,11 +132,7 @@ function createId(prefix: string) {
 }
 
 function slugify(value: string) {
-  const normalized = value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
+  const normalized = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
   return normalized || "node";
 }
 
@@ -154,19 +144,9 @@ function normalizeDocumentValidity(item: any): DocumentValidityDraft {
   return {
     documentType: item.documentType || "",
     requiresValidity: !!item.requiresValidity,
-    validityDuration:
-      item.validityDuration === null ||
-      item.validityDuration === undefined ||
-      item.validityDuration === ""
-        ? null
-        : Math.max(1, Number(item.validityDuration)),
+    validityDuration: item.validityDuration === null || item.validityDuration === undefined || item.validityDuration === "" ? null : Math.max(1, Number(item.validityDuration)),
     validityUnit: normalizeValidityUnit(item.validityUnit),
-    warningBeforeDuration:
-      item.warningBeforeDuration === null ||
-      item.warningBeforeDuration === undefined ||
-      item.warningBeforeDuration === ""
-        ? null
-        : Math.max(1, Number(item.warningBeforeDuration)),
+    warningBeforeDuration: item.warningBeforeDuration === null || item.warningBeforeDuration === undefined || item.warningBeforeDuration === "" ? null : Math.max(1, Number(item.warningBeforeDuration)),
     warningBeforeUnit: normalizeValidityUnit(item.warningBeforeUnit),
     notifyBeforeExpiry: !!item.notifyBeforeExpiry,
   };
@@ -182,13 +162,8 @@ function normalizeChecklistItem(item: any, index: number): ChecklistItemDraft {
     requiresRemarks: !!item.requiresRemarks,
     allowsUpload: !!item.allowsUpload,
     minUploads: Number(item.minUploads ?? 0),
-    maxUploads:
-      item.maxUploads === null || item.maxUploads === undefined
-        ? null
-        : Number(item.maxUploads),
-    acceptedFileTypes: Array.isArray(item.acceptedFileTypes)
-      ? item.acceptedFileTypes
-      : [],
+    maxUploads: item.maxUploads === null || item.maxUploads === undefined ? null : Number(item.maxUploads),
+    acceptedFileTypes: Array.isArray(item.acceptedFileTypes) ? item.acceptedFileTypes : [],
     deadlineDuration: Number(item.deadlineDuration ?? 2),
     deadlineUnit: normalizeValidityUnit(item.deadlineUnit),
     delayRemarksRequired: item.delayRemarksRequired !== false,
@@ -205,13 +180,8 @@ function normalizePhotoRequirement(item: any): PhotoRequirementDraft {
     description: item.description || "",
     isMandatory: item.isMandatory !== false,
     minPhotos: Number(item.minPhotos ?? 1),
-    maxPhotos:
-      item.maxPhotos === null || item.maxPhotos === undefined
-        ? null
-        : Number(item.maxPhotos),
-    acceptedFileTypes: Array.isArray(item.acceptedFileTypes)
-      ? item.acceptedFileTypes
-      : ["image/jpeg", "image/png", "application/pdf"],
+    maxPhotos: item.maxPhotos === null || item.maxPhotos === undefined ? null : Number(item.maxPhotos),
+    acceptedFileTypes: Array.isArray(item.acceptedFileTypes) ? item.acceptedFileTypes : ["image/jpeg", "image/png", "application/pdf"],
     isVisibleInTimeline: item.isVisibleInTimeline !== false,
   };
 }
@@ -234,23 +204,17 @@ function normalizeNode(node: any, index: number): NodeDraft {
     positionX: Number(node.positionX ?? 120 + index * 40),
     positionY: Number(node.positionY ?? 120 + index * 30),
     slaDuration: Number(node.slaDuration ?? 2),
-    slaUnit:
-      node.slaUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : "BUSINESS_DAYS",
+    slaUnit: node.slaUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : "BUSINESS_DAYS",
     commentsRequired: !!node.commentsRequired,
     canBeSkipped: !!node.canBeSkipped,
     canBeRevisited: node.canBeRevisited !== false,
     approvalRequired: !!node.approvalRequired,
     approvalRoles: Array.isArray(node.approvalRoles) ? node.approvalRoles : [],
-    requireAllMandatoryChecklistItems:
-      node.requireAllMandatoryChecklistItems !== false,
+    requireAllMandatoryChecklistItems: node.requireAllMandatoryChecklistItems !== false,
     requireMandatoryPhotos: !!node.requireMandatoryPhotos,
     allowedRoles: Array.isArray(node.allowedRoles) ? node.allowedRoles : [],
-    checklistItems: Array.isArray(node.checklistItems)
-      ? node.checklistItems.map(normalizeChecklistItem)
-      : [],
-    photoRequirements: Array.isArray(node.photoRequirements)
-      ? node.photoRequirements.map(normalizePhotoRequirement)
-      : [],
+    checklistItems: Array.isArray(node.checklistItems) ? node.checklistItems.map(normalizeChecklistItem) : [],
+    photoRequirements: Array.isArray(node.photoRequirements) ? node.photoRequirements.map(normalizePhotoRequirement) : [],
   };
 }
 
@@ -267,11 +231,7 @@ function buildValidation(nodes: NodeDraft[], edges: EdgeDraft[]) {
 
   const startNodes = activeNodes.filter((node) => node.isStart);
   if (startNodes.length !== 1) {
-    errors.push(
-      startNodes.length === 0
-        ? "Exactly one start node is required."
-        : "Only one start node can be active.",
-    );
+    errors.push(startNodes.length === 0 ? "Exactly one start node is required." : "Only one start node can be active.");
   }
 
   for (const node of activeNodes) {
@@ -280,34 +240,20 @@ function buildValidation(nodes: NodeDraft[], edges: EdgeDraft[]) {
     }
     const activeItems = node.checklistItems.filter((item) => item.isActive);
     if (node.nodeType === "CHECKLIST_NODE" && activeItems.length === 0) {
-      errors.push(
-        `Checklist node ${node.name || node.key} must have at least one active checklist item.`,
-      );
+      errors.push(`Checklist node ${node.name || node.key} must have at least one active checklist item.`);
     }
     if (node.nodeType === "NOTIFICATION" && activeItems.length > 0) {
-      warnings.push(
-        `Notification node ${node.name || node.key} ignores checklist items.`,
-      );
+      warnings.push(`Notification node ${node.name || node.key} ignores checklist items.`);
     }
     for (const item of activeItems) {
       if (!item.label.trim()) {
-        errors.push(
-          `Checklist items in ${node.name || node.key} must have a name.`,
-        );
+        errors.push(`Checklist items in ${node.name || node.key} must have a name.`);
       }
       if (item.deadlineDuration <= 0) {
-        errors.push(
-          `Checklist item "${item.label || "Untitled"}" must have a valid SLA duration.`,
-        );
+        errors.push(`Checklist item "${item.label || "Untitled"}" must have a valid SLA duration.`);
       }
-      if (
-        item.allowsUpload &&
-        item.maxUploads !== null &&
-        item.maxUploads < item.minUploads
-      ) {
-        errors.push(
-          `Checklist item "${item.label || "Untitled"}" has max uploads lower than min uploads.`,
-        );
+      if (item.allowsUpload && item.maxUploads !== null && item.maxUploads < item.minUploads) {
+        errors.push(`Checklist item "${item.label || "Untitled"}" has max uploads lower than min uploads.`);
       }
     }
   }
@@ -316,13 +262,8 @@ function buildValidation(nodes: NodeDraft[], edges: EdgeDraft[]) {
     if (edge.sourceKey === edge.targetKey) {
       errors.push(`Node ${edge.sourceKey} cannot connect to itself.`);
     }
-    if (
-      !activeNodeMap.has(edge.sourceKey) ||
-      !activeNodeMap.has(edge.targetKey)
-    ) {
-      errors.push(
-        `Edge ${edge.sourceKey} -> ${edge.targetKey} points to an inactive or missing node.`,
-      );
+    if (!activeNodeMap.has(edge.sourceKey) || !activeNodeMap.has(edge.targetKey)) {
+      errors.push(`Edge ${edge.sourceKey} -> ${edge.targetKey} points to an inactive or missing node.`);
     }
     const signature = `${edge.sourceKey}:${edge.targetKey}`;
     if (edgeSet.has(signature)) {
@@ -333,13 +274,9 @@ function buildValidation(nodes: NodeDraft[], edges: EdgeDraft[]) {
 
   for (const node of activeNodes) {
     if (node.nodeType === "NOTIFICATION") {
-      const outgoingCount = edges.filter(
-        (edge) => edge.sourceKey === node.key,
-      ).length;
+      const outgoingCount = edges.filter((edge) => edge.sourceKey === node.key).length;
       if (outgoingCount > 1) {
-        errors.push(
-          `Notification node ${node.name || node.key} can have at most one outgoing edge.`,
-        );
+        errors.push(`Notification node ${node.name || node.key} can have at most one outgoing edge.`);
       }
     }
   }
@@ -358,9 +295,7 @@ function buildValidation(nodes: NodeDraft[], edges: EdgeDraft[]) {
     }
     const disconnected = activeNodes.filter((node) => !visited.has(node.key));
     if (disconnected.length > 0) {
-      errors.push(
-        `Disconnected active nodes: ${disconnected.map((node) => node.name).join(", ")}.`,
-      );
+      errors.push(`Disconnected active nodes: ${disconnected.map((node) => node.name).join(", ")}.`);
     }
   }
 
@@ -368,9 +303,7 @@ function buildValidation(nodes: NodeDraft[], edges: EdgeDraft[]) {
     const source = activeNodeMap.get(edge.sourceKey);
     const target = activeNodeMap.get(edge.targetKey);
     if (source && target && target.positionY <= source.positionY) {
-      warnings.push(
-        `Double-back path configured: ${source.name} -> ${target.name}.`,
-      );
+      warnings.push(`Double-back path configured: ${source.name} -> ${target.name}.`);
     }
   }
 
@@ -379,31 +312,17 @@ function buildValidation(nodes: NodeDraft[], edges: EdgeDraft[]) {
 
 function serializeWorkflowSnapshot(nodes: NodeDraft[], edges: EdgeDraft[]) {
   return JSON.stringify({
-    nodes: nodes
-      .map((node) => ({
-        ...node,
-        checklistItems: [...node.checklistItems].sort(
-          (a, b) => a.sortOrder - b.sortOrder,
-        ),
-      }))
-      .sort((a, b) => a.key.localeCompare(b.key)),
+    nodes: nodes.map((node) => ({
+      ...node,
+      checklistItems: [...node.checklistItems].sort((a, b) => a.sortOrder - b.sortOrder),
+    })).sort((a, b) => a.key.localeCompare(b.key)),
     edges: [...edges]
-      .map((edge) => ({
-        sourceKey: edge.sourceKey,
-        targetKey: edge.targetKey,
-        label: edge.label || null,
-      }))
-      .sort((a, b) =>
-        `${a.sourceKey}:${a.targetKey}`.localeCompare(
-          `${b.sourceKey}:${b.targetKey}`,
-        ),
-      ),
+      .map((edge) => ({ sourceKey: edge.sourceKey, targetKey: edge.targetKey, label: edge.label || null }))
+      .sort((a, b) => `${a.sourceKey}:${a.targetKey}`.localeCompare(`${b.sourceKey}:${b.targetKey}`)),
   });
 }
 
-function createDocumentValidityDraft(
-  options: DocumentRuleOptions = {},
-): DocumentValidityDraft {
+function createDocumentValidityDraft(options: DocumentRuleOptions = {}): DocumentValidityDraft {
   return {
     documentType: options.documentType || "",
     requiresValidity: !!options.requiresValidity,
@@ -415,11 +334,7 @@ function createDocumentValidityDraft(
   };
 }
 
-function createChecklistItemDraft(
-  label: string,
-  sortOrder = 1,
-  options: DocumentRuleOptions = {},
-): ChecklistItemDraft {
+function createChecklistItemDraft(label: string, sortOrder = 1, options: DocumentRuleOptions = {}): ChecklistItemDraft {
   return {
     ...createDocumentValidityDraft(options),
     id: createId("item"),
@@ -439,26 +354,17 @@ function createChecklistItemDraft(
   };
 }
 
-function createStageUploadSlot(
-  label: string,
-  options: DocumentRuleOptions = {},
-): PhotoRequirementDraft {
+function createStageUploadSlot(label: string, options: DocumentRuleOptions = {}): PhotoRequirementDraft {
   const requiresUpload = options.allowsUpload !== false;
   return {
     ...createDocumentValidityDraft(options),
     id: createId("photo"),
     label,
-    description:
-      options.description ||
-      "Upload supporting document, photo, or proof for this workflow node.",
+    description: options.description || "Upload supporting document, photo, or proof for this workflow node.",
     isMandatory: options.isMandatory !== false,
     minPhotos: Number(options.minUploads ?? (requiresUpload ? 1 : 0)),
     maxPhotos: options.maxUploads ?? null,
-    acceptedFileTypes: options.acceptedFileTypes || [
-      "image/jpeg",
-      "image/png",
-      "application/pdf",
-    ],
+    acceptedFileTypes: options.acceptedFileTypes || ["image/jpeg", "image/png", "application/pdf"],
     isVisibleInTimeline: true,
   };
 }
@@ -534,10 +440,7 @@ function createWorkflowChecklistNode(
     id: createId("node"),
     key,
     name: label,
-    description:
-      options.nodeDescription ||
-      options.description ||
-      "Standalone configurable checklist node. It can be rerouted, delayed, revisited, or branched independently.",
+    description: options.nodeDescription || options.description || "Standalone configurable checklist node. It can be rerouted, delayed, revisited, or branched independently.",
     category: "CHECKLIST_ITEM",
     nodeType: "CHECKLIST_NODE",
     sectionKey,
@@ -556,16 +459,11 @@ function createWorkflowChecklistNode(
     canBeRevisited: true,
     approvalRequired: false,
     approvalRoles: [],
-    requireAllMandatoryChecklistItems:
-      options.isMandatory === false ? false : true,
+    requireAllMandatoryChecklistItems: options.isMandatory === false ? false : true,
     requireMandatoryPhotos: !!options.allowsUpload,
     allowedRoles: [],
     checklistItems: [createChecklistItemDraft(label, 1, options)],
-    photoRequirements:
-      options.photoRequirements ||
-      (options.allowsUpload
-        ? [createStageUploadSlot(`${label} document`, options)]
-        : []),
+    photoRequirements: options.photoRequirements || (options.allowsUpload ? [createStageUploadSlot(`${label} document`, options)] : []),
   };
 }
 
@@ -580,8 +478,7 @@ function createWorkflowNotificationNode(
     id: createId("node"),
     key,
     name,
-    description:
-      "Automatically notifies the job owner, assigned manager, and all assigned users, then moves to the next connected node.",
+    description: "Automatically notifies the job owner, assigned manager, and all assigned users, then moves to the next connected node.",
     category: "NOTIFICATION",
     nodeType: "NOTIFICATION",
     sectionKey: "",
@@ -608,11 +505,7 @@ function createWorkflowNotificationNode(
   };
 }
 
-function connectNodes(
-  sourceKey: string,
-  targetKey: string,
-  label?: string,
-): EdgeDraft {
+function connectNodes(sourceKey: string, targetKey: string, label?: string): EdgeDraft {
   return {
     id: createId("edge"),
     sourceKey,
@@ -656,15 +549,7 @@ function buildChaFilingBlueprintDraft() {
     isStart = false,
     options: Parameters<typeof createWorkflowStageNode>[6] = {},
   ) => {
-    const node = createWorkflowStageNode(
-      name,
-      key,
-      order++,
-      x,
-      y,
-      isStart,
-      options,
-    );
+    const node = createWorkflowStageNode(name, key, order++, x, y, isStart, options);
     nodes.push(node);
     return node;
   };
@@ -680,18 +565,7 @@ function buildChaFilingBlueprintDraft() {
     branchKey = "",
     options: Parameters<typeof createWorkflowChecklistNode>[9] = {},
   ) => {
-    const node = createWorkflowChecklistNode(
-      label,
-      key,
-      order++,
-      x,
-      y,
-      sectionName,
-      sectionKey,
-      branchName,
-      branchKey,
-      options,
-    );
+    const node = createWorkflowChecklistNode(label, key, order++, x, y, sectionName, sectionKey, branchName, branchKey, options);
     nodes.push(node);
     return node;
   };
@@ -732,83 +606,72 @@ function buildChaFilingBlueprintDraft() {
     return lastKey;
   };
 
-  const examinationOptions: Parameters<typeof createWorkflowChecklistNode>[9] =
-    {
-      allowsUpload: true,
-      minUploads: 2,
-      acceptedFileTypes: imageAndReportTypes,
-      documentType: "Examination Photos + CE/Lab Report",
-      requiresValidity: true,
-      validityDuration: null,
-      validityUnit: "CALENDAR_DAYS",
-      warningBeforeDuration: 1,
-      warningBeforeUnit: "CALENDAR_DAYS",
-      notifyBeforeExpiry: true,
-      description:
-        "Upload examination photos and CE/Lab report file. Capture validity date so warnings and notifications can run before expiry.",
-      nodeDescription:
-        "Examination requires photos, CE/Lab report upload, validity tracking, warning, and notification.",
-      photoRequirements: [
-        createStageUploadSlot("Examination photos", {
-          allowsUpload: true,
-          isMandatory: true,
-          minUploads: 1,
-          acceptedFileTypes: ["image/jpeg", "image/png"],
-          documentType: "Examination Photos",
-          description: "Upload one or more examination photos.",
-        }),
-        createStageUploadSlot("CE/Lab Report", {
-          allowsUpload: true,
-          isMandatory: true,
-          minUploads: 1,
-          acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
-          documentType: "CE/Lab Report",
-          requiresValidity: true,
-          validityDuration: null,
-          validityUnit: "CALENDAR_DAYS",
-          warningBeforeDuration: 1,
-          warningBeforeUnit: "CALENDAR_DAYS",
-          notifyBeforeExpiry: true,
-          description:
-            "Upload CE/Lab report and capture validity date for warning/notification.",
-        }),
-      ],
-    };
+  const examinationOptions: Parameters<typeof createWorkflowChecklistNode>[9] = {
+    allowsUpload: true,
+    minUploads: 2,
+    acceptedFileTypes: imageAndReportTypes,
+    documentType: "Examination Photos + CE/Lab Report",
+    requiresValidity: true,
+    validityDuration: null,
+    validityUnit: "CALENDAR_DAYS",
+    warningBeforeDuration: 1,
+    warningBeforeUnit: "CALENDAR_DAYS",
+    notifyBeforeExpiry: true,
+    description: "Upload examination photos and CE/Lab report file. Capture validity date so warnings and notifications can run before expiry.",
+    nodeDescription: "Examination requires photos, CE/Lab report upload, validity tracking, warning, and notification.",
+    photoRequirements: [
+      createStageUploadSlot("Examination photos", {
+        allowsUpload: true,
+        isMandatory: true,
+        minUploads: 1,
+        acceptedFileTypes: ["image/jpeg", "image/png"],
+        documentType: "Examination Photos",
+        description: "Upload one or more examination photos.",
+      }),
+      createStageUploadSlot("CE/Lab Report", {
+        allowsUpload: true,
+        isMandatory: true,
+        minUploads: 1,
+        acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
+        documentType: "CE/Lab Report",
+        requiresValidity: true,
+        validityDuration: null,
+        validityUnit: "CALENDAR_DAYS",
+        warningBeforeDuration: 1,
+        warningBeforeUnit: "CALENDAR_DAYS",
+        notifyBeforeExpiry: true,
+        description: "Upload CE/Lab report and capture validity date for warning/notification.",
+      }),
+    ],
+  };
 
-  const dutyOptionalOptions: Parameters<typeof createWorkflowChecklistNode>[9] =
-    {
-      isMandatory: false,
-      canBeSkipped: true,
-      description:
-        "Duty is optional. Users can proceed without completing this checklist node.",
-      nodeDescription:
-        "Optional duty node. This can be skipped when duty is not applicable or already handled.",
-    };
+  const dutyOptionalOptions: Parameters<typeof createWorkflowChecklistNode>[9] = {
+    isMandatory: false,
+    canBeSkipped: true,
+    description: "Duty is optional. Users can proceed without completing this checklist node.",
+    nodeDescription: "Optional duty node. This can be skipped when duty is not applicable or already handled.",
+  };
 
-  const oocDocumentOptions: Parameters<typeof createWorkflowChecklistNode>[9] =
-    {
-      allowsUpload: true,
-      minUploads: 1,
-      acceptedFileTypes: pdfAndImageTypes,
-      documentType: "OOC Document",
-      description:
-        "Upload the Out of Charge document before completing this node.",
-      nodeDescription: "OOC requires document upload.",
-      photoRequirements: [
-        createStageUploadSlot("OOC document", {
-          allowsUpload: true,
-          isMandatory: true,
-          minUploads: 1,
-          acceptedFileTypes: pdfAndImageTypes,
-          documentType: "OOC Document",
-          description: "Upload OOC document.",
-        }),
-      ],
-    };
+  const oocDocumentOptions: Parameters<typeof createWorkflowChecklistNode>[9] = {
+    allowsUpload: true,
+    minUploads: 1,
+    acceptedFileTypes: pdfAndImageTypes,
+    documentType: "OOC Document",
+    description: "Upload the Out of Charge document before completing this node.",
+    nodeDescription: "OOC requires document upload.",
+    photoRequirements: [
+      createStageUploadSlot("OOC document", {
+        allowsUpload: true,
+        isMandatory: true,
+        minUploads: 1,
+        acceptedFileTypes: pdfAndImageTypes,
+        documentType: "OOC Document",
+        description: "Upload OOC document.",
+      }),
+    ],
+  };
 
-  const deliveryEWayBillOptions: Parameters<
-    typeof createWorkflowChecklistNode
-  >[9] = {
+  const deliveryEWayBillOptions: Parameters<typeof createWorkflowChecklistNode>[9] = {
     allowsUpload: true,
     minUploads: 1,
     acceptedFileTypes: eWayBillTypes,
@@ -819,10 +682,8 @@ function buildChaFilingBlueprintDraft() {
     warningBeforeDuration: 1,
     warningBeforeUnit: "CALENDAR_DAYS",
     notifyBeforeExpiry: true,
-    description:
-      "Upload E-Way Bill and capture validity date. Warning and notification should run before expiry.",
-    nodeDescription:
-      "Delivery requires E-Way Bill upload with validity tracking and expiry notification.",
+    description: "Upload E-Way Bill and capture validity date. Warning and notification should run before expiry.",
+    nodeDescription: "Delivery requires E-Way Bill upload with validity tracking and expiry notification.",
     photoRequirements: [
       createStageUploadSlot("E-Way Bill", {
         allowsUpload: true,
@@ -836,16 +697,12 @@ function buildChaFilingBlueprintDraft() {
         warningBeforeDuration: 1,
         warningBeforeUnit: "CALENDAR_DAYS",
         notifyBeforeExpiry: true,
-        description:
-          "Upload E-Way Bill and capture validity date for warning/notification.",
+        description: "Upload E-Way Bill and capture validity date for warning/notification.",
       }),
     ],
   };
 
-  const requiredDocumentOptions = (
-    documentType: string,
-    description: string,
-  ): Parameters<typeof createWorkflowChecklistNode>[9] => ({
+  const requiredDocumentOptions = (documentType: string, description: string): Parameters<typeof createWorkflowChecklistNode>[9] => ({
     allowsUpload: true,
     minUploads: 1,
     acceptedFileTypes: pdfAndImageTypes,
@@ -909,68 +766,32 @@ function buildChaFilingBlueprintDraft() {
     );
     addEdge(entrySourceKey, filingNode.key, entryEdgeLabel);
 
-    const checkTypeDecision = addStage(
-      `Choose ${flowLabel} Check Type`,
-      `${flowKey}_choose_check_type`,
-      centerX,
-      startY + rowGap * 2,
-      false,
-      {
-        category: "DECISION",
-        nodeType: "DECISION",
-        sectionKey: `${flowKey}_routing`,
-        sectionName: `${flowLabel} Routing`,
-        description: `User decision point: choose whether this ${flowKind === "IMPORT" ? "import" : "export"} filing needs First Check or Second Check.`,
-      },
-    );
+    const checkTypeDecision = addStage(`Choose ${flowLabel} Check Type`, `${flowKey}_choose_check_type`, centerX, startY + rowGap * 2, false, {
+      category: "DECISION",
+      nodeType: "DECISION",
+      sectionKey: `${flowKey}_routing`,
+      sectionName: `${flowLabel} Routing`,
+      description: `User decision point: choose whether this ${flowKind === "IMPORT" ? "import" : "export"} filing needs First Check or Second Check.`,
+    });
     addEdge(filingNode.key, checkTypeDecision.key, `After ${filingNodeLabel}`);
 
-    const firstCheckStage = addStage(
-      `${flowLabel} First Check`,
-      `${flowKey}_first_check`,
-      firstCheckX,
-      startY + rowGap * 3,
-      false,
-      {
-        sectionKey: `${flowKey}_first_check`,
-        sectionName: `${flowLabel} First Check`,
-        description: `${flowLabel} First Check workflow path selected by the user after ${filingNodeLabel}.`,
-      },
-    );
+    const firstCheckStage = addStage(`${flowLabel} First Check`, `${flowKey}_first_check`, firstCheckX, startY + rowGap * 3, false, {
+      sectionKey: `${flowKey}_first_check`,
+      sectionName: `${flowLabel} First Check`,
+      description: `${flowLabel} First Check workflow path selected by the user after ${filingNodeLabel}.`,
+    });
     addEdge(checkTypeDecision.key, firstCheckStage.key, "First Check");
 
     const firstCheckLastKey = addSequentialChecklistPath(
       [
-        {
-          label: copyGenerationLabel,
-          key: `${flowKey}_first_check_copy_generation`,
-        },
-        {
-          label: "Goods Registration",
-          key: `${flowKey}_first_check_goods_registration`,
-        },
-        {
-          label: "Examination",
-          key: `${flowKey}_first_check_examination`,
-          options: examinationOptions,
-        },
+        { label: copyGenerationLabel, key: `${flowKey}_first_check_copy_generation` },
+        { label: "Goods Registration", key: `${flowKey}_first_check_goods_registration` },
+        { label: "Examination", key: `${flowKey}_first_check_examination`, options: examinationOptions },
         { label: "Group Forward", key: `${flowKey}_first_check_group_forward` },
         { label: "Assessment", key: `${flowKey}_first_check_assessment` },
-        {
-          label: "Duty",
-          key: `${flowKey}_first_check_duty`,
-          options: dutyOptionalOptions,
-        },
-        {
-          label: "OOC",
-          key: `${flowKey}_first_check_ooc`,
-          options: oocDocumentOptions,
-        },
-        {
-          label: "Delivery",
-          key: `${flowKey}_first_check_delivery`,
-          options: deliveryEWayBillOptions,
-        },
+        { label: "Duty", key: `${flowKey}_first_check_duty`, options: dutyOptionalOptions },
+        { label: "OOC", key: `${flowKey}_first_check_ooc`, options: oocDocumentOptions },
+        { label: "Delivery", key: `${flowKey}_first_check_delivery`, options: deliveryEWayBillOptions },
       ],
       firstCheckX,
       startY + rowGap * 4,
@@ -982,80 +803,37 @@ function buildChaFilingBlueprintDraft() {
       `Start ${flowLabel} First Check`,
     );
 
-    const secondCheckStage = addStage(
-      `${flowLabel} Second Check`,
-      `${flowKey}_second_check`,
-      secondCheckX,
-      startY + rowGap * 3,
-      false,
-      {
-        sectionKey: `${flowKey}_second_check`,
-        sectionName: `${flowLabel} Second Check`,
-        description: `${flowLabel} Second Check workflow path selected by the user after ${filingNodeLabel}.`,
-      },
-    );
+    const secondCheckStage = addStage(`${flowLabel} Second Check`, `${flowKey}_second_check`, secondCheckX, startY + rowGap * 3, false, {
+      sectionKey: `${flowKey}_second_check`,
+      sectionName: `${flowLabel} Second Check`,
+      description: `${flowLabel} Second Check workflow path selected by the user after ${filingNodeLabel}.`,
+    });
     addEdge(checkTypeDecision.key, secondCheckStage.key, "Second Check");
 
-    const secondCheckDecision = addStage(
-      `Choose ${flowLabel} Second Check Category`,
-      `${flowKey}_choose_second_check_category`,
-      secondCheckX,
-      startY + rowGap * 4,
-      false,
-      {
-        category: "DECISION",
-        nodeType: "DECISION",
-        sectionKey: `${flowKey}_second_check`,
-        sectionName: `${flowLabel} Second Check`,
-        description: `User decision point under ${flowLabel} Second Check: choose RMS or Open Bill.`,
-      },
-    );
-    addEdge(
-      secondCheckStage.key,
-      secondCheckDecision.key,
-      "Choose RMS/Open Bill",
-    );
+    const secondCheckDecision = addStage(`Choose ${flowLabel} Second Check Category`, `${flowKey}_choose_second_check_category`, secondCheckX, startY + rowGap * 4, false, {
+      category: "DECISION",
+      nodeType: "DECISION",
+      sectionKey: `${flowKey}_second_check`,
+      sectionName: `${flowLabel} Second Check`,
+      description: `User decision point under ${flowLabel} Second Check: choose RMS or Open Bill.`,
+    });
+    addEdge(secondCheckStage.key, secondCheckDecision.key, "Choose RMS/Open Bill");
 
-    const rmsStage = addStage(
-      `${flowLabel} RMS`,
-      `${flowKey}_second_check_rms`,
-      rmsX,
-      startY + rowGap * 5,
-      false,
-      {
-        category: "BRANCH",
-        sectionKey: `${flowKey}_second_check`,
-        sectionName: `${flowLabel} Second Check`,
-        branchKey: "rms",
-        branchName: "RMS",
-        description: `${flowLabel} RMS branch under Second Check. Duty is copied from the other checks and comes before OOC.`,
-      },
-    );
+    const rmsStage = addStage(`${flowLabel} RMS`, `${flowKey}_second_check_rms`, rmsX, startY + rowGap * 5, false, {
+      category: "BRANCH",
+      sectionKey: `${flowKey}_second_check`,
+      sectionName: `${flowLabel} Second Check`,
+      branchKey: "rms",
+      branchName: "RMS",
+      description: `${flowLabel} RMS branch under Second Check. Duty is copied from the other checks and comes before OOC.`,
+    });
     addEdge(secondCheckDecision.key, rmsStage.key, "RMS");
 
     const rmsLastKey = addSequentialChecklistPath(
       [
-        {
-          label: "Duty",
-          key: `${flowKey}_second_check_rms_duty`,
-          options: dutyOptionalOptions,
-        },
-        {
-          label: "OOC",
-          key: `${flowKey}_second_check_rms_ooc`,
-          options: requiredDocumentOptions(
-            `${flowLabel} RMS OOC Document`,
-            `Upload ${flowLabel} RMS OOC document.`,
-          ),
-        },
-        {
-          label: "Delivery",
-          key: `${flowKey}_second_check_rms_delivery`,
-          options: requiredDocumentOptions(
-            `${flowLabel} RMS Delivery Document`,
-            `Upload delivery document for ${flowLabel} RMS.`,
-          ),
-        },
+        { label: "Duty", key: `${flowKey}_second_check_rms_duty`, options: dutyOptionalOptions },
+        { label: "OOC", key: `${flowKey}_second_check_rms_ooc`, options: requiredDocumentOptions(`${flowLabel} RMS OOC Document`, `Upload ${flowLabel} RMS OOC document.`) },
+        { label: "Delivery", key: `${flowKey}_second_check_rms_delivery`, options: requiredDocumentOptions(`${flowLabel} RMS Delivery Document`, `Upload delivery document for ${flowLabel} RMS.`) },
       ],
       rmsX,
       startY + rowGap * 6,
@@ -1067,53 +845,24 @@ function buildChaFilingBlueprintDraft() {
       `Start ${flowLabel} RMS`,
     );
 
-    const openBillStage = addStage(
-      `${flowLabel} Open Bill`,
-      `${flowKey}_second_check_open_bill`,
-      openBillX,
-      startY + rowGap * 5,
-      false,
-      {
-        category: "BRANCH",
-        sectionKey: `${flowKey}_second_check`,
-        sectionName: `${flowLabel} Second Check`,
-        branchKey: "open_bill",
-        branchName: "Open Bill",
-        description: `${flowLabel} Open Bill branch under Second Check.`,
-      },
-    );
+    const openBillStage = addStage(`${flowLabel} Open Bill`, `${flowKey}_second_check_open_bill`, openBillX, startY + rowGap * 5, false, {
+      category: "BRANCH",
+      sectionKey: `${flowKey}_second_check`,
+      sectionName: `${flowLabel} Second Check`,
+      branchKey: "open_bill",
+      branchName: "Open Bill",
+      description: `${flowLabel} Open Bill branch under Second Check.`,
+    });
     addEdge(secondCheckDecision.key, openBillStage.key, "Open Bill");
 
     const openBillLastKey = addSequentialChecklistPath(
       [
-        {
-          label: "Assessment",
-          key: `${flowKey}_second_check_open_bill_assessment`,
-        },
-        {
-          label: "Goods Registration",
-          key: `${flowKey}_second_check_open_bill_goods_registration`,
-        },
-        {
-          label: "Examination",
-          key: `${flowKey}_second_check_open_bill_examination`,
-          options: examinationOptions,
-        },
-        {
-          label: "Duty",
-          key: `${flowKey}_second_check_open_bill_duty`,
-          options: dutyOptionalOptions,
-        },
-        {
-          label: "OOC",
-          key: `${flowKey}_second_check_open_bill_ooc`,
-          options: oocDocumentOptions,
-        },
-        {
-          label: "Delivery",
-          key: `${flowKey}_second_check_open_bill_delivery`,
-          options: deliveryEWayBillOptions,
-        },
+        { label: "Assessment", key: `${flowKey}_second_check_open_bill_assessment` },
+        { label: "Goods Registration", key: `${flowKey}_second_check_open_bill_goods_registration` },
+        { label: "Examination", key: `${flowKey}_second_check_open_bill_examination`, options: examinationOptions },
+        { label: "Duty", key: `${flowKey}_second_check_open_bill_duty`, options: dutyOptionalOptions },
+        { label: "OOC", key: `${flowKey}_second_check_open_bill_ooc`, options: oocDocumentOptions },
+        { label: "Delivery", key: `${flowKey}_second_check_open_bill_delivery`, options: deliveryEWayBillOptions },
       ],
       openBillX,
       startY + rowGap * 6,
@@ -1132,21 +881,13 @@ function buildChaFilingBlueprintDraft() {
     };
   };
 
-  const flowDecision = addStage(
-    "Choose Filing Flow",
-    "choose_filing_flow",
-    startX,
-    startY,
-    true,
-    {
-      category: "DECISION",
-      nodeType: "DECISION",
-      sectionKey: "routing",
-      sectionName: "Routing",
-      description:
-        "Choose Import/Bill of Entry flow or Export/Shipping Bill flow. Backend should later auto-select this from clearance type.",
-    },
-  );
+  const flowDecision = addStage("Choose Filing Flow", "choose_filing_flow", startX, startY, true, {
+    category: "DECISION",
+    nodeType: "DECISION",
+    sectionKey: "routing",
+    sectionName: "Routing",
+    description: "Choose Import/Bill of Entry flow or Export/Shipping Bill flow. Backend should later auto-select this from clearance type.",
+  });
 
   const importFlow = buildBillFlow({
     flowLabel: "Import BE",
@@ -1181,21 +922,13 @@ function buildChaFilingBlueprintDraft() {
   });
 
   const amendmentDecisionY = startY + rowGap * 14;
-  const amendmentDecision = addStage(
-    "Amendment Required?",
-    "amendment_required",
-    startX,
-    amendmentDecisionY,
-    false,
-    {
-      category: "DECISION",
-      nodeType: "DECISION",
-      sectionKey: "amendment",
-      sectionName: "Amendment",
-      description:
-        "Optional decision point. User can skip amendment or proceed to amendment when required.",
-    },
-  );
+  const amendmentDecision = addStage("Amendment Required?", "amendment_required", startX, amendmentDecisionY, false, {
+    category: "DECISION",
+    nodeType: "DECISION",
+    sectionKey: "amendment",
+    sectionName: "Amendment",
+    description: "Optional decision point. User can skip amendment or proceed to amendment when required.",
+  });
 
   [
     { key: importFlow.firstCheckLastKey, label: "Import First Check Complete" },
@@ -1206,36 +939,21 @@ function buildChaFilingBlueprintDraft() {
     { key: exportFlow.openBillLastKey, label: "Export Open Bill Complete" },
   ].forEach(({ key, label }) => addEdge(key, amendmentDecision.key, label));
 
-  const amendment = addStage(
-    "Amendment",
-    "amendment",
-    startX,
-    amendmentDecisionY + rowGap,
-    false,
-    {
-      category: "OPTIONAL_STAGE",
-      sectionKey: "amendment",
-      sectionName: "Amendment",
-      canBeSkipped: true,
-      description:
-        "Optional amendment workflow placeholder. Add configurable amendment checklist nodes only when amendment is required.",
-    },
-  );
+  const amendment = addStage("Amendment", "amendment", startX, amendmentDecisionY + rowGap, false, {
+    category: "OPTIONAL_STAGE",
+    sectionKey: "amendment",
+    sectionName: "Amendment",
+    canBeSkipped: true,
+    description: "Optional amendment workflow placeholder. Add configurable amendment checklist nodes only when amendment is required.",
+  });
 
-  const completed = addStage(
-    "Filing Complete",
-    "filing_complete",
-    startX,
-    amendmentDecisionY + rowGap * 2,
-    false,
-    {
-      category: "END",
-      nodeType: "END",
-      sectionKey: "completed",
-      sectionName: "Completed",
-      description: "End of the filing workflow.",
-    },
-  );
+  const completed = addStage("Filing Complete", "filing_complete", startX, amendmentDecisionY + rowGap * 2, false, {
+    category: "END",
+    nodeType: "END",
+    sectionKey: "completed",
+    sectionName: "Completed",
+    description: "End of the filing workflow.",
+  });
 
   addEdge(amendmentDecision.key, amendment.key, "Do Amendment");
   addEdge(amendmentDecision.key, completed.key, "Skip Amendment");
@@ -1249,20 +967,12 @@ function getConnectorPath(source: NodeDraft, target: NodeDraft) {
   const targetCenterX = target.positionX + NODE_WIDTH / 2;
   const targetCenterY = target.positionY + NODE_HEIGHT / 2;
   const isBackRoute = target.positionY <= source.positionY;
-  const isSideRoute =
-    Math.abs(targetCenterX - sourceCenterX) > NODE_WIDTH &&
-    Math.abs(targetCenterY - sourceCenterY) < NODE_HEIGHT * 1.4;
+  const isSideRoute = Math.abs(targetCenterX - sourceCenterX) > NODE_WIDTH && Math.abs(targetCenterY - sourceCenterY) < NODE_HEIGHT * 1.4;
 
   if (isBackRoute || isSideRoute) {
-    const startX =
-      targetCenterX < sourceCenterX
-        ? source.positionX
-        : source.positionX + NODE_WIDTH;
+    const startX = targetCenterX < sourceCenterX ? source.positionX : source.positionX + NODE_WIDTH;
     const startY = sourceCenterY;
-    const endX =
-      targetCenterX < sourceCenterX
-        ? target.positionX + NODE_WIDTH
-        : target.positionX;
+    const endX = targetCenterX < sourceCenterX ? target.positionX + NODE_WIDTH : target.positionX;
     const endY = targetCenterY;
     const controlOffset = Math.max(120, Math.abs(endX - startX) / 2);
     const c1x = startX + (endX > startX ? controlOffset : -controlOffset);
@@ -1289,8 +999,7 @@ function getConnectorPath(source: NodeDraft, target: NodeDraft) {
 }
 
 function describeNodeType(node: NodeDraft) {
-  if (node.nodeType === "SECTION" && node.category === "MAIN_STAGE")
-    return "MAIN STAGE";
+  if (node.nodeType === "SECTION" && node.category === "MAIN_STAGE") return "MAIN STAGE";
   if (node.category === "BRANCH") return "BRANCH";
   if (node.category === "CHECKLIST_ITEM") return "CHECKLIST";
   return node.nodeType.replace(/_/g, " ");
@@ -1303,24 +1012,17 @@ function autoArrangeNodes(nodes: NodeDraft[], edges: EdgeDraft[]) {
 
   const sections = new Map<string, NodeDraft[]>();
   for (const node of nodes) {
-    const sectionId =
-      node.sectionKey || node.sectionName || node.category || "workflow";
+    const sectionId = node.sectionKey || node.sectionName || node.category || "workflow";
     const bucket = sections.get(sectionId) ?? [];
     bucket.push(node);
     sections.set(sectionId, bucket);
   }
 
-  const orderedSections = Array.from(sections.entries()).sort(
-    ([, leftNodes], [, rightNodes]) => {
-      const leftOrder = Math.min(
-        ...leftNodes.map((node) => node.sortOrder || Number.MAX_SAFE_INTEGER),
-      );
-      const rightOrder = Math.min(
-        ...rightNodes.map((node) => node.sortOrder || Number.MAX_SAFE_INTEGER),
-      );
-      return leftOrder - rightOrder;
-    },
-  );
+  const orderedSections = Array.from(sections.entries()).sort(([, leftNodes], [, rightNodes]) => {
+    const leftOrder = Math.min(...leftNodes.map((node) => node.sortOrder || Number.MAX_SAFE_INTEGER));
+    const rightOrder = Math.min(...rightNodes.map((node) => node.sortOrder || Number.MAX_SAFE_INTEGER));
+    return leftOrder - rightOrder;
+  });
 
   const VERTICAL_GAP = 180;
   const SECTION_GAP = 120;
@@ -1339,27 +1041,15 @@ function autoArrangeNodes(nodes: NodeDraft[], edges: EdgeDraft[]) {
       branches.set(branchId, bucket);
     }
 
-    const orderedBranches = Array.from(branches.entries()).sort(
-      ([, leftNodes], [, rightNodes]) => {
-        const leftOrder = Math.min(
-          ...leftNodes.map((node) => node.sortOrder || Number.MAX_SAFE_INTEGER),
-        );
-        const rightOrder = Math.min(
-          ...rightNodes.map(
-            (node) => node.sortOrder || Number.MAX_SAFE_INTEGER,
-          ),
-        );
-        return leftOrder - rightOrder;
-      },
-    );
+    const orderedBranches = Array.from(branches.entries()).sort(([, leftNodes], [, rightNodes]) => {
+      const leftOrder = Math.min(...leftNodes.map((node) => node.sortOrder || Number.MAX_SAFE_INTEGER));
+      const rightOrder = Math.min(...rightNodes.map((node) => node.sortOrder || Number.MAX_SAFE_INTEGER));
+      return leftOrder - rightOrder;
+    });
 
     let tallestBranch = 0;
     orderedBranches.forEach(([, branchNodes], branchIndex) => {
-      const sortedBranchNodes = [...branchNodes].sort(
-        (left, right) =>
-          left.sortOrder - right.sortOrder ||
-          left.name.localeCompare(right.name),
-      );
+      const sortedBranchNodes = [...branchNodes].sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name));
       sortedBranchNodes.forEach((node, rowIndex) => {
         nextPositions.set(node.id, {
           x: START_X + branchIndex * BRANCH_GAP,
@@ -1388,9 +1078,7 @@ function expandChecklistNodesForCanvas(rawNodes: any[], rawEdges: any[]) {
 
   for (const [index, rawNode] of rawNodes.entries()) {
     const normalizedNode = normalizeNode(rawNode, index);
-    const activeChecklistItems = normalizedNode.checklistItems.filter(
-      (item) => item.isActive,
-    );
+    const activeChecklistItems = normalizedNode.checklistItems.filter((item) => item.isActive);
     const shouldExpand =
       normalizedNode.category !== "CHECKLIST_ITEM" &&
       activeChecklistItems.length > 0;
@@ -1401,9 +1089,7 @@ function expandChecklistNodesForCanvas(rawNodes: any[], rawEdges: any[]) {
     }
     didExpand = true;
 
-    const orderedItems = [...normalizedNode.checklistItems].sort(
-      (a, b) => a.sortOrder - b.sortOrder,
-    );
+    const orderedItems = [...normalizedNode.checklistItems].sort((a, b) => a.sortOrder - b.sortOrder);
     const checklistNodes = orderedItems.map((item, itemIndex) => {
       const itemKey = `${normalizedNode.key}_item_${itemIndex + 1}`;
       return {
@@ -1417,16 +1103,11 @@ function expandChecklistNodesForCanvas(rawNodes: any[], rawEdges: any[]) {
         positionX: normalizedNode.positionX + itemIndex * (NODE_WIDTH + 48),
         positionY: normalizedNode.positionY,
         checklistItems: [{ ...item, sortOrder: 1 }],
-        photoRequirements:
-          itemIndex === 0 ? normalizedNode.photoRequirements : [],
+        photoRequirements: itemIndex === 0 ? normalizedNode.photoRequirements : [],
       } satisfies NodeDraft;
     });
 
-    for (
-      let itemIndex = 0;
-      itemIndex < checklistNodes.length - 1;
-      itemIndex += 1
-    ) {
+    for (let itemIndex = 0; itemIndex < checklistNodes.length - 1; itemIndex += 1) {
       generatedEdges.push({
         id: createId("edge"),
         sourceKey: checklistNodes[itemIndex].key,
@@ -1465,25 +1146,15 @@ function expandChecklistNodesForCanvas(rawNodes: any[], rawEdges: any[]) {
   };
 }
 
-export function WorkflowsClient({
-  initialTemplates,
-  availableRoles,
-  availableJobTypes,
-}: WorkflowsClientProps) {
+export function WorkflowsClient({ initialTemplates, availableRoles, availableJobTypes }: WorkflowsClientProps) {
   const router = useRouter();
   const canvasRef = useRef<HTMLDivElement>(null);
   const capturedPointerElementRef = useRef<HTMLElement | null>(null);
-  const bodyInteractionStyleRef = useRef<{
-    userSelect: string;
-    cursor: string;
-  } | null>(null);
+  const bodyInteractionStyleRef = useRef<{ userSelect: string; cursor: string } | null>(null);
 
   const [templates, setTemplates] = useState(initialTemplates);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
-    initialTemplates[0]?.id || null,
-  );
-  const [selectedClearanceTypeId, setSelectedClearanceTypeId] =
-    useState<string>("");
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(initialTemplates[0]?.id || null);
+  const [selectedClearanceTypeId, setSelectedClearanceTypeId] = useState<string>("");
   const [activeVersion, setActiveVersion] = useState<any>(null);
   const [nodes, setNodes] = useState<NodeDraft[]>([]);
   const [edges, setEdges] = useState<EdgeDraft[]>([]);
@@ -1497,9 +1168,7 @@ export function WorkflowsClient({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
-  const [connectingSourceKey, setConnectingSourceKey] = useState<string | null>(
-    null,
-  );
+  const [connectingSourceKey, setConnectingSourceKey] = useState<string | null>(null);
   const [connectionCursor, setConnectionCursor] = useState({ x: 0, y: 0 });
   const [hoveredTargetKey, setHoveredTargetKey] = useState<string | null>(null);
   const [loadedSnapshot, setLoadedSnapshot] = useState("");
@@ -1516,10 +1185,7 @@ export function WorkflowsClient({
     [edges, selectedEdgeId],
   );
 
-  const validation = useMemo(
-    () => buildValidation(nodes, edges),
-    [nodes, edges],
-  );
+  const validation = useMemo(() => buildValidation(nodes, edges), [nodes, edges]);
   const hasUnsavedChanges = useMemo(
     () => serializeWorkflowSnapshot(nodes, edges) !== loadedSnapshot,
     [edges, loadedSnapshot, nodes],
@@ -1537,8 +1203,7 @@ export function WorkflowsClient({
   };
 
   const lockDocumentInteraction = (cursor = "grabbing") => {
-    if (typeof document === "undefined" || bodyInteractionStyleRef.current)
-      return;
+    if (typeof document === "undefined" || bodyInteractionStyleRef.current) return;
     bodyInteractionStyleRef.current = {
       userSelect: document.body.style.userSelect,
       cursor: document.body.style.cursor,
@@ -1548,8 +1213,7 @@ export function WorkflowsClient({
   };
 
   const unlockDocumentInteraction = () => {
-    if (typeof document === "undefined" || !bodyInteractionStyleRef.current)
-      return;
+    if (typeof document === "undefined" || !bodyInteractionStyleRef.current) return;
     document.body.style.userSelect = bodyInteractionStyleRef.current.userSelect;
     document.body.style.cursor = bodyInteractionStyleRef.current.cursor;
     bodyInteractionStyleRef.current = null;
@@ -1580,26 +1244,39 @@ export function WorkflowsClient({
   };
 
   const applyTemplateData = (data: any) => {
-    const latest = data.versions?.[0];
-    const expanded = expandChecklistNodesForCanvas(
-      latest?.nodes || [],
-      latest?.edges || [],
-    );
-    const arrangedNodes = expanded.didExpand
-      ? autoArrangeNodes(expanded.nodes, expanded.edges)
-      : expanded.nodes;
-    setSelectedClearanceTypeId(
-      data.clearanceType?.id || data.clearanceTypeId || "",
-    );
-    setActiveVersion(latest || null);
+    const latest = data.versions?.[0] ?? null;
+    const persistedNodes = Array.isArray(latest?.nodes) ? latest.nodes : [];
+    const persistedEdges = Array.isArray(latest?.edges) ? latest.edges : [];
+    const hasPersistedWorkflow = persistedNodes.length > 0;
+
+    // Default workflow fallback:
+    // When a template has no saved nodes yet, show the combined Import BE + Export SB workflow immediately.
+    // This makes the BE/SB workflow the default canvas instead of leaving the user with an empty/old starter.
+    const defaultBlueprint = hasPersistedWorkflow ? null : buildChaFilingBlueprintDraft();
+    const rawNodes = hasPersistedWorkflow ? persistedNodes : defaultBlueprint!.nodes;
+    const rawEdges = hasPersistedWorkflow ? persistedEdges : defaultBlueprint!.edges;
+
+    const expanded = expandChecklistNodesForCanvas(rawNodes, rawEdges);
+    const arrangedNodes = expanded.didExpand ? autoArrangeNodes(expanded.nodes, expanded.edges) : expanded.nodes;
+
+    setSelectedClearanceTypeId(data.clearanceType?.id || data.clearanceTypeId || "");
+    setActiveVersion(latest);
     setNodes(arrangedNodes);
     setEdges(expanded.edges);
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
     setPropertiesOpen(false);
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-    setLoadedSnapshot(serializeWorkflowSnapshot(arrangedNodes, expanded.edges));
+
+    if (hasPersistedWorkflow) {
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+      setLoadedSnapshot(serializeWorkflowSnapshot(arrangedNodes, expanded.edges));
+    } else {
+      setZoom(0.45);
+      setPan({ x: 32, y: 24 });
+      // Keep the default blueprint marked as unsaved until the user saves it into the selected template.
+      setLoadedSnapshot("");
+    }
   };
 
   const loadTemplateDetails = async (templateId: string) => {
@@ -1633,10 +1310,10 @@ export function WorkflowsClient({
           prev.map((node) =>
             node.id === draggingNodeId
               ? {
-                  ...node,
-                  positionX: Math.round(coords.x - dragOffset.x),
-                  positionY: Math.round(coords.y - dragOffset.y),
-                }
+                ...node,
+                positionX: Math.round(coords.x - dragOffset.x),
+                positionY: Math.round(coords.y - dragOffset.y),
+              }
               : node,
           ),
         );
@@ -1648,49 +1325,24 @@ export function WorkflowsClient({
       } else if (connectingSourceKey) {
         const coords = screenToCanvas(event.clientX, event.clientY);
         setConnectionCursor(coords);
-        const hovered = (
-          document.elementFromPoint(
-            event.clientX,
-            event.clientY,
-          ) as HTMLElement | null
-        )?.closest("[data-handle-role='target']") as HTMLElement | null;
+        const hovered = (document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null)?.closest("[data-handle-role='target']") as HTMLElement | null;
         setHoveredTargetKey(hovered?.dataset.nodeKey || null);
       }
     };
 
     const handleUp = (event: PointerEvent) => {
       if (connectingSourceKey) {
-        const target = (
-          document.elementFromPoint(
-            event.clientX,
-            event.clientY,
-          ) as HTMLElement | null
-        )?.closest("[data-handle-role='target']") as HTMLElement | null;
+        const target = (document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null)?.closest("[data-handle-role='target']") as HTMLElement | null;
         const targetKey = target?.dataset.nodeKey || null;
         if (targetKey) {
           if (targetKey === connectingSourceKey) {
             toast.error("A node cannot connect to itself.");
-          } else if (
-            edges.some(
-              (edge) =>
-                edge.sourceKey === connectingSourceKey &&
-                edge.targetKey === targetKey,
-            )
-          ) {
+          } else if (edges.some((edge) => edge.sourceKey === connectingSourceKey && edge.targetKey === targetKey)) {
             toast.error("That connection already exists.");
-          } else if (
-            !nodes.find((node) => node.key === targetKey && node.isActive)
-          ) {
+          } else if (!nodes.find((node) => node.key === targetKey && node.isActive)) {
             toast.error("Connections can only target active nodes.");
           } else {
-            setEdges((prev) => [
-              ...prev,
-              {
-                id: createId("edge"),
-                sourceKey: connectingSourceKey,
-                targetKey,
-              },
-            ]);
+            setEdges((prev) => [...prev, { id: createId("edge"), sourceKey: connectingSourceKey, targetKey }]);
             toast.success("Connection created.");
           }
         }
@@ -1721,20 +1373,7 @@ export function WorkflowsClient({
       window.removeEventListener("pointercancel", cancelInteraction);
       unlockDocumentInteraction();
     };
-  }, [
-    connectingSourceKey,
-    dragOffset.x,
-    dragOffset.y,
-    draggingNodeId,
-    edges,
-    isPanning,
-    nodes,
-    panStart.x,
-    panStart.y,
-    zoom,
-    pan.x,
-    pan.y,
-  ]);
+  }, [connectingSourceKey, dragOffset.x, dragOffset.y, draggingNodeId, edges, isPanning, nodes, panStart.x, panStart.y, zoom, pan.x, pan.y]);
 
   const handleAddNode = () => {
     if (activeVersion?.isPublished) {
@@ -1743,11 +1382,8 @@ export function WorkflowsClient({
     }
     const baseName = newNodeName.trim() || "New Main Stage";
     const keyBase = slugify(baseName);
-    const duplicateCount = nodes.filter((node) =>
-      node.key.startsWith(keyBase),
-    ).length;
-    const key =
-      duplicateCount === 0 ? keyBase : `${keyBase}_${duplicateCount + 1}`;
+    const duplicateCount = nodes.filter((node) => node.key.startsWith(keyBase)).length;
+    const key = duplicateCount === 0 ? keyBase : `${keyBase}_${duplicateCount + 1}`;
     const node = createWorkflowStageNode(
       baseName,
       key,
@@ -1772,11 +1408,8 @@ export function WorkflowsClient({
     }
     const baseName = newNodeName.trim() || "Checklist Item";
     const keyBase = slugify(baseName);
-    const duplicateCount = nodes.filter((node) =>
-      node.key.startsWith(keyBase),
-    ).length;
-    const key =
-      duplicateCount === 0 ? keyBase : `${keyBase}_${duplicateCount + 1}`;
+    const duplicateCount = nodes.filter((node) => node.key.startsWith(keyBase)).length;
+    const key = duplicateCount === 0 ? keyBase : `${keyBase}_${duplicateCount + 1}`;
     const node = createWorkflowChecklistNode(
       baseName,
       key,
@@ -1802,11 +1435,8 @@ export function WorkflowsClient({
     }
     const baseName = newNodeName.trim() || "Notification";
     const keyBase = slugify(baseName);
-    const duplicateCount = nodes.filter((node) =>
-      node.key.startsWith(keyBase),
-    ).length;
-    const key =
-      duplicateCount === 0 ? keyBase : `${keyBase}_${duplicateCount + 1}`;
+    const duplicateCount = nodes.filter((node) => node.key.startsWith(keyBase)).length;
+    const key = duplicateCount === 0 ? keyBase : `${keyBase}_${duplicateCount + 1}`;
     const node = createWorkflowNotificationNode(
       baseName,
       key,
@@ -1834,21 +1464,11 @@ export function WorkflowsClient({
     const sourceNodes = activeNodes.length > 0 ? activeNodes : nodes;
     const minX = Math.min(...sourceNodes.map((node) => node.positionX));
     const minY = Math.min(...sourceNodes.map((node) => node.positionY));
-    const maxX = Math.max(
-      ...sourceNodes.map((node) => node.positionX + NODE_WIDTH),
-    );
-    const maxY = Math.max(
-      ...sourceNodes.map((node) => node.positionY + NODE_HEIGHT),
-    );
+    const maxX = Math.max(...sourceNodes.map((node) => node.positionX + NODE_WIDTH));
+    const maxY = Math.max(...sourceNodes.map((node) => node.positionY + NODE_HEIGHT));
     const width = Math.max(maxX - minX, NODE_WIDTH);
     const height = Math.max(maxY - minY, NODE_HEIGHT);
-    const nextZoom = Math.min(
-      MAX_ZOOM,
-      Math.max(
-        MIN_ZOOM,
-        Math.min((rect.width - 96) / width, (rect.height - 96) / height),
-      ),
-    );
+    const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.min((rect.width - 96) / width, (rect.height - 96) / height)));
     setZoom(Number(nextZoom.toFixed(2)));
     setPan({
       x: Math.round((rect.width - width * nextZoom) / 2 - minX * nextZoom),
@@ -1873,16 +1493,12 @@ export function WorkflowsClient({
 
   const updateSelectedNode = (updater: (node: NodeDraft) => NodeDraft) => {
     if (!selectedNodeId) return;
-    setNodes((prev) =>
-      prev.map((node) => (node.id === selectedNodeId ? updater(node) : node)),
-    );
+    setNodes((prev) => prev.map((node) => (node.id === selectedNodeId ? updater(node) : node)));
   };
 
   const updateSelectedEdge = (updater: (edge: EdgeDraft) => EdgeDraft) => {
     if (!selectedEdgeId) return;
-    setEdges((prev) =>
-      prev.map((edge) => (edge.id === selectedEdgeId ? updater(edge) : edge)),
-    );
+    setEdges((prev) => prev.map((edge) => (edge.id === selectedEdgeId ? updater(edge) : edge)));
   };
 
   const loadChaBlueprintDraft = () => {
@@ -1890,12 +1506,7 @@ export function WorkflowsClient({
       toast.error("Published versions are read-only. Fork a new draft first.");
       return;
     }
-    if (
-      hasUnsavedChanges &&
-      !window.confirm(
-        "Replace the current draft canvas with the editable CHA blueprint starter? Unsaved canvas changes will be overwritten.",
-      )
-    ) {
+    if (hasUnsavedChanges && !window.confirm("Replace the current draft canvas with the editable CHA blueprint starter? Unsaved canvas changes will be overwritten.")) {
       return;
     }
     const blueprint = buildChaFilingBlueprintDraft();
@@ -1906,7 +1517,7 @@ export function WorkflowsClient({
     setPropertiesOpen(false);
     setZoom(0.78);
     setPan({ x: 60, y: 20 });
-    toast.success("Editable CHA filing blueprint loaded.");
+    toast.success("Default Import BE + Export SB workflow loaded.");
   };
 
   const addChecklistItem = () => {
@@ -1914,23 +1525,15 @@ export function WorkflowsClient({
       ...node,
       checklistItems: [
         ...node.checklistItems,
-        createChecklistItemDraft(
-          "New Checklist Item",
-          node.checklistItems.length + 1,
-        ),
+        createChecklistItemDraft("New Checklist Item", node.checklistItems.length + 1),
       ],
     }));
   };
 
-  const updateChecklistItem = (
-    itemId: string,
-    updater: (item: ChecklistItemDraft) => ChecklistItemDraft,
-  ) => {
+  const updateChecklistItem = (itemId: string, updater: (item: ChecklistItemDraft) => ChecklistItemDraft) => {
     updateSelectedNode((node) => ({
       ...node,
-      checklistItems: node.checklistItems.map((item) =>
-        item.id === itemId ? updater(item) : item,
-      ),
+      checklistItems: node.checklistItems.map((item) => (item.id === itemId ? updater(item) : item)),
     }));
   };
 
@@ -1938,11 +1541,7 @@ export function WorkflowsClient({
     updateSelectedNode((node) => {
       const index = node.checklistItems.findIndex((item) => item.id === itemId);
       const nextIndex = index + direction;
-      if (
-        index < 0 ||
-        nextIndex < 0 ||
-        nextIndex >= node.checklistItems.length
-      ) {
+      if (index < 0 || nextIndex < 0 || nextIndex >= node.checklistItems.length) {
         return node;
       }
       const nextItems = [...node.checklistItems];
@@ -1950,10 +1549,7 @@ export function WorkflowsClient({
       nextItems.splice(nextIndex, 0, item);
       return {
         ...node,
-        checklistItems: nextItems.map((entry, orderIndex) => ({
-          ...entry,
-          sortOrder: orderIndex + 1,
-        })),
+        checklistItems: nextItems.map((entry, orderIndex) => ({ ...entry, sortOrder: orderIndex + 1 })),
       };
     });
   };
@@ -1973,31 +1569,23 @@ export function WorkflowsClient({
     }));
   };
 
-  const updatePhotoRequirement = (
-    photoId: string,
-    updater: (item: PhotoRequirementDraft) => PhotoRequirementDraft,
-  ) => {
+  const updatePhotoRequirement = (photoId: string, updater: (item: PhotoRequirementDraft) => PhotoRequirementDraft) => {
     updateSelectedNode((node) => ({
       ...node,
-      photoRequirements: node.photoRequirements.map((item) =>
-        item.id === photoId ? updater(item) : item,
-      ),
+      photoRequirements: node.photoRequirements.map((item) => (item.id === photoId ? updater(item) : item)),
     }));
   };
 
   const saveDraft = async () => {
     if (!selectedTemplateId) return false;
     const template = templates.find((entry) => entry.id === selectedTemplateId);
-    const result = await actions.saveFilingWorkflowDraftAction(
-      selectedTemplateId,
-      {
-        name: template?.name || "Filing Workflow",
-        description: template?.description || "",
-        clearanceTypeId: selectedClearanceTypeId || null,
-        nodes,
-        edges,
-      },
-    );
+    const result = await actions.saveFilingWorkflowDraftAction(selectedTemplateId, {
+      name: template?.name || "Filing Workflow",
+      description: template?.description || "",
+      clearanceTypeId: selectedClearanceTypeId || null,
+      nodes,
+      edges,
+    });
     if (!result.ok) {
       toast.error(result.error || "Failed to save workflow draft.");
       return false;
@@ -2016,11 +1604,7 @@ export function WorkflowsClient({
     if (!selectedEdge || activeVersion?.isPublished) {
       return;
     }
-    if (
-      !window.confirm(
-        `Delete connector from ${selectedEdge.sourceKey} to ${selectedEdge.targetKey}?`,
-      )
-    ) {
+    if (!window.confirm(`Delete connector from ${selectedEdge.sourceKey} to ${selectedEdge.targetKey}?`)) {
       return;
     }
     const nextEdges = edges.filter((edge) => edge.id !== selectedEdge.id);
@@ -2029,16 +1613,13 @@ export function WorkflowsClient({
     setPropertiesOpen(false);
 
     const template = templates.find((entry) => entry.id === selectedTemplateId);
-    const result = await actions.saveFilingWorkflowDraftAction(
-      selectedTemplateId,
-      {
-        name: template?.name || "Filing Workflow",
-        description: template?.description || "",
-        clearanceTypeId: selectedClearanceTypeId || null,
-        nodes,
-        edges: nextEdges,
-      },
-    );
+    const result = await actions.saveFilingWorkflowDraftAction(selectedTemplateId, {
+      name: template?.name || "Filing Workflow",
+      description: template?.description || "",
+      clearanceTypeId: selectedClearanceTypeId || null,
+      nodes,
+      edges: nextEdges,
+    });
     if (!result.ok) {
       toast.error(result.error || "Failed to persist connector deletion.");
       return;
@@ -2053,11 +1634,7 @@ export function WorkflowsClient({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        (event.key === "Delete" || event.key === "Backspace") &&
-        selectedEdgeId &&
-        !activeVersion?.isPublished
-      ) {
+      if ((event.key === "Delete" || event.key === "Backspace") && selectedEdgeId && !activeVersion?.isPublished) {
         event.preventDefault();
         void deleteSelectedEdge();
       }
@@ -2091,27 +1668,18 @@ export function WorkflowsClient({
   const forkDraft = async () => {
     if (!selectedTemplateId) return;
     const template = templates.find((entry) => entry.id === selectedTemplateId);
-    const result = await actions.saveFilingWorkflowDraftAction(
-      selectedTemplateId,
-      {
-        name: template?.name || "Filing Workflow",
-        description: template?.description || "",
-        clearanceTypeId: selectedClearanceTypeId || null,
-        nodes: nodes.map((node) => ({
-          ...node,
-          id: undefined,
-          checklistItems: node.checklistItems.map((item) => ({
-            ...item,
-            id: undefined,
-          })),
-          photoRequirements: node.photoRequirements.map((item) => ({
-            ...item,
-            id: undefined,
-          })),
-        })),
-        edges,
-      },
-    );
+    const result = await actions.saveFilingWorkflowDraftAction(selectedTemplateId, {
+      name: template?.name || "Filing Workflow",
+      description: template?.description || "",
+      clearanceTypeId: selectedClearanceTypeId || null,
+      nodes: nodes.map((node) => ({
+        ...node,
+        id: undefined,
+        checklistItems: node.checklistItems.map((item) => ({ ...item, id: undefined })),
+        photoRequirements: node.photoRequirements.map((item) => ({ ...item, id: undefined })),
+      })),
+      edges,
+    });
     if (!result.ok) {
       toast.error(result.error || "Failed to fork draft.");
       return;
@@ -2128,31 +1696,18 @@ export function WorkflowsClient({
     <div className="flex h-[calc(100vh-6rem)] w-full flex-col overflow-hidden rounded-3xl border border-outline-variant bg-surface shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant bg-surface px-4 py-3">
         <div className="flex items-start gap-3">
-          <Button
-            variant="outline"
-            mode="icon"
-            size="sm"
-            onClick={() => router.push("/cha/settings")}
-            aria-label="Back to CHA settings"
-          >
+          <Button variant="outline" mode="icon" size="sm" onClick={() => router.push("/cha/settings")} aria-label="Back to CHA settings">
             <ArrowLeft size={16} />
           </Button>
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="ds-h2 text-on-surface">
-                FILING WORKFLOW BLUEPRINT
-              </h1>
-              <Badge
-                variant={activeVersion?.isPublished ? "success" : "warning"}
-              >
-                {activeVersion
-                  ? `${activeVersion.isPublished ? "PUBLISHED" : "DRAFT"} V${activeVersion.versionNumber}`
-                  : "NO VERSION"}
+              <h1 className="ds-h1 text-on-surface">FILING WORKFLOW BLUEPRINT</h1>
+              <Badge variant={activeVersion?.isPublished ? "success" : "warning"}>
+                {activeVersion ? `${activeVersion.isPublished ? "PUBLISHED" : "DRAFT"} V${activeVersion.versionNumber}` : "NO VERSION"}
               </Badge>
             </div>
             <p className="text-sm text-on-surface-variant">
-              Build configurable filing stages, checklist deadlines, and
-              non-linear routing without hardcoded CHA node types.
+              Build configurable filing stages, checklist deadlines, and non-linear routing without hardcoded CHA node types.
             </p>
           </div>
         </div>
@@ -2218,13 +1773,7 @@ export function WorkflowsClient({
                 <p className="ds-label">Tools</p>
                 <h2 className="ds-h3 text-on-surface">Workflow Palette</h2>
               </div>
-              <Button
-                variant="outline"
-                mode="icon"
-                size="sm"
-                onClick={() => setPaletteOpen(false)}
-                aria-label="Close workflow palette"
-              >
+              <Button variant="outline" mode="icon" size="sm" onClick={() => setPaletteOpen(false)} aria-label="Close workflow palette">
                 <X size={15} />
               </Button>
             </div>
@@ -2234,65 +1783,30 @@ export function WorkflowsClient({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="rounded-xl border border-outline-variant bg-surface p-3 text-xs text-on-surface-variant">
-                  Load the CHA starter as editable nodes only. After loading,
-                  every stage, checklist, deadline, upload slot, and connector
-                  can be changed.
-                  <span className="mt-2 block">
-                    Processor roles are empty by default, so anyone with job
-                    access can work the filing node. Available roles:{" "}
-                    {availableRoles.length || 0}.
-                  </span>
+                  Load the default combined Import Bill of Entry + Export Shipping Bill workflow as editable nodes. After loading, every stage, checklist, deadline, upload slot, and connector can be changed.
+                  <span className="mt-2 block">Processor roles are empty by default, so anyone with job access can work the filing node. Available roles: {availableRoles.length || 0}.</span>
                 </div>
-                <Button
-                  className="w-full"
-                  onClick={loadChaBlueprintDraft}
-                  disabled={activeVersion?.isPublished}
-                >
+                <Button className="w-full" onClick={loadChaBlueprintDraft} disabled={activeVersion?.isPublished}>
                   <Workflow size={16} />
-                  Load CHA Filing Blueprint
+                  Load Default BE + SB Workflow
                 </Button>
                 <div className="space-y-1.5">
                   <label className="ds-label block">Node Name</label>
-                  <input
-                    value={newNodeName}
-                    onChange={(event) => setNewNodeName(event.target.value)}
-                    placeholder="First Check"
-                    className="w-full text-sm"
-                  />
+                  <input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="First Check" className="w-full text-sm" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="ds-label block">Category</label>
-                  <input
-                    value={newNodeCategory}
-                    onChange={(event) => setNewNodeCategory(event.target.value)}
-                    placeholder="MAIN_STAGE"
-                    className="w-full text-sm"
-                  />
+                  <input value={newNodeCategory} onChange={(event) => setNewNodeCategory(event.target.value)} placeholder="MAIN_STAGE" className="w-full text-sm" />
                 </div>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleAddNode}
-                  disabled={activeVersion?.isPublished}
-                >
+                <Button variant="outline" className="w-full" onClick={handleAddNode} disabled={activeVersion?.isPublished}>
                   <Plus size={16} />
                   Add Main Stage Node
                 </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleAddChecklistNode}
-                  disabled={activeVersion?.isPublished}
-                >
+                <Button variant="outline" className="w-full" onClick={handleAddChecklistNode} disabled={activeVersion?.isPublished}>
                   <Plus size={16} />
                   Add Checklist Node
                 </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleAddNotificationNode}
-                  disabled={activeVersion?.isPublished}
-                >
+                <Button variant="outline" className="w-full" onClick={handleAddNotificationNode} disabled={activeVersion?.isPublished}>
                   <Plus size={16} />
                   Add Notification Node
                 </Button>
@@ -2304,31 +1818,19 @@ export function WorkflowsClient({
                 <CardTitle>Publish Checks</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {validation.errors.length === 0 &&
-                validation.warnings.length === 0 ? (
-                  <p className="text-sm text-on-surface-variant">
-                    No blocking validation issues in the current draft.
-                  </p>
+                {validation.errors.length === 0 && validation.warnings.length === 0 ? (
+                  <p className="text-sm text-on-surface-variant">No blocking validation issues in the current draft.</p>
                 ) : null}
                 {validation.errors.map((message) => (
-                  <div
-                    key={message}
-                    className="card-left-accent-orange rounded-xl bg-surface p-3 text-sm text-on-surface"
-                  >
+                  <div key={message} className="card-left-accent-orange rounded-xl bg-surface p-3 text-sm text-on-surface">
                     <div className="flex items-start gap-2">
-                      <AlertTriangle
-                        size={16}
-                        className="mt-0.5 text-[#fb923c]"
-                      />
+                      <AlertTriangle size={16} className="mt-0.5 text-[#fb923c]" />
                       <span>{message}</span>
                     </div>
                   </div>
                 ))}
                 {validation.warnings.map((message) => (
-                  <div
-                    key={message}
-                    className="rounded-xl border border-outline-variant bg-surface p-3 text-sm text-on-surface-variant"
-                  >
+                  <div key={message} className="rounded-xl border border-outline-variant bg-surface p-3 text-sm text-on-surface-variant">
                     <div className="flex items-start gap-2">
                       <Workflow size={16} className="mt-0.5 text-[#00cec4]" />
                       <span>{message}</span>
@@ -2345,18 +1847,10 @@ export function WorkflowsClient({
             <div className="flex items-center justify-between border-b border-outline-variant px-4 py-3">
               <div>
                 <p className="ds-label">Canvas</p>
-                <p className="text-sm text-on-surface-variant">
-                  Blueprint mode: drag nodes, connect handles, zoom with wheel,
-                  branch RMS/Open Bill, and route back to any passed stage when
-                  required.
-                </p>
+                <p className="text-sm text-on-surface-variant">Blueprint mode: drag nodes, connect handles, zoom with wheel, branch RMS/Open Bill, and route back to any passed stage when required.</p>
               </div>
               <div className="flex flex-wrap items-center justify-end gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPaletteOpen(true)}
-                >
+                <Button variant="outline" size="sm" onClick={() => setPaletteOpen(true)}>
                   <PanelLeft size={14} />
                   Tools
                 </Button>
@@ -2369,61 +1863,27 @@ export function WorkflowsClient({
                   <PanelRight size={14} />
                   Properties
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setValidationOpen((value) => !value)}
-                >
+                <Button variant="outline" size="sm" onClick={() => setValidationOpen((value) => !value)}>
                   <Settings2 size={14} />
-                  Checks{" "}
-                  {validation.errors.length > 0
-                    ? `(${validation.errors.length})`
-                    : ""}
+                  Checks {validation.errors.length > 0 ? `(${validation.errors.length})` : ""}
                 </Button>
                 {selectedEdge ? (
                   <div className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-1.5">
                     <span className="text-xs text-on-surface-variant">
                       {selectedEdge.sourceKey} → {selectedEdge.targetKey}
                     </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => void deleteSelectedEdge()}
-                      disabled={activeVersion?.isPublished}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => void deleteSelectedEdge()} disabled={activeVersion?.isPublished}>
                       <Trash2 size={14} />
                       Delete Connector
                     </Button>
                   </div>
                 ) : null}
                 <div className="flex items-center gap-1 rounded-xl border border-outline-variant bg-surface p-1">
-                  <Button
-                    variant="outline"
-                    mode="icon"
-                    size="sm"
-                    onClick={() =>
-                      setZoom((value) =>
-                        Math.max(MIN_ZOOM, Number((value - 0.1).toFixed(2))),
-                      )
-                    }
-                    aria-label="Zoom out"
-                  >
+                  <Button variant="outline" mode="icon" size="sm" onClick={() => setZoom((value) => Math.max(MIN_ZOOM, Number((value - 0.1).toFixed(2))))} aria-label="Zoom out">
                     <ZoomOut size={15} />
                   </Button>
-                  <span className="min-w-14 text-center text-xs text-on-surface-variant ds-numeric">
-                    {Math.round(zoom * 100)}%
-                  </span>
-                  <Button
-                    variant="outline"
-                    mode="icon"
-                    size="sm"
-                    onClick={() =>
-                      setZoom((value) =>
-                        Math.min(MAX_ZOOM, Number((value + 0.1).toFixed(2))),
-                      )
-                    }
-                    aria-label="Zoom in"
-                  >
+                  <span className="min-w-14 text-center text-xs text-on-surface-variant ds-numeric">{Math.round(zoom * 100)}%</span>
+                  <Button variant="outline" mode="icon" size="sm" onClick={() => setZoom((value) => Math.min(MAX_ZOOM, Number((value + 0.1).toFixed(2))))} aria-label="Zoom in">
                     <ZoomIn size={15} />
                   </Button>
                 </div>
@@ -2467,19 +1927,8 @@ export function WorkflowsClient({
 
                 const pointerX = event.clientX - rect.left;
                 const pointerY = event.clientY - rect.top;
-                const zoomStep =
-                  event.ctrlKey || event.metaKey || event.altKey ? 0.14 : 0.08;
-                const nextZoom = Math.min(
-                  MAX_ZOOM,
-                  Math.max(
-                    MIN_ZOOM,
-                    Number(
-                      (
-                        zoom + (event.deltaY < 0 ? zoomStep : -zoomStep)
-                      ).toFixed(2),
-                    ),
-                  ),
-                );
+                const zoomStep = event.ctrlKey || event.metaKey || event.altKey ? 0.14 : 0.08;
+                const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Number((zoom + (event.deltaY < 0 ? zoomStep : -zoomStep)).toFixed(2))));
                 const scaleRatio = nextZoom / zoom;
 
                 setPan((current) => ({
@@ -2490,21 +1939,13 @@ export function WorkflowsClient({
               }}
               onPointerDown={(event) => {
                 const target = event.target as HTMLElement;
-                if (
-                  target.closest(
-                    "[data-canvas-ui='true'], input, textarea, select, button",
-                  )
-                )
-                  return;
+                if (target.closest("[data-canvas-ui='true'], input, textarea, select, button")) return;
                 event.preventDefault();
                 setSelectedNodeId(null);
                 setSelectedEdgeId(null);
                 setPropertiesOpen(false);
                 setIsPanning(true);
-                setPanStart({
-                  x: event.clientX - pan.x,
-                  y: event.clientY - pan.y,
-                });
+                setPanStart({ x: event.clientX - pan.x, y: event.clientY - pan.y });
                 lockDocumentInteraction("grabbing");
                 capturePointer(event.currentTarget, event.pointerId);
               }}
@@ -2518,38 +1959,20 @@ export function WorkflowsClient({
               >
                 <svg className="absolute inset-0 h-[8000px] w-[8000px] overflow-visible">
                   <defs>
-                    <marker
-                      id="filing-arrow"
-                      viewBox="0 0 10 10"
-                      refX="8"
-                      refY="5"
-                      markerWidth="6"
-                      markerHeight="6"
-                      orient="auto-start-reverse"
-                    >
+                    <marker id="filing-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                       <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
                     </marker>
                   </defs>
                   {edges.map((edge) => {
-                    const source = nodes.find(
-                      (node) => node.key === edge.sourceKey,
-                    );
-                    const target = nodes.find(
-                      (node) => node.key === edge.targetKey,
-                    );
+                    const source = nodes.find((node) => node.key === edge.sourceKey);
+                    const target = nodes.find((node) => node.key === edge.targetKey);
                     if (!source || !target) return null;
                     const connector = getConnectorPath(source, target);
                     const selected = selectedEdgeId === edge.id;
                     return (
                       <g
                         key={edge.id}
-                        className={
-                          selected
-                            ? "text-[#fb923c]"
-                            : connector.isBackRoute
-                              ? "text-[#fb923c]"
-                              : "text-[#00cec4]"
-                        }
+                        className={selected ? "text-[#fb923c]" : connector.isBackRoute ? "text-[#fb923c]" : "text-[#00cec4]"}
                         onClick={(event) => {
                           event.stopPropagation();
                           setSelectedNodeId(null);
@@ -2569,20 +1992,12 @@ export function WorkflowsClient({
                           fill="none"
                           stroke="currentColor"
                           strokeWidth={selected ? "3" : "2"}
-                          strokeDasharray={
-                            connector.isBackRoute ? "8 7" : undefined
-                          }
+                          strokeDasharray={connector.isBackRoute ? "8 7" : undefined}
                           markerEnd="url(#filing-arrow)"
                           className="drop-shadow-sm"
                         />
                         {edge.label ? (
-                          <foreignObject
-                            x={connector.labelX - 70}
-                            y={connector.labelY - 12}
-                            width="140"
-                            height="28"
-                            className="pointer-events-none overflow-visible"
-                          >
+                          <foreignObject x={connector.labelX - 70} y={connector.labelY - 12} width="140" height="28" className="pointer-events-none overflow-visible">
                             <div className="truncate rounded-full border border-outline-variant bg-surface/95 px-2 py-1 text-center text-[10px] uppercase tracking-[0.1em] text-on-surface-variant shadow-sm">
                               {edge.label}
                             </div>
@@ -2591,28 +2006,24 @@ export function WorkflowsClient({
                       </g>
                     );
                   })}
-                  {connectingSourceKey
-                    ? (() => {
-                        const source = nodes.find(
-                          (node) => node.key === connectingSourceKey,
-                        );
-                        if (!source) return null;
-                        const startX = source.positionX + NODE_WIDTH / 2;
-                        const startY = source.positionY + NODE_HEIGHT;
-                        const endX = connectionCursor.x;
-                        const endY = connectionCursor.y;
-                        const curve = Math.max(80, Math.abs(endY - startY) / 2);
-                        return (
-                          <path
-                            d={`M ${startX} ${startY} C ${startX} ${startY + curve}, ${endX} ${endY - curve}, ${endX} ${endY}`}
-                            fill="none"
-                            stroke="var(--color-on-surface-variant)"
-                            strokeDasharray="8 6"
-                            strokeWidth="2"
-                          />
-                        );
-                      })()
-                    : null}
+                  {connectingSourceKey ? (() => {
+                    const source = nodes.find((node) => node.key === connectingSourceKey);
+                    if (!source) return null;
+                    const startX = source.positionX + NODE_WIDTH / 2;
+                    const startY = source.positionY + NODE_HEIGHT;
+                    const endX = connectionCursor.x;
+                    const endY = connectionCursor.y;
+                    const curve = Math.max(80, Math.abs(endY - startY) / 2);
+                    return (
+                      <path
+                        d={`M ${startX} ${startY} C ${startX} ${startY + curve}, ${endX} ${endY - curve}, ${endX} ${endY}`}
+                        fill="none"
+                        stroke="var(--color-on-surface-variant)"
+                        strokeDasharray="8 6"
+                        strokeWidth="2"
+                      />
+                    );
+                  })() : null}
                 </svg>
 
                 {nodes.map((node) => {
@@ -2621,22 +2032,10 @@ export function WorkflowsClient({
                     <button
                       key={node.id}
                       type="button"
-                      className={`absolute rounded-2xl border bg-surface/95 p-4 text-left shadow-sm backdrop-blur transition-all ${
-                        selected
-                          ? "border-[#00cec4] shadow-[0_0_0_3px_rgba(0,206,196,0.18),0_18px_42px_-28px_rgba(0,206,196,0.75)]"
-                          : "border-outline-variant hover:border-[#00cec4]/60 hover:shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
-                      } ${node.isActive ? "" : "opacity-55"}`}
-                      style={{
-                        left: node.positionX,
-                        top: node.positionY,
-                        width: NODE_WIDTH,
-                        height: NODE_HEIGHT,
-                      }}
-                      onClick={() => {
-                        setSelectedNodeId(node.id);
-                        setSelectedEdgeId(null);
-                        setPropertiesOpen(true);
-                      }}
+                      className={`absolute rounded-2xl border bg-surface/95 p-4 text-left shadow-sm backdrop-blur transition-all ${selected ? "border-[#00cec4] shadow-[0_0_0_3px_rgba(0,206,196,0.18),0_18px_42px_-28px_rgba(0,206,196,0.75)]" : "border-outline-variant hover:border-[#00cec4]/60 hover:shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
+                        } ${node.isActive ? "" : "opacity-55"}`}
+                      style={{ left: node.positionX, top: node.positionY, width: NODE_WIDTH, height: NODE_HEIGHT }}
+                      onClick={() => { setSelectedNodeId(node.id); setSelectedEdgeId(null); setPropertiesOpen(true); }}
                       onPointerDown={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
@@ -2644,15 +2043,9 @@ export function WorkflowsClient({
                         setSelectedEdgeId(null);
                         setSelectedNodeId(node.id);
                         setPropertiesOpen(true);
-                        const coords = screenToCanvas(
-                          event.clientX,
-                          event.clientY,
-                        );
+                        const coords = screenToCanvas(event.clientX, event.clientY);
                         setDraggingNodeId(node.id);
-                        setDragOffset({
-                          x: coords.x - node.positionX,
-                          y: coords.y - node.positionY,
-                        });
+                        setDragOffset({ x: coords.x - node.positionX, y: coords.y - node.positionY });
                         lockDocumentInteraction("grabbing");
                         capturePointer(event.currentTarget, event.pointerId);
                       }}
@@ -2661,21 +2054,15 @@ export function WorkflowsClient({
                         data-handle-role="target"
                         data-node-key={node.key}
                         title="Drop connector here"
-                        className={`absolute left-[126px] -top-2 h-4 w-4 rounded-full border-2 ${
-                          hoveredTargetKey === node.key
-                            ? "border-[#00cec4] bg-[#00cec4]/20"
-                            : "border-outline bg-surface"
-                        }`}
+                        className={`absolute left-[126px] -top-2 h-4 w-4 rounded-full border-2 ${hoveredTargetKey === node.key ? "border-[#00cec4] bg-[#00cec4]/20" : "border-outline bg-surface"
+                          }`}
                       />
                       <div
                         data-handle-role="target"
                         data-node-key={node.key}
                         title="Drop connector here"
-                        className={`absolute -left-2 top-[68px] h-4 w-4 rounded-full border-2 ${
-                          hoveredTargetKey === node.key
-                            ? "border-[#00cec4] bg-[#00cec4]/20"
-                            : "border-outline bg-surface"
-                        }`}
+                        className={`absolute -left-2 top-[68px] h-4 w-4 rounded-full border-2 ${hoveredTargetKey === node.key ? "border-[#00cec4] bg-[#00cec4]/20" : "border-outline bg-surface"
+                          }`}
                       />
                       <div
                         data-node-key={node.key}
@@ -2684,16 +2071,12 @@ export function WorkflowsClient({
                         onPointerDown={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
-                          if (activeVersion?.isPublished || !node.isActive)
-                            return;
+                          if (activeVersion?.isPublished || !node.isActive) return;
                           setSelectedNodeId(node.id);
                           setSelectedEdgeId(null);
                           setPropertiesOpen(false);
                           setConnectingSourceKey(node.key);
-                          setConnectionCursor({
-                            x: node.positionX + NODE_WIDTH / 2,
-                            y: node.positionY + NODE_HEIGHT,
-                          });
+                          setConnectionCursor({ x: node.positionX + NODE_WIDTH / 2, y: node.positionY + NODE_HEIGHT });
                           lockDocumentInteraction("crosshair");
                           capturePointer(event.currentTarget, event.pointerId);
                         }}
@@ -2705,16 +2088,12 @@ export function WorkflowsClient({
                         onPointerDown={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
-                          if (activeVersion?.isPublished || !node.isActive)
-                            return;
+                          if (activeVersion?.isPublished || !node.isActive) return;
                           setSelectedNodeId(node.id);
                           setSelectedEdgeId(null);
                           setPropertiesOpen(false);
                           setConnectingSourceKey(node.key);
-                          setConnectionCursor({
-                            x: node.positionX + NODE_WIDTH,
-                            y: node.positionY + NODE_HEIGHT / 2,
-                          });
+                          setConnectionCursor({ x: node.positionX + NODE_WIDTH, y: node.positionY + NODE_HEIGHT / 2 });
                           lockDocumentInteraction("crosshair");
                           capturePointer(event.currentTarget, event.pointerId);
                         }}
@@ -2722,38 +2101,17 @@ export function WorkflowsClient({
 
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-on-surface">
-                            {node.name}
-                          </p>
+                          <p className="truncate text-sm font-semibold text-on-surface">{node.name}</p>
                           <p className="mt-1 truncate text-xs text-on-surface-variant">
-                            {[
-                              node.sectionName || node.category,
-                              node.branchName,
-                            ]
-                              .filter(Boolean)
-                              .join(" / ")}
+                            {[node.sectionName || node.category, node.branchName].filter(Boolean).join(" / ")}
                           </p>
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1">
-                          {node.isStart ? (
-                            <Badge variant="success">START</Badge>
-                          ) : null}
-                          {node.nodeType === "NOTIFICATION" ? (
-                            <Badge variant="warning">NOTIFY</Badge>
-                          ) : null}
-                          {node.branchName ? (
-                            <Badge variant="secondary">
-                              {node.branchName.toUpperCase()}
-                            </Badge>
-                          ) : null}
-                          {node.photoRequirements.length > 0 ? (
-                            <Badge variant="secondary">
-                              {node.photoRequirements.length} UPLOAD
-                            </Badge>
-                          ) : null}
-                          {!node.isActive ? (
-                            <Badge variant="secondary">INACTIVE</Badge>
-                          ) : null}
+                          {node.isStart ? <Badge variant="success">START</Badge> : null}
+                          {node.nodeType === "NOTIFICATION" ? <Badge variant="warning">NOTIFY</Badge> : null}
+                          {node.branchName ? <Badge variant="secondary">{node.branchName.toUpperCase()}</Badge> : null}
+                          {node.photoRequirements.length > 0 ? <Badge variant="secondary">{node.photoRequirements.length} UPLOAD</Badge> : null}
+                          {!node.isActive ? <Badge variant="secondary">INACTIVE</Badge> : null}
                         </div>
                       </div>
                       <p className="mt-3 line-clamp-2 text-xs text-on-surface-variant">
@@ -2761,10 +2119,7 @@ export function WorkflowsClient({
                       </p>
                       <div className="mt-4 flex items-center justify-between border-t border-outline-variant pt-3 text-xs text-on-surface-variant">
                         <span>{describeNodeType(node)}</span>
-                        <span className="ds-numeric">
-                          {node.slaDuration}{" "}
-                          {node.slaUnit === "BUSINESS_DAYS" ? "BD" : "CD"}
-                        </span>
+                        <span className="ds-numeric">{node.slaDuration} {node.slaUnit === "BUSINESS_DAYS" ? "BD" : "CD"}</span>
                       </div>
                     </button>
                   );
@@ -2784,42 +2139,24 @@ export function WorkflowsClient({
                 <p className="ds-label">Publish Checks</p>
                 <h3 className="ds-h3 text-on-surface">Validation</h3>
               </div>
-              <Button
-                variant="outline"
-                mode="icon"
-                size="sm"
-                onClick={() => setValidationOpen(false)}
-                aria-label="Close validation panel"
-              >
+              <Button variant="outline" mode="icon" size="sm" onClick={() => setValidationOpen(false)} aria-label="Close validation panel">
                 <X size={15} />
               </Button>
             </div>
             <div className="space-y-3">
-              {validation.errors.length === 0 &&
-              validation.warnings.length === 0 ? (
-                <p className="text-sm text-on-surface-variant">
-                  No blocking validation issues in the current draft.
-                </p>
+              {validation.errors.length === 0 && validation.warnings.length === 0 ? (
+                <p className="text-sm text-on-surface-variant">No blocking validation issues in the current draft.</p>
               ) : null}
               {validation.errors.map((message) => (
-                <div
-                  key={message}
-                  className="card-left-accent-orange rounded-xl bg-surface-container-low p-3 text-sm text-on-surface"
-                >
+                <div key={message} className="card-left-accent-orange rounded-xl bg-surface-container-low p-3 text-sm text-on-surface">
                   <div className="flex items-start gap-2">
-                    <AlertTriangle
-                      size={16}
-                      className="mt-0.5 text-[#fb923c]"
-                    />
+                    <AlertTriangle size={16} className="mt-0.5 text-[#fb923c]" />
                     <span>{message}</span>
                   </div>
                 </div>
               ))}
               {validation.warnings.map((message) => (
-                <div
-                  key={message}
-                  className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-sm text-on-surface-variant"
-                >
+                <div key={message} className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-sm text-on-surface-variant">
                   <div className="flex items-start gap-2">
                     <Workflow size={16} className="mt-0.5 text-[#00cec4]" />
                     <span>{message}</span>
@@ -2837,18 +2174,9 @@ export function WorkflowsClient({
           <div className="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant bg-surface/95 px-4 py-3 backdrop-blur">
             <div>
               <p className="ds-label">Properties</p>
-              <p className="text-sm font-semibold text-on-surface">
-                {selectedNode?.name ||
-                  (selectedEdge ? "Connector" : "Nothing selected")}
-              </p>
+              <p className="text-sm font-semibold text-on-surface">{selectedNode?.name || (selectedEdge ? "Connector" : "Nothing selected")}</p>
             </div>
-            <Button
-              variant="outline"
-              mode="icon"
-              size="sm"
-              onClick={() => setPropertiesOpen(false)}
-              aria-label="Close properties"
-            >
+            <Button variant="outline" mode="icon" size="sm" onClick={() => setPropertiesOpen(false)} aria-label="Close properties">
               <X size={15} />
             </Button>
           </div>
@@ -2865,16 +2193,8 @@ export function WorkflowsClient({
                   size="sm"
                   onClick={() => {
                     if (activeVersion?.isPublished) return;
-                    setNodes((prev) =>
-                      prev.filter((node) => node.id !== selectedNode.id),
-                    );
-                    setEdges((prev) =>
-                      prev.filter(
-                        (edge) =>
-                          edge.sourceKey !== selectedNode.key &&
-                          edge.targetKey !== selectedNode.key,
-                      ),
-                    );
+                    setNodes((prev) => prev.filter((node) => node.id !== selectedNode.id));
+                    setEdges((prev) => prev.filter((edge) => edge.sourceKey !== selectedNode.key && edge.targetKey !== selectedNode.key));
                     setSelectedNodeId(null);
                     setPropertiesOpen(false);
                   }}
@@ -2888,54 +2208,22 @@ export function WorkflowsClient({
                 <h3 className="ds-h3 text-on-surface">Node Settings</h3>
                 <div className="space-y-1.5">
                   <label className="ds-label block">Node Name</label>
-                  <input
-                    value={selectedNode.name}
-                    onChange={(event) =>
-                      updateSelectedNode((node) => ({
-                        ...node,
-                        name: event.target.value,
-                      }))
-                    }
-                    className="w-full text-sm"
-                  />
+                  <input value={selectedNode.name} onChange={(event) => updateSelectedNode((node) => ({ ...node, name: event.target.value }))} className="w-full text-sm" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="ds-label block">Key</label>
-                  <input
-                    value={selectedNode.key}
-                    onChange={(event) =>
-                      updateSelectedNode((node) => ({
-                        ...node,
-                        key: slugify(event.target.value),
-                      }))
-                    }
-                    className="w-full text-sm ds-numeric"
-                  />
+                  <input value={selectedNode.key} onChange={(event) => updateSelectedNode((node) => ({ ...node, key: slugify(event.target.value) }))} className="w-full text-sm ds-numeric" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="ds-label block">Category</label>
-                  <input
-                    value={selectedNode.category}
-                    onChange={(event) =>
-                      updateSelectedNode((node) => ({
-                        ...node,
-                        category: event.target.value,
-                      }))
-                    }
-                    className="w-full text-sm"
-                  />
+                  <input value={selectedNode.category} onChange={(event) => updateSelectedNode((node) => ({ ...node, category: event.target.value }))} className="w-full text-sm" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <label className="ds-label block">Node Type</label>
                     <select
                       value={selectedNode.nodeType}
-                      onChange={(event) =>
-                        updateSelectedNode((node) => ({
-                          ...node,
-                          nodeType: event.target.value as NodeDraft["nodeType"],
-                        }))
-                      }
+                      onChange={(event) => updateSelectedNode((node) => ({ ...node, nodeType: event.target.value as NodeDraft["nodeType"] }))}
                       className="w-full text-sm"
                     >
                       <option value="START">Start</option>
@@ -2952,15 +2240,7 @@ export function WorkflowsClient({
                       type="number"
                       min={1}
                       value={selectedNode.sortOrder}
-                      onChange={(event) =>
-                        updateSelectedNode((node) => ({
-                          ...node,
-                          sortOrder: Math.max(
-                            1,
-                            Number(event.target.value || 1),
-                          ),
-                        }))
-                      }
+                      onChange={(event) => updateSelectedNode((node) => ({ ...node, sortOrder: Math.max(1, Number(event.target.value || 1)) }))}
                       className="w-full text-sm ds-numeric"
                     />
                   </div>
@@ -2968,72 +2248,26 @@ export function WorkflowsClient({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <label className="ds-label block">Section Key</label>
-                    <input
-                      value={selectedNode.sectionKey}
-                      onChange={(event) =>
-                        updateSelectedNode((node) => ({
-                          ...node,
-                          sectionKey: slugify(event.target.value),
-                        }))
-                      }
-                      className="w-full text-sm ds-numeric"
-                    />
+                    <input value={selectedNode.sectionKey} onChange={(event) => updateSelectedNode((node) => ({ ...node, sectionKey: slugify(event.target.value) }))} className="w-full text-sm ds-numeric" />
                   </div>
                   <div className="space-y-1.5">
                     <label className="ds-label block">Section Label</label>
-                    <input
-                      value={selectedNode.sectionName}
-                      onChange={(event) =>
-                        updateSelectedNode((node) => ({
-                          ...node,
-                          sectionName: event.target.value,
-                        }))
-                      }
-                      className="w-full text-sm"
-                    />
+                    <input value={selectedNode.sectionName} onChange={(event) => updateSelectedNode((node) => ({ ...node, sectionName: event.target.value }))} className="w-full text-sm" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <label className="ds-label block">Branch Key</label>
-                    <input
-                      value={selectedNode.branchKey}
-                      onChange={(event) =>
-                        updateSelectedNode((node) => ({
-                          ...node,
-                          branchKey: slugify(event.target.value),
-                        }))
-                      }
-                      className="w-full text-sm ds-numeric"
-                    />
+                    <input value={selectedNode.branchKey} onChange={(event) => updateSelectedNode((node) => ({ ...node, branchKey: slugify(event.target.value) }))} className="w-full text-sm ds-numeric" />
                   </div>
                   <div className="space-y-1.5">
                     <label className="ds-label block">Branch Label</label>
-                    <input
-                      value={selectedNode.branchName}
-                      onChange={(event) =>
-                        updateSelectedNode((node) => ({
-                          ...node,
-                          branchName: event.target.value,
-                        }))
-                      }
-                      className="w-full text-sm"
-                    />
+                    <input value={selectedNode.branchName} onChange={(event) => updateSelectedNode((node) => ({ ...node, branchName: event.target.value }))} className="w-full text-sm" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="ds-label block">Description</label>
-                  <textarea
-                    value={selectedNode.description}
-                    onChange={(event) =>
-                      updateSelectedNode((node) => ({
-                        ...node,
-                        description: event.target.value,
-                      }))
-                    }
-                    rows={3}
-                    className="w-full text-sm"
-                  />
+                  <textarea value={selectedNode.description} onChange={(event) => updateSelectedNode((node) => ({ ...node, description: event.target.value }))} rows={3} className="w-full text-sm" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
@@ -3042,15 +2276,7 @@ export function WorkflowsClient({
                       type="number"
                       min={1}
                       value={selectedNode.slaDuration}
-                      onChange={(event) =>
-                        updateSelectedNode((node) => ({
-                          ...node,
-                          slaDuration: Math.max(
-                            1,
-                            Number(event.target.value || 1),
-                          ),
-                        }))
-                      }
+                      onChange={(event) => updateSelectedNode((node) => ({ ...node, slaDuration: Math.max(1, Number(event.target.value || 1)) }))}
                       className="w-full text-sm ds-numeric"
                     />
                   </div>
@@ -3058,12 +2284,7 @@ export function WorkflowsClient({
                     <label className="ds-label block">SLA Unit</label>
                     <select
                       value={selectedNode.slaUnit}
-                      onChange={(event) =>
-                        updateSelectedNode((node) => ({
-                          ...node,
-                          slaUnit: event.target.value as NodeDraft["slaUnit"],
-                        }))
-                      }
+                      onChange={(event) => updateSelectedNode((node) => ({ ...node, slaUnit: event.target.value as NodeDraft["slaUnit"] }))}
                       className="w-full text-sm"
                     >
                       <option value="BUSINESS_DAYS">Business Days</option>
@@ -3072,80 +2293,25 @@ export function WorkflowsClient({
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm text-on-surface">
-                  {(
-                    [
-                      {
-                        label: "Active",
-                        checked: selectedNode.isActive,
-                        buildUpdate: (checked: boolean) => ({
-                          isActive: checked,
-                        }),
-                      },
-                      {
-                        label: "Start Node",
-                        checked: selectedNode.isStart,
-                        buildUpdate: (checked: boolean) => ({
-                          isStart: checked,
-                        }),
-                      },
-                      {
-                        label: "Completion Remarks",
-                        checked: selectedNode.commentsRequired,
-                        buildUpdate: (checked: boolean) => ({
-                          commentsRequired: checked,
-                        }),
-                      },
-                      {
-                        label: "Allow Double-Back",
-                        checked: selectedNode.canBeRevisited,
-                        buildUpdate: (checked: boolean) => ({
-                          canBeRevisited: checked,
-                        }),
-                      },
-                      {
-                        label: "Approval Required",
-                        checked: selectedNode.approvalRequired,
-                        buildUpdate: (checked: boolean) => ({
-                          approvalRequired: checked,
-                        }),
-                      },
-                      {
-                        label: "Checklist Gate",
-                        checked: selectedNode.requireAllMandatoryChecklistItems,
-                        buildUpdate: (checked: boolean) => ({
-                          requireAllMandatoryChecklistItems: checked,
-                        }),
-                      },
-                      {
-                        label: "Stage Upload Gate",
-                        checked: selectedNode.requireMandatoryPhotos,
-                        buildUpdate: (checked: boolean) => ({
-                          requireMandatoryPhotos: checked,
-                        }),
-                      },
-                    ] as const
-                  ).map(({ label, checked, buildUpdate }) => (
-                    <label
-                      key={label}
-                      className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2"
-                    >
+                  {([
+                    { label: "Active", checked: selectedNode.isActive, buildUpdate: (checked: boolean) => ({ isActive: checked }) },
+                    { label: "Start Node", checked: selectedNode.isStart, buildUpdate: (checked: boolean) => ({ isStart: checked }) },
+                    { label: "Completion Remarks", checked: selectedNode.commentsRequired, buildUpdate: (checked: boolean) => ({ commentsRequired: checked }) },
+                    { label: "Allow Double-Back", checked: selectedNode.canBeRevisited, buildUpdate: (checked: boolean) => ({ canBeRevisited: checked }) },
+                    { label: "Approval Required", checked: selectedNode.approvalRequired, buildUpdate: (checked: boolean) => ({ approvalRequired: checked }) },
+                    { label: "Checklist Gate", checked: selectedNode.requireAllMandatoryChecklistItems, buildUpdate: (checked: boolean) => ({ requireAllMandatoryChecklistItems: checked }) },
+                    { label: "Stage Upload Gate", checked: selectedNode.requireMandatoryPhotos, buildUpdate: (checked: boolean) => ({ requireMandatoryPhotos: checked }) },
+                  ] as const).map(({ label, checked, buildUpdate }) => (
+                    <label key={label} className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2">
                       <input
                         type="checkbox"
                         checked={checked as boolean}
                         onChange={(event) => {
                           if (label === "Start Node" && event.target.checked) {
-                            setNodes((prev) =>
-                              prev.map((node) => ({
-                                ...node,
-                                isStart: node.id === selectedNode.id,
-                              })),
-                            );
+                            setNodes((prev) => prev.map((node) => ({ ...node, isStart: node.id === selectedNode.id })));
                             return;
                           }
-                          updateSelectedNode((node) => ({
-                            ...node,
-                            ...buildUpdate(event.target.checked),
-                          }));
+                          updateSelectedNode((node) => ({ ...node, ...buildUpdate(event.target.checked) }));
                         }}
                       />
                       <span>{label}</span>
@@ -3157,49 +2323,33 @@ export function WorkflowsClient({
                     <label className="ds-label block">Approval Roles</label>
                     <input
                       value={selectedNode.approvalRoles.join(", ")}
-                      onChange={(event) =>
-                        updateSelectedNode((node) => ({
-                          ...node,
-                          approvalRoles: event.target.value
-                            .split(",")
-                            .map((value) => value.trim())
-                            .filter(Boolean),
-                        }))
-                      }
+                      onChange={(event) => updateSelectedNode((node) => ({
+                        ...node,
+                        approvalRoles: event.target.value.split(",").map((value) => value.trim()).filter(Boolean),
+                      }))}
                       className="w-full text-sm"
                       placeholder="Manager, Admin"
                     />
                   </div>
                 ) : null}
                 <div className="space-y-1.5">
-                  <label className="ds-label block">
-                    Allowed Processor Roles
-                  </label>
+                  <label className="ds-label block">Allowed Processor Roles</label>
                   <input
                     value={selectedNode.allowedRoles.join(", ")}
-                    onChange={(event) =>
-                      updateSelectedNode((node) => ({
-                        ...node,
-                        allowedRoles: event.target.value
-                          .split(",")
-                          .map((value) => value.trim())
-                          .filter(Boolean),
-                      }))
-                    }
+                    onChange={(event) => updateSelectedNode((node) => ({
+                      ...node,
+                      allowedRoles: event.target.value.split(",").map((value) => value.trim()).filter(Boolean),
+                    }))}
                     className="w-full text-sm"
                     placeholder="Leave empty so anyone concerned with the job can process it"
                   />
                   <p className="text-xs text-on-surface-variant">
-                    Empty means anyone who can access the job can complete this
-                    node.
+                    Empty means anyone who can access the job can complete this node.
                   </p>
                 </div>
                 {selectedNode.nodeType === "NOTIFICATION" ? (
                   <div className="rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
-                    This node runs automatically. When the workflow enters it,
-                    the job owner, assigned manager, and all assigned users
-                    receive a notification, then the workflow advances through
-                    its single connected path.
+                    This node runs automatically. When the workflow enters it, the job owner, assigned manager, and all assigned users receive a notification, then the workflow advances through its single connected path.
                   </div>
                 ) : null}
               </div>
@@ -3209,11 +2359,7 @@ export function WorkflowsClient({
                   <h3 className="ds-h3 text-on-surface">Checklist Items</h3>
                   {selectedNode.nodeType === "CHECKLIST_NODE" ? (
                     selectedNode.checklistItems.length === 0 ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={addChecklistItem}
-                      >
+                      <Button variant="outline" size="sm" onClick={addChecklistItem}>
                         <Plus size={14} />
                         Add Item
                       </Button>
@@ -3221,11 +2367,7 @@ export function WorkflowsClient({
                       <Badge variant="success">STANDALONE CHECKLIST NODE</Badge>
                     )
                   ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleAddChecklistNode}
-                    >
+                    <Button variant="outline" size="sm" onClick={handleAddChecklistNode}>
                       <Plus size={14} />
                       Add Checklist Node
                     </Button>
@@ -3234,20 +2376,13 @@ export function WorkflowsClient({
 
                 {selectedNode.nodeType === "NOTIFICATION" ? (
                   <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
-                    Notification nodes do not use checklist items. Use the node
-                    name as the notification title and the description as the
-                    message body.
+                    Notification nodes do not use checklist items. Use the node name as the notification title and the description as the message body.
                   </div>
                 ) : null}
 
-                {selectedNode.nodeType !== "CHECKLIST_NODE" &&
-                selectedNode.nodeType !== "NOTIFICATION" ? (
+                {selectedNode.nodeType !== "CHECKLIST_NODE" && selectedNode.nodeType !== "NOTIFICATION" ? (
                   <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
-                    Checklist items should be modeled as separate nodes. Use{" "}
-                    <span className="font-medium text-on-surface">
-                      Add Checklist Node
-                    </span>{" "}
-                    for new workflow checks.
+                    Checklist items should be modeled as separate nodes. Use <span className="font-medium text-on-surface">Add Checklist Node</span> for new workflow checks.
                   </div>
                 ) : null}
 
@@ -3259,48 +2394,24 @@ export function WorkflowsClient({
 
                 <div className="space-y-4">
                   {selectedNode.checklistItems.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className="rounded-xl border border-outline-variant bg-surface-container-low p-4"
-                    >
+                    <div key={item.id} className="rounded-xl border border-outline-variant bg-surface-container-low p-4">
                       <div className="mb-3 flex items-start justify-between gap-2">
                         <div>
                           <p className="ds-label">Item {index + 1}</p>
-                          <p className="text-sm font-semibold text-on-surface">
-                            {item.label || "Untitled Checklist Item"}
-                          </p>
+                          <p className="text-sm font-semibold text-on-surface">{item.label || "Untitled Checklist Item"}</p>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Button
-                            variant="outline"
-                            mode="icon"
-                            size="sm"
-                            onClick={() => reorderChecklistItem(item.id, -1)}
-                            aria-label="Move checklist item up"
-                          >
+                          <Button variant="outline" mode="icon" size="sm" onClick={() => reorderChecklistItem(item.id, -1)} aria-label="Move checklist item up">
                             <ChevronUp size={14} />
                           </Button>
-                          <Button
-                            variant="outline"
-                            mode="icon"
-                            size="sm"
-                            onClick={() => reorderChecklistItem(item.id, 1)}
-                            aria-label="Move checklist item down"
-                          >
+                          <Button variant="outline" mode="icon" size="sm" onClick={() => reorderChecklistItem(item.id, 1)} aria-label="Move checklist item down">
                             <ChevronDown size={14} />
                           </Button>
                           <Button
                             variant="outline"
                             mode="icon"
                             size="sm"
-                            onClick={() =>
-                              updateSelectedNode((node) => ({
-                                ...node,
-                                checklistItems: node.checklistItems.filter(
-                                  (entry) => entry.id !== item.id,
-                                ),
-                              }))
-                            }
+                            onClick={() => updateSelectedNode((node) => ({ ...node, checklistItems: node.checklistItems.filter((entry) => entry.id !== item.id) }))}
                             aria-label="Delete checklist item"
                           >
                             <Trash2 size={14} />
@@ -3309,29 +2420,8 @@ export function WorkflowsClient({
                       </div>
 
                       <div className="space-y-3">
-                        <input
-                          value={item.label}
-                          onChange={(event) =>
-                            updateChecklistItem(item.id, (current) => ({
-                              ...current,
-                              label: event.target.value,
-                            }))
-                          }
-                          className="w-full text-sm"
-                          placeholder="Checklist item name"
-                        />
-                        <textarea
-                          value={item.description}
-                          onChange={(event) =>
-                            updateChecklistItem(item.id, (current) => ({
-                              ...current,
-                              description: event.target.value,
-                            }))
-                          }
-                          rows={2}
-                          className="w-full text-sm"
-                          placeholder="Help text or operator guidance"
-                        />
+                        <input value={item.label} onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, label: event.target.value }))} className="w-full text-sm" placeholder="Checklist item name" />
+                        <textarea value={item.description} onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, description: event.target.value }))} rows={2} className="w-full text-sm" placeholder="Help text or operator guidance" />
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <label className="ds-label block">Deadline</label>
@@ -3339,77 +2429,32 @@ export function WorkflowsClient({
                               type="number"
                               min={1}
                               value={item.deadlineDuration}
-                              onChange={(event) =>
-                                updateChecklistItem(item.id, (current) => ({
-                                  ...current,
-                                  deadlineDuration: Math.max(
-                                    1,
-                                    Number(event.target.value || 1),
-                                  ),
-                                }))
-                              }
+                              onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, deadlineDuration: Math.max(1, Number(event.target.value || 1)) }))}
                               className="w-full text-sm ds-numeric"
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <label className="ds-label block">
-                              Deadline Unit
-                            </label>
+                            <label className="ds-label block">Deadline Unit</label>
                             <select
                               value={item.deadlineUnit}
-                              onChange={(event) =>
-                                updateChecklistItem(item.id, (current) => ({
-                                  ...current,
-                                  deadlineUnit: event.target
-                                    .value as ChecklistItemDraft["deadlineUnit"],
-                                }))
-                              }
+                              onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, deadlineUnit: event.target.value as ChecklistItemDraft["deadlineUnit"] }))}
                               className="w-full text-sm"
                             >
-                              <option value="BUSINESS_DAYS">
-                                Business Days
-                              </option>
-                              <option value="CALENDAR_DAYS">
-                                Calendar Days
-                              </option>
+                              <option value="BUSINESS_DAYS">Business Days</option>
+                              <option value="CALENDAR_DAYS">Calendar Days</option>
                             </select>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 text-sm text-on-surface">
-                          {(
-                            [
-                              {
-                                label: "Mandatory",
-                                checked: item.isMandatory,
-                                field: "isMandatory",
-                              },
-                              {
-                                label: "Completion Remarks",
-                                checked: item.requiresRemarks,
-                                field: "requiresRemarks",
-                              },
-                              {
-                                label: "Allow Uploads",
-                                checked: item.allowsUpload,
-                                field: "allowsUpload",
-                              },
-                              {
-                                label: "Delay Remarks Required",
-                                checked: item.delayRemarksRequired,
-                                field: "delayRemarksRequired",
-                              },
-                              {
-                                label: "Active",
-                                checked: item.isActive,
-                                field: "isActive",
-                              },
-                            ] as const
-                          ).map(({ label, checked, field }) => (
-                            <label
-                              key={label}
-                              className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2"
-                            >
+                          {([
+                            { label: "Mandatory", checked: item.isMandatory, field: "isMandatory" },
+                            { label: "Completion Remarks", checked: item.requiresRemarks, field: "requiresRemarks" },
+                            { label: "Allow Uploads", checked: item.allowsUpload, field: "allowsUpload" },
+                            { label: "Delay Remarks Required", checked: item.delayRemarksRequired, field: "delayRemarksRequired" },
+                            { label: "Active", checked: item.isActive, field: "isActive" },
+                          ] as const).map(({ label, checked, field }) => (
+                            <label key={label} className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2">
                               <input
                                 type="checkbox"
                                 checked={checked as boolean}
@@ -3429,29 +2474,17 @@ export function WorkflowsClient({
                           <div className="rounded-xl border border-outline-variant bg-surface p-3">
                             <div className="grid grid-cols-2 gap-3">
                               <div className="space-y-1.5">
-                                <label className="ds-label block">
-                                  Min Uploads
-                                </label>
+                                <label className="ds-label block">Min Uploads</label>
                                 <input
                                   type="number"
                                   min={0}
                                   value={item.minUploads}
-                                  onChange={(event) =>
-                                    updateChecklistItem(item.id, (current) => ({
-                                      ...current,
-                                      minUploads: Math.max(
-                                        0,
-                                        Number(event.target.value || 0),
-                                      ),
-                                    }))
-                                  }
+                                  onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, minUploads: Math.max(0, Number(event.target.value || 0)) }))}
                                   className="w-full text-sm ds-numeric"
                                 />
                               </div>
                               <div className="space-y-1.5">
-                                <label className="ds-label block">
-                                  Max Uploads
-                                </label>
+                                <label className="ds-label block">Max Uploads</label>
                                 <input
                                   type="number"
                                   min={item.minUploads}
@@ -3459,12 +2492,7 @@ export function WorkflowsClient({
                                   onChange={(event) =>
                                     updateChecklistItem(item.id, (current) => ({
                                       ...current,
-                                      maxUploads: event.target.value
-                                        ? Math.max(
-                                            current.minUploads,
-                                            Number(event.target.value),
-                                          )
-                                        : null,
+                                      maxUploads: event.target.value ? Math.max(current.minUploads, Number(event.target.value)) : null,
                                     }))
                                   }
                                   className="w-full text-sm ds-numeric"
@@ -3473,18 +2501,13 @@ export function WorkflowsClient({
                               </div>
                             </div>
                             <div className="mt-3 space-y-1.5">
-                              <label className="ds-label block">
-                                Accepted File Types
-                              </label>
+                              <label className="ds-label block">Accepted File Types</label>
                               <input
                                 value={item.acceptedFileTypes.join(", ")}
                                 onChange={(event) =>
                                   updateChecklistItem(item.id, (current) => ({
                                     ...current,
-                                    acceptedFileTypes: event.target.value
-                                      .split(",")
-                                      .map((value) => value.trim())
-                                      .filter(Boolean),
+                                    acceptedFileTypes: event.target.value.split(",").map((value) => value.trim()).filter(Boolean),
                                   }))
                                 }
                                 className="w-full text-sm"
@@ -3496,17 +2519,10 @@ export function WorkflowsClient({
 
                         <div className="rounded-xl border border-outline-variant bg-surface p-3">
                           <div className="space-y-1.5">
-                            <label className="ds-label block">
-                              Document Type
-                            </label>
+                            <label className="ds-label block">Document Type</label>
                             <input
                               value={item.documentType}
-                              onChange={(event) =>
-                                updateChecklistItem(item.id, (current) => ({
-                                  ...current,
-                                  documentType: event.target.value,
-                                }))
-                              }
+                              onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, documentType: event.target.value }))}
                               className="w-full text-sm"
                               placeholder="Example: E-Way Bill, OOC Document, CE/Lab Report"
                             />
@@ -3516,12 +2532,7 @@ export function WorkflowsClient({
                               <input
                                 type="checkbox"
                                 checked={item.requiresValidity}
-                                onChange={(event) =>
-                                  updateChecklistItem(item.id, (current) => ({
-                                    ...current,
-                                    requiresValidity: event.target.checked,
-                                  }))
-                                }
+                                onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, requiresValidity: event.target.checked }))}
                               />
                               <span>Validity Required</span>
                             </label>
@@ -3529,12 +2540,7 @@ export function WorkflowsClient({
                               <input
                                 type="checkbox"
                                 checked={item.notifyBeforeExpiry}
-                                onChange={(event) =>
-                                  updateChecklistItem(item.id, (current) => ({
-                                    ...current,
-                                    notifyBeforeExpiry: event.target.checked,
-                                  }))
-                                }
+                                onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, notifyBeforeExpiry: event.target.checked }))}
                               />
                               <span>Expiry Notification</span>
                             </label>
@@ -3542,95 +2548,47 @@ export function WorkflowsClient({
                           {item.requiresValidity ? (
                             <div className="mt-3 grid grid-cols-2 gap-3">
                               <div className="space-y-1.5">
-                                <label className="ds-label block">
-                                  Validity Duration
-                                </label>
+                                <label className="ds-label block">Validity Duration</label>
                                 <input
                                   type="number"
                                   min={1}
                                   value={item.validityDuration ?? ""}
-                                  onChange={(event) =>
-                                    updateChecklistItem(item.id, (current) => ({
-                                      ...current,
-                                      validityDuration: event.target.value
-                                        ? Math.max(
-                                            1,
-                                            Number(event.target.value),
-                                          )
-                                        : null,
-                                    }))
-                                  }
+                                  onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, validityDuration: event.target.value ? Math.max(1, Number(event.target.value)) : null }))}
                                   className="w-full text-sm ds-numeric"
                                   placeholder="Set during filing"
                                 />
                               </div>
                               <div className="space-y-1.5">
-                                <label className="ds-label block">
-                                  Validity Unit
-                                </label>
+                                <label className="ds-label block">Validity Unit</label>
                                 <select
                                   value={item.validityUnit}
-                                  onChange={(event) =>
-                                    updateChecklistItem(item.id, (current) => ({
-                                      ...current,
-                                      validityUnit: event.target
-                                        .value as ValidityUnit,
-                                    }))
-                                  }
+                                  onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, validityUnit: event.target.value as ValidityUnit }))}
                                   className="w-full text-sm"
                                 >
-                                  <option value="BUSINESS_DAYS">
-                                    Business Days
-                                  </option>
-                                  <option value="CALENDAR_DAYS">
-                                    Calendar Days
-                                  </option>
+                                  <option value="BUSINESS_DAYS">Business Days</option>
+                                  <option value="CALENDAR_DAYS">Calendar Days</option>
                                 </select>
                               </div>
                               <div className="space-y-1.5">
-                                <label className="ds-label block">
-                                  Warn Before
-                                </label>
+                                <label className="ds-label block">Warn Before</label>
                                 <input
                                   type="number"
                                   min={1}
                                   value={item.warningBeforeDuration ?? ""}
-                                  onChange={(event) =>
-                                    updateChecklistItem(item.id, (current) => ({
-                                      ...current,
-                                      warningBeforeDuration: event.target.value
-                                        ? Math.max(
-                                            1,
-                                            Number(event.target.value),
-                                          )
-                                        : null,
-                                    }))
-                                  }
+                                  onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, warningBeforeDuration: event.target.value ? Math.max(1, Number(event.target.value)) : null }))}
                                   className="w-full text-sm ds-numeric"
                                   placeholder="1"
                                 />
                               </div>
                               <div className="space-y-1.5">
-                                <label className="ds-label block">
-                                  Warning Unit
-                                </label>
+                                <label className="ds-label block">Warning Unit</label>
                                 <select
                                   value={item.warningBeforeUnit}
-                                  onChange={(event) =>
-                                    updateChecklistItem(item.id, (current) => ({
-                                      ...current,
-                                      warningBeforeUnit: event.target
-                                        .value as ValidityUnit,
-                                    }))
-                                  }
+                                  onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, warningBeforeUnit: event.target.value as ValidityUnit }))}
                                   className="w-full text-sm"
                                 >
-                                  <option value="BUSINESS_DAYS">
-                                    Business Days
-                                  </option>
-                                  <option value="CALENDAR_DAYS">
-                                    Calendar Days
-                                  </option>
+                                  <option value="BUSINESS_DAYS">Business Days</option>
+                                  <option value="CALENDAR_DAYS">Calendar Days</option>
                                 </select>
                               </div>
                             </div>
@@ -3645,118 +2603,39 @@ export function WorkflowsClient({
               <div className="ds-form-section space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="ds-h3 text-on-surface">Stage Upload Slots</h3>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={addPhotoRequirement}
-                  >
+                  <Button variant="outline" size="sm" onClick={addPhotoRequirement}>
                     <Plus size={14} />
                     Add Upload Slot
                   </Button>
                 </div>
                 <div className="space-y-3">
                   {selectedNode.photoRequirements.map((photo) => (
-                    <div
-                      key={photo.id}
-                      className="rounded-xl border border-outline-variant bg-surface-container-low p-4"
-                    >
+                    <div key={photo.id} className="rounded-xl border border-outline-variant bg-surface-container-low p-4">
                       <div className="mb-3 flex items-start justify-between gap-2">
-                        <p className="text-sm font-semibold text-on-surface">
-                          {photo.label || "Untitled Upload Slot"}
-                        </p>
+                        <p className="text-sm font-semibold text-on-surface">{photo.label || "Untitled Upload Slot"}</p>
                         <Button
                           variant="outline"
                           mode="icon"
                           size="sm"
-                          onClick={() =>
-                            updateSelectedNode((node) => ({
-                              ...node,
-                              photoRequirements: node.photoRequirements.filter(
-                                (entry) => entry.id !== photo.id,
-                              ),
-                            }))
-                          }
+                          onClick={() => updateSelectedNode((node) => ({ ...node, photoRequirements: node.photoRequirements.filter((entry) => entry.id !== photo.id) }))}
                           aria-label="Delete upload slot"
                         >
                           <Trash2 size={14} />
                         </Button>
                       </div>
                       <div className="space-y-3">
-                        <input
-                          value={photo.label}
-                          onChange={(event) =>
-                            updatePhotoRequirement(photo.id, (current) => ({
-                              ...current,
-                              label: event.target.value,
-                            }))
-                          }
-                          className="w-full text-sm"
-                          placeholder="Upload slot label"
-                        />
-                        <textarea
-                          value={photo.description}
-                          onChange={(event) =>
-                            updatePhotoRequirement(photo.id, (current) => ({
-                              ...current,
-                              description: event.target.value,
-                            }))
-                          }
-                          rows={2}
-                          className="w-full text-sm"
-                          placeholder="What should operators upload here?"
-                        />
+                        <input value={photo.label} onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, label: event.target.value }))} className="w-full text-sm" placeholder="Upload slot label" />
+                        <textarea value={photo.description} onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, description: event.target.value }))} rows={2} className="w-full text-sm" placeholder="What should operators upload here?" />
                         <div className="grid grid-cols-2 gap-3">
-                          <input
-                            type="number"
-                            min={0}
-                            value={photo.minPhotos}
-                            onChange={(event) =>
-                              updatePhotoRequirement(photo.id, (current) => ({
-                                ...current,
-                                minPhotos: Math.max(
-                                  0,
-                                  Number(event.target.value || 0),
-                                ),
-                              }))
-                            }
-                            className="w-full text-sm ds-numeric"
-                            placeholder="Min uploads"
-                          />
-                          <input
-                            type="number"
-                            min={photo.minPhotos}
-                            value={photo.maxPhotos ?? ""}
-                            onChange={(event) =>
-                              updatePhotoRequirement(photo.id, (current) => ({
-                                ...current,
-                                maxPhotos: event.target.value
-                                  ? Math.max(
-                                      current.minPhotos,
-                                      Number(event.target.value),
-                                    )
-                                  : null,
-                              }))
-                            }
-                            className="w-full text-sm ds-numeric"
-                            placeholder="Max uploads"
-                          />
+                          <input type="number" min={0} value={photo.minPhotos} onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, minPhotos: Math.max(0, Number(event.target.value || 0)) }))} className="w-full text-sm ds-numeric" placeholder="Min uploads" />
+                          <input type="number" min={photo.minPhotos} value={photo.maxPhotos ?? ""} onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, maxPhotos: event.target.value ? Math.max(current.minPhotos, Number(event.target.value)) : null }))} className="w-full text-sm ds-numeric" placeholder="Max uploads" />
                         </div>
                         <div className="grid grid-cols-2 gap-3 text-sm text-on-surface">
                           <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2">
                             <input
                               type="checkbox"
                               checked={photo.isMandatory}
-                              onChange={(event) =>
-                                updatePhotoRequirement(photo.id, (current) => ({
-                                  ...current,
-                                  isMandatory: event.target.checked,
-                                  minPhotos:
-                                    event.target.checked &&
-                                    current.minPhotos === 0
-                                      ? 1
-                                      : current.minPhotos,
-                                }))
-                              }
+                              onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, isMandatory: event.target.checked, minPhotos: event.target.checked && current.minPhotos === 0 ? 1 : current.minPhotos }))}
                             />
                             <span>Mandatory</span>
                           </label>
@@ -3764,48 +2643,29 @@ export function WorkflowsClient({
                             <input
                               type="checkbox"
                               checked={photo.isVisibleInTimeline}
-                              onChange={(event) =>
-                                updatePhotoRequirement(photo.id, (current) => ({
-                                  ...current,
-                                  isVisibleInTimeline: event.target.checked,
-                                }))
-                              }
+                              onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, isVisibleInTimeline: event.target.checked }))}
                             />
                             <span>Timeline</span>
                           </label>
                         </div>
                         <div className="space-y-1.5">
-                          <label className="ds-label block">
-                            Accepted File Types
-                          </label>
+                          <label className="ds-label block">Accepted File Types</label>
                           <input
                             value={photo.acceptedFileTypes.join(", ")}
-                            onChange={(event) =>
-                              updatePhotoRequirement(photo.id, (current) => ({
-                                ...current,
-                                acceptedFileTypes: event.target.value
-                                  .split(",")
-                                  .map((value) => value.trim())
-                                  .filter(Boolean),
-                              }))
-                            }
+                            onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({
+                              ...current,
+                              acceptedFileTypes: event.target.value.split(",").map((value) => value.trim()).filter(Boolean),
+                            }))}
                             className="w-full text-sm"
                             placeholder="image/jpeg, image/png, application/pdf"
                           />
                         </div>
                         <div className="rounded-xl border border-outline-variant bg-surface p-3">
                           <div className="space-y-1.5">
-                            <label className="ds-label block">
-                              Document Type
-                            </label>
+                            <label className="ds-label block">Document Type</label>
                             <input
                               value={photo.documentType}
-                              onChange={(event) =>
-                                updatePhotoRequirement(photo.id, (current) => ({
-                                  ...current,
-                                  documentType: event.target.value,
-                                }))
-                              }
+                              onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, documentType: event.target.value }))}
                               className="w-full text-sm"
                               placeholder="Example: E-Way Bill, OOC Document, CE/Lab Report"
                             />
@@ -3815,15 +2675,7 @@ export function WorkflowsClient({
                               <input
                                 type="checkbox"
                                 checked={photo.requiresValidity}
-                                onChange={(event) =>
-                                  updatePhotoRequirement(
-                                    photo.id,
-                                    (current) => ({
-                                      ...current,
-                                      requiresValidity: event.target.checked,
-                                    }),
-                                  )
-                                }
+                                onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, requiresValidity: event.target.checked }))}
                               />
                               <span>Validity Required</span>
                             </label>
@@ -3831,15 +2683,7 @@ export function WorkflowsClient({
                               <input
                                 type="checkbox"
                                 checked={photo.notifyBeforeExpiry}
-                                onChange={(event) =>
-                                  updatePhotoRequirement(
-                                    photo.id,
-                                    (current) => ({
-                                      ...current,
-                                      notifyBeforeExpiry: event.target.checked,
-                                    }),
-                                  )
-                                }
+                                onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, notifyBeforeExpiry: event.target.checked }))}
                               />
                               <span>Expiry Notification</span>
                             </label>
@@ -3847,108 +2691,47 @@ export function WorkflowsClient({
                           {photo.requiresValidity ? (
                             <div className="mt-3 grid grid-cols-2 gap-3">
                               <div className="space-y-1.5">
-                                <label className="ds-label block">
-                                  Validity Duration
-                                </label>
+                                <label className="ds-label block">Validity Duration</label>
                                 <input
                                   type="number"
                                   min={1}
                                   value={photo.validityDuration ?? ""}
-                                  onChange={(event) =>
-                                    updatePhotoRequirement(
-                                      photo.id,
-                                      (current) => ({
-                                        ...current,
-                                        validityDuration: event.target.value
-                                          ? Math.max(
-                                              1,
-                                              Number(event.target.value),
-                                            )
-                                          : null,
-                                      }),
-                                    )
-                                  }
+                                  onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, validityDuration: event.target.value ? Math.max(1, Number(event.target.value)) : null }))}
                                   className="w-full text-sm ds-numeric"
                                   placeholder="Set during filing"
                                 />
                               </div>
                               <div className="space-y-1.5">
-                                <label className="ds-label block">
-                                  Validity Unit
-                                </label>
+                                <label className="ds-label block">Validity Unit</label>
                                 <select
                                   value={photo.validityUnit}
-                                  onChange={(event) =>
-                                    updatePhotoRequirement(
-                                      photo.id,
-                                      (current) => ({
-                                        ...current,
-                                        validityUnit: event.target
-                                          .value as ValidityUnit,
-                                      }),
-                                    )
-                                  }
+                                  onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, validityUnit: event.target.value as ValidityUnit }))}
                                   className="w-full text-sm"
                                 >
-                                  <option value="BUSINESS_DAYS">
-                                    Business Days
-                                  </option>
-                                  <option value="CALENDAR_DAYS">
-                                    Calendar Days
-                                  </option>
+                                  <option value="BUSINESS_DAYS">Business Days</option>
+                                  <option value="CALENDAR_DAYS">Calendar Days</option>
                                 </select>
                               </div>
                               <div className="space-y-1.5">
-                                <label className="ds-label block">
-                                  Warn Before
-                                </label>
+                                <label className="ds-label block">Warn Before</label>
                                 <input
                                   type="number"
                                   min={1}
                                   value={photo.warningBeforeDuration ?? ""}
-                                  onChange={(event) =>
-                                    updatePhotoRequirement(
-                                      photo.id,
-                                      (current) => ({
-                                        ...current,
-                                        warningBeforeDuration: event.target
-                                          .value
-                                          ? Math.max(
-                                              1,
-                                              Number(event.target.value),
-                                            )
-                                          : null,
-                                      }),
-                                    )
-                                  }
+                                  onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, warningBeforeDuration: event.target.value ? Math.max(1, Number(event.target.value)) : null }))}
                                   className="w-full text-sm ds-numeric"
                                   placeholder="1"
                                 />
                               </div>
                               <div className="space-y-1.5">
-                                <label className="ds-label block">
-                                  Warning Unit
-                                </label>
+                                <label className="ds-label block">Warning Unit</label>
                                 <select
                                   value={photo.warningBeforeUnit}
-                                  onChange={(event) =>
-                                    updatePhotoRequirement(
-                                      photo.id,
-                                      (current) => ({
-                                        ...current,
-                                        warningBeforeUnit: event.target
-                                          .value as ValidityUnit,
-                                      }),
-                                    )
-                                  }
+                                  onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, warningBeforeUnit: event.target.value as ValidityUnit }))}
                                   className="w-full text-sm"
                                 >
-                                  <option value="BUSINESS_DAYS">
-                                    Business Days
-                                  </option>
-                                  <option value="CALENDAR_DAYS">
-                                    Calendar Days
-                                  </option>
+                                  <option value="BUSINESS_DAYS">Business Days</option>
+                                  <option value="CALENDAR_DAYS">Calendar Days</option>
                                 </select>
                               </div>
                             </div>
@@ -3988,46 +2771,34 @@ export function WorkflowsClient({
                 <h3 className="ds-h3 text-on-surface">Connector</h3>
                 <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-sm text-on-surface">
                   <div className="ds-label text-on-surface-variant">From</div>
-                  <div className="mt-1 break-all ds-numeric">
-                    {selectedEdge.sourceKey}
-                  </div>
-                  <div className="mt-3 ds-label text-on-surface-variant">
-                    To
-                  </div>
-                  <div className="mt-1 break-all ds-numeric">
-                    {selectedEdge.targetKey}
-                  </div>
+                  <div className="mt-1 break-all ds-numeric">{selectedEdge.sourceKey}</div>
+                  <div className="mt-3 ds-label text-on-surface-variant">To</div>
+                  <div className="mt-1 break-all ds-numeric">{selectedEdge.targetKey}</div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="ds-label block">Connector Label</label>
                   <input
                     value={selectedEdge.label || ""}
-                    onChange={(event) =>
-                      updateSelectedEdge((edge) => ({
-                        ...edge,
-                        label: event.target.value || null,
-                      }))
-                    }
+                    onChange={(event) => updateSelectedEdge((edge) => ({ ...edge, label: event.target.value || null }))}
                     className="w-full text-sm"
                     placeholder="Example: RMS Path, Recheck BE, Next"
                     disabled={activeVersion?.isPublished}
                   />
                 </div>
                 <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
-                  Backward connectors are allowed. Use them for cases like
-                  Examination returning to Bill of Entry upload, then routing
-                  forward again.
+                  Backward connectors are allowed. Use them for cases like Examination returning to Bill of Entry upload, then routing forward again.
                 </div>
               </div>
             </div>
           ) : (
-            <div className="flex h-full items-center justify-center p-8 text-center">
+            <div className="flex h-full items-center justify-center p-6 text-center">
               <div className="space-y-3">
-                <Workflow size={28} className="mx-auto text-[#00cec4]" />
+                <span className="ds-icon-badge mx-auto">
+                  <Workflow size={18} />
+                </span>
                 <h2 className="ds-h3 text-on-surface">SELECT A NODE</h2>
                 <p className="max-w-xs text-sm text-on-surface-variant">
-                  Choose a node on the canvas to edit checklist deadlines,
-                  upload rules, and route behavior.
+                  Choose a node on the canvas to edit checklist deadlines, upload rules, and route behavior.
                 </p>
               </div>
             </div>

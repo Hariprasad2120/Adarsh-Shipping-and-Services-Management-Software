@@ -6,6 +6,7 @@ import { can, ForbiddenError } from "@/lib/rbac";
 import { BreadcrumbLabel } from "@/components/breadcrumb-label";
 import { JobWorkspaceClient } from "./job-workspace-client";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 interface WorkspaceData {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -113,20 +114,22 @@ export default async function ChaJobWorkspacePage({
       (error instanceof Error && error.message.includes("Access Denied"))
     ) {
       return (
-        <main className="max-w-4xl mx-auto p-12 text-center space-y-4">
-          <div className="inline-flex p-3 rounded-full bg-red-50 text-red-500 border border-red-200">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-            </svg>
-          </div>
-          <h1 className="ds-h2 text-on-surface">Access Prohibited</h1>
-          <p className="text-sm text-on-surface-variant max-w-md mx-auto">
-            {(error as Error).message}
-          </p>
-          <div className="pt-4">
-            <Link href="/cha/jobs" className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-4 py-2 rounded-xl text-sm uppercase tracking-wide transition-all font-semibold inline-block">
-              Back to Catalog
-            </Link>
+        <main className="w-full">
+          <div className="mx-auto max-w-3xl rounded-2xl border border-outline-variant bg-surface p-8 text-center shadow-sm">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-red-200 bg-red-50 text-red-500">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-8 w-8">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+            </div>
+            <h1 className="ds-h1 mt-4 text-on-surface">Access Prohibited</h1>
+            <p className="mx-auto mt-3 max-w-md text-sm text-on-surface-variant">
+              {(error as Error).message}
+            </p>
+            <div className="mt-6">
+              <Link href="/cha/jobs">
+                <Button>Back to Catalog</Button>
+              </Link>
+            </div>
           </div>
         </main>
       );

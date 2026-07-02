@@ -55,6 +55,7 @@ interface SettingsFormProps {
     isManifestMandatory: boolean;
     manifestHelpText: string | null;
     isActive: boolean;
+    filingFlowCategory: string | null;
   }[];
   shipmentTypes: { id: string; name: string; isActive: boolean }[];
   teamGroups: {
@@ -316,7 +317,8 @@ export function SettingsForm({
       | "customManifestLabel"
       | "manifestHelpText"
       | "isManifestMandatory"
-      | "isActive",
+      | "isActive"
+      | "filingFlowCategory",
     value: string | boolean | null,
   ) => {
     setJobTypesList((prev) =>
@@ -343,6 +345,7 @@ export function SettingsForm({
         isManifestMandatory: jobType.isManifestMandatory,
         manifestHelpText: jobType.manifestHelpText,
         isActive: jobType.isActive,
+        filingFlowCategory: jobType.filingFlowCategory,
       });
       if (res.ok) {
         setJobTypesList((prev) => prev.map((jt) => (jt.id === jobType.id ? res.data : jt)));
@@ -1177,6 +1180,19 @@ export function SettingsForm({
                         onChange={(e) => handleJobTypeFieldChange(jt.id, "isManifestMandatory", e.target.checked)}
                       />
                       Manifest field is mandatory
+                    </label>
+                    <label className="space-y-1">
+                      <span className="ds-label">Filing Flow Category</span>
+                      <select
+                        value={jt.filingFlowCategory || ""}
+                        onChange={(e) => handleJobTypeFieldChange(jt.id, "filingFlowCategory", e.target.value || null)}
+                        className="w-full text-sm py-2 px-3 bg-surface border border-outline-variant/50 rounded-xl"
+                      >
+                        <option value="">— Not set (catch-all template) —</option>
+                        <option value="IMPORT_BE">Import / Bill of Entry</option>
+                        <option value="EXPORT_SB">Export / Shipping Bill</option>
+                        <option value="CUSTOM">Custom Flow</option>
+                      </select>
                     </label>
                     <label className="flex items-center gap-2 text-xs text-on-surface-variant">
                       <input

@@ -206,6 +206,7 @@ export async function updateJobTypeManifestConfigAction(
     isManifestMandatory: boolean;
     manifestHelpText?: string | null;
     isActive?: boolean;
+    filingFlowCategory?: string | null;
   },
 ): Promise<ActionResponse> {
   try {
@@ -254,6 +255,21 @@ export async function deleteJobTypeAction(id: string): Promise<ActionResponse> {
     return { ok: true, data: jobType };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to delete clearance job type" };
+  }
+}
+
+export async function updateJobTypeFilingFlowCategoryAction(
+  id: string,
+  filingFlowCategory: string | null,
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.settings.manage");
+    const jobType = await chaService.updateJobTypeFilingFlowCategory(userId, orgId, id, filingFlowCategory);
+    revalidatePath("/cha/settings");
+    revalidatePath("/cha/settings/filing-workflows");
+    return { ok: true, data: jobType };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update filing flow category" };
   }
 }
 
@@ -346,6 +362,41 @@ export async function uploadDocumentVersionAction(
     return { ok: true, data: version };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to upload document version" };
+  }
+}
+
+export async function createJobCustomDocumentUploadAction(
+  jobId: string,
+  formData: FormData,
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.document.upload");
+    const nameValue = formData.get("name");
+    const file = formData.get("file");
+
+    if (typeof nameValue !== "string" || !nameValue.trim()) {
+      return { ok: false, error: "Please enter a custom document name." };
+    }
+
+    if (!(file instanceof File) || file.size === 0) {
+      return { ok: false, error: "Please choose a valid file to upload." };
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const requirement = await chaService.createJobCustomDocumentRequirementAndUpload(userId, orgId, jobId, {
+      name: nameValue,
+      fileData: {
+        fileName: file.name,
+        mimeType: file.type || "application/octet-stream",
+        sizeBytes: file.size,
+      },
+      fileBuffer: buffer,
+    });
+
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: requirement };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to create custom job document" };
   }
 }
 
@@ -931,6 +982,7 @@ export async function saveFilingWorkflowDraftAction(
     name: string;
     description?: string;
     clearanceTypeId?: string | null;
+    filingFlowCategory?: string | null;
     nodes: any[];
     edges: any[];
   }
