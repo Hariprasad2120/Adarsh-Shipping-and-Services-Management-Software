@@ -120,16 +120,24 @@ export async function provisionJobWorkspace(
       });
     }
 
-    const categories = [
-      "01 Customer KYC",
-      "02 Job Documents",
-      "03 User Uploads",
-      "04 Checklists",
-      "05 Customs and CHA",
-      "06 Invoices and Billing",
-      "07 Correspondence",
-      "08 Other Documents"
-    ];
+    // Subfolders mirror the org's configured document requirement categories
+    // (CHA Settings > Document Requirements), so adding/renaming/removing a
+    // category there is reflected in the Drive structure of the next job created.
+    const settingsCategories = await db.chaDocumentRequirementCategory.findMany({
+      where: { orgId: job.orgId, isActive: true },
+      orderBy: { sortOrder: "asc" },
+      select: { name: true },
+    });
+
+    const categories = settingsCategories.map((c) => c.name.trim()).filter(Boolean);
+    // Fixed utility buckets that always exist regardless of settings, since they
+    // don't correspond to a document-collection category: ad-hoc custom uploads
+    // and filing-stage checklist/photo evidence.
+    for (const utility of ["User Uploads", "Filing Documents"]) {
+      if (!categories.some((name) => name.toLowerCase() === utility.toLowerCase())) {
+        categories.push(utility);
+      }
+    }
 
     let categoryFolders = (profile.categoryFolders as Record<string, string>) || {};
     if (rootFolderId && !rootFolderId.startsWith("mock-") && Object.values(categoryFolders).some(id => id.startsWith("mock-"))) {

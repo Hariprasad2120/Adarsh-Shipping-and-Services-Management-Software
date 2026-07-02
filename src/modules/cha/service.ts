@@ -2109,18 +2109,22 @@ async function advanceToChecklistPreparationIfDocumentGatePassed(jobId: string) 
   return true;
 }
 
-export function getFolderNameForCategory(category: string): string {
-  const normalized = category.toLowerCase().trim();
-  if (normalized.includes("kyc")) return "01 Customer KYC";
-  if (normalized.includes("commercial")) return "02 Job Documents";
-  if (normalized.includes("logistics")) return "02 Job Documents";
-  if (normalized.includes("financial") || normalized.includes("invoice") || normalized.includes("billing")) return "06 Invoices and Billing";
-  if (normalized.includes("compliance") || normalized.includes("customs") || normalized.includes("cha")) return "05 Customs and CHA";
-  if (normalized.includes("checklist")) return "04 Checklists";
-  if (normalized.includes("user")) return "03 User Uploads";
-  if (normalized.includes("correspondence")) return "07 Correspondence";
-  return "08 Other Documents";
+// Resolve the Drive subfolder for a document requirement's category. Folder keys
+// are the exact category names provisioned in workspace-provisioning.ts (mirrors
+// ChaDocumentRequirementCategory), so this is a direct lookup with a case-insensitive
+// fallback in case the category name's casing drifted, then the job's root folder.
+export function resolveDriveFolderForCategory(
+  categoryFolders: Record<string, string> | null | undefined,
+  rootFolderId: string | null | undefined,
+  category: string,
+): string | undefined {
+  if (!categoryFolders) return rootFolderId || undefined;
+  if (categoryFolders[category]) return categoryFolders[category];
+  const normalized = category.trim().toLowerCase();
+  const matchKey = Object.keys(categoryFolders).find((key) => key.trim().toLowerCase() === normalized);
+  return (matchKey ? categoryFolders[matchKey] : undefined) || rootFolderId || undefined;
 }
+
 // Upload a version for a document requirement
 export async function uploadDocumentVersion(
   actorId: string,
@@ -2151,14 +2155,13 @@ export async function uploadDocumentVersion(
       where: { jobId },
     });
 
-    let driveFolderId: string | undefined;
-    if (profile && profile.categoryFolders) {
-      const categoryFolders = profile.categoryFolders as Record<string, string>;
-      const targetFolder = getFolderNameForCategory(req.category);
-      driveFolderId = categoryFolders[targetFolder] || profile.rootFolderId || undefined;
-    }
+    const driveFolderId = resolveDriveFolderForCategory(
+      profile?.categoryFolders as Record<string, string> | undefined,
+      profile?.rootFolderId,
+      req.category,
+    );
 
-    if (driveFolderId && !driveFolderId.startsWith("mock-") && process.env.GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL) {
+    if (driveFolderId && !driveFolderId.startsWith("mock-")) {
       try {
         const uploadResult = await driveClient.uploadFile({
           name: fileData.fileName,
@@ -8580,15 +8583,15 @@ export async function uploadFilingAttachment(
     where: { jobId },
   });
 
-  let driveFolderId = "root";
-  if (profile) {
-    const categoryFolders = (profile.categoryFolders as Record<string, string>) || {};
-    driveFolderId = categoryFolders["03 Filing Documents"] || categoryFolders["02 Job Documents"] || profile.rootFolderId || "root";
-  }
+  const driveFolderId = resolveDriveFolderForCategory(
+    profile?.categoryFolders as Record<string, string> | undefined,
+    profile?.rootFolderId,
+    "Filing Documents",
+  );
 
   let fileKey = `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
 
-  if (fileBuffer && process.env.GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL) {
+  if (fileBuffer && driveFolderId && !driveFolderId.startsWith("mock-")) {
     try {
       const uploadResult = await driveClient.uploadFile({
         name: fileData.fileName,
@@ -8598,8 +8601,13 @@ export async function uploadFilingAttachment(
       });
       fileKey = uploadResult.webViewLink;
     } catch (err: any) {
+      if (process.env.NODE_ENV === "production") {
+        throw new Error(`Google Drive upload failed: ${err.message || err}`);
+      }
       console.warn("[Upload] Google Drive upload failed for Filing. Falling back to mock URL. Error:", err.message || err);
     }
+  } else if (fileBuffer && process.env.NODE_ENV === "production") {
+    throw new Error("Google Drive is not provisioned for this job or missing credentials. Please retry provisioning the workspace.");
   }
 
   const checklistItem = checklistItemId

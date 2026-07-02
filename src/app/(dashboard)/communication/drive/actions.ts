@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { provisionJobWorkspace } from "@/lib/workspace-provisioning";
 import * as driveClient from "@/lib/google-drive-client";
-import { getFolderNameForCategory } from "@/modules/cha/service";
+import { resolveDriveFolderForCategory } from "@/modules/cha/service";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 
@@ -65,8 +65,7 @@ export async function syncJobWorkspaceAction(jobId: string) {
 
       if (isMockKey) {
         // Resolve target folder ID in Drive
-        const folderName = getFolderNameForCategory(doc.category);
-        const folderId = categoryFolders[folderName] || profile.rootFolderId;
+        const folderId = resolveDriveFolderForCategory(categoryFolders, profile.rootFolderId, doc.category) || profile.rootFolderId;
 
         // Since we don't have the original file buffer in the DB (mock uploads don't persist buffers),
         // we write a placeholder text document with the document metadata.

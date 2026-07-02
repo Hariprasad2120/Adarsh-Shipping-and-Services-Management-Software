@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
     // are included in each page bundle. lucide-react ships 1400+ icons; without
     // this the entire library ends up in the JS bundle.
     optimizePackageImports: ["lucide-react", "framer-motion", "@carbon/icons-react"],
+
+    // Server Action body size limit (covers file uploads sent via FormData,
+    // e.g. CHA document uploads). Next.js default is 1mb.
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
   },
 
   // Suppress Prisma from being bundled into Edge/client chunks.
