@@ -2125,6 +2125,38 @@ export function resolveDriveFolderForCategory(
   return (matchKey ? categoryFolders[matchKey] : undefined) || rootFolderId || undefined;
 }
 
+// Get (or lazily create) the Drive subfolder for one filing workflow checklist
+// stage, so each stage's uploads land in their own folder under "Filing
+// Documents" instead of one shared bucket. Keyed by the node's stable key
+// (unique within a workflow version) so a renamed stage keeps its folder.
+async function getOrCreateFilingNodeFolder(
+  jobId: string,
+  filingRootFolderId: string,
+  nodeKey: string,
+  nodeName: string,
+): Promise<string> {
+  const profile = await db.jobWorkspaceProfile.findUniqueOrThrow({ where: { jobId } });
+  const categoryFolders = (profile.categoryFolders as Record<string, string>) || {};
+  const folderMapKey = `Filing Documents/${nodeKey}`;
+
+  const existing = categoryFolders[folderMapKey];
+  if (existing && !existing.startsWith("mock-")) {
+    return existing;
+  }
+
+  const nodeFolderId = await driveClient.createFolder({
+    name: nodeName,
+    parentFolderId: filingRootFolderId,
+  });
+
+  await db.jobWorkspaceProfile.update({
+    where: { jobId },
+    data: { categoryFolders: { ...categoryFolders, [folderMapKey]: nodeFolderId } },
+  });
+
+  return nodeFolderId;
+}
+
 // Upload a version for a document requirement
 export async function uploadDocumentVersion(
   actorId: string,
@@ -8583,7 +8615,7 @@ export async function uploadFilingAttachment(
     where: { jobId },
   });
 
-  const driveFolderId = resolveDriveFolderForCategory(
+  const filingRootFolderId = resolveDriveFolderForCategory(
     profile?.categoryFolders as Record<string, string> | undefined,
     profile?.rootFolderId,
     "Filing Documents",
@@ -8591,8 +8623,16 @@ export async function uploadFilingAttachment(
 
   let fileKey = `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
 
-  if (fileBuffer && driveFolderId && !driveFolderId.startsWith("mock-")) {
+  if (fileBuffer && filingRootFolderId && !filingRootFolderId.startsWith("mock-")) {
     try {
+      // Each filing checklist stage (node) gets its own subfolder under "Filing
+      // Documents", created lazily on first upload and reused after that.
+      const driveFolderId = await getOrCreateFilingNodeFolder(
+        jobId,
+        filingRootFolderId,
+        nodeRun.node.key,
+        nodeRun.node.name,
+      );
       const uploadResult = await driveClient.uploadFile({
         name: fileData.fileName,
         mimeType: fileData.mimeType,

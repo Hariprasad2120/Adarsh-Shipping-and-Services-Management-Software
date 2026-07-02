@@ -143,24 +143,28 @@ export async function provisionJobWorkspace(
     if (rootFolderId && !rootFolderId.startsWith("mock-") && Object.values(categoryFolders).some(id => id.startsWith("mock-"))) {
       categoryFolders = {};
     }
+    // Create each configured category's subfolder in settings order. One category
+    // failing (e.g. a transient API error) must not stop the rest from being
+    // created — collect failures and surface them together after the loop.
+    const categoryFolderErrors: string[] = [];
     for (const cat of categories) {
       if (!categoryFolders[cat] || categoryFolders[cat].startsWith("mock-")) {
-        let catFolderId = "";
         try {
-          catFolderId = await driveClient.createFolder({
+          const catFolderId = await driveClient.createFolder({
             name: cat,
             parentFolderId: rootFolderId,
             accessToken: userAccessToken
           });
+          categoryFolders[cat] = catFolderId;
+
+          await db.jobWorkspaceProfile.update({
+            where: { id: profile.id },
+            data: { categoryFolders }
+          });
         } catch (err: any) {
-          throw new Error(`Google Drive subfolder creation failed for "${cat}" in job ${job.jobNumber}: ${err.message}`);
+          console.error(`[Provisioning] Drive subfolder creation failed for "${cat}" in job ${job.jobNumber}:`, err.message || err);
+          categoryFolderErrors.push(`"${cat}": ${err.message || err}`);
         }
-        categoryFolders[cat] = catFolderId;
-        
-        await db.jobWorkspaceProfile.update({
-          where: { id: profile.id },
-          data: { categoryFolders }
-        });
       }
     }
 
@@ -289,12 +293,17 @@ export async function provisionJobWorkspace(
       }
     }
 
-    // Update status to success
+    // If any configured category subfolder failed to create, keep status as
+    // "failed" so the next provisioning call (e.g. re-opening the job, or the
+    // manual Sync action) retries just the missing folders instead of treating
+    // this job's workspace as fully provisioned.
     await db.jobWorkspaceProfile.update({
       where: { id: profile.id },
       data: {
-        provisioningStatus: "success",
-        lastError: null,
+        provisioningStatus: categoryFolderErrors.length > 0 ? "failed" : "success",
+        lastError: categoryFolderErrors.length > 0
+          ? `Some Drive subfolders failed to create: ${categoryFolderErrors.join("; ")}`
+          : null,
         provisionedAt: new Date()
       }
     });
