@@ -495,7 +495,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
     // Check document requirements
     const reqs = await db.chaJobDocumentRequirement.findMany({ where: { jobId: job.id } });
-    expect(reqs.length).toBe(16);
+    expect(reqs.length).toBe(18);
     const mandatory = reqs.filter((r) => r.isMandatory);
     expect(mandatory.length).toBe(6); // Bill of Lading, Invoice, Packing List, IEC, GST, AD Code
   });
@@ -504,7 +504,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     const job = await db.chaJob.findFirstOrThrow({ where: { orgId: org.id, jobNumber: "CHA-JOB-999" } });
     const reqs = await db.chaJobDocumentRequirement.findMany({ where: { jobId: job.id } });
 
-    const blReq = reqs.find((r) => r.name === "Bill of Lading")!;
+    const blReq = reqs.find((r) => r.name === "Bill of Landing")!;
     const invReq = reqs.find((r) => r.name === "Invoice")!;
     const pkReq = reqs.find((r) => r.name === "Packing List")!;
     const iecReq = reqs.find((r) => r.name === "IEC")!;
@@ -1226,27 +1226,29 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     const nodeNames = activeVersion.nodes.map((node: any) => node.name);
     expect(nodeNames).toEqual(expect.arrayContaining([
       "Bill of Entry",
+      "Choose Filing Path",
+      "Choose Second Check Branch",
+      "BE Copy Generation",
       "Goods Registration",
       "Examination",
-      "CE",
       "Group Forward",
       "Assessment",
       "Duty",
       "OOC",
       "Delivery",
+      "Amendment Decision",
       "Amendment",
+      "Workflow Complete",
     ]));
 
     const firstCheckNodes = activeVersion.nodes.filter((node: any) => node.sectionKey === "first_check");
-    expect(firstCheckNodes).toHaveLength(9);
+    expect(firstCheckNodes).toHaveLength(8);
     expect(firstCheckNodes.every((node: any) => node.checklistItems.length === 1)).toBe(true);
+    expect(firstCheckNodes.some((node: any) => node.name === "Duty" && node.canBeSkipped)).toBe(true);
 
     const rmsNodes = activeVersion.nodes.filter((node: any) => node.branchKey === "rms");
     const openBillNodes = activeVersion.nodes.filter((node: any) => node.branchKey === "open_bill");
     expect(rmsNodes.map((node: any) => node.name)).toEqual([
-      "Goods Registration",
-      "Duty",
-      "Assessment",
       "OOC",
       "Delivery",
     ]);
@@ -1262,22 +1264,37 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(activeVersion.edges).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          sourceKey: "first_check_delivery",
-          targetKey: "second_check_rms_goods_registration",
-          label: "RMS Path",
+          sourceKey: "choose_primary_path",
+          targetKey: "first_check_be_copy_generation",
+          label: "First Check",
         }),
         expect.objectContaining({
-          sourceKey: "first_check_delivery",
+          sourceKey: "choose_primary_path",
+          targetKey: "choose_second_check_branch",
+          label: "Second Check",
+        }),
+        expect.objectContaining({
+          sourceKey: "choose_second_check_branch",
+          targetKey: "second_check_rms_ooc",
+          label: "RMS",
+        }),
+        expect.objectContaining({
+          sourceKey: "choose_second_check_branch",
           targetKey: "second_check_open_bill_assessment",
-          label: "Open Bill Path",
+          label: "Open Bill",
+        }),
+        expect.objectContaining({
+          sourceKey: "amendment_decision",
+          targetKey: "workflow_complete",
+          label: "Skip Amendment",
         }),
         expect.objectContaining({
           sourceKey: "second_check_rms_delivery",
-          targetKey: "amendment",
+          targetKey: "amendment_decision",
         }),
         expect.objectContaining({
           sourceKey: "second_check_open_bill_delivery",
-          targetKey: "amendment",
+          targetKey: "amendment_decision",
         }),
       ]),
     );
@@ -1311,7 +1328,6 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
           allowedRoles: ["Employee", "Manager"],
           checklistItems: [
             { label: "Check BL copy authenticity", isMandatory: true, requiresRemarks: true, allowsUpload: true },
-            { label: "Verify country of origin signature", isMandatory: false, requiresRemarks: false, allowsUpload: false },
           ],
           photoRequirements: [
             { label: "First Check Signed Sheet", isMandatory: true, minPhotos: 1, acceptedFileTypes: ["image/jpeg"] },
@@ -1370,16 +1386,18 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       data: { stage: "FILING" },
     });
 
+    const expandedStartKey = "node_start";
+
     // D. Start visual filing workflow
     const instance = await chaService.startFilingWorkflow(ownerUser.id, org.id, job.id);
     if (!instance) throw new Error("instance is null");
     expect(instance).toBeDefined();
     expect(instance.status).toBe("ACTIVE");
-    expect(instance.currentNodeKey).toBe("node_start");
+    expect(instance.currentNodeKey).toBe(expandedStartKey);
 
     const activeRun = instance.nodeRuns.find((run: any) => run.status === "ACTIVE")!;
     expect(activeRun).toBeDefined();
-    expect(activeRun.nodeKey).toBe("node_start");
+    expect(activeRun.nodeKey).toBe(expandedStartKey);
 
     // E. Perform filing photo upload requirement validation check
     const checklistItemId = activeRun.node.checklistItems[0].id;
@@ -1449,9 +1467,9 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     });
 
     const instanceDoubleBack = await chaService.getFilingWorkflowInstance(org.id, job.id);
-    expect(instanceDoubleBack?.currentNodeKey).toBe("node_start");
+    expect(instanceDoubleBack?.currentNodeKey).toBe(expandedStartKey);
     const activeRun3 = instanceDoubleBack?.nodeRuns.find((run: any) => run.status === "ACTIVE")!;
-    expect(activeRun3.nodeKey).toBe("node_start");
+    expect(activeRun3.nodeKey).toBe(expandedStartKey);
 
     // I. Test transition to complete (File bill copy)
     // First, upload the mandatory photo for the new run of the start node
@@ -1521,12 +1539,107 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(audit?.remarks).toContain("Urgent port clearance bond filed");
   }, 30000);
 
+  it("12.1. should sync filing uploads into the job documents registry with validity metadata", async () => {
+    await db.filingWorkflowInstance.deleteMany({ where: { job: { orgId: org.id } } });
+    await db.filingWorkflowTemplate.deleteMany({ where: { orgId: org.id } });
+
+    const workflowDraft = await chaService.saveFilingWorkflowDraft(ownerUser.id, org.id, null, {
+      name: `Workflow Upload Sync ${Date.now()}`,
+      description: "Verifies filing uploads sync to documents",
+      nodes: [
+        {
+          key: "start_upload",
+          name: "Upload Step",
+          description: "Upload a workflow document with validity tracking",
+          category: "CHECKLIST_ITEM",
+          positionX: 100,
+          positionY: 100,
+          isStart: true,
+          checklistItems: [
+            {
+              label: "Upload E-Way Bill",
+              isMandatory: true,
+              allowsUpload: true,
+              minUploads: 1,
+              acceptedFileTypes: ["application/pdf"],
+              documentType: "E-Way Bill",
+              requiresValidity: true,
+              warningBeforeDuration: 1,
+              warningBeforeUnit: "CALENDAR_DAYS",
+              notifyBeforeExpiry: true,
+            },
+          ],
+          photoRequirements: [],
+        },
+      ],
+      edges: [],
+    });
+
+    await chaService.publishFilingWorkflow(ownerUser.id, org.id, workflowDraft.versions?.[0]?.id!);
+
+    const job = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: `CHA-FILING-DOCSYNC-${Date.now()}`,
+      title: "Filing upload sync job",
+      customerId: customer.id,
+      jobTypeId: jobTypeImport.id,
+      branchId: branch.id,
+      priority: "MEDIUM",
+      primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
+      assignments: [{ userId: ownerUser.id, responsibility: "OPERATIONS" }],
+    });
+
+    await db.chaJob.update({
+      where: { id: job.id },
+      data: { stage: "FILING" },
+    });
+
+    const started = await chaService.startFilingWorkflow(ownerUser.id, org.id, job.id);
+    const activeRun = started.nodeRuns.find((run: any) => run.status === "ACTIVE");
+    expect(activeRun).toBeDefined();
+
+    const validityDate = new Date("2026-08-10T00:00:00.000Z");
+    await chaService.uploadFilingAttachment(
+      ownerUser.id,
+      org.id,
+      job.id,
+      activeRun.id,
+      null,
+      activeRun.node.checklistItems[0].id,
+      {
+        fileName: "eway-bill.pdf",
+        mimeType: "application/pdf",
+        sizeBytes: 2048,
+      },
+      undefined,
+      validityDate,
+    );
+
+    const syncedRequirement = await db.chaJobDocumentRequirement.findFirst({
+      where: {
+        jobId: job.id,
+        name: "E-Way Bill",
+      },
+      include: {
+        versions: {
+          where: { isCurrent: true },
+        },
+      },
+    });
+
+    expect(syncedRequirement).toBeDefined();
+    expect(syncedRequirement?.status).toBe("UPLOADED");
+    expect(syncedRequirement?.versions[0]?.source).toBe("FILING_WORKFLOW");
+    expect(syncedRequirement?.versions[0]?.validityDate?.toISOString()).toBe(validityDate.toISOString());
+  }, 30000);
+
   it("13. should switch active filing templates by scope and refresh untouched job instances", async () => {
     await chaService.ensureSettingsAndDefaults(org.id);
     const importJobType = await db.chaJobType.findFirstOrThrow({
       where: { orgId: org.id, name: "Import Clearance" },
     });
 
+    await db.filingWorkflowInstance.deleteMany({ where: { job: { orgId: org.id } } });
     await db.filingWorkflowTemplate.deleteMany({ where: { orgId: org.id } });
 
     const legacyDraft = await chaService.saveFilingWorkflowDraft(ownerUser.id, org.id, null, {
@@ -1576,7 +1689,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       ],
       edges: [{ sourceKey: "legacy_start", targetKey: "legacy_finish", label: "Next" }],
     });
-    const legacyPublished = await chaService.publishFilingWorkflow(ownerUser.id, org.id, legacyDraft.id);
+    const legacyPublished = await chaService.publishFilingWorkflow(ownerUser.id, org.id, legacyDraft.versions?.[0]?.id!);
 
     const existingJob = await chaService.createJob(ownerUser.id, org.id, {
       jobNumber: `CHA-FILING-LEGACY-${Date.now()}`,
@@ -1646,7 +1759,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       ],
       edges: [{ sourceKey: "replacement_start", targetKey: "replacement_finish", label: "Continue" }],
     });
-    const replacementPublished = await chaService.publishFilingWorkflow(ownerUser.id, org.id, replacementDraft.id);
+    const replacementPublished = await chaService.publishFilingWorkflow(ownerUser.id, org.id, replacementDraft.versions?.[0]?.id!);
 
     const workflows = await chaService.listFilingWorkflows(org.id);
     const legacyTemplate = workflows.find((workflow: any) => workflow.id === legacyPublished.templateId);
@@ -1687,6 +1800,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       where: { orgId: org.id, name: "Import Clearance" },
     });
 
+    await db.filingWorkflowInstance.deleteMany({ where: { job: { orgId: org.id } } });
     await db.filingWorkflowTemplate.deleteMany({ where: { orgId: org.id } });
 
     const workflowDraft = await chaService.saveFilingWorkflowDraft(ownerUser.id, org.id, null, {
@@ -1762,7 +1876,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       ],
     });
 
-    await chaService.publishFilingWorkflow(ownerUser.id, org.id, workflowDraft.id);
+    await chaService.publishFilingWorkflow(ownerUser.id, org.id, workflowDraft.versions?.[0]?.id!);
 
     const job = await chaService.createJob(ownerUser.id, org.id, {
       jobNumber: `CHA-FILING-NOTIFY-${Date.now()}`,

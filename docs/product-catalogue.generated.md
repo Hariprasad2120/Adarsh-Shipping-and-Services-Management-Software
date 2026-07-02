@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-01T08:38:08.780Z
+> Generated at: 2026-07-02T06:16:56.373Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -596,8 +596,8 @@
 | ChaJobAssignment | cha | 6 | ChaJob, User |
 | ChaJobDocumentRequirement | cha | 11 | ChaJob, ChaDocumentRequirementItem, ChaDocumentVersion, ChaDocumentException |
 | ChaDocumentRequirementCategory | cha | 10 | Organisation, ChaDocumentRequirementItem |
-| ChaDocumentRequirementItem | cha | 11 | ChaDocumentRequirementCategory, ChaJobDocumentRequirement |
-| ChaDocumentVersion | cha | 12 | ChaJobDocumentRequirement, User |
+| ChaDocumentRequirementItem | cha | 23 | ChaDocumentRequirementCategory, ChaJobDocumentRequirement |
+| ChaDocumentVersion | cha | 21 | ChaJobDocumentRequirement, User |
 | ChaDocumentException | cha | 8 | ChaJobDocumentRequirement, User |
 | ChaChecklistImport | cha | 14 | ChaJob, User, ChaChecklistSection, ChaChecklistApproval, ChaChecklistReworkNote |
 | ChaChecklistSection | cha | 6 | ChaChecklistImport, ChaChecklistItem |
@@ -670,12 +670,12 @@
 | FilingWorkflowVersion | core | 12 | FilingWorkflowTemplate, FilingWorkflowNode, FilingWorkflowEdge, FilingWorkflowInstance |
 | FilingWorkflowNode | core | 30 | FilingWorkflowVersion, FilingChecklistItem, FilingPhotoRequirement, FilingNodeRun |
 | FilingWorkflowEdge | core | 6 | FilingWorkflowVersion |
-| FilingChecklistItem | core | 19 | FilingWorkflowNode, FilingChecklistResponse, FilingAttachment |
-| FilingPhotoRequirement | core | 11 | FilingWorkflowNode, FilingAttachment |
+| FilingChecklistItem | core | 29 | FilingWorkflowNode, FilingChecklistResponse, FilingAttachment |
+| FilingPhotoRequirement | core | 20 | FilingWorkflowNode, FilingAttachment |
 | FilingWorkflowInstance | core | 14 | ChaJob, FilingWorkflowTemplate, FilingWorkflowVersion, FilingNodeRun, FilingChecklistResponse, FilingAttachment |
 | FilingNodeRun | core | 15 | FilingWorkflowInstance, FilingWorkflowNode, User, FilingChecklistResponse, FilingAttachment |
 | FilingChecklistResponse | core | 16 | FilingWorkflowInstance, FilingNodeRun, FilingChecklistItem |
-| FilingAttachment | core | 16 | FilingWorkflowInstance, FilingNodeRun, FilingPhotoRequirement, FilingChecklistItem, User |
+| FilingAttachment | core | 17 | FilingWorkflowInstance, FilingNodeRun, FilingPhotoRequirement, FilingChecklistItem, User |
 | FilingSection49Flag | core | 8 | ChaJob, User |
 | MobileDevice | hrms | 14 | User |
 | EmployeeFaceEnrollment | hrms | 14 | User |

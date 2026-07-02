@@ -323,6 +323,11 @@ export async function uploadDocumentVersionAction(
       return { ok: false, error: "Please choose a valid file to upload." };
     }
     const buffer = Buffer.from(await file.arrayBuffer());
+    const validityDateValue = formData.get("validityDate");
+    const validityDate =
+      typeof validityDateValue === "string" && validityDateValue.trim().length > 0
+        ? new Date(validityDateValue)
+        : null;
     const fileData = {
       fileName: file.name,
       mimeType: file.type || "application/octet-stream",
@@ -334,7 +339,8 @@ export async function uploadDocumentVersionAction(
       jobId,
       requirementId,
       fileData,
-      buffer
+      buffer,
+      validityDate
     );
     revalidatePath(`/cha/jobs/${jobId}`);
     return { ok: true, data: version };
@@ -1062,6 +1068,11 @@ export async function uploadFilingAttachmentAction(
       mimeType: file.type || "application/octet-stream",
       sizeBytes: file.size,
     };
+    const validityDateValue = formData.get("validityDate");
+    const validityDate =
+      typeof validityDateValue === "string" && validityDateValue.trim().length > 0
+        ? new Date(validityDateValue)
+        : null;
     const attachment = await chaService.uploadFilingAttachment(
       userId,
       orgId,
@@ -1070,7 +1081,8 @@ export async function uploadFilingAttachmentAction(
       photoRequirementId,
       checklistItemId,
       fileData,
-      buffer
+      buffer,
+      validityDate
     );
     revalidatePath(`/cha/jobs/${jobId}`);
     return { ok: true, data: attachment };

@@ -73,6 +73,34 @@ function getDefaultTabForStage(stage: string): WorkspaceTab {
   return "docs";
 }
 
+function getValiditySummary(validityDate?: string | null) {
+  if (!validityDate) return null;
+  const parsed = new Date(validityDate);
+  const today = new Date();
+  const current = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const target = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+  const diffDays = Math.ceil((target.getTime() - current.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) {
+    return {
+      tone: "destructive" as const,
+      label: "Expired",
+      detail: `Expired on ${parsed.toLocaleDateString("en-IN")}`,
+    };
+  }
+  if (diffDays <= 4) {
+    return {
+      tone: "warning" as const,
+      label: "Near Expiry",
+      detail: `Expires in ${diffDays} day(s) on ${parsed.toLocaleDateString("en-IN")}`,
+    };
+  }
+  return {
+    tone: "neutral" as const,
+    label: "Valid",
+    detail: `Valid until ${parsed.toLocaleDateString("en-IN")}`,
+  };
+}
+
 export function JobWorkspaceClient({
   job,
   users,
@@ -450,12 +478,31 @@ export function JobWorkspaceClient({
   const handleUploadDoc = async (reqId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const requirement = documentRequirements.find((req) => req.id === reqId);
+    const requiresValidity = !!requirement?.requirementItem?.requiresValidityDate;
+    let validityDateValue = "";
+    if (requiresValidity) {
+      const prompted = window.prompt("Enter validity date in YYYY-MM-DD format for this document.", "");
+      if (!prompted) {
+        e.target.value = "";
+        return;
+      }
+      validityDateValue = prompted.trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(validityDateValue)) {
+        toast.error("Use YYYY-MM-DD for the validity date.");
+        e.target.value = "";
+        return;
+      }
+    }
 
     setLoading(`doc-${reqId}`);
     try {
       const localUrl = URL.createObjectURL(file);
       const formData = new FormData();
       formData.append("file", file);
+      if (validityDateValue) {
+        formData.append("validityDate", validityDateValue);
+      }
       const res = await actions.uploadDocumentVersionAction(job.id, reqId, formData);
 
       if (res.ok) {
@@ -1206,11 +1253,29 @@ export function JobWorkspaceClient({
   const handleUploadFilingPhoto = async (photoRequirementId: string | null, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !activeNodeRun) return;
+    const requirement = activeNodeRun.node.photoRequirements?.find((entry: any) => entry.id === photoRequirementId);
+    let validityDateValue = "";
+    if (requirement?.requiresValidity) {
+      const prompted = window.prompt("Enter validity date in YYYY-MM-DD format for this filing upload.", "");
+      if (!prompted) {
+        e.target.value = "";
+        return;
+      }
+      validityDateValue = prompted.trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(validityDateValue)) {
+        toast.error("Use YYYY-MM-DD for the validity date.");
+        e.target.value = "";
+        return;
+      }
+    }
 
     setLoading(`filing-photo-${photoRequirementId || "general"}`);
     try {
       const formData = new FormData();
       formData.append("file", file);
+      if (validityDateValue) {
+        formData.append("validityDate", validityDateValue);
+      }
       const res = await actions.uploadFilingAttachmentAction(job.id, activeNodeRun.id, photoRequirementId, null, formData);
 
       if (res.ok) {
@@ -1267,11 +1332,29 @@ export function JobWorkspaceClient({
   const handleUploadChecklistItemFile = async (checklistItemId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !activeNodeRun) return;
+    const requirement = activeNodeRun.node.checklistItems?.find((entry: any) => entry.id === checklistItemId);
+    let validityDateValue = "";
+    if (requirement?.requiresValidity) {
+      const prompted = window.prompt("Enter validity date in YYYY-MM-DD format for this filing upload.", "");
+      if (!prompted) {
+        e.target.value = "";
+        return;
+      }
+      validityDateValue = prompted.trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(validityDateValue)) {
+        toast.error("Use YYYY-MM-DD for the validity date.");
+        e.target.value = "";
+        return;
+      }
+    }
 
     setLoading(`checklist-item-file-${checklistItemId}`);
     try {
       const formData = new FormData();
       formData.append("file", file);
+      if (validityDateValue) {
+        formData.append("validityDate", validityDateValue);
+      }
       const res = await actions.uploadFilingAttachmentAction(job.id, activeNodeRun.id, null, checklistItemId, formData);
       if (res.ok) {
         const fileKey = res.data.fileKey;
@@ -1678,21 +1761,6 @@ export function JobWorkspaceClient({
         </div>
       )}
 
-      {section49Flag?.isEnabled && (
-        <div className="rounded-xl border border-orange-500/40 bg-orange-500/10 p-4 flex items-center gap-3 text-orange-600">
-          <AlertTriangle size={20} className="shrink-0 text-orange-500" />
-          <div>
-            <span className="ds-label text-orange-500">Section 49 Bond Active</span>
-            <p className="text-sm font-semibold text-on-surface">
-              Section 49 has been activated for this customs clearance job.
-            </p>
-            {section49Flag.remarks && (
-              <p className="text-xs text-on-surface-variant mt-0.5">Remarks: {section49Flag.remarks}</p>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Job Main Header */}
       <div className="flex flex-col gap-4 border-b border-outline-variant/30 pb-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 space-y-2">
@@ -2001,7 +2069,7 @@ export function JobWorkspaceClient({
               <div>
                 <h3 className="ds-h3 text-on-surface">Required Customs Documents</h3>
                 <p className="text-xs text-on-surface-variant mt-1">
-                  Upload required files or declare exceptions to pass the document gate.
+                  Upload required files or declare exceptions to pass the document gate. Workflow-uploaded files, Section 49, and Extension documents also appear here with source and validity tracking.
                 </p>
               </div>
             </div>
@@ -2039,6 +2107,7 @@ export function JobWorkspaceClient({
                             const isUploaded = req.status === "UPLOADED";
                             const isExempted = req.status === "NOT_AVAILABLE";
                             const currentVersion = req.versions.find((v: any) => v.isCurrent);
+                            const validitySummary = getValiditySummary(currentVersion?.validityDate || null);
                             return (
                               <div
                                 key={req.id}
@@ -2049,25 +2118,30 @@ export function JobWorkspaceClient({
                                 }`}
                               >
                                 <div>
-                                  <div className="flex items-center justify-between">
-                                    <span className="font-semibold text-sm text-on-surface">{req.name}</span>
-                                    <div className="flex items-center gap-1.5">
-                                      {req.isMandatory && (
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-semibold text-sm text-on-surface">{req.name}</span>
+                                      <div className="flex items-center gap-1.5">
+                                        {req.isMandatory && (
                                         <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-50 text-red-500 border border-red-200">
                                           MANDATORY
                                         </span>
                                       )}
-                                      <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
-                                        isUploaded
-                                          ? "bg-[#00cec4]/10 text-[#00cec4]"
-                                          : isExempted
+                                        <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                                          isUploaded
+                                            ? "bg-[#00cec4]/10 text-[#00cec4]"
+                                            : isExempted
                                           ? "bg-orange-500/10 text-[#fb923c]"
                                           : "bg-surface-container-high text-on-surface-variant"
-                                      }`}>
-                                        {req.status.replace(/_/g, " ")}
-                                      </span>
+                                        }`}>
+                                          {req.status.replace(/_/g, " ")}
+                                        </span>
+                                        {req.requirementItem?.requiresValidityDate || req.requirementItem?.defaultValidityDuration ? (
+                                          <span className="text-[10px] font-bold uppercase rounded bg-[#fb923c]/10 px-1.5 py-0.5 text-[#fb923c]">
+                                            Validity
+                                          </span>
+                                        ) : null}
+                                      </div>
                                     </div>
-                                  </div>
 
                                   {req.requirementItem?.description && (
                                     <p className="text-xs text-on-surface-variant mt-1">{req.requirementItem.description}</p>
@@ -2075,8 +2149,9 @@ export function JobWorkspaceClient({
 
                                   {/* Display Uploaded File details */}
                                   {isUploaded && currentVersion && (
-                                    <div className="mt-3 bg-surface border border-green-200/50 p-2.5 rounded-lg flex items-center justify-between text-xs">
-                                      <div className="flex items-center gap-2 truncate">
+                                    <div className="mt-3 rounded-lg border border-outline-variant/40 bg-surface p-2.5 text-xs">
+                                      <div className="flex items-center justify-between gap-3">
+                                        <div className="flex min-w-0 items-center gap-2 truncate">
                                         <FileText size={16} className="text-green-600 shrink-0" />
                                         {currentVersion.fileKey.startsWith("http") ? (
                                           <a
@@ -2092,30 +2167,63 @@ export function JobWorkspaceClient({
                                         ) : (
                                           <span className="truncate font-medium">{currentVersion.fileName}</span>
                                         )}
-                                      </div>
-                                      <div className="flex items-center gap-2 shrink-0 pl-2">
-                                        <span className="text-[10px] text-on-surface-variant font-mono ds-numeric">
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0 pl-2">
+                                          <span className="text-[10px] text-on-surface-variant font-mono ds-numeric">
                                           {(currentVersion.sizeBytes / 1024).toFixed(1)} KB
-                                        </span>
-                                        {(currentUserId === currentVersion.uploadedById ||
-                                          currentUserId === job.primaryOwnerId ||
-                                          canDeleteDoc ||
-                                          canManageSettings) && (
-                                          <button
-                                            type="button"
-                                            className="text-red-500 hover:text-red-700 transition-colors p-1"
-                                            onClick={() =>
-                                              setDeleteDocModal({
-                                                reqId: req.id,
-                                                versionId: currentVersion.id,
-                                                fileName: currentVersion.fileName,
-                                              })
+                                          </span>
+                                          {(currentUserId === currentVersion.uploadedById ||
+                                            currentUserId === job.primaryOwnerId ||
+                                            canDeleteDoc ||
+                                            canManageSettings) && (
+                                            <button
+                                              type="button"
+                                              className="text-red-500 hover:text-red-700 transition-colors p-1"
+                                              onClick={() =>
+                                                setDeleteDocModal({
+                                                  reqId: req.id,
+                                                  versionId: currentVersion.id,
+                                                  fileName: currentVersion.fileName,
+                                                })
+                                              }
+                                              title="Delete document version"
+                                            >
+                                              <Trash2 size={14} />
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div className="mt-2 grid grid-cols-1 gap-2 text-[11px] text-on-surface-variant md:grid-cols-2">
+                                        <div>
+                                          <span className="ds-label block">Source</span>
+                                          <span className="text-on-surface">
+                                            {currentVersion.source === "FILING_WORKFLOW" ? "Filing Workflow" : "Documents Page"}
+                                          </span>
+                                        </div>
+                                        <div>
+                                          <span className="ds-label block">Uploaded By</span>
+                                          <span className="text-on-surface">{currentVersion.uploadedBy?.name || currentUserName}</span>
+                                        </div>
+                                        <div>
+                                          <span className="ds-label block">Uploaded On</span>
+                                          <span className="text-on-surface">
+                                            {currentVersion.uploadedAt ? new Date(currentVersion.uploadedAt).toLocaleDateString("en-IN") : "Just now"}
+                                          </span>
+                                        </div>
+                                        <div>
+                                          <span className="ds-label block">Validity</span>
+                                          <span
+                                            className={
+                                              validitySummary?.tone === "destructive"
+                                                ? "text-red-500"
+                                                : validitySummary?.tone === "warning"
+                                                  ? "text-[#fb923c]"
+                                                  : "text-on-surface"
                                             }
-                                            title="Delete document version"
                                           >
-                                            <Trash2 size={14} />
-                                          </button>
-                                        )}
+                                            {validitySummary?.detail || "Not required"}
+                                          </span>
+                                        </div>
                                       </div>
                                     </div>
                                   )}
@@ -2788,29 +2896,8 @@ export function JobWorkspaceClient({
 
         {activeTab === "filing" && (
           <div className="space-y-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-outline-variant/30 pb-3">
+            <div className="border-b border-outline-variant/30 pb-3">
               <h3 className="ds-h3 text-on-surface">Customs Submission Filing Details</h3>
-              
-              {/* Global Section 49 Button / Trigger */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-on-surface-variant font-medium uppercase tracking-wider ds-label">Section 49 Bond:</span>
-                <span className={`px-2 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider ${
-                  section49Flag?.isEnabled ? "bg-orange-500/10 text-orange-600 border border-orange-500/20 animate-pulse" : "bg-surface-container-high text-on-surface-variant border border-outline-variant"
-                }`}>
-                  {section49Flag?.isEnabled ? "Active" : "Inactive"}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSection49Remarks("");
-                    setShowSection49Modal(true);
-                  }}
-                  className="text-xs h-8 border-[#00cec4] text-[#00cec4] hover:bg-[#00cec4]/10"
-                >
-                  {section49Flag?.isEnabled ? "Deactivate" : "Activate"}
-                </Button>
-              </div>
             </div>
 
             {/* Display DO warnings and active flags inside the tab if any */}
@@ -2940,6 +3027,18 @@ export function JobWorkspaceClient({
                                   {[activeNodeRun.node.sectionName, activeNodeRun.node.branchName].filter(Boolean).join(" / ")}
                                 </p>
                               )}
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {activeNodeRun.node.nodeType === "DECISION" ? (
+                                  <span className="rounded-lg bg-[#00cec4]/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#00cec4]">
+                                    Decision
+                                  </span>
+                                ) : null}
+                                {activeNodeRun.node.canBeSkipped ? (
+                                  <span className="rounded-lg bg-[#fb923c]/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#fb923c]">
+                                    Optional / Skippable
+                                  </span>
+                                ) : null}
+                              </div>
                               {activeNodeRun.node.description && (
                                 <p className="text-xs text-on-surface-variant mt-1">{activeNodeRun.node.description}</p>
                               )}
@@ -3276,27 +3375,56 @@ export function JobWorkspaceClient({
                             {/* Transitions dropdown */}
                             <div className="border-t border-outline-variant/30 pt-4">
                               {outgoingEdges.length > 0 ? (
-                                <div className="space-y-1.5 max-w-sm">
-                                  <label className="ds-label text-on-surface block">Select Next Workflow Stage *</label>
-                                  <select
-                                    value={selectedNextNodeKey}
-                                    onChange={(e) => setSelectedNextNodeKey(e.target.value)}
-                                    required
-                                    className="w-full text-xs"
-                                  >
-                                    <option value="">-- Choose Next Stage --</option>
-                                    {outgoingEdges.map((edge: any) => {
-                                      const targetNode = targetNodesMap.get(edge.targetKey);
-                                      return (
-                                        <option key={edge.targetKey} value={edge.targetKey}>
-                                          {[targetNode?.sectionName, targetNode?.branchName, targetNode?.name || edge.targetKey]
-                                            .filter(Boolean)
-                                            .join(" / ")} {edge.label ? `(${edge.label})` : ""}
-                                        </option>
-                                      );
-                                    })}
-                                  </select>
-                                </div>
+                                activeNodeRun.node.nodeType === "DECISION" ? (
+                                  <div className="space-y-2">
+                                    <label className="ds-label text-on-surface block">Decision *</label>
+                                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                      {outgoingEdges.map((edge: any) => {
+                                        const targetNode = targetNodesMap.get(edge.targetKey);
+                                        const isSelected = selectedNextNodeKey === edge.targetKey;
+                                        return (
+                                          <button
+                                            key={edge.targetKey}
+                                            type="button"
+                                            onClick={() => setSelectedNextNodeKey(edge.targetKey)}
+                                            className={`rounded-xl border px-4 py-3 text-left transition ${
+                                              isSelected
+                                                ? "border-[#00cec4] bg-[#00cec4]/10 shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
+                                                : "border-outline-variant bg-surface hover:border-[#00cec4]/55 hover:bg-surface-container-low"
+                                            }`}
+                                          >
+                                            <span className="ds-label block">{edge.label || "Choice"}</span>
+                                            <span className="mt-1 block text-sm font-medium text-on-surface">
+                                              {targetNode?.name || edge.targetKey}
+                                            </span>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-1.5 max-w-sm">
+                                    <label className="ds-label text-on-surface block">Select Next Workflow Stage *</label>
+                                    <select
+                                      value={selectedNextNodeKey}
+                                      onChange={(e) => setSelectedNextNodeKey(e.target.value)}
+                                      required
+                                      className="w-full text-xs"
+                                    >
+                                      <option value="">-- Choose Next Stage --</option>
+                                      {outgoingEdges.map((edge: any) => {
+                                        const targetNode = targetNodesMap.get(edge.targetKey);
+                                        return (
+                                          <option key={edge.targetKey} value={edge.targetKey}>
+                                            {[targetNode?.sectionName, targetNode?.branchName, targetNode?.name || edge.targetKey]
+                                              .filter(Boolean)
+                                              .join(" / ")} {edge.label ? `(${edge.label})` : ""}
+                                          </option>
+                                        );
+                                      })}
+                                    </select>
+                                  </div>
+                                )
                               ) : (
                                 <div className="rounded-xl bg-[#00cec4]/10 border border-[#00cec4]/20 p-3 text-xs text-on-surface-variant">
                                   Completing this node will finalize the Filing workflow and transition the job stage to <strong>FILED</strong>.

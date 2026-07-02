@@ -3530,6 +3530,18 @@ model ChaDocumentRequirementItem {
   description       String?
   sortOrder         Int      @default(0)
   isRequiredDefault Boolean  @default(true)
+  acceptedFileTypes String[]
+  minUploadCount    Int      @default(1)
+  maxUploadCount    Int?
+  requiresValidityDate Boolean @default(false)
+  defaultValidityDuration Int?
+  defaultValidityUnit String?
+  warningBeforeDuration Int?
+  warningBeforeUnit String?
+  notifyBeforeExpiry Boolean @default(false)
+  notificationRoles String[]
+  showInJobDocuments Boolean @default(true)
+  showInTimeline     Boolean @default(false)
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -3552,6 +3564,15 @@ model ChaDocumentVersion {
   uploadedById  String
   uploadedAt    DateTime @default(now())
   isCurrent     Boolean  @default(true)
+  validityDate  DateTime?
+  source        String   @default("DOCUMENTS_PAGE")
+  workflowTemplateId String?
+  workflowVersionId  String?
+  workflowNodeId     String?
+  workflowNodeRunId  String?
+  filingChecklistItemId String?
+  filingPhotoRequirementId String?
+  timelineVisible Boolean @default(false)
 
   requirement ChaJobDocumentRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
   uploadedBy  User                      @relation(fields: [uploadedById], references: [id])
@@ -5137,6 +5158,16 @@ model FilingChecklistItem {
   minUploads           Int                       @default(0)
   maxUploads           Int?
   acceptedFileTypes    String[]
+  documentType         String?
+  requiresValidity     Boolean                   @default(false)
+  validityDuration     Int?
+  validityUnit         String?
+  warningBeforeDuration Int?
+  warningBeforeUnit    String?
+  notifyBeforeExpiry   Boolean                   @default(false)
+  notificationRoles    String[]
+  showInDocumentsPage  Boolean                   @default(true)
+  showInTimeline       Boolean                   @default(true)
   deadlineDuration     Int                       @default(2)
   deadlineUnit         String                    @default("BUSINESS_DAYS")
   delayRemarksRequired Boolean                   @default(true)
@@ -5160,6 +5191,15 @@ model FilingPhotoRequirement {
   maxPhotos           Int?
   acceptedFileTypes   String[]
   isVisibleInTimeline Boolean            @default(true)
+  documentType         String?
+  requiresValidity     Boolean            @default(false)
+  validityDuration     Int?
+  validityUnit         String?
+  warningBeforeDuration Int?
+  warningBeforeUnit    String?
+  notifyBeforeExpiry   Boolean            @default(false)
+  notificationRoles    String[]
+  showInDocumentsPage  Boolean            @default(true)
   node                FilingWorkflowNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
   attachments         FilingAttachment[]
 
@@ -5245,6 +5285,7 @@ model FilingAttachment {
   fileType           String
   uploadedById       String
   uploadedAt         DateTime                @default(now())
+  validityDate       DateTime?
   instance           FilingWorkflowInstance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   nodeRun            FilingNodeRun?          @relation(fields: [nodeRunId], references: [id], onDelete: Cascade)
   photoRequirement   FilingPhotoRequirement? @relation(fields: [photoRequirementId], references: [id], onDelete: SetNull)

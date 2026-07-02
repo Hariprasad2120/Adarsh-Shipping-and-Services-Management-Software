@@ -76,7 +76,31 @@ const chaManifestSchemaStatePromise: Promise<ChaManifestSchemaState> = Promise.r
   customManifestValue: true,
 });
 
-export const DEFAULT_DOCUMENT_REQUIREMENTS = [
+type DefaultDocumentRequirementItemSeed = {
+  name: string;
+  sortOrder: number;
+  isRequiredDefault: boolean;
+  acceptedFileTypes?: string[];
+  minUploadCount?: number;
+  maxUploadCount?: number | null;
+  requiresValidityDate?: boolean;
+  defaultValidityDuration?: number | null;
+  defaultValidityUnit?: string | null;
+  warningBeforeDuration?: number | null;
+  warningBeforeUnit?: string | null;
+  notifyBeforeExpiry?: boolean;
+  notificationRoles?: string[];
+  showInJobDocuments?: boolean;
+  showInTimeline?: boolean;
+};
+
+type DefaultDocumentRequirementCategorySeed = {
+  category: string;
+  sortOrder: number;
+  items: DefaultDocumentRequirementItemSeed[];
+};
+
+export const DEFAULT_DOCUMENT_REQUIREMENTS: DefaultDocumentRequirementCategorySeed[] = [
   {
     category: "Documents Required From Supplier",
     sortOrder: 1,
@@ -105,6 +129,42 @@ export const DEFAULT_DOCUMENT_REQUIREMENTS = [
       { name: "Authorisation Letter", sortOrder: 7, isRequiredDefault: false },
     ],
   },
+  {
+    category: "Customs Validity Documents",
+    sortOrder: 3,
+    items: [
+      {
+        name: "Section 49",
+        sortOrder: 1,
+        isRequiredDefault: false,
+        acceptedFileTypes: ["application/pdf"],
+        minUploadCount: 1,
+        maxUploadCount: 1,
+        requiresValidityDate: false,
+        defaultValidityDuration: 4,
+        defaultValidityUnit: "CALENDAR_DAYS",
+        warningBeforeDuration: 1,
+        warningBeforeUnit: "CALENDAR_DAYS",
+        notifyBeforeExpiry: true,
+        showInTimeline: true,
+      },
+      {
+        name: "Extension",
+        sortOrder: 2,
+        isRequiredDefault: false,
+        acceptedFileTypes: ["application/pdf"],
+        minUploadCount: 1,
+        maxUploadCount: 1,
+        requiresValidityDate: true,
+        defaultValidityDuration: null,
+        defaultValidityUnit: null,
+        warningBeforeDuration: 1,
+        warningBeforeUnit: "CALENDAR_DAYS",
+        notifyBeforeExpiry: true,
+        showInTimeline: true,
+      },
+    ],
+  },
 ];
 
 export async function ensureDefaultDocumentRequirements(orgId: string, tx: any = db) {
@@ -123,12 +183,40 @@ export async function ensureDefaultDocumentRequirements(orgId: string, tx: any =
     for (const item of cat.items) {
       await tx.chaDocumentRequirementItem.upsert({
         where: { categoryId_name: { categoryId: dbCat.id, name: item.name } },
-        update: {},
+        update: {
+          sortOrder: item.sortOrder,
+          isRequiredDefault: item.isRequiredDefault,
+          acceptedFileTypes: item.acceptedFileTypes ?? [],
+          minUploadCount: item.minUploadCount ?? 1,
+          maxUploadCount: item.maxUploadCount ?? null,
+          requiresValidityDate: item.requiresValidityDate ?? false,
+          defaultValidityDuration: item.defaultValidityDuration ?? null,
+          defaultValidityUnit: item.defaultValidityUnit ?? null,
+          warningBeforeDuration: item.warningBeforeDuration ?? null,
+          warningBeforeUnit: item.warningBeforeUnit ?? null,
+          notifyBeforeExpiry: item.notifyBeforeExpiry ?? false,
+          notificationRoles: item.notificationRoles ?? [],
+          showInJobDocuments: item.showInJobDocuments ?? true,
+          showInTimeline: item.showInTimeline ?? false,
+          isActive: true,
+        },
         create: {
           categoryId: dbCat.id,
           name: item.name,
           sortOrder: item.sortOrder,
           isRequiredDefault: item.isRequiredDefault,
+          acceptedFileTypes: item.acceptedFileTypes ?? [],
+          minUploadCount: item.minUploadCount ?? 1,
+          maxUploadCount: item.maxUploadCount ?? null,
+          requiresValidityDate: item.requiresValidityDate ?? false,
+          defaultValidityDuration: item.defaultValidityDuration ?? null,
+          defaultValidityUnit: item.defaultValidityUnit ?? null,
+          warningBeforeDuration: item.warningBeforeDuration ?? null,
+          warningBeforeUnit: item.warningBeforeUnit ?? null,
+          notifyBeforeExpiry: item.notifyBeforeExpiry ?? false,
+          notificationRoles: item.notificationRoles ?? [],
+          showInJobDocuments: item.showInJobDocuments ?? true,
+          showInTimeline: item.showInTimeline ?? false,
           isActive: true,
         },
       });
@@ -1969,10 +2057,14 @@ export async function uploadDocumentVersion(
     sizeBytes: number;
     checksum?: string;
   },
-  fileBuffer?: Buffer
+  fileBuffer?: Buffer,
+  explicitValidityDate?: Date | null,
 ) {
   const req = await db.chaJobDocumentRequirement.findFirstOrThrow({
     where: { id: requirementId, jobId, job: getActiveChaJobWhere(orgId) },
+    include: {
+      requirementItem: true,
+    },
   });
 
   let fileKey = fileData.fileKey || `cha/docs/${Math.random().toString(36).substring(7)}_${fileData.fileName}`;
@@ -2015,6 +2107,16 @@ export async function uploadDocumentVersion(
     }
   }
 
+  const uploadedAt = await getNow();
+  const resolvedValidityDate = await resolveConfiguredValidityDate({
+    uploadedAt,
+    explicitValidityDate: explicitValidityDate ?? null,
+    requiresValidity: !!req.requirementItem?.requiresValidityDate,
+    validityDuration: req.requirementItem?.defaultValidityDuration ?? null,
+    validityUnit: req.requirementItem?.defaultValidityUnit ?? null,
+    orgId,
+  });
+
   const result = await db.$transaction(async (tx) => {
     // Mark previous current versions as not current
     await tx.chaDocumentVersion.updateMany({
@@ -2032,6 +2134,8 @@ export async function uploadDocumentVersion(
         sizeBytes: fileData.sizeBytes,
         checksum: fileData.checksum,
         uploadedById: actorId,
+        uploadedAt,
+        validityDate: resolvedValidityDate,
       },
     });
 
@@ -2058,6 +2162,9 @@ export async function uploadDocumentVersion(
     actorId,
     newState: "UPLOADED",
     remarks: `Uploaded document: ${fileData.fileName}`,
+    metadata: {
+      validityDate: resolvedValidityDate?.toISOString() ?? null,
+    },
   });
 
   // Auto-stage-transition removed (Proceed button handles this now)
@@ -5653,255 +5760,502 @@ export async function submitChecklistOwnerDecision(
 // ─── Configurable Filing Workflow blueprint services ────────────────────────
 
 const DEFAULT_WORKFLOW_ROLES = ["Admin", "Manager", "Employee"] as const;
+const DEFAULT_VALIDITY_NOTIFICATION_ROLES = ["Manager"] as const;
+
+function buildDefaultChecklistConfig(input: {
+  label: string;
+  description?: string;
+  isMandatory?: boolean;
+  allowsUpload?: boolean;
+  minUploads?: number;
+  maxUploads?: number | null;
+  acceptedFileTypes?: string[];
+  documentType?: string | null;
+  requiresValidity?: boolean;
+  validityDuration?: number | null;
+  validityUnit?: "BUSINESS_DAYS" | "CALENDAR_DAYS" | null;
+  warningBeforeDuration?: number | null;
+  warningBeforeUnit?: "BUSINESS_DAYS" | "CALENDAR_DAYS" | null;
+  notifyBeforeExpiry?: boolean;
+}) {
+  return {
+    label: input.label,
+    description: input.description ?? null,
+    isMandatory: input.isMandatory !== false,
+    requiresRemarks: false,
+    allowsUpload: !!input.allowsUpload,
+    minUploads: input.allowsUpload ? input.minUploads ?? 1 : 0,
+    maxUploads: input.allowsUpload ? input.maxUploads ?? null : null,
+    acceptedFileTypes: input.acceptedFileTypes ?? [],
+    documentType: input.documentType ?? null,
+    requiresValidity: !!input.requiresValidity,
+    validityDuration: input.validityDuration ?? null,
+    validityUnit: input.validityUnit ?? null,
+    warningBeforeDuration: input.warningBeforeDuration ?? null,
+    warningBeforeUnit: input.warningBeforeUnit ?? null,
+    notifyBeforeExpiry: !!input.notifyBeforeExpiry,
+    notificationRoles: input.notifyBeforeExpiry ? [...DEFAULT_VALIDITY_NOTIFICATION_ROLES] : [],
+    showInDocumentsPage: !!input.allowsUpload,
+    showInTimeline: !!input.allowsUpload,
+    deadlineDuration: 2,
+    deadlineUnit: "BUSINESS_DAYS",
+    delayRemarksRequired: true,
+    hasPhotoRequirement: false,
+  };
+}
+
+function buildDefaultPhotoRequirementConfig(input: {
+  label: string;
+  description?: string;
+  minPhotos?: number;
+  maxPhotos?: number | null;
+  acceptedFileTypes?: string[];
+  documentType?: string | null;
+  requiresValidity?: boolean;
+  validityDuration?: number | null;
+  validityUnit?: "BUSINESS_DAYS" | "CALENDAR_DAYS" | null;
+  warningBeforeDuration?: number | null;
+  warningBeforeUnit?: "BUSINESS_DAYS" | "CALENDAR_DAYS" | null;
+  notifyBeforeExpiry?: boolean;
+}) {
+  return {
+    label: input.label,
+    description: input.description ?? null,
+    isMandatory: true,
+    minPhotos: input.minPhotos ?? 1,
+    maxPhotos: input.maxPhotos ?? null,
+    acceptedFileTypes: input.acceptedFileTypes ?? ["image/jpeg", "image/png", "application/pdf"],
+    isVisibleInTimeline: true,
+    documentType: input.documentType ?? null,
+    requiresValidity: !!input.requiresValidity,
+    validityDuration: input.validityDuration ?? null,
+    validityUnit: input.validityUnit ?? null,
+    warningBeforeDuration: input.warningBeforeDuration ?? null,
+    warningBeforeUnit: input.warningBeforeUnit ?? null,
+    notifyBeforeExpiry: !!input.notifyBeforeExpiry,
+    notificationRoles: input.notifyBeforeExpiry ? [...DEFAULT_VALIDITY_NOTIFICATION_ROLES] : [],
+    showInDocumentsPage: true,
+  };
+}
 
 function buildDefaultWorkflowNode(input: {
   key: string;
   name: string;
   description: string;
+  nodeType?: string;
   sectionKey: string;
   sectionName: string;
   branchKey?: string | null;
   branchName?: string | null;
   sortOrder: number;
   isStart?: boolean;
+  positionX: number;
+  positionY: number;
+  canBeSkipped?: boolean;
+  checklistItems?: any[];
+  photoRequirements?: any[];
 }) {
   return {
     key: input.key,
     name: input.name,
     description: input.description,
     category: input.branchName ? `${input.sectionName} / ${input.branchName}` : input.sectionName,
-    nodeType: "CHECKLIST_NODE",
+    nodeType: input.nodeType ?? "CHECKLIST_NODE",
     sectionKey: input.sectionKey,
     sectionName: input.sectionName,
     branchKey: input.branchKey ?? null,
     branchName: input.branchName ?? null,
     sortOrder: input.sortOrder,
     isStart: input.isStart ?? false,
-    positionX: 120,
-    positionY: 120 + (input.sortOrder - 1) * 180,
+    positionX: input.positionX,
+    positionY: input.positionY,
     allowedRoles: [...DEFAULT_WORKFLOW_ROLES],
     approvalRequired: false,
     approvalRoles: [] as string[],
-    checklistItems: [input.name],
+    canBeSkipped: !!input.canBeSkipped,
+    checklistItems: input.checklistItems ?? [],
+    photoRequirements: input.photoRequirements ?? [],
   };
 }
 
 const DEFAULT_FILING_WORKFLOW_SEED = {
   nodes: [
     buildDefaultWorkflowNode({
-      key: "first_check_bill_of_entry",
+      key: "bill_of_entry",
       name: "Bill of Entry",
-      description: "Verify bill of entry readiness before customs processing begins.",
-      sectionKey: "first_check",
-      sectionName: "First Check",
+      description: "Start the filing flow from the Bill of Entry stage.",
+      sectionKey: "start",
+      sectionName: "Start",
       sortOrder: 1,
       isStart: true,
+      positionX: 500,
+      positionY: 100,
+      checklistItems: [buildDefaultChecklistConfig({ label: "Bill of Entry" })],
+    }),
+    buildDefaultWorkflowNode({
+      key: "choose_primary_path",
+      name: "Choose Filing Path",
+      description: "Choose whether this filing follows the First Check or Second Check path.",
+      nodeType: "DECISION",
+      sectionKey: "start",
+      sectionName: "Start",
+      sortOrder: 2,
+      positionX: 500,
+      positionY: 280,
+    }),
+    buildDefaultWorkflowNode({
+      key: "first_check_be_copy_generation",
+      name: "BE Copy Generation",
+      description: "Generate the BE copy before the remaining First Check sequence.",
+      sectionKey: "first_check",
+      sectionName: "First Check",
+      sortOrder: 3,
+      positionX: 140,
+      positionY: 460,
+      checklistItems: [buildDefaultChecklistConfig({ label: "BE Copy Generation" })],
     }),
     buildDefaultWorkflowNode({
       key: "first_check_goods_registration",
       name: "Goods Registration",
-      description: "Register goods in the filing sequence.",
+      description: "Register goods under the First Check path.",
       sectionKey: "first_check",
       sectionName: "First Check",
-      sortOrder: 2,
+      sortOrder: 4,
+      positionX: 140,
+      positionY: 640,
+      checklistItems: [buildDefaultChecklistConfig({ label: "Goods Registration" })],
     }),
     buildDefaultWorkflowNode({
       key: "first_check_examination",
       name: "Examination",
-      description: "Complete the examination checkpoint.",
+      description: "Capture examination evidence and CE/Lab report validity.",
       sectionKey: "first_check",
       sectionName: "First Check",
-      sortOrder: 3,
-    }),
-    buildDefaultWorkflowNode({
-      key: "first_check_ce",
-      name: "CE",
-      description: "Handle CE verification as its own workflow node.",
-      sectionKey: "first_check",
-      sectionName: "First Check",
-      sortOrder: 4,
+      sortOrder: 5,
+      positionX: 140,
+      positionY: 820,
+      checklistItems: [
+        buildDefaultChecklistConfig({
+          label: "Examination",
+          allowsUpload: true,
+          minUploads: 1,
+          acceptedFileTypes: ["application/pdf"],
+          documentType: "CE/Lab Report",
+          requiresValidity: true,
+          warningBeforeDuration: 1,
+          warningBeforeUnit: "CALENDAR_DAYS",
+          notifyBeforeExpiry: true,
+        }),
+      ],
+      photoRequirements: [
+        buildDefaultPhotoRequirementConfig({
+          label: "Examination Photos",
+          acceptedFileTypes: ["image/jpeg", "image/png"],
+          documentType: "Examination Photos",
+        }),
+      ],
     }),
     buildDefaultWorkflowNode({
       key: "first_check_group_forward",
       name: "Group Forward",
-      description: "Advance the filing through the group-forward checkpoint.",
+      description: "Forward the First Check file to the customs group.",
       sectionKey: "first_check",
       sectionName: "First Check",
-      sortOrder: 5,
+      sortOrder: 6,
+      positionX: 140,
+      positionY: 1000,
+      checklistItems: [buildDefaultChecklistConfig({ label: "Group Forward" })],
     }),
     buildDefaultWorkflowNode({
       key: "first_check_assessment",
       name: "Assessment",
-      description: "Assessment must be completed as a standalone workflow node.",
+      description: "Complete assessment under the First Check path.",
       sectionKey: "first_check",
       sectionName: "First Check",
-      sortOrder: 6,
+      sortOrder: 7,
+      positionX: 140,
+      positionY: 1180,
+      checklistItems: [buildDefaultChecklistConfig({ label: "Assessment" })],
     }),
     buildDefaultWorkflowNode({
       key: "first_check_duty",
       name: "Duty",
-      description: "Review duty obligations before proceeding.",
+      description: "Optional duty stage. Users may skip it and continue.",
       sectionKey: "first_check",
       sectionName: "First Check",
-      sortOrder: 7,
+      sortOrder: 8,
+      positionX: 140,
+      positionY: 1360,
+      canBeSkipped: true,
+      checklistItems: [buildDefaultChecklistConfig({ label: "Duty", isMandatory: false })],
     }),
     buildDefaultWorkflowNode({
       key: "first_check_ooc",
       name: "OOC",
-      description: "Out of Charge confirmation for the first-check path.",
+      description: "Upload the Out of Charge document before moving to delivery.",
       sectionKey: "first_check",
       sectionName: "First Check",
-      sortOrder: 8,
+      sortOrder: 9,
+      positionX: 140,
+      positionY: 1540,
+      checklistItems: [
+        buildDefaultChecklistConfig({
+          label: "OOC",
+          allowsUpload: true,
+          acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
+          documentType: "OOC Document",
+        }),
+      ],
     }),
     buildDefaultWorkflowNode({
       key: "first_check_delivery",
       name: "Delivery",
-      description: "Delivery closes the first-check vertical sequence.",
+      description: "Upload the E-Way Bill and track its validity before delivery.",
       sectionKey: "first_check",
       sectionName: "First Check",
-      sortOrder: 9,
-    }),
-    buildDefaultWorkflowNode({
-      key: "second_check_rms_goods_registration",
-      name: "Goods Registration",
-      description: "RMS branch goods registration step.",
-      sectionKey: "second_check",
-      sectionName: "Second Check",
-      branchKey: "rms",
-      branchName: "RMS",
       sortOrder: 10,
+      positionX: 140,
+      positionY: 1720,
+      checklistItems: [
+        buildDefaultChecklistConfig({
+          label: "Delivery",
+          allowsUpload: true,
+          acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
+          documentType: "E-Way Bill",
+          requiresValidity: true,
+          warningBeforeDuration: 1,
+          warningBeforeUnit: "CALENDAR_DAYS",
+          notifyBeforeExpiry: true,
+        }),
+      ],
     }),
     buildDefaultWorkflowNode({
-      key: "second_check_rms_duty",
-      name: "Duty",
-      description: "RMS branch duty step.",
+      key: "choose_second_check_branch",
+      name: "Choose Second Check Branch",
+      description: "Choose whether the Second Check continues through RMS or Open Bill.",
+      nodeType: "DECISION",
       sectionKey: "second_check",
       sectionName: "Second Check",
-      branchKey: "rms",
-      branchName: "RMS",
       sortOrder: 11,
+      positionX: 860,
+      positionY: 460,
     }),
     buildDefaultWorkflowNode({
-      key: "second_check_rms_assessment",
-      name: "Assessment",
-      description: "RMS branch assessment step.",
+      key: "second_check_rms_ooc",
+      name: "OOC",
+      description: "Upload the RMS OOC document.",
       sectionKey: "second_check",
       sectionName: "Second Check",
       branchKey: "rms",
       branchName: "RMS",
       sortOrder: 12,
+      positionX: 660,
+      positionY: 640,
+      checklistItems: [
+        buildDefaultChecklistConfig({
+          label: "OOC",
+          allowsUpload: true,
+          acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
+          documentType: "RMS OOC Document",
+        }),
+      ],
     }),
     buildDefaultWorkflowNode({
-      key: "second_check_rms_ooc",
-      name: "OOC",
-      description: "RMS branch OOC step.",
+      key: "second_check_rms_delivery",
+      name: "Delivery",
+      description: "Upload the RMS delivery document.",
       sectionKey: "second_check",
       sectionName: "Second Check",
       branchKey: "rms",
       branchName: "RMS",
       sortOrder: 13,
-    }),
-    buildDefaultWorkflowNode({
-      key: "second_check_rms_delivery",
-      name: "Delivery",
-      description: "RMS branch delivery step.",
-      sectionKey: "second_check",
-      sectionName: "Second Check",
-      branchKey: "rms",
-      branchName: "RMS",
-      sortOrder: 14,
+      positionX: 660,
+      positionY: 820,
+      checklistItems: [
+        buildDefaultChecklistConfig({
+          label: "Delivery",
+          allowsUpload: true,
+          acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
+          documentType: "RMS Delivery Document",
+        }),
+      ],
     }),
     buildDefaultWorkflowNode({
       key: "second_check_open_bill_assessment",
       name: "Assessment",
-      description: "Open Bill branch assessment step.",
+      description: "Start the Open Bill path with assessment.",
+      sectionKey: "second_check",
+      sectionName: "Second Check",
+      branchKey: "open_bill",
+      branchName: "Open Bill",
+      sortOrder: 14,
+      positionX: 1060,
+      positionY: 640,
+      checklistItems: [buildDefaultChecklistConfig({ label: "Assessment" })],
+    }),
+    buildDefaultWorkflowNode({
+      key: "second_check_open_bill_goods_registration",
+      name: "Goods Registration",
+      description: "Register goods for the Open Bill path.",
       sectionKey: "second_check",
       sectionName: "Second Check",
       branchKey: "open_bill",
       branchName: "Open Bill",
       sortOrder: 15,
+      positionX: 1060,
+      positionY: 820,
+      checklistItems: [buildDefaultChecklistConfig({ label: "Goods Registration" })],
     }),
     buildDefaultWorkflowNode({
-      key: "second_check_open_bill_goods_registration",
-      name: "Goods Registration",
-      description: "Open Bill branch goods registration step.",
+      key: "second_check_open_bill_examination",
+      name: "Examination",
+      description: "Capture examination evidence and validity on the Open Bill path.",
       sectionKey: "second_check",
       sectionName: "Second Check",
       branchKey: "open_bill",
       branchName: "Open Bill",
       sortOrder: 16,
+      positionX: 1060,
+      positionY: 1000,
+      checklistItems: [
+        buildDefaultChecklistConfig({
+          label: "Examination",
+          allowsUpload: true,
+          minUploads: 1,
+          acceptedFileTypes: ["application/pdf"],
+          documentType: "CE/Lab Report",
+          requiresValidity: true,
+          warningBeforeDuration: 1,
+          warningBeforeUnit: "CALENDAR_DAYS",
+          notifyBeforeExpiry: true,
+        }),
+      ],
+      photoRequirements: [
+        buildDefaultPhotoRequirementConfig({
+          label: "Examination Photos",
+          acceptedFileTypes: ["image/jpeg", "image/png"],
+          documentType: "Examination Photos",
+        }),
+      ],
     }),
     buildDefaultWorkflowNode({
-      key: "second_check_open_bill_examination",
-      name: "Examination",
-      description: "Open Bill branch examination step.",
+      key: "second_check_open_bill_duty",
+      name: "Duty",
+      description: "Optional duty stage on the Open Bill path.",
       sectionKey: "second_check",
       sectionName: "Second Check",
       branchKey: "open_bill",
       branchName: "Open Bill",
       sortOrder: 17,
+      positionX: 1060,
+      positionY: 1180,
+      canBeSkipped: true,
+      checklistItems: [buildDefaultChecklistConfig({ label: "Duty", isMandatory: false })],
     }),
     buildDefaultWorkflowNode({
-      key: "second_check_open_bill_duty",
-      name: "Duty",
-      description: "Open Bill branch duty step.",
+      key: "second_check_open_bill_ooc",
+      name: "OOC",
+      description: "Upload the Open Bill OOC document.",
       sectionKey: "second_check",
       sectionName: "Second Check",
       branchKey: "open_bill",
       branchName: "Open Bill",
       sortOrder: 18,
+      positionX: 1060,
+      positionY: 1360,
+      checklistItems: [
+        buildDefaultChecklistConfig({
+          label: "OOC",
+          allowsUpload: true,
+          acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
+          documentType: "OOC Document",
+        }),
+      ],
     }),
     buildDefaultWorkflowNode({
-      key: "second_check_open_bill_ooc",
-      name: "OOC",
-      description: "Open Bill branch OOC step.",
+      key: "second_check_open_bill_delivery",
+      name: "Delivery",
+      description: "Upload the Open Bill E-Way Bill and track validity.",
       sectionKey: "second_check",
       sectionName: "Second Check",
       branchKey: "open_bill",
       branchName: "Open Bill",
       sortOrder: 19,
+      positionX: 1060,
+      positionY: 1540,
+      checklistItems: [
+        buildDefaultChecklistConfig({
+          label: "Delivery",
+          allowsUpload: true,
+          acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
+          documentType: "E-Way Bill",
+          requiresValidity: true,
+          warningBeforeDuration: 1,
+          warningBeforeUnit: "CALENDAR_DAYS",
+          notifyBeforeExpiry: true,
+        }),
+      ],
     }),
     buildDefaultWorkflowNode({
-      key: "second_check_open_bill_delivery",
-      name: "Delivery",
-      description: "Open Bill branch delivery step.",
-      sectionKey: "second_check",
-      sectionName: "Second Check",
-      branchKey: "open_bill",
-      branchName: "Open Bill",
+      key: "amendment_decision",
+      name: "Amendment Decision",
+      description: "Choose whether to enter the optional amendment flow or skip it.",
+      nodeType: "DECISION",
+      sectionKey: "amendment",
+      sectionName: "Amendment",
       sortOrder: 20,
+      positionX: 860,
+      positionY: 1820,
     }),
     buildDefaultWorkflowNode({
-      key: "amendment",
+      key: "amendment_execution",
       name: "Amendment",
-      description: "Configurable amendment step that can be reached from either branch or via added reconnections.",
+      description: "Configurable amendment checklist that can be entered or skipped.",
       sectionKey: "amendment",
       sectionName: "Amendment",
       sortOrder: 21,
+      positionX: 860,
+      positionY: 2000,
+      canBeSkipped: true,
+      checklistItems: [buildDefaultChecklistConfig({ label: "Amendment", isMandatory: false })],
+    }),
+    buildDefaultWorkflowNode({
+      key: "workflow_complete",
+      name: "Workflow Complete",
+      description: "Finalize the filing workflow after the chosen path finishes.",
+      nodeType: "END",
+      sectionKey: "end",
+      sectionName: "End",
+      sortOrder: 22,
+      positionX: 860,
+      positionY: 2180,
     }),
   ],
   edges: [
-    { sourceKey: "first_check_bill_of_entry", targetKey: "first_check_goods_registration" },
-    { sourceKey: "first_check_goods_registration", targetKey: "first_check_examination" },
-    { sourceKey: "first_check_examination", targetKey: "first_check_ce" },
-    { sourceKey: "first_check_ce", targetKey: "first_check_group_forward" },
-    { sourceKey: "first_check_group_forward", targetKey: "first_check_assessment" },
-    { sourceKey: "first_check_assessment", targetKey: "first_check_duty" },
-    { sourceKey: "first_check_duty", targetKey: "first_check_ooc" },
-    { sourceKey: "first_check_ooc", targetKey: "first_check_delivery" },
-    { sourceKey: "first_check_delivery", targetKey: "second_check_rms_goods_registration", label: "RMS Path" },
-    { sourceKey: "first_check_delivery", targetKey: "second_check_open_bill_assessment", label: "Open Bill Path" },
-    { sourceKey: "second_check_rms_goods_registration", targetKey: "second_check_rms_duty" },
-    { sourceKey: "second_check_rms_duty", targetKey: "second_check_rms_assessment" },
-    { sourceKey: "second_check_rms_assessment", targetKey: "second_check_rms_ooc" },
-    { sourceKey: "second_check_rms_ooc", targetKey: "second_check_rms_delivery" },
-    { sourceKey: "second_check_rms_delivery", targetKey: "amendment" },
-    { sourceKey: "second_check_open_bill_assessment", targetKey: "second_check_open_bill_goods_registration" },
-    { sourceKey: "second_check_open_bill_goods_registration", targetKey: "second_check_open_bill_examination" },
-    { sourceKey: "second_check_open_bill_examination", targetKey: "second_check_open_bill_duty" },
-    { sourceKey: "second_check_open_bill_duty", targetKey: "second_check_open_bill_ooc" },
-    { sourceKey: "second_check_open_bill_ooc", targetKey: "second_check_open_bill_delivery" },
-    { sourceKey: "second_check_open_bill_delivery", targetKey: "amendment" },
+    { sourceKey: "bill_of_entry", targetKey: "choose_primary_path", label: "Next" },
+    { sourceKey: "choose_primary_path", targetKey: "first_check_be_copy_generation", label: "First Check" },
+    { sourceKey: "choose_primary_path", targetKey: "choose_second_check_branch", label: "Second Check" },
+    { sourceKey: "first_check_be_copy_generation", targetKey: "first_check_goods_registration", label: "Next" },
+    { sourceKey: "first_check_goods_registration", targetKey: "first_check_examination", label: "Next" },
+    { sourceKey: "first_check_examination", targetKey: "first_check_group_forward", label: "Next" },
+    { sourceKey: "first_check_group_forward", targetKey: "first_check_assessment", label: "Next" },
+    { sourceKey: "first_check_assessment", targetKey: "first_check_duty", label: "Next" },
+    { sourceKey: "first_check_duty", targetKey: "first_check_ooc", label: "Skip / Complete" },
+    { sourceKey: "first_check_ooc", targetKey: "first_check_delivery", label: "Next" },
+    { sourceKey: "first_check_delivery", targetKey: "amendment_decision", label: "Next" },
+    { sourceKey: "choose_second_check_branch", targetKey: "second_check_rms_ooc", label: "RMS" },
+    { sourceKey: "choose_second_check_branch", targetKey: "second_check_open_bill_assessment", label: "Open Bill" },
+    { sourceKey: "second_check_rms_ooc", targetKey: "second_check_rms_delivery", label: "Next" },
+    { sourceKey: "second_check_rms_delivery", targetKey: "amendment_decision", label: "Next" },
+    { sourceKey: "second_check_open_bill_assessment", targetKey: "second_check_open_bill_goods_registration", label: "Next" },
+    { sourceKey: "second_check_open_bill_goods_registration", targetKey: "second_check_open_bill_examination", label: "Next" },
+    { sourceKey: "second_check_open_bill_examination", targetKey: "second_check_open_bill_duty", label: "Next" },
+    { sourceKey: "second_check_open_bill_duty", targetKey: "second_check_open_bill_ooc", label: "Skip / Complete" },
+    { sourceKey: "second_check_open_bill_ooc", targetKey: "second_check_open_bill_delivery", label: "Next" },
+    { sourceKey: "second_check_open_bill_delivery", targetKey: "amendment_decision", label: "Next" },
+    { sourceKey: "amendment_decision", targetKey: "amendment_execution", label: "Do Amendment" },
+    { sourceKey: "amendment_decision", targetKey: "workflow_complete", label: "Skip Amendment" },
+    { sourceKey: "amendment_execution", targetKey: "workflow_complete", label: "Next" },
   ],
 } as const;
 
@@ -5956,6 +6310,17 @@ function normalizeWorkflowNodeDraft(node: any, nodeIndex: number) {
         ? photo.acceptedFileTypes.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
         : ["image/jpeg", "image/png", "application/pdf"],
       isVisibleInTimeline: photo.isVisibleInTimeline !== undefined ? !!photo.isVisibleInTimeline : true,
+      documentType: typeof photo.documentType === "string" ? photo.documentType.trim() || null : null,
+      requiresValidity: !!photo.requiresValidity,
+      validityDuration: photo.validityDuration === undefined || photo.validityDuration === null ? null : Math.max(Number(photo.validityDuration), 1),
+      validityUnit: photo.validityUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : photo.validityUnit === "BUSINESS_DAYS" ? "BUSINESS_DAYS" : null,
+      warningBeforeDuration: photo.warningBeforeDuration === undefined || photo.warningBeforeDuration === null ? null : Math.max(Number(photo.warningBeforeDuration), 1),
+      warningBeforeUnit: photo.warningBeforeUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : photo.warningBeforeUnit === "BUSINESS_DAYS" ? "BUSINESS_DAYS" : null,
+      notifyBeforeExpiry: !!photo.notifyBeforeExpiry,
+      notificationRoles: Array.isArray(photo.notificationRoles)
+        ? photo.notificationRoles.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
+        : [],
+      showInDocumentsPage: photo.showInDocumentsPage !== false,
     })),
   };
 }
@@ -6081,6 +6446,18 @@ function normalizeFilingChecklistItem(item: any, idx: number) {
       ? Math.max(Number(item.maxUploads), 0)
       : null,
     acceptedFileTypes,
+    documentType: typeof item.documentType === "string" ? item.documentType.trim() || null : null,
+    requiresValidity: !!item.requiresValidity,
+    validityDuration: item.validityDuration === undefined || item.validityDuration === null ? null : Math.max(Number(item.validityDuration), 1),
+    validityUnit: item.validityUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : item.validityUnit === "BUSINESS_DAYS" ? "BUSINESS_DAYS" : null,
+    warningBeforeDuration: item.warningBeforeDuration === undefined || item.warningBeforeDuration === null ? null : Math.max(Number(item.warningBeforeDuration), 1),
+    warningBeforeUnit: item.warningBeforeUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : item.warningBeforeUnit === "BUSINESS_DAYS" ? "BUSINESS_DAYS" : null,
+    notifyBeforeExpiry: !!item.notifyBeforeExpiry,
+    notificationRoles: Array.isArray(item.notificationRoles)
+      ? item.notificationRoles.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
+      : [],
+    showInDocumentsPage: item.showInDocumentsPage !== false,
+    showInTimeline: item.showInTimeline !== false,
     deadlineDuration: Math.max(Number(item.deadlineDuration ?? 2), 1),
     deadlineUnit: item.deadlineUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : "BUSINESS_DAYS",
     delayRemarksRequired: item.delayRemarksRequired !== undefined ? !!item.delayRemarksRequired : true,
@@ -6522,107 +6899,18 @@ export async function ensureDefaultFilingWorkflows(orgId: string) {
 
   const firstUser = await db.user.findFirst({ where: { orgId } });
   const createdById = firstUser?.id || "system";
-
-  await db.$transaction(async (tx) => {
-    const template = await tx.filingWorkflowTemplate.create({
-      data: {
-        orgId,
-        name: "Default Filing Workflow",
-        description: "Default configurable filing workflow with First Check, Second Check branches, and Amendment routing.",
-        isActive: true,
-      },
-    });
-
-    const version = await tx.filingWorkflowVersion.create({
-      data: {
-        templateId: template.id,
-        versionNumber: 1,
-        isPublished: true,
-        isActive: true,
-        createdById,
-      },
-    });
-
-    for (const [nodeIndex, node] of DEFAULT_FILING_WORKFLOW_SEED.nodes.entries()) {
-      const createdNode = await tx.filingWorkflowNode.create({
-        data: {
-          versionId: version.id,
-          key: node.key,
-          name: node.name,
-          description: node.description,
-          category: node.category,
-          nodeType: node.nodeType,
-          sectionKey: node.sectionKey,
-          sectionName: node.sectionName,
-          branchKey: node.branchKey,
-          branchName: node.branchName,
-          sortOrder: node.sortOrder,
-          isActive: true,
-          isStart: node.isStart,
-          positionX: node.positionX,
-          positionY: node.positionY,
-          slaDuration: 2,
-          slaUnit: "BUSINESS_DAYS",
-          commentsRequired: false,
-          canBeSkipped: false,
-          canBeRevisited: true,
-          approvalRequired: false,
-          approvalRoles: [],
-          requireAllMandatoryChecklistItems: true,
-          requireMandatoryPhotos: false,
-          allowedRoles: [...node.allowedRoles],
-        },
-      });
-
-      if (node.checklistItems.length > 0) {
-        await tx.filingChecklistItem.createMany({
-          data: node.checklistItems.map((label, checklistIndex) => ({
-            nodeId: createdNode.id,
-            label,
-            description: null,
-            isMandatory: true,
-            requiresRemarks: false,
-            allowsUpload: false,
-            minUploads: 0,
-            maxUploads: null,
-            acceptedFileTypes: [],
-            deadlineDuration: 2,
-            deadlineUnit: "BUSINESS_DAYS",
-            delayRemarksRequired: true,
-            hasPhotoRequirement: false,
-            sortOrder: checklistIndex + 1,
-            isActive: true,
-          })),
-        });
-      }
-
-      if (nodeIndex === 0) {
-        await tx.filingPhotoRequirement.createMany({
-          data: [
-            {
-              nodeId: createdNode.id,
-              label: "Filed Document Set",
-              description: null,
-              isMandatory: false,
-              minPhotos: 0,
-              maxPhotos: null,
-              acceptedFileTypes: ["image/jpeg", "image/png", "application/pdf"],
-              isVisibleInTimeline: true,
-            },
-          ],
-        });
-      }
-    }
-
-    await tx.filingWorkflowEdge.createMany({
-      data: DEFAULT_FILING_WORKFLOW_SEED.edges.map((edge) => ({
-        versionId: version.id,
-        sourceKey: edge.sourceKey,
-        targetKey: edge.targetKey,
-        label: "label" in edge ? edge.label ?? null : null,
-      })),
-    });
-  }, { timeout: 20000 });
+  const draft = await saveFilingWorkflowDraft(createdById, orgId, null, {
+    name: "Default Filing Workflow",
+    description:
+      "Default configurable filing workflow with First Check, Second Check, RMS/Open Bill decisions, configurable uploads, validity tracking, and optional amendment handling.",
+    nodes: [...DEFAULT_FILING_WORKFLOW_SEED.nodes] as unknown as any[],
+    edges: [...DEFAULT_FILING_WORKFLOW_SEED.edges] as unknown as any[],
+  });
+  const versionId = draft.versions?.[0]?.id;
+  if (!versionId) {
+    throw new Error("Failed to create the default filing workflow draft.");
+  }
+  await publishFilingWorkflow(createdById, orgId, versionId);
 }
 
 export async function calculateSlaDueDate(startDate: Date, duration: number, unit: string, orgId?: string): Promise<Date> {
@@ -6851,6 +7139,16 @@ export async function saveFilingWorkflowDraft(
           minUploads: item.minUploads !== undefined ? item.minUploads : 0,
           maxUploads: item.maxUploads !== undefined ? item.maxUploads : null,
           acceptedFileTypes: item.acceptedFileTypes || [],
+          documentType: item.documentType || null,
+          requiresValidity: !!item.requiresValidity,
+          validityDuration: item.validityDuration !== undefined ? item.validityDuration : null,
+          validityUnit: item.validityUnit || null,
+          warningBeforeDuration: item.warningBeforeDuration !== undefined ? item.warningBeforeDuration : null,
+          warningBeforeUnit: item.warningBeforeUnit || null,
+          notifyBeforeExpiry: !!item.notifyBeforeExpiry,
+          notificationRoles: item.notificationRoles || [],
+          showInDocumentsPage: item.showInDocumentsPage !== undefined ? !!item.showInDocumentsPage : true,
+          showInTimeline: item.showInTimeline !== undefined ? !!item.showInTimeline : true,
           deadlineDuration: item.deadlineDuration !== undefined ? item.deadlineDuration : 2,
           deadlineUnit: item.deadlineUnit || "BUSINESS_DAYS",
           delayRemarksRequired: item.delayRemarksRequired !== undefined ? !!item.delayRemarksRequired : true,
@@ -6874,6 +7172,15 @@ export async function saveFilingWorkflowDraft(
           maxPhotos: pr.maxPhotos !== undefined ? pr.maxPhotos : null,
           acceptedFileTypes: pr.acceptedFileTypes || ["image/jpeg", "image/png", "application/pdf"],
           isVisibleInTimeline: pr.isVisibleInTimeline !== undefined ? !!pr.isVisibleInTimeline : true,
+          documentType: pr.documentType || null,
+          requiresValidity: !!pr.requiresValidity,
+          validityDuration: pr.validityDuration !== undefined ? pr.validityDuration : null,
+          validityUnit: pr.validityUnit || null,
+          warningBeforeDuration: pr.warningBeforeDuration !== undefined ? pr.warningBeforeDuration : null,
+          warningBeforeUnit: pr.warningBeforeUnit || null,
+          notifyBeforeExpiry: !!pr.notifyBeforeExpiry,
+          notificationRoles: pr.notificationRoles || [],
+          showInDocumentsPage: pr.showInDocumentsPage !== undefined ? !!pr.showInDocumentsPage : true,
         }))
       );
       if (allPhotoRequirements.length > 0) {
@@ -7539,6 +7846,19 @@ export async function completeFilingNode(
       },
     });
 
+    const completedResponses = data.checklistItemResponses.filter((response) => response.isChecked);
+    if (node.canBeSkipped && completedResponses.length === 0) {
+      await logChaAudit({
+        orgId,
+        jobId,
+        entityType: "FilingNodeRun",
+        entityId: nodeRunId,
+        event: "FILING_OPTIONAL_NODE_SKIPPED",
+        actorId: userId,
+        remarks: `Optional node "${node.name}" was skipped.`,
+      });
+    }
+
     const nextNodeKey = data.nextNodeKey;
 
     if (nextNodeKey) {
@@ -7591,6 +7911,20 @@ export async function completeFilingNode(
           remarks: `Transition from "${node.name}" to "${targetNode.name}". ${isDoubleBack ? "Double-back run." : ""}`,
         },
       });
+
+      if (node.nodeType === "DECISION") {
+        await logChaAudit({
+          orgId,
+          jobId,
+          entityType: "FilingNodeRun",
+          entityId: nodeRunId,
+          event: "FILING_DECISION_RECORDED",
+          actorId: userId,
+          prevState: node.key,
+          newState: nextNodeKey,
+          remarks: `Decision node "${node.name}" routed the workflow to "${targetNode.name}".`,
+        });
+      }
 
     } else {
       const pastRuns = await tx.filingNodeRun.findMany({
@@ -7710,6 +8044,241 @@ export async function getFilingSection49(orgId: string, jobId: string) {
   });
 }
 
+async function resolveConfiguredValidityDate(params: {
+  uploadedAt: Date;
+  explicitValidityDate?: Date | null;
+  requiresValidity: boolean;
+  validityDuration?: number | null;
+  validityUnit?: string | null;
+  orgId: string;
+}) {
+  if (params.explicitValidityDate) {
+    return params.explicitValidityDate;
+  }
+  if (!params.requiresValidity) {
+    return null;
+  }
+  if (params.validityDuration && params.validityUnit) {
+    return calculateSlaDueDate(params.uploadedAt, params.validityDuration, params.validityUnit, params.orgId);
+  }
+  throw new Error("This document requires a validity date before the upload can be completed.");
+}
+
+async function ensureWorkflowDocumentRequirementItem(
+  tx: Prisma.TransactionClient,
+  orgId: string,
+  input: {
+    documentType: string;
+    acceptedFileTypes: string[];
+    isMandatory: boolean;
+    minUploadCount: number;
+    maxUploadCount?: number | null;
+    requiresValidityDate: boolean;
+    defaultValidityDuration?: number | null;
+    defaultValidityUnit?: string | null;
+    warningBeforeDuration?: number | null;
+    warningBeforeUnit?: string | null;
+    notifyBeforeExpiry: boolean;
+    notificationRoles: string[];
+    showInTimeline: boolean;
+  },
+) {
+  const category = await tx.chaDocumentRequirementCategory.upsert({
+    where: { orgId_name: { orgId, name: "Filing Workflow Documents" } },
+    update: { isActive: true },
+    create: {
+      orgId,
+      name: "Filing Workflow Documents",
+      description: "Documents automatically generated or uploaded during the CHA filing workflow.",
+      sortOrder: 98,
+      isActive: true,
+    },
+  });
+
+  return tx.chaDocumentRequirementItem.upsert({
+    where: { categoryId_name: { categoryId: category.id, name: input.documentType } },
+    update: {
+      acceptedFileTypes: input.acceptedFileTypes,
+      isRequiredDefault: input.isMandatory,
+      minUploadCount: input.minUploadCount,
+      maxUploadCount: input.maxUploadCount ?? null,
+      requiresValidityDate: input.requiresValidityDate,
+      defaultValidityDuration: input.defaultValidityDuration ?? null,
+      defaultValidityUnit: input.defaultValidityUnit ?? null,
+      warningBeforeDuration: input.warningBeforeDuration ?? null,
+      warningBeforeUnit: input.warningBeforeUnit ?? null,
+      notifyBeforeExpiry: input.notifyBeforeExpiry,
+      notificationRoles: input.notificationRoles,
+      showInJobDocuments: true,
+      showInTimeline: input.showInTimeline,
+      isActive: true,
+    },
+    create: {
+      categoryId: category.id,
+      name: input.documentType,
+      sortOrder: 1,
+      isRequiredDefault: input.isMandatory,
+      acceptedFileTypes: input.acceptedFileTypes,
+      minUploadCount: input.minUploadCount,
+      maxUploadCount: input.maxUploadCount ?? null,
+      requiresValidityDate: input.requiresValidityDate,
+      defaultValidityDuration: input.defaultValidityDuration ?? null,
+      defaultValidityUnit: input.defaultValidityUnit ?? null,
+      warningBeforeDuration: input.warningBeforeDuration ?? null,
+      warningBeforeUnit: input.warningBeforeUnit ?? null,
+      notifyBeforeExpiry: input.notifyBeforeExpiry,
+      notificationRoles: input.notificationRoles,
+      showInJobDocuments: true,
+      showInTimeline: input.showInTimeline,
+      isActive: true,
+    },
+  });
+}
+
+async function syncFilingAttachmentToDocuments(
+  tx: Prisma.TransactionClient,
+  params: {
+    orgId: string;
+    jobId: string;
+    attachment: {
+      id: string;
+      fileKey: string;
+      fileName: string;
+      fileType: string;
+      fileSize: number;
+      uploadedById: string;
+      uploadedAt: Date;
+      validityDate: Date | null;
+    };
+    instance: { templateId: string; versionId: string };
+    nodeRunId: string;
+    nodeId: string;
+    checklistItem?: {
+      id: string;
+      label: string;
+      isMandatory: boolean;
+      minUploads: number;
+      maxUploads: number | null;
+      acceptedFileTypes: string[];
+      documentType: string | null;
+      requiresValidity: boolean;
+      validityDuration: number | null;
+      validityUnit: string | null;
+      warningBeforeDuration: number | null;
+      warningBeforeUnit: string | null;
+      notifyBeforeExpiry: boolean;
+      notificationRoles: string[];
+      showInDocumentsPage: boolean;
+      showInTimeline: boolean;
+    } | null;
+    photoRequirement?: {
+      id: string;
+      label: string;
+      isMandatory: boolean;
+      minPhotos: number;
+      maxPhotos: number | null;
+      acceptedFileTypes: string[];
+      documentType: string | null;
+      requiresValidity: boolean;
+      validityDuration: number | null;
+      validityUnit: string | null;
+      warningBeforeDuration: number | null;
+      warningBeforeUnit: string | null;
+      notifyBeforeExpiry: boolean;
+      notificationRoles: string[];
+      showInDocumentsPage: boolean;
+      isVisibleInTimeline: boolean;
+    } | null;
+  },
+) {
+  const sourceConfig = params.checklistItem ?? params.photoRequirement;
+  if (!sourceConfig) {
+    return null;
+  }
+  const shouldShowInDocuments = "showInDocumentsPage" in sourceConfig ? sourceConfig.showInDocumentsPage !== false : true;
+  if (!shouldShowInDocuments) {
+    return null;
+  }
+
+  const documentType = sourceConfig.documentType?.trim() || sourceConfig.label;
+  const requirementItem = await ensureWorkflowDocumentRequirementItem(tx, params.orgId, {
+    documentType,
+    acceptedFileTypes: sourceConfig.acceptedFileTypes,
+    isMandatory: sourceConfig.isMandatory,
+    minUploadCount: "minUploads" in sourceConfig ? sourceConfig.minUploads : sourceConfig.minPhotos,
+    maxUploadCount: "maxUploads" in sourceConfig ? sourceConfig.maxUploads : sourceConfig.maxPhotos,
+    requiresValidityDate: sourceConfig.requiresValidity,
+    defaultValidityDuration: sourceConfig.validityDuration,
+    defaultValidityUnit: sourceConfig.validityUnit,
+    warningBeforeDuration: sourceConfig.warningBeforeDuration,
+    warningBeforeUnit: sourceConfig.warningBeforeUnit,
+    notifyBeforeExpiry: sourceConfig.notifyBeforeExpiry,
+    notificationRoles: sourceConfig.notificationRoles,
+    showInTimeline: "showInTimeline" in sourceConfig ? sourceConfig.showInTimeline : sourceConfig.isVisibleInTimeline,
+  });
+
+  let jobRequirement = await tx.chaJobDocumentRequirement.findFirst({
+    where: {
+      jobId: params.jobId,
+      requirementItemId: requirementItem.id,
+      name: documentType,
+    },
+    orderBy: { id: "asc" },
+  });
+
+  if (!jobRequirement) {
+    jobRequirement = await tx.chaJobDocumentRequirement.create({
+      data: {
+        jobId: params.jobId,
+        name: documentType,
+        category: "Filing Workflow Documents",
+        isMandatory: sourceConfig.isMandatory,
+        status: "PENDING",
+        requirementItemId: requirementItem.id,
+      },
+    });
+  }
+
+  await tx.chaDocumentVersion.updateMany({
+    where: { requirementId: jobRequirement.id, isCurrent: true },
+    data: { isCurrent: false },
+  });
+
+  const syncedVersion = await tx.chaDocumentVersion.create({
+    data: {
+      requirementId: jobRequirement.id,
+      fileKey: params.attachment.fileKey,
+      fileName: params.attachment.fileName,
+      mimeType: params.attachment.fileType,
+      sizeBytes: params.attachment.fileSize,
+      uploadedById: params.attachment.uploadedById,
+      validityDate: params.attachment.validityDate,
+      source: "FILING_WORKFLOW",
+      workflowTemplateId: params.instance.templateId,
+      workflowVersionId: params.instance.versionId,
+      workflowNodeId: params.nodeId,
+      workflowNodeRunId: params.nodeRunId,
+      filingChecklistItemId: params.checklistItem?.id ?? null,
+      filingPhotoRequirementId: params.photoRequirement?.id ?? null,
+      timelineVisible: "showInTimeline" in sourceConfig ? sourceConfig.showInTimeline : sourceConfig.isVisibleInTimeline,
+    },
+  });
+
+  await tx.chaJobDocumentRequirement.update({
+    where: { id: jobRequirement.id },
+    data: {
+      isMandatory: sourceConfig.isMandatory,
+      status: "UPLOADED",
+    },
+  });
+
+  await tx.chaDocumentException.deleteMany({
+    where: { requirementId: jobRequirement.id },
+  });
+
+  return syncedVersion;
+}
+
 export async function uploadFilingAttachment(
   actorId: string,
   orgId: string,
@@ -7718,7 +8287,8 @@ export async function uploadFilingAttachment(
   photoRequirementId: string | null,
   checklistItemId: string | null,
   fileData: { fileName: string; mimeType: string; sizeBytes: number },
-  fileBuffer?: Buffer
+  fileBuffer?: Buffer,
+  validityDate?: Date | null,
 ) {
   const job = await db.chaJob.findFirstOrThrow({
     where: { id: jobId, orgId },
@@ -7745,7 +8315,14 @@ export async function uploadFilingAttachment(
       id: nodeRunId,
       instanceId: instance.id,
     },
-    select: { id: true },
+    include: {
+      node: {
+        include: {
+          checklistItems: true,
+          photoRequirements: true,
+        },
+      },
+    },
   });
 
   if (!nodeRun) {
@@ -7778,18 +8355,66 @@ export async function uploadFilingAttachment(
     }
   }
 
-  const attachment = await db.filingAttachment.create({
-    data: {
-      instanceId: instance.id,
+  const checklistItem = checklistItemId
+    ? nodeRun.node.checklistItems.find((item) => item.id === checklistItemId) ?? null
+    : null;
+  const photoRequirement = photoRequirementId
+    ? nodeRun.node.photoRequirements.find((item) => item.id === photoRequirementId) ?? null
+    : null;
+  const sourceConfig = checklistItem ?? photoRequirement;
+  const uploadedAt = await getNow();
+  const resolvedValidityDate = sourceConfig
+    ? await resolveConfiguredValidityDate({
+        uploadedAt,
+        explicitValidityDate: validityDate ?? null,
+        requiresValidity: sourceConfig.requiresValidity,
+        validityDuration: sourceConfig.validityDuration,
+        validityUnit: sourceConfig.validityUnit,
+        orgId,
+      })
+    : null;
+
+  const attachment = await db.$transaction(async (tx) => {
+    const createdAttachment = await tx.filingAttachment.create({
+      data: {
+        instanceId: instance.id,
+        nodeRunId,
+        photoRequirementId,
+        checklistItemId,
+        fileKey,
+        fileName: fileData.fileName,
+        fileSize: fileData.sizeBytes,
+        fileType: fileData.mimeType,
+        uploadedById: actorId,
+        uploadedAt,
+        validityDate: resolvedValidityDate,
+      },
+    });
+
+    await syncFilingAttachmentToDocuments(tx, {
+      orgId,
+      jobId,
+      attachment: {
+        id: createdAttachment.id,
+        fileKey: createdAttachment.fileKey,
+        fileName: createdAttachment.fileName,
+        fileType: createdAttachment.fileType,
+        fileSize: createdAttachment.fileSize,
+        uploadedById: createdAttachment.uploadedById,
+        uploadedAt: createdAttachment.uploadedAt,
+        validityDate: createdAttachment.validityDate,
+      },
+      instance: {
+        templateId: instance.templateId,
+        versionId: instance.versionId,
+      },
       nodeRunId,
-      photoRequirementId,
-      checklistItemId,
-      fileKey,
-      fileName: fileData.fileName,
-      fileSize: fileData.sizeBytes,
-      fileType: fileData.mimeType,
-      uploadedById: actorId,
-    },
+      nodeId: nodeRun.node.id,
+      checklistItem,
+      photoRequirement,
+    });
+
+    return createdAttachment;
   });
 
   await logChaAudit({
@@ -7800,6 +8425,11 @@ export async function uploadFilingAttachment(
     event: checklistItemId ? "FILING_CHECKLIST_FILE_UPLOADED" : "FILING_PHOTO_UPLOADED",
     actorId,
     remarks: `Uploaded file: ${fileData.fileName} for node run ${nodeRunId}`,
+    metadata: {
+      validityDate: resolvedValidityDate?.toISOString() ?? null,
+      checklistItemId,
+      photoRequirementId,
+    },
   });
 
   return attachment;
