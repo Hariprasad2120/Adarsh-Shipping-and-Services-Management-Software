@@ -189,8 +189,8 @@ export function JobsClient({
     emptyText: string;
     tableKey: "active" | "completed";
   }) => (
-    <section className="space-y-3">
-      <div className="space-y-1">
+    <section className="space-y-5 py-2">
+      <div className="space-y-2">
         <h2 className="ds-h2 text-on-surface">{title}</h2>
         <p className="text-sm text-on-surface-variant">{description}</p>
       </div>
@@ -198,15 +198,15 @@ export function JobsClient({
       <DataTable className="cha-jobs-table-shell border-outline-variant/25 shadow-sm" tableClassName="cha-jobs-table">
         <DataTableHeader className="border-b-0">
           <tr>
-            <DataTableHead>Job Number</DataTableHead>
-            <DataTableHead>Job Title</DataTableHead>
-            <DataTableHead>Customer</DataTableHead>
-            <DataTableHead>Job Type</DataTableHead>
-            <DataTableHead>BOE / SB Number</DataTableHead>
-            <DataTableHead>Created On</DataTableHead>
-            <DataTableHead>Current Stage</DataTableHead>
-            <DataTableHead>Priority</DataTableHead>
-            <DataTableHead>Owner</DataTableHead>
+            <DataTableHead className="py-4">Job Number</DataTableHead>
+            <DataTableHead className="py-4">Job Title</DataTableHead>
+            <DataTableHead className="py-4">Customer</DataTableHead>
+            <DataTableHead className="py-4">Job Type</DataTableHead>
+            <DataTableHead className="py-4">BOE / SB Number</DataTableHead>
+            <DataTableHead className="py-4">Created On</DataTableHead>
+            <DataTableHead className="py-4">Current Stage</DataTableHead>
+            <DataTableHead className="py-4">Priority</DataTableHead>
+            <DataTableHead className="py-4">Owner</DataTableHead>
           </tr>
         </DataTableHeader>
         <DataTableBody>
@@ -224,7 +224,7 @@ export function JobsClient({
           ) : (
             data.items.map((job) => (
               <ClickableRow key={job.id} href={`/cha/jobs/${job.id}`}>
-                <DataTableCell className="font-medium text-[#00cec4]">
+                <DataTableCell className="py-5 font-medium text-[#00cec4]">
                   <div className="flex items-center gap-2">
                     <span>{job.jobNumber}</span>
                     {job.deliveryOrderWarning ? (
@@ -232,31 +232,31 @@ export function JobsClient({
                     ) : null}
                   </div>
                 </DataTableCell>
-                <DataTableCell>
+                <DataTableCell className="py-5">
                   <div className="min-w-0">
                     <p className="truncate text-on-surface">{job.title}</p>
-                    <p className="truncate text-xs text-on-surface-variant">{job.branchName}</p>
+                    <p className="mt-1 truncate text-xs text-on-surface-variant">{job.branchName}</p>
                   </div>
                 </DataTableCell>
-                <DataTableCell>{job.customerName}</DataTableCell>
-                <DataTableCell className="ds-label">{job.jobTypeName}</DataTableCell>
-                <DataTableCell className="ds-numeric text-on-surface-variant">
+                <DataTableCell className="py-5">{job.customerName}</DataTableCell>
+                <DataTableCell className="py-5 ds-label">{job.jobTypeName}</DataTableCell>
+                <DataTableCell className="py-5 ds-numeric text-on-surface-variant">
                   {getFilingReference(job) || "Pending"}
                 </DataTableCell>
-                <DataTableCell className="text-on-surface-variant">
+                <DataTableCell className="py-5 text-on-surface-variant">
                   {formatJobDate(job.createdAt)}
                 </DataTableCell>
-                <DataTableCell>
+                <DataTableCell className="py-5">
                   <span className="inline-flex rounded-full border border-outline-variant/35 bg-surface-container-low px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-on-surface-variant">
                     {job.stage.replace(/_/g, " ")}
                   </span>
                 </DataTableCell>
-                <DataTableCell>
+                <DataTableCell className="py-5">
                   <span className="text-xs uppercase tracking-[0.12em] text-on-surface-variant">
                     {job.priority}
                   </span>
                 </DataTableCell>
-                <DataTableCell className="text-on-surface-variant">{job.ownerName}</DataTableCell>
+                <DataTableCell className="py-5 text-on-surface-variant">{job.ownerName}</DataTableCell>
               </ClickableRow>
             ))
           )}
@@ -298,142 +298,141 @@ export function JobsClient({
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 border-b border-outline-variant/30 pb-4 sm:flex-row sm:items-center sm:justify-end">
-        <div className="flex items-center gap-2">
-          <FilterMenu
-            open={isFilterPanelOpen}
-            onOpenChange={setIsFilterPanelOpen}
-            activeCount={activeFilterCount}
-            title="Filters"
-            ariaLabel="Open filters"
-            contentClassName="w-[320px] max-h-[70vh] overflow-y-auto"
-          >
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="ds-label block">Workflow Stage</label>
-                <DropdownSelect
-                  value={stage}
-                  onValueChange={setStage}
-                  placeholder="All Workflow Stages"
-                  options={[
-                    { value: "", label: "All Workflow Stages" },
-                    { value: "DOCUMENT_COLLECTION", label: "Document Collection" },
-                    { value: "ADDITIONAL_DATA", label: "Additional Data" },
-                    { value: "CHECKLIST_PREPARATION", label: "Checklist Prep" },
-                    { value: "CHECKLIST_APPROVAL", label: "Checklist Approval" },
-                    { value: "FILING", label: "Filing Stage" },
-                    { value: "FILED", label: "Filed / Completed" },
-                  ]}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="ds-label block">Status</label>
-                <DropdownSelect
-                  value={status}
-                  onValueChange={setStatus}
-                  placeholder="All Statuses"
-                  options={[
-                    { value: "", label: "All Statuses" },
-                    { value: "ACTIVE", label: "Active" },
-                    { value: "HOLD", label: "Hold" },
-                    { value: "CANCELLED", label: "Cancelled" },
-                    { value: "COMPLETED", label: "Completed" },
-                  ]}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="ds-label block">Priority</label>
-                <DropdownSelect
-                  value={priority}
-                  onValueChange={setPriority}
-                  placeholder="All Priorities"
-                  options={[
-                    { value: "", label: "All Priorities" },
-                    { value: "LOW", label: "Low" },
-                    { value: "MEDIUM", label: "Medium" },
-                    { value: "HIGH", label: "High" },
-                  ]}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="ds-label block">Branch</label>
-                <DropdownSelect
-                  value={branchId}
-                  onValueChange={setBranchId}
-                  placeholder="All Branches"
-                  options={[
-                    { value: "", label: "All Branches" },
-                    ...options.branches.map((branch) => ({
-                      value: branch.id,
-                      label: branch.name,
-                    })),
-                  ]}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="ds-label block">Job Type</label>
-                <DropdownSelect
-                  value={jobTypeId}
-                  onValueChange={setJobTypeId}
-                  placeholder="All Job Types"
-                  options={[
-                    { value: "", label: "All Job Types" },
-                    ...options.jobTypes.map((jobType) => ({
-                      value: jobType.id,
-                      label: jobType.name,
-                    })),
-                  ]}
-                />
-              </div>
-
-              <label className="flex items-center gap-3 rounded-xl border border-outline-variant/30 px-4 py-3 text-sm text-on-surface">
-                <input
-                  type="checkbox"
-                  checked={assignedToMe}
-                  onChange={(event) => setAssignedToMe(event.target.checked)}
-                  className="h-4 w-4 rounded"
-                />
-                Assigned to me
-              </label>
-
-              <div className="flex items-center justify-between gap-3 border-t border-outline-variant/20 pt-4">
-                <Button variant="outline" onClick={resetFilters} className="flex-1">
-                  Reset
-                </Button>
-                <Button onClick={applyFilters} className="flex-1">
-                  Apply Filters
-                </Button>
-              </div>
-            </div>
-          </FilterMenu>
-          <Button onClick={() => setIsModalOpen(true)} className="flex w-full items-center justify-center gap-2 sm:w-auto">
-            <Plus className="size-4" /> Create Job
-          </Button>
-        </div>
-      </div>
-
+    <div className="space-y-8">
       <div className="rounded-2xl border border-outline-variant/25 bg-surface p-4 shadow-sm">
-        <div className="relative max-w-xl">
-          <span className="absolute inset-y-0 left-3 flex items-center text-on-surface-variant">
-            <Search size={16} />
-          </span>
-          <input
-            type="text"
-            placeholder="Search job #, customer, or title..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                applyFilters();
-              }
-            }}
-            className="h-11 w-full pl-10 pr-4 text-sm"
-          />
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="relative min-w-0 flex-1">
+            <span className="absolute inset-y-0 left-3 flex items-center text-on-surface-variant">
+              <Search size={16} />
+            </span>
+            <input
+              type="text"
+              placeholder="Search job #, customer, or title..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  applyFilters();
+                }
+              }}
+              className="h-11 w-full pl-10 pr-4 text-sm"
+            />
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <FilterMenu
+              open={isFilterPanelOpen}
+              onOpenChange={setIsFilterPanelOpen}
+              activeCount={activeFilterCount}
+              title="Filters"
+              ariaLabel="Open filters"
+              contentClassName="w-[320px] max-h-[70vh] overflow-y-auto"
+            >
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="ds-label block">Workflow Stage</label>
+                  <DropdownSelect
+                    value={stage}
+                    onValueChange={setStage}
+                    placeholder="All Workflow Stages"
+                    options={[
+                      { value: "", label: "All Workflow Stages" },
+                      { value: "DOCUMENT_COLLECTION", label: "Document Collection" },
+                      { value: "ADDITIONAL_DATA", label: "Additional Data" },
+                      { value: "CHECKLIST_PREPARATION", label: "Checklist Prep" },
+                      { value: "CHECKLIST_APPROVAL", label: "Checklist Approval" },
+                      { value: "FILING", label: "Filing Stage" },
+                      { value: "FILED", label: "Filed / Completed" },
+                    ]}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="ds-label block">Status</label>
+                  <DropdownSelect
+                    value={status}
+                    onValueChange={setStatus}
+                    placeholder="All Statuses"
+                    options={[
+                      { value: "", label: "All Statuses" },
+                      { value: "ACTIVE", label: "Active" },
+                      { value: "HOLD", label: "Hold" },
+                      { value: "CANCELLED", label: "Cancelled" },
+                      { value: "COMPLETED", label: "Completed" },
+                    ]}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="ds-label block">Priority</label>
+                  <DropdownSelect
+                    value={priority}
+                    onValueChange={setPriority}
+                    placeholder="All Priorities"
+                    options={[
+                      { value: "", label: "All Priorities" },
+                      { value: "LOW", label: "Low" },
+                      { value: "MEDIUM", label: "Medium" },
+                      { value: "HIGH", label: "High" },
+                    ]}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="ds-label block">Branch</label>
+                  <DropdownSelect
+                    value={branchId}
+                    onValueChange={setBranchId}
+                    placeholder="All Branches"
+                    options={[
+                      { value: "", label: "All Branches" },
+                      ...options.branches.map((branch) => ({
+                        value: branch.id,
+                        label: branch.name,
+                      })),
+                    ]}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="ds-label block">Job Type</label>
+                  <DropdownSelect
+                    value={jobTypeId}
+                    onValueChange={setJobTypeId}
+                    placeholder="All Job Types"
+                    options={[
+                      { value: "", label: "All Job Types" },
+                      ...options.jobTypes.map((jobType) => ({
+                        value: jobType.id,
+                        label: jobType.name,
+                      })),
+                    ]}
+                  />
+                </div>
+
+                <label className="flex items-center gap-3 rounded-xl border border-outline-variant/30 px-4 py-3 text-sm text-on-surface">
+                  <input
+                    type="checkbox"
+                    checked={assignedToMe}
+                    onChange={(event) => setAssignedToMe(event.target.checked)}
+                    className="h-4 w-4 rounded"
+                  />
+                  Assigned to me
+                </label>
+
+                <div className="flex items-center justify-between gap-3 border-t border-outline-variant/20 pt-4">
+                  <Button variant="outline" onClick={resetFilters} className="flex-1">
+                    Reset
+                  </Button>
+                  <Button onClick={applyFilters} className="flex-1">
+                    Apply Filters
+                  </Button>
+                </div>
+              </div>
+            </FilterMenu>
+            <Button onClick={() => setIsModalOpen(true)} className="flex items-center justify-center gap-2 whitespace-nowrap">
+              <Plus className="size-4" /> Create Job
+            </Button>
+          </div>
         </div>
       </div>
 

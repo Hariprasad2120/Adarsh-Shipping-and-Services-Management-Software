@@ -42,6 +42,7 @@ export function DashboardShell({
 }) {
   const pathname = usePathname();
   const isCrm = pathname.startsWith("/crm");
+  const isCha = pathname.startsWith("/cha");
   const isPortal = pathname === "/dashboard";
   const showBreadcrumb = !isPortal && !isCrm;
   const topBarRef = useRef<HTMLDivElement | null>(null);
@@ -81,7 +82,9 @@ export function DashboardShell({
     ["--dashboard-topbar-height" as string]: `${topBarHeight}px`,
     ["--dashboard-breadcrumb-height" as string]: `${breadcrumbHeight}px`,
   } as React.CSSProperties;
-  const contentPaddingClass = showBreadcrumb ? "px-6 pb-8 pt-5 lg:px-8 xl:px-10" : "px-6 py-8 lg:px-8 xl:px-10";
+  const contentPaddingClass = showBreadcrumb
+    ? `px-6 pb-8 ${isCha ? "pt-2" : "pt-5"} lg:px-8 xl:px-10`
+    : "px-6 py-8 lg:px-8 xl:px-10";
   const topBarClass = showBreadcrumb
     ? "sticky top-0 z-40 w-full shrink-0 bg-background/95 shadow-sm backdrop-blur-sm"
     : "sticky top-0 z-40 w-full shrink-0 border-b border-outline-variant/40 bg-background/95 shadow-sm backdrop-blur-sm";

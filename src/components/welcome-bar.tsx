@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, memo, useState } from "react";
+import { useEffect, useMemo, memo, useState, useSyncExternalStore } from "react";
 import {
   CalendarDays,
   Clock3,
@@ -17,7 +17,9 @@ import { toast } from "sonner";
 import { createPortal } from "react-dom";
 import { useCaps } from "@/lib/caps-context";
 import { useDashboardChrome } from "@/components/dashboard-chrome";
-import { getVisibleSections, matchesPath } from "@/lib/navigation";
+import { getActiveItemHref, getVisibleSections, matchesPath } from "@/lib/navigation";
+import { getBreadcrumbLabels, subscribeBreadcrumb } from "@/lib/breadcrumb-store";
+import { getPathLabel } from "@/lib/route-labels";
 import { motion, AnimatePresence } from "framer-motion";
 
 function toTitleCase(value: string) {
@@ -101,6 +103,11 @@ export function AppHeader({
   );
 
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const dynamicLabels = useSyncExternalStore(
+    subscribeBreadcrumb,
+    getBreadcrumbLabels,
+    getBreadcrumbLabels,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -174,14 +181,28 @@ export function AppHeader({
     [pathname, visibleSections],
   );
   const activeItem = useMemo(
-    () =>
-      activeSection?.items.find((item) =>
-        matchesPath(pathname, item.href, item.matchPaths),
-      ) ?? null,
+    () => {
+      if (!activeSection) return null;
+      const activeItemHref = getActiveItemHref(pathname, activeSection.items);
+      return activeSection.items.find((item) => item.href === activeItemHref) ?? null;
+    },
     [activeSection, pathname],
   );
 
-  const workspaceLabel = activeItem?.label ?? activeSection?.label ?? "Workspace";
+  const pathWorkspaceLabel = useMemo(() => getPathLabel(pathname), [pathname]);
+  const breadcrumbWorkspaceLabel = useMemo(() => {
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments.length === 0) return null;
+    const lastSegment = segments[segments.length - 1];
+    return dynamicLabels[lastSegment] ?? null;
+  }, [dynamicLabels, pathname]);
+
+  const workspaceLabel =
+    breadcrumbWorkspaceLabel ??
+    pathWorkspaceLabel ??
+    activeItem?.label ??
+    activeSection?.label ??
+    "Workspace";
   const canOpenSettings = Boolean(caps["admin.org.manage"]);
   const expiredDoCount = doWarnings.filter((warning) => warning.severity === "expired").length;
 

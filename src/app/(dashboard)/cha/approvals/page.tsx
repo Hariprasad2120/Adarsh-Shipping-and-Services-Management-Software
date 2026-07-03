@@ -31,6 +31,18 @@ export default async function ChaApprovalsPage() {
     <div className="space-y-6">
       {/* Checklist Queue */}
       <div className="bg-surface border border-outline-variant/30 rounded-xl shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between border-b border-outline-variant/30 px-6 py-4">
+          <div>
+            <h2 className="ds-h2 text-on-surface flex items-center gap-2">
+              <CheckSquare size={18} className="text-[#00cec4]" />
+              Your Approvals
+            </h2>
+            <p className="mt-1 text-xs text-on-surface-variant">
+              Pending job checklist audits assigned to you for review and approval.
+            </p>
+          </div>
+        </div>
+
         {approvals.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-center text-on-surface-variant">
             <CheckSquare size={48} className="text-outline-variant mb-3" />

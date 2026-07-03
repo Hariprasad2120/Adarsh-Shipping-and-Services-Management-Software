@@ -13,10 +13,8 @@ export default async function ChaSettingsPage() {
   const orgId = session.user.orgId;
   if (!orgId) redirect("/setup");
 
-  // Check RBAC permission for settings management
   await requirePermission(session.user.id, "cha.settings.manage");
 
-  // All 9 data fetches are independent — run in parallel
   const [
     settings,
     roles,
@@ -34,8 +32,15 @@ export default async function ChaSettingsPage() {
     listJobTypesForSettings(orgId),
     db.chaShipmentType.findMany({ where: { orgId }, orderBy: { name: "asc" } }),
     db.chaTeamGroup.findMany({ where: { orgId }, orderBy: { name: "asc" } }),
-    db.branch.findMany({ where: { orgId }, select: { id: true, name: true, code: true }, orderBy: { name: "asc" } }),
-    db.chaBranchNumberingRule.findMany({ where: { orgId }, orderBy: { branch: { name: "asc" } } }),
+    db.branch.findMany({
+      where: { orgId },
+      select: { id: true, name: true, code: true },
+      orderBy: { name: "asc" },
+    }),
+    db.chaBranchNumberingRule.findMany({
+      where: { orgId },
+      orderBy: { branch: { name: "asc" } },
+    }),
     db.chaDocumentRequirementCategory.findMany({
       where: { orgId },
       include: { items: { orderBy: { sortOrder: "asc" } } },
@@ -43,17 +48,21 @@ export default async function ChaSettingsPage() {
     }),
   ]);
 
-  const availableRoles = roles.map((r) => r.name);
-  if (!availableRoles.includes("Admin")) availableRoles.push("Admin");
-  if (!availableRoles.includes("HR")) availableRoles.push("HR");
-  if (!availableRoles.includes("Manager")) availableRoles.push("Manager");
-  if (!availableRoles.includes("Employee")) availableRoles.push("Employee");
+  const availableRoles = roles.map((role) => role.name);
+
+  for (const fallbackRole of ["Admin", "HR", "Manager", "Employee"]) {
+    if (!availableRoles.includes(fallbackRole)) {
+      availableRoles.push(fallbackRole);
+    }
+  }
 
   const parseStringArray = (value: unknown, fallback: string[] = []) => {
     if (!value) return fallback;
+
     if (Array.isArray(value)) {
       return value.filter((item): item is string => typeof item === "string");
     }
+
     if (typeof value === "string") {
       try {
         const parsed = JSON.parse(value);
@@ -64,11 +73,19 @@ export default async function ChaSettingsPage() {
         return fallback;
       }
     }
+
     return fallback;
   };
 
-  const parsedJobCreatorRoles = parseStringArray(settings.jobCreatorRoles, ["Admin", "HR", "Manager", "Employee"]);
+  const parsedJobCreatorRoles = parseStringArray(settings.jobCreatorRoles, [
+    "Admin",
+    "HR",
+    "Manager",
+    "Employee",
+  ]);
+
   const parsedJobCreatorUsers = parseStringArray(settings.jobCreatorUsers);
+
   const parsedExpenseCategories = parseStringArray(settings.expenseCategories, [
     "Customs Duty",
     "Port Handling Charges",
@@ -80,7 +97,7 @@ export default async function ChaSettingsPage() {
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6">
+    <div className="w-full max-w-none space-y-4">
       <SettingsForm
         initialSettings={{
           id: settings.id,
