@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -524,6 +524,34 @@ export function JobWorkspaceClient({
   const filingBillNumberLabel =
     isExportFiling ? "Shipping Bill Number" : isImportFiling ? "Bill Of Entry Number" : "Bill Number";
   const filingBillNumberValue = isExportFiling ? shippingBillNumber : billOfEntryNumber;
+
+  // The bill number appears both in Shipment Details and in the Bill Filing
+  // "Fill Bill" input — keep them as one value: typing in either updates both.
+  const setBillNumberEverywhere = (value: string) => {
+    setFilingFieldValues((prev) => ({ ...prev, bill_number: value }));
+    if (isExportFiling) {
+      setShippingBillNumber(value);
+      setBillOfEntryNumber("");
+    } else {
+      setBillOfEntryNumber(value);
+      setShippingBillNumber("");
+    }
+  };
+
+  // Seed the Fill Bill input from the saved shipment bill number once per
+  // active stage, so a previously saved number shows up in both places.
+  const billNumberSeededRunRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!activeNodeRun?.id) return;
+    if (billNumberSeededRunRef.current === activeNodeRun.id) return;
+    billNumberSeededRunRef.current = activeNodeRun.id;
+    const savedBillNumber = filingBillNumberValue.trim();
+    if (savedBillNumber) {
+      setFilingFieldValues((prev) =>
+        prev.bill_number?.trim() ? prev : { ...prev, bill_number: savedBillNumber },
+      );
+    }
+  }, [activeNodeRun?.id, filingBillNumberValue]);
   const requiresIgm = manifestRequirement === "IGM" || manifestRequirement === "BOTH";
   const requiresEgm = manifestRequirement === "EGM" || manifestRequirement === "BOTH";
   const requiresCustomManifest = manifestRequirement === "CUSTOM";
@@ -3617,15 +3645,7 @@ export function JobWorkspaceClient({
                       <input
                         type="text"
                         value={filingBillNumberValue}
-                        onChange={(e) => {
-                          if (isExportFiling) {
-                            setShippingBillNumber(e.target.value);
-                            setBillOfEntryNumber("");
-                            return;
-                          }
-                          setBillOfEntryNumber(e.target.value);
-                          setShippingBillNumber("");
-                        }}
+                        onChange={(e) => setBillNumberEverywhere(e.target.value)}
                         placeholder={
                           isExportFiling
                             ? "Enter Shipping Bill Number"
@@ -3777,7 +3797,7 @@ export function JobWorkspaceClient({
                                         </span>
                                         <input
                                           value={filingFieldValues.bill_number || ""}
-                                          onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, bill_number: e.target.value }))}
+                                          onChange={(e) => setBillNumberEverywhere(e.target.value)}
                                           placeholder={`Enter ${filingBillNumberLabel}`}
                                           className="w-full text-sm"
                                         />
