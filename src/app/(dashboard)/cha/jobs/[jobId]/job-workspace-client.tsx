@@ -234,6 +234,8 @@ export function JobWorkspaceClient({
   const [checklistRemarks, setChecklistRemarks] = useState("");
   const [internalApprovalRemarks, setInternalApprovalRemarks] = useState("");
   const [customerApprovalRemarks, setCustomerApprovalRemarks] = useState("");
+  const [customerMailSubject, setCustomerMailSubject] = useState("");
+  const [customerMailBody, setCustomerMailBody] = useState("");
 
   // Filing Form State
   const [newEstFilingDate, setNewEstFilingDate] = useState("");
@@ -249,6 +251,10 @@ export function JobWorkspaceClient({
   const [filingInstance, setFilingInstance] = useState<any>(null);
   const [activeNodeRun, setActiveNodeRun] = useState<any>(null);
   const [checklistResponses, setChecklistResponses] = useState<Record<string, { isChecked: boolean; remarks?: string; fileKey?: string; delayRemarks?: string }>>({});
+  const [filingFieldValues, setFilingFieldValues] = useState<Record<string, string>>({});
+  const [filingToggleStates, setFilingToggleStates] = useState<Record<string, boolean>>({});
+  const [filingQueryTitle, setFilingQueryTitle] = useState("");
+  const [filingQueryDetails, setFilingQueryDetails] = useState("");
   const [nodeRemarks, setNodeRemarks] = useState("");
   const [selectedNextNodeKey, setSelectedNextNodeKey] = useState<string>("");
   const [section49Flag, setSection49Flag] = useState<any>(null);
@@ -430,6 +436,13 @@ export function JobWorkspaceClient({
   const checklistWorkflow = job.checklistWorkflow ?? null;
   const currentChecklistVersion = checklistWorkflow?.currentFileVersion ?? checklistWorkflow?.fileVersions?.[0] ?? null;
   const checklistApprovals = checklistWorkflow?.approvals ?? [];
+  const latestCustomerMailLog = checklistWorkflow?.customerMailLogs?.[0] ?? null;
+  const customerApprovalVisibleAt = checklistWorkflow?.customerApprovalVisibleAt
+    ? new Date(checklistWorkflow.customerApprovalVisibleAt)
+    : latestCustomerMailLog?.approvalVisibleAt
+    ? new Date(latestCustomerMailLog.approvalVisibleAt)
+    : null;
+  const customerApprovalDelayElapsed = customerApprovalVisibleAt ? customerApprovalVisibleAt.getTime() <= Date.now() : false;
   const currentInternalApprovals = checklistApprovals.filter(
     (approval: any) =>
       approval.fileVersionId === currentChecklistVersion?.id &&
@@ -930,6 +943,32 @@ export function JobWorkspaceClient({
     }
   };
 
+  const handleSendChecklistCustomerMail = async () => {
+    if (!checklistWorkflow) return;
+    const subject = customerMailSubject.trim() || `Checklist Approval Required - ${job.jobNumber}`;
+    const body = customerMailBody.trim() || `Please review the attached approved checklist for job ${job.jobNumber}.`;
+
+    setLoading("checklist-customer-mail");
+    try {
+      const res = await actions.sendChecklistCustomerMailAction(job.id, checklistWorkflow.id, {
+        subject,
+        body,
+      });
+      if (res.ok) {
+        toast.success("Checklist mail queued for customer approval.");
+        setCustomerMailSubject("");
+        setCustomerMailBody("");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to send checklist mail.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   const handleUpdateManager = async () => {
     if (!selectedManagerId) {
       toast.error("Please select a manager.");
@@ -1147,6 +1186,18 @@ export function JobWorkspaceClient({
             };
           });
           setChecklistResponses(initialResponses);
+          const fieldValuesForNode = Object.fromEntries(
+            (instanceRes.data.fieldValues || [])
+              .filter((entry: any) => entry.nodeId === activeRun.node.id)
+              .map((entry: any) => [entry.fieldKey, entry.valueJson == null ? "" : String(entry.valueJson)]),
+          );
+          setFilingFieldValues(fieldValuesForNode);
+          const toggleStatesForNode = Object.fromEntries(
+            (instanceRes.data.toggleStates || [])
+              .filter((entry: any) => entry.nodeId === activeRun.node.id)
+              .map((entry: any) => [entry.sectionKey, !!entry.isEnabled]),
+          );
+          setFilingToggleStates(toggleStatesForNode);
 
           const edges = instanceRes.data.version?.edges || [];
           const outgoing = edges.filter((e: any) => e.sourceKey === activeRun.nodeKey);
@@ -1157,6 +1208,8 @@ export function JobWorkspaceClient({
           }
         } else {
           setChecklistResponses({});
+          setFilingFieldValues({});
+          setFilingToggleStates({});
           setSelectedNextNodeKey("");
         }
 
@@ -1267,6 +1320,8 @@ export function JobWorkspaceClient({
       const res = await actions.completeFilingNodeAction(job.id, activeNodeRun.id, {
         remarks: nodeRemarks,
         checklistItemResponses: responsesList,
+        fieldValues: Object.entries(filingFieldValues).map(([fieldKey, value]) => ({ fieldKey, value })),
+        toggleStates: Object.entries(filingToggleStates).map(([sectionKey, isEnabled]) => ({ sectionKey, isEnabled })),
         nextNodeKey: selectedNextNodeKey || null,
       });
 
@@ -1310,7 +1365,7 @@ export function JobWorkspaceClient({
       if (validityDateValue) {
         formData.append("validityDate", validityDateValue);
       }
-      const res = await actions.uploadFilingAttachmentAction(job.id, activeNodeRun.id, photoRequirementId, null, formData);
+      const res = await actions.uploadFilingAttachmentAction(job.id, activeNodeRun.id, photoRequirementId, null, null, formData);
 
       if (res.ok) {
         toast.success(`Uploaded ${file.name} successfully.`);
@@ -1389,7 +1444,7 @@ export function JobWorkspaceClient({
       if (validityDateValue) {
         formData.append("validityDate", validityDateValue);
       }
-      const res = await actions.uploadFilingAttachmentAction(job.id, activeNodeRun.id, null, checklistItemId, formData);
+      const res = await actions.uploadFilingAttachmentAction(job.id, activeNodeRun.id, null, checklistItemId, null, formData);
       if (res.ok) {
         const fileKey = res.data.fileKey;
         setChecklistResponses((prev) => ({
@@ -1404,6 +1459,72 @@ export function JobWorkspaceClient({
         await loadFilingData();
       } else {
         toast.error(res.error || "Upload failed.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleUploadNodeDocument = async (documentRequirementKey: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeNodeRun) return;
+
+    setLoading(`node-document-${documentRequirementKey}`);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await actions.uploadFilingAttachmentAction(job.id, activeNodeRun.id, null, null, documentRequirementKey, formData);
+      if (res.ok) {
+        toast.success(`Uploaded ${file.name}.`);
+        await loadFilingData();
+      } else {
+        toast.error(res.error || "Upload failed.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleCreateFilingQuery = async () => {
+    if (!activeNodeRun || !filingQueryDetails.trim()) {
+      toast.error("Enter query details before saving.");
+      return;
+    }
+
+    setLoading("filing-query-create");
+    try {
+      const res = await actions.createFilingWorkflowQueryAction(job.id, activeNodeRun.id, {
+        title: filingQueryTitle.trim() || "Customs Query",
+        details: filingQueryDetails.trim(),
+      });
+      if (res.ok) {
+        toast.success("Filing query saved.");
+        setFilingQueryTitle("");
+        setFilingQueryDetails("");
+        await loadFilingData();
+      } else {
+        toast.error(res.error || "Failed to save filing query.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleUpdateFilingQueryStatus = async (queryId: string, status: "REPLIED" | "CLOSED") => {
+    setLoading(`filing-query-${queryId}`);
+    try {
+      const res = await actions.updateFilingWorkflowQueryStatusAction(job.id, queryId, { status });
+      if (res.ok) {
+        toast.success(status === "CLOSED" ? "Query closed." : "Query marked as replied.");
+        await loadFilingData();
+      } else {
+        toast.error(res.error || "Failed to update filing query.");
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
@@ -2756,12 +2877,21 @@ export function JobWorkspaceClient({
                         <p className="mt-1 text-sm text-on-surface">
                           {approvedCustomerDecision
                             ? `Approved by ${getUserName(approvedCustomerDecision.actedById || approvedCustomerDecision.assignedToId)} on behalf of concerned job users on ${approvedCustomerDecision.actedAt ? new Date(approvedCustomerDecision.actedAt).toLocaleString("en-IN") : "Pending"}`
+                            : checklistWorkflow?.currentApprovalStage === "CUSTOMER" && !latestCustomerMailLog
+                            ? "Internal approval is complete. Send the checklist mail to unlock customer approval."
+                            : checklistWorkflow?.currentApprovalStage === "CUSTOMER" && latestCustomerMailLog && !customerApprovalDelayElapsed
+                            ? `Checklist mail sent on ${new Date(latestCustomerMailLog.sentAt).toLocaleString("en-IN")}. Customer approval will unlock at ${customerApprovalVisibleAt?.toLocaleString("en-IN")}.`
                             : checklistWorkflow?.currentApprovalStage === "CUSTOMER"
                             ? "Pending: concerned job user approval required."
                             : checklistWorkflow?.customerRejectedOnce
                             ? "Customer approval will not be requested again after rework."
                             : "Customer approval starts after the first successful internal approval."}
                         </p>
+                        {latestCustomerMailLog ? (
+                          <p className="mt-1 text-xs text-on-surface-variant">
+                            Mail recipients: {(latestCustomerMailLog.recipients || []).join(", ")}. Attachment: {latestCustomerMailLog.attachmentFileName || currentChecklistVersion?.originalFileName || "Checklist file"}.
+                          </p>
+                        ) : null}
                         {checklistWorkflow?.currentApprovalStage === "CUSTOMER" && !approvedCustomerDecision ? (
                           <p className="mt-1 text-xs text-on-surface-variant">
                             Eligible approvers: any concerned user linked to this job, including the job owner.
@@ -2769,7 +2899,36 @@ export function JobWorkspaceClient({
                           </p>
                         ) : null}
                       </div>
-                      {canCurrentUserCustomerApprove && checklistWorkflow?.currentApprovalStage === "CUSTOMER" ? (
+                      {checklistWorkflow?.currentApprovalStage === "CUSTOMER" && !latestCustomerMailLog ? (
+                        <div className="space-y-3 rounded-xl border border-outline-variant/40 bg-surface-container-low p-3">
+                          <input
+                            value={customerMailSubject}
+                            onChange={(e) => setCustomerMailSubject(e.target.value)}
+                            placeholder={`Checklist Approval Required - ${job.jobNumber}`}
+                            className="w-full text-sm"
+                          />
+                          <textarea
+                            rows={4}
+                            value={customerMailBody}
+                            onChange={(e) => setCustomerMailBody(e.target.value)}
+                            placeholder={`Please review the attached approved checklist for job ${job.jobNumber}.`}
+                            className="w-full text-xs"
+                          />
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-xs text-on-surface-variant">
+                              The latest approved checklist file will be attached automatically and customer recipients will be fetched from the customer record.
+                            </p>
+                            <Button
+                              type="button"
+                              disabled={loading !== null}
+                              onClick={handleSendChecklistCustomerMail}
+                            >
+                              {loading === "checklist-customer-mail" ? "Sending..." : "Send Customer Mail"}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
+                      {canCurrentUserCustomerApprove && checklistWorkflow?.currentApprovalStage === "CUSTOMER" && customerApprovalDelayElapsed ? (
                         <>
                           <textarea
                             rows={2}
@@ -3012,6 +3171,148 @@ export function JobWorkspaceClient({
 
                           {/* Node run completion form */}
                           <form onSubmit={handleCompleteFilingNode} className="space-y-4">
+                            {activeNodeRun.node.fieldDefinitionsJson?.length > 0 && (
+                              <div className="space-y-3">
+                                <h4 className="ds-label text-on-surface">Configured Fields</h4>
+                                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                  {activeNodeRun.node.fieldDefinitionsJson.map((field: any) => (
+                                    <div key={field.key} className="space-y-1">
+                                      <label className="ds-label block text-on-surface-variant">
+                                        {field.label} {field.required !== false ? "*" : ""}
+                                      </label>
+                                      <input
+                                        value={filingFieldValues[field.key] || ""}
+                                        onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                                        placeholder={field.placeholder || field.label}
+                                        className="w-full text-sm"
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {(activeNodeRun.node.conditionalSectionsJson?.length > 0 || activeNodeRun.node.documentRequirementsJson?.length > 0) && (
+                              <div className="space-y-3 border-t border-outline-variant/30 pt-4">
+                                <h4 className="ds-label text-on-surface">Conditional Sections & Documents</h4>
+                                <div className="space-y-3">
+                                  {(activeNodeRun.node.conditionalSectionsJson || []).map((section: any) => (
+                                    <div key={section.key} className="rounded-2xl border border-outline-variant/35 bg-surface-container-low/35 p-3 space-y-3">
+                                      <label className="flex items-center gap-3 text-sm text-on-surface">
+                                        <input
+                                          type="checkbox"
+                                          checked={!!filingToggleStates[section.key]}
+                                          onChange={(e) => setFilingToggleStates((prev) => ({ ...prev, [section.key]: e.target.checked }))}
+                                        />
+                                        <span>{section.label}</span>
+                                      </label>
+                                      {filingToggleStates[section.key] && section.unlocksFields?.length > 0 && (
+                                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                          {section.unlocksFields.map((field: any) => (
+                                            <div key={field.key} className="space-y-1">
+                                              <label className="ds-label block text-on-surface-variant">
+                                                {field.label} {field.required !== false ? "*" : ""}
+                                              </label>
+                                              <input
+                                                value={filingFieldValues[field.key] || ""}
+                                                onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                                                placeholder={field.placeholder || field.label}
+                                                className="w-full text-sm"
+                                              />
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                      {filingToggleStates[section.key] && section.unlocksDocuments?.length > 0 && (
+                                        <div className="space-y-2">
+                                          {section.unlocksDocuments.map((requirement: any) => (
+                                            <div key={requirement.key} className="rounded-xl border border-outline-variant/30 bg-surface p-3">
+                                              <div className="flex items-center justify-between gap-3">
+                                                <div>
+                                                  <div className="text-xs font-semibold text-on-surface">
+                                                    {requirement.label} {requirement.required !== false ? "*" : ""}
+                                                  </div>
+                                                </div>
+                                                <label className="cursor-pointer text-xs font-semibold text-[#00cec4]">
+                                                  Upload
+                                                  <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    onChange={(e) => handleUploadNodeDocument(requirement.key, e)}
+                                                  />
+                                                </label>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+
+                                  {(activeNodeRun.node.documentRequirementsJson || []).map((requirement: any) => (
+                                    <div key={requirement.key} className="rounded-xl border border-outline-variant/30 bg-surface p-3">
+                                      <div className="flex items-center justify-between gap-3">
+                                        <div className="text-xs font-semibold text-on-surface">
+                                          {requirement.label} {requirement.required !== false ? "*" : ""}
+                                        </div>
+                                        <label className="cursor-pointer text-xs font-semibold text-[#00cec4]">
+                                          Upload
+                                          <input
+                                            type="file"
+                                            className="hidden"
+                                            onChange={(e) => handleUploadNodeDocument(requirement.key, e)}
+                                          />
+                                        </label>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {((filingFieldValues["query_notes"] && filingFieldValues["query_notes"].trim()) || filingToggleStates["customs_query"] || (filingInstance?.queries || []).some((query: any) => query.nodeRunId === activeNodeRun.id && query.status !== "CLOSED")) && (
+                              <div className="space-y-3 border-t border-outline-variant/30 pt-4">
+                                <h4 className="ds-label text-on-surface">Customs Query</h4>
+                                <input
+                                  value={filingQueryTitle}
+                                  onChange={(e) => setFilingQueryTitle(e.target.value)}
+                                  placeholder="Query title"
+                                  className="w-full text-sm"
+                                />
+                                <textarea
+                                  rows={3}
+                                  value={filingQueryDetails}
+                                  onChange={(e) => setFilingQueryDetails(e.target.value)}
+                                  placeholder="Record customs query details, reply notes, or follow-up context..."
+                                  className="w-full text-xs"
+                                />
+                                <div className="flex justify-end">
+                                  <Button type="button" onClick={handleCreateFilingQuery} disabled={loading !== null}>
+                                    {loading === "filing-query-create" ? "Saving..." : "Save Query"}
+                                  </Button>
+                                </div>
+                                {(filingInstance?.queries || [])
+                                  .filter((query: any) => query.nodeRunId === activeNodeRun.id)
+                                  .map((query: any) => (
+                                    <div key={query.id} className="rounded-xl border border-outline-variant/35 bg-surface-container-low/35 p-3 text-xs">
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                          <div className="font-semibold text-on-surface">{query.title}</div>
+                                          <div className="mt-1 text-on-surface-variant">{query.details}</div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                          {query.status !== "CLOSED" && (
+                                            <>
+                                              <Button type="button" size="sm" variant="outline" onClick={() => handleUpdateFilingQueryStatus(query.id, "REPLIED")}>Query Replied</Button>
+                                              <Button type="button" size="sm" variant="outline" onClick={() => handleUpdateFilingQueryStatus(query.id, "CLOSED")}>Close Query</Button>
+                                            </>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                              </div>
+                            )}
                             
                             {/* Checklist Items */}
                             {activeNodeRun.node.checklistItems?.length > 0 && (

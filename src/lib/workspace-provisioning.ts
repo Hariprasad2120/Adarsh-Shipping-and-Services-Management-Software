@@ -93,6 +93,7 @@ export async function ensureJobCategoryFolder(
 
   let rootFolderId = profile.rootFolderId;
   let categoryFolders = (profile.categoryFolders as Record<string, string>) || {};
+  const legacyDocumentsFolderId = categoryFolders["02 Job Documents"];
 
   const rootStillExists = rootFolderId && !rootFolderId.startsWith("mock-")
     ? await driveClient.folderExists(rootFolderId, userAccessToken).catch(() => false)
@@ -111,6 +112,13 @@ export async function ensureJobCategoryFolder(
       where: { id: profile.id },
       data: { rootFolderId, categoryFolders, provisioningStatus: "success", lastError: null }
     });
+  }
+
+  const legacyDocumentsStillExist = legacyDocumentsFolderId && !legacyDocumentsFolderId.startsWith("mock-")
+    ? await driveClient.folderExists(legacyDocumentsFolderId, userAccessToken).catch(() => false)
+    : false;
+  if (!categoryFolders[category] && legacyDocumentsStillExist) {
+    return legacyDocumentsFolderId;
   }
 
   const existingCategoryFolderId = categoryFolders[category];

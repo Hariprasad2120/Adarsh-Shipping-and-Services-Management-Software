@@ -384,12 +384,17 @@ model User {
   chaChecklistImportsUploaded  ChaChecklistImport[]
   chaChecklistApprovals        ChaChecklistApproval[]
   chaChecklistReworkNotes      ChaChecklistReworkNote[]
+  chaChecklistMailLogsSent     ChaChecklistMailLog[]
   chaFilingHistorySet          ChaFilingDateHistory[]
   chaExpenseRequestsCreated    ChaExpenseRequest[]      @relation("ChaExpenseRequestedBy")
   chaExpensePaymentsMade       ChaExpensePayment[]
   chaExpenseQueriesCreated     ChaExpenseQuery[]        @relation("ChaExpenseQueryAuthor")
   filingNodeRuns               FilingNodeRun[]
   filingAttachments            FilingAttachment[]
+  filingFieldValuesUpdated     FilingFieldValue[]
+  filingToggleStatesUpdated    FilingToggleState[]
+  filingWorkflowQueriesCreated FilingWorkflowQuery[]    @relation("FilingWorkflowQueryCreatedBy")
+  filingWorkflowQueriesClosed  FilingWorkflowQuery[]    @relation("FilingWorkflowQueryClosedBy")
   filingSection49Flags         FilingSection49Flag[]
 
   @@index([orgId])
@@ -1314,7 +1319,10 @@ model CrmContact {
   mobile          String?
   designation     String?
   department      String?
+  purpose         String?
   isDecisionMaker Boolean  @default(false)
+  isPrimary       Boolean  @default(false)
+  isActive        Boolean  @default(true)
   address         String?
   description     String?
   tags            String[]
@@ -3691,6 +3699,7 @@ model ChaChecklist {
   currentApprovalStage      String   @default("UPLOAD")
   customerApprovalAttempted Boolean  @default(false)
   customerRejectedOnce      Boolean  @default(false)
+  customerApprovalVisibleAt DateTime?
   createdById               String
   updatedById               String?
   createdAt                 DateTime @default(now())
@@ -3700,9 +3709,33 @@ model ChaChecklist {
   currentFileVersion ChaChecklistFileVersion?  @relation("ChaChecklistCurrentVersion", fields: [currentFileVersionId], references: [id], onDelete: SetNull)
   fileVersions       ChaChecklistFileVersion[] @relation("ChaChecklistVersions")
   approvals          ChaChecklistDecision[]
+  customerMailLogs   ChaChecklistMailLog[]
 
   @@index([status])
   @@index([currentApprovalStage])
+}
+
+model ChaChecklistMailLog {
+  id                    String   @id @default(cuid())
+  checklistId           String
+  fileVersionId         String
+  sentById              String
+  recipients            String[]
+  subject               String
+  body                  String
+  attachmentFileKey     String?
+  attachmentFileName    String?
+  sentAt                DateTime @default(now())
+  approvalVisibleAt     DateTime
+  source                String   @default("CHA_CHECKLIST")
+
+  checklist   ChaChecklist            @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  fileVersion ChaChecklistFileVersion @relation(fields: [fileVersionId], references: [id], onDelete: Cascade)
+  sentBy      User                    @relation(fields: [sentById], references: [id])
+
+  @@index([checklistId, sentAt])
+  @@index([fileVersionId])
+  @@index([sentById])
 }
 
 model ChaChecklistFileVersion {
@@ -3720,6 +3753,7 @@ model ChaChecklistFileVersion {
   checklist            ChaChecklist           @relation("ChaChecklistVersions", fields: [checklistId], references: [id], onDelete: Cascade)
   currentForChecklists ChaChecklist[]         @relation("ChaChecklistCurrentVersion")
   approvals            ChaChecklistDecision[]
+  customerMailLogs     ChaChecklistMailLog[]
 
   @@unique([checklistId, versionNumber])
   @@index([checklistId, uploadedAt])
@@ -5076,6 +5110,8 @@ model FilingWorkflowTemplate {
   filingFlowCategory String?                  // IMPORT_BE | EXPORT_SB | CUSTOM — the flow category this template belongs to
   name               String
   description        String?
+  settingsJson       Json?
+  mailTemplatesJson  Json?
   isActive           Boolean                  @default(true)
   createdAt          DateTime                 @default(now())
   updatedAt          DateTime                 @updatedAt
@@ -5118,6 +5154,12 @@ model FilingWorkflowNode {
   description                       String?
   category                          String?
   nodeType                          String                   @default("CHECKLIST_NODE")
+  fieldDefinitionsJson              Json?
+  documentRequirementsJson          Json?
+  conditionalSectionsJson           Json?
+  approvalConfigJson                Json?
+  notificationConfigJson            Json?
+  actionConfigJson                  Json?
   sectionKey                        String?
   sectionName                       String?
   branchKey                         String?
@@ -5141,6 +5183,9 @@ model FilingWorkflowNode {
   checklistItems                    FilingChecklistItem[]
   photoRequirements                 FilingPhotoRequirement[]
   nodeRuns                          FilingNodeRun[]
+  fieldValues                       FilingFieldValue[]
+  toggleStates                      FilingToggleState[]
+  queries                           FilingWorkflowQuery[]
 
   @@unique([versionId, key])
   @@index([versionId])
@@ -5152,6 +5197,9 @@ model FilingWorkflowEdge {
   sourceKey String
   targetKey String
   label     String?
+  transitionType String           @default("FORWARD")
+  requiresReason Boolean          @default(false)
+  transitionConfigJson Json?
   version   FilingWorkflowVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
 
   @@unique([versionId, sourceKey, targetKey])
@@ -5224,6 +5272,7 @@ model FilingWorkflowInstance {
   versionId      String
   status         String                    @default("ACTIVE")
   currentNodeKey String?
+  contextJson    Json?
   createdAt      DateTime                  @default(now())
   updatedAt      DateTime                  @updatedAt
   job            ChaJob                    @relation(fields: [jobId], references: [id], onDelete: Cascade)
@@ -5232,6 +5281,9 @@ model FilingWorkflowInstance {
   nodeRuns       FilingNodeRun[]
   responses      FilingChecklistResponse[]
   attachments    FilingAttachment[]
+  fieldValues    FilingFieldValue[]
+  toggleStates   FilingToggleState[]
+  queries        FilingWorkflowQuery[]
 
   @@index([jobId])
   @@index([templateId])
@@ -5250,15 +5302,86 @@ model FilingNodeRun {
   slaDueDate    DateTime?
   completedById String?
   remarks       String?
+  resolutionJson Json?
   instance      FilingWorkflowInstance    @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   node          FilingWorkflowNode        @relation(fields: [nodeId], references: [id])
   completedBy   User?                     @relation(fields: [completedById], references: [id])
   responses     FilingChecklistResponse[]
   attachments   FilingAttachment[]
+  fieldValues   FilingFieldValue[]
+  toggleStates  FilingToggleState[]
+  queries       FilingWorkflowQuery[]
 
   @@index([instanceId])
   @@index([nodeId])
   @@index([completedById])
+}
+
+model FilingFieldValue {
+  id          String                 @id @default(cuid())
+  instanceId  String
+  nodeRunId   String?
+  nodeId      String
+  fieldKey    String
+  valueJson   Json?
+  updatedById String?
+  updatedAt   DateTime               @updatedAt
+
+  instance  FilingWorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  nodeRun   FilingNodeRun?         @relation(fields: [nodeRunId], references: [id], onDelete: Cascade)
+  node      FilingWorkflowNode     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  updatedBy User?                  @relation(fields: [updatedById], references: [id])
+
+  @@unique([instanceId, nodeId, fieldKey])
+  @@index([nodeRunId])
+  @@index([updatedById])
+}
+
+model FilingToggleState {
+  id                String                 @id @default(cuid())
+  instanceId        String
+  nodeRunId         String?
+  nodeId            String
+  sectionKey        String
+  isEnabled         Boolean                @default(false)
+  stateJson         Json?
+  updatedById       String?
+  updatedAt         DateTime               @updatedAt
+
+  instance  FilingWorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  nodeRun   FilingNodeRun?         @relation(fields: [nodeRunId], references: [id], onDelete: Cascade)
+  node      FilingWorkflowNode     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  updatedBy User?                  @relation(fields: [updatedById], references: [id])
+
+  @@unique([instanceId, nodeId, sectionKey])
+  @@index([nodeRunId])
+  @@index([updatedById])
+}
+
+model FilingWorkflowQuery {
+  id                    String                 @id @default(cuid())
+  instanceId            String
+  nodeRunId             String?
+  nodeId                String
+  title                 String
+  details               String
+  status                String                 @default("OPEN")
+  reminderTime          String?
+  lastReminderAt        DateTime?
+  closedAt              DateTime?
+  createdById           String
+  closedById            String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  instance   FilingWorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  nodeRun    FilingNodeRun?         @relation(fields: [nodeRunId], references: [id], onDelete: Cascade)
+  node       FilingWorkflowNode     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  createdBy  User                   @relation("FilingWorkflowQueryCreatedBy", fields: [createdById], references: [id])
+  closedBy   User?                  @relation("FilingWorkflowQueryClosedBy", fields: [closedById], references: [id])
+
+  @@index([instanceId, status])
+  @@index([nodeRunId])
 }
 
 model FilingChecklistResponse {
@@ -5290,6 +5413,9 @@ model FilingAttachment {
   nodeRunId          String?
   photoRequirementId String?
   checklistItemId    String?
+  documentRequirementKey String?
+  documentRequirementLabel String?
+  conditionalSectionKey String?
   fileKey            String
   fileName           String
   fileSize           Int

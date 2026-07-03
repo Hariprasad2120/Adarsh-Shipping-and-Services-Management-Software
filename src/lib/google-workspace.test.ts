@@ -14,6 +14,8 @@ vi.mock("../workspace-oauth", () => ({
 // Mock drive client uploadFile to return a specific webViewLink
 vi.mock("@/lib/google-drive-client", () => {
   return {
+    folderExists: vi.fn().mockResolvedValue(true),
+    createFolder: vi.fn().mockResolvedValue("mock-google-drive-folder-123"),
     uploadFile: vi.fn().mockResolvedValue({
       id: "mock-google-drive-file-123",
       webViewLink: "https://drive.google.com/file/d/mock-google-drive-file-123/view",
@@ -134,7 +136,7 @@ describe("Google Workspace Parity Tests", () => {
     const reqs = await db.chaJobDocumentRequirement.findMany({
       where: { jobId: job.id },
     });
-    blReq = reqs.find((r) => r.name === "Bill of Lading")!;
+    blReq = reqs.find((r) => r.name === "Bill of Lading" || r.name === "Bill of Landing")!;
 
     await db.chaJobDocumentRequirement.update({
       where: { id: blReq.id },

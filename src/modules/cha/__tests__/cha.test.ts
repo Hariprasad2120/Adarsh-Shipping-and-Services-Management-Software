@@ -719,6 +719,23 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(checklistPendingCustomer.status).toBe("CUSTOMER_APPROVAL_PENDING");
     expect(checklistPendingCustomer.currentApprovalStage).toBe("CUSTOMER");
 
+    await db.crmAccount.update({
+      where: { id: customer.id },
+      data: { email: "customer-approval@example.com" },
+    });
+
+    const customerMail = await chaService.sendChecklistCustomerMail(ownerUser.id, org.id, job.id, checklist.id, {
+      subject: `Checklist Approval Required - ${job.jobNumber}`,
+      body: "Please review the attached approved checklist.",
+    });
+    expect(customerMail.attachmentFileName).toBe("customs-checklist-v2.pdf");
+    expect(customerMail.recipients.length).toBeGreaterThan(0);
+
+    await db.chaChecklist.update({
+      where: { id: checklist.id },
+      data: { customerApprovalVisibleAt: new Date(Date.now() - 60_000) },
+    });
+
     await expect(
       chaService.submitChecklistCustomerDecision(
         otherManagerUser.id,
@@ -1225,7 +1242,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
     const nodeNames = activeVersion.nodes.map((node: any) => node.name);
     expect(nodeNames).toEqual(expect.arrayContaining([
-      "Bill of Entry",
+      "Bill Filing",
       "Choose Filing Path",
       "Choose Second Check Branch",
       "BE Copy Generation",
@@ -1413,7 +1430,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     ).rejects.toThrow();
 
     // F. Upload photo requirement
-    const photo = await chaService.uploadFilingAttachment(ownerUser.id, org.id, job.id, activeRun.id, photoRequirementId, null, {
+    const photo = await chaService.uploadFilingAttachment(ownerUser.id, org.id, job.id, activeRun.id, photoRequirementId, null, null, {
       fileName: "first_check_scan.jpg",
       mimeType: "image/jpeg",
       sizeBytes: 1024,
@@ -1473,7 +1490,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
     // I. Test transition to complete (File bill copy)
     // First, upload the mandatory photo for the new run of the start node
-    await chaService.uploadFilingAttachment(ownerUser.id, org.id, job.id, activeRun3.id, photoRequirementId, null, {
+    await chaService.uploadFilingAttachment(ownerUser.id, org.id, job.id, activeRun3.id, photoRequirementId, null, null, {
       fileName: "first_check_scan_v2.jpg",
       mimeType: "image/jpeg",
       sizeBytes: 1024,
@@ -1606,6 +1623,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       activeRun.id,
       null,
       activeRun.node.checklistItems[0].id,
+      null,
       {
         fileName: "eway-bill.pdf",
         mimeType: "application/pdf",

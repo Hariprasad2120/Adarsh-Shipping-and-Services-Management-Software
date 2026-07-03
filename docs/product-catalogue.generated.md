@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-03T06:59:49.694Z
+> Generated at: 2026-07-03T12:20:37.783Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -9,7 +9,7 @@
 |---|---|
 | App Routes (Pages) | 202 |
 | API Routes | 173 |
-| Prisma Models | 257 |
+| Prisma Models | 261 |
 | Module Service Files | 70 |
 | UI Components | 89 |
 
@@ -23,9 +23,9 @@
 | ams | 18 | 17 | 17 | 11 | 3 |
 | attendance | 7 | 10 | 9 | 1 | 0 |
 | auth | 0 | 1 | 0 | 0 | 0 |
-| cha | 12 | 3 | 33 | 3 | 2 |
+| cha | 12 | 3 | 34 | 3 | 2 |
 | communication | 11 | 18 | 2 | 1 | 0 |
-| core | 2 | 0 | 56 | 5 | 0 |
+| core | 2 | 0 | 59 | 5 | 0 |
 | crm | 59 | 4 | 26 | 7 | 1 |
 | cron | 0 | 6 | 0 | 0 | 0 |
 | dashboard | 1 | 0 | 0 | 0 | 0 |
@@ -441,7 +441,7 @@
 | Role | core | 8 | Organisation, RolePermission, UserRole, AppraisalCriterion |
 | Permission | core | 5 | RolePermission |
 | RolePermission | core | 4 | Role, Permission |
-| User | core | 157 | Organisation, Branch, Department, Division, User, UserRole, Notification, NotificationActivity, EmploymentRecord, Document, TodoTask, AttendancePunch, AttendancePunchEvent, LeaveBalance, LeaveRequest, OTEntry, OtRecord, AttendanceRegularization, EmployeeLop, BiometricSyncLog, Appraisal, AppraisalReviewer, ManagementReview, AppraisalMeeting, MeetingMinute, HikeDecision, AppraisalSchedule, AppraisalExtensionRequest, MeetingReschedule, CrmTicket, CrmTicketComment, PasskeyResetRequest, SecurityEvent, UserSession, CrmInvoice, CrmApprovalLog, CrmLead, CrmContact, CrmAccount, CrmDeal, CrmActivity, CrmVendor, CrmProject, CrmNote, CrmAttachment, CrmTimelineEvent, CrmLeadSourceJustdialConfig, CrmExternalLeadSnapshot, CrmLeadReminder, CrmWorkTimeLog, EmployeePreference, EmployeeContact, ShiftAssignment, AttendancePermissionRequest, OnDutyRequest, TimesheetSubmission, Goal, EmployeeSkill, PerformanceFeedback, SalaryRevisionLetter, CourseEnrollment, SurveyResponse, HRCase, HRLetterRequest, TravelRequest, HrmsTask, HrmsAuditLog, WorkReport, MobileDevice, EmployeeFaceEnrollment, AttendanceSession, LocationTrackingSession, TrackingAlert, FuelReimbursementClaim, UserAgreementAcceptance, AccountingAuditLog, CrmCallAttempt, CrmCallReview, CrmCallRecordingAuditLog, GoogleWorkspaceConnection, CommunicationAuditEvent, GoogleChatUserLink, RecruitJobSeekerProfile, RecruitJobListing, RecruitJobMatch, RecruitJobSeekerResume, RecruitTailoredResume, RecruitCoverLetter, RecruitJobSeekerApplication, RecruitJobAlert, RecruitCareerConversation, RecruitInterviewPrep, RecruitPrivateShare, ChaJob, ChaJobAssignment, ChaJobDeletionRequest, ChaDocumentVersion, ChaDocumentException, ChaChecklistImport, ChaChecklistApproval, ChaChecklistReworkNote, ChaFilingDateHistory, ChaExpenseRequest, ChaExpensePayment, ChaExpenseQuery, FilingNodeRun, FilingAttachment, FilingSection49Flag |
+| User | core | 162 | Organisation, Branch, Department, Division, User, UserRole, Notification, NotificationActivity, EmploymentRecord, Document, TodoTask, AttendancePunch, AttendancePunchEvent, LeaveBalance, LeaveRequest, OTEntry, OtRecord, AttendanceRegularization, EmployeeLop, BiometricSyncLog, Appraisal, AppraisalReviewer, ManagementReview, AppraisalMeeting, MeetingMinute, HikeDecision, AppraisalSchedule, AppraisalExtensionRequest, MeetingReschedule, CrmTicket, CrmTicketComment, PasskeyResetRequest, SecurityEvent, UserSession, CrmInvoice, CrmApprovalLog, CrmLead, CrmContact, CrmAccount, CrmDeal, CrmActivity, CrmVendor, CrmProject, CrmNote, CrmAttachment, CrmTimelineEvent, CrmLeadSourceJustdialConfig, CrmExternalLeadSnapshot, CrmLeadReminder, CrmWorkTimeLog, EmployeePreference, EmployeeContact, ShiftAssignment, AttendancePermissionRequest, OnDutyRequest, TimesheetSubmission, Goal, EmployeeSkill, PerformanceFeedback, SalaryRevisionLetter, CourseEnrollment, SurveyResponse, HRCase, HRLetterRequest, TravelRequest, HrmsTask, HrmsAuditLog, WorkReport, MobileDevice, EmployeeFaceEnrollment, AttendanceSession, LocationTrackingSession, TrackingAlert, FuelReimbursementClaim, UserAgreementAcceptance, AccountingAuditLog, CrmCallAttempt, CrmCallReview, CrmCallRecordingAuditLog, GoogleWorkspaceConnection, CommunicationAuditEvent, GoogleChatUserLink, RecruitJobSeekerProfile, RecruitJobListing, RecruitJobMatch, RecruitJobSeekerResume, RecruitTailoredResume, RecruitCoverLetter, RecruitJobSeekerApplication, RecruitJobAlert, RecruitCareerConversation, RecruitInterviewPrep, RecruitPrivateShare, ChaJob, ChaJobAssignment, ChaJobDeletionRequest, ChaDocumentVersion, ChaDocumentException, ChaChecklistImport, ChaChecklistApproval, ChaChecklistReworkNote, ChaChecklistMailLog, ChaFilingDateHistory, ChaExpenseRequest, ChaExpensePayment, ChaExpenseQuery, FilingNodeRun, FilingAttachment, FilingFieldValue, FilingToggleState, FilingWorkflowQuery, FilingSection49Flag |
 | UserRole | core | 4 | User, Role |
 | Notification | notifications | 26 | Organisation, User, Notification, NotificationActivity |
 | NotificationActivity | notifications | 10 | Notification, Organisation, User |
@@ -489,7 +489,7 @@
 | UserSession | core | 18 | User |
 | CrmLead | crm | 47 | User, CrmExternalLeadSnapshot, CrmLeadReminder, CrmWorkTimeLog, CrmInvoice, CrmCallAttempt |
 | CrmLeadReminder | crm | 11 | CrmLead, User |
-| CrmContact | crm | 23 | User, CrmAccount, CrmDeal, CrmInvoice |
+| CrmContact | crm | 26 | User, CrmAccount, CrmDeal, CrmInvoice |
 | CrmAccount | crm | 48 | User, CrmContact, CrmDeal, CrmInvoice, CrmProject, SalesInvoice, CustomerLedgerEntry, Quotation, CustomerNote, JobCosting, ChaJob |
 | CrmDeal | crm | 27 | User, CrmAccount, CrmContact, CrmInvoice, SalesInvoice |
 | CrmActivity | crm | 21 | User |
@@ -608,8 +608,9 @@
 | ChaChecklistItem | cha | 9 | ChaChecklistSection |
 | ChaChecklistApproval | cha | 8 | ChaChecklistImport, User |
 | ChaChecklistReworkNote | cha | 7 | ChaChecklistImport, User |
-| ChaChecklist | cha | 15 | ChaJob, ChaChecklistFileVersion, ChaChecklistDecision |
-| ChaChecklistFileVersion | cha | 13 | ChaChecklist, ChaChecklistDecision |
+| ChaChecklist | cha | 17 | ChaJob, ChaChecklistFileVersion, ChaChecklistDecision, ChaChecklistMailLog |
+| ChaChecklistMailLog | cha | 15 | ChaChecklist, ChaChecklistFileVersion, User |
+| ChaChecklistFileVersion | cha | 14 | ChaChecklist, ChaChecklistDecision, ChaChecklistMailLog |
 | ChaChecklistDecision | cha | 13 | ChaChecklist, ChaChecklistFileVersion |
 | ChaFiling | cha | 15 | ChaJob, ChaFilingDateHistory |
 | ChaFilingDateHistory | cha | 7 | ChaFiling, User |
@@ -670,16 +671,19 @@
 | GoogleChatDelivery | google-chat | 22 | Organisation, GoogleChatSpace |
 | GoogleChatInteractionEvent | google-chat | 6 | — |
 | GoogleChatLinkToken | google-chat | 12 | — |
-| FilingWorkflowTemplate | core | 13 | Organisation, ChaJobType, FilingWorkflowVersion, FilingWorkflowInstance |
+| FilingWorkflowTemplate | core | 15 | Organisation, ChaJobType, FilingWorkflowVersion, FilingWorkflowInstance |
 | FilingWorkflowVersion | core | 12 | FilingWorkflowTemplate, FilingWorkflowNode, FilingWorkflowEdge, FilingWorkflowInstance |
-| FilingWorkflowNode | core | 30 | FilingWorkflowVersion, FilingChecklistItem, FilingPhotoRequirement, FilingNodeRun |
-| FilingWorkflowEdge | core | 6 | FilingWorkflowVersion |
+| FilingWorkflowNode | core | 39 | FilingWorkflowVersion, FilingChecklistItem, FilingPhotoRequirement, FilingNodeRun, FilingFieldValue, FilingToggleState, FilingWorkflowQuery |
+| FilingWorkflowEdge | core | 9 | FilingWorkflowVersion |
 | FilingChecklistItem | core | 29 | FilingWorkflowNode, FilingChecklistResponse, FilingAttachment |
 | FilingPhotoRequirement | core | 20 | FilingWorkflowNode, FilingAttachment |
-| FilingWorkflowInstance | core | 14 | ChaJob, FilingWorkflowTemplate, FilingWorkflowVersion, FilingNodeRun, FilingChecklistResponse, FilingAttachment |
-| FilingNodeRun | core | 15 | FilingWorkflowInstance, FilingWorkflowNode, User, FilingChecklistResponse, FilingAttachment |
+| FilingWorkflowInstance | core | 18 | ChaJob, FilingWorkflowTemplate, FilingWorkflowVersion, FilingNodeRun, FilingChecklistResponse, FilingAttachment, FilingFieldValue, FilingToggleState, FilingWorkflowQuery |
+| FilingNodeRun | core | 19 | FilingWorkflowInstance, FilingWorkflowNode, User, FilingChecklistResponse, FilingAttachment, FilingFieldValue, FilingToggleState, FilingWorkflowQuery |
+| FilingFieldValue | core | 12 | FilingWorkflowInstance, FilingNodeRun, FilingWorkflowNode, User |
+| FilingToggleState | core | 13 | FilingWorkflowInstance, FilingNodeRun, FilingWorkflowNode, User |
+| FilingWorkflowQuery | core | 19 | FilingWorkflowInstance, FilingNodeRun, FilingWorkflowNode, User |
 | FilingChecklistResponse | core | 16 | FilingWorkflowInstance, FilingNodeRun, FilingChecklistItem |
-| FilingAttachment | core | 17 | FilingWorkflowInstance, FilingNodeRun, FilingPhotoRequirement, FilingChecklistItem, User |
+| FilingAttachment | core | 20 | FilingWorkflowInstance, FilingNodeRun, FilingPhotoRequirement, FilingChecklistItem, User |
 | FilingSection49Flag | core | 8 | ChaJob, User |
 | MobileDevice | hrms | 14 | User |
 | EmployeeFaceEnrollment | hrms | 14 | User |
@@ -719,8 +723,8 @@
 - **service.ts**: punchIn, punchOut, getMonthAttendance, getLeaveTypes, createLeaveType, getLeaveBalances, initLeaveBalancesForUser, getLeaveRequests, createLeaveRequest, decideLeaveRequest, createOTEntry, decideOT, getOTEntries, getHolidays, createHoliday, getMonthlyReport
 
 ### cha
-- **actions.ts**: ensureSettingsAndDefaultsAction, updateSettingsAction, createJobAction, getNextJobNumberPreviewAction, submitJobDeletionAction, decideJobDeletionRequestAction, createJobTypeAction, updateJobTypeManifestConfigAction, createShipmentTypeAction, deleteShipmentTypeAction, deleteJobTypeAction, updateJobTypeFilingFlowCategoryAction, createTeamGroupAction, deleteTeamGroupAction, getJobDetailsAction, listJobsAction, uploadDocumentVersionAction, createJobCustomDocumentUploadAction, deleteDocumentVersionAction, declareDocumentExceptionAction, markDocumentNotAvailableAction, importChecklistExcelAction, uploadChecklistFileAction, upsertAdditionalDataAction, submitChecklistInternalDecisionAction, submitChecklistCustomerDecisionAction, proceedAdditionalDataAction, submitChecklistForApprovalAction, checklistManagerActionAction, selfApproveChecklistAction, adjustEstimatedFilingDateAction, markAsFiledAction, updateCustomerAdvanceExpectedAction, recordCustomerAdvanceReceiptAction, declareAdvanceNotRequiredAction, createExpenseRequestAction, triggerUrgentExpenseEscalationAction, setExpenseStatusAction, postExpensePaymentAction, acknowledgeExpenseReceiptAction, raisePaymentQueryAction, resolvePaymentQueryAction, listAllExpensesAction, listManagerChecklistApprovalsAction, upsertDocumentCategoryAction, deleteDocumentCategoryAction, upsertDocumentItemAction, deleteDocumentItemAction, removeDocumentExceptionAction, proceedDocumentStageAction, acknowledgeDoValidityWarningAction, updateJobDetailsAction, submitChecklistOwnerDecisionAction, saveFilingWorkflowDraftAction, publishFilingWorkflowAction, getFilingWorkflowDetailsAction, getFilingWorkflowInstanceAction, startFilingWorkflowAction, completeFilingNodeAction, toggleFilingSection49Action, getFilingSection49Action, uploadFilingAttachmentAction, upsertFilingShipmentDetailsAction, deleteFilingAttachmentAction
-- **service.ts**: ensureDefaultDocumentRequirements, getNextChaJobNumberPreview, ensureSettingsAndDefaults, logChaAudit, getChecklistInternalApproverIds, createJob, createJobType, updateJobTypeManifestConfig, updateJobTypeFilingFlowCategory, deleteJobType, upsertBranchNumberingRules, createShipmentType, deleteShipmentType, createTeamGroup, deleteTeamGroup, listJobTypesForSelection, listJobTypesForSettings, getJobDetails, listJobs, resolveDriveFolderForCategory, uploadDocumentVersion, createJobCustomDocumentRequirementAndUpload, deleteDocumentVersion, declareDocumentException, markDocumentNotAvailable, verifyDocumentGate, upsertAdditionalData, proceedAdditionalDataStage, listDeliveryOrderValidityWarnings, createDeliveryOrderNotifications, acknowledgeDeliveryOrderValidityWarning, uploadChecklistFile, submitChecklistInternalDecision, submitChecklistCustomerDecision, importChecklistExcel, submitChecklistForApproval, checklistManagerAction, selfApproveChecklist, adjustEstimatedFilingDate, markAsFiled, updateCustomerAdvanceExpected, recordCustomerAdvanceReceipt, declareAdvanceNotRequired, createExpenseRequest, triggerUrgentExpenseEscalation, setExpenseStatus, postExpensePayment, acknowledgeExpenseReceipt, raisePaymentQuery, resolvePaymentQuery, listAllExpenses, listManagerChecklistApprovals, listManagerJobDeletionRequests, submitJobDeletion, decideJobDeletionRequest, upsertDocumentCategory, deleteDocumentCategory, upsertDocumentItem, deleteDocumentItem, removeDocumentException, proceedDocumentStage, getEligibleManagers, updateJobDetails, submitChecklistOwnerDecision, ensureDefaultFilingWorkflows, calculateSlaDueDate, listFilingWorkflows, getFilingWorkflowDetails, saveFilingWorkflowDraft, publishFilingWorkflow, getFilingWorkflowInstance, startFilingWorkflow, completeFilingNode, toggleFilingSection49, getFilingSection49, uploadFilingAttachment, upsertFilingShipmentDetails, deleteFilingAttachment
+- **actions.ts**: ensureSettingsAndDefaultsAction, updateSettingsAction, createJobAction, getNextJobNumberPreviewAction, submitJobDeletionAction, decideJobDeletionRequestAction, createJobTypeAction, updateJobTypeManifestConfigAction, createShipmentTypeAction, deleteShipmentTypeAction, deleteJobTypeAction, updateJobTypeFilingFlowCategoryAction, createTeamGroupAction, deleteTeamGroupAction, getJobDetailsAction, listJobsAction, uploadDocumentVersionAction, createJobCustomDocumentUploadAction, deleteDocumentVersionAction, declareDocumentExceptionAction, markDocumentNotAvailableAction, importChecklistExcelAction, uploadChecklistFileAction, upsertAdditionalDataAction, submitChecklistInternalDecisionAction, submitChecklistCustomerDecisionAction, sendChecklistCustomerMailAction, proceedAdditionalDataAction, submitChecklistForApprovalAction, checklistManagerActionAction, selfApproveChecklistAction, adjustEstimatedFilingDateAction, markAsFiledAction, updateCustomerAdvanceExpectedAction, recordCustomerAdvanceReceiptAction, declareAdvanceNotRequiredAction, createExpenseRequestAction, triggerUrgentExpenseEscalationAction, setExpenseStatusAction, postExpensePaymentAction, acknowledgeExpenseReceiptAction, raisePaymentQueryAction, resolvePaymentQueryAction, listAllExpensesAction, listManagerChecklistApprovalsAction, upsertDocumentCategoryAction, deleteDocumentCategoryAction, upsertDocumentItemAction, deleteDocumentItemAction, removeDocumentExceptionAction, proceedDocumentStageAction, acknowledgeDoValidityWarningAction, updateJobDetailsAction, submitChecklistOwnerDecisionAction, saveFilingWorkflowDraftAction, publishFilingWorkflowAction, getFilingWorkflowDetailsAction, getFilingWorkflowInstanceAction, startFilingWorkflowAction, completeFilingNodeAction, toggleFilingSection49Action, getFilingSection49Action, createFilingWorkflowQueryAction, updateFilingWorkflowQueryStatusAction, uploadFilingAttachmentAction, upsertFilingShipmentDetailsAction, deleteFilingAttachmentAction
+- **service.ts**: ensureDefaultDocumentRequirements, getNextChaJobNumberPreview, ensureSettingsAndDefaults, logChaAudit, getChecklistInternalApproverIds, createJob, createJobType, updateJobTypeManifestConfig, updateJobTypeFilingFlowCategory, deleteJobType, upsertBranchNumberingRules, createShipmentType, deleteShipmentType, createTeamGroup, deleteTeamGroup, listJobTypesForSelection, listJobTypesForSettings, getJobDetails, listJobs, resolveDriveFolderForCategory, uploadDocumentVersion, createJobCustomDocumentRequirementAndUpload, deleteDocumentVersion, declareDocumentException, markDocumentNotAvailable, verifyDocumentGate, upsertAdditionalData, proceedAdditionalDataStage, listDeliveryOrderValidityWarnings, createDeliveryOrderNotifications, acknowledgeDeliveryOrderValidityWarning, uploadChecklistFile, submitChecklistInternalDecision, sendChecklistCustomerMail, submitChecklistCustomerDecision, importChecklistExcel, submitChecklistForApproval, checklistManagerAction, selfApproveChecklist, adjustEstimatedFilingDate, markAsFiled, updateCustomerAdvanceExpected, recordCustomerAdvanceReceipt, declareAdvanceNotRequired, createExpenseRequest, triggerUrgentExpenseEscalation, setExpenseStatus, postExpensePayment, acknowledgeExpenseReceipt, raisePaymentQuery, resolvePaymentQuery, listAllExpenses, listManagerChecklistApprovals, listManagerJobDeletionRequests, submitJobDeletion, decideJobDeletionRequest, upsertDocumentCategory, deleteDocumentCategory, upsertDocumentItem, deleteDocumentItem, removeDocumentException, proceedDocumentStage, getEligibleManagers, updateJobDetails, submitChecklistOwnerDecision, ensureDefaultFilingWorkflows, calculateSlaDueDate, listFilingWorkflows, getFilingWorkflowDetails, saveFilingWorkflowDraft, publishFilingWorkflow, getFilingWorkflowInstance, startFilingWorkflow, completeFilingNode, toggleFilingSection49, getFilingSection49, createFilingWorkflowQuery, updateFilingWorkflowQueryStatus, uploadFilingAttachment, upsertFilingShipmentDetails, deleteFilingAttachment
 - **cha.test.ts**: no exports detected
 
 ### communication

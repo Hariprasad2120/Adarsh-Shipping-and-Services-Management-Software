@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-03T06:59:49.694Z",
+  "generatedAt": "2026-07-03T12:20:37.783Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -8,7 +8,7 @@
   "stats": {
     "totalAppRoutes": 202,
     "totalApiRoutes": 173,
-    "totalPrismaModels": 257,
+    "totalPrismaModels": 261,
     "totalModuleServices": 70,
     "totalComponents": 89
   },
@@ -3141,12 +3141,17 @@
         "chaChecklistImportsUploaded",
         "chaChecklistApprovals",
         "chaChecklistReworkNotes",
+        "chaChecklistMailLogsSent",
         "chaFilingHistorySet",
         "chaExpenseRequestsCreated",
         "chaExpensePaymentsMade",
         "chaExpenseQueriesCreated",
         "filingNodeRuns",
         "filingAttachments",
+        "filingFieldValuesUpdated",
+        "filingToggleStatesUpdated",
+        "filingWorkflowQueriesCreated",
+        "filingWorkflowQueriesClosed",
         "filingSection49Flags"
       ],
       "relations": [
@@ -3251,12 +3256,16 @@
         "ChaChecklistImport",
         "ChaChecklistApproval",
         "ChaChecklistReworkNote",
+        "ChaChecklistMailLog",
         "ChaFilingDateHistory",
         "ChaExpenseRequest",
         "ChaExpensePayment",
         "ChaExpenseQuery",
         "FilingNodeRun",
         "FilingAttachment",
+        "FilingFieldValue",
+        "FilingToggleState",
+        "FilingWorkflowQuery",
         "FilingSection49Flag"
       ],
       "module": "core"
@@ -4307,7 +4316,10 @@
         "mobile",
         "designation",
         "department",
+        "purpose",
         "isDecisionMaker",
+        "isPrimary",
+        "isActive",
         "address",
         "description",
         "tags",
@@ -7083,6 +7095,7 @@
         "currentApprovalStage",
         "customerApprovalAttempted",
         "customerRejectedOnce",
+        "customerApprovalVisibleAt",
         "createdById",
         "updatedById",
         "createdAt",
@@ -7090,12 +7103,40 @@
         "job",
         "currentFileVersion",
         "fileVersions",
-        "approvals"
+        "approvals",
+        "customerMailLogs"
       ],
       "relations": [
         "ChaJob",
         "ChaChecklistFileVersion",
-        "ChaChecklistDecision"
+        "ChaChecklistDecision",
+        "ChaChecklistMailLog"
+      ],
+      "module": "cha"
+    },
+    {
+      "name": "ChaChecklistMailLog",
+      "fields": [
+        "id",
+        "checklistId",
+        "fileVersionId",
+        "sentById",
+        "recipients",
+        "subject",
+        "body",
+        "attachmentFileKey",
+        "attachmentFileName",
+        "sentAt",
+        "approvalVisibleAt",
+        "source",
+        "checklist",
+        "fileVersion",
+        "sentBy"
+      ],
+      "relations": [
+        "ChaChecklist",
+        "ChaChecklistFileVersion",
+        "User"
       ],
       "module": "cha"
     },
@@ -7114,11 +7155,13 @@
         "remarks",
         "checklist",
         "currentForChecklists",
-        "approvals"
+        "approvals",
+        "customerMailLogs"
       ],
       "relations": [
         "ChaChecklist",
-        "ChaChecklistDecision"
+        "ChaChecklistDecision",
+        "ChaChecklistMailLog"
       ],
       "module": "cha"
     },
@@ -8563,6 +8606,8 @@
         "filingFlowCategory",
         "name",
         "description",
+        "settingsJson",
+        "mailTemplatesJson",
         "isActive",
         "createdAt",
         "updatedAt",
@@ -8613,6 +8658,12 @@
         "description",
         "category",
         "nodeType",
+        "fieldDefinitionsJson",
+        "documentRequirementsJson",
+        "conditionalSectionsJson",
+        "approvalConfigJson",
+        "notificationConfigJson",
+        "actionConfigJson",
         "sectionKey",
         "sectionName",
         "branchKey",
@@ -8635,13 +8686,19 @@
         "version",
         "checklistItems",
         "photoRequirements",
-        "nodeRuns"
+        "nodeRuns",
+        "fieldValues",
+        "toggleStates",
+        "queries"
       ],
       "relations": [
         "FilingWorkflowVersion",
         "FilingChecklistItem",
         "FilingPhotoRequirement",
-        "FilingNodeRun"
+        "FilingNodeRun",
+        "FilingFieldValue",
+        "FilingToggleState",
+        "FilingWorkflowQuery"
       ],
       "module": "core"
     },
@@ -8653,6 +8710,9 @@
         "sourceKey",
         "targetKey",
         "label",
+        "transitionType",
+        "requiresReason",
+        "transitionConfigJson",
         "version"
       ],
       "relations": [
@@ -8739,6 +8799,7 @@
         "versionId",
         "status",
         "currentNodeKey",
+        "contextJson",
         "createdAt",
         "updatedAt",
         "job",
@@ -8746,7 +8807,10 @@
         "version",
         "nodeRuns",
         "responses",
-        "attachments"
+        "attachments",
+        "fieldValues",
+        "toggleStates",
+        "queries"
       ],
       "relations": [
         "ChaJob",
@@ -8754,7 +8818,10 @@
         "FilingWorkflowVersion",
         "FilingNodeRun",
         "FilingChecklistResponse",
-        "FilingAttachment"
+        "FilingAttachment",
+        "FilingFieldValue",
+        "FilingToggleState",
+        "FilingWorkflowQuery"
       ],
       "module": "core"
     },
@@ -8771,18 +8838,105 @@
         "slaDueDate",
         "completedById",
         "remarks",
+        "resolutionJson",
         "instance",
         "node",
         "completedBy",
         "responses",
-        "attachments"
+        "attachments",
+        "fieldValues",
+        "toggleStates",
+        "queries"
       ],
       "relations": [
         "FilingWorkflowInstance",
         "FilingWorkflowNode",
         "User",
         "FilingChecklistResponse",
-        "FilingAttachment"
+        "FilingAttachment",
+        "FilingFieldValue",
+        "FilingToggleState",
+        "FilingWorkflowQuery"
+      ],
+      "module": "core"
+    },
+    {
+      "name": "FilingFieldValue",
+      "fields": [
+        "id",
+        "instanceId",
+        "nodeRunId",
+        "nodeId",
+        "fieldKey",
+        "valueJson",
+        "updatedById",
+        "updatedAt",
+        "instance",
+        "nodeRun",
+        "node",
+        "updatedBy"
+      ],
+      "relations": [
+        "FilingWorkflowInstance",
+        "FilingNodeRun",
+        "FilingWorkflowNode",
+        "User"
+      ],
+      "module": "core"
+    },
+    {
+      "name": "FilingToggleState",
+      "fields": [
+        "id",
+        "instanceId",
+        "nodeRunId",
+        "nodeId",
+        "sectionKey",
+        "isEnabled",
+        "stateJson",
+        "updatedById",
+        "updatedAt",
+        "instance",
+        "nodeRun",
+        "node",
+        "updatedBy"
+      ],
+      "relations": [
+        "FilingWorkflowInstance",
+        "FilingNodeRun",
+        "FilingWorkflowNode",
+        "User"
+      ],
+      "module": "core"
+    },
+    {
+      "name": "FilingWorkflowQuery",
+      "fields": [
+        "id",
+        "instanceId",
+        "nodeRunId",
+        "nodeId",
+        "title",
+        "details",
+        "status",
+        "reminderTime",
+        "lastReminderAt",
+        "closedAt",
+        "createdById",
+        "closedById",
+        "createdAt",
+        "updatedAt",
+        "instance",
+        "nodeRun",
+        "node",
+        "createdBy",
+        "closedBy"
+      ],
+      "relations": [
+        "FilingWorkflowInstance",
+        "FilingNodeRun",
+        "FilingWorkflowNode",
+        "User"
       ],
       "module": "core"
     },
@@ -8821,6 +8975,9 @@
         "nodeRunId",
         "photoRequirementId",
         "checklistItemId",
+        "documentRequirementKey",
+        "documentRequirementLabel",
+        "conditionalSectionKey",
         "fileKey",
         "fileName",
         "fileSize",
@@ -9465,6 +9622,7 @@
         "upsertAdditionalDataAction",
         "submitChecklistInternalDecisionAction",
         "submitChecklistCustomerDecisionAction",
+        "sendChecklistCustomerMailAction",
         "proceedAdditionalDataAction",
         "submitChecklistForApprovalAction",
         "checklistManagerActionAction",
@@ -9500,6 +9658,8 @@
         "completeFilingNodeAction",
         "toggleFilingSection49Action",
         "getFilingSection49Action",
+        "createFilingWorkflowQueryAction",
+        "updateFilingWorkflowQueryStatusAction",
         "uploadFilingAttachmentAction",
         "upsertFilingShipmentDetailsAction",
         "deleteFilingAttachmentAction"
@@ -9543,6 +9703,7 @@
         "acknowledgeDeliveryOrderValidityWarning",
         "uploadChecklistFile",
         "submitChecklistInternalDecision",
+        "sendChecklistCustomerMail",
         "submitChecklistCustomerDecision",
         "importChecklistExcel",
         "submitChecklistForApproval",
@@ -9585,6 +9746,8 @@
         "completeFilingNode",
         "toggleFilingSection49",
         "getFilingSection49",
+        "createFilingWorkflowQuery",
+        "updateFilingWorkflowQueryStatus",
         "uploadFilingAttachment",
         "upsertFilingShipmentDetails",
         "deleteFilingAttachment"
@@ -10822,7 +10985,7 @@
     "cha": {
       "appRoutes": 12,
       "apiRoutes": 3,
-      "prismaModels": 33,
+      "prismaModels": 34,
       "serviceFiles": 3,
       "components": 2
     },
@@ -10836,7 +10999,7 @@
     "core": {
       "appRoutes": 2,
       "apiRoutes": 0,
-      "prismaModels": 56,
+      "prismaModels": 59,
       "serviceFiles": 5,
       "components": 0
     },

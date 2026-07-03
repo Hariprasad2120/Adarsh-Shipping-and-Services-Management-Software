@@ -540,6 +540,24 @@ export async function submitChecklistCustomerDecisionAction(
   }
 }
 
+export async function sendChecklistCustomerMailAction(
+  jobId: string,
+  checklistId: string,
+  data: {
+    subject: string;
+    body: string;
+  },
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const result = await chaService.sendChecklistCustomerMail(userId, orgId, jobId, checklistId, data);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to send checklist mail to customer" };
+  }
+}
+
 export async function proceedAdditionalDataAction(jobId: string): Promise<ActionResponse> {
   try {
     const { userId, orgId } = await getAuthAndVerify();
@@ -1054,6 +1072,7 @@ export async function completeFilingNodeAction(
   nodeRunId: string,
   data: {
     remarks?: string;
+    transitionReason?: string;
     checklistItemResponses: {
       checklistItemId: string;
       isChecked: boolean;
@@ -1061,6 +1080,8 @@ export async function completeFilingNodeAction(
       fileKey?: string;
       delayRemarks?: string;
     }[];
+    fieldValues?: Array<{ fieldKey: string; value: unknown }>;
+    toggleStates?: Array<{ sectionKey: string; isEnabled: boolean; state?: Record<string, unknown> | null }>;
     nextNodeKey?: string | null;
   }
 ): Promise<ActionResponse> {
@@ -1101,11 +1122,49 @@ export async function getFilingSection49Action(
   }
 }
 
+export async function createFilingWorkflowQueryAction(
+  jobId: string,
+  nodeRunId: string,
+  data: {
+    title: string;
+    details: string;
+    reminderTime?: string;
+  },
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const result = await chaService.createFilingWorkflowQuery(userId, orgId, jobId, nodeRunId, data);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to create filing query" };
+  }
+}
+
+export async function updateFilingWorkflowQueryStatusAction(
+  jobId: string,
+  queryId: string,
+  data: {
+    status: "OPEN" | "REPLIED" | "CLOSED";
+    details?: string;
+  },
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const result = await chaService.updateFilingWorkflowQueryStatus(userId, orgId, jobId, queryId, data);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update filing query" };
+  }
+}
+
 export async function uploadFilingAttachmentAction(
   jobId: string,
   nodeRunId: string,
   photoRequirementId: string | null,
   checklistItemId: string | null,
+  documentRequirementKey: string | null,
   formData: FormData
 ): Promise<ActionResponse> {
   try {
@@ -1132,6 +1191,7 @@ export async function uploadFilingAttachmentAction(
       nodeRunId,
       photoRequirementId,
       checklistItemId,
+      documentRequirementKey,
       fileData,
       buffer,
       validityDate
