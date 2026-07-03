@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-03T12:20:37.783Z",
+  "generatedAt": "2026-07-03T13:49:32.458Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -8,8 +8,8 @@
   "stats": {
     "totalAppRoutes": 202,
     "totalApiRoutes": 173,
-    "totalPrismaModels": 261,
-    "totalModuleServices": 70,
+    "totalPrismaModels": 262,
+    "totalModuleServices": 71,
     "totalComponents": 89
   },
   "appRoutes": [
@@ -6762,6 +6762,7 @@
         "deletionRequests",
         "documentRequirements",
         "additionalData",
+        "doExtensions",
         "checklistWorkflow",
         "checklistImports",
         "filing",
@@ -6783,6 +6784,7 @@
         "ChaJobDeletionRequest",
         "ChaJobDocumentRequirement",
         "ChaJobAdditionalData",
+        "ChaDoExtension",
         "ChaChecklist",
         "ChaChecklistImport",
         "ChaFiling",
@@ -6812,6 +6814,30 @@
         "completedAt",
         "createdAt",
         "updatedAt",
+        "doUploadEnabled",
+        "doDocumentFileKey",
+        "doDocumentFileName",
+        "doDocumentUploadedAt",
+        "doDocumentUploadedById",
+        "doExtensionEnabled",
+        "job"
+      ],
+      "relations": [
+        "ChaJob"
+      ],
+      "module": "cha"
+    },
+    {
+      "name": "ChaDoExtension",
+      "fields": [
+        "id",
+        "jobId",
+        "previousValidity",
+        "extensionDate",
+        "fileKey",
+        "fileName",
+        "appliedById",
+        "createdAt",
         "job"
       ],
       "relations": [
@@ -9648,6 +9674,10 @@
         "removeDocumentExceptionAction",
         "proceedDocumentStageAction",
         "acknowledgeDoValidityWarningAction",
+        "setDoUploadToggleAction",
+        "setDoExtensionToggleAction",
+        "uploadDeliveryOrderDocumentAction",
+        "applyDoExtensionAction",
         "updateJobDetailsAction",
         "submitChecklistOwnerDecisionAction",
         "saveFilingWorkflowDraftAction",
@@ -9701,6 +9731,11 @@
         "listDeliveryOrderValidityWarnings",
         "createDeliveryOrderNotifications",
         "acknowledgeDeliveryOrderValidityWarning",
+        "setDeliveryOrderUploadToggle",
+        "setDeliveryOrderExtensionToggle",
+        "uploadDeliveryOrderDocument",
+        "applyDeliveryOrderExtension",
+        "listDeliveryOrderExtensions",
         "uploadChecklistFile",
         "submitChecklistInternalDecision",
         "sendChecklistCustomerMail",
@@ -9757,6 +9792,12 @@
       "module": "cha",
       "fileName": "cha.test.ts",
       "filePath": "src/modules/cha/__tests__/cha.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "cha",
+      "fileName": "do-extension.test.ts",
+      "filePath": "src/modules/cha/__tests__/do-extension.test.ts",
       "exportedFunctions": []
     },
     {
@@ -10985,8 +11026,8 @@
     "cha": {
       "appRoutes": 12,
       "apiRoutes": 3,
-      "prismaModels": 34,
-      "serviceFiles": 3,
+      "prismaModels": 35,
+      "serviceFiles": 4,
       "components": 2
     },
     "communication": {

@@ -953,6 +953,89 @@ export async function acknowledgeDoValidityWarningAction(jobId: string): Promise
   }
 }
 
+export async function setDoUploadToggleAction(jobId: string, enabled: boolean): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const result = await chaService.setDeliveryOrderUploadToggle(userId, orgId, jobId, enabled);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update DO upload toggle" };
+  }
+}
+
+export async function setDoExtensionToggleAction(jobId: string, enabled: boolean): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const result = await chaService.setDeliveryOrderExtensionToggle(userId, orgId, jobId, enabled);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update DO extension toggle" };
+  }
+}
+
+export async function uploadDeliveryOrderDocumentAction(
+  jobId: string,
+  formData: FormData,
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.document.upload");
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      return { ok: false, error: "Please choose a valid Delivery Order file to upload." };
+    }
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const result = await chaService.uploadDeliveryOrderDocument(
+      userId,
+      orgId,
+      jobId,
+      {
+        fileName: file.name,
+        mimeType: file.type || "application/octet-stream",
+        sizeBytes: file.size,
+      },
+      buffer,
+    );
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to upload Delivery Order document" };
+  }
+}
+
+export async function applyDoExtensionAction(
+  jobId: string,
+  formData: FormData,
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const extensionDateValue = formData.get("extensionDate");
+    if (typeof extensionDateValue !== "string" || !extensionDateValue.trim()) {
+      return { ok: false, error: "Enter the new Delivery Order extension date." };
+    }
+
+    const file = formData.get("file");
+    const hasFile = file instanceof File && file.size > 0;
+    const result = await chaService.applyDeliveryOrderExtension(userId, orgId, jobId, {
+      extensionDate: new Date(extensionDateValue),
+      fileData: hasFile
+        ? {
+            fileName: (file as File).name,
+            mimeType: (file as File).type || "application/octet-stream",
+            sizeBytes: (file as File).size,
+          }
+        : null,
+      fileBuffer: hasFile ? Buffer.from(await (file as File).arrayBuffer()) : null,
+    });
+    revalidatePath("/cha/jobs");
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to apply Delivery Order extension" };
+  }
+}
+
 export async function updateJobDetailsAction(
   jobId: string,
   data: {

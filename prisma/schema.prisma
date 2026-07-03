@@ -3418,6 +3418,7 @@ model ChaJob {
   deletionRequests       ChaJobDeletionRequest[]
   documentRequirements   ChaJobDocumentRequirement[]
   additionalData         ChaJobAdditionalData?
+  doExtensions           ChaDoExtension[]
   checklistWorkflow      ChaChecklist?
   checklistImports       ChaChecklistImport[]
   filing                 ChaFiling?
@@ -3458,10 +3459,34 @@ model ChaJobAdditionalData {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
+  // Delivery Order document upload (unlocked by toggle)
+  doUploadEnabled        Boolean   @default(false)
+  doDocumentFileKey      String?
+  doDocumentFileName     String?
+  doDocumentUploadedAt   DateTime?
+  doDocumentUploadedById String?
+  // DO extension flow (unlocked by toggle; usable only while a DO validity warning is active)
+  doExtensionEnabled     Boolean   @default(false)
+
   job ChaJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@index([status])
   @@index([deliveryOrderValidity, status])
+}
+
+model ChaDoExtension {
+  id               String   @id @default(cuid())
+  jobId            String
+  previousValidity DateTime?
+  extensionDate    DateTime
+  fileKey          String?
+  fileName         String?
+  appliedById      String
+  createdAt        DateTime @default(now())
+
+  job ChaJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId, createdAt])
 }
 
 model ChaJobDeletionRequest {

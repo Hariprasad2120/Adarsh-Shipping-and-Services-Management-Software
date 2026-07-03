@@ -343,6 +343,15 @@ function normalizeCompatibleJobType(
   };
 }
 
+const DO_FLOW_ADDITIONAL_DATA_SELECT = {
+  doUploadEnabled: true,
+  doDocumentFileKey: true,
+  doDocumentFileName: true,
+  doDocumentUploadedAt: true,
+  doDocumentUploadedById: true,
+  doExtensionEnabled: true,
+} satisfies Prisma.ChaJobAdditionalDataSelect;
+
 function getAdditionalDataSelect(includeCustomManifestValue: boolean): Prisma.ChaJobAdditionalDataSelect {
   return includeCustomManifestValue
     ? {
@@ -360,6 +369,7 @@ function getAdditionalDataSelect(includeCustomManifestValue: boolean): Prisma.Ch
         completedAt: true,
         createdAt: true,
         updatedAt: true,
+        ...DO_FLOW_ADDITIONAL_DATA_SELECT,
       }
     : {
         id: true,
@@ -375,6 +385,7 @@ function getAdditionalDataSelect(includeCustomManifestValue: boolean): Prisma.Ch
         completedAt: true,
         createdAt: true,
         updatedAt: true,
+        ...DO_FLOW_ADDITIONAL_DATA_SELECT,
       };
 }
 
@@ -2013,6 +2024,7 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
           }
         },
         additionalData: { select: getAdditionalDataSelect(manifestSchema.customManifestValue) },
+        doExtensions: { orderBy: { createdAt: "desc" }, take: 10 },
         checklistWorkflow: {
           include: {
             currentFileVersion: true,
@@ -3253,6 +3265,279 @@ export async function acknowledgeDeliveryOrderValidityWarning(
   return { ok: true };
 }
 
+// ─── Delivery Order document upload & extension flow ─────────────────────────
+//
+// Under Delivery Order Validity the user can:
+// 1. Toggle "DO document upload" to unlock a DO file upload tab.
+// 2. Toggle "Extension" to unlock the extension flow. The extension itself can
+//    only be applied while a DO validity warning is active (expired or inside
+//    the warning window) — the "Extension" action sits next to Acknowledge on
+//    the warning notification and opens a popup for the new validity date +
+//    extension file. Applying it updates deliveryOrderValidity (the displayed
+//    column), dismisses the active DO notifications, and re-enters the normal
+//    warning pipeline so a fresh notification appears before the new date.
+
+const DO_DOCUMENT_CATEGORY = "Customs Validity Documents";
+
+async function getAdditionalDataForDoFlow(orgId: string, jobId: string) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: getActiveChaJobByIdWhere(orgId, jobId),
+    include: { additionalData: true },
+  });
+  if (!job.additionalData) {
+    throw new Error("Complete the Additional Data section before configuring Delivery Order options.");
+  }
+  return { job, additionalData: job.additionalData };
+}
+
+export async function setDeliveryOrderUploadToggle(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  enabled: boolean,
+) {
+  const { additionalData } = await getAdditionalDataForDoFlow(orgId, jobId);
+  const updated = await db.chaJobAdditionalData.update({
+    where: { id: additionalData.id },
+    data: { doUploadEnabled: enabled, updatedById: actorId },
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "ChaJobAdditionalData",
+    entityId: additionalData.id,
+    event: "DO_UPLOAD_TOGGLED",
+    actorId,
+    prevState: String(additionalData.doUploadEnabled),
+    newState: String(enabled),
+    remarks: `Delivery Order document upload ${enabled ? "enabled" : "disabled"}.`,
+  });
+
+  return updated;
+}
+
+export async function setDeliveryOrderExtensionToggle(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  enabled: boolean,
+) {
+  const { additionalData } = await getAdditionalDataForDoFlow(orgId, jobId);
+  const updated = await db.chaJobAdditionalData.update({
+    where: { id: additionalData.id },
+    data: { doExtensionEnabled: enabled, updatedById: actorId },
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "ChaJobAdditionalData",
+    entityId: additionalData.id,
+    event: "DO_EXTENSION_TOGGLED",
+    actorId,
+    prevState: String(additionalData.doExtensionEnabled),
+    newState: String(enabled),
+    remarks: `Delivery Order extension flow ${enabled ? "enabled" : "disabled"}.`,
+  });
+
+  return updated;
+}
+
+async function storeDeliveryOrderFile(
+  jobId: string,
+  actorId: string,
+  fileData: { fileName: string; mimeType: string },
+  fileBuffer: Buffer,
+): Promise<string> {
+  let driveFolderId: string | undefined;
+  try {
+    driveFolderId = await ensureJobCategoryFolder(jobId, DO_DOCUMENT_CATEGORY, actorId);
+  } catch (err: any) {
+    console.warn(`[DO Upload] Drive folder self-heal failed for job ${jobId}:`, err.message || err);
+    const profile = await db.jobWorkspaceProfile.findUnique({ where: { jobId } });
+    driveFolderId = resolveDriveFolderForCategory(
+      profile?.categoryFolders as Record<string, string> | undefined,
+      profile?.rootFolderId,
+      DO_DOCUMENT_CATEGORY,
+    );
+  }
+
+  if (driveFolderId && !driveFolderId.startsWith("mock-")) {
+    try {
+      const uploadResult = await driveClient.uploadFile({
+        name: fileData.fileName,
+        mimeType: fileData.mimeType,
+        parentFolderId: driveFolderId,
+        fileBuffer,
+      });
+      return uploadResult.webViewLink;
+    } catch (err: any) {
+      if (process.env.NODE_ENV === "production") {
+        throw new Error(`Google Drive upload failed: ${err.message || err}`);
+      }
+      console.warn("[DO Upload] Google Drive upload failed. Falling back to mock URL:", err.message || err);
+      return `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
+    }
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Google Drive is not provisioned for this job. Please retry provisioning the workspace.");
+  }
+  return `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
+}
+
+export async function uploadDeliveryOrderDocument(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  fileData: { fileName: string; mimeType: string; sizeBytes: number },
+  fileBuffer: Buffer,
+) {
+  const { additionalData } = await getAdditionalDataForDoFlow(orgId, jobId);
+  if (!additionalData.doUploadEnabled) {
+    throw new Error("Enable the Delivery Order document upload toggle before uploading.");
+  }
+
+  const fileKey = await storeDeliveryOrderFile(jobId, actorId, fileData, fileBuffer);
+  const now = await getNow();
+
+  const updated = await db.chaJobAdditionalData.update({
+    where: { id: additionalData.id },
+    data: {
+      doDocumentFileKey: fileKey,
+      doDocumentFileName: fileData.fileName,
+      doDocumentUploadedAt: now,
+      doDocumentUploadedById: actorId,
+      updatedById: actorId,
+    },
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "ChaJobAdditionalData",
+    entityId: additionalData.id,
+    event: "DO_DOCUMENT_UPLOADED",
+    actorId,
+    remarks: `Delivery Order document uploaded: ${fileData.fileName}`,
+    metadata: { fileKey, fileName: fileData.fileName },
+  });
+
+  return updated;
+}
+
+/**
+ * Apply a Delivery Order extension from the validity warning notification.
+ * Only allowed while a warning is actually active (expired or inside the
+ * warning window) and the extension toggle is on. Updates the validity date,
+ * records the extension history, and dismisses the active DO notifications
+ * for every user so the warning disappears until the new date approaches.
+ */
+export async function applyDeliveryOrderExtension(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  input: {
+    extensionDate: Date;
+    fileData?: { fileName: string; mimeType: string; sizeBytes: number } | null;
+    fileBuffer?: Buffer | null;
+  },
+) {
+  const { additionalData } = await getAdditionalDataForDoFlow(orgId, jobId);
+  if (!additionalData.doExtensionEnabled) {
+    throw new Error("Enable the Delivery Order extension toggle in Additional Data before applying an extension.");
+  }
+  if (Number.isNaN(input.extensionDate.getTime())) {
+    throw new Error("Enter a valid extension date.");
+  }
+
+  const now = await getNow();
+  const previousValidity = additionalData.deliveryOrderValidity;
+  if (!previousValidity) {
+    throw new Error("Delivery Order Validity must be set before an extension can be applied.");
+  }
+  if (input.extensionDate.getTime() <= previousValidity.getTime()) {
+    throw new Error("The extension date must be after the current Delivery Order validity date.");
+  }
+
+  // Extension is only available once the warning window is active.
+  const warningThreshold = new Date(now);
+  warningThreshold.setDate(warningThreshold.getDate() + 4);
+  warningThreshold.setHours(23, 59, 59, 999);
+  if (previousValidity.getTime() > warningThreshold.getTime()) {
+    throw new Error("Extensions can only be applied while a Delivery Order validity warning is active.");
+  }
+
+  let fileKey: string | null = null;
+  if (input.fileBuffer && input.fileData) {
+    fileKey = await storeDeliveryOrderFile(jobId, actorId, input.fileData, input.fileBuffer);
+  }
+
+  const extension = await db.$transaction(async (tx) => {
+    const record = await tx.chaDoExtension.create({
+      data: {
+        jobId,
+        previousValidity,
+        extensionDate: input.extensionDate,
+        fileKey,
+        fileName: input.fileData?.fileName ?? null,
+        appliedById: actorId,
+      },
+    });
+
+    // Reflected in the Delivery Order Validity column everywhere it is shown.
+    await tx.chaJobAdditionalData.update({
+      where: { id: additionalData.id },
+      data: {
+        deliveryOrderValidity: input.extensionDate,
+        updatedById: actorId,
+      },
+    });
+
+    // The existing DO warning notifications disappear for all users; the
+    // notification pipeline re-creates them ahead of the new date.
+    await tx.notification.updateMany({
+      where: {
+        orgId,
+        link: `/cha/jobs/${jobId}`,
+        kind: { in: ["CHA_DO_VALIDITY_EXPIRED", "CHA_DO_VALIDITY_EXPIRING"] },
+        dismissedAt: null,
+      },
+      data: { dismissedAt: now, readAt: now },
+    });
+
+    return record;
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "ChaDoExtension",
+    entityId: extension.id,
+    event: "DO_EXTENSION_APPLIED",
+    actorId,
+    prevState: previousValidity.toISOString(),
+    newState: input.extensionDate.toISOString(),
+    remarks: `Delivery Order validity extended from ${previousValidity.toLocaleDateString("en-IN")} to ${input.extensionDate.toLocaleDateString("en-IN")}.${input.fileData ? ` Extension document: ${input.fileData.fileName}.` : ""}`,
+    metadata: {
+      extensionId: extension.id,
+      fileKey,
+      fileName: input.fileData?.fileName ?? null,
+    },
+  });
+
+  return extension;
+}
+
+export async function listDeliveryOrderExtensions(orgId: string, jobId: string) {
+  await db.chaJob.findFirstOrThrow({ where: getActiveChaJobByIdWhere(orgId, jobId), select: { id: true } });
+  return db.chaDoExtension.findMany({
+    where: { jobId },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
 export async function uploadChecklistFile(
   actorId: string,
   orgId: string,
@@ -3604,6 +3889,7 @@ export async function sendChecklistCustomerMail(
     where: getActiveChaJobByIdWhere(orgId, jobId),
     include: {
       customer: true,
+      assignments: true,
       checklistWorkflow: {
         include: {
           currentFileVersion: true,
@@ -3620,6 +3906,7 @@ export async function sendChecklistCustomerMail(
   if (!checklist || checklist.id !== checklistId || !checklist.currentFileVersion) {
     throw new Error("Checklist record not found for this job.");
   }
+  const currentFileVersion = checklist.currentFileVersion;
   if (checklist.currentApprovalStage !== "CUSTOMER") {
     throw new Error("Customer mail can only be sent after internal approval routes the checklist to customer approval.");
   }
@@ -3671,8 +3958,8 @@ export async function sendChecklistCustomerMail(
         recipients: recipients.map((entry) => entry.email),
         subject: input.subject.trim(),
         body: input.body,
-        attachmentFileKey: checklist.currentFileVersion.fileKey,
-        attachmentFileName: checklist.currentFileVersion.originalFileName,
+        attachmentFileKey: currentFileVersion.fileKey,
+        attachmentFileName: currentFileVersion.originalFileName,
         sentAt,
         approvalVisibleAt,
       },
@@ -7712,7 +7999,7 @@ export async function saveFilingWorkflowDraft(
         name: data.name,
         description: data.description,
         settingsJson: normalizeTemplateSettings(data.settings ?? null),
-        mailTemplatesJson: data.mailTemplates ?? null,
+        mailTemplatesJson: (data.mailTemplates ?? Prisma.JsonNull) as Prisma.InputJsonValue,
         isActive: true,
       },
     });
@@ -7750,7 +8037,7 @@ export async function saveFilingWorkflowDraft(
         clearanceTypeId: data.clearanceTypeId || null,
         filingFlowCategory: data.filingFlowCategory !== undefined ? (data.filingFlowCategory || null) : undefined,
         settingsJson: normalizeTemplateSettings(data.settings ?? template.settingsJson ?? null),
-        mailTemplatesJson: data.mailTemplates ?? template.mailTemplatesJson ?? null,
+        mailTemplatesJson: (data.mailTemplates ?? template.mailTemplatesJson ?? Prisma.JsonNull) as Prisma.InputJsonValue,
       },
     });
 
@@ -8658,13 +8945,13 @@ export async function completeFilingNode(
           nodeId: node.id,
           sectionKey: section.key,
           isEnabled: !!sectionState.isEnabled,
-          stateJson: sectionState.state ?? Prisma.JsonNull,
+          stateJson: (sectionState.state ?? Prisma.JsonNull) as Prisma.InputJsonValue,
           updatedById: userId,
         },
         update: {
           nodeRunId: nodeRun.id,
           isEnabled: !!sectionState.isEnabled,
-          stateJson: sectionState.state ?? Prisma.JsonNull,
+          stateJson: (sectionState.state ?? Prisma.JsonNull) as Prisma.InputJsonValue,
           updatedById: userId,
         },
       });
@@ -9245,11 +9532,15 @@ async function syncFilingAttachmentToDocuments(
     return null;
   }
 
-  const documentType = sourceConfig.documentType?.trim() || sourceConfig.label;
+  const documentType =
+    ("documentType" in sourceConfig ? sourceConfig.documentType?.trim() : undefined) ||
+    sourceConfig.label;
+  const isMandatory =
+    "isMandatory" in sourceConfig ? sourceConfig.isMandatory : !!sourceConfig.required;
   const requirementItem = await ensureWorkflowDocumentRequirementItem(tx, params.orgId, {
     documentType,
-    acceptedFileTypes: sourceConfig.acceptedFileTypes,
-    isMandatory: sourceConfig.isMandatory,
+    acceptedFileTypes: sourceConfig.acceptedFileTypes ?? [],
+    isMandatory,
     minUploadCount: "minUploads" in sourceConfig ? sourceConfig.minUploads : "minPhotos" in sourceConfig ? sourceConfig.minPhotos : 1,
     maxUploadCount: "maxUploads" in sourceConfig ? sourceConfig.maxUploads : "maxPhotos" in sourceConfig ? sourceConfig.maxPhotos : null,
     requiresValidityDate: "requiresValidity" in sourceConfig ? !!sourceConfig.requiresValidity : false,
@@ -9277,7 +9568,7 @@ async function syncFilingAttachmentToDocuments(
         jobId: params.jobId,
         name: documentType,
         category: "Filing Workflow Documents",
-        isMandatory: sourceConfig.isMandatory,
+        isMandatory,
         status: "PENDING",
         requirementItemId: requirementItem.id,
       },
@@ -9312,7 +9603,7 @@ async function syncFilingAttachmentToDocuments(
   await tx.chaJobDocumentRequirement.update({
     where: { id: jobRequirement.id },
     data: {
-      isMandatory: sourceConfig.isMandatory,
+      isMandatory,
       status: "UPLOADED",
     },
   });
@@ -9438,9 +9729,10 @@ export async function uploadFilingAttachment(
     ? await resolveConfiguredValidityDate({
         uploadedAt,
         explicitValidityDate: validityDate ?? null,
-        requiresValidity: sourceConfig.requiresValidity,
-        validityDuration: sourceConfig.validityDuration,
-        validityUnit: sourceConfig.validityUnit,
+        requiresValidity: !!sourceConfig.requiresValidity,
+        validityDuration:
+          "validityDuration" in sourceConfig ? sourceConfig.validityDuration : null,
+        validityUnit: "validityUnit" in sourceConfig ? sourceConfig.validityUnit : null,
         orgId,
       })
     : null;

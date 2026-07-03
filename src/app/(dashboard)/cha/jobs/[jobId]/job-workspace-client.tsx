@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import * as actions from "@/modules/cha/actions";
+import { DoValidityPanel } from "./do-validity-panel";
 
 interface JobWorkspaceClientProps {
   job: any;
@@ -2575,6 +2576,22 @@ export function JobWorkspaceClient({
                 ) : null}
               </div>
             </div>
+
+            {job.additionalData ? (
+              <DoValidityPanel
+                jobId={job.id}
+                canUpdateJob={canUpdateJob}
+                additionalData={{
+                  deliveryOrderValidity: job.additionalData.deliveryOrderValidity ?? null,
+                  doUploadEnabled: !!job.additionalData.doUploadEnabled,
+                  doDocumentFileKey: job.additionalData.doDocumentFileKey ?? null,
+                  doDocumentFileName: job.additionalData.doDocumentFileName ?? null,
+                  doDocumentUploadedAt: job.additionalData.doDocumentUploadedAt ?? null,
+                  doExtensionEnabled: !!job.additionalData.doExtensionEnabled,
+                }}
+                extensions={job.doExtensions ?? []}
+              />
+            ) : null}
 
             <div className="grid grid-cols-1 gap-3 rounded-2xl border border-outline-variant/40 bg-surface-container-low p-4 md:grid-cols-4">
               <div>

@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { AlertTriangle, ArrowUpRight, CheckCheck } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, CalendarPlus, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DoExtensionModal } from "./do-extension-modal";
 import * as actions from "@/modules/cha/actions";
 
 type DeliveryOrderWarning = {
@@ -28,6 +29,7 @@ export function JobValidityWarningIndicator({
   const [acknowledging, setAcknowledging] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [panelPosition, setPanelPosition] = useState({ top: 0, left: 0 });
+  const [extensionOpen, setExtensionOpen] = useState(false);
 
   const openTarget =
     warning.severity === "expired"
@@ -92,8 +94,8 @@ export function JobValidityWarningIndicator({
       }
       toast.success("Delivery Order validity warning acknowledged.");
       router.refresh();
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to acknowledge warning.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to acknowledge warning.");
       setAcknowledging(false);
     }
   };
@@ -177,10 +179,33 @@ export function JobValidityWarningIndicator({
               <CheckCheck size={13} />
               {acknowledging ? "Saving..." : "Acknowledge"}
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 flex-1 border-[#00cec4]/40 bg-[#00cec4]/10 text-[#00cec4] hover:bg-[#00cec4]/15 text-xs"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setIsOpen(false);
+                setExtensionOpen(true);
+              }}
+            >
+              <CalendarPlus size={13} />
+              Extension
+            </Button>
           </div>
         </div>
         </div>
       ) : null}
+
+      <DoExtensionModal
+        open={extensionOpen}
+        jobId={jobId}
+        currentValidity={warning.deliveryOrderValidity}
+        onClose={() => setExtensionOpen(false)}
+        onApplied={() => router.refresh()}
+      />
     </div>
   );
 }

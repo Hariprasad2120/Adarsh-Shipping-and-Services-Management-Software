@@ -13,6 +13,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { acknowledgeDoValidityWarningAction } from "@/modules/cha/actions";
+import { DoExtensionModal } from "@/app/(dashboard)/cha/_components/do-extension-modal";
 import { toast } from "sonner";
 import { createPortal } from "react-dom";
 import { useCaps } from "@/lib/caps-context";
@@ -229,6 +230,11 @@ export function AppHeader({
     router.push(`/cha/jobs/${jobId}?tab=additionalData&focus=deliveryOrderValidity`);
   };
 
+  const [extensionTarget, setExtensionTarget] = useState<{
+    jobId: string;
+    validity: string;
+  } | null>(null);
+
   return (
     <>
       <header className="z-20 flex h-14 shrink-0 items-center justify-between border-b border-outline-variant/60 bg-surface/90 px-4 backdrop-blur-sm sm:px-6 lg:px-8 xl:px-10">
@@ -320,6 +326,19 @@ export function AppHeader({
                         >
                           Update Date
                         </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExtensionTarget({
+                              jobId: warning.jobId,
+                              validity: warning.deliveryOrderValidity,
+                            });
+                          }}
+                          className="flex-1 text-[10px] font-bold uppercase tracking-wider text-[#00cec4] bg-[#00cec4]/10 border border-[#00cec4]/30 hover:bg-[#00cec4]/15 py-1 px-1.5 rounded-lg transition-all cursor-pointer"
+                        >
+                          Extension
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -348,6 +367,20 @@ export function AppHeader({
           ) : null}
         </div>
       </header>
+
+      {extensionTarget ? (
+        <DoExtensionModal
+          open
+          jobId={extensionTarget.jobId}
+          currentValidity={extensionTarget.validity}
+          onClose={() => setExtensionTarget(null)}
+          onApplied={() => {
+            setExtensionTarget(null);
+            setRefreshTrigger((prev) => prev + 1);
+            router.refresh();
+          }}
+        />
+      ) : null}
 
       <AnimatePresence>
         {showWelcome && typeof document !== "undefined" && createPortal(
