@@ -83,3 +83,9 @@ pnpm-lock.yaml
 credentials.json
 *service-account*.json
 ngrok.yml
+
+# local AI/dev artifacts
+/.codex-*
+/brain/
+/graphify-out/
+/Parsec *.mp4
