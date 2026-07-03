@@ -57,6 +57,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [isTypingPassword, setIsTypingPassword] = useState(false);
@@ -91,11 +92,14 @@ export default function LoginPage() {
     const result = await signIn("credentials", {
       email,
       password,
+      rememberMe: rememberMe ? "true" : "false",
       redirect: false,
     });
 
     if (result?.error) {
-      setError("Invalid email or password.");
+      setError(
+        "Sign in failed. Check your credentials — after several failed attempts the account is temporarily locked."
+      );
       setIsLoading(false);
       return;
     }
@@ -275,7 +279,16 @@ export default function LoginPage() {
                     }`}
                   />
                 </div>
-                <div className="flex justify-end">
+                <div className="flex items-center justify-between">
+                  <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-400">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="size-3.5 accent-[#00A89D]"
+                    />
+                    Remember me
+                  </label>
                   <a
                     href="#"
                     className="text-sm font-medium text-[#00A89D] transition-colors hover:text-[#52d6cd]"

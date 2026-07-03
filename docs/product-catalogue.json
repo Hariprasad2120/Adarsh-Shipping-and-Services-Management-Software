@@ -1,18 +1,24 @@
 {
-  "generatedAt": "2026-07-02T09:19:11.222Z",
+  "generatedAt": "2026-07-03T06:59:49.694Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
     "version": "0.1.0"
   },
   "stats": {
-    "totalAppRoutes": 201,
-    "totalApiRoutes": 172,
+    "totalAppRoutes": 202,
+    "totalApiRoutes": 173,
     "totalPrismaModels": 257,
     "totalModuleServices": 70,
     "totalComponents": 89
   },
   "appRoutes": [
+    {
+      "route": "/account/security",
+      "filePath": "src/app/(dashboard)/account/security/page.tsx",
+      "module": "account",
+      "type": "page"
+    },
     {
       "route": "/accounting/accounts",
       "filePath": "src/app/(dashboard)/accounting/accounts/page.tsx",
@@ -1760,6 +1766,14 @@
       "path": "/api/cron/tracking-alerts",
       "filePath": "src/app/api/cron/tracking-alerts/route.ts",
       "module": "cron",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dev/clear-auth-cookies",
+      "filePath": "src/app/api/dev/clear-auth-cookies/route.ts",
+      "module": "dev",
       "methods": [
         "GET"
       ]
@@ -4180,8 +4194,15 @@
         "logoutAt",
         "status",
         "ipAddress",
+        "ipHash",
         "userAgent",
-        "location"
+        "device",
+        "location",
+        "rememberMe",
+        "expiresAt",
+        "revokedAt",
+        "revokedById",
+        "revokeReason"
       ],
       "relations": [
         "User"
@@ -9508,7 +9529,7 @@
         "listJobTypesForSettings",
         "getJobDetails",
         "listJobs",
-        "getFolderNameForCategory",
+        "resolveDriveFolderForCategory",
         "uploadDocumentVersion",
         "createJobCustomDocumentRequirementAndUpload",
         "deleteDocumentVersion",
@@ -10756,6 +10777,13 @@
     }
   ],
   "modulesSummary": {
+    "account": {
+      "appRoutes": 1,
+      "apiRoutes": 0,
+      "prismaModels": 0,
+      "serviceFiles": 0,
+      "components": 0
+    },
     "accounting": {
       "appRoutes": 32,
       "apiRoutes": 0,
@@ -10829,6 +10857,13 @@
     "dashboard": {
       "appRoutes": 1,
       "apiRoutes": 0,
+      "prismaModels": 0,
+      "serviceFiles": 0,
+      "components": 0
+    },
+    "dev": {
+      "appRoutes": 0,
+      "apiRoutes": 1,
       "prismaModels": 0,
       "serviceFiles": 0,
       "components": 0

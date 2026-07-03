@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { isBlockedApiPath, isBlockedRoutePath } from "@/lib/app-edition";
+import { SESSION_COOKIE_NAME } from "@/lib/session-config";
 
 /**
  * Next.js 16 Proxy — runs before every matched request.
@@ -29,13 +30,11 @@ const PUBLIC_PATHS = [
 // Static asset prefixes — always public
 const STATIC_PREFIXES = ["/_next", "/favicon.ico", "/Logo", "/logo"];
 
-// NextAuth v5 cookie names (varies by secure/non-secure context)
-const SESSION_COOKIE_NAMES = [
-  "authjs.session-token",
-  "__Secure-authjs.session-token",
-  "next-auth.session-token",
-  "__Secure-next-auth.session-token",
-];
+// Monolith-isolated session cookie names ONLY. Legacy authjs/next-auth
+// cookies (potentially shared with AMS on localhost) must never pass this
+// check — a request carrying only a foreign cookie is treated as
+// unauthenticated and redirected to /login.
+const SESSION_COOKIE_NAMES = [SESSION_COOKIE_NAME];
 
 const MOBILE_CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -45,6 +44,14 @@ const MOBILE_CORS_HEADERS = {
 };
 
 function isPublicPath(pathname: string): boolean {
+  // Dev-only utilities (e.g. /api/dev/clear-auth-cookies) — never public in prod
+  if (
+    process.env.NODE_ENV !== "production" &&
+    pathname.startsWith("/api/dev/")
+  ) {
+    return true;
+  }
+
   for (const pub of PUBLIC_PATHS) {
     if (pathname === pub || pathname.startsWith(pub + "/")) return true;
   }

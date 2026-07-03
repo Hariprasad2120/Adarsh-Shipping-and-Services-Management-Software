@@ -1,6 +1,6 @@
 "use client";
 
-import { signOut } from "next-auth/react";
+import { secureLogoutAction } from "@/lib/auth-actions";
 
 // ─── BroadcastChannel for cross-tab sync ─────────────────────────────────────
 
@@ -96,7 +96,7 @@ function clearAuthLocalStorage() {
  * 1. Clears session-specific sessionStorage (welcome animation markers, etc.)
  * 2. Clears user-specific localStorage (drafts, cached data)
  * 3. Broadcasts logout to other tabs via BroadcastChannel
- * 4. Calls NextAuth signOut to invalidate the JWT cookie server-side
+ * 4. Calls secureLogoutAction to revoke the DB session and purge all auth cookies
  * 5. Forces a full-page navigation to /login (not a client-side router push)
  *
  * This function should be the ONLY way logout happens in the app.
@@ -109,11 +109,13 @@ export async function performLogout() {
   // 2. Notify other tabs
   broadcast("logout");
 
-  // 3. Server-side signout (hits NextAuth endpoint, which triggers events.signOut)
+  // 3. Server-side signout: revokes the DB session, clears the Monolith
+  //    session cookie AND purges legacy/foreign auth cookies (old
+  //    next-auth/authjs defaults, AMS cookies).
   try {
-    await signOut({ redirect: false });
+    await secureLogoutAction();
   } catch {
-    // Even if signOut fails, we still clear local state and redirect
+    // Even if the server action fails, we still clear local state and redirect
   }
 
   // 4. Full navigation to login (not router.push — we want a clean page load)

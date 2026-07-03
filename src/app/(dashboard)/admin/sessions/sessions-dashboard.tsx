@@ -2,9 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Users, Clock, Wifi, MapPin, Shield, RefreshCw } from "lucide-react";
+import { Users, Clock, Wifi, MapPin, Shield, RefreshCw, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { saveTimeoutAction, getActiveSessionsAction } from "./actions";
+import {
+  saveTimeoutAction,
+  getActiveSessionsAction,
+  adminRevokeSessionAction,
+  adminRevokeAllUserSessionsAction,
+} from "./actions";
 
 type ActiveSession = {
   id: string;
@@ -103,6 +108,8 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
   const [timeoutSaved, setTimeoutSaved] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const todayCutoffMs = nowMs - 86_400_000;
+
+  const [revokingId, setRevokingId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
@@ -263,6 +270,45 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
                       <span>{s.ipAddress}{s.location ? ` · ${s.location}` : ""}</span>
                     </div>
                   )}
+                </div>
+
+                {/* Admin force-logout controls */}
+                <div className="flex shrink-0 items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={revokingId === s.id}
+                    onClick={async () => {
+                      setRevokingId(s.id);
+                      try {
+                        await adminRevokeSessionAction(s.id);
+                        await refresh();
+                      } finally {
+                        setRevokingId(null);
+                      }
+                    }}
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-500/30 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-red-500 transition-colors hover:bg-red-500/10 disabled:opacity-50"
+                    title="Force logout this session"
+                  >
+                    <LogOut className="size-3" />
+                    {revokingId === s.id ? "Revoking…" : "Force logout"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={revokingId === s.userId}
+                    onClick={async () => {
+                      setRevokingId(s.userId);
+                      try {
+                        await adminRevokeAllUserSessionsAction(s.userId);
+                        await refresh();
+                      } finally {
+                        setRevokingId(null);
+                      }
+                    }}
+                    className="cursor-pointer rounded-lg border border-outline-variant px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant transition-colors hover:bg-surface-container disabled:opacity-50"
+                    title="Force logout ALL sessions of this user"
+                  >
+                    All devices
+                  </button>
                 </div>
               </motion.div>
             ))}

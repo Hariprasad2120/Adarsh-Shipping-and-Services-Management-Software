@@ -13,6 +13,7 @@ import {
   Sun,
   Moon,
   LogOut,
+  ShieldCheck,
   ChevronDown,
   ChevronRight,
   ChevronLeft,
@@ -512,9 +513,16 @@ export function Sidebar({
           <div
             className={cn(
               "flex shrink-0 items-center gap-1 overflow-hidden transition-[max-width,opacity] duration-300 ease-in-out",
-              collapsed ? "max-w-0 opacity-0" : "max-w-16 opacity-100",
+              collapsed ? "max-w-0 opacity-0" : "max-w-24 opacity-100",
             )}
           >
+            <Link
+              href="/account/security"
+              className="cursor-pointer rounded-md p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+              title="Security & Sessions"
+            >
+              <ShieldCheck size={16} />
+            </Link>
             <button
               type="button"
               onClick={toggleTheme}

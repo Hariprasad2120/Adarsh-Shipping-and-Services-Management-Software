@@ -1995,13 +1995,14 @@ export async function listJobs(
   const pageSize = filters.pageSize || 10;
   const skip = (page - 1) * pageSize;
 
+  const andConditions: Prisma.ChaJobWhereInput[] = [];
   const where: Prisma.ChaJobWhereInput = {
     ...getActiveChaJobWhere(orgId),
-    AND: [],
+    AND: andConditions,
   };
 
   if (filters.search) {
-    where.AND?.push({
+    andConditions.push({
       OR: [
         { jobNumber: { contains: filters.search, mode: "insensitive" } },
         { title: { contains: filters.search, mode: "insensitive" } },
@@ -2017,7 +2018,7 @@ export async function listJobs(
   if (filters.jobTypeId) where.jobTypeId = filters.jobTypeId;
 
   if (filters.jobGroup === "ACTIVE") {
-    where.AND?.push({
+    andConditions.push({
       NOT: {
         OR: [
           { stage: "FILED" },
@@ -2029,7 +2030,7 @@ export async function listJobs(
   }
 
   if (filters.jobGroup === "COMPLETED") {
-    where.AND?.push({
+    andConditions.push({
       OR: [
         { stage: "FILED" },
         { status: "COMPLETED" },
@@ -2042,7 +2043,7 @@ export async function listJobs(
     where.assignments = { some: { userId } };
   }
 
-  if (!where.AND?.length) {
+  if (!andConditions.length) {
     delete where.AND;
   }
 

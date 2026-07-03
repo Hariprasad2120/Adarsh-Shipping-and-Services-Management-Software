@@ -1,7 +1,11 @@
 import { db } from "../src/lib/db";
 import { provisionJobWorkspace } from "../src/lib/workspace-provisioning";
 import * as driveClient from "../src/lib/google-drive-client";
-import { getFolderNameForCategory } from "../src/modules/cha/service";
+// Local fallback — getFolderNameForCategory was removed from the CHA service
+// when category folders became a per-profile map keyed by category name.
+function getFolderNameForCategory(category: string): string {
+  return category;
+}
 
 async function main() {
   console.log("=== BULK WORKSPACE SYNCHRONIZATION STARTED ===");

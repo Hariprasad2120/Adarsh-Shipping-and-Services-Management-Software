@@ -4,6 +4,10 @@ import { getNow } from "@/lib/clock";
 import { invalidateRbacCache } from "@/lib/rbac";
 import { Prisma } from "@/generated/prisma/client";
 import { syncEmployeeAppraisalSchedule } from "@/modules/ams/service";
+import {
+  logSecurityEvent,
+  revokeAllSessionsForUser,
+} from "@/lib/session-service";
 
 export type CreateUserInput = {
   orgId: string;
@@ -186,7 +190,18 @@ export async function updateUser(id: string, data: {
   tlId?: string | null;
   active?: boolean;
 }) {
-  return db.user.update({ where: { id }, data });
+  const updated = await db.user.update({ where: { id }, data });
+
+  // Disabling a user kills every live session immediately.
+  if (data.active === false) {
+    await revokeAllSessionsForUser({
+      userId: id,
+      actorUserId: id,
+      reason: "USER_DISABLED",
+    }).catch((e) => console.error("[user] Session revocation on disable failed:", e));
+  }
+
+  return updated;
 }
 
 export async function updateUserRoles(userId: string, roleIds: string[]) {
@@ -197,6 +212,14 @@ export async function updateUserRoles(userId: string, roleIds: string[]) {
     });
   }
   invalidateRbacCache();
+
+  // Role IDs are cached in the login JWT — force re-login so stale
+  // permissions can't persist after a critical role change.
+  await revokeAllSessionsForUser({
+    userId,
+    actorUserId: userId,
+    reason: "ROLE_CHANGED",
+  }).catch((e) => console.error("[user] Session revocation on role change failed:", e));
 }
 
 export async function updateEmploymentRecord(userId: string, data: {
@@ -231,5 +254,23 @@ export async function updateEmploymentRecord(userId: string, data: {
 
 export async function resetPassword(userId: string, newPassword: string) {
   const passwordHash = await hash(newPassword, 12);
-  return db.user.update({ where: { id: userId }, data: { passwordHash } });
+  const user = await db.user.update({
+    where: { id: userId },
+    data: { passwordHash },
+  });
+
+  // Password change invalidates every existing session.
+  await revokeAllSessionsForUser({
+    userId,
+    actorUserId: userId,
+    reason: "PASSWORD_CHANGED",
+  }).catch((e) => console.error("[user] Session revocation on password reset failed:", e));
+  await logSecurityEvent({
+    event: "PASSWORD_CHANGED",
+    outcome: "SUCCESS",
+    userId,
+    email: user.email,
+  });
+
+  return user;
 }

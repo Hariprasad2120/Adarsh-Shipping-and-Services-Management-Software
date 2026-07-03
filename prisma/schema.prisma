@@ -1195,20 +1195,28 @@ model SecurityEvent {
 }
 
 model UserSession {
-  id         String    @id @default(cuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token      String    @unique
-  loginAt    DateTime  @default(now())
-  lastSeenAt DateTime  @default(now())
-  logoutAt   DateTime?
-  status     String    @default("ACTIVE")
-  ipAddress  String?
-  userAgent  String?
-  location   String?
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token        String    @unique
+  loginAt      DateTime  @default(now())
+  lastSeenAt   DateTime  @default(now())
+  logoutAt     DateTime?
+  status       String    @default("ACTIVE") // ACTIVE | EXPIRED | REVOKED
+  ipAddress    String? // masked IP (e.g. 103.21.x.x)
+  ipHash       String? // sha256(ip + secret) — correlation without raw IP
+  userAgent    String?
+  device       String? // human-readable label parsed from userAgent
+  location     String?
+  rememberMe   Boolean   @default(false)
+  expiresAt    DateTime? // absolute lifetime cap
+  revokedAt    DateTime?
+  revokedById  String? // actor who revoked (null = self/system)
+  revokeReason String? // LOGOUT | IDLE_TIMEOUT | ABSOLUTE_TIMEOUT | USER_REVOKED | ADMIN_REVOKED | PASSWORD_CHANGED | USER_DISABLED | ROLE_CHANGED
 
   @@index([userId, status])
   @@index([status, lastSeenAt])
+  @@index([expiresAt])
 }
 
 // ─── CRM Module Entities ───────────────────────────────────────────────────────

@@ -1,29 +1,38 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { compare } from "bcryptjs";
 import { z } from "zod";
 import { cache } from "react";
 import { db } from "@/lib/db";
-import { randomUUID } from "crypto";
-import { appendFileSync } from "fs";
 import { isRootControlEmail } from "@/lib/root-access";
-
-// ─── Configuration (env-driven with safe defaults) ───────────────────────────
-
-const SESSION_MAX_AGE_HOURS = Number(process.env.SESSION_MAX_AGE_HOURS) || 24;
-const SESSION_IDLE_TIMEOUT_HOURS =
-  Number(process.env.SESSION_IDLE_TIMEOUT_HOURS) || 4;
-const SESSION_ACTIVITY_THROTTLE_MS =
-  (Number(process.env.SESSION_ACTIVITY_THROTTLE_MINUTES) || 5) * 60 * 1000;
-
-const SESSION_MAX_AGE_S = SESSION_MAX_AGE_HOURS * 60 * 60;
+import {
+  CALLBACK_URL_COOKIE_NAME,
+  CSRF_COOKIE_NAME,
+  SESSION_COOKIE_MAX_AGE_S,
+  SESSION_COOKIE_NAME,
+  USE_SECURE_COOKIES,
+} from "@/lib/session-config";
+import {
+  createSession,
+  extractRequestMeta,
+  logSecurityEvent,
+  validateSession,
+} from "@/lib/session-service";
+import {
+  isLoginLocked,
+  recordLoginFailure,
+  recordLoginSuccess,
+} from "@/lib/login-rate-limit";
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
+  rememberMe: z
+    .union([z.boolean(), z.string()])
+    .optional()
+    .transform((v) => v === true || v === "true" || v === "on"),
 });
-
-import Google from "next-auth/providers/google";
 
 type SessionUserPayload = {
   id: string;
@@ -43,57 +52,120 @@ type TokenPayload = {
   redirectPath?: string;
 };
 
+/**
+ * MFA hook — placeholder for future multi-factor support.
+ * When implemented, this should verify a second factor after password
+ * verification succeeds and before the session is created.
+ */
+async function verifySecondFactor(userId: string): Promise<boolean> {
+  void userId;
+  return true;
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Monolith-isolated cookies. Prevents AMS (or any other app on the same
+  // host) from reading — or being read by — a Monolith session. Production
+  // uses the __Host- prefix (Secure, Path=/, no Domain).
+  cookies: {
+    sessionToken: {
+      name: SESSION_COOKIE_NAME,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: USE_SECURE_COOKIES,
+      },
+    },
+    csrfToken: {
+      name: CSRF_COOKIE_NAME,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: USE_SECURE_COOKIES,
+      },
+    },
+    callbackUrl: {
+      name: CALLBACK_URL_COOKIE_NAME,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: USE_SECURE_COOKIES,
+      },
+    },
+  },
   providers: [
     Credentials({
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
-        const { email, password } = parsed.data;
+        const { email, password, rememberMe } = parsed.data;
         const normalizedEmail = email.trim().toLowerCase();
+        const { ip, userAgent } = extractRequestMeta(request);
+
+        // Brute-force protection
+        const lock = isLoginLocked(normalizedEmail, ip);
+        if (lock.locked) {
+          await logSecurityEvent({
+            event: "LOGIN_LOCKED",
+            outcome: "BLOCKED",
+            email: normalizedEmail,
+            ip,
+            userAgent,
+            reason: `Locked, retry in ${Math.ceil((lock.retryAfterMs ?? 0) / 1000)}s`,
+          });
+          return null;
+        }
+
         const user = await db.user.findFirst({
           where: { email: { equals: normalizedEmail, mode: "insensitive" } },
           include: { roles: { include: { role: true } } },
         });
 
-        if (!user || !user.active) return null;
-        const valid = await compare(password, user.passwordHash);
-        if (!valid) return null;
+        const valid =
+          user && user.active
+            ? await compare(password, user.passwordHash)
+            : false;
 
-        // Generate a unique nonce for this login session.
-        // This will be stored in both the JWT and the UserSession DB record,
-        // allowing server-side session revocation without abandoning JWT.
-        const sessionNonce = randomUUID();
-
-        // Create a server-side session record for revocation tracking.
-        try {
-          await db.userSession.create({
-            data: {
-              userId: user.id,
-              token: sessionNonce,
-              status: "ACTIVE",
-            },
+        if (!user || !user.active || !valid) {
+          const lockedNow = recordLoginFailure(normalizedEmail, ip);
+          await logSecurityEvent({
+            event: lockedNow ? "LOGIN_LOCKED" : "LOGIN_FAILURE",
+            outcome: lockedNow ? "BLOCKED" : "FAILURE",
+            userId: user?.id,
+            email: normalizedEmail,
+            ip,
+            userAgent,
+            reason:
+              user && !user.active ? "Account disabled" : "Invalid credentials",
           });
-        } catch (e) {
-          console.error("[auth] Failed to create UserSession record:", e);
-          // Non-fatal — login still succeeds, but revocation won't work for this session
+          return null;
         }
 
-        // Log the security event
-        try {
-          await db.securityEvent.create({
-            data: {
-              userId: user.id,
-              email: user.email,
-              event: "LOGIN_SUCCESS",
-              outcome: "SUCCESS",
-              sessionToken: sessionNonce,
-            },
-          });
-        } catch {
-          // Non-fatal
-        }
+        if (!(await verifySecondFactor(user.id))) return null;
+
+        recordLoginSuccess(normalizedEmail, ip);
+
+        // Opaque server-side session — the DB record is the source of truth
+        // for expiry and revocation. The JWT only carries this nonce.
+        const sessionNonce = await createSession({
+          userId: user.id,
+          ip,
+          userAgent,
+          rememberMe,
+        });
+
+        await logSecurityEvent({
+          event: "LOGIN_SUCCESS",
+          outcome: "SUCCESS",
+          userId: user.id,
+          email: user.email,
+          ip,
+          userAgent,
+          sessionToken: sessionNonce,
+        });
 
         return {
           id: user.id,
@@ -122,24 +194,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
-        try {
-          const logMsg = `[${new Date().toISOString()}] Google Sign-in attempt: email=${user.email}, name=${user.name}, provider=${account.provider}, hasAccessToken=${!!account.access_token}, hasRefreshToken=${!!account.refresh_token}\n`;
-          appendFileSync("next-auth.log", logMsg);
-        } catch (e) {
-          console.error("Error writing to next-auth.log", e);
-        }
-
         if (!user.email) return false;
         const dbUser = await db.user.findFirst({
           where: { email: { equals: user.email, mode: "insensitive" } },
         });
-        
-        try {
-          const logMsg = `[${new Date().toISOString()}] DB User lookup: found=${!!dbUser}, email=${dbUser?.email}, orgId=${dbUser?.orgId}, active=${dbUser?.active}\n`;
-          appendFileSync("next-auth.log", logMsg);
-        } catch {}
 
-        if (!dbUser || !dbUser.orgId) return false; // Must be pre-registered by admin in database
+        // Must be pre-registered by admin and active
+        if (!dbUser || !dbUser.orgId || !dbUser.active) {
+          await logSecurityEvent({
+            event: "LOGIN_FAILURE",
+            outcome: "FAILURE",
+            email: user.email,
+            reason: dbUser
+              ? "Google login for disabled/unprovisioned user"
+              : "Google login for unknown user",
+          });
+          return false;
+        }
 
         const tokenExpiresAt = account.expires_at
           ? new Date(account.expires_at * 1000)
@@ -175,7 +246,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         const sessionUser = user as SessionUserPayload;
         // First-time token creation (login)
@@ -187,8 +258,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.redirectPath = sessionUser.redirectPath;
       }
 
-      // If logging in via Google OAuth, the user object won't have orgId or roleIds in it.
-      // We look up the corresponding database user by email and populate the token.
+      // Google OAuth logins don't pass through the credentials authorize() —
+      // populate org/roles from the DB and create the server-side session.
       if (!token.orgId && token.email) {
         const dbUser = await db.user.findFirst({
           where: { email: { equals: token.email, mode: "insensitive" } },
@@ -200,6 +271,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.isPlatformAdmin = dbUser.isPlatformAdmin;
           token.roleIds = dbUser.roles.map((ur) => ur.roleId);
         }
+      }
+      if (token.id && !token.sessionNonce) {
+        token.sessionNonce = await createSession({ userId: token.id as string });
+        await logSecurityEvent({
+          event: "LOGIN_SUCCESS",
+          outcome: "SUCCESS",
+          userId: token.id as string,
+          email: (token.email as string) ?? null,
+          sessionToken: token.sessionNonce,
+          reason: "Google OAuth login",
+        });
+      }
+
+      // ── Server-side session enforcement ──
+      // On every subsequent request (no `user`), validate the opaque nonce
+      // against the DB. Revoked / idle-expired / absolute-expired sessions and
+      // disabled users are rejected: returning null invalidates the JWT and
+      // clears the cookie, forcing a redirect to /login.
+      if (!user && trigger !== "update") {
+        const nonce = token.sessionNonce as string | undefined;
+        if (!nonce) return null;
+        const result = await validateSession(nonce, {
+          isAdmin: token.isPlatformAdmin === true,
+        });
+        if (!result.valid) return null;
       }
 
       return token;
@@ -225,15 +321,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           await db.userSession.updateMany({
             where: { token: token.sessionNonce, status: "ACTIVE" },
-            data: { status: "REVOKED", logoutAt: new Date() },
-          });
-          await db.securityEvent.create({
             data: {
-              userId: token.id as string,
-              event: "LOGOUT",
-              outcome: "SUCCESS",
-              sessionToken: token.sessionNonce,
+              status: "REVOKED",
+              logoutAt: new Date(),
+              revokedAt: new Date(),
+              revokeReason: "LOGOUT",
             },
+          });
+          await logSecurityEvent({
+            event: "LOGOUT",
+            outcome: "SUCCESS",
+            userId: token.id,
+            sessionToken: token.sessionNonce,
           });
         } catch (e) {
           console.error("[auth] Failed to revoke session on signOut:", e);
@@ -246,69 +345,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   session: {
     strategy: "jwt",
-    maxAge: SESSION_MAX_AGE_S,
+    // Cookie lifetime covers the longest possible (remember-me) session.
+    // Actual expiry is enforced per-request against the UserSession record.
+    maxAge: SESSION_COOKIE_MAX_AGE_S,
   },
 });
 
 // Deduplicate auth() calls within a single server request. Pages that call
 // auth() themselves AND the dashboard layout calling it would otherwise hit the
-// JWT decode + cookie parse twice. This makes the second call free.
+// JWT decode + DB session validation twice. This makes the second call free.
 export const getSession = cache(auth);
-
-// ─── Session Validation ──────────────────────────────────────────────────────
-
-/**
- * Validate that a session nonce is still active in the database.
- * Returns false if the session has been revoked, expired, or doesn't exist.
- * Throttles lastSeenAt updates to avoid excessive DB writes.
- */
-export async function isSessionValid(sessionNonce: string): Promise<boolean> {
-  if (!sessionNonce) return false;
-
-  try {
-    const session = await db.userSession.findUnique({
-      where: { token: sessionNonce },
-      select: { status: true, loginAt: true, lastSeenAt: true },
-    });
-
-    if (!session || session.status !== "ACTIVE") return false;
-
-    // Check absolute lifetime
-    const ageMs = Date.now() - session.loginAt.getTime();
-    if (ageMs > SESSION_MAX_AGE_S * 1000) {
-      // Session has exceeded absolute lifetime — revoke it
-      await db.userSession.update({
-        where: { token: sessionNonce },
-        data: { status: "EXPIRED", logoutAt: new Date() },
-      });
-      return false;
-    }
-
-    // Check idle timeout
-    const idleMs = Date.now() - session.lastSeenAt.getTime();
-    if (idleMs > SESSION_IDLE_TIMEOUT_HOURS * 60 * 60 * 1000) {
-      await db.userSession.update({
-        where: { token: sessionNonce },
-        data: { status: "EXPIRED", logoutAt: new Date() },
-      });
-      return false;
-    }
-
-    // Throttle lastSeenAt updates
-    if (idleMs > SESSION_ACTIVITY_THROTTLE_MS) {
-      // Fire-and-forget — don't block the request
-      db.userSession
-        .update({
-          where: { token: sessionNonce },
-          data: { lastSeenAt: new Date() },
-        })
-        .catch(() => {});
-    }
-
-    return true;
-  } catch {
-    // DB error — fail open for availability, but log
-    console.error("[auth] Session validation DB error for nonce:", sessionNonce);
-    return true; // fail open to avoid locking users out on transient DB issues
-  }
-}

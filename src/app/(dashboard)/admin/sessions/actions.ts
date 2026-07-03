@@ -59,6 +59,51 @@ export async function getActiveSessionsAction() {
   }));
 }
 
+/** Force-logout a single session (admin). Audit-logged. */
+export async function adminRevokeSessionAction(sessionId: string) {
+  const session = await requireAdmin();
+  const { revokeSessionById } = await import("@/lib/session-service");
+
+  const target = await db.userSession.findUnique({
+    where: { id: sessionId },
+    select: { user: { select: { orgId: true } } },
+  });
+  if (!target || target.user.orgId !== session.user.orgId) {
+    return { ok: false as const, error: "Session not found" };
+  }
+
+  await revokeSessionById({
+    sessionId,
+    actorUserId: session.user.id,
+    reason: "ADMIN_REVOKED",
+    byAdmin: true,
+  });
+  revalidatePath("/admin/sessions");
+  return { ok: true as const };
+}
+
+/** Force-logout ALL sessions of a user (admin). Audit-logged. */
+export async function adminRevokeAllUserSessionsAction(userId: string) {
+  const session = await requireAdmin();
+  const { revokeAllSessionsForUser } = await import("@/lib/session-service");
+
+  const target = await db.user.findUnique({
+    where: { id: userId },
+    select: { orgId: true },
+  });
+  if (!target || target.orgId !== session.user.orgId) {
+    return { ok: false as const, error: "User not found" };
+  }
+
+  const count = await revokeAllSessionsForUser({
+    userId,
+    actorUserId: session.user.id,
+    reason: "ADMIN_REVOKED",
+  });
+  revalidatePath("/admin/sessions");
+  return { ok: true as const, count };
+}
+
 export async function saveTimeoutAction(minutes: number) {
   await requireAdmin();
   
