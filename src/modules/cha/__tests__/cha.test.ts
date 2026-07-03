@@ -677,6 +677,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       where: { checklistId: checklist.id, stage: "INTERNAL", fileVersionId: uploadResult.fileVersion.id },
     });
     expect(internalApprovals.some((approval) => approval.assignedToId === managerUser.id)).toBe(true);
+    expect(internalApprovals.some((approval) => approval.assignedToId === ownerUser.id)).toBe(true);
 
     await chaService.submitChecklistInternalDecision(
       managerUser.id,
@@ -707,7 +708,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(reuploadResult.fileVersion.versionNumber).toBe(2);
 
     await chaService.submitChecklistInternalDecision(
-      managerUser.id,
+      ownerUser.id,
       org.id,
       job.id,
       checklist.id,

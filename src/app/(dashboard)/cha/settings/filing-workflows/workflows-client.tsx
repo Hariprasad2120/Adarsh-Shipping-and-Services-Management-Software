@@ -892,7 +892,7 @@ function buildChaFilingBlueprintDraft() {
   const importFlow = buildBillFlow({
     flowLabel: "Import BE",
     flowKey: "import_be",
-    filingNodeLabel: "Bill of Entry",
+    filingNodeLabel: "Bill Filing",
     filingNodeKey: "import_be_bill_of_entry",
     copyGenerationLabel: "BE Copy Generation",
     centerX: importCenterX,
@@ -908,7 +908,7 @@ function buildChaFilingBlueprintDraft() {
   const exportFlow = buildBillFlow({
     flowLabel: "Export SB",
     flowKey: "export_sb",
-    filingNodeLabel: "Shipping Bill",
+    filingNodeLabel: "Bill Filing",
     filingNodeKey: "export_sb_shipping_bill",
     copyGenerationLabel: "SB Copy Generation",
     centerX: exportCenterX,

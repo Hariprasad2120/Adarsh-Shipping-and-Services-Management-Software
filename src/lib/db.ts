@@ -1,4 +1,6 @@
-// Trigger recompilation after schema updates: 2026-06-22-v5-google-chat
+// Bump this when Prisma schema changes need a fresh dev-time singleton.
+const PRISMA_CLIENT_SCHEMA_VERSION = "2026-07-03-cha-do-flow-v2-section49";
+
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
@@ -18,7 +20,10 @@ function createPrismaClient() {
   });
 }
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+const globalForPrisma = globalThis as unknown as {
+  prisma?: PrismaClient;
+  prismaSchemaVersion?: string;
+};
 
 type PrismaClientWithDelegates = PrismaClient & {
   appraisalSelfTemplate?: unknown;
@@ -52,15 +57,27 @@ function hasRequiredDelegates(client: PrismaClient) {
 }
 
 const existingPrisma = globalForPrisma.prisma;
-const shouldRefreshPrisma = existingPrisma && !hasRequiredDelegates(existingPrisma);
+const hasCurrentSchemaVersion = globalForPrisma.prismaSchemaVersion === PRISMA_CLIENT_SCHEMA_VERSION;
+const shouldRefreshPrisma =
+  existingPrisma && (!hasRequiredDelegates(existingPrisma) || !hasCurrentSchemaVersion);
 
 // When refreshing due to stale delegates, save the new client to the global
 // so subsequent module evaluations reuse it instead of creating new connections.
 export const db = shouldRefreshPrisma
-  ? (() => { const c = createPrismaClient(); if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = c; return c; })()
+  ? (() => {
+      const c = createPrismaClient();
+      if (process.env.NODE_ENV !== "production") {
+        globalForPrisma.prisma = c;
+        globalForPrisma.prismaSchemaVersion = PRISMA_CLIENT_SCHEMA_VERSION;
+      }
+      return c;
+    })()
   : (existingPrisma ?? createPrismaClient());
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = db;
+  globalForPrisma.prismaSchemaVersion = PRISMA_CLIENT_SCHEMA_VERSION;
+}
 
 // Background Scheduler for Justdial Importer
 const globalForScheduler = globalThis as unknown as { justdialSchedulerStarted?: boolean };

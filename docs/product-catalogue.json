@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-03T13:49:32.458Z",
+  "generatedAt": "2026-07-03T15:32:55.870Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -7,8 +7,8 @@
   },
   "stats": {
     "totalAppRoutes": 202,
-    "totalApiRoutes": 173,
-    "totalPrismaModels": 262,
+    "totalApiRoutes": 174,
+    "totalPrismaModels": 263,
     "totalModuleServices": 71,
     "totalComponents": 89
   },
@@ -1731,6 +1731,14 @@
       ]
     },
     {
+      "path": "/api/cron/cha-filing-query-reminders",
+      "filePath": "src/app/api/cron/cha-filing-query-reminders/route.ts",
+      "module": "cron",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
       "path": "/api/cron/crm-reminders",
       "filePath": "src/app/api/cron/crm-reminders/route.ts",
       "module": "cron",
@@ -3152,7 +3160,8 @@
         "filingToggleStatesUpdated",
         "filingWorkflowQueriesCreated",
         "filingWorkflowQueriesClosed",
-        "filingSection49Flags"
+        "filingSection49Flags",
+        "filingSection49Extensions"
       ],
       "relations": [
         "Organisation",
@@ -3266,7 +3275,8 @@
         "FilingFieldValue",
         "FilingToggleState",
         "FilingWorkflowQuery",
-        "FilingSection49Flag"
+        "FilingSection49Flag",
+        "FilingSection49Extension"
       ],
       "module": "core"
     },
@@ -6763,6 +6773,7 @@
         "documentRequirements",
         "additionalData",
         "doExtensions",
+        "section49Extensions",
         "checklistWorkflow",
         "checklistImports",
         "filing",
@@ -6785,6 +6796,7 @@
         "ChaJobDocumentRequirement",
         "ChaJobAdditionalData",
         "ChaDoExtension",
+        "FilingSection49Extension",
         "ChaChecklist",
         "ChaChecklistImport",
         "ChaFiling",
@@ -9032,11 +9044,32 @@
         "id",
         "jobId",
         "isEnabled",
+        "validityDate",
         "remarks",
         "toggledById",
         "updatedAt",
         "job",
         "toggledBy"
+      ],
+      "relations": [
+        "ChaJob",
+        "User"
+      ],
+      "module": "core"
+    },
+    {
+      "name": "FilingSection49Extension",
+      "fields": [
+        "id",
+        "jobId",
+        "previousValidity",
+        "extensionDate",
+        "fileKey",
+        "fileName",
+        "appliedById",
+        "createdAt",
+        "job",
+        "appliedBy"
       ],
       "relations": [
         "ChaJob",
@@ -9678,6 +9711,8 @@
         "setDoExtensionToggleAction",
         "uploadDeliveryOrderDocumentAction",
         "applyDoExtensionAction",
+        "updateSection49ValidityAction",
+        "applySection49ExtensionAction",
         "updateJobDetailsAction",
         "submitChecklistOwnerDecisionAction",
         "saveFilingWorkflowDraftAction",
@@ -9781,6 +9816,9 @@
         "completeFilingNode",
         "toggleFilingSection49",
         "getFilingSection49",
+        "updateFilingSection49Validity",
+        "applyFilingSection49Extension",
+        "runFilingWorkflowQueryReminderCron",
         "createFilingWorkflowQuery",
         "updateFilingWorkflowQueryStatus",
         "uploadFilingAttachment",
@@ -11040,7 +11078,7 @@
     "core": {
       "appRoutes": 2,
       "apiRoutes": 0,
-      "prismaModels": 59,
+      "prismaModels": 60,
       "serviceFiles": 5,
       "components": 0
     },
@@ -11053,7 +11091,7 @@
     },
     "cron": {
       "appRoutes": 0,
-      "apiRoutes": 6,
+      "apiRoutes": 7,
       "prismaModels": 0,
       "serviceFiles": 0,
       "components": 0

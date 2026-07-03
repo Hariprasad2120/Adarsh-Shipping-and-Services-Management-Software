@@ -17,6 +17,7 @@ import {
   Check,
   Database,
   ExternalLink,
+  Undo2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -152,6 +153,20 @@ export function JobWorkspaceClient({
     return branchManagers.length > 0 ? branchManagers : managers;
   }, [managers, job.branchId]);
 
+  const [section49Flag, setSection49Flag] = useState<any>(job.filingSection49Flag ?? null);
+  const [showSection49Modal, setShowSection49Modal] = useState(false);
+  const [section49Remarks, setSection49Remarks] = useState("");
+  const [section49ValidityDate, setSection49ValidityDate] = useState(
+    job.filingSection49Flag?.validityDate ? job.filingSection49Flag.validityDate.slice(0, 10) : "",
+  );
+  const [section49ExtensionDate, setSection49ExtensionDate] = useState("");
+  const [section49ExtensionFile, setSection49ExtensionFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    setSection49Flag(job.filingSection49Flag ?? null);
+    setSection49ValidityDate(job.filingSection49Flag?.validityDate ? job.filingSection49Flag.validityDate.slice(0, 10) : "");
+  }, [job.filingSection49Flag]);
+
 
   const doValidityWarning = useMemo(() => {
     if (!job.additionalData?.deliveryOrderValidity) return null;
@@ -171,6 +186,54 @@ export function JobWorkspaceClient({
     return null;
   }, [job.additionalData?.deliveryOrderValidity]);
 
+  const section49ValidityWarning = useMemo(() => {
+    if (!section49Flag?.isEnabled || !section49Flag?.validityDate) return null;
+    const summary = getValiditySummary(section49Flag.validityDate);
+    if (!summary || summary.tone === "neutral") return null;
+    return {
+      type: summary.tone === "destructive" ? "EXPIRED" : "EXPIRING",
+      message:
+        summary.tone === "destructive"
+          ? `Section 49 validity expired on ${new Date(section49Flag.validityDate).toLocaleDateString("en-IN")}.`
+          : `Section 49 validity is expiring on ${new Date(section49Flag.validityDate).toLocaleDateString("en-IN")}.`,
+    };
+  }, [section49Flag]);
+
+  const visibleDocumentRequirements = useMemo(() => {
+    return documentRequirements.filter((req: any) => {
+      const categoryName = req.requirementItem?.category?.name || req.category || "General Documents";
+      if (categoryName !== "Customs Validity Documents") {
+        return true;
+      }
+
+      const hasPersistedState =
+        req.status !== "PENDING" || (Array.isArray(req.versions) && req.versions.length > 0) || !!req.exception;
+
+      if (req.name === "Section 49") {
+        return !!section49Flag?.isEnabled || hasPersistedState;
+      }
+
+      if (req.name === "Extension") {
+        return !!job.additionalData?.doExtensionEnabled || hasPersistedState;
+      }
+
+      return !!job.additionalData?.doUploadEnabled || hasPersistedState;
+    });
+  }, [
+    documentRequirements,
+    job.additionalData?.doExtensionEnabled,
+    job.additionalData?.doUploadEnabled,
+    section49Flag?.isEnabled,
+  ]);
+
+  const bulkNaEligibleRequirements = useMemo(
+    () =>
+      visibleDocumentRequirements.filter(
+        (req: any) => req.status !== "UPLOADED" && req.status !== "NOT_AVAILABLE",
+      ),
+    [visibleDocumentRequirements],
+  );
+
 
   // Document Collection Form State
   const [exceptionReason, setExceptionReason] = useState("");
@@ -178,6 +241,7 @@ export function JobWorkspaceClient({
   const [isCustomDocumentModalOpen, setIsCustomDocumentModalOpen] = useState(false);
   const [customDocumentName, setCustomDocumentName] = useState("");
   const [customDocumentFile, setCustomDocumentFile] = useState<File | null>(null);
+  const [customerApprovalNow, setCustomerApprovalNow] = useState(() => Date.now());
   
   // Custom Document Requirements Configuration State additions
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
@@ -256,11 +320,13 @@ export function JobWorkspaceClient({
   const [filingToggleStates, setFilingToggleStates] = useState<Record<string, boolean>>({});
   const [filingQueryTitle, setFilingQueryTitle] = useState("");
   const [filingQueryDetails, setFilingQueryDetails] = useState("");
+  const [filingQueryStatusUpdates, setFilingQueryStatusUpdates] = useState<Record<string, string>>({});
+  const [showBillNumberEntry, setShowBillNumberEntry] = useState(false);
+  const [billFilingQueryDecision, setBillFilingQueryDecision] = useState<"" | "QUERY" | "CLEARED">("");
+  const [goBackOpen, setGoBackOpen] = useState(false);
+  const [goBackReason, setGoBackReason] = useState("");
   const [nodeRemarks, setNodeRemarks] = useState("");
   const [selectedNextNodeKey, setSelectedNextNodeKey] = useState<string>("");
-  const [section49Flag, setSection49Flag] = useState<any>(null);
-  const [showSection49Modal, setShowSection49Modal] = useState(false);
-  const [section49Remarks, setSection49Remarks] = useState("");
 
   useEffect(() => {
     setBillOfEntryNumber(job.filing?.billOfEntryNumber || "");
@@ -279,6 +345,10 @@ export function JobWorkspaceClient({
 
   const overdueChecklistItems = useMemo(() => filingInstance?.overdueItems || [], [filingInstance]);
   const overdueChecklistCount = overdueChecklistItems.length;
+  const activeNodeAttachments = useMemo(
+    () => filingInstance?.attachments?.filter((attachment: any) => attachment.nodeRunId === activeNodeRun?.id) || [],
+    [activeNodeRun?.id, filingInstance?.attachments],
+  );
   const activeChecklistItems = useMemo(
     () => activeNodeRun?.node?.checklistItems?.filter((item: any) => item.isActive !== false) || [],
     [activeNodeRun],
@@ -320,8 +390,45 @@ export function JobWorkspaceClient({
     const firstPendingIndex = activeChecklistItems.findIndex((item: any) => !isItemReady(item));
     return firstPendingIndex === -1 ? activeChecklistItems.length - 1 : firstPendingIndex;
   }, [activeChecklistItems, checklistAttachmentsByItem, checklistResponses, overdueChecklistItems]);
-  const beDisabled = !!shippingBillNumber.trim();
-  const sbDisabled = !!billOfEntryNumber.trim();
+  const activeNodeQueries = useMemo(
+    () => (filingInstance?.queries || []).filter((query: any) => query.nodeRunId === activeNodeRun?.id),
+    [activeNodeRun?.id, filingInstance?.queries],
+  );
+  const activeNodeOpenQueries = useMemo(
+    () => activeNodeQueries.filter((query: any) => query.status !== "CLOSED"),
+    [activeNodeQueries],
+  );
+  const isBillFilingNode = useMemo(() => {
+    if (!activeNodeRun?.node) return false;
+    // The first step of every filing workflow is the Bill Filing stage:
+    // upload the bill document + enter the bill number, then decide the
+    // customs-query state — regardless of how the start node was configured.
+    if (activeNodeRun.node.isStart && activeNodeRun.node.nodeType !== "DECISION") return true;
+    const fieldKeys = (activeNodeRun.node.fieldDefinitionsJson || []).map((field: any) => field.key);
+    const documentKeys = (activeNodeRun.node.documentRequirementsJson || []).map((document: any) => document.key);
+    return fieldKeys.includes("bill_number") && documentKeys.includes("bill_document");
+  }, [activeNodeRun]);
+  const activeNodeDisplayName = isBillFilingNode ? "Bill Filing" : activeNodeRun?.node?.name || "";
+  const billFilingDocumentUploaded = activeNodeAttachments.some(
+    (attachment: any) => attachment.documentRequirementKey === "bill_document",
+  );
+  const billFilingDocumentAttachment = activeNodeAttachments.find(
+    (attachment: any) => attachment.documentRequirementKey === "bill_document",
+  );
+  const billFilingNumberEntered = !!filingFieldValues.bill_number?.trim();
+  const billFilingReadyForRouting = !isBillFilingNode || (billFilingDocumentUploaded && billFilingNumberEntered);
+  const canOpenCustomsQueryTab = !isBillFilingNode || billFilingDocumentUploaded;
+  const customsQueryTabOpen =
+    billFilingQueryDecision === "QUERY" || !!filingToggleStates.customs_query || activeNodeOpenQueries.length > 0;
+  const billFilingCanChooseQuery = isBillFilingNode && showBillNumberEntry && billFilingDocumentUploaded && billFilingNumberEntered;
+  const billFilingCanMoveNext =
+    !isBillFilingNode || (billFilingReadyForRouting && billFilingQueryDecision === "CLEARED" && activeNodeOpenQueries.length === 0);
+  // Go-back is available on every filing stage that has a completed predecessor.
+  const hasPreviousFilingStage =
+    !!activeNodeRun &&
+    (filingInstance?.nodeRuns || []).some(
+      (run: any) => run.status === "COMPLETED" && run.nodeKey !== activeNodeRun.nodeKey,
+    );
 
 
   // Customer Advance Form State
@@ -408,6 +515,15 @@ export function JobWorkspaceClient({
     !manifestMovementDirection ||
     !manifestRequirement ||
     (manifestRequirement === "CUSTOM" && !job.jobType?.customManifestLabel);
+  const filingMovementDirection =
+    manifestMovementDirection === "IMPORT" || manifestMovementDirection === "EXPORT"
+      ? manifestMovementDirection
+      : null;
+  const isImportFiling = filingMovementDirection === "IMPORT";
+  const isExportFiling = filingMovementDirection === "EXPORT";
+  const filingBillNumberLabel =
+    isExportFiling ? "Shipping Bill Number" : isImportFiling ? "Bill Of Entry Number" : "Bill Number";
+  const filingBillNumberValue = isExportFiling ? shippingBillNumber : billOfEntryNumber;
   const requiresIgm = manifestRequirement === "IGM" || manifestRequirement === "BOTH";
   const requiresEgm = manifestRequirement === "EGM" || manifestRequirement === "BOTH";
   const requiresCustomManifest = manifestRequirement === "CUSTOM";
@@ -443,7 +559,40 @@ export function JobWorkspaceClient({
     : latestCustomerMailLog?.approvalVisibleAt
     ? new Date(latestCustomerMailLog.approvalVisibleAt)
     : null;
-  const customerApprovalDelayElapsed = customerApprovalVisibleAt ? customerApprovalVisibleAt.getTime() <= Date.now() : false;
+  const customerApprovalDelayRemainingMs = customerApprovalVisibleAt
+    ? Math.max(customerApprovalVisibleAt.getTime() - customerApprovalNow, 0)
+    : 0;
+  const customerApprovalDelayElapsed = customerApprovalVisibleAt ? customerApprovalDelayRemainingMs === 0 : false;
+  const customerApprovalCountdown = customerApprovalVisibleAt
+    ? `${String(Math.floor(customerApprovalDelayRemainingMs / 60000)).padStart(2, "0")}:${String(
+        Math.floor((customerApprovalDelayRemainingMs % 60000) / 1000),
+      ).padStart(2, "0")}`
+    : null;
+  useEffect(() => {
+    setCustomerApprovalNow(Date.now());
+  }, [checklistWorkflow?.currentApprovalStage, latestCustomerMailLog?.id, latestCustomerMailLog?.approvalVisibleAt]);
+
+  useEffect(() => {
+    if (
+      checklistWorkflow?.currentApprovalStage !== "CUSTOMER" ||
+      !latestCustomerMailLog ||
+      !customerApprovalVisibleAt ||
+      customerApprovalDelayElapsed
+    ) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setCustomerApprovalNow(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [
+    checklistWorkflow?.currentApprovalStage,
+    latestCustomerMailLog?.id,
+    customerApprovalVisibleAt,
+    customerApprovalDelayElapsed,
+  ]);
   const currentInternalApprovals = checklistApprovals.filter(
     (approval: any) =>
       approval.fileVersionId === currentChecklistVersion?.id &&
@@ -474,7 +623,26 @@ export function JobWorkspaceClient({
     ),
   );
   const getInternalApproverRole = (approval: any) =>
-    approval?.assignedToId === job.assignedManagerId ? "Manager" : "TL";
+    approval?.assignedToId === job.primaryOwnerId
+      ? "Owner"
+      : approval?.assignedToId === job.assignedManagerId
+        ? "Manager"
+        : "TL";
+  const eligibleInternalApproverLabels = Array.from(
+    new Set(
+      [
+        job.primaryOwnerId
+          ? `${getUserName(job.primaryOwnerId)} (Owner)`
+          : null,
+        job.assignedManagerId
+          ? `${getUserName(job.assignedManagerId)} (Manager)`
+          : null,
+        ...currentInternalApprovals
+          .filter((approval: any) => approval.assignedToId)
+          .map((approval: any) => `${getUserName(approval.assignedToId)} (${getInternalApproverRole(approval)})`),
+      ].filter(Boolean) as string[],
+    ),
+  );
   const currentUserName = users.find((user) => user.id === currentUserId)?.name || "You";
   const refreshJobInBackground = () => {
     startRefreshTransition(() => {
@@ -508,7 +676,9 @@ export function JobWorkspaceClient({
       const localUrl = URL.createObjectURL(file);
       const formData = new FormData();
       formData.append("file", file);
-      if (validityDateValue) {
+      if (requirement?.name === "Section 49" && section49ValidityDate) {
+        formData.append("validityDate", section49ValidityDate);
+      } else if (validityDateValue) {
         formData.append("validityDate", validityDateValue);
       }
       const res = await actions.uploadDocumentVersionAction(job.id, reqId, formData);
@@ -664,6 +834,63 @@ export function JobWorkspaceClient({
         refreshJobInBackground();
       } else {
         toast.error(res.error || "Failed to mark requirement as N/A.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleMarkAllNotAvailable = async () => {
+    if (bulkNaEligibleRequirements.length === 0) {
+      toast.error("There are no visible pending documents to mark as N/A.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Mark ${bulkNaEligibleRequirements.length} visible pending document requirement(s) as N/A?`,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setLoading("na-all");
+    try {
+      const updatedIds = new Set<string>();
+      const failedNames: string[] = [];
+
+      for (const requirement of bulkNaEligibleRequirements) {
+        const res = await actions.markDocumentNotAvailableAction(job.id, requirement.id);
+        if (res.ok) {
+          updatedIds.add(requirement.id);
+          continue;
+        }
+        failedNames.push(requirement.name);
+      }
+
+      if (updatedIds.size > 0) {
+        setDocumentRequirements((current) =>
+          current.map((req) =>
+            updatedIds.has(req.id)
+              ? {
+                  ...req,
+                  status: "NOT_AVAILABLE",
+                  exception: {
+                    ...(req.exception || {}),
+                    reason: "N/A",
+                    user: { name: currentUserName },
+                  },
+                }
+              : req,
+          ),
+        );
+        toast.success(`Marked ${updatedIds.size} document requirement(s) as N/A.`);
+        refreshJobInBackground();
+      }
+
+      if (failedNames.length > 0) {
+        toast.error(`Failed to mark as N/A: ${failedNames.join(", ")}`);
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
@@ -1193,6 +1420,15 @@ export function JobWorkspaceClient({
               .map((entry: any) => [entry.fieldKey, entry.valueJson == null ? "" : String(entry.valueJson)]),
           );
           setFilingFieldValues(fieldValuesForNode);
+          setShowBillNumberEntry(!!fieldValuesForNode.bill_number);
+          const activeRunQueries = (instanceRes.data.queries || []).filter((query: any) => query.nodeRunId === activeRun.id);
+          setBillFilingQueryDecision(
+            activeRunQueries.some((query: any) => query.status !== "CLOSED")
+              ? "QUERY"
+              : activeRunQueries.some((query: any) => query.status === "CLOSED")
+                ? "CLEARED"
+                : "",
+          );
           const toggleStatesForNode = Object.fromEntries(
             (instanceRes.data.toggleStates || [])
               .filter((entry: any) => entry.nodeId === activeRun.node.id)
@@ -1211,6 +1447,8 @@ export function JobWorkspaceClient({
           setChecklistResponses({});
           setFilingFieldValues({});
           setFilingToggleStates({});
+          setShowBillNumberEntry(false);
+          setBillFilingQueryDecision("");
           setSelectedNextNodeKey("");
         }
 
@@ -1256,14 +1494,21 @@ export function JobWorkspaceClient({
     e.preventDefault();
     if (!activeNodeRun) return;
 
+    if (isBillFilingNode && !billFilingCanMoveNext) {
+      toast.error("Choose Update Query or No Query / Query Completed before moving to the next filing step.");
+      return;
+    }
+
     // Validate that comments are entered if commentsRequired is true
     if (activeNodeRun.node.commentsRequired && !nodeRemarks.trim()) {
       toast.error(`Comments are mandatory to complete stage: ${activeNodeRun.node.name}.`);
       return;
     }
 
-    // Validate all mandatory checklist items are checked if requireAllMandatoryChecklistItems is true
-    if (activeNodeRun.node.requireAllMandatoryChecklistItems) {
+    // Validate all mandatory checklist items are checked if requireAllMandatoryChecklistItems is true.
+    // Bill Filing nodes hide the checklist — items are auto-completed through
+    // the upload + Fill Bill + query-decision actions instead.
+    if (!isBillFilingNode && activeNodeRun.node.requireAllMandatoryChecklistItems) {
       for (const item of activeChecklistItems) {
         if (item.isMandatory) {
           const resp = checklistResponses[item.id];
@@ -1307,8 +1552,30 @@ export function JobWorkspaceClient({
 
     setLoading("filing-complete");
     try {
+      if (isBillFilingNode && filingFieldValues.bill_number?.trim()) {
+        const billNumber = filingFieldValues.bill_number.trim();
+        const shipmentSaveRes = await actions.upsertFilingShipmentDetailsAction(job.id, {
+          filingShipmentType,
+          billOfEntryNumber: isExportFiling ? null : billNumber,
+          shippingBillNumber: isExportFiling ? billNumber : null,
+        });
+        if (!shipmentSaveRes.ok) {
+          toast.error(shipmentSaveRes.error || "Failed to save bill number for filing.");
+          return;
+        }
+      }
+
       const responsesList = activeChecklistItems.map((item: any) => {
         const val = checklistResponses[item.id] || { isChecked: false, remarks: "", fileKey: undefined, delayRemarks: "" };
+        if (isBillFilingNode) {
+          return {
+            checklistItemId: item.id,
+            isChecked: true,
+            remarks: val.remarks || "Completed through Bill Filing actions.",
+            fileKey: val.fileKey || undefined,
+            delayRemarks: val.delayRemarks || undefined,
+          };
+        }
         return {
           checklistItemId: item.id,
           isChecked: val.isChecked,
@@ -1332,6 +1599,31 @@ export function JobWorkspaceClient({
         router.refresh();
       } else {
         toast.error(res.error || "Failed to finalize filing stage.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleGoBackStage = async () => {
+    if (!activeNodeRun) return;
+    if (!goBackReason.trim()) {
+      toast.error("Enter a reason to move back to the previous filing stage.");
+      return;
+    }
+    setLoading("filing-go-back");
+    try {
+      const res = await actions.revertFilingStageAction(job.id, activeNodeRun.id, goBackReason.trim());
+      if (res.ok) {
+        toast.success(`Moved back to ${res.data?.reopenedNodeName || "the previous stage"}.`);
+        setGoBackOpen(false);
+        setGoBackReason("");
+        await loadFilingData();
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to move back to the previous filing stage.");
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
@@ -1411,6 +1703,60 @@ export function JobWorkspaceClient({
         router.refresh();
       } else {
         toast.error(res.error || "Failed to update Section 49 status.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleSaveSection49Validity = async () => {
+    if (!section49ValidityDate) {
+      toast.error("Enter Section 49 validity date.");
+      return;
+    }
+
+    setLoading("section49-validity");
+    try {
+      const res = await actions.updateSection49ValidityAction(job.id, section49ValidityDate);
+      if (res.ok) {
+        setSection49Flag(res.data);
+        toast.success("Section 49 validity date updated.");
+        refreshJobInBackground();
+      } else {
+        toast.error(res.error || "Failed to update Section 49 validity date.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleApplySection49Extension = async () => {
+    if (!section49ExtensionDate) {
+      toast.error("Enter the new Section 49 validity date.");
+      return;
+    }
+    if (!section49ExtensionFile) {
+      toast.error("Choose the Section 49 extension document.");
+      return;
+    }
+
+    setLoading("section49-extension");
+    try {
+      const formData = new FormData();
+      formData.append("extensionDate", section49ExtensionDate);
+      formData.append("file", section49ExtensionFile);
+      const res = await actions.applySection49ExtensionAction(job.id, formData);
+      if (res.ok) {
+        toast.success("Section 49 extension applied.");
+        setSection49ExtensionDate("");
+        setSection49ExtensionFile(null);
+        refreshJobInBackground();
+      } else {
+        toast.error(res.error || "Failed to apply Section 49 extension.");
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
@@ -1504,6 +1850,9 @@ export function JobWorkspaceClient({
       });
       if (res.ok) {
         toast.success("Filing query saved.");
+        setBillFilingQueryDecision("QUERY");
+        setFilingToggleStates((current) => ({ ...current, customs_query: true }));
+        setFilingFieldValues((current) => ({ ...current, query_notes: filingQueryDetails.trim() }));
         setFilingQueryTitle("");
         setFilingQueryDetails("");
         await loadFilingData();
@@ -1517,12 +1866,26 @@ export function JobWorkspaceClient({
     }
   };
 
-  const handleUpdateFilingQueryStatus = async (queryId: string, status: "REPLIED" | "CLOSED") => {
+  const handleUpdateFilingQueryStatus = async (
+    queryId: string,
+    status: "REPLIED" | "CLOSED",
+    details?: string,
+  ) => {
     setLoading(`filing-query-${queryId}`);
     try {
-      const res = await actions.updateFilingWorkflowQueryStatusAction(job.id, queryId, { status });
+      const res = await actions.updateFilingWorkflowQueryStatusAction(job.id, queryId, {
+        status,
+        details: details?.trim() || undefined,
+      });
       if (res.ok) {
         toast.success(status === "CLOSED" ? "Query closed." : "Query marked as replied.");
+        if (status === "CLOSED") {
+          setBillFilingQueryDecision("CLEARED");
+          setFilingToggleStates((current) => ({ ...current, customs_query: false }));
+        } else {
+          setBillFilingQueryDecision("QUERY");
+        }
+        setFilingQueryStatusUpdates((current) => ({ ...current, [queryId]: "" }));
         await loadFilingData();
       } else {
         toast.error(res.error || "Failed to update filing query.");
@@ -1539,17 +1902,26 @@ export function JobWorkspaceClient({
       toast.error("Shipment type is required.");
       return;
     }
-    if (billOfEntryNumber.trim() && shippingBillNumber.trim()) {
+    if (isImportFiling && !billOfEntryNumber.trim() && shippingBillNumber.trim()) {
+      toast.error("This job is import filing. Use only Bill of Entry Number.");
+      return;
+    }
+    if (isExportFiling && !shippingBillNumber.trim() && billOfEntryNumber.trim()) {
+      toast.error("This job is export filing. Use only Shipping Bill Number.");
+      return;
+    }
+    if (!isImportFiling && !isExportFiling && billOfEntryNumber.trim() && shippingBillNumber.trim()) {
       toast.error("Bill of Entry Number and Shipping Bill Number cannot both be filled.");
       return;
     }
 
     setLoading("filing-shipment-save");
     try {
+      const trimmedBillNumber = filingBillNumberValue.trim() || null;
       const res = await actions.upsertFilingShipmentDetailsAction(job.id, {
         filingShipmentType,
-        billOfEntryNumber: billOfEntryNumber.trim() || null,
-        shippingBillNumber: shippingBillNumber.trim() || null,
+        billOfEntryNumber: isExportFiling ? null : isImportFiling ? trimmedBillNumber : billOfEntryNumber.trim() || null,
+        shippingBillNumber: isImportFiling ? null : isExportFiling ? trimmedBillNumber : shippingBillNumber.trim() || null,
       });
       if (res.ok) {
         toast.success("Filing shipment details saved.");
@@ -1889,7 +2261,7 @@ export function JobWorkspaceClient({
 
   const stageProgress = activeStepIndex >= 0 ? Math.round(((activeStepIndex + 1) / STAGES.length) * 100) : 0;
   const workspaceTabs: { key: WorkspaceTab; label: string; count?: number }[] = [
-    { key: "docs", label: "Documents", count: documentRequirements.length },
+    { key: "docs", label: "Documents", count: visibleDocumentRequirements.length },
     { key: "additionalData", label: "Additional Data" },
     { key: "checklist", label: "Checklist" },
     { key: "filing", label: "Filing" },
@@ -1924,6 +2296,25 @@ export function JobWorkspaceClient({
             }}
           >
             Acknowledge
+          </Button>
+        </div>
+      )}
+
+      {section49ValidityWarning && (
+        <div className="rounded-2xl border border-orange-500/40 bg-orange-500/10 p-4 flex items-center justify-between gap-3 text-orange-600">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={20} className="shrink-0 text-orange-500" />
+            <div>
+              <span className="ds-label text-orange-500">Section 49 Validity Alert</span>
+              <p className="text-sm font-semibold text-on-surface">{section49ValidityWarning.message}</p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            className="border-orange-500/40 text-orange-600 hover:bg-orange-500/10 text-xs shrink-0 h-8"
+            onClick={() => setActiveTab("docs")}
+          >
+            Open Documents
           </Button>
         </div>
       )}
@@ -2134,20 +2525,53 @@ export function JobWorkspaceClient({
                   Upload required files or declare exceptions to pass the document gate. Workflow-uploaded files, Section 49, and Extension documents also appear here with source and validity tracking.
                 </p>
               </div>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleMarkAllNotAvailable}
+                  disabled={loading !== null || bulkNaEligibleRequirements.length === 0}
+                  className="border-[#fb923c]/50 text-[#fb923c] hover:bg-[#fb923c]/10"
+                >
+                  {loading === "na-all" ? "Marking..." : "Mark All N/A"}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => setIsCustomDocumentModalOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus size={14} />
+                  Add Custom Document
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="ds-label">Customs Validity Controls</p>
+                <p className="mt-1 text-xs text-on-surface-variant">
+                  Activate Section 49 here to reveal its document card in the list below.
+                </p>
+              </div>
               <Button
                 type="button"
-                onClick={() => setIsCustomDocumentModalOpen(true)}
-                className="flex items-center gap-2"
+                variant="outline"
+                onClick={() => setShowSection49Modal(true)}
+                disabled={loading !== null || !canUpdateJob}
+                className={
+                  section49Flag?.isEnabled
+                    ? "border-[#00cec4]/50 text-[#00cec4] hover:bg-[#00cec4]/10"
+                    : "border-[#fb923c]/50 text-[#fb923c] hover:bg-[#fb923c]/10"
+                }
               >
-                <Plus size={14} />
-                Add Custom Document
+                {section49Flag?.isEnabled ? "Deactivate Section 49" : "Activate Section 49"}
               </Button>
             </div>
 
             {/* Categories and grouped requirement slots */}
             {(() => {
               const groupedRequirements: Record<string, any[]> = {};
-              documentRequirements.forEach((req: any) => {
+              visibleDocumentRequirements.forEach((req: any) => {
                 const categoryName = req.requirementItem?.category?.name || req.category || "General Documents";
                 if (!groupedRequirements[categoryName]) {
                   groupedRequirements[categoryName] = [];
@@ -2177,7 +2601,14 @@ export function JobWorkspaceClient({
                             const isUploaded = req.status === "UPLOADED";
                             const isExempted = req.status === "NOT_AVAILABLE";
                             const currentVersion = req.versions.find((v: any) => v.isCurrent);
-                            const validitySummary = getValiditySummary(currentVersion?.validityDate || null);
+                            const isSection49Requirement = req.name === "Section 49";
+                            const effectiveValidityDate =
+                              isSection49Requirement ? section49Flag?.validityDate || currentVersion?.validityDate : currentVersion?.validityDate;
+                            const validitySummary = getValiditySummary(effectiveValidityDate || null);
+                            const section49WarningActive =
+                              isSection49Requirement &&
+                              effectiveValidityDate &&
+                              ["warning", "destructive"].includes(validitySummary?.tone || "");
                             return (
                               <div
                                 key={req.id}
@@ -2216,6 +2647,106 @@ export function JobWorkspaceClient({
                                   {req.requirementItem?.description && (
                                     <p className="text-xs text-on-surface-variant mt-1">{req.requirementItem.description}</p>
                                   )}
+
+                                  {isSection49Requirement ? (
+                                    <div className="mt-3 space-y-3 rounded-xl border border-outline-variant/40 bg-surface-container-low p-3">
+                                      <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto] md:items-end">
+                                        <label className="space-y-1.5">
+                                          <span className="ds-label">Section 49 Validity Date</span>
+                                          <input
+                                            type="date"
+                                            value={section49ValidityDate}
+                                            onChange={(e) => setSection49ValidityDate(e.target.value)}
+                                            disabled={loading !== null || !canUpdateJob}
+                                            className="w-full ds-numeric"
+                                          />
+                                        </label>
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={handleSaveSection49Validity}
+                                          disabled={loading !== null || !canUpdateJob || !section49ValidityDate}
+                                          className="md:mb-0.5"
+                                        >
+                                          {loading === "section49-validity" ? "Saving..." : "Save Date"}
+                                        </Button>
+                                      </div>
+                                      {validitySummary ? (
+                                        <p
+                                          className={`text-xs ${
+                                            validitySummary.tone === "destructive"
+                                              ? "text-red-500"
+                                              : validitySummary.tone === "warning"
+                                                ? "text-[#fb923c]"
+                                                : "text-on-surface-variant"
+                                          }`}
+                                        >
+                                          {validitySummary.detail}. Extension opens within 4 days of expiry.
+                                        </p>
+                                      ) : null}
+
+                                      {section49WarningActive ? (
+                                        <div className="space-y-2 border-t border-outline-variant/30 pt-3">
+                                          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                                            <label className="space-y-1.5">
+                                              <span className="ds-label">New Validity Date</span>
+                                              <input
+                                                type="date"
+                                                value={section49ExtensionDate}
+                                                onChange={(e) => setSection49ExtensionDate(e.target.value)}
+                                                disabled={loading !== null || !canUpdateJob}
+                                                className="w-full ds-numeric"
+                                              />
+                                            </label>
+                                            <label className="space-y-1.5">
+                                              <span className="ds-label">Extension Document</span>
+                                              <input
+                                                type="file"
+                                                accept="application/pdf,image/*"
+                                                onChange={(e) => setSection49ExtensionFile(e.target.files?.[0] ?? null)}
+                                                disabled={loading !== null || !canUpdateJob}
+                                                className="w-full text-xs"
+                                              />
+                                            </label>
+                                          </div>
+                                          <div className="flex justify-end">
+                                            <Button
+                                              type="button"
+                                              size="sm"
+                                              onClick={handleApplySection49Extension}
+                                              disabled={loading !== null || !canUpdateJob || !section49ExtensionDate || !section49ExtensionFile}
+                                            >
+                                              {loading === "section49-extension" ? "Applying..." : "Apply Extension"}
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      ) : null}
+
+                                      {Array.isArray(job.section49Extensions) && job.section49Extensions.length > 0 ? (
+                                        <div className="space-y-1 border-t border-outline-variant/30 pt-3 text-xs">
+                                          <span className="ds-label">Extension History</span>
+                                          {job.section49Extensions.slice(0, 3).map((extension: any) => (
+                                            <div key={extension.id} className="flex flex-wrap items-center justify-between gap-2 text-on-surface-variant">
+                                              <span className="ds-numeric">
+                                                {new Date(extension.extensionDate).toLocaleDateString("en-IN")}
+                                              </span>
+                                              {extension.fileKey ? (
+                                                <a
+                                                  href={extension.fileKey}
+                                                  target="_blank"
+                                                  rel="noreferrer"
+                                                  className="text-[#00cec4] hover:underline"
+                                                >
+                                                  {extension.fileName || "View document"}
+                                                </a>
+                                              ) : null}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  ) : null}
 
                                   {/* Display Uploaded File details */}
                                   {isUploaded && currentVersion && (
@@ -2680,7 +3211,7 @@ export function JobWorkspaceClient({
                     <div>
                       <h4 className="font-bold text-sm uppercase text-[#fb923c]">Manager Assignment Recommended</h4>
                       <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
-                        No manager has been assigned to this job yet. Internal approval can still route through the primary owner&apos;s Manager or TL if configured in HRMS, but assigning a manager keeps responsibility explicit.
+                        No manager has been assigned to this job yet. Internal approval can still be completed by the job owner, or route through the owner&apos;s Manager or TL if configured in HRMS, but assigning a manager keeps responsibility explicit.
                       </p>
                       {canUpdateJob && (
                         <button
@@ -2710,7 +3241,7 @@ export function JobWorkspaceClient({
                           <p className="text-xs text-on-surface-variant">
                             {checklistWorkflow?.customerRejectedOnce
                               ? "Customer has already rejected once. After rework, internal approval will move this directly to Filing."
-                              : "Internal approval now completes when either the assigned Manager or TL approves, then routes to concerned job users for customer approval."}
+                              : "Internal approval now completes when the job owner, assigned Manager, or TL approves, then routes to concerned job users for customer approval."}
                           </p>
                         </div>
                         {currentChecklistVersion ? (
@@ -2744,9 +3275,9 @@ export function JobWorkspaceClient({
                           <div>
                             <h4 className="font-bold text-xs uppercase text-red-500">No Internal Approvers Configured</h4>
                             <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
-                              There are no active internal checklist approvers configured for this job. 
+                              There are no active internal checklist approvers configured for this job.
                               Please assign an employee with the <span className="font-medium text-on-surface">Approval</span> responsibility in the job settings, 
-                              or verify that the job owner has a manager or team lead configured in HRMS.
+                              or verify that the job owner, assigned manager, or owner&apos;s team lead is configured in HRMS.
                             </p>
                             {canManageSettings && (
                               <button
@@ -2848,12 +3379,15 @@ export function JobWorkspaceClient({
                             : approvedInternalDecision
                             ? `Approved by ${getUserName(approvedInternalDecision.actedById || approvedInternalDecision.assignedToId)} (${getInternalApproverRole(approvedInternalDecision)}) on ${approvedInternalDecision.actedAt ? new Date(approvedInternalDecision.actedAt).toLocaleString("en-IN") : "Pending"}`
                             : checklistWorkflow.currentApprovalStage === "INTERNAL"
-                            ? "Pending: Manager or TL approval required."
+                            ? "Pending: owner, Manager, or TL approval required."
                             : "Internal approval has not been completed for the current file version yet."}
+                        </p>
+                        <p className="mt-1 text-xs text-on-surface-variant">
+                          Eligible approvers: {eligibleInternalApproverLabels.join(", ") || "Owner, Manager, or TL"}
                         </p>
                         {checklistWorkflow?.currentApprovalStage === "INTERNAL" && !approvedInternalDecision ? (
                           <p className="mt-1 text-xs text-on-surface-variant">
-                            Pending approvers: {Array.from(new Set(currentInternalApprovals.filter((approval: any) => approval.action === "PENDING").map((approval: any) => `${getUserName(approval.assignedToId)} (${getInternalApproverRole(approval)})`))).join(", ") || "Manager or TL"}
+                            Pending approvers: {Array.from(new Set(currentInternalApprovals.filter((approval: any) => approval.action === "PENDING").map((approval: any) => `${getUserName(approval.assignedToId)} (${getInternalApproverRole(approval)})`))).join(", ") || "Owner, Manager, or TL"}
                           </p>
                         ) : null}
                       </div>
@@ -2897,7 +3431,7 @@ export function JobWorkspaceClient({
                             : checklistWorkflow?.currentApprovalStage === "CUSTOMER" && !latestCustomerMailLog
                             ? "Internal approval is complete. Send the checklist mail to unlock customer approval."
                             : checklistWorkflow?.currentApprovalStage === "CUSTOMER" && latestCustomerMailLog && !customerApprovalDelayElapsed
-                            ? `Checklist mail sent on ${new Date(latestCustomerMailLog.sentAt).toLocaleString("en-IN")}. Customer approval will unlock at ${customerApprovalVisibleAt?.toLocaleString("en-IN")}.`
+                            ? `Checklist mail sent on ${new Date(latestCustomerMailLog.sentAt).toLocaleString("en-IN")}. Customer approval unlocks automatically in ${customerApprovalCountdown} at ${customerApprovalVisibleAt?.toLocaleString("en-IN")}.`
                             : checklistWorkflow?.currentApprovalStage === "CUSTOMER"
                             ? "Pending: concerned job user approval required."
                             : checklistWorkflow?.customerRejectedOnce
@@ -3069,7 +3603,7 @@ export function JobWorkspaceClient({
               <div className="space-y-4">
                 <div className="ds-form-section rounded-2xl border border-outline-variant/40 bg-surface p-4">
                   <h3 className="ds-h3 text-on-surface">SHIPMENT DETAILS</h3>
-                  <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="space-y-1">
                       <label className="ds-label block">Shipment Type</label>
                       <input
@@ -3079,29 +3613,33 @@ export function JobWorkspaceClient({
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="ds-label block">Bill Of Entry Number</label>
+                      <label className="ds-label block">{filingBillNumberLabel}</label>
                       <input
                         type="text"
-                        value={billOfEntryNumber}
-                        disabled={beDisabled}
-                        onChange={(e) => setBillOfEntryNumber(e.target.value)}
-                        className="w-full text-xs disabled:opacity-50"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="ds-label block">Shipping Bill Number</label>
-                      <input
-                        type="text"
-                        value={shippingBillNumber}
-                        disabled={sbDisabled}
-                        onChange={(e) => setShippingBillNumber(e.target.value)}
-                        className="w-full text-xs disabled:opacity-50"
+                        value={filingBillNumberValue}
+                        onChange={(e) => {
+                          if (isExportFiling) {
+                            setShippingBillNumber(e.target.value);
+                            setBillOfEntryNumber("");
+                            return;
+                          }
+                          setBillOfEntryNumber(e.target.value);
+                          setShippingBillNumber("");
+                        }}
+                        placeholder={
+                          isExportFiling
+                            ? "Enter Shipping Bill Number"
+                            : isImportFiling
+                              ? "Enter Bill Of Entry Number"
+                              : "Enter Bill Number"
+                        }
+                        className="w-full text-xs"
                       />
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                     <p className="text-xs text-on-surface-variant">
-                      Shipment type is set automatically from the shipment type selected when the job was created. Once you start typing either Bill of Entry or Shipping Bill, the other field is greyed out.
+                      Shipment direction is taken from the configured clearance flow. Only the applicable bill number field is shown here.
                     </p>
                     <Button onClick={handleSaveFilingShipmentDetails} disabled={loading === "filing-shipment-save"} className="text-xs h-9">
                       {loading === "filing-shipment-save" ? "Saving..." : "Save Shipment Details"}
@@ -3145,7 +3683,7 @@ export function JobWorkspaceClient({
                           <div className="flex flex-col gap-2 border-b border-outline-variant/30 pb-3 sm:flex-row sm:items-start sm:justify-between">
                             <div>
                               <span className="ds-label block text-on-surface-variant">Active Checking Stage</span>
-                              <h3 className="ds-h3 text-[#00cec4]">{activeNodeRun.node.name}</h3>
+                              <h3 className="ds-h3 text-[#00cec4]">{activeNodeDisplayName}</h3>
                               {(activeNodeRun.node.sectionName || activeNodeRun.node.branchName) && (
                                 <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
                                   {[activeNodeRun.node.sectionName, activeNodeRun.node.branchName].filter(Boolean).join(" / ")}
@@ -3188,19 +3726,93 @@ export function JobWorkspaceClient({
 
                           {/* Node run completion form */}
                           <form onSubmit={handleCompleteFilingNode} className="space-y-4">
-                            {activeNodeRun.node.fieldDefinitionsJson?.length > 0 && (
+                            {isBillFilingNode ? (
+                              <div className="space-y-3">
+                                <h4 className="ds-label text-on-surface">Bill Filing Actions</h4>
+                                <div className="rounded-xl border border-outline-variant/30 bg-surface p-3">
+                                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                    <div className="min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <FileText size={16} className="shrink-0 text-[#00cec4]" />
+                                        <span className="text-xs font-semibold text-on-surface">
+                                          {billFilingDocumentAttachment?.fileName || "Bill document not uploaded"}
+                                        </span>
+                                      </div>
+                                      <p className="mt-1 text-xs text-on-surface-variant">
+                                        {billFilingNumberEntered
+                                          ? `${filingBillNumberLabel}: ${filingFieldValues.bill_number}`
+                                          : `Fill ${filingBillNumberLabel} after uploading the bill document.`}
+                                      </p>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <input
+                                        id={`bill-document-upload-${activeNodeRun.id}`}
+                                        type="file"
+                                        className="hidden"
+                                        onChange={(e) => handleUploadNodeDocument("bill_document", e)}
+                                      />
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => document.getElementById(`bill-document-upload-${activeNodeRun.id}`)?.click()}
+                                        disabled={loading === "node-document-bill_document"}
+                                        className="gap-2"
+                                      >
+                                        <Upload size={14} />
+                                        {billFilingDocumentUploaded ? "Replace Document" : "Upload Document"}
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        onClick={() => setShowBillNumberEntry((current) => !current)}
+                                      >
+                                        {billFilingNumberEntered ? "Edit Bill" : "Fill Bill"}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  {showBillNumberEntry ? (
+                                    <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto] md:items-end">
+                                      <label className="space-y-1.5">
+                                        <span className="ds-label block text-on-surface-variant">
+                                          {filingBillNumberLabel} *
+                                        </span>
+                                        <input
+                                          value={filingFieldValues.bill_number || ""}
+                                          onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, bill_number: e.target.value }))}
+                                          placeholder={`Enter ${filingBillNumberLabel}`}
+                                          className="w-full text-sm"
+                                        />
+                                      </label>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setShowBillNumberEntry(false)}
+                                        disabled={!filingFieldValues.bill_number?.trim()}
+                                      >
+                                        Done
+                                      </Button>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              </div>
+                            ) : null}
+
+                            {(activeNodeRun.node.fieldDefinitionsJson || []).filter((field: any) => !(isBillFilingNode && field.key === "bill_number")).length > 0 && (
                               <div className="space-y-3">
                                 <h4 className="ds-label text-on-surface">Configured Fields</h4>
                                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                  {activeNodeRun.node.fieldDefinitionsJson.map((field: any) => (
+                                  {(activeNodeRun.node.fieldDefinitionsJson || []).filter((field: any) => !(isBillFilingNode && field.key === "bill_number")).map((field: any) => (
                                     <div key={field.key} className="space-y-1">
                                       <label className="ds-label block text-on-surface-variant">
-                                        {field.label} {field.required !== false ? "*" : ""}
+                                        {field.key === "bill_number" ? filingBillNumberLabel : field.label} {field.required !== false ? "*" : ""}
                                       </label>
                                       <input
                                         value={filingFieldValues[field.key] || ""}
                                         onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                                        placeholder={field.placeholder || field.label}
+                                        placeholder={
+                                          field.key === "bill_number"
+                                            ? `Enter ${filingBillNumberLabel}`
+                                            : field.placeholder || field.label
+                                        }
                                         className="w-full text-sm"
                                       />
                                     </div>
@@ -3209,7 +3821,7 @@ export function JobWorkspaceClient({
                               </div>
                             )}
 
-                            {(activeNodeRun.node.conditionalSectionsJson?.length > 0 || activeNodeRun.node.documentRequirementsJson?.length > 0) && (
+                            {(activeNodeRun.node.conditionalSectionsJson?.length > 0 || (activeNodeRun.node.documentRequirementsJson || []).filter((requirement: any) => !(isBillFilingNode && requirement.key === "bill_document")).length > 0) && (
                               <div className="space-y-3 border-t border-outline-variant/30 pt-4">
                                 <h4 className="ds-label text-on-surface">Conditional Sections & Documents</h4>
                                 <div className="space-y-3">
@@ -3266,7 +3878,7 @@ export function JobWorkspaceClient({
                                     </div>
                                   ))}
 
-                                  {(activeNodeRun.node.documentRequirementsJson || []).map((requirement: any) => (
+                                  {(activeNodeRun.node.documentRequirementsJson || []).filter((requirement: any) => !(isBillFilingNode && requirement.key === "bill_document")).map((requirement: any) => (
                                     <div key={requirement.key} className="rounded-xl border border-outline-variant/30 bg-surface p-3">
                                       <div className="flex items-center justify-between gap-3">
                                         <div className="text-xs font-semibold text-on-surface">
@@ -3287,9 +3899,89 @@ export function JobWorkspaceClient({
                               </div>
                             )}
 
-                            {((filingFieldValues["query_notes"] && filingFieldValues["query_notes"].trim()) || filingToggleStates["customs_query"] || (filingInstance?.queries || []).some((query: any) => query.nodeRunId === activeNodeRun.id && query.status !== "CLOSED")) && (
+                            {billFilingCanChooseQuery && !customsQueryTabOpen && billFilingQueryDecision !== "CLEARED" ? (
                               <div className="space-y-3 border-t border-outline-variant/30 pt-4">
-                                <h4 className="ds-label text-on-surface">Customs Query</h4>
+                                <div className="rounded-2xl border border-outline-variant/35 bg-surface-container-low/35 p-4">
+                                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                      <h4 className="ds-label text-on-surface">Query Decision</h4>
+                                      <p className="mt-1 text-xs text-on-surface-variant">
+                                        Choose whether the bill is under customs query or ready to move to the next filing step.
+                                      </p>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
+                                          setBillFilingQueryDecision("QUERY");
+                                          setFilingToggleStates((current) => ({ ...current, customs_query: true }));
+                                        }}
+                                      >
+                                        Update Query
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        onClick={() => {
+                                          setBillFilingQueryDecision("CLEARED");
+                                          setFilingToggleStates((current) => ({ ...current, customs_query: false }));
+                                        }}
+                                      >
+                                        No Query / Query Completed
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : null}
+
+                            {isBillFilingNode && showBillNumberEntry && !billFilingDocumentUploaded ? (
+                              <div className="space-y-3 border-t border-outline-variant/30 pt-4">
+                                <div className="rounded-2xl border border-[#fb923c]/35 bg-[#fb923c]/10 p-4 text-xs text-on-surface">
+                                  Upload the bill document to continue with query status or move to the next step.
+                                </div>
+                              </div>
+                            ) : null}
+
+                            {isBillFilingNode && showBillNumberEntry && billFilingDocumentUploaded && !billFilingNumberEntered ? (
+                              <div className="space-y-3 border-t border-outline-variant/30 pt-4">
+                                <div className="rounded-2xl border border-[#fb923c]/35 bg-[#fb923c]/10 p-4 text-xs text-on-surface">
+                                  Enter the bill number to continue with query status or move to the next step.
+                                </div>
+                              </div>
+                            ) : null}
+
+                            {isBillFilingNode && billFilingQueryDecision === "CLEARED" ? (
+                              <div className="space-y-3 border-t border-outline-variant/30 pt-4">
+                                <div className="rounded-2xl border border-[#00cec4]/25 bg-[#00cec4]/10 p-4 text-xs text-on-surface">
+                                  Bill query status is clear. Choose the next filing step below.
+                                </div>
+                              </div>
+                            ) : null}
+
+                            {customsQueryTabOpen && (
+                              <div className="space-y-3 border-t border-outline-variant/30 pt-4">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                  <div>
+                                    <h4 className="ds-label text-on-surface">Customs Query</h4>
+                                    <p className="mt-1 text-xs text-on-surface-variant">
+                                      Daily status reminders are scheduled for 10:30 AM until the query is marked replied or closed.
+                                    </p>
+                                  </div>
+                                  {filingToggleStates["customs_query"] ? (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setBillFilingQueryDecision("");
+                                        setFilingToggleStates((current) => ({ ...current, customs_query: false }));
+                                      }}
+                                      disabled={activeNodeOpenQueries.length > 0}
+                                    >
+                                      Change Decision
+                                    </Button>
+                                  ) : null}
+                                </div>
                                 <input
                                   value={filingQueryTitle}
                                   onChange={(e) => setFilingQueryTitle(e.target.value)}
@@ -3299,7 +3991,10 @@ export function JobWorkspaceClient({
                                 <textarea
                                   rows={3}
                                   value={filingQueryDetails}
-                                  onChange={(e) => setFilingQueryDetails(e.target.value)}
+                                  onChange={(e) => {
+                                    setFilingQueryDetails(e.target.value);
+                                    setFilingFieldValues((current) => ({ ...current, query_notes: e.target.value }));
+                                  }}
                                   placeholder="Record customs query details, reply notes, or follow-up context..."
                                   className="w-full text-xs"
                                 />
@@ -3308,31 +4003,73 @@ export function JobWorkspaceClient({
                                     {loading === "filing-query-create" ? "Saving..." : "Save Query"}
                                   </Button>
                                 </div>
-                                {(filingInstance?.queries || [])
-                                  .filter((query: any) => query.nodeRunId === activeNodeRun.id)
-                                  .map((query: any) => (
+                                {activeNodeQueries.map((query: any) => (
                                     <div key={query.id} className="rounded-xl border border-outline-variant/35 bg-surface-container-low/35 p-3 text-xs">
                                       <div className="flex items-start justify-between gap-3">
                                         <div>
-                                          <div className="font-semibold text-on-surface">{query.title}</div>
+                                          <div className="flex flex-wrap items-center gap-2">
+                                            <div className="font-semibold text-on-surface">{query.title}</div>
+                                            <span className="rounded-md bg-[#00cec4]/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#00cec4]">
+                                              {query.status}
+                                            </span>
+                                          </div>
                                           <div className="mt-1 text-on-surface-variant">{query.details}</div>
                                         </div>
-                                        <div className="flex gap-2">
-                                          {query.status !== "CLOSED" && (
-                                            <>
-                                              <Button type="button" size="sm" variant="outline" onClick={() => handleUpdateFilingQueryStatus(query.id, "REPLIED")}>Query Replied</Button>
-                                              <Button type="button" size="sm" variant="outline" onClick={() => handleUpdateFilingQueryStatus(query.id, "CLOSED")}>Close Query</Button>
-                                            </>
-                                          )}
-                                        </div>
                                       </div>
+                                      {query.status !== "CLOSED" ? (
+                                        <div className="mt-3 space-y-2 border-t border-outline-variant/30 pt-3">
+                                          <label className="ds-label block text-on-surface-variant">Status Update</label>
+                                          <textarea
+                                            rows={2}
+                                            value={filingQueryStatusUpdates[query.id] ?? ""}
+                                            onChange={(e) =>
+                                              setFilingQueryStatusUpdates((current) => ({
+                                                ...current,
+                                                [query.id]: e.target.value,
+                                              }))
+                                            }
+                                            placeholder="Enter today&apos;s query status or reply update..."
+                                            className="w-full text-xs"
+                                          />
+                                          <div className="flex flex-wrap justify-end gap-2">
+                                            <Button
+                                              type="button"
+                                              size="sm"
+                                              variant="outline"
+                                              onClick={() =>
+                                                handleUpdateFilingQueryStatus(
+                                                  query.id,
+                                                  "REPLIED",
+                                                  filingQueryStatusUpdates[query.id] || query.details,
+                                                )
+                                              }
+                                            >
+                                              Save Status Update
+                                            </Button>
+                                            <Button
+                                              type="button"
+                                              size="sm"
+                                              variant="outline"
+                                              onClick={() =>
+                                                handleUpdateFilingQueryStatus(
+                                                  query.id,
+                                                  "CLOSED",
+                                                  filingQueryStatusUpdates[query.id] || query.details,
+                                                )
+                                              }
+                                            >
+                                              Query Is Replied
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      ) : null}
                                     </div>
                                   ))}
                               </div>
                             )}
                             
                             {/* Checklist Items */}
-                            {activeNodeRun.node.checklistItems?.length > 0 && (
+                            {!isBillFilingNode && activeNodeRun.node.checklistItems?.length > 0 && (
                               <div className="space-y-3">
                                 <h4 className="ds-label text-on-surface">Stage Checklist Verification</h4>
                                 <div className="space-y-3.5">
@@ -3640,7 +4377,15 @@ export function JobWorkspaceClient({
 
                             {/* Transitions dropdown */}
                             <div className="border-t border-outline-variant/30 pt-4">
-                              {outgoingEdges.length > 0 ? (
+                              {isBillFilingNode && !billFilingReadyForRouting ? (
+                                <div className="rounded-2xl border border-outline-variant/35 bg-surface-container-low/35 p-3 text-xs text-on-surface-variant">
+                                  Complete Bill Filing by uploading the bill document and entering the bill number.
+                                </div>
+                              ) : isBillFilingNode && !billFilingCanMoveNext ? (
+                                <div className="rounded-2xl border border-outline-variant/35 bg-surface-container-low/35 p-3 text-xs text-on-surface-variant">
+                                  Select Update Query or No Query / Query Completed before moving to the next filing step.
+                                </div>
+                              ) : outgoingEdges.length > 0 ? (
                                 activeNodeRun.node.nodeType === "DECISION" ? (
                                   <div className="space-y-2">
                                     <label className="ds-label text-on-surface block">Decision *</label>
@@ -3699,7 +4444,21 @@ export function JobWorkspaceClient({
                             </div>
 
                             {/* Complete Action Button */}
-                            <div className="flex justify-end gap-2 border-t border-outline-variant/30 pt-4">
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-outline-variant/30 pt-4">
+                              {hasPreviousFilingStage ? (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  disabled={loading !== null}
+                                  onClick={() => setGoBackOpen(true)}
+                                  className="gap-2 text-xs"
+                                >
+                                  <Undo2 size={14} />
+                                  Move Back to Previous Stage
+                                </Button>
+                              ) : (
+                                <span />
+                              )}
                               <Button
                                 type="submit"
                                 disabled={loading !== null}
@@ -3709,6 +4468,48 @@ export function JobWorkspaceClient({
                               </Button>
                             </div>
                           </form>
+
+                          <Modal
+                            open={goBackOpen}
+                            title="Move Back to Previous Stage"
+                            description="The current stage will be cancelled and the previous filing stage reopened. This move is recorded in the audit tab."
+                            onClose={() => setGoBackOpen(false)}
+                            className="max-w-lg"
+                          >
+                            <div className="space-y-4">
+                              <label className="block space-y-1.5">
+                                <span className="ds-label">Reason for going back *</span>
+                                <textarea
+                                  rows={3}
+                                  value={goBackReason}
+                                  onChange={(e) => setGoBackReason(e.target.value)}
+                                  placeholder="Explain why this filing stage must be reworked..."
+                                  className="w-full text-sm"
+                                  required
+                                />
+                              </label>
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setGoBackOpen(false)}
+                                  disabled={loading === "filing-go-back"}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  disabled={loading === "filing-go-back" || !goBackReason.trim()}
+                                  onClick={() => void handleGoBackStage()}
+                                >
+                                  <Undo2 size={13} />
+                                  {loading === "filing-go-back" ? "Moving Back..." : "Confirm & Move Back"}
+                                </Button>
+                              </div>
+                            </div>
+                          </Modal>
                         </div>
                       ) : (
                         // No active runs but filing instance exists (Filing completed)

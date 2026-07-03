@@ -1036,6 +1036,63 @@ export async function applyDoExtensionAction(
   }
 }
 
+export async function updateSection49ValidityAction(
+  jobId: string,
+  validityDateValue: string,
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    if (!validityDateValue.trim()) {
+      return { ok: false, error: "Enter the Section 49 validity date." };
+    }
+
+    const result = await chaService.updateFilingSection49Validity(
+      userId,
+      orgId,
+      jobId,
+      new Date(validityDateValue),
+    );
+    revalidatePath("/cha/jobs");
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update Section 49 validity" };
+  }
+}
+
+export async function applySection49ExtensionAction(
+  jobId: string,
+  formData: FormData,
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const extensionDateValue = formData.get("extensionDate");
+    if (typeof extensionDateValue !== "string" || !extensionDateValue.trim()) {
+      return { ok: false, error: "Enter the new Section 49 validity date." };
+    }
+
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      return { ok: false, error: "Choose the Section 49 extension document." };
+    }
+
+    const result = await chaService.applyFilingSection49Extension(userId, orgId, jobId, {
+      extensionDate: new Date(extensionDateValue),
+      fileData: {
+        fileName: file.name,
+        mimeType: file.type || "application/octet-stream",
+        sizeBytes: file.size,
+      },
+      fileBuffer: Buffer.from(await file.arrayBuffer()),
+    });
+    revalidatePath("/cha/jobs");
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to apply Section 49 extension" };
+  }
+}
+
 export async function updateJobDetailsAction(
   jobId: string,
   data: {
@@ -1175,6 +1232,27 @@ export async function completeFilingNodeAction(
     return { ok: true, data: result };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to complete filing step" };
+  }
+}
+
+export async function revertFilingStageAction(
+  jobId: string,
+  nodeRunId: string,
+  reason: string,
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const result = await chaService.revertFilingWorkflowToPreviousStage(
+      userId,
+      orgId,
+      jobId,
+      nodeRunId,
+      reason,
+    );
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to move back to the previous filing stage" };
   }
 }
 

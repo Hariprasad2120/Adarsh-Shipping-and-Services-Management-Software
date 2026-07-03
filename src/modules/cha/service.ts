@@ -965,6 +965,7 @@ export async function getChecklistInternalApproverIds(_orgId: string, job: {
   assignedManagerId?: string | null;
   assignments: { userId: string; responsibility: string }[];
 }) {
+  const internalApproverIds = new Set<string>();
   const ownerManagerIds: string[] = [];
   const ownerTlIds: string[] = [];
 
@@ -985,6 +986,7 @@ export async function getChecklistInternalApproverIds(_orgId: string, job: {
   }
 
   if (primaryOwnerId) {
+    internalApproverIds.add(primaryOwnerId);
     const owner = await db.user.findUnique({
       where: { id: primaryOwnerId },
       select: { managerId: true, tlId: true },
@@ -993,7 +995,13 @@ export async function getChecklistInternalApproverIds(_orgId: string, job: {
     if (owner?.tlId) ownerTlIds.push(owner.tlId);
   }
 
-  return Array.from(new Set([...ownerManagerIds, ...ownerTlIds].filter(Boolean)));
+  for (const approverId of [...ownerManagerIds, ...ownerTlIds]) {
+    if (approverId) {
+      internalApproverIds.add(approverId);
+    }
+  }
+
+  return Array.from(internalApproverIds);
 }
 
 async function getChecklistCustomerApproverIds(job: {
@@ -2025,6 +2033,12 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
         },
         additionalData: { select: getAdditionalDataSelect(manifestSchema.customManifestValue) },
         doExtensions: { orderBy: { createdAt: "desc" }, take: 10 },
+        section49Extensions: {
+          orderBy: { createdAt: "desc" },
+          take: 10,
+          include: { appliedBy: { select: { name: true } } },
+        },
+        filingSection49Flag: true,
         checklistWorkflow: {
           include: {
             currentFileVersion: true,
@@ -3278,6 +3292,9 @@ export async function acknowledgeDeliveryOrderValidityWarning(
 //    warning pipeline so a fresh notification appears before the new date.
 
 const DO_DOCUMENT_CATEGORY = "Customs Validity Documents";
+const DO_DOCUMENT_REQUIREMENT_NAME = "Delivery Order";
+const SECTION49_DOCUMENT_NAME = "Section 49";
+const SECTION49_VALIDITY_NOTIFICATION_KINDS = ["CHA_SECTION49_VALIDITY_EXPIRED", "CHA_SECTION49_VALIDITY_EXPIRING"];
 
 async function getAdditionalDataForDoFlow(orgId: string, jobId: string) {
   const job = await db.chaJob.findFirstOrThrow({
@@ -3402,15 +3419,64 @@ export async function uploadDeliveryOrderDocument(
   const fileKey = await storeDeliveryOrderFile(jobId, actorId, fileData, fileBuffer);
   const now = await getNow();
 
-  const updated = await db.chaJobAdditionalData.update({
-    where: { id: additionalData.id },
-    data: {
-      doDocumentFileKey: fileKey,
-      doDocumentFileName: fileData.fileName,
-      doDocumentUploadedAt: now,
-      doDocumentUploadedById: actorId,
-      updatedById: actorId,
-    },
+  const updated = await db.$transaction(async (tx) => {
+    const updatedAdditionalData = await tx.chaJobAdditionalData.update({
+      where: { id: additionalData.id },
+      data: {
+        doDocumentFileKey: fileKey,
+        doDocumentFileName: fileData.fileName,
+        doDocumentUploadedAt: now,
+        doDocumentUploadedById: actorId,
+        updatedById: actorId,
+      },
+    });
+
+    let requirement = await tx.chaJobDocumentRequirement.findFirst({
+      where: {
+        jobId,
+        name: DO_DOCUMENT_REQUIREMENT_NAME,
+        category: DO_DOCUMENT_CATEGORY,
+      },
+    });
+    if (!requirement) {
+      requirement = await tx.chaJobDocumentRequirement.create({
+        data: {
+          jobId,
+          name: DO_DOCUMENT_REQUIREMENT_NAME,
+          category: DO_DOCUMENT_CATEGORY,
+          isMandatory: false,
+          status: "PENDING",
+        },
+      });
+    }
+
+    await tx.chaDocumentVersion.updateMany({
+      where: { requirementId: requirement.id, isCurrent: true },
+      data: { isCurrent: false },
+    });
+    await tx.chaDocumentVersion.create({
+      data: {
+        requirementId: requirement.id,
+        fileKey,
+        fileName: fileData.fileName,
+        mimeType: fileData.mimeType,
+        sizeBytes: fileData.sizeBytes,
+        uploadedById: actorId,
+        uploadedAt: now,
+        source: "ADDITIONAL_DATA",
+        timelineVisible: true,
+        validityDate: updatedAdditionalData.deliveryOrderValidity,
+      },
+    });
+    await tx.chaJobDocumentRequirement.update({
+      where: { id: requirement.id },
+      data: { status: "UPLOADED" },
+    });
+    await tx.chaDocumentException.deleteMany({
+      where: { requirementId: requirement.id },
+    });
+
+    return updatedAdditionalData;
   });
 
   await logChaAudit({
@@ -3712,7 +3778,7 @@ export async function submitChecklistInternalDecision(
 
   const internalApproverIds = await getChecklistInternalApproverIds(orgId, job);
   if (!internalApproverIds.includes(actorId)) {
-    throw new Error("Only the assigned Manager or Team Lead can internally approve this checklist.");
+    throw new Error("Only the job owner, assigned Manager, or Team Lead can internally approve this checklist.");
   }
 
   const pendingApprovals = checklist.approvals.filter(
@@ -9121,6 +9187,132 @@ export async function completeFilingNode(
   return result;
 }
 
+/**
+ * Move the filing workflow back to the previously completed stage.
+ *
+ * Available on every filing stage (filing tab only) — it does not require a
+ * BACKWARD edge in the template. A non-empty reason is mandatory and the move
+ * is registered in the job audit tab (FILING_STAGE_REVERTED).
+ */
+export async function revertFilingWorkflowToPreviousStage(
+  userId: string,
+  orgId: string,
+  jobId: string,
+  nodeRunId: string,
+  reason: string,
+) {
+  if (!reason || !reason.trim()) {
+    throw new Error("A reason is required to move back to the previous filing stage.");
+  }
+  const trimmedReason = reason.trim();
+
+  const job = await db.chaJob.findFirstOrThrow({
+    where: { id: jobId, orgId },
+    select: {
+      id: true,
+      jobNumber: true,
+      primaryOwnerId: true,
+      assignedManagerId: true,
+      assignments: { select: { userId: true } },
+    },
+  });
+  await assertCanAccessFiling(userId, job);
+
+  const result = await db.$transaction(async (tx) => {
+    const nodeRun = await tx.filingNodeRun.findUniqueOrThrow({
+      where: { id: nodeRunId },
+      include: {
+        node: true,
+        instance: {
+          include: {
+            version: { include: { nodes: { include: { checklistItems: true } } } },
+          },
+        },
+      },
+    });
+
+    if (nodeRun.instance.jobId !== jobId) {
+      throw new Error("Node run does not belong to this job.");
+    }
+    if (nodeRun.status !== "ACTIVE") {
+      throw new Error("Only the active filing stage can be moved back.");
+    }
+
+    const instance = nodeRun.instance;
+
+    // The previous stage = the most recently completed run of a different node.
+    const previousRun = await tx.filingNodeRun.findFirst({
+      where: {
+        instanceId: instance.id,
+        status: "COMPLETED",
+        nodeKey: { not: nodeRun.nodeKey },
+      },
+      orderBy: { completedAt: "desc" },
+    });
+    if (!previousRun) {
+      throw new Error("There is no previous filing stage to go back to.");
+    }
+
+    const previousNode = instance.version.nodes.find(
+      (n) => n.key === previousRun.nodeKey && n.isActive,
+    );
+    if (!previousNode) {
+      throw new Error("The previous filing stage is no longer active in this workflow version.");
+    }
+
+    const now = await getNow();
+
+    // Cancel the current run (nothing on it is finalized).
+    await tx.filingNodeRun.update({
+      where: { id: nodeRun.id },
+      data: {
+        status: "CANCELLED",
+        completedAt: now,
+        completedById: userId,
+        remarks: `Moved back to previous stage. Reason: ${trimmedReason}`,
+      },
+    });
+
+    // Reopen the previous stage as a fresh run.
+    const reopenedRun = await createFilingNodeRunWithResponses(tx, {
+      instanceId: instance.id,
+      node: previousNode,
+      startedAt: now,
+      orgId,
+    });
+    const slaDueDate = await calculateSlaDueDate(now, previousNode.slaDuration, previousNode.slaUnit, orgId);
+    await tx.filingNodeRun.update({
+      where: { id: reopenedRun.id },
+      data: { slaDueDate },
+    });
+
+    await tx.filingWorkflowInstance.update({
+      where: { id: instance.id },
+      data: { currentNodeKey: previousNode.key },
+    });
+
+    // Registered in the audit tab.
+    await tx.chaAuditLog.create({
+      data: {
+        orgId,
+        jobId,
+        entityType: "FilingWorkflowInstance",
+        entityId: instance.id,
+        event: "FILING_STAGE_REVERTED",
+        actorId: userId,
+        prevState: nodeRun.nodeKey,
+        newState: previousNode.key,
+        remarks: `Moved back from "${nodeRun.node.name}" to "${previousNode.name}". Reason: ${trimmedReason}`,
+      },
+    });
+
+    return { reopenedNodeKey: previousNode.key, reopenedNodeName: previousNode.name };
+  });
+
+  await getFilingWorkflowInstance(orgId, jobId);
+  return result;
+}
+
 export async function toggleFilingSection49(
   userId: string,
   orgId: string,
@@ -9155,6 +9347,7 @@ export async function toggleFilingSection49(
     create: {
       jobId,
       isEnabled,
+      validityDate: existingFlag?.validityDate ?? null,
       remarks,
       toggledById: userId,
     },
@@ -9181,9 +9374,244 @@ export async function toggleFilingSection49(
 }
 
 export async function getFilingSection49(orgId: string, jobId: string) {
-  return db.filingSection49Flag.findUnique({
-    where: { jobId },
+  const [flag, extensions] = await Promise.all([
+    db.filingSection49Flag.findUnique({
+      where: { jobId },
+    }),
+    db.filingSection49Extension.findMany({
+      where: { jobId },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      include: { appliedBy: { select: { name: true } } },
+    }),
+  ]);
+
+  return flag ? { ...flag, extensions } : null;
+}
+
+async function findSection49Requirement(tx: Prisma.TransactionClient, jobId: string) {
+  return tx.chaJobDocumentRequirement.findFirst({
+    where: {
+      jobId,
+      name: SECTION49_DOCUMENT_NAME,
+      category: DO_DOCUMENT_CATEGORY,
+    },
   });
+}
+
+async function syncSection49CurrentVersionValidity(
+  tx: Prisma.TransactionClient,
+  jobId: string,
+  validityDate: Date | null,
+) {
+  const requirement = await findSection49Requirement(tx, jobId);
+  if (!requirement) {
+    return;
+  }
+
+  const currentVersion = await tx.chaDocumentVersion.findFirst({
+    where: { requirementId: requirement.id, isCurrent: true },
+    orderBy: { uploadedAt: "desc" },
+  });
+  if (currentVersion) {
+    await tx.chaDocumentVersion.update({
+      where: { id: currentVersion.id },
+      data: { validityDate },
+    });
+  }
+}
+
+function isWithinFourDayValidityWindow(validityDate: Date, now: Date) {
+  const threshold = new Date(now);
+  threshold.setDate(threshold.getDate() + 4);
+  threshold.setHours(23, 59, 59, 999);
+  return validityDate.getTime() <= threshold.getTime();
+}
+
+export async function updateFilingSection49Validity(
+  userId: string,
+  orgId: string,
+  jobId: string,
+  validityDate: Date,
+) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: { id: jobId, orgId },
+    select: {
+      id: true,
+      primaryOwnerId: true,
+      assignedManagerId: true,
+      assignments: { select: { userId: true } },
+    },
+  });
+  await assertCanAccessFiling(userId, job);
+
+  if (Number.isNaN(validityDate.getTime())) {
+    throw new Error("Enter a valid Section 49 validity date.");
+  }
+
+  const updated = await db.$transaction(async (tx) => {
+    const flag = await tx.filingSection49Flag.upsert({
+      where: { jobId },
+      create: {
+        jobId,
+        isEnabled: true,
+        validityDate,
+        toggledById: userId,
+      },
+      update: {
+        isEnabled: true,
+        validityDate,
+        toggledById: userId,
+      },
+    });
+
+    await syncSection49CurrentVersionValidity(tx, jobId, validityDate);
+    return flag;
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "FilingSection49Flag",
+    entityId: updated.id,
+    event: "FILING_SECTION49_VALIDITY_UPDATED",
+    actorId: userId,
+    newState: validityDate.toISOString(),
+    remarks: `Section 49 validity date set to ${validityDate.toLocaleDateString("en-IN")}.`,
+  });
+
+  return updated;
+}
+
+export async function applyFilingSection49Extension(
+  userId: string,
+  orgId: string,
+  jobId: string,
+  input: {
+    extensionDate: Date;
+    fileData: { fileName: string; mimeType: string; sizeBytes: number };
+    fileBuffer: Buffer;
+  },
+) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: { id: jobId, orgId },
+    select: {
+      id: true,
+      primaryOwnerId: true,
+      assignedManagerId: true,
+      assignments: { select: { userId: true } },
+    },
+  });
+  await assertCanAccessFiling(userId, job);
+
+  const flag = await db.filingSection49Flag.findUnique({ where: { jobId } });
+  if (!flag?.isEnabled) {
+    throw new Error("Enable Section 49 before applying an extension.");
+  }
+  if (!flag.validityDate) {
+    throw new Error("Set the current Section 49 validity date before applying an extension.");
+  }
+  if (Number.isNaN(input.extensionDate.getTime())) {
+    throw new Error("Enter a valid Section 49 extension date.");
+  }
+  if (input.extensionDate.getTime() <= flag.validityDate.getTime()) {
+    throw new Error("The Section 49 extension date must be after the current validity date.");
+  }
+
+  const now = await getNow();
+  if (!isWithinFourDayValidityWindow(flag.validityDate, now)) {
+    throw new Error("Section 49 extension is available only when the validity warning window is active.");
+  }
+
+  const fileKey = await storeDeliveryOrderFile(jobId, userId, input.fileData, input.fileBuffer);
+  const extension = await db.$transaction(async (tx) => {
+    let requirement = await findSection49Requirement(tx, jobId);
+    if (!requirement) {
+      requirement = await tx.chaJobDocumentRequirement.create({
+        data: {
+          jobId,
+          name: SECTION49_DOCUMENT_NAME,
+          category: DO_DOCUMENT_CATEGORY,
+          isMandatory: false,
+          status: "PENDING",
+        },
+      });
+    }
+
+    await tx.chaDocumentVersion.updateMany({
+      where: { requirementId: requirement.id, isCurrent: true },
+      data: { isCurrent: false },
+    });
+    await tx.chaDocumentVersion.create({
+      data: {
+        requirementId: requirement.id,
+        fileKey,
+        fileName: input.fileData.fileName,
+        mimeType: input.fileData.mimeType,
+        sizeBytes: input.fileData.sizeBytes,
+        uploadedById: userId,
+        uploadedAt: now,
+        isCurrent: true,
+        validityDate: input.extensionDate,
+        source: "SECTION49_EXTENSION",
+        timelineVisible: true,
+      },
+    });
+    await tx.chaJobDocumentRequirement.update({
+      where: { id: requirement.id },
+      data: { status: "UPLOADED" },
+    });
+    await tx.chaDocumentException.deleteMany({ where: { requirementId: requirement.id } });
+
+    const record = await tx.filingSection49Extension.create({
+      data: {
+        jobId,
+        previousValidity: flag.validityDate,
+        extensionDate: input.extensionDate,
+        fileKey,
+        fileName: input.fileData.fileName,
+        appliedById: userId,
+      },
+    });
+
+    await tx.filingSection49Flag.update({
+      where: { id: flag.id },
+      data: {
+        validityDate: input.extensionDate,
+        toggledById: userId,
+      },
+    });
+
+    await tx.notification.updateMany({
+      where: {
+        orgId,
+        link: `/cha/jobs/${jobId}`,
+        kind: { in: SECTION49_VALIDITY_NOTIFICATION_KINDS },
+        dismissedAt: null,
+      },
+      data: { dismissedAt: now, readAt: now },
+    });
+
+    return record;
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "FilingSection49Extension",
+    entityId: extension.id,
+    event: "FILING_SECTION49_EXTENSION_APPLIED",
+    actorId: userId,
+    prevState: flag.validityDate.toISOString(),
+    newState: input.extensionDate.toISOString(),
+    remarks: `Section 49 validity extended from ${flag.validityDate.toLocaleDateString("en-IN")} to ${input.extensionDate.toLocaleDateString("en-IN")}. Extension document: ${input.fileData.fileName}.`,
+    metadata: {
+      fileKey,
+      fileName: input.fileData.fileName,
+    },
+  });
+
+  return extension;
 }
 
 function hasReminderTimeElapsed(reminderTime: string, now: Date) {
@@ -9272,6 +9700,49 @@ async function syncFilingWorkflowQueryReminders(orgId: string, jobId: string) {
       data: { lastReminderAt: now },
     });
   }
+}
+
+export async function runFilingWorkflowQueryReminderCron() {
+  const queryTargets = await db.filingWorkflowQuery.findMany({
+    where: {
+      status: { in: ["OPEN", "REPLIED"] },
+    },
+    select: {
+      instance: {
+        select: {
+          jobId: true,
+          job: {
+            select: {
+              orgId: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const uniqueTargets = Array.from(
+    new Set(
+      queryTargets
+        .map((entry) => {
+          const orgId = entry.instance.job.orgId;
+          const jobId = entry.instance.jobId;
+          return orgId && jobId ? `${orgId}:${jobId}` : null;
+        })
+        .filter((value): value is string => typeof value === "string"),
+    ),
+  ).map((value) => {
+    const [orgId, jobId] = value.split(":");
+    return { orgId, jobId };
+  });
+
+  for (const target of uniqueTargets) {
+    await syncFilingWorkflowQueryReminders(target.orgId, target.jobId);
+  }
+
+  return {
+    processedJobs: uniqueTargets.length,
+  };
 }
 
 export async function createFilingWorkflowQuery(
@@ -9820,6 +10291,11 @@ export async function upsertFilingShipmentDetails(
       primaryOwnerId: true,
       assignedManagerId: true,
       filing: true,
+      jobType: {
+        select: {
+          movementDirection: true,
+        },
+      },
       assignments: {
         select: {
           userId: true,
@@ -9840,6 +10316,14 @@ export async function upsertFilingShipmentDetails(
 
   if (billOfEntryNumber && shippingBillNumber) {
     throw new Error("Bill of Entry and Shipping Bill numbers cannot both be set.");
+  }
+
+  if (job.jobType?.movementDirection === "IMPORT" && shippingBillNumber) {
+    throw new Error("Import jobs can only store a Bill of Entry Number.");
+  }
+
+  if (job.jobType?.movementDirection === "EXPORT" && billOfEntryNumber) {
+    throw new Error("Export jobs can only store a Shipping Bill Number.");
   }
 
   const previous = job.filing;

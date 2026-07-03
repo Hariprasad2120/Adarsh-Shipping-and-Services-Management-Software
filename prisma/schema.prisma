@@ -396,6 +396,7 @@ model User {
   filingWorkflowQueriesCreated FilingWorkflowQuery[]    @relation("FilingWorkflowQueryCreatedBy")
   filingWorkflowQueriesClosed  FilingWorkflowQuery[]    @relation("FilingWorkflowQueryClosedBy")
   filingSection49Flags         FilingSection49Flag[]
+  filingSection49Extensions    FilingSection49Extension[]
 
   @@index([orgId])
   @@index([isPlatformAdmin, active])
@@ -3419,6 +3420,7 @@ model ChaJob {
   documentRequirements   ChaJobDocumentRequirement[]
   additionalData         ChaJobAdditionalData?
   doExtensions           ChaDoExtension[]
+  section49Extensions    FilingSection49Extension[]
   checklistWorkflow      ChaChecklist?
   checklistImports       ChaChecklistImport[]
   filing                 ChaFiling?
@@ -5461,16 +5463,34 @@ model FilingAttachment {
 }
 
 model FilingSection49Flag {
-  id          String   @id @default(cuid())
-  jobId       String   @unique
-  isEnabled   Boolean  @default(false)
-  remarks     String?
-  toggledById String
-  updatedAt   DateTime @updatedAt
-  job         ChaJob   @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  toggledBy   User     @relation(fields: [toggledById], references: [id])
+  id           String    @id @default(cuid())
+  jobId        String    @unique
+  isEnabled    Boolean   @default(false)
+  validityDate DateTime?
+  remarks      String?
+  toggledById  String
+  updatedAt    DateTime  @updatedAt
+  job          ChaJob    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  toggledBy    User      @relation(fields: [toggledById], references: [id])
 
   @@index([jobId])
+  @@index([validityDate, isEnabled])
+}
+
+model FilingSection49Extension {
+  id               String   @id @default(cuid())
+  jobId            String
+  previousValidity DateTime?
+  extensionDate    DateTime
+  fileKey          String?
+  fileName         String?
+  appliedById      String
+  createdAt        DateTime @default(now())
+
+  job       ChaJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  appliedBy User   @relation(fields: [appliedById], references: [id])
+
+  @@index([jobId, createdAt])
 }
 
 // ─── HRMS Mobile Attendance & Tracking ──────────────────────────────────────────
