@@ -29,7 +29,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
   return (
     <main
       data-main-shell-scroll="true"
-      className="flex min-w-0 flex-1 flex-col overflow-y-auto overflow-x-clip bg-background pl-0 transition-[padding-left] duration-300 lg:pl-[var(--sidebar-width)]"
+      className="flex min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden bg-background pl-0 transition-[padding-left] duration-300 lg:pl-[var(--sidebar-width)]"
       style={{ ["--sidebar-width" as string]: pl } as CSSProperties}
     >
       {children}

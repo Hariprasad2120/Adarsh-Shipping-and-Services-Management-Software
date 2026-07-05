@@ -13,21 +13,7 @@ import { NotesPanel } from "../../_components/notes-panel";
 import { AttachmentsPanel } from "../../_components/attachments-panel";
 import { ActivitiesPanel } from "../../_components/activities-panel";
 import { TimelinePanel } from "../../_components/timeline-panel";
-import {
-  Edit2,
-  RefreshCcw,
-  Trash2,
-  Building,
-  MapPin,
-  Info,
-  Ship,
-  Plane,
-  Clock,
-  Timer,
-  History,
-  TrendingUp,
-  Plus
-} from "lucide-react";
+import {Edit2,RefreshCcw,Trash2,Building,MapPin,Info,Ship,Plane,Clock,Timer,History,TrendingUp,Plus} from "lucide-react";
 
 interface LeadDetailWrapperProps {
   lead: any;

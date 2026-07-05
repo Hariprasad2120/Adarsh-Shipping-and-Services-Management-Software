@@ -3,23 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import {
-  ArrowLeft,
-  ChevronDown,
-  ChevronRight,
-  Copy,
-  FileOutput,
-  FileText,
-  Mail,
-  MoreHorizontal,
-  Pencil,
-  Plus,
-  Search,
-  Send,
-  Share2,
-  Trash2,
-  ShieldAlert,
-} from "lucide-react";
+import {ArrowLeft,ChevronDown,ChevronRight,Copy,FileOutput,FileText,Mail,MoreHorizontal,Pencil,Plus,Search,Send,Share2,Trash2,ShieldAlert,} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { quoteDetails } from "../_lib/quote-details-data";
 import { quoteViews } from "../_lib/quote-list-data";

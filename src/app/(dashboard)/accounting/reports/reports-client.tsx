@@ -1,33 +1,9 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
-import {
-  FileSpreadsheet,
-  Download,
-  Calendar,
-  Layers,
-  ChevronRight,
-  TrendingUp,
-  Scale,
-  Percent,
-  RefreshCw,
-} from "lucide-react";
-import {
-  getARAgeingAction,
-  getAPAgeingAction,
-  getSalesRegisterAction,
-  getPurchaseRegisterAction,
-  getGSTR1SummaryAction,
-  getGSTR2BSummaryAction,
-  getConsolidatedGSTLedgerAction,
-  getDayBookAction,
-  getJournalRegisterAction,
-  getJobProfitabilityAction,
-  getCashAndBankLedgerAction,
-  getProfitAndLossAction,
-  getBalanceSheetAction,
-  getTrialBalanceAction,
-} from "@/modules/accounting/actions";
+import {FileSpreadsheet,Download,Calendar,Layers,ChevronRight,TrendingUp,Scale,Percent,RefreshCw,} from "lucide-react";
+import {getARAgeingAction,getAPAgeingAction,getSalesRegisterAction,getPurchaseRegisterAction,getGSTR1SummaryAction,getGSTR2BSummaryAction,getConsolidatedGSTLedgerAction,getDayBookAction,getJournalRegisterAction,getJobProfitabilityAction,getCashAndBankLedgerAction,getProfitAndLossAction,getBalanceSheetAction,getTrialBalanceAction,} from "@/modules/accounting/actions";
 
 interface Partner {
   id: string;
@@ -225,8 +201,7 @@ export function ReportsClient({ partners }: ReportsClientProps) {
               <>
                 <div className="space-y-1.5">
                   <span className="ds-label block">From Date</span>
-                  <input
-                    type="date"
+                  <DateInput
                     value={fromDate}
                     onChange={(e) => setFromDate(e.target.value)}
                     className="bg-[var(--color-background)] text-white p-2.5 rounded-xl text-xs ds-numeric border border-outline-variant/10"
@@ -234,8 +209,7 @@ export function ReportsClient({ partners }: ReportsClientProps) {
                 </div>
                 <div className="space-y-1.5">
                   <span className="ds-label block">To Date</span>
-                  <input
-                    type="date"
+                  <DateInput
                     value={toDate}
                     onChange={(e) => setToDate(e.target.value)}
                     className="bg-[var(--color-background)] text-white p-2.5 rounded-xl text-xs ds-numeric border border-outline-variant/10"
@@ -247,8 +221,7 @@ export function ReportsClient({ partners }: ReportsClientProps) {
             {selectedReport.dateType === "asOf" && (
               <div className="space-y-1.5">
                 <span className="ds-label block">As Of Date</span>
-                <input
-                  type="date"
+                <DateInput
                   value={asOfDate}
                   onChange={(e) => setAsOfDate(e.target.value)}
                   className="bg-[var(--color-background)] text-white p-2.5 rounded-xl text-xs ds-numeric border border-outline-variant/10"
@@ -259,8 +232,7 @@ export function ReportsClient({ partners }: ReportsClientProps) {
             {selectedReport.dateType === "single" && (
               <div className="space-y-1.5">
                 <span className="ds-label block">Statement Date</span>
-                <input
-                  type="date"
+                <DateInput
                   value={singleDate}
                   onChange={(e) => setSingleDate(e.target.value)}
                   className="bg-[var(--color-background)] text-white p-2.5 rounded-xl text-xs ds-numeric border border-outline-variant/10"

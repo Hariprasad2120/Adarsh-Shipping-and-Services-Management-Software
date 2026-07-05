@@ -1,5 +1,6 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -186,8 +187,7 @@ export function NewInvoiceClient({
 
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Posting Date</label>
-            <input
-              type="date"
+            <DateInput
               required
               value={postingDate}
               onChange={(e) => setPostingDate(e.target.value)}

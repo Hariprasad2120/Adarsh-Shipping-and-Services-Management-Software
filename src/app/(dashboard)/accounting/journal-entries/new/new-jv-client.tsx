@@ -1,5 +1,6 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -115,8 +116,7 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Posting Date</label>
-            <input
-              type="date"
+            <DateInput
               required
               value={postingDate}
               onChange={(e) => setPostingDate(e.target.value)}

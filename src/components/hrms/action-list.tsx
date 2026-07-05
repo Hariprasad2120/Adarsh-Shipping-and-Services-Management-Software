@@ -1,16 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  ArrowUpRight,
-  BellRing,
-  Calendar,
-  CheckSquare,
-  FileClock,
-  Landmark,
-  Megaphone,
-  Sparkles,
-} from "lucide-react";
+import {ArrowUpRight,BellRing,Calendar,CheckSquare,FileClock,Landmark,Megaphone,Sparkles,} from "lucide-react";
 import { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 
 interface ActionListProps {

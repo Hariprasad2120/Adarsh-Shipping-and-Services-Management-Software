@@ -9,28 +9,7 @@ import { NotesPanel } from "../../_components/notes-panel";
 import { AttachmentsPanel } from "../../_components/attachments-panel";
 import { ActivitiesPanel } from "../../_components/activities-panel";
 import { TimelinePanel } from "../../_components/timeline-panel";
-import {
-  Edit2,
-  Trash2,
-  Users,
-  Briefcase,
-  FileText,
-  Plus,
-  Eye,
-  Search,
-  ChevronDown,
-  X,
-  Building,
-  Mail,
-  Phone,
-  MapPin,
-  FileText as StatementIcon,
-  DollarSign,
-  TrendingUp,
-  User as UserIcon,
-  MoreHorizontal,
-  ArrowRight
-} from "lucide-react";
+import {Edit2,Trash2,Users,Briefcase,FileText,Plus,Eye,Search,ChevronDown,X,Building,Mail,Phone,MapPin,FileText as StatementIcon,DollarSign,TrendingUp,User as UserIcon,MoreHorizontal,ArrowRight} from "lucide-react";
 
 interface AccountDetailWrapperProps {
   account: any;

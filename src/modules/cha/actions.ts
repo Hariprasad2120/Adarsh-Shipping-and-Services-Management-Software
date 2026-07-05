@@ -466,17 +466,28 @@ export async function importChecklistExcelAction(
 
 export async function uploadChecklistFileAction(
   jobId: string,
-  data: {
-    fileKey: string;
-    fileName: string;
-    mimeType: string;
-    sizeBytes: number;
-    remarks?: string;
-  }
+  formData: FormData,
 ): Promise<ActionResponse> {
   try {
     const { userId, orgId } = await getAuthAndVerify();
-    const checklist = await chaService.uploadChecklistFile(userId, orgId, jobId, data);
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      return { ok: false, error: "Please choose a valid checklist file to upload." };
+    }
+    const remarksValue = formData.get("remarks");
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const checklist = await chaService.uploadChecklistFile(
+      userId,
+      orgId,
+      jobId,
+      {
+        fileName: file.name,
+        mimeType: file.type || "application/octet-stream",
+        sizeBytes: file.size,
+        remarks: typeof remarksValue === "string" && remarksValue.trim() ? remarksValue.trim() : undefined,
+      },
+      buffer,
+    );
     revalidatePath(`/cha/jobs/${jobId}`);
     revalidatePath("/cha/approvals");
     return { ok: true, data: checklist };
@@ -841,7 +852,7 @@ export async function listAllExpensesAction(filters: {
 
 export async function listManagerChecklistApprovalsAction(): Promise<ActionResponse> {
   try {
-    const { userId, orgId } = await getAuthAndVerify("cha.checklist.manager_approve");
+    const { userId, orgId } = await getAuthAndVerify();
     const approvals = await chaService.listManagerChecklistApprovals(userId, orgId);
     return { ok: true, data: approvals };
   } catch (err: any) {
@@ -1317,6 +1328,23 @@ export async function updateFilingWorkflowQueryStatusAction(
     return { ok: true, data: result };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to update filing query" };
+  }
+}
+
+export async function addFilingWorkflowQueryCommentAction(
+  jobId: string,
+  queryId: string,
+  data: {
+    message: string;
+  },
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const result = await chaService.addFilingWorkflowQueryComment(userId, orgId, jobId, queryId, data);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to post filing query update" };
   }
 }
 

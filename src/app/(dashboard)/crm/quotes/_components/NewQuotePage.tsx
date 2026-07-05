@@ -14,16 +14,7 @@ import { LineItemsTable } from "./LineItemsTable";
 import { NotesAndTermsSection } from "./NotesAndTermsSection";
 import { FixedActionBar } from "./FixedActionBar";
 import { ConfirmDialog } from "./ConfirmDialog";
-import {
-  defaultQuoteValues,
-  incoterms,
-  locations,
-  pdfTemplates,
-  projects,
-  salespersons,
-  sourceOfSupplyByLocation,
-  containerTypes,
-} from "../_lib/mock-data";
+import {defaultQuoteValues,incoterms,locations,pdfTemplates,projects,salespersons,sourceOfSupplyByLocation,containerTypes,} from "../_lib/mock-data";
 import { calculateFinalTotal, calculateLineItemAmount } from "../_lib/quote-calculations";
 import type { QuoteFormValues, QuoteStatus, QuoteTemplateOption, ComboboxOption, CustomerOption } from "../_lib/types";
 import { quoteFormSchema } from "../_lib/validation";

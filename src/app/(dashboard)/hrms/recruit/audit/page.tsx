@@ -2,15 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Search } from "@carbon/icons-react";
-import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-  DataTableEmpty,
-} from "@/components/data-table";
+import {DataTable,DataTableBody,DataTableCell,DataTableHead,DataTableHeader,DataTableRow,DataTableEmpty,} from "@/components/data-table";
 
 type AuditEvent = {
   id: string;

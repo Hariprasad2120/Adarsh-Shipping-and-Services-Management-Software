@@ -1,5 +1,6 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -130,8 +131,7 @@ export default function NewJobPage() {
               </div>
               <div>
                 <label className="ds-label mb-1 block">Target Fill Date</label>
-                <input
-                  type="date"
+                <DateInput
                   value={form.targetFillDate}
                   onChange={(e) => set("targetFillDate", e.target.value)}
                   className="w-full rounded-xl px-3 py-2 text-sm"

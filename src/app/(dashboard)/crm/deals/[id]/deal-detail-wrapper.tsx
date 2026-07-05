@@ -10,13 +10,7 @@ import { NotesPanel } from "../../_components/notes-panel";
 import { AttachmentsPanel } from "../../_components/attachments-panel";
 import { ActivitiesPanel } from "../../_components/activities-panel";
 import { TimelinePanel } from "../../_components/timeline-panel";
-import {
-  Edit2,
-  Trash2,
-  Truck,
-  Info,
-  Receipt
-} from "lucide-react";
+import {Edit2,Trash2,Truck,Info,Receipt} from "lucide-react";
 
 interface DealDetailWrapperProps {
   deal: any;

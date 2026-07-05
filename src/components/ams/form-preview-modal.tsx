@@ -3,12 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { CriteriaPointsView } from "@/components/ams/criteria-points-form";
-import type {
-  AppraisalSelfFormTemplate,
-  ManagementReviewAnswers,
-  ReviewerRatingAnswers,
-  SelfAssessmentAnswers,
-} from "@/modules/ams/criteria-config";
+import type {AppraisalSelfFormTemplate,ManagementReviewAnswers,ReviewerRatingAnswers,SelfAssessmentAnswers,} from "@/modules/ams/criteria-config";
 import type { CriterionPoint } from "@/modules/ams/types";
 
 type SelfPreview = {

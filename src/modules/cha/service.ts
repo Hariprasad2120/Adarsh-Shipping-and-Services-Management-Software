@@ -6,6 +6,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { can, ForbiddenError } from "@/lib/rbac";
 import * as driveClient from "@/lib/google-drive-client";
 import { ensureJobCategoryFolder } from "@/lib/workspace-provisioning";
+import { getValidAccessToken } from "@/lib/workspace-oauth";
 
 const DEFAULT_CHA_EXPENSE_CATEGORIES = [
   "Customs Duty",
@@ -282,6 +283,79 @@ function parseStringArray(value: Prisma.JsonValue | null | undefined, fallback: 
     }
   }
   return fallback;
+}
+
+function parseAuditMetadata(value: unknown): Record<string, any> | null {
+  if (!value) return null;
+  if (typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, any>;
+  }
+  if (typeof value !== "string") {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+const FILING_QUERY_ACTIVITY_EVENTS = [
+  "FILING_QUERY_CREATED",
+  "FILING_QUERY_UPDATED",
+  "FILING_QUERY_COMMENT_ADDED",
+  "FILING_QUERY_CLOSED",
+] as const;
+
+type FilingQueryActivityEvent = typeof FILING_QUERY_ACTIVITY_EVENTS[number];
+const CHECKLIST_DOCUMENT_CATEGORY = "Checklist Documents";
+
+function getFileExtension(fileName: string) {
+  const trimmed = fileName.trim();
+  const dotIndex = trimmed.lastIndexOf(".");
+  return dotIndex > 0 ? trimmed.slice(dotIndex) : "";
+}
+
+function buildDriveStoredFileName(label: string, originalFileName: string) {
+  const sanitizedLabel = label.replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim() || "Document";
+  const extension = getFileExtension(originalFileName);
+  if (!extension) {
+    return sanitizedLabel;
+  }
+  return sanitizedLabel.toLowerCase().endsWith(extension.toLowerCase())
+    ? sanitizedLabel
+    : `${sanitizedLabel}${extension}`;
+}
+
+async function resolveJobDriveUploadAccessToken(primaryOwnerId: string, actorId: string) {
+  const preferredConnection = await db.googleWorkspaceConnection.findUnique({
+    where: { userId: actorId },
+    select: { userId: true, status: true, scopes: true },
+  });
+  if (
+    preferredConnection?.status === "connected" &&
+    (preferredConnection.scopes.includes("https://www.googleapis.com/auth/drive")
+      || preferredConnection.scopes.includes("https://www.googleapis.com/auth/drive.file"))
+  ) {
+    return getValidAccessToken(actorId).catch(() => undefined);
+  }
+
+  if (primaryOwnerId !== actorId) {
+    const ownerConnection = await db.googleWorkspaceConnection.findUnique({
+      where: { userId: primaryOwnerId },
+      select: { userId: true, status: true, scopes: true },
+    });
+    if (
+      ownerConnection?.status === "connected" &&
+      (ownerConnection.scopes.includes("https://www.googleapis.com/auth/drive")
+        || ownerConnection.scopes.includes("https://www.googleapis.com/auth/drive.file"))
+    ) {
+      return getValidAccessToken(primaryOwnerId).catch(() => undefined);
+    }
+  }
+
+  return undefined;
 }
 
 function getChaManifestSchemaState() {
@@ -2117,6 +2191,7 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
     throw new ForbiddenError("cha.job.read");
   }
 
+  const [filingQueryWarning] = await buildFilingQueryEscalationWarnings({ actorId: userId, orgId, jobId });
   const actorMap = new Map(actors.map((a) => [a.id, { name: a.name }]));
   const auditLogsWithActor = rawAuditLogs.map((log) => ({
     ...log,
@@ -2127,6 +2202,7 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
     ...normalizedJob,
     auditLogs: auditLogsWithActor,
     expenseRequests,
+    filingQueryWarning: filingQueryWarning || null,
   };
 }
 
@@ -2293,19 +2369,21 @@ async function getOrCreateFilingNodeFolder(
   filingRootFolderId: string,
   nodeKey: string,
   nodeName: string,
+  accessToken?: string,
 ): Promise<string> {
   const profile = await db.jobWorkspaceProfile.findUniqueOrThrow({ where: { jobId } });
   const categoryFolders = (profile.categoryFolders as Record<string, string>) || {};
   const folderMapKey = `Filing Documents/${nodeKey}`;
 
   const existing = categoryFolders[folderMapKey];
-  if (existing && !existing.startsWith("mock-") && (await driveClient.folderExists(existing).catch(() => false))) {
+  if (existing && !existing.startsWith("mock-") && (await driveClient.folderExists(existing, accessToken).catch(() => false))) {
     return existing;
   }
 
   const nodeFolderId = await driveClient.createFolder({
     name: nodeName,
     parentFolderId: filingRootFolderId,
+    accessToken,
   });
 
   await db.jobWorkspaceProfile.update({
@@ -2339,7 +2417,9 @@ export async function uploadDocumentVersion(
     },
   });
 
-  let fileKey = fileData.fileKey || `cha/docs/${Math.random().toString(36).substring(7)}_${fileData.fileName}`;
+  const storedFileName = buildDriveStoredFileName(req.name, fileData.fileName);
+
+  let fileKey = fileData.fileKey || `cha/docs/${Math.random().toString(36).substring(7)}_${storedFileName}`;
 
   if (fileBuffer) {
     // Verifies (and transparently recreates) the job's root and category
@@ -2360,7 +2440,7 @@ export async function uploadDocumentVersion(
     if (driveFolderId && !driveFolderId.startsWith("mock-")) {
       try {
         const uploadResult = await driveClient.uploadFile({
-          name: fileData.fileName,
+          name: storedFileName,
           mimeType: fileData.mimeType,
           parentFolderId: driveFolderId,
           fileBuffer,
@@ -2405,7 +2485,7 @@ export async function uploadDocumentVersion(
       data: {
         requirementId,
         fileKey,
-        fileName: fileData.fileName,
+        fileName: storedFileName,
         mimeType: fileData.mimeType,
         sizeBytes: fileData.sizeBytes,
         checksum: fileData.checksum,
@@ -2437,7 +2517,7 @@ export async function uploadDocumentVersion(
     event: "DOCUMENT_UPLOADED",
     actorId,
     newState: "UPLOADED",
-    remarks: `Uploaded document: ${fileData.fileName}`,
+    remarks: `Uploaded document: ${storedFileName}`,
     metadata: {
       validityDate: resolvedValidityDate?.toISOString() ?? null,
     },
@@ -3092,6 +3172,25 @@ type DoValidityWarning = {
   severity: "expired" | "expiring";
 };
 
+export type Section49ValidityWarning = {
+  jobId: string;
+  jobNumber: string;
+  validityDate: Date;
+  daysUntilExpiry: number;
+  severity: "expired" | "expiring";
+};
+
+export type FilingQueryEscalationWarning = {
+  jobId: string;
+  jobNumber: string;
+  queryId: string;
+  queryTitle: string;
+  overdueQueryCount: number;
+  reminderTriggeredAt: Date;
+  warningTriggeredAt: Date;
+  staleMinutes: number;
+};
+
 // Read-only: returns warnings without creating any notifications.
 // Notification creation runs in a separate background job (createDeliveryOrderNotifications).
 export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: string): Promise<DoValidityWarning[]> {
@@ -3366,7 +3465,9 @@ async function storeDeliveryOrderFile(
   actorId: string,
   fileData: { fileName: string; mimeType: string },
   fileBuffer: Buffer,
-): Promise<string> {
+  driveLabel: string,
+): Promise<{ fileKey: string; storedFileName: string }> {
+  const storedFileName = buildDriveStoredFileName(driveLabel, fileData.fileName);
   let driveFolderId: string | undefined;
   try {
     driveFolderId = await ensureJobCategoryFolder(jobId, DO_DOCUMENT_CATEGORY, actorId);
@@ -3383,25 +3484,99 @@ async function storeDeliveryOrderFile(
   if (driveFolderId && !driveFolderId.startsWith("mock-")) {
     try {
       const uploadResult = await driveClient.uploadFile({
-        name: fileData.fileName,
+        name: storedFileName,
         mimeType: fileData.mimeType,
         parentFolderId: driveFolderId,
         fileBuffer,
       });
-      return uploadResult.webViewLink;
+      return { fileKey: uploadResult.webViewLink, storedFileName };
     } catch (err: any) {
       if (process.env.NODE_ENV === "production") {
         throw new Error(`Google Drive upload failed: ${err.message || err}`);
       }
       console.warn("[DO Upload] Google Drive upload failed. Falling back to mock URL:", err.message || err);
-      return `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
+      return {
+        fileKey: `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`,
+        storedFileName,
+      };
     }
   }
 
   if (process.env.NODE_ENV === "production") {
     throw new Error("Google Drive is not provisioned for this job. Please retry provisioning the workspace.");
   }
-  return `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
+  return {
+    fileKey: `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`,
+    storedFileName,
+  };
+}
+
+export async function listSection49ValidityWarnings(
+  actorId: string,
+  orgId: string,
+): Promise<Section49ValidityWarning[]> {
+  const [now, canViewAll] = await Promise.all([
+    getNow(),
+    can(actorId, "cha.job.view_all"),
+  ]);
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+
+  const threshold = new Date(today);
+  threshold.setDate(threshold.getDate() + 4);
+  threshold.setHours(23, 59, 59, 999);
+
+  const jobs = await db.chaJob.findMany({
+    where: {
+      ...getActiveChaJobWhere(orgId),
+      status: "ACTIVE",
+      stage: { not: "FILED" },
+      filingSection49Flag: {
+        isEnabled: true,
+        validityDate: { lte: threshold },
+      },
+      ...(canViewAll
+        ? {}
+        : {
+            OR: [
+              { primaryOwnerId: actorId },
+              { assignedManagerId: actorId },
+              { assignments: { some: { userId: actorId } } },
+            ],
+          }),
+    },
+    include: {
+      filingSection49Flag: {
+        select: {
+          validityDate: true,
+        },
+      },
+    },
+  });
+
+  return jobs.flatMap((job) => {
+    const validityDate = job.filingSection49Flag?.validityDate;
+    if (!validityDate) {
+      return [];
+    }
+
+    const expiry = new Date(validityDate);
+    expiry.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays > 4) {
+      return [];
+    }
+
+    return [
+      {
+        jobId: job.id,
+        jobNumber: job.jobNumber,
+        validityDate,
+        daysUntilExpiry: diffDays,
+        severity: diffDays < 0 ? "expired" : "expiring",
+      } satisfies Section49ValidityWarning,
+    ];
+  });
 }
 
 export async function uploadDeliveryOrderDocument(
@@ -3416,7 +3591,13 @@ export async function uploadDeliveryOrderDocument(
     throw new Error("Enable the Delivery Order document upload toggle before uploading.");
   }
 
-  const fileKey = await storeDeliveryOrderFile(jobId, actorId, fileData, fileBuffer);
+  const { fileKey, storedFileName } = await storeDeliveryOrderFile(
+    jobId,
+    actorId,
+    fileData,
+    fileBuffer,
+    DO_DOCUMENT_REQUIREMENT_NAME,
+  );
   const now = await getNow();
 
   const updated = await db.$transaction(async (tx) => {
@@ -3424,7 +3605,7 @@ export async function uploadDeliveryOrderDocument(
       where: { id: additionalData.id },
       data: {
         doDocumentFileKey: fileKey,
-        doDocumentFileName: fileData.fileName,
+        doDocumentFileName: storedFileName,
         doDocumentUploadedAt: now,
         doDocumentUploadedById: actorId,
         updatedById: actorId,
@@ -3458,7 +3639,7 @@ export async function uploadDeliveryOrderDocument(
       data: {
         requirementId: requirement.id,
         fileKey,
-        fileName: fileData.fileName,
+        fileName: storedFileName,
         mimeType: fileData.mimeType,
         sizeBytes: fileData.sizeBytes,
         uploadedById: actorId,
@@ -3486,8 +3667,8 @@ export async function uploadDeliveryOrderDocument(
     entityId: additionalData.id,
     event: "DO_DOCUMENT_UPLOADED",
     actorId,
-    remarks: `Delivery Order document uploaded: ${fileData.fileName}`,
-    metadata: { fileKey, fileName: fileData.fileName },
+    remarks: `Delivery Order document uploaded: ${storedFileName}`,
+    metadata: { fileKey, fileName: storedFileName },
   });
 
   return updated;
@@ -3536,8 +3717,11 @@ export async function applyDeliveryOrderExtension(
   }
 
   let fileKey: string | null = null;
+  let storedExtensionFileName: string | null = null;
   if (input.fileBuffer && input.fileData) {
-    fileKey = await storeDeliveryOrderFile(jobId, actorId, input.fileData, input.fileBuffer);
+    const uploaded = await storeDeliveryOrderFile(jobId, actorId, input.fileData, input.fileBuffer, "Delivery Order Extension");
+    fileKey = uploaded.fileKey;
+    storedExtensionFileName = uploaded.storedFileName;
   }
 
   const extension = await db.$transaction(async (tx) => {
@@ -3547,7 +3731,7 @@ export async function applyDeliveryOrderExtension(
         previousValidity,
         extensionDate: input.extensionDate,
         fileKey,
-        fileName: input.fileData?.fileName ?? null,
+        fileName: storedExtensionFileName,
         appliedById: actorId,
       },
     });
@@ -3585,11 +3769,11 @@ export async function applyDeliveryOrderExtension(
     actorId,
     prevState: previousValidity.toISOString(),
     newState: input.extensionDate.toISOString(),
-    remarks: `Delivery Order validity extended from ${previousValidity.toLocaleDateString("en-IN")} to ${input.extensionDate.toLocaleDateString("en-IN")}.${input.fileData ? ` Extension document: ${input.fileData.fileName}.` : ""}`,
+    remarks: `Delivery Order validity extended from ${previousValidity.toLocaleDateString("en-IN")} to ${input.extensionDate.toLocaleDateString("en-IN")}.${storedExtensionFileName ? ` Extension document: ${storedExtensionFileName}.` : ""}`,
     metadata: {
       extensionId: extension.id,
       fileKey,
-      fileName: input.fileData?.fileName ?? null,
+      fileName: storedExtensionFileName,
     },
   });
 
@@ -3609,12 +3793,13 @@ export async function uploadChecklistFile(
   orgId: string,
   jobId: string,
   fileData: {
-    fileKey: string;
+    fileKey?: string;
     fileName: string;
     mimeType: string;
     sizeBytes: number;
     remarks?: string;
-  }
+  },
+  fileBuffer?: Buffer,
 ) {
   const job = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
@@ -3635,11 +3820,52 @@ export async function uploadChecklistFile(
   if (!fileData.fileName.trim()) {
     throw new Error("Checklist file name is required.");
   }
-  if (!fileData.fileKey.trim()) {
+  if (!fileBuffer && !fileData.fileKey?.trim()) {
     throw new Error("Checklist file reference is required.");
   }
   if (fileData.sizeBytes <= 0) {
     throw new Error("Checklist file is empty.");
+  }
+
+  const previousVersion = job.checklistWorkflow?.fileVersions[0]?.versionNumber ?? 0;
+  const nextVersion = previousVersion + 1;
+
+  let fileKey = fileData.fileKey?.trim() || "";
+  if (fileBuffer) {
+    let driveFolderId: string | undefined;
+    try {
+      driveFolderId = await ensureJobCategoryFolder(jobId, CHECKLIST_DOCUMENT_CATEGORY, actorId);
+    } catch (err: any) {
+      console.warn(`[Checklist Upload] Drive folder self-heal failed for job ${jobId}:`, err.message || err);
+      const profile = await db.jobWorkspaceProfile.findUnique({ where: { jobId } });
+      driveFolderId = resolveDriveFolderForCategory(
+        profile?.categoryFolders as Record<string, string> | undefined,
+        profile?.rootFolderId,
+        CHECKLIST_DOCUMENT_CATEGORY,
+      );
+    }
+
+    if (driveFolderId && !driveFolderId.startsWith("mock-")) {
+      try {
+        const uploadResult = await driveClient.uploadFile({
+          name: fileData.fileName,
+          mimeType: fileData.mimeType || "application/octet-stream",
+          parentFolderId: driveFolderId,
+          fileBuffer,
+        });
+        fileKey = uploadResult.webViewLink;
+      } catch (err: any) {
+        if (process.env.NODE_ENV === "production") {
+          throw new Error(`Google Drive upload failed: ${err.message || err}`);
+        }
+        console.warn("[Checklist Upload] Google Drive upload failed. Falling back to mock URL:", err.message || err);
+        fileKey = `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
+      }
+    } else if (process.env.NODE_ENV === "production") {
+      throw new Error("Google Drive is not provisioned for this job. Please retry provisioning the workspace.");
+    } else {
+      fileKey = `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
+    }
   }
 
   const internalApproverIds = await getChecklistInternalApproverIds(orgId, job);
@@ -3648,7 +3874,6 @@ export async function uploadChecklistFile(
   }
 
   const previousStatus = job.checklistWorkflow?.status ?? "PENDING_UPLOAD";
-  const previousVersion = job.checklistWorkflow?.fileVersions[0]?.versionNumber ?? 0;
 
   const result = await db.$transaction(async (tx) => {
     const checklist = job.checklistWorkflow
@@ -3673,12 +3898,12 @@ export async function uploadChecklistFile(
     const fileVersion = await tx.chaChecklistFileVersion.create({
       data: {
         checklistId: checklist.id,
-        fileKey: fileData.fileKey,
+        fileKey,
         originalFileName: fileData.fileName,
         mimeType: fileData.mimeType || "application/octet-stream",
         fileSize: fileData.sizeBytes,
         uploadedById: actorId,
-        versionNumber: previousVersion + 1,
+        versionNumber: nextVersion,
         remarks: fileData.remarks,
       },
     });
@@ -5523,26 +5748,97 @@ export async function listAllExpenses(
   });
 }
 
-// Fetch all checklist approvals queue for a manager
+// Fetch the active checklist workflow approvals queue for users who can act on it.
+// This uses the current ChaChecklist + ChaChecklistDecision workflow rather than
+// the legacy checklist-import approval model so job owners and assigned managers
+// see in-flight approvals consistently in both the workspace and approval queue.
 export async function listManagerChecklistApprovals(
   userId: string,
   orgId: string
 ) {
-  return db.chaChecklistApproval.findMany({
+  const workflows = await db.chaChecklist.findMany({
     where: {
-      managerId: userId,
-      decision: "PENDING",
-      checklistImport: { job: { orgId } },
+      currentApprovalStage: "INTERNAL",
+      currentFileVersionId: { not: null },
+      job: getActiveChaJobWhere(orgId),
     },
     include: {
-      checklistImport: {
+      currentFileVersion: true,
+      approvals: {
+        where: { stage: "INTERNAL" },
+        orderBy: { createdAt: "asc" },
+      },
+      job: {
         include: {
-          job: { include: { customer: true, primaryOwner: true } },
-          uploadedBy: { select: { name: true } },
+          customer: true,
+          primaryOwner: true,
+          assignedManager: true,
         },
       },
     },
+    orderBy: { updatedAt: "desc" },
   });
+
+  const uploaderIds = Array.from(
+    new Set(
+      workflows
+        .map((workflow) => workflow.currentFileVersion?.uploadedById)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
+  const uploaders =
+    uploaderIds.length > 0
+      ? await db.user.findMany({
+          where: { id: { in: uploaderIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+  const uploaderNameById = new Map(uploaders.map((user) => [user.id, user.name || "Unknown"]));
+
+  return workflows
+    .filter((workflow) => {
+      const currentVersionId = workflow.currentFileVersionId;
+      if (!currentVersionId) return false;
+
+      const currentInternalApprovals = workflow.approvals.filter(
+        (approval) => approval.fileVersionId === currentVersionId,
+      );
+
+      const hasPendingAssignment = currentInternalApprovals.some(
+        (approval) => approval.assignedToId === userId && approval.action === "PENDING",
+      );
+
+      const isOwner = workflow.job.primaryOwnerId === userId;
+      const isAssignedManager = workflow.job.assignedManagerId === userId;
+
+      return hasPendingAssignment || isOwner || isAssignedManager;
+    })
+    .map((workflow) => {
+      const currentVersionId = workflow.currentFileVersionId!;
+      const currentInternalApprovals = workflow.approvals.filter(
+        (approval) => approval.fileVersionId === currentVersionId,
+      );
+
+      return {
+        id: workflow.id,
+        checklistId: workflow.id,
+        stage: workflow.currentApprovalStage,
+        status: workflow.status,
+        submittedAt: workflow.currentFileVersion?.uploadedAt ?? workflow.updatedAt,
+        checklistImport: {
+          id: workflow.id,
+          uploadedAt: workflow.currentFileVersion?.uploadedAt ?? workflow.updatedAt,
+          uploadedBy: workflow.currentFileVersion?.uploadedById
+            ? {
+                name: uploaderNameById.get(workflow.currentFileVersion.uploadedById) || "Unknown",
+              }
+            : null,
+          currentFileVersion: workflow.currentFileVersion,
+          approvals: currentInternalApprovals,
+          job: workflow.job,
+        },
+      };
+    });
 }
 
 export async function listManagerJobDeletionRequests(userId: string, orgId: string) {
@@ -6262,21 +6558,41 @@ export async function proceedDocumentStage(actorId: string, orgId: string, jobId
 }
 
 export async function getEligibleManagers(orgId: string) {
-  const [usersWithPermission, usersWithRoles] = await Promise.all([
+  const eligibleRoleNames = ["Admin", "Management", "Manager", "Director", "Executive Team"];
+  const specialEligibleEmails = ["hr@adarshshipping.in"];
+
+  const [usersWithPermission, usersWithRoles, specialEligibleUsers] = await Promise.all([
     getUsersWithPermission(orgId, "cha.checklist.internal_approve"),
     db.user.findMany({
       where: {
         orgId,
         active: true,
-        roles: {
-          some: {
-            role: {
-              name: {
-                in: ["Admin", "Management", "Manager", "Director"],
+        OR: [
+          {
+            roles: {
+              some: {
+                role: {
+                  name: {
+                    in: eligibleRoleNames,
+                  },
+                },
               },
             },
           },
-        },
+          {
+            department: {
+              name: "Executive Team",
+            },
+          },
+        ],
+      },
+      select: { id: true, name: true, email: true, branchId: true },
+    }),
+    db.user.findMany({
+      where: {
+        orgId,
+        active: true,
+        email: { in: specialEligibleEmails },
       },
       select: { id: true, name: true, email: true, branchId: true },
     }),
@@ -6298,6 +6614,10 @@ export async function getEligibleManagers(orgId: string) {
   }
 
   for (const u of usersWithRoles) {
+    allEligible.set(u.id, u);
+  }
+
+  for (const u of specialEligibleUsers) {
     allEligible.set(u.id, u);
   }
 
@@ -8628,11 +8948,54 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
       delayRemarkedAt: response.delayRemarkedAt,
     }));
 
+  const queryIds = resolvedInstance.queries.map((query) => query.id);
+  const queryLogs = queryIds.length
+    ? await db.chaAuditLog.findMany({
+        where: {
+          jobId,
+          entityType: "FilingWorkflowQuery",
+          entityId: { in: queryIds },
+          event: { in: [...FILING_QUERY_ACTIVITY_EVENTS] },
+        },
+        orderBy: { timestamp: "asc" },
+      })
+    : [];
+
+  const actorIds = queryLogs
+    .map((log) => log.actorId)
+    .filter((actorId, index, array) => actorId && array.indexOf(actorId) === index);
+  const resolvedActors =
+    actorIds.length > 0
+      ? await db.user.findMany({
+          where: { id: { in: actorIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+  const queryActorMap = new Map(resolvedActors.map((actor) => [actor.id, actor.name || "System"]));
+  const queryMessages = queryLogs.map((log) => {
+    const metadata = parseAuditMetadata(log.metadata);
+    return {
+      id: log.id,
+      queryId: log.entityId,
+      event: log.event,
+      actorId: log.actorId,
+      actorName: queryActorMap.get(log.actorId) || "System",
+      remarks: log.remarks,
+      body:
+        (typeof metadata?.message === "string" && metadata.message.trim()) ||
+        (typeof metadata?.details === "string" && metadata.details.trim()) ||
+        null,
+      status: log.newState || null,
+      createdAt: log.timestamp,
+    };
+  });
+
   return {
     ...resolvedInstance,
     activeNodeRun,
     overdueItems,
     overdueCount: overdueItems.length,
+    queryMessages,
   };
 }
 
@@ -8739,6 +9102,11 @@ export async function completeFilingNode(
       id: true,
       primaryOwnerId: true,
       assignedManagerId: true,
+      jobType: {
+        select: {
+          movementDirection: true,
+        },
+      },
       assignments: {
         select: {
           userId: true,
@@ -9326,6 +9694,11 @@ export async function toggleFilingSection49(
       id: true,
       primaryOwnerId: true,
       assignedManagerId: true,
+      jobType: {
+        select: {
+          movementDirection: true,
+        },
+      },
       assignments: {
         select: {
           userId: true,
@@ -9523,8 +9896,14 @@ export async function applyFilingSection49Extension(
     throw new Error("Section 49 extension is available only when the validity warning window is active.");
   }
 
-  const fileKey = await storeDeliveryOrderFile(jobId, userId, input.fileData, input.fileBuffer);
-  const extension = await db.$transaction(async (tx) => {
+  const { fileKey, storedFileName } = await storeDeliveryOrderFile(
+    jobId,
+    userId,
+    input.fileData,
+    input.fileBuffer,
+    "Section 49 Extension",
+  );
+  const result = await db.$transaction(async (tx) => {
     let requirement = await findSection49Requirement(tx, jobId);
     if (!requirement) {
       requirement = await tx.chaJobDocumentRequirement.create({
@@ -9546,7 +9925,7 @@ export async function applyFilingSection49Extension(
       data: {
         requirementId: requirement.id,
         fileKey,
-        fileName: input.fileData.fileName,
+        fileName: storedFileName,
         mimeType: input.fileData.mimeType,
         sizeBytes: input.fileData.sizeBytes,
         uploadedById: userId,
@@ -9563,18 +9942,18 @@ export async function applyFilingSection49Extension(
     });
     await tx.chaDocumentException.deleteMany({ where: { requirementId: requirement.id } });
 
-    const record = await tx.filingSection49Extension.create({
+    const extension = await tx.filingSection49Extension.create({
       data: {
         jobId,
         previousValidity: flag.validityDate,
         extensionDate: input.extensionDate,
         fileKey,
-        fileName: input.fileData.fileName,
+        fileName: storedFileName,
         appliedById: userId,
       },
     });
 
-    await tx.filingSection49Flag.update({
+    const updatedFlag = await tx.filingSection49Flag.update({
       where: { id: flag.id },
       data: {
         validityDate: input.extensionDate,
@@ -9592,26 +9971,29 @@ export async function applyFilingSection49Extension(
       data: { dismissedAt: now, readAt: now },
     });
 
-    return record;
+    return {
+      extension,
+      updatedFlag,
+    };
   });
 
   await logChaAudit({
     orgId,
     jobId,
     entityType: "FilingSection49Extension",
-    entityId: extension.id,
+    entityId: result.extension.id,
     event: "FILING_SECTION49_EXTENSION_APPLIED",
     actorId: userId,
     prevState: flag.validityDate.toISOString(),
     newState: input.extensionDate.toISOString(),
-    remarks: `Section 49 validity extended from ${flag.validityDate.toLocaleDateString("en-IN")} to ${input.extensionDate.toLocaleDateString("en-IN")}. Extension document: ${input.fileData.fileName}.`,
+    remarks: `Section 49 validity extended from ${flag.validityDate.toLocaleDateString("en-IN")} to ${input.extensionDate.toLocaleDateString("en-IN")}. Extension document: ${storedFileName}.`,
     metadata: {
       fileKey,
-      fileName: input.fileData.fileName,
+      fileName: storedFileName,
     },
   });
 
-  return extension;
+  return result;
 }
 
 function hasReminderTimeElapsed(reminderTime: string, now: Date) {
@@ -9745,6 +10127,188 @@ export async function runFilingWorkflowQueryReminderCron() {
   };
 }
 
+function getFilingQueryRecipientIds(job: {
+  primaryOwnerId: string | null;
+  assignedManagerId: string | null;
+  assignments: { userId: string }[];
+}) {
+  return Array.from(
+    new Set([
+      job.primaryOwnerId,
+      job.assignedManagerId,
+      ...job.assignments.map((assignment) => assignment.userId),
+    ].filter((value): value is string => typeof value === "string" && value.length > 0)),
+  );
+}
+
+async function notifyFilingQueryParticipants(params: {
+  orgId: string;
+  jobId: string;
+  jobNumber: string;
+  queryId: string;
+  queryTitle: string;
+  actorId: string;
+  body: string;
+  kind: string;
+}) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: getActiveChaJobByIdWhere(params.orgId, params.jobId),
+    select: {
+      primaryOwnerId: true,
+      assignedManagerId: true,
+      assignments: { select: { userId: true } },
+    },
+  });
+
+  const recipients = getFilingQueryRecipientIds(job).filter((userId) => userId !== params.actorId);
+  if (recipients.length === 0) {
+    return;
+  }
+
+  await Promise.all(
+    recipients.map((userId) =>
+      createNotification({
+        userId,
+        orgId: params.orgId,
+        kind: params.kind,
+        title: `Filing query update: ${params.jobNumber}`,
+        body: params.body,
+        link: `/cha/jobs/${params.jobId}?tab=filing`,
+        payload: {
+          jobId: params.jobId,
+          queryId: params.queryId,
+          queryTitle: params.queryTitle,
+        },
+        priority: "important",
+      }),
+    ),
+  );
+}
+
+async function buildFilingQueryEscalationWarnings(params: {
+  actorId: string;
+  orgId: string;
+  jobId?: string;
+}): Promise<FilingQueryEscalationWarning[]> {
+  const [now, canViewAll] = await Promise.all([
+    getNow(),
+    can(params.actorId, "cha.job.view_all"),
+  ]);
+
+  const warningThreshold = new Date(now.getTime() - 60 * 60 * 1000);
+  const queries = await db.filingWorkflowQuery.findMany({
+    where: {
+      status: { in: ["OPEN", "REPLIED"] },
+      lastReminderAt: { lte: warningThreshold },
+      instance: {
+        ...(params.jobId ? { jobId: params.jobId } : {}),
+        job: {
+          ...getActiveChaJobWhere(params.orgId),
+          ...(canViewAll
+            ? {}
+            : {
+                OR: [
+                  { primaryOwnerId: params.actorId },
+                  { assignedManagerId: params.actorId },
+                  { assignments: { some: { userId: params.actorId } } },
+                ],
+              }),
+        },
+      },
+    },
+    select: {
+      id: true,
+      title: true,
+      lastReminderAt: true,
+      instance: {
+        select: {
+          jobId: true,
+          job: {
+            select: {
+              jobNumber: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (queries.length === 0) {
+    return [];
+  }
+
+  const queryIds = queries.map((query) => query.id);
+  const logs = await db.chaAuditLog.findMany({
+    where: {
+      entityType: "FilingWorkflowQuery",
+      entityId: { in: queryIds },
+      event: { in: [...FILING_QUERY_ACTIVITY_EVENTS] },
+    },
+    select: {
+      entityId: true,
+      timestamp: true,
+      actorId: true,
+    },
+    orderBy: { timestamp: "desc" },
+  });
+
+  const latestActivityAfterReminder = new Map<string, Date>();
+  for (const log of logs) {
+    if (log.actorId === "system") {
+      continue;
+    }
+    if (!latestActivityAfterReminder.has(log.entityId)) {
+      latestActivityAfterReminder.set(log.entityId, log.timestamp);
+    }
+  }
+
+  const warningsByJob = new Map<string, FilingQueryEscalationWarning>();
+  const warningCounts = new Map<string, number>();
+
+  for (const query of queries) {
+    if (!query.lastReminderAt) {
+      continue;
+    }
+    const latestActivity = latestActivityAfterReminder.get(query.id);
+    if (latestActivity && latestActivity.getTime() > query.lastReminderAt.getTime()) {
+      continue;
+    }
+
+    const warningTriggeredAt = new Date(query.lastReminderAt.getTime() + 60 * 60 * 1000);
+    const staleMinutes = Math.max(60, Math.floor((now.getTime() - query.lastReminderAt.getTime()) / 60000));
+    const existingCount = warningCounts.get(query.instance.jobId) || 0;
+    warningCounts.set(query.instance.jobId, existingCount + 1);
+
+    const candidate: FilingQueryEscalationWarning = {
+      jobId: query.instance.jobId,
+      jobNumber: query.instance.job.jobNumber,
+      queryId: query.id,
+      queryTitle: query.title,
+      overdueQueryCount: existingCount + 1,
+      reminderTriggeredAt: query.lastReminderAt,
+      warningTriggeredAt,
+      staleMinutes,
+    };
+
+    const existing = warningsByJob.get(query.instance.jobId);
+    if (!existing || existing.warningTriggeredAt.getTime() > candidate.warningTriggeredAt.getTime()) {
+      warningsByJob.set(query.instance.jobId, candidate);
+    }
+  }
+
+  return Array.from(warningsByJob.values()).map((warning) => ({
+    ...warning,
+    overdueQueryCount: warningCounts.get(warning.jobId) || warning.overdueQueryCount,
+  }));
+}
+
+export async function listFilingQueryEscalationWarnings(
+  actorId: string,
+  orgId: string,
+): Promise<FilingQueryEscalationWarning[]> {
+  return buildFilingQueryEscalationWarnings({ actorId, orgId });
+}
+
 export async function createFilingWorkflowQuery(
   actorId: string,
   orgId: string,
@@ -9796,8 +10360,90 @@ export async function createFilingWorkflowQuery(
     },
   });
 
+  const createdJob = await db.chaJob.findUniqueOrThrow({
+    where: { id: jobId },
+    select: { jobNumber: true },
+  });
+
+  await notifyFilingQueryParticipants({
+    orgId,
+    jobId,
+    jobNumber: createdJob.jobNumber,
+    queryId: query.id,
+    queryTitle: query.title,
+    actorId,
+    kind: "CHA_FILING_QUERY_CREATED",
+    body: `A customs query "${query.title}" was opened and needs collaborative updates.`,
+  });
+
   await syncFilingWorkflowQueryReminders(orgId, jobId);
   return query;
+}
+
+export async function addFilingWorkflowQueryComment(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  queryId: string,
+  input: {
+    message: string;
+  },
+) {
+  const message = input.message.trim();
+  if (!message) {
+    throw new Error("Enter a message before posting the query update.");
+  }
+
+  const query = await db.filingWorkflowQuery.findFirstOrThrow({
+    where: {
+      id: queryId,
+      instance: {
+        jobId,
+        job: { orgId },
+      },
+    },
+    include: {
+      instance: {
+        include: {
+          job: {
+            select: {
+              jobNumber: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (query.status === "CLOSED") {
+    throw new Error("This customs query is already closed.");
+  }
+
+  const commentLog = await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "FilingWorkflowQuery",
+    entityId: query.id,
+    event: "FILING_QUERY_COMMENT_ADDED",
+    actorId,
+    remarks: `Added a customs query update on "${query.title}".`,
+    metadata: {
+      message,
+    },
+  });
+
+  await notifyFilingQueryParticipants({
+    orgId,
+    jobId,
+    jobNumber: query.instance.job.jobNumber,
+    queryId: query.id,
+    queryTitle: query.title,
+    actorId,
+    kind: "CHA_FILING_QUERY_COMMENT",
+    body: `A new customs query update was posted for "${query.title}".`,
+  });
+
+  return commentLog;
 }
 
 export async function updateFilingWorkflowQueryStatus(
@@ -9817,6 +10463,17 @@ export async function updateFilingWorkflowQueryStatus(
       instance: {
         jobId,
         job: { orgId },
+      },
+    },
+    include: {
+      instance: {
+        include: {
+          job: {
+            select: {
+              jobNumber: true,
+            },
+          },
+        },
       },
     },
   });
@@ -9841,6 +10498,24 @@ export async function updateFilingWorkflowQueryStatus(
     prevState: query.status,
     newState: input.status,
     remarks: `Filing query "${query.title}" updated to ${input.status}.`,
+    metadata: {
+      details: typeof input.details === "string" && input.details.trim() ? input.details.trim() : null,
+      status: input.status,
+    },
+  });
+
+  await notifyFilingQueryParticipants({
+    orgId,
+    jobId,
+    jobNumber: query.instance.job.jobNumber,
+    queryId,
+    queryTitle: query.title,
+    actorId,
+    kind: input.status === "CLOSED" ? "CHA_FILING_QUERY_CLOSED" : "CHA_FILING_QUERY_UPDATED",
+    body:
+      input.status === "CLOSED"
+        ? `The customs query "${query.title}" was marked replied and closed.`
+        : `The customs query "${query.title}" has a new replied status update.`,
   });
 
   return updated;
@@ -10104,6 +10779,11 @@ export async function uploadFilingAttachment(
       id: true,
       primaryOwnerId: true,
       assignedManagerId: true,
+      jobType: {
+        select: {
+          movementDirection: true,
+        },
+      },
       assignments: {
         select: {
           userId: true,
@@ -10137,6 +10817,30 @@ export async function uploadFilingAttachment(
     throw new Error("Filing workflow step not found for this job.");
   }
 
+  const checklistItem = checklistItemId
+    ? nodeRun.node.checklistItems.find((item) => item.id === checklistItemId) ?? null
+    : null;
+  const photoRequirement = photoRequirementId
+    ? nodeRun.node.photoRequirements.find((item) => item.id === photoRequirementId) ?? null
+    : null;
+  const nodeDocumentRequirements = normalizeDocumentRequirements(nodeRun.node.documentRequirementsJson);
+  const conditionalSections = normalizeConditionalSections(nodeRun.node.conditionalSectionsJson);
+  const conditionalDocuments = conditionalSections.flatMap((section) => section.unlocksDocuments ?? []);
+  const documentRequirement =
+    documentRequirementKey
+      ? [...nodeDocumentRequirements, ...conditionalDocuments].find((item) => item.key === documentRequirementKey) ?? null
+      : null;
+  const uploadLabel = checklistItem?.label
+    || photoRequirement?.label
+    || (documentRequirementKey === "bill_document"
+      ? job.jobType?.movementDirection === "EXPORT"
+        ? "Shipping Bill"
+        : "Bill of Entry"
+      : documentRequirement?.label)
+    || "Filing Document";
+  const storedFileName = buildDriveStoredFileName(uploadLabel, fileData.fileName);
+  const driveAccessToken = await resolveJobDriveUploadAccessToken(job.primaryOwnerId, actorId);
+
   // Verifies (and transparently recreates) the job's root and "Filing
   // Documents" folder if either was deleted from Drive after the job was created.
   let filingRootFolderId: string | undefined;
@@ -10163,9 +10867,10 @@ export async function uploadFilingAttachment(
         filingRootFolderId,
         nodeRun.node.key,
         nodeRun.node.name,
+        driveAccessToken,
       );
       const uploadResult = await driveClient.uploadFile({
-        name: fileData.fileName,
+        name: storedFileName,
         mimeType: fileData.mimeType,
         parentFolderId: driveFolderId,
         fileBuffer,
@@ -10181,19 +10886,6 @@ export async function uploadFilingAttachment(
     throw new Error("Google Drive is not provisioned for this job or missing credentials. Please retry provisioning the workspace.");
   }
 
-  const checklistItem = checklistItemId
-    ? nodeRun.node.checklistItems.find((item) => item.id === checklistItemId) ?? null
-    : null;
-  const photoRequirement = photoRequirementId
-    ? nodeRun.node.photoRequirements.find((item) => item.id === photoRequirementId) ?? null
-    : null;
-  const nodeDocumentRequirements = normalizeDocumentRequirements(nodeRun.node.documentRequirementsJson);
-  const conditionalSections = normalizeConditionalSections(nodeRun.node.conditionalSectionsJson);
-  const conditionalDocuments = conditionalSections.flatMap((section) => section.unlocksDocuments ?? []);
-  const documentRequirement =
-    documentRequirementKey
-      ? [...nodeDocumentRequirements, ...conditionalDocuments].find((item) => item.key === documentRequirementKey) ?? null
-      : null;
   const sourceConfig = checklistItem ?? photoRequirement ?? documentRequirement;
   const uploadedAt = await getNow();
   const resolvedValidityDate = sourceConfig
@@ -10219,7 +10911,7 @@ export async function uploadFilingAttachment(
         documentRequirementLabel: documentRequirement?.label ?? null,
         conditionalSectionKey: documentRequirement?.visibleWhen?.sectionKey ?? null,
         fileKey,
-        fileName: fileData.fileName,
+        fileName: storedFileName,
         fileSize: fileData.sizeBytes,
         fileType: fileData.mimeType,
         uploadedById: actorId,
@@ -10262,7 +10954,7 @@ export async function uploadFilingAttachment(
     entityId: attachment.id,
     event: checklistItemId ? "FILING_CHECKLIST_FILE_UPLOADED" : documentRequirementKey ? "FILING_DOCUMENT_REQUIREMENT_FILE_UPLOADED" : "FILING_PHOTO_UPLOADED",
     actorId,
-    remarks: `Uploaded file: ${fileData.fileName} for node run ${nodeRunId}`,
+    remarks: `Uploaded file: ${storedFileName} for node run ${nodeRunId}`,
     metadata: {
       validityDate: resolvedValidityDate?.toISOString() ?? null,
       checklistItemId,

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-03T15:32:55.870Z",
+  "generatedAt": "2026-07-04T11:20:29.890Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -10,7 +10,7 @@
     "totalApiRoutes": 174,
     "totalPrismaModels": 263,
     "totalModuleServices": 71,
-    "totalComponents": 89
+    "totalComponents": 90
   },
   "appRoutes": [
     {
@@ -9721,10 +9721,12 @@
         "getFilingWorkflowInstanceAction",
         "startFilingWorkflowAction",
         "completeFilingNodeAction",
+        "revertFilingStageAction",
         "toggleFilingSection49Action",
         "getFilingSection49Action",
         "createFilingWorkflowQueryAction",
         "updateFilingWorkflowQueryStatusAction",
+        "addFilingWorkflowQueryCommentAction",
         "uploadFilingAttachmentAction",
         "upsertFilingShipmentDetailsAction",
         "deleteFilingAttachmentAction"
@@ -9768,6 +9770,7 @@
         "acknowledgeDeliveryOrderValidityWarning",
         "setDeliveryOrderUploadToggle",
         "setDeliveryOrderExtensionToggle",
+        "listSection49ValidityWarnings",
         "uploadDeliveryOrderDocument",
         "applyDeliveryOrderExtension",
         "listDeliveryOrderExtensions",
@@ -9814,12 +9817,15 @@
         "getFilingWorkflowInstance",
         "startFilingWorkflow",
         "completeFilingNode",
+        "revertFilingWorkflowToPreviousStage",
         "toggleFilingSection49",
         "getFilingSection49",
         "updateFilingSection49Validity",
         "applyFilingSection49Extension",
         "runFilingWorkflowQueryReminderCron",
+        "listFilingQueryEscalationWarnings",
         "createFilingWorkflowQuery",
+        "addFilingWorkflowQueryComment",
         "updateFilingWorkflowQueryStatus",
         "uploadFilingAttachment",
         "upsertFilingShipmentDetails",
@@ -11013,6 +11019,11 @@
       "filePath": "src/components/ui/modal.tsx"
     },
     {
+      "module": "ui",
+      "fileName": "neon-checkbox.tsx",
+      "filePath": "src/components/ui/neon-checkbox.tsx"
+    },
+    {
       "module": "shared",
       "fileName": "welcome-bar.tsx",
       "filePath": "src/components/welcome-bar.tsx"
@@ -11248,7 +11259,7 @@
       "apiRoutes": 0,
       "prismaModels": 0,
       "serviceFiles": 0,
-      "components": 12
+      "components": 13
     },
     "users": {
       "appRoutes": 0,

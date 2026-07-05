@@ -2,10 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { LogOut, MonitorSmartphone } from "lucide-react";
-import {
-  revokeAllOtherSessionsAction,
-  revokeMySessionAction,
-} from "./actions";
+import {revokeAllOtherSessionsAction,revokeMySessionAction,} from "./actions";
 
 type SessionRow = {
   id: string;

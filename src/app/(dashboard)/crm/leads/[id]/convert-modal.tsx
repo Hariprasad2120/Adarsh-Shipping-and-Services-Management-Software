@@ -1,5 +1,6 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -102,8 +103,7 @@ export function ConvertModal({ leadId, leadName, companyName, onClose }: Convert
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Close Date</label>
-                  <input
-                    type="date"
+                  <DateInput
                     value={dealCloseDate}
                     onChange={(e) => setDealCloseDate(e.target.value)}
                     className="w-full px-3 py-1.5 bg-[#0f1319] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#00c4b6]"

@@ -10,16 +10,7 @@ import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { getSalaryDemoValues } from "@/lib/demo-fill";
-import {
-  cityLabel,
-  computeSalary,
-  formatINR,
-  type City,
-  type InsuranceCoverage,
-  type PFType,
-  type SalaryInputs,
-  type TaxRegime,
-} from "@/modules/hrms/salary-structure";
+import {cityLabel,computeSalary,formatINR,type City,type InsuranceCoverage,type PFType,type SalaryInputs,type TaxRegime,} from "@/modules/hrms/salary-structure";
 
 type Employee = { id: string; name: string; designation: string | null };
 

@@ -4,12 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Users, Clock, Wifi, MapPin, Shield, RefreshCw, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  saveTimeoutAction,
-  getActiveSessionsAction,
-  adminRevokeSessionAction,
-  adminRevokeAllUserSessionsAction,
-} from "./actions";
+import {saveTimeoutAction,getActiveSessionsAction,adminRevokeSessionAction,adminRevokeAllUserSessionsAction,} from "./actions";
 
 type ActiveSession = {
   id: string;

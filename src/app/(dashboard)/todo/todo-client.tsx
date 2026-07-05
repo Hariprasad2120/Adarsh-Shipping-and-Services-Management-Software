@@ -1,32 +1,15 @@
 "use client";
 
 import { Fragment, startTransition, useEffect, useMemo, useState } from "react";
-import {
-  CalendarClock,
-  CheckCircle2,
-  ChevronRight,
-  ListChecks,
-  Pencil,
-  Plus,
-  Trash2,
-  X,
-} from "lucide-react";
-import {
-  Badge,
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-} from "@/components/data-table";
+import {CalendarClock,CheckCircle2,ChevronRight,ListChecks,Pencil,Plus,Trash2,X,} from "lucide-react";
+import {Badge,DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableHead,DataTableHeader,DataTableRow,} from "@/components/data-table";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { Button } from "@/components/ui/button-1";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NeonCheckbox } from "@/components/ui/neon-checkbox";
 
 type TodoStatus = "PENDING" | "COMPLETED";
 type TodoFilter = "ALL" | "PENDING" | "COMPLETED" | "UPCOMING_ALERTS";
@@ -721,13 +704,12 @@ export function TodoClient({
                             {task.subtasks.length > 0 ? (
                               <div className="grid gap-2 md:grid-cols-2">
                                 {task.subtasks.map((subtask) => (
-                                  <label
+                                  <div
                                     key={subtask.id}
                                     onClick={(event) => event.stopPropagation()}
                                     className="flex items-center gap-3 rounded-xl border border-outline-variant/25 bg-surface px-3 py-2 text-sm text-on-surface"
                                   >
-                                    <input
-                                      type="checkbox"
+                                    <NeonCheckbox
                                       checked={subtask.completed}
                                       onChange={(event) =>
                                         void toggleSubtask(
@@ -735,19 +717,19 @@ export function TodoClient({
                                           event.target.checked,
                                         )
                                       }
-                                      className="h-4 w-4 rounded border-outline-variant text-[#00cec4] focus:ring-[#00cec4]"
-                                    />
-
-                                    <span
-                                      className={
-                                        subtask.completed
-                                          ? "text-on-surface-variant line-through"
-                                          : ""
+                                      label={
+                                        <span
+                                          className={
+                                            subtask.completed
+                                              ? "text-on-surface-variant line-through"
+                                              : ""
+                                          }
+                                        >
+                                          {subtask.label}
+                                        </span>
                                       }
-                                    >
-                                      {subtask.label}
-                                    </span>
-                                  </label>
+                                    />
+                                  </div>
                                 ))}
                               </div>
                             ) : (
@@ -922,15 +904,13 @@ export function TodoClient({
                       key={subtask.localId}
                       className="flex items-center gap-3 rounded-2xl border border-outline-variant/30 bg-surface px-3 py-2.5"
                     >
-                      <input
+                      <NeonCheckbox
                         checked={subtask.completed}
-                        className="h-4 w-4 rounded border-outline-variant text-[#00cec4] focus:ring-[#00cec4]"
                         onChange={(event) =>
                           updateDraftSubtask(subtask.localId, {
                             completed: event.target.checked,
                           })
                         }
-                        type="checkbox"
                       />
 
                       <Input
@@ -957,9 +937,8 @@ export function TodoClient({
                 </div>
               </div>
 
-              <label className="flex items-center gap-3 rounded-2xl border border-outline-variant/35 bg-surface-container-low/70 px-4 py-3 text-sm text-on-surface">
-                <input
-                  type="checkbox"
+              <div className="flex items-center gap-3 rounded-2xl border border-outline-variant/35 bg-surface-container-low/70 px-4 py-3 text-sm text-on-surface">
+                <NeonCheckbox
                   checked={draft.reminderEnabled}
                   onChange={(event) =>
                     setDraft((current) => ({
@@ -968,10 +947,9 @@ export function TodoClient({
                       alertAt: event.target.checked ? current.alertAt : "",
                     }))
                   }
-                  className="h-4 w-4 rounded border-outline-variant text-[#00cec4] focus:ring-[#00cec4]"
+                  label="Enable reminder"
                 />
-                Enable reminder
-              </label>
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="task-alert-at">Alert date and time</Label>

@@ -7,14 +7,7 @@ import { useState, useEffect, useTransition, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { cn } from "@/lib/utils";
-import {
-  Calendar,
-  CheckCircle,
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  TrendingUp,
-} from "lucide-react";
+import {Calendar,CheckCircle,ArrowRight,ChevronLeft,ChevronRight,TrendingUp,} from "lucide-react";
 
 type Punch = {
   id: string;

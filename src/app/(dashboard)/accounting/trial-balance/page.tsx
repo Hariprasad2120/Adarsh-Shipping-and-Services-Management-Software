@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getTrialBalance } from "@/modules/accounting/reports";
 import { Filter, Scale } from "lucide-react";
+import { DateInput } from "@/components/ui/date-input";
 
 interface TBPageProps {
   searchParams: Promise<{
@@ -83,8 +84,7 @@ export default async function TrialBalanceReportPage({ searchParams }: TBPagePro
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <label className="ds-label block text-slate-400">From Date</label>
-              <input
-                type="date"
+              <DateInput
                 name="fromDate"
                 defaultValue={params.fromDate || ""}
                 className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-1.5"
@@ -92,8 +92,7 @@ export default async function TrialBalanceReportPage({ searchParams }: TBPagePro
             </div>
             <div className="space-y-1">
               <label className="ds-label block text-slate-400">To Date</label>
-              <input
-                type="date"
+              <DateInput
                 name="toDate"
                 defaultValue={params.toDate || ""}
                 className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-1.5"

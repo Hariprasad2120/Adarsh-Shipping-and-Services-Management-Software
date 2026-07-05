@@ -1,5 +1,6 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -150,8 +151,7 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
 
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Posting Date</label>
-            <input
-              type="date"
+            <DateInput
               required
               value={postingDate}
               onChange={(e) => setPostingDate(e.target.value)}
@@ -161,8 +161,7 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
 
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Due Date</label>
-            <input
-              type="date"
+            <DateInput
               required
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}

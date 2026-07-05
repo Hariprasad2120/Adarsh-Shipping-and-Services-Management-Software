@@ -108,6 +108,10 @@ export default async function ChaJobWorkspacePage({
   }
 
   if (error) {
+    if (error instanceof Error && error.message === "Job not found.") {
+      return notFound();
+    }
+
     console.error("Failed to load job workspace:", error);
     if (
       error instanceof ForbiddenError ||
@@ -133,10 +137,6 @@ export default async function ChaJobWorkspacePage({
           </div>
         </main>
       );
-    }
-
-    if (error instanceof Error && error.message === "Job not found.") {
-      return notFound();
     }
 
     throw error;

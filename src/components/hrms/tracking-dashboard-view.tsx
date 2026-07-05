@@ -1,19 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  Loader2,
-  MapPin,
-  Radio,
-  RefreshCw,
-  Shield,
-  Smartphone,
-  User,
-  XCircle,
-} from "lucide-react";
+import {AlertTriangle,CheckCircle2,Clock,Loader2,MapPin,Radio,RefreshCw,Shield,Smartphone,User,XCircle,} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

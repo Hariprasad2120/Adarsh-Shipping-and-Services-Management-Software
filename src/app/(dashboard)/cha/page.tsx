@@ -7,14 +7,17 @@ import Link from "next/link";
 import { ensureSettingsAndDefaults } from "@/modules/cha/service";
 import { listJobTypesForSelection } from "@/modules/cha/service";
 import { listDeliveryOrderValidityWarnings } from "@/modules/cha/service";
+import { listFilingQueryEscalationWarnings } from "@/modules/cha/service";
+import { listSection49ValidityWarnings } from "@/modules/cha/service";
 import { DashboardCreateJob } from "@/components/cha/dashboard-create-job";
 import { JobValidityWarningIndicator } from "./_components/job-validity-warning-indicator";
+import { JobFilingQueryWarningIndicator } from "./_components/job-filing-query-warning-indicator";
+import { JobSection49ValidityWarningIndicator } from "./_components/job-section49-validity-warning-indicator";
 import {
   FileText,
   CheckSquare,
   DollarSign,
   AlertCircle,
-  Plus,
   Briefcase,
   UserCheck,
   Settings,
@@ -28,7 +31,6 @@ import {
   DataTableEmpty,
   DataTableHead,
   DataTableHeader,
-  DataTableRow,
   DataTableToolbar,
 } from "@/components/data-table";
 
@@ -54,10 +56,12 @@ export default async function ChaDashboard() {
     shipmentTypes,
     users,
     teamGroups,
-    settings,
+    ,
     branchNumberingRules,
     pendingAdvances,
     validityWarnings,
+    section49Warnings,
+    filingQueryWarnings,
   ] = await Promise.all([
     db.chaJob.count({
       where: { orgId, stage: { not: "FILED" }, status: "ACTIVE" },
@@ -126,6 +130,8 @@ export default async function ChaDashboard() {
       include: { receipts: true },
     }),
     listDeliveryOrderValidityWarnings(session.user.id, orgId),
+    listSection49ValidityWarnings(session.user.id, orgId),
+    listFilingQueryEscalationWarnings(session.user.id, orgId),
   ]);
 
   const totalOutstandingAdvance = pendingAdvances.reduce((sum, adv) => {
@@ -145,6 +151,32 @@ export default async function ChaDashboard() {
           warning.severity === "expired"
             ? `Delivery Order Validity expired on ${warning.deliveryOrderValidity.toLocaleDateString("en-IN")}.`
             : `Delivery Order Validity is expiring in ${warning.daysUntilExpiry} day(s) on ${warning.deliveryOrderValidity.toLocaleDateString("en-IN")}.`,
+      },
+    ]),
+  );
+  const filingQueryWarningMap = new Map(
+    filingQueryWarnings.map((warning) => [
+      warning.jobId,
+      {
+        queryTitle: warning.queryTitle,
+        overdueQueryCount: warning.overdueQueryCount,
+        reminderTriggeredAt: warning.reminderTriggeredAt.toISOString(),
+        warningTriggeredAt: warning.warningTriggeredAt.toISOString(),
+        staleMinutes: warning.staleMinutes,
+      },
+    ]),
+  );
+  const section49WarningMap = new Map(
+    section49Warnings.map((warning) => [
+      warning.jobId,
+      {
+        severity: warning.severity as "expired" | "expiring",
+        daysUntilExpiry: warning.daysUntilExpiry,
+        validityDate: warning.validityDate.toISOString(),
+        message:
+          warning.severity === "expired"
+            ? `Section 49 validity expired on ${warning.validityDate.toLocaleDateString("en-IN")}.`
+            : `Section 49 validity is expiring in ${warning.daysUntilExpiry} day(s) on ${warning.validityDate.toLocaleDateString("en-IN")}.`,
       },
     ]),
   );
@@ -296,6 +328,18 @@ export default async function ChaDashboard() {
                           <JobValidityWarningIndicator
                             jobId={job.id}
                             warning={validityWarningMap.get(job.id)!}
+                          />
+                        ) : null}
+                        {section49WarningMap.get(job.id) ? (
+                          <JobSection49ValidityWarningIndicator
+                            jobId={job.id}
+                            warning={section49WarningMap.get(job.id)!}
+                          />
+                        ) : null}
+                        {filingQueryWarningMap.get(job.id) ? (
+                          <JobFilingQueryWarningIndicator
+                            jobId={job.id}
+                            warning={filingQueryWarningMap.get(job.id)!}
                           />
                         ) : null}
                       </div>

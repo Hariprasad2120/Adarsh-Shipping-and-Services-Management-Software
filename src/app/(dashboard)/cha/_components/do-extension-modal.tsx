@@ -1,5 +1,6 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { CalendarPlus, FileUp } from "lucide-react";
@@ -76,8 +77,7 @@ export function DoExtensionModal({
       <div className="space-y-4">
         <label className="block space-y-1.5">
           <span className="ds-label">New Extension Date</span>
-          <input
-            type="date"
+          <DateInput
             value={extensionDate}
             onChange={(e) => setExtensionDate(e.target.value)}
             min={new Date(currentValidity).toISOString().slice(0, 10)}

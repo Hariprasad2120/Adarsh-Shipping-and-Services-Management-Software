@@ -4,16 +4,7 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as LucideIcons from "lucide-react";
-import {
-  productOverview,
-  problems,
-  solutions,
-  modules,
-  detailedWorkflowStages,
-  moduleInteractions,
-  benefits,
-  ctaContent
-} from "@/lib/catalogue-data";
+import {productOverview,problems,solutions,modules,detailedWorkflowStages,moduleInteractions,benefits,ctaContent} from "@/lib/catalogue-data";
 
 const STATUS_BADGE: Record<string, { label: string; bg: string; text: string; border: string }> = {
   Implemented: { label: "IMPLEMENTED", bg: "bg-emerald-950/40", text: "text-emerald-400", border: "border-emerald-400/25" },

@@ -3,17 +3,7 @@
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { clearStaleSessionData } from "@/lib/logout";
-import {
-  Anchor,
-  ArrowRight,
-  ChevronRight,
-  Eye,
-  EyeOff,
-  Globe,
-  Lock,
-  ShieldCheck,
-  User,
-} from "lucide-react";
+import {Anchor,ArrowRight,ChevronRight,Eye,EyeOff,Globe,Lock,ShieldCheck,User,} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { HarborScene3D } from "@/components/login/harbor-scene-3d";
 import { isRootControlEmail } from "@/lib/root-access";

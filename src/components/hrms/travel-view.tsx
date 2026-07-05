@@ -1,8 +1,9 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { Plane, DollarSign, Plus, Save, Loader2, AlertCircle, Calendar, MapPin, Receipt, CheckCircle, Clock } from "lucide-react";
-import { toast } from "sonner";
+import { toast }from "sonner";
 
 export function TravelView() {
   const [requests, setRequests] = useState<any[]>([]);
@@ -171,8 +172,7 @@ export function TravelView() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">From Date</label>
-              <input
-                type="date"
+              <DateInput
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
                 required
@@ -181,8 +181,7 @@ export function TravelView() {
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">To Date</label>
-              <input
-                type="date"
+              <DateInput
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
                 required

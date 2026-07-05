@@ -1,33 +1,9 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import {
-  Send,
-  CheckCircle,
-  RotateCcw,
-  XCircle,
-  Eye,
-  ThumbsUp,
-  FileText,
-  ArchiveRestore,
-  Loader2,
-  ChevronDown,
-  Plus,
-} from "lucide-react";
+import {Send,CheckCircle,RotateCcw,XCircle,Eye,ThumbsUp,FileText,ArchiveRestore,Loader2,ChevronDown,Plus,} from "lucide-react";
 import type { ApprovalStatus, CrmEntityType } from "@/modules/crm/approval-workflow";
-import {
-  actionSubmitForApproval,
-  actionApproveDocument,
-  actionRequestRework,
-  actionDeclineDocument,
-  actionSendToCustomer,
-  actionMarkCustomerViewed,
-  actionAcceptQuote,
-  actionMarkInvoiced,
-  actionAdminRestoreToDraft,
-  actionConvertToInvoice,
-  actionRaiseDirectSalesOrder,
-} from "@/modules/crm/approval-actions";
+import {actionSubmitForApproval,actionApproveDocument,actionRequestRework,actionDeclineDocument,actionSendToCustomer,actionMarkCustomerViewed,actionAcceptQuote,actionMarkInvoiced,actionAdminRestoreToDraft,actionConvertToInvoice,actionRaiseDirectSalesOrder,} from "@/modules/crm/approval-actions";
 import { toast } from "sonner";
 
 // ─── Permission caps passed from server ───────────────────────────────────────

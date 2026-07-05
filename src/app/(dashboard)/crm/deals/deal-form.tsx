@@ -1,5 +1,6 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -182,8 +183,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Expected Close Date</label>
-            <input
-              type="date"
+            <DateInput
               name="expectedCloseDate"
               defaultValue={initialData?.expectedCloseDate ? new Date(initialData.expectedCloseDate).toISOString().split("T")[0] : ""}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -191,8 +191,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Next Follow Up Date</label>
-            <input
-              type="date"
+            <DateInput
               name="nextFollowUpDate"
               defaultValue={initialData?.nextFollowUpDate ? new Date(initialData.nextFollowUpDate).toISOString().split("T")[0] : ""}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"

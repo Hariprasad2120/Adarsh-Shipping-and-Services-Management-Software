@@ -1,16 +1,8 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
-import {
-  Ship,
-  Plus,
-  TrendingUp,
-  Percent,
-  Calendar,
-  DollarSign,
-  AlertCircle,
-  FileCheck2,
-} from "lucide-react";
+import {Ship,Plus,TrendingUp,Percent,Calendar,DollarSign,AlertCircle,FileCheck2,} from "lucide-react";
 import { createJobCostingAction, getJobCostingAction } from "@/modules/accounting/actions";
 
 interface Job {
@@ -425,8 +417,7 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="ds-label block">Start Date</label>
-                  <input
-                    type="date"
+                  <DateInput
                     required
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
@@ -435,8 +426,7 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
                 </div>
                 <div className="space-y-2">
                   <label className="ds-label block">Expected End Date</label>
-                  <input
-                    type="date"
+                  <DateInput
                     value={expectedEndDate}
                     onChange={(e) => setExpectedEndDate(e.target.value)}
                     className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs ds-numeric"

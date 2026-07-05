@@ -3,17 +3,7 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import {
-  Calendar,
-  FileText,
-  ShieldAlert,
-  Loader2,
-  CheckCircle,
-  XCircle,
-  Database,
-  ArrowRight,
-  TrendingUp
-} from "lucide-react";
+import {Calendar,FileText,ShieldAlert,Loader2,CheckCircle,XCircle,Database,ArrowRight,TrendingUp} from "lucide-react";
 import { submitJournalEntryAction, cancelJournalEntryAction } from "@/modules/accounting/actions";
 
 interface JournalEntryDetailClientProps {

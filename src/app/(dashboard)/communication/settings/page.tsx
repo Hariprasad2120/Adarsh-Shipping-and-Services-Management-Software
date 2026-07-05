@@ -179,7 +179,7 @@ export default async function CommunicationSettings() {
                     placeholder="https://drive.google.com/drive/folders/... or ID"
                   />
                   <p className="text-[10px] text-on-surface-variant mt-1">
-                    Google Drive link or Parent folder ID where new Job workspaces will be created.
+                    Google Drive link or Parent folder ID where new Job workspaces will be created. If left blank, Monolith creates a managed root folder inside the configured Shared Drive automatically.
                   </p>
                 </div>
               </div>

@@ -1,8 +1,9 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { CheckSquare, Square, Plus, Save, Loader2, Calendar, User, Trash, CheckCircle } from "lucide-react";
-import { toast } from "sonner";
+import { toast }from "sonner";
 
 export function TasksView() {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -181,8 +182,7 @@ export function TasksView() {
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Due Date</label>
-              <input
-                type="date"
+              <DateInput
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 required

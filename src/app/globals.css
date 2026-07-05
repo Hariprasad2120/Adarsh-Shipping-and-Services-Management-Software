@@ -393,7 +393,10 @@ html.dark .text-neutral-400 {
   color: var(--color-on-surface-variant) !important;
 }
 
-html.dark .shadow-sm,
+html.dark .shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
 html.dark .shadow-md,
 html.dark .shadow-lg,
 html.dark .shadow-xl,
@@ -716,6 +719,68 @@ html.dark .cha-jobs-table td {
   border-radius: var(--radius-card-lg);
 }
 
+@keyframes ds-calendar-panel-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) rotateX(-10deg) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg) scale(1);
+  }
+}
+
+@keyframes ds-calendar-day-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ds-date-panel {
+  perspective: 1400px;
+  transform-style: preserve-3d;
+  animation: ds-calendar-panel-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ds-date-panel__glow {
+  position: absolute;
+  inset: 18px;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top, rgba(0, 206, 196, 0.14), transparent 60%),
+    radial-gradient(circle at bottom right, rgba(251, 146, 60, 0.08), transparent 44%);
+  filter: blur(24px);
+  pointer-events: none;
+}
+
+.ds-date-nav-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 9999px;
+  border: 1px solid rgba(0, 206, 196, 0.16);
+  background: linear-gradient(180deg, rgba(0, 206, 196, 0.12), rgba(0, 206, 196, 0.04));
+  color: var(--color-on-surface);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.ds-date-nav-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(0, 206, 196, 0.34);
+  box-shadow: 0 12px 26px -20px rgba(0, 206, 196, 0.8);
+}
+
+.ds-date-day {
+  animation: ds-calendar-day-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 /* ─── Theme Compliance Overrides ─── */
 
 /* Background overrides for Light Mode */
@@ -978,4 +1043,468 @@ html.light main .ds-dark-banner [class*="text-white/56"] {
 
 .animate-pulse-red {
   animation: pulse-ring-red 2.2s cubic-bezier(0.25, 0, 0, 1) infinite;
+}
+
+/* ─── Neon Checkbox Keyframes ─── */
+@keyframes borderFlow1 {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(200%); }
+}
+@keyframes borderFlow2 {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(200%); }
+}
+@keyframes borderFlow3 {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-200%); }
+}
+@keyframes borderFlow4 {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-200%); }
+}
+@keyframes particleExplosion {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+  20% { opacity: 1; }
+  100% { 
+    transform: translate(
+      calc(-50% + var(--x, 20px)),
+      calc(-50% + var(--y, 20px))
+    ) scale(0);
+    opacity: 0;
+  }
+}
+@keyframes ringPulse {
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+@keyframes sparkFlash {
+  0% { 
+    transform: rotate(var(--r, 0deg)) translateX(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(var(--r, 0deg)) translateX(30px) scale(0);
+    opacity: 0;
+  }
+}
+
+/* Global Neon styling for default checkboxes */
+main input[type="checkbox"]:not(.hidden) {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 206, 196, 0.45) !important;
+  border-radius: 4px !important;
+  background-color: var(--color-surface) !important;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 0 rgba(0, 206, 196, 0);
+}
+
+main input[type="checkbox"]:not(.hidden):checked {
+  background-color: rgba(0, 206, 196, 0.12) !important;
+  border-color: #00cec4 !important;
+  box-shadow: 0 0 8px rgba(0, 206, 196, 0.35);
+}
+
+main input[type="checkbox"]:not(.hidden):checked::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  color: rgba(255, 255, 255, 0.66) !important;
+}
+html.light main .ds-dark-banner [class*="text-white/56"] {
+  color: rgba(255, 255, 255, 0.56) !important;
+}
+
+/* ─── Mona AI Companion ─────────────────────────────────────────────────── */
+
+/* Prose formatting inside Mona messages */
+.mona-prose {
+  word-break: break-word;
+}
+.mona-prose strong {
+  font-weight: 600;
+}
+.mona-prose em {
+  font-style: italic;
+}
+.mona-prose .mona-code {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--color-surface-container);
+  color: #00cec4;
+}
+.mona-prose .mona-link {
+  color: #00cec4;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: opacity 0.15s;
+}
+.mona-prose .mona-link:hover {
+  opacity: 0.8;
+}
+.mona-prose .mona-nav-link {
+  font-weight: 500;
+  text-decoration: none;
+  background: rgba(0, 206, 196, 0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.mona-prose .mona-ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 6px 0;
+}
+.mona-prose .mona-li {
+  position: relative;
+  padding-left: 16px;
+  margin-bottom: 3px;
+}
+.mona-prose .mona-li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 7px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #00cec4;
+}
+.mona-prose .mona-li-num::before {
+  content: none;
+}
+
+/* Mona input — exempt from global cyan border override, uses outline-variant */
+.mona-input {
+  border-color: var(--color-outline-variant) !important;
+}
+.mona-input:focus {
+  border-color: #00cec4 !important;
+  box-shadow: 0 0 0 3px rgba(0, 206, 196, 0.12) !important;
+}
+
+/* Scoped input/select/textarea padding inside the CHA module */
+.cha-module input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.cha-module select,
+.cha-module textarea {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+.cha-module input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([class*="pl-"]),
+.cha-module select:not([class*="pl-"]),
+.cha-module textarea:not([class*="pl-"]) {
+  padding-left: 14px !important;
+}
+.cha-module input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([class*="pr-"]),
+.cha-module select:not([class*="pr-"]),
+.cha-module textarea:not([class*="pr-"]) {
+  padding-right: 14px !important;
+}
+
+@keyframes pulse-ring-orange {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(251, 146, 60, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 146, 60, 0);
+  }
+}
+
+@keyframes pulse-ring-red {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.animate-pulse-orange {
+  animation: pulse-ring-orange 2.2s cubic-bezier(0.25, 0, 0, 1) infinite;
+}
+
+.animate-pulse-red {
+  animation: pulse-ring-red 2.2s cubic-bezier(0.25, 0, 0, 1) infinite;
+}
+
+/* ─── Neon Checkbox Keyframes ─── */
+@keyframes borderFlow1 {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(200%); }
+}
+@keyframes borderFlow2 {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(200%); }
+}
+@keyframes borderFlow3 {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-200%); }
+}
+@keyframes borderFlow4 {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-200%); }
+}
+@keyframes particleExplosion {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+  20% { opacity: 1; }
+  100% { 
+    transform: translate(
+      calc(-50% + var(--x, 20px)),
+      calc(-50% + var(--y, 20px))
+    ) scale(0);
+    opacity: 0;
+  }
+}
+@keyframes ringPulse {
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+@keyframes sparkFlash {
+  0% { 
+    transform: rotate(var(--r, 0deg)) translateX(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(var(--r, 0deg)) translateX(30px) scale(0);
+    opacity: 0;
+  }
+}
+
+/* Global Neon styling for default checkboxes */
+main input[type="checkbox"]:not(.hidden) {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 206, 196, 0.45) !important;
+  border-radius: 4px !important;
+  background-color: var(--color-surface) !important;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 0 rgba(0, 206, 196, 0);
+}
+
+main input[type="checkbox"]:not(.hidden):checked {
+  background-color: rgba(0, 206, 196, 0.12) !important;
+  border-color: #00cec4 !important;
+  box-shadow: 0 0 8px rgba(0, 206, 196, 0.35);
+}
+
+main input[type="checkbox"]:not(.hidden):checked::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  color: #00cec4;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+/* ─── Neon Approval/Rejection Buttons (CHA Module) ─── */
+@keyframes neon-pulse-approve {
+  0%, 100% { box-shadow: 0 0 4px rgba(0, 206, 196, 0.25), inset 0 0 2px rgba(0, 206, 196, 0.1); }
+  50% { box-shadow: 0 0 10px rgba(0, 206, 196, 0.5), inset 0 0 4px rgba(0, 206, 196, 0.2); }
+}
+
+@keyframes neon-pulse-reject {
+  0%, 100% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.25), inset 0 0 2px rgba(239, 68, 68, 0.1); }
+  50% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.5), inset 0 0 4px rgba(239, 68, 68, 0.2); }
+}
+
+/* Primary Cyan Neon Buttons in CHA */
+.cha-btn-neon-approve,
+.cha-module button[class*="bg-"][class*="00cec4"],
+.cha-module button[class*="bg-primary"],
+.cha-module button:not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]) {
+  border: 1px solid #00cec4 !important;
+  background: #00cec4 !important;
+  color: #ffffff !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer;
+}
+
+/* Ensure ALL descendants of cyan buttons render as white in rest state */
+.cha-btn-neon-approve *,
+.cha-module button[class*="bg-"][class*="00cec4"] *,
+.cha-module button[class*="bg-primary"] *,
+.cha-module button:not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]) * {
+  color: #ffffff !important;
+}
+
+.cha-btn-neon-approve:hover:not(:disabled),
+.cha-module button[class*="bg-"][class*="00cec4"]:hover:not(:disabled),
+.cha-module button[class*="bg-primary"]:hover:not(:disabled),
+.cha-module button:not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]):hover {
+  background: #00b8af !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 16px rgba(0, 206, 196, 0.5), 0 0 5px rgba(0, 206, 196, 0.3) !important;
+  animation: neon-pulse-approve 2s infinite ease-in-out !important;
+  transform: translateY(-1px);
+}
+
+/* Ensure ALL descendants of cyan buttons render as white on hover */
+.cha-btn-neon-approve:hover:not(:disabled) *,
+.cha-module button[class*="bg-"][class*="00cec4"]:hover:not(:disabled) *,
+.cha-module button[class*="bg-primary"]:hover:not(:disabled) *,
+.cha-module button:not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]):hover * {
+  color: #ffffff !important;
+}
+
+.cha-btn-neon-approve:active:not(:disabled),
+.cha-module button[class*="bg-"][class*="00cec4"]:active:not(:disabled),
+.cha-module button[class*="bg-primary"]:active:not(:disabled),
+.cha-module button:not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]):active {
+  transform: translateY(0) !important;
+  scale: 0.96 !important;
+}
+
+/* Upload label buttons (label elements styled as buttons) */
+.cha-module label[class*="bg-"][class*="00cec4"] {
+  border: 1px solid #00cec4 !important;
+  background: #00cec4 !important;
+  color: #ffffff !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer;
+}
+
+.cha-module label[class*="bg-"][class*="00cec4"] * {
+  color: #ffffff !important;
+}
+
+.cha-module label[class*="bg-"][class*="00cec4"]:hover {
+  background: #00b8af !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 16px rgba(0, 206, 196, 0.5), 0 0 5px rgba(0, 206, 196, 0.3) !important;
+  animation: neon-pulse-approve 2s infinite ease-in-out !important;
+  transform: translateY(-1px);
+}
+
+.cha-module label[class*="bg-"][class*="00cec4"]:hover * {
+  color: #ffffff !important;
+}
+
+.cha-module label[class*="bg-"][class*="00cec4"]:active {
+  transform: translateY(0) !important;
+  scale: 0.96 !important;
+}
+
+/* Rejection/Destructive Red Neon Buttons in CHA */
+.cha-btn-neon-reject,
+.cha-module button[class*="bg-red-"],
+.cha-module button[class*="text-red-"],
+.cha-module button[class*="border-red-"],
+.cha-module button[class*="destructive"] {
+  border: 1px solid #ef4444 !important;
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer;
+}
+
+/* Ensure ALL descendants of red buttons render as white in rest state */
+.cha-btn-neon-reject *,
+.cha-module button[class*="bg-red-"] *,
+.cha-module button[class*="text-red-"] *,
+.cha-module button[class*="border-red-"] *,
+.cha-module button[class*="destructive"] * {
+  color: #ffffff !important;
+}
+
+.cha-btn-neon-reject:hover:not(:disabled),
+.cha-module button[class*="bg-red-"]:hover:not(:disabled),
+.cha-module button[class*="text-red-"]:hover:not(:disabled),
+.cha-module button[class*="border-red-"]:hover:not(:disabled),
+.cha-module button[class*="destructive"]:hover:not(:disabled) {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.5), 0 0 5px rgba(239, 68, 68, 0.3) !important;
+  animation: neon-pulse-reject 2s infinite ease-in-out !important;
+  transform: translateY(-1px);
+}
+
+/* Ensure ALL descendants of red buttons render as white on hover */
+.cha-btn-neon-reject:hover:not(:disabled) *,
+.cha-module button[class*="bg-red-"]:hover:not(:disabled) *,
+.cha-module button[class*="text-red-"]:hover:not(:disabled) *,
+.cha-module button[class*="border-red-"]:hover:not(:disabled) *,
+.cha-module button[class*="destructive"]:hover:not(:disabled) * {
+  color: #ffffff !important;
+}
+
+.cha-btn-neon-reject:active:not(:disabled),
+.cha-module button[class*="bg-red-"]:active:not(:disabled),
+.cha-module button[class*="text-red-"]:active:not(:disabled),
+.cha-module button[class*="border-red-"]:active:not(:disabled),
+.cha-module button[class*="destructive"]:active:not(:disabled) {
+  transform: translateY(0) !important;
+  scale: 0.96 !important;
+}
+
+/* Secondary outline buttons (Cyan Neon Outline) */
+.cha-module button[class*="border-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]),
+.cha-module button[class*="variant-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]) {
+  border: 1px solid rgba(0, 206, 196, 0.45) !important;
+  background: var(--color-surface) !important;
+  color: #00cec4 !important;
+  transition: all 0.2s ease !important;
+}
+
+.cha-module button[class*="border-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]) *,
+.cha-module button[class*="variant-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]) * {
+  color: #00cec4 !important;
+}
+
+.cha-module button[class*="border-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]):hover:not([disabled]),
+.cha-module button[class*="variant-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]):hover:not([disabled]) {
+  background: rgba(0, 206, 196, 0.08) !important;
+  border-color: #00cec4 !important;
+  box-shadow: 0 0 12px rgba(0, 206, 196, 0.3) !important;
+  color: #00cec4 !important;
+}
+
+.cha-module button[class*="border-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]):hover:not([disabled]) *,
+.cha-module button[class*="variant-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]):hover:not([disabled]) * {
+  color: #00cec4 !important;
+}
+
+/* Warning outline buttons (Orange Neon Outline - e.g. Mark as N/A) */
+.cha-module button[class*="text-"][class*="fb923c"],
+.cha-module button[class*="border-"][class*="fb923c"] {
+  border: 1px solid rgba(251, 146, 60, 0.45) !important;
+  background: var(--color-surface) !important;
+  color: #fb923c !important;
+  transition: all 0.2s ease !important;
+}
+
+.cha-module button[class*="text-"][class*="fb923c"] *,
+.cha-module button[class*="border-"][class*="fb923c"] * {
+  color: #fb923c !important;
+}
+
+.cha-module button[class*="text-"][class*="fb923c"]:hover:not([disabled]),
+.cha-module button[class*="border-"][class*="fb923c"]:hover:not([disabled]) {
+  background: rgba(251, 146, 60, 0.08) !important;
+  border-color: #fb923c !important;
+  box-shadow: 0 0 12px rgba(251, 146, 60, 0.3) !important;
+  color: #fb923c !important;
+}
+
+.cha-module button[class*="text-"][class*="fb923c"]:hover:not([disabled]) *,
+.cha-module button[class*="border-"][class*="fb923c"]:hover:not([disabled]) * {
+  color: #fb923c !important;
 }

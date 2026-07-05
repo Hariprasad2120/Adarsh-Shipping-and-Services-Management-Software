@@ -10,17 +10,8 @@ import { DemoFillButton } from "@/components/demo-fill-button";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  buildReviewerDemoAnswers,
-  demoPerformanceProfiles,
-  type DemoPerformanceProfile,
-} from "@/lib/demo-fill";
-import type {
-  AppraisalSelfFormTemplate,
-  ManagementReviewAnswers,
-  ReviewerRatingAnswers,
-  SelfAssessmentAnswers,
-} from "@/modules/ams/criteria-config";
+import {buildReviewerDemoAnswers,demoPerformanceProfiles,type DemoPerformanceProfile,} from "@/lib/demo-fill";
+import type {AppraisalSelfFormTemplate,ManagementReviewAnswers,ReviewerRatingAnswers,SelfAssessmentAnswers,} from "@/modules/ams/criteria-config";
 import type { CriterionPoint } from "@/modules/ams/types";
 
 type ManagementReviewDetail = {

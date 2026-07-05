@@ -679,6 +679,24 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(internalApprovals.some((approval) => approval.assignedToId === managerUser.id)).toBe(true);
     expect(internalApprovals.some((approval) => approval.assignedToId === ownerUser.id)).toBe(true);
 
+    const managerApprovalQueue = await chaService.listManagerChecklistApprovals(managerUser.id, org.id);
+    expect(managerApprovalQueue.some((approval) => approval.checklistImport.job.id === job.id)).toBe(true);
+
+    const ownerApprovalQueue = await chaService.listManagerChecklistApprovals(ownerUser.id, org.id);
+    expect(ownerApprovalQueue.some((approval) => approval.checklistImport.job.id === job.id)).toBe(true);
+
+    await db.chaChecklistDecision.deleteMany({
+      where: {
+        checklistId: checklist.id,
+        stage: "INTERNAL",
+        fileVersionId: uploadResult.fileVersion.id,
+        assignedToId: ownerUser.id,
+      },
+    });
+
+    const ownerApprovalQueueWithoutPendingRow = await chaService.listManagerChecklistApprovals(ownerUser.id, org.id);
+    expect(ownerApprovalQueueWithoutPendingRow.some((approval) => approval.checklistImport.job.id === job.id)).toBe(true);
+
     await chaService.submitChecklistInternalDecision(
       managerUser.id,
       org.id,

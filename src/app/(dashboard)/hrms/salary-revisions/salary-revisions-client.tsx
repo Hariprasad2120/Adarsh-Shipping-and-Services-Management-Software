@@ -3,17 +3,7 @@
 import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
 import { ArrowUpRight, ChevronDown, ChevronRight, FileText, IndianRupee, TrendingUp, Users } from "lucide-react";
-import {
-  Badge,
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-  DataTablePrimaryLinkCell,
-  DataTableRow,
-} from "@/components/data-table";
+import {Badge,DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableHead,DataTableHeader,DataTablePrimaryLinkCell,DataTableRow,} from "@/components/data-table";
 import { Input } from "@/components/ui/input";
 import type { SalaryRevisionStats, SalaryRevisionSummary } from "@/modules/hrms/salary-revisions-shared";
 import { formatINR, formatPercent } from "@/modules/hrms/salary-revisions-shared";

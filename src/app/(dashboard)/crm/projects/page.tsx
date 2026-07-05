@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { listProjects } from "@/modules/crm/service";
 import { requirePermission } from "@/lib/rbac";
+import { DateInput } from "@/components/ui/date-input";
 import {
   Search,
   FolderKanban,
@@ -173,16 +174,14 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Start Date</label>
-                <input
-                  type="date"
+                <DateInput
                   name="startDate"
                   className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#00c4b6]"
                 />
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">End Date</label>
-                <input
-                  type="date"
+                <DateInput
                   name="endDate"
                   className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#00c4b6]"
                 />

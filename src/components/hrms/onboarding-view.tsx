@@ -1,8 +1,9 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { UserCheck, CheckCircle2, ChevronRight, Lock, Save, Loader2, AlertCircle } from "lucide-react";
-import { toast } from "sonner";
+import { toast }from "sonner";
 
 export function OnboardingView() {
   const [loading, setLoading] = useState(false);
@@ -188,8 +189,7 @@ export function OnboardingView() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Date of Birth</label>
-                    <input
-                      type="date"
+                    <DateInput
                       value={personal.dob}
                       onChange={(e) => setPersonal({ ...personal, dob: e.target.value })}
                       required

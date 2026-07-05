@@ -2,17 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import {
-  Badge,
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-  DataTableToolbar,
-} from "@/components/data-table";
+import {Badge,DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableHead,DataTableHeader,DataTableRow,DataTableToolbar,} from "@/components/data-table";
 
 type Cycle = { id: string; name: string; year: number; status: string; _count: { appraisals: number } };
 

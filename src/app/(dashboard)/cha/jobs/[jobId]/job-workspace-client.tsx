@@ -1,29 +1,16 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {
-  FileText,
-  Upload,
-  CheckCircle2,
-  AlertTriangle,
-  FolderOpen,
-  ArrowRight,
-  ShieldCheck,
-  AlertCircle,
-  Plus,
-  Trash2,
-  Check,
-  Database,
-  ExternalLink,
-  Undo2,
-} from "lucide-react";
+import {FileText,Upload,CheckCircle2,AlertTriangle,FolderOpen,ArrowRight,ShieldCheck,AlertCircle,Plus,Trash2,Check,Database,ExternalLink,Undo2,} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import * as actions from "@/modules/cha/actions";
 import { DoValidityPanel } from "./do-validity-panel";
+import { NeonCheckbox } from "@/components/ui/neon-checkbox";
 
 interface JobWorkspaceClientProps {
   job: any;
@@ -262,9 +249,10 @@ export function JobWorkspaceClient({
     if (focusField === "deliveryOrderValidity") {
       const timer = setTimeout(() => {
         const input = document.getElementById("deliveryOrderValidity");
-        if (input) {
+        if (input instanceof HTMLInputElement) {
           input.scrollIntoView({ behavior: "smooth", block: "center" });
           input.focus();
+          input.click();
         }
       }, 300);
       return () => clearTimeout(timer);
@@ -1114,13 +1102,12 @@ export function JobWorkspaceClient({
     setLoading("checklist-upload");
     try {
       const localUrl = URL.createObjectURL(checklistFile);
-      const res = await actions.uploadChecklistFileAction(job.id, {
-        fileKey: localUrl,
-        fileName: checklistFile.name,
-        mimeType: checklistFile.type || "application/octet-stream",
-        sizeBytes: checklistFile.size,
-        remarks: checklistRemarks || undefined,
-      });
+      const formData = new FormData();
+      formData.append("file", checklistFile);
+      if (checklistRemarks) {
+        formData.append("remarks", checklistRemarks);
+      }
+      const res = await actions.uploadChecklistFileAction(job.id, formData);
 
       if (res.ok) {
         const versionId = res.data?.fileVersion?.id;
@@ -2677,57 +2664,66 @@ export function JobWorkspaceClient({
                                   )}
 
                                   {isSection49Requirement ? (
-                                    <div className="mt-3 space-y-3 rounded-xl border border-outline-variant/40 bg-surface-container-low p-3">
-                                      <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto] md:items-end">
-                                        <label className="space-y-1.5">
-                                          <span className="ds-label">Section 49 Validity Date</span>
-                                          <input
-                                            type="date"
-                                            value={section49ValidityDate}
-                                            onChange={(e) => setSection49ValidityDate(e.target.value)}
-                                            disabled={loading !== null || !canUpdateJob}
-                                            className="w-full ds-numeric"
-                                          />
-                                        </label>
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={handleSaveSection49Validity}
-                                          disabled={loading !== null || !canUpdateJob || !section49ValidityDate}
-                                          className="md:mb-0.5"
-                                        >
-                                          {loading === "section49-validity" ? "Saving..." : "Save Date"}
-                                        </Button>
-                                      </div>
-                                      {validitySummary ? (
-                                        <p
-                                          className={`text-xs ${
-                                            validitySummary.tone === "destructive"
-                                              ? "text-red-500"
-                                              : validitySummary.tone === "warning"
-                                                ? "text-[#fb923c]"
-                                                : "text-on-surface-variant"
-                                          }`}
-                                        >
-                                          {validitySummary.detail}. Extension opens within 4 days of expiry.
-                                        </p>
-                                      ) : null}
+                                    <div className="mt-3 space-y-3 rounded-xl border border-outline-variant/40 dark:border-[#00cec4]/20 bg-surface-container-low p-3.5">
+                                      {section49Flag?.validityDate ? (
+                                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 pb-2.5">
+                                          <div className="flex items-center gap-2">
+                                            <span className="ds-label text-on-surface-variant font-medium">Saved Section 49 Validity:</span>
+                                            <span className="rounded-lg border border-[#00cec4]/35 bg-[#00cec4]/10 px-2.5 py-0.5 text-xs font-semibold text-[#00cec4] ds-numeric">
+                                              {new Date(section49Flag.validityDate).toLocaleDateString("en-IN")}
+                                            </span>
+                                          </div>
+                                          {validitySummary ? (
+                                            <span
+                                              className={`text-xs font-semibold ${
+                                                validitySummary.tone === "destructive"
+                                                  ? "text-red-500"
+                                                  : validitySummary.tone === "warning"
+                                                    ? "text-[#fb923c]"
+                                                    : "text-green-500"
+                                              }`}
+                                            >
+                                              {validitySummary.detail}
+                                            </span>
+                                          ) : null}
+                                        </div>
+                                      ) : (
+                                        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-[1fr_auto] sm:items-end pb-1">
+                                          <label className="space-y-1">
+                                            <span className="ds-label">Section 49 Validity Date</span>
+                                            <DateInput
+                                              value={section49ValidityDate}
+                                              onChange={(e) => setSection49ValidityDate(e.target.value)}
+                                              disabled={loading !== null || !canUpdateJob}
+                                              className="w-full ds-numeric"
+                                            />
+                                          </label>
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleSaveSection49Validity}
+                                            disabled={loading !== null || !canUpdateJob || !section49ValidityDate}
+                                            className="h-10"
+                                          >
+                                            {loading === "section49-validity" ? "Saving..." : "Save Date"}
+                                          </Button>
+                                        </div>
+                                      )}
 
-                                      {section49WarningActive ? (
-                                        <div className="space-y-2 border-t border-outline-variant/30 pt-3">
-                                          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                                            <label className="space-y-1.5">
+                                      {section49Flag?.validityDate ? (
+                                        <div className="space-y-3 pt-1">
+                                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.2fr_2fr_auto] sm:items-end">
+                                            <label className="space-y-1">
                                               <span className="ds-label">New Validity Date</span>
-                                              <input
-                                                type="date"
+                                              <DateInput
                                                 value={section49ExtensionDate}
                                                 onChange={(e) => setSection49ExtensionDate(e.target.value)}
                                                 disabled={loading !== null || !canUpdateJob}
                                                 className="w-full ds-numeric"
                                               />
                                             </label>
-                                            <label className="space-y-1.5">
+                                            <label className="space-y-1">
                                               <span className="ds-label">Extension Document</span>
                                               <input
                                                 type="file"
@@ -2737,17 +2733,33 @@ export function JobWorkspaceClient({
                                                 className="w-full text-xs"
                                               />
                                             </label>
-                                          </div>
-                                          <div className="flex justify-end">
                                             <Button
                                               type="button"
                                               size="sm"
                                               onClick={handleApplySection49Extension}
-                                              disabled={loading !== null || !canUpdateJob || !section49ExtensionDate || !section49ExtensionFile}
+                                              disabled={
+                                                loading !== null ||
+                                                !canUpdateJob ||
+                                                !section49WarningActive ||
+                                                !section49ExtensionDate ||
+                                                !section49ExtensionFile
+                                              }
+                                              className="h-10 w-full sm:w-auto"
                                             >
                                               {loading === "section49-extension" ? "Applying..." : "Apply Extension"}
                                             </Button>
                                           </div>
+                                          <p className="text-[11px] leading-relaxed text-on-surface-variant">
+                                            {!section49WarningActive ? (
+                                              <span className="text-[#fb923c] font-medium">
+                                                ⚠️ Extension entry is saved here, but submission becomes available only within 4 days of expiry.
+                                              </span>
+                                            ) : (
+                                              <span>
+                                                An extension document and new validity date are required to apply the extension.
+                                              </span>
+                                            )}
+                                          </p>
                                         </div>
                                       ) : null}
 
@@ -3066,8 +3078,7 @@ export function JobWorkspaceClient({
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <label className="space-y-1.5">
                   <span className="ds-label">Vessel Inward Date</span>
-                  <input
-                    type="date"
+                  <DateInput
                     value={vesselInwardDate}
                     onChange={(e) => setVesselInwardDate(e.target.value)}
                     disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
@@ -3077,9 +3088,8 @@ export function JobWorkspaceClient({
                 </label>
                 <label className="space-y-1.5">
                   <span className="ds-label">Delivery Order Validity</span>
-                  <input
+                  <DateInput
                     id="deliveryOrderValidity"
-                    type="date"
                     value={deliveryOrderValidity}
                     onChange={(e) => setDeliveryOrderValidity(e.target.value)}
                     disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
@@ -3432,7 +3442,7 @@ export function JobWorkspaceClient({
                             <Button
                               type="button"
                               variant="outline"
-                              className="border-red-200 text-red-500 hover:bg-red-50"
+                              className="cha-btn-neon-reject"
                               disabled={loading !== null}
                               onClick={() => handleChecklistInternalDecision("REJECTED")}
                             >
@@ -3440,6 +3450,8 @@ export function JobWorkspaceClient({
                             </Button>
                             <Button
                               type="button"
+                              variant="outline"
+                              className="cha-btn-neon-approve"
                               disabled={loading !== null}
                               onClick={() => handleChecklistInternalDecision("APPROVED")}
                             >
@@ -3520,7 +3532,7 @@ export function JobWorkspaceClient({
                             <Button
                               type="button"
                               variant="outline"
-                              className="border-red-200 text-red-500 hover:bg-red-50"
+                              className="cha-btn-neon-reject"
                               disabled={loading !== null}
                               onClick={() => handleChecklistCustomerDecision("REJECTED")}
                             >
@@ -3528,6 +3540,8 @@ export function JobWorkspaceClient({
                             </Button>
                             <Button
                               type="button"
+                              variant="outline"
+                              className="cha-btn-neon-approve"
                               disabled={loading !== null}
                               onClick={() => handleChecklistCustomerDecision("APPROVED")}
                             >
@@ -3847,14 +3861,13 @@ export function JobWorkspaceClient({
                                 <div className="space-y-3">
                                   {(activeNodeRun.node.conditionalSectionsJson || []).map((section: any) => (
                                     <div key={section.key} className="rounded-2xl border border-outline-variant/35 bg-surface-container-low/35 p-3 space-y-3">
-                                      <label className="flex items-center gap-3 text-sm text-on-surface">
-                                        <input
-                                          type="checkbox"
+                                      <div className="flex items-center gap-3 text-sm text-on-surface">
+                                        <NeonCheckbox
                                           checked={!!filingToggleStates[section.key]}
                                           onChange={(e) => setFilingToggleStates((prev) => ({ ...prev, [section.key]: e.target.checked }))}
+                                          label={section.label}
                                         />
-                                        <span>{section.label}</span>
-                                      </label>
+                                      </div>
                                       {filingToggleStates[section.key] && section.unlocksFields?.length > 0 && (
                                         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                                           {section.unlocksFields.map((field: any) => (
@@ -4117,8 +4130,7 @@ export function JobWorkspaceClient({
                                       >
                                         <div className="flex items-start justify-between gap-3">
                                           <div className="flex items-start gap-3">
-                                            <input
-                                              type="checkbox"
+                                            <NeonCheckbox
                                               id={`check-${item.id}`}
                                               checked={resp.isChecked}
                                               disabled={isLockedItem}
@@ -4131,7 +4143,7 @@ export function JobWorkspaceClient({
                                                   },
                                                 }));
                                               }}
-                                              className="mt-1 rounded border-outline-variant/60 text-[#00cec4] focus:ring-[#00cec4]/30"
+                                              className="mt-0.5"
                                             />
                                             <div className="flex-1 min-w-0">
                                               <label htmlFor={`check-${item.id}`} className="text-xs font-semibold text-on-surface block cursor-pointer">
@@ -4673,8 +4685,7 @@ export function JobWorkspaceClient({
 
                   <div className="space-y-1">
                     <label className="text-[10px] uppercase font-bold tracking-wide block">Advance Due Date</label>
-                    <input
-                      type="date"
+                    <DateInput
                       value={advanceDueDate}
                       onChange={(e) => setAdvanceDueDate(e.target.value)}
                       className="w-full text-xs"
@@ -4754,8 +4765,7 @@ export function JobWorkspaceClient({
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] uppercase font-bold tracking-wide block">Date Received *</label>
-                        <input
-                          type="date"
+                        <DateInput
                           required
                           value={receiptDate}
                           onChange={(e) => setReceiptDate(e.target.value)}
@@ -4845,20 +4855,21 @@ export function JobWorkspaceClient({
               <form onSubmit={handleCreateExpenseRequest} className="space-y-4">
                 {/* Urgent switch */}
                 <div className="flex flex-col md:flex-row gap-4 md:items-center justify-between p-4 border border-outline-variant/60 rounded-2xl bg-surface">
-                  <label className="flex items-start space-x-3 cursor-pointer">
-                    <input
-                      type="checkbox"
+                  <div className="flex items-start space-x-3">
+                    <NeonCheckbox
                       checked={expenseUrgent}
                       onChange={(e) => setExpenseUrgent(e.target.checked)}
-                      className="mt-1 w-4 h-4 rounded text-[#00cec4] focus:ring-[#00cec4]/30"
+                      className="mt-1"
+                      label={
+                        <div>
+                          <span className="text-sm font-semibold text-on-surface block">Escalate to URGENT Payment</span>
+                          <span className="text-xs text-on-surface-variant">
+                            Request accounts to disburse payment immediately to resolve critical port blocks.
+                          </span>
+                        </div>
+                      }
                     />
-                    <div>
-                      <span className="text-sm font-semibold text-on-surface block">Escalate to URGENT Payment</span>
-                      <span className="text-xs text-on-surface-variant">
-                        Request accounts to disburse payment immediately to resolve critical port blocks.
-                      </span>
-                    </div>
-                  </label>
+                  </div>
 
                   {expenseUrgent && (
                     <div className="flex-1 max-w-md space-y-1">
@@ -4940,8 +4951,7 @@ export function JobWorkspaceClient({
                         {/* Required Date */}
                         <div className="space-y-1 md:col-span-1">
                           <label className="text-[9px] uppercase font-bold tracking-wide text-on-surface-variant">Required Date</label>
-                          <input
-                            type="date"
+                          <DateInput
                             value={line.requiredDate}
                             onChange={(e) => handleExpenseLineChange(index, "requiredDate", e.target.value)}
                             className="w-full text-xs h-9"
@@ -5199,8 +5209,7 @@ export function JobWorkspaceClient({
                               </div>
                               <div>
                                 <label className="text-[9px] uppercase font-bold tracking-wide block">Date Paid *</label>
-                                <input
-                                  type="date"
+                                <DateInput
                                   required
                                   value={payDate}
                                   onChange={(e) => setPayDate(e.target.value)}
@@ -5496,7 +5505,8 @@ export function JobWorkspaceClient({
               Cancel
             </Button>
             <Button
-              variant="destructive"
+              variant="outline"
+              className="cha-btn-neon-approve"
               disabled={!deleteInputsMatch || loading === "job-delete-approve"}
               onClick={handleApproveDeletionRequest}
             >
@@ -5530,7 +5540,8 @@ export function JobWorkspaceClient({
               Cancel
             </Button>
             <Button
-              variant="destructive"
+              variant="outline"
+              className="cha-btn-neon-reject"
               disabled={!deleteDecisionRemarks.trim() || loading === "job-delete-reject"}
               onClick={handleRejectDeletionRequest}
             >

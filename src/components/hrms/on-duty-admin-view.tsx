@@ -1,17 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import {
-  ArrowRight,
-  Check,
-  CheckCircle2,
-  Clock,
-  Loader2,
-  MapPin,
-  RefreshCw,
-  Route,
-  X,
-} from "lucide-react";
+import {ArrowRight,Check,CheckCircle2,Clock,Loader2,MapPin,RefreshCw,Route,X,} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

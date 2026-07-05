@@ -7,12 +7,7 @@ import { Info, Users } from "lucide-react";
 import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
 import { FormPreviewModal } from "@/components/ams/form-preview-modal";
 import { Button } from "@/components/ui/button";
-import type {
-  AppraisalSelfFormTemplate,
-  SelfAssessmentAnswers,
-  ReviewerRatingAnswers,
-  ManagementReviewAnswers,
-} from "@/modules/ams/criteria-config";
+import type {AppraisalSelfFormTemplate,SelfAssessmentAnswers,ReviewerRatingAnswers,ManagementReviewAnswers,} from "@/modules/ams/criteria-config";
 import type { CriterionPoint } from "@/modules/ams/types";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { DropdownSelect } from "@/components/ui/dropdown-select";

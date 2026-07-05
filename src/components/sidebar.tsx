@@ -9,16 +9,7 @@ import type { Caps } from "@/lib/rbac";
 import { useDashboardChrome } from "@/components/dashboard-chrome";
 import { cn } from "@/lib/utils";
 import { getActiveItemHref, getVisibleSections, matchesPath } from "@/lib/navigation";
-import {
-  Sun,
-  Moon,
-  LogOut,
-  ShieldCheck,
-  ChevronDown,
-  ChevronRight,
-  ChevronLeft,
-  X,
-} from "lucide-react";
+import {Sun,Moon,LogOut,ShieldCheck,ChevronDown,ChevronRight,ChevronLeft,X,} from "lucide-react";
 
 type ThemeMode = "light" | "dark";
 

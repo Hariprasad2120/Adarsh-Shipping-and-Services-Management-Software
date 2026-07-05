@@ -1,23 +1,10 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {
-  CreditCard,
-  Search,
-  Filter,
-  DollarSign,
-  AlertCircle,
-  Clock,
-  CheckCircle2,
-  HelpCircle,
-  XCircle,
-  FileText,
-  User,
-  ExternalLink,
-  MessageSquare,
-} from "lucide-react";
+import {CreditCard,Search,Filter,DollarSign,AlertCircle,Clock,CheckCircle2,HelpCircle,XCircle,FileText,User,ExternalLink,MessageSquare,} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import * as actions from "@/modules/cha/actions";
 import Link from "next/link";
@@ -428,8 +415,7 @@ export function ExpensesClient({
                       </div>
                       <div>
                         <label className="text-[9px] uppercase font-bold tracking-wide block text-on-surface-variant">Payment Date *</label>
-                        <input
-                          type="date"
+                        <DateInput
                           required
                           value={payDate}
                           onChange={(e) => setPayDate(e.target.value)}

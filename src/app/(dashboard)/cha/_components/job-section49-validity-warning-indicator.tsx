@@ -3,46 +3,35 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { AlertTriangle, ArrowUpRight, CalendarPlus, CheckCheck } from "lucide-react";
+import { AlertTriangle, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DoExtensionModal } from "./do-extension-modal";
-import * as actions from "@/modules/cha/actions";
 
-type DeliveryOrderWarning = {
+type Section49ValidityWarning = {
   severity: "expired" | "expiring";
   daysUntilExpiry: number;
-  deliveryOrderValidity: string;
+  validityDate: string;
   message: string;
 };
 
-type JobValidityWarningIndicatorProps = {
+type JobSection49ValidityWarningIndicatorProps = {
   jobId: string;
-  warning: DeliveryOrderWarning;
+  warning: Section49ValidityWarning;
 };
 
-export function JobValidityWarningIndicator({
+export function JobSection49ValidityWarningIndicator({
   jobId,
   warning,
-}: JobValidityWarningIndicatorProps) {
+}: JobSection49ValidityWarningIndicatorProps) {
   const router = useRouter();
   const triggerRef = useRef<HTMLDivElement | null>(null);
-  const [acknowledging, setAcknowledging] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [panelPosition, setPanelPosition] = useState({ top: 0, left: 0 });
-  const [extensionOpen, setExtensionOpen] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const openTarget =
-    warning.severity === "expired"
-      ? `/cha/jobs/${jobId}?tab=additionalData&focus=deliveryOrderValidity`
-      : `/cha/jobs/${jobId}`;
-
-  const openLabel = warning.severity === "expired" ? "Update Validity" : "Review Job";
   const toneClass =
     warning.severity === "expired"
       ? "border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/15"
@@ -55,16 +44,12 @@ export function JobValidityWarningIndicator({
     warning.severity === "expired"
       ? "border-red-500/20 bg-red-500/10 text-red-400"
       : "border-[#fb923c]/20 bg-[#fb923c]/10 text-[#fb923c]";
-  const actionButtonClass =
-    warning.severity === "expired"
-      ? "h-8 flex-1 border border-red-500/25 bg-red-500/12 text-red-500 hover:bg-red-500/18 hover:text-red-600 text-xs"
-      : "h-8 flex-1 border border-[#fb923c]/25 bg-[#fb923c]/12 text-[#fb923c] hover:bg-[#fb923c]/18 hover:text-[#f97316] text-xs";
 
   const syncPanelPosition = () => {
     const rect = triggerRef.current?.getBoundingClientRect();
     if (!rect) return;
     const panelWidth = 288;
-    const panelHeight = 236;
+    const panelHeight = 200;
     const gap = 10;
     const viewportPadding = 16;
     const nextLeft = Math.min(
@@ -95,31 +80,6 @@ export function JobValidityWarningIndicator({
     };
   }, [isOpen]);
 
-  const handleAcknowledge = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setAcknowledging(true);
-    try {
-      const response = await actions.acknowledgeDoValidityWarningAction(jobId);
-      if (!response.ok) {
-        toast.error(response.error || "Failed to acknowledge warning.");
-        setAcknowledging(false);
-        return;
-      }
-      toast.success("Delivery Order validity warning acknowledged.");
-      router.refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to acknowledge warning.");
-      setAcknowledging(false);
-    }
-  };
-
-  const handleOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    router.push(openTarget);
-  };
-
   return (
     <div
       ref={triggerRef}
@@ -141,7 +101,7 @@ export function JobValidityWarningIndicator({
     >
       <span
         className={`inline-flex h-7 w-7 items-center justify-center rounded-lg border shadow-sm transition-transform hover:scale-105 focus:scale-105 ${toneClass}`}
-        aria-label="Delivery order validity warning"
+        aria-label="Section 49 validity warning"
       >
         <AlertTriangle size={14} />
       </span>
@@ -171,11 +131,11 @@ export function JobValidityWarningIndicator({
                   </span>
                   <div className="min-w-0 space-y-1">
                     <p className="ds-label">
-                      {warning.severity === "expired" ? "DO Validity Expired" : "DO Validity Expiring"}
+                      {warning.severity === "expired" ? "Section 49 Expired" : "Section 49 Expiring"}
                     </p>
                     <p className="text-sm text-on-surface">{warning.message}</p>
                     <p className="text-xs text-on-surface-variant">
-                      Validity date: {new Date(warning.deliveryOrderValidity).toLocaleDateString("en-IN")}
+                      Validity date: {new Date(warning.validityDate).toLocaleDateString("en-IN")}
                     </p>
                   </div>
                 </div>
@@ -184,37 +144,15 @@ export function JobValidityWarningIndicator({
                   <Button
                     type="button"
                     size="sm"
-                    className={actionButtonClass}
-                    onClick={handleOpen}
-                  >
-                    <ArrowUpRight size={13} />
-                    {openLabel}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 flex-1 border-outline-variant/50 bg-surface text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface text-xs"
-                    disabled={acknowledging}
-                    onClick={handleAcknowledge}
-                  >
-                    <CheckCheck size={13} />
-                    {acknowledging ? "Saving..." : "Acknowledge"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 flex-1 border-[#00cec4]/40 bg-[#00cec4]/10 text-[#00cec4] hover:bg-[#00cec4]/15 text-xs"
+                    className="h-8 flex-1 border border-[#fb923c]/25 bg-[#fb923c]/12 text-[#fb923c] hover:bg-[#fb923c]/18 hover:text-[#f97316] text-xs"
                     onClick={(event) => {
                       event.preventDefault();
                       event.stopPropagation();
-                      setIsOpen(false);
-                      setExtensionOpen(true);
+                      router.push(`/cha/jobs/${jobId}?tab=docs`);
                     }}
                   >
-                    <CalendarPlus size={13} />
-                    Extension
+                    <ArrowUpRight size={13} />
+                    Open Documents
                   </Button>
                 </div>
               </div>
@@ -222,14 +160,6 @@ export function JobValidityWarningIndicator({
             document.body,
           )
         : null}
-
-      <DoExtensionModal
-        open={extensionOpen}
-        jobId={jobId}
-        currentValidity={warning.deliveryOrderValidity}
-        onClose={() => setExtensionOpen(false)}
-        onApplied={() => router.refresh()}
-      />
     </div>
   );
 }

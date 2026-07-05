@@ -3,18 +3,7 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import {
-  FileText,
-  Calendar,
-  DollarSign,
-  Loader2,
-  CheckCircle,
-  XCircle,
-  Receipt,
-  User,
-  Database,
-  ArrowRight
-} from "lucide-react";
+import {FileText,Calendar,DollarSign,Loader2,CheckCircle,XCircle,Receipt,User,Database,ArrowRight} from "lucide-react";
 import { submitSalesInvoiceAction, cancelSalesInvoiceAction } from "@/modules/accounting/actions";
 import Link from "next/link";
 

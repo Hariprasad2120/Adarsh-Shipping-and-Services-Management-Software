@@ -8,30 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { EvaluatorRole } from "@/modules/ams/criteria-config";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Hash,
-  Scale,
-  Award,
-  ListPlus,
-  Eye,
-  Edit3,
-  ArrowUp,
-  ArrowDown,
-  Copy,
-  RotateCcw,
-  Upload,
-  Plus,
-  Trash2,
-  Check,
-  AlertTriangle,
-  ArrowUpRight,
-  ChevronDown,
-  ChevronUp,
-  Sparkles,
-  Printer,
-  FileText,
-  FileDown,
-} from "lucide-react";
+import {Hash,Scale,Award,ListPlus,Eye,Edit3,ArrowUp,ArrowDown,Copy,RotateCcw,Upload,Plus,Trash2,Check,AlertTriangle,ArrowUpRight,ChevronDown,ChevronUp,Sparkles,Printer,FileText,FileDown,} from "lucide-react";
 
 type Phase = "SELF" | "REVIEWER" | "MANAGEMENT";
 

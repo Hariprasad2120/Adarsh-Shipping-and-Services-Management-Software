@@ -10,6 +10,8 @@ type JobForDrive = {
   primaryOwnerId: string;
 };
 
+const DEFAULT_SHARED_DRIVE_JOBS_ROOT_NAME = "Monolith Job Workspaces";
+
 // Resolve a Drive-scoped OAuth access token to act as, preferring the
 // triggering user's connection and falling back to the job's primary owner.
 // Shared by full provisioning and the lighter-weight self-heal path below.
@@ -59,6 +61,47 @@ async function resolveJobDriveAccessToken(
   return userAccessToken;
 }
 
+async function resolveWorkspaceParentFolderId(params: {
+  orgId: string;
+  accessToken: string;
+}) {
+  const settings = await db.googleWorkspaceSetting.findUnique({ where: { orgId: params.orgId } });
+  const jobsRootFolderId = settings?.jobsRootFolderId || process.env.GOOGLE_JOBS_ROOT_FOLDER_ID;
+  const sharedDriveId = settings?.sharedDriveId || process.env.GOOGLE_SHARED_DRIVE_ID;
+
+  if (jobsRootFolderId) {
+    return { parentFolderId: jobsRootFolderId, sharedDriveId, settings };
+  }
+
+  if (!sharedDriveId) {
+    return { parentFolderId: undefined, sharedDriveId: undefined, settings };
+  }
+
+  const existingManagedRoots = await driveClient.findFolders({
+    name: DEFAULT_SHARED_DRIVE_JOBS_ROOT_NAME,
+    parentFolderId: sharedDriveId,
+    driveId: sharedDriveId,
+    accessToken: params.accessToken,
+  });
+  const managedRootId =
+    existingManagedRoots[0]?.id ||
+    (await driveClient.createFolder({
+      name: DEFAULT_SHARED_DRIVE_JOBS_ROOT_NAME,
+      parentFolderId: sharedDriveId,
+      sharedDriveId,
+      accessToken: params.accessToken,
+    }));
+
+  if (!settings?.jobsRootFolderId && settings?.id) {
+    await db.googleWorkspaceSetting.update({
+      where: { id: settings.id },
+      data: { jobsRootFolderId: managedRootId },
+    });
+  }
+
+  return { parentFolderId: managedRootId, sharedDriveId, settings };
+}
+
 // Fail-safe used right before an upload: confirms the job's root folder and
 // one specific category subfolder still exist in Drive, and transparently
 // recreates whichever one was deleted by a user. Much cheaper than a full
@@ -77,6 +120,10 @@ export async function ensureJobCategoryFolder(
   if (!job) return undefined;
 
   let profile = await db.jobWorkspaceProfile.findUnique({ where: { jobId } });
+  if (!profile || !profile.rootFolderId || profile.rootFolderId.startsWith("mock-")) {
+    await provisionJobWorkspace(jobId, true, triggeringUserId);
+    profile = await db.jobWorkspaceProfile.findUnique({ where: { jobId } });
+  }
   if (!profile) return undefined;
 
   let userAccessToken: string | undefined;
@@ -86,10 +133,14 @@ export async function ensureJobCategoryFolder(
     console.warn(`[Drive self-heal] Could not resolve access token for job ${job.jobNumber}:`, err);
     return profile.rootFolderId || undefined;
   }
+  if (!userAccessToken) {
+    throw new Error("Google Drive workspace sync requires a connected Google Workspace account with Drive access.");
+  }
 
-  const settings = await db.googleWorkspaceSetting.findUnique({ where: { orgId: job.orgId } });
-  const jobsRootFolderId = settings?.jobsRootFolderId || process.env.GOOGLE_JOBS_ROOT_FOLDER_ID;
-  const sharedDriveId = settings?.sharedDriveId || process.env.GOOGLE_SHARED_DRIVE_ID;
+  const { parentFolderId, sharedDriveId } = await resolveWorkspaceParentFolderId({
+    orgId: job.orgId,
+    accessToken: userAccessToken,
+  });
 
   let rootFolderId = profile.rootFolderId;
   let categoryFolders = (profile.categoryFolders as Record<string, string>) || {};
@@ -104,7 +155,8 @@ export async function ensureJobCategoryFolder(
     // and drop any cached subfolder ids since their parent is gone too.
     rootFolderId = await driveClient.createFolder({
       name: `${job.jobNumber} - ${job.customer.name}`,
-      parentFolderId: jobsRootFolderId || sharedDriveId || undefined,
+      parentFolderId: parentFolderId,
+      sharedDriveId,
       accessToken: userAccessToken
     });
     categoryFolders = {};
@@ -190,14 +242,17 @@ export async function provisionJobWorkspace(
   }
 
   const userAccessToken = await resolveJobDriveAccessToken(job, triggeringUserId);
+  if (!userAccessToken) {
+    throw new Error(
+      "Connect a Google Workspace account with Drive access in Communication Settings before provisioning CHA job folders."
+    );
+  }
 
   // Fetch Workspace Settings
-  const settings = await db.googleWorkspaceSetting.findUnique({
-    where: { orgId: job.orgId }
+  const { parentFolderId, sharedDriveId, settings } = await resolveWorkspaceParentFolderId({
+    orgId: job.orgId,
+    accessToken: userAccessToken,
   });
-
-  const jobsRootFolderId = settings?.jobsRootFolderId || process.env.GOOGLE_JOBS_ROOT_FOLDER_ID;
-  const sharedDriveId = settings?.sharedDriveId || process.env.GOOGLE_SHARED_DRIVE_ID;
   const domain = settings?.workspaceDomain || process.env.GOOGLE_WORKSPACE_DOMAIN || "adarshshipping.in";
 
   try {
@@ -208,7 +263,8 @@ export async function provisionJobWorkspace(
       try {
         rootFolderId = await driveClient.createFolder({
           name: rootFolderName,
-          parentFolderId: jobsRootFolderId || sharedDriveId || undefined,
+          parentFolderId,
+          sharedDriveId,
           accessToken: userAccessToken
         });
       } catch (err: any) {
@@ -233,7 +289,7 @@ export async function provisionJobWorkspace(
     // Fixed utility buckets that always exist regardless of settings, since they
     // don't correspond to a document-collection category: ad-hoc custom uploads
     // and filing-stage checklist/photo evidence.
-    for (const utility of ["User Uploads", "Filing Documents"]) {
+    for (const utility of ["User Uploads", "Filing Documents", "Checklist Documents"]) {
       if (!categories.some((name) => name.toLowerCase() === utility.toLowerCase())) {
         categories.push(utility);
       }

@@ -1,19 +1,10 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { createActivityAction } from "@/modules/crm/actions";
-import {
-  Calendar,
-  CheckSquare,
-  PhoneCall,
-  Plus,
-  Clock,
-  MapPin,
-  Trash2,
-  CheckCircle2,
-  X
-} from "lucide-react";
+import {Calendar,CheckSquare,PhoneCall,Plus,Clock,MapPin,Trash2,CheckCircle2,X} from "lucide-react";
 
 interface Activity {
   id: string;
@@ -167,8 +158,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
               {activeForm === "TASK" && (
                 <div>
                   <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Due Date</label>
-                  <input
-                    type="date"
+                  <DateInput
                     value={dueAt}
                     onChange={(e) => setDueAt(e.target.value)}
                     className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#00c4b6]"

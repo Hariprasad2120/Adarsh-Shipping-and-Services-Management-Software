@@ -1,16 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import {
-  BriefcaseBusiness,
-  CalendarCheck2,
-  Clock3,
-  Coffee,
-  LogOut,
-  Play,
-  ShieldCheck,
-  TimerReset,
-} from "lucide-react";
+import {BriefcaseBusiness,CalendarCheck2,Clock3,Coffee,LogOut,Play,ShieldCheck,TimerReset,} from "lucide-react";
 import { UserProfile } from "@/modules/hrms/types";
 import { toast } from "sonner";
 

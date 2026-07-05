@@ -1,8 +1,9 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { Target, Award, Heart, MessageSquare, Plus, Save, Loader2, Calendar } from "lucide-react";
-import { toast } from "sonner";
+import { toast }from "sonner";
 
 export function PmsView() {
   const [activeTab, setActiveTab] = useState<"goals" | "skills" | "feedback">("goals");
@@ -256,8 +257,7 @@ export function PmsView() {
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Target Due Date</label>
-              <input
-                type="date"
+              <DateInput
                 value={newGoalDueDate}
                 onChange={(e) => setNewGoalDueDate(e.target.value)}
                 required

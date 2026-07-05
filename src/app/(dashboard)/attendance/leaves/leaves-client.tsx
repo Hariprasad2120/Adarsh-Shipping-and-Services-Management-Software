@@ -3,17 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DemoFillButton } from "@/components/demo-fill-button";
-import {
-  Badge,
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-  DataTableToolbar,
-} from "@/components/data-table";
+import {Badge,DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableHead,DataTableHeader,DataTableRow,DataTableToolbar,} from "@/components/data-table";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
 import { getLeaveDemoValues } from "@/lib/demo-fill";

@@ -1,22 +1,9 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect, useRef } from "react";
 import NextLink from "next/link";
-import {
-  Wallet,
-  ArrowUpRight,
-  ArrowDownRight,
-  Scale,
-  Receipt,
-  ArrowRight,
-  FileText,
-  Clock,
-  Settings,
-  Lock,
-  Unlock,
-  Ship,
-  FileSpreadsheet,
-} from "lucide-react";
+import {Wallet,ArrowUpRight,ArrowDownRight,Scale,Receipt,ArrowRight,FileText,Clock,Settings,Lock,Unlock,Ship,FileSpreadsheet,} from "lucide-react";
 import { updateTransactionLockAction } from "@/modules/accounting/actions";
 
 interface DashboardClientProps {
@@ -496,8 +483,7 @@ export function DashboardClient({
 
               <div className="space-y-2">
                 <label className="ds-label block">Lock Postings On Or Before</label>
-                <input
-                  type="date"
+                <DateInput
                   value={lockDate}
                   onChange={(e) => setLockDate(e.target.value)}
                   required

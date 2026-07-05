@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getBalanceSheet } from "@/modules/accounting/reports";
 import { Filter, Scale, ShieldCheck, ShieldAlert } from "lucide-react";
+import { DateInput } from "@/components/ui/date-input";
 
 interface BSPageProps {
   searchParams: Promise<{
@@ -63,8 +64,7 @@ export default async function BalanceSheetReportPage({ searchParams }: BSPagePro
 
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">As Of Date</label>
-            <input
-              type="date"
+            <DateInput
               name="toDate"
               defaultValue={params.toDate || ""}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-1.5"

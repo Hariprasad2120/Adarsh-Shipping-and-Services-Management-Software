@@ -1,5 +1,6 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -215,8 +216,7 @@ export function InvoiceForm({
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Issue Date *</label>
-            <input
-              type="date"
+            <DateInput
               name="date"
               value={issueDate}
               onChange={(e) => setIssueDate(e.target.value)}
@@ -248,8 +248,7 @@ export function InvoiceForm({
           ) : (
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Due Date</label>
-              <input
-                type="date"
+              <DateInput
                 name="dueDate"
                 value={dueDateState}
                 onChange={(e) => setDueDateState(e.target.value)}

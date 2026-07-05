@@ -2,18 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  Home, 
-  Mail, 
-  MessageSquare, 
-  Layers, 
-  Video, 
-  Calendar, 
-  HardDrive, 
-  Search, 
-  Settings,
-  FlaskConical
-} from "lucide-react";
+import { Home, Mail, MessageSquare, Layers, Video, Calendar, HardDrive, Search, Settings,FlaskConical} from "lucide-react";
 
 interface NavItem {
   label: string;

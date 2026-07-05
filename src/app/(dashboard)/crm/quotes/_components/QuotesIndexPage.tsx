@@ -3,14 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ChevronDown,
-  ChevronRight,
-  MoreHorizontal,
-  Plus,
-  Search,
-  SlidersHorizontal,
-} from "lucide-react";
+import {ChevronDown,ChevronRight,MoreHorizontal,Plus,Search,SlidersHorizontal,} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { quoteViews } from "../_lib/quote-list-data";
 import type { QuoteListStatus, QuoteRecord } from "../_lib/types";

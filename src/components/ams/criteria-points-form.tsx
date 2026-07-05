@@ -8,25 +8,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DemoFillButton } from "@/components/demo-fill-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  buildReviewerDemoAnswers,
-  buildSelfAssessmentDemoAnswers,
-  demoPerformanceProfiles,
-  type DemoPerformanceProfile,
-} from "@/lib/demo-fill";
+import {buildReviewerDemoAnswers,buildSelfAssessmentDemoAnswers,demoPerformanceProfiles,type DemoPerformanceProfile,} from "@/lib/demo-fill";
 import { cn } from "@/lib/utils";
-import {
-  buildQuestionKey,
-  buildDefaultSelfFormTemplate,
-  clampRating,
-  type AppraisalSelfFormTemplate,
-  type QuestionResponse,
-  type AppraisalQuestionDefinition,
-  type AppraisalSectionDefinition,
-  type ManagementReviewAnswers,
-  type ReviewerRatingAnswers,
-  type SelfAssessmentAnswers,
-} from "@/modules/ams/criteria-config";
+import {buildQuestionKey,buildDefaultSelfFormTemplate,clampRating,type AppraisalSelfFormTemplate,type QuestionResponse,type AppraisalQuestionDefinition,type AppraisalSectionDefinition,type ManagementReviewAnswers,type ReviewerRatingAnswers,type SelfAssessmentAnswers,} from "@/modules/ams/criteria-config";
 import type { CriterionPoint } from "@/modules/ams/types";
 
 export type EmployeeSummaryField = {

@@ -13,19 +13,18 @@ export default async function ChaApprovalsPage() {
   const orgId = session.user.orgId;
   if (!orgId) redirect("/setup");
 
-  const [canChecklistApprove, canDeleteApprove] = await Promise.all([
-    can(session.user.id, "cha.checklist.manager_approve"),
+  const [approvals, canDeleteApprove] = await Promise.all([
+    listManagerChecklistApprovals(session.user.id, orgId),
     can(session.user.id, "cha.job.delete.approve"),
   ]);
 
-  if (!canChecklistApprove && !canDeleteApprove) {
+  if (approvals.length === 0 && !canDeleteApprove) {
     redirect("/cha");
   }
 
-  const [approvals, deletionRequests] = await Promise.all([
-    canChecklistApprove ? listManagerChecklistApprovals(session.user.id, orgId) : Promise.resolve([]),
-    canDeleteApprove ? listManagerJobDeletionRequests(session.user.id, orgId) : Promise.resolve([]),
-  ]);
+  const deletionRequests = canDeleteApprove
+    ? await listManagerJobDeletionRequests(session.user.id, orgId)
+    : [];
 
   return (
     <div className="space-y-6">

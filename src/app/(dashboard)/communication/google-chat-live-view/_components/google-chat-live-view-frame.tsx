@@ -3,10 +3,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import {
-  Wifi, WifiOff, Loader2, ExternalLink, FlaskConical,
-  ChevronDown, ChevronUp, Globe
-} from "lucide-react";
+import {Wifi, WifiOff, Loader2, ExternalLink, FlaskConical,ChevronDown, ChevronUp, Globe} from "lucide-react";
 import { GoogleChatLiveViewFallback } from "./google-chat-live-view-fallback";
 import { GoogleChatLiveViewDiagnostics } from "./google-chat-live-view-diagnostics";
 

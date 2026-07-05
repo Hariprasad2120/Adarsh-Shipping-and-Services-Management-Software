@@ -1,8 +1,9 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { Plus, Check, X, Clock, HelpCircle, User, MapPin, Send } from "lucide-react";
-import { toast } from "sonner";
+import { toast }from "sonner";
 
 interface WorkReport {
   id: string;
@@ -471,8 +472,7 @@ export function WorkReportsView() {
             <form onSubmit={handleCreateReport} className="space-y-4 text-xs">
               <div className="flex flex-col gap-1">
                 <label className="font-bold text-slate-500">Date</label>
-                <input
-                  type="date"
+                <DateInput
                   value={newReport.date}
                   onChange={(e) => setNewReport({ ...newReport, date: e.target.value })}
                   className="p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[#00c4b6]"

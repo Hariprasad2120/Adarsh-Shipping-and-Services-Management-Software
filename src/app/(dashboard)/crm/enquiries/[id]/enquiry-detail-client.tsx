@@ -4,39 +4,12 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {
-  assignLeadOwnerAction,
-  updateLeadStatusAction,
-  updatePerishableDetailsAction,
-  saveEnquiryRatesAction,
-  simulateInboundEmailAction,
-  updateLeadAction,
-  getCallAttemptsAction
-} from "@/modules/crm/actions";
+import {assignLeadOwnerAction,updateLeadStatusAction,updatePerishableDetailsAction,saveEnquiryRatesAction,simulateInboundEmailAction,updateLeadAction,getCallAttemptsAction} from "@/modules/crm/actions";
 import { NotesPanel } from "../../_components/notes-panel";
 import { AttachmentsPanel } from "../../_components/attachments-panel";
 import { ActivitiesPanel } from "../../_components/activities-panel";
 import { TimelinePanel } from "../../_components/timeline-panel";
-import {
-  ArrowLeft,
-  Ship,
-  Plane,
-  Calendar,
-  AlertTriangle,
-  Clock,
-  Sparkles,
-  Eye,
-  Briefcase,
-  User,
-  Info,
-  RefreshCcw,
-  Edit2,
-  Trash2,
-  Save,
-  Mail,
-  X,
-  Plus
-} from "lucide-react";
+import {ArrowLeft,Ship,Plane,Calendar,AlertTriangle,Clock,Sparkles,Eye,Briefcase,User,Info,RefreshCcw,Edit2,Trash2,Save,Mail,X,Plus} from "lucide-react";
 
 interface EnquiryDetailClientProps {
   lead: any;

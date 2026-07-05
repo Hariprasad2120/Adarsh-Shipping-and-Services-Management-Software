@@ -1,23 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  Home,
-  Folder,
-  Heart,
-  HelpCircle,
-  FileText,
-  Plane,
-  Settings,
-  Users,
-  Grid,
-  UserCheck,
-  CheckSquare,
-  CheckCircle2,
-  BookOpen,
-  Award,
-  Mail,
-} from "lucide-react";
+import {Home,Folder,Heart,HelpCircle,FileText,Plane,Settings,Users,Grid,UserCheck,CheckSquare,CheckCircle2,BookOpen,Award,Mail,} from "lucide-react";
 import { ModuleKey } from "@/modules/hrms/types";
 
 export type SidebarItem = {

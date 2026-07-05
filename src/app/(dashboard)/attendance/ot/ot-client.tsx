@@ -1,5 +1,6 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import { Fragment, useState, useTransition, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -7,27 +8,8 @@ import * as XLSX from "xlsx";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DataTable, DataTableBody, DataTableCell, DataTableEmpty, DataTableHead, DataTableHeader, DataTableRow } from "@/components/data-table";
-import {
-  Plus, Check, X, Clock, User, Calendar, AlertCircle, IndianRupee,
-  Sliders, ArrowRight, Download, Trash, RefreshCw,
-  Search, SlidersHorizontal, ChevronRight, ChevronDown, CheckSquare
-} from "lucide-react";
-import {
-  decideOtRecordAction,
-  bulkDecideOtRecordsAction,
-  adjustOtRecordAction,
-  saveOtSettingsAction,
-  saveWorkingCalendarAction,
-  saveShiftAction,
-  assignEmployeeShiftAction,
-  saveHolidayAction,
-  deleteHolidayAction,
-  saveLopRecordAction,
-  deleteLopRecordAction,
-  processMonthOtAction,
-  importAttendanceDataAction,
-  clearMonthOtRecordsAction
-} from "./actions";
+import {Plus, Check, X, Clock, User, Calendar, AlertCircle, IndianRupee,Sliders, ArrowRight, Download, Trash, RefreshCw,Search, SlidersHorizontal, ChevronRight, ChevronDown, CheckSquare} from "lucide-react";
+import {decideOtRecordAction,bulkDecideOtRecordsAction,adjustOtRecordAction,saveOtSettingsAction,saveWorkingCalendarAction,saveShiftAction,assignEmployeeShiftAction,saveHolidayAction,deleteHolidayAction,saveLopRecordAction,deleteLopRecordAction,processMonthOtAction,importAttendanceDataAction,clearMonthOtRecordsAction} from "./actions";
 
 type LegacyOTEntry = {
   id: string;
@@ -1058,8 +1040,7 @@ export function OtClient({
               }} className="space-y-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Date</label>
-                  <input
-                    type="date"
+                  <DateInput
                     required
                     value={reqDate}
                     onChange={(e) => setReqDate(e.target.value)}
@@ -1322,14 +1303,12 @@ export function OtClient({
                   <option key={shift.id} value={shift.id}>{shift.name}</option>
                 ))}
               </select>
-              <input
-                type="date"
+              <DateInput
                 value={dateFromFilter}
                 onChange={(e) => setDateFromFilter(e.target.value)}
                 className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
               />
-              <input
-                type="date"
+              <DateInput
                 value={dateToFilter}
                 onChange={(e) => setDateToFilter(e.target.value)}
                 className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
@@ -1732,8 +1711,7 @@ export function OtClient({
                 <form onSubmit={handleSaveHoliday} className="space-y-4">
                   <div className="space-y-1">
                     <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Date</label>
-                    <input
-                      type="date"
+                    <DateInput
                       required
                       value={holidayDate}
                       onChange={(e) => setHolidayDate(e.target.value)}
@@ -2120,7 +2098,7 @@ export function OtClient({
                       <option key={shift.id} value={shift.id}>{shift.name}</option>
                     ))}
                   </select>
-                  <input type="date" value={shiftAssignmentStartDate} onChange={(e) => setShiftAssignmentStartDate(e.target.value)} className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  <DateInput value={shiftAssignmentStartDate} onChange={(e) => setShiftAssignmentStartDate(e.target.value)} className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
                   <div className="sm:col-span-3">
                     <Button type="submit" disabled={isPending} className="bg-[#00cec4] hover:bg-[#00b2a9] text-white">
                       Save Shift Assignment

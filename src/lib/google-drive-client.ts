@@ -28,6 +28,7 @@ async function getDriveAccessToken(): Promise<string> {
 export async function createFolder(params: {
   name: string;
   parentFolderId?: string;
+  sharedDriveId?: string;
   accessToken?: string;
 }): Promise<string> {
   const token = params.accessToken || (await getDriveAccessToken());
@@ -39,6 +40,8 @@ export async function createFolder(params: {
 
   if (params.parentFolderId) {
     body.parents = [params.parentFolderId];
+  } else if (params.sharedDriveId) {
+    body.parents = [params.sharedDriveId];
   } else if (SHARED_DRIVE_ID) {
     // If no parent is specified but we have a Shared Drive ID, use it as parent
     body.parents = [SHARED_DRIVE_ID];
@@ -161,6 +164,46 @@ export async function listFiles(
   return data.files || [];
 }
 
+export async function findFolders(params: {
+  name?: string;
+  parentFolderId?: string;
+  driveId?: string;
+  accessToken?: string;
+}): Promise<{ id: string; name: string; webViewLink?: string }[]> {
+  const token = params.accessToken || (await getDriveAccessToken());
+  const filters = ["mimeType = 'application/vnd.google-apps.folder'", "trashed = false"];
+  if (params.parentFolderId) {
+    filters.push(`'${params.parentFolderId}' in parents`);
+  }
+  if (params.name?.trim()) {
+    filters.push(`name = '${params.name.trim().replace(/'/g, "\\'")}'`);
+  }
+
+  const url = new URL("https://www.googleapis.com/drive/v3/files");
+  url.searchParams.set("q", filters.join(" and "));
+  url.searchParams.set("fields", "files(id,name,webViewLink)");
+  url.searchParams.set("supportsAllDrives", "true");
+  url.searchParams.set("includeItemsFromAllDrives", "true");
+  if (params.driveId) {
+    url.searchParams.set("corpora", "drive");
+    url.searchParams.set("driveId", params.driveId);
+  }
+
+  const res = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Drive findFolders failed: ${err}`);
+  }
+
+  const data = (await res.json()) as {
+    files?: { id: string; name: string; webViewLink?: string }[];
+  };
+  return data.files || [];
+}
+
 // Upload a file to a parent folder using Multipart Upload
 export async function uploadFile(params: {
   name: string;
@@ -202,8 +245,7 @@ export async function uploadFile(params: {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
-      "Content-Type": `multipart/related; boundary=${boundary}`,
-      "Content-Length": String(multipartBody.length)
+      "Content-Type": `multipart/related; boundary=${boundary}`
     },
     body: multipartBody
   });
@@ -211,6 +253,95 @@ export async function uploadFile(params: {
   if (!res.ok) {
     const err = await res.text();
     throw new Error(`Drive uploadFile failed: ${err}`);
+  }
+
+  return res.json() as Promise<{ id: string; webViewLink: string }>;
+}
+
+export function extractDriveFileId(fileKey: string | null | undefined): string | null {
+  if (!fileKey) return null;
+  const patterns = [
+    /\/file\/d\/([^/]+)/,
+    /[?&]id=([^&]+)/,
+  ];
+  for (const pattern of patterns) {
+    const match = fileKey.match(pattern);
+    if (match?.[1]) {
+      return match[1];
+    }
+  }
+  return null;
+}
+
+export async function getFileMetadata(
+  fileId: string,
+  accessToken?: string,
+): Promise<{ id: string; name: string; mimeType: string; parents?: string[]; webViewLink?: string } | null> {
+  if (!fileId) return null;
+  const token = accessToken || (await getDriveAccessToken());
+  const url = new URL(`https://www.googleapis.com/drive/v3/files/${fileId}`);
+  url.searchParams.set("fields", "id,name,mimeType,parents,webViewLink,trashed");
+  url.searchParams.set("supportsAllDrives", "true");
+
+  const res = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Drive getFileMetadata failed: ${err}`);
+  }
+
+  const data = (await res.json()) as {
+    id: string;
+    name: string;
+    mimeType: string;
+    parents?: string[];
+    webViewLink?: string;
+    trashed?: boolean;
+  };
+
+  if (data.trashed) return null;
+  return {
+    id: data.id,
+    name: data.name,
+    mimeType: data.mimeType,
+    parents: data.parents,
+    webViewLink: data.webViewLink,
+  };
+}
+
+export async function copyFileToFolder(params: {
+  fileId: string;
+  parentFolderId: string;
+  name?: string;
+  accessToken?: string;
+}): Promise<{ id: string; webViewLink: string }> {
+  const token = params.accessToken || (await getDriveAccessToken());
+  const url = new URL(`https://www.googleapis.com/drive/v3/files/${params.fileId}/copy`);
+  url.searchParams.set("supportsAllDrives", "true");
+  url.searchParams.set("fields", "id,name,mimeType,webViewLink");
+
+  const body: Record<string, unknown> = {
+    parents: [params.parentFolderId],
+  };
+  if (params.name?.trim()) {
+    body.name = params.name.trim();
+  }
+
+  const res = await fetch(url.toString(), {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Drive copyFileToFolder failed: ${err}`);
   }
 
   return res.json() as Promise<{ id: string; webViewLink: string }>;

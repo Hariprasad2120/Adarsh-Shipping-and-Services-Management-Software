@@ -1,20 +1,17 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { X, FilePlus, Trash2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  createJobAction,
-  createJobTypeAction,
-  createShipmentTypeAction,
-  getNextJobNumberPreviewAction,
-} from "@/modules/cha/actions";
+import {createJobAction,createJobTypeAction,createShipmentTypeAction,getNextJobNumberPreviewAction,} from "@/modules/cha/actions";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 
 const ADD_NEW_JOB_TYPE = "__add_new_job_type__";
 const ADD_NEW_SHIPMENT_TYPE = "__add_new_shipment_type__";
+const ALWAYS_VISIBLE_OWNER_MANAGER_EMAILS = ["hr@adarshshipping.in"];
 
 function buildFinancialYearLabel(format?: string | null) {
   const now = new Date();
@@ -100,6 +97,10 @@ export function CreateJobDialog({
 
   const [teamSearch, setTeamSearch] = useState("");
   const [showTeamDropdown, setShowTeamDropdown] = useState(false);
+  const [ownerSearch, setOwnerSearch] = useState("");
+  const [showOwnerDropdown, setShowOwnerDropdown] = useState(false);
+  const [managerSearch, setManagerSearch] = useState("");
+  const [showManagerDropdown, setShowManagerDropdown] = useState(false);
 
   // 3D Success Animation state
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
@@ -205,6 +206,9 @@ export function CreateJobDialog({
       setEstimatedClosureDate("");
       setCustomerSearch("");
       setSelectedCustomerName("");
+      const defaultOwner = (options.managers || []).find((user) => user.id === currentUserId);
+      setOwnerSearch(defaultOwner ? `${defaultOwner.name} (${defaultOwner.email})` : "");
+      setManagerSearch("");
       draftRestoredRef.current = true;
       return;
     }
@@ -220,7 +224,20 @@ export function CreateJobDialog({
       setNewBranchId(parsed.branchId || "");
       setNewPriority(parsed.priority || "MEDIUM");
       setNewOwnerId(parsed.ownerId || currentUserId);
+      if (parsed.ownerId) {
+        const savedOwner = (options.managers || []).find((owner) => owner.id === parsed.ownerId);
+        setOwnerSearch(savedOwner ? `${savedOwner.name} (${savedOwner.email})` : "");
+      } else {
+        const defaultOwner = (options.managers || []).find((user) => user.id === (parsed.ownerId || currentUserId));
+        setOwnerSearch(defaultOwner ? `${defaultOwner.name} (${defaultOwner.email})` : "");
+      }
       setNewManagerId(parsed.assignedManagerId || "");
+      if (parsed.assignedManagerId) {
+        const savedManager = (options.managers || []).find((manager) => manager.id === parsed.assignedManagerId);
+        setManagerSearch(savedManager ? `${savedManager.name} (${savedManager.email})` : "");
+      } else {
+        setManagerSearch("");
+      }
       setNewRemarks(parsed.remarks || "");
       setAssignments(parsed.assignments || [{ userId: currentUserId, responsibility: "OPERATIONS" }]);
       setEstimatedClosureDate(parsed.estimatedClosureDate || "");
@@ -237,7 +254,7 @@ export function CreateJobDialog({
       localStorage.removeItem("cha_draft_job");
       draftRestoredRef.current = true;
     }
-  }, [open, options.customers, currentUserId]);
+  }, [open, options.customers, options.managers, currentUserId]);
 
   const saveDraft = () => {
     const draft = {
@@ -303,6 +320,57 @@ export function CreateJobDialog({
     : (options.teamGroups || []).filter((g) =>
         g.name.toLowerCase().includes(teamSearch.toLowerCase())
       );
+
+  const eligibleManagers = (options.managers || []).filter((manager) => {
+    if (!newBranchId) return true;
+    return (
+      manager.branchId === newBranchId ||
+      ALWAYS_VISIBLE_OWNER_MANAGER_EMAILS.includes(manager.email.toLowerCase())
+    );
+  });
+  const displayedManagers = eligibleManagers.length > 0 ? eligibleManagers : (options.managers || []);
+  const filteredOwners = ownerSearch.trim() === ""
+    ? displayedManagers
+    : displayedManagers.filter((owner) => {
+        const needle = ownerSearch.toLowerCase();
+        return (
+          owner.name.toLowerCase().includes(needle) ||
+          owner.email.toLowerCase().includes(needle)
+        );
+      });
+  const filteredManagers = managerSearch.trim() === ""
+    ? displayedManagers
+    : displayedManagers.filter((manager) => {
+        const needle = managerSearch.toLowerCase();
+        return (
+          manager.name.toLowerCase().includes(needle) ||
+          manager.email.toLowerCase().includes(needle)
+        );
+      });
+
+  const selectManager = (manager: { id: string; name: string; email: string }) => {
+    const prevAutoId = autoAddedManagerIdRef.current;
+    setNewManagerId(manager.id);
+    setManagerSearch(`${manager.name} (${manager.email})`);
+    setShowManagerDropdown(false);
+    setAssignments((prev) => {
+      const without = prevAutoId
+        ? prev.filter((assignment) => assignment.userId !== prevAutoId)
+        : prev;
+      if (without.some((assignment) => assignment.userId === manager.id)) {
+        autoAddedManagerIdRef.current = "";
+        return without;
+      }
+      autoAddedManagerIdRef.current = manager.id;
+      return [...without, { userId: manager.id, responsibility: "APPROVAL" }];
+    });
+  };
+
+  const selectOwner = (owner: { id: string; name: string; email: string }) => {
+    setNewOwnerId(owner.id);
+    setOwnerSearch(`${owner.name} (${owner.email})`);
+    setShowOwnerDropdown(false);
+  };
 
   const refreshGeneratedPreview = async (branchId: string) => {
     setJobNumberPreviewLoading(true);
@@ -415,6 +483,10 @@ export function CreateJobDialog({
       toast.error("Please fill in all mandatory job attributes.");
       return;
     }
+    if (!newOwnerId) {
+      toast.error("Please select a Primary Operations Owner.");
+      return;
+    }
     if (!newManagerId) {
       toast.error("Please select an Assigned Manager.");
       return;
@@ -458,6 +530,9 @@ export function CreateJobDialog({
           setNewShipmentTypeId("");
           setNewBranchId("");
           setNewManagerId("");
+          const defaultOwner = displayedManagers.find((user) => user.id === currentUserId);
+          setOwnerSearch(defaultOwner ? `${defaultOwner.name} (${defaultOwner.email})` : "");
+          setManagerSearch("");
           setNewRemarks("");
           setEstimatedClosureDate("");
           setCustomerSearch("");
@@ -478,6 +553,13 @@ export function CreateJobDialog({
       setCreating(false);
     }
   };
+
+  useEffect(() => {
+    const activeOwner = displayedManagers.find((owner) => owner.id === newOwnerId);
+    if (activeOwner) {
+      setOwnerSearch(`${activeOwner.name} (${activeOwner.email})`);
+    }
+  }, [displayedManagers, newOwnerId]);
 
   if (!open) return null;
 
@@ -587,22 +669,19 @@ export function CreateJobDialog({
 
     const nextAssignments = [{ userId: newOwnerId || currentUserId, responsibility: "OPERATIONS" }];
     if (manager) {
-      setNewManagerId(manager.id);
+      setManagerSearch(`${manager.name} (${manager.email})`);
       autoAddedManagerIdRef.current = manager.id;
       if (manager.id !== (newOwnerId || currentUserId)) {
         nextAssignments.push({ userId: manager.id, responsibility: "APPROVAL" });
       }
+      setNewManagerId(manager.id);
+    } else {
+      setManagerSearch("");
     }
     setAssignments(nextAssignments);
 
     toast.success("Demo data filled in.");
   };
-
-  const eligibleManagers = (options.managers || []).filter((m) => {
-    if (!newBranchId) return true;
-    return m.branchId === newBranchId;
-  });
-  const displayedManagers = eligibleManagers.length > 0 ? eligibleManagers : (options.managers || options.users || []);
 
   return (
     <>
@@ -928,56 +1007,117 @@ export function CreateJobDialog({
               </div>
 
               {/* Owner */}
-              <div className="space-y-1">
+              <div className="space-y-1 relative">
                 <label className="ds-label block">Primary Operations Owner *</label>
-                <DropdownSelect
+                <input
+                  type="text"
                   required
-                  value={newOwnerId}
-                  onValueChange={setNewOwnerId}
-                  placeholder="Select Owner"
-                  options={options.users.map((u) => ({
-                    value: u.id,
-                    label: `${u.name} (${u.email})`,
-                  }))}
+                  value={ownerSearch}
+                  placeholder="Type owner name or email..."
+                  onChange={(event) => {
+                    setOwnerSearch(event.target.value);
+                    setNewOwnerId("");
+                    setShowOwnerDropdown(true);
+                  }}
+                  onFocus={() => setShowOwnerDropdown(true)}
+                  onBlur={() => {
+                    setTimeout(() => setShowOwnerDropdown(false), 250);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return;
+                    event.preventDefault();
+                    if (filteredOwners.length > 0) {
+                      selectOwner(filteredOwners[0]);
+                    }
+                  }}
+                  className="w-full px-3.5 py-2.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-xl text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)] transition-all font-sans"
                 />
+                {showOwnerDropdown ? (
+                  <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto rounded-xl border border-outline-variant bg-surface p-2 shadow-lg">
+                    {filteredOwners.length > 0 ? (
+                      filteredOwners.map((owner) => (
+                        <button
+                          key={owner.id}
+                          type="button"
+                          onClick={() => selectOwner(owner)}
+                          className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs text-on-surface transition-all hover:bg-[#00cec4]/15 hover:text-[#00cec4]"
+                        >
+                          <span>{owner.name}</span>
+                          <span className="text-[10px] text-on-surface-variant">{owner.email}</span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-xs italic text-on-surface-variant">
+                        No matching owners found.
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+                {newOwnerId ? (
+                  <p className="text-xs text-on-surface-variant">
+                    Selected owner: <span className="text-on-surface">{ownerSearch}</span>
+                  </p>
+                ) : null}
               </div>
 
               {/* Assigned Manager */}
-              <div className="space-y-1">
+              <div className="space-y-1 relative">
                 <label className="ds-label block">Assigned Manager *</label>
-                <DropdownSelect
+                <input
+                  type="text"
                   required
-                  value={newManagerId}
-                  onValueChange={(value) => {
-                    const prevAutoId = autoAddedManagerIdRef.current;
-                    setNewManagerId(value);
-                    setAssignments((prev) => {
-                      // Remove the previously auto-added manager entry (if any)
-                      const without = prevAutoId
-                        ? prev.filter((a) => a.userId !== prevAutoId)
-                        : prev;
-                      // Don't duplicate if already manually assigned
-                      if (without.some((a) => a.userId === value)) {
-                        autoAddedManagerIdRef.current = "";
-                        return without;
-                      }
-                      autoAddedManagerIdRef.current = value;
-                      return [...without, { userId: value, responsibility: "APPROVAL" }];
-                    });
+                  value={managerSearch}
+                  placeholder="Type manager name or email..."
+                  onChange={(event) => {
+                    setManagerSearch(event.target.value);
+                    setNewManagerId("");
+                    setShowManagerDropdown(true);
                   }}
-                  placeholder="Select Manager"
-                  options={displayedManagers.map((m) => ({
-                    value: m.id,
-                    label: `${m.name} (${m.email})`,
-                  }))}
+                  onFocus={() => setShowManagerDropdown(true)}
+                  onBlur={() => {
+                    setTimeout(() => setShowManagerDropdown(false), 250);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return;
+                    event.preventDefault();
+                    if (filteredManagers.length > 0) {
+                      selectManager(filteredManagers[0]);
+                    }
+                  }}
+                  className="w-full px-3.5 py-2.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-xl text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)] transition-all font-sans"
                 />
+                {showManagerDropdown ? (
+                  <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto rounded-xl border border-outline-variant bg-surface p-2 shadow-lg">
+                    {filteredManagers.length > 0 ? (
+                      filteredManagers.map((manager) => (
+                        <button
+                          key={manager.id}
+                          type="button"
+                          onClick={() => selectManager(manager)}
+                          className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs text-on-surface transition-all hover:bg-[#00cec4]/15 hover:text-[#00cec4]"
+                        >
+                          <span>{manager.name}</span>
+                          <span className="text-[10px] text-on-surface-variant">{manager.email}</span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-xs italic text-on-surface-variant">
+                        No matching managers found.
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+                {newManagerId ? (
+                  <p className="text-xs text-on-surface-variant">
+                    Selected manager: <span className="text-on-surface">{managerSearch}</span>
+                  </p>
+                ) : null}
               </div>
 
               {/* Estimated Closure Date */}
               <div className="space-y-1">
                 <label className="ds-label block">Estimated Closure Date (Benchmark) *</label>
-                <input
-                  type="date"
+                <DateInput
                   required
                   value={estimatedClosureDate}
                   onChange={(e) => setEstimatedClosureDate(e.target.value)}

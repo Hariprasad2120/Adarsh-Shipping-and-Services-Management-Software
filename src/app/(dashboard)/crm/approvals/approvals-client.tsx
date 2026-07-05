@@ -1,24 +1,9 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import {
-  ClipboardList,
-  CheckCircle2,
-  XCircle,
-  RotateCcw,
-  Clock,
-  TrendingUp,
-  FileText,
-  ShoppingCart,
-  Receipt,
-  Loader2,
-} from "lucide-react";
+import {ClipboardList,CheckCircle2,XCircle,RotateCcw,Clock,TrendingUp,FileText,ShoppingCart,Receipt,Loader2,} from "lucide-react";
 import { ApprovalStatusBadge } from "@/components/crm/ApprovalActionBar";
-import {
-  actionApproveDocument,
-  actionRequestRework,
-  actionDeclineDocument,
-} from "@/modules/crm/approval-actions";
+import {actionApproveDocument,actionRequestRework,actionDeclineDocument,} from "@/modules/crm/approval-actions";
 import { toast } from "sonner";
 
 type PendingItem = {

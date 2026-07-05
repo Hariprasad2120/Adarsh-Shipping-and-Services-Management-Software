@@ -1,5 +1,6 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import { ArrowLeftRight, Coins, Building, Activity, Plus } from "lucide-react";
 import { recordBankTransferAction } from "@/modules/accounting/actions";
@@ -340,8 +341,7 @@ export function BankingClient({ bankAccounts, transactions, leafAccounts }: Bank
                 </div>
                 <div className="space-y-2">
                   <label className="ds-label block">Posting Date</label>
-                  <input
-                    type="date"
+                  <DateInput
                     value={postingDate}
                     onChange={(e) => setPostingDate(e.target.value)}
                     required

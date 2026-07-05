@@ -1,21 +1,9 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
-import {
-  FileText,
-  Plus,
-  RefreshCw,
-  TrendingUp,
-  FileCheck2,
-  Undo2,
-  Trash2,
-} from "lucide-react";
-import {
-  createQuotationAction,
-  convertQuotationToInvoiceAction,
-  createCustomerNoteAction,
-  submitCustomerNoteAction,
-} from "@/modules/accounting/actions";
+import {FileText,Plus,RefreshCw,TrendingUp,FileCheck2,Undo2,Trash2,} from "lucide-react";
+import {createQuotationAction,convertQuotationToInvoiceAction,createCustomerNoteAction,submitCustomerNoteAction,} from "@/modules/accounting/actions";
 
 interface Quotation {
   id: string;
@@ -563,8 +551,7 @@ export function QuotationsClient({
                 </div>
                 <div className="space-y-2">
                   <label className="ds-label block">Valid Until</label>
-                  <input
-                    type="date"
+                  <DateInput
                     value={quotValidUntil}
                     onChange={(e) => setQuotValidUntil(e.target.value)}
                     required

@@ -5,18 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Briefcase, Plus, Search } from "lucide-react";
 import { CreateJobDialog } from "@/components/cha/create-job-dialog";
 import { ClickableRow } from "@/components/clickable-row";
-import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-} from "@/components/data-table";
+import {DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableHead,DataTableHeader,} from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { FilterMenu } from "@/components/ui/filter-menu";
 import { JobValidityWarningIndicator } from "@/app/(dashboard)/cha/_components/job-validity-warning-indicator";
+import { JobFilingQueryWarningIndicator } from "@/app/(dashboard)/cha/_components/job-filing-query-warning-indicator";
+import { JobSection49ValidityWarningIndicator } from "@/app/(dashboard)/cha/_components/job-section49-validity-warning-indicator";
 
 type MovementDirection = "IMPORT" | "EXPORT" | "BOTH" | "OTHER" | null;
 
@@ -42,6 +37,19 @@ interface JobItem {
     daysUntilExpiry: number;
     deliveryOrderValidity: string;
     message: string;
+  } | null;
+  section49Warning?: {
+    severity: "expired" | "expiring";
+    daysUntilExpiry: number;
+    validityDate: string;
+    message: string;
+  } | null;
+  filingQueryWarning?: {
+    queryTitle: string;
+    overdueQueryCount: number;
+    reminderTriggeredAt: string;
+    warningTriggeredAt: string;
+    staleMinutes: number;
   } | null;
   createdAt: string;
 }
@@ -229,6 +237,12 @@ export function JobsClient({
                     <span>{job.jobNumber}</span>
                     {job.deliveryOrderWarning ? (
                       <JobValidityWarningIndicator jobId={job.id} warning={job.deliveryOrderWarning} />
+                    ) : null}
+                    {job.section49Warning ? (
+                      <JobSection49ValidityWarningIndicator jobId={job.id} warning={job.section49Warning} />
+                    ) : null}
+                    {job.filingQueryWarning ? (
+                      <JobFilingQueryWarningIndicator jobId={job.id} warning={job.filingQueryWarning} />
                     ) : null}
                   </div>
                 </DataTableCell>

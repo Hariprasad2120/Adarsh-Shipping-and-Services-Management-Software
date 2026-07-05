@@ -3,15 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Search } from "@carbon/icons-react";
-import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-  DataTableEmpty,
-} from "@/components/data-table";
+import {DataTable,DataTableBody,DataTableCell,DataTableHead,DataTableHeader,DataTableRow,DataTableEmpty,} from "@/components/data-table";
 import { RECRUIT_APP_STAGES } from "@/modules/recruit/types";
 
 type Application = {

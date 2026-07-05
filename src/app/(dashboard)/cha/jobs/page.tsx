@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
-import { listJobs, ensureSettingsAndDefaults, getEligibleManagers, listJobTypesForSelection, listDeliveryOrderValidityWarnings } from "@/modules/cha/service";
+import { listJobs, ensureSettingsAndDefaults, getEligibleManagers, listJobTypesForSelection, listDeliveryOrderValidityWarnings, listFilingQueryEscalationWarnings, listSection49ValidityWarnings } from "@/modules/cha/service";
 import { JobsClient } from "./jobs-client";
 
 export default async function ChaJobsPage({
@@ -36,6 +36,8 @@ export default async function ChaJobsPage({
     activeJobsData,
     completedJobsData,
     validityWarnings,
+    section49Warnings,
+    filingQueryWarnings,
     ,
     branches,
     customers,
@@ -71,6 +73,8 @@ export default async function ChaJobsPage({
       pageSize: 10,
     }),
     listDeliveryOrderValidityWarnings(session.user.id, orgId),
+    listSection49ValidityWarnings(session.user.id, orgId),
+    listFilingQueryEscalationWarnings(session.user.id, orgId),
     ensureSettingsAndDefaults(orgId),
     db.branch.findMany({ where: { orgId }, select: { id: true, name: true, code: true } }),
     db.crmAccount.findMany({ where: { orgId, type: "Customer" }, select: { id: true, name: true } }),
@@ -109,6 +113,32 @@ export default async function ChaJobsPage({
       },
     ]),
   );
+  const filingQueryWarningMap = new Map(
+    filingQueryWarnings.map((warning) => [
+      warning.jobId,
+      {
+        queryTitle: warning.queryTitle,
+        overdueQueryCount: warning.overdueQueryCount,
+        reminderTriggeredAt: warning.reminderTriggeredAt.toISOString(),
+        warningTriggeredAt: warning.warningTriggeredAt.toISOString(),
+        staleMinutes: warning.staleMinutes,
+      },
+    ]),
+  );
+  const section49WarningMap = new Map(
+    section49Warnings.map((warning) => [
+      warning.jobId,
+      {
+        severity: warning.severity as "expired" | "expiring",
+        daysUntilExpiry: warning.daysUntilExpiry,
+        validityDate: warning.validityDate.toISOString(),
+        message:
+          warning.severity === "expired"
+            ? `Section 49 validity expired on ${warning.validityDate.toLocaleDateString("en-IN")}.`
+            : `Section 49 validity is expiring in ${warning.daysUntilExpiry} day(s) on ${warning.validityDate.toLocaleDateString("en-IN")}.`,
+      },
+    ]),
+  );
 
   return (
     <JobsClient
@@ -131,6 +161,8 @@ export default async function ChaJobsPage({
           assignedUserIds: j.assignments.map((assignment) => assignment.userId),
           hasActiveDeletionRequest: j.deletionRequests.length > 0,
           deliveryOrderWarning: validityWarningMap.get(j.id) || null,
+          section49Warning: section49WarningMap.get(j.id) || null,
+          filingQueryWarning: filingQueryWarningMap.get(j.id) || null,
           createdAt: j.createdAt.toISOString(),
         })),
         total: activeJobsData.total,
@@ -157,6 +189,8 @@ export default async function ChaJobsPage({
           assignedUserIds: j.assignments.map((assignment) => assignment.userId),
           hasActiveDeletionRequest: j.deletionRequests.length > 0,
           deliveryOrderWarning: validityWarningMap.get(j.id) || null,
+          section49Warning: section49WarningMap.get(j.id) || null,
+          filingQueryWarning: filingQueryWarningMap.get(j.id) || null,
           createdAt: j.createdAt.toISOString(),
         })),
         total: completedJobsData.total,

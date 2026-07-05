@@ -1,22 +1,11 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Plus,
-  Calendar,
-  Settings,
-  FolderOpen,
-  DollarSign,
-  Activity,
-  Calculator,
-  Loader2,
-  ChevronRight,
-  Sparkles,
-  Eye
-} from "lucide-react";
+import {Plus,Calendar,Settings,FolderOpen,DollarSign,Activity,Calculator,Loader2,ChevronRight,Sparkles,Eye} from "lucide-react";
 import { createAssetAction, runDepreciationAction } from "@/modules/accounting/actions";
 
 interface AssetsClientProps {
@@ -307,8 +296,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1">
                     <label className="ds-label">Purchase Date *</label>
-                    <input
-                      type="date"
+                    <DateInput
                       required
                       value={formData.purchaseDate}
                       onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}

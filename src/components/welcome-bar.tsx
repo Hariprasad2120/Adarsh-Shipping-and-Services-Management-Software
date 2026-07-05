@@ -2,16 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, memo, useState, useSyncExternalStore } from "react";
-import {
-  CalendarDays,
-  Clock3,
-  LayoutGrid,
-  Bell,
-  Menu,
-  Settings,
-  Search,
-  AlertTriangle,
-} from "lucide-react";
+import {CalendarDays,Clock3,LayoutGrid,Bell,Menu,Settings,Search,AlertTriangle,} from "lucide-react";
 import { acknowledgeDoValidityWarningAction } from "@/modules/cha/actions";
 import { DoExtensionModal } from "@/app/(dashboard)/cha/_components/do-extension-modal";
 import { toast } from "sonner";

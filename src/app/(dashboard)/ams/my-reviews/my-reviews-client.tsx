@@ -4,17 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useNotifications } from "@/components/notifications/notification-provider";
-import {
-  Badge,
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-  MetaText,
-} from "@/components/data-table";
+import {Badge,DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableHead,DataTableHeader,DataTableRow,MetaText,} from "@/components/data-table";
 
 type ReviewEntry = {
   id: string;

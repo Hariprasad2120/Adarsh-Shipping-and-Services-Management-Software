@@ -3,16 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  AlertCircle,
-  CheckCircle2,
-  Link2,
-  Loader2,
-  LogIn,
-  RefreshCw,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
+import {AlertCircle,CheckCircle2,Link2,Loader2,LogIn,RefreshCw,ShieldCheck,Sparkles,} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { fonts } from "@/lib/design-tokens";
