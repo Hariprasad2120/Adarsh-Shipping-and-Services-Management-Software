@@ -323,7 +323,7 @@ describe("Google Workspace Parity Tests", () => {
     // Verify it called driveClient.uploadFile with parentFolderId mapping to '02 Job Documents'
     expect(driveClientMock.uploadFile).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: "bill_of_lading.pdf",
+        name: "Bill of Landing.pdf",
         mimeType: "application/pdf",
         parentFolderId: "real-job-docs-folder-id",
         fileBuffer,
@@ -341,6 +341,47 @@ describe("Google Workspace Parity Tests", () => {
     const currentVer = reqAfter.versions.find((v) => v.isCurrent);
     expect(currentVer).toBeDefined();
     expect(currentVer?.fileKey).toBe("https://drive.google.com/file/d/mock-google-drive-file-123/view");
+  });
+
+  it("5.1. CHA Checklist upload with buffer should use the dedicated checklist Drive folder", async () => {
+    await db.jobWorkspaceProfile.update({
+      where: { id: profile.id },
+      data: {
+        categoryFolders: {
+          "02 Job Documents": "real-job-docs-folder-id",
+          "Checklist Files": "real-checklist-files-folder-id",
+        },
+      },
+    });
+
+    await db.chaJob.update({
+      where: { id: job.id },
+      data: { stage: "CHECKLIST_PREPARATION" },
+    });
+
+    const fileBuffer = Buffer.from("mock checklist contents");
+    const result = await chaService.uploadChecklistFile(
+      ownerUser.id,
+      org.id,
+      job.id,
+      {
+        fileName: "customs-checklist.xlsx",
+        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        sizeBytes: fileBuffer.length,
+      },
+      fileBuffer,
+    );
+
+    expect(driveClientMock.uploadFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Checklist V1.xlsx",
+        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        parentFolderId: "real-checklist-files-folder-id",
+        fileBuffer,
+      }),
+    );
+
+    expect(result.fileVersion.fileKey).toBe("https://drive.google.com/file/d/mock-google-drive-file-123/view");
   });
 
   it("6. Gmail listLabels, createLabel, and deleteLabel should make correct API requests", async () => {

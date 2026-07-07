@@ -1243,13 +1243,17 @@ export function CreateJobDialog({
                           ]}
                         />
                       </div>
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        mode="icon"
+                        size="sm"
                         onClick={() => handleRemoveAssignment(index)}
-                        className="text-red-500 hover:text-red-700 transition-colors p-1.5 cursor-pointer bg-transparent border-0"
+                        aria-label="Remove assignment"
+                        className="ds-plain rounded-xl border-red-500/35 bg-transparent text-red-500 shadow-sm hover:border-red-500/50 hover:bg-transparent hover:text-red-600 hover:shadow-[0_0_12px_rgba(239,68,68,0.18)]"
                       >
                         <Trash2 size={16} />
-                      </button>
+                      </Button>
                     </div>
                   );
                 })}
@@ -1275,7 +1279,12 @@ export function CreateJobDialog({
 
             {/* Action Buttons */}
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-outline-variant/30">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="ds-plain rounded-xl border-red-500 bg-transparent text-red-500 hover:border-red-600 hover:bg-transparent hover:text-red-600 hover:shadow-[0_0_12px_rgba(239,68,68,0.18)]"
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={creating} className="rounded-xl">

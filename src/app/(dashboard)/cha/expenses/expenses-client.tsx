@@ -9,6 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import * as actions from "@/modules/cha/actions";
 import Link from "next/link";
+import {
+  formatChaBadgeLabel,
+  getChaDocumentStatusBadgeVariant,
+} from "@/lib/cha-badges";
 
 interface ExpensesClientProps {
   initialExpenses: any[];
@@ -222,9 +226,6 @@ export function ExpensesClient({
           </div>
         ) : (
           initialExpenses.map((req) => {
-            const isPaid = req.status === "PAID";
-            const isAck = req.status === "RECEIPT_ACKNOWLEDGED";
-            const isQuery = req.status === "QUERY_RAISED";
             const isUrgent = req.isUrgent;
             const sum = req.lines.reduce((tot: number, l: any) => tot + Number(l.amount), 0);
 
@@ -269,10 +270,10 @@ export function ExpensesClient({
 
                   <div className="flex items-center gap-2">
                     <Badge
-                      variant={isAck ? "success" : isPaid ? "default" : isQuery ? "warning" : "secondary"}
-                      className="text-[10px] uppercase tracking-wider"
+                      variant={getChaDocumentStatusBadgeVariant(req.status)}
+                      className="uppercase"
                     >
-                      {req.status.replace(/_/g, " ")}
+                      {formatChaBadgeLabel(req.status)}
                     </Badge>
                   </div>
                 </div>
@@ -291,7 +292,7 @@ export function ExpensesClient({
 
                 {/* Urgent alert notes */}
                 {isUrgent && req.urgencyReason && (
-                  <div className="p-3 rounded-lg border border-red-500/25 bg-red-500/10 text-xs leading-relaxed text-on-surface">
+                  <div className="p-3 rounded-lg border border-red-500/25 bg-red-500/10 text-xs leading-relaxed text-red-700 dark:text-red-200">
                     <strong>Disbursement urgency justification:</strong> "{req.urgencyReason}"
                   </div>
                 )}

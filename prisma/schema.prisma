@@ -3452,6 +3452,9 @@ model ChaJobAdditionalData {
   importGeneralManifest String?
   exportGeneralManifest String?
   customManifestValue   String?
+  containerDetails      Json?
+  mblNumber             String?
+  hblNumber             String?
   deliveryOrderValidity DateTime?
   status                String    @default("PENDING") // PENDING | COMPLETED
   createdById           String

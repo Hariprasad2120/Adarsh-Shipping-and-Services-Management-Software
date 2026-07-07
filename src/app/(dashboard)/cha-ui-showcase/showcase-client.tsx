@@ -1024,8 +1024,8 @@ export function ShowcaseClient() {
             file="expenses-client.tsx · reports/page.tsx:229 · design.md §7.2"
             source="shared"
             reusable
-            classes="card-left-accent-orange border-red-500/35 (urgent) · justification: border-red-500/25 bg-red-500/10 text-on-surface · status/urgency via Badge"
-            notes="DESIGN SYSTEM APPLIED 2026-07-07: light-only red-200/red-50 replaced with theme-safe alpha tints; status pill and URGENT chip converted to the shared Badge; justification paragraph inside the red container reads in normal text color (black in light theme) instead of red, per review."
+            classes="card-left-accent-orange border-red-500/35 (urgent) · justification: border-red-500/25 bg-red-500/10 text-red-700 dark:text-red-200 · status/urgency via Badge"
+            notes="DESIGN SYSTEM APPLIED 2026-07-07: light-only red-200/red-50 replaced with theme-safe alpha tints; status pill and URGENT chip converted to the shared Badge; red-tinted justification copy now uses red text for stronger contrast and consistent urgency signaling."
           >
             <div className="space-y-3">
               <div className="card-left-accent-orange bg-surface p-4 rounded-xl border border-red-500/35 shadow-sm space-y-2">
@@ -1034,7 +1034,7 @@ export function ShowcaseClient() {
                   <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">URGENT PAYMENT REQUIRED</Badge>
                 </div>
                 <span className="text-xl ds-numeric text-on-surface flex items-center gap-2">₹42,500 <Badge variant="destructive" className="text-[10px] uppercase">URGENT</Badge></span>
-                <div className="p-3 rounded-lg border border-red-500/25 bg-red-500/10 text-xs leading-relaxed text-on-surface">
+                <div className="p-3 rounded-lg border border-red-500/25 bg-red-500/10 text-xs leading-relaxed text-red-700 dark:text-red-200">
                   <strong>Disbursement urgency justification:</strong> &quot;Vessel berthing tomorrow morning.&quot;
                 </div>
               </div>
@@ -1051,70 +1051,51 @@ export function ShowcaseClient() {
         </Section>
 
         {/* ── BADGES ── */}
-        <Section id="badges" title="Badges & Status Indicators" blurb="The same 'job stage' concept is rendered five different ways across CHA. All five are shown with the shared Badge component for comparison.">
+        <Section id="badges" title="Badges & Status Indicators" blurb="CHA stage, document state, and priority chips are now normalized to the shared Badge component with one shared mapping layer.">
           <Spec
             name="One status, five implementations"
-            file="cha/page.tsx:364 · jobs-client.tsx:264 · expenses-client.tsx:270 · job-workspace-client.tsx:2342 · job-workspace-client.tsx:2645"
-            source="inline-tailwind"
-            reusable={false}
-            inconsistent
-            notes="Dashboard uses light-only tonal palettes; jobs list is neutral; workspace uses square chips; doc cards use 4px-radius chips. (Expenses variant #3 was migrated to the shared Badge on 2026-07-07 — shown for reference.)"
-            dsNotes="One primitive: shared Badge (rounded-full, 5 variants). Map: FILING→default, CHECKLIST APPROVAL→warning, FILED→success, neutral stages→secondary, MANDATORY/blocked→destructive."
-            ds={
-              <div className="space-y-2.5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="warning">CHECKLIST APPROVAL</Badge>
-                  <Badge>FILING</Badge>
-                  <Badge variant="success">FILED</Badge>
-                  <Badge variant="secondary">DOCUMENT COLLECTION</Badge>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="success">RECEIPT ACKNOWLEDGED</Badge>
-                  <Badge variant="warning">QUERY RAISED</Badge>
-                  <Badge variant="destructive">MANDATORY</Badge>
-                  <Badge variant="success">UPLOADED</Badge>
-                  <Badge variant="secondary">NOT AVAILABLE</Badge>
-                </div>
-                <p className="text-xs text-on-surface-variant">Every status everywhere = the same Badge component, same radius, same weight.</p>
-              </div>
-            }
+            file="src/lib/cha-badges.ts · cha/page.tsx:365 · jobs-client.tsx:264 · expenses-client.tsx:270 · job-workspace-client.tsx:2346 · job-workspace-client.tsx:2648"
+            source="shared"
+            reusable
+            classes='Badge + getChaStageBadgeVariant|getChaDocumentStatusBadgeVariant + formatChaBadgeLabel'
+            notes="Normalized on 2026-07-07. Dashboard, jobs list, workspace header/doc cards, and expense states now all resolve through the shared Badge primitive instead of inline pills."
           >
             <div className="space-y-2.5 text-on-surface">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="w-28 text-[10px] text-on-surface-variant shrink-0">1 · dashboard</span>
-                <span className="inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] border border-amber-200 bg-amber-50 text-amber-700">CHECKLIST APPROVAL</span>
-                <span className="inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] border border-blue-200 bg-blue-50 text-blue-700">FILING</span>
-                <span className="inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] border border-green-200 bg-green-50 text-green-700">FILED</span>
+                <Badge variant="warning">CHECKLIST APPROVAL</Badge>
+                <Badge>FILING</Badge>
+                <Badge variant="success">FILED</Badge>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="w-28 text-[10px] text-on-surface-variant shrink-0">2 · jobs list</span>
-                <span className="inline-flex rounded-full border border-outline-variant/35 bg-surface-container-low px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-on-surface-variant">CHECKLIST APPROVAL</span>
+                <Badge variant="warning">CHECKLIST APPROVAL</Badge>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="w-28 text-[10px] text-on-surface-variant shrink-0">3 · expenses</span>
-                <span className="inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-green-100 text-green-700 border border-green-200">RECEIPT ACKNOWLEDGED</span>
-                <span className="inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-orange-100 text-orange-700 border border-orange-200">QUERY RAISED</span>
+                <Badge variant="success">RECEIPT ACKNOWLEDGED</Badge>
+                <Badge variant="warning">QUERY RAISED</Badge>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="w-28 text-[10px] text-on-surface-variant shrink-0">4 · job header</span>
-                <span className="rounded-md border border-outline-variant bg-surface-container-high px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--color-primary)]">IMPORT BOE</span>
-                <span className="rounded-md border border-green-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-green-600">ACTIVE</span>
+                <Badge variant="secondary">IMPORT BOE</Badge>
+                <Badge variant="success">ACTIVE</Badge>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="w-28 text-[10px] text-on-surface-variant shrink-0">5 · doc cards</span>
-                <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#00cec4]/10 text-[#00cec4]">UPLOADED</span>
-                <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-orange-500/10 text-[#fb923c]">NOT AVAILABLE</span>
-                <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-50 text-red-500 border border-red-200">MANDATORY</span>
+                <Badge variant="success">UPLOADED</Badge>
+                <Badge variant="secondary">NOT AVAILABLE</Badge>
+                <Badge variant="destructive">MANDATORY</Badge>
               </div>
             </div>
           </Spec>
           <Spec
-            name="Shared Badge component (used only by workflow builder)"
-            file="src/components/ui/badge.tsx · workflows-client.tsx:1688+"
+            name="Shared Badge component (now used across workflow builder + CHA)"
+            file="src/components/ui/badge.tsx · src/lib/cha-badges.ts · workflows-client.tsx:1688+ · cha/page.tsx · jobs-client.tsx · job-workspace-client.tsx"
             source="shared"
             reusable
             classes='<Badge variant="default|secondary|success|warning|destructive">'
-            notes="The sanctioned badge — currently used on exactly one CHA screen."
+            notes="Canonical badge primitive. Its typography was updated on 2026-07-07 to lighter weight + wider tracking, and it now drives workflow builder plus CHA stage/status/priority treatments."
           >
             <div className="flex flex-wrap items-center gap-2">
               <Badge>DEFAULT</Badge>
@@ -1126,24 +1107,16 @@ export function ShowcaseClient() {
           </Spec>
           <Spec
             name="Priority — two treatments of the same field"
-            file="cha/page.tsx:377 vs jobs-client.tsx:269"
-            source="inline-tailwind"
-            reusable={false}
-            inconsistent
-            classes="text-xs font-semibold uppercase text-red-500/#fb923c vs text-xs uppercase text-on-surface-variant"
-            dsNotes="Pick one treatment and use it on both screens — Badge fits: HIGH→destructive, MEDIUM→warning, LOW→secondary."
-            ds={
-              <div className="flex flex-wrap items-center gap-3">
-                <Badge variant="destructive">HIGH</Badge>
-                <Badge variant="warning">MEDIUM</Badge>
-                <Badge variant="secondary">LOW</Badge>
-              </div>
-            }
+            file="src/lib/cha-badges.ts · cha/page.tsx:373 · jobs-client.tsx:268"
+            source="shared"
+            reusable
+            classes='Badge + getChaPriorityBadgeVariant("HIGH"|"MEDIUM"|"LOW")'
+            notes="Normalized on 2026-07-07. Dashboard and jobs list now use the same priority treatment: HIGH→destructive, MEDIUM→warning, LOW→secondary."
           >
-            <div className="flex flex-wrap items-center gap-6">
-              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-red-500">HIGH (dashboard)</span>
-              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[#fb923c]">MEDIUM (dashboard)</span>
-              <span className="text-xs uppercase tracking-[0.12em] text-on-surface-variant">HIGH (jobs list — muted)</span>
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge variant="destructive">HIGH</Badge>
+              <Badge variant="warning">MEDIUM</Badge>
+              <Badge variant="secondary">LOW</Badge>
             </div>
           </Spec>
           <Spec

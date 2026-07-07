@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-06T07:37:08.272Z
+> Generated at: 2026-07-07T11:59:39.295Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -11,7 +11,7 @@
 | API Routes | 175 |
 | Prisma Models | 263 |
 | Module Service Files | 71 |
-| UI Components | 91 |
+| UI Components | 93 |
 
 ## Modules Overview
 
@@ -50,7 +50,7 @@
 | shared | 0 | 0 | 0 | 0 | 16 |
 | todo | 1 | 0 | 2 | 1 | 1 |
 | todos | 0 | 5 | 0 | 0 | 0 |
-| ui | 0 | 0 | 0 | 0 | 14 |
+| ui | 0 | 0 | 0 | 0 | 16 |
 | users | 0 | 4 | 0 | 0 | 0 |
 
 ## API Routes
@@ -599,7 +599,7 @@
 | ChaShipmentType | cha | 8 | Organisation, ChaJob |
 | ChaDocumentDefinition | cha | 8 | ChaJobType |
 | ChaJob | cha | 43 | Organisation, CrmAccount, ChaJobType, ChaShipmentType, Branch, User, ChaJobAssignment, ChaJobDeletionRequest, ChaJobDocumentRequirement, ChaJobAdditionalData, ChaDoExtension, FilingSection49Extension, ChaChecklist, ChaChecklistImport, ChaFiling, FilingWorkflowInstance, FilingSection49Flag, ChaCustomerAdvance, ChaExpenseRequest, ChaAuditLog, JobWorkspaceProfile |
-| ChaJobAdditionalData | cha | 21 | ChaJob |
+| ChaJobAdditionalData | cha | 24 | ChaJob |
 | ChaDoExtension | cha | 9 | ChaJob |
 | ChaJobDeletionRequest | cha | 18 | Organisation, ChaJob, User |
 | ChaJobAssignment | cha | 6 | ChaJob, User |

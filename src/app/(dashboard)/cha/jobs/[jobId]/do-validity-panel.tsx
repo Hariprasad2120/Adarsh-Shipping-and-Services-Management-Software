@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { FileUploadField } from "@/components/ui/file-upload-field";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CalendarClock, ExternalLink, FileUp, History } from "lucide-react";
+import { CalendarClock, ExternalLink, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import * as actions from "@/modules/cha/actions";
 
@@ -64,7 +65,6 @@ function Toggle({
 
 export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extensions }: DoValidityPanelProps) {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState(false);
 
   const validity = additionalData.deliveryOrderValidity
@@ -115,15 +115,17 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
       router.refresh();
     } finally {
       setBusy(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
   return (
-    <div className="ds-form-section space-y-4">
-      <h3 className="ds-h3 text-on-surface">Delivery Order Document &amp; Extension</h3>
+    <div className="space-y-4">
+      <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
+        <span className="h-7 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+        <h3 className="ds-h3 text-on-surface">Delivery Order Document &amp; Extension</h3>
+      </div>
 
-      <div className="space-y-4 rounded-xl border border-outline-variant bg-surface-container-low p-4">
+      <div className="space-y-4">
         {/* DO document upload toggle + tab */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -141,23 +143,20 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
         </div>
 
         {additionalData.doUploadEnabled ? (
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[#00cec4]/30 bg-surface p-3">
-            <input
-              ref={fileInputRef}
-              type="file"
+          <div className="space-y-3">
+            <FileUploadField
+              id="do-document-upload"
               accept="application/pdf,image/*"
-              className="hidden"
-              onChange={(e) => void handleUpload(e.target.files?.[0] ?? null)}
-            />
-            <Button
-              type="button"
-              size="sm"
               disabled={busy || !canUpdateJob}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <FileUp size={14} />
-              {additionalData.doDocumentFileKey ? "Replace DO Document" : "Upload DO Document"}
-            </Button>
+              helperText="Accepted formats: PDF and images. Uploading here replaces the current Delivery Order file."
+              triggerText={
+                additionalData.doDocumentFileKey
+                  ? "Drag and drop or choose file to replace the Delivery Order document"
+                  : "Drag and drop or choose file to upload the Delivery Order document"
+              }
+              showSelectedPreview={false}
+              onInputChange={(e) => void handleUpload(e.target.files?.[0] ?? null)}
+            />
             {additionalData.doDocumentFileKey ? (
               <a
                 href={additionalData.doDocumentFileKey}
@@ -175,7 +174,7 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
         ) : null}
 
         {/* Extension toggle */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/40 pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-4">
           <div>
             <span className="ds-label">Extension</span>
             <p className="mt-0.5 text-xs text-on-surface-variant">
@@ -193,7 +192,7 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
         </div>
 
         {additionalData.doExtensionEnabled && !warningActive ? (
-          <p className="rounded-xl border border-outline-variant/40 bg-surface p-3 text-xs text-on-surface-variant">
+          <p className="card-cyan-outline rounded-xl border border-outline-variant/40 bg-surface p-3 text-xs text-on-surface-variant">
             <CalendarClock size={13} className="mr-1.5 inline-block text-[#fb923c]" />
             The extension form opens from the Delivery Order validity notification — it becomes
             available once the validity warning is active.
@@ -207,7 +206,7 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
               <History size={12} />
               Extension History
             </span>
-            <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+            <div className="card-cyan-outline overflow-hidden rounded-xl border border-outline-variant/40 bg-surface shadow-sm">
               <div className="overflow-x-auto">
                 <table className="ds-table">
                   <thead>

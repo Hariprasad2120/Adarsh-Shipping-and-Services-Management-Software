@@ -289,7 +289,7 @@ export async function provisionJobWorkspace(
     // Fixed utility buckets that always exist regardless of settings, since they
     // don't correspond to a document-collection category: ad-hoc custom uploads
     // and filing-stage checklist/photo evidence.
-    for (const utility of ["User Uploads", "Filing Documents", "Checklist Documents"]) {
+    for (const utility of ["User Uploads", "Filing Documents", "Checklist Files"]) {
       if (!categories.some((name) => name.toLowerCase() === utility.toLowerCase())) {
         categories.push(utility);
       }

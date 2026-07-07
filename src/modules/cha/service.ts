@@ -103,6 +103,9 @@ type CompatibleAdditionalData = {
   importGeneralManifest: string | null;
   exportGeneralManifest: string | null;
   customManifestValue: string | null;
+  containerDetails?: Prisma.JsonValue | null;
+  mblNumber?: string | null;
+  hblNumber?: string | null;
   deliveryOrderValidity: Date | null;
   status?: string | null;
   createdById?: string | null;
@@ -309,7 +312,7 @@ const FILING_QUERY_ACTIVITY_EVENTS = [
 ] as const;
 
 type FilingQueryActivityEvent = typeof FILING_QUERY_ACTIVITY_EVENTS[number];
-const CHECKLIST_DOCUMENT_CATEGORY = "Checklist Documents";
+const CHECKLIST_DOCUMENT_CATEGORY = "Checklist Files";
 
 function getFileExtension(fileName: string) {
   const trimmed = fileName.trim();
@@ -435,6 +438,9 @@ function getAdditionalDataSelect(includeCustomManifestValue: boolean): Prisma.Ch
         importGeneralManifest: true,
         exportGeneralManifest: true,
         customManifestValue: true,
+        containerDetails: true,
+        mblNumber: true,
+        hblNumber: true,
         deliveryOrderValidity: true,
         status: true,
         createdById: true,
@@ -451,6 +457,9 @@ function getAdditionalDataSelect(includeCustomManifestValue: boolean): Prisma.Ch
         vesselInwardDate: true,
         importGeneralManifest: true,
         exportGeneralManifest: true,
+        containerDetails: true,
+        mblNumber: true,
+        hblNumber: true,
         deliveryOrderValidity: true,
         status: true,
         createdById: true,
@@ -479,7 +488,27 @@ function normalizeCompatibleAdditionalData(
   return {
     ...additionalData,
     customManifestValue: hasCustomManifestValueColumn ? additionalData.customManifestValue ?? null : null,
+    containerDetails: additionalData.containerDetails ?? null,
+    mblNumber: additionalData.mblNumber ?? null,
+    hblNumber: additionalData.hblNumber ?? null,
   };
+}
+
+function sanitizeContainerDetails(
+  value: Array<{ containerName?: string | null; containerNumber?: string | null }> | null | undefined,
+): Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput {
+  if (!value?.length) {
+    return Prisma.DbNull;
+  }
+
+  const normalized = value
+    .map((entry) => ({
+      containerName: entry.containerName?.trim() || null,
+      containerNumber: entry.containerNumber?.trim() || null,
+    }))
+    .filter((entry) => entry.containerName || entry.containerNumber);
+
+  return normalized.length ? (normalized as Prisma.InputJsonValue) : Prisma.DbNull;
 }
 
 function getFinancialYearLabel(date: Date, format?: string | null) {
@@ -2940,6 +2969,9 @@ export async function upsertAdditionalData(
     importGeneralManifest?: string | null;
     exportGeneralManifest?: string | null;
     customManifestValue?: string | null;
+    containerDetails?: Array<{ containerName?: string | null; containerNumber?: string | null }> | null;
+    mblNumber?: string | null;
+    hblNumber?: string | null;
     deliveryOrderValidity?: Date | string | null;
   }
 ) {
@@ -2973,12 +3005,15 @@ export async function upsertAdditionalData(
   const importGeneralManifest = data.importGeneralManifest?.trim() ? data.importGeneralManifest.trim() : null;
   const exportGeneralManifest = data.exportGeneralManifest?.trim() ? data.exportGeneralManifest.trim() : null;
   const customManifestValue = data.customManifestValue?.trim() ? data.customManifestValue.trim() : null;
+  const containerDetails = sanitizeContainerDetails(data.containerDetails);
+  const mblNumber = data.mblNumber?.trim() ? data.mblNumber.trim() : null;
+  const hblNumber = data.hblNumber?.trim() ? data.hblNumber.trim() : null;
 
-  if (importGeneralManifest !== null && !/^\d+$/.test(importGeneralManifest)) {
-    throw new Error("Import General Manifest (IGM) must contain digits only.");
+  if (importGeneralManifest !== null && !/^[a-zA-Z0-9]+$/.test(importGeneralManifest)) {
+    throw new Error("Import General Manifest (IGM) must be alphanumeric.");
   }
-  if (exportGeneralManifest !== null && !/^\d+$/.test(exportGeneralManifest)) {
-    throw new Error("Export General Manifest (EGM) must contain digits only.");
+  if (exportGeneralManifest !== null && !/^[a-zA-Z0-9]+$/.test(exportGeneralManifest)) {
+    throw new Error("Export General Manifest (EGM) must be alphanumeric.");
   }
 
   const vesselInwardDate = data.vesselInwardDate ? new Date(data.vesselInwardDate) : null;
@@ -3022,6 +3057,9 @@ export async function upsertAdditionalData(
       importGeneralManifest,
       exportGeneralManifest,
       ...(manifestSchema.customManifestValue ? { customManifestValue } : {}),
+      containerDetails,
+      mblNumber,
+      hblNumber,
       deliveryOrderValidity,
       status: nextStatus,
       updatedById: actorId,
@@ -3035,6 +3073,9 @@ export async function upsertAdditionalData(
       importGeneralManifest,
       exportGeneralManifest,
       ...(manifestSchema.customManifestValue ? { customManifestValue } : {}),
+      containerDetails,
+      mblNumber,
+      hblNumber,
       deliveryOrderValidity,
       status: nextStatus,
       createdById: actorId,
@@ -3829,6 +3870,7 @@ export async function uploadChecklistFile(
 
   const previousVersion = job.checklistWorkflow?.fileVersions[0]?.versionNumber ?? 0;
   const nextVersion = previousVersion + 1;
+  const storedFileName = buildDriveStoredFileName(`Checklist V${nextVersion}`, fileData.fileName);
 
   let fileKey = fileData.fileKey?.trim() || "";
   if (fileBuffer) {
@@ -3848,7 +3890,7 @@ export async function uploadChecklistFile(
     if (driveFolderId && !driveFolderId.startsWith("mock-")) {
       try {
         const uploadResult = await driveClient.uploadFile({
-          name: fileData.fileName,
+          name: storedFileName,
           mimeType: fileData.mimeType || "application/octet-stream",
           parentFolderId: driveFolderId,
           fileBuffer,

@@ -24,6 +24,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DataTable,
   DataTableBody,
@@ -33,6 +34,11 @@ import {
   DataTableHeader,
   DataTableToolbar,
 } from "@/components/data-table";
+import {
+  formatChaBadgeLabel,
+  getChaPriorityBadgeVariant,
+  getChaStageBadgeVariant,
+} from "@/lib/cha-badges";
 
 export default async function ChaDashboard() {
   const session = await auth();
@@ -361,28 +367,17 @@ export default async function ChaDashboard() {
                       })}
                     </DataTableCell>
                     <DataTableCell>
-                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${
-                        job.stage === "FILING"
-                          ? "border border-blue-200 bg-blue-50 text-blue-700"
-                          : job.stage === "CHECKLIST_APPROVAL"
-                            ? "border border-amber-200 bg-amber-50 text-amber-700"
-                            : job.stage === "FILED"
-                              ? "border border-green-200 bg-green-50 text-green-700"
-                              : "border border-outline-variant bg-surface-container-low text-on-surface"
-                      }`}>
-                        {job.stage.replace(/_/g, " ")}
-                      </span>
+                      <Badge variant={getChaStageBadgeVariant(job.stage)} className="uppercase">
+                        {formatChaBadgeLabel(job.stage)}
+                      </Badge>
                     </DataTableCell>
                     <DataTableCell>
-                      <span className={`text-xs font-semibold uppercase tracking-[0.12em] ${
-                        job.priority === "HIGH"
-                          ? "text-red-500"
-                          : job.priority === "MEDIUM"
-                            ? "text-[#fb923c]"
-                            : "text-on-surface-variant"
-                      }`}>
+                      <Badge
+                        variant={getChaPriorityBadgeVariant(job.priority)}
+                        className="uppercase"
+                      >
                         {job.priority}
-                      </span>
+                      </Badge>
                     </DataTableCell>
                   </ClickableRow>
                 ))}

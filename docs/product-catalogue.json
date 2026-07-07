@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-06T07:37:08.272Z",
+  "generatedAt": "2026-07-07T11:59:39.295Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -10,7 +10,7 @@
     "totalApiRoutes": 175,
     "totalPrismaModels": 263,
     "totalModuleServices": 71,
-    "totalComponents": 91
+    "totalComponents": 93
   },
   "appRoutes": [
     {
@@ -6833,6 +6833,9 @@
         "importGeneralManifest",
         "exportGeneralManifest",
         "customManifestValue",
+        "containerDetails",
+        "mblNumber",
+        "hblNumber",
         "deliveryOrderValidity",
         "status",
         "createdById",
@@ -11015,6 +11018,11 @@
     },
     {
       "module": "ui",
+      "fileName": "file-upload-field.tsx",
+      "filePath": "src/components/ui/file-upload-field.tsx"
+    },
+    {
+      "module": "ui",
       "fileName": "filter-menu.tsx",
       "filePath": "src/components/ui/filter-menu.tsx"
     },
@@ -11042,6 +11050,11 @@
       "module": "ui",
       "fileName": "neon-checkbox.tsx",
       "filePath": "src/components/ui/neon-checkbox.tsx"
+    },
+    {
+      "module": "ui",
+      "fileName": "warning-indicator-popover.tsx",
+      "filePath": "src/components/ui/warning-indicator-popover.tsx"
     },
     {
       "module": "shared",
@@ -11286,7 +11299,7 @@
       "apiRoutes": 0,
       "prismaModels": 0,
       "serviceFiles": 0,
-      "components": 14
+      "components": 16
     },
     "users": {
       "appRoutes": 0,

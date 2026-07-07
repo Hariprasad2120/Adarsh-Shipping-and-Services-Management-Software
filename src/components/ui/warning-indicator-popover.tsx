@@ -183,32 +183,30 @@ export function WarningIndicatorPopover({
               <div className={cn("overflow-hidden rounded-2xl border bg-surface shadow-[var(--shadow-ambient-hover)]", toneStyles.shell)}>
                 <div className={cn("h-1 w-full", toneStyles.accent)} />
                 <div className="space-y-4 p-4">
-                  <div className="flex items-start gap-3">
+                  <div className="grid grid-cols-[40px_minmax(0,1fr)] gap-x-3 gap-y-3">
                     <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border", toneStyles.badge)}>
                       <AlertTriangle size={18} />
                     </span>
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <p className={cn("ds-label", toneStyles.eyebrow)}>{eyebrow}</p>
-                        {status ? (
-                          <span
-                            className={cn(
-                              "rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.14em]",
-                              toneStyles.status,
-                            )}
-                          >
-                            {status}
-                          </span>
-                        ) : null}
-                      </div>
-                      <p className="text-sm leading-6 text-on-surface">{description}</p>
-                      {meta ? (
-                        <div className="rounded-xl border border-outline-variant/50 bg-surface-container-low px-3 py-2 text-xs text-on-surface-variant">
-                          {meta}
-                        </div>
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <p className={cn("ds-label", toneStyles.eyebrow)}>{eyebrow}</p>
+                      {status ? (
+                        <span
+                          className={cn(
+                            "rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.14em]",
+                            toneStyles.status,
+                          )}
+                        >
+                          {status}
+                        </span>
                       ) : null}
                     </div>
-                  </div>
+                    <p className="col-span-2 text-sm leading-6 text-on-surface">{description}</p>
+                    {meta ? (
+                      <div className="col-span-2 rounded-xl border border-outline-variant/40 bg-surface-container-low px-3 py-2 text-xs text-on-surface-variant">
+                        {meta}
+                      </div>
+                    ) : null}
+                    </div>
 
                   <div
                     className="flex flex-col gap-2"

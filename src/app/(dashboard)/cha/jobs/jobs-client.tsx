@@ -7,11 +7,17 @@ import { CreateJobDialog } from "@/components/cha/create-job-dialog";
 import { ClickableRow } from "@/components/clickable-row";
 import {DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableHead,DataTableHeader,} from "@/components/data-table";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { FilterMenu } from "@/components/ui/filter-menu";
 import { JobValidityWarningIndicator } from "@/app/(dashboard)/cha/_components/job-validity-warning-indicator";
 import { JobFilingQueryWarningIndicator } from "@/app/(dashboard)/cha/_components/job-filing-query-warning-indicator";
 import { JobSection49ValidityWarningIndicator } from "@/app/(dashboard)/cha/_components/job-section49-validity-warning-indicator";
+import {
+  formatChaBadgeLabel,
+  getChaPriorityBadgeVariant,
+  getChaStageBadgeVariant,
+} from "@/lib/cha-badges";
 
 type MovementDirection = "IMPORT" | "EXPORT" | "BOTH" | "OTHER" | null;
 
@@ -261,14 +267,17 @@ export function JobsClient({
                   {formatJobDate(job.createdAt)}
                 </DataTableCell>
                 <DataTableCell className="py-5">
-                  <span className="inline-flex rounded-full border border-outline-variant/35 bg-surface-container-low px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-on-surface-variant">
-                    {job.stage.replace(/_/g, " ")}
-                  </span>
+                  <Badge variant={getChaStageBadgeVariant(job.stage)} className="uppercase">
+                    {formatChaBadgeLabel(job.stage)}
+                  </Badge>
                 </DataTableCell>
                 <DataTableCell className="py-5">
-                  <span className="text-xs uppercase tracking-[0.12em] text-on-surface-variant">
+                  <Badge
+                    variant={getChaPriorityBadgeVariant(job.priority)}
+                    className="uppercase"
+                  >
                     {job.priority}
-                  </span>
+                  </Badge>
                 </DataTableCell>
                 <DataTableCell className="py-5 text-on-surface-variant">{job.ownerName}</DataTableCell>
               </ClickableRow>

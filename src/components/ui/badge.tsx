@@ -1,14 +1,14 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-type BadgeVariant = "default" | "secondary" | "success" | "warning" | "destructive";
+export type BadgeVariant = "default" | "secondary" | "success" | "warning" | "destructive";
 
 const VARIANTS: Record<BadgeVariant, string> = {
-  default: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  default: "border-indigo-500/25 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300",
   secondary: "bg-surface-container-high text-on-surface-variant border-outline-variant",
-  success: "bg-green-50 text-green-700 border-green-200",
-  warning: "bg-amber-50 text-amber-700 border-amber-200",
-  destructive: "bg-red-50 text-red-600 border-red-200",
+  success: "border-green-500/25 bg-green-500/10 text-green-700 dark:text-green-300",
+  warning: "border-[#fb923c]/25 bg-[#fb923c]/10 text-[#c96a16] dark:text-[#fdba74]",
+  destructive: "border-red-500/25 bg-red-500/10 text-red-700 dark:text-red-200",
 };
 
 export function Badge({
@@ -19,7 +19,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold",
+        "inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-medium leading-none tracking-[0.14em]",
         VARIANTS[variant],
         className,
       )}

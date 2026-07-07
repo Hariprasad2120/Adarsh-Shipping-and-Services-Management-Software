@@ -11,7 +11,7 @@ const buttonVariants = cva(
           "border-[#00cec4] bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_16px_rgba(0,206,196,0.5),0_0_5px_rgba(0,206,196,0.3)] hover:animate-[neon-pulse-approve_2s_infinite_ease-in-out]",
         inverse: "bg-transparent text-current hover:bg-black/10",
         outline:
-          "border border-[#00cec4]/45 bg-surface text-[#00cec4] hover:border-[#00cec4] hover:bg-[#00cec4]/10 hover:shadow-[0_0_12px_rgba(0,206,196,0.3)]",
+          "border-[#00cec4]/45 bg-surface text-[#00cec4] hover:border-[#00cec4] hover:bg-surface hover:text-[#00cec4] hover:shadow-[0_0_12px_rgba(0,206,196,0.3)]",
         destructive:
           "border-red-500 bg-red-500 text-white hover:bg-red-600 hover:shadow-[0_0_16px_rgba(239,68,68,0.5),0_0_5px_rgba(239,68,68,0.3)] hover:animate-[neon-pulse-reject_2s_infinite_ease-in-out]",
       },
@@ -39,10 +39,17 @@ export interface ButtonProps
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, mode, type = "button", ...props }, ref) => {
+    const resolvedVariant = variant ?? "default";
+    const resolvedSize = size ?? "md";
+    const resolvedMode = mode ?? "default";
+
     return (
       <button
         ref={ref}
         type={type}
+        data-variant={resolvedVariant}
+        data-size={resolvedSize}
+        data-mode={resolvedMode}
         className={cn(buttonVariants({ variant, size, mode }), className)}
         {...props}
       />

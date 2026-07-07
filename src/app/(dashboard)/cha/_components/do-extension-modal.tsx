@@ -1,9 +1,10 @@
 "use client";
 
 import { DateInput } from "@/components/ui/date-input";
-import { useRef, useState } from "react";
+import { FileUploadField } from "@/components/ui/file-upload-field";
+import { useState } from "react";
 import { toast } from "sonner";
-import { CalendarPlus, FileUp } from "lucide-react";
+import { CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { applyDoExtensionAction } from "@/modules/cha/actions";
@@ -31,9 +32,8 @@ export function DoExtensionModal({
   onClose,
   onApplied,
 }: DoExtensionModalProps) {
-  const fileRef = useRef<HTMLInputElement | null>(null);
   const [extensionDate, setExtensionDate] = useState("");
-  const [fileName, setFileName] = useState("");
+  const [extensionFile, setExtensionFile] = useState<File | null>(null);
   const [applying, setApplying] = useState(false);
 
   const handleApply = async () => {
@@ -45,8 +45,7 @@ export function DoExtensionModal({
     try {
       const formData = new FormData();
       formData.append("extensionDate", extensionDate);
-      const file = fileRef.current?.files?.[0];
-      if (file) formData.append("file", file);
+      if (extensionFile) formData.append("file", extensionFile);
 
       const response = await applyDoExtensionAction(jobId, formData);
       if (!response.ok) {
@@ -55,8 +54,7 @@ export function DoExtensionModal({
       }
       toast.success("Delivery Order extension applied. Validity date updated.");
       setExtensionDate("");
-      setFileName("");
-      if (fileRef.current) fileRef.current.value = "";
+      setExtensionFile(null);
       onClose();
       onApplied?.();
     } catch (error) {
@@ -86,24 +84,25 @@ export function DoExtensionModal({
           />
         </label>
 
-        <div className="space-y-1.5">
-          <span className="ds-label">Extension Document</span>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="application/pdf,image/*"
-            className="hidden"
-            onChange={(e) => setFileName(e.target.files?.[0]?.name ?? "")}
-          />
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className="ds-plain flex w-full cursor-pointer items-center gap-2 rounded-xl border border-dashed border-outline-variant/50 bg-surface px-4 py-3 text-sm text-on-surface-variant transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/40"
-          >
-            <FileUp size={15} className="text-[#00cec4]" />
-            {fileName || "Choose extension file (PDF or image)"}
-          </button>
-        </div>
+        <FileUploadField
+          id="do-extension-file-upload"
+          label="Extension Document"
+          accept="application/pdf,image/*"
+          helperText="Upload the signed extension support document as a PDF or image."
+          triggerText="Drag and drop or choose extension file to upload"
+          selectedFile={
+            extensionFile
+              ? {
+                  file: extensionFile,
+                  name: extensionFile.name,
+                  sizeBytes: extensionFile.size,
+                  statusLabel: "Ready",
+                }
+              : null
+          }
+          onClear={() => setExtensionFile(null)}
+          onInputChange={(e) => setExtensionFile(e.target.files?.[0] ?? null)}
+        />
 
         <p className="text-xs text-on-surface-variant">
           Current validity: {new Date(currentValidity).toLocaleDateString("en-IN")}

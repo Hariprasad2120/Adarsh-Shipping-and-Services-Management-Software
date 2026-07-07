@@ -503,6 +503,9 @@ export async function upsertAdditionalDataAction(
     importGeneralManifest?: string | null;
     exportGeneralManifest?: string | null;
     customManifestValue?: string | null;
+    containerDetails?: Array<{ containerName?: string | null; containerNumber?: string | null }> | null;
+    mblNumber?: string | null;
+    hblNumber?: string | null;
     deliveryOrderValidity?: string | Date | null;
   }
 ): Promise<ActionResponse> {

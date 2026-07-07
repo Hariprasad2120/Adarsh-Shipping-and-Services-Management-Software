@@ -4,13 +4,20 @@ import { DateInput } from "@/components/ui/date-input";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {FileText,Upload,CheckCircle2,AlertTriangle,FolderOpen,ArrowRight,ShieldCheck,AlertCircle,Plus,Trash2,Check,Database,ExternalLink,Undo2,} from "lucide-react";
+import {FileText,Upload,CheckCircle2,AlertTriangle,FolderOpen,ArrowRight,ShieldCheck,AlertCircle,Plus,Trash2,Check,Database,ExternalLink,Undo2,Mail,} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { FileUploadField } from "@/components/ui/file-upload-field";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import * as actions from "@/modules/cha/actions";
 import { DoValidityPanel } from "./do-validity-panel";
 import { NeonCheckbox } from "@/components/ui/neon-checkbox";
+import {
+  formatChaBadgeLabel,
+  getChaDocumentStatusBadgeVariant,
+  getChaJobStatusBadgeVariant,
+} from "@/lib/cha-badges";
 
 interface JobWorkspaceClientProps {
   job: any;
@@ -49,6 +56,10 @@ type WorkspaceTab =
   | "expenses"
   | "audit";
 
+type ContainerEntry = {
+  containerNumber: string;
+};
+
 function getDefaultTabForStage(stage: string): WorkspaceTab {
   if (stage === "ADDITIONAL_DATA") return "additionalData";
   if (stage === "CHECKLIST_PREPARATION" || stage === "CHECKLIST_APPROVAL") return "checklist";
@@ -82,6 +93,75 @@ function getValiditySummary(validityDate?: string | null) {
     label: "Valid",
     detail: `Valid until ${parsed.toLocaleDateString("en-IN")}`,
   };
+}
+
+function getDefaultContainerEntry(): ContainerEntry {
+  return {
+    containerNumber: "",
+  };
+}
+
+function normalizeContainerEntries(value: unknown): ContainerEntry[] {
+  if (!Array.isArray(value)) {
+    return [getDefaultContainerEntry()];
+  }
+
+  const normalized = value
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") {
+        return null;
+      }
+
+      const containerNumber =
+        "containerNumber" in entry && typeof entry.containerNumber === "string" ? entry.containerNumber : "";
+
+      return {
+        containerNumber,
+      };
+    })
+    .filter((entry): entry is ContainerEntry => entry !== null);
+
+  return normalized.length ? normalized : [getDefaultContainerEntry()];
+}
+
+function AdditionalDataStatCard({
+  label,
+  value,
+  numeric = false,
+}: {
+  label: string;
+  value: string;
+  numeric?: boolean;
+}) {
+  return (
+    <div className="card-cyan-outline card-top-accent rounded-xl border border-outline-variant/40 bg-surface p-3 shadow-sm">
+      <span className="ds-label">{label}</span>
+      <p className={`mt-1 text-sm text-on-surface ${numeric ? "ds-numeric" : ""}`}>{value}</p>
+    </div>
+  );
+}
+
+function SectionHeading({
+  title,
+  description,
+  aside,
+}: {
+  title: string;
+  description?: string;
+  aside?: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
+          <span className="h-7 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+          <h3 className="ds-h3 text-on-surface">{title}</h3>
+        </div>
+        {aside ? <div className="shrink-0">{aside}</div> : null}
+      </div>
+      {description ? <p className="pl-[17px] text-xs text-on-surface-variant">{description}</p> : null}
+    </div>
+  );
 }
 
 export function JobWorkspaceClient({
@@ -221,10 +301,19 @@ export function JobWorkspaceClient({
     [visibleDocumentRequirements],
   );
 
+  const firstUnresolvedMandatoryDocumentId = useMemo(() => {
+    const unresolvedRequirement = visibleDocumentRequirements.find((req: any) => {
+      const isExempted = req.status === "NOT_AVAILABLE" || !!req.exception;
+      return req.isMandatory && req.status !== "UPLOADED" && !isExempted;
+    });
+    return unresolvedRequirement?.id ?? null;
+  }, [visibleDocumentRequirements]);
+
 
   // Document Collection Form State
   const [exceptionReason, setExceptionReason] = useState("");
   const [activeDocReqId, setActiveDocReqId] = useState<string | null>(null);
+  const [uploadDocumentModalReqId, setUploadDocumentModalReqId] = useState<string | null>(null);
   const [isCustomDocumentModalOpen, setIsCustomDocumentModalOpen] = useState(false);
   const [customDocumentName, setCustomDocumentName] = useState("");
   const [customDocumentFile, setCustomDocumentFile] = useState<File | null>(null);
@@ -235,6 +324,11 @@ export function JobWorkspaceClient({
   const [viewingVersion, setViewingVersion] = useState<any | null>(null);
   const [proceedErrors, setProceedErrors] = useState<string[] | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(true);
+  const [highlightedDocumentReqId, setHighlightedDocumentReqId] = useState<string | null>(null);
+  const documentRequirementCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const uploadDocumentModalRequirement = uploadDocumentModalReqId
+    ? documentRequirements.find((req) => req.id === uploadDocumentModalReqId) ?? null
+    : null;
 
   useEffect(() => {
     if (viewingVersion) {
@@ -259,6 +353,27 @@ export function JobWorkspaceClient({
     }
   }, [initialTab, focusField]);
 
+  useEffect(() => {
+    if (!highlightedDocumentReqId || activeTab !== "docs") {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      const card = documentRequirementCardRefs.current[highlightedDocumentReqId];
+      if (card) {
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 180);
+
+    return () => window.clearTimeout(timer);
+  }, [activeTab, highlightedDocumentReqId]);
+
+  useEffect(() => {
+    if (highlightedDocumentReqId && highlightedDocumentReqId !== firstUnresolvedMandatoryDocumentId) {
+      setHighlightedDocumentReqId(null);
+    }
+  }, [firstUnresolvedMandatoryDocumentId, highlightedDocumentReqId]);
+
   // Additional Data Form State
   const [vesselInwardDate, setVesselInwardDate] = useState(
     job.additionalData?.vesselInwardDate ? job.additionalData.vesselInwardDate.slice(0, 10) : ""
@@ -278,6 +393,11 @@ export function JobWorkspaceClient({
       ? String(job.additionalData.customManifestValue)
       : ""
   );
+  const [containerEntries, setContainerEntries] = useState<ContainerEntry[]>(
+    normalizeContainerEntries(job.additionalData?.containerDetails)
+  );
+  const [mblNumber, setMblNumber] = useState(job.additionalData?.mblNumber || "");
+  const [hblNumber, setHblNumber] = useState(job.additionalData?.hblNumber || "");
   const [deliveryOrderValidity, setDeliveryOrderValidity] = useState(
     job.additionalData?.deliveryOrderValidity ? job.additionalData.deliveryOrderValidity.slice(0, 10) : ""
   );
@@ -554,6 +674,38 @@ export function JobWorkspaceClient({
     ))
   );
   const additionalDataLocked = job.stage === "FILING" || job.stage === "FILED";
+
+  const addContainerEntry = () => {
+    setContainerEntries((current) => [...current, getDefaultContainerEntry()]);
+  };
+
+  const updateContainerEntry = (index: number, field: keyof ContainerEntry, value: string) => {
+    setContainerEntries((current) =>
+      current.map((entry, entryIndex) => (entryIndex === index ? { ...entry, [field]: value } : entry))
+    );
+  };
+
+  const removeContainerEntry = (index: number) => {
+    setContainerEntries((current) => {
+      if (current.length === 1) {
+        return [getDefaultContainerEntry()];
+      }
+      return current.filter((_, entryIndex) => entryIndex !== index);
+    });
+  };
+  const populatedContainerCount = containerEntries.filter((entry) => entry.containerNumber.trim()).length;
+  const manifestPreview = requiresCustomManifest
+    ? customManifestValue || "Pending"
+    : requiresIgm && requiresEgm
+      ? `${importGeneralManifest || "IGM Pending"} / ${exportGeneralManifest || "EGM Pending"}`
+      : requiresIgm
+        ? importGeneralManifest || "Pending"
+        : requiresEgm
+          ? exportGeneralManifest || "Pending"
+          : "Not Required";
+  const blPreview = mblNumber || hblNumber
+    ? [mblNumber && `MBL: ${mblNumber}`, hblNumber && `HBL: ${hblNumber}`].filter(Boolean).join(" / ")
+    : "Pending";
   const activeDeletionRequest =
     job.deletionRequests?.find((request: any) => ["PENDING", "APPROVED"].includes(request.status)) ?? null;
   const pendingDeletionReview =
@@ -956,6 +1108,10 @@ export function JobWorkspaceClient({
         refreshJobInBackground();
       } else {
         setProceedErrors(res.error ? [res.error] : ["Mandatory document requirement gating check failed."]);
+        if (firstUnresolvedMandatoryDocumentId) {
+          setHighlightedDocumentReqId(firstUnresolvedMandatoryDocumentId);
+          setActiveTab("docs");
+        }
         toast.error("Document collection gate not satisfied.");
       }
     } catch (err: any) {
@@ -967,7 +1123,7 @@ export function JobWorkspaceClient({
 
   const isValidManifest = (value: string) => {
     if (value === "") return false;
-    return /^\d+$/.test(value);
+    return /^[a-zA-Z0-9]+$/.test(value);
   };
 
   const handleSaveAdditionalData = async () => {
@@ -976,11 +1132,11 @@ export function JobWorkspaceClient({
       return;
     }
     if (importGeneralManifest !== "" && !isValidManifest(importGeneralManifest)) {
-      toast.error("IGM must contain digits only.");
+      toast.error("IGM must be alphanumeric.");
       return;
     }
     if (exportGeneralManifest !== "" && !isValidManifest(exportGeneralManifest)) {
-      toast.error("EGM must contain digits only.");
+      toast.error("EGM must be alphanumeric.");
       return;
     }
 
@@ -991,6 +1147,12 @@ export function JobWorkspaceClient({
         importGeneralManifest: importGeneralManifest === "" ? null : importGeneralManifest,
         exportGeneralManifest: exportGeneralManifest === "" ? null : exportGeneralManifest,
         customManifestValue: customManifestValue === "" ? null : customManifestValue,
+        containerDetails: containerEntries.map((entry, index) => ({
+          containerName: `Container ${index + 1}`,
+          containerNumber: entry.containerNumber,
+        })),
+        mblNumber: mblNumber === "" ? null : mblNumber,
+        hblNumber: hblNumber === "" ? null : hblNumber,
         deliveryOrderValidity: deliveryOrderValidity || null,
       });
       if (res.ok) {
@@ -1029,11 +1191,11 @@ export function JobWorkspaceClient({
     }
 
     if (importGeneralManifest !== "" && !isValidManifest(importGeneralManifest)) {
-      toast.error("IGM must contain digits only.");
+      toast.error("IGM must be alphanumeric.");
       return;
     }
     if (exportGeneralManifest !== "" && !isValidManifest(exportGeneralManifest)) {
-      toast.error("EGM must contain digits only.");
+      toast.error("EGM must be alphanumeric.");
       return;
     }
 
@@ -1045,6 +1207,12 @@ export function JobWorkspaceClient({
         importGeneralManifest: importGeneralManifest === "" ? null : importGeneralManifest,
         exportGeneralManifest: exportGeneralManifest === "" ? null : exportGeneralManifest,
         customManifestValue: customManifestValue === "" ? null : customManifestValue,
+        containerDetails: containerEntries.map((entry, index) => ({
+          containerName: `Container ${index + 1}`,
+          containerNumber: entry.containerNumber,
+        })),
+        mblNumber: mblNumber === "" ? null : mblNumber,
+        hblNumber: hblNumber === "" ? null : hblNumber,
         deliveryOrderValidity: deliveryOrderValidity || null,
       });
 
@@ -2339,22 +2507,20 @@ export function JobWorkspaceClient({
         <div className="flex flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="rounded-md border border-outline-variant bg-surface-container-high px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--color-primary)]">
+              <Badge variant="secondary" className="uppercase">
                 {job.jobType.name}
-              </span>
+              </Badge>
               {job.shipmentType ? (
-                <span className="rounded-md border border-outline-variant bg-surface-container-low px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-on-surface">
+                <Badge variant="secondary" className="uppercase">
                   {job.shipmentType.name}
-                </span>
+                </Badge>
               ) : null}
               <span className="rounded-md bg-surface-container-low px-2 py-0.5 text-[10px] font-semibold text-on-surface-variant ds-numeric">
                 {job.branch.name}
               </span>
-              <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                job.status === "ACTIVE" ? "border-green-200 text-green-600" : "border-orange-200 text-orange-500"
-              }`}>
-                {job.status}
-              </span>
+              <Badge variant={getChaJobStatusBadgeVariant(job.status)} className="uppercase">
+                {formatChaBadgeLabel(job.status)}
+              </Badge>
             </div>
             <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
               <h1 className="ds-h1 ds-numeric text-on-surface">{job.jobNumber}</h1>
@@ -2533,13 +2699,11 @@ export function JobWorkspaceClient({
         {/* PANEL: DOCUMENTS */}
         {activeTab === "docs" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-outline-variant/20 pb-4">
-              <div>
-                <h3 className="ds-h3 text-on-surface">Required Customs Documents</h3>
-                <p className="text-xs text-on-surface-variant mt-1">
-                  Upload required files or declare exceptions to pass the document gate. Workflow-uploaded files, Section 49, and Extension documents also appear here with source and validity tracking.
-                </p>
-              </div>
+            <div className="flex items-start justify-between gap-4 border-b border-outline-variant/20 pb-4">
+              <SectionHeading
+                title="Required Customs Documents"
+                description="Upload required files or declare exceptions to pass the document gate. Workflow-uploaded files, Section 49, and Extension documents also appear here with source and validity tracking."
+              />
               <div className="flex flex-wrap items-center justify-end gap-2">
                 <Button
                   type="button"
@@ -2606,15 +2770,59 @@ export function JobWorkspaceClient({
                 <div className="space-y-4">
                   {categoryKeys.map((categoryName) => {
                     const reqs = groupedRequirements[categoryName];
+                    const uploadedRequirements = reqs.filter((req: any) => req.status === "UPLOADED");
+                    const exemptionRequirements = reqs.filter(
+                      (req: any) => req.status === "NOT_AVAILABLE" && req.exception?.reason && req.exception.reason !== "N/A"
+                    );
+                    const markedNaRequirements = reqs.filter(
+                      (req: any) => req.status === "NOT_AVAILABLE" && req.exception?.reason === "N/A"
+                    );
+                    const pendingRequirements = reqs.filter(
+                      (req: any) =>
+                        req.status !== "UPLOADED" &&
+                        !(req.status === "NOT_AVAILABLE" && req.exception?.reason && req.exception.reason !== "N/A") &&
+                        !(req.status === "NOT_AVAILABLE" && req.exception?.reason === "N/A")
+                    );
+                    const requirementSections = [
+                      {
+                        key: "uploaded",
+                        title: "Uploaded",
+                        requirements: uploadedRequirements,
+                      },
+                      {
+                        key: "exempted",
+                        title: "Exempted",
+                        requirements: exemptionRequirements,
+                      },
+                      {
+                        key: "na",
+                        title: "Marked as N/A",
+                        requirements: markedNaRequirements,
+                      },
+                      {
+                        key: "pending",
+                        title: "Awaiting Upload",
+                        requirements: pendingRequirements,
+                      },
+                    ].filter((section) => section.requirements.length > 0);
+
                     return (
                       <div key={categoryName} className="space-y-4">
-                        <h3 className="ds-h3 border-b border-outline-variant/20 pb-2 text-on-surface">
-                          {categoryName}
-                        </h3>
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                          {reqs.map((req: any) => {
+                        <SectionHeading title={categoryName} />
+                        <div className="space-y-4">
+                          {requirementSections.map((section) => (
+                            <div key={section.key} className="space-y-2">
+                              <div className="flex items-center justify-between gap-3 border-b border-outline-variant/10 pb-2">
+                                <p className="ds-label text-on-surface-variant">{section.title}</p>
+                                <span className="ds-numeric text-[11px] text-on-surface-variant">
+                                  {section.requirements.length}
+                                </span>
+                              </div>
+                              <div className="grid items-start grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                                {section.requirements.map((req: any) => {
                             const isUploaded = req.status === "UPLOADED";
-                            const isExempted = req.status === "NOT_AVAILABLE";
+                            const isExempted = req.status === "NOT_AVAILABLE" || !!req.exception;
+                            const isPendingRequirement = section.key === "pending";
                             const currentVersion = req.versions.find((v: any) => v.isCurrent);
                             const isSection49Requirement = req.name === "Section 49";
                             const effectiveValidityDate =
@@ -2625,36 +2833,52 @@ export function JobWorkspaceClient({
                               effectiveValidityDate &&
                               ["warning", "destructive"].includes(validitySummary?.tone || "");
                             return (
-                              <div
-                                key={req.id}
-                                className={`p-4 rounded-2xl border flex flex-col justify-between bg-[var(--color-surface)] ${
-                                  isUploaded
-                                    ? "card-left-accent border-outline-variant/30"
-                                    : "card-left-accent-orange border-outline-variant/30"
-                                }`}
-                              >
+                                <div
+                                  key={req.id}
+                                  ref={(element) => {
+                                    documentRequirementCardRefs.current[req.id] = element;
+                                  }}
+                                  className={`p-4 rounded-2xl border flex flex-col justify-between bg-[var(--color-surface)] ${
+                                    isUploaded
+                                      ? "card-left-accent border-[#00cec4]/30"
+                                      : isPendingRequirement
+                                        ? "border-red-500/30"
+                                        : "card-left-accent-orange border-[#fb923c]/30"
+                                  } ${
+                                    highlightedDocumentReqId === req.id
+                                      ? isPendingRequirement
+                                        ? "animate-doc-missing-blink-red"
+                                        : "animate-doc-missing-blink"
+                                      : ""
+                                  }`}
+                                  style={
+                                    isPendingRequirement
+                                      ? {
+                                          borderLeftWidth: "3px",
+                                          borderLeftColor: "rgb(239 68 68 / 0.9)",
+                                        }
+                                      : undefined
+                                  }
+                                >
                                 <div>
                                     <div className="flex items-center justify-between">
                                       <span className="font-semibold text-sm text-on-surface">{req.name}</span>
                                       <div className="flex items-center gap-1.5">
                                         {req.isMandatory && (
-                                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-50 text-red-500 border border-red-200">
-                                          MANDATORY
-                                        </span>
-                                      )}
-                                        <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
-                                          isUploaded
-                                            ? "bg-[#00cec4]/10 text-[#00cec4]"
-                                            : isExempted
-                                          ? "bg-orange-500/10 text-[#fb923c]"
-                                          : "bg-surface-container-high text-on-surface-variant"
-                                        }`}>
-                                          {req.status.replace(/_/g, " ")}
-                                        </span>
+                                          <Badge variant="destructive" className="uppercase">
+                                            MANDATORY
+                                          </Badge>
+                                        )}
+                                        <Badge
+                                          variant={getChaDocumentStatusBadgeVariant(req.status)}
+                                          className="uppercase"
+                                        >
+                                          {formatChaBadgeLabel(req.status)}
+                                        </Badge>
                                         {req.requirementItem?.requiresValidityDate || req.requirementItem?.defaultValidityDuration ? (
-                                          <span className="text-[10px] font-bold uppercase rounded bg-[#fb923c]/10 px-1.5 py-0.5 text-[#fb923c]">
+                                          <Badge variant="warning" className="uppercase">
                                             Validity
-                                          </span>
+                                          </Badge>
                                         ) : null}
                                       </div>
                                     </div>
@@ -2723,16 +2947,27 @@ export function JobWorkspaceClient({
                                                 className="w-full ds-numeric"
                                               />
                                             </label>
-                                            <label className="space-y-1">
-                                              <span className="ds-label">Extension Document</span>
-                                              <input
-                                                type="file"
-                                                accept="application/pdf,image/*"
-                                                onChange={(e) => setSection49ExtensionFile(e.target.files?.[0] ?? null)}
-                                                disabled={loading !== null || !canUpdateJob}
-                                                className="w-full text-xs"
-                                              />
-                                            </label>
+                                            <FileUploadField
+                                              id="section49-extension-upload"
+                                              compact
+                                              label="Extension Document"
+                                              accept="application/pdf,image/*"
+                                              disabled={loading !== null || !canUpdateJob}
+                                              helperText="Upload a PDF or image before applying the extension."
+                                              triggerText="Choose extension document"
+                                              selectedFile={
+                                                section49ExtensionFile
+                                                  ? {
+                                                      file: section49ExtensionFile,
+                                                      name: section49ExtensionFile.name,
+                                                      sizeBytes: section49ExtensionFile.size,
+                                                      statusLabel: "Ready",
+                                                    }
+                                                  : null
+                                              }
+                                              onClear={() => setSection49ExtensionFile(null)}
+                                              onInputChange={(e) => setSection49ExtensionFile(e.target.files?.[0] ?? null)}
+                                            />
                                             <Button
                                               type="button"
                                               size="sm"
@@ -2937,7 +3172,7 @@ export function JobWorkspaceClient({
                                         type="button"
                                         variant="outline"
                                         size="sm"
-                                        className="text-xs text-red-500 border-red-200 hover:bg-red-50"
+                                        className="text-xs border-[#fb923c]/50 text-[#fb923c] hover:bg-surface"
                                         onClick={() => handleRemoveException(req.id)}
                                         disabled={loading !== null}
                                       >
@@ -2972,20 +3207,23 @@ export function JobWorkspaceClient({
                                       )
                                     )}
 
-                                    <label className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#00cec4] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white transition-all hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)]">
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      className="gap-1.5 text-xs font-bold uppercase tracking-wide"
+                                      onClick={() => setUploadDocumentModalReqId(req.id)}
+                                    >
                                       <Upload size={12} />
                                       {isUploaded ? "Re-upload" : isExempted ? "Upload File Anyway" : "Upload File"}
-                                      <input
-                                        type="file"
-                                        className="hidden"
-                                        onChange={(e) => handleUploadDoc(req.id, e)}
-                                      />
-                                    </label>
+                                    </Button>
                                   </div>
                                 </div>
                               </div>
                             );
-                          })}
+                                })}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     );
@@ -3020,12 +3258,10 @@ export function JobWorkspaceClient({
         {activeTab === "additionalData" && (
           <div className="space-y-4">
             <div className="flex flex-col gap-3 border-b border-outline-variant/20 pb-4 md:flex-row md:items-start md:justify-between">
-              <div>
-                <h3 className="ds-h3 text-on-surface">CHA Additional Data</h3>
-                <p className="mt-1 text-xs text-on-surface-variant">
-                  Capture manifest and delivery-order validity details before checklist preparation.
-                </p>
-              </div>
+              <SectionHeading
+                title="CHA Additional Data"
+                description="Capture manifest and delivery-order validity details before checklist preparation."
+              />
               <span
                 className={`inline-flex min-h-8 items-center rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider ${
                   additionalDataComplete
@@ -3061,139 +3297,202 @@ export function JobWorkspaceClient({
               </div>
             ) : null}
 
-            <div className="ds-form-section space-y-4">
-              <h3 className="ds-h3 text-on-surface">Additional Data Fields</h3>
-              <div className="grid grid-cols-1 gap-3 rounded-xl border border-outline-variant bg-surface-container-low p-4 md:grid-cols-2">
-                <div>
-                  <span className="ds-label">Clearance Type</span>
-                  <p className="mt-1 text-sm font-medium text-on-surface">{job.jobType?.name || "Unknown"}</p>
-                </div>
-                <div>
-                  <span className="ds-label">Required Manifest</span>
-                  <p className="mt-1 text-sm font-medium text-on-surface">{manifestLabel}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <label className="space-y-1.5">
-                  <span className="ds-label">Vessel Inward Date</span>
-                  <DateInput
-                    value={vesselInwardDate}
-                    onChange={(e) => setVesselInwardDate(e.target.value)}
-                    disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
-                    required
-                    className="w-full"
-                  />
-                </label>
-                <label className="space-y-1.5">
-                  <span className="ds-label">Delivery Order Validity</span>
-                  <DateInput
-                    id="deliveryOrderValidity"
-                    value={deliveryOrderValidity}
-                    onChange={(e) => setDeliveryOrderValidity(e.target.value)}
-                    disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
-                    required
-                    className="w-full"
-                  />
-                </label>
-                {requiresIgm ? (
-                  <label className="space-y-1.5">
-                    <span className="ds-label">IGM Number</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={importGeneralManifest}
-                      onChange={(e) => setImportGeneralManifest(e.target.value)}
-                      disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked || manifestConfigMissing}
-                      required={manifestMandatory}
-                      className="w-full ds-numeric"
-                      placeholder={job.jobType?.manifestHelpText || "Enter IGM reference"}
-                    />
-                  </label>
-                ) : null}
-                {requiresEgm ? (
-                  <label className="space-y-1.5">
-                    <span className="ds-label">EGM Number</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={exportGeneralManifest}
-                      onChange={(e) => setExportGeneralManifest(e.target.value)}
-                      disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked || manifestConfigMissing}
-                      required={manifestMandatory}
-                      className="w-full ds-numeric"
-                      placeholder={job.jobType?.manifestHelpText || "Enter EGM reference"}
-                    />
-                  </label>
-                ) : null}
-                {requiresCustomManifest ? (
-                  <label className="space-y-1.5">
-                    <span className="ds-label">{customManifestLabel}</span>
-                    <input
-                      type="text"
-                      value={customManifestValue}
-                      onChange={(e) => setCustomManifestValue(e.target.value)}
-                      disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked || manifestConfigMissing}
-                      required={manifestMandatory}
-                      className="w-full"
-                      placeholder={job.jobType?.manifestHelpText || `Enter ${customManifestLabel}`}
-                    />
-                  </label>
-                ) : null}
-              </div>
-            </div>
-
-            {job.additionalData ? (
-              <DoValidityPanel
-                jobId={job.id}
-                canUpdateJob={canUpdateJob}
-                additionalData={{
-                  deliveryOrderValidity: job.additionalData.deliveryOrderValidity ?? null,
-                  doUploadEnabled: !!job.additionalData.doUploadEnabled,
-                  doDocumentFileKey: job.additionalData.doDocumentFileKey ?? null,
-                  doDocumentFileName: job.additionalData.doDocumentFileName ?? null,
-                  doDocumentUploadedAt: job.additionalData.doDocumentUploadedAt ?? null,
-                  doExtensionEnabled: !!job.additionalData.doExtensionEnabled,
-                }}
-                extensions={job.doExtensions ?? []}
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+              <AdditionalDataStatCard label="Status" value={job.additionalData?.status ?? "PENDING"} />
+              <AdditionalDataStatCard
+                label="Last Updated"
+                value={job.additionalData?.updatedAt
+                  ? new Date(job.additionalData.updatedAt).toLocaleDateString("en-IN")
+                  : "Not saved"}
+                numeric
               />
-            ) : null}
+              <AdditionalDataStatCard label="Manifest" value={manifestPreview} numeric />
+              <AdditionalDataStatCard label="Direction" value={manifestMovementDirection || "Not Configured"} />
+              <AdditionalDataStatCard label="BL No" value={blPreview} />
+              <AdditionalDataStatCard label="Containers" value={String(populatedContainerCount)} numeric />
+            </div>
 
-            <div className="grid grid-cols-1 gap-3 rounded-xl border border-outline-variant bg-surface-container-low p-4 md:grid-cols-4">
-              <div>
-                <span className="ds-label">Status</span>
-                <p className="mt-1 text-sm font-medium text-on-surface">{job.additionalData?.status ?? "PENDING"}</p>
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(360px,1fr)]">
+              <div className="space-y-4">
+                <div className="card-cyan-outline card-top-accent rounded-xl border border-outline-variant/40 bg-surface p-4 shadow-sm">
+                  <SectionHeading
+                    title="Core Filing Data"
+                    description="Complete the job movement and manifest references required before checklist preparation."
+                  />
+                  <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12">
+                    <label className="space-y-1.5 xl:col-span-4">
+                      <span className="ds-label">Vessel Inward Date</span>
+                      <DateInput
+                        value={vesselInwardDate}
+                        onChange={(e) => setVesselInwardDate(e.target.value)}
+                        disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
+                        required
+                        className="w-full"
+                      />
+                    </label>
+                    <label className="space-y-1.5 xl:col-span-4">
+                      <span className="ds-label">Delivery Order Validity</span>
+                      <DateInput
+                        id="deliveryOrderValidity"
+                        value={deliveryOrderValidity}
+                        onChange={(e) => setDeliveryOrderValidity(e.target.value)}
+                        disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
+                        required
+                        className="w-full"
+                      />
+                    </label>
+                    {requiresIgm ? (
+                      <label className="space-y-1.5 xl:col-span-4">
+                        <span className="ds-label">IGM Number</span>
+                        <Input
+                          type="text"
+                          inputMode="text"
+                          pattern="[A-Za-z0-9]*"
+                          value={importGeneralManifest}
+                          onChange={(e) => setImportGeneralManifest(e.target.value.replace(/[^a-zA-Z0-9]/g, ""))}
+                          disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked || manifestConfigMissing}
+                          required={manifestMandatory}
+                          className="w-full"
+                          placeholder={job.jobType?.manifestHelpText || "Enter IGM reference"}
+                        />
+                      </label>
+                    ) : null}
+                    {requiresEgm ? (
+                      <label className="space-y-1.5 xl:col-span-4">
+                        <span className="ds-label">EGM Number</span>
+                        <Input
+                          type="text"
+                          inputMode="text"
+                          pattern="[A-Za-z0-9]*"
+                          value={exportGeneralManifest}
+                          onChange={(e) => setExportGeneralManifest(e.target.value.replace(/[^a-zA-Z0-9]/g, ""))}
+                          disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked || manifestConfigMissing}
+                          required={manifestMandatory}
+                          className="w-full"
+                          placeholder={job.jobType?.manifestHelpText || "Enter EGM reference"}
+                        />
+                      </label>
+                    ) : null}
+                    {requiresCustomManifest ? (
+                      <label className="space-y-1.5 xl:col-span-4">
+                        <span className="ds-label">{customManifestLabel}</span>
+                        <Input
+                          type="text"
+                          value={customManifestValue}
+                          onChange={(e) => setCustomManifestValue(e.target.value)}
+                          disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked || manifestConfigMissing}
+                          required={manifestMandatory}
+                          className="w-full"
+                          placeholder={job.jobType?.manifestHelpText || `Enter ${customManifestLabel}`}
+                        />
+                      </label>
+                    ) : null}
+                  </div>
+                  {job.additionalData ? (
+                    <div className="mt-4 pt-4">
+                      <DoValidityPanel
+                        jobId={job.id}
+                        canUpdateJob={canUpdateJob}
+                        additionalData={{
+                          deliveryOrderValidity: job.additionalData.deliveryOrderValidity ?? null,
+                          doUploadEnabled: !!job.additionalData.doUploadEnabled,
+                          doDocumentFileKey: job.additionalData.doDocumentFileKey ?? null,
+                          doDocumentFileName: job.additionalData.doDocumentFileName ?? null,
+                          doDocumentUploadedAt: job.additionalData.doDocumentUploadedAt ?? null,
+                          doExtensionEnabled: !!job.additionalData.doExtensionEnabled,
+                        }}
+                        extensions={job.doExtensions ?? []}
+                      />
+                    </div>
+                  ) : null}
+                </div>
               </div>
-              <div>
-                <span className="ds-label">Last Updated</span>
-                <p className="mt-1 text-sm text-on-surface ds-numeric">
-                  {job.additionalData?.updatedAt
-                    ? new Date(job.additionalData.updatedAt).toLocaleDateString("en-IN")
-                    : "Not saved"}
-                </p>
-              </div>
-              <div>
-                <span className="ds-label">{requiresCustomManifest ? customManifestLabel : "Manifest"}</span>
-                <p className="mt-1 text-sm text-on-surface ds-numeric">
-                  {requiresCustomManifest
-                    ? customManifestValue || "Pending"
-                    : requiresIgm && requiresEgm
-                      ? `${importGeneralManifest || "IGM Pending"} / ${exportGeneralManifest || "EGM Pending"}`
-                      : requiresIgm
-                        ? importGeneralManifest || "Pending"
-                        : requiresEgm
-                          ? exportGeneralManifest || "Pending"
-                          : "Not Required"}
-                </p>
-              </div>
-              <div>
-                <span className="ds-label">Direction</span>
-                <p className="mt-1 text-sm text-on-surface">{manifestMovementDirection || "Not Configured"}</p>
+
+              <div className="space-y-4">
+                <div className="card-cyan-outline card-top-accent rounded-xl border border-outline-variant/40 bg-surface p-4 shadow-sm">
+                  <SectionHeading
+                    title="BL References"
+                    description="Store master and house bill numbers alongside the shipment record."
+                  />
+                  <div className="mt-4 grid grid-cols-1 gap-4">
+                    <label className="space-y-1.5">
+                      <span className="ds-label">MBL</span>
+                      <Input
+                        type="text"
+                        value={mblNumber}
+                        onChange={(e) => setMblNumber(e.target.value)}
+                        disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
+                        className="w-full"
+                        placeholder="Enter MBL number"
+                      />
+                    </label>
+                    <label className="space-y-1.5">
+                      <span className="ds-label">HBL</span>
+                      <Input
+                        type="text"
+                        value={hblNumber}
+                        onChange={(e) => setHblNumber(e.target.value)}
+                        disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
+                        className="w-full"
+                        placeholder="Enter HBL number"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="card-cyan-outline card-top-accent rounded-xl border border-outline-variant/40 bg-surface p-4 shadow-sm">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <SectionHeading
+                      title="Containers"
+                      description="Add only the container numbers that need to stay with this job."
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addContainerEntry}
+                      disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
+                      className="w-full sm:w-auto"
+                    >
+                      <Plus className="mr-1.5 size-4" />
+                      Add Container
+                    </Button>
+                  </div>
+                  <div className="mt-4 grid grid-cols-1 gap-3">
+                    {containerEntries.map((entry, index) => (
+                      <div key={`container-${index}`} className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_64px] md:items-end">
+                        <label className="space-y-1.5">
+                          <span className="ds-label">Container {index + 1}</span>
+                          <Input
+                            type="text"
+                            value={entry.containerNumber}
+                            onChange={(e) => updateContainerEntry(index, "containerNumber", e.target.value)}
+                            disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
+                            className="w-full"
+                            placeholder={`Enter container ${index + 1} number`}
+                          />
+                        </label>
+                        <div className="flex items-end">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            mode="icon"
+                            onClick={() => removeContainerEntry(index)}
+                            disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
+                            aria-label={`Remove container ${index + 1}`}
+                            className="h-11 w-full border-outline-variant/60 text-on-surface-variant hover:border-red-500/40 hover:bg-surface hover:text-red-500 md:w-16"
+                          >
+                            <Trash2 className="size-5" strokeWidth={2.2} />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 border-t border-outline-variant/30 pt-4 sm:flex-row sm:justify-end">
+            <div className="flex flex-col gap-2 pt-4 sm:flex-row sm:justify-end">
               <Button
                 type="button"
                 variant="outline"
@@ -3222,7 +3521,22 @@ export function JobWorkspaceClient({
         {/* PANEL: CHECKLIST */}
         {activeTab === "checklist" && (
           <div className="space-y-4">
-            <h3 className="ds-h3 text-on-surface">Checklist Workflow</h3>
+            <SectionHeading
+              title="Checklist Workflow"
+              description="Upload, route, and track checklist approvals through internal and customer review."
+              aside={
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant={currentChecklistVersion ? "default" : "warning"} className="uppercase">
+                    {checklistWorkflow?.status?.replace(/_/g, " ") || "Pending Upload"}
+                  </Badge>
+                  {checklistWorkflow?.customerRejectedOnce ? (
+                    <Badge variant="warning" className="uppercase">
+                      Rework Required
+                    </Badge>
+                  ) : null}
+                </div>
+              }
+            />
 
             {/* Check if gate is open */}
             {activeStepIndex < checklistStageIndex ? (
@@ -3264,45 +3578,14 @@ export function JobWorkspaceClient({
 
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
                   <div className="space-y-4">
-                    <div className="rounded-xl border border-outline-variant bg-surface-container-low p-4">
-                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                        <div className="space-y-1">
-                          <span className="ds-label">Current Checklist Status</span>
-                          <div className="flex items-center gap-2">
-                            <AlertCircle size={18} className="text-[#00cec4]" />
-                            <p className="text-sm font-semibold text-on-surface">
-                              {checklistWorkflow?.status?.replace(/_/g, " ") || "PENDING UPLOAD"}
-                            </p>
-                          </div>
-                          <p className="text-xs text-on-surface-variant">
-                            {checklistWorkflow?.customerRejectedOnce
-                              ? "Customer has already rejected once. After rework, internal approval will move this directly to Filing."
-                              : "Internal approval now completes when the job owner, assigned Manager, or TL approves, then routes to concerned job users for customer approval."}
-                          </p>
-                        </div>
-                        {currentChecklistVersion ? (
-                          <div className="space-y-1 text-right">
-                            <span className="ds-label">Current Version</span>
-                            <p className="text-sm font-semibold text-on-surface ds-numeric">V{currentChecklistVersion.versionNumber}</p>
-                            <p className="text-xs text-on-surface-variant">
-                              Uploaded by {getUserName(currentChecklistVersion.uploadedById)}
-                            </p>
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <form onSubmit={handleUploadChecklist} className="space-y-4 rounded-xl border border-dashed border-outline-variant/60 bg-surface p-4">
-                      <div className="flex items-start gap-3">
-                        <FolderOpen size={22} className="mt-0.5 shrink-0 text-[#00cec4]" />
-                        <div>
-                          <h4 className="text-sm font-semibold text-on-surface">
-                            {currentChecklistVersion ? "Upload Corrected / Replacement Checklist" : "Upload Checklist File"}
-                          </h4>
-                          <p className="mt-1 text-xs text-on-surface-variant">
-                            Any file format is allowed here. The uploaded file will move into internal approval automatically.
-                          </p>
-                        </div>
+                    <form onSubmit={handleUploadChecklist} className="space-y-4">
+                      <div className="space-y-1">
+                        <span className="ds-label">
+                          {currentChecklistVersion ? "Replacement Upload" : "Checklist Upload"}
+                        </span>
+                        <p className="text-xs text-on-surface-variant">
+                          Any file format is allowed here. The uploaded file will move into internal approval automatically.
+                        </p>
                       </div>
 
                       {internalApproversCount === 0 && (
@@ -3328,11 +3611,23 @@ export function JobWorkspaceClient({
                         </div>
                       )}
 
-                      <input
-                        type="file"
+                      <FileUploadField
+                        id="checklist-file-upload"
                         disabled={internalApproversCount === 0}
-                        onChange={(e) => setChecklistFile(e.target.files?.[0] || null)}
-                        className="w-full text-xs disabled:opacity-50"
+                        helperText="Any file format is allowed here. The uploaded file will move into internal approval automatically."
+                        triggerText="Drag and drop or choose checklist file to upload"
+                        selectedFile={
+                          checklistFile
+                            ? {
+                                file: checklistFile,
+                                name: checklistFile.name,
+                                sizeBytes: checklistFile.size,
+                                statusLabel: "Ready",
+                              }
+                            : null
+                        }
+                        onClear={() => setChecklistFile(null)}
+                        onInputChange={(e) => setChecklistFile(e.target.files?.[0] || null)}
                       />
                       <textarea
                         rows={2}
@@ -3340,7 +3635,7 @@ export function JobWorkspaceClient({
                         disabled={internalApproversCount === 0}
                         onChange={(e) => setChecklistRemarks(e.target.value)}
                         placeholder="Optional upload remarks"
-                        className="w-full text-xs disabled:opacity-50"
+                        className="ds-textarea w-full disabled:opacity-50"
                       />
                       <div className="flex justify-end">
                         <Button type="submit" disabled={loading === "checklist-upload" || internalApproversCount === 0} className="w-full sm:w-auto">
@@ -3350,7 +3645,7 @@ export function JobWorkspaceClient({
                     </form>
 
                     {currentChecklistVersion ? (
-                      <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4">
+                      <div className="space-y-4">
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                           <div>
                             <span className="ds-label">Current File</span>
@@ -3406,26 +3701,71 @@ export function JobWorkspaceClient({
                   </div>
 
                   <div className="space-y-4">
-                    <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4">
-                      <div>
-                        <span className="ds-label">Internal Approval</span>
-                        <p className="mt-1 text-sm text-on-surface">
-                          {!checklistWorkflow
-                            ? "Checklist upload will start the internal review process."
-                            : approvedInternalDecision
-                            ? `Approved by ${getUserName(approvedInternalDecision.actedById || approvedInternalDecision.assignedToId)} (${getInternalApproverRole(approvedInternalDecision)}) on ${approvedInternalDecision.actedAt ? new Date(approvedInternalDecision.actedAt).toLocaleString("en-IN") : "Pending"}`
-                            : checklistWorkflow.currentApprovalStage === "INTERNAL"
-                            ? "Pending: owner, Manager, or TL approval required."
-                            : "Internal approval has not been completed for the current file version yet."}
-                        </p>
-                        <p className="mt-1 text-xs text-on-surface-variant">
-                          Eligible approvers: {eligibleInternalApproverLabels.join(", ") || "Owner, Manager, or TL"}
-                        </p>
-                        {checklistWorkflow?.currentApprovalStage === "INTERNAL" && !approvedInternalDecision ? (
-                          <p className="mt-1 text-xs text-on-surface-variant">
-                            Pending approvers: {Array.from(new Set(currentInternalApprovals.filter((approval: any) => approval.action === "PENDING").map((approval: any) => `${getUserName(approval.assignedToId)} (${getInternalApproverRole(approval)})`))).join(", ") || "Owner, Manager, or TL"}
-                          </p>
-                        ) : null}
+                    <div className="card-cyan-outline rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4 shadow-sm">
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <span className="ds-label">Internal Approval</span>
+                            <p className="mt-1 text-sm font-semibold text-on-surface">
+                              {!checklistWorkflow
+                                ? "Starts after checklist upload."
+                                : approvedInternalDecision
+                                ? `Approved by ${getUserName(approvedInternalDecision.actedById || approvedInternalDecision.assignedToId)}`
+                                : checklistWorkflow.currentApprovalStage === "INTERNAL"
+                                ? "Awaiting one internal approval."
+                                : "Waiting for the current file version."}
+                            </p>
+                          </div>
+                          <Badge
+                            variant={
+                              approvedInternalDecision
+                                ? "success"
+                                : checklistWorkflow?.currentApprovalStage === "INTERNAL"
+                                ? "warning"
+                                : "secondary"
+                            }
+                            className="uppercase"
+                          >
+                            {approvedInternalDecision
+                              ? "Approved"
+                              : checklistWorkflow?.currentApprovalStage === "INTERNAL"
+                              ? "Pending"
+                              : "Locked"}
+                          </Badge>
+                        </div>
+
+                        <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-3 space-y-2">
+                          {approvedInternalDecision ? (
+                            <p className="text-xs text-on-surface-variant">
+                              {getInternalApproverRole(approvedInternalDecision)} approval recorded on{" "}
+                              <span className="text-on-surface ds-numeric">
+                                {approvedInternalDecision.actedAt
+                                  ? new Date(approvedInternalDecision.actedAt).toLocaleString("en-IN")
+                                  : "Pending"}
+                              </span>
+                            </p>
+                          ) : (
+                            <>
+                              <p className="text-xs text-on-surface-variant">
+                                Eligible: <span className="text-on-surface">{eligibleInternalApproverLabels.join(", ") || "Owner, Manager, or TL"}</span>
+                              </p>
+                              {checklistWorkflow?.currentApprovalStage === "INTERNAL" && !approvedInternalDecision ? (
+                                <p className="text-xs text-on-surface-variant">
+                                  Pending:{" "}
+                                  <span className="text-on-surface">
+                                    {Array.from(
+                                      new Set(
+                                        currentInternalApprovals
+                                          .filter((approval: any) => approval.action === "PENDING")
+                                          .map((approval: any) => `${getUserName(approval.assignedToId)} (${getInternalApproverRole(approval)})`),
+                                      ),
+                                    ).join(", ") || "Owner, Manager, or TL"}
+                                  </span>
+                                </p>
+                              ) : null}
+                            </>
+                          )}
+                        </div>
                       </div>
                       {canCurrentUserInternalApprove && checklistWorkflow?.currentApprovalStage === "INTERNAL" ? (
                         <>
@@ -3434,7 +3774,7 @@ export function JobWorkspaceClient({
                             value={internalApprovalRemarks}
                             onChange={(e) => setInternalApprovalRemarks(e.target.value)}
                             placeholder="Required for rejection, optional for approval"
-                            className="w-full text-xs"
+                            className="ds-textarea w-full"
                           />
                           <div className="flex justify-end gap-2">
                             <Button
@@ -3457,7 +3797,7 @@ export function JobWorkspaceClient({
                       ) : null}
                     </div>
 
-                    <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4">
+                    <div className="card-cyan-outline rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4 shadow-sm">
                       <div>
                         <span className="ds-label">Customer Approval</span>
                         <p className="mt-1 text-sm text-on-surface">
@@ -3486,30 +3826,32 @@ export function JobWorkspaceClient({
                         ) : null}
                       </div>
                       {checklistWorkflow?.currentApprovalStage === "CUSTOMER" && !latestCustomerMailLog ? (
-                        <div className="space-y-3 rounded-xl border border-outline-variant/40 bg-surface-container-low p-3">
+                        <div className="space-y-3">
                           <input
                             value={customerMailSubject}
                             onChange={(e) => setCustomerMailSubject(e.target.value)}
                             placeholder={`Checklist Approval Required - ${job.jobNumber}`}
-                            className="w-full text-sm"
+                            className="w-full"
                           />
                           <textarea
                             rows={4}
                             value={customerMailBody}
                             onChange={(e) => setCustomerMailBody(e.target.value)}
                             placeholder={`Please review the attached approved checklist for job ${job.jobNumber}.`}
-                            className="w-full text-xs"
+                            className="ds-textarea w-full"
                           />
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="text-xs text-on-surface-variant">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                            <p className="max-w-xl text-xs text-on-surface-variant">
                               The latest approved checklist file will be attached automatically and customer recipients will be fetched from the customer record.
                             </p>
                             <Button
                               type="button"
                               disabled={loading !== null}
+                              className="w-full whitespace-nowrap gap-2 sm:w-auto"
                               onClick={handleSendChecklistCustomerMail}
                             >
-                              {loading === "checklist-customer-mail" ? "Sending..." : "Send Customer Mail"}
+                              <Mail size={14} />
+                              {loading === "checklist-customer-mail" ? "Mailing..." : "Mail"}
                             </Button>
                           </div>
                         </div>
@@ -3521,7 +3863,7 @@ export function JobWorkspaceClient({
                             value={customerApprovalRemarks}
                             onChange={(e) => setCustomerApprovalRemarks(e.target.value)}
                             placeholder="Required for rejection, optional for approval"
-                            className="w-full text-xs"
+                            className="ds-textarea w-full"
                           />
                           <div className="flex justify-end gap-2">
                             <Button
@@ -3544,7 +3886,7 @@ export function JobWorkspaceClient({
                       ) : null}
                     </div>
 
-                    <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4">
+                    <div className="card-cyan-outline rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4 shadow-sm">
                       <div className="flex items-center justify-between">
                         <span className="ds-label">Approval History</span>
                         <span className="text-[11px] text-on-surface-variant">
@@ -3554,26 +3896,39 @@ export function JobWorkspaceClient({
                       {checklistApprovals.length === 0 ? (
                         <p className="text-xs text-on-surface-variant">No approval history recorded yet.</p>
                       ) : (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                           {checklistApprovals
                             .slice()
                             .reverse()
-                            .map((approval: any) => (
-                              <div key={approval.id} className="rounded-xl border border-outline-variant bg-surface-container-low p-3">
-                                <div className="flex items-center justify-between gap-3">
-                                  <p className="text-xs font-semibold text-on-surface">
-                                    {approval.stage} • {approval.action}
-                                  </p>
-                                  <span className="text-[11px] text-on-surface-variant ds-numeric">
-                                    {approval.actedAt ? new Date(approval.actedAt).toLocaleString("en-IN") : "Pending"}
-                                  </span>
+                            .map((approval: any, index: number, approvals: any[]) => (
+                              <div key={approval.id} className="grid grid-cols-[18px_minmax(0,1fr)] gap-3">
+                                <div className="flex flex-col items-center">
+                                  <span className="mt-1 h-3.5 w-3.5 rounded-full border-2 border-surface bg-[#00cec4]" />
+                                  {index < approvals.length - 1 ? (
+                                    <span className="mt-1 w-px flex-1 bg-outline-variant/60" />
+                                  ) : null}
                                 </div>
-                                <p className="mt-1 text-[11px] text-on-surface-variant">
-                                  Assigned to {getUserName(approval.assignedToId)}{approval.actedById ? ` • acted by ${getUserName(approval.actedById)}` : ""}
-                                </p>
-                                {approval.remarks ? (
-                                  <p className="mt-1 text-xs text-on-surface">{approval.remarks}</p>
-                                ) : null}
+                                <div className="space-y-2 pb-1">
+                                  <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                                    <div className="space-y-1">
+                                      <p className="text-sm font-semibold text-on-surface">
+                                        {approval.stage.replace(/_/g, " ")} • {approval.action.replace(/_/g, " ")}
+                                      </p>
+                                      <p className="text-xs text-on-surface-variant">
+                                        Assigned to <span className="text-on-surface">{getUserName(approval.assignedToId)}</span>
+                                        {approval.actedById ? ` • acted by ${getUserName(approval.actedById)}` : ""}
+                                      </p>
+                                    </div>
+                                    <span className="text-[11px] text-on-surface-variant ds-numeric md:text-right">
+                                      {approval.actedAt ? new Date(approval.actedAt).toLocaleString("en-IN") : "Pending"}
+                                    </span>
+                                  </div>
+                                  {approval.remarks ? (
+                                    <p className="text-xs text-on-surface-variant">
+                                      {approval.remarks}
+                                    </p>
+                                  ) : null}
+                                </div>
                               </div>
                             ))}
                         </div>
@@ -3771,22 +4126,20 @@ export function JobWorkspaceClient({
                                       </p>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-2">
-                                      <input
-                                        id={`bill-document-upload-${activeNodeRun.id}`}
-                                        type="file"
-                                        className="hidden"
-                                        onChange={(e) => handleUploadNodeDocument("bill_document", e)}
-                                      />
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => document.getElementById(`bill-document-upload-${activeNodeRun.id}`)?.click()}
-                                        disabled={loading === "node-document-bill_document"}
-                                        className="gap-2"
-                                      >
-                                        <Upload size={14} />
-                                        {billFilingDocumentUploaded ? "Replace Document" : "Upload Document"}
-                                      </Button>
+                                      <div className="w-full sm:w-[250px]">
+                                        <FileUploadField
+                                          id={`bill-document-upload-${activeNodeRun.id}`}
+                                          compact
+                                          disabled={loading === "node-document-bill_document"}
+                                          showSelectedPreview={false}
+                                          triggerText={
+                                            billFilingDocumentUploaded
+                                              ? "Choose file to replace bill document"
+                                              : "Choose file to upload bill document"
+                                          }
+                                          onInputChange={(e) => handleUploadNodeDocument("bill_document", e)}
+                                        />
+                                      </div>
                                       <Button
                                         type="button"
                                         onClick={() => setShowBillNumberEntry((current) => !current)}
@@ -3887,14 +4240,15 @@ export function JobWorkspaceClient({
                                                     {requirement.label} {requirement.required !== false ? "*" : ""}
                                                   </div>
                                                 </div>
-                                                <label className="cursor-pointer text-xs font-semibold text-[#00cec4]">
-                                                  Upload
-                                                  <input
-                                                    type="file"
-                                                    className="hidden"
-                                                    onChange={(e) => handleUploadNodeDocument(requirement.key, e)}
+                                                <div className="w-full max-w-[220px]">
+                                                  <FileUploadField
+                                                    id={`unlocked-node-document-upload-${section.key}-${requirement.key}`}
+                                                    compact
+                                                    showSelectedPreview={false}
+                                                    triggerText="Choose file to upload"
+                                                    onInputChange={(e) => handleUploadNodeDocument(requirement.key, e)}
                                                   />
-                                                </label>
+                                                </div>
                                               </div>
                                             </div>
                                           ))}
@@ -3909,14 +4263,15 @@ export function JobWorkspaceClient({
                                         <div className="text-xs font-semibold text-on-surface">
                                           {requirement.label} {requirement.required !== false ? "*" : ""}
                                         </div>
-                                        <label className="cursor-pointer text-xs font-semibold text-[#00cec4]">
-                                          Upload
-                                          <input
-                                            type="file"
-                                            className="hidden"
-                                            onChange={(e) => handleUploadNodeDocument(requirement.key, e)}
+                                        <div className="w-full max-w-[220px]">
+                                          <FileUploadField
+                                            id={`node-document-upload-${activeNodeRun.id}-${requirement.key}`}
+                                            compact
+                                            showSelectedPreview={false}
+                                            triggerText="Choose file to upload"
+                                            onInputChange={(e) => handleUploadNodeDocument(requirement.key, e)}
                                           />
-                                        </label>
+                                        </div>
                                       </div>
                                     </div>
                                   ))}
@@ -4226,27 +4581,15 @@ export function JobWorkspaceClient({
                                                 Uploaded {checklistItemAttachments.length} / Minimum {item.minUploads || 0}
                                               </span>
                                             </div>
-                                            <label
-                                              htmlFor={`checklist-item-upload-${item.id}`}
-                                              className="flex min-h-20 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-outline-variant/50 bg-surface px-4 py-4 text-sm text-on-surface-variant transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/40"
-                                            >
-                                              <span className="ds-icon-badge shrink-0">
-                                                <Upload size={18} />
-                                              </span>
-                                              <span className="min-w-0">
-                                                <span className="block font-medium text-on-surface">Upload supporting files for this checklist item</span>
-                                                <span className="mt-1 block text-xs text-on-surface-variant">
-                                                  Add images or documents here. This upload counts toward this checklist item directly.
-                                                </span>
-                                              </span>
-                                            </label>
-                                              <input
-                                                id={`checklist-item-upload-${item.id}`}
-                                                type="file"
-                                                onChange={(e) => handleUploadChecklistItemFile(item.id, e)}
-                                                disabled={loading === `checklist-item-file-${item.id}`}
-                                                className="hidden"
-                                              />
+                                            <FileUploadField
+                                              id={`checklist-item-upload-${item.id}`}
+                                              compact
+                                              disabled={loading === `checklist-item-file-${item.id}`}
+                                              helperText="Add images or documents here. This upload counts toward this checklist item directly."
+                                              triggerText="Drag and drop or choose supporting file to upload"
+                                              showSelectedPreview={false}
+                                              onInputChange={(e) => handleUploadChecklistItemFile(item.id, e)}
+                                            />
                                             {checklistItemAttachments.length > 0 && (
                                               <div className="space-y-1">
                                                 {checklistItemAttachments.map((attachment: any) => (
@@ -4304,26 +4647,14 @@ export function JobWorkspaceClient({
                                         {/* Upload Input */}
                                         {(!pr.maxPhotos || reqAttachments.length < pr.maxPhotos) && (
                                           <>
-                                            <label
-                                              htmlFor={`photo-requirement-upload-${pr.id}`}
-                                              className="flex min-h-20 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-outline-variant/50 bg-surface px-4 py-4 text-sm text-on-surface-variant transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/40"
-                                            >
-                                              <span className="ds-icon-badge shrink-0">
-                                                <Upload size={18} />
-                                              </span>
-                                              <span className="min-w-0">
-                                                <span className="block font-medium text-on-surface">Upload required image or document</span>
-                                                <span className="mt-1 block text-xs text-on-surface-variant">
-                                                  This upload is counted against the requirement above, not the checklist item upload count.
-                                                </span>
-                                              </span>
-                                            </label>
-                                            <input
+                                            <FileUploadField
                                               id={`photo-requirement-upload-${pr.id}`}
-                                              type="file"
+                                              compact
                                               disabled={loading === `filing-photo-${pr.id}`}
-                                              onChange={(e) => handleUploadFilingPhoto(pr.id, e)}
-                                              className="hidden"
+                                              helperText="This upload is counted against the requirement above, not the checklist item upload count."
+                                              triggerText="Drag and drop or choose required image or document"
+                                              showSelectedPreview={false}
+                                              onInputChange={(e) => handleUploadFilingPhoto(pr.id, e)}
                                             />
                                           </>
                                         )}
@@ -5573,6 +5904,38 @@ export function JobWorkspaceClient({
         </Modal>
       )}
 
+      {uploadDocumentModalRequirement && (
+        <Modal
+          open={true}
+          onClose={() => setUploadDocumentModalReqId(null)}
+          title={`Upload ${uploadDocumentModalRequirement.name}`}
+          description="Drag and drop a file here or click to browse and upload it to this document requirement."
+          className="max-w-xl"
+        >
+          <div className="space-y-4">
+            <FileUploadField
+              id={`document-upload-modal-${uploadDocumentModalRequirement.id}`}
+              helperText="Choose the file for this document requirement. If a validity date is required, you will be prompted next."
+              triggerText="Drag and drop or choose file to upload"
+              onInputChange={(e) => {
+                handleUploadDoc(uploadDocumentModalRequirement.id, e);
+                setUploadDocumentModalReqId(null);
+              }}
+            />
+
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setUploadDocumentModalReqId(null)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {isCustomDocumentModalOpen && (
         <Modal
           open={true}
@@ -5604,20 +5967,24 @@ export function JobWorkspaceClient({
                 />
               </label>
 
-              <label className="space-y-1.5">
-                <span className="ds-label">File Upload</span>
-                <input
-                  type="file"
-                  onChange={(e) => setCustomDocumentFile(e.target.files?.[0] || null)}
-                  className="w-full rounded-2xl border border-outline-variant/40 bg-surface px-3 py-2.5 text-sm text-on-surface"
-                />
-              </label>
-
-              {customDocumentFile ? (
-                <div className="rounded-xl border border-outline-variant/60 bg-surface p-3 text-xs text-on-surface-variant">
-                  Selected file: <strong className="text-on-surface">{customDocumentFile.name}</strong>
-                </div>
-              ) : null}
+              <FileUploadField
+                id="custom-document-upload"
+                label="File Upload"
+                helperText="Upload the file now so this custom document appears immediately in the job workspace."
+                triggerText="Drag and drop or choose file to upload"
+                selectedFile={
+                  customDocumentFile
+                    ? {
+                        file: customDocumentFile,
+                        name: customDocumentFile.name,
+                        sizeBytes: customDocumentFile.size,
+                        statusLabel: "Ready",
+                      }
+                    : null
+                }
+                onClear={() => setCustomDocumentFile(null)}
+                onInputChange={(e) => setCustomDocumentFile(e.target.files?.[0] || null)}
+              />
             </div>
 
             <div className="flex justify-end gap-2 border-t border-outline-variant/20 pt-4">
@@ -5808,7 +6175,7 @@ export function JobWorkspaceClient({
                 value={section49Remarks}
                 onChange={(e) => setSection49Remarks(e.target.value)}
                 placeholder="Provide justification or remarks for this status change..."
-                className="w-full text-xs font-sans"
+                className="w-full resize-none rounded-xl border border-[rgba(0,206,196,0.55)] bg-surface px-[14px] py-[10px] text-sm text-on-surface placeholder:text-placeholder outline-none transition-colors hover:border-[rgba(0,206,196,0.4)] focus:border-[rgba(0,206,196,0.52)] focus:shadow-[0_0_0_3px_rgba(14,137,149,0.14)]"
                 required
               />
             </div>
