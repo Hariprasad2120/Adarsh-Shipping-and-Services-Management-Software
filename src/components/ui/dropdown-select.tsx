@@ -81,8 +81,9 @@ export function DropdownSelect({
           <button
             aria-label={ariaLabel}
             data-dropdown-select-trigger="true"
+            data-form-field-trigger="true"
             className={cn(
-              "flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-[#00cec4]/55 bg-surface px-4 py-2.5 text-left text-[var(--text-base)] text-on-surface shadow-sm transition outline-none hover:border-[#00cec4]/85 hover:shadow-[0_4px_12px_rgba(0,206,196,0.08)] focus-visible:ring-2 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-container-low disabled:text-on-surface-variant",
+              "ds-plain flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-[#00cec4]/55 bg-surface px-4 py-2.5 text-left text-[var(--text-base)] text-on-surface shadow-sm transition outline-none hover:border-[#00cec4]/85 hover:shadow-[0_4px_12px_rgba(0,206,196,0.08)] focus-visible:ring-2 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-container-low disabled:text-on-surface-variant",
               selectedValue === "" && "text-on-surface-variant",
               triggerClassName,
             )}

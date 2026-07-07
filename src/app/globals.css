@@ -1328,9 +1328,9 @@ main input[type="checkbox"]:not(.hidden):checked::after {
 
 /* Primary Cyan Neon Buttons in CHA */
 .cha-btn-neon-approve,
-.cha-module button[class*="bg-"][class*="00cec4"],
-.cha-module button[class*="bg-primary"],
-.cha-module button:not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]) {
+.cha-module button:not(.ds-plain)[class*="bg-"][class*="00cec4"],
+.cha-module button:not(.ds-plain)[class*="bg-primary"],
+.cha-module button:not(.ds-plain):not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]) {
   border: 1px solid #00cec4 !important;
   background: #00cec4 !important;
   color: #ffffff !important;
@@ -1340,41 +1340,41 @@ main input[type="checkbox"]:not(.hidden):checked::after {
 
 /* Ensure ALL descendants of cyan buttons render as white in rest state */
 .cha-btn-neon-approve *,
-.cha-module button[class*="bg-"][class*="00cec4"] *,
-.cha-module button[class*="bg-primary"] *,
-.cha-module button:not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]) * {
+.cha-module button:not(.ds-plain)[class*="bg-"][class*="00cec4"] *,
+.cha-module button:not(.ds-plain)[class*="bg-primary"] *,
+.cha-module button:not(.ds-plain):not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]) * {
   color: #ffffff !important;
 }
 
 .cha-btn-neon-approve:hover:not(:disabled),
-.cha-module button[class*="bg-"][class*="00cec4"]:hover:not(:disabled),
-.cha-module button[class*="bg-primary"]:hover:not(:disabled),
-.cha-module button:not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]):hover {
+.cha-module button:not(.ds-plain)[class*="bg-"][class*="00cec4"]:hover:not(:disabled),
+.cha-module button:not(.ds-plain)[class*="bg-primary"]:hover:not(:disabled),
+.cha-module button:not(.ds-plain):not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]):hover {
   background: #00b8af !important;
   color: #ffffff !important;
   box-shadow: 0 0 16px rgba(0, 206, 196, 0.5), 0 0 5px rgba(0, 206, 196, 0.3) !important;
   animation: neon-pulse-approve 2s infinite ease-in-out !important;
-  transform: translateY(-1px);
+  transform: translateY(-1px); /* hover lift reinstated for all buttons — design decision 2026-07-06 */
 }
 
 /* Ensure ALL descendants of cyan buttons render as white on hover */
 .cha-btn-neon-approve:hover:not(:disabled) *,
-.cha-module button[class*="bg-"][class*="00cec4"]:hover:not(:disabled) *,
-.cha-module button[class*="bg-primary"]:hover:not(:disabled) *,
-.cha-module button:not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]):hover * {
+.cha-module button:not(.ds-plain)[class*="bg-"][class*="00cec4"]:hover:not(:disabled) *,
+.cha-module button:not(.ds-plain)[class*="bg-primary"]:hover:not(:disabled) *,
+.cha-module button:not(.ds-plain):not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]):hover * {
   color: #ffffff !important;
 }
 
 .cha-btn-neon-approve:active:not(:disabled),
-.cha-module button[class*="bg-"][class*="00cec4"]:active:not(:disabled),
-.cha-module button[class*="bg-primary"]:active:not(:disabled),
-.cha-module button:not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]):active {
+.cha-module button:not(.ds-plain)[class*="bg-"][class*="00cec4"]:active:not(:disabled),
+.cha-module button:not(.ds-plain)[class*="bg-primary"]:active:not(:disabled),
+.cha-module button:not(.ds-plain):not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]):active {
   transform: translateY(0) !important;
   scale: 0.96 !important;
 }
 
-/* Upload label buttons (label elements styled as buttons) */
-.cha-module label[class*="bg-"][class*="00cec4"] {
+/* Upload label buttons (solid cyan labels only — dashed dropzone labels keep their own style) */
+.cha-module label[class*="bg-[#00cec4]"] {
   border: 1px solid #00cec4 !important;
   background: #00cec4 !important;
   color: #ffffff !important;
@@ -1382,33 +1382,33 @@ main input[type="checkbox"]:not(.hidden):checked::after {
   cursor: pointer;
 }
 
-.cha-module label[class*="bg-"][class*="00cec4"] * {
+.cha-module label[class*="bg-[#00cec4]"] * {
   color: #ffffff !important;
 }
 
-.cha-module label[class*="bg-"][class*="00cec4"]:hover {
+.cha-module label[class*="bg-[#00cec4]"]:hover {
   background: #00b8af !important;
   color: #ffffff !important;
   box-shadow: 0 0 16px rgba(0, 206, 196, 0.5), 0 0 5px rgba(0, 206, 196, 0.3) !important;
   animation: neon-pulse-approve 2s infinite ease-in-out !important;
-  transform: translateY(-1px);
+  transform: translateY(-1px); /* hover lift reinstated for all buttons — design decision 2026-07-06 */
 }
 
-.cha-module label[class*="bg-"][class*="00cec4"]:hover * {
+.cha-module label[class*="bg-[#00cec4]"]:hover * {
   color: #ffffff !important;
 }
 
-.cha-module label[class*="bg-"][class*="00cec4"]:active {
+.cha-module label[class*="bg-[#00cec4]"]:active {
   transform: translateY(0) !important;
   scale: 0.96 !important;
 }
 
 /* Rejection/Destructive Red Neon Buttons in CHA */
 .cha-btn-neon-reject,
-.cha-module button[class*="bg-red-"],
-.cha-module button[class*="text-red-"],
-.cha-module button[class*="border-red-"],
-.cha-module button[class*="destructive"] {
+.cha-module button:not(.ds-plain)[class*="bg-red-"],
+.cha-module button:not(.ds-plain)[class*="text-red-"],
+.cha-module button:not(.ds-plain)[class*="border-red-"],
+.cha-module button:not(.ds-plain)[class*="destructive"] {
   border: 1px solid #ef4444 !important;
   background: #ef4444 !important;
   color: #ffffff !important;
@@ -1418,18 +1418,18 @@ main input[type="checkbox"]:not(.hidden):checked::after {
 
 /* Ensure ALL descendants of red buttons render as white in rest state */
 .cha-btn-neon-reject *,
-.cha-module button[class*="bg-red-"] *,
-.cha-module button[class*="text-red-"] *,
-.cha-module button[class*="border-red-"] *,
-.cha-module button[class*="destructive"] * {
+.cha-module button:not(.ds-plain)[class*="bg-red-"] *,
+.cha-module button:not(.ds-plain)[class*="text-red-"] *,
+.cha-module button:not(.ds-plain)[class*="border-red-"] *,
+.cha-module button:not(.ds-plain)[class*="destructive"] * {
   color: #ffffff !important;
 }
 
 .cha-btn-neon-reject:hover:not(:disabled),
-.cha-module button[class*="bg-red-"]:hover:not(:disabled),
-.cha-module button[class*="text-red-"]:hover:not(:disabled),
-.cha-module button[class*="border-red-"]:hover:not(:disabled),
-.cha-module button[class*="destructive"]:hover:not(:disabled) {
+.cha-module button:not(.ds-plain)[class*="bg-red-"]:hover:not(:disabled),
+.cha-module button:not(.ds-plain)[class*="text-red-"]:hover:not(:disabled),
+.cha-module button:not(.ds-plain)[class*="border-red-"]:hover:not(:disabled),
+.cha-module button:not(.ds-plain)[class*="destructive"]:hover:not(:disabled) {
   background: #dc2626 !important;
   color: #ffffff !important;
   box-shadow: 0 0 16px rgba(239, 68, 68, 0.5), 0 0 5px rgba(239, 68, 68, 0.3) !important;
@@ -1439,72 +1439,96 @@ main input[type="checkbox"]:not(.hidden):checked::after {
 
 /* Ensure ALL descendants of red buttons render as white on hover */
 .cha-btn-neon-reject:hover:not(:disabled) *,
-.cha-module button[class*="bg-red-"]:hover:not(:disabled) *,
-.cha-module button[class*="text-red-"]:hover:not(:disabled) *,
-.cha-module button[class*="border-red-"]:hover:not(:disabled) *,
-.cha-module button[class*="destructive"]:hover:not(:disabled) * {
+.cha-module button:not(.ds-plain)[class*="bg-red-"]:hover:not(:disabled) *,
+.cha-module button:not(.ds-plain)[class*="text-red-"]:hover:not(:disabled) *,
+.cha-module button:not(.ds-plain)[class*="border-red-"]:hover:not(:disabled) *,
+.cha-module button:not(.ds-plain)[class*="destructive"]:hover:not(:disabled) * {
   color: #ffffff !important;
 }
 
 .cha-btn-neon-reject:active:not(:disabled),
-.cha-module button[class*="bg-red-"]:active:not(:disabled),
-.cha-module button[class*="text-red-"]:active:not(:disabled),
-.cha-module button[class*="border-red-"]:active:not(:disabled),
-.cha-module button[class*="destructive"]:active:not(:disabled) {
+.cha-module button:not(.ds-plain)[class*="bg-red-"]:active:not(:disabled),
+.cha-module button:not(.ds-plain)[class*="text-red-"]:active:not(:disabled),
+.cha-module button:not(.ds-plain)[class*="border-red-"]:active:not(:disabled),
+.cha-module button:not(.ds-plain)[class*="destructive"]:active:not(:disabled) {
   transform: translateY(0) !important;
   scale: 0.96 !important;
 }
 
 /* Secondary outline buttons (Cyan Neon Outline) */
-.cha-module button[class*="border-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]),
-.cha-module button[class*="variant-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]) {
+.cha-module button:not(.ds-plain)[class*="border-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]),
+.cha-module button:not(.ds-plain)[class*="variant-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]) {
   border: 1px solid rgba(0, 206, 196, 0.45) !important;
   background: var(--color-surface) !important;
   color: #00cec4 !important;
   transition: all 0.2s ease !important;
 }
 
-.cha-module button[class*="border-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]) *,
-.cha-module button[class*="variant-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]) * {
+.cha-module button:not(.ds-plain)[class*="border-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]) *,
+.cha-module button:not(.ds-plain)[class*="variant-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]) * {
   color: #00cec4 !important;
 }
 
-.cha-module button[class*="border-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]):hover:not([disabled]),
-.cha-module button[class*="variant-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]):hover:not([disabled]) {
+.cha-module button:not(.ds-plain)[class*="border-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]):hover:not([disabled]),
+.cha-module button:not(.ds-plain)[class*="variant-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]):hover:not([disabled]) {
   background: rgba(0, 206, 196, 0.08) !important;
   border-color: #00cec4 !important;
   box-shadow: 0 0 12px rgba(0, 206, 196, 0.3) !important;
   color: #00cec4 !important;
+  transform: translateY(-1px);
 }
 
-.cha-module button[class*="border-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]):hover:not([disabled]) *,
-.cha-module button[class*="variant-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]):hover:not([disabled]) * {
+.cha-module button:not(.ds-plain)[class*="border-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]):hover:not([disabled]) *,
+.cha-module button:not(.ds-plain)[class*="variant-outline"]:not([class*="text-red-"]):not([class*="border-red-"]):not([class*="text-"][class*="fb923c"]):hover:not([disabled]) * {
   color: #00cec4 !important;
 }
 
 /* Warning outline buttons (Orange Neon Outline - e.g. Mark as N/A) */
-.cha-module button[class*="text-"][class*="fb923c"],
-.cha-module button[class*="border-"][class*="fb923c"] {
+.cha-module button:not(.ds-plain)[class*="text-"][class*="fb923c"],
+.cha-module button:not(.ds-plain)[class*="border-"][class*="fb923c"] {
   border: 1px solid rgba(251, 146, 60, 0.45) !important;
   background: var(--color-surface) !important;
   color: #fb923c !important;
   transition: all 0.2s ease !important;
 }
 
-.cha-module button[class*="text-"][class*="fb923c"] *,
-.cha-module button[class*="border-"][class*="fb923c"] * {
+.cha-module button:not(.ds-plain)[class*="text-"][class*="fb923c"] *,
+.cha-module button:not(.ds-plain)[class*="border-"][class*="fb923c"] * {
   color: #fb923c !important;
 }
 
-.cha-module button[class*="text-"][class*="fb923c"]:hover:not([disabled]),
-.cha-module button[class*="border-"][class*="fb923c"]:hover:not([disabled]) {
+.cha-module button:not(.ds-plain)[class*="text-"][class*="fb923c"]:hover:not([disabled]),
+.cha-module button:not(.ds-plain)[class*="border-"][class*="fb923c"]:hover:not([disabled]) {
   background: rgba(251, 146, 60, 0.08) !important;
   border-color: #fb923c !important;
   box-shadow: 0 0 12px rgba(251, 146, 60, 0.3) !important;
   color: #fb923c !important;
+  transform: translateY(-1px);
 }
 
-.cha-module button[class*="text-"][class*="fb923c"]:hover:not([disabled]) *,
-.cha-module button[class*="border-"][class*="fb923c"]:hover:not([disabled]) * {
+.cha-module button:not(.ds-plain)[class*="text-"][class*="fb923c"]:hover:not([disabled]) *,
+.cha-module button:not(.ds-plain)[class*="border-"][class*="fb923c"]:hover:not([disabled]) * {
   color: #fb923c !important;
+}
+
+/* --- .cha-link : text-link buttons (2026-07-07 review) ------------------
+   No background fill, cyan text, underline on hover; keeps the neon hover
+   animation (pulse glow + 1px lift). Pair with .ds-plain so the neon button
+   cascade above never force-fills these. */
+button.cha-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #00cec4;
+  cursor: pointer;
+  transition: color 0.15s ease, transform 0.2s ease;
+}
+button.cha-link:hover:not(:disabled) {
+  color: #00b8af;
+  text-decoration: underline;
+  animation: neon-pulse-approve 2s infinite ease-in-out;
+  transform: translateY(-1px);
+}
+button.cha-link:active:not(:disabled) {
+  transform: translateY(0) scale(0.96);
 }

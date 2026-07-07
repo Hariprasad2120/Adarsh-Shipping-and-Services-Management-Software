@@ -98,7 +98,7 @@ export function DoExtensionModal({
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex w-full cursor-pointer items-center gap-2 rounded-xl border border-dashed border-[#00cec4]/45 bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant transition-colors hover:bg-surface-container"
+            className="ds-plain flex w-full cursor-pointer items-center gap-2 rounded-xl border border-dashed border-outline-variant/50 bg-surface px-4 py-3 text-sm text-on-surface-variant transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/40"
           >
             <FileUp size={15} className="text-[#00cec4]" />
             {fileName || "Choose extension file (PDF or image)"}

@@ -106,15 +106,15 @@ export default async function ChaReportsPage() {
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs">
               <span className="text-on-surface-variant font-medium">Expected Billing:</span>
-              <span className="font-bold ds-numeric text-on-surface">₹{totalExpectedAdvance.toLocaleString("en-IN")}</span>
+              <span className="ds-numeric text-on-surface">₹{totalExpectedAdvance.toLocaleString("en-IN")}</span>
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-on-surface-variant font-medium">Total Collected:</span>
-              <span className="font-bold ds-numeric text-green-600">₹{totalReceivedAdvance.toLocaleString("en-IN")}</span>
+              <span className="ds-numeric text-green-600">₹{totalReceivedAdvance.toLocaleString("en-IN")}</span>
             </div>
             <div className="border-t border-outline-variant/20 pt-1.5 flex justify-between text-xs">
               <span className="text-on-surface-variant font-semibold">Outstanding Cash Flow:</span>
-              <span className="font-bold ds-numeric text-[#fb923c]">
+              <span className="ds-numeric text-[#fb923c]">
                 ₹{Math.max(0, totalExpectedAdvance - totalReceivedAdvance).toLocaleString("en-IN")}
               </span>
             </div>
@@ -130,11 +130,11 @@ export default async function ChaReportsPage() {
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs">
               <span className="text-on-surface-variant font-medium">Total Paid Expenses:</span>
-              <span className="font-bold ds-numeric text-on-surface">₹{totalDisbursedExpense.toLocaleString("en-IN")}</span>
+              <span className="ds-numeric text-on-surface">₹{totalDisbursedExpense.toLocaleString("en-IN")}</span>
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-on-surface-variant font-medium">Net Financing Balances:</span>
-              <span className="font-bold ds-numeric text-green-600">
+              <span className="ds-numeric text-green-600">
                 ₹{(totalReceivedAdvance - totalDisbursedExpense).toLocaleString("en-IN")}
               </span>
             </div>
@@ -153,23 +153,23 @@ export default async function ChaReportsPage() {
           <div className="space-y-1 text-xs">
             <div className="flex justify-between">
               <span className="text-on-surface-variant">Doc Collection:</span>
-              <span className="font-bold ds-numeric">{stageMap.DOCUMENT_COLLECTION}</span>
+              <span className="ds-numeric">{stageMap.DOCUMENT_COLLECTION}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-on-surface-variant">Checklist Prep:</span>
-              <span className="font-bold ds-numeric">{stageMap.CHECKLIST_PREPARATION}</span>
+              <span className="ds-numeric">{stageMap.CHECKLIST_PREPARATION}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-on-surface-variant">Checklist Approval:</span>
-              <span className="font-bold ds-numeric">{stageMap.CHECKLIST_APPROVAL}</span>
+              <span className="ds-numeric">{stageMap.CHECKLIST_APPROVAL}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-on-surface-variant">Filing Stage:</span>
-              <span className="font-bold ds-numeric">{stageMap.FILING}</span>
+              <span className="ds-numeric">{stageMap.FILING}</span>
             </div>
             <div className="flex justify-between border-t border-outline-variant/20 pt-1">
               <span className="text-on-surface-variant font-semibold">Completed / Filed:</span>
-              <span className="font-bold ds-numeric text-green-600">{stageMap.FILED}</span>
+              <span className="ds-numeric text-green-600">{stageMap.FILED}</span>
             </div>
           </div>
         </div>
@@ -177,7 +177,7 @@ export default async function ChaReportsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left: Delayed filings reports */}
-        <div className="lg:col-span-2 bg-surface border border-outline-variant/30 rounded-xl p-6 space-y-6 shadow-sm">
+        <div className="lg:col-span-2 rounded-xl border border-outline-variant/60 bg-surface p-6 space-y-6 shadow-sm">
           <h2 className="ds-h2 text-on-surface flex items-center gap-2">
             <AlertTriangle size={18} className="text-[#fb923c]" /> Delay-Justified Customs Filings
           </h2>
@@ -219,7 +219,7 @@ export default async function ChaReportsPage() {
         </div>
 
         {/* Right: Full organization Audit Logs feed */}
-        <div className="bg-surface border border-outline-variant/30 rounded-xl p-6 space-y-6 shadow-sm">
+        <div className="rounded-xl border border-outline-variant/60 bg-surface p-6 space-y-6 shadow-sm">
           <h2 className="ds-h2 text-on-surface flex items-center gap-2">
             <FileText size={18} className="text-[#00cec4]" /> Organization Audit Logs
           </h2>

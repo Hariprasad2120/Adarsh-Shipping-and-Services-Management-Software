@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {CreditCard,Search,Filter,DollarSign,AlertCircle,Clock,CheckCircle2,HelpCircle,XCircle,FileText,User,ExternalLink,MessageSquare,} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import * as actions from "@/modules/cha/actions";
 import Link from "next/link";
 
@@ -161,7 +162,7 @@ export function ExpensesClient({
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="bg-surface border border-outline-variant/30 p-5 rounded-xl space-y-4 shadow-sm">
+      <div className="rounded-xl border border-outline-variant/60 bg-surface p-5 space-y-4 shadow-sm">
         <div className="flex items-center gap-2 text-[#00cec4]">
           <Filter size={16} />
           <span className="ds-label tracking-wider font-semibold">Queue Filters</span>
@@ -231,7 +232,7 @@ export function ExpensesClient({
               <div
                 key={req.id}
                 className={`bg-surface p-6 rounded-xl border shadow-sm space-y-4 transition-all ${
-                  isUrgent ? "border-red-200 bg-red-50/5" : "border-outline-variant/50"
+                  isUrgent ? "card-left-accent-orange border-red-500/35" : "border-outline-variant/60"
                 }`}
               >
                 {/* Header */}
@@ -256,28 +257,23 @@ export function ExpensesClient({
                       </span>
                     </div>
 
-                    <span className="text-xl font-bold text-[#00cec4] block mt-1.5 ds-numeric">
+                    <span className="text-xl text-[#00cec4] block mt-1.5 ds-numeric">
                       ₹{sum.toLocaleString("en-IN")}{" "}
                       {isUrgent && (
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-red-100 text-red-700 border border-red-200 ml-2">
+                        <Badge variant="destructive" className="ml-2 align-middle text-[10px] uppercase">
                           URGENT
-                        </span>
+                        </Badge>
                       )}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                      isAck
-                        ? "bg-green-100 text-green-700 border border-green-200"
-                        : isPaid
-                        ? "bg-blue-100 text-blue-700 border border-blue-200"
-                        : isQuery
-                        ? "bg-orange-100 text-orange-700 border border-orange-200"
-                        : "bg-surface-container-high text-on-surface-variant border border-outline-variant"
-                    }`}>
+                    <Badge
+                      variant={isAck ? "success" : isPaid ? "default" : isQuery ? "warning" : "secondary"}
+                      className="text-[10px] uppercase tracking-wider"
+                    >
                       {req.status.replace(/_/g, " ")}
-                    </span>
+                    </Badge>
                   </div>
                 </div>
 
@@ -295,7 +291,7 @@ export function ExpensesClient({
 
                 {/* Urgent alert notes */}
                 {isUrgent && req.urgencyReason && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs leading-relaxed text-red-700">
+                  <div className="p-3 rounded-lg border border-red-500/25 bg-red-500/10 text-xs leading-relaxed text-on-surface">
                     <strong>Disbursement urgency justification:</strong> "{req.urgencyReason}"
                   </div>
                 )}
@@ -324,10 +320,10 @@ export function ExpensesClient({
                             className="w-full text-xs font-sans"
                           />
                           <div className="flex justify-end gap-1">
-                            <Button size="sm" variant="outline" onClick={() => setResolveQueryId(null)} className="h-7 text-xs">
+                            <Button size="sm" variant="outline" onClick={() => setResolveQueryId(null)}>
                               Cancel
                             </Button>
-                            <Button size="sm" onClick={handleResolveQuery} disabled={loading !== null} className="h-7 text-xs">
+                            <Button size="sm" onClick={handleResolveQuery} disabled={loading !== null}>
                               Confirm Resolution
                             </Button>
                           </div>
@@ -388,10 +384,10 @@ export function ExpensesClient({
                       />
                     </div>
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setReviewRequestId(null)} className="text-xs h-8">
+                      <Button variant="outline" size="sm" onClick={() => setReviewRequestId(null)}>
                         Cancel
                       </Button>
-                      <Button onClick={handleReviewStatus} disabled={loading !== null} className="text-xs h-8">
+                      <Button size="sm" onClick={handleReviewStatus} disabled={loading !== null}>
                         Submit Status Update
                       </Button>
                     </div>
@@ -404,7 +400,7 @@ export function ExpensesClient({
                     <span className="ds-label text-[#00cec4] block">Disburse Bank Payout Details</span>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                       <div>
-                        <label className="text-[9px] uppercase font-bold tracking-wide block text-on-surface-variant">Amount Paid (₹) *</label>
+                        <label className="ds-label block">Amount Paid (₹) *</label>
                         <input
                           type="number"
                           required
@@ -414,7 +410,7 @@ export function ExpensesClient({
                         />
                       </div>
                       <div>
-                        <label className="text-[9px] uppercase font-bold tracking-wide block text-on-surface-variant">Payment Date *</label>
+                        <label className="ds-label block">Payment Date *</label>
                         <DateInput
                           required
                           value={payDate}
@@ -423,7 +419,7 @@ export function ExpensesClient({
                         />
                       </div>
                       <div>
-                        <label className="text-[9px] uppercase font-bold tracking-wide block text-on-surface-variant">Disbursement Method *</label>
+                        <label className="ds-label block">Disbursement Method *</label>
                         <select
                           value={payMethod}
                           onChange={(e) => setPayMethod(e.target.value)}
@@ -435,7 +431,7 @@ export function ExpensesClient({
                         </select>
                       </div>
                       <div>
-                        <label className="text-[9px] uppercase font-bold tracking-wide block text-on-surface-variant">Txn Reference ID *</label>
+                        <label className="ds-label block">Txn Reference ID *</label>
                         <input
                           type="text"
                           required
@@ -447,10 +443,10 @@ export function ExpensesClient({
                       </div>
                     </div>
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setPayRequestId(null)} className="text-xs h-8">
+                      <Button variant="outline" size="sm" onClick={() => setPayRequestId(null)}>
                         Cancel
                       </Button>
-                      <Button type="submit" disabled={loading !== null} className="text-xs h-8">
+                      <Button type="submit" size="sm" disabled={loading !== null}>
                         Confirm Bank Disbursement
                       </Button>
                     </div>
@@ -466,7 +462,7 @@ export function ExpensesClient({
                         setReviewStatus(req.status);
                         setReviewRemarks("");
                       }}
-                      className="text-on-surface-variant hover:text-on-surface font-semibold"
+                      className="ds-plain cha-link hover:underline font-semibold"
                     >
                       Audit Status
                     </button>
@@ -483,7 +479,7 @@ export function ExpensesClient({
                           setPayDate(new Date().toISOString().slice(0, 10));
                           setPayRef("");
                         }}
-                        className="text-[#00cec4] hover:underline font-bold"
+                        className="ds-plain cha-link hover:underline font-bold"
                       >
                         Register Payout
                       </button>

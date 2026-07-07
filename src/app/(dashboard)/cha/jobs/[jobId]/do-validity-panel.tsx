@@ -123,7 +123,7 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
     <div className="ds-form-section space-y-4">
       <h3 className="ds-h3 text-on-surface">Delivery Order Document &amp; Extension</h3>
 
-      <div className="space-y-4 rounded-2xl border border-outline-variant/40 bg-surface-container-low p-4">
+      <div className="space-y-4 rounded-xl border border-outline-variant bg-surface-container-low p-4">
         {/* DO document upload toggle + tab */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>

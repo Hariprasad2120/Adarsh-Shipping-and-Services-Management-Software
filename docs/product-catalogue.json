@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-07-04T11:20:29.890Z",
+  "generatedAt": "2026-07-06T07:37:08.272Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
     "version": "0.1.0"
   },
   "stats": {
-    "totalAppRoutes": 202,
-    "totalApiRoutes": 174,
+    "totalAppRoutes": 203,
+    "totalApiRoutes": 175,
     "totalPrismaModels": 263,
     "totalModuleServices": 71,
-    "totalComponents": 90
+    "totalComponents": 91
   },
   "appRoutes": [
     {
@@ -485,6 +485,12 @@
       "route": "/cha/settings",
       "filePath": "src/app/(dashboard)/cha/settings/page.tsx",
       "module": "cha",
+      "type": "page"
+    },
+    {
+      "route": "/cha-ui-showcase",
+      "filePath": "src/app/(dashboard)/cha-ui-showcase/page.tsx",
+      "module": "cha-ui-showcase",
       "type": "page"
     },
     {
@@ -1536,6 +1542,15 @@
       "module": "cha",
       "methods": [
         "GET"
+      ]
+    },
+    {
+      "path": "/api/cha-ui-showcase",
+      "filePath": "src/app/api/cha-ui-showcase/route.ts",
+      "module": "cha-ui-showcase",
+      "methods": [
+        "GET",
+        "POST"
       ]
     },
     {
@@ -10985,6 +11000,11 @@
     },
     {
       "module": "ui",
+      "fileName": "date-input.tsx",
+      "filePath": "src/components/ui/date-input.tsx"
+    },
+    {
+      "module": "ui",
       "fileName": "dropdown-menu.tsx",
       "filePath": "src/components/ui/dropdown-menu.tsx"
     },
@@ -11078,6 +11098,13 @@
       "prismaModels": 35,
       "serviceFiles": 4,
       "components": 2
+    },
+    "cha-ui-showcase": {
+      "appRoutes": 1,
+      "apiRoutes": 1,
+      "prismaModels": 0,
+      "serviceFiles": 0,
+      "components": 0
     },
     "communication": {
       "appRoutes": 11,
@@ -11259,7 +11286,7 @@
       "apiRoutes": 0,
       "prismaModels": 0,
       "serviceFiles": 0,
-      "components": 13
+      "components": 14
     },
     "users": {
       "appRoutes": 0,

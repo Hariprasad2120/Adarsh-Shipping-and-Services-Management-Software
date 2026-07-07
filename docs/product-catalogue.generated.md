@@ -1,17 +1,17 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-04T11:20:29.890Z
+> Generated at: 2026-07-06T07:37:08.272Z
 > Version: 0.1.0
 
 ## Codebase Statistics
 
 | Metric | Count |
 |---|---|
-| App Routes (Pages) | 202 |
-| API Routes | 174 |
+| App Routes (Pages) | 203 |
+| API Routes | 175 |
 | Prisma Models | 263 |
 | Module Service Files | 71 |
-| UI Components | 90 |
+| UI Components | 91 |
 
 ## Modules Overview
 
@@ -24,6 +24,7 @@
 | attendance | 7 | 10 | 9 | 1 | 0 |
 | auth | 0 | 1 | 0 | 0 | 0 |
 | cha | 12 | 3 | 35 | 4 | 2 |
+| cha-ui-showcase | 1 | 1 | 0 | 0 | 0 |
 | communication | 11 | 18 | 2 | 1 | 0 |
 | core | 2 | 0 | 60 | 5 | 0 |
 | crm | 59 | 4 | 26 | 7 | 1 |
@@ -49,7 +50,7 @@
 | shared | 0 | 0 | 0 | 0 | 16 |
 | todo | 1 | 0 | 2 | 1 | 1 |
 | todos | 0 | 5 | 0 | 0 | 0 |
-| ui | 0 | 0 | 0 | 0 | 13 |
+| ui | 0 | 0 | 0 | 0 | 14 |
 | users | 0 | 4 | 0 | 0 | 0 |
 
 ## API Routes
@@ -93,6 +94,7 @@
 | GET | `/api/cha/checklist-files/[id]` | cha |
 | GET | `/api/cha/do-validity/expiring` | cha |
 | GET | `/api/cha/documents/[id]` | cha |
+| GET, POST | `/api/cha-ui-showcase` | cha-ui-showcase |
 | GET | `/api/communication/chat/check-new` | communication |
 | POST | `/api/communication/chat/dm` | communication |
 | GET | `/api/communication/chat/list` | communication |
@@ -313,6 +315,7 @@
 | `/cha/reports` | cha | page |
 | `/cha/settings/filing-workflows` | cha | page |
 | `/cha/settings` | cha | page |
+| `/cha-ui-showcase` | cha-ui-showcase | page |
 | `/communication/calendar` | communication | page |
 | `/communication/chat` | communication | page |
 | `/communication/drive` | communication | page |

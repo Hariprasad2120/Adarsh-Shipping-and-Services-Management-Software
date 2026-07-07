@@ -29,7 +29,7 @@ export default async function ChaApprovalsPage() {
   return (
     <div className="space-y-6">
       {/* Checklist Queue */}
-      <div className="bg-surface border border-outline-variant/30 rounded-xl shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-outline-variant/60 bg-surface shadow-sm overflow-hidden">
         <div className="flex items-center justify-between border-b border-outline-variant/30 px-6 py-4">
           <div>
             <h2 className="ds-h2 text-on-surface flex items-center gap-2">
@@ -75,7 +75,7 @@ export default async function ChaApprovalsPage() {
                       </td>
                       <td className="text-right">
                         <Link href={`/cha/jobs/${job.id}`}>
-                          <Button size="sm" className="h-8 text-xs py-1 inline-flex items-center gap-1.5 bg-[#00cec4] hover:bg-[#00b8af]">
+                          <Button size="sm" className="inline-flex items-center gap-1.5">
                             Audit & Review <ArrowRight size={12} />
                           </Button>
                         </Link>
@@ -89,7 +89,7 @@ export default async function ChaApprovalsPage() {
         )}
       </div>
 
-      <div className="bg-surface border border-outline-variant/30 rounded-xl shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-outline-variant/60 bg-surface shadow-sm overflow-hidden">
         <div className="flex items-center justify-between border-b border-outline-variant/30 px-6 py-4">
           <div>
             <h2 className="ds-h2 text-on-surface flex items-center gap-2">
@@ -133,7 +133,7 @@ export default async function ChaApprovalsPage() {
                     <td className="ds-label">{request.status}</td>
                     <td className="text-right">
                       <Link href={`/cha/jobs/${request.jobId}`}>
-                        <Button size="sm" className="h-8 text-xs inline-flex items-center gap-1.5">
+                        <Button size="sm" className="inline-flex items-center gap-1.5">
                           Review Request <ArrowRight size={12} />
                         </Button>
                       </Link>

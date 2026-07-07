@@ -2335,7 +2335,7 @@ export function JobWorkspaceClient({
       )}
 
       {/* Compact Job Header */}
-      <section className="rounded-2xl border border-outline-variant/30 bg-surface shadow-sm">
+      <section className="rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
         <div className="flex flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-1.5">
@@ -2377,7 +2377,7 @@ export function JobWorkspaceClient({
                 <button
                   type="button"
                   onClick={() => setIsEditingManager(true)}
-                  className="ds-label text-[#00cec4] hover:underline"
+                  className="ds-plain cha-link ds-label hover:underline"
                 >
                   Change
                 </button>
@@ -2386,14 +2386,14 @@ export function JobWorkspaceClient({
           </div>
 
           <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:items-center">
-            <div className="rounded-2xl border border-outline-variant/40 bg-surface-container-low px-3 py-2">
-              <span className="ds-label block text-[9px] text-on-surface-variant">Stage</span>
+            <div className="rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2">
+              <span className="ds-label block text-on-surface-variant">Stage</span>
               <span className="mt-0.5 block whitespace-nowrap text-xs uppercase tracking-wide text-on-surface">
                 {job.stage.replace(/_/g, " ")}
               </span>
             </div>
-            <div className="rounded-2xl border border-outline-variant/40 bg-surface-container-low px-3 py-2">
-              <span className="ds-label block text-[9px] text-on-surface-variant">Progress</span>
+            <div className="rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2">
+              <span className="ds-label block text-on-surface-variant">Progress</span>
               <span className="mt-0.5 block text-xs text-[#00cec4] ds-numeric">{stageProgress}%</span>
             </div>
             {canDeleteJob ? (
@@ -2454,7 +2454,7 @@ export function JobWorkspaceClient({
             {canUpdateJob && (
               <Button
                 variant="outline"
-                className="border-[#fb923c]/45 text-[#fb923c] hover:bg-[#fb923c]/10 shrink-0"
+                className="border-[#fb923c]/50 text-[#fb923c] hover:bg-[#fb923c]/10 shrink-0"
                 onClick={() => setIsEditingManager(true)}
               >
                 Assign Manager
@@ -2528,7 +2528,7 @@ export function JobWorkspaceClient({
       </nav>
 
       {/* Tab Panels */}
-      <div className="min-h-[320px] rounded-2xl border border-outline-variant/30 bg-surface p-3 shadow-sm sm:p-4">
+      <div className="min-h-[320px] rounded-xl border border-outline-variant/60 bg-surface p-3 shadow-sm sm:p-4">
         
         {/* PANEL: DOCUMENTS */}
         {activeTab === "docs" && (
@@ -2561,7 +2561,7 @@ export function JobWorkspaceClient({
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 rounded-xl border border-outline-variant bg-surface-container-low p-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="ds-label">Customs Validity Controls</p>
                 <p className="mt-1 text-xs text-on-surface-variant">
@@ -2902,7 +2902,6 @@ export function JobWorkspaceClient({
                                         <Button
                                           variant="outline"
                                           size="sm"
-                                          className="text-xs py-1 h-7"
                                           onClick={() => {
                                             setActiveDocReqId(null);
                                             setExceptionReason("");
@@ -2912,7 +2911,6 @@ export function JobWorkspaceClient({
                                         </Button>
                                         <Button
                                           size="sm"
-                                          className="text-xs py-1 h-7"
                                           onClick={() => handleDeclareException(req.id)}
                                         >
                                           Save Exemption
@@ -3065,7 +3063,7 @@ export function JobWorkspaceClient({
 
             <div className="ds-form-section space-y-4">
               <h3 className="ds-h3 text-on-surface">Additional Data Fields</h3>
-              <div className="grid grid-cols-1 gap-3 rounded-2xl border border-outline-variant/40 bg-surface-container-low p-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 rounded-xl border border-outline-variant bg-surface-container-low p-4 md:grid-cols-2">
                 <div>
                   <span className="ds-label">Clearance Type</span>
                   <p className="mt-1 text-sm font-medium text-on-surface">{job.jobType?.name || "Unknown"}</p>
@@ -3162,7 +3160,7 @@ export function JobWorkspaceClient({
               />
             ) : null}
 
-            <div className="grid grid-cols-1 gap-3 rounded-2xl border border-outline-variant/40 bg-surface-container-low p-4 md:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 rounded-xl border border-outline-variant bg-surface-container-low p-4 md:grid-cols-4">
               <div>
                 <span className="ds-label">Status</span>
                 <p className="mt-1 text-sm font-medium text-on-surface">{job.additionalData?.status ?? "PENDING"}</p>
@@ -3255,7 +3253,7 @@ export function JobWorkspaceClient({
                         <button
                           type="button"
                           onClick={() => setIsEditingManager(true)}
-                          className="mt-2 text-xs font-semibold text-[#00cec4] hover:underline cursor-pointer uppercase tracking-wider"
+                          className="ds-plain cha-link mt-2 text-xs font-semibold hover:underline uppercase tracking-wider"
                         >
                           Assign Manager Now →
                         </button>
@@ -3266,7 +3264,7 @@ export function JobWorkspaceClient({
 
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
                   <div className="space-y-4">
-                    <div className="rounded-2xl border border-outline-variant/40 bg-surface-container-low p-4">
+                    <div className="rounded-xl border border-outline-variant bg-surface-container-low p-4">
                       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                         <div className="space-y-1">
                           <span className="ds-label">Current Checklist Status</span>
@@ -3294,7 +3292,7 @@ export function JobWorkspaceClient({
                       </div>
                     </div>
 
-                    <form onSubmit={handleUploadChecklist} className="space-y-4 rounded-2xl border border-dashed border-outline-variant/60 bg-surface p-4">
+                    <form onSubmit={handleUploadChecklist} className="space-y-4 rounded-xl border border-dashed border-outline-variant/60 bg-surface p-4">
                       <div className="flex items-start gap-3">
                         <FolderOpen size={22} className="mt-0.5 shrink-0 text-[#00cec4]" />
                         <div>
@@ -3321,7 +3319,7 @@ export function JobWorkspaceClient({
                               <button
                                 type="button"
                                 onClick={() => router.push("/cha/settings")}
-                                className="mt-2 text-xs font-semibold text-[#00cec4] hover:underline cursor-pointer"
+                                className="ds-plain cha-link mt-2 text-xs font-semibold hover:underline"
                               >
                                 Go to Settings →
                               </button>
@@ -3352,7 +3350,7 @@ export function JobWorkspaceClient({
                     </form>
 
                     {currentChecklistVersion ? (
-                      <div className="rounded-2xl border border-outline-variant/40 bg-surface p-4 space-y-4">
+                      <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4">
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                           <div>
                             <span className="ds-label">Current File</span>
@@ -3379,7 +3377,7 @@ export function JobWorkspaceClient({
                           </div>
                         </div>
 
-                        <div className="overflow-hidden rounded-2xl border border-outline-variant/40">
+                        <div className="overflow-hidden rounded-xl border border-outline-variant/60">
                           <table className="ds-table">
                             <thead>
                               <tr>
@@ -3408,7 +3406,7 @@ export function JobWorkspaceClient({
                   </div>
 
                   <div className="space-y-4">
-                    <div className="rounded-2xl border border-outline-variant/40 bg-surface p-4 space-y-4">
+                    <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4">
                       <div>
                         <span className="ds-label">Internal Approval</span>
                         <p className="mt-1 text-sm text-on-surface">
@@ -3441,8 +3439,7 @@ export function JobWorkspaceClient({
                           <div className="flex justify-end gap-2">
                             <Button
                               type="button"
-                              variant="outline"
-                              className="cha-btn-neon-reject"
+                              variant="destructive"
                               disabled={loading !== null}
                               onClick={() => handleChecklistInternalDecision("REJECTED")}
                             >
@@ -3450,8 +3447,6 @@ export function JobWorkspaceClient({
                             </Button>
                             <Button
                               type="button"
-                              variant="outline"
-                              className="cha-btn-neon-approve"
                               disabled={loading !== null}
                               onClick={() => handleChecklistInternalDecision("APPROVED")}
                             >
@@ -3462,7 +3457,7 @@ export function JobWorkspaceClient({
                       ) : null}
                     </div>
 
-                    <div className="rounded-2xl border border-outline-variant/40 bg-surface p-4 space-y-4">
+                    <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4">
                       <div>
                         <span className="ds-label">Customer Approval</span>
                         <p className="mt-1 text-sm text-on-surface">
@@ -3531,8 +3526,7 @@ export function JobWorkspaceClient({
                           <div className="flex justify-end gap-2">
                             <Button
                               type="button"
-                              variant="outline"
-                              className="cha-btn-neon-reject"
+                              variant="destructive"
                               disabled={loading !== null}
                               onClick={() => handleChecklistCustomerDecision("REJECTED")}
                             >
@@ -3540,8 +3534,6 @@ export function JobWorkspaceClient({
                             </Button>
                             <Button
                               type="button"
-                              variant="outline"
-                              className="cha-btn-neon-approve"
                               disabled={loading !== null}
                               onClick={() => handleChecklistCustomerDecision("APPROVED")}
                             >
@@ -3552,7 +3544,7 @@ export function JobWorkspaceClient({
                       ) : null}
                     </div>
 
-                    <div className="rounded-2xl border border-outline-variant/40 bg-surface p-4 space-y-4">
+                    <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4">
                       <div className="flex items-center justify-between">
                         <span className="ds-label">Approval History</span>
                         <span className="text-[11px] text-on-surface-variant">
@@ -3567,7 +3559,7 @@ export function JobWorkspaceClient({
                             .slice()
                             .reverse()
                             .map((approval: any) => (
-                              <div key={approval.id} className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-3">
+                              <div key={approval.id} className="rounded-xl border border-outline-variant bg-surface-container-low p-3">
                                 <div className="flex items-center justify-between gap-3">
                                   <p className="text-xs font-semibold text-on-surface">
                                     {approval.stage} • {approval.action}
@@ -3643,7 +3635,7 @@ export function JobWorkspaceClient({
             ) : (
               // Filing visual runner dashboard
               <div className="space-y-4">
-                <div className="ds-form-section rounded-2xl border border-outline-variant/40 bg-surface p-4">
+                <div className="ds-form-section rounded-xl border border-outline-variant/60 bg-surface p-4">
                   <h3 className="ds-h3 text-on-surface">SHIPMENT DETAILS</h3>
                   <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="space-y-1">
@@ -3763,7 +3755,7 @@ export function JobWorkspaceClient({
                             {isBillFilingNode ? (
                               <div className="space-y-3">
                                 <h4 className="ds-label text-on-surface">Bill Filing Actions</h4>
-                                <div className="rounded-xl border border-outline-variant/30 bg-surface p-3">
+                                <div className="rounded-xl border border-outline-variant/60 bg-surface p-3">
                                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                                     <div className="min-w-0">
                                       <div className="flex items-center gap-2">
@@ -3860,7 +3852,7 @@ export function JobWorkspaceClient({
                                 <h4 className="ds-label text-on-surface">Conditional Sections & Documents</h4>
                                 <div className="space-y-3">
                                   {(activeNodeRun.node.conditionalSectionsJson || []).map((section: any) => (
-                                    <div key={section.key} className="rounded-2xl border border-outline-variant/35 bg-surface-container-low/35 p-3 space-y-3">
+                                    <div key={section.key} className="rounded-xl border border-outline-variant bg-surface-container-low p-3 space-y-3">
                                       <div className="flex items-center gap-3 text-sm text-on-surface">
                                         <NeonCheckbox
                                           checked={!!filingToggleStates[section.key]}
@@ -3888,7 +3880,7 @@ export function JobWorkspaceClient({
                                       {filingToggleStates[section.key] && section.unlocksDocuments?.length > 0 && (
                                         <div className="space-y-2">
                                           {section.unlocksDocuments.map((requirement: any) => (
-                                            <div key={requirement.key} className="rounded-xl border border-outline-variant/30 bg-surface p-3">
+                                            <div key={requirement.key} className="rounded-xl border border-outline-variant/60 bg-surface p-3">
                                               <div className="flex items-center justify-between gap-3">
                                                 <div>
                                                   <div className="text-xs font-semibold text-on-surface">
@@ -3912,7 +3904,7 @@ export function JobWorkspaceClient({
                                   ))}
 
                                   {(activeNodeRun.node.documentRequirementsJson || []).filter((requirement: any) => !(isBillFilingNode && requirement.key === "bill_document")).map((requirement: any) => (
-                                    <div key={requirement.key} className="rounded-xl border border-outline-variant/30 bg-surface p-3">
+                                    <div key={requirement.key} className="rounded-xl border border-outline-variant/60 bg-surface p-3">
                                       <div className="flex items-center justify-between gap-3">
                                         <div className="text-xs font-semibold text-on-surface">
                                           {requirement.label} {requirement.required !== false ? "*" : ""}
@@ -3934,7 +3926,7 @@ export function JobWorkspaceClient({
 
                             {billFilingCanChooseQuery && !customsQueryTabOpen && billFilingQueryDecision !== "CLEARED" ? (
                               <div className="space-y-3 border-t border-outline-variant/30 pt-4">
-                                <div className="rounded-2xl border border-outline-variant/35 bg-surface-container-low/35 p-4">
+                                <div className="rounded-xl border border-outline-variant bg-surface-container-low p-4">
                                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
                                       <h4 className="ds-label text-on-surface">Query Decision</h4>
@@ -4037,7 +4029,7 @@ export function JobWorkspaceClient({
                                   </Button>
                                 </div>
                                 {activeNodeQueries.map((query: any) => (
-                                    <div key={query.id} className="rounded-xl border border-outline-variant/35 bg-surface-container-low/35 p-3 text-xs">
+                                    <div key={query.id} className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs">
                                       <div className="flex items-start justify-between gap-3">
                                         <div>
                                           <div className="flex flex-wrap items-center gap-2">
@@ -4120,12 +4112,12 @@ export function JobWorkspaceClient({
                                     return (
                                       <div
                                         key={item.id}
-                                        className={`p-3.5 rounded-2xl border space-y-3 ${
+                                        className={`p-3.5 rounded-xl border space-y-3 ${
                                           isLockedItem
-                                            ? "border-outline-variant/25 bg-surface-container-low/20 opacity-70"
+                                            ? "border-outline-variant bg-surface-container-low opacity-70"
                                             : overdueMeta
                                             ? "border-[#fb923c]/45 bg-[#fb923c]/10"
-                                            : "border-outline-variant/35 bg-surface-container-low/40"
+                                            : "border-outline-variant bg-surface-container-low"
                                         }`}
                                       >
                                         <div className="flex items-start justify-between gap-3">
@@ -4163,13 +4155,13 @@ export function JobWorkspaceClient({
                                         </div>
 
                                         {isLockedItem && (
-                                          <div className="rounded-2xl border border-outline-variant/25 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
+                                          <div className="rounded-xl border border-outline-variant/60 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
                                             Complete the current checklist item first to unlock this step.
                                           </div>
                                         )}
 
                                         {!isLockedItem && !isCurrentItem && isCompletedItem && (
-                                          <div className="rounded-2xl border border-outline-variant/25 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
+                                          <div className="rounded-xl border border-outline-variant/60 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
                                             Completed and ready. You can move to the next checklist item.
                                           </div>
                                         )}
@@ -4205,7 +4197,7 @@ export function JobWorkspaceClient({
                                         {/* Optional or required remarks */}
                                         {!isLockedItem && resp.isChecked && item.requiresRemarks && (
                                           <div className="pl-6 space-y-1">
-                                            <label className="text-[10px] uppercase font-bold text-on-surface-variant block ds-label">Remarks / Notes *</label>
+                                            <label className="ds-label block">Remarks / Notes *</label>
                                             <input
                                               type="text"
                                               required
@@ -4229,14 +4221,14 @@ export function JobWorkspaceClient({
                                         {!isLockedItem && resp.isChecked && item.allowsUpload && (
                                           <div className="pl-6 space-y-2">
                                             <div className="flex flex-wrap items-center justify-between gap-2">
-                                              <label className="text-[10px] uppercase font-bold text-on-surface-variant block ds-label">Supporting File / Photo</label>
+                                              <label className="ds-label block">Supporting File / Photo</label>
                                               <span className="text-[11px] text-on-surface-variant ds-numeric">
                                                 Uploaded {checklistItemAttachments.length} / Minimum {item.minUploads || 0}
                                               </span>
                                             </div>
                                             <label
                                               htmlFor={`checklist-item-upload-${item.id}`}
-                                              className="flex min-h-20 cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-outline-variant/50 bg-surface px-4 py-4 text-sm text-on-surface transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/40"
+                                              className="flex min-h-20 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-outline-variant/50 bg-surface px-4 py-4 text-sm text-on-surface-variant transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/40"
                                             >
                                               <span className="ds-icon-badge shrink-0">
                                                 <Upload size={18} />
@@ -4272,7 +4264,6 @@ export function JobWorkspaceClient({
                                                       variant="outline"
                                                       size="sm"
                                                       onClick={() => handleDeleteFilingPhoto(attachment.id)}
-                                                      className="h-7 text-[10px]"
                                                     >
                                                       Remove
                                                     </Button>
@@ -4315,7 +4306,7 @@ export function JobWorkspaceClient({
                                           <>
                                             <label
                                               htmlFor={`photo-requirement-upload-${pr.id}`}
-                                              className="flex min-h-20 cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-outline-variant/50 bg-surface-container-low/35 px-4 py-4 text-sm text-on-surface transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/55"
+                                              className="flex min-h-20 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-outline-variant/50 bg-surface px-4 py-4 text-sm text-on-surface-variant transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/40"
                                             >
                                               <span className="ds-icon-badge shrink-0">
                                                 <Upload size={18} />
@@ -4339,7 +4330,7 @@ export function JobWorkspaceClient({
 
                                         {/* Uploaded Attachments list */}
                                         {reqAttachments.length > 0 && (
-                                          <div className="overflow-hidden rounded-2xl border border-outline-variant/30">
+                                          <div className="overflow-hidden rounded-xl border border-outline-variant/60">
                                             <table className="ds-table">
                                               <thead>
                                                 <tr>
@@ -4366,7 +4357,7 @@ export function JobWorkspaceClient({
                                                         size="sm"
                                                         onClick={() => handleDeleteFilingPhoto(a.id)}
                                                         disabled={loading === `filing-delete-${a.id}`}
-                                                        className="text-red-500 hover:text-red-600 hover:bg-red-50 p-1 h-7"
+                                                        className="text-red-500 hover:text-red-600 hover:bg-red-500/10 p-1"
                                                       >
                                                         Delete
                                                       </Button>
@@ -4410,11 +4401,11 @@ export function JobWorkspaceClient({
                             {/* Transitions dropdown */}
                             <div className="border-t border-outline-variant/30 pt-4">
                               {isBillFilingNode && !billFilingReadyForRouting ? (
-                                <div className="rounded-2xl border border-outline-variant/35 bg-surface-container-low/35 p-3 text-xs text-on-surface-variant">
+                                <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
                                   Complete Bill Filing by uploading the bill document and entering the bill number.
                                 </div>
                               ) : isBillFilingNode && !billFilingCanMoveNext ? (
-                                <div className="rounded-2xl border border-outline-variant/35 bg-surface-container-low/35 p-3 text-xs text-on-surface-variant">
+                                <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
                                   Select Update Query or No Query / Query Completed before moving to the next filing step.
                                 </div>
                               ) : outgoingEdges.length > 0 ? (
@@ -4553,16 +4544,16 @@ export function JobWorkspaceClient({
                           <p className="text-xs text-on-surface-variant max-w-xl">
                             All blueprint checklist checks have been completed and the customs submission has been filed. The job stage is updated to <strong>FILED</strong>.
                           </p>
-                          <div className="grid grid-cols-2 gap-4 rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 text-xs max-w-md">
+                          <div className="grid grid-cols-2 gap-4 rounded-xl border border-outline-variant bg-surface-container-low p-4 text-xs max-w-md">
                             <div>
                               <span className="ds-label block text-on-surface-variant">Actual Filing Date</span>
-                              <span className="font-medium text-on-surface ds-numeric font-mono">
+                              <span className="font-medium text-on-surface ds-numeric">
                                 {job.filing.actualFilingDate ? new Date(job.filing.actualFilingDate).toLocaleDateString("en-IN") : "Completed"}
                               </span>
                             </div>
                             <div>
                               <span className="ds-label block text-on-surface-variant">Filing Reference ID</span>
-                              <span className="font-medium text-on-surface ds-numeric font-mono">{job.filing.filingRef || "Completed"}</span>
+                              <span className="font-medium text-on-surface ds-numeric">{job.filing.filingRef || "Completed"}</span>
                             </div>
                           </div>
                         </div>
@@ -4571,10 +4562,10 @@ export function JobWorkspaceClient({
 
                     {/* Right Column: Timeline / History log */}
                     <div className="space-y-4">
-                      <div className="rounded-2xl border border-outline-variant/40 bg-surface p-4 space-y-4 shadow-sm">
+                      <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4 shadow-sm">
                         <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
                           <h4 className="ds-label block text-on-surface">Execution Blueprint Timeline</h4>
-                          <span className="text-[10px] text-on-surface-variant font-medium ds-numeric font-mono">
+                          <span className="text-[10px] text-on-surface-variant font-medium ds-numeric">
                             {filingInstance.nodeRuns?.length || 0} run(s)
                           </span>
                         </div>
@@ -4600,7 +4591,7 @@ export function JobWorkspaceClient({
                                       {run.status}
                                     </span>
                                   </div>
-                                  <p className="text-[10px] text-on-surface-variant ds-numeric font-mono">
+                                  <p className="text-[10px] text-on-surface-variant ds-numeric">
                                     Started: {new Date(run.startedAt).toLocaleString("en-IN")}
                                     {run.completedAt && ` • Finished: ${new Date(run.completedAt).toLocaleString("en-IN")}`}
                                   </p>
@@ -4623,7 +4614,7 @@ export function JobWorkspaceClient({
                                   {/* Attachments for this run */}
                                   {run.attachments?.length > 0 && (
                                     <div className="mt-1.5 space-y-1 pl-1">
-                                      <span className="text-[9px] uppercase tracking-wide font-bold text-on-surface-variant block ds-label">Attachments</span>
+                                      <span className="ds-label block">Attachments</span>
                                       <div className="space-y-1">
                                         {run.attachments.map((att: any) => (
                                           <a
@@ -4674,7 +4665,7 @@ export function JobWorkspaceClient({
                   <span className="ds-label block text-on-surface">Billing expected terms</span>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold tracking-wide block">Expected Advance Amount (₹) *</label>
+                    <label className="ds-label block">Expected Advance Amount (₹) *</label>
                     <input
                       type="number"
                       value={expectedAdvance}
@@ -4684,7 +4675,7 @@ export function JobWorkspaceClient({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold tracking-wide block">Advance Due Date</label>
+                    <label className="ds-label block">Advance Due Date</label>
                     <DateInput
                       value={advanceDueDate}
                       onChange={(e) => setAdvanceDueDate(e.target.value)}
@@ -4693,7 +4684,7 @@ export function JobWorkspaceClient({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold tracking-wide block">Assigned Collections Agent</label>
+                    <label className="ds-label block">Assigned Collections Agent</label>
                     <select
                       value={advanceAssigneeId}
                       onChange={(e) => setAdvanceAssigneeId(e.target.value)}
@@ -4734,10 +4725,10 @@ export function JobWorkspaceClient({
                       className="text-xs w-full"
                     />
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setShowWaiveAdvance(false)} className="text-xs h-8">
+                      <Button variant="outline" size="sm" onClick={() => setShowWaiveAdvance(false)}>
                         Cancel
                       </Button>
-                      <Button onClick={handleWaiveAdvance} disabled={loading !== null} className="text-xs h-8 bg-red-500 hover:bg-red-600">
+                      <Button variant="destructive" size="sm" onClick={handleWaiveAdvance} disabled={loading !== null}>
                         Confirm Waiver
                       </Button>
                     </div>
@@ -4754,7 +4745,7 @@ export function JobWorkspaceClient({
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-bold tracking-wide block">Amount Paid (₹) *</label>
+                        <label className="ds-label block">Amount Paid (₹) *</label>
                         <input
                           type="number"
                           required
@@ -4764,7 +4755,7 @@ export function JobWorkspaceClient({
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-bold tracking-wide block">Date Received *</label>
+                        <label className="ds-label block">Date Received *</label>
                         <DateInput
                           required
                           value={receiptDate}
@@ -4776,7 +4767,7 @@ export function JobWorkspaceClient({
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-bold tracking-wide block">Payment Method *</label>
+                        <label className="ds-label block">Payment Method *</label>
                         <select
                           value={receiptMethod}
                           onChange={(e) => setReceiptMethod(e.target.value)}
@@ -4789,7 +4780,7 @@ export function JobWorkspaceClient({
                         </select>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-bold tracking-wide block">Txn Reference Ref</label>
+                        <label className="ds-label block">Txn Reference Ref</label>
                         <input
                           type="text"
                           placeholder="e.g. IMPS992812"
@@ -4801,7 +4792,7 @@ export function JobWorkspaceClient({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-bold tracking-wide block">Remarks</label>
+                      <label className="ds-label block">Remarks</label>
                       <input
                         type="text"
                         placeholder="e.g. Paid online"
@@ -4849,7 +4840,7 @@ export function JobWorkspaceClient({
         {activeTab === "expenses" && (
           <div className="space-y-4">
             {/* Create expense request */}
-            <div className="border border-outline-variant p-4 rounded-2xl space-y-4 bg-surface-container-low/20">
+            <div className="border border-outline-variant p-4 rounded-xl space-y-4 bg-surface-container-low">
               <h3 className="ds-h3 text-on-surface">New Clearance Expense Request</h3>
 
               <form onSubmit={handleCreateExpenseRequest} className="space-y-4">
@@ -4873,7 +4864,7 @@ export function JobWorkspaceClient({
 
                   {expenseUrgent && (
                     <div className="flex-1 max-w-md space-y-1">
-                      <label className="text-[10px] uppercase font-bold tracking-wide block text-[#fb923c]">
+                      <label className="ds-label block text-[#fb923c]">
                         Urgency Explanation Justification (REQUIRED) *
                       </label>
                       <input
@@ -4897,7 +4888,7 @@ export function JobWorkspaceClient({
                       variant="outline"
                       size="sm"
                       onClick={handleAddExpenseLine}
-                      className="h-7 px-2 text-xs flex items-center gap-1 border-[#00cec4] text-[#00cec4]"
+                      className="flex items-center gap-1 border-[#00cec4] text-[#00cec4]"
                     >
                       <Plus size={12} /> Add Line Item
                     </Button>
@@ -4908,7 +4899,7 @@ export function JobWorkspaceClient({
                       <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end border-b border-outline-variant/20 pb-3 md:pb-0 md:border-b-0">
                         {/* category */}
                         <div className="space-y-1 md:col-span-1">
-                          <label className="text-[9px] uppercase font-bold tracking-wide text-on-surface-variant">Category</label>
+                          <label className="ds-label">Category</label>
                           <select
                             value={line.category}
                             onChange={(e) => handleExpenseLineChange(index, "category", e.target.value)}
@@ -4924,7 +4915,7 @@ export function JobWorkspaceClient({
 
                         {/* Purpose */}
                         <div className="space-y-1 md:col-span-2">
-                          <label className="text-[9px] uppercase font-bold tracking-wide text-on-surface-variant">Purpose / Purpose *</label>
+                          <label className="ds-label">Purpose / Purpose *</label>
                           <input
                             type="text"
                             required
@@ -4937,7 +4928,7 @@ export function JobWorkspaceClient({
 
                         {/* Amount */}
                         <div className="space-y-1 md:col-span-1">
-                          <label className="text-[9px] uppercase font-bold tracking-wide text-on-surface-variant">Amount (₹) *</label>
+                          <label className="ds-label">Amount (₹) *</label>
                           <input
                             type="number"
                             required
@@ -4950,7 +4941,7 @@ export function JobWorkspaceClient({
 
                         {/* Required Date */}
                         <div className="space-y-1 md:col-span-1">
-                          <label className="text-[9px] uppercase font-bold tracking-wide text-on-surface-variant">Required Date</label>
+                          <label className="ds-label">Required Date</label>
                           <DateInput
                             value={line.requiredDate}
                             onChange={(e) => handleExpenseLineChange(index, "requiredDate", e.target.value)}
@@ -5012,7 +5003,7 @@ export function JobWorkspaceClient({
                             <span className="text-xs text-on-surface-variant block">
                               Ref: {req.id} • Requested by: <strong>{req.requestedBy?.name}</strong>
                             </span>
-                            <span className="text-lg font-bold text-[#00cec4] block mt-1 ds-numeric">
+                            <span className="text-lg text-[#00cec4] block mt-1 ds-numeric">
                               ₹{sum.toLocaleString("en-IN")}{" "}
                               {req.isUrgent && (
                                 <span className="text-[10px] px-2 py-0.5 rounded bg-red-100 text-red-700 border border-red-200 ml-2">
@@ -5044,7 +5035,6 @@ export function JobWorkspaceClient({
                                   setEscRequestId(req.id);
                                   setEscUrgencyReason("");
                                 }}
-                                className="h-7 text-[10px]"
                               >
                                 Escalate
                               </Button>
@@ -5096,10 +5086,10 @@ export function JobWorkspaceClient({
                                     className="w-full text-xs font-sans"
                                   />
                                   <div className="flex justify-end gap-1">
-                                    <Button size="sm" variant="outline" onClick={() => setResolveQueryId(null)} className="h-7 text-xs">
+                                    <Button size="sm" variant="outline" onClick={() => setResolveQueryId(null)}>
                                       Cancel
                                     </Button>
-                                    <Button size="sm" onClick={handleResolveQuery} disabled={loading !== null} className="h-7 text-xs">
+                                    <Button size="sm" onClick={handleResolveQuery} disabled={loading !== null}>
                                       Post Resolution
                                     </Button>
                                   </div>
@@ -5146,10 +5136,10 @@ export function JobWorkspaceClient({
                               className="text-xs w-full"
                             />
                             <div className="flex justify-end gap-2">
-                              <Button variant="outline" size="sm" onClick={() => setEscRequestId(null)} className="text-xs h-8">
+                              <Button variant="outline" size="sm" onClick={() => setEscRequestId(null)}>
                                 Cancel
                               </Button>
-                              <Button onClick={handleEscalateExpense} disabled={loading !== null} className="text-xs h-8">
+                              <Button size="sm" onClick={handleEscalateExpense} disabled={loading !== null}>
                                 Escalate Request
                               </Button>
                             </div>
@@ -5182,10 +5172,10 @@ export function JobWorkspaceClient({
                               />
                             </div>
                             <div className="flex justify-end gap-2">
-                              <Button variant="outline" size="sm" onClick={() => setExpReviewId(null)} className="text-xs h-8">
+                              <Button variant="outline" size="sm" onClick={() => setExpReviewId(null)}>
                                 Cancel
                               </Button>
-                              <Button onClick={handleExpenseReview} disabled={loading !== null} className="text-xs h-8">
+                              <Button size="sm" onClick={handleExpenseReview} disabled={loading !== null}>
                                 Post Decision
                               </Button>
                             </div>
@@ -5198,7 +5188,7 @@ export function JobWorkspaceClient({
                             <span className="ds-label text-[#00cec4] block">Post Payment Disbursement Confirmation</span>
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                               <div>
-                                <label className="text-[9px] uppercase font-bold tracking-wide block">Amount Disbursed (₹) *</label>
+                                <label className="ds-label block">Amount Disbursed (₹) *</label>
                                 <input
                                   type="number"
                                   required
@@ -5208,7 +5198,7 @@ export function JobWorkspaceClient({
                                 />
                               </div>
                               <div>
-                                <label className="text-[9px] uppercase font-bold tracking-wide block">Date Paid *</label>
+                                <label className="ds-label block">Date Paid *</label>
                                 <DateInput
                                   required
                                   value={payDate}
@@ -5217,7 +5207,7 @@ export function JobWorkspaceClient({
                                 />
                               </div>
                               <div>
-                                <label className="text-[9px] uppercase font-bold tracking-wide block">Payment Method *</label>
+                                <label className="ds-label block">Payment Method *</label>
                                 <select
                                   value={payMethod}
                                   onChange={(e) => setPayMethod(e.target.value)}
@@ -5229,7 +5219,7 @@ export function JobWorkspaceClient({
                                 </select>
                               </div>
                               <div>
-                                <label className="text-[9px] uppercase font-bold tracking-wide block">Txn Reference ID *</label>
+                                <label className="ds-label block">Txn Reference ID *</label>
                                 <input
                                   type="text"
                                   required
@@ -5241,10 +5231,10 @@ export function JobWorkspaceClient({
                               </div>
                             </div>
                             <div className="flex justify-end gap-2">
-                              <Button variant="outline" size="sm" onClick={() => setPayRequestId(null)} className="text-xs h-8">
+                              <Button variant="outline" size="sm" onClick={() => setPayRequestId(null)}>
                                 Cancel
                               </Button>
-                              <Button type="submit" disabled={loading !== null} className="text-xs h-8">
+                              <Button type="submit" size="sm" disabled={loading !== null}>
                                 Confirm Disbursal
                               </Button>
                             </div>
@@ -5263,10 +5253,10 @@ export function JobWorkspaceClient({
                               className="text-xs w-full"
                             />
                             <div className="flex justify-end gap-2">
-                              <Button variant="outline" size="sm" onClick={() => setQueryRequestId(null)} className="text-xs h-8">
+                              <Button variant="outline" size="sm" onClick={() => setQueryRequestId(null)}>
                                 Cancel
                               </Button>
-                              <Button onClick={handleRaiseQuery} disabled={loading !== null} className="text-xs h-8">
+                              <Button size="sm" onClick={handleRaiseQuery} disabled={loading !== null}>
                                 Submit Query
                               </Button>
                             </div>
@@ -5283,7 +5273,7 @@ export function JobWorkspaceClient({
                                 setExpReviewStatus(req.status);
                                 setExpReviewRemarks("");
                               }}
-                              className="text-on-surface-variant hover:text-on-surface font-semibold"
+                              className="ds-plain cha-link hover:underline font-semibold"
                             >
                               Review Status
                             </button>
@@ -5301,7 +5291,7 @@ export function JobWorkspaceClient({
                                   setPayDate(new Date().toISOString().slice(0, 10));
                                   setPayRef("");
                                 }}
-                                className="text-[#00cec4] hover:underline font-bold"
+                                className="ds-plain cha-link hover:underline font-bold"
                               >
                                 Disburse Payment
                               </button>
@@ -5505,8 +5495,6 @@ export function JobWorkspaceClient({
               Cancel
             </Button>
             <Button
-              variant="outline"
-              className="cha-btn-neon-approve"
               disabled={!deleteInputsMatch || loading === "job-delete-approve"}
               onClick={handleApproveDeletionRequest}
             >
@@ -5540,8 +5528,7 @@ export function JobWorkspaceClient({
               Cancel
             </Button>
             <Button
-              variant="outline"
-              className="cha-btn-neon-reject"
+              variant="destructive"
               disabled={!deleteDecisionRemarks.trim() || loading === "job-delete-reject"}
               onClick={handleRejectDeletionRequest}
             >
@@ -5600,7 +5587,7 @@ export function JobWorkspaceClient({
           className="max-w-xl"
         >
           <div className="space-y-4">
-            <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 text-xs text-on-surface-variant">
+            <div className="rounded-xl border border-outline-variant bg-surface-container-low p-4 text-xs text-on-surface-variant">
               This custom document name is job-specific and will appear only inside <strong className="text-on-surface">this CHA job</strong>, under the <strong className="text-on-surface">User Uploads</strong> section.
             </div>
 
@@ -5627,7 +5614,7 @@ export function JobWorkspaceClient({
               </label>
 
               {customDocumentFile ? (
-                <div className="rounded-2xl border border-outline-variant/30 bg-surface p-3 text-xs text-on-surface-variant">
+                <div className="rounded-xl border border-outline-variant/60 bg-surface p-3 text-xs text-on-surface-variant">
                   Selected file: <strong className="text-on-surface">{customDocumentFile.name}</strong>
                 </div>
               ) : null}
@@ -5724,7 +5711,7 @@ export function JobWorkspaceClient({
                         Word, Excel, or binary formats cannot be previewed directly in the browser. You can download this file to view it locally.
                       </p>
                     </div>
-                    <div className="p-4 rounded-2xl border border-outline-variant/40 bg-surface-container-low/50 text-left text-xs space-y-2 w-full max-w-md">
+                    <div className="p-4 rounded-xl border border-outline-variant bg-surface-container-low text-left text-xs space-y-2 w-full max-w-md">
                       <p className="font-semibold text-on-surface uppercase ds-label">File Details</p>
                       <div className="grid grid-cols-2 gap-2 text-on-surface-variant">
                         <span>Filename:</span>

@@ -682,29 +682,29 @@ export function SettingsForm({
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <div className="rounded-xl border border-[#00cec4]/20 bg-surface p-4 shadow-sm">
+                <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
                   <p className="ds-label text-on-surface-variant">Job Creation</p>
                   <p className="mt-1 text-sm text-on-surface">
                     {jobCreatorRoles.length} role(s) and {jobCreatorUsers.length} user(s) can create CHA jobs.
                   </p>
                 </div>
-                <div className="rounded-xl border border-[#00cec4]/20 bg-surface p-4 shadow-sm">
+                <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
                   <p className="ds-label text-on-surface-variant">Checklist Approval</p>
                   <p className="mt-1 text-sm text-on-surface">
                     {managerApprovalPolicy === "ANY" ? "Any assigned manager can approve." : "All assigned managers must approve."}
                   </p>
                 </div>
-                <div className="rounded-xl border border-[#00cec4]/20 bg-surface p-4 shadow-sm">
+                <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
                   <p className="ds-label text-on-surface-variant">Expense Categories</p>
                   <p className="mt-1 text-sm text-on-surface">{expenseCategories.length} category option(s) available.</p>
                 </div>
-                <div className="rounded-xl border border-[#00cec4]/20 bg-surface p-4 shadow-sm">
+                <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
                   <p className="ds-label text-on-surface-variant">Shipment Types</p>
                   <p className="mt-1 text-sm text-on-surface">{activeShipmentTypesCount} active shipment type(s).</p>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-[#00cec4]/20 bg-surface p-4 shadow-sm">
+              <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
                 <div className="flex items-start gap-3">
                   <ShieldCheck size={18} className="mt-0.5 text-primary" />
                   <div>
@@ -728,13 +728,13 @@ export function SettingsForm({
                   key={tab.key}
                   type="button"
                   onClick={() => setActiveTab(tab.key)}
-                  className="group flex w-full items-center justify-between rounded-xl border border-outline-variant/50 bg-surface px-4 py-3 text-left shadow-sm transition-all duration-200 hover:border-[#00cec4]/70 hover:shadow-[0_0_0_3px_rgba(0,206,196,0.12),0_14px_30px_-24px_rgba(0,206,196,0.9)] motion-reduce:transition-none"
+                  className="ds-plain card-left-accent hover-cyan flex w-full items-center justify-between rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-left shadow-sm transition-all"
                 >
                   <span>
                     <span className="block text-sm font-medium text-on-surface">{tab.label}</span>
                     <span className="block text-xs text-on-surface-variant">{tab.description}</span>
                   </span>
-                  <ChevronRight size={16} className="text-on-surface-variant transition-transform duration-200 group-hover:translate-x-1 group-hover:text-[#00cec4] motion-reduce:transition-none" />
+                  <ChevronRight size={16} className="text-on-surface-variant" />
                 </button>
               ))}
             </CardContent>
@@ -782,7 +782,7 @@ export function SettingsForm({
             <CardContent>
               <div className="grid grid-cols-1 gap-3 2xl:grid-cols-2">
                 {branchRules.map((rule) => (
-                  <div key={rule.branchId} className="rounded-xl border border-[#00cec4]/20 bg-surface p-4 shadow-sm">
+                  <div key={rule.branchId} className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
                     <div className="mb-3 flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-on-surface">{rule.branchName}</p>
@@ -922,7 +922,7 @@ export function SettingsForm({
               <CardTitle>Checklist Approval</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#00cec4]/20 bg-surface p-4 shadow-sm">
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
                 <input
                   type="checkbox"
                   checked={selfApprovalAllowed}
@@ -934,7 +934,7 @@ export function SettingsForm({
                   <span className="mt-1 block text-xs text-on-surface-variant">Job owners with permission can approve without routing.</span>
                 </span>
               </label>
-              <div className="rounded-xl border border-[#00cec4]/20 bg-surface p-4 shadow-sm">
+              <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
                 <p className="text-sm font-semibold text-on-surface">Manager Approval Policy</p>
                 <div className="mt-3 space-y-2">
                   <label className="flex cursor-pointer items-center gap-2 text-sm text-on-surface">
@@ -1013,7 +1013,7 @@ export function SettingsForm({
               <CardTitle>Filing Workflows</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-xl border border-[#00cec4]/20 bg-surface p-4 shadow-sm">
+              <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
                 <div className="flex items-start gap-3">
                   <Workflow size={20} className="mt-0.5 text-primary" />
                   <div>
@@ -1038,7 +1038,7 @@ export function SettingsForm({
               <CardTitle>Clearance Job Types</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-xl border border-[#00cec4]/20 bg-surface p-4 shadow-sm">
+              <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
                 <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
                   <label className="space-y-1.5 lg:col-span-2">
                     <span className="ds-label">Type Name</span>
@@ -1091,7 +1091,7 @@ export function SettingsForm({
                   <div className="rounded-xl border border-dashed border-outline-variant bg-surface p-6 text-center text-sm text-on-surface-variant">No clearance job types added yet.</div>
                 ) : (
                   jobTypesList.map((jobType) => (
-                    <div key={jobType.id} className="rounded-xl border border-[#00cec4]/20 bg-surface p-4 shadow-sm shadow-sm">
+                    <div key={jobType.id} className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm shadow-sm">
                       <div className="mb-3 flex items-start justify-between gap-3">
                         <div>
                           <p className="ds-label text-on-surface-variant">Clearance Type</p>
@@ -1260,7 +1260,7 @@ export function SettingsForm({
                     const memberIds = parseJsonArray(group.memberIds);
                     const memberNames = memberIds.map((id) => availableEmployees.find((employee) => employee.id === id)?.name).filter(Boolean);
                     return (
-                      <div key={group.id} className="card-left-accent rounded-xl border border-[#00cec4]/20 bg-surface p-4 shadow-sm shadow-sm">
+                      <div key={group.id} className="card-left-accent rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm shadow-sm">
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="text-sm font-semibold text-on-surface">{group.name}</p>
@@ -1314,7 +1314,7 @@ export function SettingsForm({
             </CardHeader>
             <CardContent className="space-y-4">
               {isAddingCategory ? (
-                <div className="rounded-xl border border-[#00cec4]/20 bg-surface p-4 shadow-sm">
+                <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-on-surface">New Document Category</p>
                     <button type="button" onClick={() => setIsAddingCategory(false)} className="rounded-lg p-1.5 text-on-surface-variant hover:bg-surface hover:text-destructive" aria-label="Cancel category">

@@ -193,7 +193,7 @@ export default async function ChaDashboard() {
               <Briefcase size={16} />
             </span>
           </div>
-          <p className="text-3xl font-bold ds-numeric text-on-surface">{activeJobsCount}</p>
+          <p className="text-3xl ds-numeric text-on-surface">{activeJobsCount}</p>
           <span className="text-[10px] text-on-surface-variant">Jobs currently in operations</span>
         </div>
 
@@ -205,7 +205,7 @@ export default async function ChaDashboard() {
               <CheckSquare size={16} />
             </span>
           </div>
-          <p className={`text-3xl font-bold ds-numeric ${pendingChecklistsCount > 0 ? "text-[#fb923c]" : "text-on-surface"}`}>{pendingChecklistsCount}</p>
+          <p className={`text-3xl ds-numeric ${pendingChecklistsCount > 0 ? "text-[#fb923c]" : "text-on-surface"}`}>{pendingChecklistsCount}</p>
           <span className="text-[10px] text-on-surface-variant">Awaiting manager review decision</span>
         </div>
 
@@ -217,7 +217,7 @@ export default async function ChaDashboard() {
               <FileText size={16} />
             </span>
           </div>
-          <p className="text-3xl font-bold ds-numeric text-on-surface">{pendingFilingsCount}</p>
+          <p className="text-3xl ds-numeric text-on-surface">{pendingFilingsCount}</p>
           <span className="text-[10px] text-on-surface-variant">Awaiting custom BOE/SB submissions</span>
         </div>
 
@@ -229,7 +229,7 @@ export default async function ChaDashboard() {
               <AlertCircle size={16} />
             </span>
           </div>
-          <p className={`text-3xl font-bold ds-numeric ${urgentExpensesCount > 0 ? "text-[#fb923c]" : "text-on-surface"}`}>{urgentExpensesCount}</p>
+          <p className={`text-3xl ds-numeric ${urgentExpensesCount > 0 ? "text-[#fb923c]" : "text-on-surface"}`}>{urgentExpensesCount}</p>
           <span className="text-[10px] text-on-surface-variant">Immediate payouts required</span>
         </div>
 
@@ -241,7 +241,7 @@ export default async function ChaDashboard() {
               <DollarSign size={16} />
             </span>
           </div>
-          <p className="text-2xl font-bold ds-numeric text-on-surface">
+          <p className="text-2xl ds-numeric text-on-surface">
             ₹{totalOutstandingAdvance.toLocaleString("en-IN")}
           </p>
           <span className="text-[10px] text-on-surface-variant">Expected follow-up collections</span>

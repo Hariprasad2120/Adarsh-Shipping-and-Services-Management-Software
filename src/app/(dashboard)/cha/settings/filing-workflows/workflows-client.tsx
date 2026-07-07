@@ -1676,7 +1676,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
   };
 
   return (
-    <div className="flex h-[calc(100vh-6rem)] w-full flex-col overflow-hidden rounded-3xl border border-outline-variant bg-surface shadow-sm">
+    <div className="flex h-[calc(100vh-6rem)] w-full flex-col overflow-hidden rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant bg-surface px-4 py-3">
         <div className="flex items-start gap-3">
           <Button variant="outline" mode="icon" size="sm" onClick={() => router.push("/cha/settings")} aria-label="Back to CHA settings">

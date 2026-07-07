@@ -8,6 +8,7 @@ import { X, FilePlus, Trash2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {createJobAction,createJobTypeAction,createShipmentTypeAction,getNextJobNumberPreviewAction,} from "@/modules/cha/actions";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Input } from "@/components/ui/input";
 
 const ADD_NEW_JOB_TYPE = "__add_new_job_type__";
 const ADD_NEW_SHIPMENT_TYPE = "__add_new_shipment_type__";
@@ -737,12 +738,12 @@ export function CreateJobDialog({
               <div className="space-y-1">
                 <label className="ds-label block">Job Ref Number (Leave empty to Auto-number)</label>
                 <div className="flex gap-2">
-                  <input
+                  <Input
                     type="text"
                     placeholder="e.g. CHA-MAA-2026-0001"
                     value={newJobNumber}
                     onChange={(e) => setNewJobNumber(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-xl text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)] transition-all font-sans"
+                    className="w-full text-sm"
                   />
                   <Button
                     type="button"
@@ -773,14 +774,14 @@ export function CreateJobDialog({
                   placeholder="Describe the customs clearance work, cargo details, and any critical handling notes..."
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-xl text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)] transition-all font-sans"
+                  className="w-full text-sm"
                 />
               </div>
 
               {/* Customer Account Autocomplete */}
               <div className="space-y-1 relative">
                 <label className="ds-label block">Customer Account *</label>
-                <input
+                <Input
                   type="text"
                   required
                   placeholder="Type starting letters to search..."
@@ -796,10 +797,10 @@ export function CreateJobDialog({
                   onBlur={() => {
                     setTimeout(() => setShowCustomerDropdown(false), 250);
                   }}
-                  className="w-full px-3.5 py-2.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-xl text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)] transition-all font-sans"
+                  className="w-full text-sm"
                 />
                 {showCustomerDropdown && (
-                  <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-[var(--color-surface)] border border-outline-variant rounded-xl shadow-lg z-50">
+                  <div className="absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-outline-variant/60 bg-surface p-1 shadow-sm">
                     {filteredCustomers.map((c) => (
                       <button
                         key={c.id}
@@ -810,7 +811,7 @@ export function CreateJobDialog({
                           setSelectedCustomerName(c.name);
                           setShowCustomerDropdown(false);
                         }}
-                        className="w-full text-left px-4 py-2.5 hover:bg-[#00cec4]/15 hover:text-[#00cec4] text-sm text-[var(--color-on-surface)] transition-all border-b border-outline-variant/10 cursor-pointer bg-transparent border-0"
+                        className="flex w-full cursor-pointer items-center rounded-md px-2 py-1.5 text-left text-sm text-on-surface transition-colors hover:bg-surface-container-low hover:text-on-surface focus:bg-surface-container-low focus:text-on-surface"
                       >
                         {c.name}
                       </button>
@@ -821,9 +822,9 @@ export function CreateJobDialog({
                         <button
                           type="button"
                           onClick={handleAddCustomerRedirect}
-                          className="text-xs font-bold text-[#00cec4] hover:underline cursor-pointer bg-transparent border-0"
+                          className="ds-plain cha-link text-xs font-medium"
                         >
-                          + Add "{customerSearch}" as New Customer
+                          + Add &quot;{customerSearch}&quot; as New Customer
                         </button>
                       </div>
                     )}
@@ -833,7 +834,7 @@ export function CreateJobDialog({
                   <button
                     type="button"
                     onClick={handleAddCustomerRedirect}
-                    className="text-xs font-semibold text-[#00cec4] hover:underline bg-transparent border-0 cursor-pointer"
+                    className="ds-plain cha-link text-xs font-medium"
                   >
                     Add New Customer
                   </button>
@@ -843,12 +844,12 @@ export function CreateJobDialog({
               {/* Customer Ref */}
               <div className="space-y-1">
                 <label className="ds-label block">Customer Ref PO/WO (Optional)</label>
-                <input
+                <Input
                   type="text"
                   placeholder="e.g. PO-88712"
                   value={newCustomerRef}
                   onChange={(e) => setNewCustomerRef(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-xl text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)] transition-all font-sans"
+                  className="w-full text-sm"
                 />
               </div>
 
@@ -876,7 +877,7 @@ export function CreateJobDialog({
                 />
                 {showAddJobType && (
                   <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-3 space-y-2">
-                    <input
+                    <Input
                       type="text"
                       value={newJobTypeName}
                       onChange={(e) => setNewJobTypeName(e.target.value)}
@@ -913,7 +914,7 @@ export function CreateJobDialog({
                       </label>
                     </div>
                     {newJobTypeManifestRequirement === "CUSTOM" ? (
-                      <input
+                      <Input
                         type="text"
                         value={newJobTypeCustomManifestLabel}
                         onChange={(e) => setNewJobTypeCustomManifestLabel(e.target.value)}
@@ -921,7 +922,7 @@ export function CreateJobDialog({
                         className="w-full text-sm"
                       />
                     ) : null}
-                    <input
+                    <Input
                       type="text"
                       value={newJobTypeManifestHelpText}
                       onChange={(e) => setNewJobTypeManifestHelpText(e.target.value)}
@@ -971,7 +972,7 @@ export function CreateJobDialog({
                 />
                 {showAddShipmentType && (
                   <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-3 space-y-2">
-                    <input
+                    <Input
                       type="text"
                       value={newShipmentTypeName}
                       onChange={(e) => setNewShipmentTypeName(e.target.value)}
@@ -1009,7 +1010,7 @@ export function CreateJobDialog({
               {/* Owner */}
               <div className="space-y-1 relative">
                 <label className="ds-label block">Primary Operations Owner *</label>
-                <input
+                <Input
                   type="text"
                   required
                   value={ownerSearch}
@@ -1030,17 +1031,17 @@ export function CreateJobDialog({
                       selectOwner(filteredOwners[0]);
                     }
                   }}
-                  className="w-full px-3.5 py-2.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-xl text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)] transition-all font-sans"
+                  className="w-full text-sm"
                 />
                 {showOwnerDropdown ? (
-                  <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto rounded-xl border border-outline-variant bg-surface p-2 shadow-lg">
+                  <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto rounded-xl border border-outline-variant/60 bg-surface p-1 shadow-sm">
                     {filteredOwners.length > 0 ? (
                       filteredOwners.map((owner) => (
                         <button
                           key={owner.id}
                           type="button"
                           onClick={() => selectOwner(owner)}
-                          className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs text-on-surface transition-all hover:bg-[#00cec4]/15 hover:text-[#00cec4]"
+                          className="flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-sm text-on-surface transition-colors hover:bg-surface-container-low hover:text-on-surface focus:bg-surface-container-low focus:text-on-surface"
                         >
                           <span>{owner.name}</span>
                           <span className="text-[10px] text-on-surface-variant">{owner.email}</span>
@@ -1063,7 +1064,7 @@ export function CreateJobDialog({
               {/* Assigned Manager */}
               <div className="space-y-1 relative">
                 <label className="ds-label block">Assigned Manager *</label>
-                <input
+                <Input
                   type="text"
                   required
                   value={managerSearch}
@@ -1084,17 +1085,17 @@ export function CreateJobDialog({
                       selectManager(filteredManagers[0]);
                     }
                   }}
-                  className="w-full px-3.5 py-2.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-xl text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)] transition-all font-sans"
+                  className="w-full text-sm"
                 />
                 {showManagerDropdown ? (
-                  <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto rounded-xl border border-outline-variant bg-surface p-2 shadow-lg">
+                  <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto rounded-xl border border-outline-variant/60 bg-surface p-1 shadow-sm">
                     {filteredManagers.length > 0 ? (
                       filteredManagers.map((manager) => (
                         <button
                           key={manager.id}
                           type="button"
                           onClick={() => selectManager(manager)}
-                          className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs text-on-surface transition-all hover:bg-[#00cec4]/15 hover:text-[#00cec4]"
+                          className="flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-sm text-on-surface transition-colors hover:bg-surface-container-low hover:text-on-surface focus:bg-surface-container-low focus:text-on-surface"
                         >
                           <span>{manager.name}</span>
                           <span className="text-[10px] text-on-surface-variant">{manager.email}</span>
@@ -1121,7 +1122,7 @@ export function CreateJobDialog({
                   required
                   value={estimatedClosureDate}
                   onChange={(e) => setEstimatedClosureDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-xl text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)] transition-all font-sans"
+                  className="w-full text-sm"
                 />
               </div>
             </div>
@@ -1136,7 +1137,7 @@ export function CreateJobDialog({
               </div>
 
               <div className="relative">
-                <input
+                <Input
                   type="text"
                   placeholder="Type employee or group name here..."
                   value={teamSearch}
@@ -1170,7 +1171,7 @@ export function CreateJobDialog({
                       }
                     }
                   }}
-                  className="w-full px-3.5 py-2.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-xl text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)] transition-all font-sans"
+                  className="w-full text-sm"
                 />
                 {showTeamDropdown && teamSearch.trim() !== "" && (
                   <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-[var(--color-surface)] border border-outline-variant rounded-xl shadow-lg z-50 p-2 space-y-2">
@@ -1268,7 +1269,7 @@ export function CreateJobDialog({
                 placeholder="Any immediate details like container discharge status, port free days, shipping line details..."
                 value={newRemarks}
                 onChange={(e) => setNewRemarks(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-xl text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)] transition-all font-sans"
+                className="w-full text-sm"
               />
             </div>
 

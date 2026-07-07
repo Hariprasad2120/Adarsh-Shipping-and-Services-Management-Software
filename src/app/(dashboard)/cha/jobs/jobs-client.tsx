@@ -313,7 +313,7 @@ export function JobsClient({
 
   return (
     <div className="space-y-8">
-      <div className="rounded-2xl border border-outline-variant/25 bg-surface p-4 shadow-sm">
+      <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative min-w-0 flex-1">
             <span className="absolute inset-y-0 left-3 flex items-center text-on-surface-variant">
