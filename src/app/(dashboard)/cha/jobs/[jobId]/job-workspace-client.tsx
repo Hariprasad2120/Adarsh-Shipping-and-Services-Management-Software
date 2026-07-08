@@ -2080,45 +2080,6 @@ export function JobWorkspaceClient({
     }
   };
 
-  const handleSaveFilingShipmentDetails = async () => {
-    if (!filingShipmentType.trim()) {
-      toast.error("Shipment type is required.");
-      return;
-    }
-    if (isImportFiling && !billOfEntryNumber.trim() && shippingBillNumber.trim()) {
-      toast.error("This job is import filing. Use only Bill of Entry Number.");
-      return;
-    }
-    if (isExportFiling && !shippingBillNumber.trim() && billOfEntryNumber.trim()) {
-      toast.error("This job is export filing. Use only Shipping Bill Number.");
-      return;
-    }
-    if (!isImportFiling && !isExportFiling && billOfEntryNumber.trim() && shippingBillNumber.trim()) {
-      toast.error("Bill of Entry Number and Shipping Bill Number cannot both be filled.");
-      return;
-    }
-
-    setLoading("filing-shipment-save");
-    try {
-      const trimmedBillNumber = filingBillNumberValue.trim() || null;
-      const res = await actions.upsertFilingShipmentDetailsAction(job.id, {
-        filingShipmentType,
-        billOfEntryNumber: isExportFiling ? null : isImportFiling ? trimmedBillNumber : billOfEntryNumber.trim() || null,
-        shippingBillNumber: isImportFiling ? null : isExportFiling ? trimmedBillNumber : shippingBillNumber.trim() || null,
-      });
-      if (res.ok) {
-        toast.success("Filing shipment details saved.");
-        router.refresh();
-      } else {
-        toast.error(res.error || "Failed to save filing shipment details.");
-      }
-    } catch (err: any) {
-      toast.error(err.message || "An unexpected error occurred.");
-    } finally {
-      setLoading(null);
-    }
-  };
-
   // Customer Advance update expected terms
   const handleUpdateAdvanceExpected = async () => {
     if (expectedAdvance <= 0) {
@@ -3949,23 +3910,30 @@ export function JobWorkspaceClient({
 
             {/* Display DO warnings and active flags inside the tab if any */}
             {doValidityWarning && (
-              <div className="bg-surface border border-[#fb923c]/45 p-4 rounded-2xl flex items-start gap-3">
-                <AlertTriangle size={20} className="text-[#fb923c] shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-bold text-xs uppercase text-[#fb923c] tracking-wider">Delivery Order Validity Notice</h4>
-                  <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
-                    {doValidityWarning.message}
-                  </p>
+              <div className="rounded-xl border border-[#fb923c]/35 bg-surface p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <span
+                    className="ds-icon-badge mt-0.5 shrink-0"
+                    style={{ background: "rgba(251,146,60,0.10)", color: "#fb923c" }}
+                  >
+                    <AlertTriangle size={18} />
+                  </span>
+                  <div className="space-y-1">
+                    <h4 className="ds-label text-[#fb923c]">Delivery Order Validity Notice</h4>
+                    <p className="text-sm text-on-surface-variant leading-relaxed">
+                      {doValidityWarning.message}
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
 
             {overdueChecklistCount > 0 && (
-              <div className="card-left-accent-orange rounded-2xl border border-[#fb923c]/45 bg-surface p-4">
+              <div className="card-left-accent-orange rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
                 <div className="flex items-start gap-3">
                   <AlertTriangle size={20} className="mt-0.5 shrink-0 text-[#fb923c]" />
                   <div className="space-y-1">
-                    <h4 className="ds-h3 text-[#fb923c]">OVERDUE FILING CHECKLIST ITEMS</h4>
+                    <h4 className="ds-label text-[#fb923c]">Overdue Filing Checklist Items</h4>
                     <p className="text-sm text-on-surface">
                       {overdueChecklistCount} Filing checklist item{overdueChecklistCount > 1 ? "s are" : " is"} overdue.
                     </p>
@@ -3978,64 +3946,33 @@ export function JobWorkspaceClient({
             )}
 
             {activeStepIndex < filingStageIndex ? (
-              <div className="bg-surface border border-outline-variant p-4 rounded-2xl flex items-start gap-3">
-                <AlertTriangle size={24} className="text-[#fb923c] shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-bold text-sm text-[#fb923c] uppercase tracking-wider">Filing Stage Locked</h4>
-                  <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
-                    Clearance files can only be submitted to customs after the checklist is approved. Complete all prior checklist preparation and approvals.
-                  </p>
+              <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <span
+                    className="ds-icon-badge mt-0.5 shrink-0"
+                    style={{ background: "rgba(251,146,60,0.10)", color: "#fb923c" }}
+                  >
+                    <AlertTriangle size={18} />
+                  </span>
+                  <div className="space-y-1">
+                    <h4 className="ds-label text-[#fb923c]">Filing Stage Locked</h4>
+                    <p className="text-sm text-on-surface-variant leading-relaxed">
+                      Clearance files can only be submitted to customs after the checklist is approved. Complete all prior checklist preparation and approvals.
+                    </p>
+                  </div>
                 </div>
               </div>
             ) : (
               // Filing visual runner dashboard
               <div className="space-y-4">
-                <div className="ds-form-section rounded-xl border border-outline-variant/60 bg-surface p-4">
-                  <h3 className="ds-h3 text-on-surface">SHIPMENT DETAILS</h3>
-                  <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="space-y-1">
-                      <label className="ds-label block">Shipment Type</label>
-                      <input
-                        value={filingShipmentType}
-                        readOnly
-                        className="w-full text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="ds-label block">{filingBillNumberLabel}</label>
-                      <input
-                        type="text"
-                        value={filingBillNumberValue}
-                        onChange={(e) => setBillNumberEverywhere(e.target.value)}
-                        placeholder={
-                          isExportFiling
-                            ? "Enter Shipping Bill Number"
-                            : isImportFiling
-                              ? "Enter Bill Of Entry Number"
-                              : "Enter Bill Number"
-                        }
-                        className="w-full text-xs"
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-xs text-on-surface-variant">
-                      Shipment direction is taken from the configured clearance flow. Only the applicable bill number field is shown here.
-                    </p>
-                    <Button onClick={handleSaveFilingShipmentDetails} disabled={loading === "filing-shipment-save"} className="text-xs h-9">
-                      {loading === "filing-shipment-save" ? "Saving..." : "Save Shipment Details"}
-                    </Button>
-                  </div>
-                </div>
-
                 {!filingInstance ? (
-                  <div className="card-top-accent rounded-2xl bg-surface border border-outline-variant/30 p-4 space-y-4 shadow-sm">
-                    <h4 className="ds-h3 text-on-surface">Filing Workflow</h4>
+                  <div className="card-top-accent rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-sm">
+                    <SectionHeading title="Filing Workflow" />
                     {loading === "filing-load" ? (
-                      <p className="text-xs text-on-surface-variant">Loading filing workflow...</p>
+                      <p className="mt-4 text-xs text-on-surface-variant">Loading filing workflow...</p>
                     ) : (
-                      <>
-                        <p className="text-xs text-on-surface-variant leading-relaxed">
+                      <div className="mt-4 space-y-4">
+                        <p className="max-w-3xl text-sm text-on-surface-variant leading-relaxed">
                           No active filing workflow instance found. Ensure a workflow is published in{" "}
                           <a href="/cha/settings/filing-workflows" className="text-[#00cec4] underline underline-offset-2">
                             CHA Settings → Filing Workflows
@@ -4045,88 +3982,83 @@ export function JobWorkspaceClient({
                         <Button
                           onClick={handleStartFilingWorkflow}
                           disabled={loading === "filing-start"}
-                          className="text-xs h-9"
                         >
                           {loading === "filing-start" ? "Starting..." : "Start Filing Workflow"}
                         </Button>
-                      </>
+                      </div>
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
                     
                     {/* Left Column: Active Step details and form */}
                     <div className="space-y-4">
                       {activeNodeRun ? (
-                        <div className="card-top-accent rounded-2xl bg-surface border border-outline-variant/30 p-4 space-y-4 shadow-sm">
+                        <div className="card-top-accent rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-sm">
                           
                           {/* Node Header */}
-                          <div className="flex flex-col gap-2 border-b border-outline-variant/30 pb-3 sm:flex-row sm:items-start sm:justify-between">
-                            <div>
-                              <span className="ds-label block text-on-surface-variant">Active Checking Stage</span>
-                              <h3 className="ds-h3 text-[#00cec4]">{activeNodeDisplayName}</h3>
+                          <div className="grid gap-4 border-b border-outline-variant/30 pb-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+                            <div className="space-y-2">
+                              <div>
+                                <span className="ds-label block text-on-surface-variant">Active Checking Stage</span>
+                                <h3 className="mt-1 ds-h2 text-on-surface">{activeNodeDisplayName}</h3>
+                              </div>
                               {(activeNodeRun.node.sectionName || activeNodeRun.node.branchName) && (
-                                <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                                <p className="text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
                                   {[activeNodeRun.node.sectionName, activeNodeRun.node.branchName].filter(Boolean).join(" / ")}
                                 </p>
                               )}
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {activeNodeRun.node.nodeType === "DECISION" ? (
-                                  <span className="rounded-lg bg-[#00cec4]/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#00cec4]">
-                                    Decision
-                                  </span>
-                                ) : null}
-                                {activeNodeRun.node.canBeSkipped ? (
-                                  <span className="rounded-lg bg-[#fb923c]/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#fb923c]">
-                                    Optional / Skippable
-                                  </span>
-                                ) : null}
+                              <div className="flex flex-wrap gap-2">
+                                {activeNodeRun.node.nodeType === "DECISION" ? <Badge variant="default">Decision</Badge> : null}
+                                {activeNodeRun.node.canBeSkipped ? <Badge variant="warning">Optional / Skippable</Badge> : null}
                               </div>
                               {activeNodeRun.node.description && (
-                                <p className="text-xs text-on-surface-variant mt-1">{activeNodeRun.node.description}</p>
+                                <p className="text-sm text-on-surface-variant">{activeNodeRun.node.description}</p>
                               )}
                               {overdueChecklistCount > 0 && (
-                                <p className="mt-2 text-xs font-semibold text-[#fb923c]">
+                                <p className="text-xs text-[#fb923c]">
                                   {overdueChecklistCount} overdue checklist item{overdueChecklistCount > 1 ? "s" : ""} in this active stage.
                                 </p>
                               )}
                             </div>
-                            {activeNodeRun.slaDueDate && (
-                              <div className="text-left">
+                            {activeNodeRun.slaDueDate ? (
+                              <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-3 lg:justify-self-end">
                                 <span className="ds-label block text-on-surface-variant">SLA Due Date</span>
-                                <span className={`text-xs font-semibold ds-numeric ${
-                                  new Date(activeNodeRun.slaDueDate).getTime() < new Date().getTime()
-                                    ? "text-red-500 font-bold"
-                                    : "text-on-surface"
-                                }`}>
+                                <span
+                                  className={`mt-1 block text-sm ds-numeric ${
+                                    new Date(activeNodeRun.slaDueDate).getTime() < new Date().getTime()
+                                      ? "text-red-500"
+                                      : "text-on-surface"
+                                  }`}
+                                >
                                   {new Date(activeNodeRun.slaDueDate).toLocaleDateString("en-IN")}
                                 </span>
                               </div>
-                            )}
+                            ) : null}
                           </div>
 
                           {/* Node run completion form */}
-                          <form onSubmit={handleCompleteFilingNode} className="space-y-4">
+                          <form onSubmit={handleCompleteFilingNode} className="space-y-4 pt-4">
                             {isBillFilingNode ? (
                               <div className="space-y-3">
                                 <h4 className="ds-label text-on-surface">Bill Filing Actions</h4>
-                                <div className="rounded-xl border border-outline-variant/60 bg-surface p-3">
-                                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                                    <div className="min-w-0">
+                                <div className="rounded-xl border border-outline-variant/60 bg-surface p-4">
+                                  <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                                    <div className="min-w-0 space-y-1">
                                       <div className="flex items-center gap-2">
                                         <FileText size={16} className="shrink-0 text-[#00cec4]" />
-                                        <span className="text-xs font-semibold text-on-surface">
+                                        <span className="text-sm font-medium text-on-surface">
                                           {billFilingDocumentAttachment?.fileName || "Bill document not uploaded"}
                                         </span>
                                       </div>
-                                      <p className="mt-1 text-xs text-on-surface-variant">
+                                      <p className="text-xs text-on-surface-variant">
                                         {billFilingNumberEntered
                                           ? `${filingBillNumberLabel}: ${filingFieldValues.bill_number}`
                                           : `Fill ${filingBillNumberLabel} after uploading the bill document.`}
                                       </p>
                                     </div>
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <div className="w-full sm:w-[250px]">
+                                    <div className="flex w-full flex-col gap-2 sm:flex-row xl:w-auto xl:items-center">
+                                      <div className="w-full sm:flex-1 xl:w-[320px]">
                                         <FileUploadField
                                           id={`bill-document-upload-${activeNodeRun.id}`}
                                           compact
@@ -4143,22 +4075,23 @@ export function JobWorkspaceClient({
                                       <Button
                                         type="button"
                                         onClick={() => setShowBillNumberEntry((current) => !current)}
+                                        className="sm:w-auto"
                                       >
                                         {billFilingNumberEntered ? "Edit Bill" : "Fill Bill"}
                                       </Button>
                                     </div>
                                   </div>
                                   {showBillNumberEntry ? (
-                                    <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto] md:items-end">
+                                    <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
                                       <label className="space-y-1.5">
                                         <span className="ds-label block text-on-surface-variant">
                                           {filingBillNumberLabel} *
                                         </span>
-                                        <input
+                                        <Input
                                           value={filingFieldValues.bill_number || ""}
                                           onChange={(e) => setBillNumberEverywhere(e.target.value)}
                                           placeholder={`Enter ${filingBillNumberLabel}`}
-                                          className="w-full text-sm"
+                                          className="w-full"
                                         />
                                       </label>
                                       <Button
@@ -4791,7 +4724,7 @@ export function JobWorkspaceClient({
                                   </div>
                                 )
                               ) : (
-                                <div className="rounded-2xl bg-[#00cec4]/10 border border-[#00cec4]/20 p-3 text-xs text-on-surface-variant">
+                                <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
                                   Completing this node will finalize the Filing workflow and transition the job stage to <strong>FILED</strong>.
                                 </div>
                               )}
@@ -4816,7 +4749,7 @@ export function JobWorkspaceClient({
                               <Button
                                 type="submit"
                                 disabled={loading !== null}
-                                className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-5 py-2.5 rounded-2xl text-sm uppercase tracking-wide transition-all font-semibold"
+                                className="w-full sm:w-auto sm:min-w-[320px]"
                               >
                                 {loading === "filing-complete" ? "Completing Stage..." : outgoingEdges.length > 0 ? "Complete & Move to Next Stage" : "Complete & File Customs Bill"}
                               </Button>
@@ -4867,12 +4800,17 @@ export function JobWorkspaceClient({
                         </div>
                       ) : (
                         // No active runs but filing instance exists (Filing completed)
-                        <div className="rounded-2xl border border-green-200 bg-green-50/5 p-4 space-y-4 shadow-sm">
-                          <div className="flex items-center gap-2 text-green-700">
-                            <CheckCircle2 size={24} className="shrink-0" />
-                            <h4 className="font-bold text-base uppercase tracking-wide">Customs Filing Workflow Complete</h4>
+                        <div className="card-top-accent rounded-xl border border-outline-variant/60 bg-surface p-5 space-y-4 shadow-sm">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span className="ds-icon-badge">
+                              <CheckCircle2 size={18} />
+                            </span>
+                            <div className="space-y-1">
+                              <h4 className="ds-h3 text-on-surface">Customs Filing Workflow Complete</h4>
+                              <Badge variant="success">Filed</Badge>
+                            </div>
                           </div>
-                          <p className="text-xs text-on-surface-variant max-w-xl">
+                          <p className="max-w-xl text-sm text-on-surface-variant">
                             All blueprint checklist checks have been completed and the customs submission has been filed. The job stage is updated to <strong>FILED</strong>.
                           </p>
                           <div className="grid grid-cols-2 gap-4 rounded-xl border border-outline-variant bg-surface-container-low p-4 text-xs max-w-md">
@@ -4893,7 +4831,7 @@ export function JobWorkspaceClient({
 
                     {/* Right Column: Timeline / History log */}
                     <div className="space-y-4">
-                      <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4 shadow-sm">
+                      <div className="rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-sm xl:sticky xl:top-24">
                         <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
                           <h4 className="ds-label block text-on-surface">Execution Blueprint Timeline</h4>
                           <span className="text-[10px] text-on-surface-variant font-medium ds-numeric">
@@ -4902,25 +4840,23 @@ export function JobWorkspaceClient({
                         </div>
 
                         {filingInstance.nodeRuns?.length === 0 ? (
-                          <p className="text-xs text-on-surface-variant italic">No workflow checks executed yet.</p>
+                          <p className="pt-4 text-xs text-on-surface-variant italic">No workflow checks executed yet.</p>
                         ) : (
-                          <div className="relative pl-5 space-y-4 before:absolute before:left-[8px] before:top-2 before:bottom-2 before:w-[2px] before:bg-outline-variant/40">
+                          <div className="relative space-y-4 pt-4 pl-5 before:absolute before:left-[8px] before:top-6 before:bottom-2 before:w-[2px] before:bg-outline-variant/40">
                             {filingInstance.nodeRuns.map((run: any) => {
                               const isCurrent = run.status === "ACTIVE";
+                              const runBadgeVariant =
+                                run.status === "ACTIVE" ? "default" : run.completedAt ? "success" : "secondary";
                               return (
                                 <div key={run.id} className="relative space-y-1 text-xs">
                                   <span className={`absolute -left-[21px] top-1.5 h-3.5 w-3.5 rounded-full border-2 border-surface ${
-                                    isCurrent ? "bg-[#00cec4] animate-pulse" : "bg-outline-variant"
+                                    isCurrent ? "bg-[#00cec4] animate-pulse" : run.completedAt ? "bg-[#00cec4]/70" : "bg-outline-variant"
                                   }`} />
-                                  <div className="flex flex-wrap items-center justify-between gap-1">
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
                                     <span className={`font-semibold ${isCurrent ? "text-[#00cec4]" : "text-on-surface"}`}>
                                       {run.node?.name || run.nodeKey}
                                     </span>
-                                    <span className={`text-[10px] font-medium uppercase px-1.5 py-0.5 rounded-md ${
-                                      isCurrent ? "bg-[#00cec4]/10 text-[#00cec4]" : "bg-surface-container-high text-on-surface-variant"
-                                    }`}>
-                                      {run.status}
-                                    </span>
+                                    <Badge variant={runBadgeVariant}>{run.status}</Badge>
                                   </div>
                                   <p className="text-[10px] text-on-surface-variant ds-numeric">
                                     Started: {new Date(run.startedAt).toLocaleString("en-IN")}
