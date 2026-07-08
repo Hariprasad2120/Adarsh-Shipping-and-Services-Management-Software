@@ -10563,6 +10563,103 @@ export async function updateFilingWorkflowQueryStatus(
   return updated;
 }
 
+export async function upsertFilingWorkflowToggleState(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  nodeRunId: string,
+  input: {
+    sectionKey: string;
+    isEnabled: boolean;
+    state?: Record<string, unknown> | null;
+  },
+) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: { id: jobId, orgId },
+    select: {
+      id: true,
+      primaryOwnerId: true,
+      assignedManagerId: true,
+      assignments: {
+        select: {
+          userId: true,
+        },
+      },
+      jobType: {
+        select: {
+          movementDirection: true,
+        },
+      },
+    },
+  });
+
+  await assertCanAccessFiling(actorId, job);
+
+  const nodeRun = await db.filingNodeRun.findFirstOrThrow({
+    where: {
+      id: nodeRunId,
+      instance: {
+        jobId,
+      },
+    },
+    include: {
+      node: true,
+      instance: true,
+    },
+  });
+
+  if (nodeRun.status !== "ACTIVE") {
+    throw new Error("This filing workflow section can only be updated on the active stage.");
+  }
+
+  const sectionKey = input.sectionKey.trim();
+  if (!sectionKey) {
+    throw new Error("Section key is required.");
+  }
+
+  const updated = await db.filingToggleState.upsert({
+    where: {
+      instanceId_nodeId_sectionKey: {
+        instanceId: nodeRun.instanceId,
+        nodeId: nodeRun.nodeId,
+        sectionKey,
+      },
+    },
+    create: {
+      instanceId: nodeRun.instanceId,
+      nodeRunId: nodeRun.id,
+      nodeId: nodeRun.nodeId,
+      sectionKey,
+      isEnabled: input.isEnabled,
+      stateJson: (input.state ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+      updatedById: actorId,
+    },
+    update: {
+      nodeRunId: nodeRun.id,
+      isEnabled: input.isEnabled,
+      stateJson: (input.state ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+      updatedById: actorId,
+    },
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "FilingToggleState",
+    entityId: `${nodeRun.instanceId}:${nodeRun.nodeId}:${sectionKey}`,
+    event: "FILING_TOGGLE_STATE_UPDATED",
+    actorId,
+    remarks: `Updated filing workflow section "${sectionKey}" on node "${nodeRun.node.name}".`,
+    metadata: {
+      sectionKey,
+      isEnabled: input.isEnabled,
+      state: input.state ?? null,
+    },
+  });
+
+  return updated;
+}
+
 async function resolveConfiguredValidityDate(params: {
   uploadedAt: Date;
   explicitValidityDate?: Date | null;

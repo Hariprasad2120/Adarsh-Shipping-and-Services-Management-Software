@@ -55,6 +55,16 @@ type PhotoRequirementDraft = DocumentValidityDraft & {
   isVisibleInTimeline: boolean;
 };
 
+type ConditionalSectionDraft = {
+  key: string;
+  label: string;
+  type: string;
+  defaultEnabled: boolean;
+  unlocksDocuments: unknown[];
+  unlocksFields: unknown[];
+  config: Record<string, unknown> | null;
+};
+
 type DocumentRuleOptions = Partial<DocumentValidityDraft> & {
   allowsUpload?: boolean;
   minUploads?: number;
@@ -96,6 +106,7 @@ type NodeDraft = {
   allowedRoles: string[];
   checklistItems: ChecklistItemDraft[];
   photoRequirements: PhotoRequirementDraft[];
+  conditionalSections: ConditionalSectionDraft[];
 };
 
 type EdgeDraft = {
@@ -109,6 +120,7 @@ const NODE_WIDTH = 272;
 const NODE_HEIGHT = 154;
 const MIN_ZOOM = 0.45;
 const MAX_ZOOM = 2.2;
+const QUERY_PROCESSING_SECTION_KEY = "query_processing";
 
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -117,6 +129,20 @@ function createId(prefix: string) {
 function slugify(value: string) {
   const normalized = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
   return normalized || "node";
+}
+
+function createQueryProcessingSection(): ConditionalSectionDraft {
+  return {
+    key: QUERY_PROCESSING_SECTION_KEY,
+    label: "Enable Query Processing",
+    type: "TOGGLE",
+    defaultEnabled: true,
+    unlocksDocuments: [],
+    unlocksFields: [],
+    config: {
+      moduleType: "CUSTOMS_QUERY_PROCESSING",
+    },
+  };
 }
 
 function normalizeValidityUnit(value: any): ValidityUnit {
@@ -169,6 +195,18 @@ function normalizePhotoRequirement(item: any): PhotoRequirementDraft {
   };
 }
 
+function normalizeConditionalSection(item: any, index: number): ConditionalSectionDraft {
+  return {
+    key: item.key || `section_${index + 1}`,
+    label: item.label || `Section ${index + 1}`,
+    type: item.type || "TOGGLE",
+    defaultEnabled: !!item.defaultEnabled,
+    unlocksDocuments: Array.isArray(item.unlocksDocuments) ? item.unlocksDocuments : [],
+    unlocksFields: Array.isArray(item.unlocksFields) ? item.unlocksFields : [],
+    config: item.config && typeof item.config === "object" ? item.config : null,
+  };
+}
+
 function normalizeNode(node: any, index: number): NodeDraft {
   return {
     id: node.id || createId("node"),
@@ -198,6 +236,9 @@ function normalizeNode(node: any, index: number): NodeDraft {
     allowedRoles: Array.isArray(node.allowedRoles) ? node.allowedRoles : [],
     checklistItems: Array.isArray(node.checklistItems) ? node.checklistItems.map(normalizeChecklistItem) : [],
     photoRequirements: Array.isArray(node.photoRequirements) ? node.photoRequirements.map(normalizePhotoRequirement) : [],
+    conditionalSections: Array.isArray(node.conditionalSectionsJson ?? node.conditionalSections)
+      ? (node.conditionalSectionsJson ?? node.conditionalSections).map(normalizeConditionalSection)
+      : [],
   };
 }
 
@@ -370,6 +411,7 @@ function createWorkflowStageNode(
     canBeSkipped?: boolean;
     requireMandatoryPhotos?: boolean;
     photoRequirements?: PhotoRequirementDraft[];
+    conditionalSections?: ConditionalSectionDraft[];
   } = {},
 ): NodeDraft {
   return {
@@ -400,6 +442,7 @@ function createWorkflowStageNode(
     allowedRoles: [],
     checklistItems: [],
     photoRequirements: options.photoRequirements || [],
+    conditionalSections: options.conditionalSections || [],
   };
 }
 
@@ -417,6 +460,7 @@ function createWorkflowChecklistNode(
     nodeDescription?: string;
     canBeSkipped?: boolean;
     photoRequirements?: PhotoRequirementDraft[];
+    conditionalSections?: ConditionalSectionDraft[];
   } = {},
 ): NodeDraft {
   return {
@@ -444,9 +488,10 @@ function createWorkflowChecklistNode(
     approvalRoles: [],
     requireAllMandatoryChecklistItems: options.isMandatory === false ? false : true,
     requireMandatoryPhotos: !!options.allowsUpload,
-    allowedRoles: [],
-    checklistItems: [createChecklistItemDraft(label, 1, options)],
-    photoRequirements: options.photoRequirements || (options.allowsUpload ? [createStageUploadSlot(`${label} document`, options)] : []),
+      allowedRoles: [],
+      checklistItems: [createChecklistItemDraft(label, 1, options)],
+      photoRequirements: options.photoRequirements || (options.allowsUpload ? [createStageUploadSlot(`${label} document`, options)] : []),
+      conditionalSections: options.conditionalSections || [],
   };
 }
 
@@ -485,6 +530,7 @@ function createWorkflowNotificationNode(
     allowedRoles: [],
     checklistItems: [],
     photoRequirements: [],
+    conditionalSections: [],
   };
 }
 
@@ -745,6 +791,7 @@ function buildChaFilingBlueprintDraft() {
       {
         description: `${filingNodeLabel} is the first stage for ${flowKind === "IMPORT" ? "import" : "export"} filing. After this, the user chooses First Check or Second Check.`,
         nodeDescription: `${flowKind === "IMPORT" ? "Import" : "Export"} filing starts here. Once completed, choose whether the job follows First Check or Second Check.`,
+        conditionalSections: [createQueryProcessingSection()],
       },
     );
     addEdge(entrySourceKey, filingNode.key, entryEdgeLabel);
@@ -2300,6 +2347,28 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                       <span>{label}</span>
                     </label>
                   ))}
+                </div>
+                <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3">
+                  <label className="flex items-center gap-2 text-sm text-on-surface">
+                    <input
+                      type="checkbox"
+                      checked={selectedNode.conditionalSections.some((section) => section.key === QUERY_PROCESSING_SECTION_KEY)}
+                      onChange={(event) =>
+                        updateSelectedNode((node) => ({
+                          ...node,
+                          conditionalSections: event.target.checked
+                            ? node.conditionalSections.some((section) => section.key === QUERY_PROCESSING_SECTION_KEY)
+                              ? node.conditionalSections
+                              : [...node.conditionalSections, createQueryProcessingSection()]
+                            : node.conditionalSections.filter((section) => section.key !== QUERY_PROCESSING_SECTION_KEY),
+                        }))
+                      }
+                    />
+                    <span>Enable Query Processing Module</span>
+                  </label>
+                  <p className="mt-2 text-xs text-on-surface-variant">
+                    Adds the reusable post-filing customs query workflow to this node. Operators can record whether no query was raised, open a query thread, post offline response updates, and clear the query before moving ahead.
+                  </p>
                 </div>
                 {selectedNode.approvalRequired ? (
                   <div className="space-y-1.5">

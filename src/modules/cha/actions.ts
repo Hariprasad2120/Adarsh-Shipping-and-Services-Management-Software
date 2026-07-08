@@ -1351,6 +1351,25 @@ export async function addFilingWorkflowQueryCommentAction(
   }
 }
 
+export async function upsertFilingWorkflowToggleStateAction(
+  jobId: string,
+  nodeRunId: string,
+  data: {
+    sectionKey: string;
+    isEnabled: boolean;
+    state?: Record<string, unknown> | null;
+  },
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const result = await chaService.upsertFilingWorkflowToggleState(userId, orgId, jobId, nodeRunId, data);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update filing workflow section state" };
+  }
+}
+
 export async function uploadFilingAttachmentAction(
   jobId: string,
   nodeRunId: string,
