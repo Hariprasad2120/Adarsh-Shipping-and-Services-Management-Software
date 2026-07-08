@@ -118,6 +118,21 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
     }
   };
 
+  const handleDelete = async () => {
+    setBusy(true);
+    try {
+      const response = await actions.deleteDeliveryOrderDocumentAction(jobId);
+      if (!response.ok) {
+        toast.error(response.error || "Failed to delete Delivery Order document.");
+        return;
+      }
+      toast.success("Delivery Order document deleted.");
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
@@ -154,22 +169,23 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
                   ? "Drag and drop or choose file to replace the Delivery Order document"
                   : "Drag and drop or choose file to upload the Delivery Order document"
               }
-              showSelectedPreview={false}
+              selectedFile={
+                additionalData.doDocumentFileKey
+                  ? {
+                      href: additionalData.doDocumentFileKey,
+                      name: additionalData.doDocumentFileName || "Delivery Order document",
+                      statusLabel: additionalData.doDocumentUploadedAt
+                        ? `Uploaded ${new Date(additionalData.doDocumentUploadedAt).toLocaleDateString("en-IN")}`
+                        : "Uploaded",
+                    }
+                  : null
+              }
+              onClear={additionalData.doDocumentFileKey && canUpdateJob ? () => void handleDelete() : undefined}
               onInputChange={(e) => void handleUpload(e.target.files?.[0] ?? null)}
             />
-            {additionalData.doDocumentFileKey ? (
-              <a
-                href={additionalData.doDocumentFileKey}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#00cec4] hover:underline"
-              >
-                <ExternalLink size={13} />
-                {additionalData.doDocumentFileName || "View document"}
-              </a>
-            ) : (
+            {!additionalData.doDocumentFileKey ? (
               <span className="text-xs text-on-surface-variant">No Delivery Order document uploaded yet.</span>
-            )}
+            ) : null}
           </div>
         ) : null}
 

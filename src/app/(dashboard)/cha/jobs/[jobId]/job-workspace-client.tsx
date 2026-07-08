@@ -431,11 +431,12 @@
     const [filingQueryDetails, setFilingQueryDetails] = useState("");
     const [filingQueryReferenceNumber, setFilingQueryReferenceNumber] = useState("");
     const [filingQueryOfficerName, setFilingQueryOfficerName] = useState("");
-    const [filingQueryReceivedAt, setFilingQueryReceivedAt] = useState("");
-    const [filingQueryStatusUpdates, setFilingQueryStatusUpdates] = useState<Record<string, string>>({});
-    const [filingQueryResponderNames, setFilingQueryResponderNames] = useState<Record<string, string>>({});
-    const [executionTimelineModalOpen, setExecutionTimelineModalOpen] = useState(false);
-    const [goBackOpen, setGoBackOpen] = useState(false);
+  const [filingQueryReceivedAt, setFilingQueryReceivedAt] = useState("");
+  const [filingQueryStatusUpdates, setFilingQueryStatusUpdates] = useState<Record<string, string>>({});
+  const [filingQueryResponderNames, setFilingQueryResponderNames] = useState<Record<string, string>>({});
+  const [executionTimelineModalOpen, setExecutionTimelineModalOpen] = useState(false);
+  const [queryManagementModalOpen, setQueryManagementModalOpen] = useState(false);
+  const [goBackOpen, setGoBackOpen] = useState(false);
     const [goBackReason, setGoBackReason] = useState("");
     const [nodeRemarks, setNodeRemarks] = useState("");
     const [selectedNextNodeKey, setSelectedNextNodeKey] = useState<string>("");
@@ -575,6 +576,17 @@
       }
       return "AWAITING_QUERY_DECISION";
     }, [activeNodeOpenQueries.length, activeNodeQueries, queryProcessingEnabled, queryProcessingState]);
+    const primaryQuerySummary = activeNodeOpenQueries[0] || activeNodeQueries[0] || null;
+    const querySummaryStatusLabel =
+      queryProcessingStage === "RESPONDED"
+        ? "Awaiting Customs Outcome"
+        : queryProcessingStage === "OPEN"
+          ? "Awaiting Response"
+          : queryProcessingStage === "CLEARED"
+            ? "Cleared"
+            : queryProcessingStage === "NO_QUERY"
+              ? "No Query Raised"
+              : "Pending Decision";
     const billFilingCanChooseQuery = queryProcessingEnabled && billFilingReadyForRouting;
     const queryProcessingResolved =
       !queryProcessingEnabled || queryProcessingStage === "NO_QUERY" || queryProcessingStage === "CLEARED";
@@ -824,6 +836,17 @@
       currentInternalApprovals.find((approval: any) => approval.action === "APPROVED") ?? null;
     const approvedCustomerDecision =
       currentCustomerApprovals.find((approval: any) => approval.action === "APPROVED") ?? null;
+    const getChecklistVersionStatus = (versionId?: string | null) => {
+      if (!versionId) return null;
+      const versionApprovals = checklistApprovals.filter((approval: any) => approval.fileVersionId === versionId);
+      if (versionApprovals.some((approval: any) => approval.action === "REJECTED")) {
+        return { label: "Rejected", variant: "destructive" as const };
+      }
+      if (versionApprovals.some((approval: any) => approval.action === "APPROVED")) {
+        return { label: "Approved", variant: "success" as const };
+      }
+      return null;
+    };
     const canCurrentUserInternalApprove =
       canInternalApproveChecklist ||
       currentInternalApprovals.some((approval: any) => approval.assignedToId === currentUserId && approval.action === "PENDING");
@@ -1309,18 +1332,18 @@
       }
     };
 
-    const handleUploadChecklist = async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      if (!checklistFile || checklistFile.size === 0) {
+    const handleUploadChecklist = async (file: File | null) => {
+      if (!file || file.size === 0) {
         toast.error("Please choose a checklist file to upload.");
         return;
       }
 
+      setChecklistFile(file);
       setLoading("checklist-upload");
       try {
-        const localUrl = URL.createObjectURL(checklistFile);
+        const localUrl = URL.createObjectURL(file);
         const formData = new FormData();
-        formData.append("file", checklistFile);
+        formData.append("file", file);
         if (checklistRemarks) {
           formData.append("remarks", checklistRemarks);
         }
@@ -1336,9 +1359,11 @@
           setChecklistRemarks("");
           router.refresh();
         } else {
+          setChecklistFile(null);
           toast.error(res.error || "Checklist upload failed.");
         }
       } catch (err: any) {
+        setChecklistFile(null);
         toast.error(err.message || "An unexpected error occurred.");
       } finally {
         setLoading(null);
@@ -3700,7 +3725,7 @@
 
                   <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
                     <div className="space-y-4">
-                      <form onSubmit={handleUploadChecklist} className="space-y-4">
+                      <div className="space-y-4">
                         <div className="space-y-1">
                           <span className="ds-label">
                             {currentChecklistVersion ? "Replacement Upload" : "Checklist Upload"}
@@ -3735,7 +3760,7 @@
 
                         <FileUploadField
                           id="checklist-file-upload"
-                          disabled={internalApproversCount === 0}
+                          disabled={loading === "checklist-upload" || internalApproversCount === 0}
                           helperText="Any file format is allowed here. The uploaded file will move into internal approval automatically."
                           triggerText="Drag and drop or choose checklist file to upload"
                           selectedFile={
@@ -3744,12 +3769,12 @@
                                   file: checklistFile,
                                   name: checklistFile.name,
                                   sizeBytes: checklistFile.size,
-                                  statusLabel: "Ready",
+                                  statusLabel: loading === "checklist-upload" ? "Uploading" : "Ready",
                                 }
                               : null
                           }
                           onClear={() => setChecklistFile(null)}
-                          onInputChange={(e) => setChecklistFile(e.target.files?.[0] || null)}
+                          onInputChange={(e) => handleUploadChecklist(e.target.files?.[0] || null)}
                         />
                         <textarea
                           rows={2}
@@ -3759,38 +3784,13 @@
                           placeholder="Optional upload remarks"
                           className="ds-textarea w-full disabled:opacity-50"
                         />
-                        <div className="flex justify-end">
-                          <Button type="submit" disabled={loading === "checklist-upload" || internalApproversCount === 0} className="w-full sm:w-auto">
-                            {loading === "checklist-upload" ? "Uploading..." : currentChecklistVersion ? "Reupload Checklist" : "Upload Checklist"}
-                          </Button>
-                        </div>
-                      </form>
+                      </div>
 
                       {currentChecklistVersion ? (
                         <div className="space-y-4">
                           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                             <div>
                               <span className="ds-label">Current File</span>
-                              <p className="mt-1 text-sm font-semibold text-on-surface">{currentChecklistVersion.originalFileName}</p>
-                              <p className="mt-1 text-xs text-on-surface-variant">
-                                {getUserName(currentChecklistVersion.uploadedById)} • {new Date(currentChecklistVersion.uploadedAt).toLocaleString("en-IN")}
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setViewingVersion({
-                                  ...currentChecklistVersion,
-                                  type: 'checklist',
-                                  fileName: currentChecklistVersion.originalFileName,
-                                  sizeBytes: currentChecklistVersion.fileSize,
-                                  uploadedBy: { name: getUserName(currentChecklistVersion.uploadedById) },
-                                })}
-                              >
-                                View
-                              </Button>
                             </div>
                           </div>
 
@@ -3800,21 +3800,47 @@
                                 <tr>
                                   <th>Version</th>
                                   <th>File</th>
+                                  <th>Status</th>
                                   <th>Uploaded By</th>
                                   <th>Uploaded At</th>
                                 </tr>
                               </thead>
                               <tbody>
-                                {checklistWorkflow?.fileVersions?.map((version: any) => (
+                                {checklistWorkflow?.fileVersions?.map((version: any) => {
+                                  const versionStatus = getChecklistVersionStatus(version.id);
+                                  return (
                                   <tr key={version.id}>
                                     <td className="ds-numeric font-medium">V{version.versionNumber}</td>
-                                    <td className="text-xs text-on-surface">{version.originalFileName}</td>
+                                    <td className="text-xs">
+                                      <button
+                                        type="button"
+                                        className="ds-plain cha-link text-xs font-medium"
+                                        onClick={() => setViewingVersion({
+                                          ...version,
+                                          type: "checklist",
+                                          fileName: version.originalFileName,
+                                          sizeBytes: version.fileSize,
+                                          uploadedBy: { name: getUserName(version.uploadedById) },
+                                        })}
+                                      >
+                                        {version.originalFileName}
+                                      </button>
+                                    </td>
+                                    <td className="text-xs text-on-surface">
+                                      {versionStatus ? (
+                                        <Badge variant={versionStatus.variant} className="uppercase">
+                                          {versionStatus.label}
+                                        </Badge>
+                                      ) : (
+                                        <span className="text-on-surface-variant">Pending</span>
+                                      )}
+                                    </td>
                                     <td className="text-xs text-on-surface">{getUserName(version.uploadedById)}</td>
                                     <td className="text-xs text-on-surface ds-numeric">
                                       {new Date(version.uploadedAt).toLocaleString("en-IN")}
                                     </td>
                                   </tr>
-                                ))}
+                                )})}
                               </tbody>
                             </table>
                           </div>
@@ -3825,36 +3851,36 @@
                     <div className="space-y-4">
                       <div className="card-cyan-outline rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4 shadow-sm">
                         <div className="space-y-3">
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div>
-                              <span className="ds-label">Internal Approval</span>
-                              <p className="mt-1 text-sm font-semibold text-on-surface">
-                                {!checklistWorkflow
-                                  ? "Starts after checklist upload."
-                                  : approvedInternalDecision
-                                  ? `Approved by ${getUserName(approvedInternalDecision.actedById || approvedInternalDecision.assignedToId)}`
-                                  : checklistWorkflow.currentApprovalStage === "INTERNAL"
-                                  ? "Awaiting one internal approval."
-                                  : "Waiting for the current file version."}
-                              </p>
-                            </div>
-                            <Badge
-                              variant={
-                                approvedInternalDecision
-                                  ? "success"
+                          <SectionHeading
+                            title="Internal Approval"
+                            aside={
+                              <Badge
+                                variant={
+                                  approvedInternalDecision
+                                    ? "success"
+                                    : checklistWorkflow?.currentApprovalStage === "INTERNAL"
+                                    ? "warning"
+                                    : "secondary"
+                                }
+                                className="uppercase"
+                              >
+                                {approvedInternalDecision
+                                  ? "Approved"
                                   : checklistWorkflow?.currentApprovalStage === "INTERNAL"
-                                  ? "warning"
-                                  : "secondary"
-                              }
-                              className="uppercase"
-                            >
-                              {approvedInternalDecision
-                                ? "Approved"
-                                : checklistWorkflow?.currentApprovalStage === "INTERNAL"
-                                ? "Pending"
-                                : "Locked"}
-                            </Badge>
-                          </div>
+                                  ? "Pending"
+                                  : "Locked"}
+                              </Badge>
+                            }
+                          />
+                          <p className="text-sm font-semibold text-on-surface">
+                            {!checklistWorkflow
+                              ? "Starts after checklist upload."
+                              : approvedInternalDecision
+                              ? `Approved by ${getUserName(approvedInternalDecision.actedById || approvedInternalDecision.assignedToId)}`
+                              : checklistWorkflow.currentApprovalStage === "INTERNAL"
+                              ? "Awaiting one internal approval."
+                              : "Waiting for the current file version."}
+                          </p>
 
                           <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-3 space-y-2">
                             {approvedInternalDecision ? (
@@ -3920,9 +3946,9 @@
                       </div>
 
                       <div className="card-cyan-outline rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4 shadow-sm">
-                        <div>
-                          <span className="ds-label">Customer Approval</span>
-                          <p className="mt-1 text-sm text-on-surface">
+                        <div className="space-y-3">
+                          <SectionHeading title="Customer Approval" />
+                          <p className="text-sm text-on-surface">
                             {approvedCustomerDecision
                               ? `Approved by ${getUserName(approvedCustomerDecision.actedById || approvedCustomerDecision.assignedToId)} on behalf of concerned job users on ${approvedCustomerDecision.actedAt ? new Date(approvedCustomerDecision.actedAt).toLocaleString("en-IN") : "Pending"}`
                               : checklistWorkflow?.currentApprovalStage === "CUSTOMER" && !latestCustomerMailLog
@@ -3936,12 +3962,12 @@
                               : "Customer approval starts after the first successful internal approval."}
                           </p>
                           {latestCustomerMailLog ? (
-                            <p className="mt-1 text-xs text-on-surface-variant">
+                            <p className="text-xs text-on-surface-variant">
                               Mail recipients: {(latestCustomerMailLog.recipients || []).join(", ")}. Attachment: {latestCustomerMailLog.attachmentFileName || currentChecklistVersion?.originalFileName || "Checklist file"}.
                             </p>
                           ) : null}
                           {checklistWorkflow?.currentApprovalStage === "CUSTOMER" && !approvedCustomerDecision ? (
-                            <p className="mt-1 text-xs text-on-surface-variant">
+                            <p className="text-xs text-on-surface-variant">
                               Eligible approvers: any concerned user linked to this job, including the job owner.
                               {pendingCustomerApproverNames.length > 0 ? ` Current linked users: ${pendingCustomerApproverNames.join(", ")}` : ""}
                             </p>
@@ -4214,12 +4240,12 @@
                             {/* Node run completion form */}
                             <form
                               onSubmit={handleCompleteFilingNode}
-                              className={isBillFilingNode ? "grid gap-4 pt-4 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.95fr)]" : "space-y-4 pt-4"}
+                              className={isBillFilingNode ? "grid gap-3 pt-2 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.92fr)]" : "space-y-4 pt-4"}
                             >
-                              {isBillFilingNode ? (
-                                <div className="space-y-3 xl:col-start-1">
-                                  <div className="grid gap-4">
-                                    <label className="space-y-1.5">
+                            {isBillFilingNode ? (
+                              <div className="space-y-2 xl:col-start-1">
+                                <div className="grid gap-3">
+                                  <label className="space-y-1">
                                       <span className="ds-label block text-on-surface-variant">
                                         {filingBillNumberLabel} *
                                       </span>
@@ -4229,12 +4255,18 @@
                                         placeholder={`Enter ${filingBillNumberLabel}`}
                                         className="w-full"
                                       />
-                                      <p className="text-xs text-on-surface-variant">
-                                        Add the filed bill number here while uploading the document. You can complete both actions in one pass.
-                                      </p>
-                                    </label>
-                                    <h4 className="ds-label text-on-surface">Bill Filing Actions</h4>
-                                    <FileUploadField
+                                    <p className="text-[11px] leading-snug text-on-surface-variant">
+                                      Add the filed bill number here while uploading the document. You can complete both actions in one pass.
+                                    </p>
+                                    {!billFilingNumberEntered ? (
+                                      <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/8 px-3 py-1.5 text-xs text-red-600">
+                                        <AlertTriangle size={14} className="shrink-0 text-red-500" />
+                                        <span>Enter the bill number to continue with query status or move to the next step.</span>
+                                      </div>
+                                    ) : null}
+                                  </label>
+                                  <h4 className="ds-label text-on-surface">Bill Filing Actions</h4>
+                                  <FileUploadField
                                       id={`bill-document-upload-${activeNodeRun.id}`}
                                       disabled={loading === "node-document-bill_document"}
                                       helperText="Upload the bill document here and enter the bill number alongside it. Both are required before continuing."
@@ -4251,17 +4283,23 @@
                                               statusLabel: "Uploaded",
                                             }
                                           : null
-                                      }
-                                      onInputChange={(e) => handleUploadNodeDocument("bill_document", e)}
-                                    />
-                                  </div>
+                                    }
+                                    onInputChange={(e) => handleUploadNodeDocument("bill_document", e)}
+                                  />
+                                  {!billFilingDocumentUploaded ? (
+                                    <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/8 px-3 py-1.5 text-xs text-red-600">
+                                      <AlertTriangle size={14} className="shrink-0 text-red-500" />
+                                      <span>Upload the bill document to continue with query status or move to the next step.</span>
+                                    </div>
+                                  ) : null}
                                 </div>
-                              ) : null}
+                              </div>
+                            ) : null}
 
                               {(activeNodeRun.node.fieldDefinitionsJson || []).filter((field: any) => !(isBillFilingNode && field.key === "bill_number")).length > 0 && (
-                                <div className={`space-y-3 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
+                                <div className={`space-y-2 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
                                   <h4 className="ds-label text-on-surface">Configured Fields</h4>
-                                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                  <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
                                     {(activeNodeRun.node.fieldDefinitionsJson || []).filter((field: any) => !(isBillFilingNode && field.key === "bill_number")).map((field: any) => (
                                       <div key={field.key} className="space-y-1">
                                         <label className="ds-label block text-on-surface-variant">
@@ -4284,11 +4322,11 @@
                               )}
 
                               {(activeNodeRun.node.conditionalSectionsJson?.length > 0 || (activeNodeRun.node.documentRequirementsJson || []).filter((requirement: any) => !(isBillFilingNode && requirement.key === "bill_document")).length > 0) && (
-                                <div className={`space-y-3 pt-1 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
+                                <div className={`space-y-2.5 pt-0.5 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
                                   <h4 className="ds-label text-on-surface">Conditional Sections & Documents</h4>
-                                  <div className="space-y-3">
+                                  <div className="space-y-2.5">
                                     {(activeNodeRun.node.conditionalSectionsJson || []).map((section: any) => (
-                                      <div key={section.key} className="rounded-xl border border-outline-variant bg-surface-container-low p-3 space-y-3">
+                                      <div key={section.key} className="rounded-xl border border-outline-variant bg-surface-container-low p-3 space-y-2.5">
                                         <div className="flex items-center gap-3 text-sm text-on-surface">
                                           <NeonCheckbox
                                             checked={!!filingToggleStates[section.key]}
@@ -4307,7 +4345,7 @@
                                           />
                                         </div>
                                         {filingToggleStates[section.key] && section.unlocksFields?.length > 0 && (
-                                          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                          <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
                                             {section.unlocksFields.map((field: any) => (
                                               <div key={field.key} className="space-y-1">
                                                 <label className="ds-label block text-on-surface-variant">
@@ -4324,7 +4362,7 @@
                                           </div>
                                         )}
                                         {filingToggleStates[section.key] && section.unlocksDocuments?.length > 0 && (
-                                          <div className="space-y-2">
+                                          <div className="space-y-1.5">
                                             {section.unlocksDocuments.map((requirement: any) => (
                                               <div key={requirement.key} className="rounded-xl border border-outline-variant/60 bg-surface p-3">
                                                 <div className="flex items-center justify-between gap-3">
@@ -4372,367 +4410,100 @@
                                 </div>
                               )}
 
-                              {isBillFilingNode && !billFilingDocumentUploaded ? (
-                                <div className="rounded-2xl border border-[#fb923c]/35 bg-[#fb923c]/10 p-4 text-xs text-on-surface xl:col-span-2">
-                                  Upload the bill document to continue with query status or move to the next step.
-                                </div>
-                              ) : null}
-
-                              {isBillFilingNode && billFilingDocumentUploaded && !billFilingNumberEntered ? (
-                                <div className="rounded-2xl border border-[#fb923c]/35 bg-[#fb923c]/10 p-4 text-xs text-on-surface xl:col-span-2">
-                                  Enter the bill number to continue with query status or move to the next step.
-                                </div>
-                              ) : null}
-
                               {isBillFilingNode && queryProcessingEnabled ? (
-                                <div className="space-y-3 pt-1 xl:col-start-2 xl:row-start-1">
-                                  <div className="space-y-1">
-                                    <h4 className="ds-label text-on-surface">{queryProcessingSection?.label || "Query Processing"}</h4>
-                                    <p className="text-xs text-on-surface-variant">
-                                      Raise and resolve customs queries after bill filing. Each query expands to show the full response trail.
-                                    </p>
-                                  </div>
-
-                                  {billFilingCanChooseQuery && queryProcessingStage === "AWAITING_QUERY_DECISION" ? (
-                                    <div className="rounded-xl border border-outline-variant/60 bg-surface p-4">
-                                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                            <div>
-                                              <p className="text-sm font-medium text-on-surface">Choose the post-filing path</p>
-                                              <p className="mt-1 text-xs text-on-surface-variant">
-                                                Decide whether this bill moves forward with no query or enters the customs query workflow.
-                                              </p>
-                                            </div>
-                                            <div className="flex flex-wrap gap-2">
-                                              <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={() =>
-                                                  handlePersistFilingToggleState(
-                                                    "query_processing",
-                                                    true,
-                                                    {
-                                                      ...(queryProcessingState ?? {}),
-                                                      stage: "NO_QUERY",
-                                                    },
-                                                    "Bill filing marked as no-query.",
-                                                  )
-                                                }
-                                              >
-                                                No Query Raised
-                                              </Button>
-                                              <Button
-                                                type="button"
-                                                onClick={() =>
-                                                  handlePersistFilingToggleState(
-                                                    "query_processing",
-                                                    true,
-                                                    {
-                                                      ...(queryProcessingState ?? {}),
-                                                      stage: "OPEN",
-                                                    },
-                                                    "Query processing opened for this bill filing.",
-                                                  )
-                                                }
-                                              >
-                                                Record Customs Query
-                                              </Button>
-                                            </div>
-                                          </div>
-                                        </div>
-                                  ) : null}
-
-                                    {billFilingCanChooseQuery && queryProcessingStage === "NO_QUERY" ? (
-                                      <div className="rounded-xl border border-[#00cec4]/25 bg-[#00cec4]/10 p-4 text-xs text-on-surface">
-                                          No customs query has been raised for this bill filing. You can move to the next stage or record a query if one arrives later.
-                                          <div className="mt-3">
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              onClick={() =>
-                                                handlePersistFilingToggleState(
-                                                  "query_processing",
-                                                  true,
-                                                  {
-                                                    ...(queryProcessingState ?? {}),
-                                                    stage: "OPEN",
-                                                  },
-                                                  "Query processing reopened for this bill filing.",
-                                                )
-                                              }
-                                            >
-                                              Record Customs Query
-                                            </Button>
-                                          </div>
-                                        </div>
-                                    ) : null}
-
-                                    {billFilingCanChooseQuery && queryProcessingStage === "CLEARED" ? (
-                                      <div className="rounded-xl border border-[#00cec4]/25 bg-[#00cec4]/10 p-4 text-xs text-on-surface">
-                                          All customs queries are cleared for this bill filing. You can continue to the next stage or record an additional query if customs raises another one.
-                                          <div className="mt-3">
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              onClick={() =>
-                                                handlePersistFilingToggleState(
-                                                  "query_processing",
-                                                  true,
-                                                  {
-                                                    ...(queryProcessingState ?? {}),
-                                                    stage: "OPEN",
-                                                  },
-                                                  "Ready to capture an additional customs query.",
-                                                )
-                                              }
-                                            >
-                                              Record Additional Query
-                                            </Button>
-                                          </div>
-                                        </div>
-                                    ) : null}
-
-                                  {queryProcessingStage !== "NO_QUERY" ? (
-                                    <div className="space-y-3">
-                                          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                            <label className="space-y-1">
-                                              <span className="ds-label block text-on-surface-variant">Query Title *</span>
-                                              <Input
-                                                value={filingQueryTitle}
-                                                onChange={(e) => setFilingQueryTitle(e.target.value)}
-                                                placeholder="Query title"
-                                                className="w-full"
-                                              />
-                                            </label>
-                                            <label className="space-y-1">
-                                              <span className="ds-label block text-on-surface-variant">Reference Number</span>
-                                              <Input
-                                                value={filingQueryReferenceNumber}
-                                                onChange={(e) => setFilingQueryReferenceNumber(e.target.value)}
-                                                placeholder="Enter query reference number"
-                                                className="w-full"
-                                              />
-                                            </label>
-                                            <label className="space-y-1">
-                                              <span className="ds-label block text-on-surface-variant">Customs Officer</span>
-                                              <Input
-                                                value={filingQueryOfficerName}
-                                                onChange={(e) => setFilingQueryOfficerName(e.target.value)}
-                                                placeholder="Officer name"
-                                                className="w-full"
-                                              />
-                                            </label>
-                                            <label className="space-y-1">
-                                              <span className="ds-label block text-on-surface-variant">Received Date</span>
-                                              <DateInput
-                                                value={filingQueryReceivedAt}
-                                                onChange={(e) => setFilingQueryReceivedAt(e.target.value)}
-                                              />
-                                            </label>
-                                          </div>
-                                          <label className="space-y-1">
-                                            <span className="ds-label block text-on-surface-variant">Query Details *</span>
-                                            <textarea
-                                              rows={3}
-                                              value={filingQueryDetails}
-                                              onChange={(e) => {
-                                                setFilingQueryDetails(e.target.value);
-                                                setFilingFieldValues((current) => ({ ...current, query_notes: e.target.value }));
-                                              }}
-                                              placeholder="Record customs query details, offline response notes, or follow-up context..."
-                                              className="w-full text-sm"
-                                            />
-                                          </label>
-                                          <div className="flex justify-end">
-                                            <Button type="button" onClick={handleCreateFilingQuery} disabled={loading !== null}>
-                                              {loading === "filing-query-create" ? "Saving..." : "Create Query Record"}
-                                            </Button>
-                                          </div>
-                                        </div>
-                                  ) : null}
-
-                                  <div className="space-y-3 pt-2">
-                                      <div className="flex items-center justify-between gap-3">
+                              <div className="space-y-2 pt-0.5 xl:col-start-2 xl:row-start-1">
+                                <div className="card-top-accent-orange overflow-hidden rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
+                                  <div className="flex items-start gap-3 px-4 py-3">
+                                    <span
+                                      className="ds-icon-badge shrink-0"
+                                      style={{ background: "rgba(251,146,60,0.12)", color: "#fb923c" }}
+                                    >
+                                      <AlertTriangle size={16} />
+                                    </span>
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex flex-wrap items-center justify-between gap-3">
                                         <div>
-                                          <h5 className="ds-label text-on-surface">Query Cases</h5>
-                                          <p className="mt-1 text-xs text-on-surface-variant">
-                                            Expand a query to capture responses, responder details, and final clearance.
+                                          <h4 className="text-base font-semibold text-on-surface">Customs Queries</h4>
+                                          <p className="mt-1 text-sm text-[#c76628]">
+                                            {activeNodeOpenQueries.length > 0
+                                              ? `${activeNodeOpenQueries.length} Active Quer${activeNodeOpenQueries.length > 1 ? "ies Require" : "y Requires"} Attention`
+                                              : queryProcessingStage === "CLEARED"
+                                                ? "All Recorded Queries Are Cleared"
+                                                : queryProcessingStage === "NO_QUERY"
+                                                  ? "No Query Raised For This Filing"
+                                                  : "Track Query Intake And Response Status"}
                                           </p>
                                         </div>
-                                        <Badge variant="default">{activeNodeQueries.length}</Badge>
                                       </div>
-
-                                      <div className="mt-4 space-y-3">
-                                        {activeNodeQueries.length === 0 ? (
-                                          <div className="rounded-xl border border-dashed border-outline-variant/70 px-4 py-5 text-xs text-on-surface-variant">
-                                            No customs queries recorded for this filing step yet.
-                                          </div>
-                                        ) : null}
-
-                                        {activeNodeQueries.map((query: any) => {
-                                          const queryMessages = activeNodeQueryMessages.filter((message: any) => message.queryId === query.id);
-                                          const isClosed = query.status === "CLOSED";
-                                          const statusLabel =
-                                            query.status === "CLOSED"
-                                              ? "Cleared"
-                                              : query.status === "REPLIED"
-                                                ? "Response Submitted"
-                                                : "Open";
-                                          return (
-                                            <details
-                                              key={query.id}
-                                              className="group rounded-xl border border-outline-variant/60 bg-surface overflow-hidden"
-                                            >
-                                              <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-3">
-                                                <div className="min-w-0">
-                                                  <div className="flex flex-wrap items-center gap-2">
-                                                    <p className="text-sm font-medium text-on-surface">{query.title}</p>
-                                                    <span className="rounded-md bg-[#00cec4]/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#00cec4]">
-                                                      {statusLabel}
-                                                    </span>
-                                                  </div>
-                                                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-on-surface-variant">
-                                                    {query.id === queryProcessingState?.latestQueryId &&
-                                                    typeof queryProcessingState?.queryReferenceNumber === "string" &&
-                                                    queryProcessingState.queryReferenceNumber.trim() ? (
-                                                      <span>Ref: {queryProcessingState.queryReferenceNumber}</span>
-                                                    ) : null}
-                                                    {query.id === queryProcessingState?.latestQueryId &&
-                                                    typeof queryProcessingState?.customsOfficerName === "string" &&
-                                                    queryProcessingState.customsOfficerName.trim() ? (
-                                                      <span>Officer: {queryProcessingState.customsOfficerName}</span>
-                                                    ) : null}
-                                                    <span>Raised: {new Date(query.createdAt).toLocaleDateString("en-IN")}</span>
-                                                  </div>
-                                                </div>
-                                                <ChevronRight className="mt-0.5 size-4 shrink-0 text-on-surface-variant transition-transform group-open:hidden" />
-                                                <ChevronDown className="mt-0.5 hidden size-4 shrink-0 text-on-surface-variant group-open:block" />
-                                              </summary>
-
-                                              <div className="border-t border-outline-variant/40 px-4 py-4 space-y-3">
-                                                <p className="text-xs leading-relaxed text-on-surface-variant">{query.details}</p>
-                                                {queryMessages.length > 0 ? (
-                                                  <div className="space-y-2">
-                                                    <p className="ds-label text-on-surface-variant">Responses</p>
-                                                    <div className="space-y-2">
-                                                      {queryMessages.map((message: any) => (
-                                                        <div key={message.id} className="rounded-lg border border-outline-variant/50 bg-surface px-3 py-2.5">
-                                                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-on-surface-variant">
-                                                            <span className="font-medium text-on-surface">
-                                                              {message.actorName || "System"}
-                                                            </span>
-                                                            <span>{new Date(message.createdAt).toLocaleString("en-IN")}</span>
-                                                            <span>{typeof message.event === "string" ? message.event.replaceAll("_", " ") : "Update"}</span>
-                                                          </div>
-                                                          <p className="mt-1 text-xs text-on-surface">
-                                                            {message.body || message.remarks || "No response details provided."}
-                                                          </p>
-                                                        </div>
-                                                      ))}
-                                                    </div>
-                                                  </div>
-                                                ) : null}
-                                                <div className="grid grid-cols-1 gap-3">
-                                                  <label className="space-y-1">
-                                                    <span className="ds-label block text-on-surface-variant">Who Responded?</span>
-                                                    <Input
-                                                      value={filingQueryResponderNames[query.id] ?? currentUserDisplayName}
-                                                      onChange={(e) =>
-                                                        setFilingQueryResponderNames((current) => ({
-                                                          ...current,
-                                                          [query.id]: e.target.value,
-                                                        }))
-                                                      }
-                                                      placeholder="Responder name"
-                                                      className="w-full"
-                                                    />
-                                                  </label>
-                                                  <label className="space-y-1">
-                                                    <span className="ds-label block text-on-surface-variant">What Is the Response?</span>
-                                                    <textarea
-                                                      rows={3}
-                                                      value={filingQueryStatusUpdates[query.id] ?? ""}
-                                                      onChange={(e) =>
-                                                        setFilingQueryStatusUpdates((current) => ({
-                                                          ...current,
-                                                          [query.id]: e.target.value,
-                                                        }))
-                                                      }
-                                                      placeholder="Describe the response shared with customs or the latest offline update..."
-                                                      className="w-full text-sm"
-                                                    />
-                                                  </label>
-                                                </div>
-                                                <div className="flex flex-wrap justify-end gap-2">
-                                                  <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => handleAddFilingQueryComment(query.id)}
-                                                  >
-                                                    Save Response Update
-                                                  </Button>
-                                                  {!isClosed ? (
-                                                    <>
-                                                      <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() =>
-                                                          handleUpdateFilingQueryStatus(
-                                                            query.id,
-                                                            "REPLIED",
-                                                            buildFilingQueryResponseMessage(query.id, query.details),
-                                                          )
-                                                        }
-                                                      >
-                                                        Mark Response Submitted
-                                                      </Button>
-                                                      <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        onClick={() =>
-                                                          handleUpdateFilingQueryStatus(
-                                                            query.id,
-                                                            "CLOSED",
-                                                            buildFilingQueryResponseMessage(query.id, query.details),
-                                                          )
-                                                        }
-                                                      >
-                                                        Mark Cleared
-                                                      </Button>
-                                                    </>
-                                                  ) : (
-                                                    <Button
-                                                      type="button"
-                                                      size="sm"
-                                                      variant="outline"
-                                                      onClick={() =>
-                                                        handleUpdateFilingQueryStatus(
-                                                          query.id,
-                                                          "OPEN",
-                                                          buildFilingQueryResponseMessage(query.id, query.details),
-                                                        )
-                                                      }
-                                                    >
-                                                      Reopen Query
-                                                    </Button>
-                                                  )}
-                                                </div>
-                                              </div>
-                                            </details>
-                                          );
-                                        })}
-                                      </div>
-                                  </div>
-                                  {!queryProcessingResolved ? (
-                                    <div className="rounded-xl border border-[#fb923c]/35 bg-[#fb923c]/10 p-4 text-xs text-on-surface">
-                                      {activeNodeOpenQueries.length > 0
-                                        ? "Resolve or clear the active customs query before moving to the next step."
-                                        : queryProcessingStage === "RESPONDED"
-                                        ? "Await the customs outcome and mark the query cleared once the offline response is accepted."
-                                        : "Record the customs query outcome before moving to the next step."}
                                     </div>
-                                  ) : null}
+                                  </div>
+
+                                  <div className="space-y-3 px-4 py-3">
+                                    <div className="grid gap-3 text-sm md:grid-cols-2">
+                                      <div className="space-y-2 text-on-surface-variant">
+                                        <div className="flex items-center justify-between gap-3 md:block">
+                                          <span className="ds-label block text-on-surface-variant">Ref</span>
+                                          <span className="text-sm font-medium text-on-surface md:mt-1 md:block">
+                                            {typeof queryProcessingState?.queryReferenceNumber === "string" && queryProcessingState.queryReferenceNumber.trim()
+                                              ? queryProcessingState.queryReferenceNumber
+                                              : primaryQuerySummary?.title || "Not Recorded"}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-3 md:block">
+                                          <span className="ds-label block text-on-surface-variant">Officer</span>
+                                          <span className="text-sm font-medium text-on-surface md:mt-1 md:block">
+                                            {typeof queryProcessingState?.customsOfficerName === "string" && queryProcessingState.customsOfficerName.trim()
+                                              ? queryProcessingState.customsOfficerName
+                                              : "Not Assigned"}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="space-y-2 text-on-surface-variant md:text-right">
+                                        <div>
+                                          <span className="ds-label block text-on-surface-variant">Status</span>
+                                          <div className="mt-1">
+                                            <span className="inline-flex rounded-lg border border-[#fb923c]/20 bg-[#fb923c]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#c76628]">
+                                              {querySummaryStatusLabel}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="w-full justify-center gap-2 border-[#fb923c]/35 text-[#c76628] hover:border-[#fb923c]/50 hover:text-[#c76628] md:w-auto"
+                                            onClick={() => setQueryManagementModalOpen(true)}
+                                          >
+                                            Manage Queries
+                                            <ExternalLink size={14} />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    {billFilingCanChooseQuery ? null : (
+                                      <div className="border-t border-outline-variant/30 pt-3">
+                                        <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/8 px-3 py-1.5 text-xs text-red-600">
+                                          <AlertTriangle size={14} className="shrink-0 text-red-500" />
+                                          <span>Complete the bill number and bill document upload first to start query processing.</span>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {billFilingCanChooseQuery && !queryProcessingResolved ? (
+                                      <div className="border-t border-outline-variant/30 pt-3">
+                                        <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/8 px-3 py-1.5 text-xs text-red-600">
+                                          <AlertTriangle size={14} className="shrink-0 text-red-500" />
+                                          <span>
+                                            {activeNodeOpenQueries.length > 0
+                                              ? "Resolve or clear the active customs query before moving to the next step."
+                                              : queryProcessingStage === "RESPONDED"
+                                                ? "Await the customs outcome and mark the query cleared once the offline response is accepted."
+                                                : "Record the customs query outcome before moving to the next step."}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                </div>
                                 </div>
                               ) : null}
                               
@@ -4996,19 +4767,19 @@
 
                               {/* Allowed Roles Notice */}
                               {activeNodeRun.node.allowedRoles?.length > 0 && (
-                                <div className={`pt-1 text-[11px] text-on-surface-variant flex items-center gap-1 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
+                                <div className={`pt-0.5 text-[11px] text-on-surface-variant flex items-center gap-1 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
                                   <ShieldCheck size={14} className="text-[#00cec4]" />
                                   <span>Can only be processed by users with roles: <strong>{activeNodeRun.node.allowedRoles.join(", ")}</strong></span>
                                 </div>
                               )}
 
                               {/* Node run comments */}
-                              <div className={`space-y-1.5 pt-1 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
+                              <div className={`space-y-1 pt-0.5 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
                                 <label className="ds-label text-on-surface block">
                                   Completion Comments / Remarks {activeNodeRun.node.commentsRequired && <span className="text-red-500 font-bold">*</span>}
                                 </label>
                                 <textarea
-                                  rows={3}
+                                  rows={2}
                                   value={nodeRemarks}
                                   onChange={(e) => setNodeRemarks(e.target.value)}
                                   placeholder="Provide checklist execution remarks or check outcome..."
@@ -5017,20 +4788,12 @@
                                 />
                               </div>
 
-                              {/* Transitions dropdown */}
-                              <div className={`pt-1 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
-                                {isBillFilingNode && !billFilingReadyForRouting ? (
-                                  <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
-                                    Complete Bill Filing by uploading the bill document and entering the bill number.
-                                  </div>
-                                ) : isBillFilingNode && !billFilingCanMoveNext ? (
-                                  <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
-                                    Complete query processing before moving to the next filing step.
-                                  </div>
-                                ) : outgoingEdges.length > 0 ? (
-                                  activeNodeRun.node.nodeType === "DECISION" ? (
-                                    <div className="space-y-2">
-                                      <label className="ds-label text-on-surface block">Decision *</label>
+                            {/* Transitions dropdown */}
+                            <div className={`pt-0.5 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
+                              {outgoingEdges.length > 0 ? (
+                                activeNodeRun.node.nodeType === "DECISION" ? (
+                                  <div className="space-y-2">
+                                    <label className="ds-label text-on-surface block">Decision *</label>
                                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                                         {outgoingEdges.map((edge: any) => {
                                           const targetNode = targetNodesMap.get(edge.targetKey);
@@ -5056,7 +4819,7 @@
                                       </div>
                                     </div>
                                   ) : (
-                                    <div className="space-y-1.5 max-w-sm">
+                                    <div className="max-w-sm space-y-1">
                                       <label className="ds-label text-on-surface block">Select Next Workflow Stage *</label>
                                       <select
                                         value={selectedNextNodeKey}
@@ -5086,7 +4849,7 @@
                               </div>
 
                               {/* Complete Action Button */}
-                              <div className={`flex flex-wrap items-center justify-between gap-2 pt-2 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
+                              <div className={`flex flex-wrap items-center justify-between gap-2 pt-1 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
                                 {hasPreviousFilingStage ? (
                                   <Button
                                     type="button"
@@ -5908,11 +5671,358 @@
               )}
             </div>
           )}
-        </div>
+      </div>
 
-        <Modal
-          open={executionTimelineModalOpen}
-          onClose={() => setExecutionTimelineModalOpen(false)}
+      <Modal
+        open={queryManagementModalOpen}
+        onClose={() => setQueryManagementModalOpen(false)}
+        title="Customs Query Processing"
+        description="Create queries, review responses, and complete all customs-query actions from one place."
+        className="max-w-5xl"
+      >
+        <div className="space-y-5">
+          {billFilingCanChooseQuery && queryProcessingStage === "AWAITING_QUERY_DECISION" ? (
+            <div className="rounded-xl border border-outline-variant/60 bg-surface p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium text-on-surface">Choose the post-filing path</p>
+                  <p className="mt-1 text-xs text-on-surface-variant">
+                    Decide whether this bill moves forward with no query or enters the customs query workflow.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      handlePersistFilingToggleState(
+                        "query_processing",
+                        true,
+                        {
+                          ...(queryProcessingState ?? {}),
+                          stage: "NO_QUERY",
+                        },
+                        "Bill filing marked as no-query.",
+                      )
+                    }
+                  >
+                    No Query Raised
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      handlePersistFilingToggleState(
+                        "query_processing",
+                        true,
+                        {
+                          ...(queryProcessingState ?? {}),
+                          stage: "OPEN",
+                        },
+                        "Query processing opened for this bill filing.",
+                      )
+                    }
+                  >
+                    Record Customs Query
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {billFilingCanChooseQuery && queryProcessingStage === "NO_QUERY" ? (
+            <div className="rounded-xl border border-[#00cec4]/25 bg-[#00cec4]/10 p-4 text-sm text-on-surface">
+              No customs query has been raised for this bill filing. You can move to the next stage or record a query if one arrives later.
+              <div className="mt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    handlePersistFilingToggleState(
+                      "query_processing",
+                      true,
+                      {
+                        ...(queryProcessingState ?? {}),
+                        stage: "OPEN",
+                      },
+                      "Query processing reopened for this bill filing.",
+                    )
+                  }
+                >
+                  Record Customs Query
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          {billFilingCanChooseQuery && queryProcessingStage === "CLEARED" ? (
+            <div className="rounded-xl border border-[#00cec4]/25 bg-[#00cec4]/10 p-4 text-sm text-on-surface">
+              All customs queries are cleared for this bill filing. You can continue to the next stage or record an additional query if customs raises another one.
+              <div className="mt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    handlePersistFilingToggleState(
+                      "query_processing",
+                      true,
+                      {
+                        ...(queryProcessingState ?? {}),
+                        stage: "OPEN",
+                      },
+                      "Ready to capture an additional customs query.",
+                    )
+                  }
+                >
+                  Record Additional Query
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          {queryProcessingStage !== "NO_QUERY" ? (
+            <div className="space-y-4 ds-form-section">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h4>Create Query</h4>
+                  <p className="pl-[13px] text-sm text-on-surface-variant">
+                    Capture the customs note, reference number, officer, and received date.
+                  </p>
+                </div>
+                <Badge variant="default">{activeNodeQueries.length} Case{activeNodeQueries.length === 1 ? "" : "s"}</Badge>
+              </div>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <label className="space-y-1">
+                  <span className="ds-label block text-on-surface-variant">Query Title *</span>
+                  <Input
+                    value={filingQueryTitle}
+                    onChange={(e) => setFilingQueryTitle(e.target.value)}
+                    placeholder="Query title"
+                    className="w-full"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="ds-label block text-on-surface-variant">Reference Number</span>
+                  <Input
+                    value={filingQueryReferenceNumber}
+                    onChange={(e) => setFilingQueryReferenceNumber(e.target.value)}
+                    placeholder="Enter query reference number"
+                    className="w-full"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="ds-label block text-on-surface-variant">Customs Officer</span>
+                  <Input
+                    value={filingQueryOfficerName}
+                    onChange={(e) => setFilingQueryOfficerName(e.target.value)}
+                    placeholder="Officer name"
+                    className="w-full"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="ds-label block text-on-surface-variant">Received Date</span>
+                  <DateInput
+                    value={filingQueryReceivedAt}
+                    onChange={(e) => setFilingQueryReceivedAt(e.target.value)}
+                  />
+                </label>
+              </div>
+              <label className="space-y-1">
+                <span className="ds-label block text-on-surface-variant">Query Details *</span>
+                <textarea
+                  rows={3}
+                  value={filingQueryDetails}
+                  onChange={(e) => {
+                    setFilingQueryDetails(e.target.value);
+                    setFilingFieldValues((current) => ({ ...current, query_notes: e.target.value }));
+                  }}
+                  placeholder="Record customs query details, offline response notes, or follow-up context..."
+                  className="ds-textarea w-full px-4 py-3 text-sm"
+                />
+              </label>
+              <div className="flex justify-end">
+                <Button type="button" onClick={handleCreateFilingQuery} disabled={loading !== null}>
+                  {loading === "filing-query-create" ? "Saving..." : "Create Query Record"}
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="space-y-3 ds-form-section">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h4>Query Cases</h4>
+                <p className="pl-[13px] text-sm text-on-surface-variant">
+                  View responses, respond offline, submit updates, clear, or reopen any customs query.
+                </p>
+              </div>
+              <Badge variant="default">{activeNodeQueries.length}</Badge>
+            </div>
+
+            {activeNodeQueries.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-outline-variant/70 px-4 py-5 text-sm text-on-surface-variant">
+                No customs queries recorded for this filing step yet.
+              </div>
+            ) : null}
+
+            {activeNodeQueries.map((query: any) => {
+              const queryMessages = activeNodeQueryMessages.filter((message: any) => message.queryId === query.id);
+              const isClosed = query.status === "CLOSED";
+              const statusLabel =
+                query.status === "CLOSED"
+                  ? "Cleared"
+                  : query.status === "REPLIED"
+                    ? "Response Submitted"
+                    : "Open";
+              return (
+                <details
+                  key={query.id}
+                  className="group rounded-xl border border-outline-variant/60 bg-surface overflow-hidden"
+                >
+                  <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium text-on-surface">{query.title}</p>
+                        <span className="rounded-md bg-[#00cec4]/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#00cec4]">
+                          {statusLabel}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-on-surface-variant">
+                        {query.id === queryProcessingState?.latestQueryId &&
+                        typeof queryProcessingState?.queryReferenceNumber === "string" &&
+                        queryProcessingState.queryReferenceNumber.trim() ? (
+                          <span>Ref: {queryProcessingState.queryReferenceNumber}</span>
+                        ) : null}
+                        {query.id === queryProcessingState?.latestQueryId &&
+                        typeof queryProcessingState?.customsOfficerName === "string" &&
+                        queryProcessingState.customsOfficerName.trim() ? (
+                          <span>Officer: {queryProcessingState.customsOfficerName}</span>
+                        ) : null}
+                        <span>Raised: {new Date(query.createdAt).toLocaleDateString("en-IN")}</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="mt-0.5 size-4 shrink-0 text-on-surface-variant transition-transform group-open:hidden" />
+                    <ChevronDown className="mt-0.5 hidden size-4 shrink-0 text-on-surface-variant group-open:block" />
+                  </summary>
+
+                  <div className="border-t border-outline-variant/40 px-4 py-4 space-y-3">
+                    <p className="text-sm leading-relaxed text-on-surface-variant">{query.details}</p>
+                    {queryMessages.length > 0 ? (
+                      <div className="space-y-2">
+                        <p className="ds-label text-on-surface-variant">Responses</p>
+                        <div className="space-y-2">
+                          {queryMessages.map((message: any) => (
+                            <div key={message.id} className="rounded-lg border border-outline-variant/50 bg-surface px-3 py-2.5">
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-on-surface-variant">
+                                <span className="font-medium text-on-surface">{message.actorName || "System"}</span>
+                                <span>{new Date(message.createdAt).toLocaleString("en-IN")}</span>
+                                <span>{typeof message.event === "string" ? message.event.replaceAll("_", " ") : "Update"}</span>
+                              </div>
+                              <p className="mt-1.5 text-sm leading-relaxed text-on-surface">
+                                {message.body || message.remarks || "No response details provided."}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                    <div className="grid grid-cols-1 gap-3">
+                      <label className="space-y-1">
+                        <span className="ds-label block text-on-surface-variant">Who Responded?</span>
+                        <Input
+                          value={filingQueryResponderNames[query.id] ?? currentUserDisplayName}
+                          onChange={(e) =>
+                            setFilingQueryResponderNames((current) => ({
+                              ...current,
+                              [query.id]: e.target.value,
+                            }))
+                          }
+                          placeholder="Responder name"
+                          className="w-full"
+                        />
+                      </label>
+                      <label className="space-y-1">
+                        <span className="ds-label block text-on-surface-variant">What Is the Response?</span>
+                        <textarea
+                          rows={3}
+                          value={filingQueryStatusUpdates[query.id] ?? ""}
+                          onChange={(e) =>
+                            setFilingQueryStatusUpdates((current) => ({
+                              ...current,
+                              [query.id]: e.target.value,
+                            }))
+                          }
+                          placeholder="Describe the response shared with customs or the latest offline update..."
+                          className="ds-textarea w-full px-4 py-3 text-sm leading-relaxed"
+                        />
+                      </label>
+                    </div>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAddFilingQueryComment(query.id)}
+                      >
+                        Save Response Update
+                      </Button>
+                      {!isClosed ? (
+                        <>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              handleUpdateFilingQueryStatus(
+                                query.id,
+                                "REPLIED",
+                                buildFilingQueryResponseMessage(query.id, query.details),
+                              )
+                            }
+                          >
+                            Mark Response Submitted
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() =>
+                              handleUpdateFilingQueryStatus(
+                                query.id,
+                                "CLOSED",
+                                buildFilingQueryResponseMessage(query.id, query.details),
+                              )
+                            }
+                          >
+                            Mark Cleared
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            handleUpdateFilingQueryStatus(
+                              query.id,
+                              "OPEN",
+                              buildFilingQueryResponseMessage(query.id, query.details),
+                            )
+                          }
+                        >
+                          Reopen Query
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </details>
+              );
+            })}
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={executionTimelineModalOpen}
+        onClose={() => setExecutionTimelineModalOpen(false)}
           title="Execution Blueprint Timeline"
           description="Review each filing workflow run, completion note, and attachment from the execution path."
           className="max-w-4xl"

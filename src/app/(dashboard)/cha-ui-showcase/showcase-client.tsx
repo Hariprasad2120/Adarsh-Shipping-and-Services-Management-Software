@@ -1233,9 +1233,9 @@ export function ShowcaseClient() {
               </div>
             }
           >
-            <div className="overflow-hidden rounded-xl border bg-surface shadow-sm cha-jobs-table-shell border-outline-variant/25">
+            <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
               <div className="overflow-x-auto">
-                <table className="ds-table cha-jobs-table">
+                <table className="ds-table">
                   <thead>
                     <tr><th className="py-4 px-6">Job Number</th><th className="py-4 px-6">Stage</th><th className="py-4 px-6">Priority</th></tr>
                   </thead>
@@ -1246,20 +1246,14 @@ export function ShowcaseClient() {
                       <td className="py-5 px-6"><span className="text-xs uppercase tracking-[0.12em] text-on-surface-variant">MEDIUM</span></td>
                     </tr>
                   </tbody>
-                  <tfoot>
-                    <tr>
-                      <td colSpan={3} className="p-0">
-                        <div className="flex items-center justify-between border-t border-outline-variant/15 px-6 py-4">
-                          <span className="text-xs text-on-surface-variant">Page <span className="text-on-surface">1</span> of <span className="text-on-surface">4</span> (37 jobs)</span>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm" disabled>Previous</Button>
-                            <Button variant="outline" size="sm">Next</Button>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  </tfoot>
                 </table>
+              </div>
+              <div className="flex items-center justify-between border-t border-outline-variant px-6 py-4">
+                <span className="text-xs text-on-surface-variant">Page <span className="text-on-surface">1</span> of <span className="text-on-surface">4</span> (37 jobs)</span>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" disabled>Previous</Button>
+                  <Button variant="outline" size="sm">Next</Button>
+                </div>
               </div>
             </div>
           </Spec>

@@ -1,6 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { db } from "@/lib/db";
 import * as chaService from "../service";
+import * as driveClient from "@/lib/google-drive-client";
+import * as workspaceOauth from "@/lib/workspace-oauth";
 
 describe("Customs House Agent (CHA) Module Integration Tests", () => {
   let org: any;
@@ -1033,6 +1035,9 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
   }, 60000);
 
   it("9. should allow the assigned manager to directly soft-delete a job", async () => {
+    const driveDeleteSpy = vi.spyOn(driveClient, "deleteFileOrFolder").mockResolvedValue("deleted");
+    const accessTokenSpy = vi.spyOn(workspaceOauth, "getValidAccessToken").mockResolvedValue("test-drive-token");
+
     const job = await chaService.createJob(ownerUser.id, org.id, {
       jobNumber: "CHA-DELETE-DIRECT-001",
       title: "Direct deletion job",
@@ -1046,6 +1051,33 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
         { userId: ownerUser.id, responsibility: "OPERATIONS" },
         { userId: managerUser.id, responsibility: "APPROVAL" },
       ],
+    });
+
+    await db.googleWorkspaceConnection.upsert({
+      where: { userId: managerUser.id },
+      update: {
+        status: "connected",
+        scopes: ["https://www.googleapis.com/auth/drive"],
+      },
+      create: {
+        orgId: org.id,
+        userId: managerUser.id,
+        googleEmail: managerUser.email,
+        googleUserId: `mgr-${managerUser.id}`,
+        accessToken: "token",
+        refreshToken: "refresh",
+        tokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
+        scopes: ["https://www.googleapis.com/auth/drive"],
+        status: "connected",
+      },
+    });
+    await db.jobWorkspaceProfile.create({
+      data: {
+        orgId: org.id,
+        jobId: job.id,
+        rootFolderId: "drive-folder-direct-delete-test",
+        provisioningStatus: "success",
+      },
     });
 
     await expect(
@@ -1064,6 +1096,8 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     });
 
     expect(directDelete.mode).toBe("deleted");
+    expect(accessTokenSpy).toHaveBeenCalled();
+    expect(driveDeleteSpy).toHaveBeenCalledWith("drive-folder-direct-delete-test", "test-drive-token");
 
     const deletedJob = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
     expect(deletedJob.deletedAt).not.toBeNull();
@@ -1101,9 +1135,15 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
         confirmationPhrase: "delete job",
       }),
     ).rejects.toThrow("CHA job not found.");
+
+    driveDeleteSpy.mockRestore();
+    accessTokenSpy.mockRestore();
   }, 60000);
 
   it("10. should enforce confirmation rules, missing manager handling, and approved deletion execution", async () => {
+    const driveDeleteSpy = vi.spyOn(driveClient, "deleteFileOrFolder").mockResolvedValue("deleted");
+    const accessTokenSpy = vi.spyOn(workspaceOauth, "getValidAccessToken").mockResolvedValue("test-drive-token");
+
     const noManagerJob = await chaService.createJob(ownerUser.id, org.id, {
       jobNumber: "CHA-DELETE-NOMGR-001",
       title: "Missing manager deletion job",
@@ -1194,6 +1234,33 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       ],
     });
 
+    await db.googleWorkspaceConnection.upsert({
+      where: { userId: managerUser.id },
+      update: {
+        status: "connected",
+        scopes: ["https://www.googleapis.com/auth/drive"],
+      },
+      create: {
+        orgId: org.id,
+        userId: managerUser.id,
+        googleEmail: managerUser.email,
+        googleUserId: `mgr-${managerUser.id}`,
+        accessToken: "token",
+        refreshToken: "refresh",
+        tokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
+        scopes: ["https://www.googleapis.com/auth/drive"],
+        status: "connected",
+      },
+    });
+    await db.jobWorkspaceProfile.create({
+      data: {
+        orgId: org.id,
+        jobId: approvedJob.id,
+        rootFolderId: "drive-folder-approved-delete-test",
+        provisioningStatus: "success",
+      },
+    });
+
     const requestResult = await chaService.submitJobDeletion(ownerUser.id, org.id, {
       jobId: approvedJob.id,
       confirmationJobNumber: "CHA-DELETE-APPROVE-001",
@@ -1210,6 +1277,8 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       decision: "APPROVED",
       remarks: "Deletion approved by assigned manager.",
     });
+    expect(accessTokenSpy).toHaveBeenCalled();
+    expect(driveDeleteSpy).toHaveBeenCalledWith("drive-folder-approved-delete-test", "test-drive-token");
 
     const executedRequest = await db.chaJobDeletionRequest.findUniqueOrThrow({
       where: { id: request.id },
@@ -1241,6 +1310,9 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(approvalAudit.map((entry) => entry.event)).toEqual(
       expect.arrayContaining(["JOB_DELETE_APPROVAL_APPROVED", "JOB_DELETE_EXECUTED"]),
     );
+
+    driveDeleteSpy.mockRestore();
+    accessTokenSpy.mockRestore();
   }, 60000);
 
   it("11. should seed the configurable default filing workflow with vertical first-check and branch paths", async () => {

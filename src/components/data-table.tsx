@@ -26,8 +26,15 @@ export function DataTable({
   const toolbar = childrenArray.find(
     (child) => React.isValidElement(child) && child.type === DataTableToolbar
   );
+  const footer = childrenArray.find(
+    (child) => React.isValidElement(child) && child.type === DataTableFooter
+  );
   const otherChildren = childrenArray.filter(
-    (child) => !(React.isValidElement(child) && child.type === DataTableToolbar)
+    (child) =>
+      !(
+        React.isValidElement(child) &&
+        (child.type === DataTableToolbar || child.type === DataTableFooter)
+      )
   );
 
   return (
@@ -38,6 +45,7 @@ export function DataTable({
           {otherChildren}
         </table>
       </div>
+      {footer}
     </div>
   );
 }
@@ -145,6 +153,21 @@ export function DataTableToolbar({
     <div
       className={cn(
         "flex items-center justify-between gap-3 border-b border-outline-variant/30 px-5 py-4",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+export function DataTableFooter({
+  className,
+  ...props
+}: HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between gap-3 border-t border-outline-variant px-6 py-4",
         className
       )}
       {...props}

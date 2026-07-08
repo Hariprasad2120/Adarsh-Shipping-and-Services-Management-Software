@@ -1018,6 +1018,19 @@ export async function uploadDeliveryOrderDocumentAction(
   }
 }
 
+export async function deleteDeliveryOrderDocumentAction(
+  jobId: string,
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.document.upload");
+    const result = await chaService.deleteDeliveryOrderDocument(userId, orgId, jobId);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to delete Delivery Order document" };
+  }
+}
+
 export async function applyDoExtensionAction(
   jobId: string,
   formData: FormData,

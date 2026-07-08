@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-08T06:40:41.561Z",
+  "generatedAt": "2026-07-08T10:30:07.890Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -9728,6 +9728,7 @@
         "setDoUploadToggleAction",
         "setDoExtensionToggleAction",
         "uploadDeliveryOrderDocumentAction",
+        "deleteDeliveryOrderDocumentAction",
         "applyDoExtensionAction",
         "updateSection49ValidityAction",
         "applySection49ExtensionAction",
@@ -9846,6 +9847,7 @@
         "createFilingWorkflowQuery",
         "addFilingWorkflowQueryComment",
         "updateFilingWorkflowQueryStatus",
+        "deleteDeliveryOrderDocument",
         "upsertFilingWorkflowToggleState",
         "uploadFilingAttachment",
         "upsertFilingShipmentDetails",

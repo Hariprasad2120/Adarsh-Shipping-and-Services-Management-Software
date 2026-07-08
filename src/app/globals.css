@@ -720,24 +720,6 @@ html.light [class~="bg-red-700"] {
   border-bottom: none;
 }
 
-.cha-jobs-table-shell {
-  border-color: rgba(191, 200, 198, 0.26);
-}
-
-.cha-jobs-table th,
-.cha-jobs-table td {
-  border-bottom-color: rgba(191, 200, 198, 0.18);
-}
-
-html.dark .cha-jobs-table-shell {
-  border-color: rgba(139, 148, 158, 0.16);
-}
-
-html.dark .cha-jobs-table th,
-html.dark .cha-jobs-table td {
-  border-bottom-color: rgba(139, 148, 158, 0.12);
-}
-
 /* Clickable table row — full row acts as link */
 .ds-row-link {
   cursor: pointer;
@@ -793,7 +775,7 @@ html.dark .cha-jobs-table td {
 .ds-date-panel__glow {
   position: absolute;
   inset: 18px;
-  border-radius: 28px;
+  border-radius: var(--radius-card-lg);
   background:
     radial-gradient(circle at top, rgba(0, 206, 196, 0.14), transparent 60%),
     radial-gradient(circle at bottom right, rgba(251, 146, 60, 0.08), transparent 44%);
@@ -807,7 +789,7 @@ html.dark .cha-jobs-table td {
   justify-content: center;
   width: 38px;
   height: 38px;
-  border-radius: 9999px;
+  border-radius: var(--radius-xl);
   border: 1px solid rgba(0, 206, 196, 0.16);
   background: linear-gradient(180deg, rgba(0, 206, 196, 0.12), rgba(0, 206, 196, 0.04));
   color: var(--color-on-surface);

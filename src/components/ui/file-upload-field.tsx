@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
-import { FileText, Upload, X } from "lucide-react";
+import { FileText, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -184,11 +184,11 @@ export function FileUploadField({
                 variant="outline"
                 size="md"
                 mode="icon"
-                className="h-10 w-10 shrink-0 rounded-xl text-on-surface-variant hover:bg-surface hover:text-on-surface"
-                aria-label="Remove selected file"
+                className="ds-plain h-10 w-10 shrink-0 rounded-xl border-red-500/45 text-red-500 hover:border-red-500/60 hover:bg-surface hover:text-red-600 hover:shadow-none"
+                aria-label="Delete uploaded file"
                 onClick={handleClear}
               >
-                <X className="size-4 shrink-0" aria-hidden={true} />
+                <Trash2 className="size-4 shrink-0" aria-hidden={true} />
               </Button>
             ) : null}
           </div>

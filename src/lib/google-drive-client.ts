@@ -347,6 +347,34 @@ export async function copyFileToFolder(params: {
   return res.json() as Promise<{ id: string; webViewLink: string }>;
 }
 
+export async function deleteFileOrFolder(
+  fileId: string,
+  accessToken?: string,
+): Promise<"deleted" | "missing"> {
+  if (!fileId || fileId.startsWith("mock-")) {
+    return "missing";
+  }
+
+  const token = accessToken || (await getDriveAccessToken());
+  const url = new URL(`https://www.googleapis.com/drive/v3/files/${fileId}`);
+  url.searchParams.set("supportsAllDrives", "true");
+
+  const res = await fetch(url.toString(), {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (res.status === 404) {
+    return "missing";
+  }
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Drive deleteFileOrFolder failed: ${err}`);
+  }
+
+  return "deleted";
+}
+
 // Search files matching name query in Google Drive
 export async function searchFiles(
   query: string,

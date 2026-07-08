@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays } from "lucide-react";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { cn } from "@/lib/utils";
 
 type DateInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "type">;
@@ -51,8 +52,27 @@ function formatDisplayDate(value?: string | number | readonly string[] | null): 
 function getMonthLabel(viewDate: Date) {
   return viewDate.toLocaleDateString("en-IN", {
     month: "long",
-    year: "numeric",
   });
+}
+
+function buildMonthOptions() {
+  return Array.from({ length: 12 }, (_, index) => ({
+    value: String(index),
+    label: new Date(2026, index, 1).toLocaleDateString("en-IN", { month: "long" }),
+  }));
+}
+
+function buildYearOptions(viewDate: Date, minDate: Date | null, maxDate: Date | null) {
+  const currentYear = viewDate.getFullYear();
+  const minYear = minDate ? minDate.getFullYear() : currentYear - 12;
+  const maxYear = maxDate ? maxDate.getFullYear() : currentYear + 12;
+  const years: string[] = [];
+
+  for (let year = minYear; year <= maxYear; year += 1) {
+    years.push(String(year));
+  }
+
+  return years;
 }
 
 function clampDate(date: Date, minDate: Date | null, maxDate: Date | null) {
@@ -188,6 +208,13 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(func
 
     const handlePointerDown = (event: MouseEvent) => {
       const target = event.target as Node | null;
+      const elementTarget = target instanceof Element ? target : null;
+      if (
+        elementTarget?.closest("[data-dropdown-select-trigger='true']") ||
+        elementTarget?.closest("[data-dropdown-select-content='true']")
+      ) {
+        return;
+      }
       if (panelRef.current?.contains(target) || visibleInputRef.current?.contains(target)) {
         return;
       }
@@ -239,6 +266,12 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(func
   );
 
   const days = React.useMemo(() => buildCalendarDays(viewDate, minDate, maxDate), [viewDate, minDate, maxDate]);
+  const monthOptions = React.useMemo(() => buildMonthOptions(), []);
+  const yearOptions = React.useMemo(() => buildYearOptions(viewDate, minDate, maxDate), [viewDate, minDate, maxDate]);
+  const yearSelectOptions = React.useMemo(
+    () => yearOptions.map((year) => ({ value: year, label: year })),
+    [yearOptions],
+  );
   const selectedIso = parseIsoDate(resolvedValue) ? resolvedValue : "";
   const canClear = !required && !disabled;
 
@@ -257,9 +290,20 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(func
     [commitValue],
   );
 
-  const goToMonth = React.useCallback(
-    (offset: number) => {
-      setViewDate((current) => clampDate(new Date(current.getFullYear(), current.getMonth() + offset, 1), minDate, maxDate));
+  const handleYearChange = React.useCallback(
+    (nextYear: string) => {
+      const parsedYear = Number(nextYear);
+      if (!Number.isInteger(parsedYear)) return;
+      setViewDate((current) => clampDate(new Date(parsedYear, current.getMonth(), 1), minDate, maxDate));
+    },
+    [maxDate, minDate],
+  );
+
+  const handleMonthChange = React.useCallback(
+    (nextMonth: string) => {
+      const parsedMonth = Number(nextMonth);
+      if (!Number.isInteger(parsedMonth) || parsedMonth < 0 || parsedMonth > 11) return;
+      setViewDate((current) => clampDate(new Date(current.getFullYear(), parsedMonth, 1), minDate, maxDate));
     },
     [maxDate, minDate],
   );
@@ -337,52 +381,42 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(func
         ? createPortal(
             <div ref={panelRef} style={panelStyle} className="ds-date-panel">
               <div className="ds-date-panel__glow" />
-              <div className="relative overflow-hidden rounded-[28px] border border-outline-variant/60 bg-surface/96 p-3 shadow-[0_24px_70px_-28px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+              <div className="ds-shell-lg relative overflow-hidden border border-outline-variant/60 bg-surface/96 p-2.5 shadow-[0_24px_70px_-28px_rgba(0,0,0,0.45)] backdrop-blur-xl">
                 <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-[#00cec4]/70 to-transparent" />
                 <div className="absolute inset-x-10 top-2 h-20 rounded-full bg-[#00cec4]/10 blur-3xl" />
 
-                <div className="relative mb-3 flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-[10px] uppercase tracking-[0.26em] text-on-surface-variant">Monolith Calendar</p>
-                    <button
-                      type="button"
-                      onClick={() => setViewDate((current) => new Date(current.getFullYear(), current.getMonth(), 1))}
-                      className="mt-1 flex items-center gap-2 rounded-full border border-[#00cec4]/18 bg-[#00cec4]/8 px-3 py-1.5 text-left text-sm font-semibold text-on-surface transition hover:border-[#00cec4]/35 hover:bg-[#00cec4]/12"
-                    >
-                      <span className="truncate" style={{ fontFamily: "var(--font-kiona-sans), var(--font-geist-sans), sans-serif" }}>
-                        {getMonthLabel(viewDate)}
-                      </span>
-                    </button>
+                <div className="relative mb-2.5 grid grid-cols-2 items-start gap-2">
+                  <div className="flex justify-start">
+                    <DropdownSelect
+                      ariaLabel="Select year"
+                      contentClassName="z-[120] min-w-[104px]"
+                      onValueChange={handleYearChange}
+                      options={yearSelectOptions}
+                      triggerClassName="ds-numeric h-auto min-h-0 w-[104px] rounded-xl border-[#00cec4]/18 bg-[#00cec4]/8 px-3.5 py-1.5 text-sm font-semibold shadow-none hover:border-[#00cec4]/35 hover:bg-[#00cec4]/12 hover:shadow-none focus-visible:ring-0"
+                      value={String(viewDate.getFullYear())}
+                    />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => goToMonth(-1)}
-                      className="ds-date-nav-button"
-                      aria-label="Previous month"
-                    >
-                      <ChevronLeft className="size-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => goToMonth(1)}
-                      className="ds-date-nav-button"
-                      aria-label="Next month"
-                    >
-                      <ChevronRight className="size-4" />
-                    </button>
+                  <div className="flex justify-end">
+                    <DropdownSelect
+                      ariaLabel="Select month"
+                      contentClassName="z-[120] min-w-[148px]"
+                      onValueChange={handleMonthChange}
+                      options={monthOptions}
+                      triggerClassName="h-auto min-h-0 w-[148px] rounded-xl border-[#00cec4]/18 bg-[#00cec4]/8 px-3.5 py-1.5 text-right text-sm font-semibold shadow-none hover:border-[#00cec4]/35 hover:bg-[#00cec4]/12 hover:shadow-none focus-visible:ring-0 [&>span]:ml-0 [&>span]:text-right"
+                      value={String(viewDate.getMonth())}
+                    />
                   </div>
                 </div>
 
-                <div className="mb-2 grid grid-cols-7 gap-1 px-1">
+                <div className="mb-1.5 grid grid-cols-7 gap-0.5 px-0.5">
                   {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((label) => (
-                    <div key={label} className="py-2 text-center text-[10px] uppercase tracking-[0.22em] text-on-surface-variant">
+                    <div key={label} className="py-1.5 text-center text-[10px] uppercase tracking-[0.18em] text-on-surface-variant">
                       {label}
                     </div>
                   ))}
                 </div>
 
-                <div className="grid grid-cols-7 gap-1">
+                <div className="grid grid-cols-7 gap-0.5">
                   {days.map((day, index) => {
                     const isSelected = day.iso === selectedIso;
                     return (
@@ -392,7 +426,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(func
                         disabled={day.isDisabled}
                         onClick={() => handleSelect(day.iso)}
                         className={cn(
-                          "ds-date-day relative h-11 rounded-2xl text-sm font-medium transition duration-200",
+                          "ds-date-day ds-numeric relative h-9 rounded-xl px-0 text-sm font-medium transition duration-200",
                           !day.inCurrentMonth && "text-on-surface-variant/45",
                           day.inCurrentMonth && "text-on-surface",
                           day.isToday && !isSelected && "ring-1 ring-[#00cec4]/35",
@@ -404,13 +438,13 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(func
                         style={{ animationDelay: `${Math.min(index * 14, 180)}ms` }}
                       >
                         <span className="relative z-10">{day.dayNumber}</span>
-                        {isSelected ? <span className="absolute inset-0 rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.02))]" /> : null}
+                        {isSelected ? <span className="absolute inset-0 rounded-xl bg-[linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0.02))]" /> : null}
                       </button>
                     );
                   })}
                 </div>
 
-                <div className="relative mt-3 flex items-center justify-between gap-3 border-t border-outline-variant/30 px-1 pt-3">
+                <div className="relative mt-2.5 flex items-center justify-between gap-3 border-t border-outline-variant/30 px-0.5 pt-2.5">
                   <button
                     type="button"
                     onClick={handleClear}
@@ -422,7 +456,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(func
                   <button
                     type="button"
                     onClick={jumpToToday}
-                    className="rounded-full border border-[#00cec4]/18 bg-[#00cec4]/8 px-3 py-1.5 text-sm font-semibold text-[#00cec4] transition hover:border-[#00cec4]/35 hover:bg-[#00cec4]/12"
+                    className="rounded-xl border border-[#00cec4]/18 bg-[#00cec4]/8 px-2.5 py-1 text-sm font-semibold text-[#00cec4] transition hover:border-[#00cec4]/35 hover:bg-[#00cec4]/12"
                   >
                     Today
                   </button>

@@ -43,10 +43,23 @@ export function DropdownSelect({
 }: DropdownSelectProps) {
   const isControlled = value !== undefined;
   const [uncontrolledValue, setUncontrolledValue] = React.useState(defaultValue);
+  const [open, setOpen] = React.useState(false);
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
   const selectedValue = isControlled ? value : uncontrolledValue;
   const selectedOption = options.find((option) => option.value === selectedValue);
   const buttonLabel =
     selectedValue === "" ? placeholder : (selectedOption?.label ?? placeholder);
+
+  React.useEffect(() => {
+    if (!open) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      const selectedItem = contentRef.current?.querySelector<HTMLElement>("[data-dropdown-select-item='selected']");
+      selectedItem?.scrollIntoView({ block: "center" });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [open, selectedValue]);
 
   function handleValueChange(nextValue: string) {
     if (!isControlled) {
@@ -76,7 +89,7 @@ export function DropdownSelect({
         </select>
       ) : null}
 
-      <DropdownMenu modal={false}>
+      <DropdownMenu modal={false} onOpenChange={setOpen} open={open}>
         <DropdownMenuTrigger asChild>
           <button
             aria-label={ariaLabel}
@@ -98,10 +111,12 @@ export function DropdownSelect({
           align="start"
           className={cn("w-[var(--radix-dropdown-menu-trigger-width)] max-h-[300px] overflow-y-auto", contentClassName)}
           data-dropdown-select-content="true"
+          ref={contentRef}
         >
           <DropdownMenuRadioGroup onValueChange={handleValueChange} value={selectedValue}>
             {options.map((option) => (
               <DropdownMenuRadioItem
+                data-dropdown-select-item={option.value === selectedValue ? "selected" : undefined}
                 disabled={option.disabled}
                 key={option.value}
                 value={option.value}

@@ -361,6 +361,34 @@ async function resolveJobDriveUploadAccessToken(primaryOwnerId: string, actorId:
   return undefined;
 }
 
+async function deleteChaJobDriveWorkspace(params: {
+  jobId: string;
+  jobNumber: string;
+  orgId: string;
+  primaryOwnerId: string;
+  actorId: string;
+}) {
+  const profile = await db.jobWorkspaceProfile.findUnique({
+    where: { jobId: params.jobId },
+    select: { rootFolderId: true },
+  });
+
+  const rootFolderId = profile?.rootFolderId;
+  if (!rootFolderId || rootFolderId.startsWith("mock-")) {
+    return { rootFolderId: rootFolderId || null, outcome: "skipped" as const };
+  }
+
+  const driveAccessToken = await resolveJobDriveUploadAccessToken(params.primaryOwnerId, params.actorId);
+  if (!driveAccessToken) {
+    throw new Error(
+      `Google Drive folder deletion could not be completed for job ${params.jobNumber} because no connected Drive account with delete access was available.`,
+    );
+  }
+
+  const outcome = await driveClient.deleteFileOrFolder(rootFolderId, driveAccessToken);
+  return { rootFolderId, outcome };
+}
+
 function getChaManifestSchemaState() {
   return chaManifestSchemaStatePromise;
 }
@@ -6016,6 +6044,14 @@ export async function submitJobDeletion(
   });
 
   if (isDirectDeleteAllowed) {
+    const driveDeletion = await deleteChaJobDriveWorkspace({
+      jobId: job.id,
+      jobNumber: job.jobNumber,
+      orgId,
+      primaryOwnerId: job.primaryOwnerId,
+      actorId,
+    });
+
     await db.chaJob.update({
       where: { id: job.id },
       data: {
@@ -6041,6 +6077,8 @@ export async function submitJobDeletion(
       metadata: {
         actorRoleNames,
         assignedManagerId: getAssignedDeletionManager(job)?.userId ?? null,
+        driveRootFolderId: driveDeletion.rootFolderId,
+        driveDeletionOutcome: driveDeletion.outcome,
         ...input.metadata,
       },
     });
@@ -6058,6 +6096,8 @@ export async function submitJobDeletion(
       metadata: {
         actorRoleNames,
         assignedManagerId: getAssignedDeletionManager(job)?.userId ?? null,
+        driveRootFolderId: driveDeletion.rootFolderId,
+        driveDeletionOutcome: driveDeletion.outcome,
         ...input.metadata,
       },
     });
@@ -6210,8 +6250,50 @@ export async function decideJobDeletionRequest(
     throw new Error("A rejection remark is required when declining a deletion request.");
   }
 
+  let approvedDriveDeletion:
+    | {
+        rootFolderId: string | null;
+        outcome: "deleted" | "missing" | "skipped";
+      }
+    | undefined;
+
   let result;
   try {
+    if (input.decision === "APPROVED") {
+      const requestPreview = await db.chaJobDeletionRequest.findFirst({
+        where: { id: input.requestId, orgId },
+        select: {
+          status: true,
+          assignedManagerId: true,
+          job: {
+            select: {
+              id: true,
+              jobNumber: true,
+              primaryOwnerId: true,
+            },
+          },
+        },
+      });
+
+      if (!requestPreview) {
+        throw new Error("Deletion approval request not found.");
+      }
+      if (requestPreview.status !== "PENDING") {
+        throw new Error("This deletion approval request has already been actioned.");
+      }
+      if (requestPreview.assignedManagerId !== actorId) {
+        throw new Error("You are not the assigned manager for this deletion request.");
+      }
+
+      approvedDriveDeletion = await deleteChaJobDriveWorkspace({
+        jobId: requestPreview.job.id,
+        jobNumber: requestPreview.job.jobNumber,
+        orgId,
+        primaryOwnerId: requestPreview.job.primaryOwnerId,
+        actorId,
+      });
+    }
+
     result = await db.$transaction(
       async (tx) => {
         const request = await tx.chaJobDeletionRequest.findFirst({
@@ -6329,6 +6411,8 @@ export async function decideJobDeletionRequest(
         requesterId: result.requester.id,
         assignedManagerId: actorId,
         approvalRequestId: result.request.id,
+        driveRootFolderId: approvedDriveDeletion?.rootFolderId ?? null,
+        driveDeletionOutcome: approvedDriveDeletion?.outcome ?? null,
         ...input.metadata,
       },
     });
@@ -6361,6 +6445,8 @@ export async function decideJobDeletionRequest(
       requesterId: result.requester.id,
       assignedManagerId: actorId,
       approvalRequestId: result.request.id,
+      driveRootFolderId: approvedDriveDeletion?.rootFolderId ?? null,
+      driveDeletionOutcome: approvedDriveDeletion?.outcome ?? null,
       ...input.metadata,
     },
   });
@@ -6380,6 +6466,8 @@ export async function decideJobDeletionRequest(
       requesterId: result.requester.id,
       assignedManagerId: actorId,
       approvalRequestId: result.request.id,
+      driveRootFolderId: approvedDriveDeletion?.rootFolderId ?? null,
+      driveDeletionOutcome: approvedDriveDeletion?.outcome ?? null,
       ...input.metadata,
     },
   });
@@ -10558,6 +10646,77 @@ export async function updateFilingWorkflowQueryStatus(
       input.status === "CLOSED"
         ? `The customs query "${query.title}" was marked replied and closed.`
         : `The customs query "${query.title}" has a new replied status update.`,
+  });
+
+  return updated;
+}
+
+export async function deleteDeliveryOrderDocument(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+) {
+  const { additionalData } = await getAdditionalDataForDoFlow(orgId, jobId);
+  if (!additionalData.doDocumentFileKey) {
+    throw new Error("No Delivery Order document is currently uploaded.");
+  }
+
+  const existingFileKey = additionalData.doDocumentFileKey;
+  const existingFileName = additionalData.doDocumentFileName || "Delivery Order document";
+
+  const updated = await db.$transaction(async (tx) => {
+    const updatedAdditionalData = await tx.chaJobAdditionalData.update({
+      where: { id: additionalData.id },
+      data: {
+        doDocumentFileKey: null,
+        doDocumentFileName: null,
+        doDocumentUploadedAt: null,
+        doDocumentUploadedById: null,
+        updatedById: actorId,
+      },
+    });
+
+    const requirement = await tx.chaJobDocumentRequirement.findFirst({
+      where: {
+        jobId,
+        name: DO_DOCUMENT_REQUIREMENT_NAME,
+        category: DO_DOCUMENT_CATEGORY,
+      },
+      orderBy: { id: "asc" },
+    });
+
+    if (requirement) {
+      await tx.chaDocumentVersion.updateMany({
+        where: {
+          requirementId: requirement.id,
+          isCurrent: true,
+        },
+        data: {
+          isCurrent: false,
+        },
+      });
+
+      await tx.chaJobDocumentRequirement.update({
+        where: { id: requirement.id },
+        data: { status: "PENDING" },
+      });
+    }
+
+    return updatedAdditionalData;
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "ChaJobAdditionalData",
+    entityId: additionalData.id,
+    event: "DO_DOCUMENT_DELETED",
+    actorId,
+    remarks: `Deleted Delivery Order document: ${existingFileName}`,
+    metadata: {
+      fileKey: existingFileKey,
+      fileName: existingFileName,
+    },
   });
 
   return updated;

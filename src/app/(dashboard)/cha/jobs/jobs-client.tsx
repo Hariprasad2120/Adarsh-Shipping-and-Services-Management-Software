@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Briefcase, Plus, Search } from "lucide-react";
 import { CreateJobDialog } from "@/components/cha/create-job-dialog";
 import { ClickableRow } from "@/components/clickable-row";
-import {DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableHead,DataTableHeader,} from "@/components/data-table";
+import {DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableFooter,DataTableHead,DataTableHeader,} from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
@@ -209,8 +209,8 @@ export function JobsClient({
         <p className="text-sm text-on-surface-variant">{description}</p>
       </div>
 
-      <DataTable className="cha-jobs-table-shell border-outline-variant/25 shadow-sm" tableClassName="cha-jobs-table">
-        <DataTableHeader className="border-b-0">
+      <DataTable>
+        <DataTableHeader>
           <tr>
             <DataTableHead className="py-4">Job Number</DataTableHead>
             <DataTableHead className="py-4">Job Title</DataTableHead>
@@ -285,36 +285,30 @@ export function JobsClient({
           )}
         </DataTableBody>
         {data.totalPages > 1 ? (
-          <tfoot>
-            <tr>
-              <td colSpan={9} className="p-0">
-                <div className="flex items-center justify-between border-t border-outline-variant/15 px-6 py-4">
-                  <span className="text-xs text-on-surface-variant">
-                    Page <span className="text-on-surface">{data.page}</span> of{" "}
-                    <span className="text-on-surface">{data.totalPages}</span> ({data.total} jobs)
-                  </span>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={data.page === 1}
-                      onClick={() => handlePageChange(tableKey, data.page - 1)}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={data.page === data.totalPages}
-                      onClick={() => handlePageChange(tableKey, data.page + 1)}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </tfoot>
+          <DataTableFooter>
+            <span className="text-xs text-on-surface-variant">
+              Page <span className="text-on-surface">{data.page}</span> of{" "}
+              <span className="text-on-surface">{data.totalPages}</span> ({data.total} jobs)
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={data.page === 1}
+                onClick={() => handlePageChange(tableKey, data.page - 1)}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={data.page === data.totalPages}
+                onClick={() => handlePageChange(tableKey, data.page + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          </DataTableFooter>
         ) : null}
       </DataTable>
     </section>
