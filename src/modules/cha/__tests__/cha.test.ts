@@ -2,12 +2,14 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { db } from "@/lib/db";
 import * as chaService from "../service";
 import * as driveClient from "@/lib/google-drive-client";
+import * as googleChatClient from "@/lib/google-chat-client";
 import * as workspaceOauth from "@/lib/workspace-oauth";
 
 describe("Customs House Agent (CHA) Module Integration Tests", () => {
   let org: any;
   let branch: any;
   let ownerUser: any;
+  let adminUser: any;
   let managerUser: any;
   let otherManagerUser: any;
   let customer: any;
@@ -35,6 +37,9 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     // 3. Create Roles
     const employeeRole = await db.role.create({
       data: { orgId: org.id, name: "Employee", isSystem: true },
+    });
+    const adminRole = await db.role.create({
+      data: { orgId: org.id, name: "Admin", isSystem: true },
     });
     const managerRole = await db.role.create({
       data: { orgId: org.id, name: "Manager", isSystem: true },
@@ -69,8 +74,11 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     await db.rolePermission.createMany({
       data: [
         { roleId: employeeRole.id, permissionId: readPermission.id },
+        { roleId: adminRole.id, permissionId: readPermission.id },
         { roleId: managerRole.id, permissionId: readPermission.id },
         { roleId: employeeRole.id, permissionId: deletePermission.id },
+        { roleId: adminRole.id, permissionId: deletePermission.id },
+        { roleId: adminRole.id, permissionId: approveDeletePermission.id },
         { roleId: managerRole.id, permissionId: deletePermission.id },
         { roleId: managerRole.id, permissionId: approveDeletePermission.id },
         { roleId: managerRole.id, permissionId: internalChecklistApprovePermission.id },
@@ -86,6 +94,16 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
         email: `cha-owner-${Date.now()}@example.com`,
         passwordHash: "dummy-hash",
         name: "Operations Owner",
+        branchId: branch.id,
+      },
+    });
+
+    adminUser = await db.user.create({
+      data: {
+        orgId: org.id,
+        email: `cha-admin-${Date.now()}@example.com`,
+        passwordHash: "dummy-hash",
+        name: "Admin Approver",
         branchId: branch.id,
       },
     });
@@ -113,6 +131,9 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     // Assign roles to users
     await db.userRole.create({
       data: { userId: ownerUser.id, roleId: employeeRole.id },
+    });
+    await db.userRole.create({
+      data: { userId: adminUser.id, roleId: adminRole.id },
     });
     await db.userRole.create({
       data: { userId: managerUser.id, roleId: managerRole.id },
@@ -727,7 +748,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     );
     expect(reuploadResult.fileVersion.versionNumber).toBe(2);
 
-    await chaService.submitChecklistInternalDecision(
+    const firstCustomerApprovalResult = await chaService.submitChecklistInternalDecision(
       ownerUser.id,
       org.id,
       job.id,
@@ -735,6 +756,8 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       "APPROVED",
       "All checks pass."
     );
+    expect(firstCustomerApprovalResult.emailAutomation?.queued).toBe(false);
+    expect(firstCustomerApprovalResult.emailAutomation?.warning).toMatch(/no customer email is available/i);
 
     const checklistPendingCustomer = await db.chaChecklist.findUniqueOrThrow({ where: { id: checklist.id } });
     expect(checklistPendingCustomer.status).toBe("CUSTOMER_APPROVAL_PENDING");
@@ -948,7 +971,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(finalReq.status).toBe("RECEIPT_ACKNOWLEDGED");
   }, 60000);
 
-  it("8. should create, reject, and audit deletion approval requests for non-managers", async () => {
+  it("8. should create, reject, and audit deletion approval requests for non-admin users", async () => {
     const job = await chaService.createJob(ownerUser.id, org.id, {
       jobNumber: "CHA-DELETE-REQ-001",
       title: "Deletion approval request job",
@@ -984,17 +1007,17 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     const pendingRequest = await db.chaJobDeletionRequest.findFirstOrThrow({
       where: { jobId: job.id, status: "PENDING" },
     });
-    expect(pendingRequest.assignedManagerId).toBe(managerUser.id);
+    expect(pendingRequest.assignedManagerId).toBe(adminUser.id);
 
     await expect(
       chaService.decideJobDeletionRequest(otherManagerUser.id, org.id, {
         requestId: pendingRequest.id,
         decision: "APPROVED",
-        remarks: "Attempted by wrong manager",
+        remarks: "Attempted by non-admin",
       }),
-    ).rejects.toThrow("You are not the assigned manager for this deletion request.");
+    ).rejects.toThrow("You are not authorized to approve CHA job deletions.");
 
-    await chaService.decideJobDeletionRequest(managerUser.id, org.id, {
+    await chaService.decideJobDeletionRequest(adminUser.id, org.id, {
       requestId: pendingRequest.id,
       decision: "REJECTED",
       remarks: "Supporting records still under review.",
@@ -1034,8 +1057,9 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(unauthorizedAttempt).toBeTruthy();
   }, 60000);
 
-  it("9. should allow the assigned manager to directly soft-delete a job", async () => {
+  it("9. should allow only an admin to directly soft-delete a job", async () => {
     const driveDeleteSpy = vi.spyOn(driveClient, "deleteFileOrFolder").mockResolvedValue("deleted");
+    const chatDeleteSpy = vi.spyOn(googleChatClient, "deleteSpaceWithAdminAccess").mockResolvedValue();
     const accessTokenSpy = vi.spyOn(workspaceOauth, "getValidAccessToken").mockResolvedValue("test-drive-token");
 
     const job = await chaService.createJob(ownerUser.id, org.id, {
@@ -1054,20 +1078,20 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     });
 
     await db.googleWorkspaceConnection.upsert({
-      where: { userId: managerUser.id },
+      where: { userId: adminUser.id },
       update: {
         status: "connected",
-        scopes: ["https://www.googleapis.com/auth/drive"],
+        scopes: ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/chat.admin.delete"],
       },
       create: {
         orgId: org.id,
-        userId: managerUser.id,
-        googleEmail: managerUser.email,
-        googleUserId: `mgr-${managerUser.id}`,
+        userId: adminUser.id,
+        googleEmail: adminUser.email,
+        googleUserId: `admin-${adminUser.id}`,
         accessToken: "token",
         refreshToken: "refresh",
         tokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
-        scopes: ["https://www.googleapis.com/auth/drive"],
+        scopes: ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/chat.admin.delete"],
         status: "connected",
       },
     });
@@ -1076,6 +1100,8 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
         orgId: org.id,
         jobId: job.id,
         rootFolderId: "drive-folder-direct-delete-test",
+        googleSpaceId: "spaces/AAA_DIRECT_DELETE",
+        googleSpaceUrl: "https://chat.google.com/room/AAA_DIRECT_DELETE",
         provisioningStatus: "success",
       },
     });
@@ -1088,20 +1114,40 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       }),
     ).rejects.toThrow("You are not authorized to delete or request deletion for this CHA job.");
 
-    const directDelete = await chaService.submitJobDeletion(managerUser.id, org.id, {
+    const managerRequest = await chaService.submitJobDeletion(managerUser.id, org.id, {
       jobId: job.id,
       confirmationJobNumber: "CHA-DELETE-DIRECT-001",
       confirmationPhrase: "delete job",
       metadata: { source: "test" },
     });
+    expect(managerRequest.mode).toBe("pending");
 
-    expect(directDelete.mode).toBe("deleted");
+    const request = await db.chaJobDeletionRequest.findFirstOrThrow({
+      where: { jobId: job.id, status: "PENDING" },
+    });
+
+    await chaService.decideJobDeletionRequest(adminUser.id, org.id, {
+      requestId: request.id,
+      decision: "APPROVED",
+      remarks: "Admin approved direct deletion execution.",
+    });
+
     expect(accessTokenSpy).toHaveBeenCalled();
     expect(driveDeleteSpy).toHaveBeenCalledWith("drive-folder-direct-delete-test", "test-drive-token");
+    expect(chatDeleteSpy).toHaveBeenCalledWith({
+      spaceResourceName: "spaces/AAA_DIRECT_DELETE",
+      userId: adminUser.id,
+    });
+
+    const deletedWorkspace = await db.jobWorkspaceProfile.findUniqueOrThrow({ where: { jobId: job.id } });
+    expect(deletedWorkspace.rootFolderId).toBeNull();
+    expect(deletedWorkspace.googleSpaceId).toBeNull();
+    expect(deletedWorkspace.googleSpaceUrl).toBeNull();
+    expect(deletedWorkspace.categoryFolders).toBeNull();
 
     const deletedJob = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
     expect(deletedJob.deletedAt).not.toBeNull();
-    expect(deletedJob.deletedById).toBe(managerUser.id);
+    expect(deletedJob.deletedById).toBe(adminUser.id);
     expect(deletedJob.status).toBe("CANCELLED");
     expect(deletedJob.jobNumber).toContain("CHA-DELETE-DIRECT-001__deleted__");
 
@@ -1137,11 +1183,13 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     ).rejects.toThrow("CHA job not found.");
 
     driveDeleteSpy.mockRestore();
+    chatDeleteSpy.mockRestore();
     accessTokenSpy.mockRestore();
   }, 60000);
 
   it("10. should enforce confirmation rules, missing manager handling, and approved deletion execution", async () => {
     const driveDeleteSpy = vi.spyOn(driveClient, "deleteFileOrFolder").mockResolvedValue("deleted");
+    const chatDeleteSpy = vi.spyOn(googleChatClient, "deleteSpaceWithAdminAccess").mockResolvedValue();
     const accessTokenSpy = vi.spyOn(workspaceOauth, "getValidAccessToken").mockResolvedValue("test-drive-token");
 
     const noManagerJob = await chaService.createJob(ownerUser.id, org.id, {
@@ -1182,11 +1230,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       confirmationJobNumber: "CHA-DELETE-NOMGR-001",
       confirmationPhrase: "delete job",
     });
-    expect(directDeleteNoMgr.mode).toBe("deleted");
-
-    const noManagerDeletedJob = await db.chaJob.findUniqueOrThrow({ where: { id: noManagerJob.id } });
-    expect(noManagerDeletedJob.deletedAt).not.toBeNull();
-    expect(noManagerDeletedJob.deletedById).toBe(ownerUser.id);
+    expect(directDeleteNoMgr.mode).toBe("pending");
 
     const noManagerRequestJob = await chaService.createJob(managerUser.id, org.id, {
       jobNumber: "CHA-DELETE-NOMGR-REQ",
@@ -1211,13 +1255,12 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       },
     });
 
-    await expect(
-      chaService.submitJobDeletion(ownerUser.id, org.id, {
-        jobId: noManagerRequestJob.id,
-        confirmationJobNumber: "CHA-DELETE-NOMGR-REQ",
-        confirmationPhrase: "delete job",
-      }),
-    ).rejects.toThrow("No approval manager is assigned to this CHA job. Assign a manager before requesting deletion.");
+    const noMgrRequest = await chaService.submitJobDeletion(ownerUser.id, org.id, {
+      jobId: noManagerRequestJob.id,
+      confirmationJobNumber: "CHA-DELETE-NOMGR-REQ",
+      confirmationPhrase: "delete job",
+    });
+    expect(noMgrRequest.mode).toBe("pending");
 
     const approvedJob = await chaService.createJob(ownerUser.id, org.id, {
       jobNumber: "CHA-DELETE-APPROVE-001",
@@ -1235,20 +1278,20 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     });
 
     await db.googleWorkspaceConnection.upsert({
-      where: { userId: managerUser.id },
+      where: { userId: adminUser.id },
       update: {
         status: "connected",
-        scopes: ["https://www.googleapis.com/auth/drive"],
+        scopes: ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/chat.admin.delete"],
       },
       create: {
         orgId: org.id,
-        userId: managerUser.id,
-        googleEmail: managerUser.email,
-        googleUserId: `mgr-${managerUser.id}`,
+        userId: adminUser.id,
+        googleEmail: adminUser.email,
+        googleUserId: `admin-${adminUser.id}`,
         accessToken: "token",
         refreshToken: "refresh",
         tokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
-        scopes: ["https://www.googleapis.com/auth/drive"],
+        scopes: ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/chat.admin.delete"],
         status: "connected",
       },
     });
@@ -1257,6 +1300,8 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
         orgId: org.id,
         jobId: approvedJob.id,
         rootFolderId: "drive-folder-approved-delete-test",
+        googleSpaceId: "spaces/AAA_APPROVED_DELETE",
+        googleSpaceUrl: "https://chat.google.com/room/AAA_APPROVED_DELETE",
         provisioningStatus: "success",
       },
     });
@@ -1272,24 +1317,36 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       where: { jobId: approvedJob.id, status: "PENDING" },
     });
 
-    await chaService.decideJobDeletionRequest(managerUser.id, org.id, {
+    expect(request.assignedManagerId).toBe(adminUser.id);
+
+    await chaService.decideJobDeletionRequest(adminUser.id, org.id, {
       requestId: request.id,
       decision: "APPROVED",
-      remarks: "Deletion approved by assigned manager.",
+      remarks: "Deletion approved by admin.",
     });
     expect(accessTokenSpy).toHaveBeenCalled();
     expect(driveDeleteSpy).toHaveBeenCalledWith("drive-folder-approved-delete-test", "test-drive-token");
+    expect(chatDeleteSpy).toHaveBeenCalledWith({
+      spaceResourceName: "spaces/AAA_APPROVED_DELETE",
+      userId: adminUser.id,
+    });
 
     const executedRequest = await db.chaJobDeletionRequest.findUniqueOrThrow({
       where: { id: request.id },
     });
     expect(executedRequest.status).toBe("EXECUTED");
-    expect(executedRequest.executedById).toBe(managerUser.id);
+    expect(executedRequest.executedById).toBe(adminUser.id);
 
     const deletedJob = await db.chaJob.findUniqueOrThrow({ where: { id: approvedJob.id } });
     expect(deletedJob.deletedAt).not.toBeNull();
-    expect(deletedJob.deletedById).toBe(managerUser.id);
+    expect(deletedJob.deletedById).toBe(adminUser.id);
     expect(deletedJob.jobNumber).toContain("CHA-DELETE-APPROVE-001__deleted__");
+
+    const deletedWorkspace = await db.jobWorkspaceProfile.findUniqueOrThrow({ where: { jobId: approvedJob.id } });
+    expect(deletedWorkspace.rootFolderId).toBeNull();
+    expect(deletedWorkspace.googleSpaceId).toBeNull();
+    expect(deletedWorkspace.googleSpaceUrl).toBeNull();
+    expect(deletedWorkspace.categoryFolders).toBeNull();
 
     const recreatedApprovedJob = await chaService.createJob(ownerUser.id, org.id, {
       jobNumber: "CHA-DELETE-APPROVE-001",
@@ -1312,6 +1369,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     );
 
     driveDeleteSpy.mockRestore();
+    chatDeleteSpy.mockRestore();
     accessTokenSpy.mockRestore();
   }, 60000);
 

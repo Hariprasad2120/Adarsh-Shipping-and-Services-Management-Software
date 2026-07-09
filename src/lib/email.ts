@@ -5,20 +5,41 @@ type SendParams = {
   to: string;
   subject: string;
   html: string;
+  text?: string;
+  metadata?: Record<string, unknown>;
+  idempotencyKey?: string;
 };
 
-export async function sendEmail({ to, subject, html }: SendParams): Promise<void> {
+export async function sendEmail({ to, subject, html, text, metadata, idempotencyKey }: SendParams): Promise<void> {
   const provider = process.env.EMAIL_PROVIDER ?? "resend";
 
   if (provider === "resend") {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY is required when EMAIL_PROVIDER=resend");
+    }
+
     const { Resend } = await import("resend");
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
+    const result = await resend.emails.send(
+      {
       from: process.env.EMAIL_FROM ?? "noreply@example.com",
       to,
       subject,
       html,
-    });
+      text,
+      tags: metadata
+        ? Object.entries(metadata)
+            .filter(([, value]) => typeof value === "string" || typeof value === "number" || typeof value === "boolean")
+            .slice(0, 10)
+            .map(([name, value]) => ({ name, value: String(value) }))
+        : undefined,
+      },
+      idempotencyKey ? { idempotencyKey } : undefined,
+    );
+
+    if (result.error) {
+      throw new Error(result.error.message || "Resend email delivery failed");
+    }
     return;
   }
 
@@ -33,7 +54,7 @@ export async function sendEmail({ to, subject, html }: SendParams): Promise<void
         pass: process.env.SMTP_PASS,
       },
     });
-    await transporter.sendMail({ from: process.env.EMAIL_FROM, to, subject, html });
+    await transporter.sendMail({ from: process.env.EMAIL_FROM, to, subject, html, text });
     return;
   }
 

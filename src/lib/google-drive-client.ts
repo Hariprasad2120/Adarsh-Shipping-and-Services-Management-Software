@@ -312,6 +312,31 @@ export async function getFileMetadata(
   };
 }
 
+export async function downloadFile(
+  fileId: string,
+  accessToken?: string,
+): Promise<Buffer> {
+  if (!fileId) {
+    throw new Error("Drive file id is required.");
+  }
+
+  const token = accessToken || (await getDriveAccessToken());
+  const url = new URL(`https://www.googleapis.com/drive/v3/files/${fileId}`);
+  url.searchParams.set("alt", "media");
+  url.searchParams.set("supportsAllDrives", "true");
+
+  const res = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Drive downloadFile failed: ${err}`);
+  }
+
+  return Buffer.from(await res.arrayBuffer());
+}
+
 export async function copyFileToFolder(params: {
   fileId: string;
   parentFolderId: string;

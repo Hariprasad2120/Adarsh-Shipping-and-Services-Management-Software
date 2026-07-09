@@ -12,7 +12,8 @@ const SCOPES = [
   "https://www.googleapis.com/auth/chat.bot",
   "https://www.googleapis.com/auth/chat.app.spaces.create",
   "https://www.googleapis.com/auth/chat.app.spaces",
-  "https://www.googleapis.com/auth/chat.app.memberships"
+  "https://www.googleapis.com/auth/chat.app.memberships",
+  "https://www.googleapis.com/auth/chat.app.delete"
 ];
 const SKIP_VERIFY =
   process.env.GOOGLE_CHAT_SKIP_AUTH_VERIFY === "true";
@@ -275,6 +276,48 @@ export async function getSpace(
   }
 
   return res.json() as Promise<{ name: string; displayName: string; spaceType: string }>;
+}
+
+export async function deleteSpace(spaceResourceName: string): Promise<void> {
+  const token = await getAccessToken();
+
+  const res = await fetch(`${CHAT_API_BASE}/${spaceResourceName}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (res.status === 404) {
+    return;
+  }
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Chat API deleteSpace failed (${res.status}): ${err}`);
+  }
+}
+
+export async function deleteSpaceWithAdminAccess(params: {
+  spaceResourceName: string;
+  userId: string;
+}): Promise<void> {
+  const token = await getValidAccessToken(params.userId);
+
+  const url = new URL(`${CHAT_API_BASE}/${params.spaceResourceName}`);
+  url.searchParams.set("useAdminAccess", "true");
+
+  const res = await fetch(url.toString(), {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (res.status === 404) {
+    return;
+  }
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Chat API deleteSpace with admin access failed (${res.status}): ${err}`);
+  }
 }
 
 // ─── Create DM ───────────────────────────────────────────────────────────────

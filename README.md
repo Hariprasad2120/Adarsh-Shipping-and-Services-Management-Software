@@ -96,3 +96,10 @@ Related docs: [CHA_PRODUCTION_SCOPE.md](CHA_PRODUCTION_SCOPE.md), [DEPLOYMENT.md
 
 - This repository should contain source code, docs, and intentionally versioned assets only.
 - Local recordings, generated analysis output, scratch files, and Codex artifacts are ignored.
+
+## Checklist Main email automation
+
+- CHA Checklist Main customer emails now queue automatically when a checklist moves into customer approval.
+- Configure Resend with `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, and `EMAIL_FROM`.
+- Deliver queued mail by calling `GET /api/cron/email-flush` with the `x-cron-secret` header set to `CRON_SECRET`.
+- To test without sending real emails, complete the CHA checklist approval flow locally and inspect the `EmailQueue` table without running the cron flush, or run `npm test` to exercise the queueing path with mocked delivery.

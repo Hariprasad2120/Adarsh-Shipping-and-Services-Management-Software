@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { getNow } from "@/lib/clock";
 import type { Prisma } from "@/generated/prisma/client";
+import { finalizeChecklistMainCustomerEmail } from "@/modules/cha/checklist-email-automation";
 import { getNotificationPolicy, type NotificationAppearance, type NotificationPriority, type NotificationSource, type NotificationVariant } from "./policy";
 
 export type NotificationEvent =
@@ -89,6 +90,39 @@ export async function recordNotificationActivity(params: {
   });
 }
 
+async function enqueueNotificationEmail(params: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+}) {
+  try {
+    return await db.emailQueue.create({
+      data: {
+        to: params.to,
+        subject: params.subject,
+        html: params.html,
+        text: params.text,
+      },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("column `text of relation EmailQueue` does not exist")) {
+      console.warn("[Notifications] EmailQueue.text column missing; retrying enqueue with legacy fields only.");
+      return db.emailQueue.create({
+        data: {
+          to: params.to,
+          subject: params.subject,
+          html: params.html,
+        },
+      });
+    }
+
+    console.warn("[Notifications] Email queue insert failed:", message);
+    return null;
+  }
+}
+
 export async function createNotification(params: CreateNotificationParams) {
   const policy = getNotificationPolicy(params.kind);
   const shouldEmail = params.email === true || policy.emailByDefault;
@@ -137,12 +171,11 @@ export async function createNotification(params: CreateNotificationParams) {
       event: "CREATED",
     }),
     shouldEmail && userEmail
-      ? db.emailQueue.create({
-          data: {
-            to: userEmail,
-            subject: params.title,
-            html: params.emailHtml ?? `<p>${params.body ?? params.title}</p>`,
-          },
+      ? enqueueNotificationEmail({
+          to: userEmail,
+          subject: params.title,
+          html: params.emailHtml ?? `<p>${params.body ?? params.title}</p>`,
+          text: params.body ?? params.title,
         })
       : Promise.resolve(null),
     // Route to Google Chat non-blocking
@@ -553,18 +586,43 @@ export async function flushEmailQueue(limit = 50): Promise<number> {
   let sent = 0;
   for (const item of items) {
     try {
-      await sendEmail({ to: item.to, subject: item.subject, html: item.html });
+      await sendEmail({
+        to: item.to,
+        subject: item.subject,
+        html: item.html,
+        text: item.text ?? undefined,
+        metadata:
+          item.metadata && typeof item.metadata === "object" && !Array.isArray(item.metadata)
+            ? (item.metadata as Record<string, unknown>)
+            : undefined,
+        idempotencyKey: item.automationKey ?? undefined,
+      });
+
+      await finalizeChecklistMainCustomerEmail({
+        id: item.id,
+        subject: item.subject,
+        html: item.html,
+        text: item.text,
+        metadata: item.metadata,
+      });
+
       await db.emailQueue.update({
         where: { id: item.id },
-        data: { status: "sent", sentAt: await getNow(), attempts: { increment: 1 } },
+        data: {
+          status: "sent",
+          sentAt: await getNow(),
+          attempts: { increment: 1 },
+          error: null,
+        },
       });
       sent++;
-    } catch {
+    } catch (error) {
       await db.emailQueue.update({
         where: { id: item.id },
         data: {
           attempts: { increment: 1 },
           status: item.attempts + 1 >= 3 ? "failed" : "pending",
+          error: error instanceof Error ? error.message : "Unknown email delivery failure",
         },
       });
     }

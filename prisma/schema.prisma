@@ -480,14 +480,18 @@ model NotificationActivity {
 }
 
 model EmailQueue {
-  id        String    @id @default(cuid())
-  to        String
-  subject   String
-  html      String
-  status    String    @default("pending") // pending | sent | failed
-  attempts  Int       @default(0)
-  sentAt    DateTime?
-  createdAt DateTime  @default(now())
+  id            String   @id @default(cuid())
+  to            String
+  subject       String
+  html          String
+  text          String?
+  status        String   @default("pending") // pending | sent | failed
+  attempts      Int      @default(0)
+  error         String?
+  sentAt        DateTime?
+  automationKey String?  @unique
+  metadata      Json?
+  createdAt     DateTime @default(now())
 
   @@index([status, attempts])
 }

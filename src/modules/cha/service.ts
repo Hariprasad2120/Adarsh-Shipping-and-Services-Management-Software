@@ -5,8 +5,11 @@ import * as XLSX from "xlsx";
 import { Prisma } from "@/generated/prisma/client";
 import { can, ForbiddenError } from "@/lib/rbac";
 import * as driveClient from "@/lib/google-drive-client";
+import * as googleChatClient from "@/lib/google-chat-client";
 import { ensureJobCategoryFolder } from "@/lib/workspace-provisioning";
 import { getValidAccessToken } from "@/lib/workspace-oauth";
+import { createDraft as createGmailDraft } from "@/lib/google-gmail-client";
+import { queueChecklistMainCustomerEmail } from "./checklist-email-automation";
 
 const DEFAULT_CHA_EXPENSE_CATEGORIES = [
   "Customs Duty",
@@ -387,6 +390,88 @@ async function deleteChaJobDriveWorkspace(params: {
 
   const outcome = await driveClient.deleteFileOrFolder(rootFolderId, driveAccessToken);
   return { rootFolderId, outcome };
+}
+
+async function deleteChaJobChatWorkspace(params: {
+  jobId: string;
+  actorId: string;
+}) {
+  const profile = await db.jobWorkspaceProfile.findUnique({
+    where: { jobId: params.jobId },
+    select: { googleSpaceId: true },
+  });
+
+  const googleSpaceId = profile?.googleSpaceId;
+  if (!googleSpaceId || googleSpaceId.startsWith("spaces/mock-")) {
+    return { googleSpaceId: googleSpaceId || null, outcome: "skipped" as const };
+  }
+
+  try {
+    const actorConnection = await db.googleWorkspaceConnection.findUnique({
+      where: { userId: params.actorId },
+      select: { scopes: true, status: true },
+    });
+    const hasAdminDeleteScope =
+      actorConnection?.status === "connected" &&
+      actorConnection.scopes.includes("https://www.googleapis.com/auth/chat.admin.delete");
+
+    if (!hasAdminDeleteScope) {
+      return {
+        googleSpaceId,
+        outcome: "admin_scope_missing" as const,
+        error: "The deleting admin must reconnect Google Workspace with the chat.admin.delete scope.",
+      };
+    }
+
+    await googleChatClient.deleteSpaceWithAdminAccess({
+      spaceResourceName: googleSpaceId,
+      userId: params.actorId,
+    });
+    return { googleSpaceId, outcome: "deleted" as const };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("manage chat and spaces conversations privilege")) {
+      return {
+        googleSpaceId,
+        outcome: "admin_scope_missing" as const,
+        error: "The deleting user must be a Google Workspace admin with the manage chat and spaces conversations privilege.",
+      };
+    }
+    if (message.includes("insufficient_scope") || message.includes("chat.admin.delete")) {
+      return {
+        googleSpaceId,
+        outcome: "admin_scope_missing" as const,
+        error: "The deleting admin must reconnect Google Workspace with the chat.admin.delete scope.",
+      };
+    }
+
+    throw error;
+  }
+}
+
+async function deleteChaJobWorkspace(params: {
+  jobId: string;
+  jobNumber: string;
+  orgId: string;
+  primaryOwnerId: string;
+  actorId: string;
+}) {
+  const [driveDeletion, chatDeletion] = await Promise.all([
+    deleteChaJobDriveWorkspace(params),
+    deleteChaJobChatWorkspace({ jobId: params.jobId, actorId: params.actorId }),
+  ]);
+
+  await db.jobWorkspaceProfile.updateMany({
+    where: { jobId: params.jobId },
+    data: {
+      rootFolderId: driveDeletion.outcome === "deleted" || driveDeletion.outcome === "missing" ? null : undefined,
+      categoryFolders: driveDeletion.outcome === "deleted" || driveDeletion.outcome === "missing" ? Prisma.JsonNull : undefined,
+      googleSpaceId: chatDeletion.outcome === "deleted" ? null : undefined,
+      googleSpaceUrl: chatDeletion.outcome === "deleted" ? null : undefined,
+    },
+  });
+
+  return { driveDeletion, chatDeletion };
 }
 
 function getChaManifestSchemaState() {
@@ -1203,6 +1288,84 @@ async function getChecklistCustomerMailRecipients(customerId: string) {
   return [];
 }
 
+async function queueChecklistMainAutomationForJob(params: {
+  actorId: string;
+  orgId: string;
+  job: {
+    id: string;
+    jobNumber: string;
+    jobTypeId?: string | null;
+    customerId: string;
+    customerRef?: string | null;
+    customer?: { name: string | null } | null;
+  };
+  checklist: {
+    id: string;
+    currentFileVersionId: string | null;
+    currentFileVersion?: {
+      id: string;
+      originalFileName: string;
+      versionNumber: number;
+    } | null;
+  };
+}) {
+  if (!params.checklist.currentFileVersionId || !params.checklist.currentFileVersion) {
+    return {
+      queued: false,
+      warning: "Checklist saved, but customer email was not queued because no current checklist file is available.",
+    };
+  }
+
+  const recipients = await getChecklistCustomerMailRecipients(params.job.customerId);
+  const primaryRecipient = recipients[0] ?? null;
+  if (!primaryRecipient?.email) {
+    return {
+      queued: false,
+      warning: "Checklist saved, but customer email was not queued because no customer email is available.",
+    };
+  }
+
+  const delayMinutes = await getChecklistCustomerApprovalDelayMinutesForJob(params.orgId, params.job.jobTypeId);
+  const queuedAt = await getNow();
+  const approvalVisibleAt = new Date(queuedAt.getTime() + delayMinutes * 60_000);
+  const checklistUrlBase = process.env.NEXTAUTH_URL?.replace(/\/$/, "") ?? null;
+  const checklistUrl = checklistUrlBase ? `${checklistUrlBase}/cha/jobs/${params.job.id}` : null;
+  const queueResult = await queueChecklistMainCustomerEmail({
+    actorId: params.actorId,
+    jobId: params.job.id,
+    jobNumber: params.job.jobNumber,
+    checklistId: params.checklist.id,
+    fileVersionId: params.checklist.currentFileVersionId,
+    customerId: params.job.customerId,
+    customerName: params.job.customer?.name?.trim() || primaryRecipient.name || "Customer",
+    customerReference: params.job.customerRef ?? null,
+    recipientEmail: primaryRecipient.email,
+    recipientName: primaryRecipient.name,
+    approvalVisibleAt,
+    checklistFileName: params.checklist.currentFileVersion.originalFileName,
+    checklistVersionLabel: `Version ${params.checklist.currentFileVersion.versionNumber}`,
+    checklistSummary: [
+      `Reference number: ${params.job.jobNumber}`,
+      `Checklist title: Checklist Main`,
+      `Checklist file: ${params.checklist.currentFileVersion.originalFileName}`,
+      `Checklist version: ${params.checklist.currentFileVersion.versionNumber}`,
+    ],
+    checklistUrl,
+  });
+
+  if (queueResult.duplicate) {
+    return {
+      queued: false,
+      warning: "Checklist saved, but customer email was already queued for this checklist version.",
+    };
+  }
+
+  return {
+    queued: queueResult.queued,
+    warning: queueResult.queued ? null : "Checklist saved, but customer email could not be queued.",
+  };
+}
+
 async function getChecklistApprovalActorSummary(actorId: string) {
   const actor = await db.user.findUnique({
     where: { id: actorId },
@@ -1360,6 +1523,34 @@ function getAssignedDeletionManager(job: {
   return [...job.assignments]
     .filter((assignment) => assignment.responsibility === "APPROVAL")
     .sort((a, b) => a.id.localeCompare(b.id))[0] ?? null;
+}
+
+async function getEligibleDeletionAdmins(orgId: string) {
+  return db.user.findMany({
+    where: {
+      orgId,
+      active: true,
+      OR: [
+        { isPlatformAdmin: true },
+        {
+          roles: {
+            some: {
+              role: {
+                name: "Admin",
+              },
+            },
+          },
+        },
+      ],
+    },
+    select: { id: true, name: true, email: true, isPlatformAdmin: true },
+    orderBy: [{ isPlatformAdmin: "desc" }, { name: "asc" }],
+  });
+}
+
+async function getDeletionApproverForJob(orgId: string) {
+  const admins = await getEligibleDeletionAdmins(orgId);
+  return admins[0] ?? null;
 }
 
 async function backfillAssignedManagerFromApprovalAssignment(job: {
@@ -4181,6 +4372,22 @@ export async function submitChecklistInternalDecision(
     return { outcome: "CUSTOMER_APPROVAL" as const, customerApproverIds };
   });
 
+  const emailAutomation =
+    result.outcome === "CUSTOMER_APPROVAL"
+      ? await queueChecklistMainAutomationForJob({
+          actorId,
+          orgId,
+          job,
+          checklist,
+        }).catch((error) => ({
+          queued: false,
+          warning:
+            error instanceof Error
+              ? `Checklist saved, but customer email could not be queued: ${error.message}`
+              : "Checklist saved, but customer email could not be queued.",
+        }))
+      : null;
+
   await logChecklistApprovalAudit({
     orgId,
     jobId,
@@ -4233,7 +4440,10 @@ export async function submitChecklistInternalDecision(
     });
   }
 
-  return result;
+  return {
+    ...result,
+    emailAutomation,
+  };
 }
 
 export async function sendChecklistCustomerMail(
@@ -4288,20 +4498,34 @@ export async function sendChecklistCustomerMail(
   const delayMinutes = await getChecklistCustomerApprovalDelayMinutesForJob(orgId, job.jobTypeId);
   const sentAt = await getNow();
   const approvalVisibleAt = new Date(sentAt.getTime() + delayMinutes * 60_000);
+  const accessToken = await getValidAccessToken(actorId);
+  const driveFileId = driveClient.extractDriveFileId(currentFileVersion.fileKey);
+  if (!driveFileId || driveFileId.startsWith("mock-")) {
+    throw new Error("Checklist attachment is not available in Google Drive for Gmail draft creation.");
+  }
 
+  const [attachmentMetadata, attachmentContent] = await Promise.all([
+    driveClient.getFileMetadata(driveFileId, accessToken),
+    driveClient.downloadFile(driveFileId, accessToken),
+  ]);
+  if (!attachmentMetadata) {
+    throw new Error("Checklist attachment metadata could not be loaded from Google Drive.");
+  }
+
+  const draft = await createGmailDraft({
+    userId: actorId,
+    to: recipients.map((recipient) => recipient.email).join(", "),
+    subject: input.subject.trim(),
+    body: input.body,
+    attachments: [
+      {
+        filename: attachmentMetadata.name || currentFileVersion.originalFileName,
+        mimeType: attachmentMetadata.mimeType || currentFileVersion.mimeType || "application/octet-stream",
+        content: attachmentContent,
+      },
+    ],
+  });
   const mailLog = await db.$transaction(async (tx) => {
-    await Promise.all(
-      recipients.map((recipient) =>
-        tx.emailQueue.create({
-          data: {
-            to: recipient.email,
-            subject: input.subject.trim(),
-            html: input.body,
-          },
-        }),
-      ),
-    );
-
     await tx.chaChecklist.update({
       where: { id: checklist.id },
       data: {
@@ -4320,7 +4544,7 @@ export async function sendChecklistCustomerMail(
         subject: input.subject.trim(),
         body: input.body,
         attachmentFileKey: currentFileVersion.fileKey,
-        attachmentFileName: currentFileVersion.originalFileName,
+        attachmentFileName: attachmentMetadata.name || currentFileVersion.originalFileName,
         sentAt,
         approvalVisibleAt,
       },
@@ -4338,14 +4562,17 @@ export async function sendChecklistCustomerMail(
     prevState: "CUSTOMER_APPROVAL_PENDING",
     newState: "CUSTOMER_APPROVAL_WAITING_WINDOW",
     source: "/cha/jobs/[jobId]::sendChecklistCustomerMail",
-    remarks: `Customer approval mail sent to ${recipients.map((entry) => entry.email).join(", ")} with checklist attachment ${checklist.currentFileVersion.originalFileName}.`,
+    remarks: `Customer approval Gmail draft created for ${recipients.map((entry) => entry.email).join(", ")} with checklist attachment ${attachmentMetadata.name || checklist.currentFileVersion.originalFileName}.`,
   });
 
   return {
     id: mailLog.id,
     recipients,
     approvalVisibleAt,
-    attachmentFileName: checklist.currentFileVersion.originalFileName,
+    attachmentFileName: attachmentMetadata.name || checklist.currentFileVersion.originalFileName,
+    gmailComposeUrl: `https://mail.google.com/mail/u/0/#drafts?compose=${draft.id}`,
+    draftId: draft.id,
+    draftMessageId: draft.message.id,
   };
 }
 
@@ -5977,12 +6204,12 @@ export async function submitJobDeletion(
     job.assignedManagerId = backfilledManagerAssignment.userId;
   }
 
-  const isManager = actorRoleNames.includes("Manager") || canApproveDelete;
-  const isOwner = job.primaryOwnerId === actorId;
+  const isAdminActor =
+    actor.isPlatformAdmin || actorRoleNames.includes("Admin");
   const isAssignedToJob =
     job.primaryOwnerId === actorId || job.assignments.some((assignment) => assignment.userId === actorId);
 
-  const isDirectDeleteAllowed = isOwner || (isManager && isAssignedToJob);
+  const isDirectDeleteAllowed = isAdminActor;
   const isRequestDeleteAllowed = isAssignedToJob && canRequestDelete;
 
   if (!isDirectDeleteAllowed && !isRequestDeleteAllowed) {
@@ -6044,7 +6271,7 @@ export async function submitJobDeletion(
   });
 
   if (isDirectDeleteAllowed) {
-    const driveDeletion = await deleteChaJobDriveWorkspace({
+    const workspaceDeletion = await deleteChaJobWorkspace({
       jobId: job.id,
       jobNumber: job.jobNumber,
       orgId,
@@ -6062,7 +6289,7 @@ export async function submitJobDeletion(
       },
     });
 
-    const actorTypeRemarks = isOwner ? "job owner" : "manager";
+    const actorTypeRemarks = "admin";
 
     await logChaAudit({
       orgId,
@@ -6077,8 +6304,10 @@ export async function submitJobDeletion(
       metadata: {
         actorRoleNames,
         assignedManagerId: getAssignedDeletionManager(job)?.userId ?? null,
-        driveRootFolderId: driveDeletion.rootFolderId,
-        driveDeletionOutcome: driveDeletion.outcome,
+        driveRootFolderId: workspaceDeletion.driveDeletion.rootFolderId,
+        driveDeletionOutcome: workspaceDeletion.driveDeletion.outcome,
+        googleSpaceId: workspaceDeletion.chatDeletion.googleSpaceId,
+        chatSpaceDeletionOutcome: workspaceDeletion.chatDeletion.outcome,
         ...input.metadata,
       },
     });
@@ -6096,8 +6325,10 @@ export async function submitJobDeletion(
       metadata: {
         actorRoleNames,
         assignedManagerId: getAssignedDeletionManager(job)?.userId ?? null,
-        driveRootFolderId: driveDeletion.rootFolderId,
-        driveDeletionOutcome: driveDeletion.outcome,
+        driveRootFolderId: workspaceDeletion.driveDeletion.rootFolderId,
+        driveDeletionOutcome: workspaceDeletion.driveDeletion.outcome,
+        googleSpaceId: workspaceDeletion.chatDeletion.googleSpaceId,
+        chatSpaceDeletionOutcome: workspaceDeletion.chatDeletion.outcome,
         ...input.metadata,
       },
     });
@@ -6105,7 +6336,7 @@ export async function submitJobDeletion(
     return { mode: "deleted" as const };
   }
 
-  const assignedManager = getAssignedDeletionManager(job);
+  const assignedManager = await getDeletionApproverForJob(orgId);
 
   if (!assignedManager) {
     await logChaAudit({
@@ -6117,13 +6348,13 @@ export async function submitJobDeletion(
       actorId,
       prevState: job.status,
       newState: job.status,
-      remarks: "Deletion request blocked because no approval manager is assigned to the job.",
+      remarks: "Deletion request blocked because no admin approver is available.",
       metadata: {
         actorRoleNames,
         ...input.metadata,
       },
     });
-    throw new Error("No approval manager is assigned to this CHA job. Assign a manager before requesting deletion.");
+    throw new Error("No active admin is available to approve this CHA job deletion.");
   }
 
   if (job.deletionRequests.length > 0) {
@@ -6139,7 +6370,7 @@ export async function submitJobDeletion(
       remarks: "Deletion request blocked because another active deletion request already exists.",
       metadata: {
         actorRoleNames,
-        assignedManagerId: assignedManager.userId,
+        assignedManagerId: assignedManager.id,
         ...input.metadata,
       },
     });
@@ -6165,8 +6396,8 @@ export async function submitJobDeletion(
           jobId: job.id,
           jobNumberSnapshot: job.jobNumber,
           requestedById: actorId,
-          assignedManagerId: assignedManager.userId,
-          remarks: `Deletion requested by ${actor.name}.`,
+          assignedManagerId: assignedManager.id,
+          remarks: `Deletion requested by ${actor.name} for admin review.`,
         },
       });
     },
@@ -6182,37 +6413,37 @@ export async function submitJobDeletion(
     actorId,
     prevState: "NONE",
     newState: "PENDING",
-    remarks: `Deletion request submitted for manager ${assignedManager.user?.name ?? assignedManager.userId}.`,
+    remarks: `Deletion request submitted for admin ${assignedManager.name ?? assignedManager.id}.`,
     metadata: {
       actorRoleNames,
       requesterId: actorId,
-      assignedManagerId: assignedManager.userId,
+      assignedManagerId: assignedManager.id,
       approvalRequestId: request.id,
       ...input.metadata,
     },
   });
 
   await createNotification({
-    userId: assignedManager.userId,
+    userId: assignedManager.id,
     orgId,
     kind: "CHA_JOB_DELETION_REQUESTED",
     title: `Delete Job Approval Needed: ${job.jobNumber}`,
-    body: `${actor.name} requested deletion for CHA job ${job.jobNumber}. Review the request before it is executed.`,
+    body: `${actor.name} requested deletion for CHA job ${job.jobNumber}. Admin review is required before it is executed.`,
     link: `/cha/jobs/${job.id}`,
     priority: "important",
   });
 
   await db.todoTask.create({
     data: {
-      userId: assignedManager.userId,
+      userId: assignedManager.id,
       orgId,
       title: `Review delete request for Job ${job.jobNumber}`,
-      description: `Approve or reject the deletion request raised by ${actor.name} for CHA job ${job.jobNumber}.`,
+      description: `Approve or reject the deletion request raised by ${actor.name} for CHA job ${job.jobNumber}. Only admins can execute deletion.`,
       status: "PENDING",
     },
   });
 
-  return { mode: "pending" as const, requestId: request.id, assignedManagerId: assignedManager.userId };
+  return { mode: "pending" as const, requestId: request.id, assignedManagerId: assignedManager.id };
 }
 
 export async function decideJobDeletionRequest(
@@ -6230,8 +6461,9 @@ export async function decideJobDeletionRequest(
     include: { roles: { include: { role: true } } },
   });
   const actorRoleNames = getActorRoleNames(actor);
+  const isAdminActor = actor.isPlatformAdmin || actorRoleNames.includes("Admin");
   const canApproveDelete = await can(actorId, "cha.job.delete.approve");
-  if (!canApproveDelete) {
+  if (!canApproveDelete || !isAdminActor) {
     await logChaAudit({
       orgId,
       entityType: "ChaJobDeletionRequest",
@@ -6254,6 +6486,13 @@ export async function decideJobDeletionRequest(
     | {
         rootFolderId: string | null;
         outcome: "deleted" | "missing" | "skipped";
+      }
+    | undefined;
+  let approvedChatDeletion:
+    | {
+        googleSpaceId: string | null;
+        outcome: "deleted" | "skipped" | "admin_scope_missing";
+        error?: string;
       }
     | undefined;
 
@@ -6285,13 +6524,15 @@ export async function decideJobDeletionRequest(
         throw new Error("You are not the assigned manager for this deletion request.");
       }
 
-      approvedDriveDeletion = await deleteChaJobDriveWorkspace({
+      const workspaceDeletion = await deleteChaJobWorkspace({
         jobId: requestPreview.job.id,
         jobNumber: requestPreview.job.jobNumber,
         orgId,
         primaryOwnerId: requestPreview.job.primaryOwnerId,
         actorId,
       });
+      approvedDriveDeletion = workspaceDeletion.driveDeletion;
+      approvedChatDeletion = workspaceDeletion.chatDeletion;
     }
 
     result = await db.$transaction(
@@ -6320,11 +6561,6 @@ export async function decideJobDeletionRequest(
         }
         if (request.assignedManagerId !== actorId) {
           throw new Error("You are not the assigned manager for this deletion request.");
-        }
-
-        const assignedManager = getAssignedDeletionManager(request.job);
-        if (!assignedManager || assignedManager.userId !== actorId) {
-          throw new Error("The assigned approval manager on the CHA job has changed. Create a fresh deletion request.");
         }
 
         assertJobCanBeDeleted(request.job);
@@ -6413,6 +6649,8 @@ export async function decideJobDeletionRequest(
         approvalRequestId: result.request.id,
         driveRootFolderId: approvedDriveDeletion?.rootFolderId ?? null,
         driveDeletionOutcome: approvedDriveDeletion?.outcome ?? null,
+        googleSpaceId: approvedChatDeletion?.googleSpaceId ?? null,
+        chatSpaceDeletionOutcome: approvedChatDeletion?.outcome ?? null,
         ...input.metadata,
       },
     });
@@ -6447,6 +6685,8 @@ export async function decideJobDeletionRequest(
       approvalRequestId: result.request.id,
       driveRootFolderId: approvedDriveDeletion?.rootFolderId ?? null,
       driveDeletionOutcome: approvedDriveDeletion?.outcome ?? null,
+      googleSpaceId: approvedChatDeletion?.googleSpaceId ?? null,
+      chatSpaceDeletionOutcome: approvedChatDeletion?.outcome ?? null,
       ...input.metadata,
     },
   });
@@ -6468,6 +6708,8 @@ export async function decideJobDeletionRequest(
       approvalRequestId: result.request.id,
       driveRootFolderId: approvedDriveDeletion?.rootFolderId ?? null,
       driveDeletionOutcome: approvedDriveDeletion?.outcome ?? null,
+      googleSpaceId: approvedChatDeletion?.googleSpaceId ?? null,
+      chatSpaceDeletionOutcome: approvedChatDeletion?.outcome ?? null,
       ...input.metadata,
     },
   });
@@ -6977,6 +7219,22 @@ export async function submitChecklistOwnerDecision(
     return { outcome: "CUSTOMER_APPROVAL" as const, customerApproverIds };
   });
 
+  const emailAutomation =
+    result.outcome === "CUSTOMER_APPROVAL"
+      ? await queueChecklistMainAutomationForJob({
+          actorId,
+          orgId,
+          job,
+          checklist,
+        }).catch((error) => ({
+          queued: false,
+          warning:
+            error instanceof Error
+              ? `Checklist saved, but customer email could not be queued: ${error.message}`
+              : "Checklist saved, but customer email could not be queued.",
+        }))
+      : null;
+
   await logChaAudit({
     orgId,
     jobId,
@@ -7045,7 +7303,10 @@ export async function submitChecklistOwnerDecision(
     }
   }
 
-  return result;
+  return {
+    ...result,
+    emailAutomation,
+  };
 }
 
 // ─── Configurable Filing Workflow blueprint services ────────────────────────

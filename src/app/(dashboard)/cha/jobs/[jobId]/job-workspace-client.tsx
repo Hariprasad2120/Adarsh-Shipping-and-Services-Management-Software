@@ -1386,7 +1386,14 @@
           internalApprovalRemarks || undefined,
         );
         if (res.ok) {
-          toast.success(decision === "APPROVED" ? "Internal approval recorded." : "Checklist returned for rework.");
+          const emailAutomation = res.data?.emailAutomation;
+          if (decision === "APPROVED" && emailAutomation?.queued) {
+            toast.success("Checklist saved and customer email queued.");
+          } else if (decision === "APPROVED" && emailAutomation?.warning) {
+            toast.success(emailAutomation.warning);
+          } else {
+            toast.success(decision === "APPROVED" ? "Internal approval recorded." : "Checklist returned for rework.");
+          }
           setInternalApprovalRemarks("");
           router.refresh();
         } else {
@@ -1432,6 +1439,18 @@
       if (!checklistWorkflow) return;
       const subject = customerMailSubject.trim() || `Checklist Approval Required - ${job.jobNumber}`;
       const body = customerMailBody.trim() || `Please review the attached approved checklist for job ${job.jobNumber}.`;
+      const gmailWindow = window.open("about:blank", "_blank");
+      if (gmailWindow) {
+        gmailWindow.document.write(`
+          <html>
+            <head><title>Opening Gmail…</title></head>
+            <body style="font-family: Arial, sans-serif; padding: 24px; color: #191c1e;">
+              <p style="margin: 0; font-size: 14px;">Opening Gmail draft…</p>
+            </body>
+          </html>
+        `);
+        gmailWindow.document.close();
+      }
 
       setLoading("checklist-customer-mail");
       try {
@@ -1440,14 +1459,25 @@
           body,
         });
         if (res.ok) {
-          toast.success("Checklist mail queued for customer approval.");
+          const composeUrl =
+            typeof res.data?.gmailComposeUrl === "string" && res.data.gmailComposeUrl.length > 0
+              ? res.data.gmailComposeUrl
+              : "https://mail.google.com/mail/u/0/#drafts";
+          if (gmailWindow) {
+            gmailWindow.location.replace(composeUrl);
+          } else {
+            window.location.assign(composeUrl);
+          }
+          toast.success("Gmail draft opened with the approved checklist attached.");
           setCustomerMailSubject("");
           setCustomerMailBody("");
           router.refresh();
         } else {
+          gmailWindow?.close();
           toast.error(res.error || "Failed to send checklist mail.");
         }
       } catch (err: any) {
+        gmailWindow?.close();
         toast.error(err.message || "An unexpected error occurred.");
       } finally {
         setLoading(null);
@@ -3999,7 +4029,7 @@
                                 onClick={handleSendChecklistCustomerMail}
                               >
                                 <Mail size={14} />
-                                {loading === "checklist-customer-mail" ? "Mailing..." : "Mail"}
+                                {loading === "checklist-customer-mail" ? "Opening Gmail..." : "Open Gmail"}
                               </Button>
                             </div>
                           </div>

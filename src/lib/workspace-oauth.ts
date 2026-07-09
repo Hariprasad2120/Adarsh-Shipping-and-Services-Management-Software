@@ -59,6 +59,7 @@ export function getAuthorizationUrl(state: string): string {
     "https://www.googleapis.com/auth/chat.messages",
     "https://www.googleapis.com/auth/chat.messages.create",
     "https://www.googleapis.com/auth/chat.messages.readonly",
+    "https://www.googleapis.com/auth/chat.admin.delete",
 
     // Drive — full read/write/create/delete files and folders
     "https://www.googleapis.com/auth/drive",

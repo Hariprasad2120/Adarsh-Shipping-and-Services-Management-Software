@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-08T10:30:07.890Z",
+  "generatedAt": "2026-07-09T04:55:11.801Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -9,7 +9,7 @@
     "totalAppRoutes": 203,
     "totalApiRoutes": 175,
     "totalPrismaModels": 263,
-    "totalModuleServices": 71,
+    "totalModuleServices": 73,
     "totalComponents": 93
   },
   "appRoutes": [
@@ -3375,9 +3375,13 @@
         "to",
         "subject",
         "html",
+        "text",
         "status",
         "attempts",
+        "error",
         "sentAt",
+        "automationKey",
+        "metadata",
         "createdAt"
       ],
       "relations": [],
@@ -9754,6 +9758,15 @@
     },
     {
       "module": "cha",
+      "fileName": "checklist-email-automation.ts",
+      "filePath": "src/modules/cha/checklist-email-automation.ts",
+      "exportedFunctions": [
+        "queueChecklistMainCustomerEmail",
+        "finalizeChecklistMainCustomerEmail"
+      ]
+    },
+    {
+      "module": "cha",
       "fileName": "service.ts",
       "filePath": "src/modules/cha/service.ts",
       "exportedFunctions": [
@@ -9858,6 +9871,12 @@
       "module": "cha",
       "fileName": "cha.test.ts",
       "filePath": "src/modules/cha/__tests__/cha.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "cha",
+      "fileName": "checklist-email-automation.test.ts",
+      "filePath": "src/modules/cha/__tests__/checklist-email-automation.test.ts",
       "exportedFunctions": []
     },
     {
@@ -11113,7 +11132,7 @@
       "appRoutes": 12,
       "apiRoutes": 3,
       "prismaModels": 35,
-      "serviceFiles": 4,
+      "serviceFiles": 6,
       "components": 2
     },
     "cha-ui-showcase": {

@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-08T10:30:07.890Z
+> Generated at: 2026-07-09T04:55:11.801Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -10,7 +10,7 @@
 | App Routes (Pages) | 203 |
 | API Routes | 175 |
 | Prisma Models | 263 |
-| Module Service Files | 71 |
+| Module Service Files | 73 |
 | UI Components | 93 |
 
 ## Modules Overview
@@ -23,7 +23,7 @@
 | ams | 18 | 17 | 17 | 11 | 3 |
 | attendance | 7 | 10 | 9 | 1 | 0 |
 | auth | 0 | 1 | 0 | 0 | 0 |
-| cha | 12 | 3 | 35 | 4 | 2 |
+| cha | 12 | 3 | 35 | 6 | 2 |
 | cha-ui-showcase | 1 | 1 | 0 | 0 | 0 |
 | communication | 11 | 18 | 2 | 1 | 0 |
 | core | 2 | 0 | 60 | 5 | 0 |
@@ -449,7 +449,7 @@
 | UserRole | core | 4 | User, Role |
 | Notification | notifications | 26 | Organisation, User, Notification, NotificationActivity |
 | NotificationActivity | notifications | 10 | Notification, Organisation, User |
-| EmailQueue | core | 8 | — |
+| EmailQueue | core | 12 | — |
 | TodoTask | todo | 17 | User, Organisation, TodoSubtask |
 | TodoSubtask | todo | 9 | TodoTask |
 | EmploymentRecord | hrms | 17 | User |
@@ -730,8 +730,10 @@
 
 ### cha
 - **actions.ts**: ensureSettingsAndDefaultsAction, updateSettingsAction, createJobAction, getNextJobNumberPreviewAction, submitJobDeletionAction, decideJobDeletionRequestAction, createJobTypeAction, updateJobTypeManifestConfigAction, createShipmentTypeAction, deleteShipmentTypeAction, deleteJobTypeAction, updateJobTypeFilingFlowCategoryAction, createTeamGroupAction, deleteTeamGroupAction, getJobDetailsAction, listJobsAction, uploadDocumentVersionAction, createJobCustomDocumentUploadAction, deleteDocumentVersionAction, declareDocumentExceptionAction, markDocumentNotAvailableAction, importChecklistExcelAction, uploadChecklistFileAction, upsertAdditionalDataAction, submitChecklistInternalDecisionAction, submitChecklistCustomerDecisionAction, sendChecklistCustomerMailAction, proceedAdditionalDataAction, submitChecklistForApprovalAction, checklistManagerActionAction, selfApproveChecklistAction, adjustEstimatedFilingDateAction, markAsFiledAction, updateCustomerAdvanceExpectedAction, recordCustomerAdvanceReceiptAction, declareAdvanceNotRequiredAction, createExpenseRequestAction, triggerUrgentExpenseEscalationAction, setExpenseStatusAction, postExpensePaymentAction, acknowledgeExpenseReceiptAction, raisePaymentQueryAction, resolvePaymentQueryAction, listAllExpensesAction, listManagerChecklistApprovalsAction, upsertDocumentCategoryAction, deleteDocumentCategoryAction, upsertDocumentItemAction, deleteDocumentItemAction, removeDocumentExceptionAction, proceedDocumentStageAction, acknowledgeDoValidityWarningAction, setDoUploadToggleAction, setDoExtensionToggleAction, uploadDeliveryOrderDocumentAction, deleteDeliveryOrderDocumentAction, applyDoExtensionAction, updateSection49ValidityAction, applySection49ExtensionAction, updateJobDetailsAction, submitChecklistOwnerDecisionAction, saveFilingWorkflowDraftAction, publishFilingWorkflowAction, getFilingWorkflowDetailsAction, getFilingWorkflowInstanceAction, startFilingWorkflowAction, completeFilingNodeAction, revertFilingStageAction, toggleFilingSection49Action, getFilingSection49Action, createFilingWorkflowQueryAction, updateFilingWorkflowQueryStatusAction, addFilingWorkflowQueryCommentAction, upsertFilingWorkflowToggleStateAction, uploadFilingAttachmentAction, upsertFilingShipmentDetailsAction, deleteFilingAttachmentAction
+- **checklist-email-automation.ts**: queueChecklistMainCustomerEmail, finalizeChecklistMainCustomerEmail
 - **service.ts**: ensureDefaultDocumentRequirements, getNextChaJobNumberPreview, ensureSettingsAndDefaults, logChaAudit, getChecklistInternalApproverIds, createJob, createJobType, updateJobTypeManifestConfig, updateJobTypeFilingFlowCategory, deleteJobType, upsertBranchNumberingRules, createShipmentType, deleteShipmentType, createTeamGroup, deleteTeamGroup, listJobTypesForSelection, listJobTypesForSettings, getJobDetails, listJobs, resolveDriveFolderForCategory, uploadDocumentVersion, createJobCustomDocumentRequirementAndUpload, deleteDocumentVersion, declareDocumentException, markDocumentNotAvailable, verifyDocumentGate, upsertAdditionalData, proceedAdditionalDataStage, listDeliveryOrderValidityWarnings, createDeliveryOrderNotifications, acknowledgeDeliveryOrderValidityWarning, setDeliveryOrderUploadToggle, setDeliveryOrderExtensionToggle, listSection49ValidityWarnings, uploadDeliveryOrderDocument, applyDeliveryOrderExtension, listDeliveryOrderExtensions, uploadChecklistFile, submitChecklistInternalDecision, sendChecklistCustomerMail, submitChecklistCustomerDecision, importChecklistExcel, submitChecklistForApproval, checklistManagerAction, selfApproveChecklist, adjustEstimatedFilingDate, markAsFiled, updateCustomerAdvanceExpected, recordCustomerAdvanceReceipt, declareAdvanceNotRequired, createExpenseRequest, triggerUrgentExpenseEscalation, setExpenseStatus, postExpensePayment, acknowledgeExpenseReceipt, raisePaymentQuery, resolvePaymentQuery, listAllExpenses, listManagerChecklistApprovals, listManagerJobDeletionRequests, submitJobDeletion, decideJobDeletionRequest, upsertDocumentCategory, deleteDocumentCategory, upsertDocumentItem, deleteDocumentItem, removeDocumentException, proceedDocumentStage, getEligibleManagers, updateJobDetails, submitChecklistOwnerDecision, ensureDefaultFilingWorkflows, calculateSlaDueDate, listFilingWorkflows, getFilingWorkflowDetails, saveFilingWorkflowDraft, publishFilingWorkflow, getFilingWorkflowInstance, startFilingWorkflow, completeFilingNode, revertFilingWorkflowToPreviousStage, toggleFilingSection49, getFilingSection49, updateFilingSection49Validity, applyFilingSection49Extension, runFilingWorkflowQueryReminderCron, listFilingQueryEscalationWarnings, createFilingWorkflowQuery, addFilingWorkflowQueryComment, updateFilingWorkflowQueryStatus, deleteDeliveryOrderDocument, upsertFilingWorkflowToggleState, uploadFilingAttachment, upsertFilingShipmentDetails, deleteFilingAttachment
 - **cha.test.ts**: no exports detected
+- **checklist-email-automation.test.ts**: no exports detected
 - **do-extension.test.ts**: no exports detected
 
 ### communication
