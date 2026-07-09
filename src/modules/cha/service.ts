@@ -6,6 +6,11 @@ import { Prisma } from "@/generated/prisma/client";
 import { can, ForbiddenError } from "@/lib/rbac";
 import * as driveClient from "@/lib/google-drive-client";
 import * as googleChatClient from "@/lib/google-chat-client";
+import {
+  createOrUpdateJobWorkspaceProfile,
+  findJobWorkspaceProfileByJobId,
+  getJobWorkspaceProfileSelect,
+} from "@/lib/job-workspace-profile";
 import { ensureJobCategoryFolder } from "@/lib/workspace-provisioning";
 import { getValidAccessToken } from "@/lib/workspace-oauth";
 import { createDraft as createGmailDraft } from "@/lib/google-gmail-client";
@@ -371,10 +376,7 @@ async function deleteChaJobDriveWorkspace(params: {
   primaryOwnerId: string;
   actorId: string;
 }) {
-  const profile = await db.jobWorkspaceProfile.findUnique({
-    where: { jobId: params.jobId },
-    select: { rootFolderId: true },
-  });
+  const profile = await findJobWorkspaceProfileByJobId(params.jobId);
 
   const rootFolderId = profile?.rootFolderId;
   if (!rootFolderId || rootFolderId.startsWith("mock-")) {
@@ -396,56 +398,100 @@ async function deleteChaJobChatWorkspace(params: {
   jobId: string;
   actorId: string;
 }) {
-  const profile = await db.jobWorkspaceProfile.findUnique({
-    where: { jobId: params.jobId },
-    select: { googleSpaceId: true },
-  });
+  const profile = await findJobWorkspaceProfileByJobId(params.jobId);
 
-  const googleSpaceId = profile?.googleSpaceId;
-  if (!googleSpaceId || googleSpaceId.startsWith("spaces/mock-")) {
-    return { googleSpaceId: googleSpaceId || null, outcome: "skipped" as const };
+  const chatSpaceName = profile?.chatSpaceName || profile?.googleSpaceId;
+  if (!profile || !chatSpaceName || chatSpaceName.startsWith("spaces/mock-")) {
+    return {
+      chatSpaceName: chatSpaceName || null,
+      authMode: null,
+      outcome: "skipped" as const,
+    };
   }
 
+  await createOrUpdateJobWorkspaceProfile(
+    { id: profile.id },
+    {
+      chatSpaceName,
+      chatSpaceDeletedAt: null,
+      chatSpaceDeleteStatus: "PENDING",
+      chatSpaceDeleteError: null,
+    },
+    "update",
+  );
+
   try {
-    const actorConnection = await db.googleWorkspaceConnection.findUnique({
-      where: { userId: params.actorId },
-      select: { scopes: true, status: true },
-    });
-    const hasAdminDeleteScope =
-      actorConnection?.status === "connected" &&
-      actorConnection.scopes.includes("https://www.googleapis.com/auth/chat.admin.delete");
-
-    if (!hasAdminDeleteScope) {
-      return {
-        googleSpaceId,
-        outcome: "admin_scope_missing" as const,
-        error: "The deleting admin must reconnect Google Workspace with the chat.admin.delete scope.",
-      };
-    }
-
-    await googleChatClient.deleteSpaceWithAdminAccess({
-      spaceResourceName: googleSpaceId,
+    const deleteResult = await googleChatClient.deleteGoogleChatSpace(chatSpaceName, {
       userId: params.actorId,
     });
-    return { googleSpaceId, outcome: "deleted" as const };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    if (message.includes("manage chat and spaces conversations privilege")) {
-      return {
-        googleSpaceId,
-        outcome: "admin_scope_missing" as const,
-        error: "The deleting user must be a Google Workspace admin with the manage chat and spaces conversations privilege.",
-      };
-    }
-    if (message.includes("insufficient_scope") || message.includes("chat.admin.delete")) {
-      return {
-        googleSpaceId,
-        outcome: "admin_scope_missing" as const,
-        error: "The deleting admin must reconnect Google Workspace with the chat.admin.delete scope.",
-      };
-    }
 
-    throw error;
+    await createOrUpdateJobWorkspaceProfile(
+      { id: profile.id },
+      {
+        chatSpaceName,
+        googleSpaceId: null,
+        googleSpaceUrl: null,
+        chatSpaceDeletedAt: new Date(),
+        chatSpaceDeleteStatus: "SUCCESS",
+        chatSpaceDeleteError: null,
+      },
+      "update",
+    );
+
+    console.info("[CHA] Google Chat cleanup completed", {
+      jobId: params.jobId,
+      chatSpaceName,
+      authMode: deleteResult.authMode,
+      deleteResult: deleteResult.status,
+      googleApiErrorCode: null,
+      googleApiErrorMessage: null,
+    });
+
+    return {
+      chatSpaceName,
+      authMode: deleteResult.authMode,
+      outcome: "deleted" as const,
+      deleteResult: deleteResult.status,
+    };
+  } catch (error) {
+    const deleteError =
+      error instanceof googleChatClient.GoogleChatDeleteError ? error : null;
+    const message =
+      deleteError?.googleMessage ||
+      (error instanceof Error ? error.message : String(error));
+    const failureMessage =
+      deleteError?.status === 403
+        ? `Google Chat cleanup failed due to insufficient permissions (${deleteError.authMode}). ${message}`
+        : `Google Chat cleanup failed (${deleteError?.authMode ?? "unknown"}). ${message}`;
+
+    await createOrUpdateJobWorkspaceProfile(
+      { id: profile.id },
+      {
+        chatSpaceName,
+        chatSpaceDeletedAt: null,
+        chatSpaceDeleteStatus: "FAILED",
+        chatSpaceDeleteError: failureMessage,
+      },
+      "update",
+    );
+
+    console.warn("[CHA] Google Chat cleanup failed", {
+      jobId: params.jobId,
+      chatSpaceName,
+      authMode: deleteError?.authMode ?? null,
+      deleteResult: "failed",
+      googleApiErrorCode: deleteError?.googleCode ?? deleteError?.status ?? null,
+      googleApiErrorMessage: deleteError?.googleMessage ?? message,
+    });
+
+    return {
+      chatSpaceName,
+      authMode: deleteError?.authMode ?? null,
+      outcome: "failed" as const,
+      error: failureMessage,
+      googleApiErrorCode: deleteError?.googleCode ?? deleteError?.status ?? null,
+      googleApiErrorMessage: deleteError?.googleMessage ?? message,
+    };
   }
 }
 
@@ -461,15 +507,14 @@ async function deleteChaJobWorkspace(params: {
     deleteChaJobChatWorkspace({ jobId: params.jobId, actorId: params.actorId }),
   ]);
 
-  await db.jobWorkspaceProfile.updateMany({
-    where: { jobId: params.jobId },
-    data: {
+  await createOrUpdateJobWorkspaceProfile(
+    { jobId: params.jobId },
+    {
       rootFolderId: driveDeletion.outcome === "deleted" || driveDeletion.outcome === "missing" ? null : undefined,
       categoryFolders: driveDeletion.outcome === "deleted" || driveDeletion.outcome === "missing" ? Prisma.JsonNull : undefined,
-      googleSpaceId: chatDeletion.outcome === "deleted" ? null : undefined,
-      googleSpaceUrl: chatDeletion.outcome === "deleted" ? null : undefined,
     },
-  });
+    "updateMany",
+  );
 
   return { driveDeletion, chatDeletion };
 }
@@ -2619,7 +2664,10 @@ async function getOrCreateFilingNodeFolder(
   nodeName: string,
   accessToken?: string,
 ): Promise<string> {
-  const profile = await db.jobWorkspaceProfile.findUniqueOrThrow({ where: { jobId } });
+  const profile = await db.jobWorkspaceProfile.findUniqueOrThrow({
+    where: { jobId },
+    select: await getJobWorkspaceProfileSelect(),
+  });
   const categoryFolders = (profile.categoryFolders as Record<string, string>) || {};
   const folderMapKey = `Filing Documents/${nodeKey}`;
 
@@ -2634,10 +2682,11 @@ async function getOrCreateFilingNodeFolder(
     accessToken,
   });
 
-  await db.jobWorkspaceProfile.update({
-    where: { jobId },
-    data: { categoryFolders: { ...categoryFolders, [folderMapKey]: nodeFolderId } },
-  });
+  await createOrUpdateJobWorkspaceProfile(
+    { jobId },
+    { categoryFolders: { ...categoryFolders, [folderMapKey]: nodeFolderId } },
+    "update",
+  );
 
   return nodeFolderId;
 }
@@ -2677,7 +2726,7 @@ export async function uploadDocumentVersion(
       driveFolderId = await ensureJobCategoryFolder(jobId, req.category, actorId);
     } catch (err: any) {
       console.warn(`[Upload] Drive folder self-heal failed for job ${jobId}, category "${req.category}":`, err.message || err);
-      const profile = await db.jobWorkspaceProfile.findUnique({ where: { jobId } });
+      const profile = await findJobWorkspaceProfileByJobId(jobId);
       driveFolderId = resolveDriveFolderForCategory(
         profile?.categoryFolders as Record<string, string> | undefined,
         profile?.rootFolderId,
@@ -3733,7 +3782,7 @@ async function storeDeliveryOrderFile(
     driveFolderId = await ensureJobCategoryFolder(jobId, DO_DOCUMENT_CATEGORY, actorId);
   } catch (err: any) {
     console.warn(`[DO Upload] Drive folder self-heal failed for job ${jobId}:`, err.message || err);
-    const profile = await db.jobWorkspaceProfile.findUnique({ where: { jobId } });
+    const profile = await findJobWorkspaceProfileByJobId(jobId);
     driveFolderId = resolveDriveFolderForCategory(
       profile?.categoryFolders as Record<string, string> | undefined,
       profile?.rootFolderId,
@@ -4098,7 +4147,7 @@ export async function uploadChecklistFile(
       driveFolderId = await ensureJobCategoryFolder(jobId, CHECKLIST_DOCUMENT_CATEGORY, actorId);
     } catch (err: any) {
       console.warn(`[Checklist Upload] Drive folder self-heal failed for job ${jobId}:`, err.message || err);
-      const profile = await db.jobWorkspaceProfile.findUnique({ where: { jobId } });
+      const profile = await findJobWorkspaceProfileByJobId(jobId);
       driveFolderId = resolveDriveFolderForCategory(
         profile?.categoryFolders as Record<string, string> | undefined,
         profile?.rootFolderId,
@@ -6306,8 +6355,10 @@ export async function submitJobDeletion(
         assignedManagerId: getAssignedDeletionManager(job)?.userId ?? null,
         driveRootFolderId: workspaceDeletion.driveDeletion.rootFolderId,
         driveDeletionOutcome: workspaceDeletion.driveDeletion.outcome,
-        googleSpaceId: workspaceDeletion.chatDeletion.googleSpaceId,
+        chatSpaceName: workspaceDeletion.chatDeletion.chatSpaceName,
+        chatSpaceDeleteAuthMode: workspaceDeletion.chatDeletion.authMode,
         chatSpaceDeletionOutcome: workspaceDeletion.chatDeletion.outcome,
+        chatSpaceDeletionError: workspaceDeletion.chatDeletion.error ?? null,
         ...input.metadata,
       },
     });
@@ -6327,8 +6378,10 @@ export async function submitJobDeletion(
         assignedManagerId: getAssignedDeletionManager(job)?.userId ?? null,
         driveRootFolderId: workspaceDeletion.driveDeletion.rootFolderId,
         driveDeletionOutcome: workspaceDeletion.driveDeletion.outcome,
-        googleSpaceId: workspaceDeletion.chatDeletion.googleSpaceId,
+        chatSpaceName: workspaceDeletion.chatDeletion.chatSpaceName,
+        chatSpaceDeleteAuthMode: workspaceDeletion.chatDeletion.authMode,
         chatSpaceDeletionOutcome: workspaceDeletion.chatDeletion.outcome,
+        chatSpaceDeletionError: workspaceDeletion.chatDeletion.error ?? null,
         ...input.metadata,
       },
     });
@@ -6490,8 +6543,9 @@ export async function decideJobDeletionRequest(
     | undefined;
   let approvedChatDeletion:
     | {
-        googleSpaceId: string | null;
-        outcome: "deleted" | "skipped" | "admin_scope_missing";
+        chatSpaceName: string | null;
+        authMode: googleChatClient.GoogleChatDeleteAuthMode | null;
+        outcome: "deleted" | "skipped" | "failed";
         error?: string;
       }
     | undefined;
@@ -6649,8 +6703,10 @@ export async function decideJobDeletionRequest(
         approvalRequestId: result.request.id,
         driveRootFolderId: approvedDriveDeletion?.rootFolderId ?? null,
         driveDeletionOutcome: approvedDriveDeletion?.outcome ?? null,
-        googleSpaceId: approvedChatDeletion?.googleSpaceId ?? null,
+        chatSpaceName: approvedChatDeletion?.chatSpaceName ?? null,
+        chatSpaceDeleteAuthMode: approvedChatDeletion?.authMode ?? null,
         chatSpaceDeletionOutcome: approvedChatDeletion?.outcome ?? null,
+        chatSpaceDeletionError: approvedChatDeletion?.error ?? null,
         ...input.metadata,
       },
     });
@@ -6685,8 +6741,10 @@ export async function decideJobDeletionRequest(
       approvalRequestId: result.request.id,
       driveRootFolderId: approvedDriveDeletion?.rootFolderId ?? null,
       driveDeletionOutcome: approvedDriveDeletion?.outcome ?? null,
-      googleSpaceId: approvedChatDeletion?.googleSpaceId ?? null,
+      chatSpaceName: approvedChatDeletion?.chatSpaceName ?? null,
+      chatSpaceDeleteAuthMode: approvedChatDeletion?.authMode ?? null,
       chatSpaceDeletionOutcome: approvedChatDeletion?.outcome ?? null,
+      chatSpaceDeletionError: approvedChatDeletion?.error ?? null,
       ...input.metadata,
     },
   });
@@ -6708,8 +6766,10 @@ export async function decideJobDeletionRequest(
       approvalRequestId: result.request.id,
       driveRootFolderId: approvedDriveDeletion?.rootFolderId ?? null,
       driveDeletionOutcome: approvedDriveDeletion?.outcome ?? null,
-      googleSpaceId: approvedChatDeletion?.googleSpaceId ?? null,
+      chatSpaceName: approvedChatDeletion?.chatSpaceName ?? null,
+      chatSpaceDeleteAuthMode: approvedChatDeletion?.authMode ?? null,
       chatSpaceDeletionOutcome: approvedChatDeletion?.outcome ?? null,
+      chatSpaceDeletionError: approvedChatDeletion?.error ?? null,
       ...input.metadata,
     },
   });
@@ -6725,6 +6785,83 @@ export async function decideJobDeletionRequest(
   });
 
   return result.request;
+}
+
+export async function retryJobChatCleanup(actorId: string, orgId: string, jobId: string) {
+  const [isAdminActor, canApproveDelete] = await Promise.all([
+    db.user.findFirst({
+      where: { id: actorId, orgId },
+      select: { isPlatformAdmin: true, roles: { select: { role: { select: { name: true } } } } },
+    }),
+    can(actorId, "cha.job.delete.approve"),
+  ]);
+
+  const hasAdminRole =
+    !!isAdminActor &&
+    (isAdminActor.isPlatformAdmin ||
+      isAdminActor.roles.some((userRole) => userRole.role.name === "Admin"));
+  if (!canApproveDelete || !hasAdminRole) {
+    throw new Error("You are not authorized to retry Google Chat cleanup for CHA jobs.");
+  }
+
+  const job = await db.chaJob.findFirst({
+    where: { id: jobId, orgId },
+    select: {
+      id: true,
+      jobNumber: true,
+      deletedAt: true,
+      workspaceProfile: {
+        select: {
+          chatSpaceName: true,
+          googleSpaceId: true,
+          chatSpaceDeleteStatus: true,
+          chatSpaceDeleteError: true,
+        },
+      },
+    },
+  });
+
+  if (!job) {
+    throw new Error("CHA job not found.");
+  }
+
+  if (!job.deletedAt) {
+    throw new Error("Chat cleanup retry is only available after the CHA job has been deleted.");
+  }
+
+  const chatSpaceName =
+    job.workspaceProfile?.chatSpaceName || job.workspaceProfile?.googleSpaceId;
+  if (!chatSpaceName) {
+    throw new Error("No stored Google Chat space name is available for retry.");
+  }
+
+  const chatDeletion = await deleteChaJobChatWorkspace({ jobId, actorId });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "ChaJob",
+    entityId: jobId,
+    event: "JOB_CHAT_CLEANUP_RETRIED",
+    actorId,
+    prevState: "FAILED",
+    newState: chatDeletion.outcome.toUpperCase(),
+    remarks:
+      chatDeletion.outcome === "deleted"
+        ? `Retried Google Chat cleanup for ${job.jobNumber}.`
+        : chatDeletion.error || `Google Chat cleanup retry finished with ${chatDeletion.outcome}.`,
+    metadata: {
+      jobNumber: job.jobNumber,
+      chatSpaceName: chatDeletion.chatSpaceName,
+      chatSpaceDeleteAuthMode: chatDeletion.authMode,
+      chatSpaceDeletionOutcome: chatDeletion.outcome,
+      chatSpaceDeletionError: chatDeletion.error ?? null,
+      previousChatSpaceDeleteStatus: job.workspaceProfile?.chatSpaceDeleteStatus ?? null,
+      previousChatSpaceDeleteError: job.workspaceProfile?.chatSpaceDeleteError ?? null,
+    },
+  });
+
+  return chatDeletion;
 }
 
 // ─── Document Requirements Configuration & Workflow ──────────────────────────────
@@ -11407,7 +11544,7 @@ export async function uploadFilingAttachment(
     filingRootFolderId = await ensureJobCategoryFolder(jobId, "Filing Documents", actorId);
   } catch (err: any) {
     console.warn(`[Upload] Drive folder self-heal failed for job ${jobId}, "Filing Documents":`, err.message || err);
-    const profile = await db.jobWorkspaceProfile.findUnique({ where: { jobId } });
+    const profile = await findJobWorkspaceProfileByJobId(jobId);
     filingRootFolderId = resolveDriveFolderForCategory(
       profile?.categoryFolders as Record<string, string> | undefined,
       profile?.rootFolderId,

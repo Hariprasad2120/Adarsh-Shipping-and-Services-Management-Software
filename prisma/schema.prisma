@@ -3259,7 +3259,11 @@ model JobWorkspaceProfile {
   orgId              String
   jobId              String    @unique
   googleSpaceId      String? // Google Chat space resource name
+  chatSpaceName      String? // Durable Google Chat space resource name for cleanup/retry
   googleSpaceUrl     String? // Deep link to Chat Space
+  chatSpaceDeletedAt DateTime?
+  chatSpaceDeleteStatus String @default("SKIPPED") // PENDING | SUCCESS | FAILED | SKIPPED
+  chatSpaceDeleteError String? @db.Text
   rootFolderId       String? // Root Drive folder ID for this job
   categoryFolders    Json? // Map of category names to Google Folder IDs
   provisioningStatus String    @default("pending") // pending | success | failed

@@ -1059,7 +1059,11 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
   it("9. should allow only an admin to directly soft-delete a job", async () => {
     const driveDeleteSpy = vi.spyOn(driveClient, "deleteFileOrFolder").mockResolvedValue("deleted");
-    const chatDeleteSpy = vi.spyOn(googleChatClient, "deleteSpaceWithAdminAccess").mockResolvedValue();
+    const chatDeleteSpy = vi.spyOn(googleChatClient, "deleteGoogleChatSpace").mockResolvedValue({
+      authMode: "app_auth",
+      status: "deleted",
+      useAdminAccess: false,
+    });
     const accessTokenSpy = vi.spyOn(workspaceOauth, "getValidAccessToken").mockResolvedValue("test-drive-token");
 
     const job = await chaService.createJob(ownerUser.id, org.id, {
@@ -1134,14 +1138,14 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
     expect(accessTokenSpy).toHaveBeenCalled();
     expect(driveDeleteSpy).toHaveBeenCalledWith("drive-folder-direct-delete-test", "test-drive-token");
-    expect(chatDeleteSpy).toHaveBeenCalledWith({
-      spaceResourceName: "spaces/AAA_DIRECT_DELETE",
-      userId: adminUser.id,
-    });
+    expect(chatDeleteSpy).toHaveBeenCalledWith("spaces/AAA_DIRECT_DELETE", { userId: adminUser.id });
 
     const deletedWorkspace = await db.jobWorkspaceProfile.findUniqueOrThrow({ where: { jobId: job.id } });
     expect(deletedWorkspace.rootFolderId).toBeNull();
     expect(deletedWorkspace.googleSpaceId).toBeNull();
+    expect(deletedWorkspace.chatSpaceName).toBe("spaces/AAA_DIRECT_DELETE");
+    expect(deletedWorkspace.chatSpaceDeleteStatus).toBe("SUCCESS");
+    expect(deletedWorkspace.chatSpaceDeletedAt).not.toBeNull();
     expect(deletedWorkspace.googleSpaceUrl).toBeNull();
     expect(deletedWorkspace.categoryFolders).toBeNull();
 
@@ -1189,7 +1193,11 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
   it("10. should enforce confirmation rules, missing manager handling, and approved deletion execution", async () => {
     const driveDeleteSpy = vi.spyOn(driveClient, "deleteFileOrFolder").mockResolvedValue("deleted");
-    const chatDeleteSpy = vi.spyOn(googleChatClient, "deleteSpaceWithAdminAccess").mockResolvedValue();
+    const chatDeleteSpy = vi.spyOn(googleChatClient, "deleteGoogleChatSpace").mockResolvedValue({
+      authMode: "app_auth",
+      status: "deleted",
+      useAdminAccess: false,
+    });
     const accessTokenSpy = vi.spyOn(workspaceOauth, "getValidAccessToken").mockResolvedValue("test-drive-token");
 
     const noManagerJob = await chaService.createJob(ownerUser.id, org.id, {
@@ -1326,10 +1334,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     });
     expect(accessTokenSpy).toHaveBeenCalled();
     expect(driveDeleteSpy).toHaveBeenCalledWith("drive-folder-approved-delete-test", "test-drive-token");
-    expect(chatDeleteSpy).toHaveBeenCalledWith({
-      spaceResourceName: "spaces/AAA_APPROVED_DELETE",
-      userId: adminUser.id,
-    });
+    expect(chatDeleteSpy).toHaveBeenCalledWith("spaces/AAA_APPROVED_DELETE", { userId: adminUser.id });
 
     const executedRequest = await db.chaJobDeletionRequest.findUniqueOrThrow({
       where: { id: request.id },
@@ -1345,6 +1350,9 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     const deletedWorkspace = await db.jobWorkspaceProfile.findUniqueOrThrow({ where: { jobId: approvedJob.id } });
     expect(deletedWorkspace.rootFolderId).toBeNull();
     expect(deletedWorkspace.googleSpaceId).toBeNull();
+    expect(deletedWorkspace.chatSpaceName).toBe("spaces/AAA_APPROVED_DELETE");
+    expect(deletedWorkspace.chatSpaceDeleteStatus).toBe("SUCCESS");
+    expect(deletedWorkspace.chatSpaceDeletedAt).not.toBeNull();
     expect(deletedWorkspace.googleSpaceUrl).toBeNull();
     expect(deletedWorkspace.categoryFolders).toBeNull();
 
@@ -1367,6 +1375,97 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(approvalAudit.map((entry) => entry.event)).toEqual(
       expect.arrayContaining(["JOB_DELETE_APPROVAL_APPROVED", "JOB_DELETE_EXECUTED"]),
     );
+
+    driveDeleteSpy.mockRestore();
+    chatDeleteSpy.mockRestore();
+    accessTokenSpy.mockRestore();
+  }, 60000);
+
+  it("11. should keep the stored chat space name when cleanup fails and allow admin retry", async () => {
+    const driveDeleteSpy = vi.spyOn(driveClient, "deleteFileOrFolder").mockResolvedValue("deleted");
+    const chatDeleteSpy = vi
+      .spyOn(googleChatClient, "deleteGoogleChatSpace")
+      .mockRejectedValueOnce(
+        new googleChatClient.GoogleChatDeleteError({
+          authMode: "app_auth",
+          status: 403,
+          message: "The Chat app is not allowed to delete this space.",
+          googleCode: 403,
+          googleMessage: "The Chat app is not allowed to delete this space.",
+        }),
+      )
+      .mockResolvedValueOnce({
+        authMode: "app_auth",
+        status: "deleted",
+        useAdminAccess: false,
+      });
+    const accessTokenSpy = vi.spyOn(workspaceOauth, "getValidAccessToken").mockResolvedValue("test-drive-token");
+
+    const job = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: "CHA-DELETE-RETRY-001",
+      title: "Retry chat cleanup job",
+      customerId: customer.id,
+      jobTypeId: jobTypeImport.id,
+      branchId: branch.id,
+      priority: "LOW",
+      primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
+      assignments: [{ userId: ownerUser.id, responsibility: "OPERATIONS" }],
+    });
+
+    await db.jobWorkspaceProfile.create({
+      data: {
+        orgId: org.id,
+        jobId: job.id,
+        rootFolderId: "drive-folder-retry-delete-test",
+        googleSpaceId: "spaces/AAA_RETRY_DELETE",
+        chatSpaceName: "spaces/AAA_RETRY_DELETE",
+        googleSpaceUrl: "https://chat.google.com/room/AAA_RETRY_DELETE",
+        provisioningStatus: "success",
+        chatSpaceDeleteStatus: "PENDING",
+      },
+    });
+
+    const requestResult = await chaService.submitJobDeletion(ownerUser.id, org.id, {
+      jobId: job.id,
+      confirmationJobNumber: "CHA-DELETE-RETRY-001",
+      confirmationPhrase: "delete job",
+    });
+    expect(requestResult.mode).toBe("pending");
+
+    const request = await db.chaJobDeletionRequest.findFirstOrThrow({
+      where: { jobId: job.id, status: "PENDING" },
+    });
+
+    await chaService.decideJobDeletionRequest(adminUser.id, org.id, {
+      requestId: request.id,
+      decision: "APPROVED",
+      remarks: "Delete the job even if chat cleanup needs retry.",
+    });
+
+    const failedCleanupWorkspace = await db.jobWorkspaceProfile.findUniqueOrThrow({
+      where: { jobId: job.id },
+    });
+    expect(failedCleanupWorkspace.googleSpaceId).toBe("spaces/AAA_RETRY_DELETE");
+    expect(failedCleanupWorkspace.chatSpaceName).toBe("spaces/AAA_RETRY_DELETE");
+    expect(failedCleanupWorkspace.chatSpaceDeleteStatus).toBe("FAILED");
+    expect(failedCleanupWorkspace.chatSpaceDeleteError).toContain("insufficient permissions");
+
+    const deletedJob = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
+    expect(deletedJob.deletedAt).not.toBeNull();
+
+    const retryResult = await chaService.retryJobChatCleanup(adminUser.id, org.id, job.id);
+    expect(retryResult.outcome).toBe("deleted");
+    expect(chatDeleteSpy).toHaveBeenNthCalledWith(2, "spaces/AAA_RETRY_DELETE", { userId: adminUser.id });
+
+    const retriedWorkspace = await db.jobWorkspaceProfile.findUniqueOrThrow({
+      where: { jobId: job.id },
+    });
+    expect(retriedWorkspace.googleSpaceId).toBeNull();
+    expect(retriedWorkspace.chatSpaceName).toBe("spaces/AAA_RETRY_DELETE");
+    expect(retriedWorkspace.chatSpaceDeleteStatus).toBe("SUCCESS");
+    expect(retriedWorkspace.chatSpaceDeleteError).toBeNull();
+    expect(retriedWorkspace.chatSpaceDeletedAt).not.toBeNull();
 
     driveDeleteSpy.mockRestore();
     chatDeleteSpy.mockRestore();

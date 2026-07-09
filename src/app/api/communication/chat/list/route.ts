@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { listSpaces } from "@/lib/google-chat-client";
+import {
+  getJobWorkspaceProfileSelect,
+  normalizeJobWorkspaceProfile,
+} from "@/lib/job-workspace-profile";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -12,17 +16,24 @@ export async function GET(req: NextRequest) {
   const orgId = session.user.orgId!;
 
   try {
+    const workspaceProfileSelect = await getJobWorkspaceProfileSelect();
     // 1. Fetch Job Spaces (from JobWorkspaceProfile)
     const jobs = await db.chaJob.findMany({
       where: {
         orgId,
+        deletedAt: null,
         workspaceProfile: {
           googleSpaceId: { not: null },
           provisioningStatus: "success"
         }
       },
-      include: {
-        workspaceProfile: true
+      select: {
+        id: true,
+        jobNumber: true,
+        title: true,
+        workspaceProfile: {
+          select: workspaceProfileSelect,
+        },
       },
       orderBy: {
         jobNumber: "desc"
@@ -33,8 +44,8 @@ export async function GET(req: NextRequest) {
       id: job.id,
       jobNumber: job.jobNumber,
       title: job.title,
-      spaceId: job.workspaceProfile?.googleSpaceId,
-      spaceUrl: job.workspaceProfile?.googleSpaceUrl
+      spaceId: normalizeJobWorkspaceProfile(job.workspaceProfile)?.googleSpaceId,
+      spaceUrl: normalizeJobWorkspaceProfile(job.workspaceProfile)?.googleSpaceUrl
     }));
 
     // 2. Fetch other active Employees for direct messaging mapping

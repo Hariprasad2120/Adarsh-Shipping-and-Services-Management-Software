@@ -2,6 +2,12 @@
 import { db } from "@/lib/db";
 import * as driveClient from "./google-drive-client";
 import { sendMessage, createMembership, getAccessToken } from "./google-chat-client";
+import {
+  createJobWorkspaceProfileCompat,
+  createOrUpdateJobWorkspaceProfile,
+  findJobWorkspaceProfileByJobId,
+  normalizeJobWorkspaceProfile,
+} from "./job-workspace-profile";
 import { getValidAccessToken } from "./workspace-oauth";
 
 type JobForDrive = {
@@ -119,10 +125,10 @@ export async function ensureJobCategoryFolder(
   });
   if (!job) return undefined;
 
-  let profile = await db.jobWorkspaceProfile.findUnique({ where: { jobId } });
+  let profile = await findJobWorkspaceProfileByJobId(jobId);
   if (!profile || !profile.rootFolderId || profile.rootFolderId.startsWith("mock-")) {
     await provisionJobWorkspace(jobId, true, triggeringUserId);
-    profile = await db.jobWorkspaceProfile.findUnique({ where: { jobId } });
+    profile = await findJobWorkspaceProfileByJobId(jobId);
   }
   if (!profile) return undefined;
 
@@ -160,10 +166,12 @@ export async function ensureJobCategoryFolder(
       accessToken: userAccessToken
     });
     categoryFolders = {};
-    profile = await db.jobWorkspaceProfile.update({
-      where: { id: profile.id },
-      data: { rootFolderId, categoryFolders, provisioningStatus: "success", lastError: null }
-    });
+    const updatedProfile = await createOrUpdateJobWorkspaceProfile(
+      { id: profile.id },
+      { rootFolderId, categoryFolders, provisioningStatus: "success", lastError: null },
+      "update",
+    );
+    profile = normalizeJobWorkspaceProfile(updatedProfile as Record<string, unknown>) ?? profile;
   }
 
   const legacyDocumentsStillExist = legacyDocumentsFolderId && !legacyDocumentsFolderId.startsWith("mock-")
@@ -185,10 +193,7 @@ export async function ensureJobCategoryFolder(
       accessToken: userAccessToken
     });
     categoryFolders = { ...categoryFolders, [category]: newCategoryFolderId };
-    await db.jobWorkspaceProfile.update({
-      where: { id: profile.id },
-      data: { categoryFolders }
-    });
+    await createOrUpdateJobWorkspaceProfile({ id: profile.id }, { categoryFolders }, "update");
     return newCategoryFolderId;
   }
 
@@ -216,24 +221,38 @@ export async function provisionJobWorkspace(
   }
 
   // Get or create Job Workspace Profile
-  let profile = await db.jobWorkspaceProfile.findUnique({
-    where: { jobId }
-  });
+  let profile = await findJobWorkspaceProfileByJobId(jobId);
 
   if (!profile) {
-    profile = await db.jobWorkspaceProfile.create({
-      data: {
-        orgId: job.orgId,
-        jobId: job.id,
-        provisioningStatus: "pending"
-      }
+    profile = await createJobWorkspaceProfileCompat({
+      orgId: job.orgId,
+      jobId: job.id,
+      provisioningStatus: "pending",
     });
+  }
+
+  if (!profile) {
+    throw new Error(`Workspace profile for job ${jobId} could not be created.`);
   }
 
   const isMock = profile && (
     profile.rootFolderId?.startsWith("mock-") ||
     profile.googleSpaceId?.startsWith("spaces/mock-")
   );
+
+  if (!profile.chatSpaceName && profile.googleSpaceId) {
+    const updatedProfile = await createOrUpdateJobWorkspaceProfile(
+      { id: profile.id },
+      {
+        chatSpaceName: profile.googleSpaceId,
+        chatSpaceDeleteStatus: "PENDING",
+        chatSpaceDeletedAt: null,
+        chatSpaceDeleteError: null,
+      },
+      "update",
+    );
+    profile = normalizeJobWorkspaceProfile(updatedProfile as Record<string, unknown>) ?? profile;
+  }
 
   const chatSpaceMissing = !profile.googleSpaceId;
 
@@ -270,10 +289,7 @@ export async function provisionJobWorkspace(
       } catch (err: any) {
         throw new Error(`Google Drive folder creation failed for job ${job.jobNumber}: ${err.message}`);
       }
-      await db.jobWorkspaceProfile.update({
-        where: { id: profile.id },
-        data: { rootFolderId }
-      });
+      await createOrUpdateJobWorkspaceProfile({ id: profile.id }, { rootFolderId }, "update");
     }
 
     // Subfolders mirror the org's configured document requirement categories
@@ -313,10 +329,7 @@ export async function provisionJobWorkspace(
           });
           categoryFolders[cat] = catFolderId;
 
-          await db.jobWorkspaceProfile.update({
-            where: { id: profile.id },
-            data: { categoryFolders }
-          });
+          await createOrUpdateJobWorkspaceProfile({ id: profile.id }, { categoryFolders }, "update");
         } catch (err: any) {
           console.error(`[Provisioning] Drive subfolder creation failed for "${cat}" in job ${job.jobNumber}:`, err.message || err);
           categoryFolderErrors.push(`"${cat}": ${err.message || err}`);
@@ -362,13 +375,18 @@ export async function provisionJobWorkspace(
         console.warn(`[Provisioning] Chat Space creation failed for ${job.jobNumber}: ${err.message}`);
       }
 
-      await db.jobWorkspaceProfile.update({
-        where: { id: profile.id },
-        data: {
+      await createOrUpdateJobWorkspaceProfile(
+        { id: profile.id },
+        {
           googleSpaceId,
-          googleSpaceUrl
-        }
-      });
+          chatSpaceName: googleSpaceId,
+          googleSpaceUrl,
+          chatSpaceDeletedAt: null,
+          chatSpaceDeleteStatus: googleSpaceId ? "PENDING" : profile.chatSpaceDeleteStatus,
+          chatSpaceDeleteError: null,
+        },
+        "update",
+      );
       
       // Add members (primary owner and assigned employees) if they have linked Google accounts
       const employeesToInvite = new Set<string>();
@@ -453,16 +471,17 @@ export async function provisionJobWorkspace(
     // "failed" so the next provisioning call (e.g. re-opening the job, or the
     // manual Sync action) retries just the missing folders instead of treating
     // this job's workspace as fully provisioned.
-    await db.jobWorkspaceProfile.update({
-      where: { id: profile.id },
-      data: {
+    await createOrUpdateJobWorkspaceProfile(
+      { id: profile.id },
+      {
         provisioningStatus: categoryFolderErrors.length > 0 ? "failed" : "success",
         lastError: categoryFolderErrors.length > 0
           ? `Some Drive subfolders failed to create: ${categoryFolderErrors.join("; ")}`
           : null,
-        provisionedAt: new Date()
-      }
-    });
+        provisionedAt: new Date(),
+      },
+      "update",
+    );
 
     // Create Audit log entry
     await db.communicationAuditEvent.create({
@@ -478,13 +497,14 @@ export async function provisionJobWorkspace(
     const errorMsg = err.message || String(err);
     console.error(`[Provisioning] Job Workspace failed for ${job.jobNumber}:`, errorMsg);
     
-    await db.jobWorkspaceProfile.update({
-      where: { id: profile.id },
-      data: {
+    await createOrUpdateJobWorkspaceProfile(
+      { id: profile.id },
+      {
         provisioningStatus: "failed",
-        lastError: errorMsg
-      }
-    });
+        lastError: errorMsg,
+      },
+      "update",
+    );
 
     throw err;
   }

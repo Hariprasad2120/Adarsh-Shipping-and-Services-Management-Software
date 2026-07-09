@@ -176,6 +176,20 @@ export async function decideJobDeletionRequestAction(
   }
 }
 
+export async function retryJobChatCleanupAction(
+  jobId: string,
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.delete.approve");
+    const result = await chaService.retryJobChatCleanup(userId, orgId, jobId);
+    revalidatePath("/communication/job-spaces");
+    revalidatePath("/communication");
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to retry Google Chat cleanup" };
+  }
+}
+
 export async function createJobTypeAction(data: {
   name: string;
   movementDirection: "IMPORT" | "EXPORT" | "BOTH" | "OTHER";

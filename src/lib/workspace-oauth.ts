@@ -10,6 +10,8 @@ const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.AUTH_GOOGLE_ID!;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET!;
 const REDIRECT_URI = process.env.GOOGLE_OAUTH_REDIRECT_URI || `${process.env.NEXTAUTH_URL}/api/communication/oauth/callback`;
 const WORKSPACE_DOMAIN = process.env.GOOGLE_WORKSPACE_DOMAIN || "adarshshipping.in";
+const GOOGLE_CHAT_DELETE_AUTH_MODE =
+  (process.env.GOOGLE_CHAT_DELETE_AUTH_MODE ?? "admin_oauth").toLowerCase();
 
 // Encrypt a token
 export function encryptToken(token: string): string {
@@ -59,7 +61,6 @@ export function getAuthorizationUrl(state: string): string {
     "https://www.googleapis.com/auth/chat.messages",
     "https://www.googleapis.com/auth/chat.messages.create",
     "https://www.googleapis.com/auth/chat.messages.readonly",
-    "https://www.googleapis.com/auth/chat.admin.delete",
 
     // Drive — full read/write/create/delete files and folders
     "https://www.googleapis.com/auth/drive",
@@ -77,6 +78,14 @@ export function getAuthorizationUrl(state: string): string {
     "email",
     "profile"
   ];
+
+  if (GOOGLE_CHAT_DELETE_AUTH_MODE === "user_oauth") {
+    scopes.push("https://www.googleapis.com/auth/chat.delete");
+  }
+
+  if (GOOGLE_CHAT_DELETE_AUTH_MODE === "admin_oauth") {
+    scopes.push("https://www.googleapis.com/auth/chat.admin.delete");
+  }
 
   const params = new URLSearchParams({
     client_id: CLIENT_ID,

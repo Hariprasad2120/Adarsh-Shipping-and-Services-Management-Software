@@ -25,6 +25,32 @@ import {
   recordLoginSuccess,
 } from "@/lib/login-rate-limit";
 
+const GOOGLE_CHAT_DELETE_AUTH_MODE =
+  (process.env.GOOGLE_CHAT_DELETE_AUTH_MODE ?? "admin_oauth").toLowerCase();
+const GOOGLE_AUTH_SCOPES = [
+  "openid",
+  "email",
+  "profile",
+  "https://www.googleapis.com/auth/gmail.modify",
+  "https://www.googleapis.com/auth/gmail.send",
+  "https://www.googleapis.com/auth/contacts.readonly",
+  "https://www.googleapis.com/auth/calendar",
+  "https://www.googleapis.com/auth/calendar.events",
+  "https://www.googleapis.com/auth/tasks",
+  "https://www.googleapis.com/auth/drive",
+  "https://www.googleapis.com/auth/chat.spaces.readonly",
+  "https://www.googleapis.com/auth/chat.memberships.readonly",
+  "https://www.googleapis.com/auth/chat.messages",
+];
+
+if (GOOGLE_CHAT_DELETE_AUTH_MODE === "user_oauth") {
+  GOOGLE_AUTH_SCOPES.push("https://www.googleapis.com/auth/chat.delete");
+}
+
+if (GOOGLE_CHAT_DELETE_AUTH_MODE === "admin_oauth") {
+  GOOGLE_AUTH_SCOPES.push("https://www.googleapis.com/auth/chat.admin.delete");
+}
+
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
@@ -184,7 +210,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
       authorization: {
         params: {
-          scope: "openid email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/contacts.readonly https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/chat.spaces.readonly https://www.googleapis.com/auth/chat.memberships.readonly https://www.googleapis.com/auth/chat.messages",
+          scope: GOOGLE_AUTH_SCOPES.join(" "),
           access_type: "offline",
           prompt: "consent",
         },

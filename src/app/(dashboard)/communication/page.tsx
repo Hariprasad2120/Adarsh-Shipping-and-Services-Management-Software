@@ -73,7 +73,11 @@ export default async function CommunicationDashboard() {
 
   // Count active job spaces
   const activeSpacesCount = await db.jobWorkspaceProfile.count({
-    where: { orgId: session.user.orgId!, googleSpaceId: { not: null } }
+    where: {
+      orgId: session.user.orgId!,
+      googleSpaceId: { not: null },
+      job: { deletedAt: null },
+    }
   });
 
   const parsedError = parseGoogleApiError(errorState || "");

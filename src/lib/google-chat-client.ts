@@ -8,6 +8,10 @@ const PRIVATE_KEY = (process.env.GOOGLE_CHAT_SA_PRIVATE_KEY ?? "").replace(
   "\n"
 );
 const CHAT_API_BASE = "https://chat.googleapis.com/v1";
+const CHAT_DELETE_AUTH_MODE =
+  (process.env.GOOGLE_CHAT_DELETE_AUTH_MODE ?? "admin_oauth").toLowerCase();
+const GOOGLE_CHAT_ADMIN_USE_ADMIN_ACCESS =
+  process.env.GOOGLE_CHAT_ADMIN_USE_ADMIN_ACCESS !== "false";
 const SCOPES = [
   "https://www.googleapis.com/auth/chat.bot",
   "https://www.googleapis.com/auth/chat.app.spaces.create",
@@ -278,32 +282,107 @@ export async function getSpace(
   return res.json() as Promise<{ name: string; displayName: string; spaceType: string }>;
 }
 
-export async function deleteSpace(spaceResourceName: string): Promise<void> {
-  const token = await getAccessToken();
+export type GoogleChatDeleteAuthMode = "user_oauth" | "admin_oauth" | "app_auth";
 
-  const res = await fetch(`${CHAT_API_BASE}/${spaceResourceName}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export type DeleteGoogleChatSpaceOptions = {
+  authMode?: GoogleChatDeleteAuthMode;
+  useAdminAccess?: boolean;
+  userId?: string;
+};
 
-  if (res.status === 404) {
-    return;
-  }
+export type DeleteGoogleChatSpaceResult = {
+  authMode: GoogleChatDeleteAuthMode;
+  status: "deleted" | "missing";
+  useAdminAccess: boolean;
+};
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Chat API deleteSpace failed (${res.status}): ${err}`);
+export class GoogleChatDeleteError extends Error {
+  status: number;
+  authMode: GoogleChatDeleteAuthMode;
+  googleCode?: number;
+  googleMessage?: string;
+
+  constructor(params: {
+    authMode: GoogleChatDeleteAuthMode;
+    status: number;
+    message: string;
+    googleCode?: number;
+    googleMessage?: string;
+  }) {
+    super(params.message);
+    this.name = "GoogleChatDeleteError";
+    this.status = params.status;
+    this.authMode = params.authMode;
+    this.googleCode = params.googleCode;
+    this.googleMessage = params.googleMessage;
   }
 }
 
-export async function deleteSpaceWithAdminAccess(params: {
-  spaceResourceName: string;
-  userId: string;
-}): Promise<void> {
-  const token = await getValidAccessToken(params.userId);
+function resolveDeleteAuthMode(mode?: string): GoogleChatDeleteAuthMode {
+  if (mode === "user_oauth" || mode === "admin_oauth" || mode === "app_auth") {
+    return mode;
+  }
+  return "admin_oauth";
+}
 
-  const url = new URL(`${CHAT_API_BASE}/${params.spaceResourceName}`);
-  url.searchParams.set("useAdminAccess", "true");
+async function resolveDeleteToken(options: {
+  authMode: GoogleChatDeleteAuthMode;
+  userId?: string;
+}): Promise<string> {
+  if (options.authMode === "app_auth") {
+    return getAccessToken();
+  }
+  if (!options.userId) {
+    throw new Error(`Google Chat delete with ${options.authMode} requires a connected userId.`);
+  }
+  return getValidAccessToken(options.userId);
+}
+
+async function buildDeleteError(
+  res: Response,
+  authMode: GoogleChatDeleteAuthMode,
+): Promise<GoogleChatDeleteError> {
+  const raw = await res.text();
+  let googleCode: number | undefined;
+  let googleMessage: string | undefined;
+  let message = raw || `Google Chat delete failed with status ${res.status}.`;
+
+  try {
+    const parsed = JSON.parse(raw) as {
+      error?: { code?: number; message?: string; status?: string };
+    };
+    googleCode = parsed.error?.code;
+    googleMessage = parsed.error?.message;
+    if (parsed.error?.message) {
+      message = parsed.error.message;
+    }
+  } catch {
+    // Keep raw text message when Google does not return JSON.
+  }
+
+  return new GoogleChatDeleteError({
+    authMode,
+    status: res.status,
+    message,
+    googleCode,
+    googleMessage,
+  });
+}
+
+export async function deleteGoogleChatSpace(
+  spaceName: string,
+  options?: DeleteGoogleChatSpaceOptions,
+): Promise<DeleteGoogleChatSpaceResult> {
+  const authMode = resolveDeleteAuthMode(options?.authMode ?? CHAT_DELETE_AUTH_MODE);
+  const useAdminAccess =
+    options?.useAdminAccess ??
+    (authMode === "admin_oauth" ? GOOGLE_CHAT_ADMIN_USE_ADMIN_ACCESS : false);
+  const token = await resolveDeleteToken({ authMode, userId: options?.userId });
+
+  const url = new URL(`${CHAT_API_BASE}/${spaceName}`);
+  if (useAdminAccess) {
+    url.searchParams.set("useAdminAccess", "true");
+  }
 
   const res = await fetch(url.toString(), {
     method: "DELETE",
@@ -311,13 +390,29 @@ export async function deleteSpaceWithAdminAccess(params: {
   });
 
   if (res.status === 404) {
-    return;
+    return { authMode, status: "missing", useAdminAccess };
   }
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Chat API deleteSpace with admin access failed (${res.status}): ${err}`);
+    throw await buildDeleteError(res, authMode);
   }
+
+  return { authMode, status: "deleted", useAdminAccess };
+}
+
+export async function deleteSpace(spaceResourceName: string): Promise<void> {
+  await deleteGoogleChatSpace(spaceResourceName, { authMode: "app_auth" });
+}
+
+export async function deleteSpaceWithAdminAccess(params: {
+  spaceResourceName: string;
+  userId: string;
+}): Promise<void> {
+  await deleteGoogleChatSpace(params.spaceResourceName, {
+    authMode: "admin_oauth",
+    useAdminAccess: true,
+    userId: params.userId,
+  });
 }
 
 // ─── Create DM ───────────────────────────────────────────────────────────────
