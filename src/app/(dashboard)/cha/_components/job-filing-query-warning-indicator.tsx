@@ -27,7 +27,6 @@ export function JobFilingQueryWarningIndicator({
     <WarningIndicatorPopover
       ariaLabel="Customs query update overdue"
       eyebrow="QUERY UPDATE OVERDUE"
-      status={warning.overdueQueryCount > 1 ? `${warning.overdueQueryCount} THREADS` : "Overdue"}
       description={`"${warning.queryTitle}" has not been updated after the reminder sent at ${new Date(warning.reminderTriggeredAt).toLocaleString("en-IN")}.`}
       meta={
         warning.overdueQueryCount > 1

@@ -22,9 +22,12 @@ type FileUploadFieldProps = {
   helperText?: string;
   id: string;
   label?: string;
+  multiple?: boolean;
   onClear?: () => void;
   onInputChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  previewInline?: boolean;
   selectedFile?: SelectedUploadFile | null;
+  selectedFiles?: SelectedUploadFile[] | null;
   showSelectedPreview?: boolean;
   triggerText?: string;
 };
@@ -45,9 +48,12 @@ export function FileUploadField({
   helperText,
   id,
   label,
+  multiple = false,
   onClear,
   onInputChange,
+  previewInline = false,
   selectedFile,
+  selectedFiles,
   showSelectedPreview = true,
   triggerText = "Drag and drop or choose file to upload",
 }: FileUploadFieldProps) {
@@ -55,6 +61,7 @@ export function FileUploadField({
   const [isDragging, setIsDragging] = useState(false);
   const sizeLabel = formatFileSize(selectedFile?.sizeBytes);
   const [localPreviewHref, setLocalPreviewHref] = useState<string | null>(null);
+  const previewFiles = selectedFiles && selectedFiles.length > 0 ? selectedFiles : selectedFile ? [selectedFile] : [];
 
   useEffect(() => {
     if (!selectedFile?.file) {
@@ -143,6 +150,7 @@ export function FileUploadField({
           name={id}
           type="file"
           accept={accept}
+          multiple={multiple}
           className="sr-only"
           disabled={disabled}
           onChange={(event) => {
@@ -154,42 +162,79 @@ export function FileUploadField({
 
       {compact && helperText ? <p className="text-xs text-on-surface-variant">{helperText}</p> : null}
 
-      {showSelectedPreview && selectedFile ? (
+      {showSelectedPreview && previewFiles.length > 0 ? (
         <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-3">
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-outline-variant/40 bg-surface shadow-sm">
-              <FileText className="size-5 text-on-surface" aria-hidden={true} />
-            </span>
-            <div className="min-w-0 flex-1">
-              {previewHref ? (
-                <a
-                  href={previewHref}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block truncate text-xs font-medium text-on-surface hover:text-[#00cec4] hover:underline"
+          <div className={previewInline ? "space-y-0" : "space-y-3"}>
+            {previewFiles.map((previewFile, index) => {
+              const fileHref =
+                previewFiles.length === 1 && previewFile.name === selectedFile?.name ? previewHref : previewFile.href || null;
+              const fileSizeLabel =
+                previewFiles.length === 1 && previewFile.name === selectedFile?.name
+                  ? sizeLabel
+                  : formatFileSize(previewFile.sizeBytes);
+
+              return (
+                <div key={`${previewFile.name}-${index}`} className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-outline-variant/40 bg-surface shadow-sm">
+                    <FileText className="size-5 text-on-surface" aria-hidden={true} />
+                  </span>
+                  <div className={cn("min-w-0 flex-1", previewInline && "flex items-center justify-between gap-3")}>
+                    <div className="min-w-0">
+                      {fileHref ? (
+                        <a
+                          href={fileHref}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block truncate text-xs font-medium text-on-surface hover:text-[#00cec4] hover:underline"
+                        >
+                          {previewFile.name}
+                        </a>
+                      ) : (
+                        <p className="truncate text-xs font-medium text-on-surface">{previewFile.name}</p>
+                      )}
+                      <div
+                        className={cn(
+                          "text-xs text-on-surface-variant",
+                          previewInline
+                            ? "mt-0 flex items-center gap-x-3 whitespace-nowrap"
+                            : "mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1",
+                        )}
+                      >
+                        <span>{fileSizeLabel || "Selected"}</span>
+                        <span>{previewFile.statusLabel || "Ready"}</span>
+                      </div>
+                    </div>
+                    {onClear && previewInline ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="md"
+                        mode="icon"
+                        className="ds-plain h-10 w-10 shrink-0 rounded-xl border-red-500/45 text-red-500 hover:border-red-500/60 hover:bg-surface hover:text-red-600 hover:shadow-none"
+                        aria-label="Delete uploaded file"
+                        onClick={handleClear}
+                      >
+                        <Trash2 className="size-4 shrink-0" aria-hidden={true} />
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
+            {onClear && !previewInline ? (
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="md"
+                  mode="icon"
+                  className="ds-plain h-10 w-10 shrink-0 rounded-xl border-red-500/45 text-red-500 hover:border-red-500/60 hover:bg-surface hover:text-red-600 hover:shadow-none"
+                  aria-label="Delete uploaded file"
+                  onClick={handleClear}
                 >
-                  {selectedFile.name}
-                </a>
-              ) : (
-                <p className="truncate text-xs font-medium text-on-surface">{selectedFile.name}</p>
-              )}
-              <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-on-surface-variant">
-                <span>{sizeLabel || "Selected"}</span>
-                <span>{selectedFile.statusLabel || "Ready"}</span>
+                  <Trash2 className="size-4 shrink-0" aria-hidden={true} />
+                </Button>
               </div>
-            </div>
-            {onClear ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="md"
-                mode="icon"
-                className="ds-plain h-10 w-10 shrink-0 rounded-xl border-red-500/45 text-red-500 hover:border-red-500/60 hover:bg-surface hover:text-red-600 hover:shadow-none"
-                aria-label="Delete uploaded file"
-                onClick={handleClear}
-              >
-                <Trash2 className="size-4 shrink-0" aria-hidden={true} />
-              </Button>
             ) : null}
           </div>
         </div>

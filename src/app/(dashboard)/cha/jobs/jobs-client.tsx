@@ -10,9 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { FilterMenu } from "@/components/ui/filter-menu";
-import { JobValidityWarningIndicator } from "@/app/(dashboard)/cha/_components/job-validity-warning-indicator";
 import { JobFilingQueryWarningIndicator } from "@/app/(dashboard)/cha/_components/job-filing-query-warning-indicator";
-import { JobSection49ValidityWarningIndicator } from "@/app/(dashboard)/cha/_components/job-section49-validity-warning-indicator";
+import {
+  ChaDueDateWarningIndicator,
+  type DueDateWarningViewModel,
+} from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
 import {
   formatChaBadgeLabel,
   getChaPriorityBadgeVariant,
@@ -38,18 +40,7 @@ interface JobItem {
   shippingBillNumber: string | null;
   assignedUserIds: string[];
   hasActiveDeletionRequest: boolean;
-  deliveryOrderWarning?: {
-    severity: "expired" | "expiring";
-    daysUntilExpiry: number;
-    deliveryOrderValidity: string;
-    message: string;
-  } | null;
-  section49Warning?: {
-    severity: "expired" | "expiring";
-    daysUntilExpiry: number;
-    validityDate: string;
-    message: string;
-  } | null;
+  dueDateWarnings: DueDateWarningViewModel[];
   filingQueryWarning?: {
     queryTitle: string;
     overdueQueryCount: number;
@@ -241,12 +232,12 @@ export function JobsClient({
                 <DataTableCell className="py-5 font-medium text-[#00cec4]">
                   <div className="flex items-center gap-2">
                     <span>{job.jobNumber}</span>
-                    {job.deliveryOrderWarning ? (
-                      <JobValidityWarningIndicator jobId={job.id} warning={job.deliveryOrderWarning} />
-                    ) : null}
-                    {job.section49Warning ? (
-                      <JobSection49ValidityWarningIndicator jobId={job.id} warning={job.section49Warning} />
-                    ) : null}
+                    {job.dueDateWarnings.map((warning) => (
+                      <ChaDueDateWarningIndicator
+                        key={warning.notificationId}
+                        warning={warning}
+                      />
+                    ))}
                     {job.filingQueryWarning ? (
                       <JobFilingQueryWarningIndicator jobId={job.id} warning={job.filingQueryWarning} />
                     ) : null}

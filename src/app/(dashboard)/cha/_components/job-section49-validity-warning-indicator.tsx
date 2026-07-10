@@ -27,7 +27,6 @@ export function JobSection49ValidityWarningIndicator({
       ariaLabel="Section 49 validity warning"
       tone={warning.severity === "expired" ? "destructive" : "warning"}
       eyebrow={warning.severity === "expired" ? "SECTION 49 EXPIRED" : "SECTION 49 EXPIRING"}
-      status={warning.severity === "expired" ? "Expired" : "Action Needed"}
       description={warning.message}
       meta={`Validity date: ${new Date(warning.validityDate).toLocaleDateString("en-IN")}`}
     >

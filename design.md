@@ -240,6 +240,8 @@ These two patterns are **sanctioned CHA defaults** — reuse them as-is; do not 
 |---|---|---|
 | **Orange outline (warning-state action)** | `<Button variant="outline" className="border-[#fb923c]/50 text-[#fb923c] hover:bg-surface">` | Actions that toggle/clear a warning state (Mark All N/A, Assign Manager, Deactivate Section 49). Orange neon hover keeps border/text orange with no tint fill; lifts `-1px` on hover like every button (§6.1). |
 | **Tonal tinted (severity popover actions)** | `<Button size="sm" className="flex-1 border {tone}/25 bg-{tone}/12 text-{tone} hover:bg-{tone}/18">` where tone ∈ red-500 · `#fb923c` · orange-500 · `#00cec4` · outline-variant (neutral) | Action rows inside warning-indicator popovers. **Size, padding and text size come from `size="sm"` (h-8, px-3, 12px)** — never override with `h-8`/`h-7`/`text-xs`. Tint colors are the approved part; geometry stays standard. |
+| **Warning heading / eyebrow** | Warning = `!text-[#fb923c]`; destructive = `!text-red-400` on `.ds-label` eyebrows/headings | Warning popover headings, due-date alert eyebrows, DO validity alerts, Section 49 alerts, and similar warning-note titles must match the icon tone exactly. Do not leave them on the default muted label color, and do not mix cyan heading bars into warning cards. |
+| **Warning card shell** | Use `card-top-accent-orange` for warning popovers/floating notes and `card-left-accent-orange` for persistent inline warning cards | Warning surfaces such as DO validity alerts, Section 49 alerts, filing query warnings, and inline due-date notes should carry the same orange accent-border treatment as other CHA alert cards instead of plain neutral borders. |
 
 > History: the neon look + universal hover lift was adopted 2026-07-06, briefly reverted by mistake the same day, then **restored and confirmed as final** (see §16). The neon treatment above IS the design system for buttons.
 
@@ -353,10 +355,10 @@ Form label: `text-sm`, `font-medium`, `text-on-surface`.
 | `.ds-shell-lg` | `border-radius: 24px` | Modal outer shell |
 | `.ds-dark-banner` | Preserves white text in light mode | Dark-background hero sections |
 | `.card-cyan-outline` | Thin cyan outline border | Workspace cards, data-entry panels, highlighted information cards |
-| `.card-top-accent` | Cyan inset shadow top | Primary stat cards |
-| `.card-top-accent-orange` | Orange inset shadow top | Alert/secondary stat cards |
-| `.card-left-accent` | 3px cyan left border | Detail rows, list items |
-| `.card-left-accent-orange` | 3px orange left border | Alert detail rows |
+| `.card-top-accent` | Cyan top accent + cyan-tinted border | Primary stat cards, emphasized section cards |
+| `.card-top-accent-orange` | Orange top accent + orange-tinted border | Alert/secondary stat cards, warning panels |
+| `.card-left-accent` | 3px cyan left rail + cyan-tinted border | Detail rows, list items, interactive accent cards |
+| `.card-left-accent-orange` | 3px orange left rail + orange-tinted border | Alert detail rows, persistent warning notes |
 | `.cyan-range-slider` | Styled range thumb | Range inputs |
 | `.animate-page-enter` | Slide-in-from-right animation | Page transitions |
 
@@ -417,11 +419,14 @@ Two panel roles, one recipe each — no radius drift, no border/bg opacity permu
 | **Section panel** (card on page background) | `rounded-xl border border-outline-variant/60 bg-surface shadow-sm` + local padding (`p-4`–`p-6`) | Matches the shared `Card`. Applies to ALL panels on a page background — report panels, approval queues, filter bars, workspace sections, the workflow-builder shell, nested `bg-surface` sub-panels. No `rounded-2xl`/`rounded-3xl` exceptions. |
 | **Inset panel** (nested inside a section panel) | `rounded-xl border border-outline-variant bg-surface-container-low` + local padding | Full `outline-variant` token (already subtle) and solid `surface-container-low` — never `/25 /30 /35 /40` border steps or `/20 /35 /40 /50` bg opacities. |
 
-Settings tiles follow the same rules: non-interactive info/health tiles use the section-panel recipe (neutral border — cyan borders are for interactive elements only); interactive quick-action rows use the section-panel recipe + `card-left-accent hover-cyan`.
+Settings tiles follow the same rules: non-interactive info/health tiles use the section-panel recipe (neutral border), while accent utility classes intentionally switch the full border to the same hue as the accent rail/bar. Interactive quick-action rows use the section-panel recipe + `card-left-accent hover-cyan`.
 
 Approved accent variant:
-- Workspace section panels that need light emphasis without a full left rail may add `card-top-accent` on top of the section-panel recipe. This keeps the standard thin border while adding the 2px cyan inset top line used in CHA Additional Data cards.
+- Workspace section panels that need emphasis without a full left rail may add `card-top-accent` on top of the section-panel recipe. This now applies both the 2px cyan inset top line and the matching cyan-tinted border used in prior CHA pages.
+- Warning and secondary alert panels should use `card-top-accent-orange` or `card-left-accent-orange` so the border tint matches the orange accent bar/rail.
 - Cyan-outlined cards may add `card-cyan-outline` on top of the base border utility to apply a thin `rgba(0, 206, 196, 0.35)` border, matching the approved document-card border treatment used in CHA workspaces.
+- Do not mix an accent rail/bar with a neutral `border-outline-variant` shell. If a card uses an accent utility, the border should match that accent.
+- In dark mode, accent-border utilities must use stronger contrast than light mode. Cyan/orange accent borders should be visibly brighter against `#161b22` surfaces, not the same low-opacity line used on light backgrounds.
 
 ---
 

@@ -570,6 +570,7 @@ main table td {
 }
 
 .card-top-accent {
+  border-color: rgba(0, 206, 196, 0.35) !important;
   box-shadow: inset 0 2px 0 #00cec4;
 }
 
@@ -578,15 +579,29 @@ main table td {
 }
 
 .card-top-accent-orange {
+  border-color: rgba(251, 146, 60, 0.35) !important;
   box-shadow: inset 0 2px 0 #fb923c;
 }
 
 .card-left-accent {
+  border-color: rgba(0, 206, 196, 0.35) !important;
   border-left: 3px solid #00cec4;
 }
 
 .card-left-accent-orange {
+  border-color: rgba(251, 146, 60, 0.35) !important;
   border-left: 3px solid #fb923c;
+}
+
+html.dark .card-top-accent,
+html.dark .card-cyan-outline,
+html.dark .card-left-accent {
+  border-color: rgba(0, 206, 196, 0.55) !important;
+}
+
+html.dark .card-top-accent-orange,
+html.dark .card-left-accent-orange {
+  border-color: rgba(251, 146, 60, 0.55) !important;
 }
 
 /* Global light mode: prevent text-white from becoming invisible on light surfaces */

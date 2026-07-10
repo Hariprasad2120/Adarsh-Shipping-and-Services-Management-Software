@@ -13,7 +13,7 @@ import {
 } from "@/lib/job-workspace-profile";
 import { ensureJobCategoryFolder } from "@/lib/workspace-provisioning";
 import { getValidAccessToken } from "@/lib/workspace-oauth";
-import { createDraft as createGmailDraft } from "@/lib/google-gmail-client";
+import { sendEmail as sendGmailEmail } from "@/lib/google-gmail-client";
 import { queueChecklistMainCustomerEmail } from "./checklist-email-automation";
 
 const DEFAULT_CHA_EXPENSE_CATEGORIES = [
@@ -34,6 +34,18 @@ const LEGACY_MANIFEST_REQUIREMENT: ChaManifestRequirement = "BOTH";
 const FILING_WORKFLOW_NOTIFICATION_KIND = "CHA_FILING_WORKFLOW_NODE";
 const DEFAULT_CUSTOMER_APPROVAL_DELAY_MINUTES = 1;
 const DEFAULT_QUERY_REMINDER_TIME = "10:30";
+
+type ChecklistCustomerMailAttachmentInput = {
+  fileName: string;
+  mimeType: string;
+  content: Buffer;
+};
+
+type ChecklistCustomerMailInput = {
+  subject: string;
+  body: string;
+  additionalAttachments?: ChecklistCustomerMailAttachmentInput[];
+};
 
 type FilingFieldDefinition = {
   key: string;
@@ -115,6 +127,7 @@ type CompatibleAdditionalData = {
   mblNumber?: string | null;
   hblNumber?: string | null;
   deliveryOrderValidity: Date | null;
+  deliveryOrderExtensionDate?: Date | null;
   status?: string | null;
   createdById?: string | null;
   updatedById?: string | null;
@@ -600,6 +613,7 @@ function getAdditionalDataSelect(includeCustomManifestValue: boolean): Prisma.Ch
         mblNumber: true,
         hblNumber: true,
         deliveryOrderValidity: true,
+        deliveryOrderExtensionDate: true,
         status: true,
         createdById: true,
         updatedById: true,
@@ -619,6 +633,7 @@ function getAdditionalDataSelect(includeCustomManifestValue: boolean): Prisma.Ch
         mblNumber: true,
         hblNumber: true,
         deliveryOrderValidity: true,
+        deliveryOrderExtensionDate: true,
         status: true,
         createdById: true,
         updatedById: true,
@@ -636,6 +651,7 @@ function normalizeCompatibleAdditionalData(
     importGeneralManifest: string | null;
     exportGeneralManifest: string | null;
     deliveryOrderValidity: Date | null;
+    deliveryOrderExtensionDate?: Date | null;
   } & Partial<CompatibleAdditionalData>) | null | undefined,
   hasCustomManifestValueColumn: boolean,
 ): CompatibleAdditionalData | null {
@@ -649,7 +665,18 @@ function normalizeCompatibleAdditionalData(
     containerDetails: additionalData.containerDetails ?? null,
     mblNumber: additionalData.mblNumber ?? null,
     hblNumber: additionalData.hblNumber ?? null,
+    deliveryOrderExtensionDate: additionalData.deliveryOrderExtensionDate ?? null,
   };
+}
+
+function getEffectiveDeliveryOrderValidity(additionalData: {
+  deliveryOrderValidity?: Date | null;
+  deliveryOrderExtensionDate?: Date | null;
+} | null | undefined): Date | null {
+  if (!additionalData) {
+    return null;
+  }
+  return additionalData.deliveryOrderExtensionDate ?? additionalData.deliveryOrderValidity ?? null;
 }
 
 function sanitizeContainerDetails(
@@ -2484,7 +2511,10 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
     throw new ForbiddenError("cha.job.read");
   }
 
-  const [filingQueryWarning] = await buildFilingQueryEscalationWarnings({ actorId: userId, orgId, jobId });
+  const [[filingQueryWarning], dueDateWarnings] = await Promise.all([
+    buildFilingQueryEscalationWarnings({ actorId: userId, orgId, jobId }),
+    listChaDueDateWarnings(userId, orgId, { jobId }),
+  ]);
   const actorMap = new Map(actors.map((a) => [a.id, { name: a.name }]));
   const auditLogsWithActor = rawAuditLogs.map((log) => ({
     ...log,
@@ -2496,6 +2526,7 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
     auditLogs: auditLogsWithActor,
     expenseRequests,
     filingQueryWarning: filingQueryWarning || null,
+    dueDateWarnings,
   };
 }
 
@@ -3241,6 +3272,7 @@ export async function upsertAdditionalData(
     mblNumber?: string | null;
     hblNumber?: string | null;
     deliveryOrderValidity?: Date | string | null;
+    deliveryOrderExtensionDate?: Date | string | null;
   }
 ) {
   const manifestSchema = await getChaManifestSchemaState();
@@ -3286,12 +3318,22 @@ export async function upsertAdditionalData(
 
   const vesselInwardDate = data.vesselInwardDate ? new Date(data.vesselInwardDate) : null;
   const deliveryOrderValidity = data.deliveryOrderValidity ? new Date(data.deliveryOrderValidity) : null;
+  const deliveryOrderExtensionDate = data.deliveryOrderExtensionDate ? new Date(data.deliveryOrderExtensionDate) : null;
 
   if (vesselInwardDate && Number.isNaN(vesselInwardDate.getTime())) {
     throw new Error("Vessel Inward Date is invalid.");
   }
   if (deliveryOrderValidity && Number.isNaN(deliveryOrderValidity.getTime())) {
     throw new Error("Delivery Order (DO) Validity is invalid.");
+  }
+  if (deliveryOrderExtensionDate && Number.isNaN(deliveryOrderExtensionDate.getTime())) {
+    throw new Error("Delivery Order extension date is invalid.");
+  }
+  if (deliveryOrderExtensionDate && !deliveryOrderValidity) {
+    throw new Error("Delivery Order Validity must be set before adding an extension date.");
+  }
+  if (deliveryOrderExtensionDate && deliveryOrderValidity && deliveryOrderExtensionDate.getTime() <= deliveryOrderValidity.getTime()) {
+    throw new Error("The extension date must be after the original Delivery Order validity date.");
   }
 
   if (manifestConfig.isManifestMandatory) {
@@ -3329,6 +3371,9 @@ export async function upsertAdditionalData(
       mblNumber,
       hblNumber,
       deliveryOrderValidity,
+      deliveryOrderExtensionDate,
+      doUploadEnabled: true,
+      doExtensionEnabled: true,
       status: nextStatus,
       updatedById: actorId,
       ...(nextStatus === "COMPLETED"
@@ -3345,6 +3390,9 @@ export async function upsertAdditionalData(
       mblNumber,
       hblNumber,
       deliveryOrderValidity,
+      deliveryOrderExtensionDate,
+      doUploadEnabled: true,
+      doExtensionEnabled: true,
       status: nextStatus,
       createdById: actorId,
       updatedById: actorId,
@@ -3470,23 +3518,27 @@ export async function proceedAdditionalDataStage(actorId: string, orgId: string,
   return result;
 }
 
-type DoValidityWarning = {
-  jobId: string;
-  jobNumber: string;
-  title: string;
-  customerName: string;
-  stage: string;
-  deliveryOrderValidity: Date;
-  daysUntilExpiry: number;
-  severity: "expired" | "expiring";
-};
-
 export type Section49ValidityWarning = {
   jobId: string;
   jobNumber: string;
   validityDate: Date;
   daysUntilExpiry: number;
   severity: "expired" | "expiring";
+};
+
+export type ChaDueDateWarningType = "DELIVERY_ORDER" | "SECTION49";
+
+export type ChaDueDateWarning = {
+  jobId: string;
+  jobNumber: string;
+  type: ChaDueDateWarningType;
+  validityDate: Date;
+  daysUntilExpiry: number;
+  severity: "expired" | "expiring";
+  message: string;
+  notificationId: string;
+  link: string;
+  actionLabel: string;
 };
 
 export type FilingQueryEscalationWarning = {
@@ -3500,214 +3552,126 @@ export type FilingQueryEscalationWarning = {
   staleMinutes: number;
 };
 
-// Read-only: returns warnings without creating any notifications.
-// Notification creation runs in a separate background job (createDeliveryOrderNotifications).
-export async function listDeliveryOrderValidityWarnings(actorId: string, orgId: string): Promise<DoValidityWarning[]> {
-  const [now, canViewAll, canViewIndicator] = await Promise.all([
-    getNow(),
-    can(actorId, "cha.job.view_all"),
-    can(actorId, "cha.do_validity.view_indicator"),
-  ]);
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
-
-  const threshold = new Date(today);
-  threshold.setDate(threshold.getDate() + 4);
-  threshold.setHours(23, 59, 59, 999);
-
-  const jobs = await db.chaJob.findMany({
-    where: {
-      ...getActiveChaJobWhere(orgId),
-      status: "ACTIVE",
-      stage: { not: "FILED" },
-      additionalData: {
-        status: "COMPLETED",
-        deliveryOrderValidity: { lte: threshold },
-      },
-      ...(canViewAll || canViewIndicator
-        ? {}
-        : {
-            OR: [
-              { primaryOwnerId: actorId },
-              { assignments: { some: { userId: actorId } } },
-            ],
-          }),
-    },
-    include: {
-      additionalData: true,
-      customer: { select: { name: true } },
-    },
-    orderBy: {
-      additionalData: {
-        deliveryOrderValidity: "asc",
-      },
-    },
-    take: 20,
-  });
-
-  return jobs
-    .filter((job) => job.additionalData?.deliveryOrderValidity)
-    .map((job) => {
-      const validity = job.additionalData!.deliveryOrderValidity!;
-      const validityDay = new Date(validity);
-      validityDay.setHours(0, 0, 0, 0);
-      const daysUntilExpiry = Math.ceil((validityDay.getTime() - today.getTime()) / 86_400_000);
-      const severity: "expired" | "expiring" = daysUntilExpiry < 0 ? "expired" : "expiring";
-
-      return {
-        jobId: job.id,
-        jobNumber: job.jobNumber,
-        title: job.title,
-        customerName: job.customer.name,
-        stage: job.stage,
-        deliveryOrderValidity: validity,
-        daysUntilExpiry,
-        severity,
-      };
-    });
-}
-
-// Separate mutation: creates/deduplicates DO validity notifications.
-// Call from a background scheduler, not from polling GET endpoints.
-export async function createDeliveryOrderNotifications(actorId: string, orgId: string): Promise<void> {
-  const warnings = await listDeliveryOrderValidityWarnings(actorId, orgId);
-  if (warnings.length === 0) return;
-
-  const existingNotifications = await db.notification.findMany({
-    where: {
-      userId: actorId,
-      kind: { in: ["CHA_DO_VALIDITY_EXPIRED", "CHA_DO_VALIDITY_EXPIRING"] },
-      link: { in: warnings.map((w) => `/cha/jobs/${w.jobId}`) },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  const notifMap = new Map<string, typeof existingNotifications[0]>();
-  for (const notif of existingNotifications) {
-    const key = `${notif.kind}:${notif.link}`;
-    if (!notifMap.has(key)) notifMap.set(key, notif);
-  }
-
-  const notificationsToCreate: Parameters<typeof createNotification>[0][] = [];
-
-  for (const warning of warnings) {
-    const kind = warning.severity === "expired" ? "CHA_DO_VALIDITY_EXPIRED" : "CHA_DO_VALIDITY_EXPIRING";
-    const link = `/cha/jobs/${warning.jobId}`;
-    const existing = notifMap.get(`${kind}:${link}`);
-
-    let shouldCreate = true;
-    if (existing) {
-      const payload = existing.payload as Record<string, any> | null;
-      if (payload && payload.deliveryOrderValidity === warning.deliveryOrderValidity.toISOString()) {
-        shouldCreate = false;
-      }
-    }
-
-    if (shouldCreate) {
-      notificationsToCreate.push({
-        userId: actorId,
-        orgId,
-        kind,
-        title: warning.severity === "expired"
-          ? `DO validity expired: ${warning.jobNumber}`
-          : `DO validity expiring: ${warning.jobNumber}`,
-        body: `${warning.customerName} delivery order validity ${
-          warning.severity === "expired" ? "expired" : "expires"
-        } on ${warning.deliveryOrderValidity.toLocaleDateString("en-IN")}.`,
-        link,
-        payload: {
-          jobId: warning.jobId,
-          jobNumber: warning.jobNumber,
-          deliveryOrderValidity: warning.deliveryOrderValidity.toISOString(),
-          daysUntilExpiry: warning.daysUntilExpiry,
-          severity: warning.severity,
-        },
-        source: "CHA",
-        variant: warning.severity === "expired" ? "destructive" : "warning",
-        priority: "important",
-      });
-    }
-  }
-
-  if (notificationsToCreate.length > 0) {
-    await Promise.all(notificationsToCreate.map((n) => createNotification(n)));
-  }
-}
-
-export async function acknowledgeDeliveryOrderValidityWarning(
-  actorId: string,
-  orgId: string,
-  jobId: string
-) {
-  const now = await getNow();
-  const notifications = await db.notification.findMany({
-    where: {
-      userId: actorId,
-      orgId,
-      link: `/cha/jobs/${jobId}`,
-      kind: { in: ["CHA_DO_VALIDITY_EXPIRED", "CHA_DO_VALIDITY_EXPIRING"] },
-      dismissedAt: null,
-      acknowledgedAt: null,
-    },
-  });
-
-  if (notifications.length > 0) {
-    const ids = notifications.map((n) => n.id);
-    await db.notification.updateMany({
-      where: { id: { in: ids } },
-      data: {
-        acknowledgedAt: now,
-        readAt: now,
-      },
-    });
-
-    for (const id of ids) {
-      await recordNotificationActivity({
-        notificationId: id,
-        orgId,
-        actorId,
-        event: "ACKNOWLEDGED",
-      });
-    }
-  }
-
-  await logChaAudit({
-    orgId,
-    jobId,
-    entityType: "CHA_JOB",
-    entityId: jobId,
-    event: "DO_VALIDITY_ACKNOWLEDGED",
-    actorId,
-    remarks: `User acknowledged Delivery Order Validity warning.`,
-    metadata: {
-      acknowledgedAt: now.toISOString(),
-    },
-  });
-
-  return { ok: true };
-}
-
 // ─── Delivery Order document upload & extension flow ─────────────────────────
 //
 // Under Delivery Order Validity the user can:
 // 1. Toggle "DO document upload" to unlock a DO file upload tab.
-// 2. Toggle "Extension" to unlock the extension flow. The extension itself can
-//    only be applied while a DO validity warning is active (expired or inside
-//    the warning window) — the "Extension" action sits next to Acknowledge on
-//    the warning notification and opens a popup for the new validity date +
-//    extension file. Applying it updates deliveryOrderValidity (the displayed
-//    column), dismisses the active DO notifications, and re-enters the normal
-//    warning pipeline so a fresh notification appears before the new date.
+// 2. Toggle "Extension" to unlock the extension flow.
+// 3. Maintain a dedicated extension date separate from the original
+//    deliveryOrderValidity. The extension date becomes the effective warning
+//    date without overwriting the original DO validity field.
 
 const DO_DOCUMENT_CATEGORY = "Customs Validity Documents";
 const DO_DOCUMENT_REQUIREMENT_NAME = "Delivery Order";
 const SECTION49_DOCUMENT_NAME = "Section 49";
+const DELIVERY_ORDER_VALIDITY_NOTIFICATION_KINDS = ["CHA_DELIVERY_ORDER_VALIDITY_EXPIRED", "CHA_DELIVERY_ORDER_VALIDITY_EXPIRING"];
 const SECTION49_VALIDITY_NOTIFICATION_KINDS = ["CHA_SECTION49_VALIDITY_EXPIRED", "CHA_SECTION49_VALIDITY_EXPIRING"];
+const CHA_DUE_DATE_WARNING_NOTIFICATION_KINDS = [
+  ...DELIVERY_ORDER_VALIDITY_NOTIFICATION_KINDS,
+  ...SECTION49_VALIDITY_NOTIFICATION_KINDS,
+];
+
+function getDueDateWarningAction(type: ChaDueDateWarningType, jobId: string) {
+  if (type === "DELIVERY_ORDER") {
+    return {
+      link: `/cha/jobs/${jobId}?tab=additionalData&focus=deliveryOrderExtensionDate`,
+      actionLabel: "Go To",
+    };
+  }
+
+  return {
+    link: `/cha/jobs/${jobId}?tab=docs`,
+    actionLabel: "Go To",
+  };
+}
+
+function getDueDateWarningNotificationKind(type: ChaDueDateWarningType, severity: "expired" | "expiring") {
+  if (type === "DELIVERY_ORDER") {
+    return severity === "expired"
+      ? "CHA_DELIVERY_ORDER_VALIDITY_EXPIRED"
+      : "CHA_DELIVERY_ORDER_VALIDITY_EXPIRING";
+  }
+
+  return severity === "expired"
+    ? "CHA_SECTION49_VALIDITY_EXPIRED"
+    : "CHA_SECTION49_VALIDITY_EXPIRING";
+}
+
+function getDueDateWarningLabel(type: ChaDueDateWarningType) {
+  return type === "DELIVERY_ORDER" ? "Delivery Order validity" : "Section 49 validity";
+}
+
+function buildDueDateWarningMessage(
+  type: ChaDueDateWarningType,
+  severity: "expired" | "expiring",
+  validityDate: Date,
+  daysUntilExpiry: number,
+) {
+  const label = getDueDateWarningLabel(type);
+  return severity === "expired"
+    ? `${label} expired on ${validityDate.toLocaleDateString("en-IN")}.`
+    : `${label} is expiring in ${daysUntilExpiry} day(s) on ${validityDate.toLocaleDateString("en-IN")}.`;
+}
+
+function getDueDateWarningStateKey(
+  type: ChaDueDateWarningType,
+  severity: "expired" | "expiring",
+  validityDate: Date,
+) {
+  return `${type}:${severity}:${validityDate.toISOString().slice(0, 10)}`;
+}
+
+function buildDueDateWarningLookupKey(
+  jobId: string,
+  type: ChaDueDateWarningType,
+  severity: "expired" | "expiring",
+  validityDate: Date,
+) {
+  return `${jobId}:${getDueDateWarningStateKey(type, severity, validityDate)}`;
+}
+
+function getDaysUntilExpiry(validityDate: Date, today: Date) {
+  const expiry = new Date(validityDate);
+  expiry.setHours(0, 0, 0, 0);
+  return Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function buildChaDueDateWarning(params: {
+  jobId: string;
+  jobNumber: string;
+  type: ChaDueDateWarningType;
+  validityDate: Date;
+  today: Date;
+  notificationId: string;
+}): ChaDueDateWarning | null {
+  const daysUntilExpiry = getDaysUntilExpiry(params.validityDate, params.today);
+  if (daysUntilExpiry > 4) {
+    return null;
+  }
+
+  const severity = daysUntilExpiry < 0 ? "expired" : "expiring";
+  const action = getDueDateWarningAction(params.type, params.jobId);
+  return {
+    jobId: params.jobId,
+    jobNumber: params.jobNumber,
+    type: params.type,
+    validityDate: params.validityDate,
+    daysUntilExpiry,
+    severity,
+    message: buildDueDateWarningMessage(params.type, severity, params.validityDate, daysUntilExpiry),
+    notificationId: params.notificationId,
+    link: action.link,
+    actionLabel: action.actionLabel,
+  };
+}
 
 async function getAdditionalDataForDoFlow(orgId: string, jobId: string) {
   const job = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
-    include: { additionalData: true },
+    include: {
+      additionalData: true,
+      assignments: { select: { userId: true } },
+    },
   });
   if (!job.additionalData) {
     throw new Error("Complete the Additional Data section before configuring Delivery Order options.");
@@ -3764,6 +3728,58 @@ export async function setDeliveryOrderExtensionToggle(
     prevState: String(additionalData.doExtensionEnabled),
     newState: String(enabled),
     remarks: `Delivery Order extension flow ${enabled ? "enabled" : "disabled"}.`,
+  });
+
+  return updated;
+}
+
+export async function setDeliveryOrderExtensionDate(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  extensionDate: Date | null,
+) {
+  const { job, additionalData } = await getAdditionalDataForDoFlow(orgId, jobId);
+  await assertCanAccessAdditionalData(actorId, job, "cha.additional_data.edit");
+
+  if (job.stage === "DOCUMENT_COLLECTION") {
+    throw new Error("Complete document collection before updating the Delivery Order extension date.");
+  }
+  if (["FILING", "FILED"].includes(job.stage)) {
+    throw new Error("Delivery Order extension date cannot be edited after the job has moved to filing.");
+  }
+
+  if (!additionalData.deliveryOrderValidity) {
+    throw new Error("Set the original Delivery Order validity before updating the extension date.");
+  }
+  if (extensionDate && Number.isNaN(extensionDate.getTime())) {
+    throw new Error("Enter a valid Delivery Order extension date.");
+  }
+  if (extensionDate && extensionDate.getTime() <= additionalData.deliveryOrderValidity.getTime()) {
+    throw new Error("The extension date must be after the original Delivery Order validity date.");
+  }
+
+  const updated = await db.chaJobAdditionalData.update({
+    where: { id: additionalData.id },
+    data: {
+      deliveryOrderExtensionDate: extensionDate,
+      doExtensionEnabled: true,
+      updatedById: actorId,
+    },
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "ChaJobAdditionalData",
+    entityId: additionalData.id,
+    event: "DO_EXTENSION_DATE_UPDATED",
+    actorId,
+    prevState: additionalData.deliveryOrderExtensionDate?.toISOString() ?? "NONE",
+    newState: extensionDate?.toISOString() ?? "NONE",
+    remarks: extensionDate
+      ? `Delivery Order extension date set to ${extensionDate.toLocaleDateString("en-IN")} while preserving the original validity date.`
+      : "Delivery Order extension date cleared.",
   });
 
   return updated;
@@ -3888,6 +3904,283 @@ export async function listSection49ValidityWarnings(
   });
 }
 
+export async function listChaDueDateWarnings(
+  actorId: string,
+  orgId: string,
+  options: {
+    jobId?: string;
+    limit?: number;
+  } = {},
+): Promise<ChaDueDateWarning[]> {
+  const [now, canViewAll] = await Promise.all([
+    getNow(),
+    can(actorId, "cha.job.view_all"),
+  ]);
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+
+  const threshold = new Date(today);
+  threshold.setDate(threshold.getDate() + 4);
+  threshold.setHours(23, 59, 59, 999);
+
+  const accessWhere = canViewAll
+    ? {}
+    : {
+        OR: [
+          { primaryOwnerId: actorId },
+          { assignedManagerId: actorId },
+          { assignments: { some: { userId: actorId } } },
+        ],
+      };
+
+  const [deliveryOrderJobs, section49Jobs, existingNotifications] = await Promise.all([
+    db.chaJob.findMany({
+      where: {
+        ...getActiveChaJobWhere(orgId),
+        ...(options.jobId ? { id: options.jobId } : {}),
+        status: "ACTIVE",
+        stage: { not: "FILED" },
+        additionalData: {
+          is: {
+            OR: [
+              { deliveryOrderExtensionDate: { lte: threshold } },
+              {
+                deliveryOrderExtensionDate: null,
+                deliveryOrderValidity: { lte: threshold },
+              },
+            ],
+          },
+        },
+        ...accessWhere,
+      },
+      select: {
+        id: true,
+        jobNumber: true,
+        additionalData: {
+          select: {
+            deliveryOrderValidity: true,
+            deliveryOrderExtensionDate: true,
+          },
+        },
+      },
+    }),
+    db.chaJob.findMany({
+      where: {
+        ...getActiveChaJobWhere(orgId),
+        ...(options.jobId ? { id: options.jobId } : {}),
+        status: "ACTIVE",
+        stage: { not: "FILED" },
+        filingSection49Flag: {
+          is: {
+            isEnabled: true,
+            validityDate: { lte: threshold },
+          },
+        },
+        ...accessWhere,
+      },
+      select: {
+        id: true,
+        jobNumber: true,
+        filingSection49Flag: {
+          select: {
+            validityDate: true,
+          },
+        },
+      },
+    }),
+    db.notification.findMany({
+      where: {
+        userId: actorId,
+        orgId,
+        kind: { in: CHA_DUE_DATE_WARNING_NOTIFICATION_KINDS },
+        dismissedAt: null,
+      },
+      select: {
+        id: true,
+        kind: true,
+        acknowledgedAt: true,
+        payload: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+
+  const notificationsByKey = new Map<
+    string,
+    { id: string; acknowledgedAt: Date | null }
+  >();
+  for (const notification of existingNotifications) {
+    const payload =
+      notification.payload && typeof notification.payload === "object" && !Array.isArray(notification.payload)
+        ? (notification.payload as Record<string, unknown>)
+        : null;
+    const jobId = typeof payload?.jobId === "string" ? payload.jobId : null;
+    const stateKey = typeof payload?.stateKey === "string" ? payload.stateKey : null;
+    if (!jobId || !stateKey) {
+      continue;
+    }
+    const lookupKey = `${jobId}:${stateKey}`;
+    const existing = notificationsByKey.get(lookupKey);
+    if (!existing) {
+      notificationsByKey.set(lookupKey, {
+        id: notification.id,
+        acknowledgedAt: notification.acknowledgedAt,
+      });
+      continue;
+    }
+    if (!existing.acknowledgedAt && notification.acknowledgedAt) {
+      notificationsByKey.set(lookupKey, {
+        id: existing.id,
+        acknowledgedAt: notification.acknowledgedAt,
+      });
+    }
+  }
+
+  const pendingCreates: Array<{
+    lookupKey: string;
+    jobId: string;
+    jobNumber: string;
+    type: ChaDueDateWarningType;
+    validityDate: Date;
+    severity: "expired" | "expiring";
+  }> = [];
+
+  const candidates: Array<{
+    lookupKey: string;
+    jobId: string;
+    jobNumber: string;
+    type: ChaDueDateWarningType;
+    validityDate: Date;
+    severity: "expired" | "expiring";
+  }> = [];
+
+  for (const job of deliveryOrderJobs) {
+    const validityDate = getEffectiveDeliveryOrderValidity(job.additionalData);
+    if (!validityDate) {
+      continue;
+    }
+    const daysUntilExpiry = getDaysUntilExpiry(validityDate, today);
+    if (daysUntilExpiry > 4) {
+      continue;
+    }
+    const severity = daysUntilExpiry < 0 ? "expired" : "expiring";
+    candidates.push({
+      lookupKey: buildDueDateWarningLookupKey(job.id, "DELIVERY_ORDER", severity, validityDate),
+      jobId: job.id,
+      jobNumber: job.jobNumber,
+      type: "DELIVERY_ORDER",
+      validityDate,
+      severity,
+    });
+  }
+
+  for (const job of section49Jobs) {
+    const validityDate = job.filingSection49Flag?.validityDate;
+    if (!validityDate) {
+      continue;
+    }
+    const daysUntilExpiry = getDaysUntilExpiry(validityDate, today);
+    if (daysUntilExpiry > 4) {
+      continue;
+    }
+    const severity = daysUntilExpiry < 0 ? "expired" : "expiring";
+    candidates.push({
+      lookupKey: buildDueDateWarningLookupKey(job.id, "SECTION49", severity, validityDate),
+      jobId: job.id,
+      jobNumber: job.jobNumber,
+      type: "SECTION49",
+      validityDate,
+      severity,
+    });
+  }
+
+  for (const candidate of candidates) {
+    if (!notificationsByKey.has(candidate.lookupKey)) {
+      pendingCreates.push(candidate);
+    }
+  }
+
+  if (pendingCreates.length > 0) {
+    const createdNotifications = await Promise.all(
+      pendingCreates.map(async (candidate) => {
+        const action = getDueDateWarningAction(candidate.type, candidate.jobId);
+        const stateKey = getDueDateWarningStateKey(
+          candidate.type,
+          candidate.severity,
+          candidate.validityDate,
+        );
+
+        const notification = await createNotification({
+          userId: actorId,
+          orgId,
+          kind: getDueDateWarningNotificationKind(candidate.type, candidate.severity),
+          title: `${getDueDateWarningLabel(candidate.type)} alert: ${candidate.jobNumber}`,
+          body: buildDueDateWarningMessage(
+            candidate.type,
+            candidate.severity,
+            candidate.validityDate,
+            getDaysUntilExpiry(candidate.validityDate, today),
+          ),
+          link: action.link,
+          payload: {
+            jobId: candidate.jobId,
+            warningType: candidate.type,
+            severity: candidate.severity,
+            validityDate: candidate.validityDate.toISOString(),
+            stateKey,
+          },
+          priority: "normal",
+          requiresAck: true,
+        });
+
+        return {
+          lookupKey: candidate.lookupKey,
+          id: notification.id,
+        };
+      }),
+    );
+
+    for (const notification of createdNotifications) {
+      notificationsByKey.set(notification.lookupKey, {
+        id: notification.id,
+        acknowledgedAt: null,
+      });
+    }
+  }
+
+  const warnings = candidates
+    .map((candidate) => {
+      const notification = notificationsByKey.get(candidate.lookupKey);
+      if (!notification || notification.acknowledgedAt) {
+        return null;
+      }
+
+      return buildChaDueDateWarning({
+        jobId: candidate.jobId,
+        jobNumber: candidate.jobNumber,
+        type: candidate.type,
+        validityDate: candidate.validityDate,
+        today,
+        notificationId: notification.id,
+      });
+    })
+    .filter((warning): warning is ChaDueDateWarning => warning !== null)
+    .sort((left, right) => {
+      if (left.severity !== right.severity) {
+        return left.severity === "expired" ? -1 : 1;
+      }
+      if (left.daysUntilExpiry !== right.daysUntilExpiry) {
+        return left.daysUntilExpiry - right.daysUntilExpiry;
+      }
+      if (left.validityDate.getTime() !== right.validityDate.getTime()) {
+        return left.validityDate.getTime() - right.validityDate.getTime();
+      }
+      return left.jobNumber.localeCompare(right.jobNumber);
+    });
+
+  return typeof options.limit === "number" ? warnings.slice(0, options.limit) : warnings;
+}
+
 export async function uploadDeliveryOrderDocument(
   actorId: string,
   orgId: string,
@@ -3896,9 +4189,6 @@ export async function uploadDeliveryOrderDocument(
   fileBuffer: Buffer,
 ) {
   const { additionalData } = await getAdditionalDataForDoFlow(orgId, jobId);
-  if (!additionalData.doUploadEnabled) {
-    throw new Error("Enable the Delivery Order document upload toggle before uploading.");
-  }
 
   const { fileKey, storedFileName } = await storeDeliveryOrderFile(
     jobId,
@@ -3917,6 +4207,7 @@ export async function uploadDeliveryOrderDocument(
         doDocumentFileName: storedFileName,
         doDocumentUploadedAt: now,
         doDocumentUploadedById: actorId,
+        doUploadEnabled: true,
         updatedById: actorId,
       },
     });
@@ -3955,7 +4246,7 @@ export async function uploadDeliveryOrderDocument(
         uploadedAt: now,
         source: "ADDITIONAL_DATA",
         timelineVisible: true,
-        validityDate: updatedAdditionalData.deliveryOrderValidity,
+        validityDate: getEffectiveDeliveryOrderValidity(updatedAdditionalData),
       },
     });
     await tx.chaJobDocumentRequirement.update({
@@ -3986,8 +4277,8 @@ export async function uploadDeliveryOrderDocument(
 /**
  * Apply a Delivery Order extension from the validity warning notification.
  * Only allowed while a warning is actually active (expired or inside the
- * warning window) and the extension toggle is on. Updates the validity date,
- * records the extension history, and dismisses the active DO notifications
+ * warning window) and the extension toggle is on. Updates the stored
+ * extension date, records the extension history, and dismisses the active DO notifications
  * for every user so the warning disappears until the new date approaches.
  */
 export async function applyDeliveryOrderExtension(
@@ -4001,20 +4292,18 @@ export async function applyDeliveryOrderExtension(
   },
 ) {
   const { additionalData } = await getAdditionalDataForDoFlow(orgId, jobId);
-  if (!additionalData.doExtensionEnabled) {
-    throw new Error("Enable the Delivery Order extension toggle in Additional Data before applying an extension.");
-  }
   if (Number.isNaN(input.extensionDate.getTime())) {
     throw new Error("Enter a valid extension date.");
   }
 
   const now = await getNow();
-  const previousValidity = additionalData.deliveryOrderValidity;
-  if (!previousValidity) {
+  const originalValidity = additionalData.deliveryOrderValidity;
+  const previousValidity = getEffectiveDeliveryOrderValidity(additionalData);
+  if (!originalValidity || !previousValidity) {
     throw new Error("Delivery Order Validity must be set before an extension can be applied.");
   }
   if (input.extensionDate.getTime() <= previousValidity.getTime()) {
-    throw new Error("The extension date must be after the current Delivery Order validity date.");
+    throw new Error("The extension date must be after the current effective Delivery Order date.");
   }
 
   // Extension is only available once the warning window is active.
@@ -4045,25 +4334,13 @@ export async function applyDeliveryOrderExtension(
       },
     });
 
-    // Reflected in the Delivery Order Validity column everywhere it is shown.
     await tx.chaJobAdditionalData.update({
       where: { id: additionalData.id },
       data: {
-        deliveryOrderValidity: input.extensionDate,
+        deliveryOrderExtensionDate: input.extensionDate,
+        doExtensionEnabled: true,
         updatedById: actorId,
       },
-    });
-
-    // The existing DO warning notifications disappear for all users; the
-    // notification pipeline re-creates them ahead of the new date.
-    await tx.notification.updateMany({
-      where: {
-        orgId,
-        link: `/cha/jobs/${jobId}`,
-        kind: { in: ["CHA_DO_VALIDITY_EXPIRED", "CHA_DO_VALIDITY_EXPIRING"] },
-        dismissedAt: null,
-      },
-      data: { dismissedAt: now, readAt: now },
     });
 
     return record;
@@ -4078,11 +4355,12 @@ export async function applyDeliveryOrderExtension(
     actorId,
     prevState: previousValidity.toISOString(),
     newState: input.extensionDate.toISOString(),
-    remarks: `Delivery Order validity extended from ${previousValidity.toLocaleDateString("en-IN")} to ${input.extensionDate.toLocaleDateString("en-IN")}.${storedExtensionFileName ? ` Extension document: ${storedExtensionFileName}.` : ""}`,
+    remarks: `Delivery Order validity extended from ${previousValidity.toLocaleDateString("en-IN")} to ${input.extensionDate.toLocaleDateString("en-IN")} while preserving the original validity of ${originalValidity.toLocaleDateString("en-IN")}.${storedExtensionFileName ? ` Extension document: ${storedExtensionFileName}.` : ""}`,
     metadata: {
       extensionId: extension.id,
       fileKey,
       fileName: storedExtensionFileName,
+      originalValidity: originalValidity.toISOString(),
     },
   });
 
@@ -4287,7 +4565,11 @@ export async function submitChecklistInternalDecision(
   jobId: string,
   checklistId: string,
   decision: "APPROVED" | "REJECTED",
-  remarks?: string
+  remarks?: string,
+  options?: {
+    customerActionType?: "MAIL" | null;
+    customerMail?: ChecklistCustomerMailInput | null;
+  },
 ) {
   const job = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
@@ -4421,21 +4703,49 @@ export async function submitChecklistInternalDecision(
     return { outcome: "CUSTOMER_APPROVAL" as const, customerApproverIds };
   });
 
-  const emailAutomation =
-    result.outcome === "CUSTOMER_APPROVAL"
-      ? await queueChecklistMainAutomationForJob({
-          actorId,
-          orgId,
-          job,
-          checklist,
-        }).catch((error) => ({
-          queued: false,
+  let emailAutomation:
+    | {
+        queued?: boolean;
+        sent?: boolean;
+        warning?: string | null;
+        recipients?: { email: string; name: string | null }[];
+        attachmentFileName?: string;
+        messageId?: string;
+      }
+    | null = null;
+
+  if (result.outcome === "CUSTOMER_APPROVAL") {
+    if (options?.customerActionType === "MAIL" && options.customerMail) {
+      emailAutomation = await sendChecklistCustomerMail(actorId, orgId, jobId, checklistId, options.customerMail)
+        .then((mailResult) => ({
+          sent: true,
+          warning: null,
+          recipients: mailResult.recipients,
+          attachmentFileName: mailResult.attachmentFileName,
+          messageId: mailResult.messageId,
+        }))
+        .catch((error) => ({
+          sent: false,
           warning:
             error instanceof Error
-              ? `Checklist saved, but customer email could not be queued: ${error.message}`
-              : "Checklist saved, but customer email could not be queued.",
-        }))
-      : null;
+              ? `Checklist approved, but the customer email could not be sent automatically: ${error.message}`
+              : "Checklist approved, but the customer email could not be sent automatically.",
+        }));
+    } else {
+      emailAutomation = await queueChecklistMainAutomationForJob({
+        actorId,
+        orgId,
+        job,
+        checklist,
+      }).catch((error) => ({
+        queued: false,
+        warning:
+          error instanceof Error
+            ? `Checklist saved, but customer email could not be queued: ${error.message}`
+            : "Checklist saved, but customer email could not be queued.",
+      }));
+    }
+  }
 
   await logChecklistApprovalAudit({
     orgId,
@@ -4500,10 +4810,7 @@ export async function sendChecklistCustomerMail(
   orgId: string,
   jobId: string,
   checklistId: string,
-  input: {
-    subject: string;
-    body: string;
-  },
+  input: ChecklistCustomerMailInput,
 ) {
   const job = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
@@ -4561,7 +4868,8 @@ export async function sendChecklistCustomerMail(
     throw new Error("Checklist attachment metadata could not be loaded from Google Drive.");
   }
 
-  const draft = await createGmailDraft({
+  const extraAttachments = input.additionalAttachments ?? [];
+  const message = await sendGmailEmail({
     userId: actorId,
     to: recipients.map((recipient) => recipient.email).join(", "),
     subject: input.subject.trim(),
@@ -4572,6 +4880,11 @@ export async function sendChecklistCustomerMail(
         mimeType: attachmentMetadata.mimeType || currentFileVersion.mimeType || "application/octet-stream",
         content: attachmentContent,
       },
+      ...extraAttachments.map((attachment) => ({
+        filename: attachment.fileName,
+        mimeType: attachment.mimeType || "application/octet-stream",
+        content: attachment.content,
+      })),
     ],
   });
   const mailLog = await db.$transaction(async (tx) => {
@@ -4611,7 +4924,7 @@ export async function sendChecklistCustomerMail(
     prevState: "CUSTOMER_APPROVAL_PENDING",
     newState: "CUSTOMER_APPROVAL_WAITING_WINDOW",
     source: "/cha/jobs/[jobId]::sendChecklistCustomerMail",
-    remarks: `Customer approval Gmail draft created for ${recipients.map((entry) => entry.email).join(", ")} with checklist attachment ${attachmentMetadata.name || checklist.currentFileVersion.originalFileName}.`,
+    remarks: `Customer approval mail sent to ${recipients.map((entry) => entry.email).join(", ")} with checklist attachment ${attachmentMetadata.name || checklist.currentFileVersion.originalFileName}${extraAttachments.length > 0 ? ` and ${extraAttachments.length} additional attachment(s)` : ""}.`,
   });
 
   return {
@@ -4619,9 +4932,8 @@ export async function sendChecklistCustomerMail(
     recipients,
     approvalVisibleAt,
     attachmentFileName: attachmentMetadata.name || checklist.currentFileVersion.originalFileName,
-    gmailComposeUrl: `https://mail.google.com/mail/u/0/#drafts?compose=${draft.id}`,
-    draftId: draft.id,
-    draftMessageId: draft.message.id,
+    messageId: typeof message?.id === "string" ? message.id : mailLog.id,
+    additionalAttachmentCount: extraAttachments.length,
   };
 }
 
@@ -7587,6 +7899,7 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
       positionY: 100,
       fieldDefinitionsJson: [
         { key: "bill_number", label: "Bill Number", type: "TEXT", required: true, placeholder: "Enter bill number" },
+        { key: "bill_filing_date", label: "Bill Filing Date", type: "DATE", required: true, placeholder: "Select bill filing date" },
       ],
       documentRequirementsJson: [
         {
@@ -10519,6 +10832,222 @@ export async function applyFilingSection49Extension(
       fileKey,
       fileName: storedFileName,
     },
+  });
+
+  return result;
+}
+
+export async function saveFilingNodeDraft(
+  userId: string,
+  orgId: string,
+  jobId: string,
+  nodeRunId: string,
+  data: {
+    remarks?: string;
+    checklistItemResponses: {
+      checklistItemId: string;
+      isChecked: boolean;
+      remarks?: string;
+      fileKey?: string;
+      delayRemarks?: string;
+    }[];
+    fieldValues?: Array<{
+      fieldKey: string;
+      value: unknown;
+    }>;
+    toggleStates?: Array<{
+      sectionKey: string;
+      isEnabled: boolean;
+      state?: Record<string, unknown> | null;
+    }>;
+  },
+) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: { id: jobId, orgId },
+    select: {
+      id: true,
+      primaryOwnerId: true,
+      assignedManagerId: true,
+      assignments: {
+        select: {
+          userId: true,
+        },
+      },
+      jobType: {
+        select: {
+          movementDirection: true,
+        },
+      },
+    },
+  });
+
+  await assertCanAccessFiling(userId, job);
+
+  const result = await db.$transaction(async (tx) => {
+    const nodeRun = await tx.filingNodeRun.findUniqueOrThrow({
+      where: { id: nodeRunId },
+      include: {
+        node: {
+          include: {
+            checklistItems: true,
+          },
+        },
+        instance: true,
+      },
+    });
+
+    if (nodeRun.instance.jobId !== jobId) {
+      throw new Error("This filing stage does not belong to the selected job.");
+    }
+
+    if (nodeRun.status !== "ACTIVE") {
+      throw new Error("Drafts can only be saved for the active filing stage.");
+    }
+
+    const now = await getNow();
+    const startedAt = nodeRun.startedAt ?? now;
+    const existingResponses = await tx.filingChecklistResponse.findMany({
+      where: {
+        instanceId: nodeRun.instanceId,
+        nodeRunId: nodeRun.id,
+      },
+    });
+    const existingResponsesMap = new Map(existingResponses.map((response) => [response.checklistItemId, response]));
+
+    await tx.filingNodeRun.update({
+      where: { id: nodeRun.id },
+      data: {
+        remarks: data.remarks?.trim() ? data.remarks.trim() : null,
+      },
+    });
+
+    for (const response of data.checklistItemResponses) {
+      const item = nodeRun.node.checklistItems.find((checklistItem) => checklistItem.id === response.checklistItemId);
+      if (!item) {
+        continue;
+      }
+
+      const existing = existingResponsesMap.get(response.checklistItemId);
+      const dueAt =
+        existing?.dueAt ??
+        await calculateSlaDueDate(
+          startedAt,
+          item.deadlineDuration || 2,
+          item.deadlineUnit || "BUSINESS_DAYS",
+          orgId,
+        );
+
+      await tx.filingChecklistResponse.upsert({
+        where: {
+          instanceId_checklistItemId: {
+            instanceId: nodeRun.instanceId,
+            checklistItemId: response.checklistItemId,
+          },
+        },
+        create: {
+          instanceId: nodeRun.instanceId,
+          nodeRunId: nodeRun.id,
+          checklistItemId: response.checklistItemId,
+          isChecked: response.isChecked,
+          remarks: response.remarks?.trim() ? response.remarks.trim() : null,
+          fileKey: response.fileKey || null,
+          dueAt,
+          completedAt: response.isChecked ? now : null,
+          delayRemarks: response.delayRemarks?.trim() ? response.delayRemarks.trim() : null,
+          delayRemarkedAt: response.delayRemarks?.trim() ? now : null,
+        },
+        update: {
+          nodeRunId: nodeRun.id,
+          isChecked: response.isChecked,
+          remarks: response.remarks?.trim() ? response.remarks.trim() : null,
+          fileKey: response.fileKey || null,
+          dueAt,
+          completedAt: response.isChecked ? now : null,
+          delayRemarks: response.delayRemarks?.trim() ? response.delayRemarks.trim() : null,
+          delayRemarkedAt: response.delayRemarks?.trim() ? now : null,
+        },
+      });
+    }
+
+    for (const field of data.fieldValues ?? []) {
+      const fieldKey = field.fieldKey.trim();
+      if (!fieldKey) {
+        continue;
+      }
+
+      await tx.filingFieldValue.upsert({
+        where: {
+          instanceId_nodeId_fieldKey: {
+            instanceId: nodeRun.instanceId,
+            nodeId: nodeRun.nodeId,
+            fieldKey,
+          },
+        },
+        create: {
+          instanceId: nodeRun.instanceId,
+          nodeRunId: nodeRun.id,
+          nodeId: nodeRun.nodeId,
+          fieldKey,
+          valueJson: field.value === undefined ? Prisma.JsonNull : (field.value as Prisma.InputJsonValue),
+          updatedById: userId,
+        },
+        update: {
+          nodeRunId: nodeRun.id,
+          valueJson: field.value === undefined ? Prisma.JsonNull : (field.value as Prisma.InputJsonValue),
+          updatedById: userId,
+        },
+      });
+    }
+
+    for (const toggleState of data.toggleStates ?? []) {
+      const sectionKey = toggleState.sectionKey.trim();
+      if (!sectionKey) {
+        continue;
+      }
+
+      await tx.filingToggleState.upsert({
+        where: {
+          instanceId_nodeId_sectionKey: {
+            instanceId: nodeRun.instanceId,
+            nodeId: nodeRun.nodeId,
+            sectionKey,
+          },
+        },
+        create: {
+          instanceId: nodeRun.instanceId,
+          nodeRunId: nodeRun.id,
+          nodeId: nodeRun.nodeId,
+          sectionKey,
+          isEnabled: !!toggleState.isEnabled,
+          stateJson: (toggleState.state ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+          updatedById: userId,
+        },
+        update: {
+          nodeRunId: nodeRun.id,
+          isEnabled: !!toggleState.isEnabled,
+          stateJson: (toggleState.state ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+          updatedById: userId,
+        },
+      });
+    }
+
+    await logChaAudit({
+      orgId,
+      jobId,
+      entityType: "FilingNodeRun",
+      entityId: nodeRun.id,
+      event: "FILING_NODE_DRAFT_SAVED",
+      actorId: userId,
+      remarks: `Saved draft inputs for filing stage "${nodeRun.node.name}".`,
+      metadata: {
+        nodeName: nodeRun.node.name,
+        checklistCount: data.checklistItemResponses.length,
+        fieldValueCount: data.fieldValues?.length ?? 0,
+        toggleStateCount: data.toggleStates?.length ?? 0,
+      },
+    });
+
+    return { nodeRunId: nodeRun.id };
   });
 
   return result;

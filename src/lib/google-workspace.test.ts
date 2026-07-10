@@ -246,6 +246,38 @@ describe("Google Workspace Parity Tests", () => {
     expect(decoded).toContain("References: parent-thread-id");
   });
 
+  it("2b. Gmail sendEmail should include attachments in multipart messages", async () => {
+    let sentPayload: any = null;
+    global.fetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (url.includes("/messages/send")) {
+        sentPayload = JSON.parse(init?.body as string);
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ id: "sent-msg-with-attachment" }),
+        });
+      }
+      return Promise.resolve({ ok: false });
+    }) as any;
+
+    await gmailClient.sendEmail({
+      userId: ownerUser.id,
+      to: "client@example.com",
+      subject: "Checklist attached",
+      body: "<p>Please review.</p>",
+      attachments: [
+        {
+          filename: "approved-checklist.pdf",
+          mimeType: "application/pdf",
+          content: Buffer.from("pdf-bytes"),
+        },
+      ],
+    });
+
+    const decoded = Buffer.from(sentPayload.raw, "base64url").toString("utf-8");
+    expect(decoded).toContain('Content-Type: multipart/mixed; boundary=');
+    expect(decoded).toContain('Content-Disposition: attachment; filename="approved-checklist.pdf"');
+  });
+
   it("3. Gmail getThread should fetch thread by id", async () => {
     global.fetch = vi.fn().mockImplementation((url: string) => {
       if (url.includes("/threads/thread-123")) {

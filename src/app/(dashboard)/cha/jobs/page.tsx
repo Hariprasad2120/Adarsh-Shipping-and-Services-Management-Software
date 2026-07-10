@@ -2,8 +2,30 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
-import { listJobs, ensureSettingsAndDefaults, getEligibleManagers, listJobTypesForSelection, listDeliveryOrderValidityWarnings, listFilingQueryEscalationWarnings, listSection49ValidityWarnings } from "@/modules/cha/service";
+import {
+  listJobs,
+  ensureSettingsAndDefaults,
+  getEligibleManagers,
+  listJobTypesForSelection,
+  listFilingQueryEscalationWarnings,
+  listChaDueDateWarnings,
+} from "@/modules/cha/service";
 import { JobsClient } from "./jobs-client";
+
+function serializeDueDateWarning(warning: Awaited<ReturnType<typeof listChaDueDateWarnings>>[number]) {
+  return {
+    type: warning.type,
+    severity: warning.severity,
+    daysUntilExpiry: warning.daysUntilExpiry,
+    validityDate: warning.validityDate.toISOString(),
+    message: warning.message,
+    notificationId: warning.notificationId,
+    link: warning.link,
+    actionLabel: warning.actionLabel,
+    jobNumber: warning.jobNumber,
+    jobId: warning.jobId,
+  };
+}
 
 export default async function ChaJobsPage({
   searchParams,
@@ -35,8 +57,7 @@ export default async function ChaJobsPage({
   const [
     activeJobsData,
     completedJobsData,
-    validityWarnings,
-    section49Warnings,
+    dueDateWarnings,
     filingQueryWarnings,
     ,
     branches,
@@ -72,8 +93,7 @@ export default async function ChaJobsPage({
       page: completedPage,
       pageSize: 10,
     }),
-    listDeliveryOrderValidityWarnings(session.user.id, orgId),
-    listSection49ValidityWarnings(session.user.id, orgId),
+    listChaDueDateWarnings(session.user.id, orgId),
     listFilingQueryEscalationWarnings(session.user.id, orgId),
     ensureSettingsAndDefaults(orgId),
     db.branch.findMany({ where: { orgId }, select: { id: true, name: true, code: true } }),
@@ -99,20 +119,6 @@ export default async function ChaJobsPage({
     }),
   ]);
 
-  const validityWarningMap = new Map(
-    validityWarnings.map((warning) => [
-      warning.jobId,
-      {
-        severity: warning.severity as "expired" | "expiring",
-        daysUntilExpiry: warning.daysUntilExpiry,
-        deliveryOrderValidity: warning.deliveryOrderValidity.toISOString(),
-        message:
-          warning.severity === "expired"
-            ? `Delivery Order Validity expired on ${warning.deliveryOrderValidity.toLocaleDateString("en-IN")}.`
-            : `Delivery Order Validity is expiring in ${warning.daysUntilExpiry} day(s) on ${warning.deliveryOrderValidity.toLocaleDateString("en-IN")}.`,
-      },
-    ]),
-  );
   const filingQueryWarningMap = new Map(
     filingQueryWarnings.map((warning) => [
       warning.jobId,
@@ -125,20 +131,12 @@ export default async function ChaJobsPage({
       },
     ]),
   );
-  const section49WarningMap = new Map(
-    section49Warnings.map((warning) => [
-      warning.jobId,
-      {
-        severity: warning.severity as "expired" | "expiring",
-        daysUntilExpiry: warning.daysUntilExpiry,
-        validityDate: warning.validityDate.toISOString(),
-        message:
-          warning.severity === "expired"
-            ? `Section 49 validity expired on ${warning.validityDate.toLocaleDateString("en-IN")}.`
-            : `Section 49 validity is expiring in ${warning.daysUntilExpiry} day(s) on ${warning.validityDate.toLocaleDateString("en-IN")}.`,
-      },
-    ]),
-  );
+  const dueDateWarningMap = new Map<string, ReturnType<typeof serializeDueDateWarning>[]>();
+  for (const warning of dueDateWarnings) {
+    const currentWarnings = dueDateWarningMap.get(warning.jobId) || [];
+    currentWarnings.push(serializeDueDateWarning(warning));
+    dueDateWarningMap.set(warning.jobId, currentWarnings);
+  }
 
   return (
     <JobsClient
@@ -160,8 +158,7 @@ export default async function ChaJobsPage({
           shippingBillNumber: j.filing?.shippingBillNumber || null,
           assignedUserIds: j.assignments.map((assignment) => assignment.userId),
           hasActiveDeletionRequest: j.deletionRequests.length > 0,
-          deliveryOrderWarning: validityWarningMap.get(j.id) || null,
-          section49Warning: section49WarningMap.get(j.id) || null,
+          dueDateWarnings: dueDateWarningMap.get(j.id) || [],
           filingQueryWarning: filingQueryWarningMap.get(j.id) || null,
           createdAt: j.createdAt.toISOString(),
         })),
@@ -188,8 +185,7 @@ export default async function ChaJobsPage({
           shippingBillNumber: j.filing?.shippingBillNumber || null,
           assignedUserIds: j.assignments.map((assignment) => assignment.userId),
           hasActiveDeletionRequest: j.deletionRequests.length > 0,
-          deliveryOrderWarning: validityWarningMap.get(j.id) || null,
-          section49Warning: section49WarningMap.get(j.id) || null,
+          dueDateWarnings: dueDateWarningMap.get(j.id) || [],
           filingQueryWarning: filingQueryWarningMap.get(j.id) || null,
           createdAt: j.createdAt.toISOString(),
         })),

@@ -521,6 +521,7 @@ export async function upsertAdditionalDataAction(
     mblNumber?: string | null;
     hblNumber?: string | null;
     deliveryOrderValidity?: string | Date | null;
+    deliveryOrderExtensionDate?: string | Date | null;
   }
 ): Promise<ActionResponse> {
   try {
@@ -534,15 +535,71 @@ export async function upsertAdditionalDataAction(
   }
 }
 
+export async function setDoExtensionDateAction(
+  jobId: string,
+  extensionDate: string | null,
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
+    const parsedDate = extensionDate?.trim() ? new Date(extensionDate) : null;
+    const result = await chaService.setDeliveryOrderExtensionDate(userId, orgId, jobId, parsedDate);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    revalidatePath("/cha/jobs");
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update Delivery Order extension date" };
+  }
+}
+
 export async function submitChecklistInternalDecisionAction(
   jobId: string,
   checklistId: string,
-  decision: "APPROVED" | "REJECTED",
-  remarks?: string
+  formData: FormData,
 ): Promise<ActionResponse> {
   try {
     const { userId, orgId } = await getAuthAndVerify();
-    const result = await chaService.submitChecklistInternalDecision(userId, orgId, jobId, checklistId, decision, remarks);
+    const decisionValue = formData.get("decision");
+    const remarksValue = formData.get("remarks");
+    const customerActionTypeValue = formData.get("customerActionType");
+    const customerMailSubjectValue = formData.get("customerMailSubject");
+    const customerMailBodyValue = formData.get("customerMailBody");
+    const decision = decisionValue === "REJECTED" ? "REJECTED" : "APPROVED";
+
+    const customerMailAttachments = await Promise.all(
+      formData
+        .getAll("customerMailAttachments")
+        .filter((entry): entry is File => entry instanceof File && entry.size > 0)
+        .map(async (file) => ({
+          fileName: file.name,
+          mimeType: file.type || "application/octet-stream",
+          content: Buffer.from(await file.arrayBuffer()),
+        })),
+    );
+
+    const result = await chaService.submitChecklistInternalDecision(
+      userId,
+      orgId,
+      jobId,
+      checklistId,
+      decision,
+      typeof remarksValue === "string" && remarksValue.trim() ? remarksValue.trim() : undefined,
+      customerActionTypeValue === "MAIL"
+        ? {
+            customerActionType: "MAIL",
+            customerMail: {
+              subject:
+                typeof customerMailSubjectValue === "string" && customerMailSubjectValue.trim()
+                  ? customerMailSubjectValue.trim()
+                  : `Checklist Approval Required - ${jobId}`,
+              body:
+                typeof customerMailBodyValue === "string" && customerMailBodyValue.trim()
+                  ? customerMailBodyValue.trim()
+                  : "Please review the attached approved checklist.",
+              additionalAttachments: customerMailAttachments,
+            },
+          }
+        : undefined,
+    );
     revalidatePath(`/cha/jobs/${jobId}`);
     revalidatePath("/cha/approvals");
     return { ok: true, data: result };
@@ -571,14 +628,27 @@ export async function submitChecklistCustomerDecisionAction(
 export async function sendChecklistCustomerMailAction(
   jobId: string,
   checklistId: string,
-  data: {
-    subject: string;
-    body: string;
-  },
+  formData: FormData,
 ): Promise<ActionResponse> {
   try {
     const { userId, orgId } = await getAuthAndVerify();
-    const result = await chaService.sendChecklistCustomerMail(userId, orgId, jobId, checklistId, data);
+    const subjectValue = formData.get("subject");
+    const bodyValue = formData.get("body");
+    const additionalAttachments = await Promise.all(
+      formData
+        .getAll("customerMailAttachments")
+        .filter((entry): entry is File => entry instanceof File && entry.size > 0)
+        .map(async (file) => ({
+          fileName: file.name,
+          mimeType: file.type || "application/octet-stream",
+          content: Buffer.from(await file.arrayBuffer()),
+        })),
+    );
+    const result = await chaService.sendChecklistCustomerMail(userId, orgId, jobId, checklistId, {
+      subject: typeof subjectValue === "string" && subjectValue.trim() ? subjectValue.trim() : `Checklist Approval Required - ${jobId}`,
+      body: typeof bodyValue === "string" && bodyValue.trim() ? bodyValue.trim() : "Please review the attached approved checklist.",
+      additionalAttachments,
+    });
     revalidatePath(`/cha/jobs/${jobId}`);
     return { ok: true, data: result };
   } catch (err: any) {
@@ -968,19 +1038,6 @@ export async function proceedDocumentStageAction(jobId: string): Promise<ActionR
   }
 }
 
-export async function acknowledgeDoValidityWarningAction(jobId: string): Promise<ActionResponse> {
-  try {
-    const { userId, orgId } = await getAuthAndVerify();
-    const result = await chaService.acknowledgeDeliveryOrderValidityWarning(userId, orgId, jobId);
-    revalidatePath("/cha/jobs");
-    revalidatePath(`/cha/jobs/${jobId}`);
-    return { ok: true, data: result };
-  } catch (err) {
-    const errMsg = err instanceof Error ? err.message : "Failed to acknowledge DO validity warning";
-    return { ok: false, error: errMsg };
-  }
-}
-
 export async function setDoUploadToggleAction(jobId: string, enabled: boolean): Promise<ActionResponse> {
   try {
     const { userId, orgId } = await getAuthAndVerify("cha.job.update");
@@ -1042,38 +1099,6 @@ export async function deleteDeliveryOrderDocumentAction(
     return { ok: true, data: result };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to delete Delivery Order document" };
-  }
-}
-
-export async function applyDoExtensionAction(
-  jobId: string,
-  formData: FormData,
-): Promise<ActionResponse> {
-  try {
-    const { userId, orgId } = await getAuthAndVerify("cha.job.update");
-    const extensionDateValue = formData.get("extensionDate");
-    if (typeof extensionDateValue !== "string" || !extensionDateValue.trim()) {
-      return { ok: false, error: "Enter the new Delivery Order extension date." };
-    }
-
-    const file = formData.get("file");
-    const hasFile = file instanceof File && file.size > 0;
-    const result = await chaService.applyDeliveryOrderExtension(userId, orgId, jobId, {
-      extensionDate: new Date(extensionDateValue),
-      fileData: hasFile
-        ? {
-            fileName: (file as File).name,
-            mimeType: (file as File).type || "application/octet-stream",
-            sizeBytes: (file as File).size,
-          }
-        : null,
-      fileBuffer: hasFile ? Buffer.from(await (file as File).arrayBuffer()) : null,
-    });
-    revalidatePath("/cha/jobs");
-    revalidatePath(`/cha/jobs/${jobId}`);
-    return { ok: true, data: result };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Failed to apply Delivery Order extension" };
   }
 }
 
@@ -1273,6 +1298,32 @@ export async function completeFilingNodeAction(
     return { ok: true, data: result };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to complete filing step" };
+  }
+}
+
+export async function saveFilingNodeDraftAction(
+  jobId: string,
+  nodeRunId: string,
+  data: {
+    remarks?: string;
+    checklistItemResponses: {
+      checklistItemId: string;
+      isChecked: boolean;
+      remarks?: string;
+      fileKey?: string;
+      delayRemarks?: string;
+    }[];
+    fieldValues?: Array<{ fieldKey: string; value: unknown }>;
+    toggleStates?: Array<{ sectionKey: string; isEnabled: boolean; state?: Record<string, unknown> | null }>;
+  },
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const result = await chaService.saveFilingNodeDraft(userId, orgId, jobId, nodeRunId, data);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to save filing draft" };
   }
 }
 

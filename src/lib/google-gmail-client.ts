@@ -43,6 +43,72 @@ type GmailDraftAttachment = {
   content: Buffer;
 };
 
+type GmailMessageAttachment = GmailDraftAttachment;
+
+function buildRawMessage(params: {
+  to: string;
+  cc?: string;
+  subject: string;
+  body: string;
+  threadId?: string;
+  attachments?: GmailMessageAttachment[];
+}) {
+  const attachments = params.attachments ?? [];
+  if (attachments.length === 0) {
+    const headers = [
+      `To: ${params.to}`,
+      params.cc ? `Cc: ${params.cc}` : null,
+      `Subject: ${params.subject}`,
+      `Content-Type: text/html; charset="UTF-8"`,
+      params.threadId ? `In-Reply-To: ${params.threadId}` : null,
+      params.threadId ? `References: ${params.threadId}` : null,
+      "",
+      params.body,
+    ].filter(Boolean);
+
+    return Buffer.from(headers.join("\r\n")).toString("base64url");
+  }
+
+  const mixedBoundary = `mixed_${Date.now().toString(36)}`;
+  const altBoundary = `alt_${Date.now().toString(36)}`;
+  const headers = [
+    `To: ${params.to}`,
+    params.cc ? `Cc: ${params.cc}` : null,
+    `Subject: ${params.subject}`,
+    params.threadId ? `In-Reply-To: ${params.threadId}` : null,
+    params.threadId ? `References: ${params.threadId}` : null,
+    "MIME-Version: 1.0",
+    `Content-Type: multipart/mixed; boundary="${mixedBoundary}"`,
+    "",
+  ].filter(Boolean);
+
+  const parts: string[] = [];
+  parts.push(`--${mixedBoundary}`);
+  parts.push(`Content-Type: multipart/alternative; boundary="${altBoundary}"`);
+  parts.push("");
+  parts.push(`--${altBoundary}`);
+  parts.push('Content-Type: text/html; charset="UTF-8"');
+  parts.push("Content-Transfer-Encoding: 7bit");
+  parts.push("");
+  parts.push(params.body);
+  parts.push("");
+  parts.push(`--${altBoundary}--`);
+
+  for (const attachment of attachments) {
+    parts.push(`--${mixedBoundary}`);
+    parts.push(`Content-Type: ${attachment.mimeType}; name="${attachment.filename}"`);
+    parts.push("Content-Transfer-Encoding: base64");
+    parts.push(`Content-Disposition: attachment; filename="${attachment.filename}"`);
+    parts.push("");
+    parts.push(attachment.content.toString("base64").replace(/(.{76})/g, "$1\r\n"));
+    parts.push("");
+  }
+
+  parts.push(`--${mixedBoundary}--`);
+
+  return Buffer.from([...headers, ...parts].join("\r\n")).toString("base64url");
+}
+
 // Parse headers array into friendly key-value map
 function parseHeaders(headers: { name: string; value: string }[]): Record<string, string> {
   const result: Record<string, string> = {};
@@ -219,22 +285,10 @@ export async function sendEmail(params: {
   subject: string;
   body: string;
   threadId?: string;
+  attachments?: GmailMessageAttachment[];
 }): Promise<any> {
   const token = await getValidAccessToken(params.userId);
-
-  // Construct standard RFC 822 raw message
-  const headers = [
-    `To: ${params.to}`,
-    params.cc ? `Cc: ${params.cc}` : null,
-    `Subject: ${params.subject}`,
-    `Content-Type: text/html; charset="UTF-8"`,
-    params.threadId ? `In-Reply-To: ${params.threadId}` : null,
-    params.threadId ? `References: ${params.threadId}` : null,
-    "",
-    params.body
-  ].filter(Boolean);
-
-  const raw = Buffer.from(headers.join("\r\n")).toString("base64url");
+  const raw = buildRawMessage(params);
 
   const body: any = { raw };
   if (params.threadId) {
@@ -267,44 +321,7 @@ export async function createDraft(params: {
   attachments?: GmailDraftAttachment[];
 }): Promise<{ id: string; message: { id: string } }> {
   const token = await getValidAccessToken(params.userId);
-  const mixedBoundary = `mixed_${Date.now().toString(36)}`;
-  const altBoundary = `alt_${Date.now().toString(36)}`;
-  const attachments = params.attachments ?? [];
-
-  const headers = [
-    `To: ${params.to}`,
-    params.cc ? `Cc: ${params.cc}` : null,
-    `Subject: ${params.subject}`,
-    "MIME-Version: 1.0",
-    `Content-Type: multipart/mixed; boundary="${mixedBoundary}"`,
-    "",
-  ].filter(Boolean);
-
-  const parts: string[] = [];
-  parts.push(`--${mixedBoundary}`);
-  parts.push(`Content-Type: multipart/alternative; boundary="${altBoundary}"`);
-  parts.push("");
-  parts.push(`--${altBoundary}`);
-  parts.push('Content-Type: text/html; charset="UTF-8"');
-  parts.push("Content-Transfer-Encoding: 7bit");
-  parts.push("");
-  parts.push(params.body);
-  parts.push("");
-  parts.push(`--${altBoundary}--`);
-
-  for (const attachment of attachments) {
-    parts.push(`--${mixedBoundary}`);
-    parts.push(`Content-Type: ${attachment.mimeType}; name="${attachment.filename}"`);
-    parts.push("Content-Transfer-Encoding: base64");
-    parts.push(`Content-Disposition: attachment; filename="${attachment.filename}"`);
-    parts.push("");
-    parts.push(attachment.content.toString("base64").replace(/(.{76})/g, "$1\r\n"));
-    parts.push("");
-  }
-
-  parts.push(`--${mixedBoundary}--`);
-
-  const raw = Buffer.from([...headers, ...parts].join("\r\n")).toString("base64url");
+  const raw = buildRawMessage(params);
   const res = await fetch(`${GMAIL_API_BASE}/drafts`, {
     method: "POST",
     headers: {

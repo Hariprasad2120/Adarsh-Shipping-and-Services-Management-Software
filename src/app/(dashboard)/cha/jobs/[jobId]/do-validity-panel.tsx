@@ -1,10 +1,11 @@
 "use client";
 
+import { DateInput } from "@/components/ui/date-input";
 import { FileUploadField } from "@/components/ui/file-upload-field";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CalendarClock, ExternalLink, History } from "lucide-react";
+import { ExternalLink, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import * as actions from "@/modules/cha/actions";
 
@@ -22,83 +23,25 @@ type DoValidityPanelProps = {
   canUpdateJob: boolean;
   additionalData: {
     deliveryOrderValidity: string | null;
-    doUploadEnabled: boolean;
+    deliveryOrderExtensionDate: string | null;
     doDocumentFileKey: string | null;
     doDocumentFileName: string | null;
     doDocumentUploadedAt: string | null;
-    doExtensionEnabled: boolean;
   };
   extensions: DoExtension[];
 };
 
-function Toggle({
-  checked,
-  disabled,
-  onChange,
-  label,
-}: {
-  checked: boolean;
-  disabled?: boolean;
-  onChange: (next: boolean) => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-        checked ? "bg-[#00cec4]" : "bg-surface-container"
-      }`}
-    >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-          checked ? "translate-x-[18px]" : "translate-x-0.5"
-        }`}
-      />
-    </button>
-  );
-}
-
 export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extensions }: DoValidityPanelProps) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [extensionDate, setExtensionDate] = useState(additionalData.deliveryOrderExtensionDate?.slice(0, 10) ?? "");
 
-  const validity = additionalData.deliveryOrderValidity
+  const originalValidity = additionalData.deliveryOrderValidity
     ? new Date(additionalData.deliveryOrderValidity)
     : null;
-  const warningActive = (() => {
-    if (!validity) return false;
-    const threshold = new Date();
-    threshold.setDate(threshold.getDate() + 4);
-    threshold.setHours(23, 59, 59, 999);
-    return validity.getTime() <= threshold.getTime();
-  })();
-
-  const runToggle = async (kind: "upload" | "extension", enabled: boolean) => {
-    setBusy(true);
-    try {
-      const response =
-        kind === "upload"
-          ? await actions.setDoUploadToggleAction(jobId, enabled)
-          : await actions.setDoExtensionToggleAction(jobId, enabled);
-      if (!response.ok) {
-        toast.error(response.error || "Failed to update toggle.");
-        return;
-      }
-      toast.success(
-        kind === "upload"
-          ? `DO document upload ${enabled ? "enabled" : "disabled"}.`
-          : `DO extension flow ${enabled ? "enabled" : "disabled"}.`,
-      );
-      router.refresh();
-    } finally {
-      setBusy(false);
-    }
-  };
+  const effectiveValidity = additionalData.deliveryOrderExtensionDate
+    ? new Date(additionalData.deliveryOrderExtensionDate)
+    : originalValidity;
 
   const handleUpload = async (file: File | null) => {
     if (!file) return;
@@ -133,6 +76,21 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
     }
   };
 
+  const handleSaveExtensionDate = async () => {
+    setBusy(true);
+    try {
+      const response = await actions.setDoExtensionDateAction(jobId, extensionDate || null);
+      if (!response.ok) {
+        toast.error(response.error || "Failed to update Delivery Order extension date.");
+        return;
+      }
+      toast.success(extensionDate ? "Delivery Order extension date updated." : "Delivery Order extension date cleared.");
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
@@ -141,79 +99,88 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
       </div>
 
       <div className="space-y-4">
-        {/* DO document upload toggle + tab */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
           <div>
             <span className="ds-label">DO Document Upload</span>
             <p className="mt-0.5 text-xs text-on-surface-variant">
-              Unlock the upload tab to attach the Delivery Order document.
+              Attach the Delivery Order document here. Uploading a new file replaces the current one.
             </p>
           </div>
-          <Toggle
-            checked={additionalData.doUploadEnabled}
-            disabled={busy || !canUpdateJob}
-            onChange={(next) => void runToggle("upload", next)}
-            label="Toggle DO document upload"
-          />
         </div>
 
-        {additionalData.doUploadEnabled ? (
-          <div className="space-y-3">
-            <FileUploadField
-              id="do-document-upload"
-              accept="application/pdf,image/*"
-              disabled={busy || !canUpdateJob}
-              helperText="Accepted formats: PDF and images. Uploading here replaces the current Delivery Order file."
-              triggerText={
-                additionalData.doDocumentFileKey
-                  ? "Drag and drop or choose file to replace the Delivery Order document"
-                  : "Drag and drop or choose file to upload the Delivery Order document"
-              }
-              selectedFile={
-                additionalData.doDocumentFileKey
-                  ? {
-                      href: additionalData.doDocumentFileKey,
-                      name: additionalData.doDocumentFileName || "Delivery Order document",
-                      statusLabel: additionalData.doDocumentUploadedAt
-                        ? `Uploaded ${new Date(additionalData.doDocumentUploadedAt).toLocaleDateString("en-IN")}`
-                        : "Uploaded",
-                    }
-                  : null
-              }
-              onClear={additionalData.doDocumentFileKey && canUpdateJob ? () => void handleDelete() : undefined}
-              onInputChange={(e) => void handleUpload(e.target.files?.[0] ?? null)}
-            />
-            {!additionalData.doDocumentFileKey ? (
-              <span className="text-xs text-on-surface-variant">No Delivery Order document uploaded yet.</span>
-            ) : null}
-          </div>
-        ) : null}
+        <div className="space-y-3">
+          <FileUploadField
+            id="do-document-upload"
+            accept="application/pdf,image/*"
+            disabled={busy || !canUpdateJob}
+            helperText="Accepted formats: PDF and images. Uploading here replaces the current Delivery Order file."
+            triggerText={
+              additionalData.doDocumentFileKey
+                ? "Drag and drop or choose file to replace the Delivery Order document"
+                : "Drag and drop or choose file to upload the Delivery Order document"
+            }
+            selectedFile={
+              additionalData.doDocumentFileKey
+                ? {
+                    href: additionalData.doDocumentFileKey,
+                    name: additionalData.doDocumentFileName || "Delivery Order document",
+                    statusLabel: additionalData.doDocumentUploadedAt
+                      ? `Uploaded ${new Date(additionalData.doDocumentUploadedAt).toLocaleDateString("en-IN")}`
+                      : "Uploaded",
+                  }
+                : null
+            }
+            onClear={additionalData.doDocumentFileKey && canUpdateJob ? () => void handleDelete() : undefined}
+            onInputChange={(e) => void handleUpload(e.target.files?.[0] ?? null)}
+          />
+          {!additionalData.doDocumentFileKey ? (
+            <span className="text-xs text-on-surface-variant">No Delivery Order document uploaded yet.</span>
+          ) : null}
+        </div>
 
-        {/* Extension toggle */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-4">
-          <div>
-            <span className="ds-label">Extension</span>
-            <p className="mt-0.5 text-xs text-on-surface-variant">
-              When enabled, an Extension option appears next to Acknowledge on the DO validity
-              warning notification. Applying it updates the validity date above and clears the
-              active warning.
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+            <label className="space-y-1.5">
+              <span className="ds-label">Delivery Order Extension Date</span>
+              <DateInput
+                id="deliveryOrderExtensionDate"
+                value={extensionDate}
+                onChange={(e) => setExtensionDate(e.target.value)}
+                min={additionalData.deliveryOrderValidity?.slice(0, 10)}
+                disabled={busy || !canUpdateJob || !additionalData.deliveryOrderValidity}
+                className="w-full ds-numeric"
+              />
+            </label>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void handleSaveExtensionDate()}
+              disabled={busy || !canUpdateJob || !additionalData.deliveryOrderValidity}
+              className="w-full md:w-auto"
+            >
+              {busy ? "Saving..." : "Save Extension Date"}
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 gap-2 text-xs text-on-surface-variant md:grid-cols-2">
+            <p>
+              Original validity:{" "}
+              <span className="ds-numeric text-on-surface">
+                {originalValidity ? originalValidity.toLocaleDateString("en-IN") : "—"}
+              </span>
+            </p>
+            <p>
+              Effective validity:{" "}
+              <span className="ds-numeric text-on-surface">
+                {effectiveValidity ? effectiveValidity.toLocaleDateString("en-IN") : "—"}
+              </span>
             </p>
           </div>
-          <Toggle
-            checked={additionalData.doExtensionEnabled}
-            disabled={busy || !canUpdateJob}
-            onChange={(next) => void runToggle("extension", next)}
-            label="Toggle DO extension flow"
-          />
+          {!additionalData.deliveryOrderValidity ? (
+            <p className="text-xs text-[#fb923c]">
+              Set the original Delivery Order validity first before saving an extension date.
+            </p>
+          ) : null}
         </div>
-
-        {additionalData.doExtensionEnabled && !warningActive ? (
-          <p className="card-cyan-outline rounded-xl border border-outline-variant/40 bg-surface p-3 text-xs text-on-surface-variant">
-            <CalendarClock size={13} className="mr-1.5 inline-block text-[#fb923c]" />
-            The extension form opens from the Delivery Order validity notification — it becomes
-            available once the validity warning is active.
-          </p>
-        ) : null}
 
         {/* Extension history — reflected column */}
         {extensions.length > 0 ? (

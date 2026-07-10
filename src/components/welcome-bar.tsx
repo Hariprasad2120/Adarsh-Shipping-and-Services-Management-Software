@@ -2,10 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, memo, useState, useSyncExternalStore } from "react";
-import {CalendarDays,Clock3,LayoutGrid,Bell,Menu,Settings,Search,AlertTriangle,} from "lucide-react";
-import { acknowledgeDoValidityWarningAction } from "@/modules/cha/actions";
-import { DoExtensionModal } from "@/app/(dashboard)/cha/_components/do-extension-modal";
-import { toast } from "sonner";
+import {CalendarDays,Clock3,LayoutGrid,Bell,Menu,Settings,Search,} from "lucide-react";
 import { createPortal } from "react-dom";
 import { useCaps } from "@/lib/caps-context";
 import { useDashboardChrome } from "@/components/dashboard-chrome";
@@ -13,6 +10,10 @@ import { getActiveItemHref, getVisibleSections, matchesPath } from "@/lib/naviga
 import { getBreadcrumbLabels, subscribeBreadcrumb } from "@/lib/breadcrumb-store";
 import { getPathLabel } from "@/lib/route-labels";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  ChaDueDateWarningIndicator,
+  type DueDateWarningViewModel,
+} from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
 
 function toTitleCase(value: string) {
   return value
@@ -65,15 +66,6 @@ const ClockDisplay = memo(function ClockDisplay() {
   );
 });
 
-type DoValidityWarning = {
-  jobId: string;
-  jobNumber: string;
-  customerName: string;
-  deliveryOrderValidity: string;
-  daysUntilExpiry: number;
-  severity: "expired" | "expiring";
-};
-
 export function AppHeader({
   userName,
   sessionToken,
@@ -88,40 +80,16 @@ export function AppHeader({
   const caps = useCaps();
   const { mobileNavId, mobileNavOpen, setMenuTrigger, toggleMobileNav } = useDashboardChrome();
   const [showWelcome, setShowWelcome] = useState(false);
-  const [doWarnings, setDoWarnings] = useState<DoValidityWarning[]>([]);
+  const [chaDueDateWarnings, setChaDueDateWarnings] = useState<DueDateWarningViewModel[]>([]);
   const firstName = useMemo(
     () => toTitleCase(userName.split(" ")[0] || "there"),
     [userName],
   );
-
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const dynamicLabels = useSyncExternalStore(
     subscribeBreadcrumb,
     getBreadcrumbLabels,
     getBreadcrumbLabels,
   );
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadDoWarnings() {
-      try {
-        const response = await fetch("/api/cha/do-validity/expiring", { cache: "no-store" });
-        if (!response.ok) return;
-        const warnings = (await response.json()) as DoValidityWarning[];
-        if (!cancelled) setDoWarnings(Array.isArray(warnings) ? warnings : []);
-      } catch {
-        if (!cancelled) setDoWarnings([]);
-      }
-    }
-
-    loadDoWarnings();
-    const timer = window.setInterval(loadDoWarnings, 5 * 60 * 1000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-    };
-  }, [refreshTrigger]);
 
   useEffect(() => {
     const storageKey = `welcome-toast:${sessionToken}`;
@@ -161,6 +129,56 @@ export function AppHeader({
     };
   }, [sessionToken]);
 
+  useEffect(() => {
+    if (!pathname.startsWith("/cha")) {
+      setChaDueDateWarnings([]);
+      return;
+    }
+
+    let isDisposed = false;
+
+    const loadWarnings = async () => {
+      const response = await fetch("/api/cha/due-date-warnings", { cache: "no-store" });
+      if (!response.ok) {
+        return;
+      }
+      const payload = (await response.json()) as DueDateWarningViewModel[];
+      if (!isDisposed) {
+        setChaDueDateWarnings(payload);
+      }
+    };
+
+    void loadWarnings();
+    const intervalId = window.setInterval(() => {
+      void loadWarnings();
+    }, 45000);
+
+    return () => {
+      isDisposed = true;
+      window.clearInterval(intervalId);
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    const handleAcknowledged = (event: Event) => {
+      const notificationId =
+        event instanceof CustomEvent && event.detail && typeof event.detail.notificationId === "string"
+          ? event.detail.notificationId
+          : null;
+      if (!notificationId) {
+        return;
+      }
+      setChaDueDateWarnings((current) =>
+        current.filter((warning) => warning.notificationId !== notificationId),
+      );
+    };
+
+    window.addEventListener("cha-due-date-warning-acknowledged", handleAcknowledged);
+    return () => {
+      window.removeEventListener("cha-due-date-warning-acknowledged", handleAcknowledged);
+    };
+  }, []);
+
   const visibleSections = useMemo(
     () => getVisibleSections(caps, enabledModuleIds),
     [caps, enabledModuleIds],
@@ -196,35 +214,8 @@ export function AppHeader({
     activeSection?.label ??
     "Workspace";
   const canOpenSettings = Boolean(caps["admin.org.manage"]);
-  const expiredDoCount = doWarnings.filter((warning) => warning.severity === "expired").length;
 
   const SectionIcon = activeSection?.icon ?? LayoutGrid;
-
-  const handleLeaveAsIs = async (jobId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      const res = await acknowledgeDoValidityWarningAction(jobId);
-      if (res.ok) {
-        toast.success("Warning acknowledged.");
-        setRefreshTrigger((prev) => prev + 1);
-      } else {
-        toast.error(res.error || "Failed to acknowledge warning.");
-      }
-    } catch (err) {
-      const errMsg = err instanceof Error ? err.message : "An error occurred.";
-      toast.error(errMsg);
-    }
-  };
-
-  const handleUpdateDate = (jobId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    router.push(`/cha/jobs/${jobId}?tab=additionalData&focus=deliveryOrderValidity`);
-  };
-
-  const [extensionTarget, setExtensionTarget] = useState<{
-    jobId: string;
-    validity: string;
-  } | null>(null);
 
   return (
     <>
@@ -256,85 +247,19 @@ export function AppHeader({
 
         <div className="flex items-center gap-2 sm:gap-3.5">
           <ClockDisplay />
-
-          {doWarnings.length > 0 ? (
-            <div className="group relative">
-              <button
-                type="button"
-                onClick={() => router.push(`/cha/jobs/${doWarnings[0].jobId}?tab=additionalData`)}
-                className={`relative inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide shadow-sm transition-all border ${
-                  expiredDoCount > 0
-                    ? "border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/15 hover:shadow-[0_0_0_3px_rgba(239,68,68,0.18)] animate-pulse-red"
-                    : "border-[#fb923c]/45 bg-[#fb923c]/10 text-[#fb923c] hover:bg-[#fb923c]/15 hover:shadow-[0_0_0_3px_rgba(251,146,60,0.18)] animate-pulse-orange"
-                }`}
-                title="Delivery Order validity warnings"
-              >
-                <AlertTriangle className="size-4" />
-                <span className="ds-numeric">{doWarnings.length}</span>
-              </button>
-              <div className="pointer-events-auto absolute right-0 top-full z-30 mt-2 hidden w-80 rounded-xl border border-outline-variant/60 bg-surface p-3.5 text-left shadow-lg group-hover:block">
-                <div className="mb-3 flex items-center justify-between border-b border-outline-variant/40 pb-2">
-                  <span className="ds-label text-[#fb923c] font-semibold">DO Validity Warnings</span>
-                  <span className="text-[10px] uppercase font-bold text-on-surface-variant font-mono">
-                    {expiredDoCount > 0 ? `${expiredDoCount} expired` : `${doWarnings.length} pending`}
-                  </span>
-                </div>
-                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-                  {doWarnings.map((warning) => (
-                    <div
-                      key={warning.jobId}
-                      onClick={() => router.push(`/cha/jobs/${warning.jobId}`)}
-                      className="cursor-pointer rounded-xl border border-outline-variant/40 bg-surface-container-low p-2.5 space-y-2.5 transition-colors hover:bg-surface-container"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="truncate text-xs font-semibold text-on-surface tracking-wide">{warning.jobNumber}</span>
-                        <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${
-                          warning.severity === "expired"
-                            ? "bg-red-500/10 text-red-500 border border-red-500/20"
-                            : "bg-orange-500/10 text-[#fb923c] border border-orange-500/20"
-                        }`}>
-                          {warning.severity === "expired" ? "Expired" : `${warning.daysUntilExpiry}d left`}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="truncate text-[10px] text-on-surface-variant font-medium">{warning.customerName}</p>
-                        <p className="text-[9px] text-on-surface-variant/80 font-sans mt-0.5">
-                          Expires: {new Date(warning.deliveryOrderValidity).toLocaleDateString("en-IN")}
-                        </p>
-                      </div>
-                      <div className="flex gap-2 pt-1 border-t border-outline-variant/20">
-                        <button
-                          type="button"
-                          onClick={(e) => handleLeaveAsIs(warning.jobId, e)}
-                          className="flex-1 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant hover:text-on-surface bg-surface-container border border-outline-variant/30 hover:bg-surface-container-high py-1 px-1.5 rounded-lg transition-all cursor-pointer"
-                        >
-                          Leave As Is
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => handleUpdateDate(warning.jobId, e)}
-                          className="flex-1 text-[10px] font-bold uppercase tracking-wider text-white bg-[#00cec4] hover:bg-[#00b8af] py-1 px-1.5 rounded-lg transition-all cursor-pointer"
-                        >
-                          Update Date
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setExtensionTarget({
-                              jobId: warning.jobId,
-                              validity: warning.deliveryOrderValidity,
-                            });
-                          }}
-                          className="flex-1 text-[10px] font-bold uppercase tracking-wider text-[#00cec4] bg-[#00cec4]/10 border border-[#00cec4]/30 hover:bg-[#00cec4]/15 py-1 px-1.5 rounded-lg transition-all cursor-pointer"
-                        >
-                          Extension
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+          {chaDueDateWarnings.length > 0 ? (
+            <div className="flex items-center gap-2">
+              {chaDueDateWarnings.map((warning) => (
+                <ChaDueDateWarningIndicator
+                  key={warning.notificationId}
+                  warning={warning}
+                  onAcknowledged={() => {
+                    setChaDueDateWarnings((current) =>
+                      current.filter((entry) => entry.notificationId !== warning.notificationId),
+                    );
+                  }}
+                />
+              ))}
             </div>
           ) : null}
 
@@ -358,20 +283,6 @@ export function AppHeader({
           ) : null}
         </div>
       </header>
-
-      {extensionTarget ? (
-        <DoExtensionModal
-          open
-          jobId={extensionTarget.jobId}
-          currentValidity={extensionTarget.validity}
-          onClose={() => setExtensionTarget(null)}
-          onApplied={() => {
-            setExtensionTarget(null);
-            setRefreshTrigger((prev) => prev + 1);
-            router.refresh();
-          }}
-        />
-      ) : null}
 
       <AnimatePresence>
         {showWelcome && typeof document !== "undefined" && createPortal(

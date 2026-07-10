@@ -4,7 +4,7 @@
   import { useEffect, useMemo, useRef, useState, useTransition } from "react";
   import { useRouter } from "next/navigation";
   import { toast } from "sonner";
-  import {FileText,Upload,CheckCircle2,AlertTriangle,FolderOpen,ArrowRight,ShieldCheck,AlertCircle,Plus,Trash2,Check,Database,ExternalLink,Undo2,Mail,History,ChevronDown,ChevronRight,} from "lucide-react";
+  import {FileText,Upload,CheckCircle2,AlertTriangle,FolderOpen,ArrowRight,ShieldCheck,AlertCircle,Plus,Trash2,Check,Database,ExternalLink,Undo2,Mail,History,ChevronDown,ChevronRight,Pencil,} from "lucide-react";
   import { Button } from "@/components/ui/button";
   import { Badge } from "@/components/ui/badge";
   import { FileUploadField } from "@/components/ui/file-upload-field";
@@ -13,6 +13,10 @@
   import * as actions from "@/modules/cha/actions";
   import { DoValidityPanel } from "./do-validity-panel";
   import { NeonCheckbox } from "@/components/ui/neon-checkbox";
+  import {
+    ChaDueDateWarningNote,
+  } from "@/app/(dashboard)/cha/_components/cha-due-date-warning-note";
+  import type { DueDateWarningViewModel } from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
   import {
     formatChaBadgeLabel,
     getChaDocumentStatusBadgeVariant,
@@ -59,6 +63,43 @@
   type ContainerEntry = {
     containerNumber: string;
   };
+
+  type CustomerMailActionType = "MAIL";
+
+  type AdditionalDataDraft = {
+    vesselInwardDate: string;
+    importGeneralManifest: string;
+    exportGeneralManifest: string;
+    customManifestValue: string;
+    containerEntries: ContainerEntry[];
+    mblNumber: string;
+    hblNumber: string;
+    deliveryOrderValidity: string;
+  };
+
+  type FilingNodeDraft = {
+    checklistResponses: Record<string, { isChecked: boolean; remarks?: string; fileKey?: string; delayRemarks?: string }>;
+    filingFieldValues: Record<string, string>;
+    filingToggleStates: Record<string, boolean>;
+    filingToggleStateDetails: Record<string, { isEnabled: boolean; state: Record<string, unknown> | null }>;
+    filingQueryDetails: string;
+    filingQueryOfficerName: string;
+    filingQueryReceivedAt: string;
+    filingQueryReferenceNumber: string;
+    filingQueryResponderNames: Record<string, string>;
+    filingQueryStatusUpdates: Record<string, string>;
+    filingQueryTitle: string;
+    nodeRemarks: string;
+    selectedNextNodeKey: string;
+  };
+
+  function getAdditionalDataDraftStorageKey(jobId: string) {
+    return `cha_additional_data_draft:${jobId}`;
+  }
+
+  function getFilingNodeDraftStorageKey(jobId: string, nodeRunId: string) {
+    return `cha_filing_node_draft:${jobId}:${nodeRunId}`;
+  }
 
   function getDefaultTabForStage(stage: string): WorkspaceTab {
     if (stage === "ADDITIONAL_DATA") return "additionalData";
@@ -124,6 +165,64 @@
     return normalized.length ? normalized : [getDefaultContainerEntry()];
   }
 
+  function normalizeAdditionalDataDraft(value: unknown): AdditionalDataDraft | null {
+    if (!value || typeof value !== "object") {
+      return null;
+    }
+
+    const draft = value as Partial<AdditionalDataDraft>;
+
+    return {
+      vesselInwardDate: typeof draft.vesselInwardDate === "string" ? draft.vesselInwardDate : "",
+      importGeneralManifest:
+        typeof draft.importGeneralManifest === "string" ? draft.importGeneralManifest : "",
+      exportGeneralManifest:
+        typeof draft.exportGeneralManifest === "string" ? draft.exportGeneralManifest : "",
+      customManifestValue: typeof draft.customManifestValue === "string" ? draft.customManifestValue : "",
+      containerEntries: normalizeContainerEntries(draft.containerEntries),
+      mblNumber: typeof draft.mblNumber === "string" ? draft.mblNumber : "",
+      hblNumber: typeof draft.hblNumber === "string" ? draft.hblNumber : "",
+      deliveryOrderValidity: typeof draft.deliveryOrderValidity === "string" ? draft.deliveryOrderValidity : "",
+    };
+  }
+
+  function normalizeFilingNodeDraft(value: unknown): FilingNodeDraft | null {
+    if (!value || typeof value !== "object") {
+      return null;
+    }
+
+    const draft = value as Partial<FilingNodeDraft>;
+
+    return {
+      checklistResponses:
+        draft.checklistResponses && typeof draft.checklistResponses === "object" ? draft.checklistResponses : {},
+      filingFieldValues:
+        draft.filingFieldValues && typeof draft.filingFieldValues === "object" ? draft.filingFieldValues : {},
+      filingToggleStates:
+        draft.filingToggleStates && typeof draft.filingToggleStates === "object" ? draft.filingToggleStates : {},
+      filingToggleStateDetails:
+        draft.filingToggleStateDetails && typeof draft.filingToggleStateDetails === "object"
+          ? draft.filingToggleStateDetails
+          : {},
+      filingQueryDetails: typeof draft.filingQueryDetails === "string" ? draft.filingQueryDetails : "",
+      filingQueryOfficerName: typeof draft.filingQueryOfficerName === "string" ? draft.filingQueryOfficerName : "",
+      filingQueryReceivedAt: typeof draft.filingQueryReceivedAt === "string" ? draft.filingQueryReceivedAt : "",
+      filingQueryReferenceNumber:
+        typeof draft.filingQueryReferenceNumber === "string" ? draft.filingQueryReferenceNumber : "",
+      filingQueryResponderNames:
+        draft.filingQueryResponderNames && typeof draft.filingQueryResponderNames === "object"
+          ? draft.filingQueryResponderNames
+          : {},
+      filingQueryStatusUpdates:
+        draft.filingQueryStatusUpdates && typeof draft.filingQueryStatusUpdates === "object"
+          ? draft.filingQueryStatusUpdates
+          : {},
+      filingQueryTitle: typeof draft.filingQueryTitle === "string" ? draft.filingQueryTitle : "",
+      nodeRemarks: typeof draft.nodeRemarks === "string" ? draft.nodeRemarks : "",
+      selectedNextNodeKey: typeof draft.selectedNextNodeKey === "string" ? draft.selectedNextNodeKey : "",
+    };
+  }
+
   function AdditionalDataStatCard({
     label,
     value,
@@ -160,6 +259,42 @@
           {aside ? <div className="shrink-0">{aside}</div> : null}
         </div>
         {description ? <p className="pl-[17px] text-xs text-on-surface-variant">{description}</p> : null}
+      </div>
+    );
+  }
+
+  function WarningNoteToggle({
+    title,
+    description,
+    open,
+    onToggle,
+  }: {
+    title: string;
+    description: string;
+    open: boolean;
+    onToggle: () => void;
+  }) {
+    return (
+      <div className="group/warning-note relative shrink-0">
+        <button
+          type="button"
+          aria-label={title}
+          aria-expanded={open}
+          onClick={onToggle}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#fb923c]/35 bg-[#fb923c]/10 text-[#fb923c] shadow-sm transition-all duration-200 hover:-translate-y-px hover:shadow-[0_0_18px_rgba(251,146,60,0.28)]"
+        >
+          <AlertTriangle size={20} strokeWidth={2.2} />
+        </button>
+        <div
+          className={`card-top-accent-orange absolute right-0 top-full z-20 mt-2 w-[20rem] max-w-[calc(100vw-2rem)] rounded-xl border border-[#fb923c]/30 bg-surface px-4 py-3 shadow-[0_20px_44px_-26px_rgba(251,146,60,0.45)] transition-all duration-200 ${
+            open
+              ? "pointer-events-auto translate-y-0 opacity-100"
+              : "pointer-events-none translate-y-1 opacity-0 group-hover/warning-note:pointer-events-auto group-hover/warning-note:translate-y-0 group-hover/warning-note:opacity-100"
+          }`}
+        >
+          <h4 className="ds-label !text-[#fb923c]">{title}</h4>
+          <p className="mt-2 text-sm leading-relaxed text-on-surface">{description}</p>
+        </div>
       </div>
     );
   }
@@ -228,43 +363,28 @@
     );
     const [section49ExtensionDate, setSection49ExtensionDate] = useState("");
     const [section49ExtensionFile, setSection49ExtensionFile] = useState<File | null>(null);
+    const [openWarningNote, setOpenWarningNote] = useState<"bill-filing" | "query-processing" | null>(null);
+    const hasSavedAdditionalData = Boolean(job.additionalData?.updatedAt);
+    const additionalDataStageLocked = job.stage === "FILING" || job.stage === "FILED";
+    const [isAdditionalDataEditing, setIsAdditionalDataEditing] = useState(
+      () => !hasSavedAdditionalData && !additionalDataStageLocked,
+    );
 
     useEffect(() => {
       setSection49Flag(job.filingSection49Flag ?? null);
       setSection49ValidityDate(job.filingSection49Flag?.validityDate ? job.filingSection49Flag.validityDate.slice(0, 10) : "");
     }, [job.filingSection49Flag]);
 
+    useEffect(() => {
+      setIsAdditionalDataEditing(!Boolean(job.additionalData?.updatedAt) && job.stage !== "FILING" && job.stage !== "FILED");
+    }, [job.id]);
 
-    const doValidityWarning = useMemo(() => {
-      if (!job.additionalData?.deliveryOrderValidity) return null;
-      const validityDate = new Date(job.additionalData.deliveryOrderValidity);
-      const now = new Date();
-      const validityDateStripped = new Date(validityDate.getFullYear(), validityDate.getMonth(), validityDate.getDate());
-      const nowStripped = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      
-      const diffTime = validityDateStripped.getTime() - nowStripped.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      if (diffDays < 0) {
-        return { type: "EXPIRED", message: `Delivery Order Validity expired on ${validityDate.toLocaleDateString("en-IN")}.` };
-      } else if (diffDays <= 4) {
-        return { type: "EXPIRING", message: `Delivery Order Validity is expiring in ${diffDays} day(s) on ${validityDate.toLocaleDateString("en-IN")}.` };
-      }
-      return null;
-    }, [job.additionalData?.deliveryOrderValidity]);
 
-    const section49ValidityWarning = useMemo(() => {
-      if (!section49Flag?.isEnabled || !section49Flag?.validityDate) return null;
-      const summary = getValiditySummary(section49Flag.validityDate);
-      if (!summary || summary.tone === "neutral") return null;
-      return {
-        type: summary.tone === "destructive" ? "EXPIRED" : "EXPIRING",
-        message:
-          summary.tone === "destructive"
-            ? `Section 49 validity expired on ${new Date(section49Flag.validityDate).toLocaleDateString("en-IN")}.`
-            : `Section 49 validity is expiring on ${new Date(section49Flag.validityDate).toLocaleDateString("en-IN")}.`,
-      };
-    }, [section49Flag]);
+    const [dueDateWarnings, setDueDateWarnings] = useState<DueDateWarningViewModel[]>(job.dueDateWarnings ?? []);
+
+    useEffect(() => {
+      setDueDateWarnings(job.dueDateWarnings ?? []);
+    }, [job.dueDateWarnings]);
 
     const visibleDocumentRequirements = useMemo(() => {
       return documentRequirements.filter((req: any) => {
@@ -281,15 +401,13 @@
         }
 
         if (req.name === "Extension") {
-          return !!job.additionalData?.doExtensionEnabled || hasPersistedState;
+          return true;
         }
 
-        return !!job.additionalData?.doUploadEnabled || hasPersistedState;
+        return true;
       });
     }, [
       documentRequirements,
-      job.additionalData?.doExtensionEnabled,
-      job.additionalData?.doUploadEnabled,
       section49Flag?.isEnabled,
     ]);
 
@@ -340,9 +458,9 @@
       if (initialTab && ["docs", "additionalData", "checklist", "filing", "advances", "expenses", "audit"].includes(initialTab)) {
         setActiveTab(initialTab as WorkspaceTab);
       }
-      if (focusField === "deliveryOrderValidity") {
+      if (focusField === "deliveryOrderValidity" || focusField === "deliveryOrderExtensionDate") {
         const timer = setTimeout(() => {
-          const input = document.getElementById("deliveryOrderValidity");
+          const input = document.getElementById(focusField);
           if (input instanceof HTMLInputElement) {
             input.scrollIntoView({ behavior: "smooth", block: "center" });
             input.focus();
@@ -401,14 +519,39 @@
     const [deliveryOrderValidity, setDeliveryOrderValidity] = useState(
       job.additionalData?.deliveryOrderValidity ? job.additionalData.deliveryOrderValidity.slice(0, 10) : ""
     );
+    const additionalDataDraftHydratedRef = useRef(false);
+    const additionalDataDraftStorageKey = getAdditionalDataDraftStorageKey(job.id);
+    const initialAdditionalDataDraft: AdditionalDataDraft = {
+      vesselInwardDate: job.additionalData?.vesselInwardDate ? job.additionalData.vesselInwardDate.slice(0, 10) : "",
+      importGeneralManifest:
+        job.additionalData?.importGeneralManifest !== null && job.additionalData?.importGeneralManifest !== undefined
+          ? String(job.additionalData.importGeneralManifest)
+          : "",
+      exportGeneralManifest:
+        job.additionalData?.exportGeneralManifest !== null && job.additionalData?.exportGeneralManifest !== undefined
+          ? String(job.additionalData.exportGeneralManifest)
+          : "",
+      customManifestValue:
+        job.additionalData?.customManifestValue !== null && job.additionalData?.customManifestValue !== undefined
+          ? String(job.additionalData.customManifestValue)
+          : "",
+      containerEntries: normalizeContainerEntries(job.additionalData?.containerDetails),
+      mblNumber: job.additionalData?.mblNumber || "",
+      hblNumber: job.additionalData?.hblNumber || "",
+      deliveryOrderValidity: job.additionalData?.deliveryOrderValidity
+        ? job.additionalData.deliveryOrderValidity.slice(0, 10)
+        : "",
+    };
 
     // Checklist Workflow State
     const [checklistFile, setChecklistFile] = useState<File | null>(null);
     const [checklistRemarks, setChecklistRemarks] = useState("");
     const [internalApprovalRemarks, setInternalApprovalRemarks] = useState("");
     const [customerApprovalRemarks, setCustomerApprovalRemarks] = useState("");
+    const [customerMailActionType, setCustomerMailActionType] = useState<CustomerMailActionType>("MAIL");
     const [customerMailSubject, setCustomerMailSubject] = useState("");
     const [customerMailBody, setCustomerMailBody] = useState("");
+    const [customerMailAttachments, setCustomerMailAttachments] = useState<File[]>([]);
 
     // Filing Form State
     const [newEstFilingDate, setNewEstFilingDate] = useState("");
@@ -436,15 +579,90 @@
   const [filingQueryResponderNames, setFilingQueryResponderNames] = useState<Record<string, string>>({});
   const [executionTimelineModalOpen, setExecutionTimelineModalOpen] = useState(false);
   const [queryManagementModalOpen, setQueryManagementModalOpen] = useState(false);
-  const [goBackOpen, setGoBackOpen] = useState(false);
+    const [goBackOpen, setGoBackOpen] = useState(false);
     const [goBackReason, setGoBackReason] = useState("");
     const [nodeRemarks, setNodeRemarks] = useState("");
     const [selectedNextNodeKey, setSelectedNextNodeKey] = useState<string>("");
+    const filingDraftHydratedForRef = useRef<string | null>(null);
+    const filingDraftStorageKey = activeNodeRun?.id ? getFilingNodeDraftStorageKey(job.id, activeNodeRun.id) : null;
 
     useEffect(() => {
       setBillOfEntryNumber(job.filing?.billOfEntryNumber || "");
       setShippingBillNumber(job.filing?.shippingBillNumber || "");
     }, [job.filing?.billOfEntryNumber, job.filing?.shippingBillNumber]);
+
+    useEffect(() => {
+      if (additionalDataDraftHydratedRef.current) return;
+
+      additionalDataDraftHydratedRef.current = true;
+
+      try {
+        const savedDraft = localStorage.getItem(additionalDataDraftStorageKey);
+        if (!savedDraft) return;
+
+        const parsedDraft = normalizeAdditionalDataDraft(JSON.parse(savedDraft));
+        if (!parsedDraft) {
+          localStorage.removeItem(additionalDataDraftStorageKey);
+          return;
+        }
+
+        setVesselInwardDate(parsedDraft.vesselInwardDate);
+        setImportGeneralManifest(parsedDraft.importGeneralManifest);
+        setExportGeneralManifest(parsedDraft.exportGeneralManifest);
+        setCustomManifestValue(parsedDraft.customManifestValue);
+        setContainerEntries(parsedDraft.containerEntries);
+        setMblNumber(parsedDraft.mblNumber);
+        setHblNumber(parsedDraft.hblNumber);
+        setDeliveryOrderValidity(parsedDraft.deliveryOrderValidity);
+      } catch {
+        localStorage.removeItem(additionalDataDraftStorageKey);
+      }
+    }, [additionalDataDraftStorageKey]);
+
+    const clearAdditionalDataDraft = () => {
+      try {
+        localStorage.removeItem(additionalDataDraftStorageKey);
+      } catch {
+        // localStorage unavailable
+      }
+    };
+
+    useEffect(() => {
+      if (!additionalDataDraftHydratedRef.current) return;
+
+      const currentDraft: AdditionalDataDraft = {
+        vesselInwardDate,
+        importGeneralManifest,
+        exportGeneralManifest,
+        customManifestValue,
+        containerEntries,
+        mblNumber,
+        hblNumber,
+        deliveryOrderValidity,
+      };
+
+      try {
+        if (JSON.stringify(currentDraft) === JSON.stringify(initialAdditionalDataDraft)) {
+          localStorage.removeItem(additionalDataDraftStorageKey);
+          return;
+        }
+
+        localStorage.setItem(additionalDataDraftStorageKey, JSON.stringify(currentDraft));
+      } catch {
+        // localStorage unavailable
+      }
+    }, [
+      additionalDataDraftStorageKey,
+      containerEntries,
+      customManifestValue,
+      deliveryOrderValidity,
+      exportGeneralManifest,
+      hblNumber,
+      importGeneralManifest,
+      initialAdditionalDataDraft,
+      mblNumber,
+      vesselInwardDate,
+    ]);
 
     const outgoingEdges = useMemo(() => {
       if (!filingInstance || !activeNodeRun) return [];
@@ -537,7 +755,9 @@
       (attachment: any) => attachment.documentRequirementKey === "bill_document",
     );
     const billFilingNumberEntered = !!filingFieldValues.bill_number?.trim();
-    const billFilingReadyForRouting = !isBillFilingNode || (billFilingDocumentUploaded && billFilingNumberEntered);
+    const billFilingDateEntered = !!filingFieldValues.bill_filing_date?.trim();
+    const billFilingReadyForRouting =
+      !isBillFilingNode || (billFilingDocumentUploaded && billFilingNumberEntered && billFilingDateEntered);
     const queryProcessingSection = useMemo(() => {
       const sections = Array.isArray(activeNodeRun?.node?.conditionalSectionsJson) ? activeNodeRun.node.conditionalSectionsJson : [];
       const matched =
@@ -590,6 +810,52 @@
     const billFilingCanChooseQuery = queryProcessingEnabled && billFilingReadyForRouting;
     const queryProcessingResolved =
       !queryProcessingEnabled || queryProcessingStage === "NO_QUERY" || queryProcessingStage === "CLEARED";
+    const queryProcessingWarning = !queryProcessingEnabled
+      ? null
+      : !billFilingCanChooseQuery
+        ? {
+            title: "Query Processing Locked",
+            description: "Complete the bill number and bill document upload first to start query processing.",
+          }
+        : !queryProcessingResolved
+          ? {
+              title:
+                activeNodeOpenQueries.length > 0
+                  ? "Active Query Pending"
+                  : queryProcessingStage === "RESPONDED"
+                    ? "Awaiting Customs Outcome"
+                    : "Query Decision Required",
+              description:
+                activeNodeOpenQueries.length > 0
+                  ? "Resolve or clear the active customs query before moving to the next step."
+                  : queryProcessingStage === "RESPONDED"
+                    ? "Await the customs outcome and mark the query cleared once the offline response is accepted."
+                    : "Record the customs query outcome before moving to the next step.",
+            }
+          : null;
+    const billFilingWarning = !isBillFilingNode
+      ? null
+      : !billFilingNumberEntered && !billFilingDateEntered && !billFilingDocumentUploaded
+        ? {
+            title: "Bill Filing Incomplete",
+            description: "Enter the bill number, select the bill filing date, and upload the bill document before continuing to the next step.",
+          }
+        : !billFilingNumberEntered
+          ? {
+              title: "Bill Number Required",
+              description: "Enter the bill number before continuing to the next step.",
+            }
+          : !billFilingDateEntered
+            ? {
+                title: "Bill Filing Date Required",
+                description: "Select the bill filing date before continuing to the next step.",
+              }
+          : !billFilingDocumentUploaded
+            ? {
+                title: "Bill Document Required",
+                description: "Upload the bill document before continuing to the next step.",
+              }
+            : null;
     const billFilingCanMoveNext =
       !isBillFilingNode || (billFilingReadyForRouting && queryProcessingResolved && activeNodeOpenQueries.length === 0);
     // Go-back is available on every filing stage that has a completed predecessor.
@@ -734,7 +1000,7 @@
         (!requiresCustomManifest || customManifestValue !== "")
       ))
     );
-    const additionalDataLocked = job.stage === "FILING" || job.stage === "FILED";
+    const additionalDataLocked = additionalDataStageLocked || (hasSavedAdditionalData && !isAdditionalDataEditing);
 
     const addContainerEntry = () => {
       setContainerEntries((current) => [...current, getDefaultContainerEntry()]);
@@ -1228,7 +1494,9 @@
           deliveryOrderValidity: deliveryOrderValidity || null,
         });
         if (res.ok) {
+          clearAdditionalDataDraft();
           toast.success("Additional Data saved successfully.");
+          setIsAdditionalDataEditing(false);
           router.refresh();
         } else {
           toast.error(res.error || "Failed to save Additional Data.");
@@ -1293,6 +1561,8 @@
           setLoading(null);
           return;
         }
+
+        clearAdditionalDataDraft();
 
         // Succeeded to save, now proceed!
         const res = await actions.proceedAdditionalDataAction(job.id);
@@ -1379,22 +1649,37 @@
 
       setLoading(`checklist-internal-${decision}`);
       try {
-        const res = await actions.submitChecklistInternalDecisionAction(
-          job.id,
-          checklistWorkflow.id,
-          decision,
-          internalApprovalRemarks || undefined,
-        );
+        const formData = new FormData();
+        formData.set("decision", decision);
+        formData.set("remarks", internalApprovalRemarks);
+        if (decision === "APPROVED") {
+          formData.set("customerActionType", customerMailActionType);
+          formData.set("customerMailSubject", customerMailSubject.trim() || `Checklist Approval Required - ${job.jobNumber}`);
+          formData.set(
+            "customerMailBody",
+            customerMailBody.trim() || `Please review the attached approved checklist for job ${job.jobNumber}.`,
+          );
+          customerMailAttachments.forEach((file) => formData.append("customerMailAttachments", file));
+        }
+
+        const res = await actions.submitChecklistInternalDecisionAction(job.id, checklistWorkflow.id, formData);
         if (res.ok) {
           const emailAutomation = res.data?.emailAutomation;
-          if (decision === "APPROVED" && emailAutomation?.queued) {
+          if (decision === "APPROVED" && emailAutomation?.sent) {
+            toast.success("Checklist approved and customer email sent automatically.");
+          } else if (decision === "APPROVED" && emailAutomation?.queued) {
             toast.success("Checklist saved and customer email queued.");
           } else if (decision === "APPROVED" && emailAutomation?.warning) {
-            toast.success(emailAutomation.warning);
+            toast.warning(emailAutomation.warning);
           } else {
             toast.success(decision === "APPROVED" ? "Internal approval recorded." : "Checklist returned for rework.");
           }
           setInternalApprovalRemarks("");
+          if (decision === "APPROVED") {
+            setCustomerMailSubject("");
+            setCustomerMailBody("");
+            setCustomerMailAttachments([]);
+          }
           router.refresh();
         } else {
           toast.error(res.error || "Failed to process internal decision.");
@@ -1439,45 +1724,24 @@
       if (!checklistWorkflow) return;
       const subject = customerMailSubject.trim() || `Checklist Approval Required - ${job.jobNumber}`;
       const body = customerMailBody.trim() || `Please review the attached approved checklist for job ${job.jobNumber}.`;
-      const gmailWindow = window.open("about:blank", "_blank");
-      if (gmailWindow) {
-        gmailWindow.document.write(`
-          <html>
-            <head><title>Opening Gmail…</title></head>
-            <body style="font-family: Arial, sans-serif; padding: 24px; color: #191c1e;">
-              <p style="margin: 0; font-size: 14px;">Opening Gmail draft…</p>
-            </body>
-          </html>
-        `);
-        gmailWindow.document.close();
-      }
 
       setLoading("checklist-customer-mail");
       try {
-        const res = await actions.sendChecklistCustomerMailAction(job.id, checklistWorkflow.id, {
-          subject,
-          body,
-        });
+        const formData = new FormData();
+        formData.set("subject", subject);
+        formData.set("body", body);
+        customerMailAttachments.forEach((file) => formData.append("customerMailAttachments", file));
+        const res = await actions.sendChecklistCustomerMailAction(job.id, checklistWorkflow.id, formData);
         if (res.ok) {
-          const composeUrl =
-            typeof res.data?.gmailComposeUrl === "string" && res.data.gmailComposeUrl.length > 0
-              ? res.data.gmailComposeUrl
-              : "https://mail.google.com/mail/u/0/#drafts";
-          if (gmailWindow) {
-            gmailWindow.location.replace(composeUrl);
-          } else {
-            window.location.assign(composeUrl);
-          }
-          toast.success("Gmail draft opened with the approved checklist attached.");
+          toast.success("Customer email sent with the approved checklist attached.");
           setCustomerMailSubject("");
           setCustomerMailBody("");
+          setCustomerMailAttachments([]);
           router.refresh();
         } else {
-          gmailWindow?.close();
           toast.error(res.error || "Failed to send checklist mail.");
         }
       } catch (err: any) {
-        gmailWindow?.close();
         toast.error(err.message || "An unexpected error occurred.");
       } finally {
         setLoading(null);
@@ -1706,7 +1970,20 @@
                 .filter((entry: any) => entry.nodeId === activeRun.node.id)
                 .map((entry: any) => [entry.fieldKey, entry.valueJson == null ? "" : String(entry.valueJson)]),
             );
-            setFilingFieldValues(fieldValuesForNode);
+            setFilingFieldValues((current) => {
+              if (activeNodeRun?.id !== activeRun.id) {
+                return fieldValuesForNode;
+              }
+
+              const mergedFieldValues = { ...fieldValuesForNode };
+              for (const [fieldKey, fieldValue] of Object.entries(current)) {
+                const serverValue = mergedFieldValues[fieldKey];
+                if ((serverValue === undefined || serverValue === null || serverValue === "") && fieldValue) {
+                  mergedFieldValues[fieldKey] = fieldValue;
+                }
+              }
+              return mergedFieldValues;
+            });
             const toggleEntriesForNode = (instanceRes.data.toggleStates || []).filter((entry: any) => entry.nodeId === activeRun.node.id);
             const toggleStatesForNode = Object.fromEntries(toggleEntriesForNode.map((entry: any) => [entry.sectionKey, !!entry.isEnabled]));
             const toggleStateDetailsForNode = Object.fromEntries(
@@ -1724,6 +2001,8 @@
             setFilingQueryReferenceNumber(typeof queryProcessingDetails?.queryReferenceNumber === "string" ? queryProcessingDetails.queryReferenceNumber : "");
             setFilingQueryOfficerName(typeof queryProcessingDetails?.customsOfficerName === "string" ? queryProcessingDetails.customsOfficerName : "");
             setFilingQueryReceivedAt(typeof queryProcessingDetails?.queryReceivedAt === "string" ? queryProcessingDetails.queryReceivedAt : "");
+            setFilingQueryTitle(typeof fieldValuesForNode.query_title === "string" ? fieldValuesForNode.query_title : "");
+            setFilingQueryDetails(typeof fieldValuesForNode.query_notes === "string" ? fieldValuesForNode.query_notes : "");
 
             const edges = instanceRes.data.version?.edges || [];
             const outgoing = edges.filter((e: any) => e.sourceKey === activeRun.nodeKey);
@@ -1740,10 +2019,12 @@
             setFilingQueryReferenceNumber("");
             setFilingQueryOfficerName("");
             setFilingQueryReceivedAt("");
+            setFilingQueryTitle("");
+            setFilingQueryDetails("");
             setSelectedNextNodeKey("");
           }
 
-          setNodeRemarks("");
+          setNodeRemarks(activeRun?.remarks || "");
         } else {
           toast.error(instanceRes.error || "Failed to load filing workflow. Check that a workflow is published in CHA Settings.");
         }
@@ -1777,6 +2058,182 @@
         },
       }));
     };
+
+    const clearFilingNodeDraft = (storageKey?: string | null) => {
+      if (!storageKey) return;
+      try {
+        localStorage.removeItem(storageKey);
+      } catch {
+        // localStorage unavailable
+      }
+    };
+
+    const buildCurrentFilingNodeDraft = (): FilingNodeDraft => ({
+      checklistResponses,
+      filingFieldValues,
+      filingToggleStates,
+      filingToggleStateDetails,
+      filingQueryDetails,
+      filingQueryOfficerName,
+      filingQueryReceivedAt,
+      filingQueryReferenceNumber,
+      filingQueryResponderNames,
+      filingQueryStatusUpdates,
+      filingQueryTitle,
+      nodeRemarks,
+      selectedNextNodeKey,
+    });
+
+    const handleSaveFilingDraft = () => {
+      if (!filingDraftStorageKey || !activeNodeRun?.id) {
+        toast.error("No active filing stage is available to save right now.");
+        return;
+      }
+
+      const currentDraft = buildCurrentFilingNodeDraft();
+      const toggleStatesForSave = Object.entries(currentDraft.filingToggleStateDetails).map(([sectionKey, entry]) => ({
+        sectionKey,
+        isEnabled: entry.isEnabled,
+        state:
+          sectionKey === "query_processing"
+            ? {
+                ...(entry.state ?? {}),
+                queryReferenceNumber: filingQueryReferenceNumber.trim() || null,
+                customsOfficerName: filingQueryOfficerName.trim() || null,
+                queryReceivedAt: filingQueryReceivedAt.trim() || null,
+              }
+            : entry.state ?? null,
+      }));
+      const fieldValuesForSave = [
+        ...Object.entries(currentDraft.filingFieldValues).map(([fieldKey, value]) => ({ fieldKey, value })),
+        { fieldKey: "query_title", value: currentDraft.filingQueryTitle },
+        { fieldKey: "query_notes", value: currentDraft.filingQueryDetails },
+      ];
+
+      setLoading("filing-save-draft");
+      void (async () => {
+        try {
+          const result = await actions.saveFilingNodeDraftAction(job.id, activeNodeRun.id, {
+            remarks: currentDraft.nodeRemarks,
+            checklistItemResponses: activeChecklistItems.map((item: any) => {
+              const response = currentDraft.checklistResponses[item.id] || {
+                isChecked: false,
+                remarks: "",
+                fileKey: undefined,
+                delayRemarks: "",
+              };
+              return {
+                checklistItemId: item.id,
+                isChecked: response.isChecked,
+                remarks: response.remarks || undefined,
+                fileKey: response.fileKey || undefined,
+                delayRemarks: response.delayRemarks || undefined,
+              };
+            }),
+            fieldValues: fieldValuesForSave,
+            toggleStates: toggleStatesForSave,
+          });
+
+          if (!result.ok) {
+            toast.error(result.error || "Failed to save filing draft.");
+            return;
+          }
+
+          try {
+            localStorage.setItem(filingDraftStorageKey, JSON.stringify(currentDraft));
+            filingDraftHydratedForRef.current = filingDraftStorageKey;
+          } catch {
+            // localStorage unavailable
+          }
+
+          toast.success(`Saved draft for ${activeNodeRun.node.name}.`);
+        } catch {
+          toast.error("Failed to save filing draft.");
+        } finally {
+          setLoading(null);
+        }
+      })();
+    };
+
+    useEffect(() => {
+      if (!filingDraftStorageKey || !activeNodeRun?.id) return;
+      if (filingDraftHydratedForRef.current === filingDraftStorageKey) return;
+
+      filingDraftHydratedForRef.current = filingDraftStorageKey;
+
+      try {
+        const savedDraft = localStorage.getItem(filingDraftStorageKey);
+        if (!savedDraft) return;
+
+        const parsedDraft = normalizeFilingNodeDraft(JSON.parse(savedDraft));
+        if (!parsedDraft) {
+          clearFilingNodeDraft(filingDraftStorageKey);
+          return;
+        }
+
+        setChecklistResponses(parsedDraft.checklistResponses);
+        setFilingFieldValues((current) => ({ ...current, ...parsedDraft.filingFieldValues }));
+        setFilingToggleStates(parsedDraft.filingToggleStates);
+        setFilingToggleStateDetails(parsedDraft.filingToggleStateDetails);
+        setFilingQueryTitle(parsedDraft.filingQueryTitle);
+        setFilingQueryDetails(parsedDraft.filingQueryDetails);
+        setFilingQueryReferenceNumber(parsedDraft.filingQueryReferenceNumber);
+        setFilingQueryOfficerName(parsedDraft.filingQueryOfficerName);
+        setFilingQueryReceivedAt(parsedDraft.filingQueryReceivedAt);
+        setFilingQueryStatusUpdates(parsedDraft.filingQueryStatusUpdates);
+        setFilingQueryResponderNames(parsedDraft.filingQueryResponderNames);
+        setNodeRemarks(parsedDraft.nodeRemarks);
+        setSelectedNextNodeKey(parsedDraft.selectedNextNodeKey);
+      } catch {
+        clearFilingNodeDraft(filingDraftStorageKey);
+      }
+    }, [activeNodeRun?.id, filingDraftStorageKey]);
+
+    useEffect(() => {
+      if (!filingDraftStorageKey || filingDraftHydratedForRef.current !== filingDraftStorageKey) return;
+
+      const draft = buildCurrentFilingNodeDraft();
+
+      const hasDraftContent =
+        Object.keys(checklistResponses).length > 0 ||
+        Object.keys(filingFieldValues).length > 0 ||
+        Object.keys(filingToggleStates).length > 0 ||
+        Object.keys(filingToggleStateDetails).length > 0 ||
+        Object.keys(filingQueryResponderNames).length > 0 ||
+        Object.keys(filingQueryStatusUpdates).length > 0 ||
+        !!filingQueryDetails.trim() ||
+        !!filingQueryOfficerName.trim() ||
+        !!filingQueryReceivedAt.trim() ||
+        !!filingQueryReferenceNumber.trim() ||
+        !!filingQueryTitle.trim() ||
+        !!nodeRemarks.trim() ||
+        !!selectedNextNodeKey.trim();
+
+      try {
+        if (!hasDraftContent) {
+          localStorage.removeItem(filingDraftStorageKey);
+          return;
+        }
+        localStorage.setItem(filingDraftStorageKey, JSON.stringify(draft));
+      } catch {
+        // localStorage unavailable
+      }
+    }, [
+      checklistResponses,
+      filingDraftStorageKey,
+      filingFieldValues,
+      filingQueryDetails,
+      filingQueryOfficerName,
+      filingQueryReceivedAt,
+      filingQueryReferenceNumber,
+      filingQueryResponderNames,
+      filingQueryStatusUpdates,
+      filingQueryTitle,
+      filingToggleStateDetails,
+      filingToggleStates,
+      nodeRemarks,
+      selectedNextNodeKey,
+    ]);
 
     const handlePersistFilingToggleState = async (
       sectionKey: string,
@@ -1834,6 +2291,7 @@
     const handleCompleteFilingNode = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!activeNodeRun) return;
+      const currentFilingDraftStorageKey = filingDraftStorageKey;
 
       if (isBillFilingNode && !billFilingCanMoveNext) {
         toast.error("Complete query processing before moving to the next filing step.");
@@ -1939,6 +2397,7 @@
         });
 
         if (res.ok) {
+          clearFilingNodeDraft(currentFilingDraftStorageKey);
           toast.success(`Completed stage: ${activeNodeRun.node.name}`);
           await loadFilingData();
           router.refresh();
@@ -1954,6 +2413,7 @@
 
     const handleGoBackStage = async () => {
       if (!activeNodeRun) return;
+      const currentFilingDraftStorageKey = filingDraftStorageKey;
       if (!goBackReason.trim()) {
         toast.error("Enter a reason to move back to the previous filing stage.");
         return;
@@ -1962,6 +2422,7 @@
       try {
         const res = await actions.revertFilingStageAction(job.id, activeNodeRun.id, goBackReason.trim());
         if (res.ok) {
+          clearFilingNodeDraft(currentFilingDraftStorageKey);
           toast.success(`Moved back to ${res.data?.reopenedNodeName || "the previous stage"}.`);
           setGoBackOpen(false);
           setGoBackReason("");
@@ -2632,52 +3093,17 @@
 
     return (
       <main className="w-full space-y-3 overflow-x-hidden pb-4">
-        {/* PERSISTENT HEADER WARNINGS */}
-        {doValidityWarning && (
-          <div className="rounded-2xl border border-orange-500/40 bg-orange-500/10 p-4 flex items-center justify-between gap-3 text-orange-600">
-            <div className="flex items-center gap-2">
-              <AlertTriangle size={20} className="shrink-0 text-orange-500" />
-              <div>
-                <span className="ds-label text-orange-500">Delivery Order Validity Alert</span>
-                <p className="text-sm font-semibold text-on-surface">{doValidityWarning.message}</p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              className="border-orange-500/40 text-orange-600 hover:bg-orange-500/10 text-xs shrink-0 h-8"
-              onClick={async () => {
-                const res = await actions.acknowledgeDoValidityWarningAction(job.id);
-                if (res.ok) {
-                  toast.success("Warning acknowledged.");
-                  router.refresh();
-                } else {
-                  toast.error(res.error || "Failed to acknowledge warning.");
-                }
-              }}
-            >
-              Acknowledge
-            </Button>
-          </div>
-        )}
-
-        {section49ValidityWarning && (
-          <div className="rounded-2xl border border-orange-500/40 bg-orange-500/10 p-4 flex items-center justify-between gap-3 text-orange-600">
-            <div className="flex items-center gap-2">
-              <AlertTriangle size={20} className="shrink-0 text-orange-500" />
-              <div>
-                <span className="ds-label text-orange-500">Section 49 Validity Alert</span>
-                <p className="text-sm font-semibold text-on-surface">{section49ValidityWarning.message}</p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              className="border-orange-500/40 text-orange-600 hover:bg-orange-500/10 text-xs shrink-0 h-8"
-              onClick={() => setActiveTab("docs")}
-            >
-              Open Documents
-            </Button>
-          </div>
-        )}
+        {dueDateWarnings.map((warning) => (
+          <ChaDueDateWarningNote
+            key={warning.notificationId}
+            warning={warning}
+            onAcknowledged={() => {
+              setDueDateWarnings((current) =>
+                current.filter((entry) => entry.notificationId !== warning.notificationId),
+              );
+            }}
+          />
+        ))}
 
         {/* Compact Job Header */}
         <section className="rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
@@ -3439,15 +3865,31 @@
                   title="CHA Additional Data"
                   description="Capture manifest and delivery-order validity details before checklist preparation."
                 />
-                <span
-                  className={`inline-flex min-h-8 items-center rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider ${
-                    additionalDataComplete
-                      ? "border-[#00cec4]/40 bg-[#00cec4]/10 text-[#00cec4]"
-                      : "border-[#fb923c]/40 bg-[#fb923c]/10 text-[#fb923c]"
-                  }`}
-                >
-                  {additionalDataComplete ? "Complete" : "Pending"}
-                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  {hasSavedAdditionalData && !additionalDataStageLocked ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      mode="icon"
+                      onClick={() => setIsAdditionalDataEditing(true)}
+                      disabled={loading !== null || isAdditionalDataEditing || !canUpdateJob}
+                      aria-label="Edit Additional Data"
+                      title="Edit Additional Data"
+                    >
+                      <Pencil className="size-4" />
+                    </Button>
+                  ) : null}
+                  <span
+                    className={`inline-flex min-h-8 items-center rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider ${
+                      additionalDataComplete
+                        ? "border-[#00cec4]/40 bg-[#00cec4]/10 text-[#00cec4]"
+                        : "border-[#fb923c]/40 bg-[#fb923c]/10 text-[#fb923c]"
+                    }`}
+                  >
+                    {additionalDataComplete ? "Complete" : "Pending"}
+                  </span>
+                </div>
               </div>
 
               {job.stage === "DOCUMENT_COLLECTION" ? (
@@ -3568,15 +4010,15 @@
                     {job.additionalData ? (
                       <div className="mt-4 pt-4">
                         <DoValidityPanel
+                          key={job.additionalData.deliveryOrderExtensionDate ?? "no-do-extension-date"}
                           jobId={job.id}
                           canUpdateJob={canUpdateJob}
                           additionalData={{
                             deliveryOrderValidity: job.additionalData.deliveryOrderValidity ?? null,
-                            doUploadEnabled: !!job.additionalData.doUploadEnabled,
+                            deliveryOrderExtensionDate: job.additionalData.deliveryOrderExtensionDate ?? null,
                             doDocumentFileKey: job.additionalData.doDocumentFileKey ?? null,
                             doDocumentFileName: job.additionalData.doDocumentFileName ?? null,
                             doDocumentUploadedAt: job.additionalData.doDocumentUploadedAt ?? null,
-                            doExtensionEnabled: !!job.additionalData.doExtensionEnabled,
                           }}
                           extensions={job.doExtensions ?? []}
                         />
@@ -3670,16 +4112,18 @@
               </div>
 
               <div className="flex flex-col gap-2 pt-4 sm:flex-row sm:justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={loading !== null || job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked || manifestConfigMissing}
-                  onClick={handleSaveAdditionalData}
-                  className="w-full sm:w-auto"
-                >
-                  <Database className="mr-2 size-4" />
-                  {loading === "additional-data-save" ? "Saving..." : "Save Additional Data"}
-                </Button>
+                {!additionalDataLocked ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={loading !== null || job.stage === "DOCUMENT_COLLECTION" || manifestConfigMissing}
+                    onClick={handleSaveAdditionalData}
+                    className="w-full sm:w-auto"
+                  >
+                    <Database className="mr-2 size-4" />
+                    {loading === "additional-data-save" ? "Saving..." : "Save Additional Data"}
+                  </Button>
+                ) : null}
                 {job.stage === "ADDITIONAL_DATA" ? (
                   <Button
                     type="button"
@@ -3947,6 +4391,50 @@
                         </div>
                         {canCurrentUserInternalApprove && checklistWorkflow?.currentApprovalStage === "INTERNAL" ? (
                           <>
+                            <div className="space-y-3 rounded-xl border border-outline-variant/40 bg-surface-container-low/40 p-4">
+                              <div className="space-y-1">
+                                <p className="ds-label">Customer Action Type</p>
+                                <p className="text-xs text-on-surface-variant">
+                                  When you approve with <span className="ds-numeric">MAIL</span>, the customer email sends automatically using the details below.
+                                </p>
+                              </div>
+                              <select
+                                value={customerMailActionType}
+                                onChange={(e) => setCustomerMailActionType(e.target.value as CustomerMailActionType)}
+                                className="w-full"
+                              >
+                                <option value="MAIL">MAIL</option>
+                              </select>
+                              <input
+                                value={customerMailSubject}
+                                onChange={(e) => setCustomerMailSubject(e.target.value)}
+                                placeholder={`Checklist Approval Required - ${job.jobNumber}`}
+                                className="w-full"
+                              />
+                              <textarea
+                                rows={4}
+                                value={customerMailBody}
+                                onChange={(e) => setCustomerMailBody(e.target.value)}
+                                placeholder={`Please review the attached approved checklist for job ${job.jobNumber}.`}
+                                className="ds-textarea w-full"
+                              />
+                              <FileUploadField
+                                id="customer-mail-attachments-internal"
+                                label="Additional Attachments"
+                                multiple
+                                compact
+                                helperText="The approved checklist is always attached automatically. Add any supporting files here before approval."
+                                triggerText="Drag and drop or choose files to attach"
+                                onInputChange={(event) => setCustomerMailAttachments(Array.from(event.target.files || []))}
+                                onClear={() => setCustomerMailAttachments([])}
+                                selectedFiles={customerMailAttachments.map((file) => ({
+                                  file,
+                                  name: file.name,
+                                  sizeBytes: file.size,
+                                  statusLabel: "Ready to send",
+                                }))}
+                              />
+                            </div>
                             <textarea
                               rows={2}
                               value={internalApprovalRemarks}
@@ -3982,14 +4470,14 @@
                             {approvedCustomerDecision
                               ? `Approved by ${getUserName(approvedCustomerDecision.actedById || approvedCustomerDecision.assignedToId)} on behalf of concerned job users on ${approvedCustomerDecision.actedAt ? new Date(approvedCustomerDecision.actedAt).toLocaleString("en-IN") : "Pending"}`
                               : checklistWorkflow?.currentApprovalStage === "CUSTOMER" && !latestCustomerMailLog
-                              ? "Internal approval is complete. Send the checklist mail to unlock customer approval."
+                              ? "Internal approval is complete. If the automatic mail did not send, send it here to unlock customer approval."
                               : checklistWorkflow?.currentApprovalStage === "CUSTOMER" && latestCustomerMailLog && !customerApprovalDelayElapsed
                               ? `Checklist mail sent on ${new Date(latestCustomerMailLog.sentAt).toLocaleString("en-IN")}. Customer approval unlocks automatically in ${customerApprovalCountdown} at ${customerApprovalVisibleAt?.toLocaleString("en-IN")}.`
                               : checklistWorkflow?.currentApprovalStage === "CUSTOMER"
                               ? "Pending: concerned job user approval required."
                               : checklistWorkflow?.customerRejectedOnce
                               ? "Customer approval will not be requested again after rework."
-                              : "Customer approval starts after the first successful internal approval."}
+                              : "Customer approval starts after the first successful internal approval and mail dispatch."}
                           </p>
                           {latestCustomerMailLog ? (
                             <p className="text-xs text-on-surface-variant">
@@ -4018,9 +4506,25 @@
                               placeholder={`Please review the attached approved checklist for job ${job.jobNumber}.`}
                               className="ds-textarea w-full"
                             />
+                            <FileUploadField
+                              id="customer-mail-attachments-customer"
+                              label="Additional Attachments"
+                              multiple
+                              compact
+                              helperText="The approved checklist is attached automatically. Add any extra files before sending."
+                              triggerText="Drag and drop or choose files to attach"
+                              onInputChange={(event) => setCustomerMailAttachments(Array.from(event.target.files || []))}
+                              onClear={() => setCustomerMailAttachments([])}
+                              selectedFiles={customerMailAttachments.map((file) => ({
+                                file,
+                                name: file.name,
+                                sizeBytes: file.size,
+                                statusLabel: "Ready to send",
+                              }))}
+                            />
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                               <p className="max-w-xl text-xs text-on-surface-variant">
-                                The latest approved checklist file will be attached automatically and customer recipients will be fetched from the customer record.
+                                The latest approved checklist file will be attached automatically, customer recipients will be fetched from the customer record, and any files above will be included.
                               </p>
                               <Button
                                 type="button"
@@ -4029,7 +4533,7 @@
                                 onClick={handleSendChecklistCustomerMail}
                               >
                                 <Mail size={14} />
-                                {loading === "checklist-customer-mail" ? "Opening Gmail..." : "Open Gmail"}
+                                {loading === "checklist-customer-mail" ? "Sending..." : "Send Mail"}
                               </Button>
                             </div>
                           </div>
@@ -4121,43 +4625,25 @@
 
           {activeTab === "filing" && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between gap-3 border-b border-outline-variant/30 pb-3">
-                <h3 className="ds-h3 text-on-surface">Customs Submission Filing Details</h3>
-                {filingInstance ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    mode="icon"
-                    className="h-9 w-9 rounded-xl"
-                    onClick={() => setExecutionTimelineModalOpen(true)}
-                    aria-label="Open execution blueprint timeline"
-                    title="Open execution blueprint timeline"
-                  >
-                    <History className="size-4" />
-                  </Button>
-                ) : null}
-              </div>
-
-              {/* Display DO warnings and active flags inside the tab if any */}
-              {doValidityWarning && (
-                <div className="rounded-xl border border-[#fb923c]/35 bg-surface p-4 shadow-sm">
-                  <div className="flex items-start gap-3">
-                    <span
-                      className="ds-icon-badge mt-0.5 shrink-0"
-                      style={{ background: "rgba(251,146,60,0.10)", color: "#fb923c" }}
+              <SectionHeading
+                title="Customs Submission Filing Details"
+                aside={
+                  filingInstance ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      mode="icon"
+                      className="h-9 w-9 rounded-xl"
+                      onClick={() => setExecutionTimelineModalOpen(true)}
+                      aria-label="Open execution blueprint timeline"
+                      title="Open execution blueprint timeline"
                     >
-                      <AlertTriangle size={18} />
-                    </span>
-                    <div className="space-y-1">
-                      <h4 className="ds-label text-[#fb923c]">Delivery Order Validity Notice</h4>
-                      <p className="text-sm text-on-surface-variant leading-relaxed">
-                        {doValidityWarning.message}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+                      <History className="size-6" />
+                    </Button>
+                  ) : null
+                }
+              />
 
               {overdueChecklistCount > 0 && (
                 <div className="card-left-accent-orange rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
@@ -4222,29 +4708,27 @@
                   ) : (
                     <div className="space-y-4">
                         {activeNodeRun ? (
-                          <div className="card-top-accent rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-sm">
+                          <div className="space-y-4">
                             
                             {/* Node Header */}
+                            {!isBillFilingNode ? (
                             <div className="grid gap-4 pb-4 lg:grid-cols-[minmax(0,1fr)_220px]">
                               <div className="space-y-2">
-                                <div>
-                                  <span className="ds-label block text-on-surface-variant">Active Checking Stage</span>
-                                  <h3 className="mt-1 ds-h2 text-on-surface">{activeNodeDisplayName}</h3>
-                                </div>
+                                <SectionHeading title={activeNodeDisplayName} />
                                 {(activeNodeRun.node.sectionName || activeNodeRun.node.branchName) && (
-                                  <p className="text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                                  <p className="pl-[17px] text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
                                     {[activeNodeRun.node.sectionName, activeNodeRun.node.branchName].filter(Boolean).join(" / ")}
                                   </p>
                                 )}
-                                <div className="flex flex-wrap gap-2">
+                                <div className="flex flex-wrap gap-2 pl-[17px]">
                                   {activeNodeRun.node.nodeType === "DECISION" ? <Badge variant="default">Decision</Badge> : null}
                                   {activeNodeRun.node.canBeSkipped ? <Badge variant="warning">Optional / Skippable</Badge> : null}
                                 </div>
                                 {activeNodeRun.node.description && (
-                                  <p className="text-sm text-on-surface-variant">{activeNodeRun.node.description}</p>
+                                  <p className="pl-[17px] text-sm text-on-surface-variant">{activeNodeRun.node.description}</p>
                                 )}
                                 {overdueChecklistCount > 0 && (
-                                  <p className="text-xs text-[#fb923c]">
+                                  <p className="pl-[17px] text-xs text-[#fb923c]">
                                     {overdueChecklistCount} overdue checklist item{overdueChecklistCount > 1 ? "s" : ""} in this active stage.
                                   </p>
                                 )}
@@ -4266,16 +4750,44 @@
                                 ) : null}
                               </div>
                             </div>
+                            ) : null}
 
                             {/* Node run completion form */}
                             <form
                               onSubmit={handleCompleteFilingNode}
-                              className={isBillFilingNode ? "grid gap-3 pt-2 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.92fr)]" : "space-y-4 pt-4"}
+                              className={isBillFilingNode ? "grid gap-4 pt-2 xl:grid-cols-[minmax(0,680px)_minmax(0,1fr)] xl:items-start" : "space-y-4 pt-4"}
                             >
                             {isBillFilingNode ? (
-                              <div className="space-y-2 xl:col-start-1">
+                              <div className="card-top-accent w-full max-w-[680px] space-y-2 rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm xl:col-start-1">
+                                <div className="grid gap-4 pb-2 lg:grid-cols-[minmax(0,1fr)_180px]">
+                                  <div className="space-y-2">
+                                    <SectionHeading title={activeNodeDisplayName} />
+                                    <div className="flex flex-wrap gap-2 pl-[17px]">
+                                      {activeNodeRun.node.nodeType === "DECISION" ? <Badge variant="default">Decision</Badge> : null}
+                                      {activeNodeRun.node.canBeSkipped ? <Badge variant="warning">Optional / Skippable</Badge> : null}
+                                    </div>
+                                    {overdueChecklistCount > 0 && (
+                                      <p className="pl-[17px] text-xs text-[#fb923c]">
+                                        {overdueChecklistCount} overdue checklist item{overdueChecklistCount > 1 ? "s" : ""} in this active stage.
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col gap-3 lg:items-end">
+                                    {billFilingWarning ? (
+                                      <WarningNoteToggle
+                                        title={billFilingWarning.title}
+                                        description={billFilingWarning.description}
+                                        open={openWarningNote === "bill-filing"}
+                                        onToggle={() =>
+                                          setOpenWarningNote((current) => (current === "bill-filing" ? null : "bill-filing"))
+                                        }
+                                      />
+                                    ) : null}
+                                  </div>
+                                </div>
                                 <div className="grid gap-3">
-                                  <label className="space-y-1">
+                                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                    <label className="space-y-1">
                                       <span className="ds-label block text-on-surface-variant">
                                         {filingBillNumberLabel} *
                                       </span>
@@ -4285,20 +4797,33 @@
                                         placeholder={`Enter ${filingBillNumberLabel}`}
                                         className="w-full"
                                       />
-                                    <p className="text-[11px] leading-snug text-on-surface-variant">
-                                      Add the filed bill number here while uploading the document. You can complete both actions in one pass.
-                                    </p>
-                                    {!billFilingNumberEntered ? (
-                                      <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/8 px-3 py-1.5 text-xs text-red-600">
-                                        <AlertTriangle size={14} className="shrink-0 text-red-500" />
-                                        <span>Enter the bill number to continue with query status or move to the next step.</span>
-                                      </div>
-                                    ) : null}
-                                  </label>
+                                      <p className="text-[11px] leading-snug text-on-surface-variant">
+                                        Add the filed bill number here while uploading the document. You can complete both actions in one pass.
+                                      </p>
+                                    </label>
+                                    <label className="space-y-1">
+                                      <span className="ds-label block text-on-surface-variant">
+                                        Bill Filing Date *
+                                      </span>
+                                      <DateInput
+                                        value={filingFieldValues.bill_filing_date || ""}
+                                        onChange={(e) =>
+                                          setFilingFieldValues((prev) => ({ ...prev, bill_filing_date: e.target.value }))
+                                        }
+                                        className="w-full"
+                                      />
+                                      <p className="text-[11px] leading-snug text-on-surface-variant">
+                                        Capture the date on which this bill was filed.
+                                      </p>
+                                    </label>
+                                  </div>
                                   <h4 className="ds-label text-on-surface">Bill Filing Actions</h4>
                                   <FileUploadField
                                       id={`bill-document-upload-${activeNodeRun.id}`}
-                                      disabled={loading === "node-document-bill_document"}
+                                      disabled={
+                                        loading === "node-document-bill_document" ||
+                                        loading === `filing-delete-${billFilingDocumentAttachment?.id ?? ""}`
+                                      }
                                       helperText="Upload the bill document here and enter the bill number alongside it. Both are required before continuing."
                                       triggerText={
                                         billFilingDocumentUploaded
@@ -4314,37 +4839,46 @@
                                             }
                                           : null
                                     }
+                                    previewInline
+                                    onClear={() => {
+                                      if (!billFilingDocumentAttachment?.id) {
+                                        return;
+                                      }
+                                      void handleDeleteFilingPhoto(billFilingDocumentAttachment.id);
+                                    }}
                                     onInputChange={(e) => handleUploadNodeDocument("bill_document", e)}
                                   />
-                                  {!billFilingDocumentUploaded ? (
-                                    <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/8 px-3 py-1.5 text-xs text-red-600">
-                                      <AlertTriangle size={14} className="shrink-0 text-red-500" />
-                                      <span>Upload the bill document to continue with query status or move to the next step.</span>
-                                    </div>
-                                  ) : null}
                                 </div>
                               </div>
                             ) : null}
 
-                              {(activeNodeRun.node.fieldDefinitionsJson || []).filter((field: any) => !(isBillFilingNode && field.key === "bill_number")).length > 0 && (
-                                <div className={`space-y-2 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
+                              {(activeNodeRun.node.fieldDefinitionsJson || []).filter((field: any) => !(isBillFilingNode && (field.key === "bill_number" || field.key === "bill_filing_date"))).length > 0 && (
+                                <div className={isBillFilingNode ? "w-full max-w-[680px] space-y-2 xl:col-start-1" : "space-y-2"}>
                                   <h4 className="ds-label text-on-surface">Configured Fields</h4>
                                   <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
-                                    {(activeNodeRun.node.fieldDefinitionsJson || []).filter((field: any) => !(isBillFilingNode && field.key === "bill_number")).map((field: any) => (
+                                    {(activeNodeRun.node.fieldDefinitionsJson || []).filter((field: any) => !(isBillFilingNode && (field.key === "bill_number" || field.key === "bill_filing_date"))).map((field: any) => (
                                       <div key={field.key} className="space-y-1">
                                         <label className="ds-label block text-on-surface-variant">
                                           {field.key === "bill_number" ? filingBillNumberLabel : field.label} {field.required !== false ? "*" : ""}
                                         </label>
-                                        <input
-                                          value={filingFieldValues[field.key] || ""}
-                                          onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                                          placeholder={
-                                            field.key === "bill_number"
-                                              ? `Enter ${filingBillNumberLabel}`
-                                              : field.placeholder || field.label
-                                          }
-                                          className="w-full text-sm"
-                                        />
+                                        {field.type === "DATE" ? (
+                                          <DateInput
+                                            value={filingFieldValues[field.key] || ""}
+                                            onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                                            className="w-full"
+                                          />
+                                        ) : (
+                                          <input
+                                            value={filingFieldValues[field.key] || ""}
+                                            onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                                            placeholder={
+                                              field.key === "bill_number"
+                                                ? `Enter ${filingBillNumberLabel}`
+                                                : field.placeholder || field.label
+                                            }
+                                            className="w-full text-sm"
+                                          />
+                                        )}
                                       </div>
                                     ))}
                                   </div>
@@ -4352,7 +4886,7 @@
                               )}
 
                               {(activeNodeRun.node.conditionalSectionsJson?.length > 0 || (activeNodeRun.node.documentRequirementsJson || []).filter((requirement: any) => !(isBillFilingNode && requirement.key === "bill_document")).length > 0) && (
-                                <div className={`space-y-2.5 pt-0.5 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
+                                <div className={isBillFilingNode ? "w-full max-w-[680px] space-y-2.5 pt-0.5 xl:col-start-1" : "space-y-2.5 pt-0.5"}>
                                   <h4 className="ds-label text-on-surface">Conditional Sections & Documents</h4>
                                   <div className="space-y-2.5">
                                     {(activeNodeRun.node.conditionalSectionsJson || []).map((section: any) => (
@@ -4381,12 +4915,20 @@
                                                 <label className="ds-label block text-on-surface-variant">
                                                   {field.label} {field.required !== false ? "*" : ""}
                                                 </label>
-                                                <input
-                                                  value={filingFieldValues[field.key] || ""}
-                                                  onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                                                  placeholder={field.placeholder || field.label}
-                                                  className="w-full text-sm"
-                                                />
+                                                {field.type === "DATE" ? (
+                                                  <DateInput
+                                                    value={filingFieldValues[field.key] || ""}
+                                                    onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                                                    className="w-full"
+                                                  />
+                                                ) : (
+                                                  <input
+                                                    value={filingFieldValues[field.key] || ""}
+                                                    onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                                                    placeholder={field.placeholder || field.label}
+                                                    className="w-full text-sm"
+                                                  />
+                                                )}
                                               </div>
                                             ))}
                                           </div>
@@ -4440,21 +4982,18 @@
                                 </div>
                               )}
 
-                              {isBillFilingNode && queryProcessingEnabled ? (
-                              <div className="space-y-2 pt-0.5 xl:col-start-2 xl:row-start-1">
-                                <div className="card-top-accent-orange overflow-hidden rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
-                                  <div className="flex items-start gap-3 px-4 py-3">
-                                    <span
-                                      className="ds-icon-badge shrink-0"
-                                      style={{ background: "rgba(251,146,60,0.12)", color: "#fb923c" }}
-                                    >
-                                      <AlertTriangle size={16} />
-                                    </span>
-                                    <div className="min-w-0 flex-1">
-                                      <div className="flex flex-wrap items-center justify-between gap-3">
-                                        <div>
-                                          <h4 className="text-base font-semibold text-on-surface">Customs Queries</h4>
-                                          <p className="mt-1 text-sm text-[#c76628]">
+                              {isBillFilingNode ? (
+                                <div className="w-full space-y-4 xl:col-start-2 xl:row-start-1 xl:self-start">
+                                  {queryProcessingEnabled ? (
+                                    <div className="card-top-accent-orange overflow-hidden rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
+                                    <div className="flex items-start gap-3 px-4 py-3">
+                                      <div className="min-w-0 flex-1">
+                                        <div className="space-y-2">
+                                          <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
+                                            <span className="h-7 rounded-sm bg-[#fb923c]" aria-hidden="true" />
+                                            <h3 className="ds-h3 text-[#c76628]">Manage Queries</h3>
+                                          </div>
+                                          <p className="pl-[17px] text-sm text-on-surface-variant">
                                             {activeNodeOpenQueries.length > 0
                                               ? `${activeNodeOpenQueries.length} Active Quer${activeNodeOpenQueries.length > 1 ? "ies Require" : "y Requires"} Attention`
                                               : queryProcessingStage === "CLEARED"
@@ -4465,77 +5004,58 @@
                                           </p>
                                         </div>
                                       </div>
-                                    </div>
-                                  </div>
-
-                                  <div className="space-y-3 px-4 py-3">
-                                    <div className="grid gap-3 text-sm md:grid-cols-2">
-                                      <div className="space-y-2 text-on-surface-variant">
-                                        <div className="flex items-center justify-between gap-3 md:block">
-                                          <span className="ds-label block text-on-surface-variant">Ref</span>
-                                          <span className="text-sm font-medium text-on-surface md:mt-1 md:block">
-                                            {typeof queryProcessingState?.queryReferenceNumber === "string" && queryProcessingState.queryReferenceNumber.trim()
-                                              ? queryProcessingState.queryReferenceNumber
-                                              : primaryQuerySummary?.title || "Not Recorded"}
-                                          </span>
-                                        </div>
-                                        <div className="flex items-center justify-between gap-3 md:block">
-                                          <span className="ds-label block text-on-surface-variant">Officer</span>
-                                          <span className="text-sm font-medium text-on-surface md:mt-1 md:block">
-                                            {typeof queryProcessingState?.customsOfficerName === "string" && queryProcessingState.customsOfficerName.trim()
-                                              ? queryProcessingState.customsOfficerName
-                                              : "Not Assigned"}
-                                          </span>
-                                        </div>
+                                      <div className="flex shrink-0 items-start gap-2">
+                                        <span className="inline-flex rounded-lg border border-[#fb923c]/20 bg-[#fb923c]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#c76628]">
+                                          {querySummaryStatusLabel}
+                                        </span>
+                                        {queryProcessingWarning ? (
+                                          <WarningNoteToggle
+                                            title={queryProcessingWarning.title}
+                                            description={queryProcessingWarning.description}
+                                            open={openWarningNote === "query-processing"}
+                                            onToggle={() =>
+                                              setOpenWarningNote((current) => (current === "query-processing" ? null : "query-processing"))
+                                            }
+                                          />
+                                        ) : null}
                                       </div>
-                                      <div className="space-y-2 text-on-surface-variant md:text-right">
-                                        <div>
-                                          <span className="ds-label block text-on-surface-variant">Status</span>
-                                          <div className="mt-1">
-                                            <span className="inline-flex rounded-lg border border-[#fb923c]/20 bg-[#fb923c]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#c76628]">
-                                              {querySummaryStatusLabel}
-                                            </span>
+                                    </div>
+
+                                      <div className="space-y-3 px-4 py-3">
+                                        <div className="grid gap-3 text-sm sm:grid-cols-2">
+                                          <div className="space-y-2 text-on-surface-variant">
+                                            <div className="flex items-center justify-between gap-3 sm:block">
+                                              <span className="ds-label block text-on-surface-variant">Ref</span>
+                                              <span className="text-sm font-medium text-on-surface sm:mt-1 sm:block">
+                                                {typeof queryProcessingState?.queryReferenceNumber === "string" && queryProcessingState.queryReferenceNumber.trim()
+                                                  ? queryProcessingState.queryReferenceNumber
+                                                  : primaryQuerySummary?.title || "Not Recorded"}
+                                              </span>
+                                            </div>
+                                            <div className="flex items-center justify-between gap-3 sm:block">
+                                              <span className="ds-label block text-on-surface-variant">Officer</span>
+                                              <span className="text-sm font-medium text-on-surface sm:mt-1 sm:block">
+                                                {typeof queryProcessingState?.customsOfficerName === "string" && queryProcessingState.customsOfficerName.trim()
+                                                  ? queryProcessingState.customsOfficerName
+                                                  : "Not Assigned"}
+                                              </span>
+                                            </div>
                                           </div>
                                         </div>
-                                        <div>
+                                        <div className="flex justify-end">
                                           <Button
                                             type="button"
                                             variant="outline"
-                                            className="w-full justify-center gap-2 border-[#fb923c]/35 text-[#c76628] hover:border-[#fb923c]/50 hover:text-[#c76628] md:w-auto"
+                                            className="w-full justify-center gap-2 border-[#fb923c]/35 text-base text-[#c76628] hover:border-[#fb923c]/50 hover:text-[#c76628] sm:w-auto sm:min-w-[240px]"
                                             onClick={() => setQueryManagementModalOpen(true)}
                                           >
                                             Manage Queries
-                                            <ExternalLink size={14} />
+                                            <ExternalLink size={16} />
                                           </Button>
                                         </div>
-                                      </div>
                                     </div>
-                                    {billFilingCanChooseQuery ? null : (
-                                      <div className="border-t border-outline-variant/30 pt-3">
-                                        <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/8 px-3 py-1.5 text-xs text-red-600">
-                                          <AlertTriangle size={14} className="shrink-0 text-red-500" />
-                                          <span>Complete the bill number and bill document upload first to start query processing.</span>
-                                        </div>
-                                      </div>
-                                    )}
-                                    {billFilingCanChooseQuery && !queryProcessingResolved ? (
-                                      <div className="border-t border-outline-variant/30 pt-3">
-                                        <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/8 px-3 py-1.5 text-xs text-red-600">
-                                          <AlertTriangle size={14} className="shrink-0 text-red-500" />
-                                          <span>
-                                            {activeNodeOpenQueries.length > 0
-                                              ? "Resolve or clear the active customs query before moving to the next step."
-                                              : queryProcessingStage === "RESPONDED"
-                                                ? "Await the customs outcome and mark the query cleared once the offline response is accepted."
-                                                : "Record the customs query outcome before moving to the next step."}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    ) : null}
                                   </div>
-                                </div>
-                                </div>
-                              ) : null}
+                                ) : null}
                               
                               {/* Checklist Items */}
                               {!isBillFilingNode && activeNodeRun.node.checklistItems?.length > 0 && (
@@ -4714,7 +5234,7 @@
 
                               {/* Node Photo / File Upload Requirements */}
                               {activeNodeRun.node.photoRequirements?.length > 0 && (
-                                <div className="space-y-4 border-t border-outline-variant/30 pt-4">
+                                <div className={isBillFilingNode ? "w-full max-w-[680px] space-y-4 border-t border-outline-variant/30 pt-4 xl:col-start-1" : "space-y-4 border-t border-outline-variant/30 pt-4"}>
                                   <h4 className="ds-label text-on-surface">Required Photograph / Document Uploads</h4>
                                   <div className="space-y-4">
                                     {activeNodeRun.node.photoRequirements.map((pr: any) => {
@@ -4797,111 +5317,254 @@
 
                               {/* Allowed Roles Notice */}
                               {activeNodeRun.node.allowedRoles?.length > 0 && (
-                                <div className={`pt-0.5 text-[11px] text-on-surface-variant flex items-center gap-1 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
+                                <div className={isBillFilingNode ? "flex w-full max-w-[680px] items-center gap-1 pt-0.5 text-[11px] text-on-surface-variant xl:col-start-1" : "flex items-center gap-1 pt-0.5 text-[11px] text-on-surface-variant"}>
                                   <ShieldCheck size={14} className="text-[#00cec4]" />
                                   <span>Can only be processed by users with roles: <strong>{activeNodeRun.node.allowedRoles.join(", ")}</strong></span>
                                 </div>
                               )}
 
-                              {/* Node run comments */}
-                              <div className={`space-y-1 pt-0.5 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
-                                <label className="ds-label text-on-surface block">
-                                  Completion Comments / Remarks {activeNodeRun.node.commentsRequired && <span className="text-red-500 font-bold">*</span>}
-                                </label>
-                                <textarea
-                                  rows={2}
-                                  value={nodeRemarks}
-                                  onChange={(e) => setNodeRemarks(e.target.value)}
-                                  placeholder="Provide checklist execution remarks or check outcome..."
-                                  className="w-full text-xs font-sans"
-                                  required={activeNodeRun.node.commentsRequired}
-                                />
-                              </div>
-
-                            {/* Transitions dropdown */}
-                            <div className={`pt-0.5 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
-                              {outgoingEdges.length > 0 ? (
-                                activeNodeRun.node.nodeType === "DECISION" ? (
-                                  <div className="space-y-2">
-                                    <label className="ds-label text-on-surface block">Decision *</label>
-                                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                        {outgoingEdges.map((edge: any) => {
-                                          const targetNode = targetNodesMap.get(edge.targetKey);
-                                          const isSelected = selectedNextNodeKey === edge.targetKey;
-                                          return (
-                                            <button
-                                              key={edge.targetKey}
-                                              type="button"
-                                              onClick={() => setSelectedNextNodeKey(edge.targetKey)}
-                                              className={`rounded-2xl border px-4 py-3 text-left transition ${
-                                                isSelected
-                                                  ? "border-[#00cec4] bg-[#00cec4]/10 shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
-                                                  : "border-outline-variant bg-surface hover:border-[#00cec4]/55 hover:bg-surface-container-low"
-                                              }`}
-                                            >
-                                              <span className="ds-label block">{edge.label || "Choice"}</span>
-                                              <span className="mt-1 block text-sm font-medium text-on-surface">
-                                                {targetNode?.name || edge.targetKey}
-                                              </span>
-                                            </button>
-                                          );
-                                        })}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="max-w-sm space-y-1">
-                                      <label className="ds-label text-on-surface block">Select Next Workflow Stage *</label>
-                                      <select
-                                        value={selectedNextNodeKey}
-                                        onChange={(e) => setSelectedNextNodeKey(e.target.value)}
-                                        required
-                                        className="w-full text-xs"
-                                      >
-                                        <option value="">-- Choose Next Stage --</option>
-                                        {outgoingEdges.map((edge: any) => {
-                                          const targetNode = targetNodesMap.get(edge.targetKey);
-                                          return (
-                                            <option key={edge.targetKey} value={edge.targetKey}>
-                                              {[targetNode?.sectionName, targetNode?.branchName, targetNode?.name || edge.targetKey]
-                                                .filter(Boolean)
-                                                .join(" / ")} {edge.label ? `(${edge.label})` : ""}
-                                            </option>
-                                          );
-                                        })}
-                                      </select>
-                                    </div>
-                                  )
-                                ) : (
-                                  <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
-                                    Completing this node will finalize the Filing workflow and transition the job stage to <strong>FILED</strong>.
+                                  <div className="card-top-accent w-full space-y-4 rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
+                                  <SectionHeading
+                                    title="Complete Step"
+                                    description="Choose the next action for this filing stage and record completion notes before moving forward."
+                                  />
+                                  <div className="rounded-xl border border-outline-variant/60 bg-surface-container-low px-4 py-3">
+                                    <span className="ds-label block text-on-surface-variant">Current Stage</span>
+                                    <p className="mt-1 text-sm font-medium text-on-surface">{activeNodeDisplayName}</p>
+                                    {(activeNodeRun.node.sectionName || activeNodeRun.node.branchName) && (
+                                      <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                                        {[activeNodeRun.node.sectionName, activeNodeRun.node.branchName].filter(Boolean).join(" / ")}
+                                      </p>
+                                    )}
                                   </div>
-                                )}
-                              </div>
+                                  <div className="space-y-1">
+                                    <label className="ds-label text-on-surface block">
+                                      Completion Comments / Remarks {activeNodeRun.node.commentsRequired && <span className="text-red-500 font-bold">*</span>}
+                                    </label>
+                                    <textarea
+                                      rows={3}
+                                      value={nodeRemarks}
+                                      onChange={(e) => setNodeRemarks(e.target.value)}
+                                      placeholder="Provide checklist execution remarks or check outcome..."
+                                      className="w-full text-sm font-sans"
+                                      required={activeNodeRun.node.commentsRequired}
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    {outgoingEdges.length > 0 ? (
+                                      activeNodeRun.node.nodeType === "DECISION" ? (
+                                        <>
+                                          <label className="ds-label text-on-surface block">Decision *</label>
+                                          <div className="grid grid-cols-1 gap-2">
+                                            {outgoingEdges.map((edge: any) => {
+                                              const targetNode = targetNodesMap.get(edge.targetKey);
+                                              const isSelected = selectedNextNodeKey === edge.targetKey;
+                                              return (
+                                                <button
+                                                  key={edge.targetKey}
+                                                  type="button"
+                                                  onClick={() => setSelectedNextNodeKey(edge.targetKey)}
+                                                  className={`rounded-xl border px-4 py-3 text-left transition ${
+                                                    isSelected
+                                                      ? "border-[#00cec4] bg-[#00cec4]/10 shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
+                                                      : "border-outline-variant bg-surface hover:border-[#00cec4]/55 hover:bg-surface-container-low"
+                                                  }`}
+                                                >
+                                                  <span className="ds-label block">{edge.label || "Choice"}</span>
+                                                  <span className="mt-1 block text-sm font-medium text-on-surface">
+                                                    {targetNode?.name || edge.targetKey}
+                                                  </span>
+                                                </button>
+                                              );
+                                            })}
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <div className="space-y-1">
+                                          <label className="ds-label text-on-surface block">Select Next Workflow Stage *</label>
+                                          <select
+                                            value={selectedNextNodeKey}
+                                            onChange={(e) => setSelectedNextNodeKey(e.target.value)}
+                                            required
+                                            className="w-full text-sm"
+                                          >
+                                            <option value="">-- Choose Next Stage --</option>
+                                            {outgoingEdges.map((edge: any) => {
+                                              const targetNode = targetNodesMap.get(edge.targetKey);
+                                              return (
+                                                <option key={edge.targetKey} value={edge.targetKey}>
+                                                  {[targetNode?.sectionName, targetNode?.branchName, targetNode?.name || edge.targetKey]
+                                                    .filter(Boolean)
+                                                    .join(" / ")} {edge.label ? `(${edge.label})` : ""}
+                                                </option>
+                                              );
+                                            })}
+                                          </select>
+                                        </div>
+                                      )
+                                    ) : (
+                                      <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
+                                        Completing this node will finalize the Filing workflow and transition the job stage to <strong>FILED</strong>.
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-wrap justify-end gap-2 pt-1">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      disabled={loading !== null}
+                                      onClick={handleSaveFilingDraft}
+                                      className="gap-2"
+                                    >
+                                      <Database size={14} />
+                                      Save Draft
+                                    </Button>
+                                    <Button
+                                      type="submit"
+                                      disabled={loading !== null}
+                                      className="w-full sm:w-auto sm:min-w-[280px]"
+                                    >
+                                      {loading === "filing-complete" ? "Completing Stage..." : outgoingEdges.length > 0 ? "Complete & Move to Next Stage" : "Complete & File Customs Bill"}
+                                    </Button>
+                                    {hasPreviousFilingStage ? (
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        disabled={loading !== null}
+                                        onClick={() => setGoBackOpen(true)}
+                                        className="gap-2 text-xs"
+                                      >
+                                        <Undo2 size={14} />
+                                        Move Back to Previous Stage
+                                      </Button>
+                                    ) : null}
+                                  </div>
+                                </div>
+                                </div>
+                              ) : (
+                                <>
+                                  {/* Node run comments */}
+                                  <div className="space-y-1 pt-0.5">
+                                    <label className="ds-label text-on-surface block">
+                                      Completion Comments / Remarks {activeNodeRun.node.commentsRequired && <span className="text-red-500 font-bold">*</span>}
+                                    </label>
+                                    <textarea
+                                      rows={2}
+                                      value={nodeRemarks}
+                                      onChange={(e) => setNodeRemarks(e.target.value)}
+                                      placeholder="Provide checklist execution remarks or check outcome..."
+                                      className="w-full text-xs font-sans"
+                                      required={activeNodeRun.node.commentsRequired}
+                                    />
+                                  </div>
 
-                              {/* Complete Action Button */}
-                              <div className={`flex flex-wrap items-center justify-between gap-2 pt-1 ${isBillFilingNode ? "xl:col-span-2" : ""}`}>
-                                {hasPreviousFilingStage ? (
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    disabled={loading !== null}
-                                    onClick={() => setGoBackOpen(true)}
-                                    className="gap-2 text-xs"
-                                  >
-                                    <Undo2 size={14} />
-                                    Move Back to Previous Stage
-                                  </Button>
-                                ) : (
-                                  <span />
-                                )}
-                                <Button
-                                  type="submit"
-                                  disabled={loading !== null}
-                                  className="w-full sm:w-auto sm:min-w-[320px]"
-                                >
-                                  {loading === "filing-complete" ? "Completing Stage..." : outgoingEdges.length > 0 ? "Complete & Move to Next Stage" : "Complete & File Customs Bill"}
-                                </Button>
-                              </div>
+                                {/* Transitions dropdown */}
+                                <div className="pt-0.5">
+                                  {outgoingEdges.length > 0 ? (
+                                    activeNodeRun.node.nodeType === "DECISION" ? (
+                                      <div className="space-y-2">
+                                        <label className="ds-label text-on-surface block">Decision *</label>
+                                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                            {outgoingEdges.map((edge: any) => {
+                                              const targetNode = targetNodesMap.get(edge.targetKey);
+                                              const isSelected = selectedNextNodeKey === edge.targetKey;
+                                              return (
+                                                <button
+                                                  key={edge.targetKey}
+                                                  type="button"
+                                                  onClick={() => setSelectedNextNodeKey(edge.targetKey)}
+                                                  className={`rounded-2xl border px-4 py-3 text-left transition ${
+                                                    isSelected
+                                                      ? "border-[#00cec4] bg-[#00cec4]/10 shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
+                                                      : "border-outline-variant bg-surface hover:border-[#00cec4]/55 hover:bg-surface-container-low"
+                                                  }`}
+                                                >
+                                                  <span className="ds-label block">{edge.label || "Choice"}</span>
+                                                  <span className="mt-1 block text-sm font-medium text-on-surface">
+                                                    {targetNode?.name || edge.targetKey}
+                                                  </span>
+                                                </button>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <div className="max-w-sm space-y-1">
+                                          <label className="ds-label text-on-surface block">Select Next Workflow Stage *</label>
+                                          <select
+                                            value={selectedNextNodeKey}
+                                            onChange={(e) => setSelectedNextNodeKey(e.target.value)}
+                                            required
+                                            className="w-full text-xs"
+                                          >
+                                            <option value="">-- Choose Next Stage --</option>
+                                            {outgoingEdges.map((edge: any) => {
+                                              const targetNode = targetNodesMap.get(edge.targetKey);
+                                              return (
+                                                <option key={edge.targetKey} value={edge.targetKey}>
+                                                  {[targetNode?.sectionName, targetNode?.branchName, targetNode?.name || edge.targetKey]
+                                                    .filter(Boolean)
+                                                    .join(" / ")} {edge.label ? `(${edge.label})` : ""}
+                                                </option>
+                                              );
+                                            })}
+                                          </select>
+                                        </div>
+                                      )
+                                    ) : (
+                                      <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
+                                        Completing this node will finalize the Filing workflow and transition the job stage to <strong>FILED</strong>.
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Complete Action Button */}
+                                  <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                                    {hasPreviousFilingStage ? (
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          disabled={loading !== null}
+                                          onClick={handleSaveFilingDraft}
+                                          className="gap-2"
+                                        >
+                                          <Database size={14} />
+                                          Save Draft
+                                        </Button>
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          disabled={loading !== null}
+                                          onClick={() => setGoBackOpen(true)}
+                                          className="gap-2 text-xs"
+                                      >
+                                        <Undo2 size={14} />
+                                        Move Back to Previous Stage
+                                      </Button>
+                                      </div>
+                                    ) : (
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        disabled={loading !== null}
+                                        onClick={handleSaveFilingDraft}
+                                        className="gap-2"
+                                      >
+                                        <Database size={14} />
+                                        Save Draft
+                                      </Button>
+                                    )}
+                                    <Button
+                                      type="submit"
+                                      disabled={loading !== null}
+                                      className="w-full sm:w-auto sm:min-w-[280px]"
+                                    >
+                                      {loading === "filing-complete" ? "Completing Stage..." : outgoingEdges.length > 0 ? "Complete & Move to Next Stage" : "Complete & File Customs Bill"}
+                                    </Button>
+                                  </div>
+                                </>
+                              )}
                             </form>
 
                             <Modal

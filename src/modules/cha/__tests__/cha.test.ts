@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import * as chaService from "../service";
 import * as driveClient from "@/lib/google-drive-client";
 import * as googleChatClient from "@/lib/google-chat-client";
+import * as gmailClient from "@/lib/google-gmail-client";
 import * as workspaceOauth from "@/lib/workspace-oauth";
 
 describe("Customs House Agent (CHA) Module Integration Tests", () => {
@@ -675,6 +676,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
   });
 
   it("4. should upload checklist, route through internal and customer approvals, and then move to filing", async () => {
+    const sendEmailSpy = vi.spyOn(gmailClient, "sendEmail").mockResolvedValue({ id: "gmail-message-1" });
     const job = await db.chaJob.findFirstOrThrow({ where: { orgId: org.id, jobNumber: "CHA-JOB-999" } });
 
     const uploadResult = await chaService.uploadChecklistFile(
@@ -754,10 +756,24 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       job.id,
       checklist.id,
       "APPROVED",
-      "All checks pass."
+      "All checks pass.",
+      {
+        customerActionType: "MAIL",
+        customerMail: {
+          subject: `Checklist Approval Required - ${job.jobNumber}`,
+          body: "Please review the attached approved checklist.",
+          additionalAttachments: [
+            {
+              fileName: "supporting-note.txt",
+              mimeType: "text/plain",
+              content: Buffer.from("supporting details"),
+            },
+          ],
+        },
+      },
     );
-    expect(firstCustomerApprovalResult.emailAutomation?.queued).toBe(false);
-    expect(firstCustomerApprovalResult.emailAutomation?.warning).toMatch(/no customer email is available/i);
+    expect(firstCustomerApprovalResult.emailAutomation?.sent).toBe(false);
+    expect(firstCustomerApprovalResult.emailAutomation?.warning).toMatch(/no active customer approval email is configured/i);
 
     const checklistPendingCustomer = await db.chaChecklist.findUniqueOrThrow({ where: { id: checklist.id } });
     expect(checklistPendingCustomer.status).toBe("CUSTOMER_APPROVAL_PENDING");
@@ -771,9 +787,18 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     const customerMail = await chaService.sendChecklistCustomerMail(ownerUser.id, org.id, job.id, checklist.id, {
       subject: `Checklist Approval Required - ${job.jobNumber}`,
       body: "Please review the attached approved checklist.",
+      additionalAttachments: [
+        {
+          fileName: "supporting-note.txt",
+          mimeType: "text/plain",
+          content: Buffer.from("supporting details"),
+        },
+      ],
     });
     expect(customerMail.attachmentFileName).toBe("customs-checklist-v2.pdf");
     expect(customerMail.recipients.length).toBeGreaterThan(0);
+    expect(customerMail.additionalAttachmentCount).toBe(1);
+    expect(sendEmailSpy).toHaveBeenCalled();
 
     await db.chaChecklist.update({
       where: { id: checklist.id },
@@ -836,6 +861,8 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
     const jobApproved = await db.chaJob.findUniqueOrThrow({ where: { id: job.id } });
     expect(jobApproved.stage).toBe("FILING");
+
+    sendEmailSpy.mockRestore();
   }, 60000);
 
   it("5. should handle filing dates adjustments and mark job as filed", async () => {

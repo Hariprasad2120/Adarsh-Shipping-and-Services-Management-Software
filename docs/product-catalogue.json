@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-09T06:34:19.742Z",
+  "generatedAt": "2026-07-10T08:33:58.791Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -1529,16 +1529,16 @@
       ]
     },
     {
-      "path": "/api/cha/do-validity/expiring",
-      "filePath": "src/app/api/cha/do-validity/expiring/route.ts",
+      "path": "/api/cha/documents/[id]",
+      "filePath": "src/app/api/cha/documents/[id]/route.ts",
       "module": "cha",
       "methods": [
         "GET"
       ]
     },
     {
-      "path": "/api/cha/documents/[id]",
-      "filePath": "src/app/api/cha/documents/[id]/route.ts",
+      "path": "/api/cha/due-date-warnings",
+      "filePath": "src/app/api/cha/due-date-warnings/route.ts",
       "module": "cha",
       "methods": [
         "GET"
@@ -6845,6 +6845,7 @@
         "mblNumber",
         "hblNumber",
         "deliveryOrderValidity",
+        "deliveryOrderExtensionDate",
         "status",
         "createdById",
         "updatedById",
@@ -9706,6 +9707,7 @@
         "importChecklistExcelAction",
         "uploadChecklistFileAction",
         "upsertAdditionalDataAction",
+        "setDoExtensionDateAction",
         "submitChecklistInternalDecisionAction",
         "submitChecklistCustomerDecisionAction",
         "sendChecklistCustomerMailAction",
@@ -9733,12 +9735,10 @@
         "deleteDocumentItemAction",
         "removeDocumentExceptionAction",
         "proceedDocumentStageAction",
-        "acknowledgeDoValidityWarningAction",
         "setDoUploadToggleAction",
         "setDoExtensionToggleAction",
         "uploadDeliveryOrderDocumentAction",
         "deleteDeliveryOrderDocumentAction",
-        "applyDoExtensionAction",
         "updateSection49ValidityAction",
         "applySection49ExtensionAction",
         "updateJobDetailsAction",
@@ -9749,6 +9749,7 @@
         "getFilingWorkflowInstanceAction",
         "startFilingWorkflowAction",
         "completeFilingNodeAction",
+        "saveFilingNodeDraftAction",
         "revertFilingStageAction",
         "toggleFilingSection49Action",
         "getFilingSection49Action",
@@ -9803,12 +9804,11 @@
         "verifyDocumentGate",
         "upsertAdditionalData",
         "proceedAdditionalDataStage",
-        "listDeliveryOrderValidityWarnings",
-        "createDeliveryOrderNotifications",
-        "acknowledgeDeliveryOrderValidityWarning",
         "setDeliveryOrderUploadToggle",
         "setDeliveryOrderExtensionToggle",
+        "setDeliveryOrderExtensionDate",
         "listSection49ValidityWarnings",
+        "listChaDueDateWarnings",
         "uploadDeliveryOrderDocument",
         "applyDeliveryOrderExtension",
         "listDeliveryOrderExtensions",
@@ -9861,6 +9861,7 @@
         "getFilingSection49",
         "updateFilingSection49Validity",
         "applyFilingSection49Extension",
+        "saveFilingNodeDraft",
         "runFilingWorkflowQueryReminderCron",
         "listFilingQueryEscalationWarnings",
         "createFilingWorkflowQuery",

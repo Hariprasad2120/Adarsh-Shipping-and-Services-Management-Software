@@ -12,7 +12,6 @@ type WarningIndicatorPopoverProps = {
   description: string;
   eyebrow: string;
   meta?: string;
-  status?: string;
   tone?: WarningIndicatorTone;
   children: ReactNode;
 };
@@ -22,28 +21,24 @@ const TONE_STYLES: Record<
   {
     trigger: string;
     shell: string;
-    accent: string;
-    badge: string;
+    icon: string;
     eyebrow: string;
-    status: string;
+    meta: string;
   }
 > = {
   warning: {
-    trigger:
-      "border-[#fb923c]/35 bg-[#fb923c]/10 text-[#fb923c] hover:border-[#fb923c]/55 hover:bg-[#fb923c]/14",
+    trigger: "border-[#fb923c]/35 bg-[#fb923c]/10 text-[#fb923c] hover:border-[#fb923c]/55",
     shell: "border-[#fb923c]/30",
-    accent: "bg-[#fb923c]",
-    badge: "border-[#fb923c]/20 bg-[#fb923c]/10 text-[#fb923c]",
-    eyebrow: "text-[#fb923c]",
-    status: "border-[#fb923c]/20 bg-[#fb923c]/10 text-[#fb923c]",
+    icon: "text-[#fb923c]",
+    eyebrow: "!text-[#fb923c]",
+    meta: "border-[#fb923c]/20 bg-[#fb923c]/10 text-on-surface-variant",
   },
   destructive: {
-    trigger: "border-red-500/35 bg-red-500/10 text-red-400 hover:border-red-500/55 hover:bg-red-500/14",
+    trigger: "border-red-500/35 bg-red-500/10 text-red-400 hover:border-red-500/55",
     shell: "border-red-500/30",
-    accent: "bg-red-500",
-    badge: "border-red-500/20 bg-red-500/10 text-red-400",
-    eyebrow: "text-red-400",
-    status: "border-red-500/20 bg-red-500/10 text-red-400",
+    icon: "text-red-400",
+    eyebrow: "!text-red-400",
+    meta: "border-red-500/20 bg-red-500/10 text-on-surface-variant",
   },
 };
 
@@ -52,7 +47,6 @@ export function WarningIndicatorPopover({
   description,
   eyebrow,
   meta,
-  status,
   tone = "warning",
   children,
 }: WarningIndicatorPopoverProps) {
@@ -144,7 +138,7 @@ export function WarningIndicatorPopover({
         aria-expanded={isOpen}
         aria-haspopup="dialog"
         className={cn(
-          "inline-flex h-8 w-8 items-center justify-center rounded-xl border shadow-sm transition-all duration-200 hover:-translate-y-px focus-visible:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00cec4]/30",
+          "inline-flex h-11 w-11 items-center justify-center rounded-xl border shadow-sm transition-all duration-200 hover:-translate-y-px hover:shadow-[0_0_18px_rgba(251,146,60,0.28)] focus-visible:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00cec4]/30",
           toneStyles.trigger,
         )}
         onClick={(event) => {
@@ -158,14 +152,14 @@ export function WarningIndicatorPopover({
         onFocus={openPopover}
         onBlur={(event) => closeIfOutsidePanel(event.relatedTarget)}
       >
-        <AlertTriangle size={15} />
+        <AlertTriangle className={cn("size-5", toneStyles.icon)} strokeWidth={2.2} />
       </button>
 
       {isOpen && typeof document !== "undefined"
         ? createPortal(
             <div
               ref={panelRef}
-              className="fixed z-[500] w-80 max-w-[calc(100vw-2rem)]"
+              className="fixed z-[500] w-[22rem] max-w-[calc(100vw-2rem)]"
               style={panelPosition}
               onMouseEnter={openPopover}
               onMouseLeave={scheduleClose}
@@ -180,36 +174,23 @@ export function WarningIndicatorPopover({
                 event.stopPropagation();
               }}
             >
-              <div className={cn("overflow-hidden rounded-2xl border bg-surface shadow-[var(--shadow-ambient-hover)]", toneStyles.shell)}>
-                <div className={cn("h-1 w-full", toneStyles.accent)} />
-                <div className="space-y-4 p-4">
-                  <div className="grid grid-cols-[40px_minmax(0,1fr)] gap-x-3 gap-y-3">
-                    <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border", toneStyles.badge)}>
-                      <AlertTriangle size={18} />
-                    </span>
-                    <div className="flex min-w-0 items-start justify-between gap-3">
-                      <p className={cn("ds-label", toneStyles.eyebrow)}>{eyebrow}</p>
-                      {status ? (
-                        <span
-                          className={cn(
-                            "rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.14em]",
-                            toneStyles.status,
-                          )}
-                        >
-                          {status}
-                        </span>
-                      ) : null}
+              <div
+                className={cn(
+                  "card-top-accent-orange overflow-hidden rounded-xl border bg-surface shadow-[0_20px_44px_-26px_rgba(251,146,60,0.45)]",
+                  toneStyles.shell,
+                )}
+              >
+                <div className="space-y-3 p-4">
+                  <p className={cn("ds-label", toneStyles.eyebrow)}>{eyebrow}</p>
+                  <p className="text-sm leading-relaxed text-on-surface">{description}</p>
+                  {meta ? (
+                    <div className={cn("rounded-xl border px-3 py-2 text-xs", toneStyles.meta)}>
+                      {meta}
                     </div>
-                    <p className="col-span-2 text-sm leading-6 text-on-surface">{description}</p>
-                    {meta ? (
-                      <div className="col-span-2 rounded-xl border border-outline-variant/40 bg-surface-container-low px-3 py-2 text-xs text-on-surface-variant">
-                        {meta}
-                      </div>
-                    ) : null}
-                    </div>
+                  ) : null}
 
                   <div
-                    className="flex flex-col gap-2"
+                    className="grid grid-cols-2 gap-2 pt-1"
                     onClickCapture={(event) => {
                       const target = event.target;
                       if (target instanceof HTMLElement && target.closest("button, a")) {

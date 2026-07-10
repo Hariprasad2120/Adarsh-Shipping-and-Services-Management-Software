@@ -3464,6 +3464,7 @@ model ChaJobAdditionalData {
   mblNumber             String?
   hblNumber             String?
   deliveryOrderValidity DateTime?
+  deliveryOrderExtensionDate DateTime?
   status                String    @default("PENDING") // PENDING | COMPLETED
   createdById           String
   updatedById           String?
@@ -3485,6 +3486,7 @@ model ChaJobAdditionalData {
 
   @@index([status])
   @@index([deliveryOrderValidity, status])
+  @@index([deliveryOrderExtensionDate, status])
 }
 
 model ChaDoExtension {

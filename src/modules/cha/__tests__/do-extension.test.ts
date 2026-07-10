@@ -1,9 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { db } from "@/lib/db";
+import { acknowledgeNotification } from "@/modules/notifications/service";
 import {
   setDeliveryOrderUploadToggle,
   setDeliveryOrderExtensionToggle,
+  setDeliveryOrderExtensionDate,
   applyDeliveryOrderExtension,
+  listChaDueDateWarnings,
   listDeliveryOrderExtensions,
 } from "../service";
 
@@ -98,12 +101,34 @@ describe("CHA Delivery Order upload toggle & extension flow", () => {
     expect(audits).toHaveLength(2);
   });
 
-  it("rejects extension when the toggle is off", async () => {
+  it("applies extension even when the legacy toggle flag is off", async () => {
     await setDeliveryOrderExtensionToggle(userId, orgId, jobId, false);
-    await expect(
-      applyDeliveryOrderExtension(userId, orgId, jobId, { extensionDate: daysFromNow(30) })
-    ).rejects.toThrow(/extension toggle/i);
-    await setDeliveryOrderExtensionToggle(userId, orgId, jobId, true);
+    const extension = await applyDeliveryOrderExtension(userId, orgId, jobId, {
+      extensionDate: daysFromNow(30),
+    });
+    expect(extension.extensionDate).toBeTruthy();
+    await db.chaJobAdditionalData.update({
+      where: { id: additionalDataId },
+      data: {
+        deliveryOrderValidity: daysFromNow(2),
+        deliveryOrderExtensionDate: null,
+        doExtensionEnabled: true,
+      },
+    });
+    await db.chaDoExtension.deleteMany({ where: { jobId } });
+  });
+
+  it("stores a manual extension date separately from the original validity", async () => {
+    const manualExtension = daysFromNow(15);
+    const updated = await setDeliveryOrderExtensionDate(userId, orgId, jobId, manualExtension);
+
+    expect(updated.deliveryOrderValidity?.toDateString()).toBe(daysFromNow(2).toDateString());
+    expect(updated.deliveryOrderExtensionDate?.toDateString()).toBe(manualExtension.toDateString());
+
+    await db.chaJobAdditionalData.update({
+      where: { id: additionalDataId },
+      data: { deliveryOrderExtensionDate: null },
+    });
   });
 
   it("rejects an extension date not after the current validity", async () => {
@@ -112,34 +137,19 @@ describe("CHA Delivery Order upload toggle & extension flow", () => {
     ).rejects.toThrow(/must be after/i);
   });
 
-  it("applies extension: updates validity, records history, dismisses DO notifications, audits", async () => {
-    // Simulate an active DO validity notification
-    const notification = await db.notification.create({
-      data: {
-        userId,
-        orgId,
-        kind: "CHA_DO_VALIDITY_EXPIRING",
-        title: "DO validity expiring",
-        body: "test",
-        link: `/cha/jobs/${jobId}`,
-      },
-    });
-
+  it("applies extension: preserves original validity, stores extension date, records history, audits", async () => {
     const newDate = daysFromNow(30);
     const extension = await applyDeliveryOrderExtension(userId, orgId, jobId, {
       extensionDate: newDate,
     });
     expect(extension.extensionDate.toDateString()).toBe(newDate.toDateString());
 
-    // Validity column reflects the extension
+    // Original validity stays intact and extension is stored separately
     const additionalData = await db.chaJobAdditionalData.findUniqueOrThrow({
       where: { id: additionalDataId },
     });
-    expect(additionalData.deliveryOrderValidity!.toDateString()).toBe(newDate.toDateString());
-
-    // Existing notification disappeared
-    const refreshed = await db.notification.findUniqueOrThrow({ where: { id: notification.id } });
-    expect(refreshed.dismissedAt).not.toBeNull();
+    expect(additionalData.deliveryOrderValidity!.toDateString()).toBe(daysFromNow(2).toDateString());
+    expect(additionalData.deliveryOrderExtensionDate!.toDateString()).toBe(newDate.toDateString());
 
     // History listed
     const history = await listDeliveryOrderExtensions(orgId, jobId);
@@ -151,6 +161,33 @@ describe("CHA Delivery Order upload toggle & extension flow", () => {
       where: { jobId, event: "DO_EXTENSION_APPLIED" },
     });
     expect(audit).toBeTruthy();
+  });
+
+  it("hides the delivery order warning after the user acknowledges it", async () => {
+    await db.chaJobAdditionalData.update({
+      where: { id: additionalDataId },
+      data: {
+        deliveryOrderValidity: daysFromNow(2),
+        deliveryOrderExtensionDate: null,
+      },
+    });
+
+    const warnings = await listChaDueDateWarnings(userId, orgId, { jobId });
+    const deliveryOrderWarning = warnings.find((warning) => warning.type === "DELIVERY_ORDER");
+
+    expect(deliveryOrderWarning).toBeTruthy();
+    await acknowledgeNotification(userId, deliveryOrderWarning!.notificationId);
+
+    const refreshedWarnings = await listChaDueDateWarnings(userId, orgId, { jobId });
+    expect(refreshedWarnings.some((warning) => warning.type === "DELIVERY_ORDER")).toBe(false);
+
+    await db.chaJobAdditionalData.update({
+      where: { id: additionalDataId },
+      data: {
+        deliveryOrderExtensionDate: daysFromNow(30),
+        doExtensionEnabled: true,
+      },
+    });
   });
 
   it("rejects a second extension while no warning is active (validity now far out)", async () => {

@@ -6,11 +6,9 @@ import { requirePermission } from "@/lib/rbac";
 import Link from "next/link";
 import { ensureSettingsAndDefaults } from "@/modules/cha/service";
 import { listJobTypesForSelection } from "@/modules/cha/service";
-import { listDeliveryOrderValidityWarnings } from "@/modules/cha/service";
 import { listFilingQueryEscalationWarnings } from "@/modules/cha/service";
 import { listSection49ValidityWarnings } from "@/modules/cha/service";
 import { DashboardCreateJob } from "@/components/cha/dashboard-create-job";
-import { JobValidityWarningIndicator } from "./_components/job-validity-warning-indicator";
 import { JobFilingQueryWarningIndicator } from "./_components/job-filing-query-warning-indicator";
 import { JobSection49ValidityWarningIndicator } from "./_components/job-section49-validity-warning-indicator";
 import {
@@ -65,7 +63,6 @@ export default async function ChaDashboard() {
     ,
     branchNumberingRules,
     pendingAdvances,
-    validityWarnings,
     section49Warnings,
     filingQueryWarnings,
   ] = await Promise.all([
@@ -135,7 +132,6 @@ export default async function ChaDashboard() {
       },
       include: { receipts: true },
     }),
-    listDeliveryOrderValidityWarnings(session.user.id, orgId),
     listSection49ValidityWarnings(session.user.id, orgId),
     listFilingQueryEscalationWarnings(session.user.id, orgId),
   ]);
@@ -146,20 +142,6 @@ export default async function ChaDashboard() {
     return sum + Math.max(0, expected - received);
   }, 0);
 
-  const validityWarningMap = new Map(
-    validityWarnings.map((warning) => [
-      warning.jobId,
-      {
-        severity: warning.severity as "expired" | "expiring",
-        daysUntilExpiry: warning.daysUntilExpiry,
-        deliveryOrderValidity: warning.deliveryOrderValidity.toISOString(),
-        message:
-          warning.severity === "expired"
-            ? `Delivery Order Validity expired on ${warning.deliveryOrderValidity.toLocaleDateString("en-IN")}.`
-            : `Delivery Order Validity is expiring in ${warning.daysUntilExpiry} day(s) on ${warning.deliveryOrderValidity.toLocaleDateString("en-IN")}.`,
-      },
-    ]),
-  );
   const filingQueryWarningMap = new Map(
     filingQueryWarnings.map((warning) => [
       warning.jobId,
@@ -330,12 +312,6 @@ export default async function ChaDashboard() {
                         <Link href={`/cha/jobs/${job.id}`} className="transition-colors hover:text-[#00b5ad]">
                           {job.jobNumber}
                         </Link>
-                        {validityWarningMap.get(job.id) ? (
-                          <JobValidityWarningIndicator
-                            jobId={job.id}
-                            warning={validityWarningMap.get(job.id)!}
-                          />
-                        ) : null}
                         {section49WarningMap.get(job.id) ? (
                           <JobSection49ValidityWarningIndicator
                             jobId={job.id}
