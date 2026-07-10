@@ -6,11 +6,24 @@ type SendParams = {
   subject: string;
   html: string;
   text?: string;
+  attachments?: Array<{
+    filename: string;
+    content: Buffer;
+    mimeType?: string;
+  }>;
   metadata?: Record<string, unknown>;
   idempotencyKey?: string;
 };
 
-export async function sendEmail({ to, subject, html, text, metadata, idempotencyKey }: SendParams): Promise<void> {
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  text,
+  attachments,
+  metadata,
+  idempotencyKey,
+}: SendParams): Promise<void> {
   const provider = process.env.EMAIL_PROVIDER ?? "resend";
 
   if (provider === "resend") {
@@ -27,6 +40,11 @@ export async function sendEmail({ to, subject, html, text, metadata, idempotency
       subject,
       html,
       text,
+      attachments: attachments?.map((attachment) => ({
+        filename: attachment.filename,
+        content: attachment.content,
+        content_type: attachment.mimeType,
+      })),
       tags: metadata
         ? Object.entries(metadata)
             .filter(([, value]) => typeof value === "string" || typeof value === "number" || typeof value === "boolean")
@@ -54,7 +72,18 @@ export async function sendEmail({ to, subject, html, text, metadata, idempotency
         pass: process.env.SMTP_PASS,
       },
     });
-    await transporter.sendMail({ from: process.env.EMAIL_FROM, to, subject, html, text });
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM,
+      to,
+      subject,
+      html,
+      text,
+      attachments: attachments?.map((attachment) => ({
+        filename: attachment.filename,
+        content: attachment.content,
+        contentType: attachment.mimeType,
+      })),
+    });
     return;
   }
 

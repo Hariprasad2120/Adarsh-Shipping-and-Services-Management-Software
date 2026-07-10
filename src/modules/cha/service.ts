@@ -14,6 +14,7 @@ import {
 import { ensureJobCategoryFolder } from "@/lib/workspace-provisioning";
 import { getValidAccessToken } from "@/lib/workspace-oauth";
 import { sendEmail as sendGmailEmail } from "@/lib/google-gmail-client";
+import { sendEmail as sendProviderEmail } from "@/lib/email";
 import { queueChecklistMainCustomerEmail } from "./checklist-email-automation";
 
 const DEFAULT_CHA_EXPENSE_CATEGORIES = [
@@ -46,6 +47,22 @@ type ChecklistCustomerMailInput = {
   body: string;
   additionalAttachments?: ChecklistCustomerMailAttachmentInput[];
 };
+
+function escapeChecklistMailHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function buildChecklistCustomerMailHtml(body: string) {
+  return body
+    .split(/\r?\n/)
+    .map((line) => escapeChecklistMailHtml(line))
+    .join("<br />");
+}
 
 type FilingFieldDefinition = {
   key: string;
@@ -1063,8 +1080,6 @@ export async function ensureSettingsAndDefaults(orgId: string) {
       },
     });
   }
-
-  await ensureDefaultFilingWorkflows(orgId);
 
   return settings;
 }
@@ -4566,10 +4581,6 @@ export async function submitChecklistInternalDecision(
   checklistId: string,
   decision: "APPROVED" | "REJECTED",
   remarks?: string,
-  options?: {
-    customerActionType?: "MAIL" | null;
-    customerMail?: ChecklistCustomerMailInput | null;
-  },
 ) {
   const job = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
@@ -4703,50 +4714,6 @@ export async function submitChecklistInternalDecision(
     return { outcome: "CUSTOMER_APPROVAL" as const, customerApproverIds };
   });
 
-  let emailAutomation:
-    | {
-        queued?: boolean;
-        sent?: boolean;
-        warning?: string | null;
-        recipients?: { email: string; name: string | null }[];
-        attachmentFileName?: string;
-        messageId?: string;
-      }
-    | null = null;
-
-  if (result.outcome === "CUSTOMER_APPROVAL") {
-    if (options?.customerActionType === "MAIL" && options.customerMail) {
-      emailAutomation = await sendChecklistCustomerMail(actorId, orgId, jobId, checklistId, options.customerMail)
-        .then((mailResult) => ({
-          sent: true,
-          warning: null,
-          recipients: mailResult.recipients,
-          attachmentFileName: mailResult.attachmentFileName,
-          messageId: mailResult.messageId,
-        }))
-        .catch((error) => ({
-          sent: false,
-          warning:
-            error instanceof Error
-              ? `Checklist approved, but the customer email could not be sent automatically: ${error.message}`
-              : "Checklist approved, but the customer email could not be sent automatically.",
-        }));
-    } else {
-      emailAutomation = await queueChecklistMainAutomationForJob({
-        actorId,
-        orgId,
-        job,
-        checklist,
-      }).catch((error) => ({
-        queued: false,
-        warning:
-          error instanceof Error
-            ? `Checklist saved, but customer email could not be queued: ${error.message}`
-            : "Checklist saved, but customer email could not be queued.",
-      }));
-    }
-  }
-
   await logChecklistApprovalAudit({
     orgId,
     jobId,
@@ -4801,7 +4768,6 @@ export async function submitChecklistInternalDecision(
 
   return {
     ...result,
-    emailAutomation,
   };
 }
 
@@ -4854,39 +4820,72 @@ export async function sendChecklistCustomerMail(
   const delayMinutes = await getChecklistCustomerApprovalDelayMinutesForJob(orgId, job.jobTypeId);
   const sentAt = await getNow();
   const approvalVisibleAt = new Date(sentAt.getTime() + delayMinutes * 60_000);
-  const accessToken = await getValidAccessToken(actorId);
   const driveFileId = driveClient.extractDriveFileId(currentFileVersion.fileKey);
   if (!driveFileId || driveFileId.startsWith("mock-")) {
-    throw new Error("Checklist attachment is not available in Google Drive for Gmail draft creation.");
+    throw new Error("Checklist attachment is not available in Google Drive for customer mail.");
   }
 
   const [attachmentMetadata, attachmentContent] = await Promise.all([
-    driveClient.getFileMetadata(driveFileId, accessToken),
-    driveClient.downloadFile(driveFileId, accessToken),
+    driveClient.getFileMetadata(driveFileId),
+    driveClient.downloadFile(driveFileId),
   ]);
   if (!attachmentMetadata) {
     throw new Error("Checklist attachment metadata could not be loaded from Google Drive.");
   }
 
   const extraAttachments = input.additionalAttachments ?? [];
-  const message = await sendGmailEmail({
-    userId: actorId,
-    to: recipients.map((recipient) => recipient.email).join(", "),
-    subject: input.subject.trim(),
-    body: input.body,
-    attachments: [
-      {
-        filename: attachmentMetadata.name || currentFileVersion.originalFileName,
-        mimeType: attachmentMetadata.mimeType || currentFileVersion.mimeType || "application/octet-stream",
-        content: attachmentContent,
-      },
-      ...extraAttachments.map((attachment) => ({
-        filename: attachment.fileName,
-        mimeType: attachment.mimeType || "application/octet-stream",
+  const attachments = [
+    {
+      filename: attachmentMetadata.name || currentFileVersion.originalFileName,
+      mimeType: attachmentMetadata.mimeType || currentFileVersion.mimeType || "application/octet-stream",
+      content: attachmentContent,
+    },
+    ...extraAttachments.map((attachment) => ({
+      filename: attachment.fileName,
+      mimeType: attachment.mimeType || "application/octet-stream",
+      content: attachment.content,
+    })),
+  ];
+
+  let messageId: string | null = null;
+  try {
+    const accessToken = await getValidAccessToken(actorId);
+    const message = await sendGmailEmail({
+      userId: actorId,
+      to: recipients.map((recipient) => recipient.email).join(", "),
+      subject: input.subject.trim(),
+      body: input.body,
+      attachments,
+    });
+    messageId = typeof message?.id === "string" ? message.id : null;
+  } catch (error) {
+    const shouldFallbackToProvider =
+      error instanceof Error &&
+      (/Google Workspace is not connected/i.test(error.message) ||
+        /Failed to refresh Google access token/i.test(error.message));
+
+    if (!shouldFallbackToProvider) {
+      throw error;
+    }
+
+    await sendProviderEmail({
+      to: recipients.map((recipient) => recipient.email).join(", "),
+      subject: input.subject.trim(),
+      html: buildChecklistCustomerMailHtml(input.body),
+      text: input.body,
+      attachments: attachments.map((attachment) => ({
+        filename: attachment.filename,
+        mimeType: attachment.mimeType,
         content: attachment.content,
       })),
-    ],
-  });
+      metadata: {
+        module: "CHA",
+        emailType: "CHECKLIST_CUSTOMER_APPROVAL",
+        jobId,
+        checklistId,
+      },
+    });
+  }
   const mailLog = await db.$transaction(async (tx) => {
     await tx.chaChecklist.update({
       where: { id: checklist.id },
@@ -4932,7 +4931,7 @@ export async function sendChecklistCustomerMail(
     recipients,
     approvalVisibleAt,
     attachmentFileName: attachmentMetadata.name || checklist.currentFileVersion.originalFileName,
-    messageId: typeof message?.id === "string" ? message.id : mailLog.id,
+    messageId: messageId ?? mailLog.id,
     additionalAttachmentCount: extraAttachments.length,
   };
 }
@@ -7898,7 +7897,13 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
       positionX: 500,
       positionY: 100,
       fieldDefinitionsJson: [
-        { key: "bill_number", label: "Bill Number", type: "TEXT", required: true, placeholder: "Enter bill number" },
+        {
+          key: "bill_number",
+          label: "Bill Filing Number",
+          type: "TEXT",
+          required: true,
+          placeholder: "Enter bill filing number",
+        },
         { key: "bill_filing_date", label: "Bill Filing Date", type: "DATE", required: true, placeholder: "Select bill filing date" },
       ],
       documentRequirementsJson: [
@@ -8470,80 +8475,6 @@ function normalizeWorkflowNodeDraft(node: any, nodeIndex: number) {
   };
 }
 
-function expandLegacyChecklistNodes(nodes: any[], edges: any[]) {
-  const expandedNodes: any[] = [];
-  const expandedEdges: { sourceKey: string; targetKey: string; label: string | null }[] = [];
-  const bridgeMap = new Map<string, { firstKey: string; lastKey: string }>();
-
-  for (const [index, rawNode] of nodes.entries()) {
-    const normalizedNode = normalizeWorkflowNodeDraft(rawNode, index);
-    const activeChecklistItems = normalizedNode.checklistItems.filter((item: any) => item.isActive !== false);
-    const shouldExpand =
-      normalizedNode.nodeType !== "START" &&
-      normalizedNode.nodeType !== "END" &&
-      normalizedNode.nodeType !== "NOTIFICATION" &&
-      activeChecklistItems.length > 1;
-
-    if (!shouldExpand) {
-      expandedNodes.push({
-        ...normalizedNode,
-        checklistItems:
-          normalizedNode.checklistItems.length > 0
-            ? normalizedNode.checklistItems
-            : normalizedNode.nodeType === "CHECKLIST_NODE"
-              ? [normalizeFilingChecklistItem({ label: normalizedNode.name }, 0)]
-              : [],
-      });
-      continue;
-    }
-
-    const orderedItems = [...normalizedNode.checklistItems].sort((a: any, b: any) => a.sortOrder - b.sortOrder);
-    const splitNodes = orderedItems.map((item: any, itemIndex: number) => ({
-      ...normalizedNode,
-      key: `${normalizedNode.key}_${slugify(item.label || `item_${itemIndex + 1}`)}`,
-      name: item.label || `${normalizedNode.name} ${itemIndex + 1}`,
-      description: item.description || normalizedNode.description,
-      nodeType: "CHECKLIST_NODE",
-      sortOrder: normalizedNode.sortOrder + itemIndex,
-      isStart: normalizedNode.isStart && itemIndex === 0,
-      checklistItems: [{ ...item, sortOrder: 1 }],
-      photoRequirements: itemIndex === 0 ? normalizedNode.photoRequirements : [],
-      positionX: normalizedNode.positionX,
-      positionY: normalizedNode.positionY + itemIndex * 180,
-    }));
-
-    bridgeMap.set(normalizedNode.key, {
-      firstKey: splitNodes[0].key,
-      lastKey: splitNodes[splitNodes.length - 1].key,
-    });
-    expandedNodes.push(...splitNodes);
-
-    for (let itemIndex = 0; itemIndex < splitNodes.length - 1; itemIndex += 1) {
-      expandedEdges.push({
-        sourceKey: splitNodes[itemIndex].key,
-        targetKey: splitNodes[itemIndex + 1].key,
-        label: "Checklist Sequence",
-      });
-    }
-  }
-
-  for (const edge of edges || []) {
-    const sourceKey = bridgeMap.get(edge.sourceKey)?.lastKey ?? edge.sourceKey;
-    const targetKey = bridgeMap.get(edge.targetKey)?.firstKey ?? edge.targetKey;
-    if (!sourceKey || !targetKey || sourceKey === targetKey) continue;
-    expandedEdges.push({
-      sourceKey,
-      targetKey,
-      label: edge.label || null,
-    });
-  }
-
-  return {
-    nodes: expandedNodes.map((node, index) => ({ ...node, sortOrder: index + 1 })),
-    edges: expandedEdges,
-  };
-}
-
 async function getHolidayIsoSet(orgId?: string) {
   if (!orgId) {
     return new Set<string>();
@@ -8619,17 +8550,26 @@ function slugify(value: string) {
 
 function validateFilingWorkflowDraft(data: { nodes: any[]; edges: any[] }) {
   const activeNodes = (data.nodes || []).filter((node) => node.isActive !== false);
-  const nodeKeys = new Set(activeNodes.map((node) => node.key));
+  const nodeKeys = new Set<string>();
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  if (activeNodes.length === 0) {
-    errors.push("The workflow must have at least one active node.");
+  const startNodes = activeNodes.filter((node) => node.isStart);
+  if (activeNodes.length > 0 && startNodes.length !== 1) {
+    errors.push(startNodes.length === 0 ? "The workflow must have one start node." : "The workflow can only have one start node.");
   }
 
-  const startNodes = activeNodes.filter((node) => node.isStart);
-  if (startNodes.length !== 1) {
-    errors.push(startNodes.length === 0 ? "The workflow must have one start node." : "The workflow can only have one start node.");
+  for (const node of activeNodes) {
+    const normalizedKey = typeof node.key === "string" ? node.key.trim() : "";
+    if (!normalizedKey) {
+      errors.push(`Node "${node.name || "untitled"}" must have a key.`);
+      continue;
+    }
+    if (nodeKeys.has(normalizedKey)) {
+      errors.push(`Duplicate node key "${normalizedKey}" detected.`);
+      continue;
+    }
+    nodeKeys.add(normalizedKey);
   }
 
   const edgeSet = new Set<string>();
@@ -9167,6 +9107,40 @@ export async function getFilingWorkflowDetails(userId: string, orgId: string, te
   });
 }
 
+export async function loadStarterFilingWorkflowDraft(
+  userId: string,
+  orgId: string,
+  templateId: string | null,
+  data: {
+    name: string;
+    description?: string;
+    clearanceTypeId?: string | null;
+    filingFlowCategory?: string | null;
+  },
+) {
+  const starter = cloneStarterFilingWorkflowSeed();
+  const draft = await saveFilingWorkflowDraft(userId, orgId, templateId, {
+    ...data,
+    nodes: starter.nodes as unknown as any[],
+    edges: starter.edges as unknown as any[],
+  });
+
+  await logChaAudit({
+    orgId,
+    entityType: "FilingWorkflowTemplate",
+    entityId: draft.id,
+    event: "FILING_WORKFLOW_STARTER_LOADED",
+    actorId: userId,
+    remarks: `Loaded the explicit starter workflow into template ${draft.name}.`,
+    metadata: {
+      versionId: draft.versions?.[0]?.id ?? null,
+      source: "STARTER_FIXTURE",
+    },
+  });
+
+  return draft;
+}
+
 export async function saveFilingWorkflowDraft(
   userId: string,
   orgId: string,
@@ -9182,12 +9156,11 @@ export async function saveFilingWorkflowDraft(
     edges: any[];
   }
 ) {
-  const normalizedDraft = expandLegacyChecklistNodes(data.nodes || [], data.edges || []);
-  const normalizedNodes = normalizedDraft.nodes.map((node: any, nodeIndex: number) =>
+  const normalizedNodes = (data.nodes || []).map((node: any, nodeIndex: number) =>
     normalizeWorkflowNodeDraft({ ...node, sortOrder: node.sortOrder ?? nodeIndex + 1 }, nodeIndex),
   );
 
-  const normalizedEdges = (normalizedDraft.edges || []).map((edge: any) => ({
+  const normalizedEdges = (data.edges || []).map((edge: any) => ({
     sourceKey: edge.sourceKey,
     targetKey: edge.targetKey,
     label: edge.label || null,
@@ -9254,6 +9227,30 @@ export async function saveFilingWorkflowDraft(
   }
 
   const versionId = draftVersion.id;
+  const previousVersionDetail = latestVersion
+    ? await db.filingWorkflowVersion.findUnique({
+        where: { id: latestVersion.id },
+        include: {
+          nodes: {
+            orderBy: { sortOrder: "asc" },
+            include: {
+              checklistItems: { orderBy: { sortOrder: "asc" } },
+              photoRequirements: true,
+            },
+          },
+          edges: true,
+        },
+      })
+    : null;
+
+  const validation = validateFilingWorkflowDraft({
+    nodes: normalizedNodes,
+    edges: normalizedEdges,
+  });
+  const nonEmptyGraphHasBlockingValidation = normalizedNodes.filter((node) => node.isActive !== false).length > 0 && validation.errors.length > 0;
+  if (nonEmptyGraphHasBlockingValidation) {
+    throw new Error(`Validation Failed: ${validation.errors.join(" ")}`);
+  }
 
   await db.$transaction(async (tx) => {
     await tx.filingWorkflowTemplate.update({
@@ -9395,6 +9392,110 @@ export async function saveFilingWorkflowDraft(
     }
   }, { timeout: 20000 });
 
+  const previousNodeMap = new Map((previousVersionDetail?.nodes || []).map((node) => [node.key, node]));
+  const nextNodeMap = new Map(normalizedNodes.map((node: any) => [node.key, node]));
+  const previousEdgeMap = new Map((previousVersionDetail?.edges || []).map((edge) => [`${edge.sourceKey}::${edge.targetKey}`, edge]));
+  const nextEdgeMap = new Map(normalizedEdges.map((edge: any) => [`${edge.sourceKey}::${edge.targetKey}`, edge]));
+
+  for (const [nodeKey, node] of nextNodeMap.entries()) {
+    const previousNode = previousNodeMap.get(nodeKey);
+    const event = previousNode ? "FILING_WORKFLOW_NODE_UPDATED" : "FILING_WORKFLOW_NODE_CREATED";
+    if (previousNode && summarizeWorkflowNodeForAudit(previousNode) === summarizeWorkflowNodeForAudit(node)) {
+      continue;
+    }
+    await logChaAudit({
+      orgId,
+      entityType: "FilingWorkflowNode",
+      entityId: `${versionId}:${nodeKey}`,
+      event,
+      actorId: userId,
+      remarks: `${previousNode ? "Updated" : "Created"} node "${node.name}" (${nodeKey}) in template ${template.name}.`,
+      metadata: {
+        templateId: template.id,
+        versionId,
+        nodeKey,
+      },
+    });
+  }
+
+  for (const [nodeKey, previousNode] of previousNodeMap.entries()) {
+    if (nextNodeMap.has(nodeKey)) continue;
+    await logChaAudit({
+      orgId,
+      entityType: "FilingWorkflowNode",
+      entityId: `${versionId}:${nodeKey}`,
+      event: "FILING_WORKFLOW_NODE_DELETED",
+      actorId: userId,
+      remarks: `Deleted node "${previousNode.name}" (${nodeKey}) from template ${template.name}.`,
+      metadata: {
+        templateId: template.id,
+        versionId,
+        nodeKey,
+      },
+    });
+  }
+
+  for (const [edgeKey, edge] of nextEdgeMap.entries()) {
+    const previousEdge = previousEdgeMap.get(edgeKey);
+    const event = previousEdge ? "FILING_WORKFLOW_CONNECTOR_UPDATED" : "FILING_WORKFLOW_CONNECTOR_CREATED";
+    if (previousEdge && summarizeWorkflowEdgeForAudit(previousEdge) === summarizeWorkflowEdgeForAudit(edge)) {
+      continue;
+    }
+    await logChaAudit({
+      orgId,
+      entityType: "FilingWorkflowEdge",
+      entityId: `${versionId}:${edgeKey}`,
+      event,
+      actorId: userId,
+      remarks: `${previousEdge ? "Updated" : "Created"} connector ${edge.sourceKey} -> ${edge.targetKey} in template ${template.name}.`,
+      metadata: {
+        templateId: template.id,
+        versionId,
+        sourceKey: edge.sourceKey,
+        targetKey: edge.targetKey,
+      },
+    });
+  }
+
+  for (const [edgeKey, previousEdge] of previousEdgeMap.entries()) {
+    if (nextEdgeMap.has(edgeKey)) continue;
+    await logChaAudit({
+      orgId,
+      entityType: "FilingWorkflowEdge",
+      entityId: `${versionId}:${edgeKey}`,
+      event: "FILING_WORKFLOW_CONNECTOR_DELETED",
+      actorId: userId,
+      remarks: `Deleted connector ${previousEdge.sourceKey} -> ${previousEdge.targetKey} from template ${template.name}.`,
+      metadata: {
+        templateId: template.id,
+        versionId,
+        sourceKey: previousEdge.sourceKey,
+        targetKey: previousEdge.targetKey,
+      },
+    });
+  }
+
+  const previousStartNodeKey =
+    previousVersionDetail?.nodes.find((node) => node.isStart && node.isActive !== false)?.key ?? undefined;
+  const nextStartNodeKey =
+    normalizedNodes.find((node: any) => node.isStart && node.isActive !== false)?.key ?? undefined;
+  if (previousStartNodeKey !== nextStartNodeKey) {
+    await logChaAudit({
+      orgId,
+      entityType: "FilingWorkflowVersion",
+      entityId: versionId,
+      event: "FILING_WORKFLOW_START_NODE_CHANGED",
+      actorId: userId,
+      prevState: previousStartNodeKey,
+      newState: nextStartNodeKey,
+      remarks: `Changed start node from "${previousStartNodeKey || "none"}" to "${nextStartNodeKey || "none"}" in template ${template.name}.`,
+      metadata: {
+        templateId: template.id,
+        versionId,
+      },
+    });
+  }
+
   await logChaAudit({
     orgId,
     entityType: "FilingWorkflowTemplate",
@@ -9403,6 +9504,22 @@ export async function saveFilingWorkflowDraft(
     actorId: userId,
     remarks: `Saved draft version ${draftVersion.versionNumber} for template ${template.name}`,
   });
+
+  if (latestVersion?.isPublished && draftVersion.id !== latestVersion.id) {
+    await logChaAudit({
+      orgId,
+      entityType: "FilingWorkflowVersion",
+      entityId: draftVersion.id,
+      event: "FILING_WORKFLOW_VERSION_FORKED",
+      actorId: userId,
+      prevState: latestVersion.id,
+      newState: draftVersion.id,
+      remarks: `Forked published version ${latestVersion.versionNumber} into draft version ${draftVersion.versionNumber} for template ${template.name}.`,
+      metadata: {
+        templateId: template.id,
+      },
+    });
+  }
 
   // Return full detail so caller doesn't need a separate getFilingWorkflowDetails round trip
   return db.filingWorkflowTemplate.findFirstOrThrow({
@@ -9448,6 +9565,11 @@ export async function publishFilingWorkflow(userId: string, orgId: string, versi
 
   if (version.isPublished) {
     throw new Error("This version is already published.");
+  }
+
+  const activeNodeCount = version.nodes.filter((node) => node.isActive !== false).length;
+  if (activeNodeCount === 0) {
+    throw new Error("Validation Failed: The workflow must have at least one active node before publishing.");
   }
 
   const validation = validateFilingWorkflowDraft({
@@ -9589,39 +9711,6 @@ async function findActivePublishedFilingWorkflowVersionForJob(orgId: string, job
   });
 }
 
-function hasMaterialFilingWorkflowProgress(instance: {
-  status: string;
-  nodeRuns: Array<{ status: string }>;
-  responses: Array<{
-    isChecked: boolean;
-    remarks?: string | null;
-    fileKey?: string | null;
-    delayRemarks?: string | null;
-    completedAt?: Date | null;
-  }>;
-  attachments: Array<unknown>;
-}) {
-  if (instance.status !== "ACTIVE") {
-    return true;
-  }
-
-  if (instance.nodeRuns.some((run) => run.status === "COMPLETED")) {
-    return true;
-  }
-
-  if (instance.attachments.length > 0) {
-    return true;
-  }
-
-  return instance.responses.some((response) =>
-    response.isChecked ||
-    Boolean(response.completedAt) ||
-    Boolean(response.fileKey) ||
-    Boolean(response.remarks?.trim()) ||
-    Boolean(response.delayRemarks?.trim()),
-  );
-}
-
 const FILING_WORKFLOW_INSTANCE_INCLUDE = {
   template: true,
   version: {
@@ -9663,74 +9752,6 @@ const FILING_WORKFLOW_INSTANCE_INCLUDE = {
   queries: true,
 } as const;
 
-async function refreshFilingWorkflowInstanceToLatestVersion(
-  orgId: string,
-  jobId: string,
-  instance: Prisma.FilingWorkflowInstanceGetPayload<{ include: typeof FILING_WORKFLOW_INSTANCE_INCLUDE }>,
-  latestVersion: NonNullable<Awaited<ReturnType<typeof findActivePublishedFilingWorkflowVersionForJob>>>,
-) {
-  if (instance.versionId === latestVersion.id) {
-    return instance;
-  }
-
-  if (hasMaterialFilingWorkflowProgress(instance)) {
-    return instance;
-  }
-
-  const startNode = latestVersion.nodes.find((node) => node.isStart && node.isActive);
-  if (!startNode) {
-    return instance;
-  }
-
-  await db.$transaction(async (tx) => {
-    await tx.filingAttachment.deleteMany({ where: { instanceId: instance.id } });
-    await tx.filingChecklistResponse.deleteMany({ where: { instanceId: instance.id } });
-    await tx.filingNodeRun.deleteMany({ where: { instanceId: instance.id } });
-
-    await tx.filingWorkflowInstance.update({
-      where: { id: instance.id },
-      data: {
-        templateId: latestVersion.templateId,
-        versionId: latestVersion.id,
-        currentNodeKey: startNode.key,
-        status: "ACTIVE",
-      },
-    });
-
-    const restartedAt = await getNow();
-    const slaDueDate = await calculateSlaDueDate(restartedAt, startNode.slaDuration, startNode.slaUnit, orgId);
-    const nodeRun = await createFilingNodeRunWithResponses(tx, {
-      instanceId: instance.id,
-      node: startNode,
-      startedAt: restartedAt,
-      orgId,
-    });
-    await tx.filingNodeRun.update({
-      where: { id: nodeRun.id },
-      data: { slaDueDate },
-    });
-
-    await tx.chaAuditLog.create({
-      data: {
-        orgId,
-        jobId,
-        entityType: "FilingWorkflowInstance",
-        entityId: instance.id,
-        event: "FILING_WORKFLOW_TEMPLATE_REFRESHED",
-        actorId: "system",
-        prevState: instance.versionId,
-        newState: latestVersion.id,
-        remarks: `Workflow instance refreshed to latest published template: ${latestVersion.template.name}.`,
-      },
-    });
-  });
-
-  return db.filingWorkflowInstance.findUniqueOrThrow({
-    where: { jobId },
-    include: FILING_WORKFLOW_INSTANCE_INCLUDE,
-  });
-}
-
 export async function getFilingWorkflowInstance(orgId: string, jobId: string): Promise<any> {
   await resolveNotificationWorkflowNodes(orgId, jobId);
 
@@ -9760,25 +9781,12 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
     return null;
   }
 
-  const job = await db.chaJob.findFirst({
-    where: { id: jobId, orgId, deletedAt: null },
-    select: { jobTypeId: true },
-  });
-
-  let resolvedInstance = instance;
-  if (job) {
-    const latestVersion = await findActivePublishedFilingWorkflowVersionForJob(orgId, job.jobTypeId);
-    if (latestVersion) {
-      resolvedInstance = await refreshFilingWorkflowInstanceToLatestVersion(orgId, jobId, instance, latestVersion);
-    }
-  }
-
   // Fire-and-forget: mark overdue items without blocking the response
   syncOverdueFilingItems(orgId, jobId).catch(() => {});
   syncFilingWorkflowQueryReminders(orgId, jobId).catch(() => {});
 
-  const activeNodeRun = resolvedInstance.nodeRuns.find((run) => run.status === "ACTIVE") ?? null;
-  const overdueItems = resolvedInstance.responses
+  const activeNodeRun = instance.nodeRuns.find((run) => run.status === "ACTIVE") ?? null;
+  const overdueItems = instance.responses
     .filter((response) => response.nodeRunId === activeNodeRun?.id && !response.isChecked && response.dueAt && response.dueAt.getTime() < now.getTime())
     .map((response) => ({
       checklistItemId: response.checklistItemId,
@@ -9789,7 +9797,7 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
       delayRemarkedAt: response.delayRemarkedAt,
     }));
 
-  const queryIds = resolvedInstance.queries.map((query) => query.id);
+  const queryIds = instance.queries.map((query) => query.id);
   const queryLogs = queryIds.length
     ? await db.chaAuditLog.findMany({
         where: {
@@ -9832,12 +9840,77 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
   });
 
   return {
-    ...resolvedInstance,
+    ...instance,
     activeNodeRun,
     overdueItems,
     overdueCount: overdueItems.length,
     queryMessages,
   };
+}
+
+function cloneStarterFilingWorkflowSeed() {
+  return {
+    nodes: DEFAULT_FILING_WORKFLOW_SEED.nodes.map((node) => ({
+      ...node,
+      checklistItems: Array.isArray(node.checklistItems) ? node.checklistItems.map((item) => ({ ...item })) : [],
+      photoRequirements: Array.isArray(node.photoRequirements) ? node.photoRequirements.map((item) => ({ ...item })) : [],
+      fieldDefinitionsJson: Array.isArray(node.fieldDefinitionsJson) ? node.fieldDefinitionsJson.map((item) => ({ ...item })) : [],
+      documentRequirementsJson: Array.isArray(node.documentRequirementsJson) ? node.documentRequirementsJson.map((item) => ({ ...item })) : [],
+      conditionalSectionsJson: Array.isArray(node.conditionalSectionsJson)
+        ? node.conditionalSectionsJson.map((item) => ({
+            ...item,
+            unlocksDocuments: Array.isArray(item.unlocksDocuments) ? item.unlocksDocuments.map((entry) => ({ ...entry })) : [],
+            unlocksFields: Array.isArray(item.unlocksFields) ? item.unlocksFields.map((entry) => ({ ...entry })) : [],
+          }))
+        : [],
+    })),
+    edges: DEFAULT_FILING_WORKFLOW_SEED.edges.map((edge) => ({ ...edge })),
+  };
+}
+
+function summarizeWorkflowNodeForAudit(node: any) {
+  return JSON.stringify({
+    key: node.key,
+    name: node.name,
+    description: node.description ?? null,
+    category: node.category ?? null,
+    nodeType: node.nodeType ?? "CHECKLIST_NODE",
+    sectionKey: node.sectionKey ?? null,
+    sectionName: node.sectionName ?? null,
+    branchKey: node.branchKey ?? null,
+    branchName: node.branchName ?? null,
+    sortOrder: node.sortOrder ?? null,
+    isActive: node.isActive !== false,
+    isStart: !!node.isStart,
+    positionX: node.positionX ?? 0,
+    positionY: node.positionY ?? 0,
+    slaDuration: node.slaDuration ?? 2,
+    slaUnit: node.slaUnit ?? "BUSINESS_DAYS",
+    commentsRequired: !!node.commentsRequired,
+    canBeSkipped: !!node.canBeSkipped,
+    canBeRevisited: node.canBeRevisited !== false,
+    approvalRequired: !!node.approvalRequired,
+    approvalRoles: Array.isArray(node.approvalRoles) ? [...node.approvalRoles] : [],
+    requireAllMandatoryChecklistItems: node.requireAllMandatoryChecklistItems !== false,
+    requireMandatoryPhotos: !!node.requireMandatoryPhotos,
+    allowedRoles: Array.isArray(node.allowedRoles) ? [...node.allowedRoles] : [],
+    checklistItems: Array.isArray(node.checklistItems) ? node.checklistItems.map((item: any) => ({ ...item })) : [],
+    photoRequirements: Array.isArray(node.photoRequirements) ? node.photoRequirements.map((item: any) => ({ ...item })) : [],
+    fieldDefinitionsJson: normalizeFieldDefinitions(node.fieldDefinitionsJson ?? node.fieldDefinitions ?? []),
+    documentRequirementsJson: normalizeDocumentRequirements(node.documentRequirementsJson ?? node.documentRequirements ?? []),
+    conditionalSectionsJson: normalizeConditionalSections(node.conditionalSectionsJson ?? node.conditionalSections ?? []),
+  });
+}
+
+function summarizeWorkflowEdgeForAudit(edge: any) {
+  return JSON.stringify({
+    sourceKey: edge.sourceKey,
+    targetKey: edge.targetKey,
+    label: edge.label ?? null,
+    transitionType: edge.transitionType ?? "FORWARD",
+    requiresReason: !!edge.requiresReason,
+    transitionConfigJson: edge.transitionConfigJson ?? edge.transitionConfig ?? null,
+  });
 }
 
 export async function startFilingWorkflow(userId: string, orgId: string, jobId: string): Promise<any> {
@@ -9855,11 +9928,6 @@ export async function startFilingWorkflow(userId: string, orgId: string, jobId: 
   });
 
   let activeVersion = await findActivePublishedFilingWorkflowVersionForJob(orgId, job.jobTypeId);
-
-  if (!activeVersion) {
-    await ensureDefaultFilingWorkflows(orgId);
-    activeVersion = await findActivePublishedFilingWorkflowVersionForJob(orgId, job.jobTypeId);
-  }
 
   if (!activeVersion) {
     throw new Error("No active published filing workflow template found for this organisation.");

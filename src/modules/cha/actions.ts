@@ -560,21 +560,7 @@ export async function submitChecklistInternalDecisionAction(
     const { userId, orgId } = await getAuthAndVerify();
     const decisionValue = formData.get("decision");
     const remarksValue = formData.get("remarks");
-    const customerActionTypeValue = formData.get("customerActionType");
-    const customerMailSubjectValue = formData.get("customerMailSubject");
-    const customerMailBodyValue = formData.get("customerMailBody");
     const decision = decisionValue === "REJECTED" ? "REJECTED" : "APPROVED";
-
-    const customerMailAttachments = await Promise.all(
-      formData
-        .getAll("customerMailAttachments")
-        .filter((entry): entry is File => entry instanceof File && entry.size > 0)
-        .map(async (file) => ({
-          fileName: file.name,
-          mimeType: file.type || "application/octet-stream",
-          content: Buffer.from(await file.arrayBuffer()),
-        })),
-    );
 
     const result = await chaService.submitChecklistInternalDecision(
       userId,
@@ -583,22 +569,6 @@ export async function submitChecklistInternalDecisionAction(
       checklistId,
       decision,
       typeof remarksValue === "string" && remarksValue.trim() ? remarksValue.trim() : undefined,
-      customerActionTypeValue === "MAIL"
-        ? {
-            customerActionType: "MAIL",
-            customerMail: {
-              subject:
-                typeof customerMailSubjectValue === "string" && customerMailSubjectValue.trim()
-                  ? customerMailSubjectValue.trim()
-                  : `Checklist Approval Required - ${jobId}`,
-              body:
-                typeof customerMailBodyValue === "string" && customerMailBodyValue.trim()
-                  ? customerMailBodyValue.trim()
-                  : "Please review the attached approved checklist.",
-              additionalAttachments: customerMailAttachments,
-            },
-          }
-        : undefined,
     );
     revalidatePath(`/cha/jobs/${jobId}`);
     revalidatePath("/cha/approvals");
@@ -1219,6 +1189,26 @@ export async function saveFilingWorkflowDraftAction(
     return { ok: true, data: draft };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to save workflow draft" };
+  }
+}
+
+export async function loadStarterFilingWorkflowAction(
+  templateId: string | null,
+  data: {
+    name: string;
+    description?: string;
+    clearanceTypeId?: string | null;
+    filingFlowCategory?: string | null;
+  },
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.settings.manage");
+    const draft = await tracePerformance("action:loadStarterFilingWorkflowAction", () =>
+      chaService.loadStarterFilingWorkflowDraft(userId, orgId, templateId, data),
+    );
+    return { ok: true, data: draft };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to load starter workflow" };
   }
 }
 

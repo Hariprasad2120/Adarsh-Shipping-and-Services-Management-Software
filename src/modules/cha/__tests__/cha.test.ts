@@ -757,23 +757,8 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       checklist.id,
       "APPROVED",
       "All checks pass.",
-      {
-        customerActionType: "MAIL",
-        customerMail: {
-          subject: `Checklist Approval Required - ${job.jobNumber}`,
-          body: "Please review the attached approved checklist.",
-          additionalAttachments: [
-            {
-              fileName: "supporting-note.txt",
-              mimeType: "text/plain",
-              content: Buffer.from("supporting details"),
-            },
-          ],
-        },
-      },
     );
-    expect(firstCustomerApprovalResult.emailAutomation?.sent).toBe(false);
-    expect(firstCustomerApprovalResult.emailAutomation?.warning).toMatch(/no active customer approval email is configured/i);
+    expect(firstCustomerApprovalResult.outcome).toBe("CUSTOMER_APPROVAL");
 
     const checklistPendingCustomer = await db.chaChecklist.findUniqueOrThrow({ where: { id: checklist.id } });
     expect(checklistPendingCustomer.status).toBe("CUSTOMER_APPROVAL_PENDING");
@@ -1595,6 +1580,10 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
   it("12. should verify visual filing workflow and Section 49 lifecycle", async () => {
     // Delete any default templates to ensure only the custom one is active
     await db.filingWorkflowTemplate.deleteMany({ where: { orgId: org.id } });
+    await chaService.ensureSettingsAndDefaults(org.id);
+    const importJobType = await db.chaJobType.findFirstOrThrow({
+      where: { orgId: org.id, name: "Import Clearance" },
+    });
 
     // A. Create default filing workflow draft template
     const templateName = "Custom Test Filing Workflow " + Date.now();
@@ -1630,6 +1619,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
           name: "Second Check Node",
           description: "Final manager verification",
           category: "Compliance",
+          nodeType: "END",
           positionX: 300,
           positionY: 150,
           isStart: false,
@@ -1665,7 +1655,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       jobNumber: "CHA-FILING-TEST-101",
       title: "Customs filing blueprint test run",
       customerId: customer.id,
-      jobTypeId: jobTypeImport.id,
+      jobTypeId: importJobType.id,
       branchId: branch.id,
       priority: "MEDIUM",
       primaryOwnerId: ownerUser.id,
@@ -1926,7 +1916,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(syncedRequirement?.versions[0]?.validityDate?.toISOString()).toBe(validityDate.toISOString());
   }, 30000);
 
-  it("13. should switch active filing templates by scope and refresh untouched job instances", async () => {
+  it("13. should switch active filing templates by scope while preserving existing job versions", async () => {
     await chaService.ensureSettingsAndDefaults(org.id);
     const importJobType = await db.chaJobType.findFirstOrThrow({
       where: { orgId: org.id, name: "Import Clearance" },
@@ -1965,6 +1955,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
           name: "Legacy Finish",
           description: "Old final stage",
           category: "Operations",
+          nodeType: "END",
           positionX: 300,
           positionY: 100,
           isStart: false,
@@ -2035,6 +2026,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
           name: "Replacement Finish",
           description: "New final stage",
           category: "Compliance",
+          nodeType: "END",
           positionX: 320,
           positionY: 100,
           isStart: false,
@@ -2060,10 +2052,10 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(legacyTemplate?.isActive).toBe(false);
     expect(replacementTemplate?.isActive).toBe(true);
 
-    const refreshedInstance = await chaService.getFilingWorkflowInstance(org.id, existingJob.id);
-    expect(refreshedInstance.versionId).toBe(replacementPublished.id);
-    expect(refreshedInstance.currentNodeKey).toBe("replacement_start");
-    expect(refreshedInstance.activeNodeRun?.node?.name).toBe("Replacement Start");
+    const preservedInstance = await chaService.getFilingWorkflowInstance(org.id, existingJob.id);
+    expect(preservedInstance.versionId).toBe(legacyPublished.id);
+    expect(preservedInstance.currentNodeKey).toBe("legacy_start");
+    expect(preservedInstance.activeNodeRun?.node?.name).toBe("Legacy Start");
 
     const newJob = await chaService.createJob(ownerUser.id, org.id, {
       jobNumber: `CHA-FILING-NEW-${Date.now()}`,
@@ -2085,6 +2077,119 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     const startedReplacementInstance = await chaService.startFilingWorkflow(ownerUser.id, org.id, newJob.id);
     expect(startedReplacementInstance.versionId).toBe(replacementPublished.id);
     expect(startedReplacementInstance.currentNodeKey).toBe("replacement_start");
+  }, 30000);
+
+  it("13.1. should persist bill_filing deletion and start new jobs from the replacement start node", async () => {
+    await db.filingWorkflowInstance.deleteMany({ where: { job: { orgId: org.id } } });
+    await db.filingWorkflowTemplate.deleteMany({ where: { orgId: org.id } });
+    const importJobType = await db.chaJobType.findFirstOrThrow({
+      where: { orgId: org.id, name: "Import Clearance" },
+    });
+
+    const initialDraft = await chaService.saveFilingWorkflowDraft(ownerUser.id, org.id, null, {
+      name: `Bill Filing Delete ${Date.now()}`,
+      description: "Delete bill filing and keep replacement node as the only start node",
+      nodes: [
+        {
+          key: "bill_filing",
+          name: "Bill Filing",
+          description: "Original bill filing node",
+          category: "Operations",
+          positionX: 100,
+          positionY: 100,
+          isStart: true,
+          checklistItems: [],
+          fieldDefinitionsJson: [
+            { key: "bill_number", label: "Bill Filing Number", type: "TEXT", required: true },
+          ],
+          documentRequirementsJson: [
+            { key: "bill_document", label: "Bill Document", required: true },
+          ],
+          conditionalSectionsJson: [],
+          photoRequirements: [],
+        },
+        {
+          key: "replacement_start",
+          name: "Replacement Start",
+          description: "Replacement start node",
+          category: "Operations",
+          positionX: 340,
+          positionY: 100,
+          isStart: false,
+          checklistItems: [{ label: "Replacement checklist", isMandatory: true, allowsUpload: false }],
+          photoRequirements: [],
+        },
+      ],
+      edges: [{ sourceKey: "bill_filing", targetKey: "replacement_start", label: "Next" }],
+    });
+
+    const updatedDraft = await chaService.saveFilingWorkflowDraft(ownerUser.id, org.id, initialDraft.id, {
+      name: initialDraft.name,
+      description: initialDraft.description || "",
+      nodes: [
+        {
+          key: "replacement_start",
+          name: "Replacement Start",
+          description: "Replacement start node",
+          category: "Operations",
+          positionX: 340,
+          positionY: 100,
+          isStart: true,
+          checklistItems: [{ label: "Replacement checklist", isMandatory: true, allowsUpload: false }],
+          photoRequirements: [],
+        },
+      ],
+      edges: [],
+    });
+
+    const reloadedDraft = await chaService.getFilingWorkflowDetails(ownerUser.id, org.id, updatedDraft.id);
+    expect(reloadedDraft.versions[0]?.nodes.map((node: any) => node.key)).toEqual(["replacement_start"]);
+    expect(reloadedDraft.versions[0]?.edges).toHaveLength(0);
+
+    const published = await chaService.publishFilingWorkflow(ownerUser.id, org.id, updatedDraft.versions?.[0]?.id!);
+    const publishedDetails = await chaService.getFilingWorkflowDetails(ownerUser.id, org.id, published.templateId);
+    expect(publishedDetails.versions[0]?.nodes.some((node: any) => node.key === "bill_filing")).toBe(false);
+
+    const job = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: `CHA-FILING-DELETE-${Date.now()}`,
+      title: "Bill filing deletion regression",
+      customerId: customer.id,
+      jobTypeId: importJobType.id,
+      branchId: branch.id,
+      priority: "MEDIUM",
+      primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
+      assignments: [{ userId: ownerUser.id, responsibility: "OPERATIONS" }],
+    });
+
+    await db.chaJob.update({
+      where: { id: job.id },
+      data: { stage: "FILING" },
+    });
+
+    const instance = await chaService.startFilingWorkflow(ownerUser.id, org.id, job.id);
+    expect(instance.currentNodeKey).toBe("replacement_start");
+    expect(instance.activeNodeRun?.node?.key).toBe("replacement_start");
+  }, 30000);
+
+  it("13.2. should save and reload an empty filing workflow draft without restoring starter nodes", async () => {
+    await db.filingWorkflowInstance.deleteMany({ where: { job: { orgId: org.id } } });
+    await db.filingWorkflowTemplate.deleteMany({ where: { orgId: org.id } });
+
+    const emptyDraft = await chaService.saveFilingWorkflowDraft(ownerUser.id, org.id, null, {
+      name: `Empty Filing Draft ${Date.now()}`,
+      description: "Empty draft regression",
+      nodes: [],
+      edges: [],
+    });
+
+    const details = await chaService.getFilingWorkflowDetails(ownerUser.id, org.id, emptyDraft.id);
+    expect(details.versions[0]?.nodes).toHaveLength(0);
+    expect(details.versions[0]?.edges).toHaveLength(0);
+
+    await expect(
+      chaService.publishFilingWorkflow(ownerUser.id, org.id, emptyDraft.versions?.[0]?.id!),
+    ).rejects.toThrow(/Validation Failed/);
   }, 30000);
 
   it("14. should auto-send notifications from notification nodes and advance to the next stage", async () => {

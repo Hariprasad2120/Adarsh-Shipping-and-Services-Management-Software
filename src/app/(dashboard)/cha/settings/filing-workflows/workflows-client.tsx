@@ -202,9 +202,9 @@ function createDocumentRequirementDraft(
 
 function createBillFilingFieldDefinitions() {
   return [
-    createFieldDefinitionDraft("Bill Number", "bill_number", "TEXT", {
-      placeholder: "Enter bill number",
-      helperText: "Capture the Bill of Entry or Shipping Bill number for this filing stage.",
+    createFieldDefinitionDraft("Bill Filing Number", "bill_number", "TEXT", {
+      placeholder: "Enter bill filing number",
+      helperText: "Capture the filing reference number for this stage.",
     }),
     createFieldDefinitionDraft("Bill Filing Date", "bill_filing_date", "DATE", {
       placeholder: "Select bill filing date",
@@ -354,23 +354,34 @@ function buildValidation(nodes: NodeDraft[], edges: EdgeDraft[]) {
   const errors: string[] = [];
   const warnings: string[] = [];
   const edgeSet = new Set<string>();
-
-  if (activeNodes.length === 0) {
-    errors.push("At least one active node is required.");
-  }
+  const seenKeys = new Set<string>();
 
   const startNodes = activeNodes.filter((node) => node.isStart);
-  if (startNodes.length !== 1) {
+  if (activeNodes.length > 0 && startNodes.length !== 1) {
     errors.push(startNodes.length === 0 ? "Exactly one start node is required." : "Only one start node can be active.");
   }
 
   for (const node of activeNodes) {
+    if (!node.key.trim()) {
+      errors.push(`Node ${node.name || "untitled"} must have a key.`);
+    }
+    if (seenKeys.has(node.key)) {
+      errors.push(`Duplicate node key ${node.key} detected.`);
+    } else {
+      seenKeys.add(node.key);
+    }
     if (!node.name.trim()) {
       errors.push(`Node ${node.key} must have a name.`);
     }
     const activeItems = node.checklistItems.filter((item) => item.isActive);
-    if (node.nodeType === "CHECKLIST_NODE" && activeItems.length === 0) {
-      errors.push(`Checklist node ${node.name || node.key} must have at least one active checklist item.`);
+    if (
+      node.nodeType === "CHECKLIST_NODE" &&
+      activeItems.length === 0 &&
+      node.fieldDefinitions.length === 0 &&
+      node.documentRequirements.length === 0 &&
+      node.conditionalSections.length === 0
+    ) {
+      errors.push(`Checklist node ${node.name || node.key} must have at least one active checklist item, field, document, or conditional section.`);
     }
     if (node.nodeType === "NOTIFICATION" && activeItems.length > 0) {
       warnings.push(`Notification node ${node.name || node.key} ignores checklist items.`);
@@ -1005,7 +1016,7 @@ function buildChaFilingBlueprintDraft() {
   const billFiling = addStage("Bill Filing", "bill_filing", startX, startY, true, {
     sectionKey: "bill_filing",
     sectionName: "Bill Filing",
-    description: "Capture bill number, filing date, bill document upload, and customs query handling before choosing the filing path.",
+    description: "Capture the bill filing number, filing date, configured uploads, and optional customs query handling before choosing the filing path.",
     fieldDefinitions: createBillFilingFieldDefinitions(),
     documentRequirements: createBillFilingDocumentRequirements(),
     conditionalSections: [createQueryProcessingSection()],
@@ -1369,6 +1380,37 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     }
   };
 
+  const upsertTemplateSummary = (data: any) => {
+    const latest = data?.versions?.[0] ?? null;
+    const summary = {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      clearanceType: data.clearanceType ?? null,
+      versions: latest
+        ? [{
+            id: latest.id,
+            versionNumber: latest.versionNumber,
+            isPublished: latest.isPublished,
+            isActive: latest.isActive,
+            createdAt: latest.createdAt,
+            updatedAt: latest.updatedAt,
+            createdById: latest.createdById,
+          }]
+        : [],
+    };
+
+    setTemplates((prev) => {
+      const existingIndex = prev.findIndex((entry) => entry.id === summary.id);
+      if (existingIndex === -1) {
+        return [summary, ...prev];
+      }
+      const next = [...prev];
+      next[existingIndex] = { ...next[existingIndex], ...summary };
+      return next;
+    });
+  };
+
   const applyTemplateData = (data: any) => {
     const latest = data.versions?.[0] ?? null;
 
@@ -1376,24 +1418,27 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     // restore, or infer nodes here. A saved empty graph must remain empty.
     const persistedNodes = Array.isArray(latest?.nodes) ? latest.nodes : [];
     const persistedEdges = Array.isArray(latest?.edges) ? latest.edges : [];
-
-    const expanded = expandChecklistNodesForCanvas(persistedNodes, persistedEdges);
-    const arrangedNodes = expanded.didExpand
-      ? autoArrangeNodes(expanded.nodes, expanded.edges)
-      : expanded.nodes;
+    const normalizedNodes = persistedNodes.map(normalizeNode);
+    const normalizedEdges = persistedEdges.map((edge: any, index: number) => ({
+      id: edge.id || createId(`edge_${index}`),
+      sourceKey: edge.sourceKey,
+      targetKey: edge.targetKey,
+      label: edge.label || null,
+    }));
 
     setSelectedClearanceTypeId(data.clearanceType?.id || data.clearanceTypeId || "");
     setActiveVersion(latest);
-    setNodes(arrangedNodes);
-    setEdges(expanded.edges);
+    setNodes(normalizedNodes);
+    setEdges(normalizedEdges);
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
     setPropertiesOpen(false);
     setZoom(1);
     setPan({ x: 0, y: 0 });
+    upsertTemplateSummary(data);
 
     // Even an empty persisted version is a valid saved state.
-    setLoadedSnapshot(serializeWorkflowSnapshot(arrangedNodes, expanded.edges));
+    setLoadedSnapshot(serializeWorkflowSnapshot(normalizedNodes, normalizedEdges));
   };
 
   const loadTemplateDetails = async (templateId: string) => {
@@ -1410,9 +1455,14 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
   };
 
   useEffect(() => {
-    if (selectedTemplateId) {
-      loadTemplateDetails(selectedTemplateId);
+    if (!selectedTemplateId) {
+      setActiveVersion(null);
+      setNodes([]);
+      setEdges([]);
+      setLoadedSnapshot(serializeWorkflowSnapshot([], []));
+      return;
     }
+    loadTemplateDetails(selectedTemplateId);
   }, [selectedTemplateId]);
 
   useEffect(() => {
@@ -1618,7 +1668,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     setEdges((prev) => prev.map((edge) => (edge.id === selectedEdgeId ? updater(edge) : edge)));
   };
 
-  const loadChaBlueprintDraft = () => {
+  const loadChaBlueprintDraft = async () => {
     if (activeVersion?.isPublished) {
       toast.error("Published versions are read-only. Fork a new draft first.");
       return;
@@ -1626,15 +1676,17 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     if (hasUnsavedChanges && !window.confirm("Replace the current draft canvas with the editable CHA blueprint starter? Unsaved canvas changes will be overwritten.")) {
       return;
     }
-    const blueprint = buildChaFilingBlueprintDraft();
-    setNodes(blueprint.nodes);
-    setEdges(blueprint.edges);
-    setSelectedNodeId(null);
-    setSelectedEdgeId(null);
-    setPropertiesOpen(false);
-    setZoom(0.78);
-    setPan({ x: 60, y: 20 });
-    toast.success("Starter workflow loaded into this draft. Save to persist it.");
+    const payload = buildTemplatePayload();
+    const result = await actions.loadStarterFilingWorkflowAction(selectedTemplateId, payload);
+    if (!result.ok) {
+      toast.error(result.error || "Failed to load starter workflow.");
+      return;
+    }
+    if (result.data) {
+      setSelectedTemplateId(result.data.id);
+      applyTemplateData(result.data);
+    }
+    toast.success("Starter workflow loaded.");
   };
 
   const addChecklistItem = () => {
@@ -1727,13 +1779,21 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     }));
   };
 
-  const saveDraft = async (): Promise<string | null> => {
-    if (!selectedTemplateId) return null;
+  const buildTemplatePayload = () => {
     const template = templates.find((entry) => entry.id === selectedTemplateId);
-    const result = await actions.saveFilingWorkflowDraftAction(selectedTemplateId, {
-      name: template?.name || "Filing Workflow",
+    return {
+      name: template?.name || `Filing Workflow ${templates.length + 1}`,
       description: template?.description || "",
       clearanceTypeId: selectedClearanceTypeId || null,
+    };
+  };
+
+  const saveDraft = async (): Promise<string | null> => {
+    const payload = buildTemplatePayload();
+    const result = await actions.saveFilingWorkflowDraftAction(selectedTemplateId, {
+      name: payload.name,
+      description: payload.description,
+      clearanceTypeId: payload.clearanceTypeId,
       nodes,
       edges,
     });
@@ -1746,9 +1806,12 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     toast.success("Draft saved.");
 
     if (result.data) {
+      setSelectedTemplateId(result.data.id);
       applyTemplateData(result.data);
     } else {
-      await loadTemplateDetails(selectedTemplateId);
+      if (selectedTemplateId) {
+        await loadTemplateDetails(selectedTemplateId);
+      }
     }
 
     return savedVersionId;
@@ -1766,11 +1829,11 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     setSelectedEdgeId(null);
     setPropertiesOpen(false);
 
-    const template = templates.find((entry) => entry.id === selectedTemplateId);
+    const payload = buildTemplatePayload();
     const result = await actions.saveFilingWorkflowDraftAction(selectedTemplateId, {
-      name: template?.name || "Filing Workflow",
-      description: template?.description || "",
-      clearanceTypeId: selectedClearanceTypeId || null,
+      name: payload.name,
+      description: payload.description,
+      clearanceTypeId: payload.clearanceTypeId,
       nodes,
       edges: nextEdges,
     });
@@ -1820,12 +1883,11 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
   };
 
   const forkDraft = async () => {
-    if (!selectedTemplateId) return;
-    const template = templates.find((entry) => entry.id === selectedTemplateId);
+    const payload = buildTemplatePayload();
     const result = await actions.saveFilingWorkflowDraftAction(selectedTemplateId, {
-      name: template?.name || "Filing Workflow",
-      description: template?.description || "",
-      clearanceTypeId: selectedClearanceTypeId || null,
+      name: payload.name,
+      description: payload.description,
+      clearanceTypeId: payload.clearanceTypeId,
       nodes: nodes.map((node) => ({
         ...node,
         id: undefined,
@@ -1842,9 +1904,12 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     }
     toast.success("New draft created from published version.");
     if (result.data) {
+      setSelectedTemplateId(result.data.id);
       applyTemplateData(result.data);
     } else {
-      await loadTemplateDetails(selectedTemplateId);
+      if (selectedTemplateId) {
+        await loadTemplateDetails(selectedTemplateId);
+      }
     }
   };
 
@@ -1871,9 +1936,10 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={selectedTemplateId || ""}
-            onChange={(event) => setSelectedTemplateId(event.target.value)}
+            onChange={(event) => setSelectedTemplateId(event.target.value || null)}
             className="min-w-44 text-sm"
           >
+            <option value="">New Workflow Draft</option>
             {templates.map((template) => (
               <option key={template.id} value={template.id}>
                 {template.name}
@@ -1939,12 +2005,12 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="rounded-xl border border-outline-variant bg-surface p-3 text-xs text-on-surface-variant">
-                  Load the default combined Import Bill of Entry + Export Shipping Bill workflow as editable nodes. After loading, every stage, checklist, deadline, upload slot, and connector can be changed.
+                  Load the explicit starter workflow as editable nodes. After loading, every stage, checklist, deadline, upload slot, and connector can be changed.
                   <span className="mt-2 block">Processor roles are empty by default, so anyone with job access can work the filing node. Available roles: {availableRoles.length || 0}.</span>
                 </div>
-                <Button className="w-full" onClick={loadChaBlueprintDraft} disabled={activeVersion?.isPublished}>
+                <Button className="w-full" onClick={() => void loadChaBlueprintDraft()} disabled={activeVersion?.isPublished}>
                   <Workflow size={16} />
-                  Load Default BE + SB Workflow
+                  Load Starter Workflow
                 </Button>
                 <div className="space-y-1.5">
                   <label className="ds-label block">Node Name</label>
@@ -2368,7 +2434,22 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 </div>
                 <div className="space-y-1.5">
                   <label className="ds-label block">Key</label>
-                  <input value={selectedNode.key} onChange={(event) => updateSelectedNode((node) => ({ ...node, key: slugify(event.target.value) }))} className="w-full text-sm ds-numeric" />
+                  <input
+                    value={selectedNode.key}
+                    onChange={(event) => {
+                      const nextKey = slugify(event.target.value);
+                      const previousKey = selectedNode.key;
+                      updateSelectedNode((node) => ({ ...node, key: nextKey }));
+                      if (nextKey !== previousKey) {
+                        setEdges((prev) => prev.map((edge) => ({
+                          ...edge,
+                          sourceKey: edge.sourceKey === previousKey ? nextKey : edge.sourceKey,
+                          targetKey: edge.targetKey === previousKey ? nextKey : edge.targetKey,
+                        })));
+                      }
+                    }}
+                    className="w-full text-sm ds-numeric"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label className="ds-label block">Category</label>

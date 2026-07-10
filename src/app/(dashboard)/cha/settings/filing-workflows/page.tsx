@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/rbac";
-import { ensureDefaultFilingWorkflows, listFilingWorkflows } from "@/modules/cha/service";
+import { listFilingWorkflows } from "@/modules/cha/service";
 import { db } from "@/lib/db";
 import { WorkflowsClient } from "./workflows-client";
 
@@ -14,9 +14,6 @@ export default async function FilingWorkflowsPage() {
 
   // Check RBAC permission for settings management
   await requirePermission(session.user.id, "cha.settings.manage");
-
-  // Seed default filing workflow templates if none exist yet (lightweight: single count query)
-  await ensureDefaultFilingWorkflows(orgId);
 
   // Fetch workflow templates
   const templates = await listFilingWorkflows(orgId);

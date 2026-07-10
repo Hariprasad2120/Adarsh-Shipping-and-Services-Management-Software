@@ -64,7 +64,6 @@
     containerNumber: string;
   };
 
-  type CustomerMailActionType = "MAIL";
 
   type AdditionalDataDraft = {
     vesselInwardDate: string;
@@ -95,6 +94,13 @@
 
   function getAdditionalDataDraftStorageKey(jobId: string) {
     return `cha_additional_data_draft:${jobId}`;
+  }
+
+  function formatSummaryList(items: string[]) {
+    if (items.length === 0) return "";
+    if (items.length === 1) return items[0];
+    if (items.length === 2) return `${items[0]} and ${items[1]}`;
+    return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
   }
 
   function getFilingNodeDraftStorageKey(jobId: string, nodeRunId: string) {
@@ -250,15 +256,15 @@
     aside?: React.ReactNode;
   }) {
     return (
-      <div className="space-y-1">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1 space-y-1">
           <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
             <span className="h-7 rounded-sm bg-[#00cec4]" aria-hidden="true" />
             <h3 className="ds-h3 text-on-surface">{title}</h3>
           </div>
-          {aside ? <div className="shrink-0">{aside}</div> : null}
+          {description ? <p className="pl-[17px] text-xs text-on-surface-variant">{description}</p> : null}
         </div>
-        {description ? <p className="pl-[17px] text-xs text-on-surface-variant">{description}</p> : null}
+        {aside ? <div className="shrink-0">{aside}</div> : null}
       </div>
     );
   }
@@ -293,6 +299,42 @@
           }`}
         >
           <h4 className="ds-label !text-[#fb923c]">{title}</h4>
+          <p className="mt-2 text-sm leading-relaxed text-on-surface">{description}</p>
+        </div>
+      </div>
+    );
+  }
+
+  function InfoNoteToggle({
+    title,
+    description,
+    open,
+    onToggle,
+  }: {
+    title: string;
+    description: string;
+    open: boolean;
+    onToggle: () => void;
+  }) {
+    return (
+      <div className="group/info-note relative shrink-0">
+        <button
+          type="button"
+          aria-label={title}
+          aria-expanded={open}
+          onClick={onToggle}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#00cec4]/35 bg-[#00cec4]/10 text-[#00cec4] shadow-sm transition-all duration-200 hover:-translate-y-px hover:shadow-[0_0_18px_rgba(0,206,196,0.28)]"
+        >
+          <AlertCircle size={20} strokeWidth={2.2} />
+        </button>
+        <div
+          className={`card-top-accent absolute right-0 top-full z-20 mt-2 w-[20rem] max-w-[calc(100vw-2rem)] rounded-xl border border-[#00cec4]/30 bg-surface px-4 py-3 shadow-[0_20px_44px_-26px_rgba(0,206,196,0.45)] transition-all duration-200 ${
+            open
+              ? "pointer-events-auto translate-y-0 opacity-100"
+              : "pointer-events-none translate-y-1 opacity-0 group-hover/info-note:pointer-events-auto group-hover/info-note:translate-y-0 group-hover/info-note:opacity-100"
+          }`}
+        >
+          <h4 className="ds-label !text-[#00cec4]">{title}</h4>
           <p className="mt-2 text-sm leading-relaxed text-on-surface">{description}</p>
         </div>
       </div>
@@ -548,7 +590,6 @@
     const [checklistRemarks, setChecklistRemarks] = useState("");
     const [internalApprovalRemarks, setInternalApprovalRemarks] = useState("");
     const [customerApprovalRemarks, setCustomerApprovalRemarks] = useState("");
-    const [customerMailActionType, setCustomerMailActionType] = useState<CustomerMailActionType>("MAIL");
     const [customerMailSubject, setCustomerMailSubject] = useState("");
     const [customerMailBody, setCustomerMailBody] = useState("");
     const [customerMailAttachments, setCustomerMailAttachments] = useState<File[]>([]);
@@ -578,13 +619,17 @@
   const [filingQueryStatusUpdates, setFilingQueryStatusUpdates] = useState<Record<string, string>>({});
   const [filingQueryResponderNames, setFilingQueryResponderNames] = useState<Record<string, string>>({});
   const [executionTimelineModalOpen, setExecutionTimelineModalOpen] = useState(false);
-  const [queryManagementModalOpen, setQueryManagementModalOpen] = useState(false);
+  const [queryProcessingPanelExpanded, setQueryProcessingPanelExpanded] = useState(false);
     const [goBackOpen, setGoBackOpen] = useState(false);
     const [goBackReason, setGoBackReason] = useState("");
     const [nodeRemarks, setNodeRemarks] = useState("");
     const [selectedNextNodeKey, setSelectedNextNodeKey] = useState<string>("");
     const filingDraftHydratedForRef = useRef<string | null>(null);
     const filingDraftStorageKey = activeNodeRun?.id ? getFilingNodeDraftStorageKey(job.id, activeNodeRun.id) : null;
+    const activeWorkflowVersionNode = useMemo(() => {
+      if (!activeNodeRun?.nodeKey) return null;
+      return filingInstance?.version?.nodes?.find((node: any) => node.key === activeNodeRun.nodeKey) ?? null;
+    }, [activeNodeRun?.nodeKey, filingInstance?.version?.nodes]);
 
     useEffect(() => {
       setBillOfEntryNumber(job.filing?.billOfEntryNumber || "");
@@ -680,6 +725,23 @@
       () => filingInstance?.attachments?.filter((attachment: any) => attachment.nodeRunId === activeNodeRun?.id) || [],
       [activeNodeRun?.id, filingInstance?.attachments],
     );
+    const activeNodeDocumentAttachmentsByKey = useMemo(() => {
+      const map = new Map<string, any>();
+      for (const attachment of activeNodeAttachments) {
+        if (!attachment.documentRequirementKey) continue;
+        const current = map.get(attachment.documentRequirementKey);
+        if (!current) {
+          map.set(attachment.documentRequirementKey, attachment);
+          continue;
+        }
+        const currentUploadedAt = current.uploadedAt ? new Date(current.uploadedAt).getTime() : 0;
+        const nextUploadedAt = attachment.uploadedAt ? new Date(attachment.uploadedAt).getTime() : 0;
+        if (nextUploadedAt >= currentUploadedAt) {
+          map.set(attachment.documentRequirementKey, attachment);
+        }
+      }
+      return map;
+    }, [activeNodeAttachments]);
     const activeChecklistItems = useMemo(
       () => activeNodeRun?.node?.checklistItems?.filter((item: any) => item.isActive !== false) || [],
       [activeNodeRun],
@@ -737,35 +799,82 @@
       () => activeNodeQueries.filter((query: any) => query.status !== "CLOSED"),
       [activeNodeQueries],
     );
-    const isBillFilingNode = useMemo(() => {
-      if (!activeNodeRun?.node) return false;
-      const fieldKeys = (activeNodeRun.node.fieldDefinitionsJson || []).map((field: any) => field.key);
-      const documentKeys = (activeNodeRun.node.documentRequirementsJson || []).map((document: any) => document.key);
-      return fieldKeys.includes("bill_number") && fieldKeys.includes("bill_filing_date") && documentKeys.includes("bill_document");
-    }, [activeNodeRun]);
+    const activeNodeFieldDefinitions = useMemo(() => {
+      const raw =
+        activeNodeRun?.node?.fieldDefinitionsJson ??
+        activeNodeRun?.node?.fieldDefinitions ??
+        activeWorkflowVersionNode?.fieldDefinitionsJson ??
+        activeWorkflowVersionNode?.fieldDefinitions ??
+        [];
+      return Array.isArray(raw) ? raw : [];
+    }, [
+      activeNodeRun?.node?.fieldDefinitions,
+      activeNodeRun?.node?.fieldDefinitionsJson,
+      activeWorkflowVersionNode?.fieldDefinitions,
+      activeWorkflowVersionNode?.fieldDefinitionsJson,
+    ]);
+    const activeNodeConditionalSections = useMemo(() => {
+      const raw =
+        activeNodeRun?.node?.conditionalSectionsJson ??
+        activeNodeRun?.node?.conditionalSections ??
+        activeWorkflowVersionNode?.conditionalSectionsJson ??
+        activeWorkflowVersionNode?.conditionalSections ??
+        [];
+      return Array.isArray(raw) ? raw : [];
+    }, [
+      activeNodeRun?.node?.conditionalSections,
+      activeNodeRun?.node?.conditionalSectionsJson,
+      activeWorkflowVersionNode?.conditionalSections,
+        activeWorkflowVersionNode?.conditionalSectionsJson,
+    ]);
+    const visibleNodeConditionalSections = useMemo(
+      () =>
+        activeNodeConditionalSections.filter((section: any) => {
+          const key = typeof section?.key === "string" ? section.key.trim().toLowerCase() : "";
+          const label = typeof section?.label === "string" ? section.label.trim().toLowerCase() : "";
+          return key !== "query_processing" && key !== "section49" && label !== "customs query" && label !== "sec 49";
+        }),
+      [activeNodeConditionalSections],
+    );
+    const activeNodeDocumentRequirements = useMemo(() => {
+      const raw =
+        activeNodeRun?.node?.documentRequirementsJson ??
+        activeNodeRun?.node?.documentRequirements ??
+        activeWorkflowVersionNode?.documentRequirementsJson ??
+        activeWorkflowVersionNode?.documentRequirements ??
+        [];
+      return Array.isArray(raw) ? raw : [];
+    }, [
+      activeNodeRun?.node?.documentRequirements,
+      activeNodeRun?.node?.documentRequirementsJson,
+      activeWorkflowVersionNode?.documentRequirements,
+      activeWorkflowVersionNode?.documentRequirementsJson,
+    ]);
+    const activeNodeFieldKeys = useMemo(
+      () => new Set(activeNodeFieldDefinitions.map((field: any) => field.key)),
+      [activeNodeFieldDefinitions],
+    );
     const activeNodeDisplayName = activeNodeRun?.node?.name || "";
-    const billFilingDocumentUploaded = activeNodeAttachments.some(
-      (attachment: any) => attachment.documentRequirementKey === "bill_document",
+    const hasShipmentBillNumberField = activeNodeFieldKeys.has("bill_number");
+    const activeNodeHasConditionalFields = visibleNodeConditionalSections.some(
+      (section: any) => Array.isArray(section?.unlocksFields) && section.unlocksFields.length > 0,
     );
-    const billFilingDocumentAttachment = activeNodeAttachments.find(
-      (attachment: any) => attachment.documentRequirementKey === "bill_document",
+    const activeNodeHasConditionalDocuments = visibleNodeConditionalSections.some(
+      (section: any) => Array.isArray(section?.unlocksDocuments) && section.unlocksDocuments.length > 0,
     );
-    const billFilingNumberEntered = !!filingFieldValues.bill_number?.trim();
-    const billFilingDateEntered = !!filingFieldValues.bill_filing_date?.trim();
-    const billFilingReadyForRouting =
-      !isBillFilingNode || (billFilingDocumentUploaded && billFilingNumberEntered && billFilingDateEntered);
     const queryProcessingSection = useMemo(() => {
-      const sections = Array.isArray(activeNodeRun?.node?.conditionalSectionsJson) ? activeNodeRun.node.conditionalSectionsJson : [];
       return (
-        sections.find((section: any) => section?.key === "query_processing") ||
-        sections.find((section: any) => section?.config?.moduleType === "CUSTOMS_QUERY_PROCESSING") ||
+        activeNodeConditionalSections.find((section: any) => section?.key === "query_processing") ||
+        activeNodeConditionalSections.find((section: any) => section?.config?.moduleType === "CUSTOMS_QUERY_PROCESSING") ||
         null
       );
-    }, [activeNodeRun?.node?.conditionalSectionsJson]);
-    const queryProcessingEnabled = !!queryProcessingSection;
+    }, [activeNodeConditionalSections]);
+    const queryProcessingEnabled = Boolean(queryProcessingSection || activeNodeRun);
+    const queryProcessingToggleEnabled = Boolean(filingToggleStateDetails.query_processing?.isEnabled);
     const queryProcessingState = (filingToggleStateDetails.query_processing?.state as Record<string, unknown> | null) ?? null;
+    const queryProcessingActive = queryProcessingEnabled && queryProcessingToggleEnabled;
     const queryProcessingStage = useMemo(() => {
-      if (!queryProcessingEnabled) return "DISABLED";
+      if (!queryProcessingActive) return "DISABLED";
       const persistedStage =
         typeof queryProcessingState?.stage === "string" && queryProcessingState.stage.trim()
           ? queryProcessingState.stage.trim().toUpperCase()
@@ -780,7 +889,7 @@
         return "CLEARED";
       }
       return "AWAITING_QUERY_DECISION";
-    }, [activeNodeOpenQueries.length, activeNodeQueries, queryProcessingEnabled, queryProcessingState]);
+    }, [activeNodeOpenQueries.length, activeNodeQueries, queryProcessingActive, queryProcessingState]);
     const primaryQuerySummary = activeNodeOpenQueries[0] || activeNodeQueries[0] || null;
     const querySummaryStatusLabel =
       queryProcessingStage === "RESPONDED"
@@ -792,25 +901,17 @@
             : queryProcessingStage === "NO_QUERY"
               ? "No Query Raised"
               : "Pending Decision";
-    const billFilingCanChooseQuery = queryProcessingEnabled && billFilingReadyForRouting;
     const queryProcessingResolved =
-      !queryProcessingEnabled || queryProcessingStage === "NO_QUERY" || queryProcessingStage === "CLEARED";
+      !queryProcessingActive || queryProcessingStage === "NO_QUERY" || queryProcessingStage === "CLEARED";
     const isSavingQueryProcessingDecision = loading === "filing-toggle-query_processing";
     const filingPrimaryColumnClass = "w-full max-w-[680px] xl:col-start-1";
-    const filingCompletionColumnClass = isBillFilingNode
-      ? filingPrimaryColumnClass
-      : "w-full space-y-4 xl:col-start-2 xl:row-start-1 xl:self-start";
-    const queryProcessingWarning = !queryProcessingEnabled
+    const filingCompletionColumnClass = "w-full space-y-4 xl:col-start-2 xl:self-start";
+    const queryProcessingWarning = !queryProcessingActive
       ? null
-      : !billFilingCanChooseQuery
+      : !queryProcessingResolved
         ? {
-            title: "Query Processing Locked",
-            description: "Complete the bill number and bill document upload first to start query processing.",
-          }
-        : !queryProcessingResolved
-          ? {
-              title:
-                activeNodeOpenQueries.length > 0
+            title:
+              activeNodeOpenQueries.length > 0
                   ? "Active Query Pending"
                   : queryProcessingStage === "RESPONDED"
                     ? "Awaiting Customs Outcome"
@@ -822,38 +923,40 @@
                     ? "Await the customs outcome and mark the query cleared once the offline response is accepted."
                     : "Record the customs query outcome before moving to the next step.",
             }
-          : null;
-    const billFilingWarning = !isBillFilingNode
-      ? null
-      : !billFilingNumberEntered && !billFilingDateEntered && !billFilingDocumentUploaded
-        ? {
-            title: "Bill Filing Incomplete",
-            description: "Enter the bill number, select the bill filing date, and upload the bill document before continuing to the next step.",
-          }
-        : !billFilingNumberEntered
-          ? {
-              title: "Bill Number Required",
-              description: "Enter the bill number before continuing to the next step.",
-            }
-          : !billFilingDateEntered
-            ? {
-                title: "Bill Filing Date Required",
-                description: "Select the bill filing date before continuing to the next step.",
-              }
-          : !billFilingDocumentUploaded
-            ? {
-                title: "Bill Document Required",
-                description: "Upload the bill document before continuing to the next step.",
-              }
-            : null;
-    const billFilingCanMoveNext =
-      !isBillFilingNode || (billFilingReadyForRouting && queryProcessingResolved && activeNodeOpenQueries.length === 0);
+        : null;
+    const stageSummaryItems = [
+      activeChecklistItems.length > 0 ? "checks" : null,
+      activeNodeFieldDefinitions.length > 0 || activeNodeHasConditionalFields ? "fields" : null,
+      activeNodeDocumentRequirements.length > 0 ||
+      activeNodeHasConditionalDocuments ||
+      (activeNodeRun?.node?.photoRequirements?.length ?? 0) > 0
+        ? "uploads"
+        : null,
+      queryProcessingActive ? "query updates" : null,
+      activeNodeRun?.node?.commentsRequired ? "remarks" : null,
+    ].filter((item): item is string => Boolean(item));
+    const stageSummaryText =
+      activeNodeRun?.node?.nodeType === "DECISION"
+        ? "Choose the correct filing path below, then record remarks before routing this stage forward."
+        : stageSummaryItems.length > 0
+          ? `Complete the required ${formatSummaryList(stageSummaryItems)} below before moving this filing to the next stage.`
+          : "Review this stage and record any completion notes before moving this filing to the next stage.";
     // Go-back is available on every filing stage that has a completed predecessor.
     const hasPreviousFilingStage =
       !!activeNodeRun &&
       (filingInstance?.nodeRuns || []).some(
         (run: any) => run.status === "COMPLETED" && run.nodeKey !== activeNodeRun.nodeKey,
       );
+
+    useEffect(() => {
+      setQueryProcessingPanelExpanded(false);
+    }, [activeNodeRun?.id]);
+
+    useEffect(() => {
+      if (!queryProcessingActive) {
+        setQueryProcessingPanelExpanded(false);
+      }
+    }, [queryProcessingActive]);
 
 
     // Customer Advance Form State
@@ -946,8 +1049,6 @@
         : null;
     const isImportFiling = filingMovementDirection === "IMPORT";
     const isExportFiling = filingMovementDirection === "EXPORT";
-    const filingBillNumberLabel =
-      isExportFiling ? "Shipping Bill Number" : isImportFiling ? "Bill Of Entry Number" : "Bill Number";
     const filingBillNumberValue = isExportFiling ? shippingBillNumber : billOfEntryNumber;
 
     // Keep the bill number in sync between the filing stage input and the
@@ -1642,34 +1743,11 @@
         const formData = new FormData();
         formData.set("decision", decision);
         formData.set("remarks", internalApprovalRemarks);
-        if (decision === "APPROVED") {
-          formData.set("customerActionType", customerMailActionType);
-          formData.set("customerMailSubject", customerMailSubject.trim() || `Checklist Approval Required - ${job.jobNumber}`);
-          formData.set(
-            "customerMailBody",
-            customerMailBody.trim() || `Please review the attached approved checklist for job ${job.jobNumber}.`,
-          );
-          customerMailAttachments.forEach((file) => formData.append("customerMailAttachments", file));
-        }
 
         const res = await actions.submitChecklistInternalDecisionAction(job.id, checklistWorkflow.id, formData);
         if (res.ok) {
-          const emailAutomation = res.data?.emailAutomation;
-          if (decision === "APPROVED" && emailAutomation?.sent) {
-            toast.success("Checklist approved and customer email sent automatically.");
-          } else if (decision === "APPROVED" && emailAutomation?.queued) {
-            toast.success("Checklist saved and customer email queued.");
-          } else if (decision === "APPROVED" && emailAutomation?.warning) {
-            toast.warning(emailAutomation.warning);
-          } else {
-            toast.success(decision === "APPROVED" ? "Internal approval recorded." : "Checklist returned for rework.");
-          }
+          toast.success(decision === "APPROVED" ? "Internal approval recorded." : "Checklist returned for rework.");
           setInternalApprovalRemarks("");
-          if (decision === "APPROVED") {
-            setCustomerMailSubject("");
-            setCustomerMailBody("");
-            setCustomerMailAttachments([]);
-          }
           router.refresh();
         } else {
           toast.error(res.error || "Failed to process internal decision.");
@@ -2283,8 +2361,8 @@
       if (!activeNodeRun) return;
       const currentFilingDraftStorageKey = filingDraftStorageKey;
 
-      if (isBillFilingNode && !billFilingCanMoveNext) {
-        toast.error("Complete query processing before moving to the next filing step.");
+      if (queryProcessingEnabled && !queryProcessingResolved) {
+        toast.error("Resolve query processing before moving to the next filing step.");
         return;
       }
 
@@ -2295,9 +2373,7 @@
       }
 
       // Validate all mandatory checklist items are checked if requireAllMandatoryChecklistItems is true.
-      // Bill Filing nodes hide the checklist — progress is driven through the
-      // bill document upload, bill number entry, and query-decision actions.
-      if (!isBillFilingNode && activeNodeRun.node.requireAllMandatoryChecklistItems) {
+      if (activeNodeRun.node.requireAllMandatoryChecklistItems) {
         for (const item of activeChecklistItems) {
           if (item.isMandatory) {
             const resp = checklistResponses[item.id];
@@ -2341,7 +2417,7 @@
 
       setLoading("filing-complete");
       try {
-        if (isBillFilingNode && filingFieldValues.bill_number?.trim()) {
+        if (hasShipmentBillNumberField && filingFieldValues.bill_number?.trim()) {
           const billNumber = filingFieldValues.bill_number.trim();
           const shipmentSaveRes = await actions.upsertFilingShipmentDetailsAction(job.id, {
             filingShipmentType,
@@ -2356,15 +2432,6 @@
 
         const responsesList = activeChecklistItems.map((item: any) => {
           const val = checklistResponses[item.id] || { isChecked: false, remarks: "", fileKey: undefined, delayRemarks: "" };
-          if (isBillFilingNode) {
-            return {
-              checklistItemId: item.id,
-              isChecked: true,
-              remarks: val.remarks || "Completed through Bill Filing actions.",
-              fileKey: val.fileKey || undefined,
-              delayRemarks: val.delayRemarks || undefined,
-            };
-          }
           return {
             checklistItemId: item.id,
             isChecked: val.isChecked,
@@ -3480,7 +3547,7 @@
                                       <p className="text-xs text-on-surface-variant mt-1">{req.requirementItem.description}</p>
                                     )}
 
-                                    {isSection49Requirement ? (
+                                    {isSection49Requirement && (
                                       <div className="mt-3 space-y-3 rounded-xl border border-outline-variant/40 dark:border-[#00cec4]/20 bg-surface-container-low p-3.5">
                                         {section49Flag?.validityDate ? (
                                           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 pb-2.5">
@@ -3588,33 +3655,33 @@
                                                 </span>
                                               )}
                                             </p>
-                                          </div>
-                                        ) : null}
 
-                                        {Array.isArray(job.section49Extensions) && job.section49Extensions.length > 0 ? (
-                                          <div className="space-y-1 border-t border-outline-variant/30 pt-3 text-xs">
-                                            <span className="ds-label">Extension History</span>
-                                            {job.section49Extensions.slice(0, 3).map((extension: any) => (
-                                              <div key={extension.id} className="flex flex-wrap items-center justify-between gap-2 text-on-surface-variant">
-                                                <span className="ds-numeric">
-                                                  {new Date(extension.extensionDate).toLocaleDateString("en-IN")}
-                                                </span>
-                                                {extension.fileKey ? (
-                                                  <a
-                                                    href={extension.fileKey}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="text-[#00cec4] hover:underline"
-                                                  >
-                                                    {extension.fileName || "View document"}
-                                                  </a>
-                                                ) : null}
+                                            {Array.isArray(job.section49Extensions) && job.section49Extensions.length > 0 ? (
+                                              <div className="space-y-1 border-t border-outline-variant/30 pt-3 text-xs">
+                                                <span className="ds-label">Extension History</span>
+                                                {job.section49Extensions.slice(0, 3).map((extension: any) => (
+                                                  <div key={extension.id} className="flex flex-wrap items-center justify-between gap-2 text-on-surface-variant">
+                                                    <span className="ds-numeric">
+                                                      {new Date(extension.extensionDate).toLocaleDateString("en-IN")}
+                                                    </span>
+                                                    {extension.fileKey ? (
+                                                      <a
+                                                        href={extension.fileKey}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="text-[#00cec4] hover:underline"
+                                                      >
+                                                        {extension.fileName || "View document"}
+                                                      </a>
+                                                    ) : null}
+                                                  </div>
+                                                ))}
                                               </div>
-                                            ))}
+                                            ) : null}
                                           </div>
                                         ) : null}
                                       </div>
-                                    ) : null}
+                                    )}
 
                                     {/* Display Uploaded File details */}
                                     {isUploaded && currentVersion && (
@@ -3856,20 +3923,6 @@
                   description="Capture manifest and delivery-order validity details before checklist preparation."
                 />
                 <div className="flex flex-wrap items-center gap-2">
-                  {hasSavedAdditionalData && !additionalDataStageLocked ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      mode="icon"
-                      onClick={() => setIsAdditionalDataEditing(true)}
-                      disabled={loading !== null || isAdditionalDataEditing || !canUpdateJob}
-                      aria-label="Edit Additional Data"
-                      title="Edit Additional Data"
-                    >
-                      <Pencil className="size-4" />
-                    </Button>
-                  ) : null}
                   <span
                     className={`inline-flex min-h-8 items-center rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider ${
                       additionalDataComplete
@@ -4102,6 +4155,18 @@
               </div>
 
               <div className="flex flex-col gap-2 pt-4 sm:flex-row sm:justify-end">
+                {hasSavedAdditionalData && !additionalDataStageLocked ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={loading !== null || isAdditionalDataEditing || !canUpdateJob}
+                    onClick={() => setIsAdditionalDataEditing(true)}
+                    className="w-full sm:w-auto"
+                  >
+                    <Pencil className="mr-2 size-4" />
+                    Edit Additional Data
+                  </Button>
+                ) : null}
                 {!additionalDataLocked ? (
                   <Button
                     type="button"
@@ -4381,50 +4446,6 @@
                         </div>
                         {canCurrentUserInternalApprove && checklistWorkflow?.currentApprovalStage === "INTERNAL" ? (
                           <>
-                            <div className="space-y-3 rounded-xl border border-outline-variant/40 bg-surface-container-low/40 p-4">
-                              <div className="space-y-1">
-                                <p className="ds-label">Customer Action Type</p>
-                                <p className="text-xs text-on-surface-variant">
-                                  When you approve with <span className="ds-numeric">MAIL</span>, the customer email sends automatically using the details below.
-                                </p>
-                              </div>
-                              <select
-                                value={customerMailActionType}
-                                onChange={(e) => setCustomerMailActionType(e.target.value as CustomerMailActionType)}
-                                className="w-full"
-                              >
-                                <option value="MAIL">MAIL</option>
-                              </select>
-                              <input
-                                value={customerMailSubject}
-                                onChange={(e) => setCustomerMailSubject(e.target.value)}
-                                placeholder={`Checklist Approval Required - ${job.jobNumber}`}
-                                className="w-full"
-                              />
-                              <textarea
-                                rows={4}
-                                value={customerMailBody}
-                                onChange={(e) => setCustomerMailBody(e.target.value)}
-                                placeholder={`Please review the attached approved checklist for job ${job.jobNumber}.`}
-                                className="ds-textarea w-full"
-                              />
-                              <FileUploadField
-                                id="customer-mail-attachments-internal"
-                                label="Additional Attachments"
-                                multiple
-                                compact
-                                helperText="The approved checklist is always attached automatically. Add any supporting files here before approval."
-                                triggerText="Drag and drop or choose files to attach"
-                                onInputChange={(event) => setCustomerMailAttachments(Array.from(event.target.files || []))}
-                                onClear={() => setCustomerMailAttachments([])}
-                                selectedFiles={customerMailAttachments.map((file) => ({
-                                  file,
-                                  name: file.name,
-                                  sizeBytes: file.size,
-                                  statusLabel: "Ready to send",
-                                }))}
-                              />
-                            </div>
                             <textarea
                               rows={2}
                               value={internalApprovalRemarks}
@@ -4460,7 +4481,7 @@
                             {approvedCustomerDecision
                               ? `Approved by ${getUserName(approvedCustomerDecision.actedById || approvedCustomerDecision.assignedToId)} on behalf of concerned job users on ${approvedCustomerDecision.actedAt ? new Date(approvedCustomerDecision.actedAt).toLocaleString("en-IN") : "Pending"}`
                               : checklistWorkflow?.currentApprovalStage === "CUSTOMER" && !latestCustomerMailLog
-                              ? "Internal approval is complete. If the automatic mail did not send, send it here to unlock customer approval."
+                              ? "Internal approval is complete. Send the customer mail here to unlock customer approval."
                               : checklistWorkflow?.currentApprovalStage === "CUSTOMER" && latestCustomerMailLog && !customerApprovalDelayElapsed
                               ? `Checklist mail sent on ${new Date(latestCustomerMailLog.sentAt).toLocaleString("en-IN")}. Customer approval unlocks automatically in ${customerApprovalCountdown} at ${customerApprovalVisibleAt?.toLocaleString("en-IN")}.`
                               : checklistWorkflow?.currentApprovalStage === "CUSTOMER"
@@ -4514,7 +4535,7 @@
                             />
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                               <p className="max-w-xl text-xs text-on-surface-variant">
-                                The latest approved checklist file will be attached automatically, customer recipients will be fetched from the customer record, and any files above will be included.
+                                The latest approved checklist file will be attached automatically, customer recipients will be fetched from the customer record, and any files above will be included after you send the mail.
                               </p>
                               <Button
                                 type="button"
@@ -4670,7 +4691,6 @@
                   </div>
                 </div>
               ) : (
-                // Filing visual runner dashboard
                 <div className="space-y-4">
                   {!filingInstance ? (
                     <div className="card-top-accent rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-sm">
@@ -4705,228 +4725,133 @@
                               onSubmit={handleCompleteFilingNode}
                               className="grid gap-4 pt-2 xl:grid-cols-[minmax(0,680px)_minmax(0,1fr)] xl:items-start"
                             >
-                              <div className={`card-top-accent ${filingPrimaryColumnClass} space-y-2 rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm`}>
-                                <div className="grid gap-4 pb-2 lg:grid-cols-[minmax(0,1fr)_220px]">
-                                  <div className="space-y-2">
-                                    <SectionHeading
-                                      title={activeNodeDisplayName}
-                                      description={activeNodeRun.node.description || undefined}
-                                    />
-                                    <div className="flex flex-wrap gap-2 pl-[17px]">
-                                      {activeNodeRun.node.nodeType === "DECISION" ? <Badge variant="default">Decision</Badge> : null}
-                                      {activeNodeRun.node.canBeSkipped ? <Badge variant="warning">Optional / Skippable</Badge> : null}
-                                    </div>
-                                    {(activeNodeRun.node.sectionName || activeNodeRun.node.branchName) && (
-                                      <p className="pl-[17px] text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
-                                        {[activeNodeRun.node.sectionName, activeNodeRun.node.branchName].filter(Boolean).join(" / ")}
-                                      </p>
-                                    )}
-                                    {overdueChecklistCount > 0 && (
-                                      <p className="pl-[17px] text-xs text-[#fb923c]">
-                                        {overdueChecklistCount} overdue checklist item{overdueChecklistCount > 1 ? "s" : ""} in this active stage.
-                                      </p>
-                                    )}
-                                  </div>
-                                  <div className="flex flex-col gap-3 lg:items-end">
-                                    {activeNodeRun.slaDueDate ? (
-                                      <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-3 lg:justify-self-end">
-                                        <span className="ds-label block text-on-surface-variant">SLA Due Date</span>
-                                        <span
-                                          className={`mt-1 block text-sm ds-numeric ${
-                                            new Date(activeNodeRun.slaDueDate).getTime() < new Date().getTime()
-                                              ? "text-red-500"
-                                              : "text-on-surface"
-                                          }`}
-                                        >
-                                          {new Date(activeNodeRun.slaDueDate).toLocaleDateString("en-IN")}
-                                        </span>
-                                      </div>
-                                    ) : null}
-                                    {billFilingWarning ? (
-                                      <WarningNoteToggle
-                                        title={billFilingWarning.title}
-                                        description={billFilingWarning.description}
-                                        open={openWarningNote === "bill-filing"}
-                                        onToggle={() =>
-                                          setOpenWarningNote((current) => (current === "bill-filing" ? null : "bill-filing"))
-                                        }
-                                      />
-                                    ) : null}
-                                  </div>
-                                </div>
-                                {isBillFilingNode ? (
-                                  <div className="grid gap-3">
-                                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                      <label className="space-y-1">
-                                        <span className="ds-label block text-on-surface-variant">
-                                          {filingBillNumberLabel} *
-                                        </span>
-                                        <Input
-                                          value={filingFieldValues.bill_number || ""}
-                                          onChange={(e) => setBillNumberEverywhere(e.target.value)}
-                                          placeholder={`Enter ${filingBillNumberLabel}`}
-                                          className="w-full"
-                                        />
-                                        <p className="text-[11px] leading-snug text-on-surface-variant">
-                                          Add the filed bill number here while uploading the document. You can complete both actions in one pass.
-                                        </p>
-                                      </label>
-                                      <label className="space-y-1">
-                                        <span className="ds-label block text-on-surface-variant">
-                                          Bill Filing Date *
-                                        </span>
-                                        <DateInput
-                                          value={filingFieldValues.bill_filing_date || ""}
-                                          onChange={(e) =>
-                                            setFilingFieldValues((prev) => ({ ...prev, bill_filing_date: e.target.value }))
-                                          }
-                                          className="w-full"
-                                        />
-                                        <p className="text-[11px] leading-snug text-on-surface-variant">
-                                          Capture the date on which this bill was filed.
-                                        </p>
-                                      </label>
-                                    </div>
-                                    <h4 className="ds-label text-on-surface">Bill Filing Actions</h4>
-                                    <FileUploadField
-                                        id={`bill-document-upload-${activeNodeRun.id}`}
-                                        disabled={
-                                          loading === "node-document-bill_document" ||
-                                          loading === `filing-delete-${billFilingDocumentAttachment?.id ?? ""}`
-                                        }
-                                        helperText="Upload the bill document here and enter the bill number alongside it. Both are required before continuing."
-                                        triggerText={
-                                          billFilingDocumentUploaded
-                                            ? "Drag and drop or choose bill document to replace"
-                                            : "Drag and drop or choose bill document to upload"
-                                        }
-                                        selectedFile={
-                                          billFilingDocumentAttachment
-                                            ? {
-                                                href: billFilingDocumentAttachment.fileKey,
-                                                name: billFilingDocumentAttachment.fileName || "Bill document",
-                                                statusLabel: "Uploaded",
-                                              }
-                                            : null
+                              <div className={`card-top-accent ${filingPrimaryColumnClass} space-y-3 rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm`}>
+                                <SectionHeading
+                                  title={activeNodeDisplayName}
+                                  description="Capture the filing details and upload the supporting bill document before moving forward."
+                                  aside={
+                                    <InfoNoteToggle
+                                      title="Stage Summary"
+                                      description={stageSummaryText}
+                                      open={openWarningNote === "bill-filing"}
+                                      onToggle={() =>
+                                        setOpenWarningNote((current) => (current === "bill-filing" ? null : "bill-filing"))
                                       }
-                                      previewInline
-                                      onClear={() => {
-                                        if (!billFilingDocumentAttachment?.id) {
-                                          return;
-                                        }
-                                        void handleDeleteFilingPhoto(billFilingDocumentAttachment.id);
-                                      }}
-                                      onInputChange={(e) => handleUploadNodeDocument("bill_document", e)}
                                     />
-                                    {activeNodeRun.node.nodeType === "DECISION" && outgoingEdges.length > 0 ? (
-                                      <div className="space-y-2">
-                                        <label className="ds-label text-on-surface block">Decision *</label>
-                                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                          {outgoingEdges.map((edge: any) => {
-                                            const targetNode = targetNodesMap.get(edge.targetKey);
-                                            const isSelected = selectedNextNodeKey === edge.targetKey;
-                                            return (
-                                              <button
-                                                key={edge.targetKey}
-                                                type="button"
-                                                onClick={() => setSelectedNextNodeKey(edge.targetKey)}
-                                                className={`rounded-xl border px-4 py-3 text-left transition ${
-                                                  isSelected
-                                                    ? "border-[#00cec4] bg-[#00cec4]/10 shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
-                                                    : "border-outline-variant bg-surface hover:border-[#00cec4]/55 hover:bg-surface-container-low"
-                                                }`}
-                                              >
-                                                <span className="ds-label block">{edge.label || "Choice"}</span>
-                                                <span className="mt-1 block text-sm font-medium text-on-surface">
-                                                  {targetNode?.name || edge.targetKey}
-                                                </span>
-                                              </button>
-                                            );
-                                          })}
-                                        </div>
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                ) : (
-                                  <div className="space-y-3">
-                                    <div className="rounded-xl border border-outline-variant/60 bg-surface-container-low px-4 py-3">
-                                      <span className="ds-label block text-on-surface-variant">Stage Summary</span>
-                                      <p className="mt-1 text-sm font-medium text-on-surface">
-                                        {activeNodeRun.node.nodeType === "DECISION"
-                                          ? "Choose the correct filing path below, then record remarks before routing this stage forward."
-                                          : "Complete the required checks, uploads, and remarks below before moving this filing to the next stage."}
-                                      </p>
-                                    </div>
-                                    {activeNodeRun.node.nodeType === "DECISION" && outgoingEdges.length > 0 ? (
-                                      <div className="space-y-2">
-                                        <label className="ds-label text-on-surface block">Decision *</label>
-                                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                          {outgoingEdges.map((edge: any) => {
-                                            const targetNode = targetNodesMap.get(edge.targetKey);
-                                            const isSelected = selectedNextNodeKey === edge.targetKey;
-                                            return (
-                                              <button
-                                                key={edge.targetKey}
-                                                type="button"
-                                                onClick={() => setSelectedNextNodeKey(edge.targetKey)}
-                                                className={`rounded-xl border px-4 py-3 text-left transition ${
-                                                  isSelected
-                                                    ? "border-[#00cec4] bg-[#00cec4]/10 shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
-                                                    : "border-outline-variant bg-surface hover:border-[#00cec4]/55 hover:bg-surface-container-low"
-                                                }`}
-                                              >
-                                                <span className="ds-label block">{edge.label || "Choice"}</span>
-                                                <span className="mt-1 block text-sm font-medium text-on-surface">
-                                                  {targetNode?.name || edge.targetKey}
-                                                </span>
-                                              </button>
-                                            );
-                                          })}
-                                        </div>
-                                      </div>
-                                    ) : null}
-                                  </div>
+                                  }
+                                />
+                                <div className="flex flex-wrap gap-2 pl-[17px]">
+                                  {activeNodeRun.node.nodeType === "DECISION" ? <Badge variant="default">Decision</Badge> : null}
+                                  {activeNodeRun.node.canBeSkipped ? <Badge variant="warning">Optional / Skippable</Badge> : null}
+                                </div>
+                                {overdueChecklistCount > 0 && (
+                                  <p className="pl-[17px] text-xs text-[#fb923c]">
+                                    {overdueChecklistCount} overdue checklist item{overdueChecklistCount > 1 ? "s" : ""} in this active stage.
+                                  </p>
                                 )}
+                                <div className="space-y-3">
+                                  {activeNodeRun.node.nodeType === "DECISION" && outgoingEdges.length > 0 ? (
+                                    <div className="space-y-2">
+                                      <label className="ds-label text-on-surface block">Decision *</label>
+                                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                        {outgoingEdges.map((edge: any) => {
+                                          const targetNode = targetNodesMap.get(edge.targetKey);
+                                          const isSelected = selectedNextNodeKey === edge.targetKey;
+                                          return (
+                                            <button
+                                              key={edge.targetKey}
+                                              type="button"
+                                              onClick={() => setSelectedNextNodeKey(edge.targetKey)}
+                                              className={`rounded-xl border px-4 py-3 text-left transition ${
+                                                isSelected
+                                                  ? "border-[#00cec4] bg-[#00cec4]/10 shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
+                                                  : "border-outline-variant bg-surface hover:border-[#00cec4]/55 hover:bg-surface-container-low"
+                                              }`}
+                                            >
+                                              <span className="ds-label block">{edge.label || "Choice"}</span>
+                                              <span className="mt-1 block text-sm font-medium text-on-surface">
+                                                {targetNode?.name || edge.targetKey}
+                                              </span>
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  ) : null}
+                                  {(activeNodeFieldDefinitions.length > 0 || activeNodeDocumentRequirements.length > 0) ? (
+                                    <div className="space-y-3 pt-1">
+                                      {activeNodeFieldDefinitions.length > 0 ? (
+                                        <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                                          {activeNodeFieldDefinitions.map((field: any) => (
+                                            <div key={field.key} className="space-y-1">
+                                              <label className="ds-label block text-on-surface-variant">
+                                                {field.label} {field.required !== false ? "*" : ""}
+                                              </label>
+                                              {field.type === "DATE" ? (
+                                                <DateInput
+                                                  value={filingFieldValues[field.key] || ""}
+                                                  onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                                                  className="w-full"
+                                                />
+                                              ) : (
+                                                <input
+                                                  value={filingFieldValues[field.key] || ""}
+                                                  onChange={(e) =>
+                                                    field.key === "bill_number"
+                                                      ? setBillNumberEverywhere(e.target.value)
+                                                      : setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))
+                                                  }
+                                                  placeholder={field.placeholder || field.label}
+                                                  className="w-full text-sm"
+                                                />
+                                              )}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ) : null}
+                                      {activeNodeDocumentRequirements.length > 0 ? (
+                                        <div className="space-y-2.5">
+                                          {activeNodeDocumentRequirements.map((requirement: any) => {
+                                            const uploadedAttachment = activeNodeDocumentAttachmentsByKey.get(requirement.key);
+                                            return (
+                                              <FileUploadField
+                                                key={requirement.key}
+                                                id={`node-document-upload-inline-${activeNodeRun.id}-${requirement.key}`}
+                                                helperText={`Accepted formats: PDF and images. Uploading here ${requirement.allowReplacement !== false ? "replaces the current" : "adds the"} ${requirement.label}.`}
+                                                triggerText={`Drag and drop or choose file to ${requirement.allowReplacement !== false ? "replace" : "upload"} the ${requirement.label}`}
+                                                selectedFile={
+                                                  uploadedAttachment
+                                                    ? {
+                                                        href: uploadedAttachment.fileKey || null,
+                                                        name: uploadedAttachment.fileName || `${requirement.label}.pdf`,
+                                                        sizeBytes: uploadedAttachment.sizeBytes ?? null,
+                                                        statusLabel: uploadedAttachment.uploadedAt
+                                                          ? `Uploaded ${new Date(uploadedAttachment.uploadedAt).toLocaleDateString("en-IN")}`
+                                                          : "Uploaded",
+                                                      }
+                                                    : null
+                                                }
+                                                onClear={
+                                                  uploadedAttachment
+                                                    ? () => void handleDeleteFilingPhoto(uploadedAttachment.id)
+                                                    : undefined
+                                                }
+                                                onInputChange={(e) => handleUploadNodeDocument(requirement.key, e)}
+                                              />
+                                            );
+                                          })}
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  ) : null}
+                                </div>
                               </div>
 
-                              {(activeNodeRun.node.fieldDefinitionsJson || []).filter((field: any) => !(isBillFilingNode && (field.key === "bill_number" || field.key === "bill_filing_date"))).length > 0 && (
-                                <div className={`${filingPrimaryColumnClass} space-y-2`}>
-                                  <h4 className="ds-label text-on-surface">Configured Fields</h4>
-                                  <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
-                                    {(activeNodeRun.node.fieldDefinitionsJson || []).filter((field: any) => !(isBillFilingNode && (field.key === "bill_number" || field.key === "bill_filing_date"))).map((field: any) => (
-                                      <div key={field.key} className="space-y-1">
-                                        <label className="ds-label block text-on-surface-variant">
-                                          {field.key === "bill_number" ? filingBillNumberLabel : field.label} {field.required !== false ? "*" : ""}
-                                        </label>
-                                        {field.type === "DATE" ? (
-                                          <DateInput
-                                            value={filingFieldValues[field.key] || ""}
-                                            onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                                            className="w-full"
-                                          />
-                                        ) : (
-                                          <input
-                                            value={filingFieldValues[field.key] || ""}
-                                            onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                                            placeholder={
-                                              field.key === "bill_number"
-                                                ? `Enter ${filingBillNumberLabel}`
-                                                : field.placeholder || field.label
-                                            }
-                                            className="w-full text-sm"
-                                          />
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {(activeNodeRun.node.conditionalSectionsJson?.length > 0 || (activeNodeRun.node.documentRequirementsJson || []).filter((requirement: any) => !(isBillFilingNode && requirement.key === "bill_document")).length > 0) && (
+                              {visibleNodeConditionalSections.length > 0 && (
                                 <div className={`${filingPrimaryColumnClass} space-y-2.5 pt-0.5`}>
                                   <h4 className="ds-label text-on-surface">Conditional Sections & Documents</h4>
                                   <div className="space-y-2.5">
-                                    {(activeNodeRun.node.conditionalSectionsJson || []).map((section: any) => (
+                                    {visibleNodeConditionalSections.map((section: any) => (
                                       <div key={section.key} className="rounded-xl border border-outline-variant bg-surface-container-low p-3 space-y-2.5">
                                         <div className="flex items-center gap-3 text-sm text-on-surface">
                                           <NeonCheckbox
@@ -4997,129 +4922,501 @@
                                       </div>
                                     ))}
 
-                                    {(activeNodeRun.node.documentRequirementsJson || []).filter((requirement: any) => !(isBillFilingNode && requirement.key === "bill_document")).map((requirement: any) => (
-                                      <div key={requirement.key} className="rounded-xl border border-outline-variant/60 bg-surface p-3">
-                                        <div className="flex items-center justify-between gap-3">
-                                          <div className="text-xs font-semibold text-on-surface">
-                                            {requirement.label} {requirement.required !== false ? "*" : ""}
-                                          </div>
-                                          <div className="w-full max-w-[220px]">
-                                            <FileUploadField
-                                              id={`node-document-upload-${activeNodeRun.id}-${requirement.key}`}
-                                              compact
-                                              showSelectedPreview={false}
-                                              triggerText="Choose file to upload"
-                                              onInputChange={(e) => handleUploadNodeDocument(requirement.key, e)}
-                                            />
-                                          </div>
-                                        </div>
-                                      </div>
-                                    ))}
                                   </div>
                                 </div>
                               )}
 
-                              {isBillFilingNode ? (
-                                <div className="w-full space-y-4 xl:col-start-2 xl:row-start-1 xl:self-start">
-                                  {queryProcessingEnabled ? (
+                              <div className={filingCompletionColumnClass}>
+                                {queryProcessingEnabled ? (
+                                  <>
                                     <div className="card-top-accent-orange overflow-hidden rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
-                                    <div className="flex items-start gap-3 px-4 py-3">
-                                      <div className="min-w-0 flex-1">
-                                        <div className="space-y-2">
-                                          <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
-                                            <span className="h-7 rounded-sm bg-[#fb923c]" aria-hidden="true" />
-                                            <h3 className="ds-h3 text-[#c76628]">Manage Queries</h3>
+                                      <div className="flex flex-col gap-3 px-4 py-3 lg:flex-row lg:items-start">
+                                        <div className="min-w-0 flex-1">
+                                          <div className="space-y-2">
+                                            <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
+                                              <span className="h-7 rounded-sm bg-[#fb923c]" aria-hidden="true" />
+                                              <h3 className="ds-h3 text-[#c76628]">Query Processing</h3>
+                                            </div>
+                                            <p className="pl-[17px] text-sm text-on-surface-variant">
+                                              {activeNodeOpenQueries.length > 0
+                                                ? `${activeNodeOpenQueries.length} active quer${activeNodeOpenQueries.length > 1 ? "ies require" : "y requires"} attention.`
+                                                : queryProcessingStage === "CLEARED"
+                                                  ? "All recorded queries are cleared for this filing stage."
+                                                  : queryProcessingStage === "NO_QUERY"
+                                                    ? "No query has been raised for this filing stage."
+                                                    : "Track query intake and response status for this filing stage."}
+                                            </p>
                                           </div>
-                                          <p className="pl-[17px] text-sm text-on-surface-variant">
-                                            {activeNodeOpenQueries.length > 0
-                                              ? `${activeNodeOpenQueries.length} Active Quer${activeNodeOpenQueries.length > 1 ? "ies Require" : "y Requires"} Attention`
-                                              : queryProcessingStage === "CLEARED"
-                                                ? "All Recorded Queries Are Cleared"
-                                                : queryProcessingStage === "NO_QUERY"
-                                                  ? "No Query Raised For This Filing"
-                                                  : "Track Query Intake And Response Status"}
-                                          </p>
+                                        </div>
+                                        <div className="flex shrink-0 items-center justify-end gap-3 self-start lg:ml-auto">
+                                          {queryProcessingWarning ? (
+                                            <WarningNoteToggle
+                                              title={queryProcessingWarning.title}
+                                              description={queryProcessingWarning.description}
+                                              open={openWarningNote === "query-processing"}
+                                              onToggle={() =>
+                                                setOpenWarningNote((current) => (current === "query-processing" ? null : "query-processing"))
+                                              }
+                                            />
+                                          ) : null}
+                                          <label className="inline-flex min-w-[220px] items-center justify-between gap-4 rounded-xl border border-[#fb923c]/20 bg-[#fb923c]/8 px-4 py-2 text-sm text-on-surface">
+                                            <span className="ds-label text-[#c76628]">{queryProcessingToggleEnabled ? "Queries On" : "Queries Off"}</span>
+                                            <span className="relative inline-flex h-6 w-11 shrink-0 items-center">
+                                              <input
+                                                type="checkbox"
+                                                checked={queryProcessingToggleEnabled}
+                                                disabled={isSavingQueryProcessingDecision || activeNodeOpenQueries.length > 0}
+                                                onChange={() =>
+                                                  void handlePersistFilingToggleState(
+                                                    "query_processing",
+                                                    !queryProcessingToggleEnabled,
+                                                    !queryProcessingToggleEnabled
+                                                      ? {
+                                                          ...(queryProcessingState ?? {}),
+                                                          stage:
+                                                            typeof queryProcessingState?.stage === "string" && queryProcessingState.stage.trim()
+                                                              ? queryProcessingState.stage
+                                                              : "AWAITING_QUERY_DECISION",
+                                                        }
+                                                      : {
+                                                          ...(queryProcessingState ?? {}),
+                                                          stage: undefined,
+                                                        },
+                                                    !queryProcessingToggleEnabled
+                                                      ? "Query processing enabled for this workflow stage."
+                                                      : "Query processing disabled for this workflow stage.",
+                                                  )
+                                                }
+                                                className="peer sr-only"
+                                              />
+                                              <span className="absolute inset-0 rounded-full border border-[#fb923c]/25 bg-surface-container-low transition-colors peer-checked:border-[#fb923c]/45 peer-checked:bg-[#fb923c]/20 peer-disabled:cursor-not-allowed peer-disabled:opacity-60" />
+                                              <span className="pointer-events-none absolute left-0.5 top-0.5 h-5 w-5 rounded-full border border-[#fb923c]/20 bg-surface shadow-sm transition-transform peer-checked:translate-x-5 peer-disabled:opacity-60" />
+                                            </span>
+                                          </label>
                                         </div>
                                       </div>
-                                      <div className="flex shrink-0 items-start gap-2">
-                                        <span className="inline-flex rounded-lg border border-[#fb923c]/20 bg-[#fb923c]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#c76628]">
-                                          {querySummaryStatusLabel}
-                                        </span>
-                                        {queryProcessingWarning ? (
-                                          <WarningNoteToggle
-                                            title={queryProcessingWarning.title}
-                                            description={queryProcessingWarning.description}
-                                            open={openWarningNote === "query-processing"}
-                                            onToggle={() =>
-                                              setOpenWarningNote((current) => (current === "query-processing" ? null : "query-processing"))
-                                            }
-                                          />
-                                        ) : null}
-                                      </div>
-                                    </div>
 
-                                      <div className="space-y-3 px-4 py-3">
-                                        <div className="grid gap-3 text-sm sm:grid-cols-2">
-                                          <div className="space-y-2 text-on-surface-variant">
-                                            <div className="flex items-center justify-between gap-3 sm:block">
-                                              <span className="ds-label block text-on-surface-variant">Ref</span>
-                                              <span className="text-sm font-medium text-on-surface sm:mt-1 sm:block">
-                                                {typeof queryProcessingState?.queryReferenceNumber === "string" && queryProcessingState.queryReferenceNumber.trim()
-                                                  ? queryProcessingState.queryReferenceNumber
-                                                  : primaryQuerySummary?.title || "Not Recorded"}
-                                              </span>
+                                      {queryProcessingActive ? (
+                                        <div className="space-y-3 px-4 py-3">
+                                          <div className="grid gap-3 text-sm sm:grid-cols-2">
+                                            <div className="space-y-2 text-on-surface-variant">
+                                              <div className="flex items-center justify-between gap-3 sm:block">
+                                                <span className="ds-label block text-on-surface-variant">Ref</span>
+                                                <span className="text-sm font-medium text-on-surface sm:mt-1 sm:block">
+                                                  {typeof queryProcessingState?.queryReferenceNumber === "string" && queryProcessingState.queryReferenceNumber.trim()
+                                                    ? queryProcessingState.queryReferenceNumber
+                                                    : primaryQuerySummary?.title || "Not Recorded"}
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center justify-between gap-3 sm:block">
+                                                <span className="ds-label block text-on-surface-variant">Officer</span>
+                                                <span className="text-sm font-medium text-on-surface sm:mt-1 sm:block">
+                                                  {typeof queryProcessingState?.customsOfficerName === "string" && queryProcessingState.customsOfficerName.trim()
+                                                    ? queryProcessingState.customsOfficerName
+                                                    : "Not Assigned"}
+                                                </span>
+                                              </div>
                                             </div>
-                                            <div className="flex items-center justify-between gap-3 sm:block">
-                                              <span className="ds-label block text-on-surface-variant">Officer</span>
-                                              <span className="text-sm font-medium text-on-surface sm:mt-1 sm:block">
-                                                {typeof queryProcessingState?.customsOfficerName === "string" && queryProcessingState.customsOfficerName.trim()
-                                                  ? queryProcessingState.customsOfficerName
-                                                  : "Not Assigned"}
-                                              </span>
+                                            <div className="space-y-2 text-on-surface-variant">
+                                              <div className="flex items-center justify-between gap-3 sm:block">
+                                                <span className="ds-label block text-on-surface-variant">Received</span>
+                                                <span className="text-sm font-medium text-on-surface sm:mt-1 sm:block">
+                                                  {typeof queryProcessingState?.queryReceivedAt === "string" && queryProcessingState.queryReceivedAt.trim()
+                                                    ? new Date(queryProcessingState.queryReceivedAt).toLocaleDateString("en-IN")
+                                                    : "Pending"}
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center justify-between gap-3 sm:block">
+                                                <span className="ds-label block text-on-surface-variant">Open Cases</span>
+                                                <span className="text-sm font-medium text-on-surface sm:mt-1 sm:block">
+                                                  {activeNodeOpenQueries.length}
+                                                </span>
+                                              </div>
                                             </div>
                                           </div>
-                                        </div>
-                                        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                                          {billFilingCanChooseQuery && queryProcessingStage === "AWAITING_QUERY_DECISION" ? (
+                                          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                                             <Button
                                               type="button"
                                               variant="outline"
-                                              disabled={isSavingQueryProcessingDecision}
-                                              className="w-full justify-center border-[#fb923c]/50 text-[#fb923c] hover:bg-surface sm:w-auto"
-                                              onClick={() =>
-                                                handlePersistFilingToggleState(
-                                                  "query_processing",
-                                                  true,
-                                                  {
-                                                    ...(queryProcessingState ?? {}),
-                                                    stage: "NO_QUERY",
-                                                  },
-                                                  "Bill filing marked as no-query.",
-                                                )
-                                              }
+                                              className="w-full justify-center gap-2 border-[#fb923c]/35 text-base text-[#c76628] hover:border-[#fb923c]/50 hover:text-[#c76628] sm:w-auto sm:min-w-[220px]"
+                                              onClick={() => setQueryProcessingPanelExpanded(true)}
                                             >
-                                              {isSavingQueryProcessingDecision ? "Saving..." : "No Queries"}
+                                              Manage Queries
+                                              <ChevronRight size={16} />
                                             </Button>
-                                          ) : null}
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <div className="px-4 py-3 text-sm text-on-surface-variant">
+                                          Turn on queries to reveal the customs query card, summary details, and manage actions for this filing step.
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {queryProcessingPanelExpanded && queryProcessingActive ? (
+                                      <Modal
+                                        open={queryProcessingPanelExpanded}
+                                        title="Manage Queries"
+                                            description="Review customs query details, record updates, and manage responses for this filing stage."
+                                            onClose={() => setQueryProcessingPanelExpanded(false)}
+                                            className="max-w-4xl"
+                                          >
+                                      <div className="space-y-5">
+
+                                        {queryProcessingEnabled && queryProcessingStage === "CLEARED" ? (
+                                          <div className="rounded-xl border border-[#00cec4]/25 bg-[#00cec4]/10 p-4 text-sm text-on-surface">
+                                            All customs queries are cleared for this workflow stage. You can continue to the next stage or record an additional query if customs raises another one.
+                                            <div className="mt-3">
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() =>
+                                                  handlePersistFilingToggleState(
+                                                    "query_processing",
+                                                    true,
+                                                    {
+                                                      ...(queryProcessingState ?? {}),
+                                                      stage: "OPEN",
+                                                    },
+                                                    "Ready to capture an additional customs query.",
+                                                  )
+                                                }
+                                              >
+                                                Record Additional Query
+                                              </Button>
+                                            </div>
+                                          </div>
+                                    ) : null}
+
+                                        <div className="space-y-4 ds-form-section">
+                                            <div className="flex items-start justify-between gap-3">
+                                              <div>
+                                                <h4>Create Query</h4>
+                                                <p className="pl-[13px] text-sm text-on-surface-variant">
+                                                  Capture the customs note, reference number, officer, and received date.
+                                                </p>
+                                              </div>
+                                              <Badge variant="default">{activeNodeQueries.length} Case{activeNodeQueries.length === 1 ? "" : "s"}</Badge>
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                              <label className="space-y-1">
+                                                <span className="ds-label block text-on-surface-variant">Query Title *</span>
+                                                <Input
+                                                  value={filingQueryTitle}
+                                                  onChange={(e) => setFilingQueryTitle(e.target.value)}
+                                                  placeholder="Query title"
+                                                  className="w-full"
+                                                />
+                                              </label>
+                                              <label className="space-y-1">
+                                                <span className="ds-label block text-on-surface-variant">Reference Number</span>
+                                                <Input
+                                                  value={filingQueryReferenceNumber}
+                                                  onChange={(e) => setFilingQueryReferenceNumber(e.target.value)}
+                                                  placeholder="Enter query reference number"
+                                                  className="w-full"
+                                                />
+                                              </label>
+                                              <label className="space-y-1">
+                                                <span className="ds-label block text-on-surface-variant">Customs Officer</span>
+                                                <Input
+                                                  value={filingQueryOfficerName}
+                                                  onChange={(e) => setFilingQueryOfficerName(e.target.value)}
+                                                  placeholder="Officer name"
+                                                  className="w-full"
+                                                />
+                                              </label>
+                                              <label className="space-y-1">
+                                                <span className="ds-label block text-on-surface-variant">Received Date</span>
+                                                <DateInput
+                                                  value={filingQueryReceivedAt}
+                                                  onChange={(e) => setFilingQueryReceivedAt(e.target.value)}
+                                                />
+                                              </label>
+                                            </div>
+                                            <label className="space-y-1">
+                                              <span className="ds-label block text-on-surface-variant">Query Details *</span>
+                                              <textarea
+                                                rows={3}
+                                                value={filingQueryDetails}
+                                                onChange={(e) => {
+                                                  setFilingQueryDetails(e.target.value);
+                                                  setFilingFieldValues((current) => ({ ...current, query_notes: e.target.value }));
+                                                }}
+                                                placeholder="Record customs query details, offline response notes, or follow-up context..."
+                                                className="ds-textarea w-full px-4 py-3 text-sm"
+                                              />
+                                            </label>
+                                            <div className="flex justify-end">
+                                              <Button type="button" onClick={handleCreateFilingQuery} disabled={loading !== null}>
+                                                {loading === "filing-query-create" ? "Saving..." : "Create Query Record"}
+                                              </Button>
+                                            </div>
+                                          </div>
+
+                                        <div className="space-y-3 ds-form-section">
+                                          <div className="flex items-center justify-between gap-3">
+                                            <div>
+                                              <h4>Query Cases</h4>
+                                              <p className="pl-[13px] text-sm text-on-surface-variant">
+                                                View responses, respond offline, submit updates, clear, or reopen any customs query.
+                                              </p>
+                                            </div>
+                                            <Badge variant="default">{activeNodeQueries.length}</Badge>
+                                          </div>
+
+                                          {activeNodeQueries.map((query: any) => {
+                                            const queryMessages = activeNodeQueryMessages.filter((message: any) => message.queryId === query.id);
+                                            const isClosed = query.status === "CLOSED";
+                                            const statusLabel =
+                                              query.status === "CLOSED"
+                                                ? "Cleared"
+                                                : query.status === "REPLIED"
+                                                  ? "Response Submitted"
+                                                  : "Open";
+                                            return (
+                                              <details
+                                                key={query.id}
+                                                className="group overflow-hidden rounded-xl border border-outline-variant/60 bg-surface"
+                                              >
+                                                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-3">
+                                                  <div className="min-w-0">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                      <p className="text-sm font-medium text-on-surface">{query.title}</p>
+                                                      <span className="rounded-md bg-[#00cec4]/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#00cec4]">
+                                                        {statusLabel}
+                                                      </span>
+                                                    </div>
+                                                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-on-surface-variant">
+                                                      {query.id === queryProcessingState?.latestQueryId &&
+                                                      typeof queryProcessingState?.queryReferenceNumber === "string" &&
+                                                      queryProcessingState.queryReferenceNumber.trim() ? (
+                                                        <span>Ref: {queryProcessingState.queryReferenceNumber}</span>
+                                                      ) : null}
+                                                      {query.id === queryProcessingState?.latestQueryId &&
+                                                      typeof queryProcessingState?.customsOfficerName === "string" &&
+                                                      queryProcessingState.customsOfficerName.trim() ? (
+                                                        <span>Officer: {queryProcessingState.customsOfficerName}</span>
+                                                      ) : null}
+                                                      <span>Created {new Date(query.createdAt).toLocaleString("en-IN")}</span>
+                                                    </div>
+                                                  </div>
+                                                  <div className="flex items-center gap-2">
+                                                    <Badge variant={isClosed ? "success" : "secondary"}>
+                                                      {queryMessages.length} Update{queryMessages.length === 1 ? "" : "s"}
+                                                    </Badge>
+                                                    <ChevronRight className="mt-0.5 size-4 shrink-0 text-on-surface-variant transition-transform group-open:hidden" />
+                                                    <ChevronDown className="mt-0.5 hidden size-4 shrink-0 text-on-surface-variant group-open:block" />
+                                                  </div>
+                                                </summary>
+                                                <div className="space-y-4 border-t border-outline-variant/40 px-4 py-4">
+                                                  <div className="rounded-xl border border-outline-variant/50 bg-surface-container-low p-3 text-sm text-on-surface">
+                                                    {query.details}
+                                                  </div>
+                                                  <div className="space-y-2">
+                                                    <label className="ds-label block text-on-surface-variant">Offline Response / Status Update</label>
+                                                    <textarea
+                                                      rows={3}
+                                                      value={filingQueryStatusUpdates[query.id] || ""}
+                                                      onChange={(e) =>
+                                                        setFilingQueryStatusUpdates((current) => ({ ...current, [query.id]: e.target.value }))
+                                                      }
+                                                      placeholder="Record the response shared with customs or the latest status update..."
+                                                      className="ds-textarea w-full px-4 py-3 text-sm"
+                                                    />
+                                                  </div>
+                                                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                                    <label className="space-y-1">
+                                                      <span className="ds-label block text-on-surface-variant">Responder Name</span>
+                                                      <Input
+                                                        value={filingQueryResponderNames[query.id] || ""}
+                                                        onChange={(e) =>
+                                                          setFilingQueryResponderNames((current) => ({ ...current, [query.id]: e.target.value }))
+                                                        }
+                                                        placeholder="Person who responded"
+                                                      />
+                                                    </label>
+                                                  </div>
+                                                  <div className="flex flex-wrap justify-end gap-2">
+                                                    <Button
+                                                      type="button"
+                                                      variant="outline"
+                                                      onClick={() => handleAddFilingQueryComment(query.id)}
+                                                      disabled={loading === `filing-query-${query.id}`}
+                                                    >
+                                                      Save Response Update
+                                                    </Button>
+                                                    {!isClosed ? (
+                                                      <>
+                                                        <Button
+                                                          type="button"
+                                                          variant="outline"
+                                                          onClick={() =>
+                                                            handleUpdateFilingQueryStatus(
+                                                              query.id,
+                                                              "REPLIED",
+                                                              buildFilingQueryResponseMessage(query.id, query.details),
+                                                            )
+                                                          }
+                                                          disabled={loading === `filing-query-${query.id}`}
+                                                        >
+                                                          Mark Response Submitted
+                                                        </Button>
+                                                        <Button
+                                                          type="button"
+                                                          onClick={() =>
+                                                            handleUpdateFilingQueryStatus(
+                                                              query.id,
+                                                              "CLOSED",
+                                                              buildFilingQueryResponseMessage(query.id, query.details),
+                                                            )
+                                                          }
+                                                          disabled={loading === `filing-query-${query.id}`}
+                                                        >
+                                                          Mark Cleared
+                                                        </Button>
+                                                      </>
+                                                    ) : (
+                                                      <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                          handleUpdateFilingQueryStatus(
+                                                            query.id,
+                                                            "OPEN",
+                                                            buildFilingQueryResponseMessage(query.id, query.details),
+                                                          )
+                                                        }
+                                                        disabled={loading === `filing-query-${query.id}`}
+                                                      >
+                                                        Reopen Query
+                                                      </Button>
+                                                    )}
+                                                  </div>
+                                                  {queryMessages.length > 0 ? (
+                                                    <div className="space-y-2">
+                                                      <span className="ds-label block text-on-surface-variant">History</span>
+                                                      <div className="space-y-2">
+                                                        {queryMessages.map((message: any) => (
+                                                          <div key={message.id} className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-3">
+                                                            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-on-surface-variant">
+                                                              <span>{message.authorName || "System"}</span>
+                                                              <span>{new Date(message.createdAt).toLocaleString("en-IN")}</span>
+                                                            </div>
+                                                            <p className="mt-2 text-sm text-on-surface">{message.body}</p>
+                                                          </div>
+                                                        ))}
+                                                      </div>
+                                                    </div>
+                                                  ) : null}
+                                                </div>
+                                              </details>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                          </Modal>
+                                        ) : null}
+                                    <div className="card-top-accent overflow-hidden rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
+                                      <div className="space-y-4 px-4 py-4">
+                                        <SectionHeading
+                                          title="Complete Step"
+                                          description="Choose the next action for this filing stage and record completion notes before moving forward."
+                                        />
+                                        <div className="rounded-xl border border-outline-variant/60 bg-surface-container-low px-4 py-3">
+                                          <span className="ds-label block text-on-surface-variant">Current Stage</span>
+                                          <p className="mt-1 text-sm font-medium text-on-surface">{activeNodeDisplayName}</p>
+                                          {(activeNodeRun.node.sectionName || activeNodeRun.node.branchName) && (
+                                            <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                                              {[activeNodeRun.node.sectionName, activeNodeRun.node.branchName].filter(Boolean).join(" / ")}
+                                            </p>
+                                          )}
+                                        </div>
+                                        <div className="space-y-1">
+                                          <label className="ds-label text-on-surface block">
+                                            Completion Comments / Remarks {activeNodeRun.node.commentsRequired && <span className="text-red-500 font-bold">*</span>}
+                                          </label>
+                                          <textarea
+                                            rows={3}
+                                            value={nodeRemarks}
+                                            onChange={(e) => setNodeRemarks(e.target.value)}
+                                            placeholder="Provide checklist execution remarks or check outcome..."
+                                            className="w-full text-sm font-sans"
+                                            required={activeNodeRun.node.commentsRequired}
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          {outgoingEdges.length > 0 ? (
+                                            activeNodeRun.node.nodeType === "DECISION" ? (
+                                              null
+                                            ) : (
+                                              <div className="space-y-1">
+                                                <label className="ds-label text-on-surface block">Select Next Workflow Stage *</label>
+                                                <select
+                                                  value={selectedNextNodeKey}
+                                                  onChange={(e) => setSelectedNextNodeKey(e.target.value)}
+                                                  required
+                                                  className="w-full text-sm"
+                                                >
+                                                  <option value="">-- Choose Next Stage --</option>
+                                                  {outgoingEdges.map((edge: any) => {
+                                                    const targetNode = targetNodesMap.get(edge.targetKey);
+                                                    return (
+                                                      <option key={edge.targetKey} value={edge.targetKey}>
+                                                        {[targetNode?.sectionName, targetNode?.branchName, targetNode?.name || edge.targetKey]
+                                                          .filter(Boolean)
+                                                          .join(" / ")} {edge.label ? `(${edge.label})` : ""}
+                                                      </option>
+                                                    );
+                                                  })}
+                                                </select>
+                                              </div>
+                                            )
+                                          ) : (
+                                            <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
+                                              Completing this node will finalize the Filing workflow and transition the job stage to <strong>FILED</strong>.
+                                            </div>
+                                          )}
+                                        </div>
+                                        <div className="flex flex-wrap justify-end gap-2 pt-1">
                                           <Button
                                             type="button"
                                             variant="outline"
-                                            disabled={isSavingQueryProcessingDecision}
-                                            className="w-full justify-center gap-2 border-[#fb923c]/35 text-base text-[#c76628] hover:border-[#fb923c]/50 hover:text-[#c76628] sm:w-auto sm:min-w-[240px]"
-                                            onClick={() => setQueryManagementModalOpen(true)}
+                                            disabled={loading !== null}
+                                            onClick={handleSaveFilingDraft}
+                                            className="gap-2"
                                           >
-                                            Manage Queries
-                                            <ExternalLink size={16} />
+                                            <Database size={14} />
+                                            Save Draft
+                                          </Button>
+                                          {hasPreviousFilingStage ? (
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              disabled={loading !== null}
+                                              onClick={() => setGoBackOpen(true)}
+                                              className="gap-2 text-xs"
+                                            >
+                                              <Undo2 size={14} />
+                                              Move Back to Previous Stage
+                                            </Button>
+                                          ) : null}
+                                          <Button
+                                            type="submit"
+                                            disabled={loading !== null}
+                                            className="w-full sm:w-auto sm:min-w-[280px]"
+                                          >
+                                            {loading === "filing-complete" ? "Completing Stage..." : outgoingEdges.length > 0 ? "Complete & Move to Next Stage" : "Complete & File Customs Bill"}
                                           </Button>
                                         </div>
+                                      </div>
                                     </div>
-                                  </div>
-                                  ) : null}
-                                </div>
+                                  </>
                               ) : null}
+                              </div>
                               
                               {/* Checklist Items */}
-                              {!isBillFilingNode && activeNodeRun.node.checklistItems?.length > 0 && (
+                              {activeNodeRun.node.checklistItems?.length > 0 && (
                                 <div className={`${filingPrimaryColumnClass} space-y-3`}>
                                   <h4 className="ds-label text-on-surface">Stage Checklist Verification</h4>
                                   <div className="space-y-3.5">
@@ -5376,106 +5673,6 @@
                                 </div>
                               )}
 
-                              {/* Allowed Roles Notice */}
-                              {activeNodeRun.node.allowedRoles?.length > 0 && (
-                                <div className={`${filingPrimaryColumnClass} flex items-center gap-1 pt-0.5 text-[11px] text-on-surface-variant`}>
-                                  <ShieldCheck size={14} className="text-[#00cec4]" />
-                                  <span>Can only be processed by users with roles: <strong>{activeNodeRun.node.allowedRoles.join(", ")}</strong></span>
-                                </div>
-                              )}
-
-                              <div className={`card-top-accent ${filingCompletionColumnClass} rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm`}>
-                                <SectionHeading
-                                  title="Complete Step"
-                                  description="Choose the next action for this filing stage and record completion notes before moving forward."
-                                />
-                                <div className="rounded-xl border border-outline-variant/60 bg-surface-container-low px-4 py-3">
-                                  <span className="ds-label block text-on-surface-variant">Current Stage</span>
-                                  <p className="mt-1 text-sm font-medium text-on-surface">{activeNodeDisplayName}</p>
-                                  {(activeNodeRun.node.sectionName || activeNodeRun.node.branchName) && (
-                                    <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
-                                      {[activeNodeRun.node.sectionName, activeNodeRun.node.branchName].filter(Boolean).join(" / ")}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="space-y-1">
-                                  <label className="ds-label text-on-surface block">
-                                    Completion Comments / Remarks {activeNodeRun.node.commentsRequired && <span className="text-red-500 font-bold">*</span>}
-                                  </label>
-                                  <textarea
-                                    rows={3}
-                                    value={nodeRemarks}
-                                    onChange={(e) => setNodeRemarks(e.target.value)}
-                                    placeholder="Provide checklist execution remarks or check outcome..."
-                                    className="w-full text-sm font-sans"
-                                    required={activeNodeRun.node.commentsRequired}
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  {outgoingEdges.length > 0 ? (
-                                    activeNodeRun.node.nodeType === "DECISION" ? (
-                                      null
-                                    ) : (
-                                      <div className="space-y-1">
-                                        <label className="ds-label text-on-surface block">Select Next Workflow Stage *</label>
-                                        <select
-                                          value={selectedNextNodeKey}
-                                          onChange={(e) => setSelectedNextNodeKey(e.target.value)}
-                                          required
-                                          className="w-full text-sm"
-                                        >
-                                          <option value="">-- Choose Next Stage --</option>
-                                          {outgoingEdges.map((edge: any) => {
-                                            const targetNode = targetNodesMap.get(edge.targetKey);
-                                            return (
-                                              <option key={edge.targetKey} value={edge.targetKey}>
-                                                {[targetNode?.sectionName, targetNode?.branchName, targetNode?.name || edge.targetKey]
-                                                  .filter(Boolean)
-                                                  .join(" / ")} {edge.label ? `(${edge.label})` : ""}
-                                              </option>
-                                            );
-                                          })}
-                                        </select>
-                                      </div>
-                                    )
-                                  ) : (
-                                    <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
-                                      Completing this node will finalize the Filing workflow and transition the job stage to <strong>FILED</strong>.
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="flex flex-wrap justify-end gap-2 pt-1">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    disabled={loading !== null}
-                                    onClick={handleSaveFilingDraft}
-                                    className="gap-2"
-                                  >
-                                    <Database size={14} />
-                                    Save Draft
-                                  </Button>
-                                  {hasPreviousFilingStage ? (
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      disabled={loading !== null}
-                                      onClick={() => setGoBackOpen(true)}
-                                      className="gap-2 text-xs"
-                                    >
-                                      <Undo2 size={14} />
-                                      Move Back to Previous Stage
-                                    </Button>
-                                  ) : null}
-                                  <Button
-                                    type="submit"
-                                    disabled={loading !== null}
-                                    className="w-full sm:w-auto sm:min-w-[280px]"
-                                  >
-                                    {loading === "filing-complete" ? "Completing Stage..." : outgoingEdges.length > 0 ? "Complete & Move to Next Stage" : "Complete & File Customs Bill"}
-                                  </Button>
-                                </div>
-                              </div>
                             </form>
 
                             <Modal
@@ -5521,7 +5718,6 @@
                             </Modal>
                           </div>
                         ) : (
-                          // No active runs but filing instance exists (Filing completed)
                           <div className="card-top-accent rounded-xl border border-outline-variant/60 bg-surface p-5 space-y-4 shadow-sm">
                             <div className="flex flex-wrap items-center gap-3">
                               <span className="ds-icon-badge">
@@ -5985,7 +6181,6 @@
                                   <strong>Resolution:</strong> "{q.resolutionText}" (Resolved by {q.resolvedBy?.name})
                                 </div>
                               ) : (
-                                // Allow accounts / payees to resolve
                                 resolveQueryId === q.id ? (
                                   <div className="space-y-2 border-t border-orange-200/50 pt-2">
                                     <input
@@ -6276,353 +6471,6 @@
             </div>
           )}
       </div>
-
-      <Modal
-        open={queryManagementModalOpen}
-        onClose={() => setQueryManagementModalOpen(false)}
-        title="Customs Query Processing"
-        description="Create queries, review responses, and complete all customs-query actions from one place."
-        className="max-w-5xl"
-      >
-        <div className="space-y-5">
-          {billFilingCanChooseQuery && queryProcessingStage === "AWAITING_QUERY_DECISION" ? (
-            <div className="rounded-xl border border-outline-variant/60 bg-surface p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-medium text-on-surface">Choose the post-filing path</p>
-                  <p className="mt-1 text-xs text-on-surface-variant">
-                    Decide whether this bill moves forward with no query or enters the customs query workflow.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() =>
-                      handlePersistFilingToggleState(
-                        "query_processing",
-                        true,
-                        {
-                          ...(queryProcessingState ?? {}),
-                          stage: "NO_QUERY",
-                        },
-                        "Bill filing marked as no-query.",
-                      )
-                    }
-                  >
-                    No Query Raised
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() =>
-                      handlePersistFilingToggleState(
-                        "query_processing",
-                        true,
-                        {
-                          ...(queryProcessingState ?? {}),
-                          stage: "OPEN",
-                        },
-                        "Query processing opened for this bill filing.",
-                      )
-                    }
-                  >
-                    Record Customs Query
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {billFilingCanChooseQuery && queryProcessingStage === "NO_QUERY" ? (
-            <div className="rounded-xl border border-[#00cec4]/25 bg-[#00cec4]/10 p-4 text-sm text-on-surface">
-              No customs query has been raised for this bill filing. You can move to the next stage or record a query if one arrives later.
-              <div className="mt-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() =>
-                    handlePersistFilingToggleState(
-                      "query_processing",
-                      true,
-                      {
-                        ...(queryProcessingState ?? {}),
-                        stage: "OPEN",
-                      },
-                      "Query processing reopened for this bill filing.",
-                    )
-                  }
-                >
-                  Record Customs Query
-                </Button>
-              </div>
-            </div>
-          ) : null}
-
-          {billFilingCanChooseQuery && queryProcessingStage === "CLEARED" ? (
-            <div className="rounded-xl border border-[#00cec4]/25 bg-[#00cec4]/10 p-4 text-sm text-on-surface">
-              All customs queries are cleared for this bill filing. You can continue to the next stage or record an additional query if customs raises another one.
-              <div className="mt-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() =>
-                    handlePersistFilingToggleState(
-                      "query_processing",
-                      true,
-                      {
-                        ...(queryProcessingState ?? {}),
-                        stage: "OPEN",
-                      },
-                      "Ready to capture an additional customs query.",
-                    )
-                  }
-                >
-                  Record Additional Query
-                </Button>
-              </div>
-            </div>
-          ) : null}
-
-          {queryProcessingStage !== "NO_QUERY" ? (
-            <div className="space-y-4 ds-form-section">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h4>Create Query</h4>
-                  <p className="pl-[13px] text-sm text-on-surface-variant">
-                    Capture the customs note, reference number, officer, and received date.
-                  </p>
-                </div>
-                <Badge variant="default">{activeNodeQueries.length} Case{activeNodeQueries.length === 1 ? "" : "s"}</Badge>
-              </div>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <label className="space-y-1">
-                  <span className="ds-label block text-on-surface-variant">Query Title *</span>
-                  <Input
-                    value={filingQueryTitle}
-                    onChange={(e) => setFilingQueryTitle(e.target.value)}
-                    placeholder="Query title"
-                    className="w-full"
-                  />
-                </label>
-                <label className="space-y-1">
-                  <span className="ds-label block text-on-surface-variant">Reference Number</span>
-                  <Input
-                    value={filingQueryReferenceNumber}
-                    onChange={(e) => setFilingQueryReferenceNumber(e.target.value)}
-                    placeholder="Enter query reference number"
-                    className="w-full"
-                  />
-                </label>
-                <label className="space-y-1">
-                  <span className="ds-label block text-on-surface-variant">Customs Officer</span>
-                  <Input
-                    value={filingQueryOfficerName}
-                    onChange={(e) => setFilingQueryOfficerName(e.target.value)}
-                    placeholder="Officer name"
-                    className="w-full"
-                  />
-                </label>
-                <label className="space-y-1">
-                  <span className="ds-label block text-on-surface-variant">Received Date</span>
-                  <DateInput
-                    value={filingQueryReceivedAt}
-                    onChange={(e) => setFilingQueryReceivedAt(e.target.value)}
-                  />
-                </label>
-              </div>
-              <label className="space-y-1">
-                <span className="ds-label block text-on-surface-variant">Query Details *</span>
-                <textarea
-                  rows={3}
-                  value={filingQueryDetails}
-                  onChange={(e) => {
-                    setFilingQueryDetails(e.target.value);
-                    setFilingFieldValues((current) => ({ ...current, query_notes: e.target.value }));
-                  }}
-                  placeholder="Record customs query details, offline response notes, or follow-up context..."
-                  className="ds-textarea w-full px-4 py-3 text-sm"
-                />
-              </label>
-              <div className="flex justify-end">
-                <Button type="button" onClick={handleCreateFilingQuery} disabled={loading !== null}>
-                  {loading === "filing-query-create" ? "Saving..." : "Create Query Record"}
-                </Button>
-              </div>
-            </div>
-          ) : null}
-
-          <div className="space-y-3 ds-form-section">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h4>Query Cases</h4>
-                <p className="pl-[13px] text-sm text-on-surface-variant">
-                  View responses, respond offline, submit updates, clear, or reopen any customs query.
-                </p>
-              </div>
-              <Badge variant="default">{activeNodeQueries.length}</Badge>
-            </div>
-
-            {activeNodeQueries.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-outline-variant/70 px-4 py-5 text-sm text-on-surface-variant">
-                No customs queries recorded for this filing step yet.
-              </div>
-            ) : null}
-
-            {activeNodeQueries.map((query: any) => {
-              const queryMessages = activeNodeQueryMessages.filter((message: any) => message.queryId === query.id);
-              const isClosed = query.status === "CLOSED";
-              const statusLabel =
-                query.status === "CLOSED"
-                  ? "Cleared"
-                  : query.status === "REPLIED"
-                    ? "Response Submitted"
-                    : "Open";
-              return (
-                <details
-                  key={query.id}
-                  className="group rounded-xl border border-outline-variant/60 bg-surface overflow-hidden"
-                >
-                  <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-3">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-medium text-on-surface">{query.title}</p>
-                        <span className="rounded-md bg-[#00cec4]/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#00cec4]">
-                          {statusLabel}
-                        </span>
-                      </div>
-                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-on-surface-variant">
-                        {query.id === queryProcessingState?.latestQueryId &&
-                        typeof queryProcessingState?.queryReferenceNumber === "string" &&
-                        queryProcessingState.queryReferenceNumber.trim() ? (
-                          <span>Ref: {queryProcessingState.queryReferenceNumber}</span>
-                        ) : null}
-                        {query.id === queryProcessingState?.latestQueryId &&
-                        typeof queryProcessingState?.customsOfficerName === "string" &&
-                        queryProcessingState.customsOfficerName.trim() ? (
-                          <span>Officer: {queryProcessingState.customsOfficerName}</span>
-                        ) : null}
-                        <span>Raised: {new Date(query.createdAt).toLocaleDateString("en-IN")}</span>
-                      </div>
-                    </div>
-                    <ChevronRight className="mt-0.5 size-4 shrink-0 text-on-surface-variant transition-transform group-open:hidden" />
-                    <ChevronDown className="mt-0.5 hidden size-4 shrink-0 text-on-surface-variant group-open:block" />
-                  </summary>
-
-                  <div className="border-t border-outline-variant/40 px-4 py-4 space-y-3">
-                    <p className="text-sm leading-relaxed text-on-surface-variant">{query.details}</p>
-                    {queryMessages.length > 0 ? (
-                      <div className="space-y-2">
-                        <p className="ds-label text-on-surface-variant">Responses</p>
-                        <div className="space-y-2">
-                          {queryMessages.map((message: any) => (
-                            <div key={message.id} className="rounded-lg border border-outline-variant/50 bg-surface px-3 py-2.5">
-                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-on-surface-variant">
-                                <span className="font-medium text-on-surface">{message.actorName || "System"}</span>
-                                <span>{new Date(message.createdAt).toLocaleString("en-IN")}</span>
-                                <span>{typeof message.event === "string" ? message.event.replaceAll("_", " ") : "Update"}</span>
-                              </div>
-                              <p className="mt-1.5 text-sm leading-relaxed text-on-surface">
-                                {message.body || message.remarks || "No response details provided."}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-                    <div className="grid grid-cols-1 gap-3">
-                      <label className="space-y-1">
-                        <span className="ds-label block text-on-surface-variant">Who Responded?</span>
-                        <Input
-                          value={filingQueryResponderNames[query.id] ?? currentUserDisplayName}
-                          onChange={(e) =>
-                            setFilingQueryResponderNames((current) => ({
-                              ...current,
-                              [query.id]: e.target.value,
-                            }))
-                          }
-                          placeholder="Responder name"
-                          className="w-full"
-                        />
-                      </label>
-                      <label className="space-y-1">
-                        <span className="ds-label block text-on-surface-variant">What Is the Response?</span>
-                        <textarea
-                          rows={3}
-                          value={filingQueryStatusUpdates[query.id] ?? ""}
-                          onChange={(e) =>
-                            setFilingQueryStatusUpdates((current) => ({
-                              ...current,
-                              [query.id]: e.target.value,
-                            }))
-                          }
-                          placeholder="Describe the response shared with customs or the latest offline update..."
-                          className="ds-textarea w-full px-4 py-3 text-sm leading-relaxed"
-                        />
-                      </label>
-                    </div>
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleAddFilingQueryComment(query.id)}
-                      >
-                        Save Response Update
-                      </Button>
-                      {!isClosed ? (
-                        <>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              handleUpdateFilingQueryStatus(
-                                query.id,
-                                "REPLIED",
-                                buildFilingQueryResponseMessage(query.id, query.details),
-                              )
-                            }
-                          >
-                            Mark Response Submitted
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() =>
-                              handleUpdateFilingQueryStatus(
-                                query.id,
-                                "CLOSED",
-                                buildFilingQueryResponseMessage(query.id, query.details),
-                              )
-                            }
-                          >
-                            Mark Cleared
-                          </Button>
-                        </>
-                      ) : (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            handleUpdateFilingQueryStatus(
-                              query.id,
-                              "OPEN",
-                              buildFilingQueryResponseMessage(query.id, query.details),
-                            )
-                          }
-                        >
-                          Reopen Query
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </details>
-              );
-            })}
-          </div>
-        </div>
-      </Modal>
 
       <Modal
         open={executionTimelineModalOpen}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
-import { FileText, Trash2, Upload } from "lucide-react";
+import { FileText, Trash2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,7 @@ type FileUploadFieldProps = {
   disabled?: boolean;
   helperText?: string;
   id: string;
+  iconAlign?: "start" | "end";
   label?: string;
   multiple?: boolean;
   onClear?: () => void;
@@ -47,6 +48,7 @@ export function FileUploadField({
   disabled = false,
   helperText,
   id,
+  iconAlign = "start",
   label,
   multiple = false,
   onClear,
@@ -62,6 +64,7 @@ export function FileUploadField({
   const sizeLabel = formatFileSize(selectedFile?.sizeBytes);
   const [localPreviewHref, setLocalPreviewHref] = useState<string | null>(null);
   const previewFiles = selectedFiles && selectedFiles.length > 0 ? selectedFiles : selectedFile ? [selectedFile] : [];
+  const showInlineClear = Boolean(onClear) && (previewInline || previewFiles.length === 1);
 
   useEffect(() => {
     if (!selectedFile?.file) {
@@ -133,16 +136,33 @@ export function FileUploadField({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        <div className={cn("flex items-center gap-3", compact ? "justify-start" : "justify-center")}>
+        <div
+          className={cn(
+            "flex items-center gap-3",
+            compact
+              ? "justify-start"
+              : iconAlign === "end"
+                ? "justify-between"
+                : "justify-center",
+          )}
+        >
+          {iconAlign === "end" && !compact ? (
+            <div className="min-w-0 flex-1 space-y-1 text-left">
+              <span className="block text-sm font-medium text-on-surface">{triggerText}</span>
+              {helperText ? <span className="block text-xs text-on-surface-variant">{helperText}</span> : null}
+            </div>
+          ) : null}
           <span className={cn("flex shrink-0 items-center justify-center rounded-xl border border-outline-variant/40 bg-surface shadow-sm", compact ? "h-10 w-10" : "h-12 w-12")}>
             <Upload className={cn("text-[#00cec4]", compact ? "size-4" : "size-5")} aria-hidden={true} />
           </span>
-          <div className={cn("space-y-1", compact ? "text-left" : "text-center")}>
-            <span className="block text-sm font-medium text-on-surface">{triggerText}</span>
-            {!compact && helperText ? (
-              <span className="block text-xs text-on-surface-variant">{helperText}</span>
-            ) : null}
-          </div>
+          {!(iconAlign === "end" && !compact) ? (
+            <div className={cn("space-y-1", compact ? "text-left" : "text-center")}>
+              <span className="block text-sm font-medium text-on-surface">{triggerText}</span>
+              {!compact && helperText ? (
+                <span className="block text-xs text-on-surface-variant">{helperText}</span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         <input
           ref={inputRef}
@@ -174,54 +194,103 @@ export function FileUploadField({
                   : formatFileSize(previewFile.sizeBytes);
 
               return (
-                <div key={`${previewFile.name}-${index}`} className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-outline-variant/40 bg-surface shadow-sm">
-                    <FileText className="size-5 text-on-surface" aria-hidden={true} />
-                  </span>
-                  <div className={cn("min-w-0 flex-1", previewInline && "flex items-center justify-between gap-3")}>
-                    <div className="min-w-0">
-                      {fileHref ? (
-                        <a
-                          href={fileHref}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="block truncate text-xs font-medium text-on-surface hover:text-[#00cec4] hover:underline"
-                        >
-                          {previewFile.name}
-                        </a>
-                      ) : (
-                        <p className="truncate text-xs font-medium text-on-surface">{previewFile.name}</p>
-                      )}
-                      <div
-                        className={cn(
-                          "text-xs text-on-surface-variant",
-                          previewInline
-                            ? "mt-0 flex items-center gap-x-3 whitespace-nowrap"
-                            : "mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1",
-                        )}
-                      >
-                        <span>{fileSizeLabel || "Selected"}</span>
-                        <span>{previewFile.statusLabel || "Ready"}</span>
-                      </div>
-                    </div>
-                    {onClear && previewInline ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="md"
-                        mode="icon"
-                        className="ds-plain h-10 w-10 shrink-0 rounded-xl border-red-500/45 text-red-500 hover:border-red-500/60 hover:bg-surface hover:text-red-600 hover:shadow-none"
-                        aria-label="Delete uploaded file"
-                        onClick={handleClear}
-                      >
-                        <Trash2 className="size-4 shrink-0" aria-hidden={true} />
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-              );
+  <div
+    key={`${previewFile.name}-${index}`}
+    className={cn(
+      "flex items-center gap-3",
+      showInlineClear && "justify-between",
+    )}
+  >
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-outline-variant/40 bg-surface shadow-sm">
+      <FileText
+        className="size-5 text-on-surface"
+        aria-hidden={true}
+      />
+    </span>
+
+    {showInlineClear ? (
+      <>
+        {/* Filename on top and file size at bottom */}
+        <div className="flex h-10 min-w-0 flex-1 flex-col justify-between py-0.5">
+          {fileHref ? (
+            <a
+              href={fileHref}
+              target="_blank"
+              rel="noreferrer"
+              title={previewFile.name}
+              className="block truncate text-sm font-medium leading-none text-on-surface transition-colors hover:text-[#00cec4] hover:underline"
+            >
+              {previewFile.name}
+            </a>
+          ) : (
+            <p
+              title={previewFile.name}
+              className="truncate text-sm font-medium leading-none text-on-surface"
+            >
+              {previewFile.name}
+            </p>
+          )}
+
+          <p className="text-sm leading-none text-on-surface-variant">
+            {fileSizeLabel || "Selected"}
+          </p>
+        </div>
+
+        {/* Cross on top and status at bottom */}
+        <div className="flex h-10 shrink-0 flex-col items-end justify-between py-0.5">
+          <button
+            type="button"
+            aria-label="Delete uploaded file"
+            title="Remove file"
+            onClick={handleClear}
+            className={cn(
+              "group ds-plain inline-flex h-5 w-5 items-center justify-center rounded-full",
+              "text-on-surface-variant transition-all duration-200 ease-out",
+              "hover:scale-110 hover:bg-red-50 hover:text-red-600",
+              "active:scale-90 active:bg-red-100",
+              "focus-visible:outline-none focus-visible:ring-2",
+              "focus-visible:ring-red-500/25",
+            )}
+          >
+            <X
+              className="size-4 shrink-0 transition-transform duration-200 group-hover:rotate-90"
+              aria-hidden={true}
+            />
+          </button>
+
+          <p className="text-sm leading-none text-on-surface-variant">
+            {previewFile.statusLabel || "Ready"}
+          </p>
+        </div>
+      </>
+    ) : (
+      <div className="flex h-10 min-w-0 flex-1 flex-col justify-between py-0.5">
+        {fileHref ? (
+          <a
+            href={fileHref}
+            target="_blank"
+            rel="noreferrer"
+            title={previewFile.name}
+            className="block truncate text-sm font-medium leading-none text-on-surface transition-colors hover:text-[#00cec4] hover:underline"
+          >
+            {previewFile.name}
+          </a>
+        ) : (
+          <p className="truncate text-sm font-medium leading-none text-on-surface">
+            {previewFile.name}
+          </p>
+        )}
+
+        <div className="flex items-center gap-x-3 text-sm leading-none text-on-surface-variant">
+          <span>{fileSizeLabel || "Selected"}</span>
+          <span>{previewFile.statusLabel || "Ready"}</span>
+        </div>
+      </div>
+    )}
+  </div>
+);
             })}
-            {onClear && !previewInline ? (
+            {onClear && !showInlineClear ? (
               <div className="flex justify-end">
                 <Button
                   type="button"
