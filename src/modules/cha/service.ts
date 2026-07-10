@@ -10300,13 +10300,11 @@ export async function completeFilingNode(
       });
     }
 
-    if (node.requireMandatoryPhotos) {
-      for (const pr of node.photoRequirements) {
-        if (pr.isMandatory) {
-          const prCount = attachments.filter((a) => a.photoRequirementId === pr.id).length;
-          if (prCount < pr.minPhotos) {
-            throw new Error(`Mandatory photo upload "${pr.label}" requires at least ${pr.minPhotos} image(s). Uploaded ${prCount}.`);
-          }
+    for (const pr of node.photoRequirements) {
+      if (pr.isMandatory) {
+        const prCount = attachments.filter((a) => a.photoRequirementId === pr.id).length;
+        if (prCount < pr.minPhotos) {
+          throw new Error(`Mandatory photo upload "${pr.label}" requires at least ${pr.minPhotos} image(s). Uploaded ${prCount}.`);
         }
       }
     }

@@ -1300,7 +1300,6 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [newNodeName, setNewNodeName] = useState("");
-  const [newNodeCategory, setNewNodeCategory] = useState("CHECK");
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -1559,13 +1558,11 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       120 - Math.round(pan.y / zoom),
       nodes.every((entry) => !entry.isStart),
     );
-    node.category = newNodeCategory.trim() || "MAIN_STAGE";
     setNodes((prev) => [...prev, node]);
     setSelectedNodeId(node.id);
     setSelectedEdgeId(null);
     setPropertiesOpen(true);
     setNewNodeName("");
-    setNewNodeCategory("MAIN_STAGE");
   };
 
   const handleAddChecklistNode = () => {
@@ -1592,7 +1589,6 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     setSelectedEdgeId(null);
     setPropertiesOpen(true);
     setNewNodeName("");
-    setNewNodeCategory("CHECKLIST_ITEM");
   };
 
   const handleAddNotificationNode = () => {
@@ -1617,7 +1613,6 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     setSelectedEdgeId(null);
     setPropertiesOpen(true);
     setNewNodeName("");
-    setNewNodeCategory("NOTIFICATION");
   };
 
   const fitCanvasView = () => {
@@ -1777,6 +1772,31 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       ...node,
       photoRequirements: node.photoRequirements.map((item) => (item.id === photoId ? updater(item) : item)),
     }));
+  };
+
+  const toggleStageUploads = (enabled: boolean) => {
+    updateSelectedNode((node) => {
+      if (enabled) {
+        return node.photoRequirements.length > 0
+          ? node
+          : {
+              ...node,
+              photoRequirements: [
+                createStageUploadSlot(`${node.name || "Stage"} document`, {
+                  allowsUpload: true,
+                  isMandatory: false,
+                  minUploads: 0,
+                  acceptedFileTypes: ["image/jpeg", "image/png", "application/pdf"],
+                }),
+              ],
+            };
+      }
+
+      return {
+        ...node,
+        photoRequirements: [],
+      };
+    });
   };
 
   const buildTemplatePayload = () => {
@@ -2015,10 +2035,6 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 <div className="space-y-1.5">
                   <label className="ds-label block">Node Name</label>
                   <input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="First Check" className="w-full text-sm" />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="ds-label block">Category</label>
-                  <input value={newNodeCategory} onChange={(event) => setNewNodeCategory(event.target.value)} placeholder="MAIN_STAGE" className="w-full text-sm" />
                 </div>
                 <Button variant="outline" className="w-full" onClick={handleAddNode} disabled={activeVersion?.isPublished}>
                   <Plus size={16} />
@@ -2433,76 +2449,6 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                   <input value={selectedNode.name} onChange={(event) => updateSelectedNode((node) => ({ ...node, name: event.target.value }))} className="w-full text-sm" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="ds-label block">Key</label>
-                  <input
-                    value={selectedNode.key}
-                    onChange={(event) => {
-                      const nextKey = slugify(event.target.value);
-                      const previousKey = selectedNode.key;
-                      updateSelectedNode((node) => ({ ...node, key: nextKey }));
-                      if (nextKey !== previousKey) {
-                        setEdges((prev) => prev.map((edge) => ({
-                          ...edge,
-                          sourceKey: edge.sourceKey === previousKey ? nextKey : edge.sourceKey,
-                          targetKey: edge.targetKey === previousKey ? nextKey : edge.targetKey,
-                        })));
-                      }
-                    }}
-                    className="w-full text-sm ds-numeric"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="ds-label block">Category</label>
-                  <input value={selectedNode.category} onChange={(event) => updateSelectedNode((node) => ({ ...node, category: event.target.value }))} className="w-full text-sm" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="ds-label block">Node Type</label>
-                    <select
-                      value={selectedNode.nodeType}
-                      onChange={(event) => updateSelectedNode((node) => ({ ...node, nodeType: event.target.value as NodeDraft["nodeType"] }))}
-                      className="w-full text-sm"
-                    >
-                      <option value="START">Start</option>
-                      <option value="CHECKLIST_NODE">Checklist Node</option>
-                      <option value="NOTIFICATION">Notification</option>
-                      <option value="DECISION">Decision</option>
-                      <option value="SECTION">Section</option>
-                      <option value="END">End</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="ds-label block">Sort Order</label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={selectedNode.sortOrder}
-                      onChange={(event) => updateSelectedNode((node) => ({ ...node, sortOrder: Math.max(1, Number(event.target.value || 1)) }))}
-                      className="w-full text-sm ds-numeric"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="ds-label block">Section Key</label>
-                    <input value={selectedNode.sectionKey} onChange={(event) => updateSelectedNode((node) => ({ ...node, sectionKey: slugify(event.target.value) }))} className="w-full text-sm ds-numeric" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="ds-label block">Section Label</label>
-                    <input value={selectedNode.sectionName} onChange={(event) => updateSelectedNode((node) => ({ ...node, sectionName: event.target.value }))} className="w-full text-sm" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="ds-label block">Branch Key</label>
-                    <input value={selectedNode.branchKey} onChange={(event) => updateSelectedNode((node) => ({ ...node, branchKey: slugify(event.target.value) }))} className="w-full text-sm ds-numeric" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="ds-label block">Branch Label</label>
-                    <input value={selectedNode.branchName} onChange={(event) => updateSelectedNode((node) => ({ ...node, branchName: event.target.value }))} className="w-full text-sm" />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
                   <label className="ds-label block">Description</label>
                   <textarea value={selectedNode.description} onChange={(event) => updateSelectedNode((node) => ({ ...node, description: event.target.value }))} rows={3} className="w-full text-sm" />
                 </div>
@@ -2537,7 +2483,6 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     { label: "Allow Double-Back", checked: selectedNode.canBeRevisited, buildUpdate: (checked: boolean) => ({ canBeRevisited: checked }) },
                     { label: "Approval Required", checked: selectedNode.approvalRequired, buildUpdate: (checked: boolean) => ({ approvalRequired: checked }) },
                     { label: "Checklist Gate", checked: selectedNode.requireAllMandatoryChecklistItems, buildUpdate: (checked: boolean) => ({ requireAllMandatoryChecklistItems: checked }) },
-                    { label: "Stage Upload Gate", checked: selectedNode.requireMandatoryPhotos, buildUpdate: (checked: boolean) => ({ requireMandatoryPhotos: checked }) },
                   ] as const).map(({ label, checked, buildUpdate }) => (
                     <label key={label} className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2">
                       <input
@@ -2554,6 +2499,19 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                       <span>{label}</span>
                     </label>
                   ))}
+                </div>
+                <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3">
+                  <label className="flex items-center gap-2 text-sm text-on-surface">
+                    <input
+                      type="checkbox"
+                      checked={selectedNode.photoRequirements.length > 0}
+                      onChange={(event) => toggleStageUploads(event.target.checked)}
+                    />
+                    <span>Enable Stage Document Uploads</span>
+                  </label>
+                  <p className="mt-2 text-xs text-on-surface-variant">
+                    Add a separate upload area for this stage instead of attaching document rules to checklist items.
+                  </p>
                 </div>
                 <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3">
                   <label className="flex items-center gap-2 text-sm text-on-surface">
@@ -2577,35 +2535,110 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     Adds the reusable post-filing customs query workflow to this node. Operators can record whether no query was raised, open a query thread, post offline response updates, and clear the query before moving ahead.
                   </p>
                 </div>
-                {selectedNode.approvalRequired ? (
-                  <div className="space-y-1.5">
-                    <label className="ds-label block">Approval Roles</label>
-                    <input
-                      value={selectedNode.approvalRoles.join(", ")}
-                      onChange={(event) => updateSelectedNode((node) => ({
-                        ...node,
-                        approvalRoles: event.target.value.split(",").map((value) => value.trim()).filter(Boolean),
-                      }))}
-                      className="w-full text-sm"
-                      placeholder="Manager, Admin"
-                    />
+                <details className="rounded-xl border border-outline-variant bg-surface p-3">
+                  <summary className="cursor-pointer text-sm font-medium text-on-surface">Advanced Routing And Metadata</summary>
+                  <div className="mt-4 space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="ds-label block">Key</label>
+                      <input
+                        value={selectedNode.key}
+                        onChange={(event) => {
+                          const nextKey = slugify(event.target.value);
+                          const previousKey = selectedNode.key;
+                          updateSelectedNode((node) => ({ ...node, key: nextKey }));
+                          if (nextKey !== previousKey) {
+                            setEdges((prev) => prev.map((edge) => ({
+                              ...edge,
+                              sourceKey: edge.sourceKey === previousKey ? nextKey : edge.sourceKey,
+                              targetKey: edge.targetKey === previousKey ? nextKey : edge.targetKey,
+                            })));
+                          }
+                        }}
+                        className="w-full text-sm ds-numeric"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="ds-label block">Node Type</label>
+                        <select
+                          value={selectedNode.nodeType}
+                          onChange={(event) => updateSelectedNode((node) => ({ ...node, nodeType: event.target.value as NodeDraft["nodeType"] }))}
+                          className="w-full text-sm"
+                        >
+                          <option value="START">Start</option>
+                          <option value="CHECKLIST_NODE">Checklist Node</option>
+                          <option value="NOTIFICATION">Notification</option>
+                          <option value="DECISION">Decision</option>
+                          <option value="SECTION">Section</option>
+                          <option value="END">End</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="ds-label block">Sort Order</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={selectedNode.sortOrder}
+                          onChange={(event) => updateSelectedNode((node) => ({ ...node, sortOrder: Math.max(1, Number(event.target.value || 1)) }))}
+                          className="w-full text-sm ds-numeric"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="ds-label block">Category</label>
+                      <input value={selectedNode.category} onChange={(event) => updateSelectedNode((node) => ({ ...node, category: event.target.value }))} className="w-full text-sm" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="ds-label block">Section Key</label>
+                        <input value={selectedNode.sectionKey} onChange={(event) => updateSelectedNode((node) => ({ ...node, sectionKey: slugify(event.target.value) }))} className="w-full text-sm ds-numeric" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="ds-label block">Section Label</label>
+                        <input value={selectedNode.sectionName} onChange={(event) => updateSelectedNode((node) => ({ ...node, sectionName: event.target.value }))} className="w-full text-sm" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="ds-label block">Branch Key</label>
+                        <input value={selectedNode.branchKey} onChange={(event) => updateSelectedNode((node) => ({ ...node, branchKey: slugify(event.target.value) }))} className="w-full text-sm ds-numeric" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="ds-label block">Branch Label</label>
+                        <input value={selectedNode.branchName} onChange={(event) => updateSelectedNode((node) => ({ ...node, branchName: event.target.value }))} className="w-full text-sm" />
+                      </div>
+                    </div>
+                    {selectedNode.approvalRequired ? (
+                      <div className="space-y-1.5">
+                        <label className="ds-label block">Approval Roles</label>
+                        <input
+                          value={selectedNode.approvalRoles.join(", ")}
+                          onChange={(event) => updateSelectedNode((node) => ({
+                            ...node,
+                            approvalRoles: event.target.value.split(",").map((value) => value.trim()).filter(Boolean),
+                          }))}
+                          className="w-full text-sm"
+                          placeholder="Manager, Admin"
+                        />
+                      </div>
+                    ) : null}
+                    <div className="space-y-1.5">
+                      <label className="ds-label block">Allowed Processor Roles</label>
+                      <input
+                        value={selectedNode.allowedRoles.join(", ")}
+                        onChange={(event) => updateSelectedNode((node) => ({
+                          ...node,
+                          allowedRoles: event.target.value.split(",").map((value) => value.trim()).filter(Boolean),
+                        }))}
+                        className="w-full text-sm"
+                        placeholder="Leave empty so anyone concerned with the job can process it"
+                      />
+                      <p className="text-xs text-on-surface-variant">
+                        Empty means anyone who can access the job can complete this node.
+                      </p>
+                    </div>
                   </div>
-                ) : null}
-                <div className="space-y-1.5">
-                  <label className="ds-label block">Allowed Processor Roles</label>
-                  <input
-                    value={selectedNode.allowedRoles.join(", ")}
-                    onChange={(event) => updateSelectedNode((node) => ({
-                      ...node,
-                      allowedRoles: event.target.value.split(",").map((value) => value.trim()).filter(Boolean),
-                    }))}
-                    className="w-full text-sm"
-                    placeholder="Leave empty so anyone concerned with the job can process it"
-                  />
-                  <p className="text-xs text-on-surface-variant">
-                    Empty means anyone who can access the job can complete this node.
-                  </p>
-                </div>
+                </details>
                 {selectedNode.nodeType === "NOTIFICATION" ? (
                   <div className="rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
                     This node runs automatically. When the workflow enters it, the job owner, assigned manager, and all assigned users receive a notification, then the workflow advances through its single connected path.
@@ -2876,7 +2909,6 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                           {([
                             { label: "Mandatory", checked: item.isMandatory, field: "isMandatory" },
                             { label: "Completion Remarks", checked: item.requiresRemarks, field: "requiresRemarks" },
-                            { label: "Allow Uploads", checked: item.allowsUpload, field: "allowsUpload" },
                             { label: "Delay Remarks Required", checked: item.delayRemarksRequired, field: "delayRemarksRequired" },
                             { label: "Active", checked: item.isActive, field: "isActive" },
                           ] as const).map(({ label, checked, field }) => (
@@ -2895,131 +2927,11 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                             </label>
                           ))}
                         </div>
-
-                        {item.allowsUpload ? (
-                          <div className="rounded-xl border border-outline-variant bg-surface p-3">
-                            <div className="grid grid-cols-2 gap-3">
-                              <div className="space-y-1.5">
-                                <label className="ds-label block">Min Uploads</label>
-                                <input
-                                  type="number"
-                                  min={0}
-                                  value={item.minUploads}
-                                  onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, minUploads: Math.max(0, Number(event.target.value || 0)) }))}
-                                  className="w-full text-sm ds-numeric"
-                                />
-                              </div>
-                              <div className="space-y-1.5">
-                                <label className="ds-label block">Max Uploads</label>
-                                <input
-                                  type="number"
-                                  min={item.minUploads}
-                                  value={item.maxUploads ?? ""}
-                                  onChange={(event) =>
-                                    updateChecklistItem(item.id, (current) => ({
-                                      ...current,
-                                      maxUploads: event.target.value ? Math.max(current.minUploads, Number(event.target.value)) : null,
-                                    }))
-                                  }
-                                  className="w-full text-sm ds-numeric"
-                                  placeholder="No limit"
-                                />
-                              </div>
-                            </div>
-                            <div className="mt-3 space-y-1.5">
-                              <label className="ds-label block">Accepted File Types</label>
-                              <input
-                                value={item.acceptedFileTypes.join(", ")}
-                                onChange={(event) =>
-                                  updateChecklistItem(item.id, (current) => ({
-                                    ...current,
-                                    acceptedFileTypes: event.target.value.split(",").map((value) => value.trim()).filter(Boolean),
-                                  }))
-                                }
-                                className="w-full text-sm"
-                                placeholder="image/jpeg, application/pdf"
-                              />
-                            </div>
+                        {item.allowsUpload || item.documentType || item.requiresValidity || item.notifyBeforeExpiry ? (
+                          <div className="rounded-xl border border-dashed border-outline-variant bg-surface px-4 py-3 text-sm text-on-surface-variant">
+                            Legacy checklist-item document settings are preserved for existing workflows, but new upload rules should be configured at the node level using <span className="font-medium text-on-surface">Enable Stage Document Uploads</span>.
                           </div>
                         ) : null}
-
-                        <div className="rounded-xl border border-outline-variant bg-surface p-3">
-                          <div className="space-y-1.5">
-                            <label className="ds-label block">Document Type</label>
-                            <input
-                              value={item.documentType}
-                              onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, documentType: event.target.value }))}
-                              className="w-full text-sm"
-                              placeholder="Example: E-Way Bill, OOC Document, CE/Lab Report"
-                            />
-                          </div>
-                          <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-on-surface">
-                            <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2">
-                              <input
-                                type="checkbox"
-                                checked={item.requiresValidity}
-                                onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, requiresValidity: event.target.checked }))}
-                              />
-                              <span>Validity Required</span>
-                            </label>
-                            <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2">
-                              <input
-                                type="checkbox"
-                                checked={item.notifyBeforeExpiry}
-                                onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, notifyBeforeExpiry: event.target.checked }))}
-                              />
-                              <span>Expiry Notification</span>
-                            </label>
-                          </div>
-                          {item.requiresValidity ? (
-                            <div className="mt-3 grid grid-cols-2 gap-3">
-                              <div className="space-y-1.5">
-                                <label className="ds-label block">Validity Duration</label>
-                                <input
-                                  type="number"
-                                  min={1}
-                                  value={item.validityDuration ?? ""}
-                                  onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, validityDuration: event.target.value ? Math.max(1, Number(event.target.value)) : null }))}
-                                  className="w-full text-sm ds-numeric"
-                                  placeholder="Set during filing"
-                                />
-                              </div>
-                              <div className="space-y-1.5">
-                                <label className="ds-label block">Validity Unit</label>
-                                <select
-                                  value={item.validityUnit}
-                                  onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, validityUnit: event.target.value as ValidityUnit }))}
-                                  className="w-full text-sm"
-                                >
-                                  <option value="BUSINESS_DAYS">Business Days</option>
-                                  <option value="CALENDAR_DAYS">Calendar Days</option>
-                                </select>
-                              </div>
-                              <div className="space-y-1.5">
-                                <label className="ds-label block">Warn Before</label>
-                                <input
-                                  type="number"
-                                  min={1}
-                                  value={item.warningBeforeDuration ?? ""}
-                                  onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, warningBeforeDuration: event.target.value ? Math.max(1, Number(event.target.value)) : null }))}
-                                  className="w-full text-sm ds-numeric"
-                                  placeholder="1"
-                                />
-                              </div>
-                              <div className="space-y-1.5">
-                                <label className="ds-label block">Warning Unit</label>
-                                <select
-                                  value={item.warningBeforeUnit}
-                                  onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, warningBeforeUnit: event.target.value as ValidityUnit }))}
-                                  className="w-full text-sm"
-                                >
-                                  <option value="BUSINESS_DAYS">Business Days</option>
-                                  <option value="CALENDAR_DAYS">Calendar Days</option>
-                                </select>
-                              </div>
-                            </div>
-                          ) : null}
-                        </div>
                       </div>
                     </div>
                   ))}
@@ -3028,13 +2940,20 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
 
               <div className="ds-form-section space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="ds-h3 text-on-surface">Stage Upload Slots</h3>
-                  <Button variant="outline" size="sm" onClick={addPhotoRequirement}>
-                    <Plus size={14} />
-                    Add Upload Slot
-                  </Button>
+                  <h3 className="ds-h3 text-on-surface">Stage Document Uploads</h3>
+                  {selectedNode.photoRequirements.length > 0 ? (
+                    <Button variant="outline" size="sm" onClick={addPhotoRequirement}>
+                      <Plus size={14} />
+                      Add Upload Slot
+                    </Button>
+                  ) : null}
                 </div>
                 <div className="space-y-3">
+                  {selectedNode.photoRequirements.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-6 text-sm text-on-surface-variant">
+                      Stage document uploads are disabled for this node. Turn on <span className="font-medium text-on-surface">Enable Stage Document Uploads</span> in Node Settings to add a dedicated upload area.
+                    </div>
+                  ) : null}
                   {selectedNode.photoRequirements.map((photo) => (
                     <div key={photo.id} className="rounded-xl border border-outline-variant bg-surface-container-low p-4">
                       <div className="mb-3 flex items-start justify-between gap-2">
@@ -3166,11 +3085,6 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                       </div>
                     </div>
                   ))}
-                  {selectedNode.photoRequirements.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-6 text-sm text-on-surface-variant">
-                      No stage-level upload slots configured for this node.
-                    </div>
-                  ) : null}
                 </div>
               </div>
             </div>

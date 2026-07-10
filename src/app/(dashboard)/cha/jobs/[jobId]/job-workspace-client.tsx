@@ -2399,18 +2399,15 @@
         }
       }
 
-      // Validate mandatory photo uploads if requireMandatoryPhotos is true
-      if (activeNodeRun.node.requireMandatoryPhotos) {
-        const currentAttachments = filingInstance?.attachments?.filter(
-          (a: any) => a.nodeRunId === activeNodeRun.id
-        ) || [];
-        for (const pr of activeNodeRun.node.photoRequirements) {
-          if (pr.isMandatory) {
-            const uploadedCount = currentAttachments.filter((a: any) => a.photoRequirementId === pr.id).length;
-            if (uploadedCount < pr.minPhotos) {
-              toast.error(`Mandatory photo upload "${pr.label}" requires at least ${pr.minPhotos} photo(s). Uploaded ${uploadedCount}.`);
-              return;
-            }
+      const currentAttachments = filingInstance?.attachments?.filter(
+        (a: any) => a.nodeRunId === activeNodeRun.id
+      ) || [];
+      for (const pr of activeNodeRun.node.photoRequirements) {
+        if (pr.isMandatory) {
+          const uploadedCount = currentAttachments.filter((a: any) => a.photoRequirementId === pr.id).length;
+          if (uploadedCount < pr.minPhotos) {
+            toast.error(`Mandatory photo upload "${pr.label}" requires at least ${pr.minPhotos} photo(s). Uploaded ${uploadedCount}.`);
+            return;
           }
         }
       }
