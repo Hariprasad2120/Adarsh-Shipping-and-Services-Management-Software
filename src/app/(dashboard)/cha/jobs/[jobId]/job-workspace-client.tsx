@@ -4841,6 +4841,176 @@
                                       ) : null}
                                     </div>
                                   ) : null}
+                                  {activeNodeRun.node.checklistItems?.length > 0 && (
+                                    <div className="space-y-3 pt-1">
+                                      <h4 className="ds-label text-on-surface">Stage Checklist Verification</h4>
+                                      <div className="space-y-3.5">
+                                        {activeChecklistItems.map((item: any, index: number) => {
+                                          const resp = checklistResponses[item.id] || { isChecked: false, remarks: "", fileKey: undefined, delayRemarks: "" };
+                                          const overdueMeta = overdueChecklistItems.find((entry: any) => entry.checklistItemId === item.id);
+                                          const checklistItemAttachments = checklistAttachmentsByItem.get(item.id) || [];
+                                          const isCurrentItem = index === currentChecklistItemIndex;
+                                          const isCompletedItem =
+                                            resp.isChecked &&
+                                            (!item.requiresRemarks || !!resp.remarks?.trim()) &&
+                                            (!overdueMeta || !item.delayRemarksRequired || !!resp.delayRemarks?.trim()) &&
+                                            (!(item.allowsUpload && (item.minUploads || 0) > 0) || checklistItemAttachments.length >= item.minUploads);
+                                          const isLockedItem = index > currentChecklistItemIndex;
+                                          return (
+                                            <div
+                                              key={item.id}
+                                              className={`p-3.5 rounded-xl border space-y-3 ${
+                                                isLockedItem
+                                                  ? "border-outline-variant bg-surface-container-low opacity-70"
+                                                  : overdueMeta
+                                                  ? "border-[#fb923c]/45 bg-[#fb923c]/10"
+                                                  : "border-outline-variant bg-surface-container-low"
+                                              }`}
+                                            >
+                                              <div className="flex items-center justify-between gap-4">
+                                                <div className="flex min-w-0 flex-1 items-center gap-3">
+                                                  <NeonCheckbox
+                                                    id={`check-${item.id}`}
+                                                    checked={resp.isChecked}
+                                                    disabled={isLockedItem}
+                                                    onChange={(e) => {
+                                                      setChecklistResponses((prev) => ({
+                                                        ...prev,
+                                                        [item.id]: {
+                                                          ...prev[item.id],
+                                                          isChecked: e.target.checked,
+                                                        },
+                                                      }));
+                                                    }}
+                                                  />
+                                                  <div className="min-w-0 flex-1 space-y-1">
+                                                    <label htmlFor={`check-${item.id}`} className="block cursor-pointer text-sm font-semibold leading-5 text-on-surface">
+                                                      {item.label} {item.isMandatory && <span className="text-red-500 font-bold">*</span>}
+                                                    </label>
+                                                    {item.description && (
+                                                      <p className="text-xs leading-5 text-on-surface-variant">{item.description}</p>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                                <div className="shrink-0 self-center text-right">
+                                                  <div className="ds-label text-on-surface-variant">Item {index + 1} of {activeChecklistItems.length}</div>
+                                                  <div className="mt-1 text-sm leading-5 text-on-surface-variant ds-numeric">
+                                                    {item.deadlineDuration || 2} {item.deadlineUnit === "HOURS" ? "HR" : item.deadlineUnit === "DAYS" ? "DAY" : "BD"}
+                                                  </div>
+                                                </div>
+                                              </div>
+
+                                              {isLockedItem && (
+                                                <div className="rounded-xl border border-outline-variant/60 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
+                                                  Complete the current checklist item first to unlock this step.
+                                                </div>
+                                              )}
+
+                                              {!isLockedItem && !isCurrentItem && isCompletedItem && (
+                                                <div className="rounded-xl border border-outline-variant/60 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
+                                                  Completed and ready. You can move to the next checklist item.
+                                                </div>
+                                              )}
+
+                                              {!isLockedItem && overdueMeta && (
+                                                <div className="rounded-2xl border border-[#fb923c]/35 bg-surface px-3 py-2 text-xs text-on-surface">
+                                                  <div className="flex flex-wrap items-center gap-3">
+                                                    <span className="font-semibold text-[#fb923c] uppercase tracking-wide">Overdue</span>
+                                                    <span className="ds-numeric">Due: {new Date(overdueMeta.dueAt).toLocaleDateString("en-IN")}</span>
+                                                    <span className="ds-numeric">{overdueMeta.daysDelayed} day(s) delayed</span>
+                                                  </div>
+                                                  <div className="mt-2 space-y-1">
+                                                    <label className="ds-label block text-[#fb923c]">Delay Remarks *</label>
+                                                    <textarea
+                                                      rows={2}
+                                                      value={resp.delayRemarks || ""}
+                                                      onChange={(e) => {
+                                                        setChecklistResponses((prev) => ({
+                                                          ...prev,
+                                                          [item.id]: {
+                                                            ...prev[item.id],
+                                                            delayRemarks: e.target.value,
+                                                          },
+                                                        }));
+                                                      }}
+                                                      placeholder="Explain why this checklist item crossed its deadline..."
+                                                      className="w-full text-xs"
+                                                    />
+                                                  </div>
+                                                </div>
+                                              )}
+
+                                              {!isLockedItem && resp.isChecked && item.requiresRemarks && (
+                                                <div className="pl-6 space-y-1">
+                                                  <label className="ds-label block">Remarks / Notes *</label>
+                                                  <input
+                                                    type="text"
+                                                    required
+                                                    value={resp.remarks || ""}
+                                                    onChange={(e) => {
+                                                      setChecklistResponses((prev) => ({
+                                                        ...prev,
+                                                        [item.id]: {
+                                                          ...prev[item.id],
+                                                          remarks: e.target.value,
+                                                        },
+                                                      }));
+                                                    }}
+                                                    placeholder="Enter required verification details..."
+                                                    className="w-full text-xs"
+                                                  />
+                                                </div>
+                                              )}
+
+                                              {!isLockedItem && resp.isChecked && item.allowsUpload && (
+                                                <div className="pl-6 space-y-2">
+                                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                                    <label className="ds-label block">Supporting File / Photo</label>
+                                                    <span className="text-[11px] text-on-surface-variant ds-numeric">
+                                                      Uploaded {checklistItemAttachments.length} / Minimum {item.minUploads || 0}
+                                                    </span>
+                                                  </div>
+                                                  <FileUploadField
+                                                    id={`checklist-item-upload-${item.id}`}
+                                                    compact
+                                                    disabled={loading === `checklist-item-file-${item.id}`}
+                                                    helperText="Add images or documents here. This upload counts toward this checklist item directly."
+                                                    triggerText="Drag and drop or choose supporting file to upload"
+                                                    showSelectedPreview={false}
+                                                    onInputChange={(e) => handleUploadChecklistItemFile(item.id, e)}
+                                                  />
+                                                  {checklistItemAttachments.length > 0 && (
+                                                    <div className="space-y-1">
+                                                      {checklistItemAttachments.map((attachment: any) => (
+                                                        <div key={attachment.id} className="flex items-center justify-between rounded-lg bg-surface px-2 py-1 text-xs">
+                                                          <a
+                                                            href={attachment.fileKey}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="flex items-center gap-1 font-semibold text-[#00cec4] hover:underline"
+                                                          >
+                                                            <ExternalLink size={11} /> {attachment.fileName}
+                                                          </a>
+                                                          <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleDeleteFilingPhoto(attachment.id)}
+                                                          >
+                                                            Remove
+                                                          </Button>
+                                                        </div>
+                                                      ))}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
 
@@ -5412,181 +5582,6 @@
                               ) : null}
                               </div>
                               
-                              {/* Checklist Items */}
-                              {activeNodeRun.node.checklistItems?.length > 0 && (
-                                <div className={`${filingPrimaryColumnClass} space-y-3`}>
-                                  <h4 className="ds-label text-on-surface">Stage Checklist Verification</h4>
-                                  <div className="space-y-3.5">
-                                    {activeChecklistItems.map((item: any, index: number) => {
-                                      const resp = checklistResponses[item.id] || { isChecked: false, remarks: "", fileKey: undefined, delayRemarks: "" };
-                                      const overdueMeta = overdueChecklistItems.find((entry: any) => entry.checklistItemId === item.id);
-                                      const checklistItemAttachments = checklistAttachmentsByItem.get(item.id) || [];
-                                      const isCurrentItem = index === currentChecklistItemIndex;
-                                      const isCompletedItem =
-                                        resp.isChecked &&
-                                        (!item.requiresRemarks || !!resp.remarks?.trim()) &&
-                                        (!overdueMeta || !item.delayRemarksRequired || !!resp.delayRemarks?.trim()) &&
-                                        (!(item.allowsUpload && (item.minUploads || 0) > 0) || checklistItemAttachments.length >= item.minUploads);
-                                      const isLockedItem = index > currentChecklistItemIndex;
-                                      return (
-                                        <div
-                                          key={item.id}
-                                          className={`p-3.5 rounded-xl border space-y-3 ${
-                                            isLockedItem
-                                              ? "border-outline-variant bg-surface-container-low opacity-70"
-                                              : overdueMeta
-                                              ? "border-[#fb923c]/45 bg-[#fb923c]/10"
-                                              : "border-outline-variant bg-surface-container-low"
-                                          }`}
-                                        >
-                                          <div className="flex items-start justify-between gap-3">
-                                            <div className="flex items-start gap-3">
-                                              <NeonCheckbox
-                                                id={`check-${item.id}`}
-                                                checked={resp.isChecked}
-                                                disabled={isLockedItem}
-                                                onChange={(e) => {
-                                                  setChecklistResponses((prev) => ({
-                                                    ...prev,
-                                                    [item.id]: {
-                                                      ...prev[item.id],
-                                                      isChecked: e.target.checked,
-                                                    },
-                                                  }));
-                                                }}
-                                                className="mt-0.5"
-                                              />
-                                              <div className="flex-1 min-w-0">
-                                                <label htmlFor={`check-${item.id}`} className="text-xs font-semibold text-on-surface block cursor-pointer">
-                                                  {item.label} {item.isMandatory && <span className="text-red-500 font-bold">*</span>}
-                                                </label>
-                                                {item.description && (
-                                                  <p className="text-[11px] text-on-surface-variant mt-0.5 leading-relaxed">{item.description}</p>
-                                                )}
-                                              </div>
-                                            </div>
-                                            <div className="shrink-0 text-right">
-                                              <div className="ds-label text-on-surface-variant">Item {index + 1} of {activeChecklistItems.length}</div>
-                                              <div className="mt-1 text-[11px] text-on-surface-variant">
-                                                {item.deadlineDuration || 2} {item.deadlineUnit === "HOURS" ? "HR" : item.deadlineUnit === "DAYS" ? "DAY" : "BD"}
-                                              </div>
-                                            </div>
-                                          </div>
-
-                                          {isLockedItem && (
-                                            <div className="rounded-xl border border-outline-variant/60 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
-                                              Complete the current checklist item first to unlock this step.
-                                            </div>
-                                          )}
-
-                                          {!isLockedItem && !isCurrentItem && isCompletedItem && (
-                                            <div className="rounded-xl border border-outline-variant/60 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
-                                              Completed and ready. You can move to the next checklist item.
-                                            </div>
-                                          )}
-
-                                          {!isLockedItem && overdueMeta && (
-                                            <div className="rounded-2xl border border-[#fb923c]/35 bg-surface px-3 py-2 text-xs text-on-surface">
-                                              <div className="flex flex-wrap items-center gap-3">
-                                                <span className="font-semibold text-[#fb923c] uppercase tracking-wide">Overdue</span>
-                                                <span className="ds-numeric">Due: {new Date(overdueMeta.dueAt).toLocaleDateString("en-IN")}</span>
-                                                <span className="ds-numeric">{overdueMeta.daysDelayed} day(s) delayed</span>
-                                              </div>
-                                              <div className="mt-2 space-y-1">
-                                                <label className="ds-label block text-[#fb923c]">Delay Remarks *</label>
-                                                <textarea
-                                                  rows={2}
-                                                  value={resp.delayRemarks || ""}
-                                                  onChange={(e) => {
-                                                    setChecklistResponses((prev) => ({
-                                                      ...prev,
-                                                      [item.id]: {
-                                                        ...prev[item.id],
-                                                        delayRemarks: e.target.value,
-                                                      },
-                                                    }));
-                                                  }}
-                                                  placeholder="Explain why this checklist item crossed its deadline..."
-                                                  className="w-full text-xs"
-                                                />
-                                              </div>
-                                            </div>
-                                          )}
-
-                                          {/* Optional or required remarks */}
-                                          {!isLockedItem && resp.isChecked && item.requiresRemarks && (
-                                            <div className="pl-6 space-y-1">
-                                              <label className="ds-label block">Remarks / Notes *</label>
-                                              <input
-                                                type="text"
-                                                required
-                                                value={resp.remarks || ""}
-                                                onChange={(e) => {
-                                                  setChecklistResponses((prev) => ({
-                                                    ...prev,
-                                                    [item.id]: {
-                                                      ...prev[item.id],
-                                                      remarks: e.target.value,
-                                                    },
-                                                  }));
-                                                }}
-                                                placeholder="Enter required verification details..."
-                                                className="w-full text-xs"
-                                              />
-                                            </div>
-                                          )}
-
-                                          {/* Optional or required uploads */}
-                                          {!isLockedItem && resp.isChecked && item.allowsUpload && (
-                                            <div className="pl-6 space-y-2">
-                                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                                <label className="ds-label block">Supporting File / Photo</label>
-                                                <span className="text-[11px] text-on-surface-variant ds-numeric">
-                                                  Uploaded {checklistItemAttachments.length} / Minimum {item.minUploads || 0}
-                                                </span>
-                                              </div>
-                                              <FileUploadField
-                                                id={`checklist-item-upload-${item.id}`}
-                                                compact
-                                                disabled={loading === `checklist-item-file-${item.id}`}
-                                                helperText="Add images or documents here. This upload counts toward this checklist item directly."
-                                                triggerText="Drag and drop or choose supporting file to upload"
-                                                showSelectedPreview={false}
-                                                onInputChange={(e) => handleUploadChecklistItemFile(item.id, e)}
-                                              />
-                                              {checklistItemAttachments.length > 0 && (
-                                                <div className="space-y-1">
-                                                  {checklistItemAttachments.map((attachment: any) => (
-                                                    <div key={attachment.id} className="flex items-center justify-between rounded-lg bg-surface px-2 py-1 text-xs">
-                                                      <a
-                                                        href={attachment.fileKey}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="flex items-center gap-1 font-semibold text-[#00cec4] hover:underline"
-                                                      >
-                                                        <ExternalLink size={11} /> {attachment.fileName}
-                                                      </a>
-                                                      <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleDeleteFilingPhoto(attachment.id)}
-                                                      >
-                                                        Remove
-                                                      </Button>
-                                                    </div>
-                                                  ))}
-                                                </div>
-                                              )}
-                                            </div>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              )}
-
                               {/* Node Photo / File Upload Requirements */}
                               {activeNodeRun.node.photoRequirements?.length > 0 && (
                                 <div className={`${filingPrimaryColumnClass} space-y-4 border-t border-outline-variant/30 pt-4`}>

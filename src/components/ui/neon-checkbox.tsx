@@ -33,6 +33,7 @@ const NeonCheckbox: React.FC<NeonCheckboxProps> = ({
     '--primary': '#00cec4',
     '--primary-dark': 'rgba(0, 206, 196, 0.4)',
     '--primary-light': '#00ffaa',
+    '--checkbox-surface': 'var(--color-surface)',
     '--size': '20px',
   } as React.CSSProperties;
 
@@ -52,9 +53,9 @@ const NeonCheckbox: React.FC<NeonCheckboxProps> = ({
         
         <div className="relative w-full h-full neon-checkbox__frame">
           <div className={cn(
-            "absolute inset-0 bg-black/85 dark:bg-black/90 rounded border-2 transition-all duration-300 neon-checkbox__box",
+            "absolute inset-0 rounded border bg-[var(--checkbox-surface)] transition-all duration-300 neon-checkbox__box",
             isChecked 
-              ? 'border-[var(--primary)] bg-[rgba(0,206,196,0.1)]' 
+              ? 'border-[var(--primary)] bg-[rgba(0,206,196,0.12)] shadow-[0_0_0_3px_rgba(0,206,196,0.10)]' 
               : 'border-[var(--primary-dark)]'
           )}>
             <div className="absolute inset-[1px] flex items-center justify-center neon-checkbox__check-container">
@@ -148,7 +149,7 @@ const NeonCheckbox: React.FC<NeonCheckboxProps> = ({
       </div>
       
       {label && (
-        <span className="ml-3 text-xs text-on-surface select-none font-medium">{label}</span>
+        <span className="ml-3 text-sm leading-5 text-on-surface select-none font-medium">{label}</span>
       )}
     </label>
   );
