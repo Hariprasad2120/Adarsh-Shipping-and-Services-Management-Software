@@ -739,15 +739,11 @@
     );
     const isBillFilingNode = useMemo(() => {
       if (!activeNodeRun?.node) return false;
-      // The first step of every filing workflow is the Bill Filing stage:
-      // upload the bill document + enter the bill number, then decide the
-      // customs-query state — regardless of how the start node was configured.
-      if (activeNodeRun.node.isStart && activeNodeRun.node.nodeType !== "DECISION") return true;
       const fieldKeys = (activeNodeRun.node.fieldDefinitionsJson || []).map((field: any) => field.key);
       const documentKeys = (activeNodeRun.node.documentRequirementsJson || []).map((document: any) => document.key);
-      return fieldKeys.includes("bill_number") && documentKeys.includes("bill_document");
+      return fieldKeys.includes("bill_number") && fieldKeys.includes("bill_filing_date") && documentKeys.includes("bill_document");
     }, [activeNodeRun]);
-    const activeNodeDisplayName = isBillFilingNode ? "Bill Filing" : activeNodeRun?.node?.name || "";
+    const activeNodeDisplayName = activeNodeRun?.node?.name || "";
     const billFilingDocumentUploaded = activeNodeAttachments.some(
       (attachment: any) => attachment.documentRequirementKey === "bill_document",
     );
@@ -760,23 +756,12 @@
       !isBillFilingNode || (billFilingDocumentUploaded && billFilingNumberEntered && billFilingDateEntered);
     const queryProcessingSection = useMemo(() => {
       const sections = Array.isArray(activeNodeRun?.node?.conditionalSectionsJson) ? activeNodeRun.node.conditionalSectionsJson : [];
-      const matched =
+      return (
         sections.find((section: any) => section?.key === "query_processing") ||
-        sections.find((section: any) => section?.config?.moduleType === "CUSTOMS_QUERY_PROCESSING");
-      if (matched) {
-        return matched;
-      }
-      if (isBillFilingNode) {
-        return {
-          key: "query_processing",
-          label: "Query Processing",
-          type: "TOGGLE",
-          defaultEnabled: true,
-          config: { moduleType: "CUSTOMS_QUERY_PROCESSING" },
-        };
-      }
-      return null;
-    }, [activeNodeRun?.node?.conditionalSectionsJson, isBillFilingNode]);
+        sections.find((section: any) => section?.config?.moduleType === "CUSTOMS_QUERY_PROCESSING") ||
+        null
+      );
+    }, [activeNodeRun?.node?.conditionalSectionsJson]);
     const queryProcessingEnabled = !!queryProcessingSection;
     const queryProcessingState = (filingToggleStateDetails.query_processing?.state as Record<string, unknown> | null) ?? null;
     const queryProcessingStage = useMemo(() => {
@@ -810,6 +795,11 @@
     const billFilingCanChooseQuery = queryProcessingEnabled && billFilingReadyForRouting;
     const queryProcessingResolved =
       !queryProcessingEnabled || queryProcessingStage === "NO_QUERY" || queryProcessingStage === "CLEARED";
+    const isSavingQueryProcessingDecision = loading === "filing-toggle-query_processing";
+    const filingPrimaryColumnClass = "w-full max-w-[680px] xl:col-start-1";
+    const filingCompletionColumnClass = isBillFilingNode
+      ? filingPrimaryColumnClass
+      : "w-full space-y-4 xl:col-start-2 xl:row-start-1 xl:self-start";
     const queryProcessingWarning = !queryProcessingEnabled
       ? null
       : !billFilingCanChooseQuery
@@ -4709,63 +4699,28 @@
                     <div className="space-y-4">
                         {activeNodeRun ? (
                           <div className="space-y-4">
-                            
-                            {/* Node Header */}
-                            {!isBillFilingNode ? (
-                            <div className="grid gap-4 pb-4 lg:grid-cols-[minmax(0,1fr)_220px]">
-                              <div className="space-y-2">
-                                <SectionHeading title={activeNodeDisplayName} />
-                                {(activeNodeRun.node.sectionName || activeNodeRun.node.branchName) && (
-                                  <p className="pl-[17px] text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
-                                    {[activeNodeRun.node.sectionName, activeNodeRun.node.branchName].filter(Boolean).join(" / ")}
-                                  </p>
-                                )}
-                                <div className="flex flex-wrap gap-2 pl-[17px]">
-                                  {activeNodeRun.node.nodeType === "DECISION" ? <Badge variant="default">Decision</Badge> : null}
-                                  {activeNodeRun.node.canBeSkipped ? <Badge variant="warning">Optional / Skippable</Badge> : null}
-                                </div>
-                                {activeNodeRun.node.description && (
-                                  <p className="pl-[17px] text-sm text-on-surface-variant">{activeNodeRun.node.description}</p>
-                                )}
-                                {overdueChecklistCount > 0 && (
-                                  <p className="pl-[17px] text-xs text-[#fb923c]">
-                                    {overdueChecklistCount} overdue checklist item{overdueChecklistCount > 1 ? "s" : ""} in this active stage.
-                                  </p>
-                                )}
-                              </div>
-                              <div className="flex flex-col gap-3 lg:items-end">
-                                {activeNodeRun.slaDueDate ? (
-                                  <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-3 lg:justify-self-end">
-                                    <span className="ds-label block text-on-surface-variant">SLA Due Date</span>
-                                    <span
-                                      className={`mt-1 block text-sm ds-numeric ${
-                                        new Date(activeNodeRun.slaDueDate).getTime() < new Date().getTime()
-                                          ? "text-red-500"
-                                          : "text-on-surface"
-                                      }`}
-                                    >
-                                      {new Date(activeNodeRun.slaDueDate).toLocaleDateString("en-IN")}
-                                    </span>
-                                  </div>
-                                ) : null}
-                              </div>
-                            </div>
-                            ) : null}
 
                             {/* Node run completion form */}
                             <form
                               onSubmit={handleCompleteFilingNode}
-                              className={isBillFilingNode ? "grid gap-4 pt-2 xl:grid-cols-[minmax(0,680px)_minmax(0,1fr)] xl:items-start" : "space-y-4 pt-4"}
+                              className="grid gap-4 pt-2 xl:grid-cols-[minmax(0,680px)_minmax(0,1fr)] xl:items-start"
                             >
-                            {isBillFilingNode ? (
-                              <div className="card-top-accent w-full max-w-[680px] space-y-2 rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm xl:col-start-1">
-                                <div className="grid gap-4 pb-2 lg:grid-cols-[minmax(0,1fr)_180px]">
+                              <div className={`card-top-accent ${filingPrimaryColumnClass} space-y-2 rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm`}>
+                                <div className="grid gap-4 pb-2 lg:grid-cols-[minmax(0,1fr)_220px]">
                                   <div className="space-y-2">
-                                    <SectionHeading title={activeNodeDisplayName} />
+                                    <SectionHeading
+                                      title={activeNodeDisplayName}
+                                      description={activeNodeRun.node.description || undefined}
+                                    />
                                     <div className="flex flex-wrap gap-2 pl-[17px]">
                                       {activeNodeRun.node.nodeType === "DECISION" ? <Badge variant="default">Decision</Badge> : null}
                                       {activeNodeRun.node.canBeSkipped ? <Badge variant="warning">Optional / Skippable</Badge> : null}
                                     </div>
+                                    {(activeNodeRun.node.sectionName || activeNodeRun.node.branchName) && (
+                                      <p className="pl-[17px] text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                                        {[activeNodeRun.node.sectionName, activeNodeRun.node.branchName].filter(Boolean).join(" / ")}
+                                      </p>
+                                    )}
                                     {overdueChecklistCount > 0 && (
                                       <p className="pl-[17px] text-xs text-[#fb923c]">
                                         {overdueChecklistCount} overdue checklist item{overdueChecklistCount > 1 ? "s" : ""} in this active stage.
@@ -4773,6 +4728,20 @@
                                     )}
                                   </div>
                                   <div className="flex flex-col gap-3 lg:items-end">
+                                    {activeNodeRun.slaDueDate ? (
+                                      <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-3 lg:justify-self-end">
+                                        <span className="ds-label block text-on-surface-variant">SLA Due Date</span>
+                                        <span
+                                          className={`mt-1 block text-sm ds-numeric ${
+                                            new Date(activeNodeRun.slaDueDate).getTime() < new Date().getTime()
+                                              ? "text-red-500"
+                                              : "text-on-surface"
+                                          }`}
+                                        >
+                                          {new Date(activeNodeRun.slaDueDate).toLocaleDateString("en-IN")}
+                                        </span>
+                                      </div>
+                                    ) : null}
                                     {billFilingWarning ? (
                                       <WarningNoteToggle
                                         title={billFilingWarning.title}
@@ -4785,75 +4754,143 @@
                                     ) : null}
                                   </div>
                                 </div>
-                                <div className="grid gap-3">
-                                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                    <label className="space-y-1">
-                                      <span className="ds-label block text-on-surface-variant">
-                                        {filingBillNumberLabel} *
-                                      </span>
-                                      <Input
-                                        value={filingFieldValues.bill_number || ""}
-                                        onChange={(e) => setBillNumberEverywhere(e.target.value)}
-                                        placeholder={`Enter ${filingBillNumberLabel}`}
-                                        className="w-full"
-                                      />
-                                      <p className="text-[11px] leading-snug text-on-surface-variant">
-                                        Add the filed bill number here while uploading the document. You can complete both actions in one pass.
-                                      </p>
-                                    </label>
-                                    <label className="space-y-1">
-                                      <span className="ds-label block text-on-surface-variant">
-                                        Bill Filing Date *
-                                      </span>
-                                      <DateInput
-                                        value={filingFieldValues.bill_filing_date || ""}
-                                        onChange={(e) =>
-                                          setFilingFieldValues((prev) => ({ ...prev, bill_filing_date: e.target.value }))
+                                {isBillFilingNode ? (
+                                  <div className="grid gap-3">
+                                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                      <label className="space-y-1">
+                                        <span className="ds-label block text-on-surface-variant">
+                                          {filingBillNumberLabel} *
+                                        </span>
+                                        <Input
+                                          value={filingFieldValues.bill_number || ""}
+                                          onChange={(e) => setBillNumberEverywhere(e.target.value)}
+                                          placeholder={`Enter ${filingBillNumberLabel}`}
+                                          className="w-full"
+                                        />
+                                        <p className="text-[11px] leading-snug text-on-surface-variant">
+                                          Add the filed bill number here while uploading the document. You can complete both actions in one pass.
+                                        </p>
+                                      </label>
+                                      <label className="space-y-1">
+                                        <span className="ds-label block text-on-surface-variant">
+                                          Bill Filing Date *
+                                        </span>
+                                        <DateInput
+                                          value={filingFieldValues.bill_filing_date || ""}
+                                          onChange={(e) =>
+                                            setFilingFieldValues((prev) => ({ ...prev, bill_filing_date: e.target.value }))
+                                          }
+                                          className="w-full"
+                                        />
+                                        <p className="text-[11px] leading-snug text-on-surface-variant">
+                                          Capture the date on which this bill was filed.
+                                        </p>
+                                      </label>
+                                    </div>
+                                    <h4 className="ds-label text-on-surface">Bill Filing Actions</h4>
+                                    <FileUploadField
+                                        id={`bill-document-upload-${activeNodeRun.id}`}
+                                        disabled={
+                                          loading === "node-document-bill_document" ||
+                                          loading === `filing-delete-${billFilingDocumentAttachment?.id ?? ""}`
                                         }
-                                        className="w-full"
-                                      />
-                                      <p className="text-[11px] leading-snug text-on-surface-variant">
-                                        Capture the date on which this bill was filed.
-                                      </p>
-                                    </label>
+                                        helperText="Upload the bill document here and enter the bill number alongside it. Both are required before continuing."
+                                        triggerText={
+                                          billFilingDocumentUploaded
+                                            ? "Drag and drop or choose bill document to replace"
+                                            : "Drag and drop or choose bill document to upload"
+                                        }
+                                        selectedFile={
+                                          billFilingDocumentAttachment
+                                            ? {
+                                                href: billFilingDocumentAttachment.fileKey,
+                                                name: billFilingDocumentAttachment.fileName || "Bill document",
+                                                statusLabel: "Uploaded",
+                                              }
+                                            : null
+                                      }
+                                      previewInline
+                                      onClear={() => {
+                                        if (!billFilingDocumentAttachment?.id) {
+                                          return;
+                                        }
+                                        void handleDeleteFilingPhoto(billFilingDocumentAttachment.id);
+                                      }}
+                                      onInputChange={(e) => handleUploadNodeDocument("bill_document", e)}
+                                    />
+                                    {activeNodeRun.node.nodeType === "DECISION" && outgoingEdges.length > 0 ? (
+                                      <div className="space-y-2">
+                                        <label className="ds-label text-on-surface block">Decision *</label>
+                                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                          {outgoingEdges.map((edge: any) => {
+                                            const targetNode = targetNodesMap.get(edge.targetKey);
+                                            const isSelected = selectedNextNodeKey === edge.targetKey;
+                                            return (
+                                              <button
+                                                key={edge.targetKey}
+                                                type="button"
+                                                onClick={() => setSelectedNextNodeKey(edge.targetKey)}
+                                                className={`rounded-xl border px-4 py-3 text-left transition ${
+                                                  isSelected
+                                                    ? "border-[#00cec4] bg-[#00cec4]/10 shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
+                                                    : "border-outline-variant bg-surface hover:border-[#00cec4]/55 hover:bg-surface-container-low"
+                                                }`}
+                                              >
+                                                <span className="ds-label block">{edge.label || "Choice"}</span>
+                                                <span className="mt-1 block text-sm font-medium text-on-surface">
+                                                  {targetNode?.name || edge.targetKey}
+                                                </span>
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    ) : null}
                                   </div>
-                                  <h4 className="ds-label text-on-surface">Bill Filing Actions</h4>
-                                  <FileUploadField
-                                      id={`bill-document-upload-${activeNodeRun.id}`}
-                                      disabled={
-                                        loading === "node-document-bill_document" ||
-                                        loading === `filing-delete-${billFilingDocumentAttachment?.id ?? ""}`
-                                      }
-                                      helperText="Upload the bill document here and enter the bill number alongside it. Both are required before continuing."
-                                      triggerText={
-                                        billFilingDocumentUploaded
-                                          ? "Drag and drop or choose bill document to replace"
-                                          : "Drag and drop or choose bill document to upload"
-                                      }
-                                      selectedFile={
-                                        billFilingDocumentAttachment
-                                          ? {
-                                              href: billFilingDocumentAttachment.fileKey,
-                                              name: billFilingDocumentAttachment.fileName || "Bill document",
-                                              statusLabel: "Uploaded",
-                                            }
-                                          : null
-                                    }
-                                    previewInline
-                                    onClear={() => {
-                                      if (!billFilingDocumentAttachment?.id) {
-                                        return;
-                                      }
-                                      void handleDeleteFilingPhoto(billFilingDocumentAttachment.id);
-                                    }}
-                                    onInputChange={(e) => handleUploadNodeDocument("bill_document", e)}
-                                  />
-                                </div>
+                                ) : (
+                                  <div className="space-y-3">
+                                    <div className="rounded-xl border border-outline-variant/60 bg-surface-container-low px-4 py-3">
+                                      <span className="ds-label block text-on-surface-variant">Stage Summary</span>
+                                      <p className="mt-1 text-sm font-medium text-on-surface">
+                                        {activeNodeRun.node.nodeType === "DECISION"
+                                          ? "Choose the correct filing path below, then record remarks before routing this stage forward."
+                                          : "Complete the required checks, uploads, and remarks below before moving this filing to the next stage."}
+                                      </p>
+                                    </div>
+                                    {activeNodeRun.node.nodeType === "DECISION" && outgoingEdges.length > 0 ? (
+                                      <div className="space-y-2">
+                                        <label className="ds-label text-on-surface block">Decision *</label>
+                                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                          {outgoingEdges.map((edge: any) => {
+                                            const targetNode = targetNodesMap.get(edge.targetKey);
+                                            const isSelected = selectedNextNodeKey === edge.targetKey;
+                                            return (
+                                              <button
+                                                key={edge.targetKey}
+                                                type="button"
+                                                onClick={() => setSelectedNextNodeKey(edge.targetKey)}
+                                                className={`rounded-xl border px-4 py-3 text-left transition ${
+                                                  isSelected
+                                                    ? "border-[#00cec4] bg-[#00cec4]/10 shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
+                                                    : "border-outline-variant bg-surface hover:border-[#00cec4]/55 hover:bg-surface-container-low"
+                                                }`}
+                                              >
+                                                <span className="ds-label block">{edge.label || "Choice"}</span>
+                                                <span className="mt-1 block text-sm font-medium text-on-surface">
+                                                  {targetNode?.name || edge.targetKey}
+                                                </span>
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                )}
                               </div>
-                            ) : null}
 
                               {(activeNodeRun.node.fieldDefinitionsJson || []).filter((field: any) => !(isBillFilingNode && (field.key === "bill_number" || field.key === "bill_filing_date"))).length > 0 && (
-                                <div className={isBillFilingNode ? "w-full max-w-[680px] space-y-2 xl:col-start-1" : "space-y-2"}>
+                                <div className={`${filingPrimaryColumnClass} space-y-2`}>
                                   <h4 className="ds-label text-on-surface">Configured Fields</h4>
                                   <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
                                     {(activeNodeRun.node.fieldDefinitionsJson || []).filter((field: any) => !(isBillFilingNode && (field.key === "bill_number" || field.key === "bill_filing_date"))).map((field: any) => (
@@ -4886,7 +4923,7 @@
                               )}
 
                               {(activeNodeRun.node.conditionalSectionsJson?.length > 0 || (activeNodeRun.node.documentRequirementsJson || []).filter((requirement: any) => !(isBillFilingNode && requirement.key === "bill_document")).length > 0) && (
-                                <div className={isBillFilingNode ? "w-full max-w-[680px] space-y-2.5 pt-0.5 xl:col-start-1" : "space-y-2.5 pt-0.5"}>
+                                <div className={`${filingPrimaryColumnClass} space-y-2.5 pt-0.5`}>
                                   <h4 className="ds-label text-on-surface">Conditional Sections & Documents</h4>
                                   <div className="space-y-2.5">
                                     {(activeNodeRun.node.conditionalSectionsJson || []).map((section: any) => (
@@ -5042,10 +5079,32 @@
                                             </div>
                                           </div>
                                         </div>
-                                        <div className="flex justify-end">
+                                        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                                          {billFilingCanChooseQuery && queryProcessingStage === "AWAITING_QUERY_DECISION" ? (
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              disabled={isSavingQueryProcessingDecision}
+                                              className="w-full justify-center border-[#fb923c]/50 text-[#fb923c] hover:bg-surface sm:w-auto"
+                                              onClick={() =>
+                                                handlePersistFilingToggleState(
+                                                  "query_processing",
+                                                  true,
+                                                  {
+                                                    ...(queryProcessingState ?? {}),
+                                                    stage: "NO_QUERY",
+                                                  },
+                                                  "Bill filing marked as no-query.",
+                                                )
+                                              }
+                                            >
+                                              {isSavingQueryProcessingDecision ? "Saving..." : "No Queries"}
+                                            </Button>
+                                          ) : null}
                                           <Button
                                             type="button"
                                             variant="outline"
+                                            disabled={isSavingQueryProcessingDecision}
                                             className="w-full justify-center gap-2 border-[#fb923c]/35 text-base text-[#c76628] hover:border-[#fb923c]/50 hover:text-[#c76628] sm:w-auto sm:min-w-[240px]"
                                             onClick={() => setQueryManagementModalOpen(true)}
                                           >
@@ -5055,11 +5114,13 @@
                                         </div>
                                     </div>
                                   </div>
-                                ) : null}
+                                  ) : null}
+                                </div>
+                              ) : null}
                               
                               {/* Checklist Items */}
                               {!isBillFilingNode && activeNodeRun.node.checklistItems?.length > 0 && (
-                                <div className="space-y-3">
+                                <div className={`${filingPrimaryColumnClass} space-y-3`}>
                                   <h4 className="ds-label text-on-surface">Stage Checklist Verification</h4>
                                   <div className="space-y-3.5">
                                     {activeChecklistItems.map((item: any, index: number) => {
@@ -5234,7 +5295,7 @@
 
                               {/* Node Photo / File Upload Requirements */}
                               {activeNodeRun.node.photoRequirements?.length > 0 && (
-                                <div className={isBillFilingNode ? "w-full max-w-[680px] space-y-4 border-t border-outline-variant/30 pt-4 xl:col-start-1" : "space-y-4 border-t border-outline-variant/30 pt-4"}>
+                                <div className={`${filingPrimaryColumnClass} space-y-4 border-t border-outline-variant/30 pt-4`}>
                                   <h4 className="ds-label text-on-surface">Required Photograph / Document Uploads</h4>
                                   <div className="space-y-4">
                                     {activeNodeRun.node.photoRequirements.map((pr: any) => {
@@ -5317,254 +5378,104 @@
 
                               {/* Allowed Roles Notice */}
                               {activeNodeRun.node.allowedRoles?.length > 0 && (
-                                <div className={isBillFilingNode ? "flex w-full max-w-[680px] items-center gap-1 pt-0.5 text-[11px] text-on-surface-variant xl:col-start-1" : "flex items-center gap-1 pt-0.5 text-[11px] text-on-surface-variant"}>
+                                <div className={`${filingPrimaryColumnClass} flex items-center gap-1 pt-0.5 text-[11px] text-on-surface-variant`}>
                                   <ShieldCheck size={14} className="text-[#00cec4]" />
                                   <span>Can only be processed by users with roles: <strong>{activeNodeRun.node.allowedRoles.join(", ")}</strong></span>
                                 </div>
                               )}
 
-                                  <div className="card-top-accent w-full space-y-4 rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
-                                  <SectionHeading
-                                    title="Complete Step"
-                                    description="Choose the next action for this filing stage and record completion notes before moving forward."
+                              <div className={`card-top-accent ${filingCompletionColumnClass} rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm`}>
+                                <SectionHeading
+                                  title="Complete Step"
+                                  description="Choose the next action for this filing stage and record completion notes before moving forward."
+                                />
+                                <div className="rounded-xl border border-outline-variant/60 bg-surface-container-low px-4 py-3">
+                                  <span className="ds-label block text-on-surface-variant">Current Stage</span>
+                                  <p className="mt-1 text-sm font-medium text-on-surface">{activeNodeDisplayName}</p>
+                                  {(activeNodeRun.node.sectionName || activeNodeRun.node.branchName) && (
+                                    <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                                      {[activeNodeRun.node.sectionName, activeNodeRun.node.branchName].filter(Boolean).join(" / ")}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="ds-label text-on-surface block">
+                                    Completion Comments / Remarks {activeNodeRun.node.commentsRequired && <span className="text-red-500 font-bold">*</span>}
+                                  </label>
+                                  <textarea
+                                    rows={3}
+                                    value={nodeRemarks}
+                                    onChange={(e) => setNodeRemarks(e.target.value)}
+                                    placeholder="Provide checklist execution remarks or check outcome..."
+                                    className="w-full text-sm font-sans"
+                                    required={activeNodeRun.node.commentsRequired}
                                   />
-                                  <div className="rounded-xl border border-outline-variant/60 bg-surface-container-low px-4 py-3">
-                                    <span className="ds-label block text-on-surface-variant">Current Stage</span>
-                                    <p className="mt-1 text-sm font-medium text-on-surface">{activeNodeDisplayName}</p>
-                                    {(activeNodeRun.node.sectionName || activeNodeRun.node.branchName) && (
-                                      <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
-                                        {[activeNodeRun.node.sectionName, activeNodeRun.node.branchName].filter(Boolean).join(" / ")}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <div className="space-y-1">
-                                    <label className="ds-label text-on-surface block">
-                                      Completion Comments / Remarks {activeNodeRun.node.commentsRequired && <span className="text-red-500 font-bold">*</span>}
-                                    </label>
-                                    <textarea
-                                      rows={3}
-                                      value={nodeRemarks}
-                                      onChange={(e) => setNodeRemarks(e.target.value)}
-                                      placeholder="Provide checklist execution remarks or check outcome..."
-                                      className="w-full text-sm font-sans"
-                                      required={activeNodeRun.node.commentsRequired}
-                                    />
-                                  </div>
-                                  <div className="space-y-2">
-                                    {outgoingEdges.length > 0 ? (
-                                      activeNodeRun.node.nodeType === "DECISION" ? (
-                                        <>
-                                          <label className="ds-label text-on-surface block">Decision *</label>
-                                          <div className="grid grid-cols-1 gap-2">
-                                            {outgoingEdges.map((edge: any) => {
-                                              const targetNode = targetNodesMap.get(edge.targetKey);
-                                              const isSelected = selectedNextNodeKey === edge.targetKey;
-                                              return (
-                                                <button
-                                                  key={edge.targetKey}
-                                                  type="button"
-                                                  onClick={() => setSelectedNextNodeKey(edge.targetKey)}
-                                                  className={`rounded-xl border px-4 py-3 text-left transition ${
-                                                    isSelected
-                                                      ? "border-[#00cec4] bg-[#00cec4]/10 shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
-                                                      : "border-outline-variant bg-surface hover:border-[#00cec4]/55 hover:bg-surface-container-low"
-                                                  }`}
-                                                >
-                                                  <span className="ds-label block">{edge.label || "Choice"}</span>
-                                                  <span className="mt-1 block text-sm font-medium text-on-surface">
-                                                    {targetNode?.name || edge.targetKey}
-                                                  </span>
-                                                </button>
-                                              );
-                                            })}
-                                          </div>
-                                        </>
-                                      ) : (
-                                        <div className="space-y-1">
-                                          <label className="ds-label text-on-surface block">Select Next Workflow Stage *</label>
-                                          <select
-                                            value={selectedNextNodeKey}
-                                            onChange={(e) => setSelectedNextNodeKey(e.target.value)}
-                                            required
-                                            className="w-full text-sm"
-                                          >
-                                            <option value="">-- Choose Next Stage --</option>
-                                            {outgoingEdges.map((edge: any) => {
-                                              const targetNode = targetNodesMap.get(edge.targetKey);
-                                              return (
-                                                <option key={edge.targetKey} value={edge.targetKey}>
-                                                  {[targetNode?.sectionName, targetNode?.branchName, targetNode?.name || edge.targetKey]
-                                                    .filter(Boolean)
-                                                    .join(" / ")} {edge.label ? `(${edge.label})` : ""}
-                                                </option>
-                                              );
-                                            })}
-                                          </select>
-                                        </div>
-                                      )
+                                </div>
+                                <div className="space-y-2">
+                                  {outgoingEdges.length > 0 ? (
+                                    activeNodeRun.node.nodeType === "DECISION" ? (
+                                      null
                                     ) : (
-                                      <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
-                                        Completing this node will finalize the Filing workflow and transition the job stage to <strong>FILED</strong>.
+                                      <div className="space-y-1">
+                                        <label className="ds-label text-on-surface block">Select Next Workflow Stage *</label>
+                                        <select
+                                          value={selectedNextNodeKey}
+                                          onChange={(e) => setSelectedNextNodeKey(e.target.value)}
+                                          required
+                                          className="w-full text-sm"
+                                        >
+                                          <option value="">-- Choose Next Stage --</option>
+                                          {outgoingEdges.map((edge: any) => {
+                                            const targetNode = targetNodesMap.get(edge.targetKey);
+                                            return (
+                                              <option key={edge.targetKey} value={edge.targetKey}>
+                                                {[targetNode?.sectionName, targetNode?.branchName, targetNode?.name || edge.targetKey]
+                                                  .filter(Boolean)
+                                                  .join(" / ")} {edge.label ? `(${edge.label})` : ""}
+                                              </option>
+                                            );
+                                          })}
+                                        </select>
                                       </div>
-                                    )}
-                                  </div>
-                                  <div className="flex flex-wrap justify-end gap-2 pt-1">
+                                    )
+                                  ) : (
+                                    <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
+                                      Completing this node will finalize the Filing workflow and transition the job stage to <strong>FILED</strong>.
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex flex-wrap justify-end gap-2 pt-1">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={loading !== null}
+                                    onClick={handleSaveFilingDraft}
+                                    className="gap-2"
+                                  >
+                                    <Database size={14} />
+                                    Save Draft
+                                  </Button>
+                                  {hasPreviousFilingStage ? (
                                     <Button
                                       type="button"
                                       variant="outline"
                                       disabled={loading !== null}
-                                      onClick={handleSaveFilingDraft}
-                                      className="gap-2"
+                                      onClick={() => setGoBackOpen(true)}
+                                      className="gap-2 text-xs"
                                     >
-                                      <Database size={14} />
-                                      Save Draft
+                                      <Undo2 size={14} />
+                                      Move Back to Previous Stage
                                     </Button>
-                                    <Button
-                                      type="submit"
-                                      disabled={loading !== null}
-                                      className="w-full sm:w-auto sm:min-w-[280px]"
-                                    >
-                                      {loading === "filing-complete" ? "Completing Stage..." : outgoingEdges.length > 0 ? "Complete & Move to Next Stage" : "Complete & File Customs Bill"}
-                                    </Button>
-                                    {hasPreviousFilingStage ? (
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        disabled={loading !== null}
-                                        onClick={() => setGoBackOpen(true)}
-                                        className="gap-2 text-xs"
-                                      >
-                                        <Undo2 size={14} />
-                                        Move Back to Previous Stage
-                                      </Button>
-                                    ) : null}
-                                  </div>
+                                  ) : null}
+                                  <Button
+                                    type="submit"
+                                    disabled={loading !== null}
+                                    className="w-full sm:w-auto sm:min-w-[280px]"
+                                  >
+                                    {loading === "filing-complete" ? "Completing Stage..." : outgoingEdges.length > 0 ? "Complete & Move to Next Stage" : "Complete & File Customs Bill"}
+                                  </Button>
                                 </div>
-                                </div>
-                              ) : (
-                                <>
-                                  {/* Node run comments */}
-                                  <div className="space-y-1 pt-0.5">
-                                    <label className="ds-label text-on-surface block">
-                                      Completion Comments / Remarks {activeNodeRun.node.commentsRequired && <span className="text-red-500 font-bold">*</span>}
-                                    </label>
-                                    <textarea
-                                      rows={2}
-                                      value={nodeRemarks}
-                                      onChange={(e) => setNodeRemarks(e.target.value)}
-                                      placeholder="Provide checklist execution remarks or check outcome..."
-                                      className="w-full text-xs font-sans"
-                                      required={activeNodeRun.node.commentsRequired}
-                                    />
-                                  </div>
-
-                                {/* Transitions dropdown */}
-                                <div className="pt-0.5">
-                                  {outgoingEdges.length > 0 ? (
-                                    activeNodeRun.node.nodeType === "DECISION" ? (
-                                      <div className="space-y-2">
-                                        <label className="ds-label text-on-surface block">Decision *</label>
-                                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                            {outgoingEdges.map((edge: any) => {
-                                              const targetNode = targetNodesMap.get(edge.targetKey);
-                                              const isSelected = selectedNextNodeKey === edge.targetKey;
-                                              return (
-                                                <button
-                                                  key={edge.targetKey}
-                                                  type="button"
-                                                  onClick={() => setSelectedNextNodeKey(edge.targetKey)}
-                                                  className={`rounded-2xl border px-4 py-3 text-left transition ${
-                                                    isSelected
-                                                      ? "border-[#00cec4] bg-[#00cec4]/10 shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
-                                                      : "border-outline-variant bg-surface hover:border-[#00cec4]/55 hover:bg-surface-container-low"
-                                                  }`}
-                                                >
-                                                  <span className="ds-label block">{edge.label || "Choice"}</span>
-                                                  <span className="mt-1 block text-sm font-medium text-on-surface">
-                                                    {targetNode?.name || edge.targetKey}
-                                                  </span>
-                                                </button>
-                                              );
-                                            })}
-                                          </div>
-                                        </div>
-                                      ) : (
-                                        <div className="max-w-sm space-y-1">
-                                          <label className="ds-label text-on-surface block">Select Next Workflow Stage *</label>
-                                          <select
-                                            value={selectedNextNodeKey}
-                                            onChange={(e) => setSelectedNextNodeKey(e.target.value)}
-                                            required
-                                            className="w-full text-xs"
-                                          >
-                                            <option value="">-- Choose Next Stage --</option>
-                                            {outgoingEdges.map((edge: any) => {
-                                              const targetNode = targetNodesMap.get(edge.targetKey);
-                                              return (
-                                                <option key={edge.targetKey} value={edge.targetKey}>
-                                                  {[targetNode?.sectionName, targetNode?.branchName, targetNode?.name || edge.targetKey]
-                                                    .filter(Boolean)
-                                                    .join(" / ")} {edge.label ? `(${edge.label})` : ""}
-                                                </option>
-                                              );
-                                            })}
-                                          </select>
-                                        </div>
-                                      )
-                                    ) : (
-                                      <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
-                                        Completing this node will finalize the Filing workflow and transition the job stage to <strong>FILED</strong>.
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  {/* Complete Action Button */}
-                                  <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
-                                    {hasPreviousFilingStage ? (
-                                      <div className="flex flex-wrap items-center gap-2">
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          disabled={loading !== null}
-                                          onClick={handleSaveFilingDraft}
-                                          className="gap-2"
-                                        >
-                                          <Database size={14} />
-                                          Save Draft
-                                        </Button>
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          disabled={loading !== null}
-                                          onClick={() => setGoBackOpen(true)}
-                                          className="gap-2 text-xs"
-                                      >
-                                        <Undo2 size={14} />
-                                        Move Back to Previous Stage
-                                      </Button>
-                                      </div>
-                                    ) : (
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        disabled={loading !== null}
-                                        onClick={handleSaveFilingDraft}
-                                        className="gap-2"
-                                      >
-                                        <Database size={14} />
-                                        Save Draft
-                                      </Button>
-                                    )}
-                                    <Button
-                                      type="submit"
-                                      disabled={loading !== null}
-                                      className="w-full sm:w-auto sm:min-w-[280px]"
-                                    >
-                                      {loading === "filing-complete" ? "Completing Stage..." : outgoingEdges.length > 0 ? "Complete & Move to Next Stage" : "Complete & File Customs Bill"}
-                                    </Button>
-                                  </div>
-                                </>
-                              )}
+                              </div>
                             </form>
 
                             <Modal

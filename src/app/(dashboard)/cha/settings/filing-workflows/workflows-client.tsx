@@ -55,6 +55,26 @@ type PhotoRequirementDraft = DocumentValidityDraft & {
   isVisibleInTimeline: boolean;
 };
 
+type FieldDefinitionDraft = {
+  id: string;
+  key: string;
+  label: string;
+  type: "TEXT" | "TEXTAREA" | "DATE";
+  required: boolean;
+  placeholder: string;
+  helperText: string;
+};
+
+type DocumentRequirementDraft = {
+  id: string;
+  key: string;
+  label: string;
+  required: boolean;
+  acceptedFileTypes: string[];
+  allowReplacement: boolean;
+  allowPreview: boolean;
+};
+
 type ConditionalSectionDraft = {
   key: string;
   label: string;
@@ -106,6 +126,8 @@ type NodeDraft = {
   allowedRoles: string[];
   checklistItems: ChecklistItemDraft[];
   photoRequirements: PhotoRequirementDraft[];
+  fieldDefinitions: FieldDefinitionDraft[];
+  documentRequirements: DocumentRequirementDraft[];
   conditionalSections: ConditionalSectionDraft[];
 };
 
@@ -143,6 +165,59 @@ function createQueryProcessingSection(): ConditionalSectionDraft {
       moduleType: "CUSTOMS_QUERY_PROCESSING",
     },
   };
+}
+
+function createFieldDefinitionDraft(
+  label: string,
+  key: string,
+  type: FieldDefinitionDraft["type"] = "TEXT",
+  options: Partial<Omit<FieldDefinitionDraft, "id" | "label" | "key" | "type">> = {},
+): FieldDefinitionDraft {
+  return {
+    id: createId("field"),
+    key,
+    label,
+    type,
+    required: options.required !== false,
+    placeholder: options.placeholder || "",
+    helperText: options.helperText || "",
+  };
+}
+
+function createDocumentRequirementDraft(
+  label: string,
+  key: string,
+  options: Partial<Omit<DocumentRequirementDraft, "id" | "label" | "key">> = {},
+): DocumentRequirementDraft {
+  return {
+    id: createId("document"),
+    key,
+    label,
+    required: options.required !== false,
+    acceptedFileTypes: options.acceptedFileTypes || ["application/pdf", "image/jpeg", "image/png"],
+    allowReplacement: options.allowReplacement !== false,
+    allowPreview: options.allowPreview !== false,
+  };
+}
+
+function createBillFilingFieldDefinitions() {
+  return [
+    createFieldDefinitionDraft("Bill Number", "bill_number", "TEXT", {
+      placeholder: "Enter bill number",
+      helperText: "Capture the Bill of Entry or Shipping Bill number for this filing stage.",
+    }),
+    createFieldDefinitionDraft("Bill Filing Date", "bill_filing_date", "DATE", {
+      placeholder: "Select bill filing date",
+    }),
+  ];
+}
+
+function createBillFilingDocumentRequirements() {
+  return [
+    createDocumentRequirementDraft("Bill Document", "bill_document", {
+      acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
+    }),
+  ];
 }
 
 function normalizeValidityUnit(value: any): ValidityUnit {
@@ -195,6 +270,31 @@ function normalizePhotoRequirement(item: any): PhotoRequirementDraft {
   };
 }
 
+function normalizeFieldDefinition(item: any, index: number): FieldDefinitionDraft {
+  const rawType = typeof item?.type === "string" ? item.type.toUpperCase() : "TEXT";
+  return {
+    id: item.id || createId("field"),
+    key: item.key || `field_${index + 1}`,
+    label: item.label || `Field ${index + 1}`,
+    type: rawType === "DATE" ? "DATE" : rawType === "TEXTAREA" ? "TEXTAREA" : "TEXT",
+    required: item.required !== false,
+    placeholder: item.placeholder || "",
+    helperText: item.helperText || "",
+  };
+}
+
+function normalizeDocumentRequirement(item: any, index: number): DocumentRequirementDraft {
+  return {
+    id: item.id || createId("document"),
+    key: item.key || `document_${index + 1}`,
+    label: item.label || `Document ${index + 1}`,
+    required: item.required !== false,
+    acceptedFileTypes: Array.isArray(item.acceptedFileTypes) ? item.acceptedFileTypes : ["application/pdf", "image/jpeg", "image/png"],
+    allowReplacement: item.allowReplacement !== false,
+    allowPreview: item.allowPreview !== false,
+  };
+}
+
 function normalizeConditionalSection(item: any, index: number): ConditionalSectionDraft {
   return {
     key: item.key || `section_${index + 1}`,
@@ -236,6 +336,12 @@ function normalizeNode(node: any, index: number): NodeDraft {
     allowedRoles: Array.isArray(node.allowedRoles) ? node.allowedRoles : [],
     checklistItems: Array.isArray(node.checklistItems) ? node.checklistItems.map(normalizeChecklistItem) : [],
     photoRequirements: Array.isArray(node.photoRequirements) ? node.photoRequirements.map(normalizePhotoRequirement) : [],
+    fieldDefinitions: Array.isArray(node.fieldDefinitionsJson ?? node.fieldDefinitions)
+      ? (node.fieldDefinitionsJson ?? node.fieldDefinitions).map(normalizeFieldDefinition)
+      : [],
+    documentRequirements: Array.isArray(node.documentRequirementsJson ?? node.documentRequirements)
+      ? (node.documentRequirementsJson ?? node.documentRequirements).map(normalizeDocumentRequirement)
+      : [],
     conditionalSections: Array.isArray(node.conditionalSectionsJson ?? node.conditionalSections)
       ? (node.conditionalSectionsJson ?? node.conditionalSections).map(normalizeConditionalSection)
       : [],
@@ -411,6 +517,8 @@ function createWorkflowStageNode(
     canBeSkipped?: boolean;
     requireMandatoryPhotos?: boolean;
     photoRequirements?: PhotoRequirementDraft[];
+    fieldDefinitions?: FieldDefinitionDraft[];
+    documentRequirements?: DocumentRequirementDraft[];
     conditionalSections?: ConditionalSectionDraft[];
   } = {},
 ): NodeDraft {
@@ -442,6 +550,8 @@ function createWorkflowStageNode(
     allowedRoles: [],
     checklistItems: [],
     photoRequirements: options.photoRequirements || [],
+    fieldDefinitions: options.fieldDefinitions || [],
+    documentRequirements: options.documentRequirements || [],
     conditionalSections: options.conditionalSections || [],
   };
 }
@@ -460,6 +570,8 @@ function createWorkflowChecklistNode(
     nodeDescription?: string;
     canBeSkipped?: boolean;
     photoRequirements?: PhotoRequirementDraft[];
+    fieldDefinitions?: FieldDefinitionDraft[];
+    documentRequirements?: DocumentRequirementDraft[];
     conditionalSections?: ConditionalSectionDraft[];
   } = {},
 ): NodeDraft {
@@ -491,6 +603,8 @@ function createWorkflowChecklistNode(
       allowedRoles: [],
       checklistItems: [createChecklistItemDraft(label, 1, options)],
       photoRequirements: options.photoRequirements || (options.allowsUpload ? [createStageUploadSlot(`${label} document`, options)] : []),
+      fieldDefinitions: options.fieldDefinitions || [],
+      documentRequirements: options.documentRequirements || [],
       conditionalSections: options.conditionalSections || [],
   };
 }
@@ -530,6 +644,8 @@ function createWorkflowNotificationNode(
     allowedRoles: [],
     checklistItems: [],
     photoRequirements: [],
+    fieldDefinitions: [],
+    documentRequirements: [],
     conditionalSections: [],
   };
 }
@@ -549,12 +665,10 @@ function buildChaFilingBlueprintDraft() {
   let order = 1;
 
   const startX = 1060;
-  const importCenterX = 420;
   const importFirstCheckX = 120;
   const importSecondCheckX = 680;
   const importRmsX = 520;
   const importOpenBillX = 900;
-  const exportCenterX = 1540;
   const exportFirstCheckX = 1240;
   const exportSecondCheckX = 1800;
   const exportRmsX = 1640;
@@ -753,10 +867,7 @@ function buildChaFilingBlueprintDraft() {
   const buildBillFlow = ({
     flowLabel,
     flowKey,
-    filingNodeLabel,
-    filingNodeKey,
     copyGenerationLabel,
-    centerX,
     firstCheckX,
     secondCheckX,
     rmsX,
@@ -767,10 +878,7 @@ function buildChaFilingBlueprintDraft() {
   }: {
     flowLabel: string;
     flowKey: string;
-    filingNodeLabel: string;
-    filingNodeKey: string;
     copyGenerationLabel: string;
-    centerX: number;
     firstCheckX: number;
     secondCheckX: number;
     rmsX: number;
@@ -779,36 +887,19 @@ function buildChaFilingBlueprintDraft() {
     entryEdgeLabel: string;
     flowKind: "IMPORT" | "EXPORT";
   }) => {
-    const filingNode = addChecklist(
-      filingNodeLabel,
-      filingNodeKey,
-      centerX,
-      startY + rowGap,
-      flowLabel,
-      flowKey,
-      "",
-      "",
-      {
-        description: `${filingNodeLabel} is the first stage for ${flowKind === "IMPORT" ? "import" : "export"} filing. After this, the user chooses First Check or Second Check.`,
-        nodeDescription: `${flowKind === "IMPORT" ? "Import" : "Export"} filing starts here. Once completed, choose whether the job follows First Check or Second Check.`,
-        conditionalSections: [createQueryProcessingSection()],
-      },
-    );
-    addEdge(entrySourceKey, filingNode.key, entryEdgeLabel);
-
-    const checkTypeDecision = addStage(`Choose ${flowLabel} Check Type`, `${flowKey}_choose_check_type`, centerX, startY + rowGap * 2, false, {
+    const checkTypeDecision = addStage(`Choose ${flowLabel} Check Type`, `${flowKey}_choose_check_type`, secondCheckX - ((secondCheckX - firstCheckX) / 2), startY + rowGap * 2, false, {
       category: "DECISION",
       nodeType: "DECISION",
       sectionKey: `${flowKey}_routing`,
       sectionName: `${flowLabel} Routing`,
-      description: `User decision point: choose whether this ${flowKind === "IMPORT" ? "import" : "export"} filing needs First Check or Second Check.`,
+      description: `User decision point: choose whether this ${flowKind === "IMPORT" ? "import" : "export"} filing needs First Check or Second Check after the common bill filing step.`,
     });
-    addEdge(filingNode.key, checkTypeDecision.key, `After ${filingNodeLabel}`);
+    addEdge(entrySourceKey, checkTypeDecision.key, entryEdgeLabel);
 
     const firstCheckStage = addStage(`${flowLabel} First Check`, `${flowKey}_first_check`, firstCheckX, startY + rowGap * 3, false, {
       sectionKey: `${flowKey}_first_check`,
       sectionName: `${flowLabel} First Check`,
-      description: `${flowLabel} First Check workflow path selected by the user after ${filingNodeLabel}.`,
+      description: `${flowLabel} First Check workflow path selected by the user after the shared Bill Filing step.`,
     });
     addEdge(checkTypeDecision.key, firstCheckStage.key, "First Check");
 
@@ -836,7 +927,7 @@ function buildChaFilingBlueprintDraft() {
     const secondCheckStage = addStage(`${flowLabel} Second Check`, `${flowKey}_second_check`, secondCheckX, startY + rowGap * 3, false, {
       sectionKey: `${flowKey}_second_check`,
       sectionName: `${flowLabel} Second Check`,
-      description: `${flowLabel} Second Check workflow path selected by the user after ${filingNodeLabel}.`,
+      description: `${flowLabel} Second Check workflow path selected by the user after the shared Bill Filing step.`,
     });
     addEdge(checkTypeDecision.key, secondCheckStage.key, "Second Check");
 
@@ -911,21 +1002,28 @@ function buildChaFilingBlueprintDraft() {
     };
   };
 
-  const flowDecision = addStage("Choose Filing Flow", "choose_filing_flow", startX, startY, true, {
+  const billFiling = addStage("Bill Filing", "bill_filing", startX, startY, true, {
+    sectionKey: "bill_filing",
+    sectionName: "Bill Filing",
+    description: "Capture bill number, filing date, bill document upload, and customs query handling before choosing the filing path.",
+    fieldDefinitions: createBillFilingFieldDefinitions(),
+    documentRequirements: createBillFilingDocumentRequirements(),
+    conditionalSections: [createQueryProcessingSection()],
+  });
+
+  const flowDecision = addStage("Choose Filing Flow", "choose_filing_flow", startX, startY + rowGap, false, {
     category: "DECISION",
     nodeType: "DECISION",
     sectionKey: "routing",
     sectionName: "Routing",
     description: "Choose Import/Bill of Entry flow or Export/Shipping Bill flow. Backend should later auto-select this from clearance type.",
   });
+  addEdge(billFiling.key, flowDecision.key, "Select Filing Flow");
 
   const importFlow = buildBillFlow({
     flowLabel: "Import BE",
     flowKey: "import_be",
-    filingNodeLabel: "Bill Filing",
-    filingNodeKey: "import_be_bill_of_entry",
     copyGenerationLabel: "BE Copy Generation",
-    centerX: importCenterX,
     firstCheckX: importFirstCheckX,
     secondCheckX: importSecondCheckX,
     rmsX: importRmsX,
@@ -938,10 +1036,7 @@ function buildChaFilingBlueprintDraft() {
   const exportFlow = buildBillFlow({
     flowLabel: "Export SB",
     flowKey: "export_sb",
-    filingNodeLabel: "Bill Filing",
-    filingNodeKey: "export_sb_shipping_bill",
     copyGenerationLabel: "SB Copy Generation",
-    centerX: exportCenterX,
     firstCheckX: exportFirstCheckX,
     secondCheckX: exportSecondCheckX,
     rmsX: exportRmsX,
@@ -1176,6 +1271,7 @@ function expandChecklistNodesForCanvas(rawNodes: any[], rawEdges: any[]) {
   };
 }
 
+
 export function WorkflowsClient({ initialTemplates, availableRoles, availableJobTypes }: WorkflowsClientProps) {
   const router = useRouter();
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -1275,19 +1371,16 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
 
   const applyTemplateData = (data: any) => {
     const latest = data.versions?.[0] ?? null;
+
+    // Loading must be a pure read of the persisted graph. Never inject, migrate,
+    // restore, or infer nodes here. A saved empty graph must remain empty.
     const persistedNodes = Array.isArray(latest?.nodes) ? latest.nodes : [];
     const persistedEdges = Array.isArray(latest?.edges) ? latest.edges : [];
-    const hasPersistedWorkflow = persistedNodes.length > 0;
 
-    // Default workflow fallback:
-    // When a template has no saved nodes yet, show the combined Import BE + Export SB workflow immediately.
-    // This makes the BE/SB workflow the default canvas instead of leaving the user with an empty/old starter.
-    const defaultBlueprint = hasPersistedWorkflow ? null : buildChaFilingBlueprintDraft();
-    const rawNodes = hasPersistedWorkflow ? persistedNodes : defaultBlueprint!.nodes;
-    const rawEdges = hasPersistedWorkflow ? persistedEdges : defaultBlueprint!.edges;
-
-    const expanded = expandChecklistNodesForCanvas(rawNodes, rawEdges);
-    const arrangedNodes = expanded.didExpand ? autoArrangeNodes(expanded.nodes, expanded.edges) : expanded.nodes;
+    const expanded = expandChecklistNodesForCanvas(persistedNodes, persistedEdges);
+    const arrangedNodes = expanded.didExpand
+      ? autoArrangeNodes(expanded.nodes, expanded.edges)
+      : expanded.nodes;
 
     setSelectedClearanceTypeId(data.clearanceType?.id || data.clearanceTypeId || "");
     setActiveVersion(latest);
@@ -1296,17 +1389,11 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
     setPropertiesOpen(false);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
 
-    if (hasPersistedWorkflow) {
-      setZoom(1);
-      setPan({ x: 0, y: 0 });
-      setLoadedSnapshot(serializeWorkflowSnapshot(arrangedNodes, expanded.edges));
-    } else {
-      setZoom(0.45);
-      setPan({ x: 32, y: 24 });
-      // Keep the default blueprint marked as unsaved until the user saves it into the selected template.
-      setLoadedSnapshot("");
-    }
+    // Even an empty persisted version is a valid saved state.
+    setLoadedSnapshot(serializeWorkflowSnapshot(arrangedNodes, expanded.edges));
   };
 
   const loadTemplateDetails = async (templateId: string) => {
@@ -1547,7 +1634,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     setPropertiesOpen(false);
     setZoom(0.78);
     setPan({ x: 60, y: 20 });
-    toast.success("Default Import BE + Export SB workflow loaded.");
+    toast.success("Starter workflow loaded into this draft. Save to persist it.");
   };
 
   const addChecklistItem = () => {
@@ -1599,6 +1686,40 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     }));
   };
 
+  const addFieldDefinition = () => {
+    updateSelectedNode((node) => ({
+      ...node,
+      fieldDefinitions: [
+        ...node.fieldDefinitions,
+        createFieldDefinitionDraft("New Field", `field_${node.fieldDefinitions.length + 1}`),
+      ],
+    }));
+  };
+
+  const updateFieldDefinition = (fieldId: string, updater: (item: FieldDefinitionDraft) => FieldDefinitionDraft) => {
+    updateSelectedNode((node) => ({
+      ...node,
+      fieldDefinitions: node.fieldDefinitions.map((item) => (item.id === fieldId ? updater(item) : item)),
+    }));
+  };
+
+  const addDocumentRequirement = () => {
+    updateSelectedNode((node) => ({
+      ...node,
+      documentRequirements: [
+        ...node.documentRequirements,
+        createDocumentRequirementDraft("New Document", `document_${node.documentRequirements.length + 1}`),
+      ],
+    }));
+  };
+
+  const updateDocumentRequirement = (documentId: string, updater: (item: DocumentRequirementDraft) => DocumentRequirementDraft) => {
+    updateSelectedNode((node) => ({
+      ...node,
+      documentRequirements: node.documentRequirements.map((item) => (item.id === documentId ? updater(item) : item)),
+    }));
+  };
+
   const updatePhotoRequirement = (photoId: string, updater: (item: PhotoRequirementDraft) => PhotoRequirementDraft) => {
     updateSelectedNode((node) => ({
       ...node,
@@ -1606,8 +1727,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     }));
   };
 
-  const saveDraft = async () => {
-    if (!selectedTemplateId) return false;
+  const saveDraft = async (): Promise<string | null> => {
+    if (!selectedTemplateId) return null;
     const template = templates.find((entry) => entry.id === selectedTemplateId);
     const result = await actions.saveFilingWorkflowDraftAction(selectedTemplateId, {
       name: template?.name || "Filing Workflow",
@@ -1618,16 +1739,19 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     });
     if (!result.ok) {
       toast.error(result.error || "Failed to save workflow draft.");
-      return false;
+      return null;
     }
+
+    const savedVersionId = result.data?.versions?.[0]?.id ?? activeVersion?.id ?? null;
     toast.success("Draft saved.");
-    // Use data returned by save action directly — avoids a second round trip
+
     if (result.data) {
       applyTemplateData(result.data);
     } else {
       await loadTemplateDetails(selectedTemplateId);
     }
-    return true;
+
+    return savedVersionId;
   };
 
   const deleteSelectedEdge = async () => {
@@ -1675,18 +1799,18 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
   }, [activeVersion?.isPublished, selectedEdgeId, deleteSelectedEdge]);
 
   const publishWorkflow = async () => {
-    if (!activeVersion) return;
     if (validation.errors.length > 0) {
       toast.error("Resolve workflow validation errors before publishing.");
       return;
     }
-    const saved = await saveDraft();
-    if (!saved) {
-      return;
-    }
-    // activeVersion is updated by saveDraft -> applyTemplateData; use it directly
-    const versionId = activeVersion.id;
-    const result = await actions.publishFilingWorkflowAction(versionId);
+
+    // Publish the exact version returned by save. React state does not update
+    // synchronously, so reading activeVersion immediately after save can publish
+    // a stale version.
+    const savedVersionId = await saveDraft();
+    if (!savedVersionId) return;
+
+    const result = await actions.publishFilingWorkflowAction(savedVersionId);
     if (!result.ok) {
       toast.error(result.error || "Failed to publish workflow.");
       return;
@@ -1707,6 +1831,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
         id: undefined,
         checklistItems: node.checklistItems.map((item) => ({ ...item, id: undefined })),
         photoRequirements: node.photoRequirements.map((item) => ({ ...item, id: undefined })),
+        fieldDefinitions: node.fieldDefinitions.map((item) => ({ ...item, id: undefined })),
+        documentRequirements: node.documentRequirements.map((item) => ({ ...item, id: undefined })),
       })),
       edges,
     });
@@ -2404,6 +2530,173 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     This node runs automatically. When the workflow enters it, the job owner, assigned manager, and all assigned users receive a notification, then the workflow advances through its single connected path.
                   </div>
                 ) : null}
+              </div>
+
+              <div className="ds-form-section space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="ds-h3 text-on-surface">Stage Fields</h3>
+                  <Button variant="outline" size="sm" onClick={addFieldDefinition}>
+                    <Plus size={14} />
+                    Add Field
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {selectedNode.fieldDefinitions.map((field) => (
+                    <div key={field.id} className="rounded-xl border border-outline-variant bg-surface-container-low p-4">
+                      <div className="mb-3 flex items-start justify-between gap-2">
+                        <p className="text-sm font-semibold text-on-surface">{field.label || "Untitled Field"}</p>
+                        <Button
+                          variant="outline"
+                          mode="icon"
+                          size="sm"
+                          onClick={() => updateSelectedNode((node) => ({ ...node, fieldDefinitions: node.fieldDefinitions.filter((entry) => entry.id !== field.id) }))}
+                          aria-label="Delete field"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <input
+                            value={field.label}
+                            onChange={(event) => updateFieldDefinition(field.id, (current) => ({ ...current, label: event.target.value }))}
+                            className="w-full text-sm"
+                            placeholder="Field label"
+                          />
+                          <input
+                            value={field.key}
+                            onChange={(event) => updateFieldDefinition(field.id, (current) => ({ ...current, key: slugify(event.target.value) }))}
+                            className="w-full text-sm ds-numeric"
+                            placeholder="field_key"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <select
+                            value={field.type}
+                            onChange={(event) => updateFieldDefinition(field.id, (current) => ({ ...current, type: event.target.value as FieldDefinitionDraft["type"] }))}
+                            className="w-full text-sm"
+                          >
+                            <option value="TEXT">Text</option>
+                            <option value="TEXTAREA">Textarea</option>
+                            <option value="DATE">Date</option>
+                          </select>
+                          <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
+                            <input
+                              type="checkbox"
+                              checked={field.required}
+                              onChange={(event) => updateFieldDefinition(field.id, (current) => ({ ...current, required: event.target.checked }))}
+                            />
+                            <span>Required</span>
+                          </label>
+                        </div>
+                        <input
+                          value={field.placeholder}
+                          onChange={(event) => updateFieldDefinition(field.id, (current) => ({ ...current, placeholder: event.target.value }))}
+                          className="w-full text-sm"
+                          placeholder="Placeholder"
+                        />
+                        <textarea
+                          value={field.helperText}
+                          onChange={(event) => updateFieldDefinition(field.id, (current) => ({ ...current, helperText: event.target.value }))}
+                          rows={2}
+                          className="w-full text-sm"
+                          placeholder="Helper text"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  {selectedNode.fieldDefinitions.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-6 text-sm text-on-surface-variant">
+                      No node-level fields configured for this stage.
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="ds-form-section space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="ds-h3 text-on-surface">Required Documents</h3>
+                  <Button variant="outline" size="sm" onClick={addDocumentRequirement}>
+                    <Plus size={14} />
+                    Add Document
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {selectedNode.documentRequirements.map((requirement) => (
+                    <div key={requirement.id} className="rounded-xl border border-outline-variant bg-surface-container-low p-4">
+                      <div className="mb-3 flex items-start justify-between gap-2">
+                        <p className="text-sm font-semibold text-on-surface">{requirement.label || "Untitled Document"}</p>
+                        <Button
+                          variant="outline"
+                          mode="icon"
+                          size="sm"
+                          onClick={() => updateSelectedNode((node) => ({ ...node, documentRequirements: node.documentRequirements.filter((entry) => entry.id !== requirement.id) }))}
+                          aria-label="Delete document"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <input
+                            value={requirement.label}
+                            onChange={(event) => updateDocumentRequirement(requirement.id, (current) => ({ ...current, label: event.target.value }))}
+                            className="w-full text-sm"
+                            placeholder="Document label"
+                          />
+                          <input
+                            value={requirement.key}
+                            onChange={(event) => updateDocumentRequirement(requirement.id, (current) => ({ ...current, key: slugify(event.target.value) }))}
+                            className="w-full text-sm ds-numeric"
+                            placeholder="document_key"
+                          />
+                        </div>
+                        <input
+                          value={requirement.acceptedFileTypes.join(", ")}
+                          onChange={(event) =>
+                            updateDocumentRequirement(requirement.id, (current) => ({
+                              ...current,
+                              acceptedFileTypes: event.target.value.split(",").map((value) => value.trim()).filter(Boolean),
+                            }))
+                          }
+                          className="w-full text-sm"
+                          placeholder="application/pdf, image/jpeg"
+                        />
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 text-sm text-on-surface">
+                          <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2">
+                            <input
+                              type="checkbox"
+                              checked={requirement.required}
+                              onChange={(event) => updateDocumentRequirement(requirement.id, (current) => ({ ...current, required: event.target.checked }))}
+                            />
+                            <span>Required</span>
+                          </label>
+                          <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2">
+                            <input
+                              type="checkbox"
+                              checked={requirement.allowReplacement}
+                              onChange={(event) => updateDocumentRequirement(requirement.id, (current) => ({ ...current, allowReplacement: event.target.checked }))}
+                            />
+                            <span>Replaceable</span>
+                          </label>
+                          <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2">
+                            <input
+                              type="checkbox"
+                              checked={requirement.allowPreview}
+                              onChange={(event) => updateDocumentRequirement(requirement.id, (current) => ({ ...current, allowPreview: event.target.checked }))}
+                            />
+                            <span>Preview</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {selectedNode.documentRequirements.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-6 text-sm text-on-surface-variant">
+                      No node-level document requirements configured for this stage.
+                    </div>
+                  ) : null}
+                </div>
               </div>
 
               <div className="ds-form-section space-y-4">
