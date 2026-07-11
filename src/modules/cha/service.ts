@@ -8384,6 +8384,24 @@ function normalizeConditionalSections(value: unknown): FilingConditionalSectionC
     }));
 }
 
+function normalizePrerequisiteGate(value: unknown) {
+  const raw = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  return {
+    enabled: !!raw.enabled,
+    mode: raw.mode === "ANY" ? "ANY" : "ALL",
+    requiredNodeKeys: Array.isArray(raw.requiredNodeKeys)
+      ? raw.requiredNodeKeys.filter((entry: unknown): entry is string => typeof entry === "string" && entry.trim().length > 0)
+      : [],
+  };
+}
+
+function normalizeWorkflowNodeActionConfig(value: unknown) {
+  const raw = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  return {
+    prerequisiteGate: normalizePrerequisiteGate(raw.prerequisiteGate),
+  };
+}
+
 function normalizeTemplateSettings(value: unknown) {
   const input = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
   return {
@@ -8445,7 +8463,7 @@ function normalizeWorkflowNodeDraft(node: any, nodeIndex: number) {
     conditionalSectionsJson: normalizeConditionalSections(node.conditionalSectionsJson ?? node.conditionalSections ?? []),
     approvalConfigJson: node.approvalConfigJson ?? node.approvalConfig ?? null,
     notificationConfigJson: node.notificationConfigJson ?? node.notificationConfig ?? null,
-    actionConfigJson: node.actionConfigJson ?? node.actionConfig ?? null,
+    actionConfigJson: normalizeWorkflowNodeActionConfig(node.actionConfigJson ?? node.actionConfig ?? null),
     allowedRoles: Array.isArray(node.allowedRoles)
       ? node.allowedRoles.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
       : ["Admin", "Manager", "Employee"],
@@ -8550,6 +8568,7 @@ function slugify(value: string) {
 
 function validateFilingWorkflowDraft(data: { nodes: any[]; edges: any[] }) {
   const activeNodes = (data.nodes || []).filter((node) => node.isActive !== false);
+  const activeNodeMap = new Map(activeNodes.map((node) => [node.key, node]));
   const nodeKeys = new Set<string>();
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -8635,6 +8654,52 @@ function validateFilingWorkflowDraft(data: { nodes: any[]; edges: any[] }) {
         }
       }
     }
+    const prerequisiteGate = normalizeWorkflowNodeActionConfig(node.actionConfigJson ?? node.actionConfig ?? null).prerequisiteGate;
+    if (prerequisiteGate.enabled) {
+      if (prerequisiteGate.requiredNodeKeys.length === 0) {
+        errors.push(`Node "${node.name || node.key}" has prerequisite gating enabled but no required stages selected.`);
+      }
+      if (prerequisiteGate.requiredNodeKeys.some((entry, index, list) => list.indexOf(entry) !== index)) {
+        errors.push(`Node "${node.name || node.key}" has duplicate prerequisite stage keys.`);
+      }
+      for (const requiredNodeKey of prerequisiteGate.requiredNodeKeys) {
+        if (requiredNodeKey === node.key) {
+          errors.push(`Node "${node.name || node.key}" cannot require itself as a prerequisite.`);
+        } else if (!activeNodeMap.has(requiredNodeKey)) {
+          errors.push(`Node "${node.name || node.key}" references missing or inactive prerequisite stage "${requiredNodeKey}".`);
+        }
+      }
+    }
+  }
+
+  const prerequisiteAdjacency = new Map<string, string[]>();
+  for (const node of activeNodes) {
+    const prerequisiteGate = normalizeWorkflowNodeActionConfig(node.actionConfigJson ?? node.actionConfig ?? null).prerequisiteGate;
+    prerequisiteAdjacency.set(node.key, prerequisiteGate.enabled ? [...prerequisiteGate.requiredNodeKeys] : []);
+  }
+  const visitedPrerequisiteNodes = new Set<string>();
+  const visitingPrerequisiteNodes = new Set<string>();
+  let hasPrerequisiteCycle = false;
+  const traversePrerequisites = (nodeKey: string) => {
+    if (visitingPrerequisiteNodes.has(nodeKey)) {
+      hasPrerequisiteCycle = true;
+      return;
+    }
+    if (visitedPrerequisiteNodes.has(nodeKey)) return;
+    visitingPrerequisiteNodes.add(nodeKey);
+    for (const requiredKey of prerequisiteAdjacency.get(nodeKey) || []) {
+      if (activeNodeMap.has(requiredKey)) {
+        traversePrerequisites(requiredKey);
+      }
+    }
+    visitingPrerequisiteNodes.delete(nodeKey);
+    visitedPrerequisiteNodes.add(nodeKey);
+  };
+  for (const node of activeNodes) {
+    traversePrerequisites(node.key);
+  }
+  if (hasPrerequisiteCycle) {
+    errors.push("Prerequisite cycle detected in the workflow nodes.");
   }
 
   if (startNodes.length === 1) {
@@ -9752,6 +9817,77 @@ const FILING_WORKFLOW_INSTANCE_INCLUDE = {
   queries: true,
 } as const;
 
+function getCompletedFilingNodeKeys(instance: { nodeRuns: Array<{ status: string; nodeKey: string }> }) {
+  return new Set(
+    (instance.nodeRuns || [])
+      .filter((run) => run.status === "COMPLETED")
+      .map((run) => run.nodeKey),
+  );
+}
+
+function getPendingBlockedStageContext(contextJson: unknown) {
+  if (!contextJson || typeof contextJson !== "object") return null;
+  const raw = (contextJson as Record<string, unknown>).pendingBlockedStage;
+  if (!raw || typeof raw !== "object") return null;
+  const entry = raw as Record<string, unknown>;
+  const nodeKey = typeof entry.nodeKey === "string" ? entry.nodeKey : "";
+  if (!nodeKey) return null;
+  return {
+    nodeKey,
+    nodeName: typeof entry.nodeName === "string" ? entry.nodeName : nodeKey,
+    mode: entry.mode === "ANY" ? "ANY" : "ALL",
+    requiredNodeKeys: Array.isArray(entry.requiredNodeKeys)
+      ? entry.requiredNodeKeys.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
+      : [],
+    createdFromNodeKey: typeof entry.createdFromNodeKey === "string" ? entry.createdFromNodeKey : null,
+    createdAt: typeof entry.createdAt === "string" ? entry.createdAt : null,
+  };
+}
+
+function buildInstanceContextWithPendingBlockedStage(
+  contextJson: unknown,
+  pendingBlockedStage: Record<string, unknown> | null,
+) {
+  const base = contextJson && typeof contextJson === "object" ? { ...(contextJson as Record<string, unknown>) } : {};
+  if (pendingBlockedStage) {
+    base.pendingBlockedStage = pendingBlockedStage;
+  } else {
+    delete base.pendingBlockedStage;
+  }
+  return base;
+}
+
+function evaluateNodePrerequisiteStatus(
+  node: { key: string; name: string; actionConfigJson?: unknown; actionConfig?: unknown },
+  completedNodeKeys: Set<string>,
+  nodeNameMap: Map<string, string>,
+) {
+  const prerequisiteGate = normalizeWorkflowNodeActionConfig(node.actionConfigJson ?? node.actionConfig ?? null).prerequisiteGate;
+  if (!prerequisiteGate.enabled || prerequisiteGate.requiredNodeKeys.length === 0) {
+    return {
+      enabled: false,
+      isBlocked: false,
+      mode: prerequisiteGate.mode,
+      requiredNodeKeys: [] as string[],
+      missingNodeKeys: [] as string[],
+      missingNodeNames: [] as string[],
+    };
+  }
+  const missingNodeKeys = prerequisiteGate.requiredNodeKeys.filter((nodeKey) => !completedNodeKeys.has(nodeKey));
+  const isBlocked =
+    prerequisiteGate.mode === "ANY"
+      ? prerequisiteGate.requiredNodeKeys.every((nodeKey) => !completedNodeKeys.has(nodeKey))
+      : missingNodeKeys.length > 0;
+  return {
+    enabled: true,
+    isBlocked,
+    mode: prerequisiteGate.mode,
+    requiredNodeKeys: prerequisiteGate.requiredNodeKeys,
+    missingNodeKeys,
+    missingNodeNames: missingNodeKeys.map((nodeKey) => nodeNameMap.get(nodeKey) || nodeKey),
+  };
+}
+
 export async function getFilingWorkflowInstance(orgId: string, jobId: string): Promise<any> {
   await resolveNotificationWorkflowNodes(orgId, jobId);
 
@@ -9786,6 +9922,49 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
   syncFilingWorkflowQueryReminders(orgId, jobId).catch(() => {});
 
   const activeNodeRun = instance.nodeRuns.find((run) => run.status === "ACTIVE") ?? null;
+  const completedNodeKeys = getCompletedFilingNodeKeys(instance);
+  const nodeNameMap = new Map((instance.version?.nodes || []).map((node) => [node.key, node.name || node.key]));
+  const activeNodePrerequisiteStatus = activeNodeRun
+    ? evaluateNodePrerequisiteStatus(activeNodeRun.node, completedNodeKeys, nodeNameMap)
+    : null;
+  const pendingBlockedStage = getPendingBlockedStageContext(instance.contextJson);
+  const pendingBlockedStageStatus = pendingBlockedStage
+    ? evaluateNodePrerequisiteStatus(
+        {
+          key: pendingBlockedStage.nodeKey,
+          name: pendingBlockedStage.nodeName,
+          actionConfig: {
+            prerequisiteGate: {
+              enabled: true,
+              mode: pendingBlockedStage.mode,
+              requiredNodeKeys: pendingBlockedStage.requiredNodeKeys,
+            },
+          },
+        },
+        completedNodeKeys,
+        nodeNameMap,
+      )
+    : null;
+  const jumpBackTargets = Array.from(
+    new Map(
+      instance.nodeRuns
+        .filter((run) => run.status === "COMPLETED" && run.nodeKey !== activeNodeRun?.nodeKey)
+        .sort((a, b) => {
+          const aTime = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+          const bTime = b.completedAt ? new Date(b.completedAt).getTime() : 0;
+          return bTime - aTime;
+        })
+        .map((run) => [
+          run.nodeKey,
+          {
+            nodeKey: run.nodeKey,
+            nodeName: run.node?.name || run.nodeKey,
+            completedAt: run.completedAt,
+            nodeRunId: run.id,
+          },
+        ]),
+    ).values(),
+  );
   const overdueItems = instance.responses
     .filter((response) => response.nodeRunId === activeNodeRun?.id && !response.isChecked && response.dueAt && response.dueAt.getTime() < now.getTime())
     .map((response) => ({
@@ -9842,6 +10021,11 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
   return {
     ...instance,
     activeNodeRun,
+    activeNodePrerequisiteStatus,
+    pendingBlockedStage,
+    pendingBlockedStageStatus,
+    canResumePendingBlockedStage: !!pendingBlockedStageStatus && !pendingBlockedStageStatus.isBlocked,
+    jumpBackTargets,
     overdueItems,
     overdueCount: overdueItems.length,
     queryMessages,
@@ -9899,6 +10083,7 @@ function summarizeWorkflowNodeForAudit(node: any) {
     fieldDefinitionsJson: normalizeFieldDefinitions(node.fieldDefinitionsJson ?? node.fieldDefinitions ?? []),
     documentRequirementsJson: normalizeDocumentRequirements(node.documentRequirementsJson ?? node.documentRequirements ?? []),
     conditionalSectionsJson: normalizeConditionalSections(node.conditionalSectionsJson ?? node.conditionalSections ?? []),
+    actionConfigJson: normalizeWorkflowNodeActionConfig(node.actionConfigJson ?? node.actionConfig ?? null),
   });
 }
 
@@ -10044,6 +10229,7 @@ export async function completeFilingNode(
                 nodes: true,
               },
             },
+            nodeRuns: true,
           },
         },
       },
@@ -10073,6 +10259,13 @@ export async function completeFilingNode(
 
     if (node.commentsRequired && (!data.remarks || !data.remarks.trim())) {
       throw new Error(`Remarks/Comments are required to complete stage: ${node.name}.`);
+    }
+
+    const completedNodeKeys = getCompletedFilingNodeKeys(instance);
+    const nodeNameMap = new Map(instance.version.nodes.map((entry) => [entry.key, entry.name || entry.key]));
+    const prerequisiteStatus = evaluateNodePrerequisiteStatus(node, completedNodeKeys, nodeNameMap);
+    if (prerequisiteStatus.isBlocked) {
+      throw new Error(`Stage "${node.name}" is blocked until prerequisite stages are completed: ${prerequisiteStatus.missingNodeNames.join(", ")}.`);
     }
 
     const fieldDefinitions = normalizeFieldDefinitions(node.fieldDefinitionsJson);
@@ -10463,7 +10656,7 @@ export async function completeFilingNode(
 }
 
 /**
- * Move the filing workflow back to the previously completed stage.
+ * Reopen any previously completed filing stage as a fresh run.
  *
  * Available on every filing stage (filing tab only) — it does not require a
  * BACKWARD edge in the template. A non-empty reason is mandatory and the move
@@ -10474,10 +10667,11 @@ export async function revertFilingWorkflowToPreviousStage(
   orgId: string,
   jobId: string,
   nodeRunId: string,
+  targetNodeKey: string,
   reason: string,
 ) {
   if (!reason || !reason.trim()) {
-    throw new Error("A reason is required to move back to the previous filing stage.");
+    throw new Error("A reason is required to jump back to an earlier filing stage.");
   }
   const trimmedReason = reason.trim();
 
@@ -10510,52 +10704,51 @@ export async function revertFilingWorkflowToPreviousStage(
       throw new Error("Node run does not belong to this job.");
     }
     if (nodeRun.status !== "ACTIVE") {
-      throw new Error("Only the active filing stage can be moved back.");
+      throw new Error("Only the active filing stage can be jumped back from.");
     }
 
     const instance = nodeRun.instance;
 
-    // The previous stage = the most recently completed run of a different node.
-    const previousRun = await tx.filingNodeRun.findFirst({
+    const targetRun = await tx.filingNodeRun.findFirst({
       where: {
         instanceId: instance.id,
         status: "COMPLETED",
-        nodeKey: { not: nodeRun.nodeKey },
+        nodeKey: targetNodeKey,
       },
       orderBy: { completedAt: "desc" },
     });
-    if (!previousRun) {
-      throw new Error("There is no previous filing stage to go back to.");
+    if (!targetRun) {
+      throw new Error("The selected filing stage has not been completed before.");
     }
 
-    const previousNode = instance.version.nodes.find(
-      (n) => n.key === previousRun.nodeKey && n.isActive,
+    const targetNode = instance.version.nodes.find(
+      (n) => n.key === targetNodeKey && n.isActive,
     );
-    if (!previousNode) {
-      throw new Error("The previous filing stage is no longer active in this workflow version.");
+    if (!targetNode) {
+      throw new Error("The selected filing stage is no longer active in this workflow version.");
     }
 
     const now = await getNow();
 
-    // Cancel the current run (nothing on it is finalized).
+    // Cancel the current run while preserving the historical audit trail.
     await tx.filingNodeRun.update({
       where: { id: nodeRun.id },
       data: {
         status: "CANCELLED",
         completedAt: now,
         completedById: userId,
-        remarks: `Moved back to previous stage. Reason: ${trimmedReason}`,
+        remarks: `Jumped back to earlier stage. Reason: ${trimmedReason}`,
       },
     });
 
-    // Reopen the previous stage as a fresh run.
+    // Reopen the selected earlier stage as a fresh run.
     const reopenedRun = await createFilingNodeRunWithResponses(tx, {
       instanceId: instance.id,
-      node: previousNode,
+      node: targetNode,
       startedAt: now,
       orgId,
     });
-    const slaDueDate = await calculateSlaDueDate(now, previousNode.slaDuration, previousNode.slaUnit, orgId);
+    const slaDueDate = await calculateSlaDueDate(now, targetNode.slaDuration, targetNode.slaUnit, orgId);
     await tx.filingNodeRun.update({
       where: { id: reopenedRun.id },
       data: { slaDueDate },
@@ -10563,7 +10756,10 @@ export async function revertFilingWorkflowToPreviousStage(
 
     await tx.filingWorkflowInstance.update({
       where: { id: instance.id },
-      data: { currentNodeKey: previousNode.key },
+      data: {
+        currentNodeKey: targetNode.key,
+        contextJson: buildInstanceContextWithPendingBlockedStage(instance.contextJson, null) as Prisma.InputJsonValue,
+      },
     });
 
     // Registered in the audit tab.
@@ -10576,12 +10772,12 @@ export async function revertFilingWorkflowToPreviousStage(
         event: "FILING_STAGE_REVERTED",
         actorId: userId,
         prevState: nodeRun.nodeKey,
-        newState: previousNode.key,
-        remarks: `Moved back from "${nodeRun.node.name}" to "${previousNode.name}". Reason: ${trimmedReason}`,
+        newState: targetNode.key,
+        remarks: `Jumped back from "${nodeRun.node.name}" to "${targetNode.name}". Reason: ${trimmedReason}`,
       },
     });
 
-    return { reopenedNodeKey: previousNode.key, reopenedNodeName: previousNode.name };
+    return { reopenedNodeKey: targetNode.key, reopenedNodeName: targetNode.name };
   });
 
   await getFilingWorkflowInstance(orgId, jobId);
@@ -10900,6 +11096,201 @@ export async function applyFilingSection49Extension(
     },
   });
 
+  return result;
+}
+
+export async function redirectBlockedFilingWorkflowStage(
+  userId: string,
+  orgId: string,
+  jobId: string,
+  nodeRunId: string,
+  targetNodeKey: string,
+) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: { id: jobId, orgId },
+    select: {
+      id: true,
+      jobNumber: true,
+      primaryOwnerId: true,
+      assignedManagerId: true,
+      assignments: { select: { userId: true } },
+    },
+  });
+  await assertCanAccessFiling(userId, job);
+
+  const result = await db.$transaction(async (tx) => {
+    const nodeRun = await tx.filingNodeRun.findUniqueOrThrow({
+      where: { id: nodeRunId },
+      include: {
+        node: true,
+        instance: {
+          include: {
+            version: { include: { nodes: { include: { checklistItems: true } } } },
+            nodeRuns: true,
+          },
+        },
+      },
+    });
+    if (nodeRun.instance.jobId !== jobId) throw new Error("Node run does not belong to this job.");
+    if (nodeRun.status !== "ACTIVE") throw new Error("Only the active filing stage can be redirected.");
+    const completedNodeKeys = getCompletedFilingNodeKeys(nodeRun.instance);
+    const nodeNameMap = new Map(nodeRun.instance.version.nodes.map((entry) => [entry.key, entry.name || entry.key]));
+    const prerequisiteStatus = evaluateNodePrerequisiteStatus(nodeRun.node, completedNodeKeys, nodeNameMap);
+    if (!prerequisiteStatus.isBlocked) {
+      throw new Error("This filing stage is not blocked by prerequisites.");
+    }
+    if (!prerequisiteStatus.missingNodeKeys.includes(targetNodeKey)) {
+      throw new Error("The selected redirect stage is not a missing prerequisite.");
+    }
+    const targetNode = nodeRun.instance.version.nodes.find((entry) => entry.key === targetNodeKey && entry.isActive);
+    if (!targetNode) throw new Error("The selected prerequisite stage is no longer active.");
+    const now = await getNow();
+    await tx.filingNodeRun.update({
+      where: { id: nodeRun.id },
+      data: {
+        status: "CANCELLED",
+        completedAt: now,
+        completedById: userId,
+        remarks: `Redirected to prerequisite stage "${targetNode.name}".`,
+      },
+    });
+    const reopenedRun = await createFilingNodeRunWithResponses(tx, {
+      instanceId: nodeRun.instance.id,
+      node: targetNode,
+      startedAt: now,
+      orgId,
+    });
+    const slaDueDate = await calculateSlaDueDate(now, targetNode.slaDuration, targetNode.slaUnit, orgId);
+    await tx.filingNodeRun.update({ where: { id: reopenedRun.id }, data: { slaDueDate } });
+    await tx.filingWorkflowInstance.update({
+      where: { id: nodeRun.instance.id },
+      data: {
+        currentNodeKey: targetNode.key,
+        contextJson: buildInstanceContextWithPendingBlockedStage(nodeRun.instance.contextJson, {
+          nodeKey: nodeRun.node.key,
+          nodeName: nodeRun.node.name,
+          mode: prerequisiteStatus.mode,
+          requiredNodeKeys: prerequisiteStatus.requiredNodeKeys,
+          createdFromNodeKey: targetNode.key,
+          createdAt: now.toISOString(),
+        }) as Prisma.InputJsonValue,
+      },
+    });
+    await tx.chaAuditLog.create({
+      data: {
+        orgId,
+        jobId,
+        entityType: "FilingWorkflowInstance",
+        entityId: nodeRun.instance.id,
+        event: "FILING_STAGE_PREREQUISITE_REDIRECTED",
+        actorId: userId,
+        prevState: nodeRun.node.key,
+        newState: targetNode.key,
+        remarks: `Redirected from blocked stage "${nodeRun.node.name}" to prerequisite stage "${targetNode.name}".`,
+      },
+    });
+    return { redirectedToNodeKey: targetNode.key, redirectedToNodeName: targetNode.name };
+  });
+  await getFilingWorkflowInstance(orgId, jobId);
+  return result;
+}
+
+export async function resumeBlockedFilingWorkflowStage(
+  userId: string,
+  orgId: string,
+  jobId: string,
+  nodeRunId: string,
+) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: { id: jobId, orgId },
+    select: {
+      id: true,
+      jobNumber: true,
+      primaryOwnerId: true,
+      assignedManagerId: true,
+      assignments: { select: { userId: true } },
+    },
+  });
+  await assertCanAccessFiling(userId, job);
+  const result = await db.$transaction(async (tx) => {
+    const nodeRun = await tx.filingNodeRun.findUniqueOrThrow({
+      where: { id: nodeRunId },
+      include: {
+        instance: {
+          include: {
+            version: { include: { nodes: { include: { checklistItems: true } } } },
+            nodeRuns: true,
+          },
+        },
+      },
+    });
+    if (nodeRun.instance.jobId !== jobId) throw new Error("Node run does not belong to this job.");
+    if (nodeRun.status !== "ACTIVE") throw new Error("Only the active filing stage can be used to resume a blocked stage.");
+    const pendingBlockedStage = getPendingBlockedStageContext(nodeRun.instance.contextJson);
+    if (!pendingBlockedStage) throw new Error("There is no blocked filing stage waiting to be resumed.");
+    const completedNodeKeys = getCompletedFilingNodeKeys(nodeRun.instance);
+    const nodeNameMap = new Map(nodeRun.instance.version.nodes.map((entry) => [entry.key, entry.name || entry.key]));
+    const prerequisiteStatus = evaluateNodePrerequisiteStatus(
+      {
+        key: pendingBlockedStage.nodeKey,
+        name: pendingBlockedStage.nodeName,
+        actionConfig: {
+          prerequisiteGate: {
+            enabled: true,
+            mode: pendingBlockedStage.mode,
+            requiredNodeKeys: pendingBlockedStage.requiredNodeKeys,
+          },
+        },
+      },
+      completedNodeKeys,
+      nodeNameMap,
+    );
+    if (prerequisiteStatus.isBlocked) {
+      throw new Error("The blocked stage cannot be resumed yet because prerequisites are still incomplete.");
+    }
+    const blockedNode = nodeRun.instance.version.nodes.find((entry) => entry.key === pendingBlockedStage.nodeKey && entry.isActive);
+    if (!blockedNode) throw new Error("The blocked filing stage is no longer active.");
+    const now = await getNow();
+    await tx.filingNodeRun.update({
+      where: { id: nodeRun.id },
+      data: {
+        status: "CANCELLED",
+        completedAt: now,
+        completedById: userId,
+        remarks: `Resumed blocked stage "${blockedNode.name}".`,
+      },
+    });
+    const reopenedRun = await createFilingNodeRunWithResponses(tx, {
+      instanceId: nodeRun.instance.id,
+      node: blockedNode,
+      startedAt: now,
+      orgId,
+    });
+    const slaDueDate = await calculateSlaDueDate(now, blockedNode.slaDuration, blockedNode.slaUnit, orgId);
+    await tx.filingNodeRun.update({ where: { id: reopenedRun.id }, data: { slaDueDate } });
+    await tx.filingWorkflowInstance.update({
+      where: { id: nodeRun.instance.id },
+      data: {
+        currentNodeKey: blockedNode.key,
+        contextJson: buildInstanceContextWithPendingBlockedStage(nodeRun.instance.contextJson, null) as Prisma.InputJsonValue,
+      },
+    });
+    await tx.chaAuditLog.create({
+      data: {
+        orgId,
+        jobId,
+        entityType: "FilingWorkflowInstance",
+        entityId: nodeRun.instance.id,
+        event: "FILING_STAGE_BLOCKED_RESUMED",
+        actorId: userId,
+        prevState: nodeRun.nodeKey,
+        newState: blockedNode.key,
+        remarks: `Resumed blocked stage "${blockedNode.name}".`,
+      },
+    });
+    return { reopenedNodeKey: blockedNode.key, reopenedNodeName: blockedNode.name };
+  });
+  await getFilingWorkflowInstance(orgId, jobId);
   return result;
 }
 

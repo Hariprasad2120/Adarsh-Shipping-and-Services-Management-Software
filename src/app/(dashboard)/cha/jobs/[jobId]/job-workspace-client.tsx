@@ -622,6 +622,7 @@
   const [queryProcessingPanelExpanded, setQueryProcessingPanelExpanded] = useState(false);
     const [goBackOpen, setGoBackOpen] = useState(false);
     const [goBackReason, setGoBackReason] = useState("");
+    const [selectedJumpBackNodeKey, setSelectedJumpBackNodeKey] = useState("");
     const [nodeRemarks, setNodeRemarks] = useState("");
     const [selectedNextNodeKey, setSelectedNextNodeKey] = useState<string>("");
     const filingDraftHydratedForRef = useRef<string | null>(null);
@@ -855,6 +856,11 @@
       [activeNodeFieldDefinitions],
     );
     const activeNodeDisplayName = activeNodeRun?.node?.name || "";
+    const activeNodePrerequisiteStatus = filingInstance?.activeNodePrerequisiteStatus || null;
+    const pendingBlockedStage = filingInstance?.pendingBlockedStage || null;
+    const canResumePendingBlockedStage = !!filingInstance?.canResumePendingBlockedStage;
+    const jumpBackTargets = filingInstance?.jumpBackTargets || [];
+    const isActiveStageBlocked = !!activeNodePrerequisiteStatus?.isBlocked;
     const hasShipmentBillNumberField = activeNodeFieldKeys.has("bill_number");
     const activeNodeHasConditionalFields = visibleNodeConditionalSections.some(
       (section: any) => Array.isArray(section?.unlocksFields) && section.unlocksFields.length > 0,
@@ -2015,6 +2021,7 @@
           setFilingInstance(instanceRes.data);
           const activeRun = instanceRes.data?.activeNodeRun || instanceRes.data?.nodeRuns?.find((r: any) => r.status === "ACTIVE");
           setActiveNodeRun(activeRun || null);
+          setSelectedJumpBackNodeKey((current) => current || instanceRes.data?.jumpBackTargets?.[0]?.nodeKey || "");
 
           if (activeRun) {
             const initialResponses: Record<string, { isChecked: boolean; remarks?: string; fileKey?: string; delayRemarks?: string }> = {};
@@ -2361,6 +2368,11 @@
       if (!activeNodeRun) return;
       const currentFilingDraftStorageKey = filingDraftStorageKey;
 
+      if (isActiveStageBlocked) {
+        toast.error("Complete the missing prerequisite stage before continuing this filing stage.");
+        return;
+      }
+
       if (queryProcessingEnabled && !queryProcessingResolved) {
         toast.error("Resolve query processing before moving to the next filing step.");
         return;
@@ -2468,22 +2480,65 @@
     const handleGoBackStage = async () => {
       if (!activeNodeRun) return;
       const currentFilingDraftStorageKey = filingDraftStorageKey;
+      if (!selectedJumpBackNodeKey) {
+        toast.error("Select the filing stage you want to reopen.");
+        return;
+      }
       if (!goBackReason.trim()) {
-        toast.error("Enter a reason to move back to the previous filing stage.");
+        toast.error("Enter a reason to jump back to the selected filing stage.");
         return;
       }
       setLoading("filing-go-back");
       try {
-        const res = await actions.revertFilingStageAction(job.id, activeNodeRun.id, goBackReason.trim());
+        const res = await actions.revertFilingStageAction(job.id, activeNodeRun.id, selectedJumpBackNodeKey, goBackReason.trim());
         if (res.ok) {
           clearFilingNodeDraft(currentFilingDraftStorageKey);
-          toast.success(`Moved back to ${res.data?.reopenedNodeName || "the previous stage"}.`);
+          toast.success(`Jumped back to ${res.data?.reopenedNodeName || "the selected stage"}.`);
           setGoBackOpen(false);
           setGoBackReason("");
+          setSelectedJumpBackNodeKey("");
           await loadFilingData();
           router.refresh();
         } else {
-          toast.error(res.error || "Failed to move back to the previous filing stage.");
+          toast.error(res.error || "Failed to jump back to the selected filing stage.");
+        }
+      } catch (err: any) {
+        toast.error(err.message || "An unexpected error occurred.");
+      } finally {
+        setLoading(null);
+      }
+    };
+
+    const handleRedirectBlockedStage = async (targetNodeKey: string) => {
+      if (!activeNodeRun) return;
+      setLoading(`filing-redirect-${targetNodeKey}`);
+      try {
+        const res = await actions.redirectBlockedFilingStageAction(job.id, activeNodeRun.id, targetNodeKey);
+        if (res.ok) {
+          toast.success(`Redirected to ${res.data?.redirectedToNodeName || "the prerequisite stage"}.`);
+          await loadFilingData();
+          router.refresh();
+        } else {
+          toast.error(res.error || "Failed to redirect to the prerequisite stage.");
+        }
+      } catch (err: any) {
+        toast.error(err.message || "An unexpected error occurred.");
+      } finally {
+        setLoading(null);
+      }
+    };
+
+    const handleResumeBlockedStage = async () => {
+      if (!activeNodeRun) return;
+      setLoading("filing-resume-blocked");
+      try {
+        const res = await actions.resumeBlockedFilingStageAction(job.id, activeNodeRun.id);
+        if (res.ok) {
+          toast.success(`Resumed ${res.data?.reopenedNodeName || "the blocked stage"}.`);
+          await loadFilingData();
+          router.refresh();
+        } else {
+          toast.error(res.error || "Failed to resume the blocked filing stage.");
         }
       } catch (err: any) {
         toast.error(err.message || "An unexpected error occurred.");
@@ -4746,7 +4801,44 @@
                                     {overdueChecklistCount} overdue checklist item{overdueChecklistCount > 1 ? "s" : ""} in this active stage.
                                   </p>
                                 )}
-                                <div className="space-y-3">
+                                {isActiveStageBlocked ? (
+                                  <div className="card-top-accent-orange rounded-xl border border-[#fb923c]/35 bg-surface px-4 py-4 space-y-3">
+                                    <div className="space-y-1">
+                                      <p className="ds-label !text-[#fb923c]">Stage Blocked</p>
+                                      <p className="text-sm text-on-surface">
+                                        This stage is blocked until {activeNodePrerequisiteStatus?.mode === "ANY" ? "one of these stages is completed" : "all required stages are completed"}: {(activeNodePrerequisiteStatus?.missingNodeNames || []).join(", ")}.
+                                      </p>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                      {(activeNodePrerequisiteStatus?.missingNodeKeys || []).map((nodeKey: string) => (
+                                        <Button
+                                          key={nodeKey}
+                                          type="button"
+                                          variant="outline"
+                                          disabled={loading !== null}
+                                          onClick={() => void handleRedirectBlockedStage(nodeKey)}
+                                        >
+                                          <ArrowRight size={14} />
+                                          Go To {targetNodesMap.get(nodeKey)?.name || nodeKey}
+                                        </Button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ) : null}
+                                {pendingBlockedStage && canResumePendingBlockedStage ? (
+                                  <div className="rounded-xl border border-[#00cec4]/35 bg-surface-container-low px-4 py-3">
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                      <div className="space-y-1">
+                                        <p className="ds-label text-[#00cec4]">Blocked Stage Ready</p>
+                                        <p className="text-sm text-on-surface">{pendingBlockedStage.nodeName} can now be resumed.</p>
+                                      </div>
+                                      <Button type="button" disabled={loading !== null} onClick={() => void handleResumeBlockedStage()}>
+                                        Resume {pendingBlockedStage.nodeName}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : null}
+                                <div className={`space-y-3 ${isActiveStageBlocked ? "pointer-events-none opacity-60" : ""}`}>
                                   {activeNodeRun.node.nodeType === "DECISION" && outgoingEdges.length > 0 ? (
                                     <div className="space-y-2">
                                       <label className="ds-label text-on-surface block">Decision *</label>
@@ -5015,7 +5107,7 @@
                               </div>
 
                               {visibleNodeConditionalSections.length > 0 && (
-                                <div className={`${filingPrimaryColumnClass} space-y-2.5 pt-0.5`}>
+                                <div className={`${filingPrimaryColumnClass} space-y-2.5 pt-0.5 ${isActiveStageBlocked ? "pointer-events-none opacity-60" : ""}`}>
                                   <h4 className="ds-label text-on-surface">Conditional Sections & Documents</h4>
                                   <div className="space-y-2.5">
                                     {visibleNodeConditionalSections.map((section: any) => (
@@ -5509,6 +5601,7 @@
                                             onChange={(e) => setNodeRemarks(e.target.value)}
                                             placeholder="Provide checklist execution remarks or check outcome..."
                                             className="w-full text-sm font-sans"
+                                            disabled={loading !== null || isActiveStageBlocked}
                                             required={activeNodeRun.node.commentsRequired}
                                           />
                                         </div>
@@ -5523,6 +5616,7 @@
                                                   value={selectedNextNodeKey}
                                                   onChange={(e) => setSelectedNextNodeKey(e.target.value)}
                                                   required
+                                                  disabled={loading !== null || isActiveStageBlocked}
                                                   className="w-full text-sm"
                                                 >
                                                   <option value="">-- Choose Next Stage --</option>
@@ -5546,13 +5640,13 @@
                                           )}
                                         </div>
                                         <div className="flex flex-wrap justify-end gap-2 pt-1">
-                                          <Button
-                                            type="button"
-                                            variant="outline"
-                                            disabled={loading !== null}
-                                            onClick={handleSaveFilingDraft}
-                                            className="gap-2"
-                                          >
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              disabled={loading !== null || isActiveStageBlocked}
+                                              onClick={handleSaveFilingDraft}
+                                              className="gap-2"
+                                            >
                                             <Database size={14} />
                                             Save Draft
                                           </Button>
@@ -5565,12 +5659,12 @@
                                               className="gap-2 text-xs"
                                             >
                                               <Undo2 size={14} />
-                                              Move Back to Previous Stage
+                                              Jump Back to Earlier Stage
                                             </Button>
                                           ) : null}
                                           <Button
                                             type="submit"
-                                            disabled={loading !== null}
+                                            disabled={loading !== null || isActiveStageBlocked}
                                             className="w-full sm:w-auto sm:min-w-[280px]"
                                           >
                                             {loading === "filing-complete" ? "Completing Stage..." : outgoingEdges.length > 0 ? "Complete & Move to Next Stage" : "Complete & File Customs Bill"}
@@ -5584,7 +5678,7 @@
                               
                               {/* Node Photo / File Upload Requirements */}
                               {activeNodeRun.node.photoRequirements?.length > 0 && (
-                                <div className={`${filingPrimaryColumnClass} space-y-4 border-t border-outline-variant/30 pt-4`}>
+                                <div className={`${filingPrimaryColumnClass} space-y-4 border-t border-outline-variant/30 pt-4 ${isActiveStageBlocked ? "pointer-events-none opacity-60" : ""}`}>
                                   <h4 className="ds-label text-on-surface">Required Photograph / Document Uploads</h4>
                                   <div className="space-y-4">
                                     {activeNodeRun.node.photoRequirements.map((pr: any) => {
@@ -5669,14 +5763,29 @@
 
                             <Modal
                               open={goBackOpen}
-                              title="Move Back to Previous Stage"
-                              description="The current stage will be cancelled and the previous filing stage reopened. This move is recorded in the audit tab."
+                              title="Jump Back To Earlier Stage"
+                              description="The current stage will be cancelled and the selected earlier filing stage will reopen as a fresh run. This move is recorded in the audit tab."
                               onClose={() => setGoBackOpen(false)}
                               className="max-w-lg"
                             >
                               <div className="space-y-4">
                                 <label className="block space-y-1.5">
-                                  <span className="ds-label">Reason for going back *</span>
+                                  <span className="ds-label">Select Earlier Stage *</span>
+                                  <select
+                                    value={selectedJumpBackNodeKey}
+                                    onChange={(e) => setSelectedJumpBackNodeKey(e.target.value)}
+                                    className="w-full text-sm"
+                                  >
+                                    <option value="">-- Choose Earlier Stage --</option>
+                                    {jumpBackTargets.map((target: any) => (
+                                      <option key={target.nodeKey} value={target.nodeKey}>
+                                        {target.nodeName} {target.completedAt ? `(${new Date(target.completedAt).toLocaleString("en-IN")})` : ""}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                                <label className="block space-y-1.5">
+                                  <span className="ds-label">Reason for jump-back *</span>
                                   <textarea
                                     rows={3}
                                     value={goBackReason}
@@ -5699,11 +5808,11 @@
                                   <Button
                                     type="button"
                                     size="sm"
-                                    disabled={loading === "filing-go-back" || !goBackReason.trim()}
+                                    disabled={loading === "filing-go-back" || !goBackReason.trim() || !selectedJumpBackNodeKey}
                                     onClick={() => void handleGoBackStage()}
                                   >
                                     <Undo2 size={13} />
-                                    {loading === "filing-go-back" ? "Moving Back..." : "Confirm & Move Back"}
+                                    {loading === "filing-go-back" ? "Jumping Back..." : "Confirm Jump Back"}
                                   </Button>
                                 </div>
                               </div>

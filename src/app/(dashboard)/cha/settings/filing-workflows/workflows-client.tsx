@@ -85,6 +85,18 @@ type ConditionalSectionDraft = {
   config: Record<string, unknown> | null;
 };
 
+type PrerequisiteGateMode = "ALL" | "ANY";
+
+type PrerequisiteGateDraft = {
+  enabled: boolean;
+  mode: PrerequisiteGateMode;
+  requiredNodeKeys: string[];
+};
+
+type NodeActionConfigDraft = {
+  prerequisiteGate: PrerequisiteGateDraft;
+};
+
 type DocumentRuleOptions = Partial<DocumentValidityDraft> & {
   allowsUpload?: boolean;
   minUploads?: number;
@@ -129,6 +141,7 @@ type NodeDraft = {
   fieldDefinitions: FieldDefinitionDraft[];
   documentRequirements: DocumentRequirementDraft[];
   conditionalSections: ConditionalSectionDraft[];
+  actionConfig: NodeActionConfigDraft;
 };
 
 type EdgeDraft = {
@@ -143,6 +156,16 @@ const NODE_HEIGHT = 154;
 const MIN_ZOOM = 0.45;
 const MAX_ZOOM = 2.2;
 const QUERY_PROCESSING_SECTION_KEY = "query_processing";
+
+function createDefaultNodeActionConfig(): NodeActionConfigDraft {
+  return {
+    prerequisiteGate: {
+      enabled: false,
+      mode: "ALL",
+      requiredNodeKeys: [],
+    },
+  };
+}
 
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -307,6 +330,24 @@ function normalizeConditionalSection(item: any, index: number): ConditionalSecti
   };
 }
 
+function normalizePrerequisiteGate(value: any): PrerequisiteGateDraft {
+  const raw = value && typeof value === "object" ? value : {};
+  return {
+    enabled: !!raw.enabled,
+    mode: raw.mode === "ANY" ? "ANY" : "ALL",
+    requiredNodeKeys: Array.isArray(raw.requiredNodeKeys)
+      ? raw.requiredNodeKeys.filter((entry: unknown): entry is string => typeof entry === "string" && entry.trim().length > 0)
+      : [],
+  };
+}
+
+function normalizeNodeActionConfig(value: any): NodeActionConfigDraft {
+  const raw = value && typeof value === "object" ? value : {};
+  return {
+    prerequisiteGate: normalizePrerequisiteGate(raw.prerequisiteGate),
+  };
+}
+
 function normalizeNode(node: any, index: number): NodeDraft {
   return {
     id: node.id || createId("node"),
@@ -345,6 +386,7 @@ function normalizeNode(node: any, index: number): NodeDraft {
     conditionalSections: Array.isArray(node.conditionalSectionsJson ?? node.conditionalSections)
       ? (node.conditionalSectionsJson ?? node.conditionalSections).map(normalizeConditionalSection)
       : [],
+    actionConfig: normalizeNodeActionConfig(node.actionConfigJson ?? node.actionConfig),
   };
 }
 
@@ -397,6 +439,24 @@ function buildValidation(nodes: NodeDraft[], edges: EdgeDraft[]) {
         errors.push(`Checklist item "${item.label || "Untitled"}" has max uploads lower than min uploads.`);
       }
     }
+
+    const gate = node.actionConfig.prerequisiteGate;
+    if (gate.enabled) {
+      if (gate.requiredNodeKeys.length === 0) {
+        errors.push(`Node ${node.name || node.key} has prerequisite gating enabled but no required stages selected.`);
+      }
+      const duplicatePrereqs = gate.requiredNodeKeys.filter((entry, idx, list) => list.indexOf(entry) !== idx);
+      if (duplicatePrereqs.length > 0) {
+        errors.push(`Node ${node.name || node.key} has duplicate prerequisite stages.`);
+      }
+      for (const requiredKey of gate.requiredNodeKeys) {
+        if (requiredKey === node.key) {
+          errors.push(`Node ${node.name || node.key} cannot require itself as a prerequisite.`);
+        } else if (!activeNodeMap.has(requiredKey)) {
+          errors.push(`Node ${node.name || node.key} requires missing or inactive prerequisite stage ${requiredKey}.`);
+        }
+      }
+    }
   }
 
   for (const edge of edges) {
@@ -411,6 +471,35 @@ function buildValidation(nodes: NodeDraft[], edges: EdgeDraft[]) {
       errors.push(`Duplicate edge ${edge.sourceKey} -> ${edge.targetKey}.`);
     }
     edgeSet.add(signature);
+  }
+
+  const prereqAdjacency = new Map<string, string[]>();
+  for (const node of activeNodes) {
+    prereqAdjacency.set(node.key, node.actionConfig.prerequisiteGate.enabled ? [...node.actionConfig.prerequisiteGate.requiredNodeKeys] : []);
+  }
+  const prereqVisited = new Set<string>();
+  const prereqVisiting = new Set<string>();
+  const prereqCycleNodes = new Set<string>();
+  const visitPrereq = (nodeKey: string) => {
+    if (prereqVisiting.has(nodeKey)) {
+      prereqCycleNodes.add(nodeKey);
+      return;
+    }
+    if (prereqVisited.has(nodeKey)) return;
+    prereqVisiting.add(nodeKey);
+    for (const nextKey of prereqAdjacency.get(nodeKey) || []) {
+      if (activeNodeMap.has(nextKey)) {
+        visitPrereq(nextKey);
+      }
+    }
+    prereqVisiting.delete(nodeKey);
+    prereqVisited.add(nodeKey);
+  };
+  for (const node of activeNodes) {
+    visitPrereq(node.key);
+  }
+  if (prereqCycleNodes.size > 0) {
+    errors.push(`Prerequisite cycle detected across: ${Array.from(prereqCycleNodes).join(", ")}.`);
   }
 
   for (const node of activeNodes) {
@@ -564,6 +653,7 @@ function createWorkflowStageNode(
     fieldDefinitions: options.fieldDefinitions || [],
     documentRequirements: options.documentRequirements || [],
     conditionalSections: options.conditionalSections || [],
+    actionConfig: createDefaultNodeActionConfig(),
   };
 }
 
@@ -617,6 +707,7 @@ function createWorkflowChecklistNode(
       fieldDefinitions: options.fieldDefinitions || [],
       documentRequirements: options.documentRequirements || [],
       conditionalSections: options.conditionalSections || [],
+      actionConfig: createDefaultNodeActionConfig(),
   };
 }
 
@@ -658,6 +749,7 @@ function createWorkflowNotificationNode(
     fieldDefinitions: [],
     documentRequirements: [],
     conditionalSections: [],
+    actionConfig: createDefaultNodeActionConfig(),
   };
 }
 
@@ -2535,6 +2627,94 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     Adds the reusable post-filing customs query workflow to this node. Operators can record whether no query was raised, open a query thread, post offline response updates, and clear the query before moving ahead.
                   </p>
                 </div>
+                {selectedNode.nodeType !== "START" && selectedNode.nodeType !== "END" && selectedNode.nodeType !== "NOTIFICATION" ? (
+                  <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 space-y-3">
+                    <div>
+                      <label className="flex items-center gap-2 text-sm text-on-surface">
+                        <input
+                          type="checkbox"
+                          checked={selectedNode.actionConfig.prerequisiteGate.enabled}
+                          onChange={(event) =>
+                            updateSelectedNode((node) => ({
+                              ...node,
+                              actionConfig: {
+                                ...node.actionConfig,
+                                prerequisiteGate: {
+                                  ...node.actionConfig.prerequisiteGate,
+                                  enabled: event.target.checked,
+                                },
+                              },
+                            }))
+                          }
+                        />
+                        <span>Enable Stage Prerequisites</span>
+                      </label>
+                      <p className="mt-2 text-xs text-on-surface-variant">
+                        Block this stage at runtime until the required earlier stage nodes have been completed.
+                      </p>
+                    </div>
+                    {selectedNode.actionConfig.prerequisiteGate.enabled ? (
+                      <>
+                        <div className="space-y-1.5">
+                          <label className="ds-label block">Prerequisite Mode</label>
+                          <select
+                            value={selectedNode.actionConfig.prerequisiteGate.mode}
+                            onChange={(event) =>
+                              updateSelectedNode((node) => ({
+                                ...node,
+                                actionConfig: {
+                                  ...node.actionConfig,
+                                  prerequisiteGate: {
+                                    ...node.actionConfig.prerequisiteGate,
+                                    mode: event.target.value === "ANY" ? "ANY" : "ALL",
+                                  },
+                                },
+                              }))
+                            }
+                            className="w-full text-sm"
+                          >
+                            <option value="ALL">All selected stages must be completed</option>
+                            <option value="ANY">Any one selected stage may unlock this stage</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="ds-label block">Required Stages</label>
+                          <div className="max-h-44 space-y-2 overflow-y-auto rounded-xl border border-outline-variant bg-surface p-3">
+                            {nodes
+                              .filter((node) => node.isActive && node.key !== selectedNode.key)
+                              .map((node) => {
+                                const checked = selectedNode.actionConfig.prerequisiteGate.requiredNodeKeys.includes(node.key);
+                                return (
+                                  <label key={node.key} className="flex items-center gap-2 text-sm text-on-surface">
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={(event) =>
+                                        updateSelectedNode((current) => ({
+                                          ...current,
+                                          actionConfig: {
+                                            ...current.actionConfig,
+                                            prerequisiteGate: {
+                                              ...current.actionConfig.prerequisiteGate,
+                                              requiredNodeKeys: event.target.checked
+                                                ? [...current.actionConfig.prerequisiteGate.requiredNodeKeys, node.key]
+                                                : current.actionConfig.prerequisiteGate.requiredNodeKeys.filter((entry) => entry !== node.key),
+                                            },
+                                          },
+                                        }))
+                                      }
+                                    />
+                                    <span>{node.name}</span>
+                                    <span className="ds-label">{node.key}</span>
+                                  </label>
+                                );
+                              })}
+                          </div>
+                        </div>
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
                 <details className="rounded-xl border border-outline-variant bg-surface p-3">
                   <summary className="cursor-pointer text-sm font-medium text-on-surface">Advanced Routing And Metadata</summary>
                   <div className="mt-4 space-y-4">

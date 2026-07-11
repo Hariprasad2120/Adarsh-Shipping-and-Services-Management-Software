@@ -1320,6 +1320,7 @@ export async function saveFilingNodeDraftAction(
 export async function revertFilingStageAction(
   jobId: string,
   nodeRunId: string,
+  targetNodeKey: string,
   reason: string,
 ): Promise<ActionResponse> {
   try {
@@ -1329,12 +1330,42 @@ export async function revertFilingStageAction(
       orgId,
       jobId,
       nodeRunId,
+      targetNodeKey,
       reason,
     );
     revalidatePath(`/cha/jobs/${jobId}`);
     return { ok: true, data: result };
   } catch (err: any) {
-    return { ok: false, error: err.message || "Failed to move back to the previous filing stage" };
+    return { ok: false, error: err.message || "Failed to jump back to the selected filing stage" };
+  }
+}
+
+export async function redirectBlockedFilingStageAction(
+  jobId: string,
+  nodeRunId: string,
+  targetNodeKey: string,
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const result = await chaService.redirectBlockedFilingWorkflowStage(userId, orgId, jobId, nodeRunId, targetNodeKey);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to redirect to the prerequisite filing stage" };
+  }
+}
+
+export async function resumeBlockedFilingStageAction(
+  jobId: string,
+  nodeRunId: string,
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const result = await chaService.resumeBlockedFilingWorkflowStage(userId, orgId, jobId, nodeRunId);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to resume the blocked filing stage" };
   }
 }
 
