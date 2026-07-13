@@ -9,10 +9,11 @@ type WarningIndicatorTone = "warning" | "destructive";
 
 type WarningIndicatorPopoverProps = {
   ariaLabel: string;
-  description: string;
-  eyebrow: string;
-  meta?: string;
+  description: ReactNode;
+  eyebrow: ReactNode;
+  meta?: ReactNode;
   tone?: WarningIndicatorTone;
+  actionsClassName?: string;
   children: ReactNode;
 };
 
@@ -48,6 +49,7 @@ export function WarningIndicatorPopover({
   eyebrow,
   meta,
   tone = "warning",
+  actionsClassName,
   children,
 }: WarningIndicatorPopoverProps) {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -138,7 +140,8 @@ export function WarningIndicatorPopover({
         aria-expanded={isOpen}
         aria-haspopup="dialog"
         className={cn(
-          "inline-flex h-11 w-11 items-center justify-center rounded-xl border shadow-sm transition-all duration-200 hover:-translate-y-px hover:shadow-[0_0_18px_rgba(251,146,60,0.28)] focus-visible:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00cec4]/30",
+          "ds-plain inline-flex h-7 w-7 items-center justify-center rounded-lg border shadow-sm transition-transform duration-200 hover:scale-105 focus-visible:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00cec4]/30",
+          tone === "warning" ? "animate-pulse-orange" : "animate-pulse-red",
           toneStyles.trigger,
         )}
         onClick={(event) => {
@@ -152,7 +155,7 @@ export function WarningIndicatorPopover({
         onFocus={openPopover}
         onBlur={(event) => closeIfOutsidePanel(event.relatedTarget)}
       >
-        <AlertTriangle className={cn("size-5", toneStyles.icon)} strokeWidth={2.2} />
+        <AlertTriangle className={cn("size-3.5", toneStyles.icon)} strokeWidth={2.2} />
       </button>
 
       {isOpen && typeof document !== "undefined"
@@ -190,7 +193,7 @@ export function WarningIndicatorPopover({
                   ) : null}
 
                   <div
-                    className="grid grid-cols-2 gap-2 pt-1"
+                    className={cn("grid grid-cols-2 gap-2 pt-1", actionsClassName)}
                     onClickCapture={(event) => {
                       const target = event.target;
                       if (target instanceof HTMLElement && target.closest("button, a")) {
