@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-13T05:34:52.464Z
+> Generated at: 2026-07-10T16:03:49.504Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -11,7 +11,7 @@
 | API Routes | 175 |
 | Prisma Models | 263 |
 | Module Service Files | 73 |
-| UI Components | 94 |
+| UI Components | 93 |
 
 ## Modules Overview
 
@@ -50,7 +50,7 @@
 | shared | 0 | 0 | 0 | 0 | 16 |
 | todo | 1 | 0 | 2 | 1 | 1 |
 | todos | 0 | 5 | 0 | 0 | 0 |
-| ui | 0 | 0 | 0 | 0 | 17 |
+| ui | 0 | 0 | 0 | 0 | 16 |
 | users | 0 | 4 | 0 | 0 | 0 |
 
 ## API Routes

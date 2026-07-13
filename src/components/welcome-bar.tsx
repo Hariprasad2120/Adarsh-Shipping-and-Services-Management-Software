@@ -131,6 +131,7 @@ export function AppHeader({
 
   useEffect(() => {
     if (!pathname.startsWith("/cha")) {
+      setChaDueDateWarnings([]);
       return;
     }
 
@@ -213,7 +214,6 @@ export function AppHeader({
     activeSection?.label ??
     "Workspace";
   const canOpenSettings = Boolean(caps["admin.org.manage"]);
-  const visibleChaDueDateWarnings = pathname.startsWith("/cha") ? chaDueDateWarnings : [];
 
   const SectionIcon = activeSection?.icon ?? LayoutGrid;
 
@@ -247,16 +247,19 @@ export function AppHeader({
 
         <div className="flex items-center gap-2 sm:gap-3.5">
           <ClockDisplay />
-          {visibleChaDueDateWarnings.length > 0 ? (
+          {chaDueDateWarnings.length > 0 ? (
             <div className="flex items-center gap-2">
-              <ChaDueDateWarningIndicator
-                warnings={visibleChaDueDateWarnings}
-                onAcknowledged={(notificationId) => {
-                  setChaDueDateWarnings((current) =>
-                    current.filter((entry) => entry.notificationId !== notificationId),
-                  );
-                }}
-              />
+              {chaDueDateWarnings.map((warning) => (
+                <ChaDueDateWarningIndicator
+                  key={warning.notificationId}
+                  warning={warning}
+                  onAcknowledged={() => {
+                    setChaDueDateWarnings((current) =>
+                      current.filter((entry) => entry.notificationId !== warning.notificationId),
+                    );
+                  }}
+                />
+              ))}
             </div>
           ) : null}
 

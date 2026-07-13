@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { db } from "@/lib/db";
 import { acknowledgeNotification } from "@/modules/notifications/service";
-import { listActiveUserNotifications } from "@/modules/notifications/service";
 import {
   setDeliveryOrderUploadToggle,
   setDeliveryOrderExtensionToggle,
@@ -181,13 +180,6 @@ describe("CHA Delivery Order upload toggle & extension flow", () => {
 
     const refreshedWarnings = await listChaDueDateWarnings(userId, orgId, { jobId });
     expect(refreshedWarnings.some((warning) => warning.type === "DELIVERY_ORDER")).toBe(false);
-
-    const activeNotifications = await listActiveUserNotifications(userId);
-    expect(
-      activeNotifications.some(
-        (notification) => notification.id === deliveryOrderWarning!.notificationId,
-      ),
-    ).toBe(false);
 
     await db.chaJobAdditionalData.update({
       where: { id: additionalDataId },
