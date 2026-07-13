@@ -259,7 +259,7 @@ export async function listActiveUserNotifications(userId: string) {
       dismissedAt: null,
       OR: [
         { priority: "important", acknowledgedAt: null },
-        { priority: "normal", presentedAt: null, acknowledgedAt: null },
+        { priority: "normal", presentedAt: null },
       ],
     },
     orderBy: { createdAt: "desc" },

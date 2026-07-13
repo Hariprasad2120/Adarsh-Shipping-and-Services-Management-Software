@@ -232,11 +232,12 @@ export function JobsClient({
                 <DataTableCell className="py-5 font-medium text-[#00cec4]">
                   <div className="flex items-center gap-2">
                     <span>{job.jobNumber}</span>
-                    {job.dueDateWarnings.length > 0 ? (
+                    {job.dueDateWarnings.map((warning) => (
                       <ChaDueDateWarningIndicator
-                        warnings={job.dueDateWarnings}
+                        key={warning.notificationId}
+                        warning={warning}
                       />
-                    ) : null}
+                    ))}
                     {job.filingQueryWarning ? (
                       <JobFilingQueryWarningIndicator jobId={job.id} warning={job.filingQueryWarning} />
                     ) : null}
