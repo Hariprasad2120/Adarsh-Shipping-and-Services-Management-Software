@@ -35,10 +35,20 @@ export default async function FilingWorkflowsPage() {
   if (!availableRoles.includes("Employee")) availableRoles.push("Employee");
 
   return (
-    <WorkflowsClient
-      initialTemplates={JSON.parse(JSON.stringify(templates))}
-      availableRoles={availableRoles}
-      availableJobTypes={jobTypes}
-    />
+    <div
+      className="flex min-h-0 flex-1 overflow-hidden"
+      style={{
+        height:
+          "calc(100dvh - var(--dashboard-topbar-height) - var(--dashboard-breadcrumb-height) - 2.5rem)",
+        maxHeight:
+          "calc(100dvh - var(--dashboard-topbar-height) - var(--dashboard-breadcrumb-height) - 2.5rem)",
+      }}
+    >
+      <WorkflowsClient
+        initialTemplates={JSON.parse(JSON.stringify(templates))}
+        availableRoles={availableRoles}
+        availableJobTypes={jobTypes}
+      />
+    </div>
   );
 }

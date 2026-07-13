@@ -1559,6 +1559,42 @@ button.cha-link:active:not(:disabled) {
   transform: translateY(0) scale(0.96);
 }
 
+button.cha-link.cha-workspace-tab {
+  display: inline-flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: 0;
+  border: none;
+  padding: 0.9rem 0.75rem;
+  color: #00cec4;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  background: transparent;
+  box-shadow: none;
+}
+
+button.cha-link.cha-workspace-tab:hover:not(:disabled) {
+  animation: none;
+  text-underline-offset: 0.18em;
+}
+
+button.cha-link.cha-workspace-tab[data-active="true"] {
+  color: #00cec4;
+}
+
+button.cha-link.cha-workspace-tab[data-active="true"]:hover:not(:disabled) {
+  color: #00b8af;
+}
+
 @keyframes doc-missing-blink {
   0%,
   100% {

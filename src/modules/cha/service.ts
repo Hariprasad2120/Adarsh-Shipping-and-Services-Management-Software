@@ -1,6 +1,10 @@
 import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
-import { createNotification, getUsersWithPermission, recordNotificationActivity } from "@/modules/notifications/service";
+import {
+  createNotification,
+  getUsersWithPermission,
+  recordNotificationActivity,
+} from "@/modules/notifications/service";
 import * as XLSX from "xlsx";
 import { Prisma } from "@/generated/prisma/client";
 import { can, ForbiddenError } from "@/lib/rbac";
@@ -29,8 +33,10 @@ const DEFAULT_CHA_EXPENSE_CATEGORIES = [
 
 const DEFAULT_CHA_JOB_CREATOR_ROLES = ["Admin", "HR", "Manager", "Employee"];
 const DEFAULT_CHA_SHIPMENT_TYPES = ["Air", "Sea"];
-const DEFAULT_IMPORT_MANIFEST_HELP = "Enter the Import General Manifest number.";
-const DEFAULT_EXPORT_MANIFEST_HELP = "Enter the Export General Manifest number.";
+const DEFAULT_IMPORT_MANIFEST_HELP =
+  "Enter the Import General Manifest number.";
+const DEFAULT_EXPORT_MANIFEST_HELP =
+  "Enter the Export General Manifest number.";
 const LEGACY_MANIFEST_REQUIREMENT: ChaManifestRequirement = "BOTH";
 const FILING_WORKFLOW_NOTIFICATION_KIND = "CHA_FILING_WORKFLOW_NODE";
 const DEFAULT_CUSTOMER_APPROVAL_DELAY_MINUTES = 1;
@@ -78,17 +84,31 @@ type FilingFieldDefinition = {
 type FilingDocumentRequirementConfig = {
   key: string;
   label: string;
+  description?: string | null;
   required?: boolean;
   acceptedFileTypes?: string[];
   maxFileSizeMb?: number | null;
   multiple?: boolean;
+  minUploads?: number;
+  maxUploads?: number | null;
   allowReplacement?: boolean;
   allowPreview?: boolean;
   approvalRequired?: boolean;
   visibleWhen?: { sectionKey?: string; equals?: boolean } | null;
+  documentType?: string | null;
   requiresValidity?: boolean;
+  validityDuration?: number | null;
+  validityUnit?: "BUSINESS_DAYS" | "CALENDAR_DAYS" | null;
+  warningBeforeDuration?: number | null;
+  warningBeforeUnit?: "BUSINESS_DAYS" | "CALENDAR_DAYS" | null;
+  notifyBeforeExpiry?: boolean;
+  notificationRoles?: string[];
+  showInDocumentsPage?: boolean;
+  isVisibleInTimeline?: boolean;
   reminderOffsetDays?: number | null;
   reminderKind?: string | null;
+  legacySource?: "DOCUMENT_REQUIREMENT" | "PHOTO_REQUIREMENT" | "CHECKLIST_UPLOAD";
+  legacySourceId?: string | null;
 };
 
 type FilingConditionalSectionConfig = {
@@ -155,10 +175,11 @@ type CompatibleAdditionalData = {
 };
 
 // Migration 20260625143000 is permanently applied — columns always present.
-const chaManifestSchemaStatePromise: Promise<ChaManifestSchemaState> = Promise.resolve({
-  jobTypeManifestConfig: true,
-  customManifestValue: true,
-});
+const chaManifestSchemaStatePromise: Promise<ChaManifestSchemaState> =
+  Promise.resolve({
+    jobTypeManifestConfig: true,
+    customManifestValue: true,
+  });
 
 type DefaultDocumentRequirementItemSeed = {
   name: string;
@@ -184,74 +205,102 @@ type DefaultDocumentRequirementCategorySeed = {
   items: DefaultDocumentRequirementItemSeed[];
 };
 
-export const DEFAULT_DOCUMENT_REQUIREMENTS: DefaultDocumentRequirementCategorySeed[] = [
-  {
-    category: "Documents Required From Supplier",
-    sortOrder: 1,
-    items: [
-      { name: "Invoice", sortOrder: 1, isRequiredDefault: true },
-      { name: "Packing List", sortOrder: 2, isRequiredDefault: true },
-      { name: "Bill of Landing", sortOrder: 3, isRequiredDefault: true },
-      { name: "ASEAN Certificate", sortOrder: 4, isRequiredDefault: false },
-      { name: "Country of Origin", sortOrder: 5, isRequiredDefault: false },
-      { name: "Phytosanitary Certificate", sortOrder: 6, isRequiredDefault: false },
-      { name: "Fumigation Certificate", sortOrder: 7, isRequiredDefault: false },
-      { name: "Label", sortOrder: 8, isRequiredDefault: false },
-      { name: "Certificate of Analysis", sortOrder: 9, isRequiredDefault: false },
-    ],
-  },
-  {
-    category: "KYC For Customers",
-    sortOrder: 2,
-    items: [
-      { name: "IEC", sortOrder: 1, isRequiredDefault: true },
-      { name: "GST", sortOrder: 2, isRequiredDefault: true },
-      { name: "AD Code", sortOrder: 3, isRequiredDefault: true },
-      { name: "FSSAI Licence", sortOrder: 4, isRequiredDefault: false },
-      { name: "Company Address Proof", sortOrder: 5, isRequiredDefault: false },
-      { name: "Partner / Proprietor Address Proof", sortOrder: 6, isRequiredDefault: false },
-      { name: "Authorisation Letter", sortOrder: 7, isRequiredDefault: false },
-    ],
-  },
-  {
-    category: "Customs Validity Documents",
-    sortOrder: 3,
-    items: [
-      {
-        name: "Section 49",
-        sortOrder: 1,
-        isRequiredDefault: false,
-        acceptedFileTypes: ["application/pdf"],
-        minUploadCount: 1,
-        maxUploadCount: 1,
-        requiresValidityDate: false,
-        defaultValidityDuration: 4,
-        defaultValidityUnit: "CALENDAR_DAYS",
-        warningBeforeDuration: 1,
-        warningBeforeUnit: "CALENDAR_DAYS",
-        notifyBeforeExpiry: true,
-        showInTimeline: true,
-      },
-      {
-        name: "Extension",
-        sortOrder: 2,
-        isRequiredDefault: false,
-        acceptedFileTypes: ["application/pdf"],
-        minUploadCount: 1,
-        maxUploadCount: 1,
-        requiresValidityDate: true,
-        defaultValidityDuration: null,
-        defaultValidityUnit: null,
-        warningBeforeDuration: 1,
-        warningBeforeUnit: "CALENDAR_DAYS",
-        notifyBeforeExpiry: true,
-        showInTimeline: true,
-      },
-    ],
-  },
-];
+export const DEFAULT_DOCUMENT_REQUIREMENTS: DefaultDocumentRequirementCategorySeed[] =
+  [
+    {
+      category: "Documents Required From Supplier",
+      sortOrder: 1,
+      items: [
+        { name: "Invoice", sortOrder: 1, isRequiredDefault: true },
+        { name: "Packing List", sortOrder: 2, isRequiredDefault: true },
+        { name: "Bill of Landing", sortOrder: 3, isRequiredDefault: true },
+        { name: "ASEAN Certificate", sortOrder: 4, isRequiredDefault: false },
+        { name: "Country of Origin", sortOrder: 5, isRequiredDefault: false },
+        {
+          name: "Phytosanitary Certificate",
+          sortOrder: 6,
+          isRequiredDefault: false,
+        },
+        {
+          name: "Fumigation Certificate",
+          sortOrder: 7,
+          isRequiredDefault: false,
+        },
+        { name: "Label", sortOrder: 8, isRequiredDefault: false },
+        {
+          name: "Certificate of Analysis",
+          sortOrder: 9,
+          isRequiredDefault: false,
+        },
+      ],
+    },
+    {
+      category: "KYC For Customers",
+      sortOrder: 2,
+      items: [
+        { name: "IEC", sortOrder: 1, isRequiredDefault: true },
+        { name: "GST", sortOrder: 2, isRequiredDefault: true },
+        { name: "AD Code", sortOrder: 3, isRequiredDefault: true },
+        { name: "FSSAI Licence", sortOrder: 4, isRequiredDefault: false },
+        {
+          name: "Company Address Proof",
+          sortOrder: 5,
+          isRequiredDefault: false,
+        },
+        {
+          name: "Partner / Proprietor Address Proof",
+          sortOrder: 6,
+          isRequiredDefault: false,
+        },
+        {
+          name: "Authorisation Letter",
+          sortOrder: 7,
+          isRequiredDefault: false,
+        },
+      ],
+    },
+    {
+      category: "Customs Validity Documents",
+      sortOrder: 3,
+      items: [
+        {
+          name: "Section 49",
+          sortOrder: 1,
+          isRequiredDefault: false,
+          acceptedFileTypes: ["application/pdf"],
+          minUploadCount: 1,
+          maxUploadCount: 1,
+          requiresValidityDate: false,
+          defaultValidityDuration: 4,
+          defaultValidityUnit: "CALENDAR_DAYS",
+          warningBeforeDuration: 1,
+          warningBeforeUnit: "CALENDAR_DAYS",
+          notifyBeforeExpiry: true,
+          showInTimeline: true,
+        },
+        {
+          name: "Extension",
+          sortOrder: 2,
+          isRequiredDefault: false,
+          acceptedFileTypes: ["application/pdf"],
+          minUploadCount: 1,
+          maxUploadCount: 1,
+          requiresValidityDate: true,
+          defaultValidityDuration: null,
+          defaultValidityUnit: null,
+          warningBeforeDuration: 1,
+          warningBeforeUnit: "CALENDAR_DAYS",
+          notifyBeforeExpiry: true,
+          showInTimeline: true,
+        },
+      ],
+    },
+  ];
 
-export async function ensureDefaultDocumentRequirements(orgId: string, tx: any = db) {
+export async function ensureDefaultDocumentRequirements(
+  orgId: string,
+  tx: any = db,
+) {
   for (const cat of DEFAULT_DOCUMENT_REQUIREMENTS) {
     const dbCat = await tx.chaDocumentRequirementCategory.upsert({
       where: { orgId_name: { orgId, name: cat.category } },
@@ -308,7 +357,10 @@ export async function ensureDefaultDocumentRequirements(orgId: string, tx: any =
   }
 }
 
-function parseStringArray(value: Prisma.JsonValue | null | undefined, fallback: string[] = []) {
+function parseStringArray(
+  value: Prisma.JsonValue | null | undefined,
+  fallback: string[] = [],
+) {
   if (!value) return fallback;
   if (Array.isArray(value)) {
     return value.filter((item): item is string => typeof item === "string");
@@ -349,7 +401,7 @@ const FILING_QUERY_ACTIVITY_EVENTS = [
   "FILING_QUERY_CLOSED",
 ] as const;
 
-type FilingQueryActivityEvent = typeof FILING_QUERY_ACTIVITY_EVENTS[number];
+type FilingQueryActivityEvent = (typeof FILING_QUERY_ACTIVITY_EVENTS)[number];
 const CHECKLIST_DOCUMENT_CATEGORY = "Checklist Files";
 
 function getFileExtension(fileName: string) {
@@ -359,7 +411,11 @@ function getFileExtension(fileName: string) {
 }
 
 function buildDriveStoredFileName(label: string, originalFileName: string) {
-  const sanitizedLabel = label.replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim() || "Document";
+  const sanitizedLabel =
+    label
+      .replace(/[\\/:*?"<>|]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim() || "Document";
   const extension = getFileExtension(originalFileName);
   if (!extension) {
     return sanitizedLabel;
@@ -369,15 +425,22 @@ function buildDriveStoredFileName(label: string, originalFileName: string) {
     : `${sanitizedLabel}${extension}`;
 }
 
-async function resolveJobDriveUploadAccessToken(primaryOwnerId: string, actorId: string) {
+async function resolveJobDriveUploadAccessToken(
+  primaryOwnerId: string,
+  actorId: string,
+) {
   const preferredConnection = await db.googleWorkspaceConnection.findUnique({
     where: { userId: actorId },
     select: { userId: true, status: true, scopes: true },
   });
   if (
     preferredConnection?.status === "connected" &&
-    (preferredConnection.scopes.includes("https://www.googleapis.com/auth/drive")
-      || preferredConnection.scopes.includes("https://www.googleapis.com/auth/drive.file"))
+    (preferredConnection.scopes.includes(
+      "https://www.googleapis.com/auth/drive",
+    ) ||
+      preferredConnection.scopes.includes(
+        "https://www.googleapis.com/auth/drive.file",
+      ))
   ) {
     return getValidAccessToken(actorId).catch(() => undefined);
   }
@@ -389,8 +452,12 @@ async function resolveJobDriveUploadAccessToken(primaryOwnerId: string, actorId:
     });
     if (
       ownerConnection?.status === "connected" &&
-      (ownerConnection.scopes.includes("https://www.googleapis.com/auth/drive")
-        || ownerConnection.scopes.includes("https://www.googleapis.com/auth/drive.file"))
+      (ownerConnection.scopes.includes(
+        "https://www.googleapis.com/auth/drive",
+      ) ||
+        ownerConnection.scopes.includes(
+          "https://www.googleapis.com/auth/drive.file",
+        ))
     ) {
       return getValidAccessToken(primaryOwnerId).catch(() => undefined);
     }
@@ -413,14 +480,20 @@ async function deleteChaJobDriveWorkspace(params: {
     return { rootFolderId: rootFolderId || null, outcome: "skipped" as const };
   }
 
-  const driveAccessToken = await resolveJobDriveUploadAccessToken(params.primaryOwnerId, params.actorId);
+  const driveAccessToken = await resolveJobDriveUploadAccessToken(
+    params.primaryOwnerId,
+    params.actorId,
+  );
   if (!driveAccessToken) {
     throw new Error(
       `Google Drive folder deletion could not be completed for job ${params.jobNumber} because no connected Drive account with delete access was available.`,
     );
   }
 
-  const outcome = await driveClient.deleteFileOrFolder(rootFolderId, driveAccessToken);
+  const outcome = await driveClient.deleteFileOrFolder(
+    rootFolderId,
+    driveAccessToken,
+  );
   return { rootFolderId, outcome };
 }
 
@@ -451,9 +524,12 @@ async function deleteChaJobChatWorkspace(params: {
   );
 
   try {
-    const deleteResult = await googleChatClient.deleteGoogleChatSpace(chatSpaceName, {
-      userId: params.actorId,
-    });
+    const deleteResult = await googleChatClient.deleteGoogleChatSpace(
+      chatSpaceName,
+      {
+        userId: params.actorId,
+      },
+    );
 
     await createOrUpdateJobWorkspaceProfile(
       { id: profile.id },
@@ -510,7 +586,8 @@ async function deleteChaJobChatWorkspace(params: {
       chatSpaceName,
       authMode: deleteError?.authMode ?? null,
       deleteResult: "failed",
-      googleApiErrorCode: deleteError?.googleCode ?? deleteError?.status ?? null,
+      googleApiErrorCode:
+        deleteError?.googleCode ?? deleteError?.status ?? null,
       googleApiErrorMessage: deleteError?.googleMessage ?? message,
     });
 
@@ -519,7 +596,8 @@ async function deleteChaJobChatWorkspace(params: {
       authMode: deleteError?.authMode ?? null,
       outcome: "failed" as const,
       error: failureMessage,
-      googleApiErrorCode: deleteError?.googleCode ?? deleteError?.status ?? null,
+      googleApiErrorCode:
+        deleteError?.googleCode ?? deleteError?.status ?? null,
       googleApiErrorMessage: deleteError?.googleMessage ?? message,
     };
   }
@@ -540,8 +618,16 @@ async function deleteChaJobWorkspace(params: {
   await createOrUpdateJobWorkspaceProfile(
     { jobId: params.jobId },
     {
-      rootFolderId: driveDeletion.outcome === "deleted" || driveDeletion.outcome === "missing" ? null : undefined,
-      categoryFolders: driveDeletion.outcome === "deleted" || driveDeletion.outcome === "missing" ? Prisma.JsonNull : undefined,
+      rootFolderId:
+        driveDeletion.outcome === "deleted" ||
+        driveDeletion.outcome === "missing"
+          ? null
+          : undefined,
+      categoryFolders:
+        driveDeletion.outcome === "deleted" ||
+        driveDeletion.outcome === "missing"
+          ? Prisma.JsonNull
+          : undefined,
     },
     "updateMany",
   );
@@ -553,7 +639,9 @@ function getChaManifestSchemaState() {
   return chaManifestSchemaStatePromise;
 }
 
-function getChaJobTypeSelect(includeManifestConfig: boolean): Prisma.ChaJobTypeSelect {
+function getChaJobTypeSelect(
+  includeManifestConfig: boolean,
+): Prisma.ChaJobTypeSelect {
   return includeManifestConfig
     ? {
         id: true,
@@ -576,7 +664,11 @@ function getChaJobTypeSelect(includeManifestConfig: boolean): Prisma.ChaJobTypeS
 }
 
 function normalizeCompatibleJobType(
-  jobType: { id: string; orgId: string; name: string } & Partial<CompatibleChaJobType>,
+  jobType: {
+    id: string;
+    orgId: string;
+    name: string;
+  } & Partial<CompatibleChaJobType>,
   hasManifestConfigColumns: boolean,
 ): CompatibleChaJobType {
   if (hasManifestConfigColumns) {
@@ -617,7 +709,9 @@ const DO_FLOW_ADDITIONAL_DATA_SELECT = {
   doExtensionEnabled: true,
 } satisfies Prisma.ChaJobAdditionalDataSelect;
 
-function getAdditionalDataSelect(includeCustomManifestValue: boolean): Prisma.ChaJobAdditionalDataSelect {
+function getAdditionalDataSelect(
+  includeCustomManifestValue: boolean,
+): Prisma.ChaJobAdditionalDataSelect {
   return includeCustomManifestValue
     ? {
         id: true,
@@ -663,13 +757,16 @@ function getAdditionalDataSelect(includeCustomManifestValue: boolean): Prisma.Ch
 }
 
 function normalizeCompatibleAdditionalData(
-  additionalData: ({
-    vesselInwardDate: Date | null;
-    importGeneralManifest: string | null;
-    exportGeneralManifest: string | null;
-    deliveryOrderValidity: Date | null;
-    deliveryOrderExtensionDate?: Date | null;
-  } & Partial<CompatibleAdditionalData>) | null | undefined,
+  additionalData:
+    | ({
+        vesselInwardDate: Date | null;
+        importGeneralManifest: string | null;
+        exportGeneralManifest: string | null;
+        deliveryOrderValidity: Date | null;
+        deliveryOrderExtensionDate?: Date | null;
+      } & Partial<CompatibleAdditionalData>)
+    | null
+    | undefined,
   hasCustomManifestValueColumn: boolean,
 ): CompatibleAdditionalData | null {
   if (!additionalData) {
@@ -678,26 +775,41 @@ function normalizeCompatibleAdditionalData(
 
   return {
     ...additionalData,
-    customManifestValue: hasCustomManifestValueColumn ? additionalData.customManifestValue ?? null : null,
+    customManifestValue: hasCustomManifestValueColumn
+      ? (additionalData.customManifestValue ?? null)
+      : null,
     containerDetails: additionalData.containerDetails ?? null,
     mblNumber: additionalData.mblNumber ?? null,
     hblNumber: additionalData.hblNumber ?? null,
-    deliveryOrderExtensionDate: additionalData.deliveryOrderExtensionDate ?? null,
+    deliveryOrderExtensionDate:
+      additionalData.deliveryOrderExtensionDate ?? null,
   };
 }
 
-function getEffectiveDeliveryOrderValidity(additionalData: {
-  deliveryOrderValidity?: Date | null;
-  deliveryOrderExtensionDate?: Date | null;
-} | null | undefined): Date | null {
+function getEffectiveDeliveryOrderValidity(
+  additionalData:
+    | {
+        deliveryOrderValidity?: Date | null;
+        deliveryOrderExtensionDate?: Date | null;
+      }
+    | null
+    | undefined,
+): Date | null {
   if (!additionalData) {
     return null;
   }
-  return additionalData.deliveryOrderExtensionDate ?? additionalData.deliveryOrderValidity ?? null;
+  return (
+    additionalData.deliveryOrderExtensionDate ??
+    additionalData.deliveryOrderValidity ??
+    null
+  );
 }
 
 function sanitizeContainerDetails(
-  value: Array<{ containerName?: string | null; containerNumber?: string | null }> | null | undefined,
+  value:
+    | Array<{ containerName?: string | null; containerNumber?: string | null }>
+    | null
+    | undefined,
 ): Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput {
   if (!value?.length) {
     return Prisma.DbNull;
@@ -710,11 +822,14 @@ function sanitizeContainerDetails(
     }))
     .filter((entry) => entry.containerName || entry.containerNumber);
 
-  return normalized.length ? (normalized as Prisma.InputJsonValue) : Prisma.DbNull;
+  return normalized.length
+    ? (normalized as Prisma.InputJsonValue)
+    : Prisma.DbNull;
 }
 
 function getFinancialYearLabel(date: Date, format?: string | null) {
-  const startYear = date.getMonth() >= 3 ? date.getFullYear() : date.getFullYear() - 1;
+  const startYear =
+    date.getMonth() >= 3 ? date.getFullYear() : date.getFullYear() - 1;
   const endYear = startYear + 1;
   const normalized = (format || "YYYY-YY").toUpperCase();
 
@@ -740,25 +855,34 @@ function buildChaJobNumberPreview(rule: {
   useFinancialYear: boolean;
   financialYearFormat?: string | null;
 }) {
-  const nextSequence = Math.max(rule.currentSequence + 1, rule.startingSequence, 1);
+  const nextSequence = Math.max(
+    rule.currentSequence + 1,
+    rule.startingSequence,
+    1,
+  );
   const parts = [rule.prefix.trim()];
   if (rule.useFinancialYear) {
     parts.push(getFinancialYearLabel(new Date(), rule.financialYearFormat));
   }
-  parts.push(String(nextSequence).padStart(Math.max(rule.numberPadding, 1), "0"));
+  parts.push(
+    String(nextSequence).padStart(Math.max(rule.numberPadding, 1), "0"),
+  );
   if (rule.suffix?.trim()) {
     parts.push(rule.suffix.trim());
   }
   return parts.filter(Boolean).join("-");
 }
 
-function buildChaJobNumberForSequence(rule: {
-  prefix: string;
-  suffix?: string | null;
-  numberPadding: number;
-  useFinancialYear: boolean;
-  financialYearFormat?: string | null;
-}, sequence: number) {
+function buildChaJobNumberForSequence(
+  rule: {
+    prefix: string;
+    suffix?: string | null;
+    numberPadding: number;
+    useFinancialYear: boolean;
+    financialYearFormat?: string | null;
+  },
+  sequence: number,
+) {
   const parts = [rule.prefix.trim()];
   if (rule.useFinancialYear) {
     parts.push(getFinancialYearLabel(new Date(), rule.financialYearFormat));
@@ -774,12 +898,15 @@ function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function parseChaJobNumberSequence(jobNumber: string, rule: {
-  prefix: string;
-  suffix?: string | null;
-  useFinancialYear: boolean;
-  financialYearFormat?: string | null;
-}) {
+function parseChaJobNumberSequence(
+  jobNumber: string,
+  rule: {
+    prefix: string;
+    suffix?: string | null;
+    useFinancialYear: boolean;
+    financialYearFormat?: string | null;
+  },
+) {
   const financialYearPart = rule.useFinancialYear
     ? `-${escapeRegex(getFinancialYearLabel(new Date(), rule.financialYearFormat))}`
     : "";
@@ -857,7 +984,11 @@ export async function getNextChaJobNumberPreview(
     return null;
   }
 
-  const nextAvailable = await getNextAvailableChaJobNumber(db, orgId, branchRule);
+  const nextAvailable = await getNextAvailableChaJobNumber(
+    db,
+    orgId,
+    branchRule,
+  );
   return nextAvailable.jobNumber;
 }
 
@@ -883,10 +1014,17 @@ async function ensureChaBranchNumberingRules(
 
   for (const branch of branches) {
     if (branch.chaBranchNumberingRule) {
-      const desiredStartingSequence = Math.max(branch.chaBranchNumberingRule.startingSequence, 1);
-      const desiredCurrentSequence = Math.max(branch.chaBranchNumberingRule.currentSequence, branch.chaJobs.length);
+      const desiredStartingSequence = Math.max(
+        branch.chaBranchNumberingRule.startingSequence,
+        1,
+      );
+      const desiredCurrentSequence = Math.max(
+        branch.chaBranchNumberingRule.currentSequence,
+        branch.chaJobs.length,
+      );
       if (
-        desiredStartingSequence !== branch.chaBranchNumberingRule.startingSequence ||
+        desiredStartingSequence !==
+          branch.chaBranchNumberingRule.startingSequence ||
         desiredCurrentSequence !== branch.chaBranchNumberingRule.currentSequence
       ) {
         await db.chaBranchNumberingRule.update({
@@ -903,7 +1041,11 @@ async function ensureChaBranchNumberingRules(
     const basePrefix = settings.jobNumberPrefix?.trim() || "CHA";
     const safeCode = branch.code.trim().toUpperCase();
     const existingCount = branch.chaJobs.length;
-    const nextSequence = Math.max(settings.jobNumberNextNum || 1, existingCount + 1, 1);
+    const nextSequence = Math.max(
+      settings.jobNumberNextNum || 1,
+      existingCount + 1,
+      1,
+    );
 
     await db.chaBranchNumberingRule.create({
       data: {
@@ -1005,34 +1147,83 @@ export async function ensureSettingsAndDefaults(orgId: string) {
     });
 
     // Create default document definitions for Import
-    const importDefsCount = await db.chaDocumentDefinition.count({ where: { jobTypeId: importType.id } });
+    const importDefsCount = await db.chaDocumentDefinition.count({
+      where: { jobTypeId: importType.id },
+    });
     if (importDefsCount === 0) {
       await db.chaDocumentDefinition.createMany({
         data: [
-          { jobTypeId: importType.id, name: "Bill of Lading", category: "Commercial", isMandatory: true },
-          { jobTypeId: importType.id, name: "Commercial Invoice", category: "Financial", isMandatory: true },
-          { jobTypeId: importType.id, name: "Packing List", category: "Logistics", isMandatory: true },
-          { jobTypeId: importType.id, name: "Certificate of Origin", category: "Compliance", isMandatory: false },
+          {
+            jobTypeId: importType.id,
+            name: "Bill of Lading",
+            category: "Commercial",
+            isMandatory: true,
+          },
+          {
+            jobTypeId: importType.id,
+            name: "Commercial Invoice",
+            category: "Financial",
+            isMandatory: true,
+          },
+          {
+            jobTypeId: importType.id,
+            name: "Packing List",
+            category: "Logistics",
+            isMandatory: true,
+          },
+          {
+            jobTypeId: importType.id,
+            name: "Certificate of Origin",
+            category: "Compliance",
+            isMandatory: false,
+          },
         ],
       });
     }
 
     // Create default document definitions for Export
-    const exportDefsCount = await db.chaDocumentDefinition.count({ where: { jobTypeId: exportType.id } });
+    const exportDefsCount = await db.chaDocumentDefinition.count({
+      where: { jobTypeId: exportType.id },
+    });
     if (exportDefsCount === 0) {
       await db.chaDocumentDefinition.createMany({
         data: [
-          { jobTypeId: exportType.id, name: "Shipping Bill", category: "Commercial", isMandatory: true },
-          { jobTypeId: exportType.id, name: "Commercial Invoice", category: "Financial", isMandatory: true },
-          { jobTypeId: exportType.id, name: "Packing List", category: "Logistics", isMandatory: true },
-          { jobTypeId: exportType.id, name: "Export License", category: "Compliance", isMandatory: false },
+          {
+            jobTypeId: exportType.id,
+            name: "Shipping Bill",
+            category: "Commercial",
+            isMandatory: true,
+          },
+          {
+            jobTypeId: exportType.id,
+            name: "Commercial Invoice",
+            category: "Financial",
+            isMandatory: true,
+          },
+          {
+            jobTypeId: exportType.id,
+            name: "Packing List",
+            category: "Logistics",
+            isMandatory: true,
+          },
+          {
+            jobTypeId: exportType.id,
+            name: "Export License",
+            category: "Compliance",
+            isMandatory: false,
+          },
         ],
       });
     }
   }
 
   // Optimized: check in parallel if the dependent defaults exist before calling full setups.
-  const [shipmentTypesCount, numberingRulesCount, branchesCount, docReqCategoriesCount] = await Promise.all([
+  const [
+    shipmentTypesCount,
+    numberingRulesCount,
+    branchesCount,
+    docReqCategoriesCount,
+  ] = await Promise.all([
     db.chaShipmentType.count({ where: { orgId } }),
     db.chaBranchNumberingRule.count({ where: { orgId } }),
     db.branch.count({ where: { orgId } }),
@@ -1126,18 +1317,32 @@ function getActiveChaJobWhere(orgId: string): Prisma.ChaJobWhereInput {
   };
 }
 
-function getActiveChaJobByIdWhere(orgId: string, jobId: string): Prisma.ChaJobWhereInput {
+function getActiveChaJobByIdWhere(
+  orgId: string,
+  jobId: string,
+): Prisma.ChaJobWhereInput {
   return { id: jobId, ...getActiveChaJobWhere(orgId) };
 }
 
-function isAdditionalDataComplete(data: {
-  vesselInwardDate: Date | null;
-  importGeneralManifest: string | null;
-  exportGeneralManifest: string | null;
-  customManifestValue?: string | null;
-  deliveryOrderValidity: Date | null;
-} | null | undefined, manifestConfig?: { manifestRequirement: ChaManifestRequirement; isManifestMandatory: boolean } | null) {
-  const hasBaseFields = Boolean(data?.vesselInwardDate && data.deliveryOrderValidity);
+function isAdditionalDataComplete(
+  data:
+    | {
+        vesselInwardDate: Date | null;
+        importGeneralManifest: string | null;
+        exportGeneralManifest: string | null;
+        customManifestValue?: string | null;
+        deliveryOrderValidity: Date | null;
+      }
+    | null
+    | undefined,
+  manifestConfig?: {
+    manifestRequirement: ChaManifestRequirement;
+    isManifestMandatory: boolean;
+  } | null,
+) {
+  const hasBaseFields = Boolean(
+    data?.vesselInwardDate && data.deliveryOrderValidity,
+  );
   if (!hasBaseFields) return false;
   if (!data) return false;
 
@@ -1151,7 +1356,10 @@ function isAdditionalDataComplete(data: {
     case "EGM":
       return Boolean(data.exportGeneralManifest?.trim());
     case "BOTH":
-      return Boolean(data.importGeneralManifest?.trim() && data.exportGeneralManifest?.trim());
+      return Boolean(
+        data.importGeneralManifest?.trim() &&
+        data.exportGeneralManifest?.trim(),
+      );
     case "CUSTOM":
       return Boolean(data.customManifestValue?.trim());
     case "NONE":
@@ -1160,11 +1368,17 @@ function isAdditionalDataComplete(data: {
   }
 }
 
-async function assertCanAccessAdditionalData(actorId: string, job: {
-  primaryOwnerId: string;
-  assignments: { userId: string }[];
-}, permissionKey: string) {
-  const isConcernedUser = job.primaryOwnerId === actorId || job.assignments.some((assignment) => assignment.userId === actorId);
+async function assertCanAccessAdditionalData(
+  actorId: string,
+  job: {
+    primaryOwnerId: string;
+    assignments: { userId: string }[];
+  },
+  permissionKey: string,
+) {
+  const isConcernedUser =
+    job.primaryOwnerId === actorId ||
+    job.assignments.some((assignment) => assignment.userId === actorId);
   const hasPermission = await can(actorId, permissionKey);
   const hasViewAll = await can(actorId, "cha.job.view_all");
   if (!isConcernedUser && !hasPermission && !hasViewAll) {
@@ -1172,11 +1386,17 @@ async function assertCanAccessAdditionalData(actorId: string, job: {
   }
 }
 
-async function assertCanAccessChecklist(actorId: string, job: {
-  primaryOwnerId: string;
-  assignments: { userId: string }[];
-}, permissionKey: string) {
-  const isConcernedUser = job.primaryOwnerId === actorId || job.assignments.some((assignment) => assignment.userId === actorId);
+async function assertCanAccessChecklist(
+  actorId: string,
+  job: {
+    primaryOwnerId: string;
+    assignments: { userId: string }[];
+  },
+  permissionKey: string,
+) {
+  const isConcernedUser =
+    job.primaryOwnerId === actorId ||
+    job.assignments.some((assignment) => assignment.userId === actorId);
   const hasPermission = await can(actorId, permissionKey);
   const hasViewAll = await can(actorId, "cha.job.view_all");
   if (!isConcernedUser && !hasPermission && !hasViewAll) {
@@ -1184,12 +1404,16 @@ async function assertCanAccessChecklist(actorId: string, job: {
   }
 }
 
-async function assertCanAccessFiling(actorId: string, job: {
-  id?: string;
-  primaryOwnerId?: string | null;
-  assignedManagerId?: string | null;
-  assignments: { userId: string }[];
-}, permissionKey = "cha.filing.manage") {
+async function assertCanAccessFiling(
+  actorId: string,
+  job: {
+    id?: string;
+    primaryOwnerId?: string | null;
+    assignedManagerId?: string | null;
+    assignments: { userId: string }[];
+  },
+  permissionKey = "cha.filing.manage",
+) {
   const concernedUserIds = new Set<string>();
 
   if (job.primaryOwnerId) {
@@ -1262,12 +1486,15 @@ async function getChecklistConcernedUserIds(job: {
   return Array.from(concernedUserIds);
 }
 
-export async function getChecklistInternalApproverIds(_orgId: string, job: {
-  id?: string;
-  primaryOwnerId?: string;
-  assignedManagerId?: string | null;
-  assignments: { userId: string; responsibility: string }[];
-}) {
+export async function getChecklistInternalApproverIds(
+  _orgId: string,
+  job: {
+    id?: string;
+    primaryOwnerId?: string;
+    assignedManagerId?: string | null;
+    assignments: { userId: string; responsibility: string }[];
+  },
+) {
   const internalApproverIds = new Set<string>();
   const ownerManagerIds: string[] = [];
   const ownerTlIds: string[] = [];
@@ -1281,7 +1508,8 @@ export async function getChecklistInternalApproverIds(_orgId: string, job: {
       select: { primaryOwnerId: true, assignedManagerId: true },
     });
     if (!primaryOwnerId) primaryOwnerId = jobRecord?.primaryOwnerId;
-    if (assignedManagerId === undefined) assignedManagerId = jobRecord?.assignedManagerId;
+    if (assignedManagerId === undefined)
+      assignedManagerId = jobRecord?.assignedManagerId;
   }
 
   if (assignedManagerId) {
@@ -1316,9 +1544,17 @@ async function getChecklistCustomerApproverIds(job: {
   return getChecklistConcernedUserIds(job);
 }
 
-async function getChecklistCustomerApprovalDelayMinutesForJob(orgId: string, jobTypeId: string | null | undefined) {
-  const activeVersion = await findActivePublishedFilingWorkflowVersionForJob(orgId, jobTypeId ?? null);
-  const settings = normalizeTemplateSettings(activeVersion?.template?.settingsJson ?? null);
+async function getChecklistCustomerApprovalDelayMinutesForJob(
+  orgId: string,
+  jobTypeId: string | null | undefined,
+) {
+  const activeVersion = await findActivePublishedFilingWorkflowVersionForJob(
+    orgId,
+    jobTypeId ?? null,
+  );
+  const settings = normalizeTemplateSettings(
+    activeVersion?.template?.settingsJson ?? null,
+  );
   return settings.customerApprovalTabDelayMinutes;
 }
 
@@ -1346,7 +1582,10 @@ async function getChecklistCustomerMailRecipients(customerId: string) {
   };
 
   const contacts = [...customer.contacts]
-    .filter((contact) => typeof contact.email === "string" && contact.email.trim().length > 0)
+    .filter(
+      (contact) =>
+        typeof contact.email === "string" && contact.email.trim().length > 0,
+    )
     .sort((left, right) => {
       if ((left.isPrimary ? 1 : 0) !== (right.isPrimary ? 1 : 0)) {
         return left.isPrimary ? -1 : 1;
@@ -1357,19 +1596,25 @@ async function getChecklistCustomerMailRecipients(customerId: string) {
   if (contacts.length > 0) {
     return contacts.map((contact) => ({
       email: contact.email!.trim(),
-      name: [contact.firstName, contact.lastName].filter(Boolean).join(" ").trim() || customer.name,
+      name:
+        [contact.firstName, contact.lastName]
+          .filter(Boolean)
+          .join(" ")
+          .trim() || customer.name,
       purpose: contact.purpose || null,
       isPrimary: contact.isPrimary,
     }));
   }
 
   if (customer.email?.trim()) {
-    return [{
-      email: customer.email.trim(),
-      name: customer.name,
-      purpose: "approval",
-      isPrimary: true,
-    }];
+    return [
+      {
+        email: customer.email.trim(),
+        name: customer.name,
+        purpose: "approval",
+        isPrimary: true,
+      },
+    ];
   }
 
   return [];
@@ -1396,27 +1641,41 @@ async function queueChecklistMainAutomationForJob(params: {
     } | null;
   };
 }) {
-  if (!params.checklist.currentFileVersionId || !params.checklist.currentFileVersion) {
+  if (
+    !params.checklist.currentFileVersionId ||
+    !params.checklist.currentFileVersion
+  ) {
     return {
       queued: false,
-      warning: "Checklist saved, but customer email was not queued because no current checklist file is available.",
+      warning:
+        "Checklist saved, but customer email was not queued because no current checklist file is available.",
     };
   }
 
-  const recipients = await getChecklistCustomerMailRecipients(params.job.customerId);
+  const recipients = await getChecklistCustomerMailRecipients(
+    params.job.customerId,
+  );
   const primaryRecipient = recipients[0] ?? null;
   if (!primaryRecipient?.email) {
     return {
       queued: false,
-      warning: "Checklist saved, but customer email was not queued because no customer email is available.",
+      warning:
+        "Checklist saved, but customer email was not queued because no customer email is available.",
     };
   }
 
-  const delayMinutes = await getChecklistCustomerApprovalDelayMinutesForJob(params.orgId, params.job.jobTypeId);
+  const delayMinutes = await getChecklistCustomerApprovalDelayMinutesForJob(
+    params.orgId,
+    params.job.jobTypeId,
+  );
   const queuedAt = await getNow();
-  const approvalVisibleAt = new Date(queuedAt.getTime() + delayMinutes * 60_000);
+  const approvalVisibleAt = new Date(
+    queuedAt.getTime() + delayMinutes * 60_000,
+  );
   const checklistUrlBase = process.env.NEXTAUTH_URL?.replace(/\/$/, "") ?? null;
-  const checklistUrl = checklistUrlBase ? `${checklistUrlBase}/cha/jobs/${params.job.id}` : null;
+  const checklistUrl = checklistUrlBase
+    ? `${checklistUrlBase}/cha/jobs/${params.job.id}`
+    : null;
   const queueResult = await queueChecklistMainCustomerEmail({
     actorId: params.actorId,
     jobId: params.job.id,
@@ -1424,7 +1683,8 @@ async function queueChecklistMainAutomationForJob(params: {
     checklistId: params.checklist.id,
     fileVersionId: params.checklist.currentFileVersionId,
     customerId: params.job.customerId,
-    customerName: params.job.customer?.name?.trim() || primaryRecipient.name || "Customer",
+    customerName:
+      params.job.customer?.name?.trim() || primaryRecipient.name || "Customer",
     customerReference: params.job.customerRef ?? null,
     recipientEmail: primaryRecipient.email,
     recipientName: primaryRecipient.name,
@@ -1443,13 +1703,16 @@ async function queueChecklistMainAutomationForJob(params: {
   if (queueResult.duplicate) {
     return {
       queued: false,
-      warning: "Checklist saved, but customer email was already queued for this checklist version.",
+      warning:
+        "Checklist saved, but customer email was already queued for this checklist version.",
     };
   }
 
   return {
     queued: queueResult.queued,
-    warning: queueResult.queued ? null : "Checklist saved, but customer email could not be queued.",
+    warning: queueResult.queued
+      ? null
+      : "Checklist saved, but customer email could not be queued.",
   };
 }
 
@@ -1485,7 +1748,9 @@ async function logChecklistApprovalAudit(params: {
   remarks?: string;
 }) {
   const actedAt = await getNow();
-  const { actorName, actorRoles } = await getChecklistApprovalActorSummary(params.actorId);
+  const { actorName, actorRoles } = await getChecklistApprovalActorSummary(
+    params.actorId,
+  );
 
   await logChaAudit({
     orgId: params.orgId,
@@ -1544,7 +1809,7 @@ async function applyChecklistWorkflowToFiling(
     checklistId: string;
     checklistStatus: string;
     remarks: string;
-  }
+  },
 ) {
   const checklist = await tx.chaChecklist.update({
     where: { id: params.checklistId },
@@ -1560,7 +1825,9 @@ async function applyChecklistWorkflowToFiling(
     data: { stage: "FILING" },
   });
 
-  const filing = await tx.chaFiling.findUniqueOrThrow({ where: { jobId: params.jobId } });
+  const filing = await tx.chaFiling.findUniqueOrThrow({
+    where: { jobId: params.jobId },
+  });
   if (!filing.estimatedFilingDate) {
     const estDate = new Date();
     estDate.setDate(estDate.getDate() + 3);
@@ -1582,7 +1849,10 @@ async function applyChecklistWorkflowToFiling(
   return checklist;
 }
 
-function getActorRoleNames(user: { roles?: { role: { name: string } }[]; isPlatformAdmin?: boolean }) {
+function getActorRoleNames(user: {
+  roles?: { role: { name: string } }[];
+  isPlatformAdmin?: boolean;
+}) {
   const roleNames = user.roles?.map((entry) => entry.role.name) ?? [];
   if (user.isPlatformAdmin) roleNames.push("PlatformAdmin");
   return Array.from(new Set(roleNames));
@@ -1590,7 +1860,12 @@ function getActorRoleNames(user: { roles?: { role: { name: string } }[]; isPlatf
 
 function getAssignedDeletionManager(job: {
   assignedManagerId?: string | null;
-  assignments: { id: string; userId: string; responsibility: string; user?: { name: string | null } }[];
+  assignments: {
+    id: string;
+    userId: string;
+    responsibility: string;
+    user?: { name: string | null };
+  }[];
 }) {
   if (job.assignedManagerId === null) {
     return null;
@@ -1598,7 +1873,9 @@ function getAssignedDeletionManager(job: {
   if (job.assignedManagerId) {
     return (
       job.assignments.find(
-        (assignment) => assignment.userId === job.assignedManagerId && assignment.responsibility === "APPROVAL",
+        (assignment) =>
+          assignment.userId === job.assignedManagerId &&
+          assignment.responsibility === "APPROVAL",
       ) ?? {
         id: job.assignedManagerId,
         userId: job.assignedManagerId,
@@ -1607,9 +1884,11 @@ function getAssignedDeletionManager(job: {
     );
   }
 
-  return [...job.assignments]
-    .filter((assignment) => assignment.responsibility === "APPROVAL")
-    .sort((a, b) => a.id.localeCompare(b.id))[0] ?? null;
+  return (
+    [...job.assignments]
+      .filter((assignment) => assignment.responsibility === "APPROVAL")
+      .sort((a, b) => a.id.localeCompare(b.id))[0] ?? null
+  );
 }
 
 async function getEligibleDeletionAdmins(orgId: string) {
@@ -1649,7 +1928,9 @@ async function backfillAssignedManagerFromApprovalAssignment(job: {
     return null;
   }
 
-  const approvalAssignment = job.assignments.find((assignment) => assignment.responsibility === "APPROVAL");
+  const approvalAssignment = job.assignments.find(
+    (assignment) => assignment.responsibility === "APPROVAL",
+  );
   if (!approvalAssignment) {
     return null;
   }
@@ -1662,11 +1943,18 @@ async function backfillAssignedManagerFromApprovalAssignment(job: {
   return approvalAssignment;
 }
 
-function assertDeleteConfirmationInput(jobNumber: string, confirmationJobNumber: string, confirmationPhrase: string) {
+function assertDeleteConfirmationInput(
+  jobNumber: string,
+  confirmationJobNumber: string,
+  confirmationPhrase: string,
+) {
   if (confirmationJobNumber.trim() !== jobNumber) {
     throw new Error("The entered job number does not match this CHA job.");
   }
-  if (normalizeDeleteConfirmationPhrase(confirmationPhrase) !== CHA_DELETE_CONFIRMATION_PHRASE) {
+  if (
+    normalizeDeleteConfirmationPhrase(confirmationPhrase) !==
+    CHA_DELETE_CONFIRMATION_PHRASE
+  ) {
     throw new Error("The confirmation phrase must exactly match 'delete job'.");
   }
 }
@@ -1683,10 +1971,18 @@ function assertJobCanBeDeleted(job: {
     throw new Error("This CHA job has already been deleted.");
   }
   if ((job.customerAdvance?.receipts.length ?? 0) > 0) {
-    throw new Error("This CHA job already has recorded advance receipts and cannot be deleted.");
+    throw new Error(
+      "This CHA job already has recorded advance receipts and cannot be deleted.",
+    );
   }
-  if (job.expenseRequests.some((request) => ["PAID", "RECEIPT_ACKNOWLEDGED"].includes(request.status))) {
-    throw new Error("This CHA job has paid expense records and cannot be deleted.");
+  if (
+    job.expenseRequests.some((request) =>
+      ["PAID", "RECEIPT_ACKNOWLEDGED"].includes(request.status),
+    )
+  ) {
+    throw new Error(
+      "This CHA job has paid expense records and cannot be deleted.",
+    );
   }
 }
 
@@ -1712,7 +2008,9 @@ function normalizeJobTypeManifestConfig(input: ChaJobTypeManifestConfigInput) {
   }
 
   if (manifestRequirement === "CUSTOM" && !customManifestLabel) {
-    throw new Error("Custom manifest label is required when manifest requirement is custom.");
+    throw new Error(
+      "Custom manifest label is required when manifest requirement is custom.",
+    );
   }
 
   if (isActive && !manifestRequirement) {
@@ -1721,7 +2019,8 @@ function normalizeJobTypeManifestConfig(input: ChaJobTypeManifestConfigInput) {
 
   const validFlowCategories = ["IMPORT_BE", "EXPORT_SB", "CUSTOM"];
   const filingFlowCategory =
-    input.filingFlowCategory && validFlowCategories.includes(input.filingFlowCategory)
+    input.filingFlowCategory &&
+    validFlowCategories.includes(input.filingFlowCategory)
       ? input.filingFlowCategory
       : null;
 
@@ -1751,7 +2050,10 @@ function isJobTypeManifestConfigured(jobType: {
   if (!jobType.movementDirection || !jobType.manifestRequirement) {
     return false;
   }
-  if (jobType.manifestRequirement === "CUSTOM" && !jobType.customManifestLabel?.trim()) {
+  if (
+    jobType.manifestRequirement === "CUSTOM" &&
+    !jobType.customManifestLabel?.trim()
+  ) {
     return false;
   }
   return true;
@@ -1844,7 +2146,7 @@ export async function createJob(
     assignedManagerId: string;
     assignments: { userId: string; responsibility: string }[];
     estimatedClosureDate?: Date | string;
-  }
+  },
 ) {
   if (!data.assignedManagerId) {
     throw new Error("Assigned Manager is required.");
@@ -1854,7 +2156,10 @@ export async function createJob(
   const [manifestSchema, initialSettings, creatorRoles] = await Promise.all([
     getChaManifestSchemaState(),
     db.chaSettings.findUnique({ where: { orgId } }),
-    db.userRole.findMany({ where: { userId: actorId }, include: { role: true } }),
+    db.userRole.findMany({
+      where: { userId: actorId },
+      include: { role: true },
+    }),
   ]);
   let settings = initialSettings;
   if (!settings) {
@@ -1862,191 +2167,229 @@ export async function createJob(
     settings = await db.chaSettings.findUnique({ where: { orgId } });
   }
   if (!settings) {
-    throw new Error("CHA settings have not been initialized. Please open the CHA Settings page to complete setup.");
+    throw new Error(
+      "CHA settings have not been initialized. Please open the CHA Settings page to complete setup.",
+    );
   }
   const creatorRoleNames = creatorRoles.map((ur) => ur.role.name);
 
-  const allowedRoles = parseStringArray(settings.jobCreatorRoles, DEFAULT_CHA_JOB_CREATOR_ROLES);
+  const allowedRoles = parseStringArray(
+    settings.jobCreatorRoles,
+    DEFAULT_CHA_JOB_CREATOR_ROLES,
+  );
   const allowedUsers = parseStringArray(settings.jobCreatorUsers);
 
   const isRoleAllowed = creatorRoleNames.some((r) => allowedRoles.includes(r));
   const isUserAllowed = allowedUsers.includes(actorId);
 
   if (!isRoleAllowed && !isUserAllowed) {
-    throw new Error("You are not authorized to create jobs under this organisation's settings.");
+    throw new Error(
+      "You are not authorized to create jobs under this organisation's settings.",
+    );
   }
 
-  const result = await db.$transaction(async (tx) => {
-    const selectedJobType = await tx.chaJobType.findFirst({
-      where: manifestSchema.jobTypeManifestConfig ? { id: data.jobTypeId, orgId, isActive: true } : { id: data.jobTypeId, orgId },
-      select: { id: true },
-    });
-    if (!selectedJobType) {
-      throw new Error("The selected clearance type is inactive or unavailable.");
-    }
-
-    const branchRule = await tx.chaBranchNumberingRule.findFirst({
-      where: {
-        orgId,
-        branchId: data.branchId,
-      },
-    });
-
-    if (!branchRule || !branchRule.isActive) {
-      throw new Error("The selected branch does not have an active job numbering configuration. Please ask a CHA administrator to configure it in Settings.");
-    }
-
-    const nextAvailableAutoNumber = await getNextAvailableChaJobNumber(tx, orgId, branchRule);
-
-    let finalJobNumber = data.jobNumber?.trim();
-    const providedSequence = finalJobNumber
-      ? parseChaJobNumberSequence(finalJobNumber, branchRule)
-      : null;
-    const shouldAdvanceSequence =
-      !finalJobNumber ||
-      finalJobNumber === nextAvailableAutoNumber.jobNumber ||
-      (providedSequence !== null && providedSequence <= nextAvailableAutoNumber.sequence);
-
-    if (shouldAdvanceSequence) {
-      finalJobNumber = nextAvailableAutoNumber.jobNumber;
-
-      await tx.chaBranchNumberingRule.update({
-        where: { id: branchRule.id },
-        data: { currentSequence: nextAvailableAutoNumber.sequence },
+  const result = await db.$transaction(
+    async (tx) => {
+      const selectedJobType = await tx.chaJobType.findFirst({
+        where: manifestSchema.jobTypeManifestConfig
+          ? { id: data.jobTypeId, orgId, isActive: true }
+          : { id: data.jobTypeId, orgId },
+        select: { id: true },
       });
-    }
+      if (!selectedJobType) {
+        throw new Error(
+          "The selected clearance type is inactive or unavailable.",
+        );
+      }
 
-    if (!finalJobNumber) {
-      throw new Error("Failed to determine a CHA job number for this branch.");
-    }
-
-    const existingJob = await tx.chaJob.findFirst({
-      where: { orgId, jobNumber: finalJobNumber },
-      select: { id: true, jobNumber: true, deletedAt: true },
-    });
-    if (existingJob && !existingJob.deletedAt) {
-      throw new Error(`Job number '${finalJobNumber}' already exists inside the organisation.`);
-    }
-    if (existingJob?.deletedAt) {
-      await archiveDeletedChaJobNumber(tx, existingJob);
-    }
-
-    // 1. Create Job
-    const job = await tx.chaJob.create({
-      data: {
-        orgId,
-        jobNumber: finalJobNumber,
-        title: data.title,
-        customerId: data.customerId,
-        customerRef: data.customerRef,
-        jobTypeId: data.jobTypeId,
-        shipmentTypeId: data.shipmentTypeId || null,
-        branchId: data.branchId,
-        priority: data.priority,
-        stage: "DOCUMENT_COLLECTION",
-        status: "ACTIVE",
-        primaryOwnerId: data.primaryOwnerId,
-        assignedManagerId: data.assignedManagerId,
-        remarks: data.remarks,
-        estimatedClosureDate: data.estimatedClosureDate ? new Date(data.estimatedClosureDate) : null,
-      },
-    });
-
-    // 2. Create assignments (primary owner is implicitly operations/owner)
-    // Add primary owner assignment if not present
-    const ownerAssignmentPresent = data.assignments.some(
-      (a) => a.userId === data.primaryOwnerId && a.responsibility === "OPERATIONS"
-    );
-    const assignmentsToCreate = [...data.assignments];
-    if (!ownerAssignmentPresent) {
-      assignmentsToCreate.push({ userId: data.primaryOwnerId, responsibility: "OPERATIONS" });
-    }
-    const managerAssignmentPresent = assignmentsToCreate.some(
-      (a) => a.userId === data.assignedManagerId && a.responsibility === "APPROVAL"
-    );
-    if (!managerAssignmentPresent) {
-      assignmentsToCreate.push({ userId: data.assignedManagerId, responsibility: "APPROVAL" });
-    }
-
-    await tx.chaJobAssignment.createMany({
-      data: assignmentsToCreate.map((a) => ({
-        jobId: job.id,
-        userId: a.userId,
-        responsibility: a.responsibility,
-      })),
-      skipDuplicates: true,
-    });
-
-    // 3. Fetch active document configuration categories and items for this organization and initialize requirements
-    const categories = await tx.chaDocumentRequirementCategory.findMany({
-      where: { orgId, isActive: true },
-      include: {
-        items: {
-          where: { isActive: true },
-          orderBy: { sortOrder: "asc" },
+      const branchRule = await tx.chaBranchNumberingRule.findFirst({
+        where: {
+          orgId,
+          branchId: data.branchId,
         },
-      },
-      orderBy: { sortOrder: "asc" },
-    });
+      });
 
-    const jobRequirementsData = [];
-    for (const cat of categories) {
-      for (const item of cat.items) {
-        jobRequirementsData.push({
-          jobId: job.id,
-          name: item.name,
-          category: cat.name,
-          isMandatory: item.isRequiredDefault,
-          status: "PENDING",
-          requirementItemId: item.id,
+      if (!branchRule || !branchRule.isActive) {
+        throw new Error(
+          "The selected branch does not have an active job numbering configuration. Please ask a CHA administrator to configure it in Settings.",
+        );
+      }
+
+      const nextAvailableAutoNumber = await getNextAvailableChaJobNumber(
+        tx,
+        orgId,
+        branchRule,
+      );
+
+      let finalJobNumber = data.jobNumber?.trim();
+      const providedSequence = finalJobNumber
+        ? parseChaJobNumberSequence(finalJobNumber, branchRule)
+        : null;
+      const shouldAdvanceSequence =
+        !finalJobNumber ||
+        finalJobNumber === nextAvailableAutoNumber.jobNumber ||
+        (providedSequence !== null &&
+          providedSequence <= nextAvailableAutoNumber.sequence);
+
+      if (shouldAdvanceSequence) {
+        finalJobNumber = nextAvailableAutoNumber.jobNumber;
+
+        await tx.chaBranchNumberingRule.update({
+          where: { id: branchRule.id },
+          data: { currentSequence: nextAvailableAutoNumber.sequence },
         });
       }
-    }
 
-    if (jobRequirementsData.length === 0) {
-      const legacyDefinitions = await tx.chaDocumentDefinition.findMany({
-        where: { jobTypeId: data.jobTypeId },
-        orderBy: { name: "asc" },
+      if (!finalJobNumber) {
+        throw new Error(
+          "Failed to determine a CHA job number for this branch.",
+        );
+      }
+
+      const existingJob = await tx.chaJob.findFirst({
+        where: { orgId, jobNumber: finalJobNumber },
+        select: { id: true, jobNumber: true, deletedAt: true },
       });
-      for (const definition of legacyDefinitions) {
-        jobRequirementsData.push({
-          jobId: job.id,
-          name: definition.name,
-          category: definition.category,
-          isMandatory: definition.isMandatory,
-          status: "PENDING",
-          requirementItemId: null,
+      if (existingJob && !existingJob.deletedAt) {
+        throw new Error(
+          `Job number '${finalJobNumber}' already exists inside the organisation.`,
+        );
+      }
+      if (existingJob?.deletedAt) {
+        await archiveDeletedChaJobNumber(tx, existingJob);
+      }
+
+      // 1. Create Job
+      const job = await tx.chaJob.create({
+        data: {
+          orgId,
+          jobNumber: finalJobNumber,
+          title: data.title,
+          customerId: data.customerId,
+          customerRef: data.customerRef,
+          jobTypeId: data.jobTypeId,
+          shipmentTypeId: data.shipmentTypeId || null,
+          branchId: data.branchId,
+          priority: data.priority,
+          stage: "DOCUMENT_COLLECTION",
+          status: "ACTIVE",
+          primaryOwnerId: data.primaryOwnerId,
+          assignedManagerId: data.assignedManagerId,
+          remarks: data.remarks,
+          estimatedClosureDate: data.estimatedClosureDate
+            ? new Date(data.estimatedClosureDate)
+            : null,
+        },
+      });
+
+      // 2. Create assignments (primary owner is implicitly operations/owner)
+      // Add primary owner assignment if not present
+      const ownerAssignmentPresent = data.assignments.some(
+        (a) =>
+          a.userId === data.primaryOwnerId && a.responsibility === "OPERATIONS",
+      );
+      const assignmentsToCreate = [...data.assignments];
+      if (!ownerAssignmentPresent) {
+        assignmentsToCreate.push({
+          userId: data.primaryOwnerId,
+          responsibility: "OPERATIONS",
         });
       }
-    }
+      const managerAssignmentPresent = assignmentsToCreate.some(
+        (a) =>
+          a.userId === data.assignedManagerId &&
+          a.responsibility === "APPROVAL",
+      );
+      if (!managerAssignmentPresent) {
+        assignmentsToCreate.push({
+          userId: data.assignedManagerId,
+          responsibility: "APPROVAL",
+        });
+      }
 
-    if (jobRequirementsData.length > 0) {
-      await tx.chaJobDocumentRequirement.createMany({
-        data: jobRequirementsData,
+      await tx.chaJobAssignment.createMany({
+        data: assignmentsToCreate.map((a) => ({
+          jobId: job.id,
+          userId: a.userId,
+          responsibility: a.responsibility,
+        })),
+        skipDuplicates: true,
       });
-    }
 
-    // 4. Initialize Filing
-    await tx.chaFiling.create({
-      data: {
-        jobId: job.id,
-        status: "PENDING",
-      },
-    });
+      // 3. Fetch active document configuration categories and items for this organization and initialize requirements
+      const categories = await tx.chaDocumentRequirementCategory.findMany({
+        where: { orgId, isActive: true },
+        include: {
+          items: {
+            where: { isActive: true },
+            orderBy: { sortOrder: "asc" },
+          },
+        },
+        orderBy: { sortOrder: "asc" },
+      });
 
-    // 5. Initialize Customer Advance
-    await tx.chaCustomerAdvance.create({
-      data: {
-        jobId: job.id,
-        status: "PENDING",
-      },
-    });
+      const jobRequirementsData = [];
+      for (const cat of categories) {
+        for (const item of cat.items) {
+          jobRequirementsData.push({
+            jobId: job.id,
+            name: item.name,
+            category: cat.name,
+            isMandatory: item.isRequiredDefault,
+            status: "PENDING",
+            requirementItemId: item.id,
+          });
+        }
+      }
 
-    return { job, assignmentsToCreate };
-  }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
+      if (jobRequirementsData.length === 0) {
+        const legacyDefinitions = await tx.chaDocumentDefinition.findMany({
+          where: { jobTypeId: data.jobTypeId },
+          orderBy: { name: "asc" },
+        });
+        for (const definition of legacyDefinitions) {
+          jobRequirementsData.push({
+            jobId: job.id,
+            name: definition.name,
+            category: definition.category,
+            isMandatory: definition.isMandatory,
+            status: "PENDING",
+            requirementItemId: null,
+          });
+        }
+      }
+
+      if (jobRequirementsData.length > 0) {
+        await tx.chaJobDocumentRequirement.createMany({
+          data: jobRequirementsData,
+        });
+      }
+
+      // 4. Initialize Filing
+      await tx.chaFiling.create({
+        data: {
+          jobId: job.id,
+          status: "PENDING",
+        },
+      });
+
+      // 5. Initialize Customer Advance
+      await tx.chaCustomerAdvance.create({
+        data: {
+          jobId: job.id,
+          status: "PENDING",
+        },
+      });
+
+      return { job, assignmentsToCreate };
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted },
+  );
 
   // Log audit events and send notifications in parallel
-  const uniqueUserIds = Array.from(new Set(result.assignmentsToCreate.map((a) => a.userId)));
+  const uniqueUserIds = Array.from(
+    new Set(result.assignmentsToCreate.map((a) => a.userId)),
+  );
   await Promise.all([
     logChaAudit({
       orgId,
@@ -2089,15 +2432,19 @@ export async function createJob(
             status: "PENDING",
           },
         }),
-      ])
+      ]),
     ),
   ]);
 
   // Trigger Google Workspace background provisioning
   if (process.env.NODE_ENV !== "test") {
-    const { provisionJobWorkspace } = await import("@/lib/workspace-provisioning");
+    const { provisionJobWorkspace } =
+      await import("@/lib/workspace-provisioning");
     provisionJobWorkspace(result.job.id, false, actorId).catch((err: any) => {
-      console.error(`Workspace background provisioning failed for job ${result.job.id}:`, err);
+      console.error(
+        `Workspace background provisioning failed for job ${result.job.id}:`,
+        err,
+      );
     });
   }
 
@@ -2210,7 +2557,9 @@ export async function updateJobTypeFilingFlowCategory(
 ) {
   const validCategories = ["IMPORT_BE", "EXPORT_SB", "CUSTOM", null];
   if (!validCategories.includes(filingFlowCategory)) {
-    throw new Error(`Invalid filing flow category "${filingFlowCategory}". Use IMPORT_BE, EXPORT_SB, CUSTOM, or null.`);
+    throw new Error(
+      `Invalid filing flow category "${filingFlowCategory}". Use IMPORT_BE, EXPORT_SB, CUSTOM, or null.`,
+    );
   }
 
   const jobType = await db.chaJobType.update({
@@ -2236,7 +2585,9 @@ export async function deleteJobType(orgId: string, id: string) {
     where: { orgId, jobTypeId: id },
   });
   if (count > 0) {
-    throw new Error("Cannot delete job type as it is currently associated with active clearance jobs.");
+    throw new Error(
+      "Cannot delete job type as it is currently associated with active clearance jobs.",
+    );
   }
   // Delete document definitions cascade
   await db.chaDocumentDefinition.deleteMany({
@@ -2270,8 +2621,14 @@ export async function upsertBranchNumberingRules(
         throw new Error("Each branch numbering rule must include a prefix.");
       }
 
-      const startingSequence = Math.max(Math.floor(rule.startingSequence || 1), 1);
-      const currentSequence = Math.max(Math.floor(rule.currentSequence || 0), startingSequence - 1);
+      const startingSequence = Math.max(
+        Math.floor(rule.startingSequence || 1),
+        1,
+      );
+      const currentSequence = Math.max(
+        Math.floor(rule.currentSequence || 0),
+        startingSequence - 1,
+      );
       const numberPadding = Math.max(Math.floor(rule.numberPadding || 4), 1);
 
       await tx.chaBranchNumberingRule.upsert({
@@ -2283,7 +2640,9 @@ export async function upsertBranchNumberingRules(
           currentSequence,
           numberPadding,
           useFinancialYear: rule.useFinancialYear,
-          financialYearFormat: rule.useFinancialYear ? (rule.financialYearFormat?.trim() || "YYYY-YY") : null,
+          financialYearFormat: rule.useFinancialYear
+            ? rule.financialYearFormat?.trim() || "YYYY-YY"
+            : null,
           isActive: rule.isActive,
         },
         create: {
@@ -2295,7 +2654,9 @@ export async function upsertBranchNumberingRules(
           currentSequence,
           numberPadding,
           useFinancialYear: rule.useFinancialYear,
-          financialYearFormat: rule.useFinancialYear ? (rule.financialYearFormat?.trim() || "YYYY-YY") : null,
+          financialYearFormat: rule.useFinancialYear
+            ? rule.financialYearFormat?.trim() || "YYYY-YY"
+            : null,
           isActive: rule.isActive,
         },
       });
@@ -2338,7 +2699,9 @@ export async function deleteShipmentType(orgId: string, id: string) {
     where: { orgId, shipmentTypeId: id },
   });
   if (linkedJobs > 0) {
-    throw new Error("Cannot delete shipment type because it is already used by existing CHA jobs.");
+    throw new Error(
+      "Cannot delete shipment type because it is already used by existing CHA jobs.",
+    );
   }
 
   return db.chaShipmentType.delete({
@@ -2347,7 +2710,11 @@ export async function deleteShipmentType(orgId: string, id: string) {
 }
 
 // Team Groups management helpers
-export async function createTeamGroup(orgId: string, name: string, memberIds: string[]) {
+export async function createTeamGroup(
+  orgId: string,
+  name: string,
+  memberIds: string[],
+) {
   const existing = await db.chaTeamGroup.findFirst({
     where: { orgId, name: { equals: name, mode: "insensitive" } },
   });
@@ -2372,7 +2739,9 @@ export async function deleteTeamGroup(orgId: string, id: string) {
 export async function listJobTypesForSelection(orgId: string) {
   const manifestSchema = await getChaManifestSchemaState();
   const jobTypes = await db.chaJobType.findMany({
-    where: manifestSchema.jobTypeManifestConfig ? { orgId, isActive: true } : { orgId },
+    where: manifestSchema.jobTypeManifestConfig
+      ? { orgId, isActive: true }
+      : { orgId },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
@@ -2390,14 +2759,22 @@ export async function listJobTypesForSettings(orgId: string) {
 
   return jobTypes.map((jobType) =>
     normalizeCompatibleJobType(
-      jobType as { id: string; orgId: string; name: string } & Partial<CompatibleChaJobType>,
+      jobType as {
+        id: string;
+        orgId: string;
+        name: string;
+      } & Partial<CompatibleChaJobType>,
       manifestSchema.jobTypeManifestConfig,
     ),
   );
 }
 
 // Get Job Details with access policies
-export async function getJobDetails(userId: string, orgId: string, jobId: string) {
+export async function getJobDetails(
+  userId: string,
+  orgId: string,
+  jobId: string,
+) {
   const manifestSchema = await getChaManifestSchemaState();
 
   // auditLogs and expenseRequests are pulled into explicit parallel queries so Prisma
@@ -2418,12 +2795,24 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
             },
           },
         },
-        jobType: { select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig) },
+        jobType: {
+          select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig),
+        },
         shipmentType: true,
         branch: true,
-        primaryOwner: { select: { id: true, name: true, email: true, designation: true } },
-        assignedManager: { select: { id: true, name: true, email: true, designation: true } },
-        assignments: { include: { user: { select: { id: true, name: true, email: true, designation: true } } } },
+        primaryOwner: {
+          select: { id: true, name: true, email: true, designation: true },
+        },
+        assignedManager: {
+          select: { id: true, name: true, email: true, designation: true },
+        },
+        assignments: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, designation: true },
+            },
+          },
+        },
         deletionRequests: {
           orderBy: { requestedAt: "desc" },
           take: 10,
@@ -2437,10 +2826,12 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
           include: {
             versions: { include: { uploadedBy: { select: { name: true } } } },
             exception: { include: { user: { select: { name: true } } } },
-            requirementItem: { include: { category: true } }
-          }
+            requirementItem: { include: { category: true } },
+          },
         },
-        additionalData: { select: getAdditionalDataSelect(manifestSchema.customManifestValue) },
+        additionalData: {
+          select: getAdditionalDataSelect(manifestSchema.customManifestValue),
+        },
         doExtensions: { orderBy: { createdAt: "desc" }, take: 10 },
         section49Extensions: {
           orderBy: { createdAt: "desc" },
@@ -2459,8 +2850,19 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
             },
           },
         },
-        checklistImports: { include: { uploadedBy: { select: { name: true } }, approvals: { include: { manager: { select: { name: true } } } }, reworkNotes: { include: { author: { select: { name: true } } } }, sections: { include: { items: true } } } },
-        filing: { include: { dateHistory: { include: { setBy: { select: { name: true } } } } } },
+        checklistImports: {
+          include: {
+            uploadedBy: { select: { name: true } },
+            approvals: { include: { manager: { select: { name: true } } } },
+            reworkNotes: { include: { author: { select: { name: true } } } },
+            sections: { include: { items: true } },
+          },
+        },
+        filing: {
+          include: {
+            dateHistory: { include: { setBy: { select: { name: true } } } },
+          },
+        },
         customerAdvance: { include: { receipts: true } },
       },
     }),
@@ -2499,30 +2901,59 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
     ? {
         ...job,
         jobType: normalizeCompatibleJobType(
-          job.jobType as { id: string; orgId: string; name: string } & Partial<CompatibleChaJobType>,
+          job.jobType as {
+            id: string;
+            orgId: string;
+            name: string;
+          } & Partial<CompatibleChaJobType>,
           manifestSchema.jobTypeManifestConfig,
         ),
-        additionalData: normalizeCompatibleAdditionalData(job.additionalData, manifestSchema.customManifestValue),
+        additionalData: normalizeCompatibleAdditionalData(
+          job.additionalData,
+          manifestSchema.customManifestValue,
+        ),
         assignedManagerId: backfilledManagerAssignment.userId,
-        assignedManager: backfilledManagerAssignment.user ?? job.assignedManager,
+        assignedManager:
+          backfilledManagerAssignment.user ?? job.assignedManager,
       }
     : {
         ...job,
         jobType: normalizeCompatibleJobType(
-          job.jobType as { id: string; orgId: string; name: string } & Partial<CompatibleChaJobType>,
+          job.jobType as {
+            id: string;
+            orgId: string;
+            name: string;
+          } & Partial<CompatibleChaJobType>,
           manifestSchema.jobTypeManifestConfig,
         ),
-        additionalData: normalizeCompatibleAdditionalData(job.additionalData, manifestSchema.customManifestValue),
+        additionalData: normalizeCompatibleAdditionalData(
+          job.additionalData,
+          manifestSchema.customManifestValue,
+        ),
       };
 
   // Gated access check
   const isPlatformAdmin = user.isPlatformAdmin;
-  const isOrgAdmin = user.roles.some((r) => r.role.name === "Admin" || r.role.name === "Management" || r.role.name === "Director");
+  const isOrgAdmin = user.roles.some(
+    (r) =>
+      r.role.name === "Admin" ||
+      r.role.name === "Management" ||
+      r.role.name === "Director",
+  );
   const isAssigned = normalizedJob.assignments.some((a) => a.userId === userId);
   const isAssignedManager = normalizedJob.assignedManagerId === userId;
-  const isManagerApprover = normalizedJob.assignments.some((a) => a.userId === userId && a.responsibility === "APPROVAL");
+  const isManagerApprover = normalizedJob.assignments.some(
+    (a) => a.userId === userId && a.responsibility === "APPROVAL",
+  );
 
-  if (!isPlatformAdmin && !isOrgAdmin && !isAssigned && !isAssignedManager && !isManagerApprover && !hasViewAll) {
+  if (
+    !isPlatformAdmin &&
+    !isOrgAdmin &&
+    !isAssigned &&
+    !isAssignedManager &&
+    !isManagerApprover &&
+    !hasViewAll
+  ) {
     throw new ForbiddenError("cha.job.read");
   }
 
@@ -2560,7 +2991,7 @@ export async function listJobs(
     jobGroup?: "ACTIVE" | "COMPLETED";
     page?: number;
     pageSize?: number;
-  }
+  },
 ) {
   const manifestSchema = await getChaManifestSchemaState();
   const page = filters.page || 1;
@@ -2578,7 +3009,9 @@ export async function listJobs(
       OR: [
         { jobNumber: { contains: filters.search, mode: "insensitive" } },
         { title: { contains: filters.search, mode: "insensitive" } },
-        { customer: { name: { contains: filters.search, mode: "insensitive" } } },
+        {
+          customer: { name: { contains: filters.search, mode: "insensitive" } },
+        },
       ],
     });
   }
@@ -2628,7 +3061,9 @@ export async function listJobs(
       orderBy: { createdAt: "desc" },
       include: {
         customer: true,
-        jobType: { select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig) },
+        jobType: {
+          select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig),
+        },
         branch: true,
         filing: {
           select: {
@@ -2637,7 +3072,9 @@ export async function listJobs(
           },
         },
         primaryOwner: { select: { id: true, name: true } },
-        assignments: { include: { user: { select: { id: true, name: true } } } },
+        assignments: {
+          include: { user: { select: { id: true, name: true } } },
+        },
         deletionRequests: {
           where: { status: { in: ["PENDING", "APPROVED"] } },
           select: { id: true, status: true, assignedManagerId: true },
@@ -2652,7 +3089,11 @@ export async function listJobs(
     items: items.map((item) => ({
       ...item,
       jobType: normalizeCompatibleJobType(
-        item.jobType as { id: string; orgId: string; name: string } & Partial<CompatibleChaJobType>,
+        item.jobType as {
+          id: string;
+          orgId: string;
+          name: string;
+        } & Partial<CompatibleChaJobType>,
         manifestSchema.jobTypeManifestConfig,
       ),
     })),
@@ -2662,7 +3103,9 @@ export async function listJobs(
   };
 }
 
-async function advanceToChecklistPreparationIfDocumentGatePassed(jobId: string) {
+async function advanceToChecklistPreparationIfDocumentGatePassed(
+  jobId: string,
+) {
   const [job, gate] = await Promise.all([
     db.chaJob.findUnique({
       where: { id: jobId },
@@ -2695,8 +3138,14 @@ export function resolveDriveFolderForCategory(
   if (!categoryFolders) return rootFolderId || undefined;
   if (categoryFolders[category]) return categoryFolders[category];
   const normalized = category.trim().toLowerCase();
-  const matchKey = Object.keys(categoryFolders).find((key) => key.trim().toLowerCase() === normalized);
-  return (matchKey ? categoryFolders[matchKey] : undefined) || rootFolderId || undefined;
+  const matchKey = Object.keys(categoryFolders).find(
+    (key) => key.trim().toLowerCase() === normalized,
+  );
+  return (
+    (matchKey ? categoryFolders[matchKey] : undefined) ||
+    rootFolderId ||
+    undefined
+  );
 }
 
 // Get (or lazily create) the Drive subfolder for one filing workflow checklist
@@ -2714,11 +3163,16 @@ async function getOrCreateFilingNodeFolder(
     where: { jobId },
     select: await getJobWorkspaceProfileSelect(),
   });
-  const categoryFolders = (profile.categoryFolders as Record<string, string>) || {};
+  const categoryFolders =
+    (profile.categoryFolders as Record<string, string>) || {};
   const folderMapKey = `Filing Documents/${nodeKey}`;
 
   const existing = categoryFolders[folderMapKey];
-  if (existing && !existing.startsWith("mock-") && (await driveClient.folderExists(existing, accessToken).catch(() => false))) {
+  if (
+    existing &&
+    !existing.startsWith("mock-") &&
+    (await driveClient.folderExists(existing, accessToken).catch(() => false))
+  ) {
     return existing;
   }
 
@@ -2762,16 +3216,25 @@ export async function uploadDocumentVersion(
 
   const storedFileName = buildDriveStoredFileName(req.name, fileData.fileName);
 
-  let fileKey = fileData.fileKey || `cha/docs/${Math.random().toString(36).substring(7)}_${storedFileName}`;
+  let fileKey =
+    fileData.fileKey ||
+    `cha/docs/${Math.random().toString(36).substring(7)}_${storedFileName}`;
 
   if (fileBuffer) {
     // Verifies (and transparently recreates) the job's root and category
     // folders if either was deleted from Drive after the job was created.
     let driveFolderId: string | undefined;
     try {
-      driveFolderId = await ensureJobCategoryFolder(jobId, req.category, actorId);
+      driveFolderId = await ensureJobCategoryFolder(
+        jobId,
+        req.category,
+        actorId,
+      );
     } catch (err: any) {
-      console.warn(`[Upload] Drive folder self-heal failed for job ${jobId}, category "${req.category}":`, err.message || err);
+      console.warn(
+        `[Upload] Drive folder self-heal failed for job ${jobId}, category "${req.category}":`,
+        err.message || err,
+      );
       const profile = await findJobWorkspaceProfileByJobId(jobId);
       driveFolderId = resolveDriveFolderForCategory(
         profile?.categoryFolders as Record<string, string> | undefined,
@@ -2793,13 +3256,18 @@ export async function uploadDocumentVersion(
         if (process.env.NODE_ENV === "production") {
           throw new Error(`Google Drive upload failed: ${err.message || err}`);
         } else {
-          console.warn("[Upload] Google Drive upload failed. Falling back to mock URL. Error:", err.message || err);
+          console.warn(
+            "[Upload] Google Drive upload failed. Falling back to mock URL. Error:",
+            err.message || err,
+          );
           fileKey = `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
         }
       }
     } else {
       if (process.env.NODE_ENV === "production") {
-        throw new Error("Google Drive is not provisioned for this job or missing credentials. Please retry provisioning the workspace.");
+        throw new Error(
+          "Google Drive is not provisioned for this job or missing credentials. Please retry provisioning the workspace.",
+        );
       } else {
         fileKey = `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
       }
@@ -2871,13 +3339,18 @@ export async function uploadDocumentVersion(
   // If a document changes after checklist approval, flag alert
   const job = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
-    include: { checklistImports: { where: { status: "APPROVED" } }, assignments: { where: { responsibility: "APPROVAL" } } },
+    include: {
+      checklistImports: { where: { status: "APPROVED" } },
+      assignments: { where: { responsibility: "APPROVAL" } },
+    },
   });
 
   if (job.stage === "FILING" || job.stage === "FILED") {
     // Notify checklist approvers and owner
     const approverIds = job.assignments.map((a) => a.userId);
-    const notificationRecipients = Array.from(new Set([job.primaryOwnerId, ...approverIds]));
+    const notificationRecipients = Array.from(
+      new Set([job.primaryOwnerId, ...approverIds]),
+    );
 
     for (const recipientId of notificationRecipients) {
       await createNotification({
@@ -2930,7 +3403,9 @@ export async function createJobCustomDocumentRequirementAndUpload(
   });
 
   if (existingRequirement) {
-    throw new Error("A custom document with this name already exists for this job.");
+    throw new Error(
+      "A custom document with this name already exists for this job.",
+    );
   }
 
   const requirement = await db.chaJobDocumentRequirement.create({
@@ -3020,7 +3495,7 @@ export async function deleteDocumentVersion(
   orgId: string,
   jobId: string,
   requirementId: string,
-  versionId: string
+  versionId: string,
 ) {
   // 1. Fetch the version, requirement, and job (to verify ownership & org)
   const version = await db.chaDocumentVersion.findFirstOrThrow({
@@ -3047,8 +3522,15 @@ export async function deleteDocumentVersion(
   const hasDeletePermission = await can(actorId, "cha.document.delete");
   const hasManageSettings = await can(actorId, "cha.settings.manage");
 
-  if (!isUploader && !isPrimaryOwner && !hasDeletePermission && !hasManageSettings) {
-    throw new Error("Access Denied: You are not authorized to delete this document version.");
+  if (
+    !isUploader &&
+    !isPrimaryOwner &&
+    !hasDeletePermission &&
+    !hasManageSettings
+  ) {
+    throw new Error(
+      "Access Denied: You are not authorized to delete this document version.",
+    );
   }
 
   // 3. Perform deletion and update in a transaction
@@ -3095,15 +3577,26 @@ export async function deleteDocumentVersion(
       where: { jobId },
     });
 
-    const blocking = reqs.filter(
-      (r) => r.id === requirementId ? (newStatus !== "UPLOADED" && newStatus !== "NOT_AVAILABLE" && r.isMandatory) : (r.isMandatory && r.status !== "UPLOADED" && r.status !== "NOT_AVAILABLE")
+    const blocking = reqs.filter((r) =>
+      r.id === requirementId
+        ? newStatus !== "UPLOADED" &&
+          newStatus !== "NOT_AVAILABLE" &&
+          r.isMandatory
+        : r.isMandatory &&
+          r.status !== "UPLOADED" &&
+          r.status !== "NOT_AVAILABLE",
     );
     const gatePassed = blocking.length === 0;
 
     let stageReverted = false;
     const prevStage = version.requirement.job.stage;
 
-    if (!gatePassed && (prevStage === "ADDITIONAL_DATA" || prevStage === "CHECKLIST_PREPARATION" || prevStage === "CHECKLIST_APPROVAL")) {
+    if (
+      !gatePassed &&
+      (prevStage === "ADDITIONAL_DATA" ||
+        prevStage === "CHECKLIST_PREPARATION" ||
+        prevStage === "CHECKLIST_APPROVAL")
+    ) {
       await tx.chaJob.update({
         where: { id: jobId },
         data: { stage: "DOCUMENT_COLLECTION" },
@@ -3153,10 +3646,12 @@ export async function declareDocumentException(
   jobId: string,
   requirementId: string,
   reason: string,
-  attachmentKey?: string
+  attachmentKey?: string,
 ) {
   if (!reason.trim()) {
-    throw new Error("A clear reason is required to declare a document unavailable.");
+    throw new Error(
+      "A clear reason is required to declare a document unavailable.",
+    );
   }
 
   await db.chaJobDocumentRequirement.findFirstOrThrow({
@@ -3201,7 +3696,7 @@ export async function markDocumentNotAvailable(
   actorId: string,
   orgId: string,
   jobId: string,
-  requirementId: string
+  requirementId: string,
 ) {
   await db.chaJobDocumentRequirement.findFirstOrThrow({
     where: { id: requirementId, jobId, job: getActiveChaJobWhere(orgId) },
@@ -3211,7 +3706,12 @@ export async function markDocumentNotAvailable(
   const result = await db.$transaction(async (tx) => {
     const exception = await tx.chaDocumentException.upsert({
       where: { requirementId },
-      update: { reason: "N/A", userId: actorId, createdAt: new Date(), attachmentKey: null },
+      update: {
+        reason: "N/A",
+        userId: actorId,
+        createdAt: new Date(),
+        attachmentKey: null,
+      },
       create: { requirementId, reason: "N/A", userId: actorId },
     });
 
@@ -3246,12 +3746,12 @@ export async function verifyDocumentGate(jobId: string) {
         include: {
           requirementItem: {
             include: {
-              category: true
-            }
-          }
-        }
-      }
-    }
+              category: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   const activeReqs = job.documentRequirements.filter((req) => {
@@ -3265,12 +3765,17 @@ export async function verifyDocumentGate(jobId: string) {
   });
 
   const blocking = activeReqs.filter(
-    (r) => r.isMandatory && r.status !== "UPLOADED" && r.status !== "NOT_AVAILABLE"
+    (r) =>
+      r.isMandatory && r.status !== "UPLOADED" && r.status !== "NOT_AVAILABLE",
   );
 
   return {
     passed: blocking.length === 0,
-    blockingRequirements: blocking.map((b) => ({ id: b.id, name: b.name, category: b.category })),
+    blockingRequirements: blocking.map((b) => ({
+      id: b.id,
+      name: b.name,
+      category: b.category,
+    })),
   };
 }
 
@@ -3283,57 +3788,93 @@ export async function upsertAdditionalData(
     importGeneralManifest?: string | null;
     exportGeneralManifest?: string | null;
     customManifestValue?: string | null;
-    containerDetails?: Array<{ containerName?: string | null; containerNumber?: string | null }> | null;
+    containerDetails?: Array<{
+      containerName?: string | null;
+      containerNumber?: string | null;
+    }> | null;
     mblNumber?: string | null;
     hblNumber?: string | null;
     deliveryOrderValidity?: Date | string | null;
     deliveryOrderExtensionDate?: Date | string | null;
-  }
+  },
 ) {
   const manifestSchema = await getChaManifestSchemaState();
   const rawJob = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
     include: {
       assignments: true,
-      additionalData: { select: getAdditionalDataSelect(manifestSchema.customManifestValue) },
-      jobType: { select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig) },
+      additionalData: {
+        select: getAdditionalDataSelect(manifestSchema.customManifestValue),
+      },
+      jobType: {
+        select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig),
+      },
     },
   });
   const job = {
     ...rawJob,
-    additionalData: normalizeCompatibleAdditionalData(rawJob.additionalData, manifestSchema.customManifestValue),
+    additionalData: normalizeCompatibleAdditionalData(
+      rawJob.additionalData,
+      manifestSchema.customManifestValue,
+    ),
     jobType: normalizeCompatibleJobType(
-      rawJob.jobType as { id: string; orgId: string; name: string } & Partial<CompatibleChaJobType>,
+      rawJob.jobType as {
+        id: string;
+        orgId: string;
+        name: string;
+      } & Partial<CompatibleChaJobType>,
       manifestSchema.jobTypeManifestConfig,
     ),
   };
   await assertCanAccessAdditionalData(actorId, job, "cha.additional_data.edit");
 
   if (job.stage === "DOCUMENT_COLLECTION") {
-    throw new Error("Complete document collection before entering Additional Data.");
+    throw new Error(
+      "Complete document collection before entering Additional Data.",
+    );
   }
   if (["FILING", "FILED"].includes(job.stage)) {
-    throw new Error("Additional Data cannot be edited after the job has moved to filing.");
+    throw new Error(
+      "Additional Data cannot be edited after the job has moved to filing.",
+    );
   }
 
   const manifestConfig = validateJobTypeManifestConfiguration(job.jobType);
-  const importGeneralManifest = data.importGeneralManifest?.trim() ? data.importGeneralManifest.trim() : null;
-  const exportGeneralManifest = data.exportGeneralManifest?.trim() ? data.exportGeneralManifest.trim() : null;
-  const customManifestValue = data.customManifestValue?.trim() ? data.customManifestValue.trim() : null;
+  const importGeneralManifest = data.importGeneralManifest?.trim()
+    ? data.importGeneralManifest.trim()
+    : null;
+  const exportGeneralManifest = data.exportGeneralManifest?.trim()
+    ? data.exportGeneralManifest.trim()
+    : null;
+  const customManifestValue = data.customManifestValue?.trim()
+    ? data.customManifestValue.trim()
+    : null;
   const containerDetails = sanitizeContainerDetails(data.containerDetails);
   const mblNumber = data.mblNumber?.trim() ? data.mblNumber.trim() : null;
   const hblNumber = data.hblNumber?.trim() ? data.hblNumber.trim() : null;
 
-  if (importGeneralManifest !== null && !/^[a-zA-Z0-9]+$/.test(importGeneralManifest)) {
+  if (
+    importGeneralManifest !== null &&
+    !/^[a-zA-Z0-9]+$/.test(importGeneralManifest)
+  ) {
     throw new Error("Import General Manifest (IGM) must be alphanumeric.");
   }
-  if (exportGeneralManifest !== null && !/^[a-zA-Z0-9]+$/.test(exportGeneralManifest)) {
+  if (
+    exportGeneralManifest !== null &&
+    !/^[a-zA-Z0-9]+$/.test(exportGeneralManifest)
+  ) {
     throw new Error("Export General Manifest (EGM) must be alphanumeric.");
   }
 
-  const vesselInwardDate = data.vesselInwardDate ? new Date(data.vesselInwardDate) : null;
-  const deliveryOrderValidity = data.deliveryOrderValidity ? new Date(data.deliveryOrderValidity) : null;
-  const deliveryOrderExtensionDate = data.deliveryOrderExtensionDate ? new Date(data.deliveryOrderExtensionDate) : null;
+  const vesselInwardDate = data.vesselInwardDate
+    ? new Date(data.vesselInwardDate)
+    : null;
+  const deliveryOrderValidity = data.deliveryOrderValidity
+    ? new Date(data.deliveryOrderValidity)
+    : null;
+  const deliveryOrderExtensionDate = data.deliveryOrderExtensionDate
+    ? new Date(data.deliveryOrderExtensionDate)
+    : null;
 
   if (vesselInwardDate && Number.isNaN(vesselInwardDate.getTime())) {
     throw new Error("Vessel Inward Date is invalid.");
@@ -3341,38 +3882,70 @@ export async function upsertAdditionalData(
   if (deliveryOrderValidity && Number.isNaN(deliveryOrderValidity.getTime())) {
     throw new Error("Delivery Order (DO) Validity is invalid.");
   }
-  if (deliveryOrderExtensionDate && Number.isNaN(deliveryOrderExtensionDate.getTime())) {
+  if (
+    deliveryOrderExtensionDate &&
+    Number.isNaN(deliveryOrderExtensionDate.getTime())
+  ) {
     throw new Error("Delivery Order extension date is invalid.");
   }
   if (deliveryOrderExtensionDate && !deliveryOrderValidity) {
-    throw new Error("Delivery Order Validity must be set before adding an extension date.");
+    throw new Error(
+      "Delivery Order Validity must be set before adding an extension date.",
+    );
   }
-  if (deliveryOrderExtensionDate && deliveryOrderValidity && deliveryOrderExtensionDate.getTime() <= deliveryOrderValidity.getTime()) {
-    throw new Error("The extension date must be after the original Delivery Order validity date.");
+  if (
+    deliveryOrderExtensionDate &&
+    deliveryOrderValidity &&
+    deliveryOrderExtensionDate.getTime() <= deliveryOrderValidity.getTime()
+  ) {
+    throw new Error(
+      "The extension date must be after the original Delivery Order validity date.",
+    );
   }
 
   if (manifestConfig.isManifestMandatory) {
-    if (manifestConfig.manifestRequirement === "IGM" && !importGeneralManifest) {
+    if (
+      manifestConfig.manifestRequirement === "IGM" &&
+      !importGeneralManifest
+    ) {
       throw new Error("IGM Number is required for this clearance type.");
     }
-    if (manifestConfig.manifestRequirement === "EGM" && !exportGeneralManifest) {
+    if (
+      manifestConfig.manifestRequirement === "EGM" &&
+      !exportGeneralManifest
+    ) {
       throw new Error("EGM Number is required for this clearance type.");
     }
-    if (manifestConfig.manifestRequirement === "BOTH" && (!importGeneralManifest || !exportGeneralManifest)) {
-      throw new Error("Both IGM and EGM numbers are required for this clearance type.");
+    if (
+      manifestConfig.manifestRequirement === "BOTH" &&
+      (!importGeneralManifest || !exportGeneralManifest)
+    ) {
+      throw new Error(
+        "Both IGM and EGM numbers are required for this clearance type.",
+      );
     }
-    if (manifestConfig.manifestRequirement === "CUSTOM" && !customManifestValue) {
-      throw new Error(`${manifestConfig.manifestLabel} is required for this clearance type.`);
+    if (
+      manifestConfig.manifestRequirement === "CUSTOM" &&
+      !customManifestValue
+    ) {
+      throw new Error(
+        `${manifestConfig.manifestLabel} is required for this clearance type.`,
+      );
     }
   }
 
-  const nextStatus = isAdditionalDataComplete({
-    vesselInwardDate,
-    importGeneralManifest,
-    exportGeneralManifest,
-    customManifestValue,
-    deliveryOrderValidity,
-  }, manifestConfig) ? "COMPLETED" : "PENDING";
+  const nextStatus = isAdditionalDataComplete(
+    {
+      vesselInwardDate,
+      importGeneralManifest,
+      exportGeneralManifest,
+      customManifestValue,
+      deliveryOrderValidity,
+    },
+    manifestConfig,
+  )
+    ? "COMPLETED"
+    : "PENDING";
   const wasCompleted = job.additionalData?.status === "COMPLETED";
 
   const additionalData = await db.chaJobAdditionalData.upsert({
@@ -3392,7 +3965,14 @@ export async function upsertAdditionalData(
       status: nextStatus,
       updatedById: actorId,
       ...(nextStatus === "COMPLETED"
-        ? { completedById: wasCompleted ? job.additionalData?.completedById ?? actorId : actorId, completedAt: wasCompleted ? job.additionalData?.completedAt ?? new Date() : new Date() }
+        ? {
+            completedById: wasCompleted
+              ? (job.additionalData?.completedById ?? actorId)
+              : actorId,
+            completedAt: wasCompleted
+              ? (job.additionalData?.completedAt ?? new Date())
+              : new Date(),
+          }
         : { completedById: null, completedAt: null }),
     },
     create: {
@@ -3421,14 +4001,19 @@ export async function upsertAdditionalData(
     jobId,
     entityType: "ChaJobAdditionalData",
     entityId: additionalData.id,
-    event: job.additionalData ? "ADDITIONAL_DATA_UPDATED" : "ADDITIONAL_DATA_CREATED",
+    event: job.additionalData
+      ? "ADDITIONAL_DATA_UPDATED"
+      : "ADDITIONAL_DATA_CREATED",
     actorId,
     prevState: job.additionalData?.status ?? "NONE",
     newState: additionalData.status,
     remarks: `Additional Data ${job.additionalData ? "updated" : "created"} for job ${job.jobNumber}.`,
   });
 
-  if ((job.additionalData?.importGeneralManifest ?? null) !== importGeneralManifest) {
+  if (
+    (job.additionalData?.importGeneralManifest ?? null) !==
+    importGeneralManifest
+  ) {
     await logChaAudit({
       orgId,
       jobId,
@@ -3442,7 +4027,10 @@ export async function upsertAdditionalData(
     });
   }
 
-  if ((job.additionalData?.exportGeneralManifest ?? null) !== exportGeneralManifest) {
+  if (
+    (job.additionalData?.exportGeneralManifest ?? null) !==
+    exportGeneralManifest
+  ) {
     await logChaAudit({
       orgId,
       jobId,
@@ -3456,7 +4044,9 @@ export async function upsertAdditionalData(
     });
   }
 
-  if ((job.additionalData?.customManifestValue ?? null) !== customManifestValue) {
+  if (
+    (job.additionalData?.customManifestValue ?? null) !== customManifestValue
+  ) {
     await logChaAudit({
       orgId,
       jobId,
@@ -3473,32 +4063,53 @@ export async function upsertAdditionalData(
   return additionalData;
 }
 
-export async function proceedAdditionalDataStage(actorId: string, orgId: string, jobId: string) {
+export async function proceedAdditionalDataStage(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+) {
   const manifestSchema = await getChaManifestSchemaState();
   const rawJob = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
     include: {
       assignments: true,
-      additionalData: { select: getAdditionalDataSelect(manifestSchema.customManifestValue) },
-      jobType: { select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig) },
+      additionalData: {
+        select: getAdditionalDataSelect(manifestSchema.customManifestValue),
+      },
+      jobType: {
+        select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig),
+      },
     },
   });
   const job = {
     ...rawJob,
-    additionalData: normalizeCompatibleAdditionalData(rawJob.additionalData, manifestSchema.customManifestValue),
+    additionalData: normalizeCompatibleAdditionalData(
+      rawJob.additionalData,
+      manifestSchema.customManifestValue,
+    ),
     jobType: normalizeCompatibleJobType(
-      rawJob.jobType as { id: string; orgId: string; name: string } & Partial<CompatibleChaJobType>,
+      rawJob.jobType as {
+        id: string;
+        orgId: string;
+        name: string;
+      } & Partial<CompatibleChaJobType>,
       manifestSchema.jobTypeManifestConfig,
     ),
   };
-  await assertCanAccessAdditionalData(actorId, job, "cha.additional_data.proceed");
+  await assertCanAccessAdditionalData(
+    actorId,
+    job,
+    "cha.additional_data.proceed",
+  );
 
   if (job.stage !== "ADDITIONAL_DATA") {
     throw new Error("Job is not in the Additional Data stage.");
   }
   const manifestConfig = validateJobTypeManifestConfiguration(job.jobType);
   if (!isAdditionalDataComplete(job.additionalData, manifestConfig)) {
-    throw new Error(`Cannot proceed. Vessel inward date, ${manifestConfig.manifestLabel}, and DO validity are required.`);
+    throw new Error(
+      `Cannot proceed. Vessel inward date, ${manifestConfig.manifestLabel}, and DO validity are required.`,
+    );
   }
 
   const result = await db.$transaction(async (tx) => {
@@ -3527,7 +4138,8 @@ export async function proceedAdditionalDataStage(actorId: string, orgId: string,
     actorId,
     prevState: "ADDITIONAL_DATA",
     newState: "CHECKLIST_PREPARATION",
-    remarks: "Additional Data completed and workflow advanced to Checklist Preparation.",
+    remarks:
+      "Additional Data completed and workflow advanced to Checklist Preparation.",
   });
 
   return result;
@@ -3579,8 +4191,14 @@ export type FilingQueryEscalationWarning = {
 const DO_DOCUMENT_CATEGORY = "Customs Validity Documents";
 const DO_DOCUMENT_REQUIREMENT_NAME = "Delivery Order";
 const SECTION49_DOCUMENT_NAME = "Section 49";
-const DELIVERY_ORDER_VALIDITY_NOTIFICATION_KINDS = ["CHA_DELIVERY_ORDER_VALIDITY_EXPIRED", "CHA_DELIVERY_ORDER_VALIDITY_EXPIRING"];
-const SECTION49_VALIDITY_NOTIFICATION_KINDS = ["CHA_SECTION49_VALIDITY_EXPIRED", "CHA_SECTION49_VALIDITY_EXPIRING"];
+const DELIVERY_ORDER_VALIDITY_NOTIFICATION_KINDS = [
+  "CHA_DELIVERY_ORDER_VALIDITY_EXPIRED",
+  "CHA_DELIVERY_ORDER_VALIDITY_EXPIRING",
+];
+const SECTION49_VALIDITY_NOTIFICATION_KINDS = [
+  "CHA_SECTION49_VALIDITY_EXPIRED",
+  "CHA_SECTION49_VALIDITY_EXPIRING",
+];
 const CHA_DUE_DATE_WARNING_NOTIFICATION_KINDS = [
   ...DELIVERY_ORDER_VALIDITY_NOTIFICATION_KINDS,
   ...SECTION49_VALIDITY_NOTIFICATION_KINDS,
@@ -3600,7 +4218,10 @@ function getDueDateWarningAction(type: ChaDueDateWarningType, jobId: string) {
   };
 }
 
-function getDueDateWarningNotificationKind(type: ChaDueDateWarningType, severity: "expired" | "expiring") {
+function getDueDateWarningNotificationKind(
+  type: ChaDueDateWarningType,
+  severity: "expired" | "expiring",
+) {
   if (type === "DELIVERY_ORDER") {
     return severity === "expired"
       ? "CHA_DELIVERY_ORDER_VALIDITY_EXPIRED"
@@ -3613,7 +4234,9 @@ function getDueDateWarningNotificationKind(type: ChaDueDateWarningType, severity
 }
 
 function getDueDateWarningLabel(type: ChaDueDateWarningType) {
-  return type === "DELIVERY_ORDER" ? "Delivery Order validity" : "Section 49 validity";
+  return type === "DELIVERY_ORDER"
+    ? "Delivery Order validity"
+    : "Section 49 validity";
 }
 
 function buildDueDateWarningMessage(
@@ -3648,7 +4271,9 @@ function buildDueDateWarningLookupKey(
 function getDaysUntilExpiry(validityDate: Date, today: Date) {
   const expiry = new Date(validityDate);
   expiry.setHours(0, 0, 0, 0);
-  return Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.ceil(
+    (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+  );
 }
 
 function buildChaDueDateWarning(params: {
@@ -3673,7 +4298,12 @@ function buildChaDueDateWarning(params: {
     validityDate: params.validityDate,
     daysUntilExpiry,
     severity,
-    message: buildDueDateWarningMessage(params.type, severity, params.validityDate, daysUntilExpiry),
+    message: buildDueDateWarningMessage(
+      params.type,
+      severity,
+      params.validityDate,
+      daysUntilExpiry,
+    ),
     notificationId: params.notificationId,
     link: action.link,
     actionLabel: action.actionLabel,
@@ -3689,7 +4319,9 @@ async function getAdditionalDataForDoFlow(orgId: string, jobId: string) {
     },
   });
   if (!job.additionalData) {
-    throw new Error("Complete the Additional Data section before configuring Delivery Order options.");
+    throw new Error(
+      "Complete the Additional Data section before configuring Delivery Order options.",
+    );
   }
   return { job, additionalData: job.additionalData };
 }
@@ -3754,24 +4386,38 @@ export async function setDeliveryOrderExtensionDate(
   jobId: string,
   extensionDate: Date | null,
 ) {
-  const { job, additionalData } = await getAdditionalDataForDoFlow(orgId, jobId);
+  const { job, additionalData } = await getAdditionalDataForDoFlow(
+    orgId,
+    jobId,
+  );
   await assertCanAccessAdditionalData(actorId, job, "cha.additional_data.edit");
 
   if (job.stage === "DOCUMENT_COLLECTION") {
-    throw new Error("Complete document collection before updating the Delivery Order extension date.");
+    throw new Error(
+      "Complete document collection before updating the Delivery Order extension date.",
+    );
   }
   if (["FILING", "FILED"].includes(job.stage)) {
-    throw new Error("Delivery Order extension date cannot be edited after the job has moved to filing.");
+    throw new Error(
+      "Delivery Order extension date cannot be edited after the job has moved to filing.",
+    );
   }
 
   if (!additionalData.deliveryOrderValidity) {
-    throw new Error("Set the original Delivery Order validity before updating the extension date.");
+    throw new Error(
+      "Set the original Delivery Order validity before updating the extension date.",
+    );
   }
   if (extensionDate && Number.isNaN(extensionDate.getTime())) {
     throw new Error("Enter a valid Delivery Order extension date.");
   }
-  if (extensionDate && extensionDate.getTime() <= additionalData.deliveryOrderValidity.getTime()) {
-    throw new Error("The extension date must be after the original Delivery Order validity date.");
+  if (
+    extensionDate &&
+    extensionDate.getTime() <= additionalData.deliveryOrderValidity.getTime()
+  ) {
+    throw new Error(
+      "The extension date must be after the original Delivery Order validity date.",
+    );
   }
 
   const updated = await db.chaJobAdditionalData.update({
@@ -3790,7 +4436,8 @@ export async function setDeliveryOrderExtensionDate(
     entityId: additionalData.id,
     event: "DO_EXTENSION_DATE_UPDATED",
     actorId,
-    prevState: additionalData.deliveryOrderExtensionDate?.toISOString() ?? "NONE",
+    prevState:
+      additionalData.deliveryOrderExtensionDate?.toISOString() ?? "NONE",
     newState: extensionDate?.toISOString() ?? "NONE",
     remarks: extensionDate
       ? `Delivery Order extension date set to ${extensionDate.toLocaleDateString("en-IN")} while preserving the original validity date.`
@@ -3807,12 +4454,22 @@ async function storeDeliveryOrderFile(
   fileBuffer: Buffer,
   driveLabel: string,
 ): Promise<{ fileKey: string; storedFileName: string }> {
-  const storedFileName = buildDriveStoredFileName(driveLabel, fileData.fileName);
+  const storedFileName = buildDriveStoredFileName(
+    driveLabel,
+    fileData.fileName,
+  );
   let driveFolderId: string | undefined;
   try {
-    driveFolderId = await ensureJobCategoryFolder(jobId, DO_DOCUMENT_CATEGORY, actorId);
+    driveFolderId = await ensureJobCategoryFolder(
+      jobId,
+      DO_DOCUMENT_CATEGORY,
+      actorId,
+    );
   } catch (err: any) {
-    console.warn(`[DO Upload] Drive folder self-heal failed for job ${jobId}:`, err.message || err);
+    console.warn(
+      `[DO Upload] Drive folder self-heal failed for job ${jobId}:`,
+      err.message || err,
+    );
     const profile = await findJobWorkspaceProfileByJobId(jobId);
     driveFolderId = resolveDriveFolderForCategory(
       profile?.categoryFolders as Record<string, string> | undefined,
@@ -3834,7 +4491,10 @@ async function storeDeliveryOrderFile(
       if (process.env.NODE_ENV === "production") {
         throw new Error(`Google Drive upload failed: ${err.message || err}`);
       }
-      console.warn("[DO Upload] Google Drive upload failed. Falling back to mock URL:", err.message || err);
+      console.warn(
+        "[DO Upload] Google Drive upload failed. Falling back to mock URL:",
+        err.message || err,
+      );
       return {
         fileKey: `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`,
         storedFileName,
@@ -3843,7 +4503,9 @@ async function storeDeliveryOrderFile(
   }
 
   if (process.env.NODE_ENV === "production") {
-    throw new Error("Google Drive is not provisioned for this job. Please retry provisioning the workspace.");
+    throw new Error(
+      "Google Drive is not provisioned for this job. Please retry provisioning the workspace.",
+    );
   }
   return {
     fileKey: `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`,
@@ -3902,7 +4564,9 @@ export async function listSection49ValidityWarnings(
 
     const expiry = new Date(validityDate);
     expiry.setHours(0, 0, 0, 0);
-    const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil(
+      (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+    );
     if (diffDays > 4) {
       return [];
     }
@@ -3948,77 +4612,78 @@ export async function listChaDueDateWarnings(
         ],
       };
 
-  const [deliveryOrderJobs, section49Jobs, existingNotifications] = await Promise.all([
-    db.chaJob.findMany({
-      where: {
-        ...getActiveChaJobWhere(orgId),
-        ...(options.jobId ? { id: options.jobId } : {}),
-        status: "ACTIVE",
-        stage: { not: "FILED" },
-        additionalData: {
-          is: {
-            OR: [
-              { deliveryOrderExtensionDate: { lte: threshold } },
-              {
-                deliveryOrderExtensionDate: null,
-                deliveryOrderValidity: { lte: threshold },
-              },
-            ],
+  const [deliveryOrderJobs, section49Jobs, existingNotifications] =
+    await Promise.all([
+      db.chaJob.findMany({
+        where: {
+          ...getActiveChaJobWhere(orgId),
+          ...(options.jobId ? { id: options.jobId } : {}),
+          status: "ACTIVE",
+          stage: { not: "FILED" },
+          additionalData: {
+            is: {
+              OR: [
+                { deliveryOrderExtensionDate: { lte: threshold } },
+                {
+                  deliveryOrderExtensionDate: null,
+                  deliveryOrderValidity: { lte: threshold },
+                },
+              ],
+            },
+          },
+          ...accessWhere,
+        },
+        select: {
+          id: true,
+          jobNumber: true,
+          additionalData: {
+            select: {
+              deliveryOrderValidity: true,
+              deliveryOrderExtensionDate: true,
+            },
           },
         },
-        ...accessWhere,
-      },
-      select: {
-        id: true,
-        jobNumber: true,
-        additionalData: {
-          select: {
-            deliveryOrderValidity: true,
-            deliveryOrderExtensionDate: true,
+      }),
+      db.chaJob.findMany({
+        where: {
+          ...getActiveChaJobWhere(orgId),
+          ...(options.jobId ? { id: options.jobId } : {}),
+          status: "ACTIVE",
+          stage: { not: "FILED" },
+          filingSection49Flag: {
+            is: {
+              isEnabled: true,
+              validityDate: { lte: threshold },
+            },
+          },
+          ...accessWhere,
+        },
+        select: {
+          id: true,
+          jobNumber: true,
+          filingSection49Flag: {
+            select: {
+              validityDate: true,
+            },
           },
         },
-      },
-    }),
-    db.chaJob.findMany({
-      where: {
-        ...getActiveChaJobWhere(orgId),
-        ...(options.jobId ? { id: options.jobId } : {}),
-        status: "ACTIVE",
-        stage: { not: "FILED" },
-        filingSection49Flag: {
-          is: {
-            isEnabled: true,
-            validityDate: { lte: threshold },
-          },
+      }),
+      db.notification.findMany({
+        where: {
+          userId: actorId,
+          orgId,
+          kind: { in: CHA_DUE_DATE_WARNING_NOTIFICATION_KINDS },
+          dismissedAt: null,
         },
-        ...accessWhere,
-      },
-      select: {
-        id: true,
-        jobNumber: true,
-        filingSection49Flag: {
-          select: {
-            validityDate: true,
-          },
+        select: {
+          id: true,
+          kind: true,
+          acknowledgedAt: true,
+          payload: true,
         },
-      },
-    }),
-    db.notification.findMany({
-      where: {
-        userId: actorId,
-        orgId,
-        kind: { in: CHA_DUE_DATE_WARNING_NOTIFICATION_KINDS },
-        dismissedAt: null,
-      },
-      select: {
-        id: true,
-        kind: true,
-        acknowledgedAt: true,
-        payload: true,
-      },
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
 
   const notificationsByKey = new Map<
     string,
@@ -4026,11 +4691,14 @@ export async function listChaDueDateWarnings(
   >();
   for (const notification of existingNotifications) {
     const payload =
-      notification.payload && typeof notification.payload === "object" && !Array.isArray(notification.payload)
+      notification.payload &&
+      typeof notification.payload === "object" &&
+      !Array.isArray(notification.payload)
         ? (notification.payload as Record<string, unknown>)
         : null;
     const jobId = typeof payload?.jobId === "string" ? payload.jobId : null;
-    const stateKey = typeof payload?.stateKey === "string" ? payload.stateKey : null;
+    const stateKey =
+      typeof payload?.stateKey === "string" ? payload.stateKey : null;
     if (!jobId || !stateKey) {
       continue;
     }
@@ -4080,7 +4748,12 @@ export async function listChaDueDateWarnings(
     }
     const severity = daysUntilExpiry < 0 ? "expired" : "expiring";
     candidates.push({
-      lookupKey: buildDueDateWarningLookupKey(job.id, "DELIVERY_ORDER", severity, validityDate),
+      lookupKey: buildDueDateWarningLookupKey(
+        job.id,
+        "DELIVERY_ORDER",
+        severity,
+        validityDate,
+      ),
       jobId: job.id,
       jobNumber: job.jobNumber,
       type: "DELIVERY_ORDER",
@@ -4100,7 +4773,12 @@ export async function listChaDueDateWarnings(
     }
     const severity = daysUntilExpiry < 0 ? "expired" : "expiring";
     candidates.push({
-      lookupKey: buildDueDateWarningLookupKey(job.id, "SECTION49", severity, validityDate),
+      lookupKey: buildDueDateWarningLookupKey(
+        job.id,
+        "SECTION49",
+        severity,
+        validityDate,
+      ),
       jobId: job.id,
       jobNumber: job.jobNumber,
       type: "SECTION49",
@@ -4128,7 +4806,10 @@ export async function listChaDueDateWarnings(
         const notification = await createNotification({
           userId: actorId,
           orgId,
-          kind: getDueDateWarningNotificationKind(candidate.type, candidate.severity),
+          kind: getDueDateWarningNotificationKind(
+            candidate.type,
+            candidate.severity,
+          ),
           title: `${getDueDateWarningLabel(candidate.type)} alert: ${candidate.jobNumber}`,
           body: buildDueDateWarningMessage(
             candidate.type,
@@ -4193,7 +4874,9 @@ export async function listChaDueDateWarnings(
       return left.jobNumber.localeCompare(right.jobNumber);
     });
 
-  return typeof options.limit === "number" ? warnings.slice(0, options.limit) : warnings;
+  return typeof options.limit === "number"
+    ? warnings.slice(0, options.limit)
+    : warnings;
 }
 
 export async function uploadDeliveryOrderDocument(
@@ -4315,10 +4998,14 @@ export async function applyDeliveryOrderExtension(
   const originalValidity = additionalData.deliveryOrderValidity;
   const previousValidity = getEffectiveDeliveryOrderValidity(additionalData);
   if (!originalValidity || !previousValidity) {
-    throw new Error("Delivery Order Validity must be set before an extension can be applied.");
+    throw new Error(
+      "Delivery Order Validity must be set before an extension can be applied.",
+    );
   }
   if (input.extensionDate.getTime() <= previousValidity.getTime()) {
-    throw new Error("The extension date must be after the current effective Delivery Order date.");
+    throw new Error(
+      "The extension date must be after the current effective Delivery Order date.",
+    );
   }
 
   // Extension is only available once the warning window is active.
@@ -4326,13 +5013,21 @@ export async function applyDeliveryOrderExtension(
   warningThreshold.setDate(warningThreshold.getDate() + 4);
   warningThreshold.setHours(23, 59, 59, 999);
   if (previousValidity.getTime() > warningThreshold.getTime()) {
-    throw new Error("Extensions can only be applied while a Delivery Order validity warning is active.");
+    throw new Error(
+      "Extensions can only be applied while a Delivery Order validity warning is active.",
+    );
   }
 
   let fileKey: string | null = null;
   let storedExtensionFileName: string | null = null;
   if (input.fileBuffer && input.fileData) {
-    const uploaded = await storeDeliveryOrderFile(jobId, actorId, input.fileData, input.fileBuffer, "Delivery Order Extension");
+    const uploaded = await storeDeliveryOrderFile(
+      jobId,
+      actorId,
+      input.fileData,
+      input.fileBuffer,
+      "Delivery Order Extension",
+    );
     fileKey = uploaded.fileKey;
     storedExtensionFileName = uploaded.storedFileName;
   }
@@ -4382,8 +5077,14 @@ export async function applyDeliveryOrderExtension(
   return extension;
 }
 
-export async function listDeliveryOrderExtensions(orgId: string, jobId: string) {
-  await db.chaJob.findFirstOrThrow({ where: getActiveChaJobByIdWhere(orgId, jobId), select: { id: true } });
+export async function listDeliveryOrderExtensions(
+  orgId: string,
+  jobId: string,
+) {
+  await db.chaJob.findFirstOrThrow({
+    where: getActiveChaJobByIdWhere(orgId, jobId),
+    select: { id: true },
+  });
   return db.chaDoExtension.findMany({
     where: { jobId },
     orderBy: { createdAt: "desc" },
@@ -4417,7 +5118,9 @@ export async function uploadChecklistFile(
   await assertCanAccessChecklist(actorId, job, "cha.checklist.upload");
 
   if (job.stage === "DOCUMENT_COLLECTION" || job.stage === "ADDITIONAL_DATA") {
-    throw new Error("Complete the previous workflow stages before uploading the checklist.");
+    throw new Error(
+      "Complete the previous workflow stages before uploading the checklist.",
+    );
   }
   if (!fileData.fileName.trim()) {
     throw new Error("Checklist file name is required.");
@@ -4429,17 +5132,28 @@ export async function uploadChecklistFile(
     throw new Error("Checklist file is empty.");
   }
 
-  const previousVersion = job.checklistWorkflow?.fileVersions[0]?.versionNumber ?? 0;
+  const previousVersion =
+    job.checklistWorkflow?.fileVersions[0]?.versionNumber ?? 0;
   const nextVersion = previousVersion + 1;
-  const storedFileName = buildDriveStoredFileName(`Checklist V${nextVersion}`, fileData.fileName);
+  const storedFileName = buildDriveStoredFileName(
+    `Checklist V${nextVersion}`,
+    fileData.fileName,
+  );
 
   let fileKey = fileData.fileKey?.trim() || "";
   if (fileBuffer) {
     let driveFolderId: string | undefined;
     try {
-      driveFolderId = await ensureJobCategoryFolder(jobId, CHECKLIST_DOCUMENT_CATEGORY, actorId);
+      driveFolderId = await ensureJobCategoryFolder(
+        jobId,
+        CHECKLIST_DOCUMENT_CATEGORY,
+        actorId,
+      );
     } catch (err: any) {
-      console.warn(`[Checklist Upload] Drive folder self-heal failed for job ${jobId}:`, err.message || err);
+      console.warn(
+        `[Checklist Upload] Drive folder self-heal failed for job ${jobId}:`,
+        err.message || err,
+      );
       const profile = await findJobWorkspaceProfileByJobId(jobId);
       driveFolderId = resolveDriveFolderForCategory(
         profile?.categoryFolders as Record<string, string> | undefined,
@@ -4461,11 +5175,16 @@ export async function uploadChecklistFile(
         if (process.env.NODE_ENV === "production") {
           throw new Error(`Google Drive upload failed: ${err.message || err}`);
         }
-        console.warn("[Checklist Upload] Google Drive upload failed. Falling back to mock URL:", err.message || err);
+        console.warn(
+          "[Checklist Upload] Google Drive upload failed. Falling back to mock URL:",
+          err.message || err,
+        );
         fileKey = `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
       }
     } else if (process.env.NODE_ENV === "production") {
-      throw new Error("Google Drive is not provisioned for this job. Please retry provisioning the workspace.");
+      throw new Error(
+        "Google Drive is not provisioned for this job. Please retry provisioning the workspace.",
+      );
     } else {
       fileKey = `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
     }
@@ -4473,7 +5192,9 @@ export async function uploadChecklistFile(
 
   const internalApproverIds = await getChecklistInternalApproverIds(orgId, job);
   if (internalApproverIds.length === 0) {
-    throw new Error("No internal checklist approver is configured for this job.");
+    throw new Error(
+      "No internal checklist approver is configured for this job.",
+    );
   }
 
   const previousStatus = job.checklistWorkflow?.status ?? "PENDING_UPLOAD";
@@ -4597,7 +5318,11 @@ export async function submitChecklistInternalDecision(
   });
 
   const checklist = job.checklistWorkflow;
-  if (!checklist || checklist.id !== checklistId || !checklist.currentFileVersion) {
+  if (
+    !checklist ||
+    checklist.id !== checklistId ||
+    !checklist.currentFileVersion
+  ) {
     throw new Error("Checklist record not found for this job.");
   }
   if (checklist.currentApprovalStage !== "INTERNAL") {
@@ -4606,7 +5331,9 @@ export async function submitChecklistInternalDecision(
 
   const internalApproverIds = await getChecklistInternalApproverIds(orgId, job);
   if (!internalApproverIds.includes(actorId)) {
-    throw new Error("Only the job owner, assigned Manager, or Team Lead can internally approve this checklist.");
+    throw new Error(
+      "Only the job owner, assigned Manager, or Team Lead can internally approve this checklist.",
+    );
   }
 
   const pendingApprovals = checklist.approvals.filter(
@@ -4617,7 +5344,9 @@ export async function submitChecklistInternalDecision(
   );
 
   const result = await db.$transaction(async (tx) => {
-    const existingPending = pendingApprovals.find((approval) => approval.assignedToId === actorId);
+    const existingPending = pendingApprovals.find(
+      (approval) => approval.assignedToId === actorId,
+    );
     if (existingPending) {
       await tx.chaChecklistDecision.update({
         where: { id: existingPending.id },
@@ -4669,7 +5398,11 @@ export async function submitChecklistInternalDecision(
       },
     });
     const policySatisfied = internalApproverIds.some((approverId) =>
-      approvals.some((approval) => approval.assignedToId === approverId && approval.action === "APPROVED"),
+      approvals.some(
+        (approval) =>
+          approval.assignedToId === approverId &&
+          approval.action === "APPROVED",
+      ),
     );
 
     if (!policySatisfied) {
@@ -4683,7 +5416,8 @@ export async function submitChecklistInternalDecision(
         jobId,
         checklistId: checklist.id,
         checklistStatus: "FILING_READY",
-        remarks: "Customer-rejected checklist was reworked, internally approved, and moved directly to Filing.",
+        remarks:
+          "Customer-rejected checklist was reworked, internally approved, and moved directly to Filing.",
       });
 
       return { outcome: "MOVED_TO_FILING" as const };
@@ -4719,7 +5453,10 @@ export async function submitChecklistInternalDecision(
     jobId,
     jobNumber: job.jobNumber,
     checklistId: checklist.id,
-    event: decision === "APPROVED" ? "CHECKLIST_INTERNAL_APPROVED" : "CHECKLIST_INTERNAL_REJECTED",
+    event:
+      decision === "APPROVED"
+        ? "CHECKLIST_INTERNAL_APPROVED"
+        : "CHECKLIST_INTERNAL_REJECTED",
     actorId,
     approvalType: "INTERNAL_APPROVAL",
     prevState: "INTERNAL_APPROVAL_PENDING",
@@ -4727,8 +5464,8 @@ export async function submitChecklistInternalDecision(
       result.outcome === "REJECTED"
         ? "REWORK_REQUIRED"
         : result.outcome === "MOVED_TO_FILING"
-        ? "FILING_READY"
-        : "CUSTOMER_APPROVAL_PENDING",
+          ? "FILING_READY"
+          : "CUSTOMER_APPROVAL_PENDING",
     source: "/cha/jobs/[jobId]::submitChecklistInternalDecision",
     remarks: remarks || `Internal ${decision.toLowerCase()} for checklist.`,
   });
@@ -4743,7 +5480,8 @@ export async function submitChecklistInternalDecision(
       link: `/cha/jobs/${jobId}`,
     });
   } else if (result.outcome === "CUSTOMER_APPROVAL") {
-    const { actorName: approverName } = await getChecklistApprovalActorSummary(actorId);
+    const { actorName: approverName } =
+      await getChecklistApprovalActorSummary(actorId);
     await queueChecklistNotifications({
       userIds: result.customerApproverIds ?? [],
       orgId,
@@ -4754,7 +5492,11 @@ export async function submitChecklistInternalDecision(
     });
   } else if (result.outcome === "MOVED_TO_FILING") {
     const filingRecipients = job.assignments
-      .filter((assignment) => assignment.responsibility === "FILING" || assignment.responsibility === "OPERATIONS")
+      .filter(
+        (assignment) =>
+          assignment.responsibility === "FILING" ||
+          assignment.responsibility === "OPERATIONS",
+      )
       .map((assignment) => assignment.userId);
     await queueChecklistNotifications({
       userIds: [job.primaryOwnerId, ...filingRecipients],
@@ -4796,12 +5538,18 @@ export async function sendChecklistCustomerMail(
   });
 
   const checklist = job.checklistWorkflow;
-  if (!checklist || checklist.id !== checklistId || !checklist.currentFileVersion) {
+  if (
+    !checklist ||
+    checklist.id !== checklistId ||
+    !checklist.currentFileVersion
+  ) {
     throw new Error("Checklist record not found for this job.");
   }
   const currentFileVersion = checklist.currentFileVersion;
   if (checklist.currentApprovalStage !== "CUSTOMER") {
-    throw new Error("Customer mail can only be sent after internal approval routes the checklist to customer approval.");
+    throw new Error(
+      "Customer mail can only be sent after internal approval routes the checklist to customer approval.",
+    );
   }
 
   const canSendMail =
@@ -4814,15 +5562,24 @@ export async function sendChecklistCustomerMail(
 
   const recipients = await getChecklistCustomerMailRecipients(job.customerId);
   if (recipients.length === 0) {
-    throw new Error("No active customer approval email is configured for this customer.");
+    throw new Error(
+      "No active customer approval email is configured for this customer.",
+    );
   }
 
-  const delayMinutes = await getChecklistCustomerApprovalDelayMinutesForJob(orgId, job.jobTypeId);
+  const delayMinutes = await getChecklistCustomerApprovalDelayMinutesForJob(
+    orgId,
+    job.jobTypeId,
+  );
   const sentAt = await getNow();
   const approvalVisibleAt = new Date(sentAt.getTime() + delayMinutes * 60_000);
-  const driveFileId = driveClient.extractDriveFileId(currentFileVersion.fileKey);
+  const driveFileId = driveClient.extractDriveFileId(
+    currentFileVersion.fileKey,
+  );
   if (!driveFileId || driveFileId.startsWith("mock-")) {
-    throw new Error("Checklist attachment is not available in Google Drive for customer mail.");
+    throw new Error(
+      "Checklist attachment is not available in Google Drive for customer mail.",
+    );
   }
 
   const [attachmentMetadata, attachmentContent] = await Promise.all([
@@ -4830,14 +5587,19 @@ export async function sendChecklistCustomerMail(
     driveClient.downloadFile(driveFileId),
   ]);
   if (!attachmentMetadata) {
-    throw new Error("Checklist attachment metadata could not be loaded from Google Drive.");
+    throw new Error(
+      "Checklist attachment metadata could not be loaded from Google Drive.",
+    );
   }
 
   const extraAttachments = input.additionalAttachments ?? [];
   const attachments = [
     {
       filename: attachmentMetadata.name || currentFileVersion.originalFileName,
-      mimeType: attachmentMetadata.mimeType || currentFileVersion.mimeType || "application/octet-stream",
+      mimeType:
+        attachmentMetadata.mimeType ||
+        currentFileVersion.mimeType ||
+        "application/octet-stream",
       content: attachmentContent,
     },
     ...extraAttachments.map((attachment) => ({
@@ -4905,7 +5667,8 @@ export async function sendChecklistCustomerMail(
         subject: input.subject.trim(),
         body: input.body,
         attachmentFileKey: currentFileVersion.fileKey,
-        attachmentFileName: attachmentMetadata.name || currentFileVersion.originalFileName,
+        attachmentFileName:
+          attachmentMetadata.name || currentFileVersion.originalFileName,
         sentAt,
         approvalVisibleAt,
       },
@@ -4930,7 +5693,8 @@ export async function sendChecklistCustomerMail(
     id: mailLog.id,
     recipients,
     approvalVisibleAt,
-    attachmentFileName: attachmentMetadata.name || checklist.currentFileVersion.originalFileName,
+    attachmentFileName:
+      attachmentMetadata.name || checklist.currentFileVersion.originalFileName,
     messageId: messageId ?? mailLog.id,
     additionalAttachmentCount: extraAttachments.length,
   };
@@ -4942,7 +5706,7 @@ export async function submitChecklistCustomerDecision(
   jobId: string,
   checklistId: string,
   decision: "APPROVED" | "REJECTED",
-  remarks?: string
+  remarks?: string,
 ) {
   const job = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
@@ -4958,7 +5722,11 @@ export async function submitChecklistCustomerDecision(
   });
 
   const checklist = job.checklistWorkflow;
-  if (!checklist || checklist.id !== checklistId || !checklist.currentFileVersion) {
+  if (
+    !checklist ||
+    checklist.id !== checklistId ||
+    !checklist.currentFileVersion
+  ) {
     throw new Error("Checklist record not found for this job.");
   }
   if (checklist.currentApprovalStage !== "CUSTOMER") {
@@ -4967,14 +5735,20 @@ export async function submitChecklistCustomerDecision(
 
   const customerApproverIds = await getChecklistCustomerApproverIds(job);
   if (!customerApproverIds.includes(actorId)) {
-    throw new Error("Only a concerned job user can customer-approve this checklist.");
+    throw new Error(
+      "Only a concerned job user can customer-approve this checklist.",
+    );
   }
   if (!checklist.customerApprovalVisibleAt) {
-    throw new Error("Customer approval cannot be actioned until the checklist mail has been sent.");
+    throw new Error(
+      "Customer approval cannot be actioned until the checklist mail has been sent.",
+    );
   }
   const now = await getNow();
   if (checklist.customerApprovalVisibleAt.getTime() > now.getTime()) {
-    throw new Error("Customer approval is locked until the configured mail delay window has elapsed.");
+    throw new Error(
+      "Customer approval is locked until the configured mail delay window has elapsed.",
+    );
   }
 
   const existingPending = checklist.approvals.find(
@@ -5048,17 +5822,26 @@ export async function submitChecklistCustomerDecision(
     jobId,
     jobNumber: job.jobNumber,
     checklistId: checklist.id,
-    event: decision === "APPROVED" ? "CHECKLIST_CUSTOMER_APPROVED" : "CHECKLIST_CUSTOMER_REJECTED",
+    event:
+      decision === "APPROVED"
+        ? "CHECKLIST_CUSTOMER_APPROVED"
+        : "CHECKLIST_CUSTOMER_REJECTED",
     actorId,
     approvalType: "CUSTOMER_APPROVAL",
     prevState: "CUSTOMER_APPROVAL_PENDING",
-    newState: decision === "APPROVED" ? "CUSTOMER_APPROVED" : "CUSTOMER_REWORK_REQUIRED",
+    newState:
+      decision === "APPROVED"
+        ? "CUSTOMER_APPROVED"
+        : "CUSTOMER_REWORK_REQUIRED",
     source: "/cha/jobs/[jobId]::submitChecklistCustomerDecision",
     remarks: remarks || `Customer ${decision.toLowerCase()} checklist.`,
   });
 
   if (result.outcome === "REJECTED") {
-    const internalApproverIds = await getChecklistInternalApproverIds(orgId, job);
+    const internalApproverIds = await getChecklistInternalApproverIds(
+      orgId,
+      job,
+    );
     await queueChecklistNotifications({
       userIds: [job.primaryOwnerId, ...internalApproverIds],
       orgId,
@@ -5069,7 +5852,11 @@ export async function submitChecklistCustomerDecision(
     });
   } else {
     const filingRecipients = job.assignments
-      .filter((assignment) => assignment.responsibility === "FILING" || assignment.responsibility === "OPERATIONS")
+      .filter(
+        (assignment) =>
+          assignment.responsibility === "FILING" ||
+          assignment.responsibility === "OPERATIONS",
+      )
       .map((assignment) => assignment.userId);
     await queueChecklistNotifications({
       userIds: [job.primaryOwnerId, ...filingRecipients],
@@ -5091,21 +5878,32 @@ export async function importChecklistExcel(
   jobId: string,
   fileBuffer: Buffer,
   fileName: string,
-  fileSize: number
+  fileSize: number,
 ) {
   const manifestSchema = await getChaManifestSchemaState();
   const rawJob = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
     include: {
-      additionalData: { select: getAdditionalDataSelect(manifestSchema.customManifestValue) },
-      jobType: { select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig) },
+      additionalData: {
+        select: getAdditionalDataSelect(manifestSchema.customManifestValue),
+      },
+      jobType: {
+        select: getChaJobTypeSelect(manifestSchema.jobTypeManifestConfig),
+      },
     },
   });
   const job = {
     ...rawJob,
-    additionalData: normalizeCompatibleAdditionalData(rawJob.additionalData, manifestSchema.customManifestValue),
+    additionalData: normalizeCompatibleAdditionalData(
+      rawJob.additionalData,
+      manifestSchema.customManifestValue,
+    ),
     jobType: normalizeCompatibleJobType(
-      rawJob.jobType as { id: string; orgId: string; name: string } & Partial<CompatibleChaJobType>,
+      rawJob.jobType as {
+        id: string;
+        orgId: string;
+        name: string;
+      } & Partial<CompatibleChaJobType>,
       manifestSchema.jobTypeManifestConfig,
     ),
   };
@@ -5116,16 +5914,23 @@ export async function importChecklistExcel(
     throw new Error(
       `Cannot import checklist. The following mandatory documents are pending upload/exception: ${gate.blockingRequirements
         .map((r) => r.name)
-        .join(", ")}`
+        .join(", ")}`,
     );
   }
 
   if (job.stage === "DOCUMENT_COLLECTION") {
-    throw new Error("Cannot import checklist. Complete Document Collection and Additional Data first.");
+    throw new Error(
+      "Cannot import checklist. Complete Document Collection and Additional Data first.",
+    );
   }
   const manifestConfig = validateJobTypeManifestConfiguration(job.jobType);
-  if (job.stage === "ADDITIONAL_DATA" && !isAdditionalDataComplete(job.additionalData, manifestConfig)) {
-    throw new Error("Cannot import checklist. Complete the Additional Data process first.");
+  if (
+    job.stage === "ADDITIONAL_DATA" &&
+    !isAdditionalDataComplete(job.additionalData, manifestConfig)
+  ) {
+    throw new Error(
+      "Cannot import checklist. Complete the Additional Data process first.",
+    );
   }
 
   const workbook = XLSX.read(fileBuffer, { type: "buffer" });
@@ -5143,12 +5948,20 @@ export async function importChecklistExcel(
 
   // Schema format validation
   // Expecting columns: "Section", "Question Identifier", "Question", "Response Type", "Value", "Remarks"
-  const expectedHeaders = ["Section", "Question Identifier", "Question", "Response Type", "Value"];
+  const expectedHeaders = [
+    "Section",
+    "Question Identifier",
+    "Question",
+    "Response Type",
+    "Value",
+  ];
   const headerKeys = Object.keys(rows[0]);
 
   for (const header of expectedHeaders) {
     if (!headerKeys.some((h) => h.toLowerCase() === header.toLowerCase())) {
-      throw new Error(`Missing required column: "${header}" in checklist workbook.`);
+      throw new Error(
+        `Missing required column: "${header}" in checklist workbook.`,
+      );
     }
   }
 
@@ -5171,9 +5984,16 @@ export async function importChecklistExcel(
     const sectionsMap = new Map<string, any[]>();
     for (const row of rows) {
       const secName = (row.Section || row.section || "General Details").trim();
-      const questionId = (row["Question Identifier"] || row.questionIdentifier || row.id || "").trim();
+      const questionId = (
+        row["Question Identifier"] ||
+        row.questionIdentifier ||
+        row.id ||
+        ""
+      ).trim();
       const questionText = (row.Question || row.question || "").trim();
-      const respType = (row["Response Type"] || row.responseType || "TEXT").trim().toUpperCase();
+      const respType = (row["Response Type"] || row.responseType || "TEXT")
+        .trim()
+        .toUpperCase();
       const val = row.Value !== undefined ? String(row.Value).trim() : null;
       const rem = row.Remarks !== undefined ? String(row.Remarks).trim() : null;
 
@@ -5245,16 +6065,20 @@ export async function submitChecklistForApproval(
   actorId: string,
   orgId: string,
   jobId: string,
-  importId: string
+  importId: string,
 ) {
   const job = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
     include: { assignments: { where: { responsibility: "APPROVAL" } } },
   });
 
-  const managers = job.assignments.filter((a) => a.responsibility === "APPROVAL");
+  const managers = job.assignments.filter(
+    (a) => a.responsibility === "APPROVAL",
+  );
   if (managers.length === 0) {
-    throw new Error("Cannot submit: No approval manager is assigned to this job. Assign an approval manager first.");
+    throw new Error(
+      "Cannot submit: No approval manager is assigned to this job. Assign an approval manager first.",
+    );
   }
 
   const result = await db.$transaction(async (tx) => {
@@ -5333,7 +6157,7 @@ export async function checklistManagerAction(
   importId: string,
   approvalId: string,
   decision: "APPROVED" | "REWORK",
-  remarks?: string
+  remarks?: string,
 ) {
   const result = await db.$transaction(async (tx) => {
     // 1. Update manager's approval record
@@ -5354,7 +6178,9 @@ export async function checklistManagerAction(
       },
     });
 
-    const settings = await tx.chaSettings.findUniqueOrThrow({ where: { orgId } });
+    const settings = await tx.chaSettings.findUniqueOrThrow({
+      where: { orgId },
+    });
 
     if (decision === "REWORK") {
       // Return checklist import to rework status
@@ -5421,7 +6247,9 @@ export async function checklistManagerAction(
 
         await tx.chaFilingDateHistory.create({
           data: {
-            filingId: (await tx.chaFiling.findUniqueOrThrow({ where: { jobId } })).id,
+            filingId: (
+              await tx.chaFiling.findUniqueOrThrow({ where: { jobId } })
+            ).id,
             estimatedFilingDate: estDate,
             setById: actorId,
           },
@@ -5440,9 +6268,15 @@ export async function checklistManagerAction(
     jobId,
     entityType: "ChaChecklistApproval",
     entityId: approvalId,
-    event: decision === "APPROVED" ? "CHECKLIST_APPROVED" : "CHECKLIST_REWORK_REQUESTED",
+    event:
+      decision === "APPROVED"
+        ? "CHECKLIST_APPROVED"
+        : "CHECKLIST_REWORK_REQUESTED",
     actorId,
-    newState: result.outcome === "APPROVED_STAGE_ADVANCED" ? "FILING" : "CHECKLIST_APPROVAL",
+    newState:
+      result.outcome === "APPROVED_STAGE_ADVANCED"
+        ? "FILING"
+        : "CHECKLIST_APPROVAL",
     remarks: remarks || `Manager marked as ${decision}`,
   });
 
@@ -5480,7 +6314,9 @@ export async function checklistManagerAction(
     });
 
     // Create Todo for filing
-    const filingUser = result.job.assignments.find((a) => a.responsibility === "FILING") || result.job.assignments.find((a) => a.responsibility === "OPERATIONS");
+    const filingUser =
+      result.job.assignments.find((a) => a.responsibility === "FILING") ||
+      result.job.assignments.find((a) => a.responsibility === "OPERATIONS");
     if (filingUser) {
       await db.todoTask.create({
         data: {
@@ -5503,11 +6339,13 @@ export async function selfApproveChecklist(
   orgId: string,
   jobId: string,
   importId: string,
-  remarks?: string
+  remarks?: string,
 ) {
   const settings = await db.chaSettings.findUniqueOrThrow({ where: { orgId } });
   if (!settings.selfApprovalAllowed) {
-    throw new Error("Self-approval is disabled by organization settings policy.");
+    throw new Error(
+      "Self-approval is disabled by organization settings policy.",
+    );
   }
 
   const result = await db.$transaction(async (tx) => {
@@ -5562,7 +6400,11 @@ export async function selfApproveChecklist(
   });
 
   // Notify concerned managers and filing users
-  const uniqueRecipients = Array.from(new Set(result.assignments.map((a) => a.userId).filter((id) => id !== actorId)));
+  const uniqueRecipients = Array.from(
+    new Set(
+      result.assignments.map((a) => a.userId).filter((id) => id !== actorId),
+    ),
+  );
   for (const userId of uniqueRecipients) {
     await createNotification({
       userId,
@@ -5584,7 +6426,7 @@ export async function adjustEstimatedFilingDate(
   orgId: string,
   jobId: string,
   filingId: string,
-  newDate: Date
+  newDate: Date,
 ) {
   const result = await db.$transaction(async (tx) => {
     const filing = await tx.chaFiling.update({
@@ -5629,10 +6471,12 @@ export async function markAsFiled(
     filedBillCopyKey: string;
     remarks?: string;
     delayReason?: string;
-  }
+  },
 ) {
   if (!data.filedBillCopyKey.trim()) {
-    throw new Error("Uploading the filed bill copy is mandatory to mark as filed.");
+    throw new Error(
+      "Uploading the filed bill copy is mandatory to mark as filed.",
+    );
   }
 
   const result = await db.$transaction(async (tx) => {
@@ -5648,12 +6492,16 @@ export async function markAsFiled(
       const act = new Date(data.actualFilingDate);
       if (act.getTime() > est.getTime()) {
         isDelayed = true;
-        delayDays = Math.ceil((act.getTime() - est.getTime()) / (1000 * 60 * 60 * 24));
+        delayDays = Math.ceil(
+          (act.getTime() - est.getTime()) / (1000 * 60 * 60 * 24),
+        );
       }
     }
 
     if (isDelayed && !data.delayReason?.trim()) {
-      throw new Error(`The actual filing date exceeds the committed date by ${delayDays} day(s). A delay reason is mandatory.`);
+      throw new Error(
+        `The actual filing date exceeds the committed date by ${delayDays} day(s). A delay reason is mandatory.`,
+      );
     }
 
     const updatedFiling = await tx.chaFiling.update({
@@ -5689,13 +6537,20 @@ export async function markAsFiled(
   });
 
   // Notify Accounts members to collect customer advance
-  const accountsAssignees = result.job.assignments.filter((a) => a.responsibility === "ACCOUNTS");
+  const accountsAssignees = result.job.assignments.filter(
+    (a) => a.responsibility === "ACCOUNTS",
+  );
   const notificationRecipients = accountsAssignees.map((a) => a.userId);
 
   // If no specific accounts assignee is on the job, grab general users with permission
   if (notificationRecipients.length === 0) {
     const fallbackIds = await db.userRole.findMany({
-      where: { role: { orgId, permissions: { some: { permission: { key: "cha.advance.manage" } } } } },
+      where: {
+        role: {
+          orgId,
+          permissions: { some: { permission: { key: "cha.advance.manage" } } },
+        },
+      },
       select: { userId: true },
     });
     notificationRecipients.push(...fallbackIds.map((f) => f.userId));
@@ -5735,7 +6590,7 @@ export async function updateCustomerAdvanceExpected(
   advanceId: string,
   expectedAmount: number,
   dueDate?: Date,
-  assignedUserId?: string
+  assignedUserId?: string,
 ) {
   const result = await db.chaCustomerAdvance.update({
     where: { id: advanceId, jobId },
@@ -5774,7 +6629,7 @@ export async function recordCustomerAdvanceReceipt(
     referenceNumber?: string;
     receiptProofKey?: string;
     remarks?: string;
-  }
+  },
 ) {
   const result = await db.$transaction(async (tx) => {
     const advance = await tx.chaCustomerAdvance.findUniqueOrThrow({
@@ -5834,10 +6689,12 @@ export async function declareAdvanceNotRequired(
   orgId: string,
   jobId: string,
   advanceId: string,
-  reason: string
+  reason: string,
 ) {
   if (!reason.trim()) {
-    throw new Error("Reason is required to declare customer advance not required.");
+    throw new Error(
+      "Reason is required to declare customer advance not required.",
+    );
   }
 
   const result = await db.chaCustomerAdvance.update({
@@ -5875,7 +6732,7 @@ export async function createExpenseRequest(
       supportingDocumentKey?: string;
       remarks?: string;
     }[];
-  }
+  },
 ) {
   if (data.lines.length === 0) {
     throw new Error("An expense request must contain at least one line item.");
@@ -5898,7 +6755,9 @@ export async function createExpenseRequest(
     user.roles.every((r) => r.role.name === "Accounts") &&
     !user.isPlatformAdmin;
   if (isOnlyAccounts) {
-    throw new Error("Authorization Denied: Users acting in an Accounts capacity cannot submit operational expense requests.");
+    throw new Error(
+      "Authorization Denied: Users acting in an Accounts capacity cannot submit operational expense requests.",
+    );
   }
 
   const result = await db.$transaction(async (tx) => {
@@ -5935,7 +6794,9 @@ export async function createExpenseRequest(
         requestId: request.id,
         status: request.status,
         actionedById: actorId,
-        remarks: data.isUrgent ? `Submitted urgent: ${data.urgencyReason}` : "Submitted request",
+        remarks: data.isUrgent
+          ? `Submitted urgent: ${data.urgencyReason}`
+          : "Submitted request",
       },
     });
 
@@ -5955,7 +6816,12 @@ export async function createExpenseRequest(
 
   // Notify Accounts members
   const accountsPeople = await db.userRole.findMany({
-    where: { role: { orgId, permissions: { some: { permission: { key: "cha.expense.manage" } } } } },
+    where: {
+      role: {
+        orgId,
+        permissions: { some: { permission: { key: "cha.expense.manage" } } },
+      },
+    },
     select: { userId: true },
   });
 
@@ -5964,7 +6830,9 @@ export async function createExpenseRequest(
       userId: acc.userId,
       orgId,
       kind: "CHA_EXPENSE_SUBMITTED",
-      title: data.isUrgent ? `URGENT Expense Request: ${job.jobNumber}` : `New Expense Request: ${job.jobNumber}`,
+      title: data.isUrgent
+        ? `URGENT Expense Request: ${job.jobNumber}`
+        : `New Expense Request: ${job.jobNumber}`,
       body: `Expense request for job ${job.jobNumber} is awaiting verification. Urgency: ${data.isUrgent ? "High" : "Standard"}.`,
       link: `/cha/expenses`,
       priority: data.isUrgent ? "important" : "normal",
@@ -5975,7 +6843,9 @@ export async function createExpenseRequest(
       data: {
         userId: acc.userId,
         orgId,
-        title: data.isUrgent ? `URGENT Pay Expense for Job ${job.jobNumber}` : `Verify Expense for Job ${job.jobNumber}`,
+        title: data.isUrgent
+          ? `URGENT Pay Expense for Job ${job.jobNumber}`
+          : `Verify Expense for Job ${job.jobNumber}`,
         description: `Review line items and post payment disbursement details.`,
         status: "PENDING",
       },
@@ -5990,7 +6860,7 @@ export async function triggerUrgentExpenseEscalation(
   actorId: string,
   orgId: string,
   requestId: string,
-  urgencyReason: string
+  urgencyReason: string,
 ) {
   if (!urgencyReason.trim()) {
     throw new Error("Urgency reason is required for escalation.");
@@ -6002,7 +6872,10 @@ export async function triggerUrgentExpenseEscalation(
       include: { job: true },
     });
 
-    if (request.status === "PAID" || request.status === "RECEIPT_ACKNOWLEDGED") {
+    if (
+      request.status === "PAID" ||
+      request.status === "RECEIPT_ACKNOWLEDGED"
+    ) {
       throw new Error("Cannot escalate: payment has already been disbursed.");
     }
 
@@ -6041,7 +6914,12 @@ export async function triggerUrgentExpenseEscalation(
 
   // Notify Accounts members of immediate escalation
   const accountsPeople = await db.userRole.findMany({
-    where: { role: { orgId, permissions: { some: { permission: { key: "cha.expense.manage" } } } } },
+    where: {
+      role: {
+        orgId,
+        permissions: { some: { permission: { key: "cha.expense.manage" } } },
+      },
+    },
     select: { userId: true },
   });
 
@@ -6065,14 +6943,21 @@ export async function setExpenseStatus(
   actorId: string,
   orgId: string,
   requestId: string,
-  status: "UNDER_REVIEW" | "CLARIFICATION_REQUIRED" | "APPROVED" | "READY_FOR_DISBURSEMENT" | "REJECTED",
-  remarks?: string
+  status:
+    | "UNDER_REVIEW"
+    | "CLARIFICATION_REQUIRED"
+    | "APPROVED"
+    | "READY_FOR_DISBURSEMENT"
+    | "REJECTED",
+  remarks?: string,
 ) {
   if (status === "CLARIFICATION_REQUIRED" && !remarks?.trim()) {
     throw new Error("Clarification requests require a specific query note.");
   }
   if (status === "REJECTED" && !remarks?.trim()) {
-    throw new Error("Expense rejections require an administrative rejection reason.");
+    throw new Error(
+      "Expense rejections require an administrative rejection reason.",
+    );
   }
 
   const result = await db.$transaction(async (tx) => {
@@ -6111,7 +6996,10 @@ export async function setExpenseStatus(
     title: `Expense Status Update: ${status.replace(/_/g, " ")}`,
     body: `Your expense request status has been updated to ${status.replace(/_/g, " ")}. Details: "${remarks || ""}"`,
     link: `/cha/jobs/${result.jobId}`,
-    priority: status === "CLARIFICATION_REQUIRED" || status === "REJECTED" ? "important" : "normal",
+    priority:
+      status === "CLARIFICATION_REQUIRED" || status === "REJECTED"
+        ? "important"
+        : "normal",
   });
 
   return result;
@@ -6129,10 +7017,12 @@ export async function postExpensePayment(
     transactionReference: string;
     paymentProofKey: string;
     remarks?: string;
-  }
+  },
 ) {
   if (!paymentData.paymentProofKey.trim()) {
-    throw new Error("Payment proof screenshot upload is mandatory to post an expense payment.");
+    throw new Error(
+      "Payment proof screenshot upload is mandatory to post an expense payment.",
+    );
   }
 
   const result = await db.$transaction(async (tx) => {
@@ -6201,7 +7091,7 @@ export async function postExpensePayment(
 export async function acknowledgeExpenseReceipt(
   actorId: string,
   orgId: string,
-  requestId: string
+  requestId: string,
 ) {
   const result = await db.$transaction(async (tx) => {
     const updated = await tx.chaExpenseRequest.update({
@@ -6239,7 +7129,7 @@ export async function raisePaymentQuery(
   actorId: string,
   orgId: string,
   requestId: string,
-  queryText: string
+  queryText: string,
 ) {
   if (!queryText.trim()) {
     throw new Error("Written query text is required.");
@@ -6286,7 +7176,12 @@ export async function raisePaymentQuery(
 
   // Notify Accounts members
   const accountsPeople = await db.userRole.findMany({
-    where: { role: { orgId, permissions: { some: { permission: { key: "cha.expense.pay" } } } } },
+    where: {
+      role: {
+        orgId,
+        permissions: { some: { permission: { key: "cha.expense.pay" } } },
+      },
+    },
     select: { userId: true },
   });
 
@@ -6310,7 +7205,7 @@ export async function resolvePaymentQuery(
   actorId: string,
   orgId: string,
   queryId: string,
-  resolutionText: string
+  resolutionText: string,
 ) {
   if (!resolutionText.trim()) {
     throw new Error("Resolution note is required.");
@@ -6378,7 +7273,7 @@ export async function listAllExpenses(
     status?: string;
     search?: string;
     isUrgent?: boolean;
-  }
+  },
 ) {
   const where: any = { orgId };
 
@@ -6387,8 +7282,16 @@ export async function listAllExpenses(
   if (filters.search) {
     where.OR = [
       { job: { jobNumber: { contains: filters.search, mode: "insensitive" } } },
-      { job: { customer: { name: { contains: filters.search, mode: "insensitive" } } } },
-      { requestedBy: { name: { contains: filters.search, mode: "insensitive" } } },
+      {
+        job: {
+          customer: { name: { contains: filters.search, mode: "insensitive" } },
+        },
+      },
+      {
+        requestedBy: {
+          name: { contains: filters.search, mode: "insensitive" },
+        },
+      },
     ];
   }
 
@@ -6411,7 +7314,7 @@ export async function listAllExpenses(
 // see in-flight approvals consistently in both the workspace and approval queue.
 export async function listManagerChecklistApprovals(
   userId: string,
-  orgId: string
+  orgId: string,
 ) {
   const workflows = await db.chaChecklist.findMany({
     where: {
@@ -6450,7 +7353,9 @@ export async function listManagerChecklistApprovals(
           select: { id: true, name: true },
         })
       : [];
-  const uploaderNameById = new Map(uploaders.map((user) => [user.id, user.name || "Unknown"]));
+  const uploaderNameById = new Map(
+    uploaders.map((user) => [user.id, user.name || "Unknown"]),
+  );
 
   return workflows
     .filter((workflow) => {
@@ -6462,7 +7367,8 @@ export async function listManagerChecklistApprovals(
       );
 
       const hasPendingAssignment = currentInternalApprovals.some(
-        (approval) => approval.assignedToId === userId && approval.action === "PENDING",
+        (approval) =>
+          approval.assignedToId === userId && approval.action === "PENDING",
       );
 
       const isOwner = workflow.job.primaryOwnerId === userId;
@@ -6481,13 +7387,18 @@ export async function listManagerChecklistApprovals(
         checklistId: workflow.id,
         stage: workflow.currentApprovalStage,
         status: workflow.status,
-        submittedAt: workflow.currentFileVersion?.uploadedAt ?? workflow.updatedAt,
+        submittedAt:
+          workflow.currentFileVersion?.uploadedAt ?? workflow.updatedAt,
         checklistImport: {
           id: workflow.id,
-          uploadedAt: workflow.currentFileVersion?.uploadedAt ?? workflow.updatedAt,
+          uploadedAt:
+            workflow.currentFileVersion?.uploadedAt ?? workflow.updatedAt,
           uploadedBy: workflow.currentFileVersion?.uploadedById
             ? {
-                name: uploaderNameById.get(workflow.currentFileVersion.uploadedById) || "Unknown",
+                name:
+                  uploaderNameById.get(
+                    workflow.currentFileVersion.uploadedById,
+                  ) || "Unknown",
               }
             : null,
           currentFileVersion: workflow.currentFileVersion,
@@ -6498,7 +7409,10 @@ export async function listManagerChecklistApprovals(
     });
 }
 
-export async function listManagerJobDeletionRequests(userId: string, orgId: string) {
+export async function listManagerJobDeletionRequests(
+  userId: string,
+  orgId: string,
+) {
   return db.chaJobDeletionRequest.findMany({
     where: {
       orgId,
@@ -6527,7 +7441,7 @@ export async function submitJobDeletion(
     confirmationJobNumber: string;
     confirmationPhrase: string;
     metadata?: Record<string, unknown>;
-  }
+  },
 ) {
   const actor = await db.user.findUniqueOrThrow({
     where: { id: actorId },
@@ -6550,7 +7464,12 @@ export async function submitJobDeletion(
       expenseRequests: { select: { status: true } },
       deletionRequests: {
         where: { status: { in: ["PENDING", "APPROVED"] } },
-        select: { id: true, status: true, requestedById: true, assignedManagerId: true },
+        select: {
+          id: true,
+          status: true,
+          requestedById: true,
+          assignedManagerId: true,
+        },
       },
     },
   });
@@ -6559,7 +7478,8 @@ export async function submitJobDeletion(
     throw new Error("CHA job not found.");
   }
 
-  const backfilledManagerAssignment = await backfillAssignedManagerFromApprovalAssignment(job);
+  const backfilledManagerAssignment =
+    await backfillAssignedManagerFromApprovalAssignment(job);
   if (backfilledManagerAssignment) {
     job.assignedManagerId = backfilledManagerAssignment.userId;
   }
@@ -6567,7 +7487,8 @@ export async function submitJobDeletion(
   const isAdminActor =
     actor.isPlatformAdmin || actorRoleNames.includes("Admin");
   const isAssignedToJob =
-    job.primaryOwnerId === actorId || job.assignments.some((assignment) => assignment.userId === actorId);
+    job.primaryOwnerId === actorId ||
+    job.assignments.some((assignment) => assignment.userId === actorId);
 
   const isDirectDeleteAllowed = isAdminActor;
   const isRequestDeleteAllowed = isAssignedToJob && canRequestDelete;
@@ -6582,17 +7503,24 @@ export async function submitJobDeletion(
       actorId,
       prevState: job.status,
       newState: job.status,
-      remarks: "User attempted to delete or request deletion without sufficient authorisation.",
+      remarks:
+        "User attempted to delete or request deletion without sufficient authorisation.",
       metadata: {
         actorRoleNames,
         ...input.metadata,
       },
     });
-    throw new Error("You are not authorized to delete or request deletion for this CHA job.");
+    throw new Error(
+      "You are not authorized to delete or request deletion for this CHA job.",
+    );
   }
 
   try {
-    assertDeleteConfirmationInput(job.jobNumber, input.confirmationJobNumber, input.confirmationPhrase);
+    assertDeleteConfirmationInput(
+      job.jobNumber,
+      input.confirmationJobNumber,
+      input.confirmationPhrase,
+    );
     assertJobCanBeDeleted(job);
   } catch (error) {
     await logChaAudit({
@@ -6604,7 +7532,8 @@ export async function submitJobDeletion(
       actorId,
       prevState: job.status,
       newState: job.status,
-      remarks: error instanceof Error ? error.message : "Deletion validation failed.",
+      remarks:
+        error instanceof Error ? error.message : "Deletion validation failed.",
       metadata: {
         actorRoleNames,
         ...input.metadata,
@@ -6712,13 +7641,16 @@ export async function submitJobDeletion(
       actorId,
       prevState: job.status,
       newState: job.status,
-      remarks: "Deletion request blocked because no admin approver is available.",
+      remarks:
+        "Deletion request blocked because no admin approver is available.",
       metadata: {
         actorRoleNames,
         ...input.metadata,
       },
     });
-    throw new Error("No active admin is available to approve this CHA job deletion.");
+    throw new Error(
+      "No active admin is available to approve this CHA job deletion.",
+    );
   }
 
   if (job.deletionRequests.length > 0) {
@@ -6731,14 +7663,17 @@ export async function submitJobDeletion(
       actorId,
       prevState: job.status,
       newState: job.status,
-      remarks: "Deletion request blocked because another active deletion request already exists.",
+      remarks:
+        "Deletion request blocked because another active deletion request already exists.",
       metadata: {
         actorRoleNames,
         assignedManagerId: assignedManager.id,
         ...input.metadata,
       },
     });
-    throw new Error("An active deletion request already exists for this CHA job.");
+    throw new Error(
+      "An active deletion request already exists for this CHA job.",
+    );
   }
 
   const request = await db.$transaction(
@@ -6751,7 +7686,9 @@ export async function submitJobDeletion(
         select: { id: true },
       });
       if (duplicate) {
-        throw new Error("An active deletion request already exists for this CHA job.");
+        throw new Error(
+          "An active deletion request already exists for this CHA job.",
+        );
       }
 
       return tx.chaJobDeletionRequest.create({
@@ -6807,7 +7744,11 @@ export async function submitJobDeletion(
     },
   });
 
-  return { mode: "pending" as const, requestId: request.id, assignedManagerId: assignedManager.id };
+  return {
+    mode: "pending" as const,
+    requestId: request.id,
+    assignedManagerId: assignedManager.id,
+  };
 }
 
 export async function decideJobDeletionRequest(
@@ -6818,14 +7759,15 @@ export async function decideJobDeletionRequest(
     decision: "APPROVED" | "REJECTED";
     remarks?: string;
     metadata?: Record<string, unknown>;
-  }
+  },
 ) {
   const actor = await db.user.findUniqueOrThrow({
     where: { id: actorId },
     include: { roles: { include: { role: true } } },
   });
   const actorRoleNames = getActorRoleNames(actor);
-  const isAdminActor = actor.isPlatformAdmin || actorRoleNames.includes("Admin");
+  const isAdminActor =
+    actor.isPlatformAdmin || actorRoleNames.includes("Admin");
   const canApproveDelete = await can(actorId, "cha.job.delete.approve");
   if (!canApproveDelete || !isAdminActor) {
     await logChaAudit({
@@ -6834,7 +7776,8 @@ export async function decideJobDeletionRequest(
       entityId: input.requestId,
       event: "JOB_DELETE_UNAUTHORIZED_ATTEMPT",
       actorId,
-      remarks: "User attempted to review a CHA deletion request without approval permission.",
+      remarks:
+        "User attempted to review a CHA deletion request without approval permission.",
       metadata: {
         actorRoleNames,
         ...input.metadata,
@@ -6843,7 +7786,9 @@ export async function decideJobDeletionRequest(
     throw new Error("You are not authorized to approve CHA job deletions.");
   }
   if (input.decision === "REJECTED" && !input.remarks?.trim()) {
-    throw new Error("A rejection remark is required when declining a deletion request.");
+    throw new Error(
+      "A rejection remark is required when declining a deletion request.",
+    );
   }
 
   let approvedDriveDeletion:
@@ -6883,10 +7828,14 @@ export async function decideJobDeletionRequest(
         throw new Error("Deletion approval request not found.");
       }
       if (requestPreview.status !== "PENDING") {
-        throw new Error("This deletion approval request has already been actioned.");
+        throw new Error(
+          "This deletion approval request has already been actioned.",
+        );
       }
       if (requestPreview.assignedManagerId !== actorId) {
-        throw new Error("You are not the assigned manager for this deletion request.");
+        throw new Error(
+          "You are not the assigned manager for this deletion request.",
+        );
       }
 
       const workspaceDeletion = await deleteChaJobWorkspace({
@@ -6911,7 +7860,9 @@ export async function decideJobDeletionRequest(
               include: {
                 assignments: true,
                 filing: { select: { status: true } },
-                customerAdvance: { include: { receipts: { select: { id: true } } } },
+                customerAdvance: {
+                  include: { receipts: { select: { id: true } } },
+                },
                 expenseRequests: { select: { status: true } },
               },
             },
@@ -6922,10 +7873,14 @@ export async function decideJobDeletionRequest(
           throw new Error("Deletion approval request not found.");
         }
         if (request.status !== "PENDING") {
-          throw new Error("This deletion approval request has already been actioned.");
+          throw new Error(
+            "This deletion approval request has already been actioned.",
+          );
         }
         if (request.assignedManagerId !== actorId) {
-          throw new Error("You are not the assigned manager for this deletion request.");
+          throw new Error(
+            "You are not the assigned manager for this deletion request.",
+          );
         }
 
         assertJobCanBeDeleted(request.job);
@@ -6940,7 +7895,12 @@ export async function decideJobDeletionRequest(
             },
           });
 
-          return { request: rejected, job: request.job, requester: request.requestedBy, outcome: "rejected" as const };
+          return {
+            request: rejected,
+            job: request.job,
+            requester: request.requestedBy,
+            outcome: "rejected" as const,
+          };
         }
 
         const approved = await tx.chaJobDeletionRequest.update({
@@ -6955,7 +7915,10 @@ export async function decideJobDeletionRequest(
         await tx.chaJob.update({
           where: { id: request.job.id },
           data: {
-            jobNumber: buildArchivedChaJobNumber(request.job.jobNumber, request.job.id),
+            jobNumber: buildArchivedChaJobNumber(
+              request.job.jobNumber,
+              request.job.id,
+            ),
             deletedAt: new Date(),
             deletedById: actorId,
             status: "CANCELLED",
@@ -6971,12 +7934,21 @@ export async function decideJobDeletionRequest(
           },
         });
 
-        return { request: executed, approvedRequest: approved, job: request.job, requester: request.requestedBy, outcome: "executed" as const };
+        return {
+          request: executed,
+          approvedRequest: approved,
+          job: request.job,
+          requester: request.requestedBy,
+          outcome: "executed" as const,
+        };
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Deletion approval decision failed.";
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Deletion approval decision failed.";
     const unauthorized =
       message.includes("assigned manager") ||
       message.includes("not authorized");
@@ -6984,7 +7956,9 @@ export async function decideJobDeletionRequest(
       orgId,
       entityType: "ChaJobDeletionRequest",
       entityId: input.requestId,
-      event: unauthorized ? "JOB_DELETE_UNAUTHORIZED_ATTEMPT" : "JOB_DELETE_FAILED",
+      event: unauthorized
+        ? "JOB_DELETE_UNAUTHORIZED_ATTEMPT"
+        : "JOB_DELETE_FAILED",
       actorId,
       remarks: message,
       metadata: {
@@ -7098,11 +8072,18 @@ export async function decideJobDeletionRequest(
   return result.request;
 }
 
-export async function retryJobChatCleanup(actorId: string, orgId: string, jobId: string) {
+export async function retryJobChatCleanup(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+) {
   const [isAdminActor, canApproveDelete] = await Promise.all([
     db.user.findFirst({
       where: { id: actorId, orgId },
-      select: { isPlatformAdmin: true, roles: { select: { role: { select: { name: true } } } } },
+      select: {
+        isPlatformAdmin: true,
+        roles: { select: { role: { select: { name: true } } } },
+      },
     }),
     can(actorId, "cha.job.delete.approve"),
   ]);
@@ -7112,7 +8093,9 @@ export async function retryJobChatCleanup(actorId: string, orgId: string, jobId:
     (isAdminActor.isPlatformAdmin ||
       isAdminActor.roles.some((userRole) => userRole.role.name === "Admin"));
   if (!canApproveDelete || !hasAdminRole) {
-    throw new Error("You are not authorized to retry Google Chat cleanup for CHA jobs.");
+    throw new Error(
+      "You are not authorized to retry Google Chat cleanup for CHA jobs.",
+    );
   }
 
   const job = await db.chaJob.findFirst({
@@ -7137,7 +8120,9 @@ export async function retryJobChatCleanup(actorId: string, orgId: string, jobId:
   }
 
   if (!job.deletedAt) {
-    throw new Error("Chat cleanup retry is only available after the CHA job has been deleted.");
+    throw new Error(
+      "Chat cleanup retry is only available after the CHA job has been deleted.",
+    );
   }
 
   const chatSpaceName =
@@ -7160,15 +8145,18 @@ export async function retryJobChatCleanup(actorId: string, orgId: string, jobId:
     remarks:
       chatDeletion.outcome === "deleted"
         ? `Retried Google Chat cleanup for ${job.jobNumber}.`
-        : chatDeletion.error || `Google Chat cleanup retry finished with ${chatDeletion.outcome}.`,
+        : chatDeletion.error ||
+          `Google Chat cleanup retry finished with ${chatDeletion.outcome}.`,
     metadata: {
       jobNumber: job.jobNumber,
       chatSpaceName: chatDeletion.chatSpaceName,
       chatSpaceDeleteAuthMode: chatDeletion.authMode,
       chatSpaceDeletionOutcome: chatDeletion.outcome,
       chatSpaceDeletionError: chatDeletion.error ?? null,
-      previousChatSpaceDeleteStatus: job.workspaceProfile?.chatSpaceDeleteStatus ?? null,
-      previousChatSpaceDeleteError: job.workspaceProfile?.chatSpaceDeleteError ?? null,
+      previousChatSpaceDeleteStatus:
+        job.workspaceProfile?.chatSpaceDeleteStatus ?? null,
+      previousChatSpaceDeleteError:
+        job.workspaceProfile?.chatSpaceDeleteError ?? null,
     },
   });
 
@@ -7179,14 +8167,24 @@ export async function retryJobChatCleanup(actorId: string, orgId: string, jobId:
 
 export async function upsertDocumentCategory(
   orgId: string,
-  data: { id?: string; name: string; description?: string; sortOrder: number; isActive: boolean }
+  data: {
+    id?: string;
+    name: string;
+    description?: string;
+    sortOrder: number;
+    isActive: boolean;
+  },
 ) {
   const name = data.name.trim();
   if (!name) throw new Error("Category name is required.");
 
   if (data.id) {
     const existing = await db.chaDocumentRequirementCategory.findFirst({
-      where: { orgId, name: { equals: name, mode: "insensitive" }, id: { not: data.id } },
+      where: {
+        orgId,
+        name: { equals: name, mode: "insensitive" },
+        id: { not: data.id },
+      },
     });
     if (existing) throw new Error(`Category '${name}' already exists.`);
 
@@ -7229,7 +8227,15 @@ export async function deleteDocumentCategory(orgId: string, id: string) {
 
 export async function upsertDocumentItem(
   orgId: string,
-  data: { id?: string; categoryId: string; name: string; description?: string; sortOrder: number; isRequiredDefault: boolean; isActive: boolean }
+  data: {
+    id?: string;
+    categoryId: string;
+    name: string;
+    description?: string;
+    sortOrder: number;
+    isRequiredDefault: boolean;
+    isActive: boolean;
+  },
 ) {
   await db.chaDocumentRequirementCategory.findFirstOrThrow({
     where: { id: data.categoryId, orgId },
@@ -7240,9 +8246,14 @@ export async function upsertDocumentItem(
 
   if (data.id) {
     const existing = await db.chaDocumentRequirementItem.findFirst({
-      where: { categoryId: data.categoryId, name: { equals: name, mode: "insensitive" }, id: { not: data.id } },
+      where: {
+        categoryId: data.categoryId,
+        name: { equals: name, mode: "insensitive" },
+        id: { not: data.id },
+      },
     });
-    if (existing) throw new Error(`Document '${name}' already exists in this category.`);
+    if (existing)
+      throw new Error(`Document '${name}' already exists in this category.`);
 
     return db.chaDocumentRequirementItem.update({
       where: { id: data.id },
@@ -7256,9 +8267,13 @@ export async function upsertDocumentItem(
     });
   } else {
     const existing = await db.chaDocumentRequirementItem.findFirst({
-      where: { categoryId: data.categoryId, name: { equals: name, mode: "insensitive" } },
+      where: {
+        categoryId: data.categoryId,
+        name: { equals: name, mode: "insensitive" },
+      },
     });
-    if (existing) throw new Error(`Document '${name}' already exists in this category.`);
+    if (existing)
+      throw new Error(`Document '${name}' already exists in this category.`);
 
     return db.chaDocumentRequirementItem.create({
       data: {
@@ -7287,7 +8302,7 @@ export async function removeDocumentException(
   actorId: string,
   orgId: string,
   jobId: string,
-  requirementId: string
+  requirementId: string,
 ) {
   await db.chaJobDocumentRequirement.findFirstOrThrow({
     where: { id: requirementId, jobId, job: getActiveChaJobWhere(orgId) },
@@ -7328,7 +8343,11 @@ export async function removeDocumentException(
   return result;
 }
 
-export async function proceedDocumentStage(actorId: string, orgId: string, jobId: string) {
+export async function proceedDocumentStage(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+) {
   const job = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
   });
@@ -7339,7 +8358,10 @@ export async function proceedDocumentStage(actorId: string, orgId: string, jobId
 
   const gate = await verifyDocumentGate(jobId);
   if (!gate.passed) {
-    throw new Error("Cannot proceed. Mandatory documents are pending: " + gate.blockingRequirements.map(b => b.name).join(", "));
+    throw new Error(
+      "Cannot proceed. Mandatory documents are pending: " +
+        gate.blockingRequirements.map((b) => b.name).join(", "),
+    );
   }
 
   await db.$transaction(async (tx) => {
@@ -7378,48 +8400,58 @@ export async function proceedDocumentStage(actorId: string, orgId: string, jobId
 }
 
 export async function getEligibleManagers(orgId: string) {
-  const eligibleRoleNames = ["Admin", "Management", "Manager", "Director", "Executive Team"];
+  const eligibleRoleNames = [
+    "Admin",
+    "Management",
+    "Manager",
+    "Director",
+    "Executive Team",
+  ];
   const specialEligibleEmails = ["hr@adarshshipping.in"];
 
-  const [usersWithPermission, usersWithRoles, specialEligibleUsers] = await Promise.all([
-    getUsersWithPermission(orgId, "cha.checklist.internal_approve"),
-    db.user.findMany({
-      where: {
-        orgId,
-        active: true,
-        OR: [
-          {
-            roles: {
-              some: {
-                role: {
-                  name: {
-                    in: eligibleRoleNames,
+  const [usersWithPermission, usersWithRoles, specialEligibleUsers] =
+    await Promise.all([
+      getUsersWithPermission(orgId, "cha.checklist.internal_approve"),
+      db.user.findMany({
+        where: {
+          orgId,
+          active: true,
+          OR: [
+            {
+              roles: {
+                some: {
+                  role: {
+                    name: {
+                      in: eligibleRoleNames,
+                    },
                   },
                 },
               },
             },
-          },
-          {
-            department: {
-              name: "Executive Team",
+            {
+              department: {
+                name: "Executive Team",
+              },
             },
-          },
-        ],
-      },
-      select: { id: true, name: true, email: true, branchId: true },
-    }),
-    db.user.findMany({
-      where: {
-        orgId,
-        active: true,
-        email: { in: specialEligibleEmails },
-      },
-      select: { id: true, name: true, email: true, branchId: true },
-    }),
-  ]);
+          ],
+        },
+        select: { id: true, name: true, email: true, branchId: true },
+      }),
+      db.user.findMany({
+        where: {
+          orgId,
+          active: true,
+          email: { in: specialEligibleEmails },
+        },
+        select: { id: true, name: true, email: true, branchId: true },
+      }),
+    ]);
 
-  const allEligible = new Map<string, { id: string; name: string; email: string; branchId: string | null }>();
-  
+  const allEligible = new Map<
+    string,
+    { id: string; name: string; email: string; branchId: string | null }
+  >();
+
   if (usersWithPermission.length > 0) {
     const permUsers = await db.user.findMany({
       where: {
@@ -7461,7 +8493,7 @@ export async function updateJobDetails(
   data: {
     assignedManagerId?: string;
     primaryOwnerId?: string;
-  }
+  },
 ) {
   const job = await db.chaJob.findFirstOrThrow({
     where: { id: jobId, orgId },
@@ -7544,7 +8576,7 @@ export async function submitChecklistOwnerDecision(
   jobId: string,
   checklistId: string,
   decision: "APPROVED" | "REJECTED",
-  remarks?: string
+  remarks?: string,
 ) {
   const job = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
@@ -7561,7 +8593,11 @@ export async function submitChecklistOwnerDecision(
   });
 
   const checklist = job.checklistWorkflow;
-  if (!checklist || checklist.id !== checklistId || !checklist.currentFileVersion) {
+  if (
+    !checklist ||
+    checklist.id !== checklistId ||
+    !checklist.currentFileVersion
+  ) {
     throw new Error("Checklist record not found for this job.");
   }
   if (checklist.currentApprovalStage !== "JOB_OWNER") {
@@ -7579,7 +8615,7 @@ export async function submitChecklistOwnerDecision(
     (approval) =>
       approval.fileVersionId === checklist.currentFileVersionId &&
       approval.stage === "JOB_OWNER" &&
-      approval.action === "PENDING"
+      approval.action === "PENDING",
   );
 
   if (decision === "REJECTED" && !remarks?.trim()) {
@@ -7637,7 +8673,8 @@ export async function submitChecklistOwnerDecision(
         jobId,
         checklistId: checklist.id,
         checklistStatus: "FILING_READY",
-        remarks: "Customer-rejected checklist was reworked, approved by job owner, and moved directly to Filing.",
+        remarks:
+          "Customer-rejected checklist was reworked, approved by job owner, and moved directly to Filing.",
       });
 
       return { outcome: "MOVED_TO_FILING" as const };
@@ -7688,19 +8725,25 @@ export async function submitChecklistOwnerDecision(
     jobId,
     entityType: "ChaChecklist",
     entityId: checklist.id,
-    event: decision === "APPROVED" ? "CHECKLIST_OWNER_APPROVED" : "CHECKLIST_OWNER_REJECTED",
+    event:
+      decision === "APPROVED"
+        ? "CHECKLIST_OWNER_APPROVED"
+        : "CHECKLIST_OWNER_REJECTED",
     actorId,
     prevState: "JOB_OWNER_APPROVAL_PENDING",
     newState:
       result.outcome === "REJECTED"
         ? "JOB_OWNER_REJECTED"
         : result.outcome === "CUSTOMER_APPROVAL"
-        ? "CUSTOMER_APPROVAL_PENDING"
-        : "FILING_READY",
+          ? "CUSTOMER_APPROVAL_PENDING"
+          : "FILING_READY",
     remarks: remarks || `Job owner ${decision.toLowerCase()} for checklist.`,
   });
 
-  const actorUser = await db.user.findUnique({ where: { id: actorId }, select: { name: true } });
+  const actorUser = await db.user.findUnique({
+    where: { id: actorId },
+    select: { name: true },
+  });
   const actorName = actorUser?.name || "Job Owner";
 
   if (result.outcome === "REJECTED") {
@@ -7735,7 +8778,11 @@ export async function submitChecklistOwnerDecision(
       });
     } else if (result.outcome === "MOVED_TO_FILING") {
       const filingRecipients = job.assignments
-        .filter((assignment) => assignment.responsibility === "FILING" || assignment.responsibility === "OPERATIONS")
+        .filter(
+          (assignment) =>
+            assignment.responsibility === "FILING" ||
+            assignment.responsibility === "OPERATIONS",
+        )
         .map((assignment) => assignment.userId);
       for (const id of filingRecipients) {
         recipients.add(id);
@@ -7784,8 +8831,8 @@ function buildDefaultChecklistConfig(input: {
     isMandatory: input.isMandatory !== false,
     requiresRemarks: false,
     allowsUpload: !!input.allowsUpload,
-    minUploads: input.allowsUpload ? input.minUploads ?? 1 : 0,
-    maxUploads: input.allowsUpload ? input.maxUploads ?? null : null,
+    minUploads: input.allowsUpload ? (input.minUploads ?? 1) : 0,
+    maxUploads: input.allowsUpload ? (input.maxUploads ?? null) : null,
     acceptedFileTypes: input.acceptedFileTypes ?? [],
     documentType: input.documentType ?? null,
     requiresValidity: !!input.requiresValidity,
@@ -7794,7 +8841,9 @@ function buildDefaultChecklistConfig(input: {
     warningBeforeDuration: input.warningBeforeDuration ?? null,
     warningBeforeUnit: input.warningBeforeUnit ?? null,
     notifyBeforeExpiry: !!input.notifyBeforeExpiry,
-    notificationRoles: input.notifyBeforeExpiry ? [...DEFAULT_VALIDITY_NOTIFICATION_ROLES] : [],
+    notificationRoles: input.notifyBeforeExpiry
+      ? [...DEFAULT_VALIDITY_NOTIFICATION_ROLES]
+      : [],
     showInDocumentsPage: !!input.allowsUpload,
     showInTimeline: !!input.allowsUpload,
     deadlineDuration: 2,
@@ -7824,7 +8873,11 @@ function buildDefaultPhotoRequirementConfig(input: {
     isMandatory: true,
     minPhotos: input.minPhotos ?? 1,
     maxPhotos: input.maxPhotos ?? null,
-    acceptedFileTypes: input.acceptedFileTypes ?? ["image/jpeg", "image/png", "application/pdf"],
+    acceptedFileTypes: input.acceptedFileTypes ?? [
+      "image/jpeg",
+      "image/png",
+      "application/pdf",
+    ],
     isVisibleInTimeline: true,
     documentType: input.documentType ?? null,
     requiresValidity: !!input.requiresValidity,
@@ -7833,7 +8886,9 @@ function buildDefaultPhotoRequirementConfig(input: {
     warningBeforeDuration: input.warningBeforeDuration ?? null,
     warningBeforeUnit: input.warningBeforeUnit ?? null,
     notifyBeforeExpiry: !!input.notifyBeforeExpiry,
-    notificationRoles: input.notifyBeforeExpiry ? [...DEFAULT_VALIDITY_NOTIFICATION_ROLES] : [],
+    notificationRoles: input.notifyBeforeExpiry
+      ? [...DEFAULT_VALIDITY_NOTIFICATION_ROLES]
+      : [],
     showInDocumentsPage: true,
   };
 }
@@ -7862,7 +8917,9 @@ function buildDefaultWorkflowNode(input: {
     key: input.key,
     name: input.name,
     description: input.description,
-    category: input.branchName ? `${input.sectionName} / ${input.branchName}` : input.sectionName,
+    category: input.branchName
+      ? `${input.sectionName} / ${input.branchName}`
+      : input.sectionName,
     nodeType: input.nodeType ?? "CHECKLIST_NODE",
     sectionKey: input.sectionKey,
     sectionName: input.sectionName,
@@ -7889,7 +8946,8 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
     buildDefaultWorkflowNode({
       key: "bill_filing",
       name: "Bill Filing",
-      description: "Configurable filing start node. Capture bill details, upload the bill document, optionally open customs query handling, and expose the filing path options only after completion.",
+      description:
+        "Configurable filing start node. Capture bill details, upload the bill document, optionally open customs query handling, and expose the filing path options only after completion.",
       sectionKey: "start",
       sectionName: "Start",
       sortOrder: 1,
@@ -7904,7 +8962,13 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
           required: true,
           placeholder: "Enter bill filing number",
         },
-        { key: "bill_filing_date", label: "Bill Filing Date", type: "DATE", required: true, placeholder: "Select bill filing date" },
+        {
+          key: "bill_filing_date",
+          label: "Bill Filing Date",
+          type: "DATE",
+          required: true,
+          placeholder: "Select bill filing date",
+        },
       ],
       documentRequirementsJson: [
         {
@@ -7923,7 +8987,13 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
           type: "TOGGLE",
           defaultEnabled: false,
           unlocksFields: [
-            { key: "query_notes", label: "Query Details", type: "TEXTAREA", required: true, placeholder: "Enter customs query notes" },
+            {
+              key: "query_notes",
+              label: "Query Details",
+              type: "TEXTAREA",
+              required: true,
+              placeholder: "Enter customs query notes",
+            },
           ],
         },
         {
@@ -7946,7 +9016,8 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
     buildDefaultWorkflowNode({
       key: "choose_primary_path",
       name: "Choose Filing Path",
-      description: "Choose the filing path configuration for this job after bill filing is complete.",
+      description:
+        "Choose the filing path configuration for this job after bill filing is complete.",
       nodeType: "DECISION",
       sectionKey: "start",
       sectionName: "Start",
@@ -7957,13 +9028,16 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
     buildDefaultWorkflowNode({
       key: "first_check_be_copy_generation",
       name: "BE Copy Generation",
-      description: "Generate the BE copy before the remaining First Check sequence.",
+      description:
+        "Generate the BE copy before the remaining First Check sequence.",
       sectionKey: "first_check",
       sectionName: "First Check",
       sortOrder: 3,
       positionX: 140,
       positionY: 460,
-      checklistItems: [buildDefaultChecklistConfig({ label: "BE Copy Generation" })],
+      checklistItems: [
+        buildDefaultChecklistConfig({ label: "BE Copy Generation" }),
+      ],
     }),
     buildDefaultWorkflowNode({
       key: "first_check_goods_registration",
@@ -7974,7 +9048,9 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
       sortOrder: 4,
       positionX: 140,
       positionY: 640,
-      checklistItems: [buildDefaultChecklistConfig({ label: "Goods Registration" })],
+      checklistItems: [
+        buildDefaultChecklistConfig({ label: "Goods Registration" }),
+      ],
     }),
     buildDefaultWorkflowNode({
       key: "first_check_examination",
@@ -7988,17 +9064,26 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
       checklistItems: [
         buildDefaultChecklistConfig({
           label: "Examination",
-          allowsUpload: true,
-          minUploads: 1,
-          acceptedFileTypes: ["application/pdf"],
+          allowsUpload: false,
+          minUploads: 0,
+          acceptedFileTypes: [],
+          documentType: "",
+          requiresValidity: false,
+          warningBeforeDuration: null,
+          warningBeforeUnit: "CALENDAR_DAYS",
+          notifyBeforeExpiry: false,
+        }),
+      ],
+      photoRequirements: [
+        buildDefaultPhotoRequirementConfig({
+          label: "CE/Lab Report",
+          acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
           documentType: "CE/Lab Report",
           requiresValidity: true,
           warningBeforeDuration: 1,
           warningBeforeUnit: "CALENDAR_DAYS",
           notifyBeforeExpiry: true,
         }),
-      ],
-      photoRequirements: [
         buildDefaultPhotoRequirementConfig({
           label: "Examination Photos",
           acceptedFileTypes: ["image/jpeg", "image/png"],
@@ -8038,12 +9123,15 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
       positionX: 140,
       positionY: 1360,
       canBeSkipped: true,
-      checklistItems: [buildDefaultChecklistConfig({ label: "Duty", isMandatory: false })],
+      checklistItems: [
+        buildDefaultChecklistConfig({ label: "Duty", isMandatory: false }),
+      ],
     }),
     buildDefaultWorkflowNode({
       key: "first_check_ooc",
       name: "OOC",
-      description: "Upload the Out of Charge document before moving to delivery.",
+      description:
+        "Upload the Out of Charge document before moving to delivery.",
       sectionKey: "first_check",
       sectionName: "First Check",
       sortOrder: 9,
@@ -8061,7 +9149,8 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
     buildDefaultWorkflowNode({
       key: "first_check_delivery",
       name: "Delivery",
-      description: "Upload the E-Way Bill and track its validity before delivery.",
+      description:
+        "Upload the E-Way Bill and track its validity before delivery.",
       sectionKey: "first_check",
       sectionName: "First Check",
       sortOrder: 10,
@@ -8083,7 +9172,8 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
     buildDefaultWorkflowNode({
       key: "choose_second_check_branch",
       name: "Choose Second Check Branch",
-      description: "Choose whether the Second Check continues through RMS or Open Bill.",
+      description:
+        "Choose whether the Second Check continues through RMS or Open Bill.",
       nodeType: "DECISION",
       sectionKey: "second_check",
       sectionName: "Second Check",
@@ -8155,12 +9245,15 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
       sortOrder: 15,
       positionX: 1060,
       positionY: 820,
-      checklistItems: [buildDefaultChecklistConfig({ label: "Goods Registration" })],
+      checklistItems: [
+        buildDefaultChecklistConfig({ label: "Goods Registration" }),
+      ],
     }),
     buildDefaultWorkflowNode({
       key: "second_check_open_bill_examination",
       name: "Examination",
-      description: "Capture examination evidence and validity on the Open Bill path.",
+      description:
+        "Capture examination evidence and validity on the Open Bill path.",
       sectionKey: "second_check",
       sectionName: "Second Check",
       branchKey: "open_bill",
@@ -8171,17 +9264,26 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
       checklistItems: [
         buildDefaultChecklistConfig({
           label: "Examination",
-          allowsUpload: true,
-          minUploads: 1,
-          acceptedFileTypes: ["application/pdf"],
+          allowsUpload: false,
+          minUploads: 0,
+          acceptedFileTypes: [],
+          documentType: "",
+          requiresValidity: false,
+          warningBeforeDuration: null,
+          warningBeforeUnit: "CALENDAR_DAYS",
+          notifyBeforeExpiry: false,
+        }),
+      ],
+      photoRequirements: [
+        buildDefaultPhotoRequirementConfig({
+          label: "CE/Lab Report",
+          acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
           documentType: "CE/Lab Report",
           requiresValidity: true,
           warningBeforeDuration: 1,
           warningBeforeUnit: "CALENDAR_DAYS",
           notifyBeforeExpiry: true,
         }),
-      ],
-      photoRequirements: [
         buildDefaultPhotoRequirementConfig({
           label: "Examination Photos",
           acceptedFileTypes: ["image/jpeg", "image/png"],
@@ -8201,7 +9303,9 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
       positionX: 1060,
       positionY: 1180,
       canBeSkipped: true,
-      checklistItems: [buildDefaultChecklistConfig({ label: "Duty", isMandatory: false })],
+      checklistItems: [
+        buildDefaultChecklistConfig({ label: "Duty", isMandatory: false }),
+      ],
     }),
     buildDefaultWorkflowNode({
       key: "second_check_open_bill_ooc",
@@ -8250,7 +9354,8 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
     buildDefaultWorkflowNode({
       key: "amendment_decision",
       name: "Amendment Decision",
-      description: "Choose whether to enter the optional amendment flow or skip it.",
+      description:
+        "Choose whether to enter the optional amendment flow or skip it.",
       nodeType: "DECISION",
       sectionKey: "amendment",
       sectionName: "Amendment",
@@ -8261,19 +9366,23 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
     buildDefaultWorkflowNode({
       key: "amendment_execution",
       name: "Amendment",
-      description: "Configurable amendment checklist that can be entered or skipped.",
+      description:
+        "Configurable amendment checklist that can be entered or skipped.",
       sectionKey: "amendment",
       sectionName: "Amendment",
       sortOrder: 21,
       positionX: 860,
       positionY: 2000,
       canBeSkipped: true,
-      checklistItems: [buildDefaultChecklistConfig({ label: "Amendment", isMandatory: false })],
+      checklistItems: [
+        buildDefaultChecklistConfig({ label: "Amendment", isMandatory: false }),
+      ],
     }),
     buildDefaultWorkflowNode({
       key: "workflow_complete",
       name: "Workflow Complete",
-      description: "Finalize the filing workflow after the chosen path finishes.",
+      description:
+        "Finalize the filing workflow after the chosen path finishes.",
       nodeType: "END",
       sectionKey: "end",
       sectionName: "End",
@@ -8283,69 +9392,215 @@ const DEFAULT_FILING_WORKFLOW_SEED = {
     }),
   ],
   edges: [
-    { sourceKey: "bill_filing", targetKey: "choose_primary_path", label: "Select Filing Path" },
-    { sourceKey: "choose_primary_path", targetKey: "first_check_be_copy_generation", label: "First Check" },
-    { sourceKey: "choose_primary_path", targetKey: "choose_second_check_branch", label: "Second Check" },
-    { sourceKey: "first_check_be_copy_generation", targetKey: "first_check_goods_registration", label: "Next" },
-    { sourceKey: "first_check_goods_registration", targetKey: "first_check_examination", label: "Next" },
-    { sourceKey: "first_check_examination", targetKey: "first_check_group_forward", label: "Next" },
-    { sourceKey: "first_check_group_forward", targetKey: "first_check_assessment", label: "Next" },
-    { sourceKey: "first_check_assessment", targetKey: "first_check_duty", label: "Next" },
-    { sourceKey: "first_check_duty", targetKey: "first_check_ooc", label: "Skip / Complete" },
-    { sourceKey: "first_check_ooc", targetKey: "first_check_delivery", label: "Next" },
-    { sourceKey: "first_check_delivery", targetKey: "amendment_decision", label: "Next" },
-    { sourceKey: "choose_second_check_branch", targetKey: "second_check_rms_ooc", label: "RMS" },
-    { sourceKey: "choose_second_check_branch", targetKey: "second_check_open_bill_assessment", label: "Open Bill" },
-    { sourceKey: "second_check_rms_ooc", targetKey: "second_check_rms_delivery", label: "Next" },
-    { sourceKey: "second_check_rms_delivery", targetKey: "amendment_decision", label: "Next" },
-    { sourceKey: "second_check_open_bill_assessment", targetKey: "second_check_open_bill_goods_registration", label: "Next" },
-    { sourceKey: "second_check_open_bill_goods_registration", targetKey: "second_check_open_bill_examination", label: "Next" },
-    { sourceKey: "second_check_open_bill_examination", targetKey: "second_check_open_bill_duty", label: "Next" },
-    { sourceKey: "second_check_open_bill_duty", targetKey: "second_check_open_bill_ooc", label: "Skip / Complete" },
-    { sourceKey: "second_check_open_bill_ooc", targetKey: "second_check_open_bill_delivery", label: "Next" },
-    { sourceKey: "second_check_open_bill_delivery", targetKey: "amendment_decision", label: "Next" },
-    { sourceKey: "amendment_decision", targetKey: "amendment_execution", label: "Do Amendment" },
-    { sourceKey: "amendment_decision", targetKey: "workflow_complete", label: "Skip Amendment" },
-    { sourceKey: "amendment_execution", targetKey: "workflow_complete", label: "Next" },
+    {
+      sourceKey: "bill_filing",
+      targetKey: "choose_primary_path",
+      label: "Select Filing Path",
+    },
+    {
+      sourceKey: "choose_primary_path",
+      targetKey: "first_check_be_copy_generation",
+      label: "First Check",
+    },
+    {
+      sourceKey: "choose_primary_path",
+      targetKey: "choose_second_check_branch",
+      label: "Second Check",
+    },
+    {
+      sourceKey: "first_check_be_copy_generation",
+      targetKey: "first_check_goods_registration",
+      label: "Next",
+    },
+    {
+      sourceKey: "first_check_goods_registration",
+      targetKey: "first_check_examination",
+      label: "Next",
+    },
+    {
+      sourceKey: "first_check_examination",
+      targetKey: "first_check_group_forward",
+      label: "Next",
+    },
+    {
+      sourceKey: "first_check_group_forward",
+      targetKey: "first_check_assessment",
+      label: "Next",
+    },
+    {
+      sourceKey: "first_check_assessment",
+      targetKey: "first_check_duty",
+      label: "Next",
+    },
+    {
+      sourceKey: "first_check_duty",
+      targetKey: "first_check_ooc",
+      label: "Skip / Complete",
+    },
+    {
+      sourceKey: "first_check_ooc",
+      targetKey: "first_check_delivery",
+      label: "Next",
+    },
+    {
+      sourceKey: "first_check_delivery",
+      targetKey: "amendment_decision",
+      label: "Next",
+    },
+    {
+      sourceKey: "choose_second_check_branch",
+      targetKey: "second_check_rms_ooc",
+      label: "RMS",
+    },
+    {
+      sourceKey: "choose_second_check_branch",
+      targetKey: "second_check_open_bill_assessment",
+      label: "Open Bill",
+    },
+    {
+      sourceKey: "second_check_rms_ooc",
+      targetKey: "second_check_rms_delivery",
+      label: "Next",
+    },
+    {
+      sourceKey: "second_check_rms_delivery",
+      targetKey: "amendment_decision",
+      label: "Next",
+    },
+    {
+      sourceKey: "second_check_open_bill_assessment",
+      targetKey: "second_check_open_bill_goods_registration",
+      label: "Next",
+    },
+    {
+      sourceKey: "second_check_open_bill_goods_registration",
+      targetKey: "second_check_open_bill_examination",
+      label: "Next",
+    },
+    {
+      sourceKey: "second_check_open_bill_examination",
+      targetKey: "second_check_open_bill_duty",
+      label: "Next",
+    },
+    {
+      sourceKey: "second_check_open_bill_duty",
+      targetKey: "second_check_open_bill_ooc",
+      label: "Skip / Complete",
+    },
+    {
+      sourceKey: "second_check_open_bill_ooc",
+      targetKey: "second_check_open_bill_delivery",
+      label: "Next",
+    },
+    {
+      sourceKey: "second_check_open_bill_delivery",
+      targetKey: "amendment_decision",
+      label: "Next",
+    },
+    {
+      sourceKey: "amendment_decision",
+      targetKey: "amendment_execution",
+      label: "Do Amendment",
+    },
+    {
+      sourceKey: "amendment_decision",
+      targetKey: "workflow_complete",
+      label: "Skip Amendment",
+    },
+    {
+      sourceKey: "amendment_execution",
+      targetKey: "workflow_complete",
+      label: "Next",
+    },
   ],
 } as const;
 
 function normalizeFieldDefinitions(value: unknown): FilingFieldDefinition[] {
   if (!Array.isArray(value)) return [];
   return value
-    .filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === "object")
+    .filter(
+      (entry): entry is Record<string, unknown> =>
+        Boolean(entry) && typeof entry === "object",
+    )
     .map((entry, index) => ({
-      key: typeof entry.key === "string" && entry.key.trim() ? entry.key.trim() : `field_${index + 1}`,
-      label: typeof entry.label === "string" && entry.label.trim() ? entry.label.trim() : `Field ${index + 1}`,
-      type: typeof entry.type === "string" && entry.type.trim() ? entry.type.trim() : "TEXT",
+      key:
+        typeof entry.key === "string" && entry.key.trim()
+          ? entry.key.trim()
+          : `field_${index + 1}`,
+      label:
+        typeof entry.label === "string" && entry.label.trim()
+          ? entry.label.trim()
+          : `Field ${index + 1}`,
+      type:
+        typeof entry.type === "string" && entry.type.trim()
+          ? entry.type.trim()
+          : "TEXT",
       required: entry.required !== false,
-      placeholder: typeof entry.placeholder === "string" ? entry.placeholder : null,
+      placeholder:
+        typeof entry.placeholder === "string" ? entry.placeholder : null,
       options: Array.isArray(entry.options)
         ? entry.options
-            .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+            .filter(
+              (item): item is Record<string, unknown> =>
+                Boolean(item) && typeof item === "object",
+            )
             .map((item) => ({
-              label: typeof item.label === "string" ? item.label : String(item.value ?? ""),
-              value: typeof item.value === "string" ? item.value : String(item.label ?? ""),
+              label:
+                typeof item.label === "string"
+                  ? item.label
+                  : String(item.value ?? ""),
+              value:
+                typeof item.value === "string"
+                  ? item.value
+                  : String(item.label ?? ""),
             }))
         : [],
-      helperText: typeof entry.helperText === "string" ? entry.helperText : null,
+      helperText:
+        typeof entry.helperText === "string" ? entry.helperText : null,
       defaultValue: entry.defaultValue,
     }));
 }
 
-function normalizeDocumentRequirements(value: unknown): FilingDocumentRequirementConfig[] {
+function normalizeDocumentRequirements(
+  value: unknown,
+): FilingDocumentRequirementConfig[] {
   if (!Array.isArray(value)) return [];
   return value
-    .filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === "object")
+    .filter(
+      (entry): entry is Record<string, unknown> =>
+        Boolean(entry) && typeof entry === "object",
+    )
     .map((entry, index) => ({
-      key: typeof entry.key === "string" && entry.key.trim() ? entry.key.trim() : `document_${index + 1}`,
-      label: typeof entry.label === "string" && entry.label.trim() ? entry.label.trim() : `Document ${index + 1}`,
+      key:
+        typeof entry.key === "string" && entry.key.trim()
+          ? entry.key.trim()
+          : `document_${index + 1}`,
+      label:
+        typeof entry.label === "string" && entry.label.trim()
+          ? entry.label.trim()
+          : `Document ${index + 1}`,
+      description:
+        typeof entry.description === "string" ? entry.description : null,
       required: entry.required !== false,
       acceptedFileTypes: Array.isArray(entry.acceptedFileTypes)
-        ? entry.acceptedFileTypes.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+        ? entry.acceptedFileTypes.filter(
+            (item): item is string =>
+              typeof item === "string" && item.trim().length > 0,
+          )
         : ["application/pdf", "image/jpeg", "image/png"],
-      maxFileSizeMb: entry.maxFileSizeMb === undefined || entry.maxFileSizeMb === null ? null : Number(entry.maxFileSizeMb),
+      maxFileSizeMb:
+        entry.maxFileSizeMb === undefined || entry.maxFileSizeMb === null
+          ? null
+          : Number(entry.maxFileSizeMb),
       multiple: !!entry.multiple,
+      minUploads:
+        entry.minUploads === undefined || entry.minUploads === null
+          ? 1
+          : Math.max(0, Number(entry.minUploads)),
+      maxUploads:
+        entry.maxUploads === undefined || entry.maxUploads === null
+          ? null
+          : Math.max(0, Number(entry.maxUploads)),
       allowReplacement: entry.allowReplacement !== false,
       allowPreview: entry.allowPreview !== false,
       approvalRequired: !!entry.approvalRequired,
@@ -8353,76 +9608,388 @@ function normalizeDocumentRequirements(value: unknown): FilingDocumentRequiremen
         entry.visibleWhen && typeof entry.visibleWhen === "object"
           ? {
               sectionKey:
-                typeof (entry.visibleWhen as Record<string, unknown>).sectionKey === "string"
-                  ? String((entry.visibleWhen as Record<string, unknown>).sectionKey)
+                typeof (entry.visibleWhen as Record<string, unknown>)
+                  .sectionKey === "string"
+                  ? String(
+                      (entry.visibleWhen as Record<string, unknown>).sectionKey,
+                    )
                   : undefined,
               equals:
-                typeof (entry.visibleWhen as Record<string, unknown>).equals === "boolean"
-                  ? Boolean((entry.visibleWhen as Record<string, unknown>).equals)
+                typeof (entry.visibleWhen as Record<string, unknown>).equals ===
+                "boolean"
+                  ? Boolean(
+                      (entry.visibleWhen as Record<string, unknown>).equals,
+                    )
                   : undefined,
             }
           : null,
+      documentType:
+        typeof entry.documentType === "string"
+          ? entry.documentType.trim() || null
+          : null,
       requiresValidity: !!entry.requiresValidity,
+      validityDuration:
+        entry.validityDuration === undefined || entry.validityDuration === null
+          ? null
+          : Math.max(1, Number(entry.validityDuration)),
+      validityUnit:
+        entry.validityUnit === "CALENDAR_DAYS"
+          ? "CALENDAR_DAYS"
+          : entry.validityUnit === "BUSINESS_DAYS"
+            ? "BUSINESS_DAYS"
+            : null,
+      warningBeforeDuration:
+        entry.warningBeforeDuration === undefined ||
+        entry.warningBeforeDuration === null
+          ? null
+          : Math.max(1, Number(entry.warningBeforeDuration)),
+      warningBeforeUnit:
+        entry.warningBeforeUnit === "CALENDAR_DAYS"
+          ? "CALENDAR_DAYS"
+          : entry.warningBeforeUnit === "BUSINESS_DAYS"
+            ? "BUSINESS_DAYS"
+            : null,
+      notifyBeforeExpiry: !!entry.notifyBeforeExpiry,
+      notificationRoles: Array.isArray(entry.notificationRoles)
+        ? entry.notificationRoles.filter(
+            (item): item is string =>
+              typeof item === "string" && item.trim().length > 0,
+          )
+        : [],
+      showInDocumentsPage:
+        entry.showInDocumentsPage !== undefined
+          ? !!entry.showInDocumentsPage
+          : true,
+      isVisibleInTimeline:
+        entry.isVisibleInTimeline !== undefined
+          ? !!entry.isVisibleInTimeline
+          : true,
       reminderOffsetDays:
-        entry.reminderOffsetDays === undefined || entry.reminderOffsetDays === null ? null : Number(entry.reminderOffsetDays),
-      reminderKind: typeof entry.reminderKind === "string" ? entry.reminderKind : null,
+        entry.reminderOffsetDays === undefined ||
+        entry.reminderOffsetDays === null
+          ? null
+          : Number(entry.reminderOffsetDays),
+      reminderKind:
+        typeof entry.reminderKind === "string" ? entry.reminderKind : null,
+      legacySource:
+        entry.legacySource === "PHOTO_REQUIREMENT" ||
+        entry.legacySource === "CHECKLIST_UPLOAD"
+          ? entry.legacySource
+          : "DOCUMENT_REQUIREMENT",
+      legacySourceId:
+        typeof entry.legacySourceId === "string"
+          ? entry.legacySourceId
+          : null,
     }));
 }
 
-function normalizeConditionalSections(value: unknown): FilingConditionalSectionConfig[] {
+function slugifyWorkflowDocumentKey(value: string) {
+  return (
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "") || "document"
+  );
+}
+
+function convertPhotoRequirementToDocumentRequirement(
+  photo: Record<string, unknown>,
+  index: number,
+): FilingDocumentRequirementConfig {
+  const label =
+    typeof photo.label === "string" && photo.label.trim()
+      ? photo.label.trim()
+      : `Upload ${index + 1}`;
+  const minUploads = Math.max(Number(photo.minPhotos ?? 1), 0);
+  const maxUploads =
+    photo.maxPhotos === undefined || photo.maxPhotos === null
+      ? null
+      : Math.max(Number(photo.maxPhotos), 0);
+  return {
+    key: `photo_${slugifyWorkflowDocumentKey(label)}_${index + 1}`,
+    label,
+    description:
+      typeof photo.description === "string" ? photo.description : null,
+    required: photo.isMandatory !== false,
+    acceptedFileTypes: Array.isArray(photo.acceptedFileTypes)
+      ? photo.acceptedFileTypes.filter(
+          (value): value is string =>
+            typeof value === "string" && value.trim().length > 0,
+        )
+      : ["image/jpeg", "image/png", "application/pdf"],
+    minUploads,
+    maxUploads,
+    multiple: (maxUploads ?? minUploads) > 1,
+    allowReplacement: true,
+    allowPreview: true,
+    documentType:
+      typeof photo.documentType === "string"
+        ? photo.documentType.trim() || label
+        : label,
+    requiresValidity: !!photo.requiresValidity,
+    validityDuration:
+      photo.validityDuration === undefined || photo.validityDuration === null
+        ? null
+        : Math.max(Number(photo.validityDuration), 1),
+    validityUnit:
+      photo.validityUnit === "CALENDAR_DAYS"
+        ? "CALENDAR_DAYS"
+        : photo.validityUnit === "BUSINESS_DAYS"
+          ? "BUSINESS_DAYS"
+          : null,
+    warningBeforeDuration:
+      photo.warningBeforeDuration === undefined ||
+      photo.warningBeforeDuration === null
+        ? null
+        : Math.max(Number(photo.warningBeforeDuration), 1),
+    warningBeforeUnit:
+      photo.warningBeforeUnit === "CALENDAR_DAYS"
+        ? "CALENDAR_DAYS"
+        : photo.warningBeforeUnit === "BUSINESS_DAYS"
+          ? "BUSINESS_DAYS"
+          : null,
+    notifyBeforeExpiry: !!photo.notifyBeforeExpiry,
+    notificationRoles: Array.isArray(photo.notificationRoles)
+      ? photo.notificationRoles.filter(
+          (value): value is string =>
+            typeof value === "string" && value.trim().length > 0,
+        )
+      : [],
+    showInDocumentsPage:
+      photo.showInDocumentsPage !== undefined
+        ? !!photo.showInDocumentsPage
+        : true,
+    isVisibleInTimeline:
+      photo.isVisibleInTimeline !== undefined
+        ? !!photo.isVisibleInTimeline
+        : true,
+    legacySource: "PHOTO_REQUIREMENT",
+    legacySourceId:
+      typeof photo.id === "string" && photo.id.trim() ? photo.id : null,
+  };
+}
+
+function convertChecklistUploadToDocumentRequirement(
+  item: Record<string, unknown>,
+  index: number,
+): FilingDocumentRequirementConfig {
+  const label =
+    typeof item.documentType === "string" && item.documentType.trim()
+      ? item.documentType.trim()
+      : typeof item.label === "string" && item.label.trim()
+        ? item.label.trim()
+        : `Checklist Upload ${index + 1}`;
+  const minUploads = Math.max(Number(item.minUploads ?? 0), 0);
+  const maxUploads =
+    item.maxUploads === undefined || item.maxUploads === null
+      ? null
+      : Math.max(Number(item.maxUploads), 0);
+  return {
+    key: `checklist_${slugifyWorkflowDocumentKey(label)}_${index + 1}`,
+    label,
+    description:
+      typeof item.description === "string" ? item.description : null,
+    required: item.isMandatory !== false,
+    acceptedFileTypes: Array.isArray(item.acceptedFileTypes)
+      ? item.acceptedFileTypes.filter(
+          (value): value is string =>
+            typeof value === "string" && value.trim().length > 0,
+        )
+      : ["application/pdf", "image/jpeg", "image/png"],
+    minUploads,
+    maxUploads,
+    multiple: (maxUploads ?? minUploads) > 1,
+    allowReplacement: true,
+    allowPreview: true,
+    documentType: label,
+    requiresValidity: !!item.requiresValidity,
+    validityDuration:
+      item.validityDuration === undefined || item.validityDuration === null
+        ? null
+        : Math.max(Number(item.validityDuration), 1),
+    validityUnit:
+      item.validityUnit === "CALENDAR_DAYS"
+        ? "CALENDAR_DAYS"
+        : item.validityUnit === "BUSINESS_DAYS"
+          ? "BUSINESS_DAYS"
+          : null,
+    warningBeforeDuration:
+      item.warningBeforeDuration === undefined ||
+      item.warningBeforeDuration === null
+        ? null
+        : Math.max(Number(item.warningBeforeDuration), 1),
+    warningBeforeUnit:
+      item.warningBeforeUnit === "CALENDAR_DAYS"
+        ? "CALENDAR_DAYS"
+        : item.warningBeforeUnit === "BUSINESS_DAYS"
+          ? "BUSINESS_DAYS"
+          : null,
+    notifyBeforeExpiry: !!item.notifyBeforeExpiry,
+    notificationRoles: Array.isArray(item.notificationRoles)
+      ? item.notificationRoles.filter(
+          (value): value is string =>
+            typeof value === "string" && value.trim().length > 0,
+        )
+      : [],
+    showInDocumentsPage:
+      item.showInDocumentsPage !== undefined
+        ? !!item.showInDocumentsPage
+        : true,
+    isVisibleInTimeline:
+      item.showInTimeline !== undefined ? !!item.showInTimeline : true,
+    legacySource: "CHECKLIST_UPLOAD",
+    legacySourceId:
+      typeof item.id === "string" && item.id.trim() ? item.id : null,
+  };
+}
+
+function mergeNodeDocumentRequirements(node: any) {
+  const explicitRequirements = normalizeDocumentRequirements(
+    node.documentRequirementsJson ?? node.documentRequirements ?? [],
+  );
+  const legacyPhotoRequirements = Array.isArray(node.photoRequirements)
+    ? node.photoRequirements.map(
+        (photo: any, index: number) =>
+          convertPhotoRequirementToDocumentRequirement(photo, index),
+      )
+    : [];
+  const legacyChecklistRequirements =
+    explicitRequirements.length === 0 && Array.isArray(node.checklistItems)
+      ? node.checklistItems
+          .filter((item: any) => item?.allowsUpload)
+          .map((item: any, index: number) =>
+            convertChecklistUploadToDocumentRequirement(item, index),
+          )
+      : [];
+  const fallbackRequirementsByKey = new Map<string, FilingDocumentRequirementConfig>(
+    [
+      ...legacyPhotoRequirements,
+      ...(Array.isArray(node.checklistItems)
+        ? node.checklistItems
+            .filter((item: any) => item?.allowsUpload)
+            .map((item: any, index: number) =>
+              convertChecklistUploadToDocumentRequirement(item, index),
+            )
+        : []),
+    ].map((requirement) => [requirement.key, requirement]),
+  );
+
+  const merged = new Map<string, FilingDocumentRequirementConfig>();
+  for (const requirement of [
+    ...explicitRequirements,
+    ...legacyPhotoRequirements,
+    ...legacyChecklistRequirements,
+  ]) {
+    const fallback =
+      requirement.legacySource !== "DOCUMENT_REQUIREMENT"
+        ? fallbackRequirementsByKey.get(requirement.key)
+        : null;
+    const normalizedRequirement =
+      fallback &&
+      fallback.legacySourceId &&
+      fallback.legacySource === requirement.legacySource
+        ? {
+            ...requirement,
+            legacySourceId: fallback.legacySourceId,
+          }
+        : requirement;
+    if (!merged.has(normalizedRequirement.key)) {
+      merged.set(normalizedRequirement.key, normalizedRequirement);
+    }
+  }
+  return Array.from(merged.values());
+}
+
+function normalizeConditionalSections(
+  value: unknown,
+): FilingConditionalSectionConfig[] {
   if (!Array.isArray(value)) return [];
   return value
-    .filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === "object")
+    .filter(
+      (entry): entry is Record<string, unknown> =>
+        Boolean(entry) && typeof entry === "object",
+    )
     .map((entry, index) => ({
-      key: typeof entry.key === "string" && entry.key.trim() ? entry.key.trim() : `section_${index + 1}`,
-      label: typeof entry.label === "string" && entry.label.trim() ? entry.label.trim() : `Section ${index + 1}`,
-      type: typeof entry.type === "string" && entry.type.trim() ? entry.type.trim() : "TOGGLE",
+      key:
+        typeof entry.key === "string" && entry.key.trim()
+          ? entry.key.trim()
+          : `section_${index + 1}`,
+      label:
+        typeof entry.label === "string" && entry.label.trim()
+          ? entry.label.trim()
+          : `Section ${index + 1}`,
+      type:
+        typeof entry.type === "string" && entry.type.trim()
+          ? entry.type.trim()
+          : "TOGGLE",
       defaultEnabled: !!entry.defaultEnabled,
       unlocksDocuments: normalizeDocumentRequirements(entry.unlocksDocuments),
       unlocksFields: normalizeFieldDefinitions(entry.unlocksFields),
-      config: entry.config && typeof entry.config === "object" ? (entry.config as Record<string, unknown>) : null,
+      config:
+        entry.config && typeof entry.config === "object"
+          ? (entry.config as Record<string, unknown>)
+          : null,
     }));
 }
 
 function normalizePrerequisiteGate(value: unknown) {
-  const raw = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  const raw =
+    value && typeof value === "object"
+      ? (value as Record<string, unknown>)
+      : {};
   return {
     enabled: !!raw.enabled,
     mode: raw.mode === "ANY" ? "ANY" : "ALL",
     requiredNodeKeys: Array.isArray(raw.requiredNodeKeys)
-      ? raw.requiredNodeKeys.filter((entry: unknown): entry is string => typeof entry === "string" && entry.trim().length > 0)
+      ? raw.requiredNodeKeys.filter(
+          (entry: unknown): entry is string =>
+            typeof entry === "string" && entry.trim().length > 0,
+        )
       : [],
   };
 }
 
 function normalizeWorkflowNodeActionConfig(value: unknown) {
-  const raw = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  const raw =
+    value && typeof value === "object"
+      ? (value as Record<string, unknown>)
+      : {};
   return {
     prerequisiteGate: normalizePrerequisiteGate(raw.prerequisiteGate),
   };
 }
 
 function normalizeTemplateSettings(value: unknown) {
-  const input = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  const input =
+    value && typeof value === "object"
+      ? (value as Record<string, unknown>)
+      : {};
   return {
     customerApprovalTabDelayMinutes:
       input.customerApprovalTabDelayMinutes === undefined
         ? DEFAULT_CUSTOMER_APPROVAL_DELAY_MINUTES
         : Math.max(0, Number(input.customerApprovalTabDelayMinutes)),
     queryReminderTime:
-      typeof input.queryReminderTime === "string" && input.queryReminderTime.trim()
+      typeof input.queryReminderTime === "string" &&
+      input.queryReminderTime.trim()
         ? input.queryReminderTime.trim()
         : DEFAULT_QUERY_REMINDER_TIME,
     doValidityReminderOffsetDays:
-      input.doValidityReminderOffsetDays === undefined || input.doValidityReminderOffsetDays === null
+      input.doValidityReminderOffsetDays === undefined ||
+      input.doValidityReminderOffsetDays === null
         ? 2
         : Math.max(0, Number(input.doValidityReminderOffsetDays)),
-    mailTemplates: input.mailTemplates && typeof input.mailTemplates === "object" ? input.mailTemplates : {},
+    mailTemplates:
+      input.mailTemplates && typeof input.mailTemplates === "object"
+        ? input.mailTemplates
+        : {},
   };
 }
 
 function normalizeWorkflowNodeDraft(node: any, nodeIndex: number) {
-  const rawCategory = typeof node.category === "string" ? node.category : "CHECK";
+  const rawCategory =
+    typeof node.category === "string" ? node.category : "CHECK";
   const derivedNodeType =
     typeof node.nodeType === "string" && node.nodeType.trim()
       ? node.nodeType.trim().toUpperCase()
@@ -8431,62 +9998,142 @@ function normalizeWorkflowNodeDraft(node: any, nodeIndex: number) {
         : "CHECKLIST_NODE";
   return {
     ...node,
-    key: typeof node.key === "string" && node.key.trim()
-      ? node.key.trim()
-      : `${String(node.name || "node").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "node"}_${nodeIndex + 1}`,
+    key:
+      typeof node.key === "string" && node.key.trim()
+        ? node.key.trim()
+        : `${
+            String(node.name || "node")
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "_")
+              .replace(/^_+|_+$/g, "") || "node"
+          }_${nodeIndex + 1}`,
     name: typeof node.name === "string" ? node.name : `Node ${nodeIndex + 1}`,
     description: typeof node.description === "string" ? node.description : null,
     category: rawCategory,
     nodeType: derivedNodeType,
-    sectionKey: typeof node.sectionKey === "string" && node.sectionKey.trim() ? node.sectionKey.trim() : null,
-    sectionName: typeof node.sectionName === "string" && node.sectionName.trim() ? node.sectionName.trim() : null,
-    branchKey: typeof node.branchKey === "string" && node.branchKey.trim() ? node.branchKey.trim() : null,
-    branchName: typeof node.branchName === "string" && node.branchName.trim() ? node.branchName.trim() : null,
-    sortOrder: Number.isFinite(Number(node.sortOrder)) ? Math.max(1, Number(node.sortOrder)) : nodeIndex + 1,
+    sectionKey:
+      typeof node.sectionKey === "string" && node.sectionKey.trim()
+        ? node.sectionKey.trim()
+        : null,
+    sectionName:
+      typeof node.sectionName === "string" && node.sectionName.trim()
+        ? node.sectionName.trim()
+        : null,
+    branchKey:
+      typeof node.branchKey === "string" && node.branchKey.trim()
+        ? node.branchKey.trim()
+        : null,
+    branchName:
+      typeof node.branchName === "string" && node.branchName.trim()
+        ? node.branchName.trim()
+        : null,
+    sortOrder: Number.isFinite(Number(node.sortOrder))
+      ? Math.max(1, Number(node.sortOrder))
+      : nodeIndex + 1,
     isActive: node.isActive !== false,
     positionX: Number(node.positionX ?? 0),
     positionY: Number(node.positionY ?? 0),
     isStart: !!node.isStart,
-    slaDuration: node.slaDuration !== undefined ? Math.max(1, Number(node.slaDuration)) : 2,
-    slaUnit: node.slaUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : "BUSINESS_DAYS",
+    slaDuration:
+      node.slaDuration !== undefined
+        ? Math.max(1, Number(node.slaDuration))
+        : 2,
+    slaUnit:
+      node.slaUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : "BUSINESS_DAYS",
     commentsRequired: !!node.commentsRequired,
     canBeSkipped: !!node.canBeSkipped,
-    canBeRevisited: node.canBeRevisited !== undefined ? !!node.canBeRevisited : true,
+    canBeRevisited:
+      node.canBeRevisited !== undefined ? !!node.canBeRevisited : true,
     approvalRequired: !!node.approvalRequired,
     approvalRoles: Array.isArray(node.approvalRoles)
-      ? node.approvalRoles.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
+      ? node.approvalRoles.filter(
+          (value: unknown): value is string =>
+            typeof value === "string" && value.trim().length > 0,
+        )
       : [],
-    requireAllMandatoryChecklistItems: node.requireAllMandatoryChecklistItems !== undefined ? !!node.requireAllMandatoryChecklistItems : true,
-    requireMandatoryPhotos: node.requireMandatoryPhotos !== undefined ? !!node.requireMandatoryPhotos : true,
-    fieldDefinitionsJson: normalizeFieldDefinitions(node.fieldDefinitionsJson ?? node.fieldDefinitions ?? []),
-    documentRequirementsJson: normalizeDocumentRequirements(node.documentRequirementsJson ?? node.documentRequirements ?? []),
-    conditionalSectionsJson: normalizeConditionalSections(node.conditionalSectionsJson ?? node.conditionalSections ?? []),
+    requireAllMandatoryChecklistItems:
+      node.requireAllMandatoryChecklistItems !== undefined
+        ? !!node.requireAllMandatoryChecklistItems
+        : true,
+    requireMandatoryPhotos:
+      node.requireMandatoryPhotos !== undefined
+        ? !!node.requireMandatoryPhotos
+        : true,
+    fieldDefinitionsJson: normalizeFieldDefinitions(
+      node.fieldDefinitionsJson ?? node.fieldDefinitions ?? [],
+    ),
+    documentRequirementsJson: mergeNodeDocumentRequirements(node),
+    conditionalSectionsJson: normalizeConditionalSections(
+      node.conditionalSectionsJson ?? node.conditionalSections ?? [],
+    ),
     approvalConfigJson: node.approvalConfigJson ?? node.approvalConfig ?? null,
-    notificationConfigJson: node.notificationConfigJson ?? node.notificationConfig ?? null,
-    actionConfigJson: normalizeWorkflowNodeActionConfig(node.actionConfigJson ?? node.actionConfig ?? null),
+    notificationConfigJson:
+      node.notificationConfigJson ?? node.notificationConfig ?? null,
+    actionConfigJson: normalizeWorkflowNodeActionConfig(
+      node.actionConfigJson ?? node.actionConfig ?? null,
+    ),
     allowedRoles: Array.isArray(node.allowedRoles)
-      ? node.allowedRoles.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
-      : ["Admin", "Manager", "Employee"],
-    checklistItems: (node.checklistItems || []).map((item: any, itemIndex: number) => normalizeFilingChecklistItem(item, itemIndex)),
+      ? node.allowedRoles.filter(
+          (value: unknown): value is string =>
+            typeof value === "string" && value.trim().length > 0,
+        )
+      : [],
+    checklistItems: (node.checklistItems || []).map(
+      (item: any, itemIndex: number) =>
+        normalizeFilingChecklistItem(item, itemIndex),
+    ),
     photoRequirements: (node.photoRequirements || []).map((photo: any) => ({
       label: typeof photo.label === "string" ? photo.label : "",
-      description: typeof photo.description === "string" ? photo.description : null,
+      description:
+        typeof photo.description === "string" ? photo.description : null,
       isMandatory: photo.isMandatory !== undefined ? !!photo.isMandatory : true,
       minPhotos: Math.max(Number(photo.minPhotos ?? 1), 0),
-      maxPhotos: photo.maxPhotos === undefined || photo.maxPhotos === null ? null : Math.max(Number(photo.maxPhotos), 0),
+      maxPhotos:
+        photo.maxPhotos === undefined || photo.maxPhotos === null
+          ? null
+          : Math.max(Number(photo.maxPhotos), 0),
       acceptedFileTypes: Array.isArray(photo.acceptedFileTypes)
-        ? photo.acceptedFileTypes.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
+        ? photo.acceptedFileTypes.filter(
+            (value: unknown): value is string =>
+              typeof value === "string" && value.trim().length > 0,
+          )
         : ["image/jpeg", "image/png", "application/pdf"],
-      isVisibleInTimeline: photo.isVisibleInTimeline !== undefined ? !!photo.isVisibleInTimeline : true,
-      documentType: typeof photo.documentType === "string" ? photo.documentType.trim() || null : null,
+      isVisibleInTimeline:
+        photo.isVisibleInTimeline !== undefined
+          ? !!photo.isVisibleInTimeline
+          : true,
+      documentType:
+        typeof photo.documentType === "string"
+          ? photo.documentType.trim() || null
+          : null,
       requiresValidity: !!photo.requiresValidity,
-      validityDuration: photo.validityDuration === undefined || photo.validityDuration === null ? null : Math.max(Number(photo.validityDuration), 1),
-      validityUnit: photo.validityUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : photo.validityUnit === "BUSINESS_DAYS" ? "BUSINESS_DAYS" : null,
-      warningBeforeDuration: photo.warningBeforeDuration === undefined || photo.warningBeforeDuration === null ? null : Math.max(Number(photo.warningBeforeDuration), 1),
-      warningBeforeUnit: photo.warningBeforeUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : photo.warningBeforeUnit === "BUSINESS_DAYS" ? "BUSINESS_DAYS" : null,
+      validityDuration:
+        photo.validityDuration === undefined || photo.validityDuration === null
+          ? null
+          : Math.max(Number(photo.validityDuration), 1),
+      validityUnit:
+        photo.validityUnit === "CALENDAR_DAYS"
+          ? "CALENDAR_DAYS"
+          : photo.validityUnit === "BUSINESS_DAYS"
+            ? "BUSINESS_DAYS"
+            : null,
+      warningBeforeDuration:
+        photo.warningBeforeDuration === undefined ||
+        photo.warningBeforeDuration === null
+          ? null
+          : Math.max(Number(photo.warningBeforeDuration), 1),
+      warningBeforeUnit:
+        photo.warningBeforeUnit === "CALENDAR_DAYS"
+          ? "CALENDAR_DAYS"
+          : photo.warningBeforeUnit === "BUSINESS_DAYS"
+            ? "BUSINESS_DAYS"
+            : null,
       notifyBeforeExpiry: !!photo.notifyBeforeExpiry,
       notificationRoles: Array.isArray(photo.notificationRoles)
-        ? photo.notificationRoles.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
+        ? photo.notificationRoles.filter(
+            (value: unknown): value is string =>
+              typeof value === "string" && value.trim().length > 0,
+          )
         : [],
       showInDocumentsPage: photo.showInDocumentsPage !== false,
     })),
@@ -8501,7 +10148,11 @@ async function getHolidayIsoSet(orgId?: string) {
   return new Set(holidays.map((h) => h.date.toISOString().split("T")[0]));
 }
 
-function countBusinessDaysSince(dueAt: Date, now: Date, holidayIsoSet: Set<string>) {
+function countBusinessDaysSince(
+  dueAt: Date,
+  now: Date,
+  holidayIsoSet: Set<string>,
+) {
   if (dueAt.getTime() >= now.getTime()) {
     return 0;
   }
@@ -8526,7 +10177,10 @@ function countBusinessDaysSince(dueAt: Date, now: Date, holidayIsoSet: Set<strin
 function normalizeFilingChecklistItem(item: any, idx: number) {
   const allowsUpload = !!item.allowsUpload;
   const acceptedFileTypes = Array.isArray(item.acceptedFileTypes)
-    ? item.acceptedFileTypes.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
+    ? item.acceptedFileTypes.filter(
+        (value: unknown): value is string =>
+          typeof value === "string" && value.trim().length > 0,
+      )
     : [];
 
   return {
@@ -8536,25 +10190,53 @@ function normalizeFilingChecklistItem(item: any, idx: number) {
     requiresRemarks: !!item.requiresRemarks,
     allowsUpload,
     minUploads: allowsUpload ? Math.max(Number(item.minUploads ?? 0), 0) : 0,
-    maxUploads: allowsUpload && item.maxUploads !== undefined && item.maxUploads !== null
-      ? Math.max(Number(item.maxUploads), 0)
-      : null,
+    maxUploads:
+      allowsUpload && item.maxUploads !== undefined && item.maxUploads !== null
+        ? Math.max(Number(item.maxUploads), 0)
+        : null,
     acceptedFileTypes,
-    documentType: typeof item.documentType === "string" ? item.documentType.trim() || null : null,
+    documentType:
+      typeof item.documentType === "string"
+        ? item.documentType.trim() || null
+        : null,
     requiresValidity: !!item.requiresValidity,
-    validityDuration: item.validityDuration === undefined || item.validityDuration === null ? null : Math.max(Number(item.validityDuration), 1),
-    validityUnit: item.validityUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : item.validityUnit === "BUSINESS_DAYS" ? "BUSINESS_DAYS" : null,
-    warningBeforeDuration: item.warningBeforeDuration === undefined || item.warningBeforeDuration === null ? null : Math.max(Number(item.warningBeforeDuration), 1),
-    warningBeforeUnit: item.warningBeforeUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : item.warningBeforeUnit === "BUSINESS_DAYS" ? "BUSINESS_DAYS" : null,
+    validityDuration:
+      item.validityDuration === undefined || item.validityDuration === null
+        ? null
+        : Math.max(Number(item.validityDuration), 1),
+    validityUnit:
+      item.validityUnit === "CALENDAR_DAYS"
+        ? "CALENDAR_DAYS"
+        : item.validityUnit === "BUSINESS_DAYS"
+          ? "BUSINESS_DAYS"
+          : null,
+    warningBeforeDuration:
+      item.warningBeforeDuration === undefined ||
+      item.warningBeforeDuration === null
+        ? null
+        : Math.max(Number(item.warningBeforeDuration), 1),
+    warningBeforeUnit:
+      item.warningBeforeUnit === "CALENDAR_DAYS"
+        ? "CALENDAR_DAYS"
+        : item.warningBeforeUnit === "BUSINESS_DAYS"
+          ? "BUSINESS_DAYS"
+          : null,
     notifyBeforeExpiry: !!item.notifyBeforeExpiry,
     notificationRoles: Array.isArray(item.notificationRoles)
-      ? item.notificationRoles.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
+      ? item.notificationRoles.filter(
+          (value: unknown): value is string =>
+            typeof value === "string" && value.trim().length > 0,
+        )
       : [],
     showInDocumentsPage: item.showInDocumentsPage !== false,
     showInTimeline: item.showInTimeline !== false,
     deadlineDuration: Math.max(Number(item.deadlineDuration ?? 2), 1),
-    deadlineUnit: item.deadlineUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : "BUSINESS_DAYS",
-    delayRemarksRequired: item.delayRemarksRequired !== undefined ? !!item.delayRemarksRequired : true,
+    deadlineUnit:
+      item.deadlineUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : "BUSINESS_DAYS",
+    delayRemarksRequired:
+      item.delayRemarksRequired !== undefined
+        ? !!item.delayRemarksRequired
+        : true,
     hasPhotoRequirement: !!item.hasPhotoRequirement,
     sortOrder: item.sortOrder !== undefined ? Number(item.sortOrder) : idx + 1,
     isActive: item.isActive !== undefined ? !!item.isActive : true,
@@ -8562,12 +10244,18 @@ function normalizeFilingChecklistItem(item: any, idx: number) {
 }
 
 function slugify(value: string) {
-  const normalized = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
   return normalized || "node";
 }
 
 function validateFilingWorkflowDraft(data: { nodes: any[]; edges: any[] }) {
-  const activeNodes = (data.nodes || []).filter((node) => node.isActive !== false);
+  const activeNodes = (data.nodes || []).filter(
+    (node) => node.isActive !== false,
+  );
   const activeNodeMap = new Map(activeNodes.map((node) => [node.key, node]));
   const nodeKeys = new Set<string>();
   const errors: string[] = [];
@@ -8575,7 +10263,11 @@ function validateFilingWorkflowDraft(data: { nodes: any[]; edges: any[] }) {
 
   const startNodes = activeNodes.filter((node) => node.isStart);
   if (activeNodes.length > 0 && startNodes.length !== 1) {
-    errors.push(startNodes.length === 0 ? "The workflow must have one start node." : "The workflow can only have one start node.");
+    errors.push(
+      startNodes.length === 0
+        ? "The workflow must have one start node."
+        : "The workflow can only have one start node.",
+    );
   }
 
   for (const node of activeNodes) {
@@ -8601,29 +10293,43 @@ function validateFilingWorkflowDraft(data: { nodes: any[]; edges: any[] }) {
       errors.push(`Node "${edge.sourceKey}" cannot connect to itself.`);
     }
     if (!nodeKeys.has(edge.sourceKey) || !nodeKeys.has(edge.targetKey)) {
-      errors.push(`Edge ${edge.sourceKey} -> ${edge.targetKey} references an inactive or missing node.`);
+      errors.push(
+        `Edge ${edge.sourceKey} -> ${edge.targetKey} references an inactive or missing node.`,
+      );
     }
     const signature = `${edge.sourceKey}::${edge.targetKey}`;
     if (edgeSet.has(signature)) {
-      errors.push(`Duplicate edge detected for ${edge.sourceKey} -> ${edge.targetKey}.`);
+      errors.push(
+        `Duplicate edge detected for ${edge.sourceKey} -> ${edge.targetKey}.`,
+      );
     }
     edgeSet.add(signature);
   }
 
   for (const node of activeNodes) {
     if ((node.nodeType ?? "CHECKLIST_NODE") === "NOTIFICATION") {
-      const outgoingCount = (data.edges || []).filter((edge) => edge.sourceKey === node.key).length;
+      const outgoingCount = (data.edges || []).filter(
+        (edge) => edge.sourceKey === node.key,
+      ).length;
       if (outgoingCount > 1) {
-        errors.push(`Notification node "${node.name || node.key}" can have at most one outgoing edge because it advances automatically.`);
+        errors.push(
+          `Notification node "${node.name || node.key}" can have at most one outgoing edge because it advances automatically.`,
+        );
       }
     }
     if (!node.name || !String(node.name).trim()) {
       errors.push(`Node "${node.key || "untitled"}" must have a name.`);
     }
-    const checklistItems = (node.checklistItems || []).filter((item: any) => item.isActive !== false);
-    const fieldDefinitions = normalizeFieldDefinitions(node.fieldDefinitionsJson ?? node.fieldDefinitions ?? []);
-    const documentRequirements = normalizeDocumentRequirements(node.documentRequirementsJson ?? node.documentRequirements ?? []);
-    const conditionalSections = normalizeConditionalSections(node.conditionalSectionsJson ?? node.conditionalSections ?? []);
+    const checklistItems = (node.checklistItems || []).filter(
+      (item: any) => item.isActive !== false,
+    );
+    const fieldDefinitions = normalizeFieldDefinitions(
+      node.fieldDefinitionsJson ?? node.fieldDefinitions ?? [],
+    );
+    const documentRequirements = mergeNodeDocumentRequirements(node);
+    const conditionalSections = normalizeConditionalSections(
+      node.conditionalSectionsJson ?? node.conditionalSections ?? [],
+    );
     if (
       (node.nodeType ?? "CHECKLIST_NODE") === "CHECKLIST_NODE" &&
       checklistItems.length === 0 &&
@@ -8631,42 +10337,74 @@ function validateFilingWorkflowDraft(data: { nodes: any[]; edges: any[] }) {
       documentRequirements.length === 0 &&
       conditionalSections.length === 0
     ) {
-      errors.push(`Checklist node "${node.name || node.key}" must define at least one checklist item, field, document, or conditional section.`);
+      errors.push(
+        `Checklist node "${node.name || node.key}" must define at least one checklist item, field, document, or conditional section.`,
+      );
     }
-    if ((node.nodeType ?? "CHECKLIST_NODE") === "NOTIFICATION" && checklistItems.length > 0) {
-      warnings.push(`Notification node "${node.name || node.key}" ignores checklist items. Remove them for clarity.`);
+    if (
+      (node.nodeType ?? "CHECKLIST_NODE") === "NOTIFICATION" &&
+      checklistItems.length > 0
+    ) {
+      warnings.push(
+        `Notification node "${node.name || node.key}" ignores checklist items. Remove them for clarity.`,
+      );
     }
     for (const item of checklistItems) {
       if (!item.label || !String(item.label).trim()) {
-        errors.push(`Checklist items in node "${node.name || node.key}" must have a name.`);
+        errors.push(
+          `Checklist items in node "${node.name || node.key}" must have a name.`,
+        );
       }
       if (Number(item.deadlineDuration ?? 2) <= 0) {
-        errors.push(`Checklist item "${item.label || "Untitled"}" in node "${node.name || node.key}" must have a valid SLA duration.`);
+        errors.push(
+          `Checklist item "${item.label || "Untitled"}" in node "${node.name || node.key}" must have a valid SLA duration.`,
+        );
       }
       if (item.allowsUpload) {
         const minUploads = Number(item.minUploads ?? 0);
-        const maxUploads = item.maxUploads === null || item.maxUploads === undefined ? null : Number(item.maxUploads);
+        const maxUploads =
+          item.maxUploads === null || item.maxUploads === undefined
+            ? null
+            : Number(item.maxUploads);
         if (minUploads < 0) {
-          errors.push(`Checklist item "${item.label || "Untitled"}" cannot require a negative minimum upload count.`);
+          errors.push(
+            `Checklist item "${item.label || "Untitled"}" cannot require a negative minimum upload count.`,
+          );
         }
         if (maxUploads !== null && maxUploads < minUploads) {
-          errors.push(`Checklist item "${item.label || "Untitled"}" cannot have max uploads lower than min uploads.`);
+          errors.push(
+            `Checklist item "${item.label || "Untitled"}" cannot have max uploads lower than min uploads.`,
+          );
         }
       }
     }
-    const prerequisiteGate = normalizeWorkflowNodeActionConfig(node.actionConfigJson ?? node.actionConfig ?? null).prerequisiteGate;
+    const prerequisiteGate = normalizeWorkflowNodeActionConfig(
+      node.actionConfigJson ?? node.actionConfig ?? null,
+    ).prerequisiteGate;
     if (prerequisiteGate.enabled) {
       if (prerequisiteGate.requiredNodeKeys.length === 0) {
-        errors.push(`Node "${node.name || node.key}" has prerequisite gating enabled but no required stages selected.`);
+        errors.push(
+          `Node "${node.name || node.key}" has prerequisite gating enabled but no required stages selected.`,
+        );
       }
-      if (prerequisiteGate.requiredNodeKeys.some((entry, index, list) => list.indexOf(entry) !== index)) {
-        errors.push(`Node "${node.name || node.key}" has duplicate prerequisite stage keys.`);
+      if (
+        prerequisiteGate.requiredNodeKeys.some(
+          (entry, index, list) => list.indexOf(entry) !== index,
+        )
+      ) {
+        errors.push(
+          `Node "${node.name || node.key}" has duplicate prerequisite stage keys.`,
+        );
       }
       for (const requiredNodeKey of prerequisiteGate.requiredNodeKeys) {
         if (requiredNodeKey === node.key) {
-          errors.push(`Node "${node.name || node.key}" cannot require itself as a prerequisite.`);
+          errors.push(
+            `Node "${node.name || node.key}" cannot require itself as a prerequisite.`,
+          );
         } else if (!activeNodeMap.has(requiredNodeKey)) {
-          errors.push(`Node "${node.name || node.key}" references missing or inactive prerequisite stage "${requiredNodeKey}".`);
+          errors.push(
+            `Node "${node.name || node.key}" references missing or inactive prerequisite stage "${requiredNodeKey}".`,
+          );
         }
       }
     }
@@ -8674,8 +10412,13 @@ function validateFilingWorkflowDraft(data: { nodes: any[]; edges: any[] }) {
 
   const prerequisiteAdjacency = new Map<string, string[]>();
   for (const node of activeNodes) {
-    const prerequisiteGate = normalizeWorkflowNodeActionConfig(node.actionConfigJson ?? node.actionConfig ?? null).prerequisiteGate;
-    prerequisiteAdjacency.set(node.key, prerequisiteGate.enabled ? [...prerequisiteGate.requiredNodeKeys] : []);
+    const prerequisiteGate = normalizeWorkflowNodeActionConfig(
+      node.actionConfigJson ?? node.actionConfig ?? null,
+    ).prerequisiteGate;
+    prerequisiteAdjacency.set(
+      node.key,
+      prerequisiteGate.enabled ? [...prerequisiteGate.requiredNodeKeys] : [],
+    );
   }
   const visitedPrerequisiteNodes = new Set<string>();
   const visitingPrerequisiteNodes = new Set<string>();
@@ -8717,7 +10460,9 @@ function validateFilingWorkflowDraft(data: { nodes: any[]; edges: any[] }) {
         source.canBeRevisited !== true &&
         target.canBeRevisited !== true
       ) {
-        warnings.push(`Back-transition detected from "${source.name}" to "${target.name}".`);
+        warnings.push(
+          `Back-transition detected from "${source.name}" to "${target.name}".`,
+        );
       }
     }
 
@@ -8735,7 +10480,9 @@ function validateFilingWorkflowDraft(data: { nodes: any[]; edges: any[] }) {
 
     const unreachable = activeNodes.filter((node) => !seen.has(node.key));
     if (unreachable.length > 0) {
-      errors.push(`Disconnected active nodes: ${unreachable.map((node) => node.name).join(", ")}.`);
+      errors.push(
+        `Disconnected active nodes: ${unreachable.map((node) => node.name).join(", ")}.`,
+      );
     }
   }
 
@@ -8749,7 +10496,12 @@ async function createFilingNodeRunWithResponses(
     node: {
       id: string;
       key: string;
-      checklistItems: Array<{ id: string; deadlineDuration: number; deadlineUnit: string; isActive: boolean }>;
+      checklistItems: Array<{
+        id: string;
+        deadlineDuration: number;
+        deadlineUnit: string;
+        isActive: boolean;
+      }>;
     };
     startedAt: Date;
     orgId: string;
@@ -8765,9 +10517,16 @@ async function createFilingNodeRunWithResponses(
     },
   });
 
-  const activeItems = params.node.checklistItems.filter((item) => item.isActive !== false);
+  const activeItems = params.node.checklistItems.filter(
+    (item) => item.isActive !== false,
+  );
   for (const item of activeItems) {
-    const dueAt = await calculateSlaDueDate(params.startedAt, item.deadlineDuration || 2, item.deadlineUnit || "BUSINESS_DAYS", params.orgId);
+    const dueAt = await calculateSlaDueDate(
+      params.startedAt,
+      item.deadlineDuration || 2,
+      item.deadlineUnit || "BUSINESS_DAYS",
+      params.orgId,
+    );
     await tx.filingChecklistResponse.upsert({
       where: {
         instanceId_checklistItemId: {
@@ -8819,56 +10578,71 @@ async function notifyConcernedUsersForFilingNode(params: {
     },
   });
 
-  const recipientIds = Array.from(new Set([
-    job.primaryOwnerId,
-    job.assignedManagerId,
-    ...job.assignments.map((assignment) => assignment.userId),
-  ].filter((value): value is string => typeof value === "string" && value.length > 0)));
+  const recipientIds = Array.from(
+    new Set(
+      [
+        job.primaryOwnerId,
+        job.assignedManagerId,
+        ...job.assignments.map((assignment) => assignment.userId),
+      ].filter(
+        (value): value is string =>
+          typeof value === "string" && value.length > 0,
+      ),
+    ),
+  );
 
   if (recipientIds.length === 0) {
     return;
   }
 
-  const title = params.nodeName.trim() || `Filing workflow notification for ${job.jobNumber || "job"}`;
+  const title =
+    params.nodeName.trim() ||
+    `Filing workflow notification for ${job.jobNumber || "job"}`;
   const body = [
     params.nodeDescription?.trim(),
     job.jobNumber ? `Job: ${job.jobNumber}` : null,
     job.title ? `Title: ${job.title}` : null,
-  ].filter(Boolean).join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
   const link = `/cha/jobs/${params.jobId}`;
 
-  await Promise.all(recipientIds.map(async (userId) => {
-    const existing = await db.notification.findFirst({
-      where: {
-        orgId: params.orgId,
+  await Promise.all(
+    recipientIds.map(async (userId) => {
+      const existing = await db.notification.findFirst({
+        where: {
+          orgId: params.orgId,
+          userId,
+          kind: FILING_WORKFLOW_NOTIFICATION_KIND,
+          title,
+          link,
+          createdAt: { gte: params.startedAt },
+        },
+        select: { id: true },
+      });
+
+      if (existing) {
+        return;
+      }
+
+      await createNotification({
         userId,
+        orgId: params.orgId,
+        actorId: job.primaryOwnerId,
         kind: FILING_WORKFLOW_NOTIFICATION_KIND,
         title,
+        body:
+          body ||
+          `Workflow notification triggered for ${job.jobNumber || "this filing job"}.`,
         link,
-        createdAt: { gte: params.startedAt },
-      },
-      select: { id: true },
-    });
-
-    if (existing) {
-      return;
-    }
-
-    await createNotification({
-      userId,
-      orgId: params.orgId,
-      actorId: job.primaryOwnerId,
-      kind: FILING_WORKFLOW_NOTIFICATION_KIND,
-      title,
-      body: body || `Workflow notification triggered for ${job.jobNumber || "this filing job"}.`,
-      link,
-      payload: {
-        jobId: params.jobId,
-        nodeKey: params.nodeKey,
-        nodeRunId: params.nodeRunId,
-      },
-    });
-  }));
+        payload: {
+          jobId: params.jobId,
+          nodeKey: params.nodeKey,
+          nodeRunId: params.nodeRunId,
+        },
+      });
+    }),
+  );
 }
 
 async function resolveNotificationWorkflowNodes(orgId: string, jobId: string) {
@@ -8882,14 +10656,19 @@ async function resolveNotificationWorkflowNodes(orgId: string, jobId: string) {
       return null;
     }
 
-    const activeNodeRun = instance.nodeRuns.find((run) => run.status === "ACTIVE") ?? null;
+    const activeNodeRun =
+      instance.nodeRuns.find((run) => run.status === "ACTIVE") ?? null;
     if (!activeNodeRun || activeNodeRun.node.nodeType !== "NOTIFICATION") {
       return instance;
     }
 
-    const outgoingEdges = instance.version.edges.filter((edge) => edge.sourceKey === activeNodeRun.nodeKey);
+    const outgoingEdges = instance.version.edges.filter(
+      (edge) => edge.sourceKey === activeNodeRun.nodeKey,
+    );
     if (outgoingEdges.length > 1) {
-      throw new Error(`Notification node "${activeNodeRun.node.name}" has multiple outgoing transitions. Keep it to one automatic continuation.`);
+      throw new Error(
+        `Notification node "${activeNodeRun.node.name}" has multiple outgoing transitions. Keep it to one automatic continuation.`,
+      );
     }
 
     const nextNodeKey = outgoingEdges[0]?.targetKey ?? null;
@@ -8911,18 +10690,28 @@ async function resolveNotificationWorkflowNodes(orgId: string, jobId: string) {
         data: {
           status: "COMPLETED",
           completedAt: now,
-          remarks: activeNodeRun.remarks || "Notification dispatched automatically.",
+          remarks:
+            activeNodeRun.remarks || "Notification dispatched automatically.",
         },
       });
 
       if (nextNodeKey) {
-        const targetNode = instance.version.nodes.find((node) => node.key === nextNodeKey && node.isActive);
+        const targetNode = instance.version.nodes.find(
+          (node) => node.key === nextNodeKey && node.isActive,
+        );
         if (!targetNode) {
-          throw new Error(`Notification node "${activeNodeRun.node.name}" points to a missing or inactive next node.`);
+          throw new Error(
+            `Notification node "${activeNodeRun.node.name}" points to a missing or inactive next node.`,
+          );
         }
 
         const nextStartedAt = await getNow();
-        const nextSlaDueDate = await calculateSlaDueDate(nextStartedAt, targetNode.slaDuration, targetNode.slaUnit, orgId);
+        const nextSlaDueDate = await calculateSlaDueDate(
+          nextStartedAt,
+          targetNode.slaDuration,
+          targetNode.slaUnit,
+          orgId,
+        );
         const nextNodeRun = await createFilingNodeRunWithResponses(tx, {
           instanceId: instance.id,
           node: {
@@ -8972,14 +10761,18 @@ async function resolveNotificationWorkflowNodes(orgId: string, jobId: string) {
         data: { stage: "FILED" },
       });
 
-      const existingFiling = await tx.chaFiling.findUnique({ where: { jobId } });
+      const existingFiling = await tx.chaFiling.findUnique({
+        where: { jobId },
+      });
       if (existingFiling) {
         await tx.chaFiling.update({
           where: { id: existingFiling.id },
           data: {
             status: "FILED",
             actualFilingDate: now,
-            filingRef: existingFiling.filingRef || `BLUEPRINT-${instance.id.substring(0, 8).toUpperCase()}`,
+            filingRef:
+              existingFiling.filingRef ||
+              `BLUEPRINT-${instance.id.substring(0, 8).toUpperCase()}`,
           },
         });
       }
@@ -9047,8 +10840,8 @@ async function syncOverdueFilingItems(orgId: string, jobId: string) {
         metadata: {
           dueAt: response.dueAt,
         },
-      })
-    )
+      }),
+    ),
   );
 }
 
@@ -9061,9 +10854,13 @@ export async function ensureDefaultFilingWorkflows(orgId: string) {
     where: { orgId, filingFlowCategory: { not: null } },
     select: { id: true, _count: { select: { instances: true } } },
   });
-  const safeToDelete = legacyTemplates.filter((t) => t._count.instances === 0).map((t) => t.id);
+  const safeToDelete = legacyTemplates
+    .filter((t) => t._count.instances === 0)
+    .map((t) => t.id);
   if (safeToDelete.length > 0) {
-    await db.filingWorkflowTemplate.deleteMany({ where: { id: { in: safeToDelete } } });
+    await db.filingWorkflowTemplate.deleteMany({
+      where: { id: { in: safeToDelete } },
+    });
   }
 
   const catchAllExists = await db.filingWorkflowTemplate.findFirst({
@@ -9077,7 +10874,8 @@ export async function ensureDefaultFilingWorkflows(orgId: string) {
         "Default configurable CHA filing workflow covering both Import and Export. Includes First Check, Second Check (RMS / Open Bill), configurable uploads, validity tracking, and optional amendment handling.",
       filingFlowCategory: null,
       settings: {
-        customerApprovalTabDelayMinutes: DEFAULT_CUSTOMER_APPROVAL_DELAY_MINUTES,
+        customerApprovalTabDelayMinutes:
+          DEFAULT_CUSTOMER_APPROVAL_DELAY_MINUTES,
         queryReminderTime: DEFAULT_QUERY_REMINDER_TIME,
         doValidityReminderOffsetDays: 2,
       },
@@ -9091,7 +10889,12 @@ export async function ensureDefaultFilingWorkflows(orgId: string) {
   }
 }
 
-export async function calculateSlaDueDate(startDate: Date, duration: number, unit: string, orgId?: string): Promise<Date> {
+export async function calculateSlaDueDate(
+  startDate: Date,
+  duration: number,
+  unit: string,
+  orgId?: string,
+): Promise<Date> {
   const result = new Date(startDate);
   if (unit === "CALENDAR_DAYS") {
     result.setDate(result.getDate() + duration);
@@ -9143,7 +10946,11 @@ export async function listFilingWorkflows(orgId: string) {
   });
 }
 
-export async function getFilingWorkflowDetails(userId: string, orgId: string, templateId: string) {
+export async function getFilingWorkflowDetails(
+  userId: string,
+  orgId: string,
+  templateId: string,
+) {
   return db.filingWorkflowTemplate.findFirstOrThrow({
     where: { id: templateId, orgId },
     include: {
@@ -9181,13 +10988,80 @@ export async function loadStarterFilingWorkflowDraft(
     description?: string;
     clearanceTypeId?: string | null;
     filingFlowCategory?: string | null;
+    starterClearanceTypeId?: string | null;
   },
 ) {
-  const starter = cloneStarterFilingWorkflowSeed();
+  let starterNodes: any[];
+  let starterEdges: any[];
+  let starterSource = "STARTER_FIXTURE";
+
+  if (data.starterClearanceTypeId) {
+    const scopedStarter = await db.filingWorkflowVersion.findFirst({
+      where: {
+        isPublished: true,
+        isActive: true,
+        template: {
+          orgId,
+          isActive: true,
+          clearanceTypeId: data.starterClearanceTypeId,
+        },
+      },
+      include: {
+        template: {
+          select: {
+            name: true,
+            clearanceType: { select: { name: true } },
+          },
+        },
+        nodes: {
+          orderBy: { sortOrder: "asc" },
+          include: {
+            checklistItems: { orderBy: { sortOrder: "asc" } },
+            photoRequirements: true,
+          },
+        },
+        edges: true,
+      },
+      orderBy: [{ versionNumber: "desc" }, { updatedAt: "desc" }],
+    });
+
+    if (!scopedStarter) {
+      const starterType = await db.chaJobType.findFirst({
+        where: { id: data.starterClearanceTypeId, orgId },
+        select: { name: true },
+      });
+      throw new Error(
+        `No published starter blueprint is configured for ${starterType?.name || "the selected clearance type"} yet.`,
+      );
+    }
+
+    starterNodes = scopedStarter.nodes.map((node) => ({
+      ...node,
+      id: undefined,
+      checklistItems: node.checklistItems.map((item) => ({
+        ...item,
+        id: undefined,
+      })),
+      photoRequirements: node.photoRequirements.map((item) => ({
+        ...item,
+        id: undefined,
+      })),
+    })) as unknown as any[];
+    starterEdges = scopedStarter.edges.map((edge) => ({
+      ...edge,
+      id: undefined,
+    })) as unknown as any[];
+    starterSource = scopedStarter.template.clearanceType?.name || scopedStarter.template.name;
+  } else {
+    const starter = cloneStarterFilingWorkflowSeed();
+    starterNodes = starter.nodes as unknown as any[];
+    starterEdges = starter.edges as unknown as any[];
+  }
+
   const draft = await saveFilingWorkflowDraft(userId, orgId, templateId, {
     ...data,
-    nodes: starter.nodes as unknown as any[],
-    edges: starter.edges as unknown as any[],
+    nodes: starterNodes,
+    edges: starterEdges,
   });
 
   await logChaAudit({
@@ -9199,7 +11073,7 @@ export async function loadStarterFilingWorkflowDraft(
     remarks: `Loaded the explicit starter workflow into template ${draft.name}.`,
     metadata: {
       versionId: draft.versions?.[0]?.id ?? null,
-      source: "STARTER_FIXTURE",
+      source: starterSource,
     },
   });
 
@@ -9219,19 +11093,27 @@ export async function saveFilingWorkflowDraft(
     mailTemplates?: Record<string, unknown> | null;
     nodes: any[];
     edges: any[];
-  }
+  },
 ) {
-  const normalizedNodes = (data.nodes || []).map((node: any, nodeIndex: number) =>
-    normalizeWorkflowNodeDraft({ ...node, sortOrder: node.sortOrder ?? nodeIndex + 1 }, nodeIndex),
+  const normalizedNodes = (data.nodes || []).map(
+    (node: any, nodeIndex: number) =>
+      normalizeWorkflowNodeDraft(
+        { ...node, sortOrder: node.sortOrder ?? nodeIndex + 1 },
+        nodeIndex,
+      ),
   );
 
   const normalizedEdges = (data.edges || []).map((edge: any) => ({
     sourceKey: edge.sourceKey,
     targetKey: edge.targetKey,
     label: edge.label || null,
-    transitionType: typeof edge.transitionType === "string" && edge.transitionType.trim() ? edge.transitionType.trim().toUpperCase() : "FORWARD",
+    transitionType:
+      typeof edge.transitionType === "string" && edge.transitionType.trim()
+        ? edge.transitionType.trim().toUpperCase()
+        : "FORWARD",
     requiresReason: !!edge.requiresReason,
-    transitionConfigJson: edge.transitionConfigJson ?? edge.transitionConfig ?? null,
+    transitionConfigJson:
+      edge.transitionConfigJson ?? edge.transitionConfig ?? null,
   }));
 
   if (data.clearanceTypeId) {
@@ -9240,7 +11122,9 @@ export async function saveFilingWorkflowDraft(
       select: { id: true },
     });
     if (!clearanceType) {
-      throw new Error("The selected clearance type is invalid for this organisation.");
+      throw new Error(
+        "The selected clearance type is invalid for this organisation.",
+      );
     }
   }
 
@@ -9264,7 +11148,8 @@ export async function saveFilingWorkflowDraft(
         name: data.name,
         description: data.description,
         settingsJson: normalizeTemplateSettings(data.settings ?? null),
-        mailTemplatesJson: (data.mailTemplates ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+        mailTemplatesJson: (data.mailTemplates ??
+          Prisma.JsonNull) as Prisma.InputJsonValue,
         isActive: true,
       },
     });
@@ -9312,160 +11197,234 @@ export async function saveFilingWorkflowDraft(
     nodes: normalizedNodes,
     edges: normalizedEdges,
   });
-  const nonEmptyGraphHasBlockingValidation = normalizedNodes.filter((node) => node.isActive !== false).length > 0 && validation.errors.length > 0;
+  const nonEmptyGraphHasBlockingValidation =
+    normalizedNodes.filter((node) => node.isActive !== false).length > 0 &&
+    validation.errors.length > 0;
   if (nonEmptyGraphHasBlockingValidation) {
     throw new Error(`Validation Failed: ${validation.errors.join(" ")}`);
   }
 
-  await db.$transaction(async (tx) => {
-    await tx.filingWorkflowTemplate.update({
-      where: { id: template.id },
-      data: {
-        name: data.name,
-        description: data.description,
-        clearanceTypeId: data.clearanceTypeId || null,
-        filingFlowCategory: data.filingFlowCategory !== undefined ? (data.filingFlowCategory || null) : undefined,
-        settingsJson: normalizeTemplateSettings(data.settings ?? template.settingsJson ?? null),
-        mailTemplatesJson: (data.mailTemplates ?? template.mailTemplatesJson ?? Prisma.JsonNull) as Prisma.InputJsonValue,
-      },
-    });
-
-    // Delete dependent records before parent nodes (FK order matters)
-    await tx.filingWorkflowEdge.deleteMany({ where: { versionId } });
-    await tx.filingChecklistItem.deleteMany({ where: { node: { versionId } } });
-    await tx.filingPhotoRequirement.deleteMany({ where: { node: { versionId } } });
-    await tx.filingWorkflowNode.deleteMany({ where: { versionId } });
-
-    if (normalizedNodes.length > 0) {
-      // Batch create all nodes in one round trip instead of N sequential creates
-      await tx.filingWorkflowNode.createMany({
-        data: normalizedNodes.map((n: any) => ({
-          versionId,
-          key: n.key,
-          name: n.name,
-          description: n.description,
-          category: n.category,
-          nodeType: n.nodeType,
-          fieldDefinitionsJson: n.fieldDefinitionsJson ?? [],
-          documentRequirementsJson: n.documentRequirementsJson ?? [],
-          conditionalSectionsJson: n.conditionalSectionsJson ?? [],
-          approvalConfigJson: n.approvalConfigJson ?? null,
-          notificationConfigJson: n.notificationConfigJson ?? null,
-          actionConfigJson: n.actionConfigJson ?? null,
-          sectionKey: n.sectionKey,
-          sectionName: n.sectionName,
-          branchKey: n.branchKey,
-          branchName: n.branchName,
-          sortOrder: n.sortOrder,
-          isActive: n.isActive !== false,
-          positionX: n.positionX || 0,
-          positionY: n.positionY || 0,
-          isStart: !!n.isStart,
-          slaDuration: n.slaDuration !== undefined ? n.slaDuration : 2,
-          slaUnit: n.slaUnit || "BUSINESS_DAYS",
-          commentsRequired: !!n.commentsRequired,
-          canBeSkipped: !!n.canBeSkipped,
-          canBeRevisited: n.canBeRevisited !== undefined ? !!n.canBeRevisited : true,
-          approvalRequired: !!n.approvalRequired,
-          approvalRoles: n.approvalRoles || [],
-          requireAllMandatoryChecklistItems: n.requireAllMandatoryChecklistItems !== undefined ? !!n.requireAllMandatoryChecklistItems : true,
-          requireMandatoryPhotos: n.requireMandatoryPhotos !== undefined ? !!n.requireMandatoryPhotos : true,
-          allowedRoles: n.allowedRoles || ["Admin", "Manager", "Employee"],
-        })),
+  await db.$transaction(
+    async (tx) => {
+      await tx.filingWorkflowTemplate.update({
+        where: { id: template.id },
+        data: {
+          name: data.name,
+          description: data.description,
+          clearanceTypeId: data.clearanceTypeId || null,
+          filingFlowCategory:
+            data.filingFlowCategory !== undefined
+              ? data.filingFlowCategory || null
+              : undefined,
+          settingsJson: normalizeTemplateSettings(
+            data.settings ?? template.settingsJson ?? null,
+          ),
+          mailTemplatesJson: (data.mailTemplates ??
+            template.mailTemplatesJson ??
+            Prisma.JsonNull) as Prisma.InputJsonValue,
+        },
       });
 
-      // Look up created node IDs by key in one query
-      const createdNodes = await tx.filingWorkflowNode.findMany({
-        where: { versionId },
-        select: { id: true, key: true },
+      // Delete dependent records before parent nodes (FK order matters)
+      await tx.filingWorkflowEdge.deleteMany({ where: { versionId } });
+      await tx.filingChecklistItem.deleteMany({
+        where: { node: { versionId } },
       });
-      const nodeKeyToId = new Map(createdNodes.map((n) => [n.key, n.id]));
+      await tx.filingPhotoRequirement.deleteMany({
+        where: { node: { versionId } },
+      });
+      await tx.filingWorkflowNode.deleteMany({ where: { versionId } });
 
-      // Batch create all checklist items across all nodes
-      const allChecklistItems = normalizedNodes.flatMap((n: any) =>
-        (n.checklistItems || []).map((item: any, idx: number) => ({
-          nodeId: nodeKeyToId.get(n.key)!,
-          label: item.label,
-          description: item.description,
-          isMandatory: item.isMandatory !== undefined ? !!item.isMandatory : true,
-          requiresRemarks: !!item.requiresRemarks,
-          allowsUpload: !!item.allowsUpload,
-          minUploads: item.minUploads !== undefined ? item.minUploads : 0,
-          maxUploads: item.maxUploads !== undefined ? item.maxUploads : null,
-          acceptedFileTypes: item.acceptedFileTypes || [],
-          documentType: item.documentType || null,
-          requiresValidity: !!item.requiresValidity,
-          validityDuration: item.validityDuration !== undefined ? item.validityDuration : null,
-          validityUnit: item.validityUnit || null,
-          warningBeforeDuration: item.warningBeforeDuration !== undefined ? item.warningBeforeDuration : null,
-          warningBeforeUnit: item.warningBeforeUnit || null,
-          notifyBeforeExpiry: !!item.notifyBeforeExpiry,
-          notificationRoles: item.notificationRoles || [],
-          showInDocumentsPage: item.showInDocumentsPage !== undefined ? !!item.showInDocumentsPage : true,
-          showInTimeline: item.showInTimeline !== undefined ? !!item.showInTimeline : true,
-          deadlineDuration: item.deadlineDuration !== undefined ? item.deadlineDuration : 2,
-          deadlineUnit: item.deadlineUnit || "BUSINESS_DAYS",
-          delayRemarksRequired: item.delayRemarksRequired !== undefined ? !!item.delayRemarksRequired : true,
-          hasPhotoRequirement: !!item.hasPhotoRequirement,
-          sortOrder: item.sortOrder !== undefined ? item.sortOrder : idx,
-          isActive: item.isActive !== undefined ? !!item.isActive : true,
-        }))
-      );
-      if (allChecklistItems.length > 0) {
-        await tx.filingChecklistItem.createMany({ data: allChecklistItems });
+      if (normalizedNodes.length > 0) {
+        // Batch create all nodes in one round trip instead of N sequential creates
+        await tx.filingWorkflowNode.createMany({
+          data: normalizedNodes.map((n: any) => ({
+            versionId,
+            key: n.key,
+            name: n.name,
+            description: n.description,
+            category: n.category,
+            nodeType: n.nodeType,
+            fieldDefinitionsJson: n.fieldDefinitionsJson ?? [],
+            documentRequirementsJson: n.documentRequirementsJson ?? [],
+            conditionalSectionsJson: n.conditionalSectionsJson ?? [],
+            approvalConfigJson: n.approvalConfigJson ?? null,
+            notificationConfigJson: n.notificationConfigJson ?? null,
+            actionConfigJson: n.actionConfigJson ?? null,
+            sectionKey: n.sectionKey,
+            sectionName: n.sectionName,
+            branchKey: n.branchKey,
+            branchName: n.branchName,
+            sortOrder: n.sortOrder,
+            isActive: n.isActive !== false,
+            positionX: n.positionX || 0,
+            positionY: n.positionY || 0,
+            isStart: !!n.isStart,
+            slaDuration: n.slaDuration !== undefined ? n.slaDuration : 2,
+            slaUnit: n.slaUnit || "BUSINESS_DAYS",
+            commentsRequired: !!n.commentsRequired,
+            canBeSkipped: !!n.canBeSkipped,
+            canBeRevisited:
+              n.canBeRevisited !== undefined ? !!n.canBeRevisited : true,
+            approvalRequired: !!n.approvalRequired,
+            approvalRoles: n.approvalRoles || [],
+            requireAllMandatoryChecklistItems:
+              n.requireAllMandatoryChecklistItems !== undefined
+                ? !!n.requireAllMandatoryChecklistItems
+                : true,
+            requireMandatoryPhotos:
+              n.requireMandatoryPhotos !== undefined
+                ? !!n.requireMandatoryPhotos
+                : true,
+            allowedRoles: n.allowedRoles || ["Admin", "Manager", "Employee"],
+          })),
+        });
+
+        // Look up created node IDs by key in one query
+        const createdNodes = await tx.filingWorkflowNode.findMany({
+          where: { versionId },
+          select: { id: true, key: true },
+        });
+        const nodeKeyToId = new Map(createdNodes.map((n) => [n.key, n.id]));
+
+        // Batch create all checklist items across all nodes
+        const allChecklistItems = normalizedNodes.flatMap((n: any) =>
+          (n.checklistItems || []).map((item: any, idx: number) => ({
+            nodeId: nodeKeyToId.get(n.key)!,
+            label: item.label,
+            description: item.description,
+            isMandatory:
+              item.isMandatory !== undefined ? !!item.isMandatory : true,
+            requiresRemarks: !!item.requiresRemarks,
+            allowsUpload: !!item.allowsUpload,
+            minUploads: item.minUploads !== undefined ? item.minUploads : 0,
+            maxUploads: item.maxUploads !== undefined ? item.maxUploads : null,
+            acceptedFileTypes: item.acceptedFileTypes || [],
+            documentType: item.documentType || null,
+            requiresValidity: !!item.requiresValidity,
+            validityDuration:
+              item.validityDuration !== undefined
+                ? item.validityDuration
+                : null,
+            validityUnit: item.validityUnit || null,
+            warningBeforeDuration:
+              item.warningBeforeDuration !== undefined
+                ? item.warningBeforeDuration
+                : null,
+            warningBeforeUnit: item.warningBeforeUnit || null,
+            notifyBeforeExpiry: !!item.notifyBeforeExpiry,
+            notificationRoles: item.notificationRoles || [],
+            showInDocumentsPage:
+              item.showInDocumentsPage !== undefined
+                ? !!item.showInDocumentsPage
+                : true,
+            showInTimeline:
+              item.showInTimeline !== undefined ? !!item.showInTimeline : true,
+            deadlineDuration:
+              item.deadlineDuration !== undefined ? item.deadlineDuration : 2,
+            deadlineUnit: item.deadlineUnit || "BUSINESS_DAYS",
+            delayRemarksRequired:
+              item.delayRemarksRequired !== undefined
+                ? !!item.delayRemarksRequired
+                : true,
+            hasPhotoRequirement: !!item.hasPhotoRequirement,
+            sortOrder: item.sortOrder !== undefined ? item.sortOrder : idx,
+            isActive: item.isActive !== undefined ? !!item.isActive : true,
+          })),
+        );
+        if (allChecklistItems.length > 0) {
+          await tx.filingChecklistItem.createMany({ data: allChecklistItems });
+        }
+
+        // Batch create all photo requirements across all nodes
+        const allPhotoRequirements = normalizedNodes.flatMap((n: any) =>
+          (n.photoRequirements || []).map((pr: any) => ({
+            nodeId: nodeKeyToId.get(n.key)!,
+            label: pr.label,
+            description: pr.description,
+            isMandatory: pr.isMandatory !== undefined ? !!pr.isMandatory : true,
+            minPhotos: pr.minPhotos !== undefined ? pr.minPhotos : 1,
+            maxPhotos: pr.maxPhotos !== undefined ? pr.maxPhotos : null,
+            acceptedFileTypes: pr.acceptedFileTypes || [
+              "image/jpeg",
+              "image/png",
+              "application/pdf",
+            ],
+            isVisibleInTimeline:
+              pr.isVisibleInTimeline !== undefined
+                ? !!pr.isVisibleInTimeline
+                : true,
+            documentType: pr.documentType || null,
+            requiresValidity: !!pr.requiresValidity,
+            validityDuration:
+              pr.validityDuration !== undefined ? pr.validityDuration : null,
+            validityUnit: pr.validityUnit || null,
+            warningBeforeDuration:
+              pr.warningBeforeDuration !== undefined
+                ? pr.warningBeforeDuration
+                : null,
+            warningBeforeUnit: pr.warningBeforeUnit || null,
+            notifyBeforeExpiry: !!pr.notifyBeforeExpiry,
+            notificationRoles: pr.notificationRoles || [],
+            showInDocumentsPage:
+              pr.showInDocumentsPage !== undefined
+                ? !!pr.showInDocumentsPage
+                : true,
+          })),
+        );
+        if (allPhotoRequirements.length > 0) {
+          await tx.filingPhotoRequirement.createMany({
+            data: allPhotoRequirements,
+          });
+        }
       }
 
-      // Batch create all photo requirements across all nodes
-      const allPhotoRequirements = normalizedNodes.flatMap((n: any) =>
-        (n.photoRequirements || []).map((pr: any) => ({
-          nodeId: nodeKeyToId.get(n.key)!,
-          label: pr.label,
-          description: pr.description,
-          isMandatory: pr.isMandatory !== undefined ? !!pr.isMandatory : true,
-          minPhotos: pr.minPhotos !== undefined ? pr.minPhotos : 1,
-          maxPhotos: pr.maxPhotos !== undefined ? pr.maxPhotos : null,
-          acceptedFileTypes: pr.acceptedFileTypes || ["image/jpeg", "image/png", "application/pdf"],
-          isVisibleInTimeline: pr.isVisibleInTimeline !== undefined ? !!pr.isVisibleInTimeline : true,
-          documentType: pr.documentType || null,
-          requiresValidity: !!pr.requiresValidity,
-          validityDuration: pr.validityDuration !== undefined ? pr.validityDuration : null,
-          validityUnit: pr.validityUnit || null,
-          warningBeforeDuration: pr.warningBeforeDuration !== undefined ? pr.warningBeforeDuration : null,
-          warningBeforeUnit: pr.warningBeforeUnit || null,
-          notifyBeforeExpiry: !!pr.notifyBeforeExpiry,
-          notificationRoles: pr.notificationRoles || [],
-          showInDocumentsPage: pr.showInDocumentsPage !== undefined ? !!pr.showInDocumentsPage : true,
-        }))
-      );
-      if (allPhotoRequirements.length > 0) {
-        await tx.filingPhotoRequirement.createMany({ data: allPhotoRequirements });
+      if (normalizedEdges.length) {
+        await tx.filingWorkflowEdge.createMany({
+          data: normalizedEdges.map((e: any) => ({
+            versionId,
+            sourceKey: e.sourceKey,
+            targetKey: e.targetKey,
+            label: e.label || null,
+            transitionType: e.transitionType || "FORWARD",
+            requiresReason: !!e.requiresReason,
+            transitionConfigJson: e.transitionConfigJson ?? null,
+          })),
+        });
       }
-    }
+    },
+    { timeout: 20000 },
+  );
 
-    if (normalizedEdges.length) {
-      await tx.filingWorkflowEdge.createMany({
-        data: normalizedEdges.map((e: any) => ({
-          versionId,
-          sourceKey: e.sourceKey,
-          targetKey: e.targetKey,
-          label: e.label || null,
-          transitionType: e.transitionType || "FORWARD",
-          requiresReason: !!e.requiresReason,
-          transitionConfigJson: e.transitionConfigJson ?? null,
-        })),
-      });
-    }
-  }, { timeout: 20000 });
-
-  const previousNodeMap = new Map((previousVersionDetail?.nodes || []).map((node) => [node.key, node]));
-  const nextNodeMap = new Map(normalizedNodes.map((node: any) => [node.key, node]));
-  const previousEdgeMap = new Map((previousVersionDetail?.edges || []).map((edge) => [`${edge.sourceKey}::${edge.targetKey}`, edge]));
-  const nextEdgeMap = new Map(normalizedEdges.map((edge: any) => [`${edge.sourceKey}::${edge.targetKey}`, edge]));
+  const previousNodeMap = new Map(
+    (previousVersionDetail?.nodes || []).map((node) => [node.key, node]),
+  );
+  const nextNodeMap = new Map(
+    normalizedNodes.map((node: any) => [node.key, node]),
+  );
+  const previousEdgeMap = new Map(
+    (previousVersionDetail?.edges || []).map((edge) => [
+      `${edge.sourceKey}::${edge.targetKey}`,
+      edge,
+    ]),
+  );
+  const nextEdgeMap = new Map(
+    normalizedEdges.map((edge: any) => [
+      `${edge.sourceKey}::${edge.targetKey}`,
+      edge,
+    ]),
+  );
 
   for (const [nodeKey, node] of nextNodeMap.entries()) {
     const previousNode = previousNodeMap.get(nodeKey);
-    const event = previousNode ? "FILING_WORKFLOW_NODE_UPDATED" : "FILING_WORKFLOW_NODE_CREATED";
-    if (previousNode && summarizeWorkflowNodeForAudit(previousNode) === summarizeWorkflowNodeForAudit(node)) {
+    const event = previousNode
+      ? "FILING_WORKFLOW_NODE_UPDATED"
+      : "FILING_WORKFLOW_NODE_CREATED";
+    if (
+      previousNode &&
+      summarizeWorkflowNodeForAudit(previousNode) ===
+        summarizeWorkflowNodeForAudit(node)
+    ) {
       continue;
     }
     await logChaAudit({
@@ -9502,8 +11461,14 @@ export async function saveFilingWorkflowDraft(
 
   for (const [edgeKey, edge] of nextEdgeMap.entries()) {
     const previousEdge = previousEdgeMap.get(edgeKey);
-    const event = previousEdge ? "FILING_WORKFLOW_CONNECTOR_UPDATED" : "FILING_WORKFLOW_CONNECTOR_CREATED";
-    if (previousEdge && summarizeWorkflowEdgeForAudit(previousEdge) === summarizeWorkflowEdgeForAudit(edge)) {
+    const event = previousEdge
+      ? "FILING_WORKFLOW_CONNECTOR_UPDATED"
+      : "FILING_WORKFLOW_CONNECTOR_CREATED";
+    if (
+      previousEdge &&
+      summarizeWorkflowEdgeForAudit(previousEdge) ===
+        summarizeWorkflowEdgeForAudit(edge)
+    ) {
       continue;
     }
     await logChaAudit({
@@ -9541,9 +11506,12 @@ export async function saveFilingWorkflowDraft(
   }
 
   const previousStartNodeKey =
-    previousVersionDetail?.nodes.find((node) => node.isStart && node.isActive !== false)?.key ?? undefined;
+    previousVersionDetail?.nodes.find(
+      (node) => node.isStart && node.isActive !== false,
+    )?.key ?? undefined;
   const nextStartNodeKey =
-    normalizedNodes.find((node: any) => node.isStart && node.isActive !== false)?.key ?? undefined;
+    normalizedNodes.find((node: any) => node.isStart && node.isActive !== false)
+      ?.key ?? undefined;
   if (previousStartNodeKey !== nextStartNodeKey) {
     await logChaAudit({
       orgId,
@@ -9609,7 +11577,11 @@ export async function saveFilingWorkflowDraft(
   });
 }
 
-export async function publishFilingWorkflow(userId: string, orgId: string, versionId: string) {
+export async function publishFilingWorkflow(
+  userId: string,
+  orgId: string,
+  versionId: string,
+) {
   const version = await db.filingWorkflowVersion.findUniqueOrThrow({
     where: { id: versionId },
     include: {
@@ -9632,9 +11604,13 @@ export async function publishFilingWorkflow(userId: string, orgId: string, versi
     throw new Error("This version is already published.");
   }
 
-  const activeNodeCount = version.nodes.filter((node) => node.isActive !== false).length;
+  const activeNodeCount = version.nodes.filter(
+    (node) => node.isActive !== false,
+  ).length;
   if (activeNodeCount === 0) {
-    throw new Error("Validation Failed: The workflow must have at least one active node before publishing.");
+    throw new Error(
+      "Validation Failed: The workflow must have at least one active node before publishing.",
+    );
   }
 
   const validation = validateFilingWorkflowDraft({
@@ -9690,7 +11666,10 @@ export async function publishFilingWorkflow(userId: string, orgId: string, versi
   return result;
 }
 
-async function findActivePublishedFilingWorkflowVersionForJob(orgId: string, jobTypeId: string | null) {
+async function findActivePublishedFilingWorkflowVersionForJob(
+  orgId: string,
+  jobTypeId: string | null,
+) {
   const include = {
     template: {
       include: {
@@ -9800,7 +11779,12 @@ const FILING_WORKFLOW_INSTANCE_INCLUDE = {
         },
       },
       completedBy: { select: { name: true } },
-      attachments: { include: { uploadedBy: { select: { name: true } }, checklistItem: true } },
+      attachments: {
+        include: {
+          uploadedBy: { select: { name: true } },
+          checklistItem: true,
+        },
+      },
       fieldValues: true,
       toggleStates: true,
       queries: true,
@@ -9810,14 +11794,20 @@ const FILING_WORKFLOW_INSTANCE_INCLUDE = {
     include: { checklistItem: true },
   },
   attachments: {
-    include: { photoRequirement: true, checklistItem: true, uploadedBy: { select: { name: true } } },
+    include: {
+      photoRequirement: true,
+      checklistItem: true,
+      uploadedBy: { select: { name: true } },
+    },
   },
   fieldValues: true,
   toggleStates: true,
   queries: true,
 } as const;
 
-function getCompletedFilingNodeKeys(instance: { nodeRuns: Array<{ status: string; nodeKey: string }> }) {
+function getCompletedFilingNodeKeys(instance: {
+  nodeRuns: Array<{ status: string; nodeKey: string }>;
+}) {
   return new Set(
     (instance.nodeRuns || [])
       .filter((run) => run.status === "COMPLETED")
@@ -9837,9 +11827,15 @@ function getPendingBlockedStageContext(contextJson: unknown) {
     nodeName: typeof entry.nodeName === "string" ? entry.nodeName : nodeKey,
     mode: entry.mode === "ANY" ? "ANY" : "ALL",
     requiredNodeKeys: Array.isArray(entry.requiredNodeKeys)
-      ? entry.requiredNodeKeys.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
+      ? entry.requiredNodeKeys.filter(
+          (value: unknown): value is string =>
+            typeof value === "string" && value.trim().length > 0,
+        )
       : [],
-    createdFromNodeKey: typeof entry.createdFromNodeKey === "string" ? entry.createdFromNodeKey : null,
+    createdFromNodeKey:
+      typeof entry.createdFromNodeKey === "string"
+        ? entry.createdFromNodeKey
+        : null,
     createdAt: typeof entry.createdAt === "string" ? entry.createdAt : null,
   };
 }
@@ -9848,7 +11844,10 @@ function buildInstanceContextWithPendingBlockedStage(
   contextJson: unknown,
   pendingBlockedStage: Record<string, unknown> | null,
 ) {
-  const base = contextJson && typeof contextJson === "object" ? { ...(contextJson as Record<string, unknown>) } : {};
+  const base =
+    contextJson && typeof contextJson === "object"
+      ? { ...(contextJson as Record<string, unknown>) }
+      : {};
   if (pendingBlockedStage) {
     base.pendingBlockedStage = pendingBlockedStage;
   } else {
@@ -9858,12 +11857,22 @@ function buildInstanceContextWithPendingBlockedStage(
 }
 
 function evaluateNodePrerequisiteStatus(
-  node: { key: string; name: string; actionConfigJson?: unknown; actionConfig?: unknown },
+  node: {
+    key: string;
+    name: string;
+    actionConfigJson?: unknown;
+    actionConfig?: unknown;
+  },
   completedNodeKeys: Set<string>,
   nodeNameMap: Map<string, string>,
 ) {
-  const prerequisiteGate = normalizeWorkflowNodeActionConfig(node.actionConfigJson ?? node.actionConfig ?? null).prerequisiteGate;
-  if (!prerequisiteGate.enabled || prerequisiteGate.requiredNodeKeys.length === 0) {
+  const prerequisiteGate = normalizeWorkflowNodeActionConfig(
+    node.actionConfigJson ?? node.actionConfig ?? null,
+  ).prerequisiteGate;
+  if (
+    !prerequisiteGate.enabled ||
+    prerequisiteGate.requiredNodeKeys.length === 0
+  ) {
     return {
       enabled: false,
       isBlocked: false,
@@ -9873,10 +11882,14 @@ function evaluateNodePrerequisiteStatus(
       missingNodeNames: [] as string[],
     };
   }
-  const missingNodeKeys = prerequisiteGate.requiredNodeKeys.filter((nodeKey) => !completedNodeKeys.has(nodeKey));
+  const missingNodeKeys = prerequisiteGate.requiredNodeKeys.filter(
+    (nodeKey) => !completedNodeKeys.has(nodeKey),
+  );
   const isBlocked =
     prerequisiteGate.mode === "ANY"
-      ? prerequisiteGate.requiredNodeKeys.every((nodeKey) => !completedNodeKeys.has(nodeKey))
+      ? prerequisiteGate.requiredNodeKeys.every(
+          (nodeKey) => !completedNodeKeys.has(nodeKey),
+        )
       : missingNodeKeys.length > 0;
   return {
     enabled: true,
@@ -9884,11 +11897,16 @@ function evaluateNodePrerequisiteStatus(
     mode: prerequisiteGate.mode,
     requiredNodeKeys: prerequisiteGate.requiredNodeKeys,
     missingNodeKeys,
-    missingNodeNames: missingNodeKeys.map((nodeKey) => nodeNameMap.get(nodeKey) || nodeKey),
+    missingNodeNames: missingNodeKeys.map(
+      (nodeKey) => nodeNameMap.get(nodeKey) || nodeKey,
+    ),
   };
 }
 
-export async function getFilingWorkflowInstance(orgId: string, jobId: string): Promise<any> {
+export async function getFilingWorkflowInstance(
+  orgId: string,
+  jobId: string,
+): Promise<any> {
   await resolveNotificationWorkflowNodes(orgId, jobId);
 
   // Fetch instance, now, and holiday set in parallel — single DB round trip
@@ -9921,13 +11939,25 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
   syncOverdueFilingItems(orgId, jobId).catch(() => {});
   syncFilingWorkflowQueryReminders(orgId, jobId).catch(() => {});
 
-  const activeNodeRun = instance.nodeRuns.find((run) => run.status === "ACTIVE") ?? null;
+  const activeNodeRun =
+    instance.nodeRuns.find((run) => run.status === "ACTIVE") ?? null;
   const completedNodeKeys = getCompletedFilingNodeKeys(instance);
-  const nodeNameMap = new Map((instance.version?.nodes || []).map((node) => [node.key, node.name || node.key]));
+  const nodeNameMap = new Map(
+    (instance.version?.nodes || []).map((node) => [
+      node.key,
+      node.name || node.key,
+    ]),
+  );
   const activeNodePrerequisiteStatus = activeNodeRun
-    ? evaluateNodePrerequisiteStatus(activeNodeRun.node, completedNodeKeys, nodeNameMap)
+    ? evaluateNodePrerequisiteStatus(
+        activeNodeRun.node,
+        completedNodeKeys,
+        nodeNameMap,
+      )
     : null;
-  const pendingBlockedStage = getPendingBlockedStageContext(instance.contextJson);
+  const pendingBlockedStage = getPendingBlockedStageContext(
+    instance.contextJson,
+  );
   const pendingBlockedStageStatus = pendingBlockedStage
     ? evaluateNodePrerequisiteStatus(
         {
@@ -9948,7 +11978,11 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
   const jumpBackTargets = Array.from(
     new Map(
       instance.nodeRuns
-        .filter((run) => run.status === "COMPLETED" && run.nodeKey !== activeNodeRun?.nodeKey)
+        .filter(
+          (run) =>
+            run.status === "COMPLETED" &&
+            run.nodeKey !== activeNodeRun?.nodeKey,
+        )
         .sort((a, b) => {
           const aTime = a.completedAt ? new Date(a.completedAt).getTime() : 0;
           const bTime = b.completedAt ? new Date(b.completedAt).getTime() : 0;
@@ -9966,12 +12000,21 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
     ).values(),
   );
   const overdueItems = instance.responses
-    .filter((response) => response.nodeRunId === activeNodeRun?.id && !response.isChecked && response.dueAt && response.dueAt.getTime() < now.getTime())
+    .filter(
+      (response) =>
+        response.nodeRunId === activeNodeRun?.id &&
+        !response.isChecked &&
+        response.dueAt &&
+        response.dueAt.getTime() < now.getTime(),
+    )
     .map((response) => ({
       checklistItemId: response.checklistItemId,
       label: response.checklistItem.label,
       dueAt: response.dueAt,
-      daysDelayed: Math.max(1, countBusinessDaysSince(response.dueAt!, now, holidayIsoSet)),
+      daysDelayed: Math.max(
+        1,
+        countBusinessDaysSince(response.dueAt!, now, holidayIsoSet),
+      ),
       delayRemarks: response.delayRemarks,
       delayRemarkedAt: response.delayRemarkedAt,
     }));
@@ -9991,7 +12034,9 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
 
   const actorIds = queryLogs
     .map((log) => log.actorId)
-    .filter((actorId, index, array) => actorId && array.indexOf(actorId) === index);
+    .filter(
+      (actorId, index, array) => actorId && array.indexOf(actorId) === index,
+    );
   const resolvedActors =
     actorIds.length > 0
       ? await db.user.findMany({
@@ -9999,7 +12044,9 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
           select: { id: true, name: true },
         })
       : [];
-  const queryActorMap = new Map(resolvedActors.map((actor) => [actor.id, actor.name || "System"]));
+  const queryActorMap = new Map(
+    resolvedActors.map((actor) => [actor.id, actor.name || "System"]),
+  );
   const queryMessages = queryLogs.map((log) => {
     const metadata = parseAuditMetadata(log.metadata);
     return {
@@ -10024,7 +12071,8 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
     activeNodePrerequisiteStatus,
     pendingBlockedStage,
     pendingBlockedStageStatus,
-    canResumePendingBlockedStage: !!pendingBlockedStageStatus && !pendingBlockedStageStatus.isBlocked,
+    canResumePendingBlockedStage:
+      !!pendingBlockedStageStatus && !pendingBlockedStageStatus.isBlocked,
     jumpBackTargets,
     overdueItems,
     overdueCount: overdueItems.length,
@@ -10036,15 +12084,27 @@ function cloneStarterFilingWorkflowSeed() {
   return {
     nodes: DEFAULT_FILING_WORKFLOW_SEED.nodes.map((node) => ({
       ...node,
-      checklistItems: Array.isArray(node.checklistItems) ? node.checklistItems.map((item) => ({ ...item })) : [],
-      photoRequirements: Array.isArray(node.photoRequirements) ? node.photoRequirements.map((item) => ({ ...item })) : [],
-      fieldDefinitionsJson: Array.isArray(node.fieldDefinitionsJson) ? node.fieldDefinitionsJson.map((item) => ({ ...item })) : [],
-      documentRequirementsJson: Array.isArray(node.documentRequirementsJson) ? node.documentRequirementsJson.map((item) => ({ ...item })) : [],
+      checklistItems: Array.isArray(node.checklistItems)
+        ? node.checklistItems.map((item) => ({ ...item }))
+        : [],
+      photoRequirements: Array.isArray(node.photoRequirements)
+        ? node.photoRequirements.map((item) => ({ ...item }))
+        : [],
+      fieldDefinitionsJson: Array.isArray(node.fieldDefinitionsJson)
+        ? node.fieldDefinitionsJson.map((item) => ({ ...item }))
+        : [],
+      documentRequirementsJson: Array.isArray(node.documentRequirementsJson)
+        ? node.documentRequirementsJson.map((item) => ({ ...item }))
+        : [],
       conditionalSectionsJson: Array.isArray(node.conditionalSectionsJson)
         ? node.conditionalSectionsJson.map((item) => ({
             ...item,
-            unlocksDocuments: Array.isArray(item.unlocksDocuments) ? item.unlocksDocuments.map((entry) => ({ ...entry })) : [],
-            unlocksFields: Array.isArray(item.unlocksFields) ? item.unlocksFields.map((entry) => ({ ...entry })) : [],
+            unlocksDocuments: Array.isArray(item.unlocksDocuments)
+              ? item.unlocksDocuments.map((entry) => ({ ...entry }))
+              : [],
+            unlocksFields: Array.isArray(item.unlocksFields)
+              ? item.unlocksFields.map((entry) => ({ ...entry }))
+              : [],
           }))
         : [],
     })),
@@ -10074,16 +12134,33 @@ function summarizeWorkflowNodeForAudit(node: any) {
     canBeSkipped: !!node.canBeSkipped,
     canBeRevisited: node.canBeRevisited !== false,
     approvalRequired: !!node.approvalRequired,
-    approvalRoles: Array.isArray(node.approvalRoles) ? [...node.approvalRoles] : [],
-    requireAllMandatoryChecklistItems: node.requireAllMandatoryChecklistItems !== false,
+    approvalRoles: Array.isArray(node.approvalRoles)
+      ? [...node.approvalRoles]
+      : [],
+    requireAllMandatoryChecklistItems:
+      node.requireAllMandatoryChecklistItems !== false,
     requireMandatoryPhotos: !!node.requireMandatoryPhotos,
-    allowedRoles: Array.isArray(node.allowedRoles) ? [...node.allowedRoles] : [],
-    checklistItems: Array.isArray(node.checklistItems) ? node.checklistItems.map((item: any) => ({ ...item })) : [],
-    photoRequirements: Array.isArray(node.photoRequirements) ? node.photoRequirements.map((item: any) => ({ ...item })) : [],
-    fieldDefinitionsJson: normalizeFieldDefinitions(node.fieldDefinitionsJson ?? node.fieldDefinitions ?? []),
-    documentRequirementsJson: normalizeDocumentRequirements(node.documentRequirementsJson ?? node.documentRequirements ?? []),
-    conditionalSectionsJson: normalizeConditionalSections(node.conditionalSectionsJson ?? node.conditionalSections ?? []),
-    actionConfigJson: normalizeWorkflowNodeActionConfig(node.actionConfigJson ?? node.actionConfig ?? null),
+    allowedRoles: Array.isArray(node.allowedRoles)
+      ? [...node.allowedRoles]
+      : [],
+    checklistItems: Array.isArray(node.checklistItems)
+      ? node.checklistItems.map((item: any) => ({ ...item }))
+      : [],
+    photoRequirements: Array.isArray(node.photoRequirements)
+      ? node.photoRequirements.map((item: any) => ({ ...item }))
+      : [],
+    fieldDefinitionsJson: normalizeFieldDefinitions(
+      node.fieldDefinitionsJson ?? node.fieldDefinitions ?? [],
+    ),
+    documentRequirementsJson: normalizeDocumentRequirements(
+      node.documentRequirementsJson ?? node.documentRequirements ?? [],
+    ),
+    conditionalSectionsJson: normalizeConditionalSections(
+      node.conditionalSectionsJson ?? node.conditionalSections ?? [],
+    ),
+    actionConfigJson: normalizeWorkflowNodeActionConfig(
+      node.actionConfigJson ?? node.actionConfig ?? null,
+    ),
   });
 }
 
@@ -10094,11 +12171,16 @@ function summarizeWorkflowEdgeForAudit(edge: any) {
     label: edge.label ?? null,
     transitionType: edge.transitionType ?? "FORWARD",
     requiresReason: !!edge.requiresReason,
-    transitionConfigJson: edge.transitionConfigJson ?? edge.transitionConfig ?? null,
+    transitionConfigJson:
+      edge.transitionConfigJson ?? edge.transitionConfig ?? null,
   });
 }
 
-export async function startFilingWorkflow(userId: string, orgId: string, jobId: string): Promise<any> {
+export async function startFilingWorkflow(
+  userId: string,
+  orgId: string,
+  jobId: string,
+): Promise<any> {
   let instance = await db.filingWorkflowInstance.findUnique({
     where: { jobId },
   });
@@ -10112,10 +12194,15 @@ export async function startFilingWorkflow(userId: string, orgId: string, jobId: 
     select: { jobTypeId: true },
   });
 
-  let activeVersion = await findActivePublishedFilingWorkflowVersionForJob(orgId, job.jobTypeId);
+  let activeVersion = await findActivePublishedFilingWorkflowVersionForJob(
+    orgId,
+    job.jobTypeId,
+  );
 
   if (!activeVersion) {
-    throw new Error("No active published filing workflow template found for this organisation.");
+    throw new Error(
+      "No active published filing workflow template found for this organisation.",
+    );
   }
 
   const startNode = activeVersion.nodes.find((n) => n.isStart && n.isActive);
@@ -10135,7 +12222,12 @@ export async function startFilingWorkflow(userId: string, orgId: string, jobId: 
     });
 
     const startedAt = await getNow();
-    const slaDueDate = await calculateSlaDueDate(startedAt, startNode.slaDuration, startNode.slaUnit, orgId);
+    const slaDueDate = await calculateSlaDueDate(
+      startedAt,
+      startNode.slaDuration,
+      startNode.slaUnit,
+      orgId,
+    );
     const nodeRun = await createFilingNodeRunWithResponses(tx, {
       instanceId: inst.id,
       node: startNode,
@@ -10188,7 +12280,7 @@ export async function completeFilingNode(
       state?: Record<string, unknown> | null;
     }>;
     nextNodeKey?: string | null;
-  }
+  },
 ) {
   const job = await db.chaJob.findFirstOrThrow({
     where: { id: jobId, orgId },
@@ -10253,26 +12345,51 @@ export async function completeFilingNode(
       const isAllowed = roleNames.some((r) => node.allowedRoles.includes(r));
       const userObj = await tx.user.findUnique({ where: { id: userId } });
       if (!isAllowed && !userObj?.isPlatformAdmin) {
-        throw new Error(`Forbidden: Only users with roles (${node.allowedRoles.join(", ")}) can perform this check.`);
+        throw new Error(
+          `Forbidden: Only users with roles (${node.allowedRoles.join(", ")}) can perform this check.`,
+        );
       }
     }
 
     if (node.commentsRequired && (!data.remarks || !data.remarks.trim())) {
-      throw new Error(`Remarks/Comments are required to complete stage: ${node.name}.`);
+      throw new Error(
+        `Remarks/Comments are required to complete stage: ${node.name}.`,
+      );
     }
 
     const completedNodeKeys = getCompletedFilingNodeKeys(instance);
-    const nodeNameMap = new Map(instance.version.nodes.map((entry) => [entry.key, entry.name || entry.key]));
-    const prerequisiteStatus = evaluateNodePrerequisiteStatus(node, completedNodeKeys, nodeNameMap);
+    const nodeNameMap = new Map(
+      instance.version.nodes.map((entry) => [
+        entry.key,
+        entry.name || entry.key,
+      ]),
+    );
+    const prerequisiteStatus = evaluateNodePrerequisiteStatus(
+      node,
+      completedNodeKeys,
+      nodeNameMap,
+    );
     if (prerequisiteStatus.isBlocked) {
-      throw new Error(`Stage "${node.name}" is blocked until prerequisite stages are completed: ${prerequisiteStatus.missingNodeNames.join(", ")}.`);
+      throw new Error(
+        `Stage "${node.name}" is blocked until prerequisite stages are completed: ${prerequisiteStatus.missingNodeNames.join(", ")}.`,
+      );
     }
 
-    const fieldDefinitions = normalizeFieldDefinitions(node.fieldDefinitionsJson);
-    const conditionalSections = normalizeConditionalSections(node.conditionalSectionsJson);
-    const documentRequirements = normalizeDocumentRequirements(node.documentRequirementsJson);
-    const fieldValueMap = new Map((data.fieldValues ?? []).map((entry) => [entry.fieldKey, entry.value]));
-    const toggleStateMap = new Map((data.toggleStates ?? []).map((entry) => [entry.sectionKey, entry]));
+    const fieldDefinitions = normalizeFieldDefinitions(
+      node.fieldDefinitionsJson,
+    );
+    const conditionalSections = normalizeConditionalSections(
+      node.conditionalSectionsJson,
+    );
+    const documentRequirements = normalizeDocumentRequirements(
+      node.documentRequirementsJson,
+    );
+    const fieldValueMap = new Map(
+      (data.fieldValues ?? []).map((entry) => [entry.fieldKey, entry.value]),
+    );
+    const toggleStateMap = new Map(
+      (data.toggleStates ?? []).map((entry) => [entry.sectionKey, entry]),
+    );
     const persistedToggleStates = await tx.filingToggleState.findMany({
       where: { instanceId: instance.id, nodeId: node.id },
     });
@@ -10280,17 +12397,29 @@ export async function completeFilingNode(
       if (toggleStateMap.has(sectionKey)) {
         return toggleStateMap.get(sectionKey)!;
       }
-      const existing = persistedToggleStates.find((entry) => entry.sectionKey === sectionKey);
+      const existing = persistedToggleStates.find(
+        (entry) => entry.sectionKey === sectionKey,
+      );
       return existing
-        ? { sectionKey, isEnabled: existing.isEnabled, state: (existing.stateJson as Record<string, unknown> | null) ?? null }
+        ? {
+            sectionKey,
+            isEnabled: existing.isEnabled,
+            state:
+              (existing.stateJson as Record<string, unknown> | null) ?? null,
+          }
         : { sectionKey, isEnabled: false, state: null };
     };
 
     for (const field of fieldDefinitions) {
       const value = fieldValueMap.get(field.key);
-      const hasValue = value !== undefined && value !== null && String(value).trim().length > 0;
+      const hasValue =
+        value !== undefined &&
+        value !== null &&
+        String(value).trim().length > 0;
       if (field.required !== false && !hasValue) {
-        throw new Error(`Field "${field.label}" is required for stage "${node.name}".`);
+        throw new Error(
+          `Field "${field.label}" is required for stage "${node.name}".`,
+        );
       }
     }
 
@@ -10301,43 +12430,72 @@ export async function completeFilingNode(
       }
       for (const field of section.unlocksFields ?? []) {
         const value = fieldValueMap.get(field.key);
-        const hasValue = value !== undefined && value !== null && String(value).trim().length > 0;
+        const hasValue =
+          value !== undefined &&
+          value !== null &&
+          String(value).trim().length > 0;
         if (field.required !== false && !hasValue) {
-          throw new Error(`Field "${field.label}" is required when "${section.label}" is enabled.`);
+          throw new Error(
+            `Field "${field.label}" is required when "${section.label}" is enabled.`,
+          );
         }
       }
     }
 
-    const responsesMap = new Map(data.checklistItemResponses.map((r) => [r.checklistItemId, r]));
+    const responsesMap = new Map(
+      data.checklistItemResponses.map((r) => [r.checklistItemId, r]),
+    );
     const existingResponses = await tx.filingChecklistResponse.findMany({
       where: {
         instanceId: instance.id,
         nodeRunId: nodeRun.id,
       },
     });
-    const existingResponsesMap = new Map(existingResponses.map((response) => [response.checklistItemId, response]));
-    const activeChecklistItems = node.checklistItems.filter((item) => item.isActive !== false);
+    const existingResponsesMap = new Map(
+      existingResponses.map((response) => [response.checklistItemId, response]),
+    );
+    const activeChecklistItems = node.checklistItems.filter(
+      (item) => item.isActive !== false,
+    );
+    const usesStagePhotoUploadsForExamination =
+      node.name.trim().toLowerCase() === "examination" &&
+      node.photoRequirements.length > 0;
 
     for (const item of activeChecklistItems) {
       const res = responsesMap.get(item.id);
       if (node.requireAllMandatoryChecklistItems && item.isMandatory) {
         if (!res || !res.isChecked) {
-          throw new Error(`Mandatory checklist item "${item.label}" must be completed.`);
+          throw new Error(
+            `Mandatory checklist item "${item.label}" must be completed.`,
+          );
         }
       }
-      if (item.requiresRemarks && res?.isChecked && (!res.remarks || !res.remarks.trim())) {
-        throw new Error(`Remarks are required for checklist item "${item.label}".`);
+      if (
+        item.requiresRemarks &&
+        res?.isChecked &&
+        (!res.remarks || !res.remarks.trim())
+      ) {
+        throw new Error(
+          `Remarks are required for checklist item "${item.label}".`,
+        );
       }
       const dueAt =
         existingResponsesMap.get(item.id)?.dueAt ??
-        await calculateSlaDueDate(startedAt, item.deadlineDuration || 2, item.deadlineUnit || "BUSINESS_DAYS", orgId);
+        (await calculateSlaDueDate(
+          startedAt,
+          item.deadlineDuration || 2,
+          item.deadlineUnit || "BUSINESS_DAYS",
+          orgId,
+        ));
       if (
         res?.isChecked &&
         item.delayRemarksRequired &&
         dueAt.getTime() < now.getTime() &&
         (!res.delayRemarks || !res.delayRemarks.trim())
       ) {
-        throw new Error(`Delay remarks are required for overdue checklist item "${item.label}".`);
+        throw new Error(
+          `Delay remarks are required for overdue checklist item "${item.label}".`,
+        );
       }
     }
 
@@ -10346,9 +12504,56 @@ export async function completeFilingNode(
     });
 
     for (const requirement of documentRequirements) {
-      const uploads = attachments.filter((attachment) => attachment.documentRequirementKey === requirement.key);
-      if (requirement.required !== false && uploads.length === 0) {
-        throw new Error(`Document "${requirement.label}" is required before completing "${node.name}".`);
+      const uploads = attachments.filter((attachment) => {
+        if (attachment.documentRequirementKey === requirement.key) {
+          return true;
+        }
+        if (
+          requirement.legacySource === "PHOTO_REQUIREMENT" &&
+          requirement.legacySourceId &&
+          attachment.photoRequirementId === requirement.legacySourceId
+        ) {
+          return true;
+        }
+        if (
+          requirement.legacySource === "CHECKLIST_UPLOAD" &&
+          requirement.legacySourceId &&
+          attachment.checklistItemId === requirement.legacySourceId
+        ) {
+          return true;
+        }
+        return false;
+      });
+      const shouldDeferToLegacyValidation =
+        uploads.length === 0 &&
+        requirement.legacySource &&
+        requirement.legacySource !== "DOCUMENT_REQUIREMENT";
+      if (
+        !shouldDeferToLegacyValidation &&
+        requirement.required !== false &&
+        uploads.length === 0
+      ) {
+        throw new Error(
+          `Document "${requirement.label}" is required before completing "${node.name}".`,
+        );
+      }
+      if (shouldDeferToLegacyValidation) {
+        continue;
+      }
+      const minUploads = Math.max(Number(requirement.minUploads ?? 1), 0);
+      const maxUploads =
+        requirement.maxUploads === undefined || requirement.maxUploads === null
+          ? null
+          : Math.max(Number(requirement.maxUploads), 0);
+      if (minUploads > 0 && uploads.length < minUploads) {
+        throw new Error(
+          `Document "${requirement.label}" requires at least ${minUploads} upload(s).`,
+        );
+      }
+      if (maxUploads !== null && uploads.length > maxUploads) {
+        throw new Error(
+          `Document "${requirement.label}" exceeds the maximum allowed uploads.`,
+        );
       }
     }
 
@@ -10358,21 +12563,35 @@ export async function completeFilingNode(
         continue;
       }
       for (const requirement of section.unlocksDocuments ?? []) {
-        const uploads = attachments.filter((attachment) => attachment.documentRequirementKey === requirement.key);
+        const uploads = attachments.filter(
+          (attachment) => attachment.documentRequirementKey === requirement.key,
+        );
         if (requirement.required !== false && uploads.length === 0) {
-          throw new Error(`Document "${requirement.label}" is required when "${section.label}" is enabled.`);
+          throw new Error(
+            `Document "${requirement.label}" is required when "${section.label}" is enabled.`,
+          );
         }
       }
     }
 
     for (const item of activeChecklistItems) {
-      const itemUploads = attachments.filter((attachment) => attachment.checklistItemId === item.id);
-      if (item.allowsUpload) {
+      const itemUploads = attachments.filter(
+        (attachment) => attachment.checklistItemId === item.id,
+      );
+      if (item.allowsUpload && !usesStagePhotoUploadsForExamination) {
         if (item.minUploads > 0 && itemUploads.length < item.minUploads) {
-          throw new Error(`Checklist item "${item.label}" requires at least ${item.minUploads} upload(s).`);
+          throw new Error(
+            `Checklist item "${item.label}" requires at least ${item.minUploads} upload(s).`,
+          );
         }
-        if (item.maxUploads !== null && item.maxUploads !== undefined && itemUploads.length > item.maxUploads) {
-          throw new Error(`Checklist item "${item.label}" exceeds the maximum allowed uploads.`);
+        if (
+          item.maxUploads !== null &&
+          item.maxUploads !== undefined &&
+          itemUploads.length > item.maxUploads
+        ) {
+          throw new Error(
+            `Checklist item "${item.label}" exceeds the maximum allowed uploads.`,
+          );
         }
       }
     }
@@ -10381,12 +12600,14 @@ export async function completeFilingNode(
       const existing = existingResponsesMap.get(res.checklistItemId);
       const dueAt =
         existing?.dueAt ??
-        await calculateSlaDueDate(
+        (await calculateSlaDueDate(
           startedAt,
-          node.checklistItems.find((item) => item.id === res.checklistItemId)?.deadlineDuration || 2,
-          node.checklistItems.find((item) => item.id === res.checklistItemId)?.deadlineUnit || "BUSINESS_DAYS",
+          node.checklistItems.find((item) => item.id === res.checklistItemId)
+            ?.deadlineDuration || 2,
+          node.checklistItems.find((item) => item.id === res.checklistItemId)
+            ?.deadlineUnit || "BUSINESS_DAYS",
           orgId,
-        );
+        ));
       await tx.filingChecklistResponse.upsert({
         where: {
           instanceId_checklistItemId: {
@@ -10418,7 +12639,9 @@ export async function completeFilingNode(
         },
       });
 
-      const item = node.checklistItems.find((checklistItem) => checklistItem.id === res.checklistItemId);
+      const item = node.checklistItems.find(
+        (checklistItem) => checklistItem.id === res.checklistItemId,
+      );
       if (item && res.isChecked) {
         const isOverdue = dueAt.getTime() < now.getTime();
         await logChaAudit({
@@ -10426,7 +12649,9 @@ export async function completeFilingNode(
           jobId,
           entityType: "FilingChecklistResponse",
           entityId: `${instance.id}:${res.checklistItemId}`,
-          event: isOverdue ? "FILING_CHECKLIST_ITEM_COMPLETED_OVERDUE" : "FILING_CHECKLIST_ITEM_COMPLETED",
+          event: isOverdue
+            ? "FILING_CHECKLIST_ITEM_COMPLETED_OVERDUE"
+            : "FILING_CHECKLIST_ITEM_COMPLETED",
           actorId: userId,
           remarks: `Checklist item "${item.label}" completed in node "${node.name}".`,
           metadata: {
@@ -10454,12 +12679,18 @@ export async function completeFilingNode(
           nodeRunId: nodeRun.id,
           nodeId: node.id,
           fieldKey: field.key,
-          valueJson: value === undefined ? Prisma.JsonNull : (value as Prisma.InputJsonValue),
+          valueJson:
+            value === undefined
+              ? Prisma.JsonNull
+              : (value as Prisma.InputJsonValue),
           updatedById: userId,
         },
         update: {
           nodeRunId: nodeRun.id,
-          valueJson: value === undefined ? Prisma.JsonNull : (value as Prisma.InputJsonValue),
+          valueJson:
+            value === undefined
+              ? Prisma.JsonNull
+              : (value as Prisma.InputJsonValue),
           updatedById: userId,
         },
       });
@@ -10481,25 +12712,18 @@ export async function completeFilingNode(
           nodeId: node.id,
           sectionKey: section.key,
           isEnabled: !!sectionState.isEnabled,
-          stateJson: (sectionState.state ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+          stateJson: (sectionState.state ??
+            Prisma.JsonNull) as Prisma.InputJsonValue,
           updatedById: userId,
         },
         update: {
           nodeRunId: nodeRun.id,
           isEnabled: !!sectionState.isEnabled,
-          stateJson: (sectionState.state ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+          stateJson: (sectionState.state ??
+            Prisma.JsonNull) as Prisma.InputJsonValue,
           updatedById: userId,
         },
       });
-    }
-
-    for (const pr of node.photoRequirements) {
-      if (pr.isMandatory) {
-        const prCount = attachments.filter((a) => a.photoRequirementId === pr.id).length;
-        if (prCount < pr.minPhotos) {
-          throw new Error(`Mandatory photo upload "${pr.label}" requires at least ${pr.minPhotos} image(s). Uploaded ${prCount}.`);
-        }
-      }
     }
 
     await tx.filingNodeRun.update({
@@ -10517,7 +12741,9 @@ export async function completeFilingNode(
       },
     });
 
-    const completedResponses = data.checklistItemResponses.filter((response) => response.isChecked);
+    const completedResponses = data.checklistItemResponses.filter(
+      (response) => response.isChecked,
+    );
     if (node.canBeSkipped && completedResponses.length === 0) {
       await logChaAudit({
         orgId,
@@ -10534,25 +12760,65 @@ export async function completeFilingNode(
 
     if (nextNodeKey) {
       const allowedEdges = instance.version.edges.filter(
-        (e) => e.sourceKey === node.key && e.targetKey === nextNodeKey
+        (e) => e.sourceKey === node.key && e.targetKey === nextNodeKey,
       );
       if (allowedEdges.length === 0) {
-        throw new Error(`Invalid Transition: No edge exists between "${node.name}" and node key "${nextNodeKey}".`);
+        throw new Error(
+          `Invalid Transition: No edge exists between "${node.name}" and node key "${nextNodeKey}".`,
+        );
       }
       const selectedEdge = allowedEdges[0];
-      const requiresReason = selectedEdge.requiresReason || selectedEdge.transitionType === "BACKWARD";
-      if (requiresReason && (!data.transitionReason || !data.transitionReason.trim())) {
-        throw new Error(`A reason is required before moving from "${node.name}" to the selected previous stage.`);
+      const requiresReason =
+        selectedEdge.requiresReason ||
+        selectedEdge.transitionType === "BACKWARD";
+      if (
+        requiresReason &&
+        (!data.transitionReason || !data.transitionReason.trim())
+      ) {
+        throw new Error(
+          `A reason is required before moving from "${node.name}" to the selected previous stage.`,
+        );
       }
 
       const pastRuns = await tx.filingNodeRun.findMany({
-        where: { instanceId: instance.id, nodeKey: nextNodeKey, status: "COMPLETED" },
+        where: {
+          instanceId: instance.id,
+          nodeKey: nextNodeKey,
+          status: "COMPLETED",
+        },
       });
       const isDoubleBack = pastRuns.length > 0;
 
-      const targetNode = instance.version.nodes.find((n) => n.key === nextNodeKey && n.isActive)!;
+      const targetNode = instance.version.nodes.find(
+        (n) => n.key === nextNodeKey && n.isActive,
+      )!;
+      const completedNodeKeysForTransition = new Set([
+        ...getCompletedFilingNodeKeys(instance),
+        node.key,
+      ]);
+      const targetNodeNameMap = new Map(
+        instance.version.nodes.map((entry) => [
+          entry.key,
+          entry.name || entry.key,
+        ]),
+      );
+      const targetPrerequisiteStatus = evaluateNodePrerequisiteStatus(
+        targetNode,
+        completedNodeKeysForTransition,
+        targetNodeNameMap,
+      );
+      if (targetPrerequisiteStatus.isBlocked) {
+        throw new Error(
+          `Stage "${targetNode.name}" is blocked until prerequisite stages are completed: ${targetPrerequisiteStatus.missingNodeNames.join(", ")}.`,
+        );
+      }
       const nextStartedAt = await getNow();
-      const nextSlaDueDate = await calculateSlaDueDate(nextStartedAt, targetNode.slaDuration, targetNode.slaUnit, orgId);
+      const nextSlaDueDate = await calculateSlaDueDate(
+        nextStartedAt,
+        targetNode.slaDuration,
+        targetNode.slaUnit,
+        orgId,
+      );
       const nextNodeRun = await createFilingNodeRunWithResponses(tx, {
         instanceId: instance.id,
         node: {
@@ -10580,7 +12846,9 @@ export async function completeFilingNode(
           jobId,
           entityType: "FilingWorkflowInstance",
           entityId: instance.id,
-          event: isDoubleBack ? "FILING_DOUBLE_BACK_TRANSITION" : "FILING_TRANSITION",
+          event: isDoubleBack
+            ? "FILING_DOUBLE_BACK_TRANSITION"
+            : "FILING_TRANSITION",
           actorId: userId,
           prevState: node.key,
           newState: nextNodeKey,
@@ -10601,18 +12869,23 @@ export async function completeFilingNode(
           remarks: `Decision node "${node.name}" routed the workflow to "${targetNode.name}".`,
         });
       }
-
     } else {
       const pastRuns = await tx.filingNodeRun.findMany({
         where: { instanceId: instance.id, status: "COMPLETED" },
       });
       const completedNodeKeys = new Set(pastRuns.map((r) => r.nodeKey));
 
-      const outEdges = instance.version.edges.filter((e) => e.sourceKey === node.key);
-      const forwardOutEdges = outEdges.filter((e) => !completedNodeKeys.has(e.targetKey));
+      const outEdges = instance.version.edges.filter(
+        (e) => e.sourceKey === node.key,
+      );
+      const forwardOutEdges = outEdges.filter(
+        (e) => !completedNodeKeys.has(e.targetKey),
+      );
 
       if (forwardOutEdges.length > 0) {
-        throw new Error(`Select the next stage. Connected transitions are available.`);
+        throw new Error(
+          `Select the next stage. Connected transitions are available.`,
+        );
       }
 
       await tx.filingWorkflowInstance.update({
@@ -10625,11 +12898,17 @@ export async function completeFilingNode(
         data: { stage: "FILED" },
       });
 
-      const existingFiling = await tx.chaFiling.findUnique({ where: { jobId } });
+      const existingFiling = await tx.chaFiling.findUnique({
+        where: { jobId },
+      });
       if (existingFiling) {
         await tx.chaFiling.update({
           where: { id: existingFiling.id },
-          data: { status: "FILED", actualFilingDate: new Date(), filingRef: `BLUEPRINT-${instance.id.substring(0, 8).toUpperCase()}` },
+          data: {
+            status: "FILED",
+            actualFilingDate: new Date(),
+            filingRef: `BLUEPRINT-${instance.id.substring(0, 8).toUpperCase()}`,
+          },
         });
       }
 
@@ -10671,7 +12950,9 @@ export async function revertFilingWorkflowToPreviousStage(
   reason: string,
 ) {
   if (!reason || !reason.trim()) {
-    throw new Error("A reason is required to jump back to an earlier filing stage.");
+    throw new Error(
+      "A reason is required to jump back to an earlier filing stage.",
+    );
   }
   const trimmedReason = reason.trim();
 
@@ -10694,7 +12975,9 @@ export async function revertFilingWorkflowToPreviousStage(
         node: true,
         instance: {
           include: {
-            version: { include: { nodes: { include: { checklistItems: true } } } },
+            version: {
+              include: { nodes: { include: { checklistItems: true } } },
+            },
           },
         },
       },
@@ -10718,14 +13001,18 @@ export async function revertFilingWorkflowToPreviousStage(
       orderBy: { completedAt: "desc" },
     });
     if (!targetRun) {
-      throw new Error("The selected filing stage has not been completed before.");
+      throw new Error(
+        "The selected filing stage has not been completed before.",
+      );
     }
 
     const targetNode = instance.version.nodes.find(
       (n) => n.key === targetNodeKey && n.isActive,
     );
     if (!targetNode) {
-      throw new Error("The selected filing stage is no longer active in this workflow version.");
+      throw new Error(
+        "The selected filing stage is no longer active in this workflow version.",
+      );
     }
 
     const now = await getNow();
@@ -10748,7 +13035,12 @@ export async function revertFilingWorkflowToPreviousStage(
       startedAt: now,
       orgId,
     });
-    const slaDueDate = await calculateSlaDueDate(now, targetNode.slaDuration, targetNode.slaUnit, orgId);
+    const slaDueDate = await calculateSlaDueDate(
+      now,
+      targetNode.slaDuration,
+      targetNode.slaUnit,
+      orgId,
+    );
     await tx.filingNodeRun.update({
       where: { id: reopenedRun.id },
       data: { slaDueDate },
@@ -10758,7 +13050,10 @@ export async function revertFilingWorkflowToPreviousStage(
       where: { id: instance.id },
       data: {
         currentNodeKey: targetNode.key,
-        contextJson: buildInstanceContextWithPendingBlockedStage(instance.contextJson, null) as Prisma.InputJsonValue,
+        contextJson: buildInstanceContextWithPendingBlockedStage(
+          instance.contextJson,
+          null,
+        ) as Prisma.InputJsonValue,
       },
     });
 
@@ -10777,7 +13072,10 @@ export async function revertFilingWorkflowToPreviousStage(
       },
     });
 
-    return { reopenedNodeKey: targetNode.key, reopenedNodeName: targetNode.name };
+    return {
+      reopenedNodeKey: targetNode.key,
+      reopenedNodeName: targetNode.name,
+    };
   });
 
   await getFilingWorkflowInstance(orgId, jobId);
@@ -10789,7 +13087,7 @@ export async function toggleFilingSection49(
   orgId: string,
   jobId: string,
   isEnabled: boolean,
-  remarks?: string
+  remarks?: string,
 ) {
   const job = await db.chaJob.findFirstOrThrow({
     where: { id: jobId, orgId },
@@ -10865,7 +13163,10 @@ export async function getFilingSection49(orgId: string, jobId: string) {
   return flag ? { ...flag, extensions } : null;
 }
 
-async function findSection49Requirement(tx: Prisma.TransactionClient, jobId: string) {
+async function findSection49Requirement(
+  tx: Prisma.TransactionClient,
+  jobId: string,
+) {
   return tx.chaJobDocumentRequirement.findFirst({
     where: {
       jobId,
@@ -10985,18 +13286,24 @@ export async function applyFilingSection49Extension(
     throw new Error("Enable Section 49 before applying an extension.");
   }
   if (!flag.validityDate) {
-    throw new Error("Set the current Section 49 validity date before applying an extension.");
+    throw new Error(
+      "Set the current Section 49 validity date before applying an extension.",
+    );
   }
   if (Number.isNaN(input.extensionDate.getTime())) {
     throw new Error("Enter a valid Section 49 extension date.");
   }
   if (input.extensionDate.getTime() <= flag.validityDate.getTime()) {
-    throw new Error("The Section 49 extension date must be after the current validity date.");
+    throw new Error(
+      "The Section 49 extension date must be after the current validity date.",
+    );
   }
 
   const now = await getNow();
   if (!isWithinFourDayValidityWindow(flag.validityDate, now)) {
-    throw new Error("Section 49 extension is available only when the validity warning window is active.");
+    throw new Error(
+      "Section 49 extension is available only when the validity warning window is active.",
+    );
   }
 
   const { fileKey, storedFileName } = await storeDeliveryOrderFile(
@@ -11043,7 +13350,9 @@ export async function applyFilingSection49Extension(
       where: { id: requirement.id },
       data: { status: "UPLOADED" },
     });
-    await tx.chaDocumentException.deleteMany({ where: { requirementId: requirement.id } });
+    await tx.chaDocumentException.deleteMany({
+      where: { requirementId: requirement.id },
+    });
 
     const extension = await tx.filingSection49Extension.create({
       data: {
@@ -11125,25 +13434,43 @@ export async function redirectBlockedFilingWorkflowStage(
         node: true,
         instance: {
           include: {
-            version: { include: { nodes: { include: { checklistItems: true } } } },
+            version: {
+              include: { nodes: { include: { checklistItems: true } } },
+            },
             nodeRuns: true,
           },
         },
       },
     });
-    if (nodeRun.instance.jobId !== jobId) throw new Error("Node run does not belong to this job.");
-    if (nodeRun.status !== "ACTIVE") throw new Error("Only the active filing stage can be redirected.");
+    if (nodeRun.instance.jobId !== jobId)
+      throw new Error("Node run does not belong to this job.");
+    if (nodeRun.status !== "ACTIVE")
+      throw new Error("Only the active filing stage can be redirected.");
     const completedNodeKeys = getCompletedFilingNodeKeys(nodeRun.instance);
-    const nodeNameMap = new Map(nodeRun.instance.version.nodes.map((entry) => [entry.key, entry.name || entry.key]));
-    const prerequisiteStatus = evaluateNodePrerequisiteStatus(nodeRun.node, completedNodeKeys, nodeNameMap);
+    const nodeNameMap = new Map(
+      nodeRun.instance.version.nodes.map((entry) => [
+        entry.key,
+        entry.name || entry.key,
+      ]),
+    );
+    const prerequisiteStatus = evaluateNodePrerequisiteStatus(
+      nodeRun.node,
+      completedNodeKeys,
+      nodeNameMap,
+    );
     if (!prerequisiteStatus.isBlocked) {
       throw new Error("This filing stage is not blocked by prerequisites.");
     }
     if (!prerequisiteStatus.missingNodeKeys.includes(targetNodeKey)) {
-      throw new Error("The selected redirect stage is not a missing prerequisite.");
+      throw new Error(
+        "The selected redirect stage is not a missing prerequisite.",
+      );
     }
-    const targetNode = nodeRun.instance.version.nodes.find((entry) => entry.key === targetNodeKey && entry.isActive);
-    if (!targetNode) throw new Error("The selected prerequisite stage is no longer active.");
+    const targetNode = nodeRun.instance.version.nodes.find(
+      (entry) => entry.key === targetNodeKey && entry.isActive,
+    );
+    if (!targetNode)
+      throw new Error("The selected prerequisite stage is no longer active.");
     const now = await getNow();
     await tx.filingNodeRun.update({
       where: { id: nodeRun.id },
@@ -11160,20 +13487,31 @@ export async function redirectBlockedFilingWorkflowStage(
       startedAt: now,
       orgId,
     });
-    const slaDueDate = await calculateSlaDueDate(now, targetNode.slaDuration, targetNode.slaUnit, orgId);
-    await tx.filingNodeRun.update({ where: { id: reopenedRun.id }, data: { slaDueDate } });
+    const slaDueDate = await calculateSlaDueDate(
+      now,
+      targetNode.slaDuration,
+      targetNode.slaUnit,
+      orgId,
+    );
+    await tx.filingNodeRun.update({
+      where: { id: reopenedRun.id },
+      data: { slaDueDate },
+    });
     await tx.filingWorkflowInstance.update({
       where: { id: nodeRun.instance.id },
       data: {
         currentNodeKey: targetNode.key,
-        contextJson: buildInstanceContextWithPendingBlockedStage(nodeRun.instance.contextJson, {
-          nodeKey: nodeRun.node.key,
-          nodeName: nodeRun.node.name,
-          mode: prerequisiteStatus.mode,
-          requiredNodeKeys: prerequisiteStatus.requiredNodeKeys,
-          createdFromNodeKey: targetNode.key,
-          createdAt: now.toISOString(),
-        }) as Prisma.InputJsonValue,
+        contextJson: buildInstanceContextWithPendingBlockedStage(
+          nodeRun.instance.contextJson,
+          {
+            nodeKey: nodeRun.node.key,
+            nodeName: nodeRun.node.name,
+            mode: prerequisiteStatus.mode,
+            requiredNodeKeys: prerequisiteStatus.requiredNodeKeys,
+            createdFromNodeKey: targetNode.key,
+            createdAt: now.toISOString(),
+          },
+        ) as Prisma.InputJsonValue,
       },
     });
     await tx.chaAuditLog.create({
@@ -11189,7 +13527,10 @@ export async function redirectBlockedFilingWorkflowStage(
         remarks: `Redirected from blocked stage "${nodeRun.node.name}" to prerequisite stage "${targetNode.name}".`,
       },
     });
-    return { redirectedToNodeKey: targetNode.key, redirectedToNodeName: targetNode.name };
+    return {
+      redirectedToNodeKey: targetNode.key,
+      redirectedToNodeName: targetNode.name,
+    };
   });
   await getFilingWorkflowInstance(orgId, jobId);
   return result;
@@ -11218,18 +13559,34 @@ export async function resumeBlockedFilingWorkflowStage(
       include: {
         instance: {
           include: {
-            version: { include: { nodes: { include: { checklistItems: true } } } },
+            version: {
+              include: { nodes: { include: { checklistItems: true } } },
+            },
             nodeRuns: true,
           },
         },
       },
     });
-    if (nodeRun.instance.jobId !== jobId) throw new Error("Node run does not belong to this job.");
-    if (nodeRun.status !== "ACTIVE") throw new Error("Only the active filing stage can be used to resume a blocked stage.");
-    const pendingBlockedStage = getPendingBlockedStageContext(nodeRun.instance.contextJson);
-    if (!pendingBlockedStage) throw new Error("There is no blocked filing stage waiting to be resumed.");
+    if (nodeRun.instance.jobId !== jobId)
+      throw new Error("Node run does not belong to this job.");
+    if (nodeRun.status !== "ACTIVE")
+      throw new Error(
+        "Only the active filing stage can be used to resume a blocked stage.",
+      );
+    const pendingBlockedStage = getPendingBlockedStageContext(
+      nodeRun.instance.contextJson,
+    );
+    if (!pendingBlockedStage)
+      throw new Error(
+        "There is no blocked filing stage waiting to be resumed.",
+      );
     const completedNodeKeys = getCompletedFilingNodeKeys(nodeRun.instance);
-    const nodeNameMap = new Map(nodeRun.instance.version.nodes.map((entry) => [entry.key, entry.name || entry.key]));
+    const nodeNameMap = new Map(
+      nodeRun.instance.version.nodes.map((entry) => [
+        entry.key,
+        entry.name || entry.key,
+      ]),
+    );
     const prerequisiteStatus = evaluateNodePrerequisiteStatus(
       {
         key: pendingBlockedStage.nodeKey,
@@ -11246,10 +13603,15 @@ export async function resumeBlockedFilingWorkflowStage(
       nodeNameMap,
     );
     if (prerequisiteStatus.isBlocked) {
-      throw new Error("The blocked stage cannot be resumed yet because prerequisites are still incomplete.");
+      throw new Error(
+        "The blocked stage cannot be resumed yet because prerequisites are still incomplete.",
+      );
     }
-    const blockedNode = nodeRun.instance.version.nodes.find((entry) => entry.key === pendingBlockedStage.nodeKey && entry.isActive);
-    if (!blockedNode) throw new Error("The blocked filing stage is no longer active.");
+    const blockedNode = nodeRun.instance.version.nodes.find(
+      (entry) => entry.key === pendingBlockedStage.nodeKey && entry.isActive,
+    );
+    if (!blockedNode)
+      throw new Error("The blocked filing stage is no longer active.");
     const now = await getNow();
     await tx.filingNodeRun.update({
       where: { id: nodeRun.id },
@@ -11266,13 +13628,24 @@ export async function resumeBlockedFilingWorkflowStage(
       startedAt: now,
       orgId,
     });
-    const slaDueDate = await calculateSlaDueDate(now, blockedNode.slaDuration, blockedNode.slaUnit, orgId);
-    await tx.filingNodeRun.update({ where: { id: reopenedRun.id }, data: { slaDueDate } });
+    const slaDueDate = await calculateSlaDueDate(
+      now,
+      blockedNode.slaDuration,
+      blockedNode.slaUnit,
+      orgId,
+    );
+    await tx.filingNodeRun.update({
+      where: { id: reopenedRun.id },
+      data: { slaDueDate },
+    });
     await tx.filingWorkflowInstance.update({
       where: { id: nodeRun.instance.id },
       data: {
         currentNodeKey: blockedNode.key,
-        contextJson: buildInstanceContextWithPendingBlockedStage(nodeRun.instance.contextJson, null) as Prisma.InputJsonValue,
+        contextJson: buildInstanceContextWithPendingBlockedStage(
+          nodeRun.instance.contextJson,
+          null,
+        ) as Prisma.InputJsonValue,
       },
     });
     await tx.chaAuditLog.create({
@@ -11288,7 +13661,10 @@ export async function resumeBlockedFilingWorkflowStage(
         remarks: `Resumed blocked stage "${blockedNode.name}".`,
       },
     });
-    return { reopenedNodeKey: blockedNode.key, reopenedNodeName: blockedNode.name };
+    return {
+      reopenedNodeKey: blockedNode.key,
+      reopenedNodeName: blockedNode.name,
+    };
   });
   await getFilingWorkflowInstance(orgId, jobId);
   return result;
@@ -11369,7 +13745,9 @@ export async function saveFilingNodeDraft(
         nodeRunId: nodeRun.id,
       },
     });
-    const existingResponsesMap = new Map(existingResponses.map((response) => [response.checklistItemId, response]));
+    const existingResponsesMap = new Map(
+      existingResponses.map((response) => [response.checklistItemId, response]),
+    );
 
     await tx.filingNodeRun.update({
       where: { id: nodeRun.id },
@@ -11379,7 +13757,9 @@ export async function saveFilingNodeDraft(
     });
 
     for (const response of data.checklistItemResponses) {
-      const item = nodeRun.node.checklistItems.find((checklistItem) => checklistItem.id === response.checklistItemId);
+      const item = nodeRun.node.checklistItems.find(
+        (checklistItem) => checklistItem.id === response.checklistItemId,
+      );
       if (!item) {
         continue;
       }
@@ -11387,12 +13767,12 @@ export async function saveFilingNodeDraft(
       const existing = existingResponsesMap.get(response.checklistItemId);
       const dueAt =
         existing?.dueAt ??
-        await calculateSlaDueDate(
+        (await calculateSlaDueDate(
           startedAt,
           item.deadlineDuration || 2,
           item.deadlineUnit || "BUSINESS_DAYS",
           orgId,
-        );
+        ));
 
       await tx.filingChecklistResponse.upsert({
         where: {
@@ -11410,7 +13790,9 @@ export async function saveFilingNodeDraft(
           fileKey: response.fileKey || null,
           dueAt,
           completedAt: response.isChecked ? now : null,
-          delayRemarks: response.delayRemarks?.trim() ? response.delayRemarks.trim() : null,
+          delayRemarks: response.delayRemarks?.trim()
+            ? response.delayRemarks.trim()
+            : null,
           delayRemarkedAt: response.delayRemarks?.trim() ? now : null,
         },
         update: {
@@ -11420,7 +13802,9 @@ export async function saveFilingNodeDraft(
           fileKey: response.fileKey || null,
           dueAt,
           completedAt: response.isChecked ? now : null,
-          delayRemarks: response.delayRemarks?.trim() ? response.delayRemarks.trim() : null,
+          delayRemarks: response.delayRemarks?.trim()
+            ? response.delayRemarks.trim()
+            : null,
           delayRemarkedAt: response.delayRemarks?.trim() ? now : null,
         },
       });
@@ -11445,12 +13829,18 @@ export async function saveFilingNodeDraft(
           nodeRunId: nodeRun.id,
           nodeId: nodeRun.nodeId,
           fieldKey,
-          valueJson: field.value === undefined ? Prisma.JsonNull : (field.value as Prisma.InputJsonValue),
+          valueJson:
+            field.value === undefined
+              ? Prisma.JsonNull
+              : (field.value as Prisma.InputJsonValue),
           updatedById: userId,
         },
         update: {
           nodeRunId: nodeRun.id,
-          valueJson: field.value === undefined ? Prisma.JsonNull : (field.value as Prisma.InputJsonValue),
+          valueJson:
+            field.value === undefined
+              ? Prisma.JsonNull
+              : (field.value as Prisma.InputJsonValue),
           updatedById: userId,
         },
       });
@@ -11476,13 +13866,15 @@ export async function saveFilingNodeDraft(
           nodeId: nodeRun.nodeId,
           sectionKey,
           isEnabled: !!toggleState.isEnabled,
-          stateJson: (toggleState.state ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+          stateJson: (toggleState.state ??
+            Prisma.JsonNull) as Prisma.InputJsonValue,
           updatedById: userId,
         },
         update: {
           nodeRunId: nodeRun.id,
           isEnabled: !!toggleState.isEnabled,
-          stateJson: (toggleState.state ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+          stateJson: (toggleState.state ??
+            Prisma.JsonNull) as Prisma.InputJsonValue,
           updatedById: userId,
         },
       });
@@ -11559,17 +13951,28 @@ async function syncFilingWorkflowQueryReminders(orgId: string, jobId: string) {
 
   for (const query of openQueries) {
     const reminderTime = query.reminderTime || DEFAULT_QUERY_REMINDER_TIME;
-    const lastReminderIso = query.lastReminderAt?.toISOString().slice(0, 10) ?? null;
-    if (lastReminderIso === todayIso || !hasReminderTimeElapsed(reminderTime, now)) {
+    const lastReminderIso =
+      query.lastReminderAt?.toISOString().slice(0, 10) ?? null;
+    if (
+      lastReminderIso === todayIso ||
+      !hasReminderTimeElapsed(reminderTime, now)
+    ) {
       continue;
     }
 
     const recipients = Array.from(
-      new Set([
-        query.instance.job.primaryOwnerId,
-        query.instance.job.assignedManagerId,
-        ...query.instance.job.assignments.map((assignment) => assignment.userId),
-      ].filter((value): value is string => typeof value === "string" && value.length > 0)),
+      new Set(
+        [
+          query.instance.job.primaryOwnerId,
+          query.instance.job.assignedManagerId,
+          ...query.instance.job.assignments.map(
+            (assignment) => assignment.userId,
+          ),
+        ].filter(
+          (value): value is string =>
+            typeof value === "string" && value.length > 0,
+        ),
+      ),
     );
 
     await Promise.all(
@@ -11647,11 +14050,16 @@ function getFilingQueryRecipientIds(job: {
   assignments: { userId: string }[];
 }) {
   return Array.from(
-    new Set([
-      job.primaryOwnerId,
-      job.assignedManagerId,
-      ...job.assignments.map((assignment) => assignment.userId),
-    ].filter((value): value is string => typeof value === "string" && value.length > 0)),
+    new Set(
+      [
+        job.primaryOwnerId,
+        job.assignedManagerId,
+        ...job.assignments.map((assignment) => assignment.userId),
+      ].filter(
+        (value): value is string =>
+          typeof value === "string" && value.length > 0,
+      ),
+    ),
   );
 }
 
@@ -11674,7 +14082,9 @@ async function notifyFilingQueryParticipants(params: {
     },
   });
 
-  const recipients = getFilingQueryRecipientIds(job).filter((userId) => userId !== params.actorId);
+  const recipients = getFilingQueryRecipientIds(job).filter(
+    (userId) => userId !== params.actorId,
+  );
   if (recipients.length === 0) {
     return;
   }
@@ -11784,12 +14194,20 @@ async function buildFilingQueryEscalationWarnings(params: {
       continue;
     }
     const latestActivity = latestActivityAfterReminder.get(query.id);
-    if (latestActivity && latestActivity.getTime() > query.lastReminderAt.getTime()) {
+    if (
+      latestActivity &&
+      latestActivity.getTime() > query.lastReminderAt.getTime()
+    ) {
       continue;
     }
 
-    const warningTriggeredAt = new Date(query.lastReminderAt.getTime() + 60 * 60 * 1000);
-    const staleMinutes = Math.max(60, Math.floor((now.getTime() - query.lastReminderAt.getTime()) / 60000));
+    const warningTriggeredAt = new Date(
+      query.lastReminderAt.getTime() + 60 * 60 * 1000,
+    );
+    const staleMinutes = Math.max(
+      60,
+      Math.floor((now.getTime() - query.lastReminderAt.getTime()) / 60000),
+    );
     const existingCount = warningCounts.get(query.instance.jobId) || 0;
     warningCounts.set(query.instance.jobId, existingCount + 1);
 
@@ -11805,14 +14223,19 @@ async function buildFilingQueryEscalationWarnings(params: {
     };
 
     const existing = warningsByJob.get(query.instance.jobId);
-    if (!existing || existing.warningTriggeredAt.getTime() > candidate.warningTriggeredAt.getTime()) {
+    if (
+      !existing ||
+      existing.warningTriggeredAt.getTime() >
+        candidate.warningTriggeredAt.getTime()
+    ) {
       warningsByJob.set(query.instance.jobId, candidate);
     }
   }
 
   return Array.from(warningsByJob.values()).map((warning) => ({
     ...warning,
-    overdueQueryCount: warningCounts.get(warning.jobId) || warning.overdueQueryCount,
+    overdueQueryCount:
+      warningCounts.get(warning.jobId) || warning.overdueQueryCount,
   }));
 }
 
@@ -11846,8 +14269,11 @@ export async function createFilingWorkflowQuery(
     throw new Error("Filing workflow step not found for this query.");
   }
 
-  const node = instance.version.nodes.find((entry) => entry.id === nodeRun.nodeId);
-  const reminderTime = input.reminderTime?.trim() || DEFAULT_QUERY_REMINDER_TIME;
+  const node = instance.version.nodes.find(
+    (entry) => entry.id === nodeRun.nodeId,
+  );
+  const reminderTime =
+    input.reminderTime?.trim() || DEFAULT_QUERY_REMINDER_TIME;
   const query = await db.filingWorkflowQuery.create({
     data: {
       instanceId: instance.id,
@@ -11996,7 +14422,10 @@ export async function updateFilingWorkflowQueryStatus(
     where: { id: queryId },
     data: {
       status: input.status,
-      details: typeof input.details === "string" && input.details.trim() ? input.details.trim() : undefined,
+      details:
+        typeof input.details === "string" && input.details.trim()
+          ? input.details.trim()
+          : undefined,
       closedAt: input.status === "CLOSED" ? now : null,
       closedById: input.status === "CLOSED" ? actorId : null,
     },
@@ -12007,13 +14436,19 @@ export async function updateFilingWorkflowQueryStatus(
     jobId,
     entityType: "FilingWorkflowQuery",
     entityId: queryId,
-    event: input.status === "CLOSED" ? "FILING_QUERY_CLOSED" : "FILING_QUERY_UPDATED",
+    event:
+      input.status === "CLOSED"
+        ? "FILING_QUERY_CLOSED"
+        : "FILING_QUERY_UPDATED",
     actorId,
     prevState: query.status,
     newState: input.status,
     remarks: `Filing query "${query.title}" updated to ${input.status}.`,
     metadata: {
-      details: typeof input.details === "string" && input.details.trim() ? input.details.trim() : null,
+      details:
+        typeof input.details === "string" && input.details.trim()
+          ? input.details.trim()
+          : null,
       status: input.status,
     },
   });
@@ -12025,7 +14460,10 @@ export async function updateFilingWorkflowQueryStatus(
     queryId,
     queryTitle: query.title,
     actorId,
-    kind: input.status === "CLOSED" ? "CHA_FILING_QUERY_CLOSED" : "CHA_FILING_QUERY_UPDATED",
+    kind:
+      input.status === "CLOSED"
+        ? "CHA_FILING_QUERY_CLOSED"
+        : "CHA_FILING_QUERY_UPDATED",
     body:
       input.status === "CLOSED"
         ? `The customs query "${query.title}" was marked replied and closed.`
@@ -12046,7 +14484,8 @@ export async function deleteDeliveryOrderDocument(
   }
 
   const existingFileKey = additionalData.doDocumentFileKey;
-  const existingFileName = additionalData.doDocumentFileName || "Delivery Order document";
+  const existingFileName =
+    additionalData.doDocumentFileName || "Delivery Order document";
 
   const updated = await db.$transaction(async (tx) => {
     const updatedAdditionalData = await tx.chaJobAdditionalData.update({
@@ -12152,7 +14591,9 @@ export async function upsertFilingWorkflowToggleState(
   });
 
   if (nodeRun.status !== "ACTIVE") {
-    throw new Error("This filing workflow section can only be updated on the active stage.");
+    throw new Error(
+      "This filing workflow section can only be updated on the active stage.",
+    );
   }
 
   const sectionKey = input.sectionKey.trim();
@@ -12218,9 +14659,16 @@ async function resolveConfiguredValidityDate(params: {
     return null;
   }
   if (params.validityDuration && params.validityUnit) {
-    return calculateSlaDueDate(params.uploadedAt, params.validityDuration, params.validityUnit, params.orgId);
+    return calculateSlaDueDate(
+      params.uploadedAt,
+      params.validityDuration,
+      params.validityUnit,
+      params.orgId,
+    );
   }
-  throw new Error("This document requires a validity date before the upload can be completed.");
+  throw new Error(
+    "This document requires a validity date before the upload can be completed.",
+  );
 }
 
 async function ensureWorkflowDocumentRequirementItem(
@@ -12248,14 +14696,17 @@ async function ensureWorkflowDocumentRequirementItem(
     create: {
       orgId,
       name: "Filing Workflow Documents",
-      description: "Documents automatically generated or uploaded during the CHA filing workflow.",
+      description:
+        "Documents automatically generated or uploaded during the CHA filing workflow.",
       sortOrder: 98,
       isActive: true,
     },
   });
 
   return tx.chaDocumentRequirementItem.upsert({
-    where: { categoryId_name: { categoryId: category.id, name: input.documentType } },
+    where: {
+      categoryId_name: { categoryId: category.id, name: input.documentType },
+    },
     update: {
       acceptedFileTypes: input.acceptedFileTypes,
       isRequiredDefault: input.isMandatory,
@@ -12351,35 +14802,84 @@ async function syncFilingAttachmentToDocuments(
     documentRequirement?: FilingDocumentRequirementConfig | null;
   },
 ) {
-  const sourceConfig = params.checklistItem ?? params.photoRequirement ?? params.documentRequirement;
+  const sourceConfig =
+    params.checklistItem ??
+    params.photoRequirement ??
+    params.documentRequirement;
   if (!sourceConfig) {
     return null;
   }
-  const shouldShowInDocuments = "showInDocumentsPage" in sourceConfig ? sourceConfig.showInDocumentsPage !== false : true;
+  const shouldShowInDocuments =
+    "showInDocumentsPage" in sourceConfig
+      ? sourceConfig.showInDocumentsPage !== false
+      : true;
   if (!shouldShowInDocuments) {
     return null;
   }
 
   const documentType =
-    ("documentType" in sourceConfig ? sourceConfig.documentType?.trim() : undefined) ||
-    sourceConfig.label;
+    ("documentType" in sourceConfig
+      ? sourceConfig.documentType?.trim()
+      : undefined) || sourceConfig.label;
   const isMandatory =
-    "isMandatory" in sourceConfig ? sourceConfig.isMandatory : !!sourceConfig.required;
-  const requirementItem = await ensureWorkflowDocumentRequirementItem(tx, params.orgId, {
-    documentType,
-    acceptedFileTypes: sourceConfig.acceptedFileTypes ?? [],
-    isMandatory,
-    minUploadCount: "minUploads" in sourceConfig ? sourceConfig.minUploads : "minPhotos" in sourceConfig ? sourceConfig.minPhotos : 1,
-    maxUploadCount: "maxUploads" in sourceConfig ? sourceConfig.maxUploads : "maxPhotos" in sourceConfig ? sourceConfig.maxPhotos : null,
-    requiresValidityDate: "requiresValidity" in sourceConfig ? !!sourceConfig.requiresValidity : false,
-    defaultValidityDuration: "validityDuration" in sourceConfig ? sourceConfig.validityDuration ?? null : null,
-    defaultValidityUnit: "validityUnit" in sourceConfig ? sourceConfig.validityUnit ?? null : null,
-    warningBeforeDuration: "warningBeforeDuration" in sourceConfig ? sourceConfig.warningBeforeDuration ?? null : null,
-    warningBeforeUnit: "warningBeforeUnit" in sourceConfig ? sourceConfig.warningBeforeUnit ?? null : null,
-    notifyBeforeExpiry: "notifyBeforeExpiry" in sourceConfig ? !!sourceConfig.notifyBeforeExpiry : false,
-    notificationRoles: "notificationRoles" in sourceConfig ? sourceConfig.notificationRoles ?? [] : [],
-    showInTimeline: "showInTimeline" in sourceConfig ? sourceConfig.showInTimeline : "isVisibleInTimeline" in sourceConfig ? sourceConfig.isVisibleInTimeline : true,
-  });
+    "isMandatory" in sourceConfig
+      ? sourceConfig.isMandatory
+      : !!sourceConfig.required;
+  const requirementItem = await ensureWorkflowDocumentRequirementItem(
+    tx,
+    params.orgId,
+    {
+      documentType,
+      acceptedFileTypes: sourceConfig.acceptedFileTypes ?? [],
+      isMandatory,
+      minUploadCount:
+        "minUploads" in sourceConfig
+          ? (sourceConfig.minUploads ?? 1)
+          : "minPhotos" in sourceConfig
+            ? (sourceConfig.minPhotos ?? 1)
+            : 1,
+      maxUploadCount:
+        "maxUploads" in sourceConfig
+          ? sourceConfig.maxUploads
+          : "maxPhotos" in sourceConfig
+            ? sourceConfig.maxPhotos
+            : null,
+      requiresValidityDate:
+        "requiresValidity" in sourceConfig
+          ? !!sourceConfig.requiresValidity
+          : false,
+      defaultValidityDuration:
+        "validityDuration" in sourceConfig
+          ? (sourceConfig.validityDuration ?? null)
+          : null,
+      defaultValidityUnit:
+        "validityUnit" in sourceConfig
+          ? (sourceConfig.validityUnit ?? null)
+          : null,
+      warningBeforeDuration:
+        "warningBeforeDuration" in sourceConfig
+          ? (sourceConfig.warningBeforeDuration ?? null)
+          : null,
+      warningBeforeUnit:
+        "warningBeforeUnit" in sourceConfig
+          ? (sourceConfig.warningBeforeUnit ?? null)
+          : null,
+      notifyBeforeExpiry:
+        "notifyBeforeExpiry" in sourceConfig
+          ? !!sourceConfig.notifyBeforeExpiry
+          : false,
+      notificationRoles:
+        "notificationRoles" in sourceConfig
+          ? (sourceConfig.notificationRoles ?? [])
+          : [],
+      showInTimeline:
+        "showInTimeline" in sourceConfig
+          ? (sourceConfig.showInTimeline ?? true)
+          : "isVisibleInTimeline" in sourceConfig
+            ? (sourceConfig.isVisibleInTimeline ?? true)
+            : true,
+    },
+  );
 
   let jobRequirement = await tx.chaJobDocumentRequirement.findFirst({
     where: {
@@ -12424,7 +14924,12 @@ async function syncFilingAttachmentToDocuments(
       workflowNodeRunId: params.nodeRunId,
       filingChecklistItemId: params.checklistItem?.id ?? null,
       filingPhotoRequirementId: params.photoRequirement?.id ?? null,
-      timelineVisible: "showInTimeline" in sourceConfig ? sourceConfig.showInTimeline : "isVisibleInTimeline" in sourceConfig ? sourceConfig.isVisibleInTimeline : true,
+      timelineVisible:
+        "showInTimeline" in sourceConfig
+          ? sourceConfig.showInTimeline
+          : "isVisibleInTimeline" in sourceConfig
+            ? sourceConfig.isVisibleInTimeline
+            : true,
     },
   });
 
@@ -12500,36 +15005,65 @@ export async function uploadFilingAttachment(
   }
 
   const checklistItem = checklistItemId
-    ? nodeRun.node.checklistItems.find((item) => item.id === checklistItemId) ?? null
+    ? (nodeRun.node.checklistItems.find(
+        (item) => item.id === checklistItemId,
+      ) ?? null)
     : null;
   const photoRequirement = photoRequirementId
-    ? nodeRun.node.photoRequirements.find((item) => item.id === photoRequirementId) ?? null
+    ? (nodeRun.node.photoRequirements.find(
+        (item) => item.id === photoRequirementId,
+      ) ?? null)
     : null;
-  const nodeDocumentRequirements = normalizeDocumentRequirements(nodeRun.node.documentRequirementsJson);
-  const conditionalSections = normalizeConditionalSections(nodeRun.node.conditionalSectionsJson);
-  const conditionalDocuments = conditionalSections.flatMap((section) => section.unlocksDocuments ?? []);
-  const documentRequirement =
-    documentRequirementKey
-      ? [...nodeDocumentRequirements, ...conditionalDocuments].find((item) => item.key === documentRequirementKey) ?? null
-      : null;
-  const uploadLabel = checklistItem?.label
-    || photoRequirement?.label
-    || (documentRequirementKey === "bill_document"
+  const nodeDocumentRequirements = mergeNodeDocumentRequirements(nodeRun.node);
+  const conditionalSections = normalizeConditionalSections(
+    nodeRun.node.conditionalSectionsJson,
+  );
+  const conditionalDocuments = conditionalSections.flatMap(
+    (section) => section.unlocksDocuments ?? [],
+  );
+  const documentRequirement = documentRequirementKey
+    ? ([...nodeDocumentRequirements, ...conditionalDocuments].find(
+        (item) => item.key === documentRequirementKey,
+      ) ?? null)
+    : null;
+  const resolvedChecklistItemId =
+    checklistItemId ??
+    (documentRequirement?.legacySource === "CHECKLIST_UPLOAD" &&
+    documentRequirement.legacySourceId
+      ? documentRequirement.legacySourceId
+      : null);
+  const uploadLabel =
+    checklistItem?.label ||
+    photoRequirement?.label ||
+    (documentRequirementKey === "bill_document"
       ? job.jobType?.movementDirection === "EXPORT"
         ? "Shipping Bill"
         : "Bill of Entry"
-      : documentRequirement?.label)
-    || "Filing Document";
-  const storedFileName = buildDriveStoredFileName(uploadLabel, fileData.fileName);
-  const driveAccessToken = await resolveJobDriveUploadAccessToken(job.primaryOwnerId, actorId);
+      : documentRequirement?.label) ||
+    "Filing Document";
+  const storedFileName = buildDriveStoredFileName(
+    uploadLabel,
+    fileData.fileName,
+  );
+  const driveAccessToken = await resolveJobDriveUploadAccessToken(
+    job.primaryOwnerId,
+    actorId,
+  );
 
   // Verifies (and transparently recreates) the job's root and "Filing
   // Documents" folder if either was deleted from Drive after the job was created.
   let filingRootFolderId: string | undefined;
   try {
-    filingRootFolderId = await ensureJobCategoryFolder(jobId, "Filing Documents", actorId);
+    filingRootFolderId = await ensureJobCategoryFolder(
+      jobId,
+      "Filing Documents",
+      actorId,
+    );
   } catch (err: any) {
-    console.warn(`[Upload] Drive folder self-heal failed for job ${jobId}, "Filing Documents":`, err.message || err);
+    console.warn(
+      `[Upload] Drive folder self-heal failed for job ${jobId}, "Filing Documents":`,
+      err.message || err,
+    );
     const profile = await findJobWorkspaceProfileByJobId(jobId);
     filingRootFolderId = resolveDriveFolderForCategory(
       profile?.categoryFolders as Record<string, string> | undefined,
@@ -12540,7 +15074,11 @@ export async function uploadFilingAttachment(
 
   let fileKey = `https://drive.google.com/file/d/mock-uploaded-${Math.random().toString(36).substring(7)}/view`;
 
-  if (fileBuffer && filingRootFolderId && !filingRootFolderId.startsWith("mock-")) {
+  if (
+    fileBuffer &&
+    filingRootFolderId &&
+    !filingRootFolderId.startsWith("mock-")
+  ) {
     try {
       // Each filing checklist stage (node) gets its own subfolder under "Filing
       // Documents", created lazily on first upload and reused after that.
@@ -12562,10 +15100,15 @@ export async function uploadFilingAttachment(
       if (process.env.NODE_ENV === "production") {
         throw new Error(`Google Drive upload failed: ${err.message || err}`);
       }
-      console.warn("[Upload] Google Drive upload failed for Filing. Falling back to mock URL. Error:", err.message || err);
+      console.warn(
+        "[Upload] Google Drive upload failed for Filing. Falling back to mock URL. Error:",
+        err.message || err,
+      );
     }
   } else if (fileBuffer && process.env.NODE_ENV === "production") {
-    throw new Error("Google Drive is not provisioned for this job or missing credentials. Please retry provisioning the workspace.");
+    throw new Error(
+      "Google Drive is not provisioned for this job or missing credentials. Please retry provisioning the workspace.",
+    );
   }
 
   const sourceConfig = checklistItem ?? photoRequirement ?? documentRequirement;
@@ -12576,8 +15119,11 @@ export async function uploadFilingAttachment(
         explicitValidityDate: validityDate ?? null,
         requiresValidity: !!sourceConfig.requiresValidity,
         validityDuration:
-          "validityDuration" in sourceConfig ? sourceConfig.validityDuration : null,
-        validityUnit: "validityUnit" in sourceConfig ? sourceConfig.validityUnit : null,
+          "validityDuration" in sourceConfig
+            ? sourceConfig.validityDuration
+            : null,
+        validityUnit:
+          "validityUnit" in sourceConfig ? sourceConfig.validityUnit : null,
         orgId,
       })
     : null;
@@ -12588,10 +15134,11 @@ export async function uploadFilingAttachment(
         instanceId: instance.id,
         nodeRunId,
         photoRequirementId,
-        checklistItemId,
+        checklistItemId: resolvedChecklistItemId,
         documentRequirementKey,
         documentRequirementLabel: documentRequirement?.label ?? null,
-        conditionalSectionKey: documentRequirement?.visibleWhen?.sectionKey ?? null,
+        conditionalSectionKey:
+          documentRequirement?.visibleWhen?.sectionKey ?? null,
         fileKey,
         fileName: storedFileName,
         fileSize: fileData.sizeBytes,
@@ -12621,7 +15168,13 @@ export async function uploadFilingAttachment(
       },
       nodeRunId,
       nodeId: nodeRun.node.id,
-      checklistItem,
+      checklistItem:
+        checklistItem ??
+        (resolvedChecklistItemId
+          ? (nodeRun.node.checklistItems.find(
+              (item) => item.id === resolvedChecklistItemId,
+            ) ?? null)
+          : null),
       photoRequirement,
       documentRequirement,
     });
@@ -12634,7 +15187,11 @@ export async function uploadFilingAttachment(
     jobId,
     entityType: "FilingAttachment",
     entityId: attachment.id,
-    event: checklistItemId ? "FILING_CHECKLIST_FILE_UPLOADED" : documentRequirementKey ? "FILING_DOCUMENT_REQUIREMENT_FILE_UPLOADED" : "FILING_PHOTO_UPLOADED",
+    event: checklistItemId
+      ? "FILING_CHECKLIST_FILE_UPLOADED"
+      : documentRequirementKey
+        ? "FILING_DOCUMENT_REQUIREMENT_FILE_UPLOADED"
+        : "FILING_PHOTO_UPLOADED",
     actorId,
     remarks: `Uploaded file: ${storedFileName} for node run ${nodeRunId}`,
     metadata: {
@@ -12689,7 +15246,9 @@ export async function upsertFilingShipmentDetails(
   }
 
   if (billOfEntryNumber && shippingBillNumber) {
-    throw new Error("Bill of Entry and Shipping Bill numbers cannot both be set.");
+    throw new Error(
+      "Bill of Entry and Shipping Bill numbers cannot both be set.",
+    );
   }
 
   if (job.jobType?.movementDirection === "IMPORT" && shippingBillNumber) {
@@ -12744,7 +15303,9 @@ export async function upsertFilingShipmentDetails(
       actorId: userId,
       prevState: previous?.billOfEntryNumber ?? undefined,
       newState: billOfEntryNumber ?? undefined,
-      remarks: billOfEntryNumber ? `Bill of Entry Number updated to ${billOfEntryNumber}.` : "Bill of Entry Number cleared.",
+      remarks: billOfEntryNumber
+        ? `Bill of Entry Number updated to ${billOfEntryNumber}.`
+        : "Bill of Entry Number cleared.",
     });
   }
 
@@ -12758,7 +15319,9 @@ export async function upsertFilingShipmentDetails(
       actorId: userId,
       prevState: previous?.shippingBillNumber ?? undefined,
       newState: shippingBillNumber ?? undefined,
-      remarks: shippingBillNumber ? `Shipping Bill Number updated to ${shippingBillNumber}.` : "Shipping Bill Number cleared.",
+      remarks: shippingBillNumber
+        ? `Shipping Bill Number updated to ${shippingBillNumber}.`
+        : "Shipping Bill Number cleared.",
     });
   }
 
@@ -12769,7 +15332,7 @@ export async function deleteFilingAttachment(
   actorId: string,
   orgId: string,
   jobId: string,
-  attachmentId: string
+  attachmentId: string,
 ) {
   const job = await db.chaJob.findFirstOrThrow({
     where: { id: jobId, orgId },

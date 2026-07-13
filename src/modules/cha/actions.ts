@@ -1199,6 +1199,7 @@ export async function loadStarterFilingWorkflowAction(
     description?: string;
     clearanceTypeId?: string | null;
     filingFlowCategory?: string | null;
+    starterClearanceTypeId?: string | null;
   },
 ): Promise<ActionResponse> {
   try {
