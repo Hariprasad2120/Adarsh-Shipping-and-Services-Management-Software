@@ -12,9 +12,9 @@ import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { FilterMenu } from "@/components/ui/filter-menu";
 import { JobFilingQueryWarningIndicator } from "@/app/(dashboard)/cha/_components/job-filing-query-warning-indicator";
 import {
-  ChaDueDateWarningIndicator,
-  type DueDateWarningViewModel,
-} from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
+  ChaDueDateWarningsIndicator,
+} from "@/app/(dashboard)/cha/_components/cha-due-date-warnings-indicator";
+import type { DueDateWarningViewModel } from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
 import {
   formatChaBadgeLabel,
   getChaPriorityBadgeVariant,
@@ -232,12 +232,7 @@ export function JobsClient({
                 <DataTableCell className="py-5 font-medium text-[#00cec4]">
                   <div className="flex items-center gap-2">
                     <span>{job.jobNumber}</span>
-                    {job.dueDateWarnings.map((warning) => (
-                      <ChaDueDateWarningIndicator
-                        key={warning.notificationId}
-                        warning={warning}
-                      />
-                    ))}
+                    <ChaDueDateWarningsIndicator warnings={job.dueDateWarnings} />
                     {job.filingQueryWarning ? (
                       <JobFilingQueryWarningIndicator jobId={job.id} warning={job.filingQueryWarning} />
                     ) : null}

@@ -14,6 +14,8 @@ type WarningIndicatorPopoverProps = {
   meta?: string;
   tone?: WarningIndicatorTone;
   children: ReactNode;
+  childrenClassName?: string;
+  childrenLayout?: "grid" | "stack";
 };
 
 const TONE_STYLES: Record<
@@ -49,6 +51,8 @@ export function WarningIndicatorPopover({
   meta,
   tone = "warning",
   children,
+  childrenClassName,
+  childrenLayout = "grid",
 }: WarningIndicatorPopoverProps) {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -187,7 +191,10 @@ export function WarningIndicatorPopover({
                   {meta ? <p className="text-xs leading-relaxed text-on-surface-variant">{meta}</p> : null}
 
                   <div
-                    className="grid grid-cols-2 gap-2 pt-1"
+                    className={cn(
+                      childrenLayout === "stack" ? "flex flex-col gap-3 pt-1" : "grid grid-cols-2 gap-2 pt-1",
+                      childrenClassName,
+                    )}
                     onClickCapture={(event) => {
                       const target = event.target;
                       if (target instanceof HTMLElement && target.closest("button, a")) {

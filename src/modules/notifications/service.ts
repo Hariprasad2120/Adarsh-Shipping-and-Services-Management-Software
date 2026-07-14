@@ -259,14 +259,53 @@ export async function listActiveUserNotifications(userId: string) {
       dismissedAt: null,
       OR: [
         { priority: "important", acknowledgedAt: null },
-        { priority: "normal", presentedAt: null },
+        { priority: "normal" },
       ],
     },
     orderBy: { createdAt: "desc" },
-    take: 5,
+    take: 25,
   });
 
-  return notifications.map((notification) => ({
+  const grouped = new Map<string, (typeof notifications)>();
+  for (const notification of notifications) {
+    const payload =
+      notification.payload && typeof notification.payload === "object" && !Array.isArray(notification.payload)
+        ? (notification.payload as Record<string, unknown>)
+        : null;
+    const jobId = typeof payload?.jobId === "string" ? payload.jobId : null;
+    const stateKey = typeof payload?.stateKey === "string" ? payload.stateKey : null;
+    const logicalKey = jobId && stateKey ? `${notification.kind}:${jobId}:${stateKey}` : notification.id;
+    const current = grouped.get(logicalKey) ?? [];
+    current.push(notification);
+    grouped.set(logicalKey, current);
+  }
+
+  const activeNotifications = Array.from(grouped.values())
+    .map((group) => {
+      if (group.some((notification) => notification.acknowledgedAt !== null)) {
+        return null;
+      }
+
+      const important = group.find((notification) => notification.priority === "important");
+      if (important) {
+        return important;
+      }
+
+      const normal = group.filter((notification) => notification.priority === "normal");
+      if (normal.length === 0) {
+        return null;
+      }
+
+      if (normal.some((notification) => notification.presentedAt !== null)) {
+        return null;
+      }
+
+      return normal[0] ?? null;
+    })
+    .filter((notification): notification is (typeof notifications)[number] => notification !== null)
+    .slice(0, 5);
+
+  return activeNotifications.map((notification) => ({
     ...notification,
     policy: getNotificationPolicy(notification.kind),
   }));

@@ -11,9 +11,9 @@ import { getBreadcrumbLabels, subscribeBreadcrumb } from "@/lib/breadcrumb-store
 import { getPathLabel } from "@/lib/route-labels";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChaDueDateWarningIndicator,
   type DueDateWarningViewModel,
 } from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
+import { ChaDueDateWarningsIndicator } from "@/app/(dashboard)/cha/_components/cha-due-date-warnings-indicator";
 
 function toTitleCase(value: string) {
   return value
@@ -249,17 +249,14 @@ export function AppHeader({
           <ClockDisplay />
           {chaDueDateWarnings.length > 0 ? (
             <div className="flex items-center gap-2">
-              {chaDueDateWarnings.map((warning) => (
-                <ChaDueDateWarningIndicator
-                  key={warning.notificationId}
-                  warning={warning}
-                  onAcknowledged={() => {
-                    setChaDueDateWarnings((current) =>
-                      current.filter((entry) => entry.notificationId !== warning.notificationId),
-                    );
-                  }}
-                />
-              ))}
+              <ChaDueDateWarningsIndicator
+                warnings={chaDueDateWarnings}
+                onAcknowledged={(notificationId) => {
+                  setChaDueDateWarnings((current) =>
+                    current.filter((entry) => entry.notificationId !== notificationId),
+                  );
+                }}
+              />
             </div>
           ) : null}
 

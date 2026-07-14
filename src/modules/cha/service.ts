@@ -2528,7 +2528,7 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
 
   const [[filingQueryWarning], dueDateWarnings] = await Promise.all([
     buildFilingQueryEscalationWarnings({ actorId: userId, orgId, jobId }),
-    listChaDueDateWarnings(userId, orgId, { jobId }),
+    listChaDueDateWarnings(userId, orgId, { jobId, createNotifications: false }),
   ]);
   const actorMap = new Map(actors.map((a) => [a.id, { name: a.name }]));
   const auditLogsWithActor = rawAuditLogs.map((log) => ({
@@ -3925,6 +3925,7 @@ export async function listChaDueDateWarnings(
   options: {
     jobId?: string;
     limit?: number;
+    createNotifications?: boolean;
   } = {},
 ): Promise<ChaDueDateWarning[]> {
   const [now, canViewAll] = await Promise.all([
@@ -4115,7 +4116,7 @@ export async function listChaDueDateWarnings(
     }
   }
 
-  if (pendingCreates.length > 0) {
+  if (options.createNotifications !== false && pendingCreates.length > 0) {
     const createdNotifications = await Promise.all(
       pendingCreates.map(async (candidate) => {
         const action = getDueDateWarningAction(candidate.type, candidate.jobId);
@@ -7884,431 +7885,643 @@ function buildDefaultWorkflowNode(input: {
   };
 }
 
-const DEFAULT_FILING_WORKFLOW_SEED = {
-  nodes: [
-    buildDefaultWorkflowNode({
+function buildDefaultFieldDefinitionConfig(input: FilingFieldDefinition): FilingFieldDefinition {
+  return {
+    key: input.key,
+    label: input.label,
+    type: input.type ?? "TEXT",
+    required: input.required !== false,
+    placeholder: input.placeholder ?? null,
+    options: input.options ?? [],
+    helperText: input.helperText ?? null,
+    defaultValue: input.defaultValue,
+  };
+}
+
+function buildDefaultDocumentRequirementConfig(input: FilingDocumentRequirementConfig): FilingDocumentRequirementConfig {
+  return {
+    key: input.key,
+    label: input.label,
+    required: input.required !== false,
+    acceptedFileTypes: input.acceptedFileTypes ?? ["application/pdf", "image/jpeg", "image/png"],
+    maxFileSizeMb: input.maxFileSizeMb ?? null,
+    multiple: !!input.multiple,
+    allowReplacement: input.allowReplacement !== false,
+    allowPreview: input.allowPreview !== false,
+    approvalRequired: !!input.approvalRequired,
+    visibleWhen: input.visibleWhen ?? null,
+    requiresValidity: !!input.requiresValidity,
+    reminderOffsetDays: input.reminderOffsetDays ?? null,
+    reminderKind: input.reminderKind ?? null,
+  };
+}
+
+function buildCustomsQuerySectionConfig(): FilingConditionalSectionConfig {
+  return {
+    key: "customs_query",
+    label: "Customs Query",
+    type: "TOGGLE",
+    defaultEnabled: false,
+    unlocksFields: [
+      buildDefaultFieldDefinitionConfig({
+        key: "query_notes",
+        label: "Query Details",
+        type: "TEXTAREA",
+        required: true,
+        placeholder: "Enter customs query notes",
+      }),
+    ],
+    unlocksDocuments: [],
+  };
+}
+
+function buildFilingStartNodeConfig(input: {
+  key: string;
+  name: string;
+  description: string;
+  sectionKey: string;
+  sectionName: string;
+  sortOrder: number;
+  positionX: number;
+  positionY: number;
+  numberField: FilingFieldDefinition;
+  dateField: FilingFieldDefinition;
+  starterChecklistLabel: string;
+  documentRequirements?: FilingDocumentRequirementConfig[];
+  conditionalSections?: FilingConditionalSectionConfig[];
+}) {
+  return buildDefaultWorkflowNode({
+    key: input.key,
+    name: input.name,
+    description: input.description,
+    sectionKey: input.sectionKey,
+    sectionName: input.sectionName,
+    sortOrder: input.sortOrder,
+    positionX: input.positionX,
+    positionY: input.positionY,
+    checklistItems: [buildDefaultChecklistConfig({ label: input.starterChecklistLabel })],
+    fieldDefinitionsJson: [
+      buildDefaultFieldDefinitionConfig(input.numberField),
+      buildDefaultFieldDefinitionConfig(input.dateField),
+    ],
+    documentRequirementsJson: input.documentRequirements?.map(buildDefaultDocumentRequirementConfig) ?? [],
+    conditionalSectionsJson: input.conditionalSections ?? [],
+  });
+}
+
+function buildDefaultFilingWorkflowSeed() {
+  const nodes: ReturnType<typeof buildDefaultWorkflowNode>[] = [];
+  const edges: Array<{ sourceKey: string; targetKey: string; label: string }> = [];
+  let sortOrder = 1;
+
+  const pdfAndImageTypes = ["application/pdf", "image/jpeg", "image/png"];
+  const startX = 1060;
+  const importFirstCheckX = 120;
+  const importSecondCheckX = 680;
+  const importRmsX = 520;
+  const importOpenBillX = 900;
+  const exportFirstCheckX = 1240;
+  const exportSecondCheckX = 1800;
+  const exportRmsX = 1640;
+  const exportOpenBillX = 2020;
+  const startY = 120;
+  const rowGap = 190;
+
+  const addNode = (node: ReturnType<typeof buildDefaultWorkflowNode>) => {
+    nodes.push(node);
+    return node;
+  };
+
+  const addStage = (input: Parameters<typeof buildDefaultWorkflowNode>[0]) =>
+    addNode(buildDefaultWorkflowNode({ ...input, nodeType: input.nodeType ?? "SECTION", sortOrder: sortOrder++ }));
+  const addEdge = (sourceKey: string, targetKey: string, label: string) => {
+    edges.push({ sourceKey, targetKey, label });
+  };
+
+  const examinationChecklist = () =>
+    buildDefaultChecklistConfig({
+      label: "Examination",
+      allowsUpload: true,
+      minUploads: 1,
+      acceptedFileTypes: ["application/pdf"],
+      documentType: "CE/Lab Report",
+      requiresValidity: true,
+      warningBeforeDuration: 1,
+      warningBeforeUnit: "CALENDAR_DAYS",
+      notifyBeforeExpiry: true,
+    });
+
+  const examinationPhotos = () =>
+    buildDefaultPhotoRequirementConfig({
+      label: "Examination Photos",
+      acceptedFileTypes: ["image/jpeg", "image/png"],
+      documentType: "Examination Photos",
+    });
+
+  const deliveryChecklist = (documentType: string) =>
+    buildDefaultChecklistConfig({
+      label: "Delivery",
+      allowsUpload: true,
+      acceptedFileTypes: pdfAndImageTypes,
+      documentType,
+      requiresValidity: true,
+      warningBeforeDuration: 1,
+      warningBeforeUnit: "CALENDAR_DAYS",
+      notifyBeforeExpiry: true,
+    });
+
+  const documentChecklist = (label: string, documentType: string) =>
+    buildDefaultChecklistConfig({
+      label,
+      allowsUpload: true,
+      acceptedFileTypes: pdfAndImageTypes,
+      documentType,
+    });
+
+  const addChecklistPath = (
+    entries: Array<{
+      key: string;
+      name: string;
+      description: string;
+      positionX: number;
+      positionY: number;
+      sectionKey: string;
+      sectionName: string;
+      branchKey?: string | null;
+      branchName?: string | null;
+      canBeSkipped?: boolean;
+      checklistItems?: any[];
+      photoRequirements?: any[];
+    }>,
+    sourceKey: string,
+    firstLabel: string,
+  ) => {
+    let previousKey = sourceKey;
+    entries.forEach((entry, index) => {
+      const node = addStage({
+        ...entry,
+        checklistItems: entry.checklistItems ?? [buildDefaultChecklistConfig({ label: entry.name, isMandatory: !entry.canBeSkipped })],
+        photoRequirements: entry.photoRequirements ?? [],
+      });
+      addEdge(previousKey, node.key, index === 0 ? firstLabel : "Next");
+      previousKey = node.key;
+    });
+    return previousKey;
+  };
+
+  const chooseFilingFlow = addStage({
+    key: "choose_filing_flow",
+    name: "Choose Filing Flow",
+    description: "Start the filing workflow by selecting the import or export clearance route.",
+    nodeType: "DECISION",
+    sectionKey: "routing",
+    sectionName: "Routing",
+    isStart: true,
+    positionX: startX,
+    positionY: startY,
+  });
+
+  const importStart = addNode(
+    buildFilingStartNodeConfig({
       key: "bill_filing",
       name: "Bill Filing",
-      description: "Configurable filing start node. Capture bill details, upload the bill document, optionally open customs query handling, and expose the filing path options only after completion.",
-      sectionKey: "start",
-      sectionName: "Start",
-      sortOrder: 1,
-      isStart: true,
-      positionX: 500,
-      positionY: 100,
-      fieldDefinitionsJson: [
-        {
-          key: "bill_number",
-          label: "Bill Filing Number",
-          type: "TEXT",
-          required: true,
-          placeholder: "Enter bill filing number",
-        },
-        { key: "bill_filing_date", label: "Bill Filing Date", type: "DATE", required: true, placeholder: "Select bill filing date" },
-      ],
-      documentRequirementsJson: [
+      description: "Import filing start node. Capture the Bill of Entry number, filing date, starter checklist item, supporting uploads, and optional customs query handling before the import path begins.",
+      sectionKey: "import_start",
+      sectionName: "Import Start",
+      sortOrder: sortOrder++,
+      positionX: 520,
+      positionY: startY + rowGap,
+      starterChecklistLabel: "Bill Filing Checklist Item",
+      numberField: {
+        key: "bill_number",
+        label: "Bill Filing Number",
+        type: "TEXT",
+        required: true,
+        placeholder: "Enter bill filing number",
+      },
+      dateField: {
+        key: "bill_filing_date",
+        label: "Bill Filing Date",
+        type: "DATE",
+        required: true,
+        placeholder: "Select bill filing date",
+      },
+      documentRequirements: [
         {
           key: "bill_document",
           label: "Bill Document",
-          required: true,
-          acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
-          allowReplacement: true,
-          allowPreview: true,
+          acceptedFileTypes: pdfAndImageTypes,
         },
       ],
-      conditionalSectionsJson: [
-        {
-          key: "customs_query",
-          label: "Customs Query",
-          type: "TOGGLE",
-          defaultEnabled: false,
-          unlocksFields: [
-            { key: "query_notes", label: "Query Details", type: "TEXTAREA", required: true, placeholder: "Enter customs query notes" },
-          ],
-        },
-        {
-          key: "section_49",
-          label: "Sec 49",
-          type: "TOGGLE",
-          defaultEnabled: false,
-          unlocksDocuments: [
-            {
-              key: "section_49_document",
-              label: "Sec 49 Document",
-              required: true,
-              acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
-              allowReplacement: true,
-            },
-          ],
-        },
-      ],
+      conditionalSections: [buildCustomsQuerySectionConfig()],
     }),
-    buildDefaultWorkflowNode({
-      key: "choose_primary_path",
-      name: "Choose Filing Path",
-      description: "Choose the filing path configuration for this job after bill filing is complete.",
+  );
+  addEdge(chooseFilingFlow.key, importStart.key, "Import / Bill of Entry");
+
+  const exportStart = addNode(
+    buildFilingStartNodeConfig({
+      key: "shipping_bill_filing",
+      name: "Shipping Bill Filing",
+      description: "Export filing start node. Capture the shipping bill number, date, and starter checklist item before the export path begins.",
+      sectionKey: "export_start",
+      sectionName: "Export Start",
+      sortOrder: sortOrder++,
+      positionX: 1600,
+      positionY: startY + rowGap,
+      starterChecklistLabel: "Checklist Item",
+      numberField: {
+        key: "shipping_bill_number",
+        label: "Shipping Bill Number",
+        type: "TEXT",
+        required: true,
+        placeholder: "Enter shipping bill number",
+      },
+      dateField: {
+        key: "shipping_bill_date",
+        label: "Shipping Bill Date",
+        type: "DATE",
+        required: true,
+        placeholder: "Select shipping bill date",
+      },
+    }),
+  );
+  addEdge(chooseFilingFlow.key, exportStart.key, "Export / Shipping Bill");
+
+  const buildFlow = (input: {
+    flowLabel: string;
+    flowKey: string;
+    copyGenerationLabel: string;
+    flowKind: "IMPORT" | "EXPORT";
+    firstCheckX: number;
+    secondCheckX: number;
+    rmsX: number;
+    openBillX: number;
+    startNodeKey: string;
+  }) => {
+    const chooseCheckType = addStage({
+      key: `${input.flowKey}_choose_check_type`,
+      name: `Choose ${input.flowLabel} Check Type`,
+      description: `Choose whether this ${input.flowKind === "IMPORT" ? "import" : "export"} filing follows First Check or Second Check.`,
       nodeType: "DECISION",
-      sectionKey: "start",
-      sectionName: "Start",
-      sortOrder: 2,
-      positionX: 500,
-      positionY: 280,
-    }),
-    buildDefaultWorkflowNode({
-      key: "first_check_be_copy_generation",
-      name: "BE Copy Generation",
-      description: "Generate the BE copy before the remaining First Check sequence.",
-      sectionKey: "first_check",
-      sectionName: "First Check",
-      sortOrder: 3,
-      positionX: 140,
-      positionY: 460,
-      checklistItems: [buildDefaultChecklistConfig({ label: "BE Copy Generation" })],
-    }),
-    buildDefaultWorkflowNode({
-      key: "first_check_goods_registration",
-      name: "Goods Registration",
-      description: "Register goods under the First Check path.",
-      sectionKey: "first_check",
-      sectionName: "First Check",
-      sortOrder: 4,
-      positionX: 140,
-      positionY: 640,
-      checklistItems: [buildDefaultChecklistConfig({ label: "Goods Registration" })],
-    }),
-    buildDefaultWorkflowNode({
-      key: "first_check_examination",
-      name: "Examination",
-      description: "Capture examination evidence and CE/Lab report validity.",
-      sectionKey: "first_check",
-      sectionName: "First Check",
-      sortOrder: 5,
-      positionX: 140,
-      positionY: 820,
-      checklistItems: [
-        buildDefaultChecklistConfig({
-          label: "Examination",
-          allowsUpload: true,
-          minUploads: 1,
-          acceptedFileTypes: ["application/pdf"],
-          documentType: "CE/Lab Report",
-          requiresValidity: true,
-          warningBeforeDuration: 1,
-          warningBeforeUnit: "CALENDAR_DAYS",
-          notifyBeforeExpiry: true,
-        }),
+      sectionKey: `${input.flowKey}_routing`,
+      sectionName: `${input.flowLabel} Routing`,
+      positionX: input.secondCheckX - ((input.secondCheckX - input.firstCheckX) / 2),
+      positionY: startY + rowGap * 2,
+    });
+    addEdge(input.startNodeKey, chooseCheckType.key, "Choose Check Type");
+
+    const firstCheckStage = addStage({
+      key: `${input.flowKey}_first_check`,
+      name: `${input.flowLabel} First Check`,
+      description: `${input.flowLabel} First Check workflow path selected after filing.`,
+      sectionKey: `${input.flowKey}_first_check`,
+      sectionName: `${input.flowLabel} First Check`,
+      positionX: input.firstCheckX,
+      positionY: startY + rowGap * 3,
+    });
+    addEdge(chooseCheckType.key, firstCheckStage.key, "First Check");
+
+    const firstCheckLastKey = addChecklistPath(
+      [
+        {
+          key: `${input.flowKey}_first_check_copy_generation`,
+          name: input.copyGenerationLabel,
+          description: `Generate the ${input.copyGenerationLabel} step before the remaining First Check sequence.`,
+          positionX: input.firstCheckX,
+          positionY: startY + rowGap * 4,
+          sectionKey: `${input.flowKey}_first_check`,
+          sectionName: `${input.flowLabel} First Check`,
+          checklistItems: [buildDefaultChecklistConfig({ label: input.copyGenerationLabel })],
+        },
+        {
+          key: `${input.flowKey}_first_check_goods_registration`,
+          name: "Goods Registration",
+          description: "Register goods under the First Check path.",
+          positionX: input.firstCheckX,
+          positionY: startY + rowGap * 5,
+          sectionKey: `${input.flowKey}_first_check`,
+          sectionName: `${input.flowLabel} First Check`,
+          checklistItems: [buildDefaultChecklistConfig({ label: "Goods Registration" })],
+        },
+        {
+          key: `${input.flowKey}_first_check_examination`,
+          name: "Examination",
+          description: "Capture examination evidence and CE/Lab report validity.",
+          positionX: input.firstCheckX,
+          positionY: startY + rowGap * 6,
+          sectionKey: `${input.flowKey}_first_check`,
+          sectionName: `${input.flowLabel} First Check`,
+          checklistItems: [examinationChecklist()],
+          photoRequirements: [examinationPhotos()],
+        },
+        {
+          key: `${input.flowKey}_first_check_group_forward`,
+          name: "Group Forward",
+          description: "Forward the file to the customs group.",
+          positionX: input.firstCheckX,
+          positionY: startY + rowGap * 7,
+          sectionKey: `${input.flowKey}_first_check`,
+          sectionName: `${input.flowLabel} First Check`,
+          checklistItems: [buildDefaultChecklistConfig({ label: "Group Forward" })],
+        },
+        {
+          key: `${input.flowKey}_first_check_assessment`,
+          name: "Assessment",
+          description: "Complete assessment under the First Check path.",
+          positionX: input.firstCheckX,
+          positionY: startY + rowGap * 8,
+          sectionKey: `${input.flowKey}_first_check`,
+          sectionName: `${input.flowLabel} First Check`,
+          checklistItems: [buildDefaultChecklistConfig({ label: "Assessment" })],
+        },
+        {
+          key: `${input.flowKey}_first_check_duty`,
+          name: "Duty",
+          description: "Optional duty stage. Users may skip it and continue.",
+          positionX: input.firstCheckX,
+          positionY: startY + rowGap * 9,
+          sectionKey: `${input.flowKey}_first_check`,
+          sectionName: `${input.flowLabel} First Check`,
+          canBeSkipped: true,
+          checklistItems: [buildDefaultChecklistConfig({ label: "Duty", isMandatory: false })],
+        },
+        {
+          key: `${input.flowKey}_first_check_ooc`,
+          name: "OOC",
+          description: "Upload the Out of Charge document before moving to delivery.",
+          positionX: input.firstCheckX,
+          positionY: startY + rowGap * 10,
+          sectionKey: `${input.flowKey}_first_check`,
+          sectionName: `${input.flowLabel} First Check`,
+          checklistItems: [documentChecklist("OOC", "OOC Document")],
+        },
+        {
+          key: `${input.flowKey}_first_check_delivery`,
+          name: "Delivery",
+          description: "Upload the delivery document and track validity before delivery.",
+          positionX: input.firstCheckX,
+          positionY: startY + rowGap * 11,
+          sectionKey: `${input.flowKey}_first_check`,
+          sectionName: `${input.flowLabel} First Check`,
+          checklistItems: [deliveryChecklist("E-Way Bill")],
+        },
       ],
-      photoRequirements: [
-        buildDefaultPhotoRequirementConfig({
-          label: "Examination Photos",
-          acceptedFileTypes: ["image/jpeg", "image/png"],
-          documentType: "Examination Photos",
-        }),
-      ],
-    }),
-    buildDefaultWorkflowNode({
-      key: "first_check_group_forward",
-      name: "Group Forward",
-      description: "Forward the First Check file to the customs group.",
-      sectionKey: "first_check",
-      sectionName: "First Check",
-      sortOrder: 6,
-      positionX: 140,
-      positionY: 1000,
-      checklistItems: [buildDefaultChecklistConfig({ label: "Group Forward" })],
-    }),
-    buildDefaultWorkflowNode({
-      key: "first_check_assessment",
-      name: "Assessment",
-      description: "Complete assessment under the First Check path.",
-      sectionKey: "first_check",
-      sectionName: "First Check",
-      sortOrder: 7,
-      positionX: 140,
-      positionY: 1180,
-      checklistItems: [buildDefaultChecklistConfig({ label: "Assessment" })],
-    }),
-    buildDefaultWorkflowNode({
-      key: "first_check_duty",
-      name: "Duty",
-      description: "Optional duty stage. Users may skip it and continue.",
-      sectionKey: "first_check",
-      sectionName: "First Check",
-      sortOrder: 8,
-      positionX: 140,
-      positionY: 1360,
-      canBeSkipped: true,
-      checklistItems: [buildDefaultChecklistConfig({ label: "Duty", isMandatory: false })],
-    }),
-    buildDefaultWorkflowNode({
-      key: "first_check_ooc",
-      name: "OOC",
-      description: "Upload the Out of Charge document before moving to delivery.",
-      sectionKey: "first_check",
-      sectionName: "First Check",
-      sortOrder: 9,
-      positionX: 140,
-      positionY: 1540,
-      checklistItems: [
-        buildDefaultChecklistConfig({
-          label: "OOC",
-          allowsUpload: true,
-          acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
-          documentType: "OOC Document",
-        }),
-      ],
-    }),
-    buildDefaultWorkflowNode({
-      key: "first_check_delivery",
-      name: "Delivery",
-      description: "Upload the E-Way Bill and track its validity before delivery.",
-      sectionKey: "first_check",
-      sectionName: "First Check",
-      sortOrder: 10,
-      positionX: 140,
-      positionY: 1720,
-      checklistItems: [
-        buildDefaultChecklistConfig({
-          label: "Delivery",
-          allowsUpload: true,
-          acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
-          documentType: "E-Way Bill",
-          requiresValidity: true,
-          warningBeforeDuration: 1,
-          warningBeforeUnit: "CALENDAR_DAYS",
-          notifyBeforeExpiry: true,
-        }),
-      ],
-    }),
-    buildDefaultWorkflowNode({
-      key: "choose_second_check_branch",
-      name: "Choose Second Check Branch",
-      description: "Choose whether the Second Check continues through RMS or Open Bill.",
+      firstCheckStage.key,
+      `Start ${input.flowLabel} First Check`,
+    );
+
+    const secondCheckStage = addStage({
+      key: `${input.flowKey}_second_check`,
+      name: `${input.flowLabel} Second Check`,
+      description: `${input.flowLabel} Second Check workflow path selected after filing.`,
+      sectionKey: `${input.flowKey}_second_check`,
+      sectionName: `${input.flowLabel} Second Check`,
+      positionX: input.secondCheckX,
+      positionY: startY + rowGap * 3,
+    });
+    addEdge(chooseCheckType.key, secondCheckStage.key, "Second Check");
+
+    const secondCheckDecision = addStage({
+      key: `${input.flowKey}_choose_second_check_category`,
+      name: `Choose ${input.flowLabel} Second Check Category`,
+      description: `Choose RMS or Open Bill under ${input.flowLabel} Second Check.`,
       nodeType: "DECISION",
-      sectionKey: "second_check",
-      sectionName: "Second Check",
-      sortOrder: 11,
-      positionX: 860,
-      positionY: 460,
-    }),
-    buildDefaultWorkflowNode({
-      key: "second_check_rms_ooc",
-      name: "OOC",
-      description: "Upload the RMS OOC document.",
-      sectionKey: "second_check",
-      sectionName: "Second Check",
+      sectionKey: `${input.flowKey}_second_check`,
+      sectionName: `${input.flowLabel} Second Check`,
+      positionX: input.secondCheckX,
+      positionY: startY + rowGap * 4,
+    });
+    addEdge(secondCheckStage.key, secondCheckDecision.key, "Choose RMS/Open Bill");
+
+    const rmsStage = addStage({
+      key: `${input.flowKey}_second_check_rms`,
+      name: `${input.flowLabel} RMS`,
+      description: `${input.flowLabel} RMS branch under Second Check.`,
+      sectionKey: `${input.flowKey}_second_check`,
+      sectionName: `${input.flowLabel} Second Check`,
       branchKey: "rms",
       branchName: "RMS",
-      sortOrder: 12,
-      positionX: 660,
-      positionY: 640,
-      checklistItems: [
-        buildDefaultChecklistConfig({
-          label: "OOC",
-          allowsUpload: true,
-          acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
-          documentType: "RMS OOC Document",
-        }),
+      positionX: input.rmsX,
+      positionY: startY + rowGap * 5,
+    });
+    addEdge(secondCheckDecision.key, rmsStage.key, "RMS");
+
+    const rmsLastKey = addChecklistPath(
+      [
+        {
+          key: `${input.flowKey}_second_check_rms_duty`,
+          name: "Duty",
+          description: "Optional duty stage on the RMS path.",
+          positionX: input.rmsX,
+          positionY: startY + rowGap * 6,
+          sectionKey: `${input.flowKey}_second_check`,
+          sectionName: `${input.flowLabel} Second Check`,
+          branchKey: "rms",
+          branchName: "RMS",
+          canBeSkipped: true,
+          checklistItems: [buildDefaultChecklistConfig({ label: "Duty", isMandatory: false })],
+        },
+        {
+          key: `${input.flowKey}_second_check_rms_ooc`,
+          name: "OOC",
+          description: `Upload the ${input.flowLabel} RMS OOC document.`,
+          positionX: input.rmsX,
+          positionY: startY + rowGap * 7,
+          sectionKey: `${input.flowKey}_second_check`,
+          sectionName: `${input.flowLabel} Second Check`,
+          branchKey: "rms",
+          branchName: "RMS",
+          checklistItems: [documentChecklist("OOC", `${input.flowLabel} RMS OOC Document`)],
+        },
+        {
+          key: `${input.flowKey}_second_check_rms_delivery`,
+          name: "Delivery",
+          description: `Upload the ${input.flowLabel} RMS delivery document.`,
+          positionX: input.rmsX,
+          positionY: startY + rowGap * 8,
+          sectionKey: `${input.flowKey}_second_check`,
+          sectionName: `${input.flowLabel} Second Check`,
+          branchKey: "rms",
+          branchName: "RMS",
+          checklistItems: [documentChecklist("Delivery", `${input.flowLabel} RMS Delivery Document`)],
+        },
       ],
-    }),
-    buildDefaultWorkflowNode({
-      key: "second_check_rms_delivery",
-      name: "Delivery",
-      description: "Upload the RMS delivery document.",
-      sectionKey: "second_check",
-      sectionName: "Second Check",
-      branchKey: "rms",
-      branchName: "RMS",
-      sortOrder: 13,
-      positionX: 660,
-      positionY: 820,
-      checklistItems: [
-        buildDefaultChecklistConfig({
-          label: "Delivery",
-          allowsUpload: true,
-          acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
-          documentType: "RMS Delivery Document",
-        }),
-      ],
-    }),
-    buildDefaultWorkflowNode({
-      key: "second_check_open_bill_assessment",
-      name: "Assessment",
-      description: "Start the Open Bill path with assessment.",
-      sectionKey: "second_check",
-      sectionName: "Second Check",
+      rmsStage.key,
+      `Start ${input.flowLabel} RMS`,
+    );
+
+    const openBillStage = addStage({
+      key: `${input.flowKey}_second_check_open_bill`,
+      name: `${input.flowLabel} Open Bill`,
+      description: `${input.flowLabel} Open Bill branch under Second Check.`,
+      sectionKey: `${input.flowKey}_second_check`,
+      sectionName: `${input.flowLabel} Second Check`,
       branchKey: "open_bill",
       branchName: "Open Bill",
-      sortOrder: 14,
-      positionX: 1060,
-      positionY: 640,
-      checklistItems: [buildDefaultChecklistConfig({ label: "Assessment" })],
-    }),
-    buildDefaultWorkflowNode({
-      key: "second_check_open_bill_goods_registration",
-      name: "Goods Registration",
-      description: "Register goods for the Open Bill path.",
-      sectionKey: "second_check",
-      sectionName: "Second Check",
-      branchKey: "open_bill",
-      branchName: "Open Bill",
-      sortOrder: 15,
-      positionX: 1060,
-      positionY: 820,
-      checklistItems: [buildDefaultChecklistConfig({ label: "Goods Registration" })],
-    }),
-    buildDefaultWorkflowNode({
-      key: "second_check_open_bill_examination",
-      name: "Examination",
-      description: "Capture examination evidence and validity on the Open Bill path.",
-      sectionKey: "second_check",
-      sectionName: "Second Check",
-      branchKey: "open_bill",
-      branchName: "Open Bill",
-      sortOrder: 16,
-      positionX: 1060,
-      positionY: 1000,
-      checklistItems: [
-        buildDefaultChecklistConfig({
-          label: "Examination",
-          allowsUpload: true,
-          minUploads: 1,
-          acceptedFileTypes: ["application/pdf"],
-          documentType: "CE/Lab Report",
-          requiresValidity: true,
-          warningBeforeDuration: 1,
-          warningBeforeUnit: "CALENDAR_DAYS",
-          notifyBeforeExpiry: true,
-        }),
+      positionX: input.openBillX,
+      positionY: startY + rowGap * 5,
+    });
+    addEdge(secondCheckDecision.key, openBillStage.key, "Open Bill");
+
+    const openBillLastKey = addChecklistPath(
+      [
+        {
+          key: `${input.flowKey}_second_check_open_bill_assessment`,
+          name: "Assessment",
+          description: "Start the Open Bill path with assessment.",
+          positionX: input.openBillX,
+          positionY: startY + rowGap * 6,
+          sectionKey: `${input.flowKey}_second_check`,
+          sectionName: `${input.flowLabel} Second Check`,
+          branchKey: "open_bill",
+          branchName: "Open Bill",
+          checklistItems: [buildDefaultChecklistConfig({ label: "Assessment" })],
+        },
+        {
+          key: `${input.flowKey}_second_check_open_bill_goods_registration`,
+          name: "Goods Registration",
+          description: "Register goods for the Open Bill path.",
+          positionX: input.openBillX,
+          positionY: startY + rowGap * 7,
+          sectionKey: `${input.flowKey}_second_check`,
+          sectionName: `${input.flowLabel} Second Check`,
+          branchKey: "open_bill",
+          branchName: "Open Bill",
+          checklistItems: [buildDefaultChecklistConfig({ label: "Goods Registration" })],
+        },
+        {
+          key: `${input.flowKey}_second_check_open_bill_examination`,
+          name: "Examination",
+          description: "Capture examination evidence and validity on the Open Bill path.",
+          positionX: input.openBillX,
+          positionY: startY + rowGap * 8,
+          sectionKey: `${input.flowKey}_second_check`,
+          sectionName: `${input.flowLabel} Second Check`,
+          branchKey: "open_bill",
+          branchName: "Open Bill",
+          checklistItems: [examinationChecklist()],
+          photoRequirements: [examinationPhotos()],
+        },
+        {
+          key: `${input.flowKey}_second_check_open_bill_duty`,
+          name: "Duty",
+          description: "Optional duty stage on the Open Bill path.",
+          positionX: input.openBillX,
+          positionY: startY + rowGap * 9,
+          sectionKey: `${input.flowKey}_second_check`,
+          sectionName: `${input.flowLabel} Second Check`,
+          branchKey: "open_bill",
+          branchName: "Open Bill",
+          canBeSkipped: true,
+          checklistItems: [buildDefaultChecklistConfig({ label: "Duty", isMandatory: false })],
+        },
+        {
+          key: `${input.flowKey}_second_check_open_bill_ooc`,
+          name: "OOC",
+          description: "Upload the Open Bill OOC document.",
+          positionX: input.openBillX,
+          positionY: startY + rowGap * 10,
+          sectionKey: `${input.flowKey}_second_check`,
+          sectionName: `${input.flowLabel} Second Check`,
+          branchKey: "open_bill",
+          branchName: "Open Bill",
+          checklistItems: [documentChecklist("OOC", "OOC Document")],
+        },
+        {
+          key: `${input.flowKey}_second_check_open_bill_delivery`,
+          name: "Delivery",
+          description: "Upload the Open Bill delivery document and track validity.",
+          positionX: input.openBillX,
+          positionY: startY + rowGap * 11,
+          sectionKey: `${input.flowKey}_second_check`,
+          sectionName: `${input.flowLabel} Second Check`,
+          branchKey: "open_bill",
+          branchName: "Open Bill",
+          checklistItems: [deliveryChecklist("E-Way Bill")],
+        },
       ],
-      photoRequirements: [
-        buildDefaultPhotoRequirementConfig({
-          label: "Examination Photos",
-          acceptedFileTypes: ["image/jpeg", "image/png"],
-          documentType: "Examination Photos",
-        }),
-      ],
-    }),
-    buildDefaultWorkflowNode({
-      key: "second_check_open_bill_duty",
-      name: "Duty",
-      description: "Optional duty stage on the Open Bill path.",
-      sectionKey: "second_check",
-      sectionName: "Second Check",
-      branchKey: "open_bill",
-      branchName: "Open Bill",
-      sortOrder: 17,
-      positionX: 1060,
-      positionY: 1180,
-      canBeSkipped: true,
-      checklistItems: [buildDefaultChecklistConfig({ label: "Duty", isMandatory: false })],
-    }),
-    buildDefaultWorkflowNode({
-      key: "second_check_open_bill_ooc",
-      name: "OOC",
-      description: "Upload the Open Bill OOC document.",
-      sectionKey: "second_check",
-      sectionName: "Second Check",
-      branchKey: "open_bill",
-      branchName: "Open Bill",
-      sortOrder: 18,
-      positionX: 1060,
-      positionY: 1360,
-      checklistItems: [
-        buildDefaultChecklistConfig({
-          label: "OOC",
-          allowsUpload: true,
-          acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
-          documentType: "OOC Document",
-        }),
-      ],
-    }),
-    buildDefaultWorkflowNode({
-      key: "second_check_open_bill_delivery",
-      name: "Delivery",
-      description: "Upload the Open Bill E-Way Bill and track validity.",
-      sectionKey: "second_check",
-      sectionName: "Second Check",
-      branchKey: "open_bill",
-      branchName: "Open Bill",
-      sortOrder: 19,
-      positionX: 1060,
-      positionY: 1540,
-      checklistItems: [
-        buildDefaultChecklistConfig({
-          label: "Delivery",
-          allowsUpload: true,
-          acceptedFileTypes: ["application/pdf", "image/jpeg", "image/png"],
-          documentType: "E-Way Bill",
-          requiresValidity: true,
-          warningBeforeDuration: 1,
-          warningBeforeUnit: "CALENDAR_DAYS",
-          notifyBeforeExpiry: true,
-        }),
-      ],
-    }),
-    buildDefaultWorkflowNode({
-      key: "amendment_decision",
-      name: "Amendment Decision",
-      description: "Choose whether to enter the optional amendment flow or skip it.",
-      nodeType: "DECISION",
-      sectionKey: "amendment",
-      sectionName: "Amendment",
-      sortOrder: 20,
-      positionX: 860,
-      positionY: 1820,
-    }),
-    buildDefaultWorkflowNode({
-      key: "amendment_execution",
-      name: "Amendment",
-      description: "Configurable amendment checklist that can be entered or skipped.",
-      sectionKey: "amendment",
-      sectionName: "Amendment",
-      sortOrder: 21,
-      positionX: 860,
-      positionY: 2000,
-      canBeSkipped: true,
-      checklistItems: [buildDefaultChecklistConfig({ label: "Amendment", isMandatory: false })],
-    }),
-    buildDefaultWorkflowNode({
-      key: "workflow_complete",
-      name: "Workflow Complete",
-      description: "Finalize the filing workflow after the chosen path finishes.",
-      nodeType: "END",
-      sectionKey: "end",
-      sectionName: "End",
-      sortOrder: 22,
-      positionX: 860,
-      positionY: 2180,
-    }),
-  ],
-  edges: [
-    { sourceKey: "bill_filing", targetKey: "choose_primary_path", label: "Select Filing Path" },
-    { sourceKey: "choose_primary_path", targetKey: "first_check_be_copy_generation", label: "First Check" },
-    { sourceKey: "choose_primary_path", targetKey: "choose_second_check_branch", label: "Second Check" },
-    { sourceKey: "first_check_be_copy_generation", targetKey: "first_check_goods_registration", label: "Next" },
-    { sourceKey: "first_check_goods_registration", targetKey: "first_check_examination", label: "Next" },
-    { sourceKey: "first_check_examination", targetKey: "first_check_group_forward", label: "Next" },
-    { sourceKey: "first_check_group_forward", targetKey: "first_check_assessment", label: "Next" },
-    { sourceKey: "first_check_assessment", targetKey: "first_check_duty", label: "Next" },
-    { sourceKey: "first_check_duty", targetKey: "first_check_ooc", label: "Skip / Complete" },
-    { sourceKey: "first_check_ooc", targetKey: "first_check_delivery", label: "Next" },
-    { sourceKey: "first_check_delivery", targetKey: "amendment_decision", label: "Next" },
-    { sourceKey: "choose_second_check_branch", targetKey: "second_check_rms_ooc", label: "RMS" },
-    { sourceKey: "choose_second_check_branch", targetKey: "second_check_open_bill_assessment", label: "Open Bill" },
-    { sourceKey: "second_check_rms_ooc", targetKey: "second_check_rms_delivery", label: "Next" },
-    { sourceKey: "second_check_rms_delivery", targetKey: "amendment_decision", label: "Next" },
-    { sourceKey: "second_check_open_bill_assessment", targetKey: "second_check_open_bill_goods_registration", label: "Next" },
-    { sourceKey: "second_check_open_bill_goods_registration", targetKey: "second_check_open_bill_examination", label: "Next" },
-    { sourceKey: "second_check_open_bill_examination", targetKey: "second_check_open_bill_duty", label: "Next" },
-    { sourceKey: "second_check_open_bill_duty", targetKey: "second_check_open_bill_ooc", label: "Skip / Complete" },
-    { sourceKey: "second_check_open_bill_ooc", targetKey: "second_check_open_bill_delivery", label: "Next" },
-    { sourceKey: "second_check_open_bill_delivery", targetKey: "amendment_decision", label: "Next" },
-    { sourceKey: "amendment_decision", targetKey: "amendment_execution", label: "Do Amendment" },
-    { sourceKey: "amendment_decision", targetKey: "workflow_complete", label: "Skip Amendment" },
-    { sourceKey: "amendment_execution", targetKey: "workflow_complete", label: "Next" },
-  ],
-} as const;
+      openBillStage.key,
+      `Start ${input.flowLabel} Open Bill`,
+    );
+
+    return { firstCheckLastKey, rmsLastKey, openBillLastKey };
+  };
+
+  const importFlow = buildFlow({
+    flowLabel: "Import BE",
+    flowKey: "import_be",
+    copyGenerationLabel: "BE Copy Generation",
+    flowKind: "IMPORT",
+    firstCheckX: importFirstCheckX,
+    secondCheckX: importSecondCheckX,
+    rmsX: importRmsX,
+    openBillX: importOpenBillX,
+    startNodeKey: importStart.key,
+  });
+
+  const exportFlow = buildFlow({
+    flowLabel: "Export SB",
+    flowKey: "export_sb",
+    copyGenerationLabel: "SB Copy Generation",
+    flowKind: "EXPORT",
+    firstCheckX: exportFirstCheckX,
+    secondCheckX: exportSecondCheckX,
+    rmsX: exportRmsX,
+    openBillX: exportOpenBillX,
+    startNodeKey: exportStart.key,
+  });
+
+  const amendmentDecision = addStage({
+    key: "amendment_decision",
+    name: "Amendment Decision",
+    description: "Choose whether to enter the optional amendment flow or skip it.",
+    nodeType: "DECISION",
+    sectionKey: "amendment",
+    sectionName: "Amendment",
+    positionX: startX,
+    positionY: startY + rowGap * 14,
+  });
+
+  [
+    importFlow.firstCheckLastKey,
+    importFlow.rmsLastKey,
+    importFlow.openBillLastKey,
+    exportFlow.firstCheckLastKey,
+    exportFlow.rmsLastKey,
+    exportFlow.openBillLastKey,
+  ].forEach((key) => addEdge(key, amendmentDecision.key, "Next"));
+
+  const amendmentExecution = addStage({
+    key: "amendment_execution",
+    name: "Amendment",
+    description: "Configurable amendment checklist that can be entered or skipped.",
+    sectionKey: "amendment",
+    sectionName: "Amendment",
+    positionX: startX,
+    positionY: startY + rowGap * 15,
+    canBeSkipped: true,
+    checklistItems: [buildDefaultChecklistConfig({ label: "Amendment", isMandatory: false })],
+  });
+
+  const workflowComplete = addStage({
+    key: "workflow_complete",
+    name: "Workflow Complete",
+    description: "Finalize the filing workflow after the chosen path finishes.",
+    nodeType: "END",
+    sectionKey: "end",
+    sectionName: "End",
+    positionX: startX,
+    positionY: startY + rowGap * 16,
+  });
+
+  addEdge(amendmentDecision.key, amendmentExecution.key, "Do Amendment");
+  addEdge(amendmentDecision.key, workflowComplete.key, "Skip Amendment");
+  addEdge(amendmentExecution.key, workflowComplete.key, "Next");
+
+  return { nodes, edges } as const;
+}
+
+const DEFAULT_FILING_WORKFLOW_SEED = buildDefaultFilingWorkflowSeed();
 
 function normalizeFieldDefinitions(value: unknown): FilingFieldDefinition[] {
   if (!Array.isArray(value)) return [];

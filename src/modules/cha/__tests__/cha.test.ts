@@ -1502,62 +1502,70 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
     const nodeNames = activeVersion.nodes.map((node: any) => node.name);
     expect(nodeNames).toEqual(expect.arrayContaining([
+      "Choose Filing Flow",
       "Bill Filing",
-      "Choose Filing Path",
-      "Choose Second Check Branch",
+      "Shipping Bill Filing",
+      "Choose Import BE Check Type",
+      "Choose Export SB Check Type",
       "BE Copy Generation",
-      "Goods Registration",
-      "Examination",
-      "Group Forward",
-      "Assessment",
-      "Duty",
-      "OOC",
-      "Delivery",
+      "SB Copy Generation",
       "Amendment Decision",
       "Amendment",
       "Workflow Complete",
     ]));
 
-    const firstCheckNodes = activeVersion.nodes.filter((node: any) => node.sectionKey === "first_check");
-    expect(firstCheckNodes).toHaveLength(8);
-    expect(firstCheckNodes.every((node: any) => node.checklistItems.length === 1)).toBe(true);
-    expect(firstCheckNodes.some((node: any) => node.name === "Duty" && node.canBeSkipped)).toBe(true);
+    const importStart = activeVersion.nodes.find((node: any) => node.key === "bill_filing");
+    expect(importStart?.isStart).toBe(false);
+    expect(importStart?.fieldDefinitionsJson).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: "bill_number", label: "Bill Filing Number" }),
+        expect.objectContaining({ key: "bill_filing_date", label: "Bill Filing Date" }),
+      ]),
+    );
+
+    const exportStart = activeVersion.nodes.find((node: any) => node.key === "shipping_bill_filing");
+    expect(exportStart?.checklistItems).toEqual(
+      expect.arrayContaining([expect.objectContaining({ label: "Checklist Item" })]),
+    );
+    expect(exportStart?.fieldDefinitionsJson).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: "shipping_bill_number", label: "Shipping Bill Number" }),
+        expect.objectContaining({ key: "shipping_bill_date", label: "Shipping Bill Date" }),
+      ]),
+    );
+
+    const importFirstCheckNodes = activeVersion.nodes.filter((node: any) => node.sectionKey === "import_be_first_check" && node.key !== "import_be_first_check");
+    const exportFirstCheckNodes = activeVersion.nodes.filter((node: any) => node.sectionKey === "export_sb_first_check" && node.key !== "export_sb_first_check");
+    expect(importFirstCheckNodes).toHaveLength(8);
+    expect(exportFirstCheckNodes).toHaveLength(8);
+    expect(importFirstCheckNodes.some((node: any) => node.name === "Duty" && node.canBeSkipped)).toBe(true);
+    expect(exportFirstCheckNodes.some((node: any) => node.name === "Duty" && node.canBeSkipped)).toBe(true);
 
     const rmsNodes = activeVersion.nodes.filter((node: any) => node.branchKey === "rms");
     const openBillNodes = activeVersion.nodes.filter((node: any) => node.branchKey === "open_bill");
-    expect(rmsNodes.map((node: any) => node.name)).toEqual([
-      "OOC",
-      "Delivery",
-    ]);
-    expect(openBillNodes.map((node: any) => node.name)).toEqual([
-      "Assessment",
-      "Goods Registration",
-      "Examination",
-      "Duty",
-      "OOC",
-      "Delivery",
-    ]);
+    expect(rmsNodes).toHaveLength(8);
+    expect(openBillNodes).toHaveLength(14);
 
     expect(activeVersion.edges).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          sourceKey: "choose_primary_path",
-          targetKey: "first_check_be_copy_generation",
-          label: "First Check",
+          sourceKey: "choose_filing_flow",
+          targetKey: "shipping_bill_filing",
+          label: "Export / Shipping Bill",
         }),
         expect.objectContaining({
-          sourceKey: "choose_primary_path",
-          targetKey: "choose_second_check_branch",
-          label: "Second Check",
+          sourceKey: "shipping_bill_filing",
+          targetKey: "export_sb_choose_check_type",
+          label: "Choose Check Type",
         }),
         expect.objectContaining({
-          sourceKey: "choose_second_check_branch",
-          targetKey: "second_check_rms_ooc",
+          sourceKey: "export_sb_choose_second_check_category",
+          targetKey: "export_sb_second_check_rms",
           label: "RMS",
         }),
         expect.objectContaining({
-          sourceKey: "choose_second_check_branch",
-          targetKey: "second_check_open_bill_assessment",
+          sourceKey: "export_sb_choose_second_check_category",
+          targetKey: "export_sb_second_check_open_bill",
           label: "Open Bill",
         }),
         expect.objectContaining({
@@ -1566,11 +1574,11 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
           label: "Skip Amendment",
         }),
         expect.objectContaining({
-          sourceKey: "second_check_rms_delivery",
+          sourceKey: "import_be_second_check_rms_delivery",
           targetKey: "amendment_decision",
         }),
         expect.objectContaining({
-          sourceKey: "second_check_open_bill_delivery",
+          sourceKey: "export_sb_second_check_open_bill_delivery",
           targetKey: "amendment_decision",
         }),
       ]),
