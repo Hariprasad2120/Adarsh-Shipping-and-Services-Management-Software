@@ -20,25 +20,25 @@ const TONE_STYLES: Record<
   WarningIndicatorTone,
   {
     trigger: string;
+    pulse: string;
     shell: string;
     icon: string;
     eyebrow: string;
-    meta: string;
   }
 > = {
   warning: {
-    trigger: "border-[#fb923c]/35 bg-[#fb923c]/10 text-[#fb923c] hover:border-[#fb923c]/55",
+    trigger: "border-[#fb923c]/45 bg-[#fb923c]/10 text-[#fb923c]",
+    pulse: "animate-pulse-orange",
     shell: "border-[#fb923c]/30",
     icon: "text-[#fb923c]",
     eyebrow: "!text-[#fb923c]",
-    meta: "border-[#fb923c]/20 bg-[#fb923c]/10 text-on-surface-variant",
   },
   destructive: {
-    trigger: "border-red-500/35 bg-red-500/10 text-red-400 hover:border-red-500/55",
+    trigger: "border-red-500/40 bg-red-500/10 text-red-400",
+    pulse: "animate-pulse-red",
     shell: "border-red-500/30",
     icon: "text-red-400",
     eyebrow: "!text-red-400",
-    meta: "border-red-500/20 bg-red-500/10 text-on-surface-variant",
   },
 };
 
@@ -138,8 +138,9 @@ export function WarningIndicatorPopover({
         aria-expanded={isOpen}
         aria-haspopup="dialog"
         className={cn(
-          "inline-flex h-11 w-11 items-center justify-center rounded-xl border shadow-sm transition-all duration-200 hover:-translate-y-px hover:shadow-[0_0_18px_rgba(251,146,60,0.28)] focus-visible:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00cec4]/30",
+          "inline-flex h-7 w-7 items-center justify-center rounded-lg border shadow-sm transition-transform duration-200 hover:scale-105 focus-visible:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00cec4]/30",
           toneStyles.trigger,
+          toneStyles.pulse,
         )}
         onClick={(event) => {
           event.preventDefault();
@@ -152,7 +153,7 @@ export function WarningIndicatorPopover({
         onFocus={openPopover}
         onBlur={(event) => closeIfOutsidePanel(event.relatedTarget)}
       >
-        <AlertTriangle className={cn("size-5", toneStyles.icon)} strokeWidth={2.2} />
+        <AlertTriangle className={cn("size-[14px]", toneStyles.icon)} strokeWidth={2.2} />
       </button>
 
       {isOpen && typeof document !== "undefined"
@@ -183,11 +184,7 @@ export function WarningIndicatorPopover({
                 <div className="space-y-3 p-4">
                   <p className={cn("ds-label", toneStyles.eyebrow)}>{eyebrow}</p>
                   <p className="text-sm leading-relaxed text-on-surface">{description}</p>
-                  {meta ? (
-                    <div className={cn("rounded-xl border px-3 py-2 text-xs", toneStyles.meta)}>
-                      {meta}
-                    </div>
-                  ) : null}
+                  {meta ? <p className="text-xs leading-relaxed text-on-surface-variant">{meta}</p> : null}
 
                   <div
                     className="grid grid-cols-2 gap-2 pt-1"

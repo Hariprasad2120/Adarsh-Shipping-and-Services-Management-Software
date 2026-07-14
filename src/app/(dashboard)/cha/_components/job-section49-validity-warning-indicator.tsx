@@ -28,7 +28,6 @@ export function JobSection49ValidityWarningIndicator({
       tone={warning.severity === "expired" ? "destructive" : "warning"}
       eyebrow={warning.severity === "expired" ? "SECTION 49 EXPIRED" : "SECTION 49 EXPIRING"}
       description={warning.message}
-      meta={`Validity date: ${new Date(warning.validityDate).toLocaleDateString("en-IN")}`}
     >
       <Button
         type="button"

@@ -42,7 +42,6 @@ export function ChaDueDateWarningIndicator({
       tone={warning.severity === "expired" ? "destructive" : "warning"}
       eyebrow={getEyebrow(warning)}
       description={warning.message}
-      meta={`Validity date: ${new Date(warning.validityDate).toLocaleDateString("en-IN")}`}
     >
       <Button
         type="button"
