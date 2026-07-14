@@ -1555,6 +1555,9 @@ button.cha-link:hover:not(:disabled) {
   animation: neon-pulse-approve 2s infinite ease-in-out;
   transform: translateY(-1px);
 }
+button.cha-link.cha-link-quiet:hover:not(:disabled) {
+  animation: none;
+}
 button.cha-link:active:not(:disabled) {
   transform: translateY(0) scale(0.96);
 }

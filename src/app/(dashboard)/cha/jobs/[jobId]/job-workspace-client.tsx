@@ -287,9 +287,9 @@
           aria-label={title}
           aria-expanded={open}
           onClick={onToggle}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#fb923c]/35 bg-[#fb923c]/10 text-[#fb923c] shadow-sm transition-all duration-200 hover:-translate-y-px hover:shadow-[0_0_18px_rgba(251,146,60,0.28)]"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#fb923c]/45 bg-[#fb923c]/10 text-[#fb923c] shadow-sm transition-transform duration-200 hover:scale-105 focus-visible:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00cec4]/30"
         >
-          <AlertTriangle size={20} strokeWidth={2.2} />
+          <AlertTriangle size={14} strokeWidth={2.2} />
         </button>
         <div
           className={`card-top-accent-orange absolute right-0 top-full z-20 mt-2 w-[20rem] max-w-[calc(100vw-2rem)] rounded-xl border border-[#fb923c]/30 bg-surface px-4 py-3 shadow-[0_20px_44px_-26px_rgba(251,146,60,0.45)] transition-all duration-200 ${
@@ -323,9 +323,9 @@
           aria-label={title}
           aria-expanded={open}
           onClick={onToggle}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#00cec4]/35 bg-[#00cec4]/10 text-[#00cec4] shadow-sm transition-all duration-200 hover:-translate-y-px hover:shadow-[0_0_18px_rgba(0,206,196,0.28)]"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#00cec4]/45 bg-[#00cec4]/10 text-[#00cec4] shadow-sm transition-transform duration-200 hover:scale-105 focus-visible:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00cec4]/30"
         >
-          <AlertCircle size={20} strokeWidth={2.2} />
+          <AlertCircle size={14} strokeWidth={2.2} />
         </button>
         <div
           className={`card-top-accent absolute right-0 top-full z-20 mt-2 w-[20rem] max-w-[calc(100vw-2rem)] rounded-xl border border-[#00cec4]/30 bg-surface px-4 py-3 shadow-[0_20px_44px_-26px_rgba(0,206,196,0.45)] transition-all duration-200 ${
@@ -3382,26 +3382,28 @@
         ) : null}
 
         {/* Sticky Compact Tab Controls */}
-        <nav className="sticky top-0 z-20 -mx-1 overflow-x-auto border-y border-outline-variant/25 bg-surface/95 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-surface/85">
-          <div className="flex min-w-max items-center gap-1">
-            {workspaceTabs.map((tab) => {
-              const isActive = activeTab === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-wide transition-all ${
-                    isActive
-                      ? "bg-[#00cec4]/10 text-[#00cec4] shadow-[inset_0_0_0_1px_rgba(0,206,196,0.35)]"
-                      : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
-                  }`}
-                >
-                  {tab.label}
-                  {tab.count !== undefined ? <span className="ml-1 ds-numeric">({tab.count})</span> : null}
-                </button>
-              );
-            })}
+        <nav className="sticky top-0 z-20 py-2">
+          <div className="rounded-xl border border-outline-variant/40 bg-surface/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-surface/85">
+            <div className="flex w-full flex-wrap items-center gap-x-5 gap-y-3">
+              {workspaceTabs.map((tab) => {
+                const isActive = activeTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`ds-plain cha-link cha-link-quiet ds-label inline-flex flex-1 basis-[9rem] items-center justify-center gap-1 px-2 text-center sm:basis-auto ${
+                      isActive
+                        ? "font-normal text-[#00cec4] underline underline-offset-4"
+                        : "font-normal text-on-surface-variant hover:text-[#00b8af] hover:underline hover:underline-offset-4"
+                    }`}
+                  >
+                    {tab.label}
+                    {tab.count !== undefined ? <span className="ml-1 ds-numeric">({tab.count})</span> : null}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </nav>
 
