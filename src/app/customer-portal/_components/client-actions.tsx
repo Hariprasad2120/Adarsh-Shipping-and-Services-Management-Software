@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { FileUploadField } from "@/components/ui/file-upload-field";
 import { Input } from "@/components/ui/input";
 
 export function PortalHeaderNav({
@@ -28,8 +29,8 @@ export function PortalHeaderNav({
               href={item.href}
               className={
                 active
-                  ? "ds-label inline-flex items-center justify-center whitespace-nowrap border-b border-indigo-600 px-1 pb-1 text-indigo-700"
-                  : "ds-label inline-flex items-center justify-center whitespace-nowrap border-b border-transparent px-1 pb-1 text-on-surface-variant transition-colors hover:border-indigo-300 hover:text-indigo-700"
+                  ? "ds-label inline-flex items-center justify-center whitespace-nowrap border-b border-[#00cec4] px-1 pb-1 text-[#00cec4]"
+                  : "ds-label inline-flex items-center justify-center whitespace-nowrap border-b border-transparent px-1 pb-1 text-on-surface-variant transition-colors hover:border-[#00cec4]/45 hover:text-[#00cec4]"
               }
             >
               <span>{item.label}</span>
@@ -187,12 +188,24 @@ export function PortalMarkAllReadButton() {
   );
 }
 
-export function PortalDocumentUploadForm({ jobId, requirementId }: { jobId: string; requirementId: string }) {
+export function PortalDocumentUploadForm({
+  jobId,
+  requirementId,
+  acceptedFileTypes,
+  helperText,
+}: {
+  jobId: string;
+  requirementId: string;
+  acceptedFileTypes?: string[];
+  helperText?: string;
+}) {
   const router = useRouter();
   const inputId = useId();
   const [pending, startTransition] = useTransition();
   const [comment, setComment] = useState("");
-  const [fileName, setFileName] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const accept = acceptedFileTypes?.length ? acceptedFileTypes.join(",") : undefined;
 
   return (
     <form
@@ -217,37 +230,137 @@ export function PortalDocumentUploadForm({ jobId, requirementId }: { jobId: stri
           toast.success("Document uploaded");
           form.reset();
           setComment("");
+          setSelectedFile(null);
+          router.refresh();
+        });
+      }}
+    >
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.8fr)]">
+        <FileUploadField
+          id={inputId}
+          accept={accept}
+          compact
+          helperText={helperText ?? "PDF, JPG, PNG, and WEBP are supported up to 10 MB."}
+          name="file"
+          triggerText={selectedFile?.name ?? "Drag and drop or choose file to upload"}
+          onInputChange={(uploadEvent) => {
+            setSelectedFile(uploadEvent.target.files?.[0] ?? null);
+          }}
+          onClear={() => setSelectedFile(null)}
+          selectedFile={
+            selectedFile
+              ? {
+                  file: selectedFile,
+                  name: selectedFile.name,
+                  sizeBytes: selectedFile.size,
+                }
+              : null
+          }
+        />
+        <div className="space-y-3">
+          <Input
+            value={comment}
+            onChange={(inputEvent) => setComment(inputEvent.target.value)}
+            placeholder="Add a note for the operations team (optional)"
+            className="min-h-10 flex-1 rounded-xl"
+          />
+          <div className="flex justify-end">
+            <Button type="submit" size="sm" disabled={pending || !selectedFile} className="min-h-10 rounded-xl px-5">
+              {pending ? "Uploading..." : "Upload document"}
+            </Button>
+          </div>
+        </div>
+      </div>
+      <p className="text-[11px] text-on-surface-variant">Use the latest valid file. Existing versions remain available in the document history.</p>
+    </form>
+  );
+}
+
+export function PortalGenericDocumentUploadForm({ jobId }: { jobId: string }) {
+  const router = useRouter();
+  const inputId = useId();
+  const [pending, startTransition] = useTransition();
+  const [documentName, setDocumentName] = useState("");
+  const [description, setDescription] = useState("");
+  const [fileName, setFileName] = useState("");
+
+  return (
+    <form
+      className="space-y-3"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const formData = new FormData(form);
+        formData.set("jobId", jobId);
+        formData.set("documentName", documentName);
+        formData.set("comment", description);
+        startTransition(async () => {
+          const response = await fetch("/api/customer-portal/documents/upload", {
+            method: "POST",
+            body: formData,
+          });
+          const json = await response.json();
+          if (!json.ok) {
+            toast.error(json.error || "Upload failed");
+            return;
+          }
+          toast.success("Generic document uploaded");
+          form.reset();
+          setDocumentName("");
+          setDescription("");
           setFileName("");
           router.refresh();
         });
       }}
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <label
-          htmlFor={inputId}
-          className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-xl border border-dashed border-indigo-300 bg-indigo-50/60 px-4 text-sm font-semibold text-indigo-700 transition hover:border-indigo-400 hover:bg-indigo-50"
-        >
-          {fileName || "Choose document"}
-        </label>
-        <input
-          id={inputId}
-          name="file"
-          type="file"
-          required
-          className="sr-only"
-          onChange={(event) => setFileName(event.target.files?.[0]?.name ?? "")}
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="space-y-2">
+          <label className="ds-label block">Document Name</label>
+          <Input
+            value={documentName}
+            onChange={(event) => setDocumentName(event.target.value)}
+            placeholder="Type document name"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="ds-label block">Upload File</label>
+          <label
+            htmlFor={inputId}
+            className="ds-plain inline-flex min-h-10 w-full cursor-pointer items-center justify-center rounded-xl border border-dashed border-outline-variant/60 bg-surface px-4 text-sm font-semibold text-[#00cec4] transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/40"
+          >
+            {fileName || "Choose document"}
+          </label>
+          <input
+            id={inputId}
+            name="file"
+            type="file"
+            required
+            className="sr-only"
+            onChange={(event) => setFileName(event.target.files?.[0]?.name ?? "")}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="ds-label block">Description</label>
+        <textarea
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          placeholder="Add a short description for this document"
+          rows={3}
+          className="w-full resize-y rounded-xl border border-outline-variant/60 bg-surface px-3.5 py-3 text-sm text-on-surface outline-none transition placeholder:text-placeholder focus:border-[#00cec4]/55 focus:ring-2 focus:ring-[rgba(14,137,149,0.14)]"
         />
-        <Input
-          value={comment}
-          onChange={(event) => setComment(event.target.value)}
-          placeholder="Upload remark (optional)"
-          className="min-h-10 flex-1 rounded-xl"
-        />
-        <Button type="submit" size="sm" disabled={pending || !fileName} className="min-h-10 rounded-xl px-5">
-          {pending ? "Uploading..." : "Upload"}
+      </div>
+
+      <div className="flex justify-end">
+        <Button type="submit" size="sm" disabled={pending || !fileName || !documentName.trim()} className="min-h-10 rounded-xl px-5">
+          {pending ? "Uploading..." : "Upload Generic Document"}
         </Button>
       </div>
-      <p className="text-[11px] text-slate-500">Use the latest valid file. Existing versions remain available in the audit history.</p>
+      <p className="text-[11px] text-on-surface-variant">
+        Use this when the document was not part of the requested list. The name and description will be visible to the operations team.
+      </p>
     </form>
   );
 }
@@ -321,7 +434,7 @@ export function PortalQueryReplyForm({ threadId }: { threadId: string }) {
         placeholder="Type your reply"
         required
         rows={3}
-        className="w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+        className="w-full resize-y rounded-xl border border-outline-variant/60 bg-surface px-3.5 py-3 text-sm text-on-surface outline-none transition placeholder:text-placeholder focus:border-[#00cec4]/55 focus:ring-2 focus:ring-[rgba(14,137,149,0.14)]"
       />
       <div className="flex justify-end">
         <Button size="sm" type="submit" disabled={pending || !body.trim()} className="rounded-xl px-5">

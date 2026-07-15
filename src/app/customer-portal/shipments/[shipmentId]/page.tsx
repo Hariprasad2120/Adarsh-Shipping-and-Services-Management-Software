@@ -1,22 +1,21 @@
 import Link from "next/link";
 import {
   ArrowLeft,
-  ArrowRight,
   Bell,
   Check,
-  CheckCircle2,
   ChevronDown,
-  CircleHelp,
-  Clock3,
+  ChevronRight,
   FileCheck2,
+  FileImage,
   FileText,
   LockKeyhole,
   MessageSquareText,
   PackageCheck,
+  Play,
   ShieldCheck,
   Sparkles,
-  UploadCloud,
   UserRound,
+  FolderClosed,
 } from "lucide-react";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import {
@@ -25,18 +24,55 @@ import {
 } from "@/modules/customer-portal/service";
 import {
   PortalChecklistActionForm,
-  PortalDocumentUploadForm,
   PortalQueryReplyForm,
   PortalRatingForm,
 } from "../../_components/client-actions";
+import { PortalShipmentDocumentManager } from "../../_components/portal-shipment-document-manager";
+import { Badge } from "@/components/ui/badge";
+
+type StageId = "document" | "additional-data" | "checklist" | "filing";
+type StageState = "completed" | "active" | "locked";
 
 type PortalRequirementView = {
   id: string;
   name: string;
+  category?: string | null;
+  isMandatory?: boolean;
+  status?: string;
+  exception?: { reason?: string | null } | null;
+  requirementItem?: {
+    acceptedFileTypes?: string[];
+    maxUploadCount?: number | null;
+    minUploadCount?: number | null;
+    requiresValidityDate?: boolean;
+    category?: {
+      name?: string | null;
+      sortOrder?: number | null;
+    } | null;
+  } | null;
+  versions: Array<{
+    id: string;
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+    uploadedAt: string | Date;
+    validityDate?: string | Date | null;
+    uploadedBy?: { name?: string | null; email?: string | null } | null;
+  }>;
   customerSubmissions: Array<{
+    id: string;
     status: string;
+    updatedAt?: string | Date | null;
     reviewerComment?: string | null;
-    versions?: Array<{ id: string }>;
+    customerComment?: string | null;
+    portalUser?: { name?: string | null; email?: string | null } | null;
+    versions?: Array<{
+      id: string;
+      fileName?: string | null;
+      mimeType?: string | null;
+      sizeBytes?: number | null;
+      uploadedAt?: string | Date | null;
+    }>;
   }>;
 };
 
@@ -45,18 +81,73 @@ type PortalThreadView = {
   title: string;
   description: string;
   requiresCustomerAction: boolean;
-  messages: Array<{ id: string; body: string }>;
+  status: string;
+  messages: Array<{
+    id: string;
+    body: string;
+    createdAt: string | Date;
+    authorUser?: { name?: string | null; email?: string | null } | null;
+    authorPortalUser?: { name?: string | null; email?: string | null } | null;
+  }>;
 };
 
 type PortalStageView = {
-  id: string;
+  id: StageId;
   internalStageKey: string;
   sortOrder: number;
   label: string;
   description?: string | null;
 };
 
-type StageState = "completed" | "active" | "locked";
+type PortalShipmentDetailView = {
+  job: {
+    id: string;
+    jobNumber: string;
+    title: string;
+    stage: string;
+    status: string;
+    updatedAt: Date | string;
+    customer?: { name?: string | null } | null;
+    shipmentType?: { name?: string | null } | null;
+    jobType?: { name?: string | null } | null;
+    additionalData?: {
+      vesselInwardDate?: string | Date | null;
+      importGeneralManifest?: string | null;
+      exportGeneralManifest?: string | null;
+      customManifestValue?: string | null;
+      deliveryOrderValidity?: string | Date | null;
+      deliveryOrderExtensionDate?: string | Date | null;
+      doDocumentFileName?: string | null;
+      doDocumentUploadedAt?: string | Date | null;
+      status?: string | null;
+      updatedAt?: string | Date | null;
+    } | null;
+    filingDetails?: Record<string, unknown> | null;
+    documentRequirements: PortalRequirementView[];
+    checklistWorkflow?: {
+      id: string;
+      status: string;
+      currentApprovalStage?: string | null;
+      currentFileVersion?: {
+        id: string;
+        originalFileName?: string | null;
+        uploadedAt?: string | Date | null;
+        remarks?: string | null;
+      } | null;
+    } | null;
+    customerQueryThreads: PortalThreadView[];
+    shipmentRatings: Array<{ portalUserId: string }>;
+  };
+  stageMappings: PortalStageView[];
+  currentStage: PortalStageView | null;
+  actions: {
+    hasActionRequired: boolean;
+    pendingDocumentCount: number;
+    checklistPending: boolean;
+    openQueryCount: number;
+    ratingPending?: boolean;
+  };
+};
 
 const nestedDetailKeys = [
   "boeDetails",
@@ -113,148 +204,745 @@ function formatDate(value: unknown, includeTime = false) {
   }).format(date);
 }
 
+function toIsoValue(value: unknown) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(String(value));
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+}
+
 function normalizeLabel(value: string) {
   return value
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
+function formatFileSize(sizeBytes?: number | null) {
+  if (!sizeBytes || sizeBytes <= 0) return "Pending";
+
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let size = sizeBytes;
+  let unitIndex = 0;
+
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex += 1;
+  }
+
+  const precision = size >= 100 || unitIndex === 0 ? 0 : size >= 10 ? 1 : 2;
+  return `${size.toFixed(precision)} ${units[unitIndex]}`;
+}
+
+function getDocumentTypeMeta(name: string, mimeType?: string | null) {
+  const normalizedName = name.toLowerCase();
+  const normalizedMime = (mimeType ?? "").toLowerCase();
+
+  if (normalizedMime.includes("pdf") || normalizedName.endsWith(".pdf")) {
+    return {
+      label: "PDF Document",
+      Icon: FileText,
+      accentClass: "text-[#00cec4]",
+      shellClass: "bg-[#00cec4]/10",
+    };
+  }
+
+  if (normalizedMime.includes("image") || /\.(png|jpe?g|gif|webp|svg)$/.test(normalizedName)) {
+    return {
+      label: "Image File",
+      Icon: FileImage,
+      accentClass: "text-[#00cec4]",
+      shellClass: "bg-[#00cec4]/10",
+    };
+  }
+
+  if (normalizedMime.includes("video") || /\.(mp4|mov|avi|mkv|webm)$/.test(normalizedName)) {
+    return {
+      label: "Video File",
+      Icon: Play,
+      accentClass: "text-[#fb923c]",
+      shellClass: "bg-[#fb923c]/10",
+    };
+  }
+
+  if (normalizedMime.includes("folder")) {
+    return {
+      label: "Folder",
+      Icon: FolderClosed,
+      accentClass: "text-[#00cec4]",
+      shellClass: "bg-[#00cec4]/10",
+    };
+  }
+
+  return {
+    label: "Uploaded Document",
+    Icon: FileText,
+    accentClass: "text-on-surface-variant",
+    shellClass: "bg-surface-container-low",
+  };
+}
+
+function mapPortalDocumentStatus(requirement: PortalRequirementView, fallbackUpdatedAt: string | Date) {
+  const submission = requirement.customerSubmissions[0];
+  const latestInternalVersion = requirement.versions[0];
+  const latestInternalValidity = latestInternalVersion?.validityDate ? new Date(String(latestInternalVersion.validityDate)) : null;
+  const internalExpired =
+    latestInternalValidity instanceof Date &&
+    !Number.isNaN(latestInternalValidity.getTime()) &&
+    latestInternalValidity.getTime() < Date.now();
+  const hasExistingSubmission = Boolean(submission);
+  const isPortalGeneric = requirement.category === "CUSTOMER_UPLOAD";
+  const canUpload = !requirement.exception && (Boolean(requirement.isMandatory) || hasExistingSubmission || isPortalGeneric);
+  const canReplace =
+    canUpload &&
+    submission !== undefined &&
+    !["ACCEPTED", "APPROVED", "UNDER_REVIEW"].includes(submission.status);
+
+  if (requirement.exception?.reason || requirement.status === "NOT_AVAILABLE") {
+    return {
+      statusKey: "not_available" as const,
+      statusLabel: "Not available",
+      statusVariant: "secondary" as const,
+      customerActionRequired: false,
+      canUpload: false,
+      canReplace: false,
+      updatedAtValue: toIsoValue(submission?.updatedAt ?? latestInternalVersion?.uploadedAt ?? fallbackUpdatedAt),
+      updatedAtLabel: formatDate(submission?.updatedAt ?? latestInternalVersion?.uploadedAt ?? fallbackUpdatedAt, true),
+    };
+  }
+
+  if (submission) {
+    switch (submission.status) {
+      case "ACCEPTED":
+      case "APPROVED":
+        return {
+          statusKey: "accepted" as const,
+          statusLabel: "Accepted",
+          statusVariant: "success" as const,
+          customerActionRequired: false,
+          canUpload,
+          canReplace: false,
+          updatedAtValue: toIsoValue(submission.updatedAt ?? fallbackUpdatedAt),
+          updatedAtLabel: formatDate(submission.updatedAt ?? fallbackUpdatedAt, true),
+        };
+      case "UNDER_REVIEW":
+        return {
+          statusKey: "awaiting_verification" as const,
+          statusLabel: "Awaiting verification",
+          statusVariant: "warning" as const,
+          customerActionRequired: false,
+          canUpload,
+          canReplace: false,
+          updatedAtValue: toIsoValue(submission.updatedAt ?? fallbackUpdatedAt),
+          updatedAtLabel: formatDate(submission.updatedAt ?? fallbackUpdatedAt, true),
+        };
+      case "REJECTED":
+      case "REUPLOAD_REQUIRED":
+      case "CLARIFICATION_REQUIRED":
+        return {
+          statusKey: "rejected" as const,
+          statusLabel: "Rejected",
+          statusVariant: "destructive" as const,
+          customerActionRequired: true,
+          canUpload,
+          canReplace,
+          updatedAtValue: toIsoValue(submission.updatedAt ?? fallbackUpdatedAt),
+          updatedAtLabel: formatDate(submission.updatedAt ?? fallbackUpdatedAt, true),
+        };
+      case "SUPERSEDED":
+        return {
+          statusKey: "replaced" as const,
+          statusLabel: "Replaced",
+          statusVariant: "secondary" as const,
+          customerActionRequired: false,
+          canUpload,
+          canReplace,
+          updatedAtValue: toIsoValue(submission.updatedAt ?? fallbackUpdatedAt),
+          updatedAtLabel: formatDate(submission.updatedAt ?? fallbackUpdatedAt, true),
+        };
+      default:
+        return {
+          statusKey: "uploaded" as const,
+          statusLabel: "Uploaded",
+          statusVariant: "warning" as const,
+          customerActionRequired: false,
+          canUpload,
+          canReplace,
+          updatedAtValue: toIsoValue(submission.updatedAt ?? fallbackUpdatedAt),
+          updatedAtLabel: formatDate(submission.updatedAt ?? fallbackUpdatedAt, true),
+        };
+    }
+  }
+
+  if (!latestInternalVersion && requirement.isMandatory) {
+    return {
+      statusKey: "required" as const,
+      statusLabel: "Required",
+      statusVariant: "destructive" as const,
+      customerActionRequired: true,
+      canUpload,
+      canReplace: false,
+      updatedAtValue: toIsoValue(fallbackUpdatedAt),
+      updatedAtLabel: formatDate(fallbackUpdatedAt, true),
+    };
+  }
+
+  if (!latestInternalVersion) {
+    return {
+      statusKey: "not_uploaded" as const,
+      statusLabel: "Not uploaded",
+      statusVariant: "secondary" as const,
+      customerActionRequired: false,
+      canUpload,
+      canReplace: false,
+      updatedAtValue: toIsoValue(fallbackUpdatedAt),
+      updatedAtLabel: formatDate(fallbackUpdatedAt, true),
+    };
+  }
+
+  if (internalExpired) {
+    return {
+      statusKey: "expired" as const,
+      statusLabel: "Expired",
+      statusVariant: "warning" as const,
+      customerActionRequired: false,
+      canUpload,
+      canReplace: false,
+      updatedAtValue: toIsoValue(latestInternalVersion.uploadedAt),
+      updatedAtLabel: formatDate(latestInternalVersion.uploadedAt, true),
+    };
+  }
+
+  if (requirement.status === "REPLACED") {
+    return {
+      statusKey: "replaced" as const,
+      statusLabel: "Replaced",
+      statusVariant: "secondary" as const,
+      customerActionRequired: false,
+      canUpload,
+      canReplace: false,
+      updatedAtValue: toIsoValue(latestInternalVersion.uploadedAt),
+      updatedAtLabel: formatDate(latestInternalVersion.uploadedAt, true),
+    };
+  }
+
+  return {
+    statusKey: "uploaded" as const,
+    statusLabel: "Uploaded",
+    statusVariant: "success" as const,
+    customerActionRequired: false,
+    canUpload,
+    canReplace: false,
+    updatedAtValue: toIsoValue(latestInternalVersion.uploadedAt),
+    updatedAtLabel: formatDate(latestInternalVersion.uploadedAt, true),
+  };
+}
+
+function mapPortalStageKeyToStageId(stageKey: string): StageId {
+  switch (stageKey) {
+    case "DOCUMENT_COLLECTION":
+      return "document";
+    case "ADDITIONAL_DATA":
+      return "additional-data";
+    case "CHECKLIST":
+    case "CHECKLIST_PREPARATION":
+    case "CHECKLIST_APPROVAL":
+      return "checklist";
+    case "FILING":
+    case "FILED":
+      return "filing";
+    default:
+      return "document";
+  }
+}
+
 function StatusPill({ state }: { state: StageState }) {
   if (state === "completed") {
-    return (
-      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
-        Completed
-      </span>
-    );
+    return <Badge variant="success">Completed</Badge>;
   }
 
   if (state === "active") {
-    return (
-      <span className="inline-flex items-center rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-700 ring-1 ring-inset ring-violet-200">
-        In Progress
-      </span>
-    );
+    return <Badge variant="default">In Progress</Badge>;
   }
 
-  return (
-    <span className="inline-flex items-center rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-500 ring-1 ring-inset ring-slate-200">
-      Locked
-    </span>
-  );
+  return <Badge variant="secondary">Locked</Badge>;
 }
 
-function WorkflowStep({
+function StageIcon({ stageId, size = 18 }: { stageId: StageId; size?: number }) {
+  switch (stageId) {
+    case "document":
+      return <FileText size={size} />;
+    case "additional-data":
+      return <PackageCheck size={size} />;
+    case "checklist":
+      return <ShieldCheck size={size} />;
+    case "filing":
+      return <FileCheck2 size={size} />;
+    default:
+      return null;
+  }
+}
+
+function SidebarStageItem({
   stage,
   index,
   state,
-  isLast,
+  href,
+  selected,
 }: {
   stage: PortalStageView;
   index: number;
   state: StageState;
-  isLast: boolean;
+  href: string;
+  selected: boolean;
 }) {
-  const circleClass =
-    state === "completed"
-      ? "bg-emerald-500 text-white shadow-[0_8px_24px_rgba(16,185,129,0.25)]"
-      : state === "active"
-        ? "bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-[0_8px_24px_rgba(99,102,241,0.28)]"
-        : "bg-slate-100 text-slate-500 ring-1 ring-inset ring-slate-200";
+  const isHighlighted = selected || state === "active";
+  const stateLabel = state === "completed" ? "Completed" : state === "active" ? "In progress" : "Locked";
 
   return (
-    <div
-      className={`relative rounded-2xl px-3 py-3.5 transition-colors ${
-        state === "active" ? "bg-gradient-to-r from-indigo-50/90 to-violet-50/70" : ""
+    <Link
+      href={href}
+      aria-current={selected ? "page" : undefined}
+      className={`group flex w-full items-center gap-3 rounded-[20px] border px-3.5 py-3.5 transition-all duration-200 ${
+        isHighlighted
+          ? "border-[#00cec4]/30 bg-[#00cec4]/8 shadow-[0_10px_30px_rgba(0,206,196,0.08)]"
+          : "border-transparent bg-transparent hover:border-outline-variant/60 hover:bg-surface"
       }`}
     >
-      {!isLast ? (
-        <span
-          aria-hidden="true"
-          className={`absolute left-[31px] top-[54px] h-[calc(100%+12px)] border-l ${
-            state === "completed" ? "border-dashed border-emerald-300" : "border-slate-200"
-          }`}
-        />
-      ) : null}
-      <div className="relative z-10 flex gap-4">
-        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${circleClass}`}>
+      <span
+        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition ${
+          isHighlighted || state === "completed"
+            ? "bg-[#00cec4] text-white shadow-[0_8px_20px_rgba(0,206,196,0.2)]"
+            : "bg-surface text-on-surface-variant ring-1 ring-inset ring-outline-variant/60"
+        }`}
+      >
+        {state === "locked" ? <LockKeyhole size={16} /> : <StageIcon stageId={stage.id} size={18} />}
+      </span>
+
+      <span className="min-w-0 flex-1 text-left">
+        <span className="flex items-center gap-2">
+          <span className="truncate text-sm font-semibold text-on-surface">
+            {index + 1}. {stage.label}
+          </span>
           {state === "completed" ? (
-            <Check size={20} strokeWidth={2.5} />
-          ) : state === "locked" ? (
-            <LockKeyhole size={17} />
-          ) : (
-            <span className="text-sm font-semibold">{index + 1}</span>
-          )}
-        </div>
-        <div className="min-w-0 flex-1 pt-0.5">
-          <div className="flex items-start justify-between gap-2">
-            <p className={`text-sm font-semibold ${state === "active" ? "text-indigo-950" : "text-on-surface"}`}>
-              {index + 1}. {stage.label}
-            </p>
-            {state !== "locked" ? <ChevronDown size={15} className="mt-0.5 shrink-0 text-slate-400" /> : null}
-          </div>
-          <div className="mt-1.5">
-            <StatusPill state={state} />
-          </div>
-          {stage.description ? (
-            <p className="mt-2 line-clamp-2 text-xs leading-5 text-on-surface-variant">{stage.description}</p>
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#00cec4]/12 text-[#00cec4]">
+              <Check size={12} strokeWidth={3} />
+            </span>
           ) : null}
-        </div>
-      </div>
-    </div>
+        </span>
+        <span
+          className={`mt-1.5 block text-[11px] font-medium ${
+            isHighlighted || state === "completed" ? "text-[#00aFA7]" : "text-on-surface-variant"
+          }`}
+        >
+          {stateLabel}
+        </span>
+      </span>
+
+      <ChevronRight
+        size={16}
+        className={`shrink-0 transition-transform group-hover:translate-x-0.5 ${
+          isHighlighted ? "text-[#00cec4]" : "text-on-surface-variant"
+        }`}
+      />
+    </Link>
   );
 }
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-2">
-      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{label}</p>
-      <div className="flex min-h-12 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-800 shadow-[0_1px_2px_rgba(15,23,42,0.02)]">
+      <p className="ds-label">{label}</p>
+      <div className="flex min-h-12 items-center rounded-xl border border-outline-variant/60 bg-surface px-4 text-sm font-medium text-on-surface shadow-sm">
         {value}
       </div>
     </div>
   );
 }
 
+function DocumentStagePanel({
+  detail,
+}: {
+  detail: PortalShipmentDetailView;
+}) {
+  const documents = detail.job.documentRequirements
+    .filter((requirement) =>
+      Boolean(requirement.isMandatory) ||
+      requirement.versions.length > 0 ||
+      requirement.customerSubmissions.length > 0 ||
+      Boolean(requirement.exception?.reason),
+    )
+    .map((requirement) => {
+      const submission = requirement.customerSubmissions[0];
+      const internalVersions = requirement.versions.map((version) => {
+        const typeMeta = getDocumentTypeMeta(version.fileName, version.mimeType);
+        return {
+          id: version.id,
+          name: version.fileName,
+          url: `/api/customer-portal/cha-document-versions/${version.id}`,
+          downloadUrl: `/api/customer-portal/cha-document-versions/${version.id}?download=true`,
+          mimeType: version.mimeType,
+          sizeBytes: version.sizeBytes,
+          uploadedAt: toIsoValue(version.uploadedAt),
+          uploadedAtValue: toIsoValue(version.uploadedAt),
+          uploadedAtLabel: formatDate(version.uploadedAt, true),
+          uploadedByLabel: version.uploadedBy?.name ?? version.uploadedBy?.email ?? "Operations team",
+          statusLabel: "Shared file",
+          kindLabel: typeMeta.label,
+          description: "Shared by the operations team for this shipment.",
+        };
+      });
+      const customerVersions = (submission?.versions ?? []).map((version) => {
+        const fileName = version.fileName ?? requirement.name;
+        const typeMeta = getDocumentTypeMeta(fileName, version.mimeType);
+        return {
+          id: version.id,
+          name: fileName,
+          url: `/api/customer-portal/document-versions/${version.id}`,
+          downloadUrl: `/api/customer-portal/document-versions/${version.id}?download=true`,
+          mimeType: version.mimeType,
+          sizeBytes: version.sizeBytes,
+          uploadedAt: toIsoValue(version.uploadedAt),
+          uploadedAtValue: toIsoValue(version.uploadedAt),
+          uploadedAtLabel: formatDate(version.uploadedAt, true),
+          uploadedByLabel: submission?.portalUser?.name ?? submission?.portalUser?.email ?? "Customer",
+          statusLabel: normalizeLabel(submission?.status ?? "UPLOADED"),
+          kindLabel: typeMeta.label,
+          description: submission?.customerComment ?? "Shared by the customer for review.",
+        };
+      });
+      const combinedVersions = [...customerVersions, ...internalVersions].sort((left, right) =>
+        (right.uploadedAtValue ?? "").localeCompare(left.uploadedAtValue ?? ""),
+      );
+      const primaryVersion = combinedVersions[0];
+      const status = mapPortalDocumentStatus(requirement, detail.job.updatedAt);
+      const categoryName =
+        requirement.requirementItem?.category?.name ??
+        (requirement.category === "CUSTOMER_UPLOAD" ? "Other Documents" : requirement.category) ??
+        "Other Documents";
+
+      return {
+        id: requirement.id,
+        jobId: detail.job.id,
+        name: requirement.name,
+        category: categoryName,
+        categoryOrder: requirement.requirementItem?.category?.sortOrder ?? 999,
+        statusKey: status.statusKey,
+        statusLabel: status.statusLabel,
+        statusVariant: status.statusVariant,
+        customerActionRequired: status.customerActionRequired,
+        isRequired: Boolean(requirement.isMandatory),
+        canUpload: status.canUpload,
+        canReplace: status.canReplace,
+        currentFileName: primaryVersion?.name ?? null,
+        uploadedAtLabel: primaryVersion?.uploadedAtLabel ?? "Awaiting upload",
+        uploadedAtValue: primaryVersion?.uploadedAtValue ?? null,
+        updatedAtLabel: status.updatedAtLabel,
+        updatedAtValue: status.updatedAtValue,
+        sizeLabel: primaryVersion ? formatFileSize(primaryVersion.sizeBytes) : "Pending",
+        uploadedByLabel: primaryVersion?.uploadedByLabel ?? "Customer",
+        reviewRemark: submission?.reviewerComment ?? null,
+        customerRemark: submission?.customerComment ?? null,
+        unavailableReason: requirement.exception?.reason ?? null,
+        acceptedFileTypes: requirement.requirementItem?.acceptedFileTypes ?? [],
+        versionCount: combinedVersions.length,
+        currentVersionId: primaryVersion?.id ?? null,
+        versions: combinedVersions,
+      };
+    });
+
+  return (
+    <PortalShipmentDocumentManager
+      documents={documents}
+      shipmentContext={{
+        jobNumber: detail.job.jobNumber,
+        shipmentReference: detail.job.title,
+        customerName: detail.job.customer?.name ?? "Customer",
+        shipmentType: detail.job.shipmentType?.name ?? "Shipment",
+        clearanceType: detail.job.jobType?.name ?? "CHA",
+        stageLabel: normalizeLabel(detail.job.stage),
+        lastUpdatedLabel: formatDate(detail.job.updatedAt, true),
+      }}
+    />
+  );
+}
+
+function AdditionalDataStagePanel({
+  detail,
+}: {
+  detail: PortalShipmentDetailView;
+}) {
+  const additionalData = detail.job.additionalData;
+
+  return (
+    <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="rounded-[22px] border border-outline-variant/60 bg-surface p-5 shadow-sm sm:p-6">
+        <div className="flex items-center gap-2">
+          <PackageCheck size={19} className="text-[#00cec4]" />
+          <h3 className="ds-h3 text-on-surface">Additional Data</h3>
+        </div>
+        <p className="mt-1 text-sm text-on-surface-variant">
+          These are the operational values shared from the CHA additional-data stage.
+        </p>
+
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <ReadOnlyField label="Vessel Inward Date" value={formatDate(additionalData?.vesselInwardDate)} />
+          <ReadOnlyField label="Delivery Order Validity" value={formatDate(additionalData?.deliveryOrderValidity)} />
+          <ReadOnlyField label="Import General Manifest" value={additionalData?.importGeneralManifest || "Not shared yet"} />
+          <ReadOnlyField label="Export General Manifest" value={additionalData?.exportGeneralManifest || "Not shared yet"} />
+          <ReadOnlyField label="Custom Manifest Value" value={additionalData?.customManifestValue || "Not shared yet"} />
+          <ReadOnlyField label="Extension Date" value={formatDate(additionalData?.deliveryOrderExtensionDate)} />
+        </div>
+      </div>
+
+      <div className="space-y-5">
+        <div className="rounded-[22px] border border-outline-variant/60 bg-surface p-5 shadow-sm">
+          <h3 className="ds-h3 text-on-surface">Stage Summary</h3>
+          <div className="mt-4 space-y-4">
+            <ReadOnlyField label="Status" value={normalizeLabel(additionalData?.status ?? "PENDING")} />
+            <ReadOnlyField label="Last Updated" value={formatDate(additionalData?.updatedAt ?? detail.job.updatedAt, true)} />
+          </div>
+        </div>
+
+        <div className="rounded-[22px] border border-outline-variant/60 bg-surface p-5 shadow-sm">
+          <h3 className="ds-h3 text-on-surface">Delivery Order File</h3>
+          {additionalData?.doDocumentFileName ? (
+            <div className="mt-4 rounded-2xl border border-outline-variant/60 bg-surface-container-low/30 p-4">
+              <p className="text-sm font-semibold text-on-surface">{additionalData.doDocumentFileName}</p>
+              <p className="mt-2 text-xs text-on-surface-variant">
+                Uploaded {formatDate(additionalData.doDocumentUploadedAt, true)}
+              </p>
+            </div>
+          ) : (
+            <div className="mt-4 rounded-2xl border border-dashed border-outline-variant/60 bg-surface-container-low/30 p-5 text-center text-sm text-on-surface-variant">
+              No delivery-order file has been shared yet.
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ChecklistStagePanel({
+  detail,
+}: {
+  detail: PortalShipmentDetailView;
+}) {
+  const openQueryCount = detail.job.customerQueryThreads.filter((thread) => thread.requiresCustomerAction).length;
+
+  return (
+    <section className="mt-5 grid gap-5 2xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+      <div className="space-y-5">
+        {detail.job.checklistWorkflow ? (
+          <div className="rounded-[22px] border border-outline-variant/60 bg-surface p-5 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={19} className="text-[#00cec4]" />
+                <h3 className="ds-h3 text-on-surface">Checklist Approval</h3>
+              </div>
+              <span className="rounded-full bg-surface-container-low px-2.5 py-1 text-[11px] font-semibold text-on-surface-variant">
+                {normalizeLabel(detail.job.checklistWorkflow.status)}
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-on-surface-variant">
+              Review the latest checklist when customer approval is requested.
+            </p>
+
+            {detail.job.checklistWorkflow.currentFileVersion ? (
+              <div className="mt-4 rounded-2xl border border-outline-variant/60 bg-surface-container-low/30 p-4">
+                <p className="text-sm font-semibold text-on-surface">
+                  {detail.job.checklistWorkflow.currentFileVersion.originalFileName ?? "Current checklist file"}
+                </p>
+                <p className="mt-2 text-xs text-on-surface-variant">
+                  Uploaded {formatDate(detail.job.checklistWorkflow.currentFileVersion.uploadedAt, true)}
+                </p>
+                {detail.job.checklistWorkflow.currentFileVersion.remarks ? (
+                  <p className="mt-2 text-xs leading-5 text-on-surface-variant">
+                    {detail.job.checklistWorkflow.currentFileVersion.remarks}
+                  </p>
+                ) : null}
+                <div className="mt-4">
+                  <Link
+                    href={`/api/customer-portal/checklist-files/${detail.job.checklistWorkflow.currentFileVersion.id}`}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-[#00cec4] hover:underline"
+                  >
+                    <FileCheck2 size={16} />
+                    Preview current checklist
+                  </Link>
+                </div>
+              </div>
+            ) : null}
+
+            {detail.actions.checklistPending ? (
+              <div className="mt-4 border-t border-outline-variant/60 pt-4">
+                <PortalChecklistActionForm jobId={detail.job.id} checklistId={detail.job.checklistWorkflow.id} />
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <div className="rounded-[22px] border border-outline-variant/60 bg-surface p-5 text-sm text-on-surface-variant shadow-sm">
+            No checklist workflow is available for this shipment yet.
+          </div>
+        )}
+      </div>
+
+      <details
+        className="group rounded-[22px] border border-outline-variant/60 bg-surface p-5 shadow-sm"
+        open={openQueryCount > 0}
+      >
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <MessageSquareText size={19} className="text-[#00cec4]" />
+            <div>
+              <h3 className="ds-h3 text-on-surface">Queries & Updates</h3>
+              <p className="mt-1 text-xs text-on-surface-variant">Open to review shipment conversations tied to this stage.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {openQueryCount > 0 ? (
+              <span className="rounded-full bg-[#fb923c]/12 px-2.5 py-1 text-[11px] font-semibold text-[#fb923c]">
+                {openQueryCount} open
+              </span>
+            ) : null}
+            <ChevronDown size={18} className="text-on-surface-variant transition-transform group-open:rotate-180" />
+          </div>
+        </summary>
+
+        <div className="mt-5 space-y-4 border-t border-outline-variant/60 pt-4">
+          {detail.job.customerQueryThreads.length === 0 ? (
+            <div className="rounded-2xl bg-surface-container-low/40 p-5 text-center">
+              <MessageSquareText className="mx-auto text-on-surface-variant" size={25} />
+              <p className="mt-2 text-sm text-on-surface-variant">No queries have been raised for this shipment.</p>
+            </div>
+          ) : (
+            detail.job.customerQueryThreads.map((thread) => (
+              <div key={thread.id} className="rounded-2xl border border-outline-variant/60 bg-surface-container-low/30 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-on-surface">{thread.title}</p>
+                    <p className="mt-1 text-xs leading-5 text-on-surface-variant">{thread.description}</p>
+                  </div>
+                  {thread.requiresCustomerAction ? (
+                    <span className="shrink-0 rounded-full bg-[#fb923c]/12 px-2 py-1 text-[10px] font-semibold text-[#fb923c]">
+                      Reply needed
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="mt-3 space-y-2">
+                  {thread.messages.map((message) => (
+                    <div key={message.id} className="rounded-xl border border-outline-variant/60 bg-surface p-3">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-on-surface-variant">
+                        <span>{message.authorPortalUser?.name ?? message.authorUser?.name ?? "Portal update"}</span>
+                        <span>{formatDate(message.createdAt, true)}</span>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-on-surface">{message.body}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {thread.requiresCustomerAction ? (
+                  <div className="mt-3">
+                    <PortalQueryReplyForm threadId={thread.id} />
+                  </div>
+                ) : null}
+              </div>
+            ))
+          )}
+        </div>
+      </details>
+    </section>
+  );
+}
+
+function FilingStagePanel({
+  detail,
+}: {
+  detail: PortalShipmentDetailView;
+}) {
+  const filingRecord = asRecord(detail.job.filingDetails) ?? {};
+
+  return (
+    <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="rounded-[22px] border border-outline-variant/60 bg-surface p-5 shadow-sm sm:p-6">
+        <div className="flex items-center gap-2">
+          <FileCheck2 size={19} className="text-[#00cec4]" />
+          <h3 className="ds-h3 text-on-surface">Filing Details</h3>
+        </div>
+        <p className="mt-1 text-sm text-on-surface-variant">
+          View the filing references currently shared from the CHA filing stage.
+        </p>
+
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <ReadOnlyField label="BOE Number" value={readText(filingRecord, ["boeNumber", "billOfEntryNumber"])} />
+          <ReadOnlyField label="Shipping Bill Number" value={readText(filingRecord, ["shippingBillNumber"])} />
+          <ReadOnlyField label="Filing Reference" value={readText(filingRecord, ["filingRef"])} />
+          <ReadOnlyField label="Filing Date" value={formatDate(readFirstValue(filingRecord, ["filingDate", "boeDate"]))} />
+          <ReadOnlyField label="CHA Name" value={readText(filingRecord, ["chaName"])} />
+          <ReadOnlyField label="Port Code" value={readText(filingRecord, ["portCode"])} />
+        </div>
+      </div>
+
+      <div className="rounded-[22px] border border-outline-variant/60 bg-surface p-5 shadow-sm">
+        <h3 className="ds-h3 text-on-surface">Remarks</h3>
+        <div className="mt-4 min-h-32 rounded-2xl border border-outline-variant/60 bg-surface-container-low/30 px-4 py-3 text-sm leading-6 text-on-surface">
+          {readText(
+            filingRecord,
+            ["filingRemarks", "delayReason", "exceptionReason", "remarks"],
+            "Filing updates will appear here when shared by the CHA team.",
+          )}
+        </div>
+        <div className="mt-4">
+          <ReadOnlyField label="Last Updated" value={formatDate(readFirstValue(filingRecord, ["lastUpdatedAt"]), true)} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default async function CustomerPortalShipmentDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ shipmentId: string }>;
+  searchParams?: Promise<{ stage?: string }>;
 }) {
   const session = await requirePortalSession();
   const { shipmentId } = await params;
-  const detail = await getPortalShipmentDetail(session.portalUserId, shipmentId);
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const detail = (await getPortalShipmentDetail(session.portalUserId, shipmentId)) as PortalShipmentDetailView;
   const ratingCategories = await listPortalRatingCategories(session.portalUserId);
   const ratingSubmitted = detail.job.shipmentRatings.some(
     (rating: { portalUserId: string }) => rating.portalUserId === session.portalUserId,
   );
 
-  const stages = [...(detail.stageMappings as PortalStageView[])].sort((left, right) => left.sortOrder - right.sortOrder);
+  const stages = [...detail.stageMappings].sort((left, right) => left.sortOrder - right.sortOrder);
   const matchedStageIndex = stages.findIndex((stage) => stage.internalStageKey === detail.job.stage);
   const activeStageIndex = matchedStageIndex >= 0 ? matchedStageIndex : 0;
+  const currentStage = stages[activeStageIndex] ?? detail.currentStage;
+  const currentStageId = mapPortalStageKeyToStageId(currentStage?.internalStageKey ?? detail.job.stage);
+  const requestedStageId = resolvedSearchParams?.stage;
+  const selectedStage =
+    stages.find((stage) => stage.id === requestedStageId) ??
+    stages.find((stage) => stage.id === currentStageId) ??
+    stages[0] ??
+    null;
+  const selectedStageIndex = selectedStage ? stages.findIndex((stage) => stage.id === selectedStage.id) : 0;
   const isShipmentCompleted = detail.job.status === "COMPLETED" || detail.job.stage === "FILED";
+  const selectedStageState: StageState = isShipmentCompleted
+    ? "completed"
+    : selectedStageIndex < activeStageIndex
+      ? "completed"
+      : selectedStageIndex === activeStageIndex
+        ? "active"
+        : "locked";
   const completedStageCount = isShipmentCompleted ? stages.length : Math.max(activeStageIndex, 0);
   const progressPercent = stages.length > 0 ? Math.round((completedStageCount / stages.length) * 100) : 0;
-  const currentStage = stages[activeStageIndex] ?? detail.currentStage;
-  const nextStage = stages[activeStageIndex + 1] ?? null;
-  const jobRecord = asRecord(detail.job) ?? {};
 
-  const boeNumber = readText(
-    jobRecord,
-    ["boeNumber", "billOfEntryNumber", "filingNumber", "referenceNumber", "jobNumber"],
-    detail.job.jobNumber,
-  );
-  const boeDate = formatDate(readFirstValue(jobRecord, ["boeDate", "billOfEntryDate", "filingDate", "updatedAt"]));
-  const chaName = readText(jobRecord, ["chaName", "customsBrokerName", "brokerName"], "Assigned CHA team");
-  const portCode = readText(jobRecord, ["portCode", "customsPortCode", "port", "portName"]);
-  const remarks = readText(
-    jobRecord,
-    ["boeRemarks", "filingRemarks", "remarks", "notes", "description"],
-    currentStage?.description ?? "The operations team is processing this stage. Updates will appear here automatically.",
-  );
-  const updatedAt = formatDate(readFirstValue(jobRecord, ["updatedAt", "lastUpdatedAt"]), true);
   const shipmentLabel = detail.job.shipmentType?.name ?? "Shipment";
   const clearanceLabel = detail.job.jobType?.name ?? "CHA";
   const statusLabel = normalizeLabel(String(detail.job.status ?? "IN_PROGRESS"));
+  const updatedAt = formatDate(detail.job.updatedAt, true);
   const openQueryCount = detail.job.customerQueryThreads.filter(
     (thread: PortalThreadView) => thread.requiresCustomerAction,
   ).length;
@@ -262,26 +950,24 @@ export default async function CustomerPortalShipmentDetailPage({
   const portalUserLabel = readText(portalUserRecord, ["name", "email"], session.portalUser.customer.name);
 
   return (
-    <div className="space-y-5">
-      <section className="overflow-hidden rounded-[24px] border border-slate-200/80 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
-        <div className="flex min-h-20 flex-col gap-4 border-b border-slate-200/80 px-5 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-7">
+    <div className="w-full">
+      <section className="overflow-hidden rounded-[28px] border border-outline-variant/60 bg-surface shadow-sm">
+        <header className="flex min-h-24 flex-col gap-4 border-b border-outline-variant/60 px-5 py-5 sm:flex-row sm:items-center sm:justify-between lg:px-7">
           <div className="flex min-w-0 items-center gap-3">
             <Link
               href="/customer-portal/shipments"
               aria-label="Back to shipments"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-outline-variant/60 bg-surface text-on-surface-variant transition hover:border-[#00cec4]/45 hover:text-[#00cec4]"
             >
               <ArrowLeft size={18} />
             </Link>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="truncate text-lg font-semibold text-slate-950 sm:text-xl">{detail.job.title}</h1>
-                <span className="text-sm font-medium text-slate-500">#{detail.job.jobNumber}</span>
-                <span className="inline-flex items-center rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
-                  {statusLabel}
-                </span>
+                <h1 className="ds-h2 truncate text-on-surface">{detail.job.title}</h1>
+                <span className="ds-numeric text-sm text-on-surface-variant">#{detail.job.jobNumber}</span>
+                <Badge variant="success">{statusLabel}</Badge>
               </div>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-on-surface-variant">
                 {shipmentLabel} • {clearanceLabel} • Last updated {updatedAt}
               </p>
             </div>
@@ -290,387 +976,173 @@ export default async function CustomerPortalShipmentDetailPage({
           <div className="flex items-center gap-2 self-end sm:self-auto">
             <Link
               href="/customer-portal/notifications"
-              className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+              className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-outline-variant/60 bg-surface text-on-surface-variant transition hover:border-[#00cec4]/45 hover:text-[#00cec4]"
               aria-label="Open notifications"
             >
               <Bell size={18} />
               {openQueryCount > 0 ? (
-                <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-[#fb923c] px-1 text-[10px] font-bold text-white">
                   {openQueryCount}
                 </span>
               ) : null}
             </Link>
-            <div className="hidden items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 sm:flex">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
+            <div className="hidden items-center gap-3 rounded-2xl border border-outline-variant/60 bg-surface-container-low/40 px-3 py-2.5 sm:flex">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#00cec4]/12 text-[#00cec4]">
                 <UserRound size={16} />
               </div>
               <div className="max-w-44">
-                <p className="truncate text-xs font-semibold text-slate-800">{portalUserLabel}</p>
-                <p className="truncate text-[11px] text-slate-500">{session.portalUser.customer.name}</p>
+                <p className="truncate text-xs font-semibold text-on-surface">{portalUserLabel}</p>
+                <p className="truncate text-[11px] text-on-surface-variant">{session.portalUser.customer.name}</p>
               </div>
             </div>
           </div>
-        </div>
+        </header>
 
-        <div className="grid xl:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="border-b border-slate-200/80 bg-slate-50/35 p-4 sm:p-5 xl:border-b-0 xl:border-r">
-            <div className="xl:sticky xl:top-24">
-              <div className="mb-4 flex items-center justify-between gap-3 px-2">
-                <div>
-                  <p className="text-base font-semibold text-slate-950">Workflow Progress</p>
-                  <p className="mt-1 text-xs text-slate-500">Live shipment timeline</p>
+        <div className="grid min-h-[calc(100vh-12rem)] xl:grid-cols-[300px_minmax(0,1fr)]">
+          <aside className="border-b border-outline-variant/60 bg-surface-container-low/30 xl:border-b-0 xl:border-r">
+            <div className="p-4 sm:p-5 xl:sticky xl:top-24">
+              <div className="rounded-[22px] border border-outline-variant/60 bg-surface p-5 shadow-sm">
+                <p className="ds-label">Shipment</p>
+                <p className="mt-2 truncate text-base font-semibold text-on-surface">{detail.job.jobNumber}</p>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-on-surface-variant">{detail.job.title}</p>
+
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="ds-label">Overall Progress</p>
+                    <p className="mt-1 text-2xl tracking-tight text-[#00cec4] ds-numeric">{progressPercent}%</p>
+                  </div>
+                  <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-[#00cec4]/10 text-[#00cec4]">
+                    <PackageCheck size={21} />
+                  </div>
                 </div>
-                <PackageCheck size={20} className="text-indigo-600" />
-              </div>
-
-              <div className="space-y-1">
-                {stages.map((stage, index) => {
-                  const state: StageState = isShipmentCompleted || index < activeStageIndex
-                    ? "completed"
-                    : index === activeStageIndex
-                      ? "active"
-                      : "locked";
-                  return (
-                    <WorkflowStep
-                      key={stage.id}
-                      stage={stage}
-                      index={index}
-                      state={state}
-                      isLast={index === stages.length - 1}
-                    />
-                  );
-                })}
-              </div>
-
-              <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-slate-800">Overall Progress</p>
-                  <span className="text-2xl font-bold tracking-tight text-indigo-600">{progressPercent}%</span>
-                </div>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-container">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-600 transition-[width] duration-500"
+                    className="h-full rounded-full bg-[#00cec4] transition-[width] duration-500"
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
-                <p className="mt-3 text-xs text-slate-500">
+                <p className="mt-2 text-[11px] text-on-surface-variant">
                   {completedStageCount} of {stages.length} stages completed
                 </p>
+              </div>
+
+              <nav className="mt-5" aria-label="Shipment workflow stages">
+                <div className="mb-2 px-2">
+                  <p className="ds-label">Workflow stages</p>
+                </div>
+                <div className="space-y-2">
+                  {stages.map((stage, index) => {
+                    const state: StageState = isShipmentCompleted || index < activeStageIndex
+                      ? "completed"
+                      : index === activeStageIndex
+                        ? "active"
+                        : "locked";
+
+                    return (
+                      <SidebarStageItem
+                        key={stage.id}
+                        stage={stage}
+                        index={index}
+                        state={state}
+                        href={`/customer-portal/shipments/${detail.job.id}?stage=${stage.id}`}
+                        selected={selectedStage?.id === stage.id}
+                      />
+                    );
+                  })}
+                </div>
+              </nav>
+
+              <div className="mt-5 border-t border-outline-variant/60 pt-5">
+                <Link
+                  href="/customer-portal/notifications"
+                  className="flex items-center gap-3 rounded-[22px] border border-outline-variant/60 bg-surface px-3.5 py-3.5 text-sm font-semibold text-on-surface transition hover:border-[#00cec4]/35 hover:shadow-[0_10px_30px_rgba(0,206,196,0.08)]"
+                >
+                  <span className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-surface text-on-surface-variant ring-1 ring-inset ring-outline-variant/60">
+                    <MessageSquareText size={18} />
+                    {openQueryCount > 0 ? (
+                      <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-[#fb923c] px-1 text-[10px] font-bold text-white">
+                        {openQueryCount}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block ds-h3 text-on-surface">Queries & Updates</span>
+                    <span className="mt-0.5 block text-[11px] font-normal text-on-surface-variant">
+                      {openQueryCount > 0 ? `${openQueryCount} response${openQueryCount === 1 ? "" : "s"} required` : "No pending responses"}
+                    </span>
+                  </span>
+                  <ChevronRight size={16} className="text-on-surface-variant" />
+                </Link>
               </div>
             </div>
           </aside>
 
-          <main className="min-w-0 bg-slate-50/20 p-4 sm:p-6 lg:p-7">
-            <section className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
-              <div className="flex flex-col gap-4 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                <div className="flex min-w-0 items-center gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-[0_10px_25px_rgba(99,102,241,0.25)]">
-                    <FileText size={22} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="truncate text-xl font-semibold text-slate-950">
-                        {activeStageIndex + 1}. {currentStage?.label ?? normalizeLabel(detail.job.stage)}
-                      </h2>
-                      <StatusPill state={isShipmentCompleted ? "completed" : "active"} />
-                    </div>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {currentStage?.description ?? "View the latest operational information for this shipment stage."}
-                    </p>
-                  </div>
-                </div>
-                <Link
-                  href="/customer-portal/notifications"
-                  className="inline-flex items-center gap-2 self-start text-sm font-semibold text-indigo-700 transition hover:text-indigo-900"
-                >
-                  <CircleHelp size={17} />
-                  Help & updates
-                </Link>
-              </div>
-
-              <div className="space-y-5 p-5 sm:p-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <ReadOnlyField label="BOE / Filing Number" value={boeNumber} />
-                  <ReadOnlyField label="BOE / Filing Date" value={boeDate} />
-                  <ReadOnlyField label="CHA Name" value={chaName} />
-                  <ReadOnlyField label="Port Code" value={portCode} />
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Remarks / Notes</p>
-                  <div className="min-h-20 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
-                    {remarks}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-3 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-violet-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white">
-                      {isShipmentCompleted ? <CheckCircle2 size={20} /> : <Clock3 size={20} />}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {isShipmentCompleted ? "Shipment workflow completed" : "This step is currently being processed"}
-                      </p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">
-                        Customer access is view-only for operational stages. The next stage unlocks automatically when the assigned team completes this step.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(99,102,241,0.22)]">
-                    {isShipmentCompleted ? (
-                      <span className="inline-flex items-center gap-2"><Check size={17} /> Completed</span>
-                    ) : (
-                      <span className="inline-flex items-center gap-2"><Clock3 size={17} /> In Progress</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-stretch">
-              <div className="rounded-2xl border border-indigo-100 bg-white p-4 text-center shadow-sm">
-                <p className="text-xs font-semibold text-slate-500">1. Current Step</p>
-                <div className="mx-auto mt-4 flex h-11 max-w-52 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 text-sm font-semibold text-white">
-                  <Clock3 size={17} /> {isShipmentCompleted ? "Completed" : "In Progress"}
-                </div>
-              </div>
-              <div className="hidden items-center justify-center text-slate-700 lg:flex">
-                <ArrowRight size={24} />
-              </div>
-              <div className="rounded-2xl border border-indigo-100 bg-white p-4 text-center shadow-sm">
-                <p className="text-xs font-semibold text-slate-500">2. Operations Update</p>
-                <div className="mt-4 flex items-center justify-center gap-3">
-                  <span className="h-8 w-8 animate-spin rounded-full border-[3px] border-indigo-100 border-t-indigo-600" aria-hidden="true" />
-                  <span className="text-sm font-medium text-slate-700">Saving & processing</span>
-                </div>
-                <div className="mx-auto mt-4 h-2 max-w-52 overflow-hidden rounded-full bg-slate-100">
-                  <div className="h-full w-2/5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" />
-                </div>
-              </div>
-              <div className="hidden items-center justify-center text-slate-700 lg:flex">
-                <ArrowRight size={24} />
-              </div>
-              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/45 p-4 text-center shadow-sm">
-                <p className="text-xs font-semibold text-slate-500">3. Customer Update</p>
-                <div className="mx-auto mt-4 flex max-w-60 items-center gap-3 rounded-xl border border-emerald-200 bg-white/80 p-3 text-left">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
-                    <Check size={18} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-emerald-800">Live status published</p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Updated automatically</p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {nextStage ? (
-              <section className="mt-5 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50/70 via-white to-white p-4 shadow-sm sm:p-5">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex min-w-0 items-center gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-[0_9px_22px_rgba(16,185,129,0.22)]">
-                      <LockKeyhole size={21} />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-base font-semibold text-slate-950">
-                          {activeStageIndex + 2}. {nextStage.label}
+          <main className="min-w-0 bg-background/20 p-4 sm:p-6 lg:p-7">
+            {selectedStage ? (
+              <>
+                <section className="rounded-[24px] border border-outline-variant/60 bg-surface p-5 shadow-sm sm:p-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex min-w-0 items-start gap-4">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-[#00cec4] text-white shadow-[0_10px_25px_rgba(0,206,196,0.22)]">
+                        <StageIcon stageId={selectedStage.id} size={22} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="ds-h2 text-on-surface">
+                            {selectedStageIndex + 1}. {selectedStage.label}
+                          </h2>
+                          <StatusPill state={selectedStageState} />
+                        </div>
+                        <p className="mt-2 max-w-3xl text-sm leading-6 text-on-surface-variant">
+                          {selectedStage.description ?? "View the information and actions available for this shipment stage."}
                         </p>
-                        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">Next Step</span>
                       </div>
-                      <p className="mt-1 text-sm text-slate-500">{nextStage.description ?? "This stage will open automatically."}</p>
                     </div>
                   </div>
-                  <div className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-white px-4 py-2.5 text-sm font-semibold text-indigo-700">
-                    Unlocks automatically <ArrowRight size={16} />
-                  </div>
-                </div>
-              </section>
-            ) : null}
+                </section>
 
-            <section className="mt-5 grid gap-5 2xl:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
-              <div className="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <UploadCloud size={19} className="text-indigo-600" />
-                      <h3 className="text-base font-semibold text-slate-950">Requested Documents</h3>
-                    </div>
-                    <p className="mt-1 text-sm text-slate-500">Upload requested files and preview the latest submitted version.</p>
-                  </div>
-                  <span className="w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                    {detail.job.documentRequirements.length} items
-                  </span>
-                </div>
+                {selectedStage.id === "document" ? <DocumentStagePanel detail={detail} /> : null}
+                {selectedStage.id === "additional-data" ? <AdditionalDataStagePanel detail={detail} /> : null}
+                {selectedStage.id === "checklist" ? <ChecklistStagePanel detail={detail} /> : null}
+                {selectedStage.id === "filing" ? <FilingStagePanel detail={detail} /> : null}
 
-                <div className="mt-5 space-y-4">
-                  {detail.job.documentRequirements.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-                      <FileCheck2 className="mx-auto text-slate-400" size={28} />
-                      <p className="mt-3 text-sm font-medium text-slate-700">No customer documents are required right now.</p>
-                    </div>
-                  ) : (
-                    detail.job.documentRequirements.map((requirement: PortalRequirementView) => {
-                      const submission = requirement.customerSubmissions[0];
-                      const latestVersion = submission?.versions?.[0];
-                      const submissionStatus = submission?.status ?? "NOT_UPLOADED";
-                      const isApproved = submissionStatus === "APPROVED";
-                      return (
-                        <div key={requirement.id} className="rounded-2xl border border-slate-200 bg-slate-50/40 p-4">
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <FileText size={17} className="shrink-0 text-indigo-600" />
-                                <p className="truncate text-sm font-semibold text-slate-900">{requirement.name}</p>
-                              </div>
-                              <p className="mt-2 text-xs leading-5 text-slate-500">
-                                {submission?.reviewerComment ?? "Upload the latest valid document for verification."}
-                              </p>
-                            </div>
-                            <span className={`w-fit rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                              isApproved
-                                ? "bg-emerald-100 text-emerald-700"
-                                : submissionStatus === "NOT_UPLOADED"
-                                  ? "bg-amber-100 text-amber-800"
-                                  : "bg-indigo-100 text-indigo-700"
-                            }`}>
-                              {normalizeLabel(submissionStatus)}
-                            </span>
-                          </div>
-
-                          {latestVersion ? (
-                            <Link
-                              href={`/api/customer-portal/document-versions/${latestVersion.id}`}
-                              className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-indigo-700 hover:text-indigo-900 hover:underline"
-                            >
-                              <FileCheck2 size={16} /> Preview latest upload
-                            </Link>
-                          ) : null}
-
-                          {!isApproved ? (
-                            <div className="mt-4 border-t border-slate-200 pt-4">
-                              <PortalDocumentUploadForm jobId={detail.job.id} requirementId={requirement.id} />
-                            </div>
-                          ) : null}
+                {selectedStage.id === "filing" && isShipmentCompleted && !ratingSubmitted ? (
+                  <section className="mt-5 rounded-[22px] border border-[#fb923c]/30 bg-[#fb923c]/8 p-5 shadow-sm sm:p-6">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#fb923c]/12 text-[#fb923c]">
+                        <Sparkles size={20} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="ds-h3 text-on-surface">Rate This Shipment Experience</h3>
+                        <p className="mt-1 text-sm text-on-surface-variant">
+                          Your feedback helps improve service quality and response times.
+                        </p>
+                        <div className="mt-4">
+                          <PortalRatingForm
+                            jobId={detail.job.id}
+                            categories={ratingCategories.map((category) => ({
+                              key: category.key,
+                              label: category.label,
+                            }))}
+                          />
                         </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-5">
-                {detail.job.checklistWorkflow ? (
-                  <div className="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <ShieldCheck size={19} className="text-emerald-600" />
-                        <h3 className="text-base font-semibold text-slate-950">Checklist Approval</h3>
                       </div>
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
-                        {normalizeLabel(detail.job.checklistWorkflow.status)}
-                      </span>
                     </div>
-                    <p className="mt-2 text-sm text-slate-500">Review the latest checklist when customer approval is requested.</p>
-                    {detail.job.checklistWorkflow.currentFileVersion ? (
-                      <Link
-                        href={`/api/customer-portal/checklist-files/${detail.job.checklistWorkflow.currentFileVersion.id}`}
-                        className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-indigo-700 hover:underline"
-                      >
-                        <FileCheck2 size={16} /> Preview current checklist
-                      </Link>
-                    ) : null}
-                    {detail.actions.checklistPending ? (
-                      <div className="mt-4 border-t border-slate-200 pt-4">
-                        <PortalChecklistActionForm jobId={detail.job.id} checklistId={detail.job.checklistWorkflow.id} />
-                      </div>
-                    ) : null}
-                  </div>
+                  </section>
                 ) : null}
-
-                <details
-                  className="group rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm"
-                  open={openQueryCount > 0}
-                >
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <MessageSquareText size={19} className="text-indigo-600" />
-                      <div>
-                        <h3 className="text-base font-semibold text-slate-950">Queries & Updates</h3>
-                        <p className="mt-1 text-xs text-slate-500">Open to view conversations for this shipment.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {openQueryCount > 0 ? (
-                        <span className="rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-semibold text-rose-700">
-                          {openQueryCount} open
-                        </span>
-                      ) : null}
-                      <ChevronDown size={18} className="text-slate-500 transition-transform group-open:rotate-180" />
-                    </div>
-                  </summary>
-
-                  <div className="mt-5 space-y-4 border-t border-slate-200 pt-4">
-                    {detail.job.customerQueryThreads.length === 0 ? (
-                      <div className="rounded-2xl bg-slate-50 p-5 text-center">
-                        <MessageSquareText className="mx-auto text-slate-400" size={25} />
-                        <p className="mt-2 text-sm text-slate-500">No queries have been raised for this shipment.</p>
-                      </div>
-                    ) : (
-                      detail.job.customerQueryThreads.map((thread: PortalThreadView) => (
-                        <div key={thread.id} className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-semibold text-slate-900">{thread.title}</p>
-                              <p className="mt-1 text-xs leading-5 text-slate-500">{thread.description}</p>
-                            </div>
-                            {thread.requiresCustomerAction ? (
-                              <span className="shrink-0 rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold text-amber-800">Reply needed</span>
-                            ) : null}
-                          </div>
-                          <div className="mt-3 space-y-2">
-                            {thread.messages.map((message) => (
-                              <div key={message.id} className="rounded-xl border border-slate-200 bg-white p-3 text-sm leading-6 text-slate-700">
-                                {message.body}
-                              </div>
-                            ))}
-                          </div>
-                          {thread.requiresCustomerAction ? (
-                            <div className="mt-3">
-                              <PortalQueryReplyForm threadId={thread.id} />
-                            </div>
-                          ) : null}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </details>
-              </div>
-            </section>
+              </>
+            ) : (
+              <section className="rounded-[22px] border border-dashed border-outline-variant/60 bg-surface p-10 text-center shadow-sm">
+                <PackageCheck className="mx-auto text-on-surface-variant" size={30} />
+                <h2 className="ds-h3 mt-4 text-on-surface">No Workflow Stages Are Configured</h2>
+                <p className="mt-2 text-sm text-on-surface-variant">
+                  Add customer-portal stage mappings before opening this shipment page.
+                </p>
+              </section>
+            )}
           </main>
         </div>
       </section>
-
-      {(detail.job.status === "COMPLETED" || detail.job.stage === "FILED") && !ratingSubmitted ? (
-        <section className="rounded-[22px] border border-amber-200 bg-gradient-to-r from-amber-50/70 via-white to-white p-5 shadow-sm sm:p-6">
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
-              <Sparkles size={20} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-base font-semibold text-slate-950">Rate this shipment experience</h3>
-              <p className="mt-1 text-sm text-slate-500">Your feedback helps improve service quality and response times.</p>
-              <div className="mt-4">
-                <PortalRatingForm
-                  jobId={detail.job.id}
-                  categories={ratingCategories.map((category) => ({ key: category.key, label: category.label }))}
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-      ) : null}
     </div>
   );
 }

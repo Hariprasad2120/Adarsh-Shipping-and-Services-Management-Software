@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-15T05:13:23.213Z
+> Generated at: 2026-07-15T12:34:19.730Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -8,7 +8,7 @@
 | Metric | Count |
 |---|---|
 | App Routes (Pages) | 203 |
-| API Routes | 190 |
+| API Routes | 191 |
 | Prisma Models | 277 |
 | Module Service Files | 77 |
 | UI Components | 93 |
@@ -29,7 +29,7 @@
 | core | 2 | 0 | 72 | 5 | 0 |
 | crm | 59 | 4 | 26 | 7 | 1 |
 | cron | 0 | 7 | 0 | 0 | 0 |
-| customer-portal | 0 | 15 | 0 | 4 | 0 |
+| customer-portal | 0 | 16 | 0 | 4 | 0 |
 | dashboard | 1 | 0 | 0 | 0 | 0 |
 | dev | 0 | 1 | 0 | 0 | 0 |
 | expense | 1 | 0 | 0 | 0 | 0 |
@@ -129,6 +129,7 @@
 | POST, PATCH | `/api/customer-portal/auth/forgot-password` | customer-portal |
 | POST | `/api/customer-portal/auth/login` | customer-portal |
 | POST | `/api/customer-portal/auth/logout` | customer-portal |
+| GET | `/api/customer-portal/cha-document-versions/[id]` | customer-portal |
 | GET | `/api/customer-portal/checklist-files/[id]` | customer-portal |
 | POST | `/api/customer-portal/checklists/respond` | customer-portal |
 | GET | `/api/customer-portal/document-versions/[id]` | customer-portal |
@@ -788,7 +789,7 @@
 ### customer-portal
 - **actions.ts**: inviteCustomerPortalUserAction, resendCustomerPortalInvitationAction, suspendCustomerPortalUserAction, createCustomerPortalQueryAction
 - **auth.ts**: hashPortalToken, buildPortalLink, getPortalRequestMeta, validatePortalPassword, hashPortalPassword, createPortalSession, setPortalSessionCookie, clearPortalSessionCookie, getPortalSessionToken, getPortalSession, requirePortalSession, revokePortalSession, revokeAllPortalSessions, verifyPortalPassword, shouldLockPortalAccount, recordPortalAuthAudit
-- **service.ts**: inviteCustomerPortalUser, listCustomerPortalUsers, syncCustomerPortalUsersForCrmCustomer, activateCustomerPortalAccount, loginCustomerPortal, logoutCustomerPortal, logoutCustomerPortalAllDevices, requestCustomerPortalPasswordReset, resetCustomerPortalPassword, updatePortalNotificationPreferences, listPortalShipments, getPortalDashboard, getPortalShipmentDetail, listPortalNotifications, markPortalNotificationRead, markAllPortalNotificationsRead, uploadPortalDocument, getPortalDocumentVersion, submitPortalChecklistDecision, listPortalQueries, replyToPortalQuery, createInternalCustomerQuery, listPortalRatingCategories, submitPortalShipmentRating, suspendCustomerPortalUser, resendCustomerPortalInvitation, getCustomerPortalProfile, changeCustomerPortalPassword
+- **service.ts**: inviteCustomerPortalUser, listCustomerPortalUsers, syncCustomerPortalUsersForCrmCustomer, activateCustomerPortalAccount, loginCustomerPortal, logoutCustomerPortal, logoutCustomerPortalAllDevices, requestCustomerPortalPasswordReset, resetCustomerPortalPassword, updatePortalNotificationPreferences, listPortalShipments, getPortalDashboard, getPortalShipmentDetail, listPortalNotifications, markPortalNotificationRead, markAllPortalNotificationsRead, uploadPortalDocument, getPortalDocumentVersion, getPortalChaDocumentVersion, submitPortalChecklistDecision, listPortalQueries, replyToPortalQuery, createInternalCustomerQuery, listPortalRatingCategories, submitPortalShipmentRating, suspendCustomerPortalUser, resendCustomerPortalInvitation, getCustomerPortalProfile, changeCustomerPortalPassword
 - **auth.test.ts**: no exports detected
 
 ### google-chat

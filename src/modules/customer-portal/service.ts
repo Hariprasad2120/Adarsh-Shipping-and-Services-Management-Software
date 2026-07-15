@@ -7,6 +7,7 @@ import { getNow } from "@/lib/clock";
 import { sendEmail } from "@/lib/email";
 import { can, ForbiddenError } from "@/lib/rbac";
 import type { Prisma } from "@/generated/prisma/client";
+import { getFilingWorkflowInstance } from "@/modules/cha/service";
 import {
   buildPortalLink,
   clearPortalSessionCookie,
@@ -33,11 +34,360 @@ const PORTAL_ALLOWED_FILE_TYPES = new Set([
 const PORTAL_MAX_FILE_SIZE = 10 * 1024 * 1024;
 const CUSTOMER_PORTAL_DEFAULT_PASSWORD =
   process.env.CUSTOMER_PORTAL_DEFAULT_PASSWORD?.trim() || "Password@123";
+const PORTAL_GENERIC_UPLOAD_CATEGORY = "CUSTOMER_UPLOAD";
 
 type PortalShipmentListFilters = {
   scope?: "active" | "action" | "completed" | "all";
   search?: string;
 };
+
+const PORTAL_PROGRESS_STAGES = [
+  {
+    id: "document",
+    key: "DOCUMENT_COLLECTION",
+    label: "Document",
+    description: "Shipment is waiting for customer documents and document intake checks.",
+    sortOrder: 1,
+  },
+  {
+    id: "additional-data",
+    key: "ADDITIONAL_DATA",
+    label: "Additional Data",
+    description: "Operational data is being verified before checklist preparation.",
+    sortOrder: 2,
+  },
+  {
+    id: "checklist",
+    key: "CHECKLIST",
+    description: "Checklist preparation and customer approval are in progress.",
+    label: "Checklist",
+    sortOrder: 3,
+  },
+  {
+    id: "filing",
+    key: "FILING",
+    label: "Filing",
+    description: "Filing and final clearance work are in progress or completed.",
+    sortOrder: 4,
+  },
+] as const;
+
+function mapChaStageToPortalProgressKey(stage: string, status?: string) {
+  if (status === "COMPLETED" || stage === "FILED") {
+    return "FILING";
+  }
+  switch (stage) {
+    case "DOCUMENT_COLLECTION":
+      return "DOCUMENT_COLLECTION";
+    case "ADDITIONAL_DATA":
+      return "ADDITIONAL_DATA";
+    case "CHECKLIST_PREPARATION":
+    case "CHECKLIST_APPROVAL":
+      return "CHECKLIST";
+    case "FILING":
+    case "FILED":
+      return "FILING";
+    default:
+      return "DOCUMENT_COLLECTION";
+  }
+}
+
+type PortalWorkflowStageState =
+  | "COMPLETED"
+  | "IN_PROGRESS"
+  | "LOCKED"
+  | "WAITING_FOR_CUSTOMER"
+  | "BLOCKED"
+  | "OVERDUE"
+  | "SKIPPED";
+
+type PortalWorkflowStageDto = {
+  id: string;
+  key: string;
+  label: string;
+  description: string | null;
+  state: PortalWorkflowStageState;
+  completedAt: string | null;
+  completedBy: string | null;
+  startedAt: string | null;
+  dueAt: string | null;
+  overdueBusinessDays: number;
+  customerVisible: boolean;
+  nextStageIds: string[];
+  sortOrder: number;
+};
+
+type PortalStageFieldDto = {
+  key: string;
+  label: string;
+  type: string;
+  value: unknown;
+};
+
+type PortalWorkflowSummaryDto = {
+  stages: PortalWorkflowStageDto[];
+  currentStage: PortalWorkflowStageDto | null;
+  nextStageIds: string[];
+  progressPercent: number;
+  currentStageFields: PortalStageFieldDto[];
+};
+
+type PortalActionFlags = ReturnType<typeof getActionRequiredFlags>;
+
+type PortalFieldDefinition = {
+  key: string;
+  label: string;
+  type: string;
+};
+
+function asObject(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+}
+
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function asString(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
+function asBoolean(value: unknown): boolean {
+  return value === true;
+}
+
+function asDate(value: unknown): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  const parsed = new Date(String(value));
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function toIsoString(value: Date | null) {
+  return value ? value.toISOString() : null;
+}
+
+function businessDaysLate(dueAt: Date | null, now: Date) {
+  if (!dueAt || dueAt.getTime() >= now.getTime()) return 0;
+  return Math.max(1, Math.ceil((now.getTime() - dueAt.getTime()) / (24 * 60 * 60 * 1000)));
+}
+
+function normalizePortalFieldDefinitions(value: unknown): PortalFieldDefinition[] {
+  return asArray(value)
+    .map((entry, index) => {
+      const record = asObject(entry);
+      if (!record) return null;
+      return {
+        key: asString(record.key) ?? `field_${index + 1}`,
+        label: asString(record.label) ?? `Field ${index + 1}`,
+        type: asString(record.type)?.toUpperCase() ?? "TEXT",
+      };
+    })
+    .filter((entry): entry is PortalFieldDefinition => entry !== null);
+}
+
+function normalizeWorkflowStageLabel(key: string) {
+  return key
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function buildLegacyWorkflowSummary(
+  job: { stage: string; status: string },
+) {
+  const sortedStages = PORTAL_PROGRESS_STAGES.map((stage) => ({
+    id: stage.id,
+    internalStageKey: stage.key,
+    label: stage.label,
+    description: stage.description,
+    sortOrder: stage.sortOrder,
+  }));
+  const currentStageIndex = Math.max(
+    sortedStages.findIndex((stage) => stage.internalStageKey === mapChaStageToPortalProgressKey(job.stage, job.status)),
+    0,
+  );
+  const currentStageKey =
+    sortedStages[currentStageIndex]?.internalStageKey ?? mapChaStageToPortalProgressKey(job.stage, job.status);
+  const isCompleted = job.status === "COMPLETED" || job.stage === "FILED";
+  const stages: PortalWorkflowStageDto[] = sortedStages.map((stage, index) => ({
+    id: stage.id,
+    key: stage.internalStageKey,
+    label: stage.label,
+    description: stage.description,
+    state:
+      isCompleted || index < currentStageIndex
+        ? "COMPLETED"
+        : index === currentStageIndex
+          ? "IN_PROGRESS"
+          : "LOCKED",
+    completedAt: null,
+    completedBy: null,
+    startedAt: null,
+    dueAt: null,
+    overdueBusinessDays: 0,
+    customerVisible: true,
+    nextStageIds: index < sortedStages.length - 1 ? [sortedStages[index + 1]!.internalStageKey] : [],
+    sortOrder: stage.sortOrder,
+  }));
+  const completedCount = stages.filter((stage) => stage.state === "COMPLETED").length;
+  return {
+    stages,
+    currentStage: stages.find((stage) => stage.key === currentStageKey) ?? stages[0] ?? null,
+    nextStageIds: stages.find((stage) => stage.key === currentStageKey)?.nextStageIds ?? [],
+    progressPercent: stages.length > 0 ? Math.round((completedCount / stages.length) * 100) : 0,
+    currentStageFields: [] as PortalStageFieldDto[],
+  } satisfies PortalWorkflowSummaryDto;
+}
+
+function buildWorkflowSummaryFromInstance(
+  workflow: unknown,
+  actions: PortalActionFlags,
+  now: Date,
+): PortalWorkflowSummaryDto | null {
+  const workflowRecord = asObject(workflow);
+  const versionRecord = asObject(workflowRecord?.version);
+  if (!workflowRecord || !versionRecord) {
+    return null;
+  }
+
+  const nodes = asArray(versionRecord.nodes)
+    .map((entry, index) => {
+      const node = asObject(entry);
+      if (!node || !asBoolean(node.isActive) && node.isActive !== undefined) return null;
+      const key = asString(node.key);
+      if (!key) return null;
+      return {
+        id: asString(node.id) ?? key,
+        key,
+        label: asString(node.name) ?? normalizeWorkflowStageLabel(key),
+        description: asString(node.description),
+        nodeType: asString(node.nodeType)?.toUpperCase() ?? "CHECKLIST_NODE",
+        sortOrder: typeof node.sortOrder === "number" ? node.sortOrder : index + 1,
+        fieldDefinitions: normalizePortalFieldDefinitions(node.fieldDefinitionsJson),
+      };
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+    .sort((left, right) => left.sortOrder - right.sortOrder);
+
+  const edges = asArray(versionRecord.edges)
+    .map((entry) => {
+      const edge = asObject(entry);
+      const sourceKey = asString(edge?.sourceKey);
+      const targetKey = asString(edge?.targetKey);
+      if (!sourceKey || !targetKey) return null;
+      return { sourceKey, targetKey };
+    })
+    .filter((entry): entry is { sourceKey: string; targetKey: string } => entry !== null);
+
+  const nodeRuns = asArray(workflowRecord.nodeRuns)
+    .map((entry) => {
+      const nodeRun = asObject(entry);
+      if (!nodeRun) return null;
+      const completedBy = asObject(nodeRun?.completedBy);
+      const status = asString(nodeRun?.status)?.toUpperCase();
+      const nodeKey = asString(nodeRun?.nodeKey);
+      if (!status || !nodeKey) return null;
+      return {
+        id: asString(nodeRun.id) ?? `${nodeKey}:${status}`,
+        nodeKey,
+        status,
+        startedAt: asDate(nodeRun.startedAt),
+        completedAt: asDate(nodeRun.completedAt),
+        dueAt: asDate(nodeRun.slaDueDate),
+        completedBy: asString(completedBy?.name),
+      };
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+
+  const fieldValues = asArray(workflowRecord.fieldValues)
+    .map((entry) => {
+      const fieldValue = asObject(entry);
+      const nodeId = asString(fieldValue?.nodeId);
+      const fieldKey = asString(fieldValue?.fieldKey);
+      if (!nodeId || !fieldKey) return null;
+      return {
+        nodeId,
+        fieldKey,
+        value: fieldValue?.valueJson ?? null,
+      };
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+
+  const activeNodeRun = asObject(workflowRecord.activeNodeRun);
+  const activeNodeKey = asString(activeNodeRun?.nodeKey) ?? asString(workflowRecord.currentNodeKey);
+  const activeRunId = asString(activeNodeRun?.id);
+  const activeDueAt = asDate(activeNodeRun?.slaDueDate);
+  const activePrerequisiteBlocked = asBoolean(asObject(workflowRecord.activeNodePrerequisiteStatus)?.isBlocked);
+  const pendingBlockedStageKey = asString(asObject(workflowRecord.pendingBlockedStage)?.nodeKey);
+  const completedByNodeKey = new Map(
+    nodeRuns.filter((run) => run.status === "COMPLETED").map((run) => [run.nodeKey, run]),
+  );
+  const cancelledNodeKeys = new Set(nodeRuns.filter((run) => run.status === "CANCELLED").map((run) => run.nodeKey));
+  const fieldValuesByNodeAndKey = new Map(fieldValues.map((entry) => [`${entry.nodeId}:${entry.fieldKey}`, entry.value]));
+  const visibleNodes = nodes.filter((node) => node.nodeType !== "START");
+
+  const stages = visibleNodes.map((node) => {
+    const completedRun = completedByNodeKey.get(node.key) ?? null;
+    const isActive = activeNodeKey === node.key;
+    const waitingForCustomer =
+      isActive &&
+      (actions.pendingDocumentCount > 0 || actions.checklistPending || actions.openQueryCount > 0);
+    const isBlocked = isActive && (activePrerequisiteBlocked || pendingBlockedStageKey === node.key);
+    const isOverdue = isActive && !!activeDueAt && activeDueAt.getTime() < now.getTime();
+    const state: PortalWorkflowStageState = completedRun
+      ? "COMPLETED"
+      : isBlocked
+        ? "BLOCKED"
+        : waitingForCustomer
+          ? "WAITING_FOR_CUSTOMER"
+          : isOverdue
+            ? "OVERDUE"
+            : isActive
+              ? "IN_PROGRESS"
+              : cancelledNodeKeys.has(node.key)
+                ? "SKIPPED"
+                : "LOCKED";
+
+    return {
+      id: node.id,
+      key: node.key,
+      label: node.label,
+      description: node.description,
+      state,
+      completedAt: toIsoString(completedRun?.completedAt ?? null),
+      completedBy: completedRun?.completedBy ?? null,
+      startedAt: toIsoString(isActive ? asDate(activeNodeRun?.startedAt) : completedRun?.startedAt ?? null),
+      dueAt: toIsoString(isActive ? activeDueAt : null),
+      overdueBusinessDays: isOverdue ? businessDaysLate(activeDueAt, now) : 0,
+      customerVisible: true,
+      nextStageIds: edges.filter((edge) => edge.sourceKey === node.key).map((edge) => edge.targetKey),
+      sortOrder: node.sortOrder,
+    } satisfies PortalWorkflowStageDto;
+  });
+
+  const currentStage =
+    stages.find((stage) => stage.key === activeNodeKey) ??
+    stages.find((stage) => stage.state !== "COMPLETED") ??
+    stages.at(-1) ??
+    null;
+  const completedCount = stages.filter((stage) => stage.state === "COMPLETED" || stage.state === "SKIPPED").length;
+  const currentNode = visibleNodes.find((node) => node.key === currentStage?.key) ?? null;
+  const currentStageFields =
+    currentNode?.fieldDefinitions.map((field) => ({
+      key: field.key,
+      label: field.label,
+      type: field.type,
+      value: fieldValuesByNodeAndKey.get(`${currentNode.id}:${field.key}`) ?? null,
+    })) ?? [];
+
+  return {
+    stages,
+    currentStage,
+    nextStageIds: currentStage?.nextStageIds ?? [],
+    progressPercent: stages.length > 0 ? Math.round((completedCount / stages.length) * 100) : 0,
+    currentStageFields,
+  };
+}
 
 const DEFAULT_STAGE_MAPPINGS = [
   { internalStageKey: "DOCUMENT_COLLECTION", label: "Documents Awaited", description: "Shipment is waiting for customer documents.", sortOrder: 1 },
@@ -189,6 +539,9 @@ function getActionRequiredFlags(job: {
   documentRequirements: Array<{ isMandatory: boolean; customerSubmissions: Array<{ status: string }> }>;
   checklistWorkflow?: { currentApprovalStage?: string; status?: string } | null;
   customerQueryThreads: Array<{ status: string; requiresCustomerAction: boolean }>;
+  shipmentRatings?: Array<{ id: string }>;
+  status?: string;
+  stage?: string;
 }) {
   const documents = job.documentRequirements.filter((requirement) => {
     const submission = requirement.customerSubmissions[0];
@@ -198,16 +551,24 @@ function getActionRequiredFlags(job: {
   const checklistPending =
     job.checklistWorkflow &&
     job.checklistWorkflow.currentApprovalStage === "CUSTOMER" &&
-    ["CUSTOMER_APPROVAL_PENDING", "CUSTOMER_APPROVAL_WAITING_WINDOW"].includes(job.checklistWorkflow.status);
+    ["CUSTOMER_APPROVAL_PENDING", "CUSTOMER_APPROVAL_WAITING_WINDOW"].includes(job.checklistWorkflow.status ?? "");
   const openQueries = job.customerQueryThreads.filter(
     (thread: { status: string; requiresCustomerAction: boolean }) =>
       thread.status !== "CLOSED" && thread.status !== "RESOLVED",
   );
+  const ratingPending =
+    (job.status === "COMPLETED" || job.stage === "FILED") &&
+    (job.shipmentRatings?.length ?? 0) === 0;
   return {
-    hasActionRequired: documents.length > 0 || checklistPending || openQueries.some((thread) => thread.requiresCustomerAction),
+    hasActionRequired:
+      documents.length > 0 ||
+      checklistPending ||
+      openQueries.some((thread) => thread.requiresCustomerAction) ||
+      ratingPending,
     pendingDocumentCount: documents.length,
     checklistPending,
     openQueryCount: openQueries.length,
+    ratingPending,
   };
 }
 
@@ -700,10 +1061,6 @@ export async function updatePortalNotificationPreferences(portalUserId: string, 
 export async function listPortalShipments(portalUserId: string, filters: PortalShipmentListFilters = {}) {
   const portalUser = await getPortalUserContext(portalUserId);
   await ensurePortalConfig(portalUser.orgId);
-  const stageMappings = await db.customerVisibleStageMapping.findMany({
-    where: { orgId: portalUser.orgId, isVisible: true },
-    orderBy: { sortOrder: "asc" },
-  });
 
   const jobs = await db.chaJob.findMany({
     where: {
@@ -726,6 +1083,7 @@ export async function listPortalShipments(portalUserId: string, filters: PortalS
       primaryOwner: { select: { name: true, email: true, designation: true } },
       assignedManager: { select: { name: true, email: true, designation: true } },
       additionalData: true,
+      filing: true,
       documentRequirements: {
         include: {
           customerSubmissions: {
@@ -747,10 +1105,9 @@ export async function listPortalShipments(portalUserId: string, filters: PortalS
 
   return jobs
     .map((job) => {
-      const stageMapping =
-        stageMappings.find((entry) => entry.internalStageKey === job.stage) ??
-        stageMappings[stageMappings.length - 1];
       const actions = getActionRequiredFlags(job);
+      const workflowSummary = buildLegacyWorkflowSummary(job);
+      const currentStage = workflowSummary.currentStage;
       const statusScope =
         job.status === "COMPLETED" || job.stage === "FILED"
           ? "completed"
@@ -762,17 +1119,15 @@ export async function listPortalShipments(portalUserId: string, filters: PortalS
         jobNumber: job.jobNumber,
         title: job.title,
         customerRef: job.customerRef,
-        currentStage: stageMapping?.label ?? job.stage,
-        currentStageDescription: stageMapping?.description ?? null,
+        currentStage: currentStage?.label ?? job.stage,
+        currentStageDescription: currentStage?.description ?? null,
         shipmentType: job.shipmentType?.name ?? "Shipment",
         clearanceType: job.jobType?.name ?? "CHA",
         priority: job.priority,
         status: job.status,
         lastUpdatedAt: job.updatedAt,
         contactName: job.assignedManager?.name ?? job.primaryOwner?.name ?? null,
-        progressPercent: stageMapping
-          ? Math.round(((stageMapping.sortOrder || 1) / Math.max(stageMappings.length, 1)) * 100)
-          : 0,
+        progressPercent: workflowSummary.progressPercent,
         actions,
         scope: statusScope,
       };
@@ -828,12 +1183,31 @@ export async function getPortalShipmentDetail(portalUserId: string, jobId: strin
       primaryOwner: { select: { name: true, email: true, designation: true } },
       assignedManager: { select: { name: true, email: true, designation: true } },
       additionalData: true,
+      filing: true,
       documentRequirements: {
         include: {
-          versions: { where: { isCurrent: true }, take: 1, orderBy: { uploadedAt: "desc" } },
+          exception: true,
+          requirementItem: {
+            include: {
+              category: true,
+            },
+          },
+          versions: {
+            orderBy: { uploadedAt: "desc" },
+            include: {
+              uploadedBy: {
+                select: { name: true, email: true },
+              },
+            },
+          },
           customerSubmissions: {
             where: { customerId: portalUser.customerId },
-            include: { versions: { orderBy: { uploadedAt: "desc" } } },
+            include: {
+              portalUser: {
+                select: { name: true, email: true },
+              },
+              versions: { orderBy: { uploadedAt: "desc" } },
+            },
             orderBy: { updatedAt: "desc" },
           },
         },
@@ -847,7 +1221,14 @@ export async function getPortalShipmentDetail(portalUserId: string, jobId: strin
       },
       customerQueryThreads: {
         include: {
-          messages: { where: { isInternal: false }, orderBy: { createdAt: "asc" } },
+          messages: {
+            where: { isInternal: false },
+            include: {
+              authorUser: { select: { name: true, email: true } },
+              authorPortalUser: { select: { name: true, email: true } },
+            },
+            orderBy: { createdAt: "asc" },
+          },
         },
         orderBy: { updatedAt: "desc" },
       },
@@ -857,16 +1238,68 @@ export async function getPortalShipmentDetail(portalUserId: string, jobId: strin
   if (!job) {
     throw new Error("Shipment not found.");
   }
-  const stageMappings = await db.customerVisibleStageMapping.findMany({
-    where: { orgId: portalUser.orgId, isVisible: true },
-    orderBy: { sortOrder: "asc" },
-  });
-  const currentStage = stageMappings.find((entry) => entry.internalStageKey === job.stage);
+  const [now, workflow] = await Promise.all([
+    getNow(),
+    getFilingWorkflowInstance(portalUser.orgId, job.id).catch(() => null),
+  ]);
+  const actions = getActionRequiredFlags(job);
+  const progressSummary = buildLegacyWorkflowSummary(job);
+  const workflowSummary = buildWorkflowSummaryFromInstance(workflow, actions, now);
+  const currentStage = progressSummary.currentStage;
+  const filingDetails = {
+    boeNumber: job.filing?.billOfEntryNumber ?? job.filing?.shippingBillNumber ?? null,
+    boeDate: job.filing?.actualFilingDate ?? null,
+    filingDate: job.filing?.actualFilingDate ?? null,
+    shippingBillNumber: job.filing?.shippingBillNumber ?? null,
+    billOfEntryNumber: job.filing?.billOfEntryNumber ?? null,
+    filingRef: job.filing?.filingRef ?? null,
+    filedBillCopyKey: job.filing?.filedBillCopyKey ?? null,
+    chaName: job.assignedManager?.name ?? job.primaryOwner?.name ?? null,
+    portCode: job.branch?.code ?? job.branch?.name ?? null,
+    filingRemarks: job.filing?.delayReason ?? job.filing?.exceptionReason ?? job.remarks ?? null,
+    lastUpdatedAt: job.updatedAt,
+    currentStageFields: workflowSummary?.currentStageFields ?? [],
+  };
   return {
-    job,
-    stageMappings,
-    currentStage,
-    actions: getActionRequiredFlags(job),
+    job: {
+      ...job,
+      stage: currentStage?.key ?? job.stage,
+      filingDetails,
+      workflowProgressPercent: progressSummary.progressPercent,
+      workflowStages: progressSummary.stages,
+    },
+    stageMappings: progressSummary.stages.map((stage) => ({
+      id: stage.id,
+      internalStageKey: stage.key,
+      sortOrder: stage.sortOrder,
+      label: stage.label,
+      description: stage.description,
+      state: stage.state,
+      completedAt: stage.completedAt,
+      completedBy: stage.completedBy,
+      startedAt: stage.startedAt,
+      dueAt: stage.dueAt,
+      overdueBusinessDays: stage.overdueBusinessDays,
+      nextStageIds: stage.nextStageIds,
+    })),
+    currentStage: currentStage
+      ? {
+          id: currentStage.id,
+          internalStageKey: currentStage.key,
+          sortOrder: currentStage.sortOrder,
+          label: currentStage.label,
+          description: currentStage.description,
+          state: currentStage.state,
+          completedAt: currentStage.completedAt,
+          completedBy: currentStage.completedBy,
+          startedAt: currentStage.startedAt,
+          dueAt: currentStage.dueAt,
+          overdueBusinessDays: currentStage.overdueBusinessDays,
+          nextStageIds: currentStage.nextStageIds,
+        }
+      : null,
+    workflow: workflowSummary,
+    actions,
   };
 }
 
@@ -899,22 +1332,85 @@ async function ensureSubmissionAccess(portalUserId: string, jobId: string, requi
       jobId,
       job: { orgId: portalUser.orgId, customerId: portalUser.customerId, deletedAt: null },
     },
+    include: {
+      requirementItem: {
+        include: {
+          category: true,
+        },
+      },
+      customerSubmissions: {
+        where: { customerId: portalUser.customerId },
+        select: { id: true, status: true },
+        orderBy: { updatedAt: "desc" },
+        take: 1,
+      },
+    },
   });
   if (!requirement) {
     throw new Error("Document request not found.");
   }
+
+  const hasExistingSubmission = requirement.customerSubmissions.length > 0;
+  const isExplicitPortalCategory = requirement.category === PORTAL_GENERIC_UPLOAD_CATEGORY;
+  if (!requirement.isMandatory && !hasExistingSubmission && !isExplicitPortalCategory) {
+    throw new Error("This document is not currently accepting customer uploads.");
+  }
+
+  return { portalUser, requirement };
+}
+
+async function resolvePortalUploadRequirement(params: {
+  portalUserId: string;
+  jobId: string;
+  requirementId?: string;
+  documentName?: string;
+}) {
+  if (params.requirementId) {
+    return ensureSubmissionAccess(params.portalUserId, params.jobId, params.requirementId);
+  }
+
+  const portalUser = await getPortalUserContext(params.portalUserId);
+  const documentName = params.documentName?.trim();
+  if (!documentName) {
+    throw new Error("Document name is required.");
+  }
+
+  const requirement = await db.chaJobDocumentRequirement.create({
+    data: {
+      jobId: params.jobId,
+      name: documentName,
+      category: PORTAL_GENERIC_UPLOAD_CATEGORY,
+      isMandatory: false,
+      status: "UPLOADED",
+    },
+  });
+
   return { portalUser, requirement };
 }
 
 export async function uploadPortalDocument(params: {
   portalUserId: string;
   jobId: string;
-  requirementId: string;
+  requirementId?: string;
   file: File;
   comment?: string;
+  documentName?: string;
 }) {
-  const { portalUser, requirement } = await ensureSubmissionAccess(params.portalUserId, params.jobId, params.requirementId);
-  if (!PORTAL_ALLOWED_FILE_TYPES.has(params.file.type)) {
+  const { portalUser, requirement } = await resolvePortalUploadRequirement({
+    portalUserId: params.portalUserId,
+    jobId: params.jobId,
+    requirementId: params.requirementId,
+    documentName: params.documentName,
+  });
+
+  const requirementItemConfig =
+    "requirementItem" in requirement && requirement.requirementItem && typeof requirement.requirementItem === "object"
+      ? (requirement.requirementItem as { acceptedFileTypes?: string[] })
+      : null;
+  const acceptedFileTypes = (requirementItemConfig?.acceptedFileTypes ?? Array.from(PORTAL_ALLOWED_FILE_TYPES)).filter(
+    (value: string) => value.trim().length > 0,
+  );
+  if (!acceptedFileTypes.includes(params.file.type)) {
     throw new Error("Unsupported file type.");
   }
   if (params.file.size > PORTAL_MAX_FILE_SIZE) {
@@ -934,11 +1430,14 @@ export async function uploadPortalDocument(params: {
       where: {
         customerId: portalUser.customerId,
         jobId: params.jobId,
-        requirementId: params.requirementId,
+        requirementId: requirement.id,
       },
       include: { versions: { orderBy: { uploadedAt: "desc" }, take: 1 } },
     });
     if (existing) {
+      if (["APPROVED", "ACCEPTED", "UNDER_REVIEW"].includes(existing.status)) {
+        throw new Error("This document cannot be replaced in its current review state.");
+      }
       await tx.customerDocumentSubmission.update({
         where: { id: existing.id },
         data: {
@@ -971,7 +1470,7 @@ export async function uploadPortalDocument(params: {
         orgId: portalUser.orgId,
         customerId: portalUser.customerId,
         jobId: params.jobId,
-        requirementId: params.requirementId,
+        requirementId: requirement.id,
         portalUserId: portalUser.id,
         customerComment: params.comment,
       },
@@ -1059,6 +1558,31 @@ export async function getPortalDocumentVersion(portalUserId: string, versionId: 
   });
 }
 
+export async function getPortalChaDocumentVersion(portalUserId: string, versionId: string) {
+  const portalUser = await getPortalUserContext(portalUserId);
+  return db.chaDocumentVersion.findFirst({
+    where: {
+      id: versionId,
+      requirement: {
+        job: {
+          orgId: portalUser.orgId,
+          customerId: portalUser.customerId,
+          deletedAt: null,
+        },
+      },
+    },
+    include: {
+      requirement: {
+        select: {
+          id: true,
+          name: true,
+          jobId: true,
+        },
+      },
+    },
+  });
+}
+
 export async function submitPortalChecklistDecision(params: {
   portalUserId: string;
   jobId: string;
@@ -1089,6 +1613,13 @@ export async function submitPortalChecklistDecision(params: {
   if (job.checklistWorkflow.currentApprovalStage !== "CUSTOMER") {
     throw new Error("Checklist is not awaiting customer approval.");
   }
+  const now = await getNow();
+  if (
+    job.checklistWorkflow.customerApprovalVisibleAt &&
+    job.checklistWorkflow.customerApprovalVisibleAt.getTime() > now.getTime()
+  ) {
+    throw new Error("Checklist approval is not yet available to the customer.");
+  }
   const existing = await db.customerChecklistResponse.findFirst({
     where: {
       jobId: params.jobId,
@@ -1100,7 +1631,6 @@ export async function submitPortalChecklistDecision(params: {
     throw new Error("This portal user has already submitted a checklist decision.");
   }
 
-  const now = await getNow();
   await db.customerChecklistResponse.create({
     data: {
       orgId: portalUser.orgId,
@@ -1212,6 +1742,12 @@ export async function replyToPortalQuery(params: {
   });
   if (!thread) {
     throw new Error("Query thread not found.");
+  }
+  if (thread.status === "RESOLVED" || thread.status === "CLOSED") {
+    throw new Error("This query is already closed.");
+  }
+  if (!thread.requiresCustomerAction) {
+    throw new Error("This query is not currently awaiting a customer reply.");
   }
   const message = await db.customerQueryMessage.create({
     data: {

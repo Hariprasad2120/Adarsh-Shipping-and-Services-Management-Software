@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-15T05:13:23.213Z",
+  "generatedAt": "2026-07-15T12:34:19.730Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -7,7 +7,7 @@
   },
   "stats": {
     "totalAppRoutes": 203,
-    "totalApiRoutes": 190,
+    "totalApiRoutes": 191,
     "totalPrismaModels": 277,
     "totalModuleServices": 77,
     "totalComponents": 93
@@ -1824,6 +1824,14 @@
       "module": "customer-portal",
       "methods": [
         "POST"
+      ]
+    },
+    {
+      "path": "/api/customer-portal/cha-document-versions/[id]",
+      "filePath": "src/app/api/customer-portal/cha-document-versions/[id]/route.ts",
+      "module": "customer-portal",
+      "methods": [
+        "GET"
       ]
     },
     {
@@ -10843,6 +10851,7 @@
         "markAllPortalNotificationsRead",
         "uploadPortalDocument",
         "getPortalDocumentVersion",
+        "getPortalChaDocumentVersion",
         "submitPortalChecklistDecision",
         "listPortalQueries",
         "replyToPortalQuery",
@@ -11897,7 +11906,7 @@
     },
     "customer-portal": {
       "appRoutes": 0,
-      "apiRoutes": 15,
+      "apiRoutes": 16,
       "prismaModels": 0,
       "serviceFiles": 4,
       "components": 0

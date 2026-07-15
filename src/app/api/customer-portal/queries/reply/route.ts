@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getPortalSession } from "@/modules/customer-portal/auth";
 import { replyToPortalQuery } from "@/modules/customer-portal/service";
@@ -20,6 +21,8 @@ export async function POST(request: Request) {
       threadId: body.threadId,
       body: body.body,
     });
+    revalidatePath("/customer-portal/shipments");
+    revalidatePath("/customer-portal/dashboard");
     return NextResponse.json({ ok: true, data: result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Reply failed";

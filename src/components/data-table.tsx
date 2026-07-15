@@ -38,7 +38,7 @@ export function DataTable({
   );
 
   return (
-    <div className={cn("w-full overflow-hidden rounded-xl border border-outline-variant bg-surface text-on-surface shadow-sm", className)}>
+    <div className={cn("w-full overflow-hidden rounded-xl bg-surface text-on-surface shadow-sm", className)}>
       {toolbar}
       <div className="overflow-x-auto">
         <table className={cn("ds-table min-w-full w-full text-sm", tableClassName)} {...props}>
@@ -57,7 +57,7 @@ export function DataTableHeader({
   return (
     <thead
       className={cn(
-        "border-b border-outline-variant/40 bg-surface-container-low text-on-surface",
+        "bg-surface-container-low text-on-surface",
         className,
       )}
       {...props}
@@ -152,7 +152,7 @@ export function DataTableToolbar({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-3 border-b border-outline-variant/30 px-5 py-4",
+        "flex items-center justify-between gap-3 px-5 py-4",
         className
       )}
       {...props}
@@ -167,7 +167,7 @@ export function DataTableFooter({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-3 border-t border-outline-variant px-6 py-4",
+        "flex items-center justify-between gap-3 px-6 py-4",
         className
       )}
       {...props}

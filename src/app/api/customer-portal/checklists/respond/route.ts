@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getPortalSession } from "@/modules/customer-portal/auth";
 import { submitPortalChecklistDecision } from "@/modules/customer-portal/service";
@@ -21,6 +22,9 @@ export async function POST(request: Request) {
       portalUserId: session.portalUserId,
       ...body,
     });
+    revalidatePath(`/customer-portal/shipments/${body.jobId}`);
+    revalidatePath("/customer-portal/shipments");
+    revalidatePath("/customer-portal/dashboard");
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Checklist response failed";

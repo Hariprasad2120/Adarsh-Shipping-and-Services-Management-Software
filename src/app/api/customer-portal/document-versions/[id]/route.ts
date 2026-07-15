@@ -5,7 +5,7 @@ import { getPortalSession } from "@/modules/customer-portal/auth";
 import { getPortalDocumentVersion } from "@/modules/customer-portal/service";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await getPortalSession();
@@ -17,12 +17,14 @@ export async function GET(
   if (!version) {
     return new Response("Not found", { status: 404 });
   }
+  const { searchParams } = new URL(request.url);
+  const forceDownload = searchParams.get("download") === "true";
   const absolutePath = path.join(process.cwd(), "public", version.fileKey);
   const buffer = await fs.readFile(absolutePath);
   return new NextResponse(buffer, {
     headers: {
       "Content-Type": version.mimeType,
-      "Content-Disposition": `inline; filename="${version.fileName}"`,
+      "Content-Disposition": `${forceDownload ? "attachment" : "inline"}; filename="${version.fileName}"`,
       "X-Content-Type-Options": "nosniff",
     },
   });

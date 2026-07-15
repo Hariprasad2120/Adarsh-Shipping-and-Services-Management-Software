@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { FileText, Trash2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,7 @@ type FileUploadFieldProps = {
   iconAlign?: "start" | "end";
   label?: string;
   multiple?: boolean;
+  name?: string;
   onClear?: () => void;
   onInputChange: (event: ChangeEvent<HTMLInputElement>) => void;
   previewInline?: boolean;
@@ -51,6 +52,7 @@ export function FileUploadField({
   iconAlign = "start",
   label,
   multiple = false,
+  name,
   onClear,
   onInputChange,
   previewInline = false,
@@ -62,20 +64,20 @@ export function FileUploadField({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const sizeLabel = formatFileSize(selectedFile?.sizeBytes);
-  const [localPreviewHref, setLocalPreviewHref] = useState<string | null>(null);
   const previewFiles = selectedFiles && selectedFiles.length > 0 ? selectedFiles : selectedFile ? [selectedFile] : [];
   const showInlineClear = Boolean(onClear) && (previewInline || previewFiles.length === 1);
+  const localPreviewHref = useMemo(
+    () => (selectedFile?.file ? URL.createObjectURL(selectedFile.file) : null),
+    [selectedFile],
+  );
 
   useEffect(() => {
-    if (!selectedFile?.file) {
-      setLocalPreviewHref(null);
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(selectedFile.file);
-    setLocalPreviewHref(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [selectedFile?.file]);
+    return () => {
+      if (localPreviewHref) {
+        URL.revokeObjectURL(localPreviewHref);
+      }
+    };
+  }, [localPreviewHref]);
 
   const previewHref = selectedFile?.href || localPreviewHref;
 
@@ -167,7 +169,7 @@ export function FileUploadField({
         <input
           ref={inputRef}
           id={id}
-          name={id}
+          name={name ?? id}
           type="file"
           accept={accept}
           multiple={multiple}
