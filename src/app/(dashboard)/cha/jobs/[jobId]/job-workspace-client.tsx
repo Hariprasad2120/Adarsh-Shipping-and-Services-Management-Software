@@ -229,6 +229,30 @@
     };
   }
 
+  function mergeFilingChecklistResponses(
+    serverResponses: Record<string, { isChecked: boolean; remarks?: string; fileKey?: string; delayRemarks?: string }>,
+    draftResponses: Record<string, { isChecked: boolean; remarks?: string; fileKey?: string; delayRemarks?: string }>,
+  ) {
+    const merged = { ...serverResponses };
+
+    for (const [itemId, draftResponse] of Object.entries(draftResponses)) {
+      const serverResponse = merged[itemId];
+      if (!serverResponse) {
+        merged[itemId] = draftResponse;
+        continue;
+      }
+
+      merged[itemId] = {
+        isChecked: draftResponse.isChecked ?? serverResponse.isChecked,
+        remarks: draftResponse.remarks?.trim() ? draftResponse.remarks : serverResponse.remarks,
+        fileKey: draftResponse.fileKey || serverResponse.fileKey,
+        delayRemarks: draftResponse.delayRemarks?.trim() ? draftResponse.delayRemarks : serverResponse.delayRemarks,
+      };
+    }
+
+    return merged;
+  }
+
   function AdditionalDataStatCard({
     label,
     value,
@@ -2011,6 +2035,9 @@
 
     // --- FILING WORKFLOW RUNNER HANDLERS ---
     const loadFilingData = async () => {
+      const previousActiveNodeRunId = activeNodeRun?.id ?? null;
+      const currentDraftSnapshot = buildCurrentFilingNodeDraft();
+
       setLoading("filing-load");
       try {
         const [instanceRes, section49Res] = await Promise.all([
@@ -2039,19 +2066,24 @@
                 delayRemarks: match ? (match.delayRemarks || "") : "",
               };
             });
-            setChecklistResponses(initialResponses);
+            const shouldPreserveDraft = previousActiveNodeRunId === activeRun.id;
+            setChecklistResponses(
+              shouldPreserveDraft
+                ? mergeFilingChecklistResponses(initialResponses, currentDraftSnapshot.checklistResponses)
+                : initialResponses,
+            );
             const fieldValuesForNode = Object.fromEntries(
               (instanceRes.data.fieldValues || [])
                 .filter((entry: any) => entry.nodeId === activeRun.node.id)
                 .map((entry: any) => [entry.fieldKey, entry.valueJson == null ? "" : String(entry.valueJson)]),
             );
             setFilingFieldValues((current) => {
-              if (activeNodeRun?.id !== activeRun.id) {
+              if (!shouldPreserveDraft) {
                 return fieldValuesForNode;
               }
 
               const mergedFieldValues = { ...fieldValuesForNode };
-              for (const [fieldKey, fieldValue] of Object.entries(current)) {
+              for (const [fieldKey, fieldValue] of Object.entries(currentDraftSnapshot.filingFieldValues)) {
                 const serverValue = mergedFieldValues[fieldKey];
                 if ((serverValue === undefined || serverValue === null || serverValue === "") && fieldValue) {
                   mergedFieldValues[fieldKey] = fieldValue;
@@ -2070,21 +2102,71 @@
                 },
               ]),
             );
-            setFilingToggleStates(toggleStatesForNode);
-            setFilingToggleStateDetails(toggleStateDetailsForNode);
+            setFilingToggleStates(
+              shouldPreserveDraft
+                ? { ...toggleStatesForNode, ...currentDraftSnapshot.filingToggleStates }
+                : toggleStatesForNode,
+            );
+            setFilingToggleStateDetails(
+              shouldPreserveDraft
+                ? { ...toggleStateDetailsForNode, ...currentDraftSnapshot.filingToggleStateDetails }
+                : toggleStateDetailsForNode,
+            );
             const queryProcessingDetails = toggleStateDetailsForNode.query_processing?.state as Record<string, unknown> | null | undefined;
-            setFilingQueryReferenceNumber(typeof queryProcessingDetails?.queryReferenceNumber === "string" ? queryProcessingDetails.queryReferenceNumber : "");
-            setFilingQueryOfficerName(typeof queryProcessingDetails?.customsOfficerName === "string" ? queryProcessingDetails.customsOfficerName : "");
-            setFilingQueryReceivedAt(typeof queryProcessingDetails?.queryReceivedAt === "string" ? queryProcessingDetails.queryReceivedAt : "");
-            setFilingQueryTitle(typeof fieldValuesForNode.query_title === "string" ? fieldValuesForNode.query_title : "");
-            setFilingQueryDetails(typeof fieldValuesForNode.query_notes === "string" ? fieldValuesForNode.query_notes : "");
+            const serverQueryReferenceNumber =
+              typeof queryProcessingDetails?.queryReferenceNumber === "string" ? queryProcessingDetails.queryReferenceNumber : "";
+            const serverQueryOfficerName =
+              typeof queryProcessingDetails?.customsOfficerName === "string" ? queryProcessingDetails.customsOfficerName : "";
+            const serverQueryReceivedAt =
+              typeof queryProcessingDetails?.queryReceivedAt === "string" ? queryProcessingDetails.queryReceivedAt : "";
+            const serverQueryTitle = typeof fieldValuesForNode.query_title === "string" ? fieldValuesForNode.query_title : "";
+            const serverQueryDetails = typeof fieldValuesForNode.query_notes === "string" ? fieldValuesForNode.query_notes : "";
+
+            setFilingQueryReferenceNumber(
+              shouldPreserveDraft && currentDraftSnapshot.filingQueryReferenceNumber.trim()
+                ? currentDraftSnapshot.filingQueryReferenceNumber
+                : serverQueryReferenceNumber,
+            );
+            setFilingQueryOfficerName(
+              shouldPreserveDraft && currentDraftSnapshot.filingQueryOfficerName.trim()
+                ? currentDraftSnapshot.filingQueryOfficerName
+                : serverQueryOfficerName,
+            );
+            setFilingQueryReceivedAt(
+              shouldPreserveDraft && currentDraftSnapshot.filingQueryReceivedAt.trim()
+                ? currentDraftSnapshot.filingQueryReceivedAt
+                : serverQueryReceivedAt,
+            );
+            setFilingQueryTitle(
+              shouldPreserveDraft && currentDraftSnapshot.filingQueryTitle.trim()
+                ? currentDraftSnapshot.filingQueryTitle
+                : serverQueryTitle,
+            );
+            setFilingQueryDetails(
+              shouldPreserveDraft && currentDraftSnapshot.filingQueryDetails.trim()
+                ? currentDraftSnapshot.filingQueryDetails
+                : serverQueryDetails,
+            );
+            if (shouldPreserveDraft) {
+              setFilingQueryResponderNames(currentDraftSnapshot.filingQueryResponderNames);
+              setFilingQueryStatusUpdates(currentDraftSnapshot.filingQueryStatusUpdates);
+            } else {
+              setFilingQueryResponderNames({});
+              setFilingQueryStatusUpdates({});
+            }
 
             const edges = instanceRes.data.version?.edges || [];
             const outgoing = edges.filter((e: any) => e.sourceKey === activeRun.nodeKey);
             if (outgoing.length === 1) {
-              setSelectedNextNodeKey(outgoing[0].targetKey);
+              setSelectedNextNodeKey(
+                shouldPreserveDraft && currentDraftSnapshot.selectedNextNodeKey.trim()
+                  ? currentDraftSnapshot.selectedNextNodeKey
+                  : outgoing[0].targetKey,
+              );
             } else {
-              setSelectedNextNodeKey("");
+              setSelectedNextNodeKey(
+                shouldPreserveDraft ? currentDraftSnapshot.selectedNextNodeKey : "",
+              );
             }
           } else {
             setChecklistResponses({});
@@ -2094,12 +2176,18 @@
             setFilingQueryReferenceNumber("");
             setFilingQueryOfficerName("");
             setFilingQueryReceivedAt("");
+            setFilingQueryResponderNames({});
+            setFilingQueryStatusUpdates({});
             setFilingQueryTitle("");
             setFilingQueryDetails("");
             setSelectedNextNodeKey("");
           }
 
-          setNodeRemarks(activeRun?.remarks || "");
+          setNodeRemarks(
+            activeRun && previousActiveNodeRunId === activeRun.id && currentDraftSnapshot.nodeRemarks.trim()
+              ? currentDraftSnapshot.nodeRemarks
+              : activeRun?.remarks || "",
+          );
         } else {
           toast.error(instanceRes.error || "Failed to load filing workflow. Check that a workflow is published in CHA Settings.");
         }

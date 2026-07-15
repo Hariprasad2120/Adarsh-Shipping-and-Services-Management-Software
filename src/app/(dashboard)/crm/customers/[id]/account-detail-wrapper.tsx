@@ -5,6 +5,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { deleteAccountAction } from "@/modules/crm/actions";
+import {
+  inviteCustomerPortalUserAction,
+  resendCustomerPortalInvitationAction,
+  suspendCustomerPortalUserAction,
+} from "@/modules/customer-portal/actions";
 import { NotesPanel } from "../../_components/notes-panel";
 import { AttachmentsPanel } from "../../_components/attachments-panel";
 import { ActivitiesPanel } from "../../_components/activities-panel";
@@ -19,6 +24,7 @@ interface AccountDetailWrapperProps {
   timeline: any[];
   invoices: any[];
   accounts: any[];
+  portalUsers: any[];
   search: string;
 }
 
@@ -30,6 +36,7 @@ export function AccountDetailWrapper({
   timeline,
   invoices,
   accounts,
+  portalUsers,
   search: initialSearch,
 }: AccountDetailWrapperProps) {
   const router = useRouter();
@@ -42,6 +49,7 @@ export function AccountDetailWrapper({
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [showMoreActions, setShowMoreActions] = useState(false);
   const [showNewTxnDropdown, setShowNewTxnDropdown] = useState(false);
+  const [portalContactId, setPortalContactId] = useState(account.contacts?.[0]?.id ?? "");
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this customer? This will delete all linked contacts too!")) return;
@@ -581,6 +589,98 @@ export function AccountDetailWrapper({
                           <span className="text-slate-400 font-medium">Total Billed</span>
                           <span className="text-[#00cec4] font-bold text-sm ds-numeric">{fmtCurrency(totalInvoiced)}</span>
                         </div>
+                      </div>
+                    </div>
+
+                    <div className="card-top-accent bg-[#0f1319] border border-[#1c212a]/50 rounded-xl p-5 space-y-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <h3 className="text-xs font-bold text-white uppercase tracking-wider">Customer Portal</h3>
+                          <p className="mt-1 text-[11px] text-slate-400">Invite customer contacts and track portal access.</p>
+                        </div>
+                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${account.isPortalEnabled ? "bg-[#00cec4]/10 text-[#00cec4]" : "bg-[#161f28] text-slate-400"}`}>
+                          {account.isPortalEnabled ? "Enabled" : "Disabled"}
+                        </span>
+                      </div>
+
+                      <div className="space-y-3">
+                        <select
+                          value={portalContactId}
+                          onChange={(event) => setPortalContactId(event.target.value)}
+                          className="w-full rounded-lg border border-[#1c212a] bg-[#0a0d12] px-3 py-2 text-sm text-white"
+                        >
+                          {account.contacts?.map((contact: any) => (
+                            <option key={contact.id} value={contact.id}>
+                              {`${contact.firstName ?? ""} ${contact.lastName ?? ""}`.trim() || contact.email || contact.id}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className="w-full rounded-xl bg-[#00cec4] px-4 py-2 text-xs font-bold uppercase tracking-wider text-white"
+                          onClick={async () => {
+                            const res = await inviteCustomerPortalUserAction(account.id, portalContactId);
+                            if (!res.ok) {
+                              toast.error(res.error);
+                              return;
+                            }
+                            toast.success("Portal invitation sent");
+                            router.refresh();
+                          }}
+                        >
+                          Invite Selected Contact
+                        </button>
+                      </div>
+
+                      <div className="space-y-3">
+                        {portalUsers.length === 0 ? (
+                          <p className="text-xs italic text-slate-500">No portal users have been invited yet.</p>
+                        ) : (
+                          portalUsers.map((portalUser: any) => (
+                            <div key={portalUser.id} className="rounded-xl border border-[#1c212a]/40 bg-[#0a0d12]/60 p-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <p className="text-sm font-semibold text-white">{portalUser.name}</p>
+                                  <p className="text-[11px] text-slate-400">{portalUser.email}</p>
+                                  <p className="mt-1 text-[10px] uppercase tracking-wider text-slate-500">
+                                    {portalUser.status} • Last login {portalUser.lastLoginAt ? new Date(portalUser.lastLoginAt).toLocaleString() : "Never"}
+                                  </p>
+                                </div>
+                                <div className="flex gap-2">
+                                  <button
+                                    type="button"
+                                    className="text-[11px] font-semibold text-[#00cec4] hover:underline"
+                                    onClick={async () => {
+                                      const res = await resendCustomerPortalInvitationAction(portalUser.id, account.id);
+                                      if (!res.ok) {
+                                        toast.error(res.error);
+                                        return;
+                                      }
+                                      toast.success("Invitation resent");
+                                    }}
+                                  >
+                                    Resend
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="text-[11px] font-semibold text-[#fb923c] hover:underline"
+                                    onClick={async () => {
+                                      const res = await suspendCustomerPortalUserAction(portalUser.id, account.id, "Suspended by account manager");
+                                      if (!res.ok) {
+                                        toast.error(res.error);
+                                        return;
+                                      }
+                                      toast.success("Portal user suspended");
+                                      router.refresh();
+                                    }}
+                                  >
+                                    Suspend
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
                       </div>
                     </div>
 

@@ -8630,6 +8630,11 @@ function normalizeTemplateSettings(value: unknown) {
       input.doValidityReminderOffsetDays === undefined || input.doValidityReminderOffsetDays === null
         ? 2
         : Math.max(0, Number(input.doValidityReminderOffsetDays)),
+    isDefault: !!input.isDefault,
+    starterPreset:
+      input.starterPreset === "IMPORT_BE" || input.starterPreset === "EXPORT_SB" || input.starterPreset === "COMBINED"
+        ? input.starterPreset
+        : "COMBINED",
     mailTemplates: input.mailTemplates && typeof input.mailTemplates === "object" ? input.mailTemplates : {},
   };
 }
@@ -9356,6 +9361,16 @@ export async function listFilingWorkflows(orgId: string) {
   });
 }
 
+function buildFilingWorkflowTemplateScopeWhere(clearanceTypeId: string | null, filingFlowCategory: string | null) {
+  if (clearanceTypeId) {
+    return { clearanceTypeId };
+  }
+  if (filingFlowCategory) {
+    return { clearanceTypeId: null, filingFlowCategory };
+  }
+  return { clearanceTypeId: null, filingFlowCategory: null };
+}
+
 export async function getFilingWorkflowDetails(userId: string, orgId: string, templateId: string) {
   return db.filingWorkflowTemplate.findFirstOrThrow({
     where: { id: templateId, orgId },
@@ -9394,11 +9409,17 @@ export async function loadStarterFilingWorkflowDraft(
     description?: string;
     clearanceTypeId?: string | null;
     filingFlowCategory?: string | null;
+    settings?: Record<string, unknown> | null;
+    starterPreset?: "COMBINED" | "IMPORT_BE" | "EXPORT_SB";
   },
 ) {
-  const starter = cloneStarterFilingWorkflowSeed();
+  const starter = cloneStarterFilingWorkflowSeed(data.starterPreset ?? "COMBINED");
   const draft = await saveFilingWorkflowDraft(userId, orgId, templateId, {
     ...data,
+    settings: {
+      ...(data.settings ?? {}),
+      starterPreset: data.starterPreset ?? "COMBINED",
+    },
     nodes: starter.nodes as unknown as any[],
     edges: starter.edges as unknown as any[],
   });
@@ -9457,6 +9478,12 @@ export async function saveFilingWorkflowDraft(
     }
   }
 
+  const normalizedSettings = normalizeTemplateSettings(data.settings ?? null);
+  const scopeWhere = buildFilingWorkflowTemplateScopeWhere(
+    data.clearanceTypeId || null,
+    data.filingFlowCategory || null,
+  );
+
   let template;
   if (templateId) {
     template = await db.filingWorkflowTemplate.findFirstOrThrow({
@@ -9476,7 +9503,7 @@ export async function saveFilingWorkflowDraft(
         filingFlowCategory: data.filingFlowCategory || null,
         name: data.name,
         description: data.description,
-        settingsJson: normalizeTemplateSettings(data.settings ?? null),
+        settingsJson: normalizedSettings,
         mailTemplatesJson: (data.mailTemplates ?? Prisma.JsonNull) as Prisma.InputJsonValue,
         isActive: true,
       },
@@ -9538,10 +9565,36 @@ export async function saveFilingWorkflowDraft(
         description: data.description,
         clearanceTypeId: data.clearanceTypeId || null,
         filingFlowCategory: data.filingFlowCategory !== undefined ? (data.filingFlowCategory || null) : undefined,
-        settingsJson: normalizeTemplateSettings(data.settings ?? template.settingsJson ?? null),
+        settingsJson: normalizedSettings,
         mailTemplatesJson: (data.mailTemplates ?? template.mailTemplatesJson ?? Prisma.JsonNull) as Prisma.InputJsonValue,
       },
     });
+
+    if (normalizedSettings.isDefault) {
+      const templatesInScope = await tx.filingWorkflowTemplate.findMany({
+        where: {
+          orgId,
+          id: { not: template.id },
+          ...scopeWhere,
+        },
+        select: {
+          id: true,
+          settingsJson: true,
+        },
+      });
+
+      for (const scopedTemplate of templatesInScope) {
+        await tx.filingWorkflowTemplate.update({
+          where: { id: scopedTemplate.id },
+          data: {
+            settingsJson: {
+              ...normalizeTemplateSettings(scopedTemplate.settingsJson),
+              isDefault: false,
+            } as Prisma.InputJsonValue,
+          },
+        });
+      }
+    }
 
     // Delete dependent records before parent nodes (FK order matters)
     await tx.filingWorkflowEdge.deleteMany({ where: { versionId } });
@@ -9863,11 +9916,16 @@ export async function publishFilingWorkflow(userId: string, orgId: string, versi
   }
 
   const result = await db.$transaction(async (tx) => {
+    const scopeWhere = buildFilingWorkflowTemplateScopeWhere(
+      version.template.clearanceTypeId ?? null,
+      version.template.filingFlowCategory ?? null,
+    );
+
     await tx.filingWorkflowTemplate.updateMany({
       where: {
         orgId,
-        clearanceTypeId: version.template.clearanceTypeId,
         id: { not: version.templateId },
+        ...scopeWhere,
       },
       data: { isActive: false },
     });
@@ -9921,6 +9979,22 @@ async function findActivePublishedFilingWorkflowVersionForJob(orgId: string, job
     edges: true,
   } as const;
 
+  const findPreferredVersion = async (where: Prisma.FilingWorkflowVersionWhereInput) => {
+    const versions = await db.filingWorkflowVersion.findMany({
+      where,
+      include,
+      orderBy: [{ versionNumber: "desc" }, { updatedAt: "desc" }],
+    });
+    if (versions.length === 0) {
+      return null;
+    }
+    return (
+      versions.find((version) => normalizeTemplateSettings(version.template.settingsJson).isDefault) ??
+      versions[0] ??
+      null
+    );
+  };
+
   // Step 1: if job has a clearance type, resolve its filingFlowCategory
   let filingFlowCategory: string | null = null;
   if (jobTypeId) {
@@ -9931,62 +10005,86 @@ async function findActivePublishedFilingWorkflowVersionForJob(orgId: string, job
     filingFlowCategory = jobType?.filingFlowCategory ?? null;
   }
 
-  // Step 2: find template by filingFlowCategory (highest priority)
-  if (filingFlowCategory) {
-    const categoryVersion = await db.filingWorkflowVersion.findFirst({
-      where: {
-        isActive: true,
-        isPublished: true,
-        template: {
-          orgId,
-          isActive: true,
-          filingFlowCategory,
-          clearanceTypeId: null,
-        },
-      },
-      include,
-      orderBy: [{ versionNumber: "desc" }, { updatedAt: "desc" }],
-    });
-    if (categoryVersion) {
-      return categoryVersion;
-    }
-  }
-
-  // Step 3: find template scoped to this specific clearance type
+  // Step 2: find template scoped to this specific clearance type.
+  // Clearance-specific workflows must win over broader category defaults.
   if (jobTypeId) {
-    const scopedVersion = await db.filingWorkflowVersion.findFirst({
-      where: {
+    const scopedVersion = await findPreferredVersion({
+      isActive: true,
+      isPublished: true,
+      template: {
+        orgId,
         isActive: true,
-        isPublished: true,
-        template: {
-          orgId,
-          isActive: true,
-          clearanceTypeId: jobTypeId,
-        },
+        clearanceTypeId: jobTypeId,
       },
-      include,
-      orderBy: [{ versionNumber: "desc" }, { updatedAt: "desc" }],
     });
     if (scopedVersion) {
       return scopedVersion;
     }
   }
 
-  // Step 4: fall back to the generic catch-all template (no category, no clearance type)
-  return db.filingWorkflowVersion.findFirst({
-    where: {
+  // Step 3: fall back to a filing-flow-category default when no clearance-specific
+  // workflow is active for this job type.
+  if (filingFlowCategory) {
+    const categoryVersion = await findPreferredVersion({
       isActive: true,
       isPublished: true,
       template: {
         orgId,
         isActive: true,
+        filingFlowCategory,
         clearanceTypeId: null,
-        filingFlowCategory: null,
+      },
+    });
+    if (categoryVersion) {
+      return categoryVersion;
+    }
+  }
+
+  // Step 4: fall back to the generic catch-all template (no category, no clearance type)
+  return findPreferredVersion({
+    isActive: true,
+    isPublished: true,
+    template: {
+      orgId,
+      isActive: true,
+      clearanceTypeId: null,
+      filingFlowCategory: null,
+    },
+  });
+}
+
+export async function deleteFilingWorkflowTemplate(userId: string, orgId: string, templateId: string) {
+  const template = await db.filingWorkflowTemplate.findFirstOrThrow({
+    where: { id: templateId, orgId },
+    select: {
+      id: true,
+      name: true,
+      _count: {
+        select: {
+          instances: true,
+        },
       },
     },
-    include,
-    orderBy: [{ versionNumber: "desc" }, { updatedAt: "desc" }],
   });
+
+  if (template._count.instances > 0) {
+    throw new Error("This workflow cannot be deleted because filing instances already exist for it.");
+  }
+
+  await db.filingWorkflowTemplate.delete({
+    where: { id: template.id },
+  });
+
+  await logChaAudit({
+    orgId,
+    entityType: "FilingWorkflowTemplate",
+    entityId: template.id,
+    event: "FILING_WORKFLOW_TEMPLATE_DELETED",
+    actorId: userId,
+    remarks: `Deleted filing workflow template ${template.name}.`,
+  });
+
+  return { id: template.id, name: template.name };
 }
 
 const FILING_WORKFLOW_INSTANCE_INCLUDE = {
@@ -10245,8 +10343,8 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
   };
 }
 
-function cloneStarterFilingWorkflowSeed() {
-  return {
+function cloneStarterFilingWorkflowSeed(preset: "COMBINED" | "IMPORT_BE" | "EXPORT_SB" = "COMBINED") {
+  const cloned = {
     nodes: DEFAULT_FILING_WORKFLOW_SEED.nodes.map((node) => ({
       ...node,
       checklistItems: Array.isArray(node.checklistItems) ? node.checklistItems.map((item) => ({ ...item })) : [],
@@ -10262,6 +10360,38 @@ function cloneStarterFilingWorkflowSeed() {
         : [],
     })),
     edges: DEFAULT_FILING_WORKFLOW_SEED.edges.map((edge) => ({ ...edge })),
+  };
+
+  if (preset === "COMBINED") {
+    return cloned;
+  }
+
+  const isImportPreset = preset === "IMPORT_BE";
+  const starterNodeKey = isImportPreset ? "bill_filing" : "shipping_bill_filing";
+  const flowPrefix = isImportPreset ? "import_be_" : "export_sb_";
+  const includedNodeKeys = new Set<string>([
+    starterNodeKey,
+    "amendment_decision",
+    "amendment_execution",
+    "workflow_complete",
+  ]);
+
+  for (const node of cloned.nodes) {
+    if (node.key.startsWith(flowPrefix)) {
+      includedNodeKeys.add(node.key);
+    }
+  }
+
+  return {
+    nodes: cloned.nodes
+      .filter((node) => includedNodeKeys.has(node.key))
+      .map((node) => ({
+        ...node,
+        isStart: node.key === starterNodeKey,
+      })),
+    edges: cloned.edges.filter(
+      (edge) => includedNodeKeys.has(edge.sourceKey) && includedNodeKeys.has(edge.targetKey),
+    ),
   };
 }
 
@@ -10325,7 +10455,7 @@ export async function startFilingWorkflow(userId: string, orgId: string, jobId: 
     select: { jobTypeId: true },
   });
 
-  let activeVersion = await findActivePublishedFilingWorkflowVersionForJob(orgId, job.jobTypeId);
+  const activeVersion = await findActivePublishedFilingWorkflowVersionForJob(orgId, job.jobTypeId);
 
   if (!activeVersion) {
     throw new Error("No active published filing workflow template found for this organisation.");

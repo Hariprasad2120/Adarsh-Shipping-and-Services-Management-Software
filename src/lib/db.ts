@@ -1,5 +1,5 @@
 // Bump this when Prisma schema changes need a fresh dev-time singleton.
-const PRISMA_CLIENT_SCHEMA_VERSION = "2026-07-09-cha-do-flow-v3-do-extension-date";
+const PRISMA_CLIENT_SCHEMA_VERSION = "2026-07-14-customer-portal-phase1";
 
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";

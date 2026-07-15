@@ -23,6 +23,8 @@ const PUBLIC_PATHS = [
   "/api/mobile",
   "/api/google-chat",
   "/api/cron",
+  "/customer-portal",
+  "/api/customer-portal",
   "/google-chat-link",
   "/verify",
 ];

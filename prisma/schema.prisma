@@ -98,6 +98,20 @@ model Organisation {
   recruitSettings       RecruitSetting?
   recruitAutomationRuns RecruitAutomationRun[]
 
+  customerPortalUsers                   CustomerPortalUser[]
+  customerPortalInvitations             CustomerPortalInvitation[]
+  customerPortalSessions                CustomerPortalSession[]
+  customerPortalAuditLogs               CustomerPortalAuditLog[]
+  customerPortalNotifications           CustomerPortalNotification[]
+  customerPortalNotificationPreferences CustomerPortalNotificationPreference[]
+  customerVisibleStageMappings          CustomerVisibleStageMapping[]
+  customerDocumentSubmissions           CustomerDocumentSubmission[]
+  customerQueryThreads                  CustomerQueryThread[]
+  customerQueryMessages                 CustomerQueryMessage[]
+  shipmentRatings                       ShipmentServiceRating[]
+  shipmentRatingCategories              ShipmentRatingCategory[]
+  customerChecklistResponses            CustomerChecklistResponse[]
+
   @@index([slug])
 }
 
@@ -329,10 +343,16 @@ model User {
   hrmsAssignedCases        HRCase[]                      @relation("HRCaseAssignee")
   hrmsLetterRequests       HRLetterRequest[]             @relation("LetterRequests")
   hrmsTravelRequests       TravelRequest[]               @relation("TravelRequests")
-  hrmsTasksAssigned        HrmsTask[]                    @relation("HrmsTasksAssigned")
-  hrmsTasksCreated         HrmsTask[]                    @relation("HrmsTasksCreated")
-  hrmsAuditLogs            HrmsAuditLog[]                @relation("HrmsAuditLogs")
-  hrmsWorkReports          WorkReport[]                  @relation("UserWorkReports")
+
+  customerPortalInvitationsSent       CustomerPortalInvitation[]   @relation("CustomerPortalInvitationSender")
+  customerPortalAuditLogsActed        CustomerPortalAuditLog[]     @relation("CustomerPortalAuditActor")
+  customerDocumentSubmissionsReviewed CustomerDocumentSubmission[] @relation("CustomerDocumentSubmissionReviewer")
+  customerQueryMessagesAuthored       CustomerQueryMessage[]       @relation("CustomerQueryMessageAuthor")
+  shipmentRatingsFollowUpOwned        ShipmentServiceRating[]      @relation("ShipmentRatingFollowUpOwner")
+  hrmsTasksAssigned                   HrmsTask[]                   @relation("HrmsTasksAssigned")
+  hrmsTasksCreated                    HrmsTask[]                   @relation("HrmsTasksCreated")
+  hrmsAuditLogs                       HrmsAuditLog[]               @relation("HrmsAuditLogs")
+  hrmsWorkReports                     WorkReport[]                 @relation("UserWorkReports")
 
   // HRMS Mobile Attendance & Tracking
   mobileDevices            MobileDevice[]            @relation("UserMobileDevices")
@@ -372,13 +392,13 @@ model User {
   recruitPrivateShares         RecruitPrivateShare[]
 
   // CHA Module Relations
-  chaJobsOwned                 ChaJob[]                 @relation("ChaJobPrimaryOwner")
-  chaJobsManaged               ChaJob[]                 @relation("ChaJobAssignedManager")
-  chaJobsDeleted               ChaJob[]                 @relation("ChaJobDeletedBy")
+  chaJobsOwned                 ChaJob[]                   @relation("ChaJobPrimaryOwner")
+  chaJobsManaged               ChaJob[]                   @relation("ChaJobAssignedManager")
+  chaJobsDeleted               ChaJob[]                   @relation("ChaJobDeletedBy")
   chaJobAssignments            ChaJobAssignment[]
-  chaJobDeletionRequests       ChaJobDeletionRequest[]  @relation("ChaJobDeletionRequester")
-  chaJobDeletionApprovals      ChaJobDeletionRequest[]  @relation("ChaJobDeletionManager")
-  chaJobDeletionExecutions     ChaJobDeletionRequest[]  @relation("ChaJobDeletionExecutor")
+  chaJobDeletionRequests       ChaJobDeletionRequest[]    @relation("ChaJobDeletionRequester")
+  chaJobDeletionApprovals      ChaJobDeletionRequest[]    @relation("ChaJobDeletionManager")
+  chaJobDeletionExecutions     ChaJobDeletionRequest[]    @relation("ChaJobDeletionExecutor")
   chaDocumentVersionsUploaded  ChaDocumentVersion[]
   chaDocumentExceptionsCreated ChaDocumentException[]
   chaChecklistImportsUploaded  ChaChecklistImport[]
@@ -386,17 +406,18 @@ model User {
   chaChecklistReworkNotes      ChaChecklistReworkNote[]
   chaChecklistMailLogsSent     ChaChecklistMailLog[]
   chaFilingHistorySet          ChaFilingDateHistory[]
-  chaExpenseRequestsCreated    ChaExpenseRequest[]      @relation("ChaExpenseRequestedBy")
+  chaExpenseRequestsCreated    ChaExpenseRequest[]        @relation("ChaExpenseRequestedBy")
   chaExpensePaymentsMade       ChaExpensePayment[]
-  chaExpenseQueriesCreated     ChaExpenseQuery[]        @relation("ChaExpenseQueryAuthor")
+  chaExpenseQueriesCreated     ChaExpenseQuery[]          @relation("ChaExpenseQueryAuthor")
   filingNodeRuns               FilingNodeRun[]
   filingAttachments            FilingAttachment[]
   filingFieldValuesUpdated     FilingFieldValue[]
   filingToggleStatesUpdated    FilingToggleState[]
-  filingWorkflowQueriesCreated FilingWorkflowQuery[]    @relation("FilingWorkflowQueryCreatedBy")
-  filingWorkflowQueriesClosed  FilingWorkflowQuery[]    @relation("FilingWorkflowQueryClosedBy")
+  filingWorkflowQueriesCreated FilingWorkflowQuery[]      @relation("FilingWorkflowQueryCreatedBy")
+  filingWorkflowQueriesClosed  FilingWorkflowQuery[]      @relation("FilingWorkflowQueryClosedBy")
   filingSection49Flags         FilingSection49Flag[]
   filingSection49Extensions    FilingSection49Extension[]
+  customerQueryThreads         CustomerQueryThread[]
 
   @@index([orgId])
   @@index([isPlatformAdmin, active])
@@ -480,18 +501,18 @@ model NotificationActivity {
 }
 
 model EmailQueue {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   to            String
   subject       String
   html          String
   text          String?
-  status        String   @default("pending") // pending | sent | failed
-  attempts      Int      @default(0)
+  status        String    @default("pending") // pending | sent | failed
+  attempts      Int       @default(0)
   error         String?
   sentAt        DateTime?
-  automationKey String?  @unique
+  automationKey String?   @unique
   metadata      Json?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime  @default(now())
 
   @@index([status, attempts])
 }
@@ -1229,6 +1250,190 @@ model UserSession {
   @@index([expiresAt])
 }
 
+model CustomerPortalUser {
+  id                       String    @id @default(cuid())
+  orgId                    String
+  customerId               String
+  contactId                String    @unique
+  email                    String
+  name                     String
+  designation              String?
+  status                   String    @default("INVITED") // INVITED | ACTIVE | SUSPENDED | REVOKED
+  passwordHash             String?
+  emailVerifiedAt          DateTime?
+  invitedAt                DateTime?
+  activatedAt              DateTime?
+  lastLoginAt              DateTime?
+  lastPasswordChangedAt    DateTime?
+  passwordResetRequestedAt DateTime?
+  failedLoginCount         Int       @default(0)
+  lockedUntil              DateTime?
+  suspendedAt              DateTime?
+  suspendedReason          String?
+  revokedAt                DateTime?
+  revokedReason            String?
+  createdById              String?
+  updatedById              String?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  org                    Organisation                          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer               CrmAccount                            @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  contact                CrmContact                            @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  invitations            CustomerPortalInvitation[]
+  sessions               CustomerPortalSession[]
+  auditLogs              CustomerPortalAuditLog[]
+  notifications          CustomerPortalNotification[]
+  notificationPreference CustomerPortalNotificationPreference?
+  documentSubmissions    CustomerDocumentSubmission[]
+  checklistResponses     CustomerChecklistResponse[]
+  queryMessages          CustomerQueryMessage[]                @relation("CustomerQueryMessagePortalAuthor")
+  shipmentRatings        ShipmentServiceRating[]
+
+  @@unique([orgId, contactId])
+  @@unique([orgId, email])
+  @@index([orgId, customerId, status])
+}
+
+model CustomerPortalInvitation {
+  id           String    @id @default(cuid())
+  orgId        String
+  customerId   String
+  portalUserId String
+  type         String    @default("ACTIVATION") // ACTIVATION | PASSWORD_RESET
+  email        String
+  tokenHash    String    @unique
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  revokedAt    DateTime?
+  sentById     String?
+  createdAt    DateTime  @default(now())
+
+  org        Organisation       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer   CrmAccount         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  portalUser CustomerPortalUser @relation(fields: [portalUserId], references: [id], onDelete: Cascade)
+  sentBy     User?              @relation("CustomerPortalInvitationSender", fields: [sentById], references: [id], onDelete: SetNull)
+
+  @@index([portalUserId, type, consumedAt])
+  @@index([orgId, customerId, type])
+}
+
+model CustomerPortalSession {
+  id           String    @id @default(cuid())
+  orgId        String
+  customerId   String
+  portalUserId String
+  token        String    @unique
+  status       String    @default("ACTIVE") // ACTIVE | REVOKED | EXPIRED
+  ipAddress    String?
+  ipHash       String?
+  userAgent    String?
+  device       String?
+  lastSeenAt   DateTime  @default(now())
+  expiresAt    DateTime
+  createdAt    DateTime  @default(now())
+  revokedAt    DateTime?
+  revokeReason String?
+
+  org        Organisation       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer   CrmAccount         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  portalUser CustomerPortalUser @relation(fields: [portalUserId], references: [id], onDelete: Cascade)
+
+  @@index([portalUserId, status])
+  @@index([orgId, customerId, status])
+}
+
+model CustomerPortalAuditLog {
+  id           String   @id @default(cuid())
+  orgId        String
+  customerId   String
+  portalUserId String?
+  actorUserId  String?
+  jobId        String?
+  entityType   String
+  entityId     String
+  event        String
+  remarks      String?
+  ipAddress    String?
+  userAgent    String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  org        Organisation        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer   CrmAccount          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  portalUser CustomerPortalUser? @relation(fields: [portalUserId], references: [id], onDelete: SetNull)
+  actorUser  User?               @relation("CustomerPortalAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  job        ChaJob?             @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, customerId, createdAt])
+  @@index([portalUserId, createdAt])
+  @@index([jobId, createdAt])
+}
+
+model CustomerPortalNotification {
+  id           String    @id @default(cuid())
+  orgId        String
+  customerId   String
+  portalUserId String
+  jobId        String?
+  kind         String
+  title        String
+  body         String?
+  link         String?
+  payload      Json?
+  readAt       DateTime?
+  emailedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  org        Organisation       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer   CrmAccount         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  portalUser CustomerPortalUser @relation(fields: [portalUserId], references: [id], onDelete: Cascade)
+  job        ChaJob?            @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  @@index([portalUserId, readAt, createdAt])
+  @@index([orgId, customerId, createdAt])
+}
+
+model CustomerPortalNotificationPreference {
+  id                   String   @id @default(cuid())
+  orgId                String
+  customerId           String
+  portalUserId         String   @unique
+  shipmentUpdatesEmail Boolean  @default(true)
+  documentUpdatesEmail Boolean  @default(true)
+  checklistEmail       Boolean  @default(true)
+  queryEmail           Boolean  @default(true)
+  ratingEmail          Boolean  @default(true)
+  pushEnabled          Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  org        Organisation       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer   CrmAccount         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  portalUser CustomerPortalUser @relation(fields: [portalUserId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, customerId])
+}
+
+model CustomerVisibleStageMapping {
+  id               String   @id @default(cuid())
+  orgId            String
+  internalStageKey String
+  label            String
+  description      String?
+  sortOrder        Int      @default(0)
+  isVisible        Boolean  @default(true)
+  showContact      Boolean  @default(true)
+  notifyCustomer   Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, internalStageKey])
+  @@index([orgId, sortOrder])
+}
+
 // ─── CRM Module Entities ───────────────────────────────────────────────────────
 
 model CrmLead {
@@ -1337,8 +1542,9 @@ model CrmContact {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  deals    CrmDeal[]
-  invoices CrmInvoice[]
+  deals              CrmDeal[]
+  invoices           CrmInvoice[]
+  customerPortalUser CustomerPortalUser?
 
   @@index([orgId])
   @@index([ownerId])
@@ -1400,7 +1606,19 @@ model CrmAccount {
   customerNotes   CustomerNote[]
   jobCostings     JobCosting[]
 
-  chaJobs ChaJob[]
+  chaJobs                               ChaJob[]
+  customerPortalUsers                   CustomerPortalUser[]
+  customerPortalInvitations             CustomerPortalInvitation[]
+  customerPortalSessions                CustomerPortalSession[]
+  customerPortalAuditLogs               CustomerPortalAuditLog[]
+  customerPortalNotifications           CustomerPortalNotification[]
+  customerPortalNotificationPreferences CustomerPortalNotificationPreference[]
+  customerDocumentSubmissions           CustomerDocumentSubmission[]
+  customerQueryThreads                  CustomerQueryThread[]
+  customerQueryMessages                 CustomerQueryMessage[]
+  shipmentRatings                       ShipmentServiceRating[]
+  shipmentRatingCategories              ShipmentRatingCategory[]
+  customerChecklistResponses            CustomerChecklistResponse[]
 
   @@index([orgId])
   @@index([ownerId])
@@ -3255,22 +3473,22 @@ model GoogleWorkspaceSetting {
 }
 
 model JobWorkspaceProfile {
-  id                 String    @id @default(cuid())
-  orgId              String
-  jobId              String    @unique
-  googleSpaceId      String? // Google Chat space resource name
-  chatSpaceName      String? // Durable Google Chat space resource name for cleanup/retry
-  googleSpaceUrl     String? // Deep link to Chat Space
-  chatSpaceDeletedAt DateTime?
-  chatSpaceDeleteStatus String @default("SKIPPED") // PENDING | SUCCESS | FAILED | SKIPPED
-  chatSpaceDeleteError String? @db.Text
-  rootFolderId       String? // Root Drive folder ID for this job
-  categoryFolders    Json? // Map of category names to Google Folder IDs
-  provisioningStatus String    @default("pending") // pending | success | failed
-  lastError          String?   @db.Text
-  provisionedAt      DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  id                    String    @id @default(cuid())
+  orgId                 String
+  jobId                 String    @unique
+  googleSpaceId         String? // Google Chat space resource name
+  chatSpaceName         String? // Durable Google Chat space resource name for cleanup/retry
+  googleSpaceUrl        String? // Deep link to Chat Space
+  chatSpaceDeletedAt    DateTime?
+  chatSpaceDeleteStatus String    @default("SKIPPED") // PENDING | SUCCESS | FAILED | SKIPPED
+  chatSpaceDeleteError  String?   @db.Text
+  rootFolderId          String? // Root Drive folder ID for this job
+  categoryFolders       Json? // Map of category names to Google Folder IDs
+  provisioningStatus    String    @default("pending") // pending | success | failed
+  lastError             String?   @db.Text
+  provisionedAt         DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   job ChaJob       @relation(fields: [jobId], references: [id], onDelete: Cascade)
@@ -3333,7 +3551,7 @@ model ChaJobType {
   isManifestMandatory     Boolean                  @default(false)
   manifestHelpText        String?
   isActive                Boolean                  @default(true)
-  filingFlowCategory      String?                  // IMPORT_BE | EXPORT_SB | CUSTOM — maps this clearance type to a filing flow
+  filingFlowCategory      String? // IMPORT_BE | EXPORT_SB | CUSTOM — maps this clearance type to a filing flow
   documentDefinitions     ChaDocumentDefinition[]
   filingWorkflowTemplates FilingWorkflowTemplate[]
   jobs                    ChaJob[]
@@ -3415,29 +3633,36 @@ model ChaJob {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  org                    Organisation                @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  customer               CrmAccount                  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  jobType                ChaJobType                  @relation(fields: [jobTypeId], references: [id])
-  shipmentType           ChaShipmentType?            @relation(fields: [shipmentTypeId], references: [id])
-  branch                 Branch                      @relation(fields: [branchId], references: [id])
-  primaryOwner           User                        @relation("ChaJobPrimaryOwner", fields: [primaryOwnerId], references: [id])
-  assignedManager        User?                       @relation("ChaJobAssignedManager", fields: [assignedManagerId], references: [id])
-  deletedBy              User?                       @relation("ChaJobDeletedBy", fields: [deletedById], references: [id])
-  assignments            ChaJobAssignment[]
-  deletionRequests       ChaJobDeletionRequest[]
-  documentRequirements   ChaJobDocumentRequirement[]
-  additionalData         ChaJobAdditionalData?
-  doExtensions           ChaDoExtension[]
-  section49Extensions    FilingSection49Extension[]
-  checklistWorkflow      ChaChecklist?
-  checklistImports       ChaChecklistImport[]
-  filing                 ChaFiling?
-  filingWorkflowInstance FilingWorkflowInstance?
-  filingSection49Flag    FilingSection49Flag?
-  customerAdvance        ChaCustomerAdvance?
-  expenseRequests        ChaExpenseRequest[]
-  auditLogs              ChaAuditLog[]
-  workspaceProfile       JobWorkspaceProfile?
+  org                         Organisation                 @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer                    CrmAccount                   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  jobType                     ChaJobType                   @relation(fields: [jobTypeId], references: [id])
+  shipmentType                ChaShipmentType?             @relation(fields: [shipmentTypeId], references: [id])
+  branch                      Branch                       @relation(fields: [branchId], references: [id])
+  primaryOwner                User                         @relation("ChaJobPrimaryOwner", fields: [primaryOwnerId], references: [id])
+  assignedManager             User?                        @relation("ChaJobAssignedManager", fields: [assignedManagerId], references: [id])
+  deletedBy                   User?                        @relation("ChaJobDeletedBy", fields: [deletedById], references: [id])
+  assignments                 ChaJobAssignment[]
+  deletionRequests            ChaJobDeletionRequest[]
+  documentRequirements        ChaJobDocumentRequirement[]
+  additionalData              ChaJobAdditionalData?
+  doExtensions                ChaDoExtension[]
+  section49Extensions         FilingSection49Extension[]
+  checklistWorkflow           ChaChecklist?
+  checklistImports            ChaChecklistImport[]
+  filing                      ChaFiling?
+  filingWorkflowInstance      FilingWorkflowInstance?
+  filingSection49Flag         FilingSection49Flag?
+  customerAdvance             ChaCustomerAdvance?
+  expenseRequests             ChaExpenseRequest[]
+  auditLogs                   ChaAuditLog[]
+  workspaceProfile            JobWorkspaceProfile?
+  customerDocumentSubmissions CustomerDocumentSubmission[]
+  customerChecklistResponses  CustomerChecklistResponse[]
+  customerQueryThreads        CustomerQueryThread[]
+  customerQueryMessages       CustomerQueryMessage[]
+  shipmentRatings             ShipmentServiceRating[]
+  customerPortalAuditLogs     CustomerPortalAuditLog[]
+  customerPortalNotifications CustomerPortalNotification[]
 
   @@unique([orgId, jobNumber])
   @@index([orgId, deletedAt])
@@ -3454,24 +3679,24 @@ model ChaJob {
 }
 
 model ChaJobAdditionalData {
-  id                    String    @id @default(cuid())
-  jobId                 String    @unique
-  vesselInwardDate      DateTime?
-  importGeneralManifest String?
-  exportGeneralManifest String?
-  customManifestValue   String?
-  containerDetails      Json?
-  mblNumber             String?
-  hblNumber             String?
-  deliveryOrderValidity DateTime?
+  id                         String    @id @default(cuid())
+  jobId                      String    @unique
+  vesselInwardDate           DateTime?
+  importGeneralManifest      String?
+  exportGeneralManifest      String?
+  customManifestValue        String?
+  containerDetails           Json?
+  mblNumber                  String?
+  hblNumber                  String?
+  deliveryOrderValidity      DateTime?
   deliveryOrderExtensionDate DateTime?
-  status                String    @default("PENDING") // PENDING | COMPLETED
-  createdById           String
-  updatedById           String?
-  completedById         String?
-  completedAt           DateTime?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  status                     String    @default("PENDING") // PENDING | COMPLETED
+  createdById                String
+  updatedById                String?
+  completedById              String?
+  completedAt                DateTime?
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
 
   // Delivery Order document upload (unlocked by toggle)
   doUploadEnabled        Boolean   @default(false)
@@ -3490,14 +3715,14 @@ model ChaJobAdditionalData {
 }
 
 model ChaDoExtension {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   jobId            String
   previousValidity DateTime?
   extensionDate    DateTime
   fileKey          String?
   fileName         String?
   appliedById      String
-  createdAt        DateTime @default(now())
+  createdAt        DateTime  @default(now())
 
   job ChaJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
@@ -3554,10 +3779,11 @@ model ChaJobDocumentRequirement {
 
   requirementItemId String?
 
-  job             ChaJob                      @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  requirementItem ChaDocumentRequirementItem? @relation(fields: [requirementItemId], references: [id], onDelete: SetNull)
-  versions        ChaDocumentVersion[]
-  exception       ChaDocumentException?
+  job                 ChaJob                       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  requirementItem     ChaDocumentRequirementItem?  @relation(fields: [requirementItemId], references: [id], onDelete: SetNull)
+  versions            ChaDocumentVersion[]
+  exception           ChaDocumentException?
+  customerSubmissions CustomerDocumentSubmission[]
 
   @@index([jobId])
   @@index([requirementItemId])
@@ -3581,27 +3807,27 @@ model ChaDocumentRequirementCategory {
 }
 
 model ChaDocumentRequirementItem {
-  id                String   @id @default(cuid())
-  categoryId        String
-  name              String
-  description       String?
-  sortOrder         Int      @default(0)
-  isRequiredDefault Boolean  @default(true)
-  acceptedFileTypes String[]
-  minUploadCount    Int      @default(1)
-  maxUploadCount    Int?
-  requiresValidityDate Boolean @default(false)
+  id                      String   @id @default(cuid())
+  categoryId              String
+  name                    String
+  description             String?
+  sortOrder               Int      @default(0)
+  isRequiredDefault       Boolean  @default(true)
+  acceptedFileTypes       String[]
+  minUploadCount          Int      @default(1)
+  maxUploadCount          Int?
+  requiresValidityDate    Boolean  @default(false)
   defaultValidityDuration Int?
-  defaultValidityUnit String?
-  warningBeforeDuration Int?
-  warningBeforeUnit String?
-  notifyBeforeExpiry Boolean @default(false)
-  notificationRoles String[]
-  showInJobDocuments Boolean @default(true)
-  showInTimeline     Boolean @default(false)
-  isActive          Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  defaultValidityUnit     String?
+  warningBeforeDuration   Int?
+  warningBeforeUnit       String?
+  notifyBeforeExpiry      Boolean  @default(false)
+  notificationRoles       String[]
+  showInJobDocuments      Boolean  @default(true)
+  showInTimeline          Boolean  @default(false)
+  isActive                Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   category        ChaDocumentRequirementCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   jobRequirements ChaJobDocumentRequirement[]
@@ -3611,25 +3837,25 @@ model ChaDocumentRequirementItem {
 }
 
 model ChaDocumentVersion {
-  id            String   @id @default(cuid())
-  requirementId String
-  fileKey       String
-  fileName      String
-  mimeType      String
-  sizeBytes     Int
-  checksum      String?
-  uploadedById  String
-  uploadedAt    DateTime @default(now())
-  isCurrent     Boolean  @default(true)
-  validityDate  DateTime?
-  source        String   @default("DOCUMENTS_PAGE")
-  workflowTemplateId String?
-  workflowVersionId  String?
-  workflowNodeId     String?
-  workflowNodeRunId  String?
-  filingChecklistItemId String?
+  id                       String    @id @default(cuid())
+  requirementId            String
+  fileKey                  String
+  fileName                 String
+  mimeType                 String
+  sizeBytes                Int
+  checksum                 String?
+  uploadedById             String
+  uploadedAt               DateTime  @default(now())
+  isCurrent                Boolean   @default(true)
+  validityDate             DateTime?
+  source                   String    @default("DOCUMENTS_PAGE")
+  workflowTemplateId       String?
+  workflowVersionId        String?
+  workflowNodeId           String?
+  workflowNodeRunId        String?
+  filingChecklistItemId    String?
   filingPhotoRequirementId String?
-  timelineVisible Boolean @default(false)
+  timelineVisible          Boolean   @default(false)
 
   requirement ChaJobDocumentRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
   uploadedBy  User                      @relation(fields: [uploadedById], references: [id])
@@ -3732,42 +3958,43 @@ model ChaChecklistReworkNote {
 }
 
 model ChaChecklist {
-  id                        String   @id @default(cuid())
-  jobId                     String   @unique
+  id                        String    @id @default(cuid())
+  jobId                     String    @unique
   currentFileVersionId      String?
-  status                    String   @default("PENDING_UPLOAD")
-  currentApprovalStage      String   @default("UPLOAD")
-  customerApprovalAttempted Boolean  @default(false)
-  customerRejectedOnce      Boolean  @default(false)
+  status                    String    @default("PENDING_UPLOAD")
+  currentApprovalStage      String    @default("UPLOAD")
+  customerApprovalAttempted Boolean   @default(false)
+  customerRejectedOnce      Boolean   @default(false)
   customerApprovalVisibleAt DateTime?
   createdById               String
   updatedById               String?
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 
-  job                ChaJob                    @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  currentFileVersion ChaChecklistFileVersion?  @relation("ChaChecklistCurrentVersion", fields: [currentFileVersionId], references: [id], onDelete: SetNull)
-  fileVersions       ChaChecklistFileVersion[] @relation("ChaChecklistVersions")
+  job                ChaJob                      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  currentFileVersion ChaChecklistFileVersion?    @relation("ChaChecklistCurrentVersion", fields: [currentFileVersionId], references: [id], onDelete: SetNull)
+  fileVersions       ChaChecklistFileVersion[]   @relation("ChaChecklistVersions")
   approvals          ChaChecklistDecision[]
   customerMailLogs   ChaChecklistMailLog[]
+  customerResponses  CustomerChecklistResponse[]
 
   @@index([status])
   @@index([currentApprovalStage])
 }
 
 model ChaChecklistMailLog {
-  id                    String   @id @default(cuid())
-  checklistId           String
-  fileVersionId         String
-  sentById              String
-  recipients            String[]
-  subject               String
-  body                  String
-  attachmentFileKey     String?
-  attachmentFileName    String?
-  sentAt                DateTime @default(now())
-  approvalVisibleAt     DateTime
-  source                String   @default("CHA_CHECKLIST")
+  id                 String   @id @default(cuid())
+  checklistId        String
+  fileVersionId      String
+  sentById           String
+  recipients         String[]
+  subject            String
+  body               String
+  attachmentFileKey  String?
+  attachmentFileName String?
+  sentAt             DateTime @default(now())
+  approvalVisibleAt  DateTime
+  source             String   @default("CHA_CHECKLIST")
 
   checklist   ChaChecklist            @relation(fields: [checklistId], references: [id], onDelete: Cascade)
   fileVersion ChaChecklistFileVersion @relation(fields: [fileVersionId], references: [id], onDelete: Cascade)
@@ -3991,6 +4218,176 @@ model ChaAuditLog {
 
   @@index([orgId, timestamp])
   @@index([jobId, timestamp])
+}
+
+model CustomerDocumentSubmission {
+  id               String    @id @default(cuid())
+  orgId            String
+  customerId       String
+  jobId            String
+  requirementId    String
+  portalUserId     String
+  status           String    @default("UPLOADED") // UPLOADED | UNDER_REVIEW | ACCEPTED | REJECTED | CLARIFICATION_REQUIRED | REUPLOAD_REQUIRED | SUPERSEDED
+  customerComment  String?
+  reviewerComment  String?
+  internalRemark   String?
+  reviewedById     String?
+  reviewedAt       DateTime?
+  currentVersionId String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  org         Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer    CrmAccount                @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  job         ChaJob                    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  requirement ChaJobDocumentRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  portalUser  CustomerPortalUser        @relation(fields: [portalUserId], references: [id], onDelete: Cascade)
+  reviewedBy  User?                     @relation("CustomerDocumentSubmissionReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  versions    CustomerDocumentVersion[]
+
+  @@index([orgId, customerId, status])
+  @@index([jobId, requirementId, status])
+}
+
+model CustomerDocumentVersion {
+  id           String   @id @default(cuid())
+  submissionId String
+  fileKey      String
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  checksum     String?
+  uploadedAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  submission CustomerDocumentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId, uploadedAt])
+}
+
+model CustomerChecklistResponse {
+  id                String   @id @default(cuid())
+  orgId             String
+  customerId        String
+  jobId             String
+  checklistId       String
+  portalUserId      String
+  decision          String // APPROVED | REJECTED
+  remarks           String?
+  attachmentPayload Json?
+  submittedAt       DateTime @default(now())
+
+  org        Organisation       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer   CrmAccount         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  job        ChaJob             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  checklist  ChaChecklist       @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  portalUser CustomerPortalUser @relation(fields: [portalUserId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, checklistId, portalUserId])
+  @@index([orgId, customerId, submittedAt])
+}
+
+model CustomerQueryThread {
+  id                     String    @id @default(cuid())
+  orgId                  String
+  customerId             String
+  jobId                  String
+  title                  String
+  description            String
+  department             String?
+  priority               String    @default("NORMAL") // LOW | NORMAL | HIGH | URGENT
+  status                 String    @default("OPEN") // OPEN | AWAITING_CUSTOMER_RESPONSE | CUSTOMER_RESPONDED | UNDER_REVIEW | RESOLVED | CLOSED
+  requiresCustomerAction Boolean   @default(false)
+  requiredResponseBy     DateTime?
+  resolution             String?
+  resolvedAt             DateTime?
+  closedAt               DateTime?
+  createdByUserId        String?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  org           Organisation           @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer      CrmAccount             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  job           ChaJob                 @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdByUser User?                  @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  messages      CustomerQueryMessage[]
+
+  @@index([orgId, customerId, status])
+  @@index([jobId, status])
+}
+
+model CustomerQueryMessage {
+  id                 String   @id @default(cuid())
+  orgId              String
+  customerId         String
+  jobId              String
+  threadId           String
+  authorUserId       String?
+  authorPortalUserId String?
+  body               String
+  attachmentPayload  Json?
+  isInternal         Boolean  @default(false)
+  createdAt          DateTime @default(now())
+
+  org              Organisation        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer         CrmAccount          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  job              ChaJob              @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  thread           CustomerQueryThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  authorUser       User?               @relation("CustomerQueryMessageAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
+  authorPortalUser CustomerPortalUser? @relation("CustomerQueryMessagePortalAuthor", fields: [authorPortalUserId], references: [id], onDelete: SetNull)
+
+  @@index([threadId, createdAt])
+  @@index([orgId, customerId, createdAt])
+}
+
+model ShipmentRatingCategory {
+  id          String   @id @default(cuid())
+  orgId       String
+  customerId  String?
+  key         String
+  label       String
+  description String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  org      Organisation            @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer CrmAccount?             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  ratings  ShipmentServiceRating[]
+
+  @@unique([orgId, key])
+  @@index([orgId, isActive, sortOrder])
+}
+
+model ShipmentServiceRating {
+  id                 String    @id @default(cuid())
+  orgId              String
+  customerId         String
+  jobId              String
+  portalUserId       String
+  categoryId         String?
+  overallRating      Int
+  categoryRatings    Json
+  remarks            String?
+  applicableServices Json?
+  followUpStatus     String    @default("OPEN") // OPEN | IN_PROGRESS | CLOSED
+  followUpOwnerId    String?
+  reopenedAt         DateTime?
+  submittedAt        DateTime  @default(now())
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  org           Organisation            @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer      CrmAccount              @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  job           ChaJob                  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  portalUser    CustomerPortalUser      @relation(fields: [portalUserId], references: [id], onDelete: Cascade)
+  category      ShipmentRatingCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  followUpOwner User?                   @relation("ShipmentRatingFollowUpOwner", fields: [followUpOwnerId], references: [id], onDelete: SetNull)
+
+  @@unique([jobId, portalUserId])
+  @@index([orgId, customerId, submittedAt])
+  @@index([jobId, submittedAt])
 }
 
 // ─── Recruit Module ────────────────────────────────────────────────────────────
@@ -5147,7 +5544,7 @@ model FilingWorkflowTemplate {
   id                 String                   @id @default(cuid())
   orgId              String
   clearanceTypeId    String?
-  filingFlowCategory String?                  // IMPORT_BE | EXPORT_SB | CUSTOM — the flow category this template belongs to
+  filingFlowCategory String? // IMPORT_BE | EXPORT_SB | CUSTOM — the flow category this template belongs to
   name               String
   description        String?
   settingsJson       Json?
@@ -5232,75 +5629,75 @@ model FilingWorkflowNode {
 }
 
 model FilingWorkflowEdge {
-  id        String                @id @default(cuid())
-  versionId String
-  sourceKey String
-  targetKey String
-  label     String?
-  transitionType String           @default("FORWARD")
-  requiresReason Boolean          @default(false)
+  id                   String                @id @default(cuid())
+  versionId            String
+  sourceKey            String
+  targetKey            String
+  label                String?
+  transitionType       String                @default("FORWARD")
+  requiresReason       Boolean               @default(false)
   transitionConfigJson Json?
-  version   FilingWorkflowVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  version              FilingWorkflowVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
 
   @@unique([versionId, sourceKey, targetKey])
   @@index([versionId])
 }
 
 model FilingChecklistItem {
-  id                   String                    @id @default(cuid())
-  nodeId               String
-  label                String
-  description          String?
-  isMandatory          Boolean                   @default(true)
-  requiresRemarks      Boolean                   @default(false)
-  allowsUpload         Boolean                   @default(false)
-  minUploads           Int                       @default(0)
-  maxUploads           Int?
-  acceptedFileTypes    String[]
-  documentType         String?
-  requiresValidity     Boolean                   @default(false)
-  validityDuration     Int?
-  validityUnit         String?
+  id                    String                    @id @default(cuid())
+  nodeId                String
+  label                 String
+  description           String?
+  isMandatory           Boolean                   @default(true)
+  requiresRemarks       Boolean                   @default(false)
+  allowsUpload          Boolean                   @default(false)
+  minUploads            Int                       @default(0)
+  maxUploads            Int?
+  acceptedFileTypes     String[]
+  documentType          String?
+  requiresValidity      Boolean                   @default(false)
+  validityDuration      Int?
+  validityUnit          String?
   warningBeforeDuration Int?
-  warningBeforeUnit    String?
-  notifyBeforeExpiry   Boolean                   @default(false)
-  notificationRoles    String[]
-  showInDocumentsPage  Boolean                   @default(true)
-  showInTimeline       Boolean                   @default(true)
-  deadlineDuration     Int                       @default(2)
-  deadlineUnit         String                    @default("BUSINESS_DAYS")
-  delayRemarksRequired Boolean                   @default(true)
-  hasPhotoRequirement  Boolean                   @default(false)
-  sortOrder            Int                       @default(0)
-  isActive             Boolean                   @default(true)
-  node                 FilingWorkflowNode        @relation(fields: [nodeId], references: [id], onDelete: Cascade)
-  responses            FilingChecklistResponse[]
-  attachments          FilingAttachment[]        @relation("FilingChecklistItemUploads")
+  warningBeforeUnit     String?
+  notifyBeforeExpiry    Boolean                   @default(false)
+  notificationRoles     String[]
+  showInDocumentsPage   Boolean                   @default(true)
+  showInTimeline        Boolean                   @default(true)
+  deadlineDuration      Int                       @default(2)
+  deadlineUnit          String                    @default("BUSINESS_DAYS")
+  delayRemarksRequired  Boolean                   @default(true)
+  hasPhotoRequirement   Boolean                   @default(false)
+  sortOrder             Int                       @default(0)
+  isActive              Boolean                   @default(true)
+  node                  FilingWorkflowNode        @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  responses             FilingChecklistResponse[]
+  attachments           FilingAttachment[]        @relation("FilingChecklistItemUploads")
 
   @@index([nodeId])
 }
 
 model FilingPhotoRequirement {
-  id                  String             @id @default(cuid())
-  nodeId              String
-  label               String
-  description         String?
-  isMandatory         Boolean            @default(true)
-  minPhotos           Int                @default(1)
-  maxPhotos           Int?
-  acceptedFileTypes   String[]
-  isVisibleInTimeline Boolean            @default(true)
-  documentType         String?
-  requiresValidity     Boolean            @default(false)
-  validityDuration     Int?
-  validityUnit         String?
+  id                    String             @id @default(cuid())
+  nodeId                String
+  label                 String
+  description           String?
+  isMandatory           Boolean            @default(true)
+  minPhotos             Int                @default(1)
+  maxPhotos             Int?
+  acceptedFileTypes     String[]
+  isVisibleInTimeline   Boolean            @default(true)
+  documentType          String?
+  requiresValidity      Boolean            @default(false)
+  validityDuration      Int?
+  validityUnit          String?
   warningBeforeDuration Int?
-  warningBeforeUnit    String?
-  notifyBeforeExpiry   Boolean            @default(false)
-  notificationRoles    String[]
-  showInDocumentsPage  Boolean            @default(true)
-  node                FilingWorkflowNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
-  attachments         FilingAttachment[]
+  warningBeforeUnit     String?
+  notifyBeforeExpiry    Boolean            @default(false)
+  notificationRoles     String[]
+  showInDocumentsPage   Boolean            @default(true)
+  node                  FilingWorkflowNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  attachments           FilingAttachment[]
 
   @@index([nodeId])
 }
@@ -5332,25 +5729,25 @@ model FilingWorkflowInstance {
 }
 
 model FilingNodeRun {
-  id            String                    @id @default(cuid())
-  instanceId    String
-  nodeId        String
-  nodeKey       String
-  status        String                    @default("ACTIVE")
-  startedAt     DateTime                  @default(now())
-  completedAt   DateTime?
-  slaDueDate    DateTime?
-  completedById String?
-  remarks       String?
+  id             String                    @id @default(cuid())
+  instanceId     String
+  nodeId         String
+  nodeKey        String
+  status         String                    @default("ACTIVE")
+  startedAt      DateTime                  @default(now())
+  completedAt    DateTime?
+  slaDueDate     DateTime?
+  completedById  String?
+  remarks        String?
   resolutionJson Json?
-  instance      FilingWorkflowInstance    @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  node          FilingWorkflowNode        @relation(fields: [nodeId], references: [id])
-  completedBy   User?                     @relation(fields: [completedById], references: [id])
-  responses     FilingChecklistResponse[]
-  attachments   FilingAttachment[]
-  fieldValues   FilingFieldValue[]
-  toggleStates  FilingToggleState[]
-  queries       FilingWorkflowQuery[]
+  instance       FilingWorkflowInstance    @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  node           FilingWorkflowNode        @relation(fields: [nodeId], references: [id])
+  completedBy    User?                     @relation(fields: [completedById], references: [id])
+  responses      FilingChecklistResponse[]
+  attachments    FilingAttachment[]
+  fieldValues    FilingFieldValue[]
+  toggleStates   FilingToggleState[]
+  queries        FilingWorkflowQuery[]
 
   @@index([instanceId])
   @@index([nodeId])
@@ -5358,14 +5755,14 @@ model FilingNodeRun {
 }
 
 model FilingFieldValue {
-  id          String                 @id @default(cuid())
+  id          String   @id @default(cuid())
   instanceId  String
   nodeRunId   String?
   nodeId      String
   fieldKey    String
   valueJson   Json?
   updatedById String?
-  updatedAt   DateTime               @updatedAt
+  updatedAt   DateTime @updatedAt
 
   instance  FilingWorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   nodeRun   FilingNodeRun?         @relation(fields: [nodeRunId], references: [id], onDelete: Cascade)
@@ -5378,15 +5775,15 @@ model FilingFieldValue {
 }
 
 model FilingToggleState {
-  id                String                 @id @default(cuid())
-  instanceId        String
-  nodeRunId         String?
-  nodeId            String
-  sectionKey        String
-  isEnabled         Boolean                @default(false)
-  stateJson         Json?
-  updatedById       String?
-  updatedAt         DateTime               @updatedAt
+  id          String   @id @default(cuid())
+  instanceId  String
+  nodeRunId   String?
+  nodeId      String
+  sectionKey  String
+  isEnabled   Boolean  @default(false)
+  stateJson   Json?
+  updatedById String?
+  updatedAt   DateTime @updatedAt
 
   instance  FilingWorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   nodeRun   FilingNodeRun?         @relation(fields: [nodeRunId], references: [id], onDelete: Cascade)
@@ -5399,26 +5796,26 @@ model FilingToggleState {
 }
 
 model FilingWorkflowQuery {
-  id                    String                 @id @default(cuid())
-  instanceId            String
-  nodeRunId             String?
-  nodeId                String
-  title                 String
-  details               String
-  status                String                 @default("OPEN")
-  reminderTime          String?
-  lastReminderAt        DateTime?
-  closedAt              DateTime?
-  createdById           String
-  closedById            String?
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
+  id             String    @id @default(cuid())
+  instanceId     String
+  nodeRunId      String?
+  nodeId         String
+  title          String
+  details        String
+  status         String    @default("OPEN")
+  reminderTime   String?
+  lastReminderAt DateTime?
+  closedAt       DateTime?
+  createdById    String
+  closedById     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  instance   FilingWorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  nodeRun    FilingNodeRun?         @relation(fields: [nodeRunId], references: [id], onDelete: Cascade)
-  node       FilingWorkflowNode     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
-  createdBy  User                   @relation("FilingWorkflowQueryCreatedBy", fields: [createdById], references: [id])
-  closedBy   User?                  @relation("FilingWorkflowQueryClosedBy", fields: [closedById], references: [id])
+  instance  FilingWorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  nodeRun   FilingNodeRun?         @relation(fields: [nodeRunId], references: [id], onDelete: Cascade)
+  node      FilingWorkflowNode     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  createdBy User                   @relation("FilingWorkflowQueryCreatedBy", fields: [createdById], references: [id])
+  closedBy  User?                  @relation("FilingWorkflowQueryClosedBy", fields: [closedById], references: [id])
 
   @@index([instanceId, status])
   @@index([nodeRunId])
@@ -5448,26 +5845,26 @@ model FilingChecklistResponse {
 }
 
 model FilingAttachment {
-  id                 String                  @id @default(cuid())
-  instanceId         String
-  nodeRunId          String?
-  photoRequirementId String?
-  checklistItemId    String?
-  documentRequirementKey String?
+  id                       String                  @id @default(cuid())
+  instanceId               String
+  nodeRunId                String?
+  photoRequirementId       String?
+  checklistItemId          String?
+  documentRequirementKey   String?
   documentRequirementLabel String?
-  conditionalSectionKey String?
-  fileKey            String
-  fileName           String
-  fileSize           Int
-  fileType           String
-  uploadedById       String
-  uploadedAt         DateTime                @default(now())
-  validityDate       DateTime?
-  instance           FilingWorkflowInstance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  nodeRun            FilingNodeRun?          @relation(fields: [nodeRunId], references: [id], onDelete: Cascade)
-  photoRequirement   FilingPhotoRequirement? @relation(fields: [photoRequirementId], references: [id], onDelete: SetNull)
-  checklistItem      FilingChecklistItem?    @relation("FilingChecklistItemUploads", fields: [checklistItemId], references: [id], onDelete: SetNull)
-  uploadedBy         User                    @relation(fields: [uploadedById], references: [id])
+  conditionalSectionKey    String?
+  fileKey                  String
+  fileName                 String
+  fileSize                 Int
+  fileType                 String
+  uploadedById             String
+  uploadedAt               DateTime                @default(now())
+  validityDate             DateTime?
+  instance                 FilingWorkflowInstance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  nodeRun                  FilingNodeRun?          @relation(fields: [nodeRunId], references: [id], onDelete: Cascade)
+  photoRequirement         FilingPhotoRequirement? @relation(fields: [photoRequirementId], references: [id], onDelete: SetNull)
+  checklistItem            FilingChecklistItem?    @relation("FilingChecklistItemUploads", fields: [checklistItemId], references: [id], onDelete: SetNull)
+  uploadedBy               User                    @relation(fields: [uploadedById], references: [id])
 
   @@index([instanceId])
   @@index([photoRequirementId])
@@ -5491,14 +5888,14 @@ model FilingSection49Flag {
 }
 
 model FilingSection49Extension {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   jobId            String
   previousValidity DateTime?
   extensionDate    DateTime
   fileKey          String?
   fileName         String?
   appliedById      String
-  createdAt        DateTime @default(now())
+  createdAt        DateTime  @default(now())
 
   job       ChaJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
   appliedBy User   @relation(fields: [appliedById], references: [id])

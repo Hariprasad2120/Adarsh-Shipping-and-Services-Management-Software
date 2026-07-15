@@ -11,6 +11,7 @@ import {
   listInvoices,
   listAccounts,
 } from "@/modules/crm/service";
+import { listCustomerPortalUsers } from "@/modules/customer-portal/service";
 import { AccountDetailWrapper } from "./account-detail-wrapper";
 import { ShieldAlert } from "lucide-react";
 
@@ -52,7 +53,7 @@ export default async function AccountDetailPage({ params, searchParams }: Accoun
   const search = awaitedSearchParams.search || "";
 
   // Fetch account and related details in parallel, including the list of all accounts
-  const [account, notes, attachments, activities, timeline, invoices, accounts] = await Promise.all([
+  const [account, notes, attachments, activities, timeline, invoices, accounts, portalUsers] = await Promise.all([
     getAccount(orgId, id),
     getNotes(orgId, "ACCOUNT", id),
     getAttachments(orgId, "ACCOUNT", id),
@@ -60,6 +61,7 @@ export default async function AccountDetailPage({ params, searchParams }: Accoun
     getTimelineEvents(orgId, "ACCOUNT", id),
     listInvoices(orgId, { customerId: id }),
     listAccounts(orgId, { search }),
+    listCustomerPortalUsers(orgId, id),
   ]);
 
   if (!account) notFound();
@@ -74,6 +76,7 @@ export default async function AccountDetailPage({ params, searchParams }: Accoun
         timeline={timeline}
         invoices={invoices}
         accounts={accounts}
+        portalUsers={portalUsers}
         search={search}
       />
     </Suspense>

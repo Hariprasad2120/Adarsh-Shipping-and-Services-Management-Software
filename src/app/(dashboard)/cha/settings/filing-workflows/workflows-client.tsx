@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {AlertTriangle,ArrowLeft,CheckCircle2,ChevronDown,ChevronUp,Plus,RefreshCw,Save,Trash2,Workflow,X,PanelLeft,PanelRight,Settings2,ZoomIn,ZoomOut,} from "lucide-react";
+import {AlertTriangle,CheckCircle2,ChevronDown,ChevronUp,Plus,RefreshCw,Save,Trash2,Workflow,X,PanelLeft,PanelRight,Settings2,ZoomIn,ZoomOut,} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +13,9 @@ interface WorkflowsClientProps {
   availableRoles: string[];
   availableJobTypes: { id: string; name: string }[];
 }
+
+type FilingFlowCategory = "IMPORT_BE" | "EXPORT_SB" | "CUSTOM" | "";
+type StarterPreset = "COMBINED" | "IMPORT_BE" | "EXPORT_SB";
 
 type ValidityUnit = "BUSINESS_DAYS" | "CALENDAR_DAYS";
 
@@ -156,6 +158,8 @@ const NODE_HEIGHT = 154;
 const MIN_ZOOM = 0.45;
 const MAX_ZOOM = 2.2;
 const QUERY_PROCESSING_SECTION_KEY = "query_processing";
+const FLAT_TOOLBAR_BUTTON_CLASS =
+  "ds-plain shadow-none hover:shadow-none active:shadow-none hover:translate-y-0 active:translate-y-0 active:scale-100";
 
 function createDefaultNodeActionConfig(): NodeActionConfigDraft {
   return {
@@ -346,6 +350,27 @@ function normalizeNodeActionConfig(value: any): NodeActionConfigDraft {
   return {
     prerequisiteGate: normalizePrerequisiteGate(raw.prerequisiteGate),
   };
+}
+
+function getTemplateEditorSettings(value: any) {
+  const settings = value && typeof value === "object" ? value : {};
+  return {
+    isDefault: !!settings.isDefault,
+    starterPreset:
+      settings.starterPreset === "IMPORT_BE" || settings.starterPreset === "EXPORT_SB" || settings.starterPreset === "COMBINED"
+        ? settings.starterPreset
+        : "COMBINED" as StarterPreset,
+  };
+}
+
+function getDefaultWorkflowScopeLabel(clearanceTypeName?: string | null, filingFlowCategory?: string | null) {
+  if (clearanceTypeName) {
+    return `Make this the default workflow for ${clearanceTypeName}.`;
+  }
+  if (filingFlowCategory) {
+    return `Make this the default workflow for ${filingFlowCategory.replace(/_/g, " ")} filings.`;
+  }
+  return "Make this the default catch-all workflow.";
 }
 
 function normalizeNode(node: any, index: number): NodeDraft {
@@ -540,8 +565,27 @@ function buildValidation(nodes: NodeDraft[], edges: EdgeDraft[]) {
   return { errors, warnings };
 }
 
-function serializeWorkflowSnapshot(nodes: NodeDraft[], edges: EdgeDraft[]) {
+function serializeWorkflowSnapshot(
+  nodes: NodeDraft[],
+  edges: EdgeDraft[],
+  metadata?: {
+    name?: string;
+    description?: string;
+    clearanceTypeId?: string | null;
+    filingFlowCategory?: string | null;
+    isDefault?: boolean;
+    starterPreset?: StarterPreset;
+  },
+) {
   return JSON.stringify({
+    metadata: {
+      name: metadata?.name?.trim() || "",
+      description: metadata?.description?.trim() || "",
+      clearanceTypeId: metadata?.clearanceTypeId || null,
+      filingFlowCategory: metadata?.filingFlowCategory || null,
+      isDefault: !!metadata?.isDefault,
+      starterPreset: metadata?.starterPreset || "COMBINED",
+    },
     nodes: nodes.map((node) => ({
       ...node,
       checklistItems: [...node.checklistItems].sort((a, b) => a.sortOrder - b.sortOrder),
@@ -1376,13 +1420,24 @@ function expandChecklistNodesForCanvas(rawNodes: any[], rawEdges: any[]) {
 
 
 export function WorkflowsClient({ initialTemplates, availableRoles, availableJobTypes }: WorkflowsClientProps) {
-  const router = useRouter();
   const canvasRef = useRef<HTMLDivElement>(null);
   const capturedPointerElementRef = useRef<HTMLElement | null>(null);
   const bodyInteractionStyleRef = useRef<{ userSelect: string; cursor: string } | null>(null);
 
   const [templates, setTemplates] = useState(initialTemplates);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(initialTemplates[0]?.id || null);
+  const [templateName, setTemplateName] = useState<string>(initialTemplates[0]?.name || "New Filing Workflow");
+  const [templateDescription, setTemplateDescription] = useState<string>(initialTemplates[0]?.description || "");
+  const [selectedFilingFlowCategory, setSelectedFilingFlowCategory] = useState<FilingFlowCategory>(
+    initialTemplates[0]?.filingFlowCategory || "",
+  );
+  const [isDefaultWorkflow, setIsDefaultWorkflow] = useState<boolean>(
+    !!initialTemplates[0]?.settingsJson?.isDefault,
+  );
+  const [starterPreset, setStarterPreset] = useState<StarterPreset>(
+    getTemplateEditorSettings(initialTemplates[0]?.settingsJson).starterPreset,
+  );
+  const [copySourceTemplateId, setCopySourceTemplateId] = useState<string>("");
   const [selectedClearanceTypeId, setSelectedClearanceTypeId] = useState<string>("");
   const [activeVersion, setActiveVersion] = useState<any>(null);
   const [nodes, setNodes] = useState<NodeDraft[]>([]);
@@ -1404,6 +1459,23 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
   const [propertiesOpen, setPropertiesOpen] = useState(false);
   const [validationOpen, setValidationOpen] = useState(false);
 
+  const visibleTemplates = useMemo(
+    () =>
+      templates.filter((template) => {
+        const latestVersion = template.versions?.[0] ?? null;
+        return template.id === selectedTemplateId || template.isActive || latestVersion?.isPublished === false;
+      }),
+    [selectedTemplateId, templates],
+  );
+  const selectedClearanceTypeName = useMemo(
+    () => availableJobTypes.find((jobType) => jobType.id === selectedClearanceTypeId)?.name ?? null,
+    [availableJobTypes, selectedClearanceTypeId],
+  );
+  const defaultWorkflowScopeLabel = useMemo(
+    () => getDefaultWorkflowScopeLabel(selectedClearanceTypeName, selectedFilingFlowCategory || null),
+    [selectedClearanceTypeName, selectedFilingFlowCategory],
+  );
+
   const selectedNode = useMemo(
     () => nodes.find((node) => node.id === selectedNodeId) ?? null,
     [nodes, selectedNodeId],
@@ -1414,9 +1486,31 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
   );
 
   const validation = useMemo(() => buildValidation(nodes, edges), [nodes, edges]);
+  const isWorkflowReadOnly = !!activeVersion?.isPublished;
+  const currentEditorSnapshot = useMemo(
+    () =>
+      serializeWorkflowSnapshot(nodes, edges, {
+        name: templateName,
+        description: templateDescription,
+        clearanceTypeId: selectedClearanceTypeId || null,
+        filingFlowCategory: selectedFilingFlowCategory || null,
+        isDefault: isDefaultWorkflow,
+        starterPreset,
+      }),
+    [
+      edges,
+      isDefaultWorkflow,
+      nodes,
+      selectedClearanceTypeId,
+      selectedFilingFlowCategory,
+      starterPreset,
+      templateDescription,
+      templateName,
+    ],
+  );
   const hasUnsavedChanges = useMemo(
-    () => serializeWorkflowSnapshot(nodes, edges) !== loadedSnapshot,
-    [edges, loadedSnapshot, nodes],
+    () => currentEditorSnapshot !== loadedSnapshot,
+    [currentEditorSnapshot, loadedSnapshot],
   );
 
   const screenToCanvas = (clientX: number, clientY: number) => {
@@ -1477,6 +1571,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       id: data.id,
       name: data.name,
       description: data.description,
+      filingFlowCategory: data.filingFlowCategory || null,
+      settingsJson: data.settingsJson ?? null,
       clearanceType: data.clearanceType ?? null,
       versions: latest
         ? [{
@@ -1504,6 +1600,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
 
   const applyTemplateData = (data: any) => {
     const latest = data.versions?.[0] ?? null;
+    const editorSettings = getTemplateEditorSettings(data.settingsJson);
 
     // Loading must be a pure read of the persisted graph. Never inject, migrate,
     // restore, or infer nodes here. A saved empty graph must remain empty.
@@ -1517,6 +1614,11 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       label: edge.label || null,
     }));
 
+    setTemplateName(data.name || "New Filing Workflow");
+    setTemplateDescription(data.description || "");
+    setSelectedFilingFlowCategory((data.filingFlowCategory || "") as FilingFlowCategory);
+    setIsDefaultWorkflow(editorSettings.isDefault);
+    setStarterPreset(editorSettings.starterPreset);
     setSelectedClearanceTypeId(data.clearanceType?.id || data.clearanceTypeId || "");
     setActiveVersion(latest);
     setNodes(normalizedNodes);
@@ -1529,7 +1631,16 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     upsertTemplateSummary(data);
 
     // Even an empty persisted version is a valid saved state.
-    setLoadedSnapshot(serializeWorkflowSnapshot(normalizedNodes, normalizedEdges));
+    setLoadedSnapshot(
+      serializeWorkflowSnapshot(normalizedNodes, normalizedEdges, {
+        name: data.name || "",
+        description: data.description || "",
+        clearanceTypeId: data.clearanceType?.id || data.clearanceTypeId || null,
+        filingFlowCategory: data.filingFlowCategory || null,
+        isDefault: editorSettings.isDefault,
+        starterPreset: editorSettings.starterPreset,
+      }),
+    );
   };
 
   const loadTemplateDetails = async (templateId: string) => {
@@ -1548,9 +1659,6 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
   useEffect(() => {
     if (!selectedTemplateId) {
       setActiveVersion(null);
-      setNodes([]);
-      setEdges([]);
-      setLoadedSnapshot(serializeWorkflowSnapshot([], []));
       return;
     }
     loadTemplateDetails(selectedTemplateId);
@@ -1755,15 +1863,22 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     setEdges((prev) => prev.map((edge) => (edge.id === selectedEdgeId ? updater(edge) : edge)));
   };
 
-  const loadChaBlueprintDraft = async () => {
+  const loadStarterWorkflowDraft = async (preset: StarterPreset) => {
     if (activeVersion?.isPublished) {
       toast.error("Published versions are read-only. Fork a new draft first.");
       return;
     }
-    if (hasUnsavedChanges && !window.confirm("Replace the current draft canvas with the editable CHA blueprint starter? Unsaved canvas changes will be overwritten.")) {
+    if (hasUnsavedChanges && !window.confirm("Replace the current draft canvas with the selected starter workflow? Unsaved canvas changes will be overwritten.")) {
       return;
     }
-    const payload = buildTemplatePayload();
+    const payload = {
+      ...buildTemplatePayload(),
+      starterPreset: preset,
+      settings: {
+        ...buildTemplatePayload().settings,
+        starterPreset: preset,
+      },
+    };
     const result = await actions.loadStarterFilingWorkflowAction(selectedTemplateId, payload);
     if (!result.ok) {
       toast.error(result.error || "Failed to load starter workflow.");
@@ -1773,7 +1888,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       setSelectedTemplateId(result.data.id);
       applyTemplateData(result.data);
     }
-    toast.success("Starter workflow loaded.");
+    toast.success(`${preset === "IMPORT_BE" ? "Import" : preset === "EXPORT_SB" ? "Export" : "Combined"} starter workflow loaded.`);
   };
 
   const addChecklistItem = () => {
@@ -1891,13 +2006,102 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
     });
   };
 
-  const buildTemplatePayload = () => {
-    const template = templates.find((entry) => entry.id === selectedTemplateId);
-    return {
-      name: template?.name || `Filing Workflow ${templates.length + 1}`,
-      description: template?.description || "",
-      clearanceTypeId: selectedClearanceTypeId || null,
-    };
+  const buildTemplatePayload = () => ({
+    name: templateName.trim() || `Filing Workflow ${templates.length + 1}`,
+    description: templateDescription.trim(),
+    clearanceTypeId: selectedClearanceTypeId || null,
+    filingFlowCategory: selectedFilingFlowCategory || null,
+    settings: {
+      isDefault: isDefaultWorkflow,
+      starterPreset,
+    },
+  });
+
+  const createNewWorkflow = () => {
+    setSelectedTemplateId(null);
+    setTemplateName(`New Filing Workflow ${templates.length + 1}`);
+    setTemplateDescription("");
+    setSelectedClearanceTypeId("");
+    setSelectedFilingFlowCategory("");
+    setIsDefaultWorkflow(false);
+    setStarterPreset("COMBINED");
+    setNodes([]);
+    setEdges([]);
+    setActiveVersion(null);
+    setSelectedNodeId(null);
+    setSelectedEdgeId(null);
+    setPropertiesOpen(false);
+    setLoadedSnapshot(
+      serializeWorkflowSnapshot([], [], {
+        name: `New Filing Workflow ${templates.length + 1}`,
+        description: "",
+        clearanceTypeId: null,
+        filingFlowCategory: null,
+        isDefault: false,
+        starterPreset: "COMBINED",
+      }),
+    );
+  };
+
+  const copyWorkflowIntoNewDraft = async () => {
+    if (!copySourceTemplateId) {
+      toast.error("Choose a workflow to copy first.");
+      return;
+    }
+    const result = await actions.getFilingWorkflowDetailsAction(copySourceTemplateId);
+    if (!result.ok || !result.data) {
+      toast.error(result.error || "Failed to copy workflow.");
+      return;
+    }
+
+    const source = result.data;
+    const latest = source.versions?.[0] ?? null;
+    const copiedNodes = (Array.isArray(latest?.nodes) ? latest.nodes : []).map(normalizeNode);
+    const copiedEdges = (Array.isArray(latest?.edges) ? latest.edges : []).map((edge: any, index: number) => ({
+      id: edge.id || createId(`edge_${index}`),
+      sourceKey: edge.sourceKey,
+      targetKey: edge.targetKey,
+      label: edge.label || null,
+    }));
+    const sourceSettings = getTemplateEditorSettings(source.settingsJson);
+
+    setSelectedTemplateId(null);
+    setTemplateName(`${source.name} Copy`);
+    setTemplateDescription(source.description || "");
+    setSelectedClearanceTypeId(source.clearanceType?.id || source.clearanceTypeId || "");
+    setSelectedFilingFlowCategory((source.filingFlowCategory || "") as FilingFlowCategory);
+    setIsDefaultWorkflow(false);
+    setStarterPreset(sourceSettings.starterPreset);
+    setNodes(copiedNodes);
+    setEdges(copiedEdges);
+    setActiveVersion(null);
+    setSelectedNodeId(null);
+    setSelectedEdgeId(null);
+    setPropertiesOpen(false);
+    setLoadedSnapshot("");
+    toast.success(`Copied workflow from ${source.name}.`);
+  };
+
+  const deleteWorkflow = async () => {
+    if (!selectedTemplateId) {
+      toast.error("No saved workflow is selected.");
+      return;
+    }
+
+    const selectedTemplate = templates.find((template) => template.id === selectedTemplateId);
+    if (!window.confirm(`Delete workflow "${selectedTemplate?.name || "this workflow"}"? This cannot be undone.`)) {
+      return;
+    }
+
+    const result = await actions.deleteFilingWorkflowTemplateAction(selectedTemplateId);
+    if (!result.ok) {
+      toast.error(result.error || "Failed to delete workflow.");
+      return;
+    }
+
+    setTemplates((prev) => prev.filter((template) => template.id !== selectedTemplateId));
+    createNewWorkflow();
+    toast.success("Workflow deleted.");
   };
 
   const saveDraft = async (): Promise<string | null> => {
@@ -1906,6 +2110,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       name: payload.name,
       description: payload.description,
       clearanceTypeId: payload.clearanceTypeId,
+      filingFlowCategory: payload.filingFlowCategory,
+      settings: payload.settings,
       nodes,
       edges,
     });
@@ -1946,6 +2152,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       name: payload.name,
       description: payload.description,
       clearanceTypeId: payload.clearanceTypeId,
+      filingFlowCategory: payload.filingFlowCategory,
+      settings: payload.settings,
       nodes,
       edges: nextEdges,
     });
@@ -2000,6 +2208,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       name: payload.name,
       description: payload.description,
       clearanceTypeId: payload.clearanceTypeId,
+      filingFlowCategory: payload.filingFlowCategory,
+      settings: payload.settings,
       nodes: nodes.map((node) => ({
         ...node,
         id: undefined,
@@ -2026,43 +2236,53 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
   };
 
   return (
-    <div className="flex h-[calc(100vh-6rem)] w-full flex-col overflow-hidden rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant bg-surface px-4 py-3">
-        <div className="flex items-start gap-3">
-          <Button variant="outline" mode="icon" size="sm" onClick={() => router.push("/cha/settings")} aria-label="Back to CHA settings">
-            <ArrowLeft size={16} />
-          </Button>
-          <div className="space-y-1">
+    <div className="flex h-[calc(100dvh-8.5rem)] w-full min-h-0 flex-col overflow-hidden rounded-2xl border border-outline-variant/60 bg-surface">
+      <div className="flex flex-col gap-4 border-b border-outline-variant bg-surface px-4 py-3">
+        <div className="min-w-0">
+          <div className="max-w-full space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="ds-h1 text-on-surface">FILING WORKFLOW BLUEPRINT</h1>
+              <p className="ds-label text-primary">CHA Settings</p>
               <Badge variant={activeVersion?.isPublished ? "success" : "warning"}>
                 {activeVersion ? `${activeVersion.isPublished ? "PUBLISHED" : "DRAFT"} V${activeVersion.versionNumber}` : "NO VERSION"}
               </Badge>
             </div>
-            <p className="text-sm text-on-surface-variant">
+            <h1 className="ds-h1 text-on-surface" style={{ fontFamily: "var(--font-kiona-sans)", letterSpacing: "0.08em" }}>
+              FILING WORKFLOW BLUEPRINT
+            </h1>
+            <p className="max-w-3xl text-sm text-on-surface-variant">
               Build configurable filing stages, checklist deadlines, and non-linear routing without hardcoded CHA node types.
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-wrap items-start gap-2">
           <select
             value={selectedTemplateId || ""}
-            onChange={(event) => setSelectedTemplateId(event.target.value || null)}
+            onChange={(event) => {
+              const nextValue = event.target.value || null;
+              if (!nextValue) {
+                return;
+              }
+              setSelectedTemplateId(nextValue);
+            }}
             className="min-w-44 text-sm"
           >
-            <option value="">New Workflow Draft</option>
-            {templates.map((template) => (
+            <option value="">Select Saved Workflow</option>
+            {visibleTemplates.map((template) => (
               <option key={template.id} value={template.id}>
-                {template.name}
+                {template.name}{template.settingsJson?.isDefault ? " (Default)" : ""}
               </option>
             ))}
           </select>
+          <Button variant="outline" onClick={createNewWorkflow}>
+            <Plus size={16} />
+            New Workflow
+          </Button>
           <select
             value={selectedClearanceTypeId}
             onChange={(event) => setSelectedClearanceTypeId(event.target.value)}
             className="min-w-44 text-sm"
-            disabled={activeVersion?.isPublished}
+            disabled={isWorkflowReadOnly}
           >
             <option value="">All Clearance Types</option>
             {availableJobTypes.map((jobType) => (
@@ -2071,11 +2291,24 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
               </option>
             ))}
           </select>
-          {activeVersion?.isPublished ? (
-            <Button variant="outline" onClick={forkDraft}>
-              <RefreshCw size={16} />
-              Fork Draft
-            </Button>
+          <select
+            value={selectedFilingFlowCategory}
+            onChange={(event) => setSelectedFilingFlowCategory(event.target.value as FilingFlowCategory)}
+            className="min-w-40 text-sm"
+            disabled={isWorkflowReadOnly}
+          >
+            <option value="">Default / Catch-all</option>
+            <option value="IMPORT_BE">Import BE</option>
+            <option value="EXPORT_SB">Export SB</option>
+            <option value="CUSTOM">Custom</option>
+          </select>
+          {isWorkflowReadOnly ? (
+            <>
+              <Button variant="outline" onClick={forkDraft}>
+                <RefreshCw size={16} />
+                Fork Draft
+              </Button>
+            </>
           ) : (
             <>
               <Button variant="outline" onClick={saveDraft}>
@@ -2099,7 +2332,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       <div className="relative flex min-h-0 flex-1 overflow-hidden">
         <aside
           data-canvas-ui="true"
-          className={`absolute inset-y-0 left-0 z-40 w-[min(330px,calc(100%-1rem))] shrink-0 overflow-y-auto border-r border-outline-variant bg-surface-container-low shadow-2xl transition-transform duration-200 ${paletteOpen ? "translate-x-0" : "pointer-events-none -translate-x-full"}`}
+          className={`absolute inset-y-0 left-0 z-40 w-[min(330px,calc(100%-1rem))] shrink-0 overflow-y-auto border-r border-outline-variant bg-surface-container-low transition-transform duration-200 ${paletteOpen ? "translate-x-0 shadow-2xl" : "pointer-events-none -translate-x-full shadow-none"}`}
         >
           <div className="space-y-5 p-4">
             <div className="flex items-start justify-between gap-3">
@@ -2116,27 +2349,91 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 <CardTitle>Blueprint Palette</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="ds-label block">Workflow Name</label>
+                  <input
+                    value={templateName}
+                    onChange={(event) => setTemplateName(event.target.value)}
+                    placeholder="Import BE Workflow"
+                    className="w-full text-sm"
+                    disabled={isWorkflowReadOnly}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="ds-label block">Workflow Description</label>
+                  <textarea
+                    value={templateDescription}
+                    onChange={(event) => setTemplateDescription(event.target.value)}
+                    rows={3}
+                    className="w-full text-sm"
+                    disabled={isWorkflowReadOnly}
+                  />
+                </div>
+                <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
+                  <input
+                    type="checkbox"
+                    checked={isDefaultWorkflow}
+                    onChange={(event) => setIsDefaultWorkflow(event.target.checked)}
+                    disabled={isWorkflowReadOnly}
+                  />
+                  <span>{defaultWorkflowScopeLabel}</span>
+                </label>
                 <div className="rounded-xl border border-outline-variant bg-surface p-3 text-xs text-on-surface-variant">
-                  Load the explicit starter workflow as editable nodes. After loading, every stage, checklist, deadline, upload slot, and connector can be changed.
+                  Start from a preset blueprint or copy an existing workflow into a brand-new draft. After loading, every stage, checklist, deadline, upload slot, and connector can be changed.
                   <span className="mt-2 block">Processor roles are empty by default, so anyone with job access can work the filing node. Available roles: {availableRoles.length || 0}.</span>
                 </div>
-                <Button className="w-full" onClick={() => void loadChaBlueprintDraft()} disabled={activeVersion?.isPublished}>
-                  <Workflow size={16} />
-                  Load Starter Workflow
-                </Button>
+                <div className="grid grid-cols-1 gap-2">
+                  <Button className="w-full" onClick={() => void loadStarterWorkflowDraft("IMPORT_BE")} disabled={isWorkflowReadOnly}>
+                    <Workflow size={16} />
+                    Load Import Starter
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={() => void loadStarterWorkflowDraft("EXPORT_SB")} disabled={isWorkflowReadOnly}>
+                    <Workflow size={16} />
+                    Load Export Starter
+                  </Button>
+                </div>
+                <div className="space-y-2 rounded-xl border border-outline-variant bg-surface p-3">
+                  <label className="ds-label block">Copy Existing Workflow</label>
+                  <select
+                    value={copySourceTemplateId}
+                    onChange={(event) => setCopySourceTemplateId(event.target.value)}
+                    className="w-full text-sm"
+                  >
+                    <option value="">Select workflow to copy</option>
+                    {templates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </select>
+                  <Button variant="outline" className="w-full" onClick={() => void copyWorkflowIntoNewDraft()}>
+                    <RefreshCw size={16} />
+                    Copy Into New Workflow
+                  </Button>
+                </div>
+                <div className="space-y-2 rounded-xl border border-outline-variant bg-surface p-3">
+                  <label className="ds-label block">Workflow Actions</label>
+                  <Button variant="destructive" className="w-full" onClick={() => void deleteWorkflow()} disabled={!selectedTemplateId}>
+                    <Trash2 size={16} />
+                    Delete Workflow
+                  </Button>
+                  <p className="text-xs text-on-surface-variant">
+                    Deletion is managed from the tools tab and is blocked once filing instances exist for this workflow.
+                  </p>
+                </div>
                 <div className="space-y-1.5">
                   <label className="ds-label block">Node Name</label>
                   <input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="First Check" className="w-full text-sm" />
                 </div>
-                <Button variant="outline" className="w-full" onClick={handleAddNode} disabled={activeVersion?.isPublished}>
+                <Button variant="outline" className="w-full" onClick={handleAddNode} disabled={isWorkflowReadOnly}>
                   <Plus size={16} />
                   Add Main Stage Node
                 </Button>
-                <Button variant="outline" className="w-full" onClick={handleAddChecklistNode} disabled={activeVersion?.isPublished}>
+                <Button variant="outline" className="w-full" onClick={handleAddChecklistNode} disabled={isWorkflowReadOnly}>
                   <Plus size={16} />
                   Add Checklist Node
                 </Button>
-                <Button variant="outline" className="w-full" onClick={handleAddNotificationNode} disabled={activeVersion?.isPublished}>
+                <Button variant="outline" className="w-full" onClick={handleAddNotificationNode} disabled={isWorkflowReadOnly}>
                   <Plus size={16} />
                   Add Notification Node
                 </Button>
@@ -2173,59 +2470,60 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
         </aside>
 
         <main className="min-w-0 flex-1 bg-surface">
-          <div className="flex h-full flex-col">
-            <div className="flex items-center justify-between border-b border-outline-variant px-4 py-3">
-              <div>
+          <div className="flex h-full min-h-0 flex-col overflow-hidden border border-outline-variant/60 bg-surface">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-outline-variant px-3 py-2">
+              <div className="min-w-0">
                 <p className="ds-label">Canvas</p>
-                <p className="text-sm text-on-surface-variant">Blueprint mode: drag nodes, connect handles, zoom with wheel, branch RMS/Open Bill, and route back to any passed stage when required.</p>
+                <p className="max-w-2xl text-xs text-on-surface-variant">Blueprint mode: drag nodes, connect handles, zoom with wheel, and route branches without leaving this canvas.</p>
               </div>
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={() => setPaletteOpen(true)}>
+              <div className="flex max-w-full flex-nowrap items-center justify-end gap-1.5 overflow-x-auto pb-1">
+                <Button variant="outline" size="sm" className={FLAT_TOOLBAR_BUTTON_CLASS} onClick={() => setPaletteOpen(true)}>
                   <PanelLeft size={14} />
                   Tools
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
+                  className={FLAT_TOOLBAR_BUTTON_CLASS}
                   onClick={() => setPropertiesOpen(true)}
                   disabled={!selectedNode && !selectedEdge}
                 >
                   <PanelRight size={14} />
                   Properties
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setValidationOpen((value) => !value)}>
+                <Button variant="outline" size="sm" className={FLAT_TOOLBAR_BUTTON_CLASS} onClick={() => setValidationOpen((value) => !value)}>
                   <Settings2 size={14} />
                   Checks {validation.errors.length > 0 ? `(${validation.errors.length})` : ""}
                 </Button>
                 {selectedEdge ? (
-                  <div className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-1.5">
+                  <div className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-2.5 py-1">
                     <span className="text-xs text-on-surface-variant">
                       {selectedEdge.sourceKey} → {selectedEdge.targetKey}
                     </span>
-                    <Button variant="outline" size="sm" onClick={() => void deleteSelectedEdge()} disabled={activeVersion?.isPublished}>
+                    <Button variant="outline" size="sm" className={FLAT_TOOLBAR_BUTTON_CLASS} onClick={() => void deleteSelectedEdge()} disabled={isWorkflowReadOnly}>
                       <Trash2 size={14} />
                       Delete Connector
                     </Button>
                   </div>
                 ) : null}
-                <div className="flex items-center gap-1 rounded-xl border border-outline-variant bg-surface p-1">
-                  <Button variant="outline" mode="icon" size="sm" onClick={() => setZoom((value) => Math.max(MIN_ZOOM, Number((value - 0.1).toFixed(2))))} aria-label="Zoom out">
+                <div className="flex items-center gap-1 rounded-xl border border-outline-variant bg-surface px-1.5 py-1">
+                  <Button variant="outline" mode="icon" size="sm" className={FLAT_TOOLBAR_BUTTON_CLASS} onClick={() => setZoom((value) => Math.max(MIN_ZOOM, Number((value - 0.1).toFixed(2))))} aria-label="Zoom out">
                     <ZoomOut size={15} />
                   </Button>
                   <span className="min-w-14 text-center text-xs text-on-surface-variant ds-numeric">{Math.round(zoom * 100)}%</span>
-                  <Button variant="outline" mode="icon" size="sm" onClick={() => setZoom((value) => Math.min(MAX_ZOOM, Number((value + 0.1).toFixed(2))))} aria-label="Zoom in">
+                  <Button variant="outline" mode="icon" size="sm" className={FLAT_TOOLBAR_BUTTON_CLASS} onClick={() => setZoom((value) => Math.min(MAX_ZOOM, Number((value + 0.1).toFixed(2))))} aria-label="Zoom in">
                     <ZoomIn size={15} />
                   </Button>
                 </div>
-                <Button variant="outline" size="sm" onClick={fitCanvasView}>
+                <Button variant="outline" size="sm" className={FLAT_TOOLBAR_BUTTON_CLASS} onClick={fitCanvasView}>
                   <Workflow size={14} />
                   Fit View
                 </Button>
-                <Button variant="outline" size="sm" onClick={applyAutoArrange}>
+                <Button variant="outline" size="sm" className={FLAT_TOOLBAR_BUTTON_CLASS} onClick={applyAutoArrange}>
                   <Workflow size={14} />
                   Auto Arrange
                 </Button>
-                <Button variant="outline" size="sm" onClick={resetCanvasView}>
+                <Button variant="outline" size="sm" className={FLAT_TOOLBAR_BUTTON_CLASS} onClick={resetCanvasView}>
                   <RefreshCw size={14} />
                   Reset View
                 </Button>
@@ -2234,12 +2532,9 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
 
             <div
               ref={canvasRef}
-              className="relative flex-1 overflow-hidden bg-surface-container-low select-none cursor-grab active:cursor-grabbing"
+              className="relative flex-1 overflow-hidden border-t border-outline-variant/60 bg-surface-container-low select-none cursor-grab active:cursor-grabbing"
               style={{
                 backgroundColor: "var(--color-surface-container-low)",
-                backgroundImage:
-                  "linear-gradient(rgba(0,206,196,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(0,206,196,0.08) 1px, transparent 1px), radial-gradient(rgba(0,206,196,0.28) 1px, transparent 1px)",
-                backgroundSize: "48px 48px, 48px 48px, 12px 12px",
                 touchAction: "none",
               }}
               onWheel={(event) => {
@@ -2499,7 +2794,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
 
         <aside
           data-canvas-ui="true"
-          className={`absolute inset-y-0 right-0 z-40 w-[min(430px,calc(100%-1rem))] shrink-0 overflow-y-auto border-l border-outline-variant bg-surface shadow-2xl transition-transform duration-200 ${propertiesOpen && (selectedNode || selectedEdge) ? "translate-x-0" : "pointer-events-none translate-x-full"}`}
+          className={`absolute inset-y-0 right-0 z-40 w-[min(430px,calc(100%-1rem))] shrink-0 overflow-y-auto border-l border-outline-variant bg-surface transition-transform duration-200 ${propertiesOpen && (selectedNode || selectedEdge) ? "translate-x-0 shadow-2xl" : "pointer-events-none translate-x-full shadow-none"}`}
         >
           <div className="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant bg-surface/95 px-4 py-3 backdrop-blur">
             <div>
@@ -2521,8 +2816,9 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                   variant="outline"
                   mode="icon"
                   size="sm"
+                  disabled={isWorkflowReadOnly}
                   onClick={() => {
-                    if (activeVersion?.isPublished) return;
+                    if (isWorkflowReadOnly) return;
                     setNodes((prev) => prev.filter((node) => node.id !== selectedNode.id));
                     setEdges((prev) => prev.filter((edge) => edge.sourceKey !== selectedNode.key && edge.targetKey !== selectedNode.key));
                     setSelectedNodeId(null);
@@ -2534,6 +2830,15 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 </Button>
               </div>
 
+              <div
+                className={[
+                  "space-y-5",
+                  isWorkflowReadOnly ? "pointer-events-none select-none opacity-75" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                aria-disabled={isWorkflowReadOnly}
+              >
               <div className="ds-form-section space-y-4">
                 <h3 className="ds-h3 text-on-surface">Node Settings</h3>
                 <div className="space-y-1.5">
@@ -3267,6 +3572,12 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                   ))}
                 </div>
               </div>
+              </div>
+              {isWorkflowReadOnly ? (
+                <div className="rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+                  This published workflow is read-only. Fork a draft to edit node properties, checklist items, documents, or routing.
+                </div>
+              ) : null}
             </div>
           ) : selectedEdge ? (
             <div className="space-y-6 p-5">
@@ -3280,13 +3591,22 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                   mode="icon"
                   size="sm"
                   onClick={() => void deleteSelectedEdge()}
-                  disabled={activeVersion?.isPublished}
+                  disabled={isWorkflowReadOnly}
                   aria-label="Delete connector"
                 >
                   <Trash2 size={15} />
                 </Button>
               </div>
 
+              <div
+                className={[
+                  "space-y-4",
+                  isWorkflowReadOnly ? "pointer-events-none select-none opacity-75" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                aria-disabled={isWorkflowReadOnly}
+              >
               <div className="ds-form-section space-y-4">
                 <h3 className="ds-h3 text-on-surface">Connector</h3>
                 <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-sm text-on-surface">
@@ -3302,13 +3622,18 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     onChange={(event) => updateSelectedEdge((edge) => ({ ...edge, label: event.target.value || null }))}
                     className="w-full text-sm"
                     placeholder="Example: RMS Path, Recheck BE, Next"
-                    disabled={activeVersion?.isPublished}
                   />
                 </div>
                 <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
                   Backward connectors are allowed. Use them for cases like Examination returning to Bill of Entry upload, then routing forward again.
                 </div>
               </div>
+              </div>
+              {isWorkflowReadOnly ? (
+                <div className="rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+                  This published workflow is read-only. Fork a draft to edit connector labels or routing.
+                </div>
+              ) : null}
             </div>
           ) : (
             <div className="flex h-full items-center justify-center p-6 text-center">

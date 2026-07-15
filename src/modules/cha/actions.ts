@@ -1177,6 +1177,7 @@ export async function saveFilingWorkflowDraftAction(
     description?: string;
     clearanceTypeId?: string | null;
     filingFlowCategory?: string | null;
+    settings?: Record<string, unknown> | null;
     nodes: any[];
     edges: any[];
   }
@@ -1199,6 +1200,8 @@ export async function loadStarterFilingWorkflowAction(
     description?: string;
     clearanceTypeId?: string | null;
     filingFlowCategory?: string | null;
+    settings?: Record<string, unknown> | null;
+    starterPreset?: "COMBINED" | "IMPORT_BE" | "EXPORT_SB";
   },
 ): Promise<ActionResponse> {
   try {
@@ -1235,6 +1238,20 @@ export async function getFilingWorkflowDetailsAction(
     return { ok: true, data: details };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to retrieve workflow details" };
+  }
+}
+
+export async function deleteFilingWorkflowTemplateAction(
+  templateId: string,
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.settings.manage");
+    const result = await chaService.deleteFilingWorkflowTemplate(userId, orgId, templateId);
+    revalidatePath("/cha/settings/filing-workflows");
+    revalidatePath("/cha/settings");
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to delete workflow template" };
   }
 }
 

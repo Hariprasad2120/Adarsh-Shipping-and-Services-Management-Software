@@ -6,6 +6,7 @@ import { can, requirePermission } from "@/lib/rbac";
 import * as crmService from "./service";
 import { db } from "@/lib/db";
 import * as leadSourceService from "./lead-source.service";
+import { syncCustomerPortalUsersForCrmCustomer } from "@/modules/customer-portal/service";
 
 type ActionResponse = { ok: true; data?: any } | { ok: false; error: string };
 
@@ -699,6 +700,13 @@ export async function createAccountAction(formData: FormData): Promise<ActionRes
     };
 
     const account = await crmService.createAccount(orgId, session.user.id, data);
+    if (data.isPortalEnabled) {
+      await syncCustomerPortalUsersForCrmCustomer({
+        actorUserId: session.user.id,
+        orgId,
+        customerId: account.id,
+      });
+    }
     revalidatePath("/crm/customers");
     return { ok: true, data: account };
   } catch (err: any) {
@@ -734,6 +742,19 @@ export async function createContactAction(formData: FormData): Promise<ActionRes
     };
 
     const contact = await crmService.createContact(orgId, session.user.id, data);
+    if (contact.accountId) {
+      const account = await db.crmAccount.findFirst({
+        where: { id: contact.accountId, orgId },
+        select: { isPortalEnabled: true },
+      });
+      if (account?.isPortalEnabled) {
+        await syncCustomerPortalUsersForCrmCustomer({
+          actorUserId: session.user.id,
+          orgId,
+          customerId: contact.accountId,
+        });
+      }
+    }
     revalidatePath("/crm/contacts");
     return { ok: true, data: contact };
   } catch (err: any) {
@@ -1027,6 +1048,19 @@ export async function updateContactAction(contactId: string, formData: FormData)
     };
 
     const contact = await crmService.updateContact(orgId, contactId, session.user.id, data);
+    if (contact.accountId) {
+      const account = await db.crmAccount.findFirst({
+        where: { id: contact.accountId, orgId },
+        select: { isPortalEnabled: true },
+      });
+      if (account?.isPortalEnabled) {
+        await syncCustomerPortalUsersForCrmCustomer({
+          actorUserId: session.user.id,
+          orgId,
+          customerId: contact.accountId,
+        });
+      }
+    }
     revalidatePath("/crm/contacts");
     revalidatePath(`/crm/contacts/${contactId}`);
     return { ok: true, data: contact };
@@ -1156,6 +1190,11 @@ export async function updateAccountAction(accountId: string, formData: FormData)
     };
 
     const account = await crmService.updateAccount(orgId, accountId, session.user.id, data);
+    await syncCustomerPortalUsersForCrmCustomer({
+      actorUserId: session.user.id,
+      orgId,
+      customerId: account.id,
+    });
     revalidatePath("/crm/customers");
     revalidatePath(`/crm/customers/${accountId}`);
     return { ok: true, data: account };
