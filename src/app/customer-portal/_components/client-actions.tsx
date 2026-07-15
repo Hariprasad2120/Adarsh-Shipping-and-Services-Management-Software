@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,8 +28,8 @@ export function PortalHeaderNav({
               href={item.href}
               className={
                 active
-                  ? "ds-label inline-flex items-center justify-center whitespace-nowrap border-b border-[#00cec4] px-1 pb-1 text-[#00cec4]"
-                  : "ds-label inline-flex items-center justify-center whitespace-nowrap border-b border-transparent px-1 pb-1 text-on-surface-variant transition-colors hover:text-[#00b8af] hover:border-[#00cec4]/60"
+                  ? "ds-label inline-flex items-center justify-center whitespace-nowrap border-b border-indigo-600 px-1 pb-1 text-indigo-700"
+                  : "ds-label inline-flex items-center justify-center whitespace-nowrap border-b border-transparent px-1 pb-1 text-on-surface-variant transition-colors hover:border-indigo-300 hover:text-indigo-700"
               }
             >
               <span>{item.label}</span>
@@ -189,14 +189,18 @@ export function PortalMarkAllReadButton() {
 
 export function PortalDocumentUploadForm({ jobId, requirementId }: { jobId: string; requirementId: string }) {
   const router = useRouter();
+  const inputId = useId();
   const [pending, startTransition] = useTransition();
   const [comment, setComment] = useState("");
+  const [fileName, setFileName] = useState("");
+
   return (
     <form
       className="space-y-3"
       onSubmit={(event) => {
         event.preventDefault();
-        const formData = new FormData(event.currentTarget);
+        const form = event.currentTarget;
+        const formData = new FormData(form);
         formData.set("jobId", jobId);
         formData.set("requirementId", requirementId);
         formData.set("comment", comment);
@@ -211,20 +215,39 @@ export function PortalDocumentUploadForm({ jobId, requirementId }: { jobId: stri
             return;
           }
           toast.success("Document uploaded");
+          form.reset();
           setComment("");
+          setFileName("");
           router.refresh();
         });
       }}
     >
-      <input name="file" type="file" required className="block w-full text-sm text-on-surface-variant" />
-      <Input
-        value={comment}
-        onChange={(event) => setComment(event.target.value)}
-        placeholder="Add an upload remark (optional)"
-      />
-      <Button type="submit" size="sm" disabled={pending}>
-        {pending ? "Uploading..." : "Upload"}
-      </Button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <label
+          htmlFor={inputId}
+          className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-xl border border-dashed border-indigo-300 bg-indigo-50/60 px-4 text-sm font-semibold text-indigo-700 transition hover:border-indigo-400 hover:bg-indigo-50"
+        >
+          {fileName || "Choose document"}
+        </label>
+        <input
+          id={inputId}
+          name="file"
+          type="file"
+          required
+          className="sr-only"
+          onChange={(event) => setFileName(event.target.files?.[0]?.name ?? "")}
+        />
+        <Input
+          value={comment}
+          onChange={(event) => setComment(event.target.value)}
+          placeholder="Upload remark (optional)"
+          className="min-h-10 flex-1 rounded-xl"
+        />
+        <Button type="submit" size="sm" disabled={pending || !fileName} className="min-h-10 rounded-xl px-5">
+          {pending ? "Uploading..." : "Upload"}
+        </Button>
+      </div>
+      <p className="text-[11px] text-slate-500">Use the latest valid file. Existing versions remain available in the audit history.</p>
     </form>
   );
 }
@@ -292,10 +315,19 @@ export function PortalQueryReplyForm({ threadId }: { threadId: string }) {
         });
       }}
     >
-      <Input value={body} onChange={(event) => setBody(event.target.value)} placeholder="Reply to this query" required />
-      <Button size="sm" type="submit" disabled={pending}>
-        {pending ? "Sending..." : "Send Reply"}
-      </Button>
+      <textarea
+        value={body}
+        onChange={(event) => setBody(event.target.value)}
+        placeholder="Type your reply"
+        required
+        rows={3}
+        className="w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+      />
+      <div className="flex justify-end">
+        <Button size="sm" type="submit" disabled={pending || !body.trim()} className="rounded-xl px-5">
+          {pending ? "Sending..." : "Send Reply"}
+        </Button>
+      </div>
     </form>
   );
 }

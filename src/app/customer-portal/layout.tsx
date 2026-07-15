@@ -27,13 +27,13 @@ export default async function CustomerPortalLayout({
   ];
 
   return (
-    <main className="min-h-screen bg-background text-on-surface">
-      <div className="sticky top-0 z-40 w-full shrink-0 bg-background/95 shadow-sm backdrop-blur-sm">
-        <header className="border-b border-outline-variant/60 bg-surface/90 backdrop-blur-sm">
-          <div className="mx-auto flex min-h-14 w-full max-w-[1400px] items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-50 text-on-surface">
+      <div className="sticky top-0 z-40 w-full shrink-0 bg-white/95 shadow-[0_1px_0_rgba(15,23,42,0.08)] backdrop-blur-sm">
+        <header className="border-b border-slate-200/80 bg-white/90 backdrop-blur-sm">
+          <div className="mx-auto flex min-h-16 w-full max-w-[1600px] items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
             <div className="flex min-w-0 shrink-0 items-center gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#00cec4]/10">
-                <PackageCheck size={16} className="text-[#00cec4]" />
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-50 ring-1 ring-inset ring-indigo-100">
+                <PackageCheck size={16} className="text-indigo-600" />
               </div>
               <div className="min-w-0">
                 <h1 className="ds-h3 heading-icon-none truncate text-on-surface">Customer Portal</h1>
@@ -52,7 +52,7 @@ export default async function CustomerPortalLayout({
         </header>
       </div>
 
-      <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-8 px-6 py-8 lg:px-8">
+      <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-5 px-3 py-4 sm:px-5 sm:py-5 lg:px-6">
         {children}
       </div>
     </main>
