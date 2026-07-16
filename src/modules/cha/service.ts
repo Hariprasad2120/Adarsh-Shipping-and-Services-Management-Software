@@ -10411,6 +10411,34 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
         ]),
     ).values(),
   );
+  const workflowNodeOrder = new Map(
+    (instance.version?.nodes || []).map((node, index) => [node.key, index]),
+  );
+  const returnToCurrentTarget =
+    instance.nodeRuns
+      .filter(
+        (run) =>
+          run.status === "CANCELLED" &&
+          run.nodeKey !== activeNodeRun?.nodeKey &&
+          typeof run.remarks === "string" &&
+          run.remarks.includes("Jumped back to earlier stage"),
+      )
+      .sort((a, b) => {
+        const aOrder = workflowNodeOrder.get(a.nodeKey) ?? -1;
+        const bOrder = workflowNodeOrder.get(b.nodeKey) ?? -1;
+        if (aOrder !== bOrder) {
+          return bOrder - aOrder;
+        }
+        const aTime = new Date(a.completedAt || a.updatedAt || a.createdAt).getTime();
+        const bTime = new Date(b.completedAt || b.updatedAt || b.createdAt).getTime();
+        return bTime - aTime;
+      })
+      .map((run) => ({
+        nodeKey: run.nodeKey,
+        nodeName: run.node?.name || run.nodeKey,
+        completedAt: run.completedAt,
+        nodeRunId: run.id,
+      }))[0] ?? null;
   const overdueItems = instance.responses
     .filter((response) => response.nodeRunId === activeNodeRun?.id && !response.isChecked && response.dueAt && response.dueAt.getTime() < now.getTime())
     .map((response) => ({
@@ -10472,6 +10500,7 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
     pendingBlockedStageStatus,
     canResumePendingBlockedStage: !!pendingBlockedStageStatus && !pendingBlockedStageStatus.isBlocked,
     jumpBackTargets,
+    returnToCurrentTarget,
     overdueItems,
     overdueCount: overdueItems.length,
     queryMessages,
@@ -11190,13 +11219,23 @@ export async function revertFilingWorkflowToPreviousStage(
     const targetRun = await tx.filingNodeRun.findFirst({
       where: {
         instanceId: instance.id,
-        status: "COMPLETED",
+        status: { in: ["COMPLETED", "CANCELLED"] },
         nodeKey: targetNodeKey,
       },
-      orderBy: { completedAt: "desc" },
+      orderBy: [
+        { completedAt: "desc" },
+        { updatedAt: "desc" },
+        { createdAt: "desc" },
+      ],
     });
     if (!targetRun) {
-      throw new Error("The selected filing stage has not been completed before.");
+      throw new Error("The selected filing stage has not been completed or reopened before.");
+    }
+    if (
+      targetRun.status === "CANCELLED" &&
+      !(typeof targetRun.remarks === "string" && targetRun.remarks.includes("Jumped back to earlier stage"))
+    ) {
+      throw new Error("Only stages cancelled through jump-back can be reopened as the current stage.");
     }
 
     const targetNode = instance.version.nodes.find(

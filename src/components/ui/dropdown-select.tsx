@@ -96,7 +96,7 @@ export function DropdownSelect({
             data-dropdown-select-trigger="true"
             data-form-field-trigger="true"
             className={cn(
-              "ds-plain flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-[#00cec4]/55 bg-surface px-4 py-2.5 text-left text-[var(--text-base)] text-on-surface shadow-sm transition outline-none hover:border-[#00cec4]/85 hover:shadow-[0_4px_12px_rgba(0,206,196,0.08)] focus-visible:ring-2 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-container-low disabled:text-on-surface-variant",
+              "ds-plain flex h-11 w-full items-center justify-between gap-2 rounded-2xl border border-[#00cec4]/45 bg-surface px-4 py-2.5 text-left text-[var(--text-base)] text-on-surface shadow-[0_12px_28px_-24px_rgba(0,0,0,0.25)] transition outline-none hover:border-[#00cec4]/75 hover:bg-surface hover:shadow-[0_14px_30px_-24px_rgba(0,206,196,0.16)] focus-visible:ring-2 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-container-low disabled:text-on-surface-variant",
               selectedValue === "" && "text-on-surface-variant",
               triggerClassName,
             )}
@@ -109,7 +109,10 @@ export function DropdownSelect({
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="start"
-          className={cn("w-[var(--radix-dropdown-menu-trigger-width)] max-h-[300px] overflow-y-auto", contentClassName)}
+          className={cn(
+            "w-[var(--radix-dropdown-menu-trigger-width)] max-h-[300px] overflow-y-auto rounded-2xl border border-outline-variant/40 bg-surface p-1 shadow-[0_20px_50px_-30px_rgba(0,0,0,0.28)]",
+            contentClassName,
+          )}
           data-dropdown-select-content="true"
           ref={contentRef}
         >

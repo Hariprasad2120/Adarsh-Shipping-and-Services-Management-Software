@@ -4,7 +4,7 @@ import { DateInput } from "@/components/ui/date-input";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { FileText, Upload, CheckCircle2, AlertTriangle, FolderOpen, ArrowRight, ShieldCheck, AlertCircle, Plus, Trash2, Check, Database, ExternalLink, Undo2, Mail, History, ChevronDown, ChevronRight, Pencil, Lock, BarChart2, CreditCard, ClipboardList, HelpCircle, Clock3, LoaderCircle, LockKeyhole, Search, Maximize2, Copy, UserRound, CalendarDays, Building2, Package, MapPin, Plane, Ship, Bookmark, RefreshCcw, Zap, Boxes, Moon, MoreVertical, X, } from "lucide-react";
+import { FileText, Upload, CheckCircle2, AlertTriangle, FolderOpen, ArrowRight, ShieldCheck, AlertCircle, Plus, Trash2, Check, Database, ExternalLink, Undo2, RotateCcw, Mail, History, ChevronDown, ChevronRight, Pencil, Lock, BarChart2, CreditCard, ClipboardList, HelpCircle, Clock3, LoaderCircle, LockKeyhole, Search, Maximize2, Copy, UserRound, CalendarDays, Building2, Package, MapPin, Plane, Ship, Bookmark, RefreshCcw, Zap, Boxes, Moon, MoreVertical, X, } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileUploadField } from "@/components/ui/file-upload-field";
@@ -202,6 +202,19 @@ function getValiditySummary(validityDate?: string | null) {
     label: "Valid",
     detail: `Valid until ${parsed.toLocaleDateString("en-IN")}`,
   };
+}
+
+function toDateInputValue(value?: string | Date | null) {
+  if (!value) return "";
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? "" : value.toISOString().slice(0, 10);
+  }
+  const trimmed = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+  const parsed = new Date(trimmed);
+  return Number.isNaN(parsed.getTime()) ? "" : parsed.toISOString().slice(0, 10);
 }
 
 function getDaysRemainingSummary(dateValue?: string | null) {
@@ -509,6 +522,8 @@ interface FilingWorkflowStatusBannerProps {
   nextStageName: string | null;
   isBlocked: boolean;
   isCompleting: boolean;
+  activeStatusLabel?: string | null;
+  activeStatusDescription?: string | null;
 }
 
 function MilestoneCard({
@@ -650,12 +665,14 @@ function FilingWorkflowStatusBanner({
   nextStageName,
   isBlocked,
   isCompleting,
+  activeStatusLabel,
+  activeStatusDescription,
 }: FilingWorkflowStatusBannerProps) {
-  const statusLabel = isCompleting
+  const statusLabel = activeStatusLabel || (isCompleting
     ? "Completing..."
     : isBlocked
       ? "Blocked"
-      : "Awaiting Completion";
+      : "In Progress");
   const latestCompletedStep = completedSteps[0] || null;
   const latestCompletedDateLabel = latestCompletedStep?.completedAt
     ? new Date(latestCompletedStep.completedAt).toLocaleDateString("en-IN")
@@ -723,7 +740,9 @@ function FilingWorkflowStatusBanner({
               ) : null}
               {activeNodeName}
             </p>
-            {activeNodeSubtitle ? (
+            {activeStatusDescription ? (
+              <p className="truncate text-[11px] text-on-surface-variant">{activeStatusDescription}</p>
+            ) : activeNodeSubtitle ? (
               <p className="truncate text-[11px] text-on-surface-variant">{activeNodeSubtitle}</p>
             ) : (
               <p className="truncate text-[11px] text-on-surface-variant">Complete this active stage to continue the filing workflow.</p>
@@ -964,7 +983,7 @@ function FilingAttachmentValidityRow({
   onToggleValidity,
 }: FilingAttachmentValidityRowProps) {
   const currentValidityDate =
-    draftValidityDate || (attachment.validityDate ? String(attachment.validityDate).slice(0, 10) : "");
+    draftValidityDate || toDateInputValue(attachment.validityDate);
   const validitySummary = getValiditySummary(currentValidityDate || null);
   const hasValidityDate = currentValidityDate.length > 0;
   const validityEnabled = hasValidityDate || isEditingValidity;
@@ -1368,7 +1387,6 @@ export function JobWorkspaceClient({
   const [customDocumentName, setCustomDocumentName] = useState("");
   const [customDocumentFile, setCustomDocumentFile] = useState<File | null>(null);
   const [customerApprovalNow, setCustomerApprovalNow] = useState(() => Date.now());
-  const [workspaceSearchQuery, setWorkspaceSearchQuery] = useState("");
   const activeExceptionRequirement =
     activeDocReqId ? documentRequirements.find((req: any) => req.id === activeDocReqId) ?? null : null;
   const section49Requirement = visibleDocumentRequirements.find((req: any) => req.name === "Section 49") ?? null;
@@ -1534,6 +1552,7 @@ export function JobWorkspaceClient({
   const [executionTimelineModalOpen, setExecutionTimelineModalOpen] = useState(false);
   const [queryProcessingPanelExpanded, setQueryProcessingPanelExpanded] = useState(false);
   const [goBackOpen, setGoBackOpen] = useState(false);
+  const [goBackMode, setGoBackMode] = useState<"previous" | "return">("previous");
   const [goBackReason, setGoBackReason] = useState("");
   const [selectedJumpBackNodeKey, setSelectedJumpBackNodeKey] = useState("");
   const [nodeRemarks, setNodeRemarks] = useState("");
@@ -1810,6 +1829,12 @@ export function JobWorkspaceClient({
   const pendingBlockedStage = filingInstance?.pendingBlockedStage || null;
   const canResumePendingBlockedStage = !!filingInstance?.canResumePendingBlockedStage;
   const jumpBackTargets = filingInstance?.jumpBackTargets || [];
+  const returnToCurrentTarget = filingInstance?.returnToCurrentTarget || null;
+  const canReturnToCurrentStage = Boolean(
+    returnToCurrentTarget &&
+    activeNodeRun &&
+    returnToCurrentTarget.nodeKey !== activeNodeRun.nodeKey,
+  );
   const isActiveStageBlocked = !!activeNodePrerequisiteStatus?.isBlocked;
   const hasShipmentBillNumberField = activeNodeFieldKeys.has("bill_number");
   const activeNodeHasConditionalFields = visibleNodeConditionalSections.some(
@@ -3977,11 +4002,11 @@ export function JobWorkspaceClient({
     if (!activeNodeRun) return;
     const currentFilingDraftStorageKey = filingDraftStorageKey;
     if (!selectedJumpBackNodeKey) {
-      toast.error("Select the filing stage you want to reopen.");
+      toast.error(goBackMode === "return" ? "No return stage is available right now." : "Select the filing stage you want to reopen.");
       return;
     }
     if (!goBackReason.trim()) {
-      toast.error("Enter a reason to jump back to the selected filing stage.");
+      toast.error(goBackMode === "return" ? "Enter a reason to return to the current stage." : "Enter a reason to jump back to the selected filing stage.");
       return;
     }
     setLoading("filing-go-back");
@@ -3989,8 +4014,13 @@ export function JobWorkspaceClient({
       const res = await actions.revertFilingStageAction(job.id, activeNodeRun.id, selectedJumpBackNodeKey, goBackReason.trim());
       if (res.ok) {
         clearFilingNodeDraft(currentFilingDraftStorageKey);
-        toast.success(`Jumped back to ${res.data?.reopenedNodeName || "the selected stage"}.`);
+        toast.success(
+          goBackMode === "return"
+            ? `Returned to ${res.data?.reopenedNodeName || "the current stage"}.`
+            : `Jumped back to ${res.data?.reopenedNodeName || "the selected stage"}.`,
+        );
         setGoBackOpen(false);
+        setGoBackMode("previous");
         setGoBackReason("");
         setSelectedJumpBackNodeKey("");
         await loadFilingData();
@@ -4100,10 +4130,25 @@ export function JobWorkspaceClient({
     try {
       const res = await actions.updateFilingAttachmentValidityAction(job.id, attachmentId, validityDate);
       if (res.ok) {
+        const savedValidityDate = toDateInputValue(res.data?.validityDate ?? validityDate);
+        setFilingInstance((current: any) => {
+          if (!current) return current;
+          return {
+            ...current,
+            attachments: (current.attachments || []).map((attachment: any) =>
+              attachment.id === attachmentId
+                ? {
+                    ...attachment,
+                    validityDate: savedValidityDate || null,
+                  }
+                : attachment,
+            ),
+          };
+        });
         setAttachmentValidityDrafts((prev) => {
           const next = { ...prev };
-          if (validityDate) {
-            next[attachmentId] = validityDate;
+          if (savedValidityDate) {
+            next[attachmentId] = savedValidityDate;
           } else {
             delete next[attachmentId];
           }
@@ -4111,9 +4156,9 @@ export function JobWorkspaceClient({
         });
         setAttachmentValidityEditors((prev) => ({
           ...prev,
-          [attachmentId]: Boolean(validityDate),
+          [attachmentId]: Boolean(savedValidityDate),
         }));
-        toast.success(validityDate ? "Validity date updated." : "Validity date cleared.");
+        toast.success(savedValidityDate ? "Validity date updated." : "Validity date cleared.");
         await loadFilingData();
         refreshJobInBackground();
       } else {
@@ -4233,11 +4278,17 @@ export function JobWorkspaceClient({
   const handleUploadNodeDocument = async (documentRequirementKey: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !activeNodeRun) return;
+    const requirement = [...activeNodeDocumentRequirements, ...visibleNodeConditionalSections.flatMap((section: any) => section.unlocksDocuments ?? [])]
+      .find((entry: any) => entry.key === documentRequirementKey);
+    const validityDateValue = requirement?.requiresValidity ? getUploadValidityDate() : "";
 
     setLoading(`node-document-${documentRequirementKey}`);
     try {
       const formData = new FormData();
       formData.append("file", file);
+      if (validityDateValue) {
+        formData.append("validityDate", validityDateValue);
+      }
       const res = await actions.uploadFilingAttachmentAction(job.id, activeNodeRun.id, null, null, documentRequirementKey, formData);
       if (res.ok) {
         markLatestVerifiedChecklistItemForReverification();
@@ -4772,12 +4823,62 @@ export function JobWorkspaceClient({
             new Date(left.completedAt || left.updatedAt || left.createdAt).getTime(),
         )
         .map((run: any) => ({
+          id: run.id,
           nodeName: run.node?.name || run.nodeName || "Completed Stage",
           completedAt: run.completedAt || run.updatedAt || run.createdAt,
           completedByName: run.completedBy?.name || run.completedByName || null,
         })),
     [filingInstance?.nodeRuns],
   );
+  const latestCompletedRunForActiveNode = useMemo(() => {
+    if (!activeNodeRun?.nodeKey) return null;
+    return (filingInstance?.nodeRuns || [])
+      .filter((run: any) => run.status === "COMPLETED" && run.nodeKey === activeNodeRun.nodeKey)
+      .sort(
+        (left: any, right: any) =>
+          new Date(right.completedAt || right.updatedAt || right.createdAt).getTime() -
+          new Date(left.completedAt || left.updatedAt || left.createdAt).getTime(),
+      )[0] ?? null;
+  }, [activeNodeRun?.nodeKey, filingInstance?.nodeRuns]);
+  const filingBannerStatus = useMemo(() => {
+    if (loading === "complete-filing-node") {
+      return {
+        label: "Completing...",
+        description: "Final handoff is in progress for this filing stage.",
+      };
+    }
+    if (isActiveStageBlocked) {
+      return {
+        label: "Blocked",
+        description:
+          activeNodePrerequisiteStatus?.missingNodeNames?.length
+            ? `Waiting on ${activeNodePrerequisiteStatus.missingNodeNames.join(", ")} before this stage can continue.`
+            : "This stage is blocked until its prerequisite workflow conditions are satisfied.",
+      };
+    }
+    if (latestCompletedRunForActiveNode) {
+      const reopenedAt = activeNodeRun?.createdAt || activeNodeRun?.updatedAt || null;
+      const reopenedAtLabel = reopenedAt ? new Date(reopenedAt).toLocaleString("en-IN") : null;
+      return {
+        label: "Reopened Live",
+        description: reopenedAtLabel
+          ? `This stage was reopened and is currently live again from ${reopenedAtLabel}.`
+          : "This completed stage was reopened and is currently live again.",
+      };
+    }
+    return {
+      label: "In Progress",
+      description: activeNodeSubtitle || "Complete this active stage to continue the filing workflow.",
+    };
+  }, [
+    activeNodePrerequisiteStatus?.missingNodeNames,
+    activeNodeRun?.createdAt,
+    activeNodeRun?.updatedAt,
+    activeNodeSubtitle,
+    isActiveStageBlocked,
+    latestCompletedRunForActiveNode,
+    loading,
+  ]);
 
   const showFilingStage = activeStepIndex >= 4;
   const showFiledStage = activeStepIndex >= 5;
@@ -5317,78 +5418,6 @@ export function JobWorkspaceClient({
         />
       ))}
 
-      {/* â”€â”€ Job Header â”€â”€ */}
-      <section className="overflow-hidden rounded-[30px] border border-[#2563eb]/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(243,247,255,0.97))] px-5 py-5 shadow-[0_24px_56px_-40px_rgba(15,23,42,0.24)] dark:bg-[linear-gradient(180deg,rgba(18,24,36,0.98),rgba(14,20,31,0.98))]">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex min-w-0 items-center gap-3">
-            <Button type="button" variant="outline" mode="icon" onClick={() => router.back()} aria-label="Go back">
-              <ArrowRight size={16} className="rotate-180" />
-            </Button>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2 text-sm text-on-surface-variant">
-                <span>Filing</span>
-                <ChevronRight size={14} />
-                <span>Jobs</span>
-                <ChevronRight size={14} />
-                <span className="ds-numeric text-[#2563eb] dark:text-[#9ab8ff]">{job.jobNumber}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative min-w-0 sm:min-w-[320px]">
-              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
-              <Input
-                value={workspaceSearchQuery}
-                onChange={(event) => setWorkspaceSearchQuery(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && workspaceSearchQuery.trim()) {
-                    router.push(`/cha/jobs?search=${encodeURIComponent(workspaceSearchQuery.trim())}`);
-                  }
-                }}
-                placeholder="Search job, customer, reference..."
-                className="pl-10"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" mode="icon" onClick={() => toast.info("Workspace help is available through the CHA workflow panels.")}>
-                <HelpCircle size={16} />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                mode="icon"
-                onClick={() => {
-                  const root = document.documentElement;
-                  const nextTheme = root.classList.contains("dark") ? "light" : "dark";
-                  root.classList.remove("light", "dark");
-                  root.classList.add(nextTheme);
-                  root.style.colorScheme = nextTheme;
-                  window.localStorage.setItem("theme", nextTheme);
-                }}
-                aria-label="Toggle appearance"
-              >
-                <Moon size={16} />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                mode="icon"
-                onClick={() => {
-                  if (document.fullscreenElement) {
-                    void document.exitFullscreen();
-                  } else {
-                    void document.documentElement.requestFullscreen();
-                  }
-                }}
-              >
-                <Maximize2 size={16} />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section className="overflow-hidden rounded-[32px] border border-[#2563eb]/18 bg-surface shadow-[0_22px_54px_-42px_rgba(15,23,42,0.34)]">
         <div className="min-w-0">
           {/* Top row: identity + actions */}
@@ -5450,24 +5479,28 @@ export function JobWorkspaceClient({
           </div>
 
           {/* Meta row: customer Â· owner Â· manager â€” full width, no stacking */}
-          <div className="grid gap-3 border-t border-[#2563eb]/12 bg-surface-container-low/25 px-5 py-4 md:grid-cols-2 xl:grid-cols-[repeat(7,minmax(0,1fr))]">
+          <div className="grid items-stretch gap-3 border-t border-[#2563eb]/12 bg-surface-container-low/25 px-5 py-4 md:grid-cols-2 xl:grid-cols-[repeat(7,minmax(0,1fr))] xl:gap-0">
             {overviewMetaItems.map((item) => (
               <div
                 key={item.label}
-                className="flex items-start gap-3 rounded-[18px] border border-[#2563eb]/14 bg-surface px-3 py-3 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.18)]"
+                className="flex h-full items-start gap-3 rounded-[18px] border border-[#2563eb]/14 bg-surface px-3 py-3 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.18)] xl:min-h-[84px] xl:rounded-none xl:border-y-0 xl:border-l-0 xl:border-r xl:border-r-[#dbeafe] xl:bg-transparent xl:px-4 xl:py-1.5 xl:shadow-none xl:last:border-r-0 dark:xl:border-r-white/8"
               >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#2563eb]/10 text-[#2563eb] dark:text-[#9ab8ff]">{item.icon}</span>
-                <div className="min-w-0">
-                  <p className="ds-label">{item.label}</p>
-                  <p className="mt-1 truncate text-sm font-semibold text-on-surface">{item.value}</p>
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#2563eb]/10 text-[#2563eb] xl:mt-0.5 dark:text-[#9ab8ff]">{item.icon}</span>
+                <div className="flex min-h-[52px] min-w-0 flex-1 flex-col overflow-hidden">
+                  <p className="ds-label leading-none">{item.label}</p>
+                  <p className="mt-1.5 text-sm font-semibold leading-5 text-on-surface break-words [overflow-wrap:anywhere]">
+                    {item.value}
+                  </p>
                   {item.secondary ? (
-                    <p className="mt-0.5 truncate text-xs text-on-surface-variant">{item.secondary}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-on-surface-variant break-all">
+                      {item.secondary}
+                    </p>
                   ) : null}
                   {item.label === "Manager" && canUpdateJob ? (
                     <button
                       type="button"
                       onClick={() => setIsEditingManager(true)}
-                      className="mt-2 rounded-full border border-[#2563eb]/25 bg-[#2563eb]/8 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2563eb] transition-colors hover:bg-[#2563eb]/14 dark:text-[#9ab8ff]"
+                      className="mt-auto self-start pt-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2563eb] transition-colors hover:text-[#1d4ed8] dark:text-[#9ab8ff] dark:hover:text-white"
                     >
                       Change
                     </button>
@@ -6686,6 +6719,8 @@ export function JobWorkspaceClient({
                         <FileUploadField
                           id="checklist-file-upload"
                           disabled={loading === "checklist-upload" || internalApproversCount === 0}
+                          uploading={loading === "checklist-upload"}
+                          uploadingLabel="Uploading checklist..."
                           helperText="Any file format is allowed here. The uploaded file will move into internal approval automatically."
                           triggerText="Drag and drop or choose checklist file to upload"
                           selectedFile={
@@ -7322,6 +7357,160 @@ export function JobWorkspaceClient({
                                               ))}
                                             </div>
                                           ) : null}
+                                          {activeChecklistItems.length === 0 && activeNodeDocumentRequirements.length > 0 && (() => {
+                                            const requiredDocumentTotal = activeNodeDocumentRequirements.filter((requirement: any) => requirement.required !== false).length;
+                                            const requiredDocumentUploadedCount = activeNodeDocumentRequirements.filter(
+                                              (requirement: any) => requirement.required !== false && !!activeNodeDocumentAttachmentsByKey.get(requirement.key),
+                                            ).length;
+                                            const isCompleted = requiredDocumentUploadedCount >= requiredDocumentTotal;
+                                            const liveCompletionPercent = requiredDocumentTotal > 0 ? Math.round((requiredDocumentUploadedCount / requiredDocumentTotal) * 100) : 100;
+                                            
+                                            return (
+                                              <div className="space-y-3 pt-3 border-t border-outline-variant/30 mt-3">
+                                                <h4 className="ds-label text-on-surface">Stage Checklist Verification</h4>
+                                                <div
+                                                  className={`relative overflow-hidden rounded-[22px] border p-3.5 space-y-2.5 transition-all duration-200 ${
+                                                    isCompleted
+                                                      ? "border-[#22c55e]/30 bg-surface shadow-[0_18px_36px_-26px_rgba(34,197,94,0.22)]"
+                                                      : "border-[#6366f1]/22 bg-surface shadow-[0_20px_40px_-30px_rgba(99,102,241,0.22)]"
+                                                  }`}
+                                                >
+                                                  <div className={`pointer-events-none absolute inset-y-4 left-0 w-1 rounded-full ${isCompleted ? "bg-[#22c55e]" : "bg-[#6366f1]"}`} />
+                                                  
+                                                  <div className="flex w-full items-start justify-between gap-4 bg-transparent text-left">
+                                                    <div className="flex min-w-0 flex-1 items-start gap-2.5">
+                                                      <span
+                                                        className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-[12px] border text-xs font-bold transition-all ${
+                                                          isCompleted
+                                                            ? "border-[#22c55e]/35 bg-[#22c55e] text-white shadow-[0_14px_24px_-16px_rgba(34,197,94,0.45)]"
+                                                            : "border-[#6366f1]/25 bg-[#6366f1] text-white shadow-[0_16px_28px_-18px_rgba(99,102,241,0.45)]"
+                                                        }`}
+                                                      >
+                                                        {isCompleted ? <Check size={16} /> : <span className="ds-numeric">01</span>}
+                                                      </span>
+                                                      <div className="min-w-0 flex-1 space-y-1.5">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                          <span className="ds-label text-on-surface-variant">Verification Item</span>
+                                                          <span
+                                                            className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] ${
+                                                              isCompleted ? "bg-[#22c55e]/12 text-[#15803d]" : "bg-[#fb923c]/12 text-[#c76628]"
+                                                            }`}
+                                                          >
+                                                            {isCompleted ? "Verified" : "Upload Required"}
+                                                          </span>
+                                                        </div>
+                                                        <div className="block text-[13px] font-semibold leading-5 text-on-surface">
+                                                          Filing Document Verification <span className="text-red-500 font-bold">*</span>
+                                                        </div>
+                                                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                                          <span
+                                                            className={`rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] ${
+                                                              isCompleted ? "bg-[#22c55e]/12 text-[#15803d]" : "bg-[#fb923c]/12 text-[#c76628]"
+                                                            }`}
+                                                          >
+                                                            {isCompleted ? "Verified Live" : "Uploads Pending"}
+                                                          </span>
+                                                          <span className="rounded-full bg-surface-container-low px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-on-surface-variant font-mono">
+                                                            Docs {requiredDocumentUploadedCount}/{requiredDocumentTotal}
+                                                          </span>
+                                                        </div>
+                                                        <div className="space-y-1 pt-0.5">
+                                                          <div className="flex items-center justify-between gap-3 text-[10px] text-on-surface-variant">
+                                                            <span>Live completion</span>
+                                                            <span className="ds-numeric">{liveCompletionPercent}%</span>
+                                                          </div>
+                                                          <div className="h-1 overflow-hidden rounded-full bg-surface-container-low">
+                                                            <div
+                                                              className={`h-full rounded-full transition-all duration-300 ${isCompleted ? "bg-[#22c55e]" : "bg-[#00cec4]"}`}
+                                                              style={{ width: `${liveCompletionPercent}%` }}
+                                                            />
+                                                          </div>
+                                                        </div>
+                                                      </div>
+                                                    </div>
+                                                    <div className="shrink-0 self-center text-right">
+                                                      <div className="ds-label text-on-surface-variant font-bold">Item 1 of 1</div>
+                                                      <div className="mt-0.5 text-[12px] leading-4 text-on-surface-variant ds-numeric font-mono">
+                                                        2 BD
+                                                      </div>
+                                                    </div>
+                                                  </div>
+
+                                                  <div className="ml-10 space-y-2">
+                                                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-outline-variant/20 pt-2.5">
+                                                      <label className="ds-label block">Required Documents</label>
+                                                      <span className="text-[11px] text-on-surface-variant ds-numeric font-mono">
+                                                        Uploaded {requiredDocumentUploadedCount} / {requiredDocumentTotal}
+                                                      </span>
+                                                    </div>
+                                                    <div className="space-y-2.5">
+                                                      {activeNodeDocumentRequirements.map((requirement: any) => {
+                                                        const uploadedAttachment = activeNodeDocumentAttachmentsByKey.get(requirement.key);
+                                                        return (
+                                                          <div key={requirement.key} className="space-y-2">
+                                                            <FileUploadField
+                                                              id={`node-document-upload-standalone-${activeNodeRun.id}-${requirement.key}`}
+                                                              compact
+                                                              disabled={loading === `node-document-${requirement.key}`}
+                                                              uploading={loading === `node-document-${requirement.key}`}
+                                                              uploadingLabel={`Uploading ${requirement.label}...`}
+                                                              helperText={`Accepted formats: PDF and images. Uploading here ${requirement.allowReplacement !== false ? "replaces the current" : "adds the"} ${requirement.label}.`}
+                                                              triggerText={`Drag and drop or choose file to ${uploadedAttachment && requirement.allowReplacement !== false ? "replace" : "upload"} the ${requirement.label}`}
+                                                              showSelectedPreview={false}
+                                                              onInputChange={(e) => handleUploadNodeDocument(requirement.key, e)}
+                                                            />
+                                                            {uploadedAttachment ? (
+                                                              <FilingAttachmentValidityRow
+                                                                attachment={uploadedAttachment}
+                                                                draftValidityDate={
+                                                                  attachmentValidityDrafts[uploadedAttachment.id]
+                                                                  ?? toDateInputValue(uploadedAttachment.validityDate)
+                                                                }
+                                                                isEditingValidity={
+                                                                  attachmentValidityEditors[uploadedAttachment.id]
+                                                                  ?? Boolean(uploadedAttachment.validityDate)
+                                                                }
+                                                                isSaving={loading === `filing-attachment-validity-${uploadedAttachment.id}`}
+                                                                onDraftChange={(value) =>
+                                                                  setAttachmentValidityDrafts((prev) => ({
+                                                                    ...prev,
+                                                                    [uploadedAttachment.id]: value,
+                                                                  }))
+                                                                }
+                                                                onRemove={() => void handleDeleteFilingPhoto(uploadedAttachment.id)}
+                                                                onSaveValidity={(value) => void handleUpdateFilingAttachmentValidity(uploadedAttachment.id, value)}
+                                                                onToggleValidity={(enabled) => {
+                                                                  setAttachmentValidityEditors((prev) => ({
+                                                                    ...prev,
+                                                                    [uploadedAttachment.id]: enabled,
+                                                                  }));
+                                                                  if (!enabled && uploadedAttachment.validityDate) {
+                                                                    void handleUpdateFilingAttachmentValidity(uploadedAttachment.id, null);
+                                                                  }
+                                                                }}
+                                                              />
+                                                            ) : null}
+                                                          </div>
+                                                        );
+                                                      })}
+                                                    </div>
+                                                  </div>
+                                                  
+                                                  {!isCompleted && (
+                                                    <div className="rounded-xl border border-[#fb923c]/30 bg-[#fb923c]/6 px-3 py-2 text-[11px] text-on-surface-variant">
+                                                      Upload every required document for this filing step before verification becomes available.
+                                                    </div>
+                                                  )}
+                                                  
+                                                  {isCompleted && (
+                                                    <div className="rounded-xl border border-outline-variant/60 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
+                                                      Completed and ready.
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            );
+                                          })()}
                                         </div>
                                       ) : null}
                                       {activeNodeRun.node.checklistItems?.length > 0 && (
@@ -7554,6 +7743,9 @@ export function JobWorkspaceClient({
                                                               <FileUploadField
                                                                 id={`node-document-upload-inline-${activeNodeRun.id}-${requirement.key}`}
                                                                 compact
+                                                                disabled={loading === `node-document-${requirement.key}`}
+                                                                uploading={loading === `node-document-${requirement.key}`}
+                                                                uploadingLabel={`Uploading ${requirement.label}...`}
                                                                 helperText={`Accepted formats: PDF and images. Uploading here ${requirement.allowReplacement !== false ? "replaces the current" : "adds the"} ${requirement.label}.`}
                                                                 triggerText={`Drag and drop or choose file to ${requirement.allowReplacement !== false ? "replace" : "upload"} the ${requirement.label}`}
                                                                 showSelectedPreview={false}
@@ -7564,7 +7756,7 @@ export function JobWorkspaceClient({
                                                                   attachment={uploadedAttachment}
                                                                   draftValidityDate={
                                                                     attachmentValidityDrafts[uploadedAttachment.id]
-                                                                    ?? (uploadedAttachment.validityDate ? String(uploadedAttachment.validityDate).slice(0, 10) : "")
+                                                                    ?? toDateInputValue(uploadedAttachment.validityDate)
                                                                   }
                                                                   isEditingValidity={
                                                                     attachmentValidityEditors[uploadedAttachment.id]
@@ -7671,6 +7863,8 @@ export function JobWorkspaceClient({
                                                         id={`checklist-item-upload-${item.id}`}
                                                         compact
                                                         disabled={loading === `checklist-item-file-${item.id}`}
+                                                        uploading={loading === `checklist-item-file-${item.id}`}
+                                                        uploadingLabel="Uploading support file..."
                                                         helperText="Add images or documents here. This upload counts toward this checklist item directly."
                                                         triggerText="Drag and drop or choose supporting file to upload"
                                                         showSelectedPreview={false}
@@ -7684,7 +7878,7 @@ export function JobWorkspaceClient({
                                                               attachment={attachment}
                                                               draftValidityDate={
                                                                 attachmentValidityDrafts[attachment.id]
-                                                                ?? (attachment.validityDate ? String(attachment.validityDate).slice(0, 10) : "")
+                                                                ?? toDateInputValue(attachment.validityDate)
                                                               }
                                                               isEditingValidity={
                                                                 attachmentValidityEditors[attachment.id]
@@ -7785,6 +7979,9 @@ export function JobWorkspaceClient({
                                                         <FileUploadField
                                                           id={`unlocked-node-document-upload-${section.key}-${requirement.key}`}
                                                           compact
+                                                          disabled={loading === `node-document-${requirement.key}`}
+                                                          uploading={loading === `node-document-${requirement.key}`}
+                                                          uploadingLabel={`Uploading ${requirement.label}...`}
                                                           showSelectedPreview={false}
                                                           triggerText="Choose file to upload"
                                                           onInputChange={(e) => handleUploadNodeDocument(requirement.key, e)}
@@ -8345,11 +8542,33 @@ export function JobWorkspaceClient({
                                                 type="button"
                                                 variant="outline"
                                                 disabled={loading !== null}
-                                                onClick={() => setGoBackOpen(true)}
+                                                onClick={() => {
+                                                  setGoBackMode("previous");
+                                                  setGoBackReason("");
+                                                  setSelectedJumpBackNodeKey(jumpBackTargets[0]?.nodeKey || "");
+                                                  setGoBackOpen(true);
+                                                }}
                                                 className="gap-2 rounded-[16px] border-[#00cec4]/40 bg-[#00cec4]/4 px-5 text-[#00a9b2]"
                                               >
                                                 <Undo2 size={16} />
                                                 Jump Back to Earlier Stage
+                                              </Button>
+                                            ) : null}
+                                            {canReturnToCurrentStage ? (
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                disabled={loading !== null}
+                                                onClick={() => {
+                                                  setGoBackMode("return");
+                                                  setGoBackReason("");
+                                                  setSelectedJumpBackNodeKey(returnToCurrentTarget?.nodeKey || "");
+                                                  setGoBackOpen(true);
+                                                }}
+                                                className="gap-2 rounded-[16px] border-[#2563eb]/35 bg-[#2563eb]/5 px-5 text-[#2563eb] dark:text-[#9ab8ff]"
+                                              >
+                                                <RotateCcw size={16} />
+                                                Jump Back to Current Stage
                                               </Button>
                                             ) : null}
                                           </div>
@@ -8364,6 +8583,8 @@ export function JobWorkspaceClient({
                                         nextStageName={outgoingEdges.length > 0 ? nextWorkflowTargetLabel : null}
                                         isBlocked={isActiveStageBlocked}
                                         isCompleting={loading === "complete-filing-node"}
+                                        activeStatusLabel={filingBannerStatus.label}
+                                        activeStatusDescription={filingBannerStatus.description}
                                       />
                                     </div>
                                   ) : null}
@@ -8396,6 +8617,8 @@ export function JobWorkspaceClient({
                                                     id={`photo-requirement-upload-${pr.id}`}
                                                     compact
                                                     disabled={loading === `filing-photo-${pr.id}`}
+                                                    uploading={loading === `filing-photo-${pr.id}`}
+                                                    uploadingLabel="Uploading requirement file..."
                                                     helperText="This upload is counted against the requirement above, not the checklist item upload count."
                                                     triggerText="Drag and drop or choose required image or document"
                                                     showSelectedPreview={false}
@@ -8455,34 +8678,57 @@ export function JobWorkspaceClient({
 
                                 <Modal
                                   open={goBackOpen}
-                                  title="Jump Back To Earlier Stage"
-                                  description="The current stage will be cancelled and the selected earlier filing stage will reopen as a fresh run. This move is recorded in the audit tab."
-                                  onClose={() => setGoBackOpen(false)}
+                                  title={goBackMode === "return" ? "Jump Back To Current Stage" : "Jump Back To Earlier Stage"}
+                                  description={
+                                    goBackMode === "return"
+                                      ? "The reopened earlier stage will be cancelled and the latest current filing stage will reopen as a fresh run. This move is recorded in the audit tab."
+                                      : "The current stage will be cancelled and the selected earlier filing stage will reopen as a fresh run. This move is recorded in the audit tab."
+                                  }
+                                  onClose={() => {
+                                    setGoBackOpen(false);
+                                    setGoBackMode("previous");
+                                    setGoBackReason("");
+                                    setSelectedJumpBackNodeKey("");
+                                  }}
                                   className="max-w-lg"
                                 >
                                   <div className="space-y-4">
+                                    {goBackMode === "return" && returnToCurrentTarget ? (
+                                      <div className="rounded-2xl border border-[#2563eb]/18 bg-[#2563eb]/5 px-4 py-3">
+                                        <div className="space-y-1">
+                                          <span className="ds-label text-[#2563eb] dark:text-[#9ab8ff]">Returning To</span>
+                                          <p className="text-sm font-semibold text-on-surface">{returnToCurrentTarget.nodeName}</p>
+                                          {returnToCurrentTarget.completedAt ? (
+                                            <p className="text-xs text-on-surface-variant">
+                                              Last cancelled on {new Date(returnToCurrentTarget.completedAt).toLocaleString("en-IN")}
+                                            </p>
+                                          ) : null}
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <label className="block space-y-1.5">
+                                        <span className="ds-label">Select Earlier Stage *</span>
+                                        <select
+                                          value={selectedJumpBackNodeKey}
+                                          onChange={(e) => setSelectedJumpBackNodeKey(e.target.value)}
+                                          className="w-full text-sm"
+                                        >
+                                          <option value="">-- Choose Earlier Stage --</option>
+                                          {jumpBackTargets.map((target: any) => (
+                                            <option key={target.nodeKey} value={target.nodeKey}>
+                                              {target.nodeName} {target.completedAt ? `(${new Date(target.completedAt).toLocaleString("en-IN")})` : ""}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </label>
+                                    )}
                                     <label className="block space-y-1.5">
-                                      <span className="ds-label">Select Earlier Stage *</span>
-                                      <select
-                                        value={selectedJumpBackNodeKey}
-                                        onChange={(e) => setSelectedJumpBackNodeKey(e.target.value)}
-                                        className="w-full text-sm"
-                                      >
-                                        <option value="">-- Choose Earlier Stage --</option>
-                                        {jumpBackTargets.map((target: any) => (
-                                          <option key={target.nodeKey} value={target.nodeKey}>
-                                            {target.nodeName} {target.completedAt ? `(${new Date(target.completedAt).toLocaleString("en-IN")})` : ""}
-                                          </option>
-                                        ))}
-                                      </select>
-                                    </label>
-                                    <label className="block space-y-1.5">
-                                      <span className="ds-label">Reason for jump-back *</span>
+                                      <span className="ds-label">{goBackMode === "return" ? "Reason for return *" : "Reason for jump-back *"}</span>
                                       <textarea
                                         rows={3}
                                         value={goBackReason}
                                         onChange={(e) => setGoBackReason(e.target.value)}
-                                        placeholder="Explain why this filing stage must be reworked..."
+                                        placeholder={goBackMode === "return" ? "Explain why the workflow should return to the current filing stage..." : "Explain why this filing stage must be reworked..."}
                                         className="w-full text-sm"
                                         required
                                       />
@@ -8492,7 +8738,12 @@ export function JobWorkspaceClient({
                                         type="button"
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setGoBackOpen(false)}
+                                        onClick={() => {
+                                          setGoBackOpen(false);
+                                          setGoBackMode("previous");
+                                          setGoBackReason("");
+                                          setSelectedJumpBackNodeKey("");
+                                        }}
                                         disabled={loading === "filing-go-back"}
                                       >
                                         Cancel
@@ -8503,8 +8754,8 @@ export function JobWorkspaceClient({
                                         disabled={loading === "filing-go-back" || !goBackReason.trim() || !selectedJumpBackNodeKey}
                                         onClick={() => void handleGoBackStage()}
                                       >
-                                        <Undo2 size={13} />
-                                        {loading === "filing-go-back" ? "Jumping Back..." : "Confirm Jump Back"}
+                                        {goBackMode === "return" ? <RotateCcw size={13} /> : <Undo2 size={13} />}
+                                        {loading === "filing-go-back" ? (goBackMode === "return" ? "Returning..." : "Jumping Back...") : (goBackMode === "return" ? "Confirm Return" : "Confirm Jump Back")}
                                       </Button>
                                     </div>
                                   </div>
@@ -9750,6 +10001,8 @@ export function JobWorkspaceClient({
               <div className="space-y-4">
                 <FileUploadField
                   id={`document-upload-modal-${uploadDocumentModalRequirement.id}`}
+                  uploading={loading === `doc-${uploadDocumentModalRequirement.id}`}
+                  uploadingLabel={`Uploading ${uploadDocumentModalRequirement.name}...`}
                   helperText="Choose the file for this document requirement. If a validity date is required, you will be prompted next."
                   triggerText="Drag and drop or choose file to upload"
                   onInputChange={(e) => {

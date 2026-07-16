@@ -4,15 +4,334 @@ import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { X, FilePlus, Trash2, Sparkles } from "lucide-react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import {
+  X,
+  FilePlus,
+  Trash2,
+  Sparkles,
+  ArrowRight,
+  BadgeCheck,
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  ChevronsRight,
+  CircleDot,
+  Clock3,
+  FileText,
+  MapPinned,
+  Package2,
+  Plane,
+  Rocket,
+  Route,
+  Search,
+  ShieldCheck,
+  Ship,
+  TrainFront,
+  Truck,
+  UserRound,
+  Users2,
+  Warehouse,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {createJobAction,createJobTypeAction,createShipmentTypeAction,getNextJobNumberPreviewAction,} from "@/modules/cha/actions";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 const ADD_NEW_JOB_TYPE = "__add_new_job_type__";
 const ADD_NEW_SHIPMENT_TYPE = "__add_new_shipment_type__";
 const ALWAYS_VISIBLE_OWNER_MANAGER_EMAILS = ["hr@adarshshipping.in"];
+const CHA_CREATE_TEXTAREA_CLASS =
+  "min-h-[112px] w-full rounded-[18px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] px-4 py-3 text-sm text-[var(--cha-create-text)] shadow-[0_16px_36px_-34px_rgba(15,23,42,0.24)] outline-none transition placeholder:text-[var(--cha-create-muted)] focus:border-[var(--cha-create-primary)] focus:ring-4 focus:ring-[var(--cha-create-ring)] dark:shadow-[0_24px_60px_-42px_rgba(2,6,23,0.9)]";
+const CHA_CREATE_INPUT_CLASS =
+  "!h-11 !rounded-[18px] !border-[var(--cha-create-border)] !bg-[var(--cha-create-card)] !text-[var(--cha-create-text)] !shadow-[0_14px_34px_-32px_rgba(15,23,42,0.22)] placeholder:!text-[var(--cha-create-muted)] focus:!border-[var(--cha-create-primary)] focus:!ring-4 focus:!ring-[var(--cha-create-ring)] dark:!shadow-[0_24px_60px_-42px_rgba(2,6,23,0.9)]";
+const CHA_CREATE_SELECT_CLASS =
+  "!h-11 !rounded-[18px] !border-[var(--cha-create-border)] !bg-[var(--cha-create-card)] !text-[var(--cha-create-text)] !shadow-[0_14px_34px_-32px_rgba(15,23,42,0.22)] hover:!border-[var(--cha-create-primary-border)] hover:!bg-[var(--cha-create-card-alt)] focus-visible:!border-[var(--cha-create-primary)] focus-visible:!ring-4 focus-visible:!ring-[var(--cha-create-ring)] dark:!shadow-[0_24px_60px_-42px_rgba(2,6,23,0.9)]";
+
+type CreatedJobSummary = {
+  id: string;
+  jobNumber: string;
+  customerName: string;
+  shipmentTypeName: string;
+  managerName: string;
+};
+
+function getPriorityPresentation(priority: string) {
+  switch (priority) {
+    case "HIGH":
+      return {
+        badge: "P1",
+        tone:
+          "border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/12 dark:text-red-200",
+      };
+    case "LOW":
+      return {
+        badge: "P3",
+        tone:
+          "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-500/30 dark:bg-slate-500/12 dark:text-slate-200",
+      };
+    case "MEDIUM":
+    default:
+      return {
+        badge: "P2",
+        tone:
+          "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/12 dark:text-amber-200",
+      };
+  }
+}
+
+function getShipmentVisual(shipmentTypeName: string) {
+  const normalized = shipmentTypeName.toLowerCase();
+  if (normalized.includes("air")) return { Icon: Plane, label: "Air shipment" };
+  if (normalized.includes("road") || normalized.includes("truck")) return { Icon: Truck, label: "Road shipment" };
+  if (normalized.includes("rail") || normalized.includes("train")) return { Icon: TrainFront, label: "Rail shipment" };
+  return { Icon: Ship, label: "Sea shipment" };
+}
+
+function CreateJobBenefit({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: typeof Clock3;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3">
+      <span className="flex h-9 w-9 items-center justify-center rounded-[16px] border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-primary-soft)] text-[var(--cha-create-primary)]">
+        <Icon size={16} />
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-[var(--cha-create-text)]">{title}</p>
+        <p className="truncate text-xs text-[var(--cha-create-secondary)]">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+function CreateJobSection({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: typeof Users2;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-5 border-t border-[var(--cha-create-divider)] pt-6 first:border-t-0 first:pt-0">
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-primary-soft)] text-[var(--cha-create-primary)]">
+          <Icon size={18} />
+        </span>
+        <h3 className="text-base font-semibold uppercase tracking-[0.04em] text-[var(--cha-create-text)]">
+          {title}
+        </h3>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function CreateJobFieldLabel({
+  label,
+  required,
+  helper,
+}: {
+  label: string;
+  required?: boolean;
+  helper?: string;
+}) {
+  return (
+    <div className="mb-2 flex items-center gap-2">
+      <label className="text-sm font-medium text-[var(--cha-create-text)]">
+        {label}
+        {required ? <span className="ml-1 text-[var(--cha-create-primary)]">*</span> : null}
+      </label>
+      {helper ? <span className="text-xs text-[var(--cha-create-muted)]">{helper}</span> : null}
+    </div>
+  );
+}
+
+function CreateJobSuccessOverlay({
+  open,
+  summary,
+  onOpenJob,
+  onCreateAnother,
+  onAutoFinish,
+  reducedMotion,
+}: {
+  open: boolean;
+  summary: CreatedJobSummary | null;
+  onOpenJob: () => void;
+  onCreateAnother: () => void;
+  onAutoFinish: () => void;
+  reducedMotion: boolean;
+}) {
+  if (!summary) return null;
+
+  const { Icon: TransportIcon, label: transportLabel } = getShipmentVisual(summary.shipmentTypeName);
+
+  return (
+    <AnimatePresence>
+      {open ? (
+        <motion.div
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/78 p-3 backdrop-blur-md sm:p-4"
+          exit={{ opacity: 0 }}
+          initial={{ opacity: 0 }}
+        >
+          <motion.div
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="relative max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl overflow-y-auto rounded-[24px] border border-[rgba(148,163,184,0.18)] bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(15,23,42,0.94))] p-5 text-slate-50 shadow-[0_32px_100px_-38px_rgba(15,23,42,0.95)] sm:max-h-[calc(100dvh-2rem)] sm:rounded-[28px] sm:p-8"
+            exit={{ opacity: 0, y: 16, scale: 0.98 }}
+            initial={{ opacity: 0, y: 24, scale: 0.97 }}
+            transition={{ duration: 0.32, ease: "easeOut" }}
+          >
+            <div className="pointer-events-none absolute inset-0 opacity-50">
+              <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,rgba(96,165,250,0.22),transparent_60%)]" />
+              <div className="absolute right-10 top-8 h-40 w-80 rounded-full bg-[radial-gradient(circle,rgba(37,99,235,0.18),transparent_70%)] blur-2xl" />
+              <div
+                className="absolute inset-0 opacity-20"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(circle at 1px 1px, rgba(191,219,254,0.5) 1px, transparent 0)",
+                  backgroundSize: "28px 28px",
+                }}
+              />
+            </div>
+
+            <div className="relative space-y-5 sm:space-y-8">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">
+                    <CircleDot size={12} />
+                    Workflow launched
+                  </div>
+                  <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                    Customs Clearance Job Created
+                  </h2>
+                  <p className="max-w-2xl text-sm text-slate-300">
+                    The shipment workflow has been initialized successfully.
+                  </p>
+                </div>
+                <motion.button
+                  animate={reducedMotion ? { scale: 1 } : { scale: [1, 1.04, 1] }}
+                  className="flex h-12 w-12 items-center justify-center rounded-full border border-[rgba(96,165,250,0.24)] bg-[rgba(37,99,235,0.18)] text-[var(--cha-create-success-primary,#60A5FA)] shadow-[0_0_0_10px_rgba(37,99,235,0.08)] sm:h-14 sm:w-14"
+                  transition={reducedMotion ? { duration: 0 } : { duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+                  type="button"
+                >
+                  <CheckCircle2 size={24} />
+                </motion.button>
+              </div>
+
+              <div className="rounded-[20px] border border-[rgba(148,163,184,0.18)] bg-[rgba(15,23,42,0.72)] p-4 sm:rounded-[24px] sm:p-6">
+                <div className="relative overflow-hidden rounded-[20px] border border-[rgba(96,165,250,0.16)] bg-[linear-gradient(180deg,rgba(15,23,42,0.95),rgba(2,6,23,0.9))] px-4 py-5 sm:rounded-[22px] sm:px-5 sm:py-6">
+                  <div className="absolute inset-x-6 top-1/2 h-px -translate-y-1/2 border-t border-dashed border-[rgba(96,165,250,0.35)] sm:inset-x-10" />
+                  <div className="absolute left-8 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-emerald-400 shadow-[0_0_0_8px_rgba(16,185,129,0.12)] sm:left-12" />
+                  <div className="absolute right-8 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-emerald-400 shadow-[0_0_0_8px_rgba(16,185,129,0.12)] sm:right-12" />
+
+                  {reducedMotion ? (
+                    <div className="relative grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Origin</p>
+                        <p className="mt-1 text-sm font-semibold text-white">Job Initialized</p>
+                      </div>
+                      <div className="flex items-center justify-center rounded-full border border-[rgba(96,165,250,0.24)] bg-[rgba(37,99,235,0.18)] p-3 text-[var(--cha-create-success-primary,#60A5FA)]">
+                        <TransportIcon size={22} />
+                      </div>
+                      <div className="md:text-right">
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Destination</p>
+                        <p className="mt-1 text-sm font-semibold text-white">Workflow Active</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative h-20 sm:h-24">
+                      <motion.div
+                        animate={{ x: ["0%", "88%"] }}
+                        className="absolute top-1/2 z-10 flex -translate-y-1/2 items-center gap-3 rounded-full border border-[rgba(96,165,250,0.24)] bg-[rgba(15,23,42,0.92)] px-4 py-2 text-[var(--cha-create-success-primary,#60A5FA)] shadow-[0_20px_40px_-28px_rgba(37,99,235,0.7)]"
+                        initial={{ x: "0%" }}
+                        transition={{ duration: 1.2, ease: [0.2, 0.8, 0.2, 1] }}
+                      >
+                        <TransportIcon size={20} />
+                        <span className="text-xs font-semibold uppercase tracking-[0.16em]">{transportLabel}</span>
+                      </motion.div>
+                      <div className="absolute inset-x-8 top-1/2 flex -translate-y-1/2 items-center justify-between">
+                        {["Job created", "Documents initialized", "Team assigned", "Workflow launched"].map((label, index) => (
+                          <motion.div
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="flex flex-col items-center gap-2"
+                            initial={{ opacity: 0.25, scale: 0.92 }}
+                            key={label}
+                            transition={{ delay: 0.28 + index * 0.18, duration: 0.24 }}
+                          >
+                            <span className="h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_0_8px_rgba(16,185,129,0.14)]" />
+                            <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400">{label}</span>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-4">
+                {[
+                  { label: "Job Number", value: summary.jobNumber },
+                  { label: "Customer", value: summary.customerName },
+                  { label: "Shipment Type", value: summary.shipmentTypeName },
+                  { label: "Assigned Manager", value: summary.managerName },
+                ].map((item) => (
+                  <div
+                    className="rounded-2xl border border-[rgba(148,163,184,0.16)] bg-[rgba(15,23,42,0.68)] px-4 py-3"
+                    key={item.label}
+                  >
+                    <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
+                    <p className="mt-1 text-sm font-semibold text-white">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-slate-400">
+                  Redirecting back to CHA shortly.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    className="ds-plain rounded-2xl border border-[rgba(148,163,184,0.18)] bg-[rgba(15,23,42,0.72)] px-5 py-2.5 text-sm text-white hover:border-[rgba(96,165,250,0.32)] hover:bg-[rgba(15,23,42,0.88)]"
+                    onClick={onCreateAnother}
+                    type="button"
+                  >
+                    Create Another Job
+                  </Button>
+                  <Button
+                    className="!border-[var(--cha-create-success-primary,#60A5FA)] !bg-[var(--cha-create-success-primary,#2563EB)] !text-white hover:!bg-[#1D4ED8]"
+                    onClick={onOpenJob}
+                    type="button"
+                  >
+                    Open Job
+                    <ArrowRight size={15} />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <button
+              aria-label="Close success state"
+              className="absolute right-4 top-4 rounded-full border border-transparent p-2 text-slate-400 transition hover:border-[rgba(148,163,184,0.2)] hover:text-white"
+              onClick={onAutoFinish}
+              type="button"
+            >
+              <X size={18} />
+            </button>
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+}
 
 function buildFinancialYearLabel(format?: string | null) {
   const now = new Date();
@@ -69,13 +388,16 @@ export function CreateJobDialog({
 }: CreateJobDialogProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const reducedMotion = useReducedMotion();
   const draftRestoredRef = useRef(false);
   const createdCustomerAppliedRef = useRef(false);
   const autoAddedManagerIdRef = useRef<string>("");
   const previousGeneratedPreviewRef = useRef("");
+  const successRedirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Form State
   const [newJobNumber, setNewJobNumber] = useState("");
+  const [jobNumberMode, setJobNumberMode] = useState<"SYSTEM" | "MANUAL">("SYSTEM");
   const [newTitle, setNewTitle] = useState("");
   const [newCustomerId, setNewCustomerId] = useState("");
   const [newCustomerRef, setNewCustomerRef] = useState("");
@@ -103,8 +425,8 @@ export function CreateJobDialog({
   const [managerSearch, setManagerSearch] = useState("");
   const [showManagerDropdown, setShowManagerDropdown] = useState(false);
 
-  // 3D Success Animation state
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [createdJobSummary, setCreatedJobSummary] = useState<CreatedJobSummary | null>(null);
 
   // Loading States
   const [creating, setCreating] = useState(false);
@@ -133,9 +455,21 @@ export function CreateJobDialog({
   }, [options.shipmentTypes]);
 
   useEffect(() => {
+    return () => {
+      if (successRedirectTimerRef.current) {
+        clearTimeout(successRedirectTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (!open) {
       draftRestoredRef.current = false;
       createdCustomerAppliedRef.current = false;
+      if (successRedirectTimerRef.current) {
+        clearTimeout(successRedirectTimerRef.current);
+        successRedirectTimerRef.current = null;
+      }
       return;
     }
 
@@ -193,6 +527,7 @@ export function CreateJobDialog({
     const draft = localStorage.getItem("cha_draft_job");
     if (!draft) {
       setNewJobNumber("");
+      setJobNumberMode("SYSTEM");
       setNewTitle("");
       setNewCustomerId("");
       setNewCustomerRef("");
@@ -217,6 +552,7 @@ export function CreateJobDialog({
     try {
       const parsed = JSON.parse(draft);
       setNewJobNumber(parsed.jobNumber || "");
+      setJobNumberMode(parsed.jobNumberMode === "MANUAL" ? "MANUAL" : "SYSTEM");
       setNewTitle(parsed.title || "");
       setNewCustomerId(parsed.customerId || "");
       setNewCustomerRef(parsed.customerRef || "");
@@ -260,6 +596,7 @@ export function CreateJobDialog({
   const saveDraft = () => {
     const draft = {
       jobNumber: newJobNumber,
+      jobNumberMode,
       title: newTitle,
       customerId: newCustomerId,
       customerRef: newCustomerRef,
@@ -478,6 +815,65 @@ export function CreateJobDialog({
     );
   };
 
+  const resetFormFields = () => {
+    if (successRedirectTimerRef.current) {
+      clearTimeout(successRedirectTimerRef.current);
+      successRedirectTimerRef.current = null;
+    }
+    setShowSuccessAnimation(false);
+    setCreatedJobSummary(null);
+    setNewJobNumber("");
+    setJobNumberMode("SYSTEM");
+    setNewTitle("");
+    setNewCustomerId("");
+    setNewCustomerRef("");
+    setNewJobTypeId("");
+    setNewShipmentTypeId("");
+    setNewBranchId("");
+    setNewPriority("MEDIUM");
+    setNewManagerId("");
+    const defaultOwner = displayedManagers.find((user) => user.id === currentUserId);
+    setNewOwnerId(currentUserId);
+    setOwnerSearch(defaultOwner ? `${defaultOwner.name} (${defaultOwner.email})` : "");
+    setManagerSearch("");
+    setNewRemarks("");
+    setEstimatedClosureDate("");
+    setCustomerSearch("");
+    setSelectedCustomerName("");
+    setAssignments([{ userId: currentUserId, responsibility: "OPERATIONS" }]);
+  };
+
+  const finishCreateFlow = (openCreatedJob?: boolean) => {
+    if (successRedirectTimerRef.current) {
+      clearTimeout(successRedirectTimerRef.current);
+      successRedirectTimerRef.current = null;
+    }
+
+    const createdJobId = createdJobSummary?.id;
+    resetFormFields();
+    onOpenChange(false);
+
+    if (openCreatedJob && createdJobId) {
+      router.push(`/cha/jobs/${createdJobId}`);
+      return;
+    }
+
+    if (onCreated) {
+      onCreated();
+    } else {
+      router.refresh();
+    }
+  };
+
+  const scheduleAutoFinish = () => {
+    if (successRedirectTimerRef.current) {
+      clearTimeout(successRedirectTimerRef.current);
+    }
+    successRedirectTimerRef.current = setTimeout(() => {
+      finishCreateFlow(false);
+    }, reducedMotion ? 1400 : 2600);
+  };
+
   const handleCreateJob = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle || !newCustomerId || !newJobTypeId || !newShipmentTypeId || !newBranchId || !estimatedClosureDate) {
@@ -496,13 +892,17 @@ export function CreateJobDialog({
       toast.error("The selected branch is not configured for CHA job numbering yet. Please update CHA Settings.");
       return;
     }
+    if (jobNumberMode === "MANUAL" && !newJobNumber.trim()) {
+      toast.error("Enter a manual job number or switch back to system-generated numbering.");
+      return;
+    }
 
     const validAssignments = assignments.filter((a) => a.userId.trim() !== "");
 
     setCreating(true);
     try {
       const res = await createJobAction({
-        jobNumber: newJobNumber || undefined,
+        jobNumber: jobNumberMode === "MANUAL" ? newJobNumber.trim() || undefined : undefined,
         title: newTitle,
         customerId: newCustomerId,
         customerRef: newCustomerRef || undefined,
@@ -518,33 +918,21 @@ export function CreateJobDialog({
       });
 
       if (res.ok) {
+        const shipmentTypeName =
+          shipmentTypesList.find((shipmentType) => shipmentType.id === newShipmentTypeId)?.name ||
+          "Shipment";
+        const managerName =
+          displayedManagers.find((manager) => manager.id === newManagerId)?.name ||
+          "Assigned Manager";
+        setCreatedJobSummary({
+          id: res.data.id,
+          jobNumber: res.data.jobNumber,
+          customerName: selectedCustomerName || options.customers.find((customer) => customer.id === newCustomerId)?.name || "Customer",
+          shipmentTypeName,
+          managerName,
+        });
         setShowSuccessAnimation(true);
-        setTimeout(() => {
-          setShowSuccessAnimation(false);
-          onOpenChange(false);
-          // Clear fields
-          setNewJobNumber("");
-          setNewTitle("");
-          setNewCustomerId("");
-          setNewCustomerRef("");
-          setNewJobTypeId("");
-          setNewShipmentTypeId("");
-          setNewBranchId("");
-          setNewManagerId("");
-          const defaultOwner = displayedManagers.find((user) => user.id === currentUserId);
-          setOwnerSearch(defaultOwner ? `${defaultOwner.name} (${defaultOwner.email})` : "");
-          setManagerSearch("");
-          setNewRemarks("");
-          setEstimatedClosureDate("");
-          setCustomerSearch("");
-          setSelectedCustomerName("");
-          setAssignments([{ userId: currentUserId, responsibility: "OPERATIONS" }]);
-          if (onCreated) {
-            onCreated();
-          } else {
-            router.refresh();
-          }
-        }, 3000);
+        scheduleAutoFinish();
       } else {
         toast.error(res.error || "Failed to create job.");
       }
@@ -684,37 +1072,88 @@ export function CreateJobDialog({
     toast.success("Demo data filled in.");
   };
 
+  const priorityPresentation = getPriorityPresentation(newPriority);
+  const activeShipmentTypeName =
+    shipmentTypesList.find((shipmentType) => shipmentType.id === newShipmentTypeId)?.name || "Sea Freight";
+  const ActiveShipmentIcon = getShipmentVisual(activeShipmentTypeName).Icon;
+  const activeBranch = options.branches.find((branch) => branch.id === newBranchId);
+  const activeCustomer = options.customers.find((customer) => customer.id === newCustomerId);
+
   return (
     <>
-      <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-        <div className="flex min-h-[calc(100vh-2rem)] items-start justify-center py-3 sm:items-center">
-        <div className="flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-outline-variant/50 bg-[var(--color-surface)] shadow-xl max-h-[calc(100vh-2rem)]">
-          {/* Modal Header */}
-          <div className="shrink-0 border-b border-outline-variant/30 bg-surface-container-low px-6 py-4.5">
-            <div className="flex items-center justify-between gap-3">
-            <h2 className="ds-h2 text-on-surface flex items-center gap-2 m-0 border-0 pb-0">
-              <FilePlus className="text-[#00cec4]" size={20} /> Initialize Customs Clearance Job
-            </h2>
-            <div className="flex items-center gap-3">
-              <Button type="button" variant="outline" size="sm" onClick={handleDemoFill} className="rounded-xl">
-                <Sparkles size={14} className="mr-1.5" /> Demo Fill
-              </Button>
-              <button
-                onClick={() => onOpenChange(false)}
-                className="text-on-surface-variant hover:text-on-surface p-1 cursor-pointer bg-transparent border-0"
-              >
-                <X size={18} />
-              </button>
+      <div
+        className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(2,6,23,0.66)] p-4 backdrop-blur-md animate-in fade-in duration-200"
+        style={
+          {
+            "--cha-create-primary": "#2563EB",
+            "--cha-create-primary-hover": "#1D4ED8",
+            "--cha-create-primary-active": "#1E40AF",
+            "--cha-create-primary-soft": "#EFF6FF",
+            "--cha-create-primary-border": "#BFDBFE",
+            "--cha-create-card": "#FFFFFF",
+            "--cha-create-card-alt": "#F8FAFC",
+            "--cha-create-text": "#0F172A",
+            "--cha-create-secondary": "#475569",
+            "--cha-create-muted": "#64748B",
+            "--cha-create-border": "#E2E8F0",
+            "--cha-create-divider": "rgba(148,163,184,0.22)",
+            "--cha-create-ring": "rgba(37,99,235,0.16)",
+          } as React.CSSProperties
+        }
+      >
+        <div className="flex min-h-[calc(100dvh-2rem)] items-start justify-center py-2 sm:items-center sm:py-3">
+          <div className="flex h-[calc(100dvh-1rem)] w-full max-w-[1120px] flex-col overflow-hidden rounded-[26px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] shadow-[0_28px_82px_-42px_rgba(15,23,42,0.4)] dark:border-[#263449] dark:bg-[#111827] dark:[--cha-create-primary:#60A5FA] dark:[--cha-create-primary-hover:#93C5FD] dark:[--cha-create-primary-active:#3B82F6] dark:[--cha-create-primary-soft:rgba(37,99,235,0.16)] dark:[--cha-create-primary-border:#263449] dark:[--cha-create-card:#111827] dark:[--cha-create-card-alt:#0F172A] dark:[--cha-create-text:#F8FAFC] dark:[--cha-create-secondary:#CBD5E1] dark:[--cha-create-muted:#94A3B8] dark:[--cha-create-border:#263449] dark:[--cha-create-divider:rgba(148,163,184,0.18)] dark:[--cha-create-ring:rgba(96,165,250,0.18)] sm:h-[calc(100dvh-2rem)]">
+            <div className="relative overflow-hidden border-b border-[var(--cha-create-divider)] bg-[linear-gradient(135deg,rgba(239,246,255,0.95),rgba(248,250,252,0.92)_52%,rgba(219,234,254,0.68))] px-5 py-4 dark:bg-[linear-gradient(135deg,rgba(15,23,42,0.96),rgba(17,24,39,0.94)_48%,rgba(30,41,59,0.96))] sm:px-6">
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-[34%] overflow-hidden opacity-90">
+                <svg className="absolute inset-0 h-full w-full" fill="none" viewBox="0 0 540 220">
+                  <path d="M40 152C96 116 156 102 214 108C262 112 314 136 382 126C432 118 472 84 514 48" stroke="rgba(37,99,235,0.28)" strokeDasharray="6 8" strokeLinecap="round" strokeWidth="2" />
+                  <path d="M82 176C144 142 214 142 272 158C340 176 400 174 468 136" stroke="rgba(59,130,246,0.18)" strokeDasharray="4 10" strokeLinecap="round" strokeWidth="2" />
+                </svg>
+                <div className="absolute right-[20%] top-[22%] text-[var(--cha-create-primary)]/60"><Plane size={18} /></div>
+                <div className="absolute right-[38%] top-[62%] text-[var(--cha-create-primary)]/60"><Ship size={18} /></div>
+                <div className="absolute right-[8%] top-[46%] text-[var(--cha-create-primary)]/60"><Package2 size={18} /></div>
+              </div>
+              <div className="relative z-10 flex items-start justify-between gap-3">
+                <div className="max-w-[620px] space-y-3 pr-2">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-[16px] border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-primary-soft)] text-[var(--cha-create-primary)] shadow-[0_16px_34px_-28px_rgba(37,99,235,0.48)]">
+                    <FilePlus size={21} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <h2 className="max-w-[520px] text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[var(--cha-create-text)] sm:text-[24px]">
+                      Initialize Customs Clearance Job
+                    </h2>
+                    <p className="max-w-[520px] text-[13px] leading-5 text-[var(--cha-create-secondary)]">
+                      Start a new CHA shipment workflow and capture initial details.
+                    </p>
+                  </div>
+                </div>
+                <div className="relative z-10 flex shrink-0 items-center gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={handleDemoFill} className="rounded-[16px] border-[var(--cha-create-border)] bg-[var(--cha-create-card)]/84 px-3 text-[var(--cha-create-text)] hover:border-[var(--cha-create-primary-border)] hover:bg-[var(--cha-create-primary-soft)]"><Sparkles size={13} className="mr-1.5" />Demo Fill</Button>
+                  <button onClick={() => onOpenChange(false)} className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)]/88 text-[var(--cha-create-secondary)] transition hover:border-[var(--cha-create-primary-border)] hover:bg-[var(--cha-create-primary-soft)] hover:text-[var(--cha-create-primary)]" type="button" aria-label="Close job creation dialog"><X size={17} /></button>
+                </div>
+              </div>
+              <div className="relative z-10 mt-4 grid gap-1 rounded-[18px] border border-[var(--cha-create-primary-border)] bg-[rgba(255,255,255,0.72)] p-1.5 shadow-[0_18px_36px_-34px_rgba(37,99,235,0.26)] backdrop-blur-sm dark:bg-[rgba(15,23,42,0.62)] md:grid-cols-3">
+                <CreateJobBenefit icon={Route} title="End-to-end visibility" description="Track every milestone" />
+                <CreateJobBenefit icon={BadgeCheck} title="Compliance first" description="Built-in validations and documents" />
+                <CreateJobBenefit icon={Rocket} title="Operational excellence" description="Faster clearance, fewer delays" />
+              </div>
             </div>
-          </div>
-          </div>
-
-          {/* Modal Form */}
-          <form
-            onSubmit={handleCreateJob}
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-7 space-y-6"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <form onSubmit={handleCreateJob} className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 py-5 sm:px-7 sm:py-6">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+              <div className="rounded-[22px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card-alt)] p-4 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.22)] sm:p-5">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--cha-create-divider)] pb-4">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--cha-create-muted)]">Job Initialization</p>
+                    <p className="mt-1 text-sm text-[var(--cha-create-secondary)]">Customer, numbering, shipment, and team configuration.</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--cha-create-secondary)]">
+                    <span className="rounded-full border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-primary-soft)] px-3 py-1.5">{activeBranch?.name || 'Select branch'}</span>
+                    <span className="rounded-full border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] px-3 py-1.5">{activeCustomer?.name || 'Select customer'}</span>
+                    <span className="rounded-full border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] px-3 py-1.5 flex items-center gap-1.5"><ActiveShipmentIcon size={12} />{activeShipmentTypeName}</span>
+                    <span className={cn('rounded-full border px-3 py-1.5 font-semibold', priorityPresentation.tone)}>{priorityPresentation.badge}</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Branch Selection */}
               <div className="space-y-1">
                 <label className="ds-label block">Customs Branch Office *</label>
@@ -725,6 +1164,7 @@ export function CreateJobDialog({
                     setNewBranchId(value);
                   }}
                   placeholder="Choose Branch Location"
+                  triggerClassName={CHA_CREATE_SELECT_CLASS}
                   options={options.branches.map((b) => ({
                     value: b.id,
                     label: `${b.name} (${b.code})`,
@@ -746,7 +1186,7 @@ export function CreateJobDialog({
                     placeholder="e.g. CHA-MAA-2026-0001"
                     value={newJobNumber}
                     onChange={(e) => setNewJobNumber(e.target.value)}
-                    className="w-full text-sm"
+                    className={CHA_CREATE_INPUT_CLASS}
                   />
                   <Button
                     type="button"
@@ -754,7 +1194,7 @@ export function CreateJobDialog({
                     size="sm"
                     onClick={handleAutoGenerateJobNumber}
                     disabled={!newBranchId || jobNumberPreviewLoading}
-                    className="text-xs shrink-0 rounded-xl"
+                    className="shrink-0 rounded-2xl border-[var(--cha-create-primary-border)] bg-[var(--cha-create-card)] text-[var(--cha-create-primary)] hover:bg-[var(--cha-create-primary-soft)]"
                   >
                     {jobNumberPreviewLoading ? "Loading..." : "Generate"}
                   </Button>
@@ -771,14 +1211,14 @@ export function CreateJobDialog({
               {/* Description */}
               <div className="space-y-1 md:col-span-2">
                 <label className="ds-label block">Description *</label>
-                <textarea
-                  required
-                  rows={4}
-                  placeholder="Describe the customs clearance work, cargo details, and any critical handling notes..."
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full text-sm"
-                />
+                  <textarea
+                    required
+                    rows={4}
+                    placeholder="Describe the customs clearance work, cargo details, and any critical handling notes..."
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    className={CHA_CREATE_TEXTAREA_CLASS}
+                  />
               </div>
 
               {/* Customer Account Autocomplete */}
@@ -800,10 +1240,10 @@ export function CreateJobDialog({
                   onBlur={() => {
                     setTimeout(() => setShowCustomerDropdown(false), 250);
                   }}
-                  className="w-full text-sm"
+                  className={CHA_CREATE_INPUT_CLASS}
                 />
                 {showCustomerDropdown && (
-                  <div className="absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-outline-variant/60 bg-surface p-1 shadow-sm">
+                  <div className="absolute left-0 right-0 z-50 mt-2 max-h-60 overflow-y-auto rounded-[20px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] p-2 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.34)]">
                     {filteredCustomers.map((c) => (
                       <button
                         key={c.id}
@@ -847,13 +1287,13 @@ export function CreateJobDialog({
               {/* Customer Ref */}
               <div className="space-y-1">
                 <label className="ds-label block">Customer Ref PO/WO (Optional)</label>
-                <Input
-                  type="text"
-                  placeholder="e.g. PO-88712"
-                  value={newCustomerRef}
-                  onChange={(e) => setNewCustomerRef(e.target.value)}
-                  className="w-full text-sm"
-                />
+                  <Input
+                    type="text"
+                    placeholder="e.g. PO-88712"
+                    value={newCustomerRef}
+                    onChange={(e) => setNewCustomerRef(e.target.value)}
+                    className={CHA_CREATE_INPUT_CLASS}
+                  />
               </div>
 
               {/* Job Type */}
@@ -870,6 +1310,7 @@ export function CreateJobDialog({
                     setNewJobTypeId(value);
                   }}
                   placeholder="Select Category"
+                  triggerClassName={CHA_CREATE_SELECT_CLASS}
                   options={[
                     ...jobTypesList.map((jt) => ({
                       value: jt.id,
@@ -879,13 +1320,13 @@ export function CreateJobDialog({
                   ]}
                 />
                 {showAddJobType && (
-                  <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-3 space-y-2">
+                  <div className="rounded-[20px] border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-primary-soft)] p-4 space-y-3">
                     <Input
                       type="text"
                       value={newJobTypeName}
                       onChange={(e) => setNewJobTypeName(e.target.value)}
                       placeholder="e.g. Transit Clearance"
-                      className="w-full text-sm"
+                      className={CHA_CREATE_INPUT_CLASS}
                     />
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                       <label className="space-y-1">
@@ -893,7 +1334,7 @@ export function CreateJobDialog({
                         <select
                           value={newJobTypeMovementDirection}
                           onChange={(e) => setNewJobTypeMovementDirection(e.target.value as "IMPORT" | "EXPORT" | "BOTH" | "OTHER")}
-                          className="w-full text-sm"
+                          className={CHA_CREATE_INPUT_CLASS}
                         >
                           <option value="IMPORT">Import</option>
                           <option value="EXPORT">Export</option>
@@ -906,7 +1347,7 @@ export function CreateJobDialog({
                         <select
                           value={newJobTypeManifestRequirement}
                           onChange={(e) => setNewJobTypeManifestRequirement(e.target.value as "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM")}
-                          className="w-full text-sm"
+                          className={CHA_CREATE_INPUT_CLASS}
                         >
                           <option value="IGM">IGM</option>
                           <option value="EGM">EGM</option>
@@ -922,7 +1363,7 @@ export function CreateJobDialog({
                         value={newJobTypeCustomManifestLabel}
                         onChange={(e) => setNewJobTypeCustomManifestLabel(e.target.value)}
                         placeholder="Custom manifest label"
-                        className="w-full text-sm"
+                        className={CHA_CREATE_INPUT_CLASS}
                       />
                     ) : null}
                     <Input
@@ -930,7 +1371,7 @@ export function CreateJobDialog({
                       value={newJobTypeManifestHelpText}
                       onChange={(e) => setNewJobTypeManifestHelpText(e.target.value)}
                       placeholder="Help text / placeholder"
-                      className="w-full text-sm"
+                      className={CHA_CREATE_INPUT_CLASS}
                     />
                     <label className="flex items-center gap-2 text-xs text-on-surface-variant">
                       <input
@@ -965,6 +1406,7 @@ export function CreateJobDialog({
                     setNewShipmentTypeId(value);
                   }}
                   placeholder="Select Shipment Type"
+                  triggerClassName={CHA_CREATE_SELECT_CLASS}
                   options={[
                     ...shipmentTypesList.map((shipmentType) => ({
                       value: shipmentType.id,
@@ -974,13 +1416,13 @@ export function CreateJobDialog({
                   ]}
                 />
                 {showAddShipmentType && (
-                  <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-3 space-y-2">
+                  <div className="rounded-[20px] border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-primary-soft)] p-4 space-y-3">
                     <Input
                       type="text"
                       value={newShipmentTypeName}
                       onChange={(e) => setNewShipmentTypeName(e.target.value)}
                       placeholder="e.g. Rail"
-                      className="w-full text-sm"
+                      className={CHA_CREATE_INPUT_CLASS}
                     />
                     <div className="flex justify-end gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setShowAddShipmentType(false)}>
@@ -1002,6 +1444,7 @@ export function CreateJobDialog({
                   value={newPriority}
                   onValueChange={setNewPriority}
                   placeholder="Select Priority"
+                  triggerClassName={CHA_CREATE_SELECT_CLASS}
                   options={[
                     { value: "LOW", label: "LOW" },
                     { value: "MEDIUM", label: "MEDIUM" },
@@ -1034,10 +1477,10 @@ export function CreateJobDialog({
                       selectOwner(filteredOwners[0]);
                     }
                   }}
-                  className="w-full text-sm"
+                  className={CHA_CREATE_INPUT_CLASS}
                 />
                 {showOwnerDropdown ? (
-                  <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto rounded-xl border border-outline-variant/60 bg-surface p-1 shadow-sm">
+                  <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-56 overflow-y-auto rounded-[20px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] p-2 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.34)]">
                     {filteredOwners.length > 0 ? (
                       filteredOwners.map((owner) => (
                         <button
@@ -1088,10 +1531,10 @@ export function CreateJobDialog({
                       selectManager(filteredManagers[0]);
                     }
                   }}
-                  className="w-full text-sm"
+                  className={CHA_CREATE_INPUT_CLASS}
                 />
                 {showManagerDropdown ? (
-                  <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto rounded-xl border border-outline-variant/60 bg-surface p-1 shadow-sm">
+                  <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-56 overflow-y-auto rounded-[20px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] p-2 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.34)]">
                     {filteredManagers.length > 0 ? (
                       filteredManagers.map((manager) => (
                         <button
@@ -1125,14 +1568,14 @@ export function CreateJobDialog({
                   required
                   value={estimatedClosureDate}
                   onChange={(e) => setEstimatedClosureDate(e.target.value)}
-                  className="w-full text-sm"
+                  className={CHA_CREATE_INPUT_CLASS}
                 />
               </div>
             </div>
 
             {/* Team Assignments Mapping */}
             <div className="space-y-3 pt-2">
-              <div className="border-b border-outline-variant/30 pb-2">
+              <div className="border-b border-[var(--cha-create-divider)] pb-3">
                 <label className="ds-label block">Team Assignments Mapping</label>
                 <p className="text-xs text-on-surface-variant mt-0.5">
                   Type employee name and press **Enter** (or select from list) to add them.
@@ -1174,22 +1617,22 @@ export function CreateJobDialog({
                       }
                     }
                   }}
-                  className="w-full text-sm"
+                  className={CHA_CREATE_INPUT_CLASS}
                 />
                 {showTeamDropdown && teamSearch.trim() !== "" && (
-                  <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-[var(--color-surface)] border border-outline-variant rounded-xl shadow-lg z-50 p-2 space-y-2">
+                  <div className="absolute left-0 right-0 mt-2 max-h-60 overflow-y-auto rounded-[20px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] p-2 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.34)] z-50 space-y-2">
                     {filteredTeamGroups.length > 0 && (
                       <div>
-                        <div className="text-[10px] ds-label px-2 py-1 border-b border-outline-variant/10 text-on-surface-variant">Team Groups</div>
+                        <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--cha-create-muted)]">Team Groups</div>
                         {filteredTeamGroups.map((g) => (
                           <button
                             key={g.id}
                             type="button"
                             onClick={() => handleAddTeamGroup(g)}
-                            className="w-full text-left px-3 py-1.5 hover:bg-[#00cec4]/15 hover:text-[#00cec4] text-xs font-semibold text-[var(--color-on-surface)] transition-all rounded-lg cursor-pointer bg-transparent border-0 flex justify-between items-center"
+                            className="flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-left text-xs font-semibold text-[var(--cha-create-text)] transition hover:bg-[var(--cha-create-primary-soft)] hover:text-[var(--cha-create-primary)]"
                           >
                             <span>{g.name}</span>
-                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-surface-container-low text-on-surface-variant font-mono">
+                            <span className="rounded-full bg-[var(--cha-create-card-alt)] px-2 py-1 text-[10px] font-semibold text-[var(--cha-create-muted)]">
                               GROUP ({parseJsonArray(g.memberIds).length})
                             </span>
                           </button>
@@ -1199,14 +1642,14 @@ export function CreateJobDialog({
 
                     <div>
                       {filteredTeamGroups.length > 0 && (
-                        <div className="text-[10px] ds-label px-2 py-1 mt-1 border-b border-outline-variant/10 text-on-surface-variant">Individual Employees</div>
+                        <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--cha-create-muted)]">Individual Employees</div>
                       )}
                       {filteredTeamUsers.map((u) => (
                         <button
                           key={u.id}
                           type="button"
                           onClick={() => handleAddTeamUser(u)}
-                          className="w-full text-left px-3 py-1.5 hover:bg-[#00cec4]/15 hover:text-[#00cec4] text-xs text-[var(--color-on-surface)] transition-all rounded-lg cursor-pointer bg-transparent border-0"
+                          className="flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-left text-xs text-[var(--cha-create-text)] transition hover:bg-[var(--cha-create-primary-soft)] hover:text-[var(--cha-create-primary)]"
                         >
                           {u.name} ({u.email})
                         </button>
@@ -1227,7 +1670,7 @@ export function CreateJobDialog({
                   return (
                     <div
                       key={assignment.userId || index}
-                      className="flex items-center justify-between p-3.5 rounded-xl border border-outline-variant/40 bg-[var(--color-surface-container-low)] shadow-sm hover:border-[#00cec4] transition-all"
+                      className="flex items-center justify-between gap-3 rounded-[22px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card-alt)] p-4 shadow-[0_18px_38px_-34px_rgba(15,23,42,0.24)] transition"
                     >
                       <div className="space-y-1 flex-1 mr-3">
                         <span className="text-xs font-semibold text-on-surface block">
@@ -1236,7 +1679,7 @@ export function CreateJobDialog({
                         <DropdownSelect
                           value={assignment.responsibility}
                           onValueChange={(val) => handleAssignmentChange(index, "responsibility", val)}
-                          triggerClassName="h-8 py-1 px-2.5 text-xs rounded-lg border border-[rgba(0,206,196,0.35)] hover:border-[#00cec4]"
+                          triggerClassName={cn(CHA_CREATE_SELECT_CLASS, "!h-10 !rounded-xl !text-xs")}
                           options={[
                             { value: "OPERATIONS", label: "OPERATIONS (Operations Executive)" },
                             { value: "APPROVAL", label: "APPROVAL (Review Manager)" },
@@ -1261,7 +1704,7 @@ export function CreateJobDialog({
                   );
                 })}
                 {assignments.length === 0 && (
-                  <p className="text-xs text-on-surface-variant italic p-2 col-span-2 text-center bg-surface-container-low rounded-xl border border-dashed border-outline-variant/35">
+                  <p className="col-span-2 rounded-[18px] border border-dashed border-[var(--cha-create-border)] bg-[var(--cha-create-card-alt)] p-3 text-center text-xs italic text-[var(--cha-create-muted)]">
                     No team members assigned yet. Add one above.
                   </p>
                 )}
@@ -1269,142 +1712,65 @@ export function CreateJobDialog({
             </div>
 
             {/* Remarks */}
-            <div className="space-y-1 pt-2">
-              <label className="ds-label block">Initial Remarks / Demurrage Threat Alerts</label>
+            <div className="space-y-2 pt-2">
+              <label className="ds-label block">Final Notes &amp; Details</label>
+              <p className="text-xs text-[var(--cha-create-secondary)]">
+                Special shipment instructions, customs remarks, discharge notes, or operational handling context.
+              </p>
               <textarea
-                rows={3}
-                placeholder="Any immediate details like container discharge status, port free days, shipping line details..."
+                rows={4}
+                placeholder="Capture customs instructions, discharge context, free-day details, or any operational remarks the assigned team should see."
                 value={newRemarks}
                 onChange={(e) => setNewRemarks(e.target.value)}
-                className="w-full text-sm"
+                className={CHA_CREATE_TEXTAREA_CLASS}
               />
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-outline-variant/30">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                className="ds-plain rounded-xl border-red-500 bg-transparent text-red-500 hover:border-red-600 hover:bg-transparent hover:text-red-600 hover:shadow-[0_0_12px_rgba(239,68,68,0.18)]"
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={creating} className="rounded-xl">
-                {creating ? "Creating Job..." : "Confirm & Launch"}
-              </Button>
+              </div>
+
+            <div className="shrink-0 border-t border-[var(--cha-create-divider)] bg-[linear-gradient(180deg,rgba(255,255,255,0.84),rgba(255,255,255,0.98))] pt-4 backdrop-blur-md dark:bg-[linear-gradient(180deg,rgba(17,24,39,0.86),rgba(17,24,39,0.98))]">
+              <div className="flex flex-col gap-3 rounded-[22px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] p-3 shadow-[0_24px_54px_-38px_rgba(15,23,42,0.35)] dark:bg-[var(--cha-create-card-alt)] sm:p-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex items-start gap-3 rounded-[18px] border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-primary-soft)] px-4 py-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-card)] text-[var(--cha-create-primary)]">
+                    <ShieldCheck size={18} />
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--cha-create-text)]">Data Security</p>
+                    <p className="text-xs text-[var(--cha-create-secondary)]">
+                      Information is encrypted and access is role-based.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => onOpenChange(false)}
+                    className="rounded-2xl border-[var(--cha-create-border)] bg-transparent px-5 text-[var(--cha-create-secondary)] hover:border-[var(--cha-create-primary-border)] hover:text-[var(--cha-create-primary)]"
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={creating} className="rounded-2xl !border-[var(--cha-create-primary)] !bg-[var(--cha-create-primary)] px-6 !text-white shadow-[0_22px_46px_-28px_rgba(37,99,235,0.58)] hover:!bg-[var(--cha-create-primary-hover)]">
+                    {creating ? "Launching Job..." : "Create & Launch Job"}
+                  </Button>
+                </div>
+              </div>
+            </div>
             </div>
           </form>
         </div>
         </div>
       </div>
 
-      {/* Fullscreen 3D-like document filing overlay animation */}
-      {showSuccessAnimation && (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center z-[100] text-white animate-in fade-in duration-200">
-          <style>{`
-            .cabinet-3d {
-              perspective: 1000px;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              gap: 4px;
-            }
-            .cabinet-body {
-              width: 140px;
-              height: 180px;
-              background: #161b22;
-              border: 4px solid #30363d;
-              border-radius: 12px;
-              position: relative;
-              transform-style: preserve-3d;
-              box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-              transform: rotateX(15deg) rotateY(-15deg);
-            }
-            .drawer-3d {
-              height: 48px;
-              background: #0d1117;
-              border: 3px solid #30363d;
-              margin: 6px;
-              border-radius: 8px;
-              position: relative;
-              transform-style: preserve-3d;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-            .drawer-3d::after {
-              content: '';
-              width: 32px;
-              height: 6px;
-              background: #8b949e;
-              border-radius: 3px;
-            }
-            .active-drawer {
-              animation: drawer-open 2.5s infinite ease-in-out;
-            }
-            .folder-3d {
-              width: 64px;
-              height: 80px;
-              background: #00cec4;
-              border: 3px solid #fff;
-              border-radius: 6px;
-              position: absolute;
-              top: -65px;
-              left: 38px;
-              box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-              transform-style: preserve-3d;
-              animation: folder-drop 2.5s infinite ease-in-out;
-              z-index: 10;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-            .checkmark-3d {
-              font-size: 24px;
-              color: white;
-              font-weight: bold;
-            }
-            @keyframes drawer-open {
-              0%, 100% { transform: translateZ(0) scale(1); }
-              25%, 75% { transform: translateZ(40px) translateY(8px) rotateX(-5deg); background: #21262d; }
-            }
-            @keyframes folder-drop {
-              0% { transform: translateY(-70px) rotate(15deg) scale(0.6); opacity: 0; }
-              25% { transform: translateY(-15px) rotate(-5deg) scale(1.05); opacity: 1; }
-              50% { transform: translateY(15px) rotate(0deg) scale(1); opacity: 1; }
-              75%, 100% { transform: translateY(55px) scale(0); opacity: 0; }
-            }
-            .text-animate {
-              animation: float 3s infinite ease-in-out;
-            }
-            @keyframes float {
-              0%, 100% { transform: translateY(0); }
-              50% { transform: translateY(-10px); }
-            }
-          `}</style>
-          <div className="relative mb-8">
-            <div className="cabinet-3d">
-              <div className="cabinet-body">
-                <div className="folder-3d">
-                  <span className="checkmark-3d">✓</span>
-                </div>
-                <div className="drawer-3d active-drawer"></div>
-                <div className="drawer-3d"></div>
-                <div className="drawer-3d"></div>
-              </div>
-            </div>
-          </div>
-          <div className="text-center space-y-4 max-w-md px-6">
-            <h2 className="ds-h1 text-[#00cec4] text-2xl tracking-widest text-animate m-0">
-              YOUR JOB CREATION IS SUCCESSFULLY!
-            </h2>
-            <p className="text-sm text-slate-400">
-              The clearance job has been initialized, assignments have been mapped, and notifications have been triggered. Redirecting to jobs dashboard...
-            </p>
-          </div>
-        </div>
-      )}
+      <CreateJobSuccessOverlay
+        open={showSuccessAnimation}
+        summary={createdJobSummary}
+        onOpenJob={() => finishCreateFlow(true)}
+        onCreateAnother={() => finishCreateFlow(false)}
+        onAutoFinish={() => finishCreateFlow(false)}
+        reducedMotion={!!reducedMotion}
+      />
     </>
   );
 }

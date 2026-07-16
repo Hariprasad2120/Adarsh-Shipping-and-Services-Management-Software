@@ -32,6 +32,8 @@ type FileUploadFieldProps = {
   selectedFiles?: SelectedUploadFile[] | null;
   showSelectedPreview?: boolean;
   triggerText?: string;
+  uploading?: boolean;
+  uploadingLabel?: string;
 };
 
 function formatFileSize(sizeBytes?: number | null) {
@@ -60,9 +62,12 @@ export function FileUploadField({
   selectedFiles,
   showSelectedPreview = true,
   triggerText = "Drag and drop or choose file to upload",
+  uploading = false,
+  uploadingLabel = "Uploading document...",
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const sizeLabel = formatFileSize(selectedFile?.sizeBytes);
   const previewFiles = selectedFiles && selectedFiles.length > 0 ? selectedFiles : selectedFile ? [selectedFile] : [];
   const showInlineClear = !onRemoveSelectedFile && Boolean(onClear) && (previewInline || previewFiles.length === 1);
@@ -79,6 +84,24 @@ export function FileUploadField({
       }
     };
   }, [localPreviewHref]);
+
+  useEffect(() => {
+    if (!uploading) {
+      setUploadProgress((current) => (current >= 96 ? 100 : 0));
+      return;
+    }
+
+    setUploadProgress(12);
+    const interval = window.setInterval(() => {
+      setUploadProgress((current) => {
+        if (current >= 92) return current;
+        const nextStep = current < 48 ? 9 : current < 74 ? 6 : 3;
+        return Math.min(92, current + nextStep);
+      });
+    }, 180);
+
+    return () => window.clearInterval(interval);
+  }, [uploading]);
 
   const previewHref = selectedFile?.href || localPreviewHref;
 
@@ -132,6 +155,7 @@ export function FileUploadField({
           "card-cyan-outline group block cursor-pointer overflow-hidden rounded-xl border border-dashed border-outline-variant/40 bg-surface transition-all duration-200",
           "hover:border-[#00cec4]/60 hover:bg-surface-container-low/30",
           isDragging && "border-[#00cec4]/70 bg-surface-container-low/40 shadow-[0_0_0_3px_rgba(0,206,196,0.14)]",
+          uploading && "border-[#00cec4]/70 bg-surface-container-low/35 shadow-[0_0_0_3px_rgba(0,206,196,0.12)]",
           disabled && "cursor-not-allowed opacity-50",
           compact ? "px-3.5 py-2.5" : "px-6 py-8",
         )}
@@ -151,27 +175,46 @@ export function FileUploadField({
         >
           {iconAlign === "end" && !compact ? (
             <div className="min-w-0 flex-1 space-y-1 text-left">
-              <span className="block text-sm font-medium text-on-surface">{triggerText}</span>
+              <span className="block text-sm font-medium text-on-surface">{uploading ? uploadingLabel : triggerText}</span>
               {helperText ? <span className="block text-xs text-on-surface-variant">{helperText}</span> : null}
             </div>
           ) : null}
           <span
             className={cn(
-              "flex shrink-0 items-center justify-center rounded-xl border border-outline-variant/40 bg-surface shadow-sm",
+              "flex shrink-0 items-center justify-center rounded-xl border border-outline-variant/40 bg-surface shadow-sm transition-all duration-300",
+              uploading && "border-[#00cec4]/45 bg-[#00cec4]/10 shadow-[0_0_18px_rgba(0,206,196,0.16)]",
               compact ? "h-10 w-10" : "h-12 w-12",
             )}
           >
-            <Upload className={cn("text-[#00cec4]", compact ? "size-4" : "size-5")} aria-hidden={true} />
+            <Upload className={cn("text-[#00cec4]", uploading && "animate-bounce", compact ? "size-4" : "size-5")} aria-hidden={true} />
           </span>
           {!(iconAlign === "end" && !compact) ? (
             <div className={cn("space-y-1", compact ? "text-left" : "text-center")}>
-              <span className="block text-sm font-medium text-on-surface">{triggerText}</span>
+              <span className="block text-sm font-medium text-on-surface">{uploading ? uploadingLabel : triggerText}</span>
               {!compact && helperText ? (
                 <span className="block text-xs text-on-surface-variant">{helperText}</span>
               ) : null}
             </div>
           ) : null}
         </div>
+        {uploading ? (
+          <div className={cn("mt-3 space-y-1.5", compact ? "pl-[3.25rem]" : "mx-auto max-w-[22rem]")}>
+            <div className="flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.14em] text-[#00cec4]">
+              <span>Uploading live</span>
+              <span>{uploadProgress}%</span>
+            </div>
+            <div className="relative h-2 overflow-hidden rounded-full bg-[#00cec4]/12">
+              <div
+                className="absolute inset-y-0 left-0 rounded-full bg-[#00cec4] transition-[width] duration-200 ease-out"
+                style={{ width: `${uploadProgress}%` }}
+              />
+              <div
+                className="absolute inset-y-0 rounded-full bg-white/35 opacity-70 animate-pulse"
+                style={{ width: `${Math.max(18, Math.min(28, uploadProgress * 0.35))}%` }}
+              />
+            </div>
+          </div>
+        ) : null}
         <input
           ref={inputRef}
           id={id}
