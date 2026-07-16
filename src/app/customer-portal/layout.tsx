@@ -10,13 +10,10 @@ export default async function CustomerPortalLayout({
   children: ReactNode;
 }) {
   const currentPath = (await headers()).get("x-current-pathname") ?? "";
-  if (
-    currentPath === "/customer-portal/login" ||
-    currentPath === "/customer-portal/activate" ||
-    currentPath === "/customer-portal/forgot-password"
-  ) {
+  if (currentPath === "/customer-portal/login") {
     return <>{children}</>;
   }
+
   const session = await requirePortalSession();
   const navigationItems = [
     { href: "/customer-portal/dashboard", label: "Dashboard" },

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { PortalLoginForm } from "../_components/client-actions";
 
 export default function CustomerPortalLoginPage() {
@@ -8,15 +7,10 @@ export default function CustomerPortalLoginPage() {
         <p className="ds-label">Monolith Customer Portal</p>
         <h1 className="ds-h2 mt-2">Sign In</h1>
         <p className="mt-2 text-sm text-on-surface-variant">
-          Access your CHA shipment tracking, documents, checklist approvals, and notifications.
+          Sign in to the portal shell while we rebuild the customer experience from scratch.
         </p>
         <div className="mt-6">
           <PortalLoginForm />
-        </div>
-        <div className="mt-4 flex items-center justify-between text-sm">
-          <Link href="/customer-portal/forgot-password" className="text-[#00cec4] hover:underline">
-            Forgot password
-          </Link>
         </div>
       </div>
     </main>

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-15T12:34:19.730Z",
+  "generatedAt": "2026-07-16T04:00:15.694Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -7,9 +7,9 @@
   },
   "stats": {
     "totalAppRoutes": 203,
-    "totalApiRoutes": 191,
+    "totalApiRoutes": 177,
     "totalPrismaModels": 277,
-    "totalModuleServices": 77,
+    "totalModuleServices": 76,
     "totalComponents": 93
   },
   "appRoutes": [
@@ -1794,23 +1794,6 @@
       ]
     },
     {
-      "path": "/api/customer-portal/auth/activate",
-      "filePath": "src/app/api/customer-portal/auth/activate/route.ts",
-      "module": "customer-portal",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
-      "path": "/api/customer-portal/auth/forgot-password",
-      "filePath": "src/app/api/customer-portal/auth/forgot-password/route.ts",
-      "module": "customer-portal",
-      "methods": [
-        "POST",
-        "PATCH"
-      ]
-    },
-    {
       "path": "/api/customer-portal/auth/login",
       "filePath": "src/app/api/customer-portal/auth/login/route.ts",
       "module": "customer-portal",
@@ -1824,102 +1807,6 @@
       "module": "customer-portal",
       "methods": [
         "POST"
-      ]
-    },
-    {
-      "path": "/api/customer-portal/cha-document-versions/[id]",
-      "filePath": "src/app/api/customer-portal/cha-document-versions/[id]/route.ts",
-      "module": "customer-portal",
-      "methods": [
-        "GET"
-      ]
-    },
-    {
-      "path": "/api/customer-portal/checklist-files/[id]",
-      "filePath": "src/app/api/customer-portal/checklist-files/[id]/route.ts",
-      "module": "customer-portal",
-      "methods": [
-        "GET"
-      ]
-    },
-    {
-      "path": "/api/customer-portal/checklists/respond",
-      "filePath": "src/app/api/customer-portal/checklists/respond/route.ts",
-      "module": "customer-portal",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
-      "path": "/api/customer-portal/document-versions/[id]",
-      "filePath": "src/app/api/customer-portal/document-versions/[id]/route.ts",
-      "module": "customer-portal",
-      "methods": [
-        "GET"
-      ]
-    },
-    {
-      "path": "/api/customer-portal/documents/upload",
-      "filePath": "src/app/api/customer-portal/documents/upload/route.ts",
-      "module": "customer-portal",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
-      "path": "/api/customer-portal/notifications/read-all",
-      "filePath": "src/app/api/customer-portal/notifications/read-all/route.ts",
-      "module": "customer-portal",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
-      "path": "/api/customer-portal/notifications/[id]/read",
-      "filePath": "src/app/api/customer-portal/notifications/[id]/read/route.ts",
-      "module": "customer-portal",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
-      "path": "/api/customer-portal/profile/preferences",
-      "filePath": "src/app/api/customer-portal/profile/preferences/route.ts",
-      "module": "customer-portal",
-      "methods": [
-        "PATCH"
-      ]
-    },
-    {
-      "path": "/api/customer-portal/queries/reply",
-      "filePath": "src/app/api/customer-portal/queries/reply/route.ts",
-      "module": "customer-portal",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
-      "path": "/api/customer-portal/ratings",
-      "filePath": "src/app/api/customer-portal/ratings/route.ts",
-      "module": "customer-portal",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
-      "path": "/api/customer-portal/security/logout-all",
-      "filePath": "src/app/api/customer-portal/security/logout-all/route.ts",
-      "module": "customer-portal",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
-      "path": "/api/customer-portal/security/password",
-      "filePath": "src/app/api/customer-portal/security/password/route.ts",
-      "module": "customer-portal",
-      "methods": [
-        "PATCH"
       ]
     },
     {
@@ -10796,17 +10683,6 @@
     },
     {
       "module": "customer-portal",
-      "fileName": "actions.ts",
-      "filePath": "src/modules/customer-portal/actions.ts",
-      "exportedFunctions": [
-        "inviteCustomerPortalUserAction",
-        "resendCustomerPortalInvitationAction",
-        "suspendCustomerPortalUserAction",
-        "createCustomerPortalQueryAction"
-      ]
-    },
-    {
-      "module": "customer-portal",
       "fileName": "auth.ts",
       "filePath": "src/modules/customer-portal/auth.ts",
       "exportedFunctions": [
@@ -10833,35 +10709,8 @@
       "fileName": "service.ts",
       "filePath": "src/modules/customer-portal/service.ts",
       "exportedFunctions": [
-        "inviteCustomerPortalUser",
-        "listCustomerPortalUsers",
-        "syncCustomerPortalUsersForCrmCustomer",
-        "activateCustomerPortalAccount",
         "loginCustomerPortal",
-        "logoutCustomerPortal",
-        "logoutCustomerPortalAllDevices",
-        "requestCustomerPortalPasswordReset",
-        "resetCustomerPortalPassword",
-        "updatePortalNotificationPreferences",
-        "listPortalShipments",
-        "getPortalDashboard",
-        "getPortalShipmentDetail",
-        "listPortalNotifications",
-        "markPortalNotificationRead",
-        "markAllPortalNotificationsRead",
-        "uploadPortalDocument",
-        "getPortalDocumentVersion",
-        "getPortalChaDocumentVersion",
-        "submitPortalChecklistDecision",
-        "listPortalQueries",
-        "replyToPortalQuery",
-        "createInternalCustomerQuery",
-        "listPortalRatingCategories",
-        "submitPortalShipmentRating",
-        "suspendCustomerPortalUser",
-        "resendCustomerPortalInvitation",
-        "getCustomerPortalProfile",
-        "changeCustomerPortalPassword"
+        "logoutCustomerPortal"
       ]
     },
     {
@@ -11906,9 +11755,9 @@
     },
     "customer-portal": {
       "appRoutes": 0,
-      "apiRoutes": 16,
+      "apiRoutes": 2,
       "prismaModels": 0,
-      "serviceFiles": 4,
+      "serviceFiles": 3,
       "components": 0
     },
     "dashboard": {

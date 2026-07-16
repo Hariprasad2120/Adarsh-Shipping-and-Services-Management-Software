@@ -149,12 +149,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
     setVal("openingBalanceAmount", "150000");
     setVal("creditLimit", "1000000");
     setVal("paymentTerms", "Net 30");
-    setVal("remarks", "Highly active logistics contractor. Prefers digital invoicing via portal and email alerts.");
+    setVal("remarks", "Highly active logistics contractor. Prefers digital invoicing and email alerts.");
     
     // Checkbox elements
-    const portalCh = document.getElementsByName("isPortalEnabled")[0] as HTMLInputElement;
-    if (portalCh) portalCh.checked = true;
-
     const emailCh = document.getElementsByName("channelEmail")[0] as HTMLInputElement;
     if (emailCh) emailCh.checked = true;
 
@@ -625,17 +622,6 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
               </div>
             </div>
 
-            <div className="pt-2">
-              <label className="flex items-center gap-2 text-sm text-[var(--color-on-surface)] cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="isPortalEnabled"
-                  defaultChecked={initialData?.isPortalEnabled ?? false}
-                  className="accent-[#00cec4] size-4 rounded"
-                />
-                <span className="font-semibold text-xs text-[var(--color-on-surface)]">Allow portal access for this customer</span>
-              </label>
-            </div>
           </div>
         )}
 

@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-15T12:34:19.730Z
+> Generated at: 2026-07-16T04:00:15.694Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -8,9 +8,9 @@
 | Metric | Count |
 |---|---|
 | App Routes (Pages) | 203 |
-| API Routes | 191 |
+| API Routes | 177 |
 | Prisma Models | 277 |
-| Module Service Files | 77 |
+| Module Service Files | 76 |
 | UI Components | 93 |
 
 ## Modules Overview
@@ -29,7 +29,7 @@
 | core | 2 | 0 | 72 | 5 | 0 |
 | crm | 59 | 4 | 26 | 7 | 1 |
 | cron | 0 | 7 | 0 | 0 | 0 |
-| customer-portal | 0 | 16 | 0 | 4 | 0 |
+| customer-portal | 0 | 2 | 0 | 3 | 0 |
 | dashboard | 1 | 0 | 0 | 0 | 0 |
 | dev | 0 | 1 | 0 | 0 | 0 |
 | expense | 1 | 0 | 0 | 0 | 0 |
@@ -125,22 +125,8 @@
 | GET | `/api/cron/google-chat-retry` | cron |
 | GET | `/api/cron/justdial-import` | cron |
 | GET | `/api/cron/tracking-alerts` | cron |
-| POST | `/api/customer-portal/auth/activate` | customer-portal |
-| POST, PATCH | `/api/customer-portal/auth/forgot-password` | customer-portal |
 | POST | `/api/customer-portal/auth/login` | customer-portal |
 | POST | `/api/customer-portal/auth/logout` | customer-portal |
-| GET | `/api/customer-portal/cha-document-versions/[id]` | customer-portal |
-| GET | `/api/customer-portal/checklist-files/[id]` | customer-portal |
-| POST | `/api/customer-portal/checklists/respond` | customer-portal |
-| GET | `/api/customer-portal/document-versions/[id]` | customer-portal |
-| POST | `/api/customer-portal/documents/upload` | customer-portal |
-| POST | `/api/customer-portal/notifications/read-all` | customer-portal |
-| POST | `/api/customer-portal/notifications/[id]/read` | customer-portal |
-| PATCH | `/api/customer-portal/profile/preferences` | customer-portal |
-| POST | `/api/customer-portal/queries/reply` | customer-portal |
-| POST | `/api/customer-portal/ratings` | customer-portal |
-| POST | `/api/customer-portal/security/logout-all` | customer-portal |
-| PATCH | `/api/customer-portal/security/password` | customer-portal |
 | GET | `/api/dev/clear-auth-cookies` | dev |
 | GET | `/api/google-chat/admin` | google-chat |
 | POST | `/api/google-chat/debug` | google-chat |
@@ -787,9 +773,8 @@
 - **service.ts**: addTimelineEvent, getTimelineEvents, addNote, getNotes, deleteNote, addAttachment, getAttachments, deleteAttachment, listLeads, listEnquiries, getLead, createLead, updateLead, deleteLead, listContacts, getContact, createContact, updateContact, listAccounts, getAccount, createAccount, updateAccount, listDeals, getDeal, createDeal, updateDealStage, updateDeal, listActivities, createActivity, updateActivity, deleteActivity, listProducts, createProduct, listVendors, createVendor, listInvoices, getInvoice, createInvoice, listProjects, createProject
 
 ### customer-portal
-- **actions.ts**: inviteCustomerPortalUserAction, resendCustomerPortalInvitationAction, suspendCustomerPortalUserAction, createCustomerPortalQueryAction
 - **auth.ts**: hashPortalToken, buildPortalLink, getPortalRequestMeta, validatePortalPassword, hashPortalPassword, createPortalSession, setPortalSessionCookie, clearPortalSessionCookie, getPortalSessionToken, getPortalSession, requirePortalSession, revokePortalSession, revokeAllPortalSessions, verifyPortalPassword, shouldLockPortalAccount, recordPortalAuthAudit
-- **service.ts**: inviteCustomerPortalUser, listCustomerPortalUsers, syncCustomerPortalUsersForCrmCustomer, activateCustomerPortalAccount, loginCustomerPortal, logoutCustomerPortal, logoutCustomerPortalAllDevices, requestCustomerPortalPasswordReset, resetCustomerPortalPassword, updatePortalNotificationPreferences, listPortalShipments, getPortalDashboard, getPortalShipmentDetail, listPortalNotifications, markPortalNotificationRead, markAllPortalNotificationsRead, uploadPortalDocument, getPortalDocumentVersion, getPortalChaDocumentVersion, submitPortalChecklistDecision, listPortalQueries, replyToPortalQuery, createInternalCustomerQuery, listPortalRatingCategories, submitPortalShipmentRating, suspendCustomerPortalUser, resendCustomerPortalInvitation, getCustomerPortalProfile, changeCustomerPortalPassword
+- **service.ts**: loginCustomerPortal, logoutCustomerPortal
 - **auth.test.ts**: no exports detected
 
 ### google-chat
