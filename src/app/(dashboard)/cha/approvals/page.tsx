@@ -34,7 +34,7 @@ export default async function ChaApprovalsPage() {
           <div>
             <h2 className="ds-h2 text-on-surface flex items-center gap-2">
               <CheckSquare size={18} className="text-[#00cec4]" />
-              Your Approvals
+              YOUR APPROVALS
             </h2>
             <p className="mt-1 text-xs text-on-surface-variant">
               Pending job checklist audits assigned to you for review and approval.
@@ -94,7 +94,7 @@ export default async function ChaApprovalsPage() {
           <div>
             <h2 className="ds-h2 text-on-surface flex items-center gap-2">
               <Trash2 size={18} className="text-red-500" />
-              Job Deletion Requests
+              JOB DELETION REQUESTS
             </h2>
             <p className="mt-1 text-xs text-on-surface-variant">
               Direct manager review queue for destructive CHA job deletion requests.

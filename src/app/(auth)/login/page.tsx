@@ -154,9 +154,11 @@ export default function LoginPage() {
         />
 
         <div className="relative w-full max-w-[440px]">
-          <div className="absolute -inset-[1px] rounded-[32px] bg-gradient-to-r from-[#00A89D]/40 via-[#F47920]/35 to-[#00A89D]/40 opacity-30" />
+          {/* Animated Glow Border */}
+          <div className="login-glow-border absolute -inset-[1.5px] rounded-[32px] bg-gradient-to-r from-[#00A89D]/60 via-[#F47920]/50 to-[#00A89D]/60" />
+          <div className="login-breathe-glow absolute -inset-6 rounded-[48px] bg-gradient-to-r from-[#00A89D] via-[#F47920] to-[#00A89D] opacity-20" />
 
-          <div className="relative overflow-hidden rounded-[31px] border border-white/10 bg-[#1A1F24]/95 p-8 shadow-2xl backdrop-blur-3xl sm:p-10">
+          <div className="relative overflow-hidden rounded-[31px] border border-white/10 bg-[#1A2229]/80 p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-3xl sm:p-10">
             <div className="mb-10 text-center">
               <div className="mb-6 flex justify-center">
                 <div className="relative">
@@ -167,7 +169,7 @@ export default function LoginPage() {
                 </div>
               </div>
               <div className="space-y-1">
-                <h1 className="ds-h1 heading-icon-none text-white">
+                <h1 className="ds-h1 heading-icon-none bg-gradient-to-r from-white via-[#f1f5f9] to-[#e2ebf0] bg-clip-text text-transparent">
                   OPERATIONS PORTAL
                 </h1>
                 <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">

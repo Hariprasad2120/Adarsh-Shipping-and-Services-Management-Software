@@ -275,27 +275,27 @@ body::-webkit-scrollbar-corner {
 }
 
 html.dark {
-  --background: #0d1117;
-  --foreground: #f0f6fc;
+  --background: #0f151b;
+  --foreground: #e8f1f6;
   
-  --color-primary: #00c4b6;
-  --color-secondary: #38bdf8;
-  --color-tertiary: #fb923c;
+  --color-primary: #63e3d7;
+  --color-secondary: #7dd3fc;
+  --color-tertiary: #f8b15d;
   
-  --color-surface: #161b22;
-  --color-surface-dim: #0d1117;
-  --color-surface-container-lowest: #0d1117;
-  --color-surface-container-low: #161b22;
-  --color-surface-container: #21262d;
-  --color-surface-container-high: #30363d;
-  --color-on-surface: #f0f6fc;
-  --color-on-surface-variant: #8b949e;
-  --color-placeholder: #96a0ad;
-  --color-outline: #30363d;
-  --color-outline-variant: #21262d;
+  --color-surface: #141c23;
+  --color-surface-dim: #0f151b;
+  --color-surface-container-lowest: #0f151b;
+  --color-surface-container-low: #182129;
+  --color-surface-container: #1f2a34;
+  --color-surface-container-high: #273440;
+  --color-on-surface: #e8f1f6;
+  --color-on-surface-variant: #a6b4bf;
+  --color-placeholder: #93a3ae;
+  --color-outline: #33424d;
+  --color-outline-variant: #25313a;
   
-  --shadow-ambient: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 20px 20px -10px rgba(0, 0, 0, 0.4);
-  --shadow-ambient-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 20px 25px -5px rgba(0, 0, 0, 0.8);
+  --shadow-ambient: 0 12px 32px -24px rgba(2, 8, 20, 0.42), 0 1px 2px rgba(2, 8, 20, 0.2);
+  --shadow-ambient-hover: 0 18px 40px -24px rgba(2, 8, 20, 0.52), 0 6px 18px -12px rgba(2, 8, 20, 0.32);
 }
 
 html.light {
@@ -571,7 +571,7 @@ main table td {
 
 .card-top-accent {
   border-color: rgba(0, 206, 196, 0.35) !important;
-  box-shadow: inset 0 2px 0 #00cec4;
+  box-shadow: inset 0 2px 0 #00cec4, 0 18px 40px -34px rgba(0, 206, 196, 0.16);
 }
 
 .card-cyan-outline {
@@ -580,7 +580,7 @@ main table td {
 
 .card-top-accent-orange {
   border-color: rgba(251, 146, 60, 0.35) !important;
-  box-shadow: inset 0 2px 0 #fb923c;
+  box-shadow: inset 0 2px 0 #fb923c, 0 18px 40px -34px rgba(251, 146, 60, 0.18);
 }
 
 .card-left-accent {
@@ -718,7 +718,7 @@ html.light [class~="bg-red-700"] {
   text-transform: uppercase;
   color: var(--color-on-surface-variant);
   text-align: left;
-  padding: 8px 12px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--color-outline-variant);
   background-color: var(--color-surface-container-low);
 }
@@ -726,7 +726,7 @@ html.light [class~="bg-red-700"] {
 .ds-table td {
   color: var(--color-on-surface);
   font-weight: 400;
-  padding: 6px 12px;
+  padding: 9px 14px;
   border-bottom: 1px solid var(--color-outline-variant);
   vertical-align: middle;
 }
@@ -744,6 +744,33 @@ html.light [class~="bg-red-700"] {
 .ds-row-link:hover {
   background-color: rgba(0, 206, 196, 0.04);
   box-shadow: inset 0 0 0 1px rgba(0, 206, 196, 0.18);
+}
+
+.cha-module .ds-table th {
+  background: linear-gradient(180deg, rgba(0, 206, 196, 0.05), rgba(255, 255, 255, 0.85));
+  border-bottom-color: color-mix(in srgb, var(--color-outline-variant) 70%, transparent);
+}
+
+.cha-module .ds-table td {
+  border-bottom-color: color-mix(in srgb, var(--color-outline-variant) 62%, transparent);
+}
+
+.cha-module .ds-table tbody tr {
+  transition: background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.cha-module .ds-table tbody tr:hover {
+  background: linear-gradient(90deg, rgba(0, 206, 196, 0.05), rgba(125, 211, 252, 0.04));
+  box-shadow: inset 2px 0 0 rgba(0, 206, 196, 0.55);
+}
+
+html.dark .cha-module .ds-table th {
+  background: linear-gradient(180deg, rgba(99, 227, 215, 0.08), rgba(24, 33, 41, 0.94));
+}
+
+html.dark .cha-module .ds-table tbody tr:hover {
+  background: linear-gradient(90deg, rgba(99, 227, 215, 0.08), rgba(125, 211, 252, 0.05));
+  box-shadow: inset 2px 0 0 rgba(99, 227, 215, 0.68);
 }
 
 /* Cyan hover glow — cards, stat panels, interactive containers */
@@ -1594,4 +1621,99 @@ button.cha-link:active:not(:disabled) {
 
 .animate-doc-missing-blink-red {
   animation: doc-missing-blink-red 1.1s ease-in-out infinite;
+}
+
+@keyframes rotate-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.login-glow-border {
+  background-size: 200% 200%;
+  animation: rotate-gradient 6s linear infinite;
+}
+
+@keyframes breathe-glow {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(0.98);
+    filter: blur(24px);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(1.04);
+    filter: blur(36px);
+  }
+}
+
+.login-breathe-glow {
+  animation: breathe-glow 5s ease-in-out infinite;
+}
+
+@keyframes workflow-chevron {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 0.95;
+    transform: translateX(3px);
+  }
+}
+
+@keyframes workflow-confetti {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.08) rotate(8deg);
+    opacity: 1;
+  }
+}
+
+.workflow-completion-confetti::before,
+.workflow-completion-confetti::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 28%, rgba(34, 197, 94, 0.7) 0 1.5px, transparent 1.6px),
+    radial-gradient(circle at 78% 16%, rgba(251, 191, 36, 0.75) 0 1.5px, transparent 1.6px),
+    radial-gradient(circle at 88% 62%, rgba(56, 189, 248, 0.65) 0 1.5px, transparent 1.6px),
+    radial-gradient(circle at 18% 78%, rgba(16, 185, 129, 0.65) 0 1.5px, transparent 1.6px),
+    radial-gradient(circle at 62% 86%, rgba(74, 222, 128, 0.55) 0 1.5px, transparent 1.6px);
+  animation: workflow-confetti 3.2s ease-in-out infinite;
+}
+
+.workflow-completion-confetti::after {
+  inset: -16px;
+  opacity: 0.7;
+  animation-delay: 0.35s;
+}
+
+.workflow-next-stage-connector {
+  border-left: 2px dashed rgba(34, 197, 94, 0.55);
+  border-bottom: 2px dashed rgba(34, 197, 94, 0.55);
+  border-bottom-left-radius: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workflow-completion-confetti::before,
+  .workflow-completion-confetti::after,
+  .workflow-next-stage-connector,
+  [class*="workflow-chevron"] {
+    animation: none !important;
+    transition: none !important;
+  }
 }

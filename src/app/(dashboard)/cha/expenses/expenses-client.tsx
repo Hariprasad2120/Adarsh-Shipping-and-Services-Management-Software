@@ -407,7 +407,7 @@ export function ExpensesClient({
                           required
                           value={payAmount}
                           onChange={(e) => setPayAmount(e.target.value)}
-                          className="w-full text-xs font-mono ds-numeric h-8"
+                          className="w-full text-xs font-mono ds-numeric h-11"
                         />
                       </div>
                       <div>
@@ -416,7 +416,7 @@ export function ExpensesClient({
                           required
                           value={payDate}
                           onChange={(e) => setPayDate(e.target.value)}
-                          className="w-full text-xs h-8"
+                          className="w-full text-xs h-11"
                         />
                       </div>
                       <div>
@@ -424,7 +424,7 @@ export function ExpensesClient({
                         <select
                           value={payMethod}
                           onChange={(e) => setPayMethod(e.target.value)}
-                          className="w-full text-xs h-8"
+                          className="w-full text-xs h-11"
                         >
                           <option value="BANK_TRANSFER">IMPS / Bank Transfer</option>
                           <option value="NEFT">NEFT / RTGS</option>
@@ -439,7 +439,7 @@ export function ExpensesClient({
                           placeholder="Reference ref code"
                           value={payRef}
                           onChange={(e) => setPayRef(e.target.value)}
-                          className="w-full text-xs h-8"
+                          className="w-full text-xs h-11"
                         />
                       </div>
                     </div>

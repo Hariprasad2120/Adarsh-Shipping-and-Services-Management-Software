@@ -179,7 +179,7 @@ export default async function ChaReportsPage() {
         {/* Left: Delayed filings reports */}
         <div className="lg:col-span-2 rounded-xl border border-outline-variant/60 bg-surface p-6 space-y-6 shadow-sm">
           <h2 className="ds-h2 text-on-surface flex items-center gap-2">
-            <AlertTriangle size={18} className="text-[#fb923c]" /> Delay-Justified Customs Filings
+            <AlertTriangle size={18} className="text-[#fb923c]" /> DELAY-JUSTIFIED CUSTOMS FILINGS
           </h2>
 
           {delayedFilings.length === 0 ? (
@@ -221,7 +221,7 @@ export default async function ChaReportsPage() {
         {/* Right: Full organization Audit Logs feed */}
         <div className="rounded-xl border border-outline-variant/60 bg-surface p-6 space-y-6 shadow-sm">
           <h2 className="ds-h2 text-on-surface flex items-center gap-2">
-            <FileText size={18} className="text-[#00cec4]" /> Organization Audit Logs
+            <FileText size={18} className="text-[#00cec4]" /> ORGANIZATION AUDIT LOGS
           </h2>
 
           <div className="space-y-4 max-h-[450px] overflow-y-auto pr-1">

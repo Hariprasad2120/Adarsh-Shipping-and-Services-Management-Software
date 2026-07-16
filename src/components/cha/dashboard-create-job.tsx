@@ -13,6 +13,7 @@ interface DashboardCreateJobProps {
     jobTypes: { id: string; name: string }[];
     shipmentTypes: { id: string; name: string }[];
     users: { id: string; name: string; email: string }[];
+    managers: { id: string; name: string; email: string; branchId: string | null }[];
     teamGroups: { id: string; name: string; memberIds: any }[];
     branchNumberingRules: {
       branchId: string;

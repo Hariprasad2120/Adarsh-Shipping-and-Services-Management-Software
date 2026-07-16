@@ -92,11 +92,8 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
   };
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
-        <span className="h-7 rounded-sm bg-[#00cec4]" aria-hidden="true" />
-        <h3 className="ds-h3 text-on-surface">Delivery Order Document &amp; Extension</h3>
-      </div>
+    <div className="ds-form-section space-y-4">
+      <h3 className="ds-h3">Delivery Order Document &amp; Extension</h3>
 
       <div className="space-y-4">
         <div>

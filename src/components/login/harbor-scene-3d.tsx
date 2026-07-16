@@ -35,50 +35,68 @@ const TRUCK_X = { enter: -26, park: -5, exit: -30 };
 const SHIP_BERTH_X = 9.8;
 const SHIP_Z = { enter: -38, berth: 0 };
 
-// Monochrome palette — soft whites and greys only. The single exception is
-// the cargo outline, which tints green/red as functional auth feedback.
-const OUTLINE_IDLE = 0x565a5e;
-const OUTLINE_OK = 0x2e7d4f;
-const OUTLINE_BAD = 0xb3402f;
+// Brand-aligned visual palette — Cyan (#00A89D) and Orange (#F47920) colors
+// with metallic textures, sunset sky/water tones, and glowing guide beams.
+const OUTLINE_IDLE = 0x00A89D;
+const OUTLINE_OK = 0x22c55e;
+const OUTLINE_BAD = 0xef4444;
 
-/** Per-theme studio palette: bright porcelain vs. graphite night. */
+const CONTAINER_COLORS = [
+  0x00A89D, // Brand Cyan
+  0xF47920, // Brand Orange
+  0x1e293b, // Deep Charcoal
+  0xf8fafc, // Ice White
+  0x64748b, // Steel Slate
+];
+
+/** Rich twilight-to-sunset studio palette. */
 const THEMES = {
   light: {
-    bg: 0xf1f2f0,
-    water: 0xd9e0e3,
+    bg: 0xe2ebf0, // bright morning sky
+    water: 0x93c5fd, // azure sea
     hemiSky: 0xffffff,
-    hemiGround: 0xd6d6d3,
-    hemiIntensity: 0.9,
-    keyColor: 0xffffff,
+    hemiGround: 0xb5c0d0,
+    hemiIntensity: 0.95,
+    keyColor: 0xfff9e6, // warm morning sun
     keyIntensity: 2.2,
     stars: 0,
-    exposure: 1.0,
+    exposure: 1.05,
   },
   dark: {
-    bg: 0x1b1e21,
-    water: 0x252a2e,
-    hemiSky: 0x3c4147,
-    hemiGround: 0x141618,
+    bg: 0x080c10, // deep night sky
+    water: 0x0c1a26, // deep harbor sea
+    hemiSky: 0x112233, // twilight blue
+    hemiGround: 0xf47920, // ground gets reflected orange warmth
     hemiIntensity: 0.55,
-    keyColor: 0xdfe6ee,
-    keyIntensity: 1.15,
-    stars: 0.65,
-    exposure: 1.05,
+    keyColor: 0xff7e21, // warm orange sunset key light
+    keyIntensity: 1.6,
+    stars: 0.9,
+    exposure: 1.15,
   },
 } as const;
 
-function matte(color: number, roughness = 0.88) {
-  return new THREE.MeshStandardMaterial({ color, roughness, metalness: 0.06 });
+function matte(color: number, roughness = 0.55, metalness = 0.15) {
+  return new THREE.MeshStandardMaterial({ color, roughness, metalness });
+}
+
+function metal(color: number, roughness = 0.25, metalness = 0.85) {
+  return new THREE.MeshStandardMaterial({ color, roughness, metalness });
+}
+
+function steelPaint(color: number, roughness = 0.35) {
+  return new THREE.MeshStandardMaterial({ color, roughness, metalness: 0.5 });
 }
 
 const M = {
-  white: () => matte(0xf6f6f4),
-  bone: () => matte(0xe9e9e6),
-  silver: () => matte(0xd4d6d4),
-  grey: () => matte(0xb8bab8),
-  slate: () => matte(0x9a9da0, 0.82),
-  graphite: () => matte(0x6f7376, 0.75),
-  dark: () => matte(0x44484c, 0.65),
+  white: () => matte(0xf8fafc),
+  bone: () => matte(0xe2e8f0),
+  silver: () => metal(0xcbd5e1, 0.2, 0.8),
+  grey: () => matte(0x64748b),
+  slate: () => steelPaint(0x475569),
+  graphite: () => metal(0x334155, 0.3, 0.7),
+  dark: () => matte(0x0f172a, 0.4, 0.4),
+  cyan: () => steelPaint(0x00A89D),   // Brand Cyan structural paint
+  orange: () => steelPaint(0xF47920), // Brand Orange structural paint
 };
 
 /** Sharp-edged box. No rounding anywhere — crisp architectural-model look. */
@@ -186,11 +204,24 @@ function buildShip() {
     curveSegments: 16,
   });
   hullGeo.rotateX(-Math.PI / 2);
-  const hull = new THREE.Mesh(hullGeo, M.white());
+  
+  // Custom deep naval steel color
+  const hull = new THREE.Mesh(hullGeo, matte(0x131920, 0.45));
   hull.castShadow = true;
   hull.receiveShadow = true;
   hull.position.y = -0.55;
   ship.add(hull);
+
+  // Red anti-fouling bottom hull
+  const bottomHull = new THREE.Mesh(hullGeo, matte(0x8a2317, 0.5));
+  bottomHull.position.y = -1.15;
+  bottomHull.scale.set(1.005, 0.7, 1.005);
+  ship.add(bottomHull);
+
+  // White boot-topping waterline stripe
+  const stripe = box(12.6, 0.1, 3.1, M.white());
+  stripe.position.set(0, -0.32, 0);
+  ship.add(stripe);
 
   // Deck plate, slightly inset.
   const deckGeo = new THREE.ExtrudeGeometry(hullShape, {
@@ -200,7 +231,7 @@ function buildShip() {
   });
   deckGeo.rotateX(-Math.PI / 2);
   deckGeo.scale(0.94, 1, 0.9);
-  const deck = new THREE.Mesh(deckGeo, M.silver());
+  const deck = new THREE.Mesh(deckGeo, M.graphite());
   deck.receiveShadow = true;
   deck.position.y = 1.32;
   ship.add(deck);
@@ -209,7 +240,7 @@ function buildShip() {
   const tier1 = box(2.0, 0.9, 2.5, M.white());
   tier1.position.set(-4.3, 1.85, 0);
   ship.add(tier1);
-  const tier2 = box(1.7, 0.8, 2.2, M.bone());
+  const tier2 = box(1.7, 0.8, 2.2, M.white());
   tier2.position.set(-4.3, 2.7, 0);
   ship.add(tier2);
   const bridge = box(1.5, 0.7, 2.7, M.white());
@@ -226,7 +257,7 @@ function buildShip() {
   ship.add(glassAft);
 
   // Funnel with a graphite cap band.
-  const funnel = box(0.6, 0.95, 1.05, M.grey());
+  const funnel = box(0.6, 0.95, 1.05, M.orange());
   funnel.position.set(-4.75, 4.3, 0);
   ship.add(funnel);
   const funnelCap = box(0.64, 0.16, 1.09, M.graphite());
@@ -237,7 +268,7 @@ function buildShip() {
   const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.045, 1.0, 6), M.slate());
   mast.position.set(-4.0, 4.3, 0);
   ship.add(mast);
-  const radar = box(0.8, 0.05, 0.1, M.graphite());
+  const radar = box(0.8, 0.05, 0.1, M.orange());
   radar.position.set(-4.0, 4.85, 0);
   ship.add(radar);
 
@@ -248,16 +279,15 @@ function buildShip() {
 
   // Deck cargo bays. The ship group is rotated 90° at placement, so every
   // box counter-rotates to keep its long axis matching the spreader.
-  const shades = [0xeeeeec, 0xd8dad8, 0xc4c6c4, 0xb2b4b2];
   const bays = [-3.0, -1.5, 0, 1.5, 3.0];
   bays.forEach((bx, i) => {
-    const { group } = buildContainer(shades[i % shades.length]);
+    const { group } = buildContainer(CONTAINER_COLORS[i % CONTAINER_COLORS.length]);
     group.position.set(bx, 1.92, 0);
     group.rotation.y = -Math.PI / 2;
     ship.add(group);
   });
   for (const bx of [-1.5, 1.5]) {
-    const { group } = buildContainer(shades[(bx + 4) % shades.length | 0]);
+    const { group } = buildContainer(CONTAINER_COLORS[(bx + 4) % CONTAINER_COLORS.length | 0]);
     group.position.set(bx, 2.96, 0);
     group.rotation.y = -Math.PI / 2;
     ship.add(group);
@@ -317,14 +347,29 @@ function buildShip() {
 function buildCrane(scene: THREE.Scene) {
   // Whole crane is one group so the gantry can travel along its rails (z).
   const crane = new THREE.Group();
-  const frame = M.bone();
+  const frame = M.cyan();
   const heavy = M.silver();
   const dark = M.graphite();
+  const accent = M.orange();
 
   // Main girder + boom over the water.
   const beam = box(21, 0.75, 1.5, frame);
   beam.position.set(2, 8, 0);
   crane.add(beam);
+  
+  // Real structural lattice girders cross-bracing details
+  for (let x = -8; x <= 11; x += 1.5) {
+    if (x >= 1 && x <= 3) continue;
+    const brace1 = rod(new THREE.Vector3(x, 7.625, 0.76), new THREE.Vector3(x + 1.5, 8.375, 0.76), 0.02, accent);
+    const brace2 = rod(new THREE.Vector3(x, 8.375, 0.76), new THREE.Vector3(x + 1.5, 7.625, 0.76), 0.02, accent);
+    crane.add(brace1);
+    crane.add(brace2);
+    const brace3 = rod(new THREE.Vector3(x, 7.625, -0.76), new THREE.Vector3(x + 1.5, 8.375, -0.76), 0.02, accent);
+    const brace4 = rod(new THREE.Vector3(x, 8.375, -0.76), new THREE.Vector3(x + 1.5, 7.625, -0.76), 0.02, accent);
+    crane.add(brace3);
+    crane.add(brace4);
+  }
+
   for (const x of [-8.1, 12.1]) {
     const tip = box(0.8, 0.85, 1.56, heavy);
     tip.position.set(x, 8, 0);
@@ -338,7 +383,7 @@ function buildCrane(scene: THREE.Scene) {
       leg.position.set(legX, 4, legZ);
       crane.add(leg);
 
-      const band = box(0.58, 0.5, 0.53, dark);
+      const band = box(0.58, 0.5, 0.53, accent);
       band.position.set(legX, 1.0, legZ);
       crane.add(band);
 
@@ -358,7 +403,7 @@ function buildCrane(scene: THREE.Scene) {
   }
 
   // Machinery house + A-frame pylon + tie-rod stays — STS silhouette.
-  const house = box(3.0, 1.0, 1.6, frame);
+  const house = box(3.0, 1.0, 1.6, M.white());
   house.position.set(-0.6, 8.9, 0);
   crane.add(house);
   const vent = box(0.7, 0.25, 1.0, dark);
@@ -399,7 +444,7 @@ function buildCrane(scene: THREE.Scene) {
   trolleyBody.position.y = 0.1;
   trolley.add(trolleyBody);
 
-  const cab = box(0.85, 0.7, 0.6, dark);
+  const cab = box(0.85, 0.7, 0.6, frame);
   cab.position.set(0, -0.5, 0.75);
   trolley.add(cab);
   const cabGlass = box(0.6, 0.32, 0.05, M.dark());
@@ -440,15 +485,15 @@ function buildCrane(scene: THREE.Scene) {
   // Alignment scan beams shown during the grab.
   const laserGroup = new THREE.Group();
   const laserMat = new THREE.MeshBasicMaterial({
-    color: 0xffffff,
+    color: 0x00A89D, // Brand Cyan lasers
     transparent: true,
-    opacity: 0.3,
+    opacity: 0.55,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
   for (const x of [-0.9, -0.3, 0.3, 0.9]) {
-    const ray = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.9, 0.02), laserMat);
-    ray.position.set(x, -0.6, 0);
+    const ray = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 6.0, 6), laserMat);
+    ray.position.set(x, -3.0, 0);
     laserGroup.add(ray);
   }
   laserGroup.visible = false;
@@ -473,6 +518,25 @@ function buildCrane(scene: THREE.Scene) {
   cargoPlate.position.set(0, 0, 0.62);
   carried.group.add(cargoPlate);
 
+  // Warm orange operator cab light
+  const cabLight = new THREE.PointLight(0xff7e21, 2.5, 6);
+  cabLight.position.set(0, -0.5, 0.7);
+  trolley.add(cabLight);
+
+  // Cyan spreader spotlight pointing down
+  const spreaderLight = new THREE.SpotLight(0x00A89D, 18, 15, 0.65, 0.5, 1.2);
+  spreaderLight.position.set(0, 0, 0);
+  const targetObj = new THREE.Object3D();
+  targetObj.position.set(0, -12, 0);
+  hoist.add(targetObj);
+  spreaderLight.target = targetObj;
+  hoist.add(spreaderLight);
+
+  // Warm red apex beacon light
+  const beaconLight = new THREE.PointLight(0xff3300, 3.0, 10);
+  beaconLight.position.set(2, 11.75, 0);
+  crane.add(beaconLight);
+
   trolley.add(hoist);
   crane.add(trolley);
   scene.add(crane);
@@ -488,6 +552,7 @@ function buildCrane(scene: THREE.Scene) {
     laserGroup,
     cargoLabel,
     apexBeaconMat,
+    beaconLight,
   };
 }
 
@@ -623,7 +688,7 @@ function buildTruck() {
     beaconMat,
     headConeMat,
     headlight,
-    smoke,
+  smoke,
   };
 }
 
@@ -632,8 +697,8 @@ function buildEnvironment(scene: THREE.Scene) {
   const waterGeo = new THREE.PlaneGeometry(160, 90, 90, 50);
   const waterMat = new THREE.MeshStandardMaterial({
     color: 0xd9e0e3,
-    roughness: 0.42,
-    metalness: 0.08,
+    roughness: 0.12,
+    metalness: 0.88,
   });
   const water = new THREE.Mesh(waterGeo, waterMat);
   water.rotation.x = -Math.PI / 2;
@@ -647,11 +712,31 @@ function buildEnvironment(scene: THREE.Scene) {
   pier.position.set(-6, -0.7, 0.8);
   scene.add(pier);
 
-  // Quay edge: graphite cap strip + pale hazard band.
+  // Quay edge: graphite cap strip + hazard stripe warning design in brand orange.
   const edgeCap = box(0.3, 0.08, 14, M.graphite());
   edgeCap.position.set(7.86, 0.02, 0.8);
   scene.add(edgeCap);
-  const hazard = box(0.5, 0.03, 14, M.silver());
+
+  // Create a canvas texture for hazard stripes
+  const hazardLabel = makeLabelTexture((ctx, w, h) => {
+    ctx.fillStyle = "#F47920"; // Brand Orange
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "#1e293b"; // Dark Slate
+    ctx.lineWidth = 16;
+    for (let x = -h; x < w + h; x += 32) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x + h, h);
+      ctx.lineTo(x + h - 16, h);
+      ctx.lineTo(x - 16, 0);
+      ctx.fill();
+    }
+  }, 512, 32);
+
+  const hazard = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5, 0.03, 14),
+    new THREE.MeshStandardMaterial({ map: hazardLabel.tex, roughness: 0.4 })
+  );
   hazard.position.set(7.4, 0.015, 0.8);
   scene.add(hazard);
 
@@ -683,8 +768,7 @@ function buildEnvironment(scene: THREE.Scene) {
   }
 
   // Storage yard stacks.
-  const shades = [0xeeeeec, 0xd8dad8, 0xc4c6c4, 0xb2b4b2];
-  shades.forEach((shade, i) => {
+  CONTAINER_COLORS.slice(0, 4).forEach((shade, i) => {
     const { group } = buildContainer(shade);
     group.position.set(-15.5 + (i % 2) * 2.7, 0.55 + Math.floor(i / 2) * 1.06, -1.9);
     group.rotation.y = (i % 2) * 0.04;
@@ -784,26 +868,7 @@ export function HarborScene3D({
   const mouseRef = useRef(mousePos);
   const [step, setStep] = useState<HarborStep>("approaching");
   const [webglFailed, setWebglFailed] = useState(false);
-  const [isDark, setIsDark] = useState(true);
-
-  // Follow the app theme: html.dark class first, OS preference as fallback.
-  useEffect(() => {
-    const root = document.documentElement;
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const compute = () =>
-      root.classList.contains("dark") ||
-      (!root.classList.contains("light") && media.matches);
-    const timer = setTimeout(() => setIsDark(compute()), 0);
-    const observer = new MutationObserver(() => setIsDark(compute()));
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
-    const onMedia = () => setIsDark(compute());
-    media.addEventListener("change", onMedia);
-    return () => {
-      clearTimeout(timer);
-      observer.disconnect();
-      media.removeEventListener("change", onMedia);
-    };
-  }, []);
+  const isDark = true;
 
   const refs = useRef<{
     ship: THREE.Group;
@@ -821,6 +886,7 @@ export function HarborScene3D({
     laserGroup: THREE.Group;
     cargoLabel: { tex: THREE.CanvasTexture; ctx: CanvasRenderingContext2D; canvas: HTMLCanvasElement };
     apexBeaconMat: THREE.MeshStandardMaterial;
+    beaconLight: THREE.PointLight;
     truck: THREE.Group;
     truckBox: THREE.Group;
     truckBoxEdges: THREE.LineBasicMaterial;
@@ -971,6 +1037,7 @@ export function HarborScene3D({
       laserGroup: craneParts.laserGroup,
       cargoLabel: craneParts.cargoLabel,
       apexBeaconMat: craneParts.apexBeaconMat,
+      beaconLight: craneParts.beaconLight,
       truck: truckParts.truck,
       truckBox: truckParts.truckBox,
       truckBoxEdges: truckParts.truckBoxEdges,
@@ -1019,7 +1086,11 @@ export function HarborScene3D({
       // Ambient motion: radar sweep, horizon traffic, beacon breathing.
       R.radar.rotation.y = t * 1.6;
       R.bgShip.position.x = -44 + ((t * 0.7) % 88);
-      R.apexBeaconMat.emissiveIntensity = 0.8 + Math.max(0, Math.sin(t * 2.6)) * 1.4;
+      const beaconIntensity = 0.8 + Math.max(0, Math.sin(t * 2.6)) * 1.4;
+      R.apexBeaconMat.emissiveIntensity = beaconIntensity;
+      if (R.beaconLight) {
+        R.beaconLight.intensity = beaconIntensity * 2.5;
+      }
       R.truckBeacon.emissiveIntensity = 0.6 + Math.max(0, Math.sin(t * 5)) * 1.2;
 
       // Outline pulses.

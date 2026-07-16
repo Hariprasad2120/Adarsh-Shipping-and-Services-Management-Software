@@ -1,10 +1,10 @@
   "use client";
 
   import { DateInput } from "@/components/ui/date-input";
-  import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+  import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
   import { useRouter } from "next/navigation";
   import { toast } from "sonner";
-  import {FileText,Upload,CheckCircle2,AlertTriangle,FolderOpen,ArrowRight,ShieldCheck,AlertCircle,Plus,Trash2,Check,Database,ExternalLink,Undo2,Mail,History,ChevronDown,ChevronRight,Pencil,} from "lucide-react";
+  import {FileText,Upload,CheckCircle2,AlertTriangle,FolderOpen,ArrowRight,ShieldCheck,AlertCircle,Plus,Trash2,Check,Database,ExternalLink,Undo2,Mail,History,ChevronDown,ChevronRight,Pencil,Lock,BarChart2,CreditCard,ClipboardList,HelpCircle,Clock3,LoaderCircle,LockKeyhole,Search,Maximize2,Copy,UserRound,CalendarDays,Building2,Package,MapPin,Plane,Ship,Bookmark,RefreshCcw,Zap,Boxes,Moon,MoreVertical,} from "lucide-react";
   import { Button } from "@/components/ui/button";
   import { Badge } from "@/components/ui/badge";
   import { FileUploadField } from "@/components/ui/file-upload-field";
@@ -12,6 +12,16 @@
   import { Modal } from "@/components/ui/modal";
   import * as actions from "@/modules/cha/actions";
   import { DoValidityPanel } from "./do-validity-panel";
+  import {
+    FilingDocumentPreviewDrawer,
+    FilingDocumentsPageHeader,
+    DocumentDropzone,
+    RequirementDocumentCard,
+    UploadedWorkflowDocumentCard,
+    WorkflowDocumentsSectionHeader,
+    type WorkflowDocumentRequirement,
+    type WorkflowDocumentVersion,
+  } from "./workflow-documents-section";
   import { NeonCheckbox } from "@/components/ui/neon-checkbox";
   import {
     ChaDueDateWarningNote,
@@ -22,6 +32,7 @@
     getChaDocumentStatusBadgeVariant,
     getChaJobStatusBadgeVariant,
   } from "@/lib/cha-badges";
+  import { cn } from "@/lib/utils";
 
   interface JobWorkspaceClientProps {
     job: any;
@@ -52,6 +63,7 @@
   ];
 
   type WorkspaceTab =
+    | "overview"
     | "docs"
     | "additionalData"
     | "checklist"
@@ -92,6 +104,13 @@
     selectedNextNodeKey: string;
   };
 
+  type FilingCompletionBannerState = {
+    completedNodeRunId: string;
+    nextNodeRunId: string | null;
+    workflowCompleted: boolean;
+    recordedAt: string;
+  };
+
   function getAdditionalDataDraftStorageKey(jobId: string) {
     return `cha_additional_data_draft:${jobId}`;
   }
@@ -105,6 +124,10 @@
 
   function getFilingNodeDraftStorageKey(jobId: string, nodeRunId: string) {
     return `cha_filing_node_draft:${jobId}:${nodeRunId}`;
+  }
+
+  function getFilingCompletionBannerStorageKey(jobId: string) {
+    return `cha_filing_completion_banner:${jobId}`;
   }
 
   function getDefaultTabForStage(stage: string): WorkspaceTab {
@@ -139,6 +162,47 @@
       tone: "neutral" as const,
       label: "Valid",
       detail: `Valid until ${parsed.toLocaleDateString("en-IN")}`,
+    };
+  }
+
+  function getDaysRemainingSummary(dateValue?: string | null) {
+    if (!dateValue) {
+      return {
+        tone: "neutral" as const,
+        label: "Not required",
+      };
+    }
+
+    const parsed = new Date(dateValue);
+    if (Number.isNaN(parsed.getTime())) {
+      return {
+        tone: "neutral" as const,
+        label: "Not set",
+      };
+    }
+
+    const today = new Date();
+    const current = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const target = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+    const diffDays = Math.ceil((target.getTime() - current.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return {
+        tone: "destructive" as const,
+        label: "Expired",
+      };
+    }
+
+    if (diffDays <= 4) {
+      return {
+        tone: "warning" as const,
+        label: `${diffDays} day${diffDays === 1 ? "" : "s"} left`,
+      };
+    }
+
+    return {
+      tone: "success" as const,
+      label: `${diffDays} day${diffDays === 1 ? "" : "s"} left`,
     };
   }
 
@@ -226,6 +290,24 @@
       filingQueryTitle: typeof draft.filingQueryTitle === "string" ? draft.filingQueryTitle : "",
       nodeRemarks: typeof draft.nodeRemarks === "string" ? draft.nodeRemarks : "",
       selectedNextNodeKey: typeof draft.selectedNextNodeKey === "string" ? draft.selectedNextNodeKey : "",
+    };
+  }
+
+  function normalizeFilingCompletionBannerState(value: unknown): FilingCompletionBannerState | null {
+    if (!value || typeof value !== "object") {
+      return null;
+    }
+
+    const banner = value as Partial<FilingCompletionBannerState>;
+    if (typeof banner.completedNodeRunId !== "string" || !banner.completedNodeRunId.trim()) {
+      return null;
+    }
+
+    return {
+      completedNodeRunId: banner.completedNodeRunId,
+      nextNodeRunId: typeof banner.nextNodeRunId === "string" && banner.nextNodeRunId.trim() ? banner.nextNodeRunId : null,
+      workflowCompleted: banner.workflowCompleted === true,
+      recordedAt: typeof banner.recordedAt === "string" ? banner.recordedAt : new Date().toISOString(),
     };
   }
 
@@ -365,6 +447,462 @@
     );
   }
 
+  interface SlideToCompleteProps {
+    onComplete: () => Promise<boolean>;
+    disabled?: boolean;
+    text?: string;
+    helperText?: string;
+    accessibleName?: string;
+  }
+
+  interface FilingCompletionBannerProps {
+    completedNodeRun: any;
+    nextNodeRun: any | null;
+    nextNodeSequence: number | null;
+    nextNodeSubtitle: string | null;
+    upcomingNodeLabel: string | null;
+    upcomingNodeSubtitle: string | null;
+    workflowCompleted: boolean;
+  }
+
+  interface MilestoneCardProps {
+    stageKey: string;
+    title: string;
+    description: string;
+    isCompleted: boolean;
+    isActive: boolean;
+    isLocked: boolean;
+    percentage: number;
+    validationState: string;
+    statusLabel?: string;
+    assignedUser?: string;
+    dueDate?: string | null;
+    completedAt?: string | null;
+    summary: React.ReactNode;
+    children: React.ReactNode;
+    isExpanded: boolean;
+    isSpotlit?: boolean;
+    onToggle: (stageKey: string) => void;
+  }
+
+  function MilestoneCard({
+    stageKey,
+    title,
+    description,
+    isCompleted,
+    isActive,
+    isLocked,
+    percentage,
+    validationState,
+    statusLabel,
+    assignedUser,
+    dueDate,
+    completedAt,
+    summary,
+    children,
+    isExpanded,
+    isSpotlit = false,
+    onToggle,
+  }: MilestoneCardProps) {
+    const cardBorderClass = isActive
+      ? "border-[#7c3aed]/35 bg-surface shadow-[0_28px_60px_-38px_rgba(99,102,241,0.45)]"
+      : isCompleted
+      ? "border-emerald-400/25 bg-surface"
+      : "border-outline-variant/30 bg-surface-container-low/30 opacity-70";
+
+    const badgeVariant = isCompleted
+      ? "success"
+      : isActive
+      ? "default"
+      : "secondary";
+
+    return (
+      <div
+        id={`workflow-stage-${stageKey.toLowerCase()}`}
+        data-stage-key={stageKey}
+        className={`overflow-hidden rounded-[28px] border bg-surface transition-all duration-500 ${cardBorderClass} ${
+          isSpotlit
+            ? "ring-2 ring-[#00cec4]/30 shadow-[0_28px_56px_-34px_rgba(0,206,196,0.4)]"
+            : ""
+        }`}
+        style={{ transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
+      >
+        <div
+          onClick={() => {
+            if (isLocked) return;
+            onToggle(stageKey);
+          }}
+          className={`select-none flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-start sm:justify-between ${
+            isLocked ? "cursor-not-allowed" : "cursor-pointer hover:bg-surface-container-low/45"
+          }`}
+        >
+          <div className="flex min-w-0 items-start gap-4">
+            <span
+              className={`mt-0.5 flex size-11 shrink-0 items-center justify-center rounded-[16px] text-xs font-bold transition-all ${
+                isCompleted
+                  ? "bg-green-600 text-white shadow-[0_16px_32px_-20px_rgba(22,163,74,0.9)]"
+                  : isActive
+                  ? "bg-gradient-to-br from-[#7c3aed] via-[#6366f1] to-[#4f46e5] text-white shadow-[0_20px_36px_-18px_rgba(99,102,241,0.8)]"
+                  : "border border-outline-variant bg-surface text-on-surface-variant/40"
+              }`}
+            >
+              {isCompleted ? <Check size={14} /> : isLocked ? <Lock size={12} /> : percentage + "%"}
+            </span>
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="ds-label">Workflow Stage</span>
+                <Badge
+                  variant={badgeVariant}
+                  className={`uppercase font-semibold tracking-wider text-[10px] ${
+                    isActive ? "bg-[#6366f1]/10 text-[#6366f1]" : ""
+                  }`}
+                >
+                  {statusLabel ?? (isCompleted ? "Completed" : isActive ? "Active" : "Locked")}
+                </Badge>
+                {assignedUser ? (
+                  <span className="rounded-full border border-outline-variant/30 bg-surface-container-low px-2.5 py-1 text-[10px] font-medium text-on-surface-variant">
+                    {assignedUser}
+                  </span>
+                ) : null}
+              </div>
+              <h3 className="ds-h3 flex items-center gap-2 text-on-surface tracking-wide">
+                {title}
+                {isCompleted && <span className="text-green-600 text-xs font-normal font-sans">(Completed)</span>}
+              </h3>
+              <p className="max-w-xl text-sm leading-relaxed text-on-surface-variant">{description}</p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <div className="rounded-2xl border border-outline-variant/25 bg-surface-container-low/65 px-3 py-2">
+                  <p className="ds-label">Readiness</p>
+                  <p className="mt-1 text-sm font-medium text-on-surface">{validationState}</p>
+                </div>
+                <div className="rounded-2xl border border-outline-variant/25 bg-surface-container-low/65 px-3 py-2">
+                  <p className="ds-label">Progress</p>
+                  <p className="mt-1 ds-numeric text-base text-[#6366f1]">{percentage}%</p>
+                </div>
+                <div className="rounded-2xl border border-outline-variant/25 bg-surface-container-low/65 px-3 py-2">
+                  <p className="ds-label">{isCompleted ? "Completed" : "Due"}</p>
+                  <p className="mt-1 text-sm font-medium text-on-surface">
+                    {isCompleted ? (completedAt || "Pending") : (dueDate || "Open")}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 self-end sm:self-start">
+            {!isLocked && (
+              <ChevronDown
+                size={18}
+                className={`text-on-surface-variant transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
+              />
+            )}
+          </div>
+        </div>
+
+        {isExpanded && !isLocked && (
+          <div className="space-y-4 border-t border-outline-variant/25 bg-surface px-5 py-5">
+            {children}
+          </div>
+        )}
+
+        {!isExpanded && isCompleted && summary && (
+          <div className="rounded-b-[28px] border-t border-outline-variant/20 bg-surface-container-low/50 px-5 py-3">
+            {summary}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function SlideToComplete({
+    onComplete,
+    disabled = false,
+    text = "Slide to complete this step",
+    helperText = "Slide all the way to the right",
+    accessibleName = "Slide to complete the current filing workflow step",
+  }: SlideToCompleteProps) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const startOffsetRef = useRef(0);
+    const [sliderPos, setSliderPos] = useState(0);
+    const [maxDistance, setMaxDistance] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const thumbWidth = 92;
+    const horizontalInset = 14;
+
+    useEffect(() => {
+      const updateMaxDistance = () => {
+        const width = containerRef.current?.clientWidth ?? 0;
+        setMaxDistance(Math.max(0, width - thumbWidth - horizontalInset * 2));
+      };
+
+      updateMaxDistance();
+      window.addEventListener("resize", updateMaxDistance);
+
+      return () => {
+        window.removeEventListener("resize", updateMaxDistance);
+      };
+    }, []);
+
+    const progressRatio = maxDistance > 0 ? sliderPos / maxDistance : 0;
+    const progressPercent = Math.round(progressRatio * 100);
+
+    const triggerCompletion = async () => {
+      if (disabled || isSubmitting) return;
+      setIsSubmitting(true);
+      setSliderPos(maxDistance);
+      const didComplete = await onComplete();
+      if (!didComplete) {
+        setSliderPos(0);
+        setIsSubmitting(false);
+      }
+    };
+
+    const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+      if (disabled || isSubmitting) return;
+      setIsDragging(true);
+      startOffsetRef.current = event.clientX - sliderPos;
+      event.currentTarget.setPointerCapture(event.pointerId);
+    };
+
+    const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+      if (!isDragging || disabled || isSubmitting) return;
+      const nextPos = Math.max(0, Math.min(event.clientX - startOffsetRef.current, maxDistance));
+      setSliderPos(nextPos);
+    };
+
+    const resetDrag = (target: HTMLDivElement | null, pointerId?: number) => {
+      setIsDragging(false);
+      if (target && pointerId !== undefined && target.hasPointerCapture(pointerId)) {
+        target.releasePointerCapture(pointerId);
+      }
+    };
+
+    const handlePointerUp = async (event: React.PointerEvent<HTMLDivElement>) => {
+      if (!isDragging) return;
+      resetDrag(event.currentTarget, event.pointerId);
+
+      if (progressRatio >= 0.94) {
+        await triggerCompletion();
+        return;
+      }
+
+      setSliderPos(0);
+    };
+
+    const stepKeyboardProgress = async (direction: "forward" | "backward" | "complete") => {
+      if (disabled || isSubmitting) return;
+      if (direction === "complete") {
+        await triggerCompletion();
+        return;
+      }
+
+      const stepSize = Math.max(maxDistance / 5, 32);
+      const nextPos =
+        direction === "forward"
+          ? Math.min(maxDistance, sliderPos + stepSize)
+          : Math.max(0, sliderPos - stepSize);
+      setSliderPos(nextPos);
+
+      if (maxDistance > 0 && nextPos / maxDistance >= 0.94) {
+        await triggerCompletion();
+      }
+    };
+
+    return (
+      <div
+        ref={containerRef}
+        role="slider"
+        tabIndex={disabled ? -1 : 0}
+        aria-label={accessibleName}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={progressPercent}
+        aria-valuetext={isSubmitting ? "Completing step" : `${progressPercent}% complete`}
+        aria-busy={isSubmitting}
+        className={cn(
+          "relative h-12 w-full overflow-hidden rounded-[22px] border border-outline-variant/70 bg-[linear-gradient(180deg,rgba(247,244,255,0.98),rgba(242,238,255,0.98))] shadow-[0_16px_36px_-30px_rgba(91,33,182,0.55)] outline-none select-none",
+          disabled || isSubmitting ? "cursor-not-allowed opacity-70" : "cursor-ew-resize touch-none",
+          "focus-visible:ring-2 focus-visible:ring-[#8b5cf6]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        )}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={(event) => void handlePointerUp(event)}
+        onPointerCancel={(event) => {
+          resetDrag(event.currentTarget, event.pointerId);
+          setSliderPos(0);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowRight") {
+            event.preventDefault();
+            void stepKeyboardProgress("forward");
+          } else if (event.key === "ArrowLeft") {
+            event.preventDefault();
+            void stepKeyboardProgress("backward");
+          } else if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            void stepKeyboardProgress("complete");
+          } else if (event.key === "Home") {
+            event.preventDefault();
+            setSliderPos(0);
+          } else if (event.key === "End") {
+            event.preventDefault();
+            void stepKeyboardProgress("complete");
+          }
+        }}
+      >
+        <div
+          className="absolute inset-y-[10px] left-[14px] rounded-full bg-[linear-gradient(90deg,rgba(124,58,237,0.18),rgba(196,181,253,0.06))] transition-[width] duration-200 ease-out"
+          style={{ width: `${Math.max(thumbWidth, sliderPos + thumbWidth)}px` }}
+        />
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-[126px] text-sm text-[#8b5cf6]/55">
+          <span className="animate-[workflow-chevron_1.15s_ease-in-out_infinite]">{">"}</span>
+          <span className="ml-2 animate-[workflow-chevron_1.15s_ease-in-out_infinite_0.12s]">{">"}</span>
+          <span className="ml-2 animate-[workflow-chevron_1.15s_ease-in-out_infinite_0.24s]">{">"}</span>
+          <span className="ml-2 animate-[workflow-chevron_1.15s_ease-in-out_infinite_0.36s]">{">"}</span>
+        </div>
+        <div
+          className={cn(
+            "absolute left-[14px] top-1/2 flex h-[72px] w-[92px] -translate-y-1/2 items-center justify-center rounded-[28px] bg-[linear-gradient(135deg,#6d28d9_0%,#7c3aed_45%,#4f46e5_100%)] text-white shadow-[0_24px_40px_-20px_rgba(109,40,217,0.88)] transition-transform duration-200",
+            isDragging ? "scale-[1.02]" : "",
+          )}
+          style={{ transform: `translate(${sliderPos}px, -50%)` }}
+        >
+          <ArrowRight size={26} />
+        </div>
+        <div className="relative z-10 grid h-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-[176px] pr-6">
+          <div className="justify-self-center text-center leading-none">
+            <p className="text-sm text-on-surface-variant">{isSubmitting ? "Completing..." : "Slide to"}</p>
+            <p className="mt-2 text-[15px] font-semibold text-on-surface">
+              <span className="text-[#5b34ea]">{isSubmitting ? "completing" : "complete"}</span> this step
+            </p>
+          </div>
+          <span className="hidden items-center gap-1.5 text-[11px] text-on-surface-variant sm:inline-flex">
+            <LockKeyhole size={12} />
+            {helperText}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  function FilingCompletionBanner({
+    completedNodeRun,
+    nextNodeRun,
+    nextNodeSequence,
+    nextNodeSubtitle,
+    upcomingNodeLabel,
+    upcomingNodeSubtitle,
+    workflowCompleted,
+  }: FilingCompletionBannerProps) {
+    const completedByName = completedNodeRun?.completedBy?.name || "System";
+    const completedDateLabel = completedNodeRun?.completedAt
+      ? new Date(completedNodeRun.completedAt).toLocaleDateString("en-IN")
+      : "Just now";
+    const completedTimeLabel = completedNodeRun?.completedAt
+      ? new Date(completedNodeRun.completedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
+      : "";
+
+    return (
+      <div className="space-y-6">
+        <div className="relative overflow-hidden rounded-[22px] border border-green-500/22 bg-[linear-gradient(180deg,rgba(236,253,245,0.95),rgba(255,255,255,0.98))] px-6 py-6 shadow-[0_20px_42px_-30px_rgba(34,197,94,0.35)]">
+          <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_280px] md:items-center">
+            <div className="flex items-start gap-4">
+              <div className="workflow-completion-confetti relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-green-500/18 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.95),rgba(187,247,208,0.75))] text-green-600 shadow-[0_22px_40px_-24px_rgba(34,197,94,0.45)]">
+                <div className="absolute inset-[10px] rounded-full border border-green-500/18 bg-green-500/10" />
+                <CheckCircle2 size={34} strokeWidth={2.5} className="relative z-10" />
+              </div>
+              <div className="space-y-2">
+                <h4 className="text-[1.05rem] font-semibold text-green-700 dark:text-green-300">Step Completed!</h4>
+                <p className="text-lg font-medium text-on-surface">
+                  {completedNodeRun?.node?.name || "This step"} has been completed successfully.
+                </p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-on-surface-variant">
+                  <span className="inline-flex items-center gap-1.5">
+                    <UserRound size={14} />
+                    Completed by <span className="font-medium text-[#0098a8]">{completedByName}</span>
+                  </span>
+                  <span className="text-outline-variant">|</span>
+                  <span className="inline-flex items-center gap-1.5 ds-numeric">
+                    <CalendarDays size={14} />
+                    {completedDateLabel}
+                  </span>
+                  {completedTimeLabel ? (
+                    <>
+                      <span className="text-outline-variant">•</span>
+                      <span className="inline-flex items-center gap-1.5 ds-numeric">
+                        <Clock3 size={14} />
+                        {completedTimeLabel}
+                      </span>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2 border-t border-green-500/15 pt-4 text-left md:border-l md:border-t-0 md:pl-6 md:pt-0">
+              <div className="inline-flex items-center gap-2 text-[1.05rem] font-medium text-on-surface">
+                {workflowCompleted ? "Workflow Completed" : "Opening next step..."}
+                <LoaderCircle size={18} className="animate-spin text-green-600 dark:text-green-300" />
+              </div>
+              <p className="text-sm text-on-surface-variant">
+                {workflowCompleted ? "All configured filing stages have been completed." : "Please wait a moment while we prepare it."}
+              </p>
+            </div>
+          </div>
+        </div>
+        {!workflowCompleted && nextNodeRun ? (
+          <div className="relative">
+            <div className="workflow-next-stage-connector pointer-events-none absolute left-0 top-[-28px] hidden h-16 w-12 md:block" />
+            <div className="rounded-[20px] border border-outline-variant/40 bg-surface px-6 py-5 shadow-[0_18px_36px_-28px_rgba(15,23,42,0.22)]">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                <div className="flex min-w-0 items-center gap-3 rounded-[18px] border border-[#00cec4]/18 bg-[#00cec4]/5 px-4 py-4">
+                  <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] bg-[linear-gradient(135deg,rgba(16,185,129,0.12),rgba(0,206,196,0.08))] text-green-600 dark:text-green-300">
+                    <FolderOpen size={26} />
+                  </span>
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="ds-label text-on-surface-variant">Current Stage</span>
+                      <Badge variant="success" className="whitespace-nowrap">
+                        Now Unlocked
+                      </Badge>
+                    </div>
+                    <p className="text-lg font-medium text-on-surface">
+                      {nextNodeSequence ? `${nextNodeSequence}. ` : ""}
+                      {nextNodeRun.node?.name || nextNodeRun.nodeKey}
+                    </p>
+                    <p className="text-sm text-on-surface-variant">
+                      {nextNodeSubtitle || "This is the active stage now available for completion."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex min-w-0 items-center gap-3 rounded-[18px] border border-outline-variant/25 bg-surface-container-low/35 px-4 py-4">
+                  <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] bg-surface text-[#5b34ea] shadow-[0_10px_24px_-18px_rgba(91,52,234,0.4)]">
+                    <ArrowRight size={24} />
+                  </span>
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="ds-label text-on-surface-variant">Upcoming Stage</span>
+                      <Badge variant="secondary" className="whitespace-nowrap">
+                        Pending
+                      </Badge>
+                    </div>
+                    <p className="text-lg font-medium text-on-surface">
+                      {upcomingNodeLabel || "Workflow completion"}
+                    </p>
+                    <p className="text-sm text-on-surface-variant">
+                      {upcomingNodeSubtitle || "This stage will open after the current stage is completed through the slider action."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
   export function JobWorkspaceClient({
     job,
     users,
@@ -384,20 +922,63 @@
   }: JobWorkspaceClientProps) {
     const router = useRouter();
     const [, startRefreshTransition] = useTransition();
+    const filingFormRef = useRef<HTMLFormElement>(null);
+    const filingActiveNodeCardRef = useRef<HTMLDivElement>(null);
     const [activeTab, setActiveTab] = useState<WorkspaceTab>(() => {
-      if (initialTab && ["docs", "additionalData", "checklist", "filing", "advances", "expenses", "audit"].includes(initialTab)) {
+      if (initialTab && ["overview", "docs", "additionalData", "checklist", "filing", "advances", "expenses", "audit"].includes(initialTab)) {
         return initialTab as WorkspaceTab;
       }
-      return getDefaultTabForStage(job.stage);
+      return "overview";
     });
+    const [expandedStageKey, setExpandedStageKey] = useState<string | null>(() => {
+      if (initialTab) {
+        if (initialTab === "docs") return "DOCUMENT_COLLECTION";
+        if (initialTab === "additionalData") return "ADDITIONAL_DATA";
+        if (initialTab === "checklist") return job.stage === "CHECKLIST_APPROVAL" ? "CHECKLIST_APPROVAL" : "CHECKLIST_PREPARATION";
+        if (initialTab === "filing") return job.stage === "FILED" ? "FILED" : "FILING";
+      }
+      return job.stage;
+    });
+    const [stageFocusKey, setStageFocusKey] = useState<string | null>(null);
+    const stageScrollAnimationRef = useRef<number | null>(null);
+    const stageFocusTimeoutRef = useRef<number | null>(null);
+    const pendingStageNavigationRef = useRef<string | null>(null);
+    const pendingStageScrollRef = useRef<string | null>(null);
+
     useEffect(() => {
       setActiveTab((currentTab) => {
-        if (currentTab === "audit" || currentTab === "advances" || currentTab === "expenses") {
+        if (currentTab === "overview" || currentTab === "audit" || currentTab === "advances" || currentTab === "expenses") {
           return currentTab;
         }
         return getDefaultTabForStage(job.stage);
       });
     }, [job.stage]);
+
+    useEffect(() => {
+      return () => {
+        if (stageScrollAnimationRef.current !== null) {
+          cancelAnimationFrame(stageScrollAnimationRef.current);
+        }
+        if (stageFocusTimeoutRef.current !== null) {
+          window.clearTimeout(stageFocusTimeoutRef.current);
+        }
+      };
+    }, []);
+
+    useEffect(() => {
+      const pendingStage = pendingStageScrollRef.current;
+      if (!pendingStage || expandedStageKey !== pendingStage) {
+        return;
+      }
+
+      const target = document.getElementById(`workflow-stage-${pendingStage.toLowerCase()}`);
+      if (!target) {
+        return;
+      }
+
+      pendingStageScrollRef.current = null;
+      animateStageScrollIntoView(pendingStage);
+    }, [activeTab, expandedStageKey]);
 
     // Submitting States
     const [loading, setLoading] = useState<string | null>(null);
@@ -493,6 +1074,112 @@
       return unresolvedRequirement?.id ?? null;
     }, [visibleDocumentRequirements]);
 
+    const [documentSearchQuery, setDocumentSearchQuery] = useState("");
+    const [documentsFilterMode, setDocumentsFilterMode] = useState<"ALL" | "PENDING" | "UPLOADED" | "EXCEPTIONS">("ALL");
+    const [selectedDocumentRequirementId, setSelectedDocumentRequirementId] = useState<string | null>(null);
+    const [isDocumentDrawerOpen, setIsDocumentDrawerOpen] = useState(true);
+    const [documentDrawerTab, setDocumentDrawerTab] = useState<"preview" | "details">("preview");
+
+    const filteredWorkflowDocuments = useMemo(() => {
+      const normalizedQuery = documentSearchQuery.trim().toLowerCase();
+      return visibleDocumentRequirements.filter((rawReq: any) => {
+        const req = rawReq as WorkflowDocumentRequirement;
+        const currentVersion = req.versions.find((version) => version.isCurrent) || req.versions[0];
+        const matchesQuery =
+          !normalizedQuery ||
+          [
+            req.name,
+            req.category,
+            req.requirementItem?.category?.name,
+            currentVersion?.fileName,
+          ]
+            .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+            .some((value) => value.toLowerCase().includes(normalizedQuery));
+
+        if (!matchesQuery) return false;
+
+        if (documentsFilterMode === "UPLOADED") return req.status === "UPLOADED";
+        if (documentsFilterMode === "EXCEPTIONS") return req.status === "NOT_AVAILABLE" || !!req.exception;
+        if (documentsFilterMode === "PENDING") return req.status !== "UPLOADED" && !(req.status === "NOT_AVAILABLE" || !!req.exception);
+        return true;
+      });
+    }, [documentSearchQuery, documentsFilterMode, visibleDocumentRequirements]);
+
+    const topRequirementCards = useMemo(
+      () =>
+        filteredWorkflowDocuments.filter((req: WorkflowDocumentRequirement) => req.status !== "UPLOADED"),
+      [filteredWorkflowDocuments],
+    );
+
+    const uploadedWorkflowDocuments = useMemo(
+      () =>
+        filteredWorkflowDocuments.filter((req: WorkflowDocumentRequirement) => {
+          const currentVersion = req.versions.find((version) => version.isCurrent) || req.versions[0];
+          return req.status === "UPLOADED" && !!currentVersion;
+        }),
+      [filteredWorkflowDocuments],
+    );
+
+    const selectedWorkflowDocumentRequirement = useMemo(() => {
+      const matchingRequirement = filteredWorkflowDocuments.find((req: WorkflowDocumentRequirement) => req.id === selectedDocumentRequirementId);
+      if (matchingRequirement) return matchingRequirement;
+      return uploadedWorkflowDocuments[0] ?? topRequirementCards[0] ?? filteredWorkflowDocuments[0] ?? null;
+    }, [filteredWorkflowDocuments, selectedDocumentRequirementId, topRequirementCards, uploadedWorkflowDocuments]);
+
+    const selectedWorkflowDocumentVersion = useMemo(() => {
+      if (!selectedWorkflowDocumentRequirement) return null;
+      return selectedWorkflowDocumentRequirement.versions.find((version: WorkflowDocumentVersion) => version.isCurrent) || selectedWorkflowDocumentRequirement.versions[0] || null;
+    }, [selectedWorkflowDocumentRequirement]);
+    const getRequirementCategoryName = (requirement: WorkflowDocumentRequirement) =>
+      requirement.requirementItem?.category?.name || requirement.category || "General Documents";
+    const getRequirementCategorySortOrder = (requirement: WorkflowDocumentRequirement) => {
+      const rawOrder =
+        (requirement.requirementItem?.category as { sortOrder?: number | null } | undefined)?.sortOrder ?? null;
+      return typeof rawOrder === "number" ? rawOrder : Number.MAX_SAFE_INTEGER;
+    };
+    const getRequirementItemSortOrder = (requirement: WorkflowDocumentRequirement) => {
+      const rawOrder =
+        (requirement.requirementItem as { sortOrder?: number | null } | undefined)?.sortOrder ?? null;
+      return typeof rawOrder === "number" ? rawOrder : Number.MAX_SAFE_INTEGER;
+    };
+    const sortWorkflowRequirements = useCallback((left: WorkflowDocumentRequirement, right: WorkflowDocumentRequirement) => {
+      const categoryOrderDiff = getRequirementCategorySortOrder(left) - getRequirementCategorySortOrder(right);
+      if (categoryOrderDiff !== 0) return categoryOrderDiff;
+
+      const categoryNameDiff = getRequirementCategoryName(left).localeCompare(getRequirementCategoryName(right));
+      if (categoryNameDiff !== 0) return categoryNameDiff;
+
+      const itemOrderDiff = getRequirementItemSortOrder(left) - getRequirementItemSortOrder(right);
+      if (itemOrderDiff !== 0) return itemOrderDiff;
+
+      return left.name.localeCompare(right.name);
+    }, []);
+    const groupedPendingWorkflowDocuments = useMemo(() => {
+      const grouped = new Map<string, WorkflowDocumentRequirement[]>();
+      for (const requirement of topRequirementCards) {
+        const categoryName = getRequirementCategoryName(requirement);
+        if (!grouped.has(categoryName)) {
+          grouped.set(categoryName, []);
+        }
+        grouped.get(categoryName)?.push(requirement);
+      }
+
+      return Array.from(grouped.entries())
+        .map(([categoryName, requirements]) => ({
+          categoryName,
+          requirements: [...requirements].sort(sortWorkflowRequirements),
+          sortOrder: requirements.reduce((lowest, current) => Math.min(lowest, getRequirementCategorySortOrder(current)), Number.MAX_SAFE_INTEGER),
+        }))
+        .sort((left, right) => {
+          if (left.sortOrder !== right.sortOrder) return left.sortOrder - right.sortOrder;
+          return left.categoryName.localeCompare(right.categoryName);
+        });
+    }, [sortWorkflowRequirements, topRequirementCards]);
+    const sortedUploadedWorkflowDocuments = useMemo(
+      () => [...uploadedWorkflowDocuments].sort(sortWorkflowRequirements),
+      [sortWorkflowRequirements, uploadedWorkflowDocuments],
+    );
+
 
     // Document Collection Form State
     const [exceptionReason, setExceptionReason] = useState("");
@@ -502,6 +1189,18 @@
     const [customDocumentName, setCustomDocumentName] = useState("");
     const [customDocumentFile, setCustomDocumentFile] = useState<File | null>(null);
     const [customerApprovalNow, setCustomerApprovalNow] = useState(() => Date.now());
+    const [workspaceSearchQuery, setWorkspaceSearchQuery] = useState("");
+    const activeExceptionRequirement =
+      activeDocReqId ? documentRequirements.find((req: any) => req.id === activeDocReqId) ?? null : null;
+    const section49Requirement = visibleDocumentRequirements.find((req: any) => req.name === "Section 49") ?? null;
+    const section49CurrentVersion = section49Requirement?.versions.find((version: any) => version.isCurrent) ?? section49Requirement?.versions?.[0] ?? null;
+    const section49EffectiveValidityDate = section49Flag?.validityDate || section49CurrentVersion?.validityDate || null;
+    const section49ValiditySummary = getValiditySummary(section49EffectiveValidityDate);
+    const section49WarningActive = Boolean(
+      section49Requirement &&
+        section49EffectiveValidityDate &&
+        ["warning", "destructive"].includes(section49ValiditySummary?.tone || ""),
+    );
     
     // Custom Document Requirements Configuration State additions
     const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
@@ -521,7 +1220,13 @@
     }, [viewingVersion?.id]);
 
     useEffect(() => {
-      if (initialTab && ["docs", "additionalData", "checklist", "filing", "advances", "expenses", "audit"].includes(initialTab)) {
+      if (!selectedWorkflowDocumentVersion) {
+        setIsDocumentDrawerOpen(false);
+      }
+    }, [selectedWorkflowDocumentVersion]);
+
+    useEffect(() => {
+      if (initialTab && ["overview", "docs", "additionalData", "checklist", "filing", "advances", "expenses", "audit"].includes(initialTab)) {
         setActiveTab(initialTab as WorkspaceTab);
       }
       if (focusField === "deliveryOrderValidity" || focusField === "deliveryOrderExtensionDate") {
@@ -631,6 +1336,8 @@
     // --- FILING WORKFLOW RUNNER STATES ---
     const [filingInstance, setFilingInstance] = useState<any>(null);
     const [activeNodeRun, setActiveNodeRun] = useState<any>(null);
+    const [filingCompletionBanner, setFilingCompletionBanner] = useState<FilingCompletionBannerState | null>(null);
+    const [filingCompletionAnnouncement, setFilingCompletionAnnouncement] = useState("");
     const [checklistResponses, setChecklistResponses] = useState<Record<string, { isChecked: boolean; remarks?: string; fileKey?: string; delayRemarks?: string }>>({});
     const [filingFieldValues, setFilingFieldValues] = useState<Record<string, string>>({});
     const [filingToggleStates, setFilingToggleStates] = useState<Record<string, boolean>>({});
@@ -642,6 +1349,8 @@
   const [filingQueryReceivedAt, setFilingQueryReceivedAt] = useState("");
   const [filingQueryStatusUpdates, setFilingQueryStatusUpdates] = useState<Record<string, string>>({});
   const [filingQueryResponderNames, setFilingQueryResponderNames] = useState<Record<string, string>>({});
+  const [queryToggleOffModalOpen, setQueryToggleOffModalOpen] = useState(false);
+  const [queryToggleOffRemarks, setQueryToggleOffRemarks] = useState("");
   const [executionTimelineModalOpen, setExecutionTimelineModalOpen] = useState(false);
   const [queryProcessingPanelExpanded, setQueryProcessingPanelExpanded] = useState(false);
     const [goBackOpen, setGoBackOpen] = useState(false);
@@ -651,6 +1360,33 @@
     const [selectedNextNodeKey, setSelectedNextNodeKey] = useState<string>("");
     const filingDraftHydratedForRef = useRef<string | null>(null);
     const filingDraftStorageKey = activeNodeRun?.id ? getFilingNodeDraftStorageKey(job.id, activeNodeRun.id) : null;
+    const filingCompletionBannerStorageKey = getFilingCompletionBannerStorageKey(job.id);
+
+    const persistFilingCompletionBanner = (nextBanner: FilingCompletionBannerState | null) => {
+      setFilingCompletionBanner(nextBanner);
+      try {
+        if (!nextBanner) {
+          localStorage.removeItem(filingCompletionBannerStorageKey);
+          return;
+        }
+        localStorage.setItem(filingCompletionBannerStorageKey, JSON.stringify(nextBanner));
+      } catch {
+        // localStorage unavailable
+      }
+    };
+
+    const clearFilingCompletionBanner = () => {
+      persistFilingCompletionBanner(null);
+    };
+
+    useEffect(() => {
+      try {
+        const stored = localStorage.getItem(filingCompletionBannerStorageKey);
+        setFilingCompletionBanner(normalizeFilingCompletionBannerState(stored ? JSON.parse(stored) : null));
+      } catch {
+        setFilingCompletionBanner(null);
+      }
+    }, [filingCompletionBannerStorageKey]);
     const activeWorkflowVersionNode = useMemo(() => {
       if (!activeNodeRun?.nodeKey) return null;
       return filingInstance?.version?.nodes?.find((node: any) => node.key === activeNodeRun.nodeKey) ?? null;
@@ -884,6 +1620,66 @@
     const pendingBlockedStage = filingInstance?.pendingBlockedStage || null;
     const canResumePendingBlockedStage = !!filingInstance?.canResumePendingBlockedStage;
     const jumpBackTargets = filingInstance?.jumpBackTargets || [];
+    const completionBannerCompletedRun = useMemo(() => {
+      if (!filingCompletionBanner?.completedNodeRunId || !filingInstance?.nodeRuns) return null;
+      return (
+        filingInstance.nodeRuns.find(
+          (run: any) => run.id === filingCompletionBanner.completedNodeRunId && run.status === "COMPLETED",
+        ) || null
+      );
+    }, [filingCompletionBanner?.completedNodeRunId, filingInstance?.nodeRuns]);
+    const completionBannerNextNodeRun = useMemo(() => {
+      if (!filingCompletionBanner?.nextNodeRunId) return null;
+      if (activeNodeRun?.id === filingCompletionBanner.nextNodeRunId) {
+        return activeNodeRun;
+      }
+      return null;
+    }, [activeNodeRun, filingCompletionBanner?.nextNodeRunId]);
+    const completionBannerNextNodeSequence = useMemo(() => {
+      const nextNodeKey = completionBannerNextNodeRun?.nodeKey;
+      if (!nextNodeKey || !filingInstance?.version?.nodes) return null;
+      const nodeIndex = filingInstance.version.nodes.findIndex((node: any) => node.key === nextNodeKey);
+      return nodeIndex >= 0 ? nodeIndex + 1 : null;
+    }, [completionBannerNextNodeRun?.nodeKey, filingInstance?.version?.nodes]);
+    const completionBannerNextNodeSubtitle = useMemo(() => {
+      const node = completionBannerNextNodeRun?.node;
+      if (!node) return null;
+      const parts = [node.description, node.sectionName, node.branchName]
+        .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+      return parts[0] ?? null;
+    }, [completionBannerNextNodeRun?.node]);
+    const completionBannerUpcomingNode = useMemo(() => {
+      const nextNodeKey = completionBannerNextNodeRun?.nodeKey;
+      if (!nextNodeKey || !filingInstance?.version?.edges) return null;
+      const nextEdge = filingInstance.version.edges.find((edge: any) => edge.sourceKey === nextNodeKey) || null;
+      if (!nextEdge) return null;
+      return targetNodesMap.get(nextEdge.targetKey) || null;
+    }, [completionBannerNextNodeRun?.nodeKey, filingInstance?.version?.edges, targetNodesMap]);
+    const completionBannerUpcomingNodeLabel = useMemo(() => {
+      if (!completionBannerUpcomingNode) return null;
+      return completionBannerUpcomingNode.name || completionBannerUpcomingNode.key || null;
+    }, [completionBannerUpcomingNode]);
+    const completionBannerUpcomingNodeSubtitle = useMemo(() => {
+      if (!completionBannerUpcomingNode) return null;
+      const parts = [
+        completionBannerUpcomingNode.description,
+        completionBannerUpcomingNode.sectionName,
+        completionBannerUpcomingNode.branchName,
+      ].filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+      return parts[0] ?? null;
+    }, [completionBannerUpcomingNode]);
+    const showFilingCompletionBanner = Boolean(
+      completionBannerCompletedRun &&
+        filingCompletionBanner &&
+        ((filingCompletionBanner.workflowCompleted && filingInstance?.status === "COMPLETED") ||
+          (!!filingCompletionBanner.nextNodeRunId && activeNodeRun?.id === filingCompletionBanner.nextNodeRunId)),
+    );
+
+    useEffect(() => {
+      if (!filingCompletionBanner || !filingInstance) return;
+      if (completionBannerCompletedRun) return;
+      clearFilingCompletionBanner();
+    }, [completionBannerCompletedRun, filingCompletionBanner, filingInstance]);
     const isActiveStageBlocked = !!activeNodePrerequisiteStatus?.isBlocked;
     const hasShipmentBillNumberField = activeNodeFieldKeys.has("bill_number");
     const activeNodeHasConditionalFields = visibleNodeConditionalSections.some(
@@ -936,6 +1732,58 @@
     const isSavingQueryProcessingDecision = loading === "filing-toggle-query_processing";
     const filingPrimaryColumnClass = "w-full max-w-[680px] xl:col-start-1";
     const filingCompletionColumnClass = "w-full space-y-4 xl:col-start-2 xl:self-start";
+    const nextWorkflowTargetNode = outgoingEdges.length > 0 ? targetNodesMap.get(outgoingEdges[0].targetKey) : null;
+    const nextWorkflowTargetLabel = nextWorkflowTargetNode?.name || outgoingEdges[0]?.label || "Final submission";
+    const filingQueryReferenceLabel =
+      typeof queryProcessingState?.queryReferenceNumber === "string" && queryProcessingState.queryReferenceNumber.trim()
+        ? queryProcessingState.queryReferenceNumber
+        : primaryQuerySummary?.title || "a";
+    const filingQueryReceivedLabel =
+      typeof queryProcessingState?.queryReceivedAt === "string" && queryProcessingState.queryReceivedAt.trim()
+        ? new Date(queryProcessingState.queryReceivedAt).toLocaleDateString("en-IN")
+        : "Pending";
+    const filingSummaryCards = [
+      {
+        key: "current-stage",
+        title: "Current Stage",
+        value: activeNodeDisplayName || "Pending",
+        note: [activeNodeRun?.node?.sectionName, activeNodeRun?.node?.branchName].filter(Boolean).join(" / ") || "Workflow in progress",
+        icon: <FolderOpen size={18} />,
+        tone: "cyan" as const,
+      },
+      {
+        key: "next-stage",
+        title: "Next Stage",
+        value: nextWorkflowTargetLabel,
+        note: outgoingEdges.length > 0 ? "Next eligible routing step" : "Workflow completes after this step",
+        icon: <ArrowRight size={18} />,
+        tone: "green" as const,
+      },
+      {
+        key: "queries",
+        title: "Queries",
+        value: querySummaryStatusLabel,
+        note: `${activeNodeOpenQueries.length} open case${activeNodeOpenQueries.length === 1 ? "" : "s"}`,
+        icon: <AlertCircle size={18} />,
+        tone: "orange" as const,
+      },
+      {
+        key: "open-cases",
+        title: "Open Cases",
+        value: String(activeNodeOpenQueries.length),
+        note: primaryQuerySummary ? "Recorded for this stage" : "No active cases",
+        icon: <ShieldCheck size={18} />,
+        tone: "violet" as const,
+      },
+      {
+        key: "received",
+        title: "Received",
+        value: filingQueryReceivedLabel,
+        note: filingQueryReferenceLabel,
+        icon: <Clock3 size={18} />,
+        tone: "cyan" as const,
+      },
+    ] as const;
     const queryProcessingWarning = !queryProcessingActive
       ? null
       : !queryProcessingResolved
@@ -971,6 +1819,19 @@
         : stageSummaryItems.length > 0
           ? `Complete the required ${formatSummaryList(stageSummaryItems)} below before moving this filing to the next stage.`
           : "Review this stage and record any completion notes before moving this filing to the next stage.";
+    const highlightedChecklistItem =
+      activeChecklistItems[Math.max(currentChecklistItemIndex, 0)] ?? activeChecklistItems[0] ?? null;
+    const highlightedChecklistPosition =
+      activeChecklistItems.length > 0 ? `Item ${Math.max(currentChecklistItemIndex, 0) + 1} of ${activeChecklistItems.length}` : null;
+    const highlightedChecklistDeadline = highlightedChecklistItem
+      ? `${highlightedChecklistItem.deadlineDuration || 2} ${
+          highlightedChecklistItem.deadlineUnit === "HOURS"
+            ? "HR"
+            : highlightedChecklistItem.deadlineUnit === "DAYS"
+              ? "DAY"
+              : "BD"
+        }`
+      : null;
     // Go-back is available on every filing stage that has a completed predecessor.
     const hasPreviousFilingStage =
       !!activeNodeRun &&
@@ -1168,6 +2029,132 @@
       deleteConfirmPhrase.trim().toLowerCase() === "delete job";
     const checklistWorkflow = job.checklistWorkflow ?? null;
     const currentChecklistVersion = checklistWorkflow?.currentFileVersion ?? checklistWorkflow?.fileVersions?.[0] ?? null;
+
+    useEffect(() => {
+      if (["docs", "additionalData", "checklist", "filing"].includes(activeTab)) {
+        if (pendingStageNavigationRef.current) {
+          setExpandedStageKey(pendingStageNavigationRef.current);
+          pendingStageNavigationRef.current = null;
+          return;
+        }
+        if (activeTab === "docs") setExpandedStageKey("DOCUMENT_COLLECTION");
+        else if (activeTab === "additionalData") setExpandedStageKey("ADDITIONAL_DATA");
+        else if (activeTab === "checklist") {
+          setExpandedStageKey(currentChecklistVersion ? "CHECKLIST_APPROVAL" : "CHECKLIST_PREPARATION");
+        }
+        else if (activeTab === "filing") setExpandedStageKey(job.stage === "FILED" ? "FILED" : "FILING");
+      } else {
+        setExpandedStageKey(null);
+      }
+    }, [activeTab, job.stage, currentChecklistVersion]);
+
+    const animateStageScrollIntoView = (stageKey: string, attempt = 0) => {
+      const target = document.getElementById(`workflow-stage-${stageKey.toLowerCase()}`);
+      if (!target) {
+        if (attempt < 8) {
+          window.setTimeout(() => animateStageScrollIntoView(stageKey, attempt + 1), 70);
+        }
+        return;
+      }
+
+      const startY = window.scrollY;
+      const targetY = Math.max(0, window.scrollY + target.getBoundingClientRect().top - 126);
+      const distance = targetY - startY;
+      const duration = 520;
+      const startTime = performance.now();
+
+      if (stageScrollAnimationRef.current !== null) {
+        cancelAnimationFrame(stageScrollAnimationRef.current);
+      }
+
+      const easeInOutQuint = (value: number) =>
+        value < 0.5 ? 16 * value * value * value * value * value : 1 - Math.pow(-2 * value + 2, 5) / 2;
+
+      const render = (timestamp: number) => {
+        const elapsed = timestamp - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = easeInOutQuint(progress);
+        window.scrollTo({ top: startY + distance * eased, behavior: "auto" });
+
+        if (progress < 1) {
+          stageScrollAnimationRef.current = requestAnimationFrame(render);
+          return;
+        }
+
+        target.animate(
+          [
+            { transform: "translateY(10px) scale(0.985)", filter: "brightness(0.985)" },
+            { transform: "translateY(-2px) scale(1.008)", filter: "brightness(1.02)" },
+            { transform: "translateY(0) scale(1)", filter: "brightness(1)" },
+          ],
+          {
+            duration: 460,
+            easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          },
+        );
+      };
+
+      stageScrollAnimationRef.current = requestAnimationFrame(render);
+    };
+
+    const openWorkflowStage = (stageKey: string) => {
+      const targetTab =
+        stageKey === "DOCUMENT_COLLECTION"
+          ? "docs"
+          : stageKey === "ADDITIONAL_DATA"
+            ? "additionalData"
+            : stageKey === "CHECKLIST_PREPARATION" || stageKey === "CHECKLIST_APPROVAL"
+              ? "checklist"
+              : "filing";
+
+      pendingStageNavigationRef.current = stageKey;
+      pendingStageScrollRef.current = stageKey;
+      setExpandedStageKey(stageKey);
+
+      setActiveTab(targetTab);
+
+      if (activeTab === targetTab && expandedStageKey === stageKey) {
+        pendingStageScrollRef.current = null;
+        animateStageScrollIntoView(stageKey);
+      }
+
+      setStageFocusKey(stageKey);
+      if (stageFocusTimeoutRef.current !== null) {
+        window.clearTimeout(stageFocusTimeoutRef.current);
+      }
+      stageFocusTimeoutRef.current = window.setTimeout(() => setStageFocusKey(null), 1100);
+    };
+
+    const handleMilestoneToggle = (stageKey: string) => {
+      const isExpanded = expandedStageKey === stageKey;
+      if (isExpanded) {
+        setExpandedStageKey(null);
+        return;
+      }
+
+      openWorkflowStage(stageKey);
+    };
+
+    const navigateToWorkspaceTab = (tab: WorkspaceTab) => {
+      if (tab === "docs") {
+        openWorkflowStage("DOCUMENT_COLLECTION");
+        return;
+      }
+      if (tab === "additionalData") {
+        openWorkflowStage("ADDITIONAL_DATA");
+        return;
+      }
+      if (tab === "checklist") {
+        openWorkflowStage(job.stage === "CHECKLIST_APPROVAL" ? "CHECKLIST_APPROVAL" : "CHECKLIST_PREPARATION");
+        return;
+      }
+      if (tab === "filing") {
+        openWorkflowStage(job.stage === "FILED" ? "FILED" : "FILING");
+        return;
+      }
+      setActiveTab(tab);
+    };
+
     const checklistApprovals = checklistWorkflow?.approvals ?? [];
     const latestCustomerMailLog = checklistWorkflow?.customerMailLogs?.[0] ?? null;
     const customerApprovalVisibleAt = checklistWorkflow?.customerApprovalVisibleAt
@@ -1276,6 +2263,7 @@
         router.refresh();
       });
     };
+    const getUploadValidityDate = () => new Date().toISOString().slice(0, 10);
 
     // Document version upload handler
     const handleUploadDoc = async (reqId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1283,20 +2271,7 @@
       if (!file) return;
       const requirement = documentRequirements.find((req) => req.id === reqId);
       const requiresValidity = !!requirement?.requirementItem?.requiresValidityDate;
-      let validityDateValue = "";
-      if (requiresValidity) {
-        const prompted = window.prompt("Enter validity date in YYYY-MM-DD format for this document.", "");
-        if (!prompted) {
-          e.target.value = "";
-          return;
-        }
-        validityDateValue = prompted.trim();
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(validityDateValue)) {
-          toast.error("Use YYYY-MM-DD for the validity date.");
-          e.target.value = "";
-          return;
-        }
-      }
+      const validityDateValue = requiresValidity ? getUploadValidityDate() : "";
 
       setLoading(`doc-${reqId}`);
       try {
@@ -1339,6 +2314,9 @@
                 : req,
             ),
           );
+          setSelectedDocumentRequirementId(reqId);
+          setIsDocumentDrawerOpen(true);
+          setDocumentDrawerTab("preview");
           toast.success(`Uploaded ${file.name} successfully.`);
           refreshJobInBackground();
         } else {
@@ -1377,6 +2355,9 @@
             setPreviewUrls((prev) => ({ ...prev, [currentVersion.id]: localUrl }));
           }
           setDocumentRequirements((current) => [...current, createdRequirement]);
+          setSelectedDocumentRequirementId(createdRequirement.id);
+          setIsDocumentDrawerOpen(true);
+          setDocumentDrawerTab("preview");
           setCustomDocumentName("");
           setCustomDocumentFile(null);
           setIsCustomDocumentModalOpen(false);
@@ -1565,6 +2546,7 @@
           toast.success("Workflow stage advanced to Additional Data successfully.");
           setActiveTab("additionalData");
           refreshJobInBackground();
+          return true;
         } else {
           setProceedErrors(res.error ? [res.error] : ["Mandatory document requirement gating check failed."]);
           if (firstUnresolvedMandatoryDocumentId) {
@@ -1572,9 +2554,11 @@
             setActiveTab("docs");
           }
           toast.error("Document collection gate not satisfied.");
+          return false;
         }
       } catch (err: any) {
         toast.error(err.message || "An unexpected error occurred.");
+        return false;
       } finally {
         setLoading(null);
       }
@@ -1632,32 +2616,32 @@
     const handleProceedAdditionalData = async () => {
       if (manifestConfigMissing) {
         toast.error("This clearance type is missing manifest configuration. Update it in CHA settings before continuing.");
-        return;
+        return false;
       }
       if (!vesselInwardDate || !deliveryOrderValidity) {
         toast.error("Complete Vessel Inward Date and DO Validity before proceeding.");
-        return;
+        return false;
       }
       if (manifestMandatory && requiresIgm && importGeneralManifest === "") {
         toast.error("IGM Number is required before proceeding.");
-        return;
+        return false;
       }
       if (manifestMandatory && requiresEgm && exportGeneralManifest === "") {
         toast.error("EGM Number is required before proceeding.");
-        return;
+        return false;
       }
       if (manifestMandatory && requiresCustomManifest && customManifestValue === "") {
         toast.error(`${customManifestLabel} is required before proceeding.`);
-        return;
+        return false;
       }
 
       if (importGeneralManifest !== "" && !isValidManifest(importGeneralManifest)) {
         toast.error("IGM must be alphanumeric.");
-        return;
+        return false;
       }
       if (exportGeneralManifest !== "" && !isValidManifest(exportGeneralManifest)) {
         toast.error("EGM must be alphanumeric.");
-        return;
+        return false;
       }
 
       setLoading("additional-data-proceed");
@@ -1680,7 +2664,7 @@
         if (!saveRes.ok) {
           toast.error(saveRes.error || "Failed to auto-save Additional Data.");
           setLoading(null);
-          return;
+          return false;
         }
 
         clearAdditionalDataDraft();
@@ -1690,11 +2674,14 @@
         if (res.ok) {
           toast.success("Additional Data saved and workflow advanced to Checklist Preparation.");
           router.refresh();
+          return true;
         } else {
           toast.error(res.error || "Failed to complete Additional Data.");
+          return false;
         }
       } catch (err: any) {
         toast.error(err.message || "An unexpected error occurred.");
+        return false;
       } finally {
         setLoading(null);
       }
@@ -2188,6 +3175,7 @@
               ? currentDraftSnapshot.nodeRemarks
               : activeRun?.remarks || "",
           );
+          return instanceRes.data;
         } else {
           toast.error(instanceRes.error || "Failed to load filing workflow. Check that a workflow is published in CHA Settings.");
         }
@@ -2199,6 +3187,7 @@
       } finally {
         setLoading(null);
       }
+      return null;
     };
 
     useEffect(() => {
@@ -2433,6 +3422,64 @@
       }
     };
 
+    const handleQueryProcessingToggleChange = async () => {
+      if (!queryProcessingToggleEnabled) {
+        await handlePersistFilingToggleState(
+          "query_processing",
+          true,
+          {
+            ...(queryProcessingState ?? {}),
+            stage:
+              typeof queryProcessingState?.stage === "string" && queryProcessingState.stage.trim()
+                ? queryProcessingState.stage
+                : "AWAITING_QUERY_DECISION",
+            disabledRemarks: undefined,
+            disabledAt: undefined,
+          },
+          "Query processing enabled for this workflow stage.",
+        );
+        return;
+      }
+
+      if (activeNodeQueries.length > 0) {
+        toast.error("Query processing cannot be turned off after a query has been recorded for this filing stage.");
+        return;
+      }
+
+      setQueryToggleOffRemarks("");
+      setQueryToggleOffModalOpen(true);
+    };
+
+    const handleConfirmQueryProcessingToggleOff = async () => {
+      if (!queryToggleOffRemarks.trim()) {
+        toast.error("Enter remarks before turning query processing off.");
+        return;
+      }
+
+      const didDisable = await handlePersistFilingToggleState(
+        "query_processing",
+        false,
+        {
+          ...(queryProcessingState ?? {}),
+          stage: undefined,
+          disabledRemarks: queryToggleOffRemarks.trim(),
+          disabledAt: new Date().toISOString(),
+        },
+        "Query processing disabled for this workflow stage.",
+      );
+
+      if (didDisable) {
+        setQueryToggleOffModalOpen(false);
+        setQueryToggleOffRemarks("");
+      }
+    };
+
+    const handleCloseQueryToggleOffModal = () => {
+      if (loading === "filing-toggle-query_processing") return;
+      setQueryToggleOffRemarks("");
+      setQueryToggleOffModalOpen(false);
+    };
+
     const handleStartFilingWorkflow = async () => {
       setLoading("filing-start");
       try {
@@ -2451,51 +3498,47 @@
       }
     };
 
-    const handleCompleteFilingNode = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!activeNodeRun) return;
+    const completeActiveFilingNode = async () => {
+      if (!activeNodeRun) return false;
       const currentFilingDraftStorageKey = filingDraftStorageKey;
 
       if (isActiveStageBlocked) {
         toast.error("Complete the missing prerequisite stage before continuing this filing stage.");
-        return;
+        return false;
       }
 
       if (queryProcessingEnabled && !queryProcessingResolved) {
         toast.error("Resolve query processing before moving to the next filing step.");
-        return;
+        return false;
       }
 
-      // Validate that comments are entered if commentsRequired is true
       if (activeNodeRun.node.commentsRequired && !nodeRemarks.trim()) {
         toast.error(`Comments are mandatory to complete stage: ${activeNodeRun.node.name}.`);
-        return;
+        return false;
       }
 
-      // Validate all mandatory checklist items are checked if requireAllMandatoryChecklistItems is true.
       if (activeNodeRun.node.requireAllMandatoryChecklistItems) {
         for (const item of activeChecklistItems) {
           if (item.isMandatory) {
             const resp = checklistResponses[item.id];
             if (!resp || !resp.isChecked) {
               toast.error(`Mandatory checklist item "${item.label}" must be checked.`);
-              return;
+              return false;
             }
           }
         }
       }
 
-      // Validate checklist items requiring remarks have remarks
       for (const item of activeChecklistItems) {
         const resp = checklistResponses[item.id];
         if (item.requiresRemarks && resp?.isChecked && !resp.remarks?.trim()) {
           toast.error(`Remarks are required for checklist item "${item.label}".`);
-          return;
+          return false;
         }
         const matchingOverdue = overdueChecklistItems.find((entry: any) => entry.checklistItemId === item.id);
         if (matchingOverdue && resp?.isChecked && item.delayRemarksRequired && !resp.delayRemarks?.trim()) {
           toast.error(`Delay remarks are required for overdue checklist item "${item.label}".`);
-          return;
+          return false;
         }
       }
 
@@ -2507,13 +3550,15 @@
           const uploadedCount = currentAttachments.filter((a: any) => a.photoRequirementId === pr.id).length;
           if (uploadedCount < pr.minPhotos) {
             toast.error(`Mandatory photo upload "${pr.label}" requires at least ${pr.minPhotos} photo(s). Uploaded ${uploadedCount}.`);
-            return;
+            return false;
           }
         }
       }
 
       setLoading("filing-complete");
       try {
+        const completedNodeRunId = activeNodeRun.id;
+        const completedNodeName = activeNodeRun.node.name;
         if (hasShipmentBillNumberField && filingFieldValues.bill_number?.trim()) {
           const billNumber = filingFieldValues.bill_number.trim();
           const shipmentSaveRes = await actions.upsertFilingShipmentDetailsAction(job.id, {
@@ -2523,7 +3568,7 @@
           });
           if (!shipmentSaveRes.ok) {
             toast.error(shipmentSaveRes.error || "Failed to save bill number for filing.");
-            return;
+            return false;
           }
         }
 
@@ -2552,17 +3597,38 @@
 
         if (res.ok) {
           clearFilingNodeDraft(currentFilingDraftStorageKey);
-          toast.success(`Completed stage: ${activeNodeRun.node.name}`);
-          await loadFilingData();
-          router.refresh();
+          toast.success(`Completed stage: ${completedNodeName}`);
+          const refreshedInstance = await loadFilingData();
+          persistFilingCompletionBanner({
+            completedNodeRunId,
+            nextNodeRunId: refreshedInstance?.activeNodeRun?.id ?? null,
+            workflowCompleted: refreshedInstance?.status === "COMPLETED",
+            recordedAt: new Date().toISOString(),
+          });
+          setFilingCompletionAnnouncement(
+            refreshedInstance?.status === "COMPLETED"
+              ? `${completedNodeName} completed. Workflow completed successfully.`
+              : `${completedNodeName} completed. ${refreshedInstance?.activeNodeRun?.node?.name || "Next step"} is now unlocked.`,
+          );
+          startRefreshTransition(() => {
+            router.refresh();
+          });
+          return true;
         } else {
           toast.error(res.error || "Failed to finalize filing stage.");
+          return false;
         }
       } catch (err: any) {
         toast.error(err.message || "An unexpected error occurred.");
+        return false;
       } finally {
         setLoading(null);
       }
+    };
+
+    const handleCompleteFilingNode = async (e: React.FormEvent) => {
+      e.preventDefault();
+      await completeActiveFilingNode();
     };
 
     const handleGoBackStage = async () => {
@@ -2639,20 +3705,7 @@
       const file = e.target.files?.[0];
       if (!file || !activeNodeRun) return;
       const requirement = activeNodeRun.node.photoRequirements?.find((entry: any) => entry.id === photoRequirementId);
-      let validityDateValue = "";
-      if (requirement?.requiresValidity) {
-        const prompted = window.prompt("Enter validity date in YYYY-MM-DD format for this filing upload.", "");
-        if (!prompted) {
-          e.target.value = "";
-          return;
-        }
-        validityDateValue = prompted.trim();
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(validityDateValue)) {
-          toast.error("Use YYYY-MM-DD for the validity date.");
-          e.target.value = "";
-          return;
-        }
-      }
+      const validityDateValue = requirement?.requiresValidity ? getUploadValidityDate() : "";
 
       setLoading(`filing-photo-${photoRequirementId || "general"}`);
       try {
@@ -2772,20 +3825,7 @@
       const file = e.target.files?.[0];
       if (!file || !activeNodeRun) return;
       const requirement = activeNodeRun.node.checklistItems?.find((entry: any) => entry.id === checklistItemId);
-      let validityDateValue = "";
-      if (requirement?.requiresValidity) {
-        const prompted = window.prompt("Enter validity date in YYYY-MM-DD format for this filing upload.", "");
-        if (!prompted) {
-          e.target.value = "";
-          return;
-        }
-        validityDateValue = prompted.trim();
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(validityDateValue)) {
-          toast.error("Use YYYY-MM-DD for the validity date.");
-          e.target.value = "";
-          return;
-        }
-      }
+      const validityDateValue = requirement?.requiresValidity ? getUploadValidityDate() : "";
 
       setLoading(`checklist-item-file-${checklistItemId}`);
       try {
@@ -3036,7 +4076,7 @@
         });
 
         if (res.ok) {
-          toast.success(`Recorded advance payment receipt of ₹${amountNum}`);
+          toast.success(`Recorded advance payment receipt of â‚¹${amountNum}`);
           setReceiptAmount("");
           setReceiptDate("");
           setReceiptRef("");
@@ -3277,8 +4317,107 @@
       }
     };
 
+    const docPercentage = useMemo(() => {
+      if (activeStepIndex > 0) return 100;
+      const total = visibleDocumentRequirements.length;
+      if (total === 0) return 100;
+      const uploaded = visibleDocumentRequirements.filter((r: any) => r.status === "UPLOADED" || r.status === "NOT_AVAILABLE" || r.exception).length;
+      return Math.round((uploaded / total) * 100);
+    }, [visibleDocumentRequirements, activeStepIndex]);
+
+    const docValidationState = firstUnresolvedMandatoryDocumentId ? "Unresolved Documents" : "Valid";
+
+    const additionalDataPercentage = useMemo(() => {
+      if (activeStepIndex > 1) return 100;
+      let filled = 0;
+      let total = 2;
+      if (vesselInwardDate) filled++;
+      if (deliveryOrderValidity) filled++;
+      if (manifestMandatory && manifestRequirement !== "NONE") {
+        total++;
+        if (requiresIgm && importGeneralManifest) filled++;
+        if (requiresEgm && exportGeneralManifest) filled++;
+        if (requiresCustomManifest && customManifestValue) filled++;
+      }
+      return Math.round((filled / total) * 100);
+    }, [vesselInwardDate, deliveryOrderValidity, manifestMandatory, manifestRequirement, requiresIgm, importGeneralManifest, requiresEgm, exportGeneralManifest, requiresCustomManifest, customManifestValue, activeStepIndex]);
+
+    const additionalDataValidationState = additionalDataComplete ? "Valid" : "Pending Fields";
+
+    const checklistPrepPercentage = currentChecklistVersion ? 100 : 0;
+    const checklistPrepValidationState = currentChecklistVersion ? "Uploaded" : "Awaiting File";
+
+    const checklistApprovalPercentage = useMemo(() => {
+      if (activeStepIndex > 3) return 100;
+      if (!checklistWorkflow) return 0;
+      let percent = 0;
+      if (approvedInternalDecision) percent += 50;
+      if (approvedCustomerDecision) percent += 50;
+      return percent;
+    }, [checklistWorkflow, approvedInternalDecision, approvedCustomerDecision, activeStepIndex]);
+
+    const checklistApprovalValidationState = useMemo(() => {
+      if (approvedCustomerDecision) return "Approved";
+      if (checklistWorkflow?.currentApprovalStage === "CUSTOMER") return "Awaiting Customer";
+      if (checklistWorkflow?.currentApprovalStage === "INTERNAL") return "Awaiting Internal";
+      return "Pending Upload";
+    }, [checklistWorkflow, approvedCustomerDecision]);
+
+    const filingPercentage = activeStepIndex > 4 ? 100 : filingInstance?.activeNodeRun ? 50 : 0;
+    const filingValidationState = isActiveStageBlocked ? "Blocked" : activeStepIndex > 4 ? "Filed" : "Active";
+
+    const filedPercentage = activeStepIndex >= 5 ? 100 : 0;
+    const filedValidationState = activeStepIndex >= 5 ? "Completed" : "Locked";
+
     const stageProgress = activeStepIndex >= 0 ? Math.round(((activeStepIndex + 1) / STAGES.length) * 100) : 0;
+    const showDocumentCollectionStage = true;
+    const showAdditionalDataStage = activeStepIndex >= 1;
+    const showChecklistPreparationStage = activeStepIndex >= 2;
+    const showChecklistApprovalStage = activeStepIndex >= 2 && !!currentChecklistVersion;
+    const showFilingStage = activeStepIndex >= 4;
+    const showFiledStage = activeStepIndex >= 5;
+    const cycleDocumentsFilterMode = () => {
+      setDocumentsFilterMode((current) => {
+        if (current === "ALL") return "PENDING";
+        if (current === "PENDING") return "UPLOADED";
+        if (current === "UPLOADED") return "EXCEPTIONS";
+        return "ALL";
+      });
+    };
+    const uploadExcludedRequirements = useMemo(
+      () =>
+        visibleDocumentRequirements.filter((req: any) => req.status === "NOT_AVAILABLE" || !!req.exception),
+      [visibleDocumentRequirements],
+    );
+    const uploadEligibleRequirements = useMemo(
+      () =>
+        visibleDocumentRequirements.filter((req: any) => !(req.status === "NOT_AVAILABLE" || !!req.exception)),
+      [visibleDocumentRequirements],
+    );
+    const uploadedEligibleRequirements = useMemo(
+      () =>
+        uploadEligibleRequirements.filter((req: any) => req.status === "UPLOADED"),
+      [uploadEligibleRequirements],
+    );
+    const pendingEligibleRequirements = useMemo(
+      () =>
+        uploadEligibleRequirements.filter((req: any) => req.status !== "UPLOADED"),
+      [uploadEligibleRequirements],
+    );
+    const workflowProgressPercent = useMemo(() => {
+      if (uploadEligibleRequirements.length === 0) return 100;
+      return Math.round((uploadedEligibleRequirements.length / uploadEligibleRequirements.length) * 100);
+    }, [uploadEligibleRequirements.length, uploadedEligibleRequirements.length]);
+    const workflowCurrentStepLabel = pendingEligibleRequirements.length > 0 ? "Uploads Pending" : "Completed";
+    const selectedDocumentPreviewUrl = selectedWorkflowDocumentVersion
+      ? previewUrls[selectedWorkflowDocumentVersion.id] || selectedWorkflowDocumentVersion.fileKey || `/api/cha/documents/${selectedWorkflowDocumentVersion.id}`
+      : null;
+    const selectedDocumentDownloadUrl = selectedWorkflowDocumentVersion
+      ? previewUrls[selectedWorkflowDocumentVersion.id] || selectedWorkflowDocumentVersion.fileKey || `/api/cha/documents/${selectedWorkflowDocumentVersion.id}?download=true`
+      : null;
+    const deliveryOrderValiditySummary = getValiditySummary(deliveryOrderValidity || null);
     const workspaceTabs: { key: WorkspaceTab; label: string; count?: number }[] = [
+      { key: "overview", label: "Overview" },
       { key: "docs", label: "Documents", count: visibleDocumentRequirements.length },
       { key: "additionalData", label: "Additional Data" },
       { key: "checklist", label: "Checklist" },
@@ -3287,9 +4426,239 @@
       { key: "expenses", label: "Expenses", count: job.expenseRequests?.length || 0 },
       { key: "audit", label: "Audit" },
     ];
+    const currentStageLabel = STAGES[Math.max(activeStepIndex, 0)]?.label ?? "Pending";
+    const topJobBadges = [
+      { label: job.jobType?.name || "JOB TYPE", variant: "secondary" as const },
+      ...(job.shipmentType?.name ? [{ label: job.shipmentType.name, variant: "secondary" as const }] : []),
+      ...(job.branch?.name ? [{ label: job.branch.name, variant: "secondary" as const }] : []),
+      { label: formatChaBadgeLabel(job.status), variant: getChaJobStatusBadgeVariant(job.status) },
+    ];
+    const overviewMetaItems = [
+      {
+        label: "Customer",
+        value: job.customer?.name || "Not assigned",
+        secondary: job.customer?.branchName || null,
+        icon: <Building2 size={16} />,
+      },
+      {
+        label: "Owner",
+        value: job.primaryOwner?.name || "Not assigned",
+        secondary: job.primaryOwner?.email || null,
+        icon: <UserRound size={16} />,
+      },
+      {
+        label: "Manager",
+        value: job.assignedManager?.name || "Not assigned",
+        secondary: job.assignedManager?.email || null,
+        icon: <UserRound size={16} />,
+      },
+      {
+        label: "Job Created",
+        value: job.createdAt ? new Date(job.createdAt).toLocaleDateString("en-IN") : "Not available",
+        secondary: job.createdAt ? new Date(job.createdAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : null,
+        icon: <CalendarDays size={16} />,
+      },
+      {
+        label: "Last Updated",
+        value: job.updatedAt ? new Date(job.updatedAt).toLocaleDateString("en-IN") : "Not available",
+        secondary: job.updatedAt ? new Date(job.updatedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : null,
+        icon: <RefreshCcw size={16} />,
+      },
+      {
+        label: "Job Type",
+        value: job.jobType?.name || "Not configured",
+        secondary: job.shipmentType?.name || null,
+        icon: <Boxes size={16} />,
+      },
+      {
+        label: "Reference",
+        value: job.referenceNumber || job.referenceCode || job.reference || job.filing?.filingReference || "Not assigned",
+        secondary: job.branch?.name || null,
+        icon: <Bookmark size={16} />,
+      },
+    ];
+    const overviewSummaryItems = [
+      { label: "Shipment Type", value: job.shipmentType?.name || "Not set", icon: <Package size={14} /> },
+      { label: job.shipmentType?.name?.toUpperCase() === "AIR" ? "Flight Date" : "Vessel / Flight Date", value: vesselInwardDate ? new Date(vesselInwardDate).toLocaleDateString("en-IN") : "Not set", icon: job.shipmentType?.name?.toUpperCase() === "AIR" ? <Plane size={14} /> : <Ship size={14} /> },
+      { label: "Port of Discharge", value: job.portOfDischarge || job.port?.name || job.branch?.name || "Not set", icon: <MapPin size={14} /> },
+      { label: "ETA", value: job.eta ? new Date(job.eta).toLocaleDateString("en-IN") : "Not set", icon: <Clock3 size={14} /> },
+      { label: job.shipmentType?.name?.toUpperCase() === "AIR" ? "Carrier / Flight" : "Carrier / Vessel", value: job.carrierName || job.flightNumber || job.vesselName || "Not set", icon: job.shipmentType?.name?.toUpperCase() === "AIR" ? <Plane size={14} /> : <Ship size={14} /> },
+      { label: manifestLabel, value: manifestPreview || "Pending", icon: <FileText size={14} /> },
+      { label: "Country of Origin", value: job.countryOfOrigin || job.originCountry || "Not set", icon: <MapPin size={14} /> },
+      { label: "No. of Packages", value: job.packageCount || job.numberOfPackages || populatedContainerCount || "Not set", icon: <Package size={14} /> },
+    ].filter((item) => item.value && item.value !== "Not set");
+    const overviewDateItems = [
+      {
+        label: "DO Validity",
+        value: deliveryOrderValidity ? new Date(deliveryOrderValidity).toLocaleDateString("en-IN") : "Not required",
+        badge: getDaysRemainingSummary(deliveryOrderValidity || null),
+        icon: <CalendarDays size={14} />,
+      },
+      {
+        label: "CE/Lab Report Validity",
+        value: job.ceLabReportValidity ? new Date(job.ceLabReportValidity).toLocaleDateString("en-IN") : "Not required",
+        badge: getDaysRemainingSummary(job.ceLabReportValidity || null),
+        icon: <FileText size={14} />,
+      },
+      {
+        label: "E-way Bill Validity",
+        value: job.ewayBillValidity ? new Date(job.ewayBillValidity).toLocaleDateString("en-IN") : "Not required",
+        badge: getDaysRemainingSummary(job.ewayBillValidity || null),
+        icon: <FileText size={14} />,
+      },
+      {
+        label: "Bill Filing Due Date",
+        value: job.filing?.estimatedFilingDate ? new Date(job.filing.estimatedFilingDate).toLocaleDateString("en-IN") : "Pending",
+        badge: getDaysRemainingSummary(job.filing?.estimatedFilingDate || null),
+        icon: <Clock3 size={14} />,
+      },
+    ].filter((item) => item.value);
+    const overviewRecentLogs = (job.auditLogs || []).slice(0, 4);
+    const workspaceQuickActions = [
+      { label: "Upload Document", note: "Add new document", icon: <Upload size={16} />, onClick: () => navigateToWorkspaceTab("docs"), accent: "cyan" as const, visible: true },
+      { label: "Add Query", note: "Raise a new query", icon: <AlertCircle size={16} />, onClick: () => navigateToWorkspaceTab("filing"), accent: "orange" as const, visible: activeStepIndex >= 4 },
+      { label: "View Workflow", note: "See filing workflow", icon: <Zap size={16} />, onClick: () => navigateToWorkspaceTab("filing"), accent: "cyan" as const, visible: true },
+      { label: "Bill Filing", note: "Manage bill filing", icon: <FileText size={16} />, onClick: () => navigateToWorkspaceTab("filing"), accent: "violet" as const, visible: activeStepIndex >= 4 },
+      { label: "Request Expense", note: "Raise expense request", icon: <CreditCard size={16} />, onClick: () => navigateToWorkspaceTab("expenses"), accent: "cyan" as const, visible: true },
+      { label: "Job Activity", note: "View all activities", icon: <History size={16} />, onClick: () => navigateToWorkspaceTab("audit"), accent: "violet" as const, visible: true },
+    ].filter((action) => action.visible);
+    const workflowNavigator = (
+      <div className="border-t border-outline-variant/20 bg-surface px-5 py-3">
+        <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+          <div className="min-w-0 flex-1">
+            <nav className="flex flex-wrap items-center gap-2 pr-2">
+              <button
+                type="button"
+                onClick={() => navigateToWorkspaceTab("overview")}
+                className={`group flex items-center gap-2 rounded-full border px-3 py-1.5 text-left transition-all hover:bg-surface-container-low/70 ${
+                  activeTab === "overview"
+                    ? "border-[#00cec4]/30 bg-[#00cec4]/8"
+                    : "border-outline-variant/35 bg-surface"
+                }`}
+              >
+                <span
+                  className={`flex size-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${
+                    activeTab === "overview"
+                      ? "bg-[#00cec4] text-white"
+                      : "border border-outline-variant/60 bg-surface text-on-surface-variant"
+                  }`}
+                >
+                  <Boxes size={10} />
+                </span>
+                <span className={`whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                  activeTab === "overview" ? "text-[#00cec4]" : "text-on-surface-variant"
+                }`}>
+                  Overview
+                </span>
+              </button>
+              {STAGES.map((stage, index) => {
+                const isCompleted = index < activeStepIndex;
+                const isActive = index === activeStepIndex;
+                const isLocked = index > activeStepIndex;
+
+                let percent = 0;
+                let statusColor = "text-on-surface-variant";
+
+                if (stage.key === "DOCUMENT_COLLECTION") {
+                  percent = docPercentage;
+                  statusColor = isCompleted || isActive ? "text-[#00cec4]" : "text-on-surface-variant/50";
+                } else if (stage.key === "ADDITIONAL_DATA") {
+                  percent = additionalDataPercentage;
+                  statusColor = isCompleted || isActive ? "text-[#00cec4]" : "text-on-surface-variant/50";
+                } else if (stage.key === "CHECKLIST_PREPARATION") {
+                  percent = checklistPrepPercentage;
+                  statusColor = isCompleted || isActive || currentChecklistVersion ? "text-[#00cec4]" : "text-on-surface-variant/50";
+                } else if (stage.key === "CHECKLIST_APPROVAL") {
+                  percent = checklistApprovalPercentage;
+                  statusColor =
+                    isCompleted || isActive || (activeStepIndex === 2 && currentChecklistVersion)
+                      ? checklistWorkflow?.currentApprovalStage === "INTERNAL"
+                        ? "text-[#fb923c]"
+                        : "text-[#00cec4]"
+                      : "text-on-surface-variant/50";
+                } else if (stage.key === "FILING") {
+                  percent = filingPercentage;
+                  statusColor = isCompleted || isActive ? "text-[#00cec4]" : "text-on-surface-variant/50";
+                } else if (stage.key === "FILED") {
+                  percent = filedPercentage;
+                  statusColor = isCompleted ? "text-[#00cec4]" : "text-on-surface-variant/50";
+                }
+
+                const isClickable = !isLocked || stage.key === "CHECKLIST_APPROVAL";
+                const isHighlighted =
+                  (activeTab === "docs" && stage.key === "DOCUMENT_COLLECTION") ||
+                  (activeTab === "additionalData" && stage.key === "ADDITIONAL_DATA") ||
+                  (activeTab === "checklist" && stage.key === "CHECKLIST_PREPARATION" && !currentChecklistVersion) ||
+                  (activeTab === "checklist" && stage.key === "CHECKLIST_APPROVAL" && !!currentChecklistVersion) ||
+                  (activeTab === "filing" && stage.key === "FILING") ||
+                  (activeTab === "filing" && stage.key === "FILED" && activeStepIndex >= 5);
+
+                return (
+                  <div key={stage.key} className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!isClickable) return;
+                        openWorkflowStage(stage.key);
+                      }}
+                      disabled={!isClickable}
+                      className={`group flex items-center gap-2 rounded-full border px-3 py-1.5 text-left transition-all ${
+                        isClickable ? "hover:bg-surface-container-low/70" : "cursor-not-allowed opacity-55"
+                      } ${isHighlighted ? "border-[#00cec4]/30 bg-[#00cec4]/8" : "border-outline-variant/35 bg-surface"}`}
+                    >
+                      <span
+                        className={`flex size-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold transition-all ${
+                          isCompleted
+                            ? "bg-[#59c7bf] text-white"
+                            : isActive
+                            ? "border border-[#59c7bf] bg-surface text-[#59c7bf] shadow-[0_10px_24px_-18px_rgba(89,199,191,0.9)]"
+                            : "border border-outline-variant/60 bg-surface text-on-surface-variant"
+                        }`}
+                      >
+                        {isCompleted ? <Check size={10} /> : index + 1}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className={`whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.14em] ${isHighlighted ? statusColor : "text-on-surface-variant"}`}>
+                          {stage.label}
+                        </span>
+                        {(isCompleted || isActive) && stage.key !== "FILED" ? (
+                          <span className={`text-[9px] font-semibold ds-numeric ${statusColor}`}>{percent}%</span>
+                        ) : null}
+                      </span>
+                    </button>
+                    {index < STAGES.length - 1 ? (
+                      <span className={`hidden h-px w-5 rounded-full lg:block ${index < activeStepIndex ? "bg-[#59c7bf]" : "bg-outline-variant/45"}`} />
+                    ) : null}
+                  </div>
+                );
+              })}
+            </nav>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2 self-start xl:grid-cols-2 xl:self-auto">
+            <div className="rounded-[20px] border border-outline-variant/25 bg-surface px-4 py-3 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.22)]">
+              <p className="ds-label text-on-surface-variant">Stage</p>
+              <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface">
+                {STAGES[Math.max(activeStepIndex, 0)]?.label ?? "Pending"}
+              </p>
+            </div>
+            <div className="rounded-[20px] border border-outline-variant/25 bg-surface px-4 py-3 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.22)]">
+              <p className="ds-label text-on-surface-variant">Progress</p>
+              <p className="mt-2 text-lg font-semibold text-[#00cec4] ds-numeric">{stageProgress}%</p>
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-outline-variant/20">
+                <div
+                  className="h-full rounded-full bg-[linear-gradient(90deg,#00cec4_0%,#18b7cb_100%)] transition-all duration-500"
+                  style={{ width: `${stageProgress}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
 
     return (
-      <main className="w-full space-y-3 overflow-x-hidden pb-4">
+      <main className="w-full space-y-5 overflow-x-hidden pb-6">
         {dueDateWarnings.map((warning) => (
           <ChaDueDateWarningNote
             key={warning.notificationId}
@@ -3302,106 +4671,166 @@
           />
         ))}
 
-        {/* Compact Job Header */}
-        <section className="rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
-          <div className="flex flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="min-w-0 space-y-2">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <Badge variant="secondary" className="uppercase">
-                  {job.jobType.name}
-                </Badge>
-                {job.shipmentType ? (
-                  <Badge variant="secondary" className="uppercase">
-                    {job.shipmentType.name}
-                  </Badge>
-                ) : null}
-                <span className="rounded-md bg-surface-container-low px-2 py-0.5 text-[10px] font-semibold text-on-surface-variant ds-numeric">
-                  {job.branch.name}
-                </span>
-                <Badge variant={getChaJobStatusBadgeVariant(job.status)} className="uppercase">
-                  {formatChaBadgeLabel(job.status)}
-                </Badge>
-              </div>
-              <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
-                <h1 className="ds-h1 ds-numeric text-on-surface">{job.jobNumber}</h1>
-                <p className="max-w-4xl truncate text-sm font-medium text-on-surface">{job.title}</p>
-              </div>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-on-surface-variant">
-                <span>Customer: <span className="text-on-surface">{job.customer.name}</span></span>
-                <span className="text-outline">•</span>
-                <span>Owner: <span className="text-on-surface">{job.primaryOwner.name}</span></span>
-                <span className="text-outline">•</span>
-                <span>
-                  Manager:{" "}
-                  {job.assignedManager ? (
-                    <span className="text-on-surface">{job.assignedManager.name}</span>
-                  ) : (
-                    <span className="text-red-500">Not assigned</span>
-                  )}
-                </span>
-                {canUpdateJob ? (
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingManager(true)}
-                    className="ds-plain cha-link ds-label hover:underline"
-                  >
-                    Change
-                  </button>
-                ) : null}
+        {/* â”€â”€ Job Header â”€â”€ */}
+        <section className="border-b border-outline-variant/20 px-1 pb-4">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex min-w-0 items-center gap-3">
+              <Button type="button" variant="outline" mode="icon" onClick={() => router.back()} aria-label="Go back">
+                <ArrowRight size={16} className="rotate-180" />
+              </Button>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-on-surface-variant">
+                  <span>Filing</span>
+                  <ChevronRight size={14} />
+                  <span>Jobs</span>
+                  <ChevronRight size={14} />
+                  <span className="ds-numeric text-[#00cec4]">{job.jobNumber}</span>
+                </div>
               </div>
             </div>
 
-            <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:items-center">
-              <div className="rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2">
-                <span className="ds-label block text-on-surface-variant">Stage</span>
-                <span className="mt-0.5 block whitespace-nowrap text-xs uppercase tracking-wide text-on-surface">
-                  {job.stage.replace(/_/g, " ")}
-                </span>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="relative min-w-0 sm:min-w-[320px]">
+                <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+                <Input
+                  value={workspaceSearchQuery}
+                  onChange={(event) => setWorkspaceSearchQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && workspaceSearchQuery.trim()) {
+                      router.push(`/cha/jobs?search=${encodeURIComponent(workspaceSearchQuery.trim())}`);
+                    }
+                  }}
+                  placeholder="Search job, customer, reference..."
+                  className="pl-10"
+                />
               </div>
-              <div className="rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2">
-                <span className="ds-label block text-on-surface-variant">Progress</span>
-                <span className="mt-0.5 block text-xs text-[#00cec4] ds-numeric">{stageProgress}%</span>
-              </div>
-              {canDeleteJob ? (
-                <Button
-                  variant="destructive"
-                  className="col-span-2 min-h-9 sm:col-span-1"
-                  disabled={loading !== null || Boolean(activeDeletionRequest)}
-                  onClick={() => setDeleteModalMode("delete")}
-                >
-                  <Trash2 className="mr-2 size-4" />
-                  {activeDeletionRequest ? "Deletion Pending" : "Delete"}
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" mode="icon" onClick={() => toast.info("Workspace help is available through the CHA workflow panels.")}>
+                  <HelpCircle size={16} />
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  mode="icon"
+                  onClick={() => {
+                    const root = document.documentElement;
+                    const nextTheme = root.classList.contains("dark") ? "light" : "dark";
+                    root.classList.remove("light", "dark");
+                    root.classList.add(nextTheme);
+                    root.style.colorScheme = nextTheme;
+                    window.localStorage.setItem("theme", nextTheme);
+                  }}
+                  aria-label="Toggle appearance"
+                >
+                  <Moon size={16} />
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  mode="icon"
+                  onClick={() => {
+                    if (document.fullscreenElement) {
+                      void document.exitFullscreen();
+                    } else {
+                      void document.documentElement.requestFullscreen();
+                    }
+                  }}
+                >
+                  <Maximize2 size={16} />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="overflow-hidden rounded-[28px] border border-outline-variant/45 bg-surface shadow-[0_22px_54px_-42px_rgba(15,23,42,0.34)]">
+          <div className="min-w-0">
+          {/* Top row: identity + actions */}
+          <div className="flex flex-col gap-3 px-5 pt-5 pb-4 lg:flex-row lg:items-center lg:justify-between">
+            {/* Left: title block */}
+            <div className="min-w-0 flex-1 space-y-1">
+              {/* Pill badges row */}
+              <div className="flex flex-wrap items-center gap-2">
+                {topJobBadges.map((badge) => (
+                  <Badge key={`${badge.label}-${badge.variant}`} variant={badge.variant} className="uppercase">
+                    {badge.label}
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <h1 className="ds-h1 ds-numeric text-on-surface">{job.jobNumber}</h1>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(job.jobNumber);
+                    toast.success("Job number copied.");
+                  }}
+                  className="rounded-full border border-outline-variant/30 p-2 text-on-surface-variant transition hover:border-[#00cec4]/40 hover:text-[#00cec4]"
+                  aria-label="Copy job number"
+                >
+                  <Copy size={14} />
+                </button>
+              </div>
+              <p className="max-w-3xl text-sm leading-relaxed text-on-surface-variant">{job.title}</p>
+            </div>
+
+            <div className="flex items-center gap-2 self-start">
+              {canDeleteJob ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 border-red-500/35 text-red-500 hover:bg-surface"
+                    disabled={loading !== null || Boolean(activeDeletionRequest)}
+                    onClick={() => setDeleteModalMode("delete")}
+                  >
+                    <Trash2 className="mr-1.5 size-3.5" />
+                    {activeDeletionRequest ? "Deletion Pending" : "Delete"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    mode="icon"
+                    className="shrink-0"
+                    aria-label="More job actions"
+                    onClick={() => toast.info("Additional job actions remain in the workspace controls below.")}
+                  >
+                    <MoreVertical size={15} />
+                  </Button>
+                </>
               ) : null}
             </div>
           </div>
 
-          <div className="border-t border-outline-variant/25 px-4 py-2">
-            <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              {STAGES.map((stage, index) => {
-                const isCompleted = index < activeStepIndex;
-                const isActive = index === activeStepIndex;
-                return (
-                  <div key={stage.key} className="flex min-w-fit items-center gap-2">
-                    <span
-                      className={`flex size-6 items-center justify-center rounded-full border text-[10px] font-bold ${
-                        isCompleted
-                          ? "border-[#00cec4] bg-[#00cec4] text-white"
-                          : isActive
-                            ? "border-[#00cec4] bg-surface text-[#00cec4] shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
-                            : "border-outline-variant bg-surface text-on-surface-variant"
-                      }`}
+          {/* Meta row: customer Â· owner Â· manager â€” full width, no stacking */}
+          <div className="grid gap-3 border-t border-outline-variant/20 bg-surface-container-low/25 px-5 py-4 md:grid-cols-2 xl:grid-cols-[repeat(7,minmax(0,1fr))]">
+            {overviewMetaItems.map((item) => (
+              <div
+                key={item.label}
+                className="flex items-start gap-3 rounded-[18px] border border-outline-variant/25 bg-surface px-3 py-3 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.18)]"
+              >
+                <span className="ds-icon-badge shrink-0">{item.icon}</span>
+                <div className="min-w-0">
+                  <p className="ds-label">{item.label}</p>
+                  <p className="mt-1 truncate text-sm font-semibold text-on-surface">{item.value}</p>
+                  {item.secondary ? (
+                    <p className="mt-0.5 truncate text-xs text-on-surface-variant">{item.secondary}</p>
+                  ) : null}
+                  {item.label === "Manager" && canUpdateJob ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingManager(true)}
+                      className="mt-2 rounded-full border border-[#00cec4]/25 bg-[#00cec4]/8 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#00cec4] transition-colors hover:bg-[#00cec4]/14"
                     >
-                      {isCompleted ? <Check size={13} /> : index + 1}
-                    </span>
-                    <span className={`whitespace-nowrap text-[10px] uppercase tracking-wide ${isActive ? "text-[#00cec4]" : "text-on-surface-variant"}`}>
-                      {stage.label}
-                    </span>
-                    {index < STAGES.length - 1 ? <span className="h-px w-5 bg-outline-variant/50" /> : null}
-                  </div>
-                );
-              })}
-            </div>
+                      Change
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+          {workflowNavigator}
           </div>
         </section>
 
@@ -3469,595 +4898,816 @@
           </div>
         ) : null}
 
-        {/* Sticky Compact Tab Controls */}
-        <nav className="sticky top-0 z-20 py-2">
-          <div className="rounded-xl border border-outline-variant/40 bg-surface/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-surface/85">
-            <div className="flex w-full flex-wrap items-center gap-x-5 gap-y-3">
-              {workspaceTabs.map((tab) => {
-                const isActive = activeTab === tab.key;
-                return (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    onClick={() => setActiveTab(tab.key)}
-                    className={`ds-plain cha-link cha-link-quiet ds-label inline-flex flex-1 basis-[9rem] items-center justify-center gap-1 px-2 text-center sm:basis-auto ${
-                      isActive
-                        ? "font-normal text-[#00cec4] underline underline-offset-4"
-                        : "font-normal text-on-surface-variant hover:text-[#00b8af] hover:underline hover:underline-offset-4"
-                    }`}
-                  >
-                    {tab.label}
-                    {tab.count !== undefined ? <span className="ml-1 ds-numeric">({tab.count})</span> : null}
-                  </button>
-                );
-              })}
+        <div className="space-y-3">
+          <aside className="hidden">
+            <div className="border-b border-outline-variant/20 px-2 pb-3">
+              <h2 className="text-sm font-bold uppercase tracking-[0.18em] text-on-surface">Workflow</h2>
+              <p className="mt-1 text-xs text-on-surface-variant">Secondary stage navigator</p>
             </div>
-          </div>
-        </nav>
 
-        {/* Tab Panels */}
-        <div className="min-h-[320px] rounded-xl border border-outline-variant/60 bg-surface p-3 shadow-sm sm:p-4">
-          
-          {/* PANEL: DOCUMENTS */}
-          {activeTab === "docs" && (
-            <div className="space-y-4">
-              <div className="flex items-start justify-between gap-4 border-b border-outline-variant/20 pb-4">
-                <SectionHeading
-                  title="Required Customs Documents"
-                  description="Upload required files or declare exceptions to pass the document gate. Workflow-uploaded files, Section 49, and Extension documents also appear here with source and validity tracking."
-                />
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleMarkAllNotAvailable}
-                    disabled={loading !== null || bulkNaEligibleRequirements.length === 0}
-                    className="border-[#fb923c]/50 text-[#fb923c] hover:bg-[#fb923c]/10"
-                  >
-                    {loading === "na-all" ? "Marking..." : "Mark All N/A"}
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => setIsCustomDocumentModalOpen(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus size={14} />
-                    Add Custom Document
-                  </Button>
-                </div>
-              </div>
+            <nav className="space-y-2 pt-3">
+              {STAGES.map((stage, index) => {
+                const isCompleted = index < activeStepIndex;
+                const isActive    = index === activeStepIndex;
+                const isLocked    = index > activeStepIndex;
+                
+                let percent = 0;
+                let valState = "";
+                let statusColor = "text-on-surface-variant";
+                let statusBg = "bg-surface-container-low";
+                let statusLabel = "Pending";
 
-              <div className="flex flex-col gap-3 rounded-xl border border-outline-variant bg-surface-container-low p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="ds-label">Customs Validity Controls</p>
-                  <p className="mt-1 text-xs text-on-surface-variant">
-                    Activate Section 49 here to reveal its document card in the list below.
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowSection49Modal(true)}
-                  disabled={loading !== null || !canUpdateJob}
-                  className={
-                    section49Flag?.isEnabled
-                      ? "border-[#00cec4]/50 text-[#00cec4] hover:bg-[#00cec4]/10"
-                      : "border-[#fb923c]/50 text-[#fb923c] hover:bg-[#fb923c]/10"
+                if (stage.key === "DOCUMENT_COLLECTION") {
+                  percent = docPercentage;
+                  valState = docValidationState;
+                  if (isCompleted) {
+                    statusColor = "text-green-500";
+                    statusBg = "bg-green-500/10";
+                    statusLabel = "Completed";
+                  } else {
+                    statusColor = "text-[#00cec4]";
+                    statusBg = "bg-[#00cec4]/10";
+                    statusLabel = "In Progress";
                   }
-                >
-                  {section49Flag?.isEnabled ? "Deactivate Section 49" : "Activate Section 49"}
-                </Button>
-              </div>
-
-              {/* Categories and grouped requirement slots */}
-              {(() => {
-                const groupedRequirements: Record<string, any[]> = {};
-                visibleDocumentRequirements.forEach((req: any) => {
-                  const categoryName = req.requirementItem?.category?.name || req.category || "General Documents";
-                  if (!groupedRequirements[categoryName]) {
-                    groupedRequirements[categoryName] = [];
+                } else if (stage.key === "ADDITIONAL_DATA") {
+                  percent = additionalDataPercentage;
+                  valState = additionalDataValidationState;
+                  if (isCompleted) {
+                    statusColor = "text-green-500";
+                    statusBg = "bg-green-500/10";
+                    statusLabel = "Completed";
+                  } else if (isActive) {
+                    statusColor = "text-[#00cec4]";
+                    statusBg = "bg-[#00cec4]/10";
+                    statusLabel = "In Progress";
+                  } else {
+                    statusColor = "text-on-surface-variant/40";
+                    statusBg = "bg-surface-container-low/50";
+                    statusLabel = "Locked";
                   }
-                  groupedRequirements[categoryName].push(req);
-                });
-
-                const categoryKeys = Object.keys(groupedRequirements).sort();
-
-                if (categoryKeys.length === 0) {
-                  return (
-                    <p className="text-sm text-on-surface-variant italic py-4">No document requirements configured for this job.</p>
-                  );
+                } else if (stage.key === "CHECKLIST_PREPARATION") {
+                  percent = checklistPrepPercentage;
+                  valState = checklistPrepValidationState;
+                  if (isCompleted || currentChecklistVersion) {
+                    statusColor = "text-green-500";
+                    statusBg = "bg-green-500/10";
+                    statusLabel = "Completed";
+                  } else if (isActive) {
+                    statusColor = "text-[#00cec4]";
+                    statusBg = "bg-[#00cec4]/10";
+                    statusLabel = "In Progress";
+                  } else {
+                    statusColor = "text-on-surface-variant/40";
+                    statusBg = "bg-surface-container-low/50";
+                    statusLabel = "Locked";
+                  }
+                } else if (stage.key === "CHECKLIST_APPROVAL") {
+                  percent = checklistApprovalPercentage;
+                  valState = checklistApprovalValidationState;
+                  if (isCompleted) {
+                    statusColor = "text-green-500";
+                    statusBg = "bg-green-500/10";
+                    statusLabel = "Completed";
+                  } else if (isActive || (activeStepIndex === 2 && currentChecklistVersion)) {
+                    if (checklistWorkflow?.currentApprovalStage === "CUSTOMER") {
+                      statusColor = "text-[#00cec4]";
+                      statusBg = "bg-[#00cec4]/10";
+                      statusLabel = "Awaiting Customer";
+                    } else {
+                      statusColor = "text-[#fb923c]";
+                      statusBg = "bg-[#fb923c]/10";
+                      statusLabel = "Awaiting Internal";
+                    }
+                  } else {
+                    statusColor = "text-on-surface-variant/40";
+                    statusBg = "bg-surface-container-low/50";
+                    statusLabel = "Locked";
+                  }
+                } else if (stage.key === "FILING") {
+                  percent = filingPercentage;
+                  valState = filingValidationState;
+                  if (isCompleted) {
+                    statusColor = "text-green-500";
+                    statusBg = "bg-green-500/10";
+                    statusLabel = "Completed";
+                  } else if (isActive) {
+                    statusColor = "text-[#00cec4]";
+                    statusBg = "bg-[#00cec4]/10";
+                    statusLabel = "In Progress";
+                  } else {
+                    statusColor = "text-on-surface-variant/40";
+                    statusBg = "bg-surface-container-low/50";
+                    statusLabel = "Locked";
+                  }
+                } else if (stage.key === "FILED") {
+                  percent = filedPercentage;
+                  valState = filedValidationState;
+                  if (isCompleted) {
+                    statusColor = "text-green-500";
+                    statusBg = "bg-green-500/10";
+                    statusLabel = "Filed";
+                  } else {
+                    statusColor = "text-on-surface-variant/40";
+                    statusBg = "bg-surface-container-low/50";
+                    statusLabel = "Locked";
+                  }
                 }
 
+                const stageTab = (
+                  stage.key === "DOCUMENT_COLLECTION" ? "docs"
+                  : stage.key === "ADDITIONAL_DATA" ? "additionalData"
+                  : stage.key === "CHECKLIST_PREPARATION" || stage.key === "CHECKLIST_APPROVAL" ? "checklist"
+                  : "filing"
+                ) as WorkspaceTab;
+
+                const isHighlighted =
+                  (activeTab === "docs" && stage.key === "DOCUMENT_COLLECTION") ||
+                  (activeTab === "additionalData" && stage.key === "ADDITIONAL_DATA") ||
+                  (activeTab === "checklist" && stage.key === "CHECKLIST_PREPARATION" && !currentChecklistVersion) ||
+                  (activeTab === "checklist" && stage.key === "CHECKLIST_APPROVAL" && !!currentChecklistVersion) ||
+                  (activeTab === "filing" && stage.key === "FILING") ||
+                  (activeTab === "filing" && stage.key === "FILED" && activeStepIndex >= 5);
+
+                const createdDate = new Date(job.createdAt || Date.now());
+                const stageDate = new Date(createdDate.getTime() + index * 45 * 60 * 1000);
+                const formattedDate = stageDate.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }) + " â€¢ " + stageDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+
                 return (
+                  <div key={stage.key} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isLocked && stage.key !== "CHECKLIST_APPROVAL") {
+                          return;
+                        }
+                        setActiveTab(stageTab);
+                        setExpandedStageKey(stage.key);
+                      }}
+                      disabled={isLocked && stage.key !== "CHECKLIST_APPROVAL"}
+                      className={`group relative flex w-full flex-col gap-2 rounded-[18px] p-3 text-left transition-all ${
+                        isHighlighted
+                          ? "bg-gradient-to-r from-[#7c3aed]/12 via-[#6366f1]/10 to-[#8b5cf6]/8 text-[#4f46e5] shadow-[0_20px_40px_-28px_rgba(99,102,241,0.65)]"
+                          : isLocked
+                          ? "cursor-not-allowed opacity-50"
+                          : "hover:bg-surface-container-low/80"
+                      }`}
+                    >
+                      {/* Left border indicator for highlighted step */}
+                      {isHighlighted && (
+                        <span className="absolute left-0 top-3 bottom-3 w-1 rounded-r-md bg-gradient-to-b from-[#7c3aed] to-[#6366f1]" />
+                      )}
+
+                      {/* Header block with circle and stage label */}
+                      <div className="flex items-center gap-2.5 w-full">
+                        <span
+                          className={`flex size-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition-all ${
+                            isCompleted
+                              ? "bg-green-600 text-white shadow-[0_14px_28px_-18px_rgba(22,163,74,0.8)]"
+                              : isHighlighted
+                              ? "bg-gradient-to-br from-[#7c3aed] via-[#6366f1] to-[#4f46e5] text-white shadow-[0_18px_34px_-18px_rgba(99,102,241,0.9)]"
+                              : "border border-outline-variant bg-surface text-on-surface-variant"
+                          }`}
+                        >
+                          {isCompleted ? <Check size={11} /> : isLocked ? <Lock size={9} /> : index + 1}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-xs font-bold uppercase tracking-wide truncate ${
+                            isHighlighted ? "text-[#4f46e5]" : "text-on-surface"
+                          }`}>
+                            {stage.label}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Stage parameters info block */}
+                      <div className="w-full space-y-1 pl-7 text-[10px] text-on-surface-variant">
+                        {/* Status badge and progress */}
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`inline-block rounded-full px-2 py-1 text-[8px] font-bold uppercase tracking-[0.16em] ${statusBg} ${statusColor}`}>
+                            {statusLabel}
+                          </span>
+                          {!isLocked && (
+                            <span className="ds-numeric font-mono text-[10px] text-on-surface font-semibold">{percent}%</span>
+                          )}
+                        </div>
+
+                        {/* Owner / Assignee */}
+                        <div className="flex items-center justify-between text-[9px] opacity-80">
+                          <span>Owner:</span>
+                          <span className="font-medium text-on-surface truncate max-w-[100px]">{job.primaryOwner.name}</span>
+                        </div>
+
+                        {/* Due date or completion date */}
+                        <div className="flex items-center justify-between text-[9px] opacity-80">
+                          <span>{isCompleted ? "Closed:" : "Due:"}</span>
+                          <span className="ds-numeric text-on-surface">
+                            {isCompleted
+                              ? formattedDate.split(" â€¢ ")[0]
+                              : job.estimatedClosureDate
+                              ? new Date(job.estimatedClosureDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })
+                              : "â€”"
+                            }
+                          </span>
+                        </div>
+
+                        {/* Validation Text */}
+                        {valState && (
+                          <div className="text-[8px] text-on-surface-variant/70 italic truncate">
+                            {valState}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+
+                    {/* Connector line */}
+                    {index < STAGES.length - 1 && (
+                      <div className={`ml-[15px] h-4 w-[2px] rounded-full ${
+                        index < activeStepIndex ? "bg-gradient-to-b from-green-500 to-green-400" : index === activeStepIndex ? "bg-gradient-to-b from-[#7c3aed]/45 to-[#6366f1]/20" : "bg-outline-variant/40"
+                      }`} />
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Divider: Utility sections */}
+              <div className="my-2 border-t border-outline-variant/30" />
+              {([
+                { key: "advances" as WorkspaceTab, label: "Advances", icon: <CreditCard size={13} /> },
+                { key: "expenses" as WorkspaceTab, label: "Expenses", icon: <BarChart2 size={13} />, count: job.expenseRequests?.length || 0 },
+                { key: "audit" as WorkspaceTab, label: "Audit Log", icon: <ClipboardList size={13} /> },
+              ] as {key: WorkspaceTab; label: string; icon: React.ReactNode; count?: number}[]).map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => { setActiveTab(item.key); }}
+                  className={`flex w-full items-center gap-2.5 rounded-[18px] px-3 py-2.5 text-left transition-all ${
+                    activeTab === item.key
+                      ? "bg-gradient-to-r from-[#7c3aed]/10 to-[#6366f1]/8 text-[#4f46e5]"
+                      : "hover:bg-surface-container-low text-on-surface-variant"
+                  }`}
+                >
+                  <span className={`flex size-6 shrink-0 items-center justify-center rounded-lg ${
+                    activeTab === item.key
+                      ? "bg-[#6366f1]/12 text-[#4f46e5]"
+                      : "bg-surface-container-low text-on-surface-variant"
+                  }`}>
+                    {item.icon}
+                  </span>
+                  <span className="text-xs font-semibold uppercase tracking-wider">{item.label}</span>
+                  {item.count !== undefined && item.count > 0 && (
+                    <span className={`ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-bold ds-numeric ${
+                      activeTab === item.key ? "bg-[#6366f1] text-white" : "bg-surface-container text-on-surface-variant"
+                    }`}>
+                      {item.count}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </nav>
+
+            {/* Overall Progress footer */}
+            <div className="border-t border-outline-variant/30 px-4 py-4">
+              <p className="ds-label text-on-surface-variant">Overall Progress</p>
+              <p className="ds-numeric mt-1 text-3xl font-bold text-[#4f46e5]">{stageProgress}%</p>
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-outline-variant/25">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[#7c3aed] via-[#6366f1] to-[#22c55e] transition-all duration-500"
+                  style={{ width: `${stageProgress}%` }}
+                />
+              </div>
+              <p className="mt-1.5 text-[10px] text-on-surface-variant">
+                {activeStepIndex} of {STAGES.length} stages completed
+              </p>
+            </div>
+          </aside>
+
+          <div className="min-w-0 space-y-3">
+            {/* Secondary tab header card */}
+            {activeTab !== "overview" && !["docs", "additionalData", "checklist", "filing"].includes(activeTab) && (() => {
+              const stageDescriptions: Record<string, string> = {
+                docs: "Upload required customs documents or declare exceptions to pass the document verification gate.",
+                additionalData: "Enter vessel inward date, manifest numbers, delivery order validity, and container details.",
+                checklist: "Upload the customs checklist file for internal and customer approval before filing.",
+                filing: "Enter BOE details and related information.",
+                advances: "Track customer advance payments and record receipts.",
+                expenses: "Submit and manage expense disbursement requests for this job.",
+                audit: "View a complete audit trail of all actions and changes made to this job.",
+              };
+              const stageIcons: Record<string, React.ReactNode> = {
+                docs: <FolderOpen size={18} />,
+                additionalData: <Database size={18} />,
+                checklist: <ShieldCheck size={18} />,
+                filing: <FileText size={18} />,
+                advances: <CreditCard size={18} />,
+                expenses: <BarChart2 size={18} />,
+                audit: <ClipboardList size={18} />,
+              };
+              const stageTitle = workspaceTabs.find(t => t.key === activeTab)?.label ?? "";
+              const stageNum = activeTab === "docs" ? 1 : activeTab === "additionalData" ? 2 : activeTab === "checklist" ? 3 : activeTab === "filing" ? 4 : null;
+              const displayTitle = stageNum ? `${stageNum}. ${stageTitle}` : stageTitle;
+
+              return (
+                <div className="rounded-[28px] border border-outline-variant/35 bg-surface px-6 py-5 shadow-[0_22px_52px_-38px_rgba(15,23,42,0.34)]">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <span className="flex size-12 items-center justify-center rounded-[18px] bg-gradient-to-br from-[#7c3aed] via-[#6366f1] to-[#4f46e5] text-white shadow-[0_18px_36px_-18px_rgba(99,102,241,0.9)]">
+                        {stageIcons[activeTab]}
+                      </span>
+                      <div>
+                        <h2 className="ds-h2 text-on-surface">{displayTitle}</h2>
+                        <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">{stageDescriptions[activeTab]}</p>
+                      </div>
+                    </div>
+                    <a
+                      href="#"
+                      onClick={(e) => { e.preventDefault(); toast.info("Help instructions loading..."); }}
+                      className="flex items-center gap-1.5 rounded-full border border-[#6366f1]/20 bg-[#6366f1]/8 px-3 py-2 text-xs font-bold text-[#4f46e5] transition-colors hover:bg-[#6366f1]/14"
+                    >
+                      <HelpCircle size={15} className="rounded-full border border-[#6366f1]/30 p-0.5" />
+                      Help
+                    </a>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* â”€â”€ Tab Panels â”€â”€ */}
+            {["docs", "additionalData", "checklist", "filing"].includes(activeTab) ? (
+              <div className="space-y-6">
+                {/* 1. DOCUMENT_COLLECTION */}
+                {showDocumentCollectionStage ? (
+                <MilestoneCard
+                  stageKey="DOCUMENT_COLLECTION"
+                  isExpanded={expandedStageKey === "DOCUMENT_COLLECTION"}
+                  isSpotlit={stageFocusKey === "DOCUMENT_COLLECTION"}
+                  onToggle={handleMilestoneToggle}
+                  title="Doc Collection"
+                  description="Upload required customs documents or declare exceptions to pass the document verification gate."
+                  isCompleted={activeStepIndex > 0}
+                  isActive={activeStepIndex === 0}
+                  isLocked={false}
+                  percentage={docPercentage}
+                  validationState={docValidationState}
+                  statusLabel={activeStepIndex > 0 ? "Completed" : activeStepIndex === 0 ? "In Progress" : "Available"}
+                  assignedUser={job.primaryOwner?.name || job.assignedManager?.name || "Operations Team"}
+                  dueDate={job.estimatedClosureDate ? new Date(job.estimatedClosureDate).toLocaleDateString("en-IN") : null}
+                  completedAt={activeStepIndex > 0 ? (job.updatedAt ? new Date(job.updatedAt).toLocaleString("en-IN") : null) : null}
+                  summary={
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <span className="text-on-surface-variant font-medium">Uploaded:</span>
+                      {visibleDocumentRequirements.filter((r: any) => r.status === "UPLOADED").map((r: any) => (
+                        <Badge key={r.id} variant="secondary" className="text-[10px] uppercase font-mono">{r.name}</Badge>
+                      ))}
+                      {visibleDocumentRequirements.filter((r: any) => r.status === "NOT_AVAILABLE" || r.exception).length > 0 && (
+                        <span className="text-orange-500 font-medium">({visibleDocumentRequirements.filter((r: any) => r.status === "NOT_AVAILABLE" || r.exception).length} exceptions)</span>
+                      )}
+                    </div>
+                  }
+                >
+            <div className="space-y-6">
+              <FilingDocumentsPageHeader />
+
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+                <div className="space-y-5">
+                  <WorkflowDocumentsSectionHeader
+                    uploadedCount={uploadedWorkflowDocuments.length}
+                    searchValue={documentSearchQuery}
+                    onSearchChange={setDocumentSearchQuery}
+                    filterMode={documentsFilterMode}
+                    onFilterToggle={cycleDocumentsFilterMode}
+                  />
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleMarkAllNotAvailable}
+                      disabled={loading !== null || bulkNaEligibleRequirements.length === 0}
+                      className="border-[#fb923c]/45 text-[#fb923c] hover:bg-surface"
+                    >
+                      {loading === "na-all" ? "Marking..." : "Mark All N/A"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowSection49Modal(true)}
+                      disabled={loading !== null || !canUpdateJob}
+                      className={
+                        section49Flag?.isEnabled
+                          ? "border-[#00cec4]/45 text-[#00cec4] hover:bg-surface"
+                          : "border-[#fb923c]/45 text-[#fb923c] hover:bg-surface"
+                      }
+                    >
+                      {section49Flag?.isEnabled ? "Deactivate Section 49" : "Activate Section 49"}
+                    </Button>
+                    <Button type="button" onClick={() => setIsCustomDocumentModalOpen(true)} className="gap-2">
+                      <Plus size={14} />
+                      Add Custom Document
+                    </Button>
+                  </div>
+
                   <div className="space-y-4">
-                    {categoryKeys.map((categoryName) => {
-                      const reqs = groupedRequirements[categoryName];
-                      const uploadedRequirements = reqs.filter((req: any) => req.status === "UPLOADED");
-                      const exemptionRequirements = reqs.filter(
-                        (req: any) => req.status === "NOT_AVAILABLE" && req.exception?.reason && req.exception.reason !== "N/A"
-                      );
-                      const markedNaRequirements = reqs.filter(
-                        (req: any) => req.status === "NOT_AVAILABLE" && req.exception?.reason === "N/A"
-                      );
-                      const pendingRequirements = reqs.filter(
-                        (req: any) =>
-                          req.status !== "UPLOADED" &&
-                          !(req.status === "NOT_AVAILABLE" && req.exception?.reason && req.exception.reason !== "N/A") &&
-                          !(req.status === "NOT_AVAILABLE" && req.exception?.reason === "N/A")
-                      );
-                      const requirementSections = [
-                        {
-                          key: "uploaded",
-                          title: "Uploaded",
-                          requirements: uploadedRequirements,
-                        },
-                        {
-                          key: "exempted",
-                          title: "Exempted",
-                          requirements: exemptionRequirements,
-                        },
-                        {
-                          key: "na",
-                          title: "Marked as N/A",
-                          requirements: markedNaRequirements,
-                        },
-                        {
-                          key: "pending",
-                          title: "Awaiting Upload",
-                          requirements: pendingRequirements,
-                        },
-                      ].filter((section) => section.requirements.length > 0);
+                    {sortedUploadedWorkflowDocuments.length > 0 ? (
+                      sortedUploadedWorkflowDocuments.map((req: WorkflowDocumentRequirement) => {
+                        const currentVersion = req.versions.find((version) => version.isCurrent) || req.versions[0];
+                        if (!currentVersion) return null;
 
-                      return (
-                        <div key={categoryName} className="space-y-4">
-                          <SectionHeading title={categoryName} />
-                          <div className="space-y-4">
-                            {requirementSections.map((section) => (
-                              <div key={section.key} className="space-y-2">
-                                <div className="flex items-center justify-between gap-3 border-b border-outline-variant/10 pb-2">
-                                  <p className="ds-label text-on-surface-variant">{section.title}</p>
-                                  <span className="ds-numeric text-[11px] text-on-surface-variant">
-                                    {section.requirements.length}
-                                  </span>
-                                </div>
-                                <div className="grid items-start grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                                  {section.requirements.map((req: any) => {
-                              const isUploaded = req.status === "UPLOADED";
-                              const isExempted = req.status === "NOT_AVAILABLE" || !!req.exception;
-                              const isPendingRequirement = section.key === "pending";
-                              const currentVersion = req.versions.find((v: any) => v.isCurrent);
-                              const isSection49Requirement = req.name === "Section 49";
-                              const effectiveValidityDate =
-                                isSection49Requirement ? section49Flag?.validityDate || currentVersion?.validityDate : currentVersion?.validityDate;
-                              const validitySummary = getValiditySummary(effectiveValidityDate || null);
-                              const section49WarningActive =
-                                isSection49Requirement &&
-                                effectiveValidityDate &&
-                                ["warning", "destructive"].includes(validitySummary?.tone || "");
-                              return (
-                                  <div
-                                    key={req.id}
-                                    ref={(element) => {
-                                      documentRequirementCardRefs.current[req.id] = element;
-                                    }}
-                                    className={`p-4 rounded-2xl border flex flex-col justify-between bg-[var(--color-surface)] ${
-                                      isUploaded
-                                        ? "card-left-accent border-[#00cec4]/30"
-                                        : isPendingRequirement
-                                          ? "border-red-500/30"
-                                          : "card-left-accent-orange border-[#fb923c]/30"
-                                    } ${
-                                      highlightedDocumentReqId === req.id
-                                        ? isPendingRequirement
-                                          ? "animate-doc-missing-blink-red"
-                                          : "animate-doc-missing-blink"
-                                        : ""
-                                    }`}
-                                    style={
-                                      isPendingRequirement
-                                        ? {
-                                            borderLeftWidth: "3px",
-                                            borderLeftColor: "rgb(239 68 68 / 0.9)",
-                                          }
-                                        : undefined
-                                    }
-                                  >
-                                  <div>
-                                      <div className="flex items-center justify-between">
-                                        <span className="font-semibold text-sm text-on-surface">{req.name}</span>
-                                        <div className="flex items-center gap-1.5">
-                                          {req.isMandatory && (
-                                            <Badge variant="destructive" className="uppercase">
-                                              MANDATORY
-                                            </Badge>
-                                          )}
-                                          <Badge
-                                            variant={getChaDocumentStatusBadgeVariant(req.status)}
-                                            className="uppercase"
-                                          >
-                                            {formatChaBadgeLabel(req.status)}
-                                          </Badge>
-                                          {req.requirementItem?.requiresValidityDate || req.requirementItem?.defaultValidityDuration ? (
-                                            <Badge variant="warning" className="uppercase">
-                                              Validity
-                                            </Badge>
-                                          ) : null}
-                                        </div>
-                                      </div>
+                        return (
+                          <div
+                            key={req.id}
+                            ref={(element) => {
+                              documentRequirementCardRefs.current[req.id] = element;
+                            }}
+                            className={highlightedDocumentReqId === req.id ? "animate-doc-missing-blink" : ""}
+                          >
+                            <UploadedWorkflowDocumentCard
+                              requirement={req}
+                              version={currentVersion}
+                              loadingKey={loading}
+                              currentUserId={currentUserId}
+                              canDelete={Boolean(canDeleteDoc || canManageSettings || currentUserId === job.primaryOwnerId)}
+                              selected={selectedWorkflowDocumentRequirement?.id === req.id}
+                              onSelect={(requirementId) => {
+                                setSelectedDocumentRequirementId(requirementId);
+                                setIsDocumentDrawerOpen(true);
+                                setDocumentDrawerTab("preview");
+                              }}
+                              onPreview={(requirementId) => {
+                                setSelectedDocumentRequirementId(requirementId);
+                                setIsDocumentDrawerOpen(true);
+                                setDocumentDrawerTab("preview");
+                              }}
+                              onDelete={(requirementId, versionId, fileName) =>
+                                setDeleteDocModal({
+                                  reqId: requirementId,
+                                  versionId,
+                                  fileName,
+                                })
+                              }
+                              onDeclareExemption={(requirementId) => {
+                                setSelectedDocumentRequirementId(requirementId);
+                                setIsDocumentDrawerOpen(false);
+                                setActiveDocReqId(requirementId);
+                                const currentRequirement = documentRequirements.find((entry: any) => entry.id === requirementId);
+                                setExceptionReason(
+                                  currentRequirement?.exception?.reason === "N/A"
+                                    ? ""
+                                    : currentRequirement?.exception?.reason || "",
+                                );
+                              }}
+                              onMarkNa={handleMarkNotAvailable}
+                              onUpload={setUploadDocumentModalReqId}
+                            />
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-[24px] border border-outline-variant/60 bg-surface p-8 text-center text-sm text-on-surface-variant shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
+                        No uploaded documents match the current search and filter state yet.
+                      </div>
+                    )}
+                  </div>
 
-                                    {req.requirementItem?.description && (
-                                      <p className="text-xs text-on-surface-variant mt-1">{req.requirementItem.description}</p>
-                                    )}
+                  {section49Requirement ? (
+                    <div className="rounded-[24px] border border-outline-variant/60 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)]">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div>
+                          <p className="ds-label text-[#00cec4]">Section 49 Controls</p>
+                          <h3 className="mt-2 text-lg font-semibold text-on-surface">Manage Section 49 validity and extension workflow</h3>
+                          <p className="mt-1 text-sm text-on-surface-variant">
+                            Keep the saved validity date current and attach extension evidence when customs warns of expiry.
+                          </p>
+                        </div>
+                        {section49ValiditySummary ? (
+                          <Badge
+                            variant={
+                              section49ValiditySummary.tone === "destructive"
+                                ? "destructive"
+                                : section49ValiditySummary.tone === "warning"
+                                  ? "warning"
+                                  : "success"
+                            }
+                          >
+                            {section49ValiditySummary.detail}
+                          </Badge>
+                        ) : null}
+                      </div>
 
-                                    {isSection49Requirement && (
-                                      <div className="mt-3 space-y-3 rounded-xl border border-outline-variant/40 dark:border-[#00cec4]/20 bg-surface-container-low p-3.5">
-                                        {section49Flag?.validityDate ? (
-                                          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 pb-2.5">
-                                            <div className="flex items-center gap-2">
-                                              <span className="ds-label text-on-surface-variant font-medium">Saved Section 49 Validity:</span>
-                                              <span className="rounded-lg border border-[#00cec4]/35 bg-[#00cec4]/10 px-2.5 py-0.5 text-xs font-semibold text-[#00cec4] ds-numeric">
-                                                {new Date(section49Flag.validityDate).toLocaleDateString("en-IN")}
-                                              </span>
-                                            </div>
-                                            {validitySummary ? (
-                                              <span
-                                                className={`text-xs font-semibold ${
-                                                  validitySummary.tone === "destructive"
-                                                    ? "text-red-500"
-                                                    : validitySummary.tone === "warning"
-                                                      ? "text-[#fb923c]"
-                                                      : "text-green-500"
-                                                }`}
-                                              >
-                                                {validitySummary.detail}
-                                              </span>
-                                            ) : null}
-                                          </div>
-                                        ) : (
-                                          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-[1fr_auto] sm:items-end pb-1">
-                                            <label className="space-y-1">
-                                              <span className="ds-label">Section 49 Validity Date</span>
-                                              <DateInput
-                                                value={section49ValidityDate}
-                                                onChange={(e) => setSection49ValidityDate(e.target.value)}
-                                                disabled={loading !== null || !canUpdateJob}
-                                                className="w-full ds-numeric"
-                                              />
-                                            </label>
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              size="sm"
-                                              onClick={handleSaveSection49Validity}
-                                              disabled={loading !== null || !canUpdateJob || !section49ValidityDate}
-                                              className="h-10"
-                                            >
-                                              {loading === "section49-validity" ? "Saving..." : "Save Date"}
-                                            </Button>
-                                          </div>
-                                        )}
+                      <div className="mt-4 space-y-4">
+                        {section49Flag?.validityDate ? (
+                          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-outline-variant/50 bg-surface-container-low/55 px-4 py-3">
+                            <div>
+                              <p className="ds-label">Saved Section 49 Validity</p>
+                              <p className="mt-1 ds-numeric text-sm text-on-surface">
+                                {new Date(section49Flag.validityDate).toLocaleDateString("en-IN")}
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setUploadDocumentModalReqId(section49Requirement.id)}
+                              disabled={loading !== null}
+                            >
+                              Re-upload Section 49 Document
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="grid gap-3 rounded-[20px] border border-outline-variant/50 bg-surface-container-low/55 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                            <label className="space-y-1">
+                              <span className="ds-label">Section 49 Validity Date</span>
+                              <DateInput
+                                value={section49ValidityDate}
+                                onChange={(e) => setSection49ValidityDate(e.target.value)}
+                                disabled={loading !== null || !canUpdateJob}
+                                className="w-full ds-numeric"
+                              />
+                            </label>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleSaveSection49Validity}
+                              disabled={loading !== null || !canUpdateJob || !section49ValidityDate}
+                            >
+                              {loading === "section49-validity" ? "Saving..." : "Save Date"}
+                            </Button>
+                          </div>
+                        )}
 
-                                        {section49Flag?.validityDate ? (
-                                          <div className="space-y-3 pt-1">
-                                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.2fr_2fr_auto] sm:items-end">
-                                              <label className="space-y-1">
-                                                <span className="ds-label">New Validity Date</span>
-                                                <DateInput
-                                                  value={section49ExtensionDate}
-                                                  onChange={(e) => setSection49ExtensionDate(e.target.value)}
-                                                  disabled={loading !== null || !canUpdateJob}
-                                                  className="w-full ds-numeric"
-                                                />
-                                              </label>
-                                              <FileUploadField
-                                                id="section49-extension-upload"
-                                                compact
-                                                label="Extension Document"
-                                                accept="application/pdf,image/*"
-                                                disabled={loading !== null || !canUpdateJob}
-                                                helperText="Upload a PDF or image before applying the extension."
-                                                triggerText="Choose extension document"
-                                                selectedFile={
-                                                  section49ExtensionFile
-                                                    ? {
-                                                        file: section49ExtensionFile,
-                                                        name: section49ExtensionFile.name,
-                                                        sizeBytes: section49ExtensionFile.size,
-                                                        statusLabel: "Ready",
-                                                      }
-                                                    : null
-                                                }
-                                                onClear={() => setSection49ExtensionFile(null)}
-                                                onInputChange={(e) => setSection49ExtensionFile(e.target.files?.[0] ?? null)}
-                                              />
-                                              <Button
-                                                type="button"
-                                                size="sm"
-                                                onClick={handleApplySection49Extension}
-                                                disabled={
-                                                  loading !== null ||
-                                                  !canUpdateJob ||
-                                                  !section49WarningActive ||
-                                                  !section49ExtensionDate ||
-                                                  !section49ExtensionFile
-                                                }
-                                                className="h-10 w-full sm:w-auto"
-                                              >
-                                                {loading === "section49-extension" ? "Applying..." : "Apply Extension"}
-                                              </Button>
-                                            </div>
-                                            <p className="text-[11px] leading-relaxed text-on-surface-variant">
-                                              {!section49WarningActive ? (
-                                                <span className="text-[#fb923c] font-medium">
-                                                  ⚠️ Extension entry is saved here, but submission becomes available only within 4 days of expiry.
-                                                </span>
-                                              ) : (
-                                                <span>
-                                                  An extension document and new validity date are required to apply the extension.
-                                                </span>
-                                              )}
-                                            </p>
+                        {section49Flag?.validityDate ? (
+                          <div className="space-y-3 rounded-[20px] border border-outline-variant/50 bg-surface-container-low/55 p-4">
+                            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_auto] lg:items-end">
+                              <label className="space-y-1">
+                                <span className="ds-label">New Validity Date</span>
+                                <DateInput
+                                  value={section49ExtensionDate}
+                                  onChange={(e) => setSection49ExtensionDate(e.target.value)}
+                                  disabled={loading !== null || !canUpdateJob}
+                                  className="w-full ds-numeric"
+                                />
+                              </label>
+                              <FileUploadField
+                                id="section49-extension-upload"
+                                compact
+                                label="Extension Document"
+                                accept="application/pdf,image/*"
+                                disabled={loading !== null || !canUpdateJob}
+                                helperText="Upload a PDF or image before applying the extension."
+                                triggerText="Choose extension document"
+                                selectedFile={
+                                  section49ExtensionFile
+                                    ? {
+                                        file: section49ExtensionFile,
+                                        name: section49ExtensionFile.name,
+                                        sizeBytes: section49ExtensionFile.size,
+                                        statusLabel: "Ready",
+                                      }
+                                    : null
+                                }
+                                onClear={() => setSection49ExtensionFile(null)}
+                                onInputChange={(e) => setSection49ExtensionFile(e.target.files?.[0] ?? null)}
+                              />
+                              <Button
+                                type="button"
+                                onClick={handleApplySection49Extension}
+                                disabled={
+                                  loading !== null ||
+                                  !canUpdateJob ||
+                                  !section49WarningActive ||
+                                  !section49ExtensionDate ||
+                                  !section49ExtensionFile
+                                }
+                                className="w-full lg:w-auto"
+                              >
+                                {loading === "section49-extension" ? "Applying..." : "Apply Extension"}
+                              </Button>
+                            </div>
+                            <p className="text-xs text-on-surface-variant">
+                              {section49WarningActive
+                                ? "An extension document and new validity date are required to apply the extension."
+                                : "Extension submission becomes available only within four days of expiry or after expiry."}
+                            </p>
 
-                                            {Array.isArray(job.section49Extensions) && job.section49Extensions.length > 0 ? (
-                                              <div className="space-y-1 border-t border-outline-variant/30 pt-3 text-xs">
-                                                <span className="ds-label">Extension History</span>
-                                                {job.section49Extensions.slice(0, 3).map((extension: any) => (
-                                                  <div key={extension.id} className="flex flex-wrap items-center justify-between gap-2 text-on-surface-variant">
-                                                    <span className="ds-numeric">
-                                                      {new Date(extension.extensionDate).toLocaleDateString("en-IN")}
-                                                    </span>
-                                                    {extension.fileKey ? (
-                                                      <a
-                                                        href={extension.fileKey}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="text-[#00cec4] hover:underline"
-                                                      >
-                                                        {extension.fileName || "View document"}
-                                                      </a>
-                                                    ) : null}
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            ) : null}
-                                          </div>
-                                        ) : null}
-                                      </div>
-                                    )}
-
-                                    {/* Display Uploaded File details */}
-                                    {isUploaded && currentVersion && (
-                                      <div className="mt-3 rounded-lg border border-outline-variant/40 bg-surface p-2.5 text-xs">
-                                        <div className="flex items-center justify-between gap-3">
-                                          <div className="flex min-w-0 items-center gap-2 truncate">
-                                          <FileText size={16} className="text-green-600 shrink-0" />
-                                          {currentVersion.fileKey.startsWith("http") ? (
-                                            <a
-                                              href={currentVersion.fileKey}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="truncate font-medium text-[#00cec4] hover:underline flex items-center gap-1"
-                                              title="Open in Google Drive"
-                                            >
-                                              <span className="truncate">{currentVersion.fileName}</span>
-                                              <ExternalLink size={12} className="shrink-0" />
-                                            </a>
-                                          ) : (
-                                            <span className="truncate font-medium">{currentVersion.fileName}</span>
-                                          )}
-                                          </div>
-                                          <div className="flex items-center gap-2 shrink-0 pl-2">
-                                            <span className="text-[10px] text-on-surface-variant font-mono ds-numeric">
-                                            {(currentVersion.sizeBytes / 1024).toFixed(1)} KB
-                                            </span>
-                                            {(currentUserId === currentVersion.uploadedById ||
-                                              currentUserId === job.primaryOwnerId ||
-                                              canDeleteDoc ||
-                                              canManageSettings) && (
-                                              <button
-                                                type="button"
-                                                className="text-red-500 hover:text-red-700 transition-colors p-1"
-                                                onClick={() =>
-                                                  setDeleteDocModal({
-                                                    reqId: req.id,
-                                                    versionId: currentVersion.id,
-                                                    fileName: currentVersion.fileName,
-                                                  })
-                                                }
-                                                title="Delete document version"
-                                              >
-                                                <Trash2 size={14} />
-                                              </button>
-                                            )}
-                                          </div>
-                                        </div>
-                                        <div className="mt-2 grid grid-cols-1 gap-2 text-[11px] text-on-surface-variant md:grid-cols-2">
-                                          <div>
-                                            <span className="ds-label block">Source</span>
-                                            <span className="text-on-surface">
-                                              {currentVersion.source === "FILING_WORKFLOW" ? "Filing Workflow" : "Documents Page"}
-                                            </span>
-                                          </div>
-                                          <div>
-                                            <span className="ds-label block">Uploaded By</span>
-                                            <span className="text-on-surface">{currentVersion.uploadedBy?.name || currentUserName}</span>
-                                          </div>
-                                          <div>
-                                            <span className="ds-label block">Uploaded On</span>
-                                            <span className="text-on-surface">
-                                              {currentVersion.uploadedAt ? new Date(currentVersion.uploadedAt).toLocaleDateString("en-IN") : "Just now"}
-                                            </span>
-                                          </div>
-                                          <div>
-                                            <span className="ds-label block">Validity</span>
-                                            <span
-                                              className={
-                                                validitySummary?.tone === "destructive"
-                                                  ? "text-red-500"
-                                                  : validitySummary?.tone === "warning"
-                                                    ? "text-[#fb923c]"
-                                                    : "text-on-surface"
-                                              }
-                                            >
-                                              {validitySummary?.detail || "Not required"}
-                                            </span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {/* Display N/A / Exception status */}
-                                    {isExempted && req.exception && (
-                                      <div className="mt-3 bg-surface border border-orange-500/30 p-2.5 rounded-lg text-xs space-y-1">
-                                        {req.exception.reason === "N/A" ? (
-                                          <p className="font-medium text-[#fb923c]">Marked as N/A</p>
-                                        ) : (
-                                          <>
-                                            <p className="font-medium text-[#fb923c]">Exemption reason:</p>
-                                            <p className="text-on-surface">{req.exception.reason}</p>
-                                          </>
-                                        )}
-                                        <span className="text-[10px] text-on-surface-variant block">
-                                          {req.exception.reason === "N/A" ? "Marked" : "Declared"} by: {req.exception.user?.name || "N/A"}
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  <div className="mt-4 space-y-3 border-t border-outline-variant/20 pt-3">
-                                    {/* Exception form pop */}
-                                    {activeDocReqId === req.id ? (
-                                      <div className="w-full space-y-2">
-                                        <input
-                                          type="text"
-                                          placeholder="Enter detailed reason for exemption..."
-                                          value={exceptionReason}
-                                          onChange={(e) => setExceptionReason(e.target.value)}
-                                          className="w-full text-xs py-2 px-3 bg-[var(--color-surface)] border border-outline-variant/50 rounded-2xl"
-                                        />
-                                        <div className="flex flex-wrap justify-end gap-2">
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => {
-                                              setActiveDocReqId(null);
-                                              setExceptionReason("");
-                                            }}
-                                          >
-                                            Cancel
-                                          </Button>
-                                          <Button
-                                            size="sm"
-                                            onClick={() => handleDeclareException(req.id)}
-                                          >
-                                            Save Exemption
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    ) : null}
-
-                                    <div className="flex flex-wrap items-center justify-end gap-2">
-                                      {isUploaded && currentVersion && (
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          size="sm"
-                                          className="text-xs border-[#00cec4] text-[#00cec4] hover:bg-[#00cec4]/5"
-                                          onClick={() => setViewingVersion({ ...currentVersion, type: 'document' })}
-                                        >
-                                          View File
-                                        </Button>
-                                      )}
-
-                                      {isExempted ? (
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          size="sm"
-                                          className="text-xs border-[#fb923c]/50 text-[#fb923c] hover:bg-surface"
-                                          onClick={() => handleRemoveException(req.id)}
-                                          disabled={loading !== null}
-                                        >
-                                          Undo N/A
-                                        </Button>
-                                      ) : (
-                                        !activeDocReqId && (
-                                          <>
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              size="sm"
-                                              className="text-xs"
-                                              onClick={() => {
-                                                setActiveDocReqId((current) => (current === req.id ? null : req.id));
-                                                setExceptionReason(req.exception?.reason === "N/A" ? "" : req.exception?.reason || "");
-                                              }}
-                                            >
-                                              Declare Exemption
-                                            </Button>
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              size="sm"
-                                              className="text-xs border-[#fb923c]/50 text-[#fb923c] hover:bg-[#fb923c]/10"
-                                              onClick={() => handleMarkNotAvailable(req.id)}
-                                              disabled={loading !== null}
-                                            >
-                                              {loading === `na-${req.id}` ? "Marking..." : "Mark as N/A"}
-                                            </Button>
-                                          </>
-                                        )
-                                      )}
-
-                                      <Button
-                                        type="button"
-                                        size="sm"
-                                        className="gap-1.5 text-xs font-bold uppercase tracking-wide"
-                                        onClick={() => setUploadDocumentModalReqId(req.id)}
+                            {Array.isArray(job.section49Extensions) && job.section49Extensions.length > 0 ? (
+                              <div className="space-y-2 border-t border-outline-variant/30 pt-3">
+                                <p className="ds-label">Extension History</p>
+                                {job.section49Extensions.slice(0, 3).map((extension: any) => (
+                                  <div key={extension.id} className="flex flex-wrap items-center justify-between gap-2 text-sm text-on-surface-variant">
+                                    <span className="ds-numeric">
+                                      {new Date(extension.extensionDate).toLocaleDateString("en-IN")}
+                                    </span>
+                                    {extension.fileKey ? (
+                                      <a
+                                        href={extension.fileKey}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="text-[#00cec4] hover:underline"
                                       >
-                                        <Upload size={12} />
-                                        {isUploaded ? "Re-upload" : isExempted ? "Upload File Anyway" : "Upload File"}
-                                      </Button>
-                                    </div>
+                                        {extension.fileName || "View document"}
+                                      </a>
+                                    ) : null}
                                   </div>
-                                </div>
-                              );
-                                  })}
-                                </div>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {activeExceptionRequirement ? (
+                    <div className="rounded-[24px] border border-outline-variant/60 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)]">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div>
+                          <p className="ds-label text-[#fb923c]">Exemption Draft</p>
+                          <h3 className="mt-2 text-lg font-semibold text-on-surface">{activeExceptionRequirement.name}</h3>
+                          <p className="mt-1 text-sm text-on-surface-variant">
+                            Record the business reason for handling this requirement without a file upload.
+                          </p>
+                        </div>
+                        <Badge variant="warning">PENDING EXEMPTION</Badge>
+                      </div>
+                      <div className="mt-4 space-y-3">
+                        <textarea
+                          value={exceptionReason}
+                          onChange={(event) => setExceptionReason(event.target.value)}
+                          placeholder="Enter detailed reason for exemption..."
+                          className="min-h-28 w-full rounded-[20px] border border-outline-variant/55 bg-surface px-4 py-3 text-sm text-on-surface"
+                        />
+                        <div className="flex flex-wrap justify-end gap-3">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setActiveDocReqId(null);
+                              setExceptionReason("");
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button type="button" onClick={() => handleDeclareException(activeExceptionRequirement.id)}>
+                            Save Exemption
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="space-y-4">
+                    <div className="space-y-3">
+                      <p className="ds-label text-[#00cec4]">Pending By Category</p>
+                      <p className="text-sm text-on-surface-variant">
+                        Categories follow CHA settings. Only documents configured under each heading are shown there.
+                      </p>
+                    </div>
+                    {groupedPendingWorkflowDocuments.length > 0 ? (
+                      groupedPendingWorkflowDocuments.map((group) => (
+                        <section key={group.categoryName} className="space-y-4 rounded-[24px] border border-outline-variant/45 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
+                          <div className="space-y-1 border-b border-outline-variant/20 pb-4">
+                            <p className="text-lg font-semibold text-on-surface">{group.categoryName}</p>
+                            <p className="text-sm text-on-surface-variant">
+                              {group.requirements.length} requirement{group.requirements.length === 1 ? "" : "s"} pending action in this category.
+                            </p>
+                          </div>
+                          <div className="grid gap-4 xl:grid-cols-2">
+                            {group.requirements.map((req: WorkflowDocumentRequirement) => (
+                              <div
+                                key={req.id}
+                                ref={(element) => {
+                                  documentRequirementCardRefs.current[req.id] = element;
+                                }}
+                                className={highlightedDocumentReqId === req.id ? "animate-doc-missing-blink" : ""}
+                              >
+                                <RequirementDocumentCard
+                                  requirement={req}
+                                  loadingKey={loading}
+                                  selected={selectedWorkflowDocumentRequirement?.id === req.id}
+                                  onSelect={(requirementId) => {
+                                    setSelectedDocumentRequirementId(requirementId);
+                                    const selectedRequirement = filteredWorkflowDocuments.find((entry: WorkflowDocumentRequirement) => entry.id === requirementId);
+                                    const selectedVersion = selectedRequirement?.versions.find((version: WorkflowDocumentVersion) => version.isCurrent) || selectedRequirement?.versions?.[0];
+                                    setIsDocumentDrawerOpen(Boolean(selectedVersion));
+                                    setDocumentDrawerTab("preview");
+                                  }}
+                                  onUndo={handleRemoveException}
+                                  onUpload={setUploadDocumentModalReqId}
+                                  onDeclareExemption={(requirementId) => {
+                                    setSelectedDocumentRequirementId(requirementId);
+                                    setIsDocumentDrawerOpen(false);
+                                    setActiveDocReqId(requirementId);
+                                    const currentRequirement = documentRequirements.find((entry: any) => entry.id === requirementId);
+                                    setExceptionReason(
+                                      currentRequirement?.exception?.reason === "N/A"
+                                        ? ""
+                                        : currentRequirement?.exception?.reason || "",
+                                    );
+                                  }}
+                                  onMarkNa={handleMarkNotAvailable}
+                                />
                               </div>
                             ))}
                           </div>
-                        </div>
-                      );
-                    })}
+                        </section>
+                      ))
+                    ) : (
+                      <div className="rounded-[24px] border border-outline-variant/60 bg-surface p-8 text-center text-sm text-on-surface-variant shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
+                        No pending or exception-based requirements match the current filter.
+                      </div>
+                    )}
                   </div>
-                );
-              })()}
 
-              {/* Stage Proceed button for Document Collection stage */}
-              {job.stage === "DOCUMENT_COLLECTION" && (
-                <div className="pt-4 border-t border-outline-variant/30 flex flex-col items-end gap-3">
-                  {proceedErrors && (
-                    <div className="w-full md:max-w-xl p-4 rounded-2xl border border-orange-500/30 bg-orange-500/10 text-orange-500 text-xs">
-                      <p className="font-semibold uppercase tracking-wider ds-label text-orange-500 mb-1">Proceed Blocked</p>
-                      <p>{proceedErrors[0]}</p>
+                  <DocumentDropzone
+                    requirement={selectedWorkflowDocumentRequirement}
+                    disabled={loading !== null}
+                    onInputChange={handleUploadDoc}
+                  />
+
+                  {job.stage === "DOCUMENT_COLLECTION" && (
+                    <div className="flex flex-col gap-3 border-t border-outline-variant/25 pt-4 sm:items-end">
+                      {proceedErrors ? (
+                        <div className="w-full rounded-[20px] border border-[#fb923c]/30 bg-[#fb923c]/10 p-4 text-xs text-[#fb923c] sm:max-w-xl">
+                          <p className="ds-label mb-1 text-[#fb923c]">Proceed Blocked</p>
+                          <p>{proceedErrors[0]}</p>
+                        </div>
+                      ) : null}
+                      <div className="w-full sm:min-w-[320px] sm:w-auto">
+                        <SlideToComplete
+                          key="document-stage-slider"
+                          disabled={loading !== null || !!firstUnresolvedMandatoryDocumentId}
+                          text={loading === "proceed-stage" ? "Advancing stage..." : "Slide to complete this step"}
+                          onComplete={handleProceedStage}
+                        />
+                      </div>
                     </div>
                   )}
-                  <Button
-                    onClick={handleProceedStage}
-                    disabled={loading !== null}
-                    className="w-full sm:w-auto bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] font-bold tracking-wider"
-                  >
-                    {loading === "proceed-stage" ? "Advancing stage..." : "Proceed to Additional Data"}
-                    <ArrowRight size={14} className="ml-1.5" />
-                  </Button>
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* PANEL: ADDITIONAL DATA */}
-          {activeTab === "additionalData" && (
+                <FilingDocumentPreviewDrawer
+                  open={isDocumentDrawerOpen}
+                  requirement={selectedWorkflowDocumentRequirement}
+                  version={selectedWorkflowDocumentVersion}
+                  previewUrl={selectedDocumentPreviewUrl}
+                  downloadUrl={selectedDocumentDownloadUrl}
+                  loadingPreview={loadingPreview}
+                  activeTab={documentDrawerTab}
+                  currentStepLabel={`${workflowProgressPercent}% Uploaded • ${workflowCurrentStepLabel}`}
+                  currentStageLabel={currentStageLabel}
+                  dueDate={job.estimatedClosureDate || null}
+                  onClose={() => setIsDocumentDrawerOpen(false)}
+                  onTabChange={setDocumentDrawerTab}
+                  onPreviewLoad={() => setLoadingPreview(false)}
+                  onPreviewError={() => setLoadingPreview(false)}
+                />
+              </div>
+
+              </div>
+            </MilestoneCard>
+                ) : null}
+
+                {/* 2. ADDITIONAL_DATA */}
+                {showAdditionalDataStage ? (
+                <MilestoneCard
+                  stageKey="ADDITIONAL_DATA"
+                  isExpanded={expandedStageKey === "ADDITIONAL_DATA"}
+                  isSpotlit={stageFocusKey === "ADDITIONAL_DATA"}
+                  onToggle={handleMilestoneToggle}
+                  title="Additional Data"
+                  description="Enter vessel inward date, manifest numbers, delivery order validity, and container details."
+                  isCompleted={activeStepIndex > 1}
+                  isActive={activeStepIndex === 1}
+                  isLocked={activeStepIndex < 1}
+                  percentage={additionalDataPercentage}
+                  validationState={additionalDataValidationState}
+                  statusLabel={activeStepIndex > 1 ? "Completed" : activeStepIndex === 1 ? "In Progress" : "Locked"}
+                  assignedUser={job.primaryOwner?.name || "Operations Team"}
+                  dueDate={deliveryOrderValidity ? new Date(deliveryOrderValidity).toLocaleDateString("en-IN") : null}
+                  completedAt={activeStepIndex > 1 ? (job.additionalData?.updatedAt ? new Date(job.additionalData.updatedAt).toLocaleString("en-IN") : null) : null}
+                  summary={
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                      <div>
+                        <span className="text-on-surface-variant block text-[10px] uppercase">Vessel Inward Date</span>
+                        <span className="font-semibold text-on-surface ds-numeric">{vesselInwardDate ? new Date(vesselInwardDate).toLocaleDateString("en-IN") : "â€”"}</span>
+                      </div>
+                      <div>
+                        <span className="text-on-surface-variant block text-[10px] uppercase">DO Validity</span>
+                        <span className="font-semibold text-on-surface ds-numeric">{deliveryOrderValidity ? new Date(deliveryOrderValidity).toLocaleDateString("en-IN") : "â€”"}</span>
+                      </div>
+                      {requiresIgm && (
+                        <div>
+                          <span className="text-on-surface-variant block text-[10px] uppercase">IGM Number</span>
+                          <span className="font-semibold text-on-surface font-mono">{importGeneralManifest || "â€”"}</span>
+                        </div>
+                      )}
+                      {requiresEgm && (
+                        <div>
+                          <span className="text-on-surface-variant block text-[10px] uppercase">EGM Number</span>
+                          <span className="font-semibold text-on-surface font-mono">{exportGeneralManifest || "â€”"}</span>
+                        </div>
+                      )}
+                    </div>
+                  }
+                >
             <div className="space-y-4">
               <div className="flex flex-col gap-3 border-b border-outline-variant/20 pb-4 md:flex-row md:items-start md:justify-between">
                 <SectionHeading
@@ -4322,112 +5972,76 @@
                   </Button>
                 ) : null}
                 {job.stage === "ADDITIONAL_DATA" ? (
-                  <Button
-                    type="button"
-                    disabled={loading !== null || !additionalDataComplete || manifestConfigMissing}
-                    onClick={handleProceedAdditionalData}
-                    className="w-full sm:w-auto"
-                  >
-                    {loading === "additional-data-proceed" ? "Saving and Proceeding..." : "Proceed to Checklist Prep"}
-                    <ArrowRight size={14} className="ml-1.5" />
-                  </Button>
+                  <div className="w-full sm:w-auto sm:min-w-[320px] pt-1">
+                    <SlideToComplete
+                      key="additional-data-slider"
+                      disabled={loading !== null || !additionalDataComplete || manifestConfigMissing}
+                      text={loading === "additional-data-proceed" ? "Saving and Proceeding..." : "Slide to complete Additional Data"}
+                      onComplete={handleProceedAdditionalData}
+                    />
+                  </div>
                 ) : null}
               </div>
-            </div>
-          )}
+              </div>
+            </MilestoneCard>
+                ) : null}
 
-          {/* PANEL: CHECKLIST */}
-          {activeTab === "checklist" && (
-            <div className="space-y-4">
-              <SectionHeading
-                title="Checklist Workflow"
-                description="Upload, route, and track checklist approvals through internal and customer review."
-                aside={
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={currentChecklistVersion ? "default" : "warning"} className="uppercase">
-                      {checklistWorkflow?.status?.replace(/_/g, " ") || "Pending Upload"}
-                    </Badge>
-                    {checklistWorkflow?.customerRejectedOnce ? (
-                      <Badge variant="warning" className="uppercase">
-                        Rework Required
-                      </Badge>
-                    ) : null}
-                  </div>
-                }
-              />
-
-              {/* Check if gate is open */}
-              {activeStepIndex < checklistStageIndex ? (
-                <div className="bg-surface border border-[#fb923c]/40 p-4 rounded-2xl flex items-start gap-3">
-                  <AlertTriangle size={24} className="text-[#fb923c] shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-bold text-sm text-[#fb923c]">CHECKLIST PREPARATION NOT AVAILABLE</h4>
-                    <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
-                      {job.stage === "DOCUMENT_COLLECTION"
-                        ? "Complete Document Collection first. Make sure all mandatory documents are uploaded or exempted."
-                        : manifestConfigMissing
-                          ? "This clearance type is missing manifest configuration. Update it in CHA settings before continuing."
-                          : `Complete the Additional Data process first. Vessel Inward Date, ${manifestLabel}, and DO Validity are required.`}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {!job.assignedManagerId && (
-                    <div className="bg-surface border border-[#fb923c]/40 p-4 rounded-2xl flex items-start gap-3">
-                      <AlertTriangle size={24} className="text-[#fb923c] shrink-0 mt-0.5" />
-                      <div>
-                        <h4 className="font-bold text-sm uppercase text-[#fb923c]">Manager Assignment Recommended</h4>
-                        <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
-                          No manager has been assigned to this job yet. Internal approval can still be completed by the job owner, or route through the owner&apos;s Manager or TL if configured in HRMS, but assigning a manager keeps responsibility explicit.
-                        </p>
-                        {canUpdateJob && (
-                          <button
-                            type="button"
-                            onClick={() => setIsEditingManager(true)}
-                            className="ds-plain cha-link mt-2 text-xs font-semibold hover:underline uppercase tracking-wider"
-                          >
-                            Assign Manager Now →
-                          </button>
-                        )}
-                      </div>
+                {/* 3. CHECKLIST_PREPARATION */}
+                {showChecklistPreparationStage ? (
+                <MilestoneCard
+                  stageKey="CHECKLIST_PREPARATION"
+                  isExpanded={expandedStageKey === "CHECKLIST_PREPARATION"}
+                  isSpotlit={stageFocusKey === "CHECKLIST_PREPARATION"}
+                  onToggle={handleMilestoneToggle}
+                  title="Checklist Preparation"
+                  description="Upload the customs checklist file for review."
+                  isCompleted={!!currentChecklistVersion}
+                  isActive={activeStepIndex === 2}
+                  isLocked={activeStepIndex < 2}
+                  percentage={checklistPrepPercentage}
+                  validationState={checklistPrepValidationState}
+                  summary={
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-on-surface-variant">Checklist File:</span>
+                      {currentChecklistVersion ? (
+                        <span className="font-semibold text-on-surface font-mono">{currentChecklistVersion.originalFileName} (V{currentChecklistVersion.versionNumber})</span>
+                      ) : (
+                        <span className="text-red-500 italic">No checklist uploaded yet</span>
+                      )}
                     </div>
-                  )}
-
-                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-                    <div className="space-y-4">
-                      <div className="space-y-4">
-                        <div className="space-y-1">
-                          <span className="ds-label">
-                            {currentChecklistVersion ? "Replacement Upload" : "Checklist Upload"}
-                          </span>
-                          <p className="text-xs text-on-surface-variant">
-                            Any file format is allowed here. The uploaded file will move into internal approval automatically.
+                  }
+                >
+                  <div className="space-y-4">
+                    {!job.assignedManagerId && (
+                      <div className="bg-surface border border-[#fb923c]/40 p-4 rounded-2xl flex items-start gap-3">
+                        <AlertTriangle size={24} className="text-[#fb923c] shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className="font-bold text-sm uppercase text-[#fb923c]">Manager Assignment Recommended</h4>
+                          <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
+                            No manager has been assigned to this job yet. Internal approval can still be completed by the job owner, or route through the owner&apos;s Manager or TL if configured in HRMS, but assigning a manager keeps responsibility explicit.
                           </p>
+                          {canUpdateJob && (
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingManager(true)}
+                              className="ds-plain cha-link mt-2 text-xs font-semibold hover:underline uppercase tracking-wider"
+                            >
+                              Assign Manager Now â†’
+                            </button>
+                          )}
                         </div>
+                      </div>
+                    )}
 
-                        {internalApproversCount === 0 && (
-                          <div className="bg-surface border border-red-500/40 p-4 rounded-2xl flex items-start gap-3">
-                            <AlertTriangle size={20} className="text-red-500 shrink-0 mt-0.5" />
-                            <div>
-                              <h4 className="font-bold text-xs uppercase text-red-500">No Internal Approvers Configured</h4>
-                              <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
-                                There are no active internal checklist approvers configured for this job.
-                                Please assign an employee with the <span className="font-medium text-on-surface">Approval</span> responsibility in the job settings, 
-                                or verify that the job owner, assigned manager, or owner&apos;s team lead is configured in HRMS.
-                              </p>
-                              {canManageSettings && (
-                                <button
-                                  type="button"
-                                  onClick={() => router.push("/cha/settings")}
-                                  className="ds-plain cha-link mt-2 text-xs font-semibold hover:underline"
-                                >
-                                  Go to Settings →
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        )}
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <span className="ds-label">
+                          {currentChecklistVersion ? "Replacement Upload" : "Checklist Upload"}
+                        </span>
+                        <p className="text-xs text-on-surface-variant">
+                          Any file format is allowed here. The uploaded file will move into internal approval automatically.
+                        </p>
+
 
                         <FileUploadField
                           id="checklist-file-upload"
@@ -4511,14 +6125,52 @@
                                       {new Date(version.uploadedAt).toLocaleString("en-IN")}
                                     </td>
                                   </tr>
-                                )})}
+                                );})}
                               </tbody>
                             </table>
                           </div>
                         </div>
                       ) : null}
                     </div>
+                  </div>
+            </MilestoneCard>
+                ) : null}
 
+                {/* 4. CHECKLIST_APPROVAL */}
+                {showChecklistApprovalStage ? (
+                <MilestoneCard
+                  stageKey="CHECKLIST_APPROVAL"
+                  isExpanded={expandedStageKey === "CHECKLIST_APPROVAL"}
+                  isSpotlit={stageFocusKey === "CHECKLIST_APPROVAL"}
+                  onToggle={handleMilestoneToggle}
+                  title="Checklist Approval"
+                  description="Route and track checklist approvals through internal and customer review."
+                  isCompleted={activeStepIndex > 3}
+                  isActive={activeStepIndex === 3 || (activeStepIndex === 2 && !!currentChecklistVersion)}
+                  isLocked={activeStepIndex < 2 || !currentChecklistVersion}
+                  percentage={checklistApprovalPercentage}
+                  validationState={checklistApprovalValidationState}
+                  statusLabel={activeStepIndex > 3 ? "Approved" : activeStepIndex === 3 ? (checklistWorkflow?.currentApprovalStage === "CUSTOMER" ? "Waiting Customer" : "Waiting Approval") : "Locked"}
+                  assignedUser={job.assignedManager?.name || "Approval Team"}
+                  dueDate={customerApprovalVisibleAt ? customerApprovalVisibleAt.toLocaleString("en-IN") : (job.estimatedClosureDate ? new Date(job.estimatedClosureDate).toLocaleDateString("en-IN") : null)}
+                  completedAt={activeStepIndex > 3 ? (approvedCustomerDecision?.actedAt ? new Date(approvedCustomerDecision.actedAt).toLocaleString("en-IN") : approvedInternalDecision?.actedAt ? new Date(approvedInternalDecision.actedAt).toLocaleString("en-IN") : null) : null}
+                  summary={
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <span className="text-on-surface-variant block text-[10px] uppercase">Internal Approval</span>
+                        <span className={`font-semibold ${approvedInternalDecision ? "text-green-600" : "text-orange-500"}`}>
+                          {approvedInternalDecision ? `Approved by ${getUserName(approvedInternalDecision.actedById || approvedInternalDecision.assignedToId)}` : "Pending"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-on-surface-variant block text-[10px] uppercase">Customer Approval</span>
+                        <span className={`font-semibold ${approvedCustomerDecision ? "text-green-600" : "text-orange-500"}`}>
+                          {approvedCustomerDecision ? "Approved" : "Pending"}
+                        </span>
+                      </div>
+                    </div>
+                  }
+                >
                     <div className="space-y-4">
                       <div className="card-cyan-outline rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4 shadow-sm">
                         <div className="space-y-3">
@@ -4747,11 +6399,11 @@
                                     <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                                       <div className="space-y-1">
                                         <p className="text-sm font-semibold text-on-surface">
-                                          {approval.stage.replace(/_/g, " ")} • {approval.action.replace(/_/g, " ")}
+                                          {approval.stage.replace(/_/g, " ")} â€¢ {approval.action.replace(/_/g, " ")}
                                         </p>
                                         <p className="text-xs text-on-surface-variant">
                                           Assigned to <span className="text-on-surface">{getUserName(approval.assignedToId)}</span>
-                                          {approval.actedById ? ` • acted by ${getUserName(approval.actedById)}` : ""}
+                                          {approval.actedById ? ` â€¢ acted by ${getUserName(approval.actedById)}` : ""}
                                         </p>
                                       </div>
                                       <span className="text-[11px] text-on-surface-variant ds-numeric md:text-right">
@@ -4770,13 +6422,48 @@
                         )}
                       </div>
                     </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+                </MilestoneCard>
+                ) : null}
 
-          {activeTab === "filing" && (
+                {/* 5. FILING */}
+                {showFilingStage ? (
+                <MilestoneCard
+                  stageKey="FILING"
+                  isExpanded={expandedStageKey === "FILING"}
+                  isSpotlit={stageFocusKey === "FILING"}
+                  onToggle={handleMilestoneToggle}
+                  title="Filing Stage"
+                  description="Execute filing operations using the workflow canvas."
+                  isCompleted={activeStepIndex > 4}
+                  isActive={activeStepIndex === 4}
+                  isLocked={activeStepIndex < 4}
+                  percentage={filingPercentage}
+                  validationState={filingValidationState}
+                  statusLabel={activeStepIndex > 4 ? "Filed" : activeStepIndex === 4 ? (isActiveStageBlocked ? "Blocked" : "In Progress") : "Locked"}
+                  assignedUser={job.assignedManager?.name || job.primaryOwner?.name || "Filing Team"}
+                  dueDate={job.estimatedClosureDate ? new Date(job.estimatedClosureDate).toLocaleDateString("en-IN") : null}
+                  completedAt={activeStepIndex > 4 ? (job.filing?.updatedAt ? new Date(job.filing.updatedAt).toLocaleString("en-IN") : null) : null}
+                  summary={
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                      {job.filing?.billOfEntryNumber && (
+                        <div>
+                          <span className="text-on-surface-variant block text-[10px] uppercase">BOE Number</span>
+                          <span className="font-semibold text-on-surface ds-numeric">{job.filing.billOfEntryNumber}</span>
+                        </div>
+                      )}
+                      {job.filing?.shippingBillNumber && (
+                        <div>
+                          <span className="text-on-surface-variant block text-[10px] uppercase">Shipping Bill Number</span>
+                          <span className="font-semibold text-on-surface ds-numeric">{job.filing.shippingBillNumber}</span>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-on-surface-variant block text-[10px] uppercase">Filing Date</span>
+                        <span className="font-semibold text-on-surface ds-numeric">{job.filing?.actualFilingDate ? new Date(job.filing.actualFilingDate).toLocaleDateString("en-IN") : "â€”"}</span>
+                      </div>
+                    </div>
+                  }
+                >
             <div className="space-y-4">
               <SectionHeading
                 title="Customs Submission Filing Details"
@@ -4844,7 +6531,7 @@
                           <p className="max-w-3xl text-sm text-on-surface-variant leading-relaxed">
                             No active filing workflow instance found. Ensure a workflow is published in{" "}
                             <a href="/cha/settings/filing-workflows" className="text-[#00cec4] underline underline-offset-2">
-                              CHA Settings → Filing Workflows
+                              CHA Settings â†’ Filing Workflows
                             </a>
                             , then start the workflow below.
                           </p>
@@ -4861,16 +6548,56 @@
                     <div className="space-y-4">
                         {activeNodeRun ? (
                           <div className="space-y-4">
+                            <div aria-live="polite" className="sr-only">
+                              {filingCompletionAnnouncement}
+                            </div>
 
                             {/* Node run completion form */}
                             <form
+                              ref={filingFormRef}
                               onSubmit={handleCompleteFilingNode}
-                              className="grid gap-4 pt-2 xl:grid-cols-[minmax(0,680px)_minmax(0,1fr)] xl:items-start"
+                              className="grid gap-5 pt-2 xl:grid-cols-[minmax(0,680px)_minmax(0,1fr)] xl:items-start"
                             >
-                              <div className={`card-top-accent ${filingPrimaryColumnClass} space-y-3 rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm`}>
+                              <div className="xl:col-span-2">
+                                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                                  {filingSummaryCards.map((card) => {
+                                    const toneClasses =
+                                      card.tone === "orange"
+                                        ? "border-[#fb923c]/30 bg-[linear-gradient(135deg,rgba(251,146,60,0.10),rgba(255,255,255,0.02))] text-[#c76628]"
+                                        : card.tone === "green"
+                                          ? "border-[#22c55e]/25 bg-[linear-gradient(135deg,rgba(34,197,94,0.08),rgba(255,255,255,0.02))] text-[#15803d]"
+                                          : card.tone === "violet"
+                                            ? "border-[#6366f1]/22 bg-[linear-gradient(135deg,rgba(99,102,241,0.09),rgba(255,255,255,0.02))] text-[#4f46e5]"
+                                            : "border-[#00cec4]/25 bg-[linear-gradient(135deg,rgba(0,206,196,0.09),rgba(255,255,255,0.02))] text-[#0f766e]";
+
+                                    return (
+                                      <div
+                                        key={card.key}
+                                        className={`rounded-[24px] border bg-surface px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.22)] ${toneClasses}`}
+                                      >
+                                        <div className="flex items-start gap-3">
+                                          <span className="ds-icon-badge shrink-0">{card.icon}</span>
+                                          <div className="min-w-0 flex-1 space-y-1">
+                                            <p className="text-xs font-medium uppercase tracking-[0.12em] text-on-surface-variant">
+                                              {card.title}
+                                            </p>
+                                            <p className="text-base font-semibold leading-6 text-on-surface">
+                                              {card.value}
+                                            </p>
+                                            <p className="text-xs leading-5 text-on-surface-variant">
+                                              {card.note}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                              <div ref={filingActiveNodeCardRef} className={`card-top-accent ${filingPrimaryColumnClass} space-y-3 rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm`}>
                                 <SectionHeading
-                                  title={activeNodeDisplayName}
-                                  description="Capture the filing details and upload the supporting bill document before moving forward."
+                                  title="Stage Checklist Verification"
+                                  description="Review this active filing checkpoint, complete the checklist, and capture the required stage data."
                                   aside={
                                     <InfoNoteToggle
                                       title="Stage Summary"
@@ -4885,6 +6612,30 @@
                                 <div className="flex flex-wrap gap-2 pl-[17px]">
                                   {activeNodeRun.node.nodeType === "DECISION" ? <Badge variant="default">Decision</Badge> : null}
                                   {activeNodeRun.node.canBeSkipped ? <Badge variant="warning">Optional / Skippable</Badge> : null}
+                                </div>
+                                <div className="ml-[17px] rounded-[24px] border border-[#6366f1]/20 bg-[linear-gradient(135deg,rgba(99,102,241,0.08),rgba(255,255,255,0.02))] px-4 py-4 shadow-[0_18px_36px_-28px_rgba(99,102,241,0.26)]">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0 space-y-1">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <span className="flex size-10 items-center justify-center rounded-[16px] border border-[#6366f1]/18 bg-gradient-to-br from-[#7c3aed] via-[#6366f1] to-[#4f46e5] text-sm font-bold text-white shadow-[0_16px_28px_-18px_rgba(99,102,241,0.9)]">
+                                          3D
+                                        </span>
+                                        <span className="rounded-full bg-[#6366f1]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#4f46e5]">
+                                          Tap To Verify
+                                        </span>
+                                      </div>
+                                      <p className="text-sm font-semibold text-on-surface">
+                                        {highlightedChecklistItem?.label || activeNodeDisplayName}
+                                        {highlightedChecklistItem?.isMandatory || activeNodeRun.node.isMandatory !== false ? (
+                                          <span className="ml-1 font-bold text-red-500">*</span>
+                                        ) : null}
+                                      </p>
+                                    </div>
+                                    <div className="shrink-0 text-right">
+                                      <div className="ds-label text-on-surface-variant">{highlightedChecklistPosition || "Active Item"}</div>
+                                      <div className="mt-1 text-sm text-on-surface-variant ds-numeric">{highlightedChecklistDeadline || "Ready"}</div>
+                                    </div>
+                                  </div>
                                 </div>
                                 {overdueChecklistCount > 0 && (
                                   <p className="pl-[17px] text-xs text-[#fb923c]">
@@ -5031,47 +6782,124 @@
                                           const resp = checklistResponses[item.id] || { isChecked: false, remarks: "", fileKey: undefined, delayRemarks: "" };
                                           const overdueMeta = overdueChecklistItems.find((entry: any) => entry.checklistItemId === item.id);
                                           const checklistItemAttachments = checklistAttachmentsByItem.get(item.id) || [];
+                                          const mandatoryNodeDocumentsReady = activeNodeDocumentRequirements
+                                            .filter((requirement: any) => requirement.required !== false)
+                                            .every((requirement: any) => !!activeNodeDocumentAttachmentsByKey.get(requirement.key));
+                                          const mandatoryPhotoRequirementsReady = (activeNodeRun.node.photoRequirements || [])
+                                            .filter((requirement: any) => requirement.isMandatory)
+                                            .every((requirement: any) => {
+                                              const uploadedCount = activeNodeAttachments.filter(
+                                                (attachment: any) => attachment.photoRequirementId === requirement.id,
+                                              ).length;
+                                              return uploadedCount >= (requirement.minPhotos || 1);
+                                            });
+                                          const checklistUploadsReady =
+                                            !item.allowsUpload ||
+                                            (item.minUploads || 0) === 0 ||
+                                            checklistItemAttachments.length >= (item.minUploads || 0);
                                           const isCurrentItem = index === currentChecklistItemIndex;
                                           const isCompletedItem =
                                             resp.isChecked &&
                                             (!item.requiresRemarks || !!resp.remarks?.trim()) &&
                                             (!overdueMeta || !item.delayRemarksRequired || !!resp.delayRemarks?.trim()) &&
-                                            (!(item.allowsUpload && (item.minUploads || 0) > 0) || checklistItemAttachments.length >= item.minUploads);
+                                            checklistUploadsReady;
                                           const isLockedItem = index > currentChecklistItemIndex;
+                                          const canVerifyChecklistItem =
+                                            !isLockedItem &&
+                                            (resp.isChecked ||
+                                              (isCurrentItem && mandatoryNodeDocumentsReady && mandatoryPhotoRequirementsReady && checklistUploadsReady));
                                           return (
                                             <div
                                               key={item.id}
-                                              className={`p-3.5 rounded-xl border space-y-3 ${
+                                              className={`relative overflow-hidden rounded-[24px] border p-4 space-y-3 transition-all duration-200 ${
                                                 isLockedItem
-                                                  ? "border-outline-variant bg-surface-container-low opacity-70"
+                                                  ? "border-outline-variant bg-surface-container-low/75 opacity-70"
                                                   : overdueMeta
-                                                  ? "border-[#fb923c]/45 bg-[#fb923c]/10"
-                                                  : "border-outline-variant bg-surface-container-low"
+                                                  ? "border-[#fb923c]/45 bg-[linear-gradient(135deg,rgba(251,146,60,0.10),rgba(255,255,255,0.02))] shadow-[0_18px_38px_-28px_rgba(251,146,60,0.35)]"
+                                                  : resp.isChecked
+                                                  ? "border-[#22c55e]/35 bg-[linear-gradient(135deg,rgba(34,197,94,0.10),rgba(255,255,255,0.02))] shadow-[0_18px_36px_-24px_rgba(34,197,94,0.35)]"
+                                                  : "border-[#6366f1]/22 bg-[linear-gradient(135deg,rgba(124,58,237,0.10),rgba(255,255,255,0.02))] shadow-[0_22px_42px_-30px_rgba(99,102,241,0.32)] hover:-translate-y-0.5"
                                               }`}
                                             >
-                                              <div className="flex items-center justify-between gap-4">
-                                                <div className="flex min-w-0 flex-1 items-center gap-3">
-                                                  <NeonCheckbox
-                                                    id={`check-${item.id}`}
-                                                    checked={resp.isChecked}
-                                                    disabled={isLockedItem}
-                                                    onChange={(e) => {
-                                                      setChecklistResponses((prev) => ({
-                                                        ...prev,
-                                                        [item.id]: {
-                                                          ...prev[item.id],
-                                                          isChecked: e.target.checked,
-                                                        },
-                                                      }));
-                                                    }}
-                                                  />
-                                                  <div className="min-w-0 flex-1 space-y-1">
-                                                    <label htmlFor={`check-${item.id}`} className="block cursor-pointer text-sm font-semibold leading-5 text-on-surface">
-                                                      {item.label} {item.isMandatory && <span className="text-red-500 font-bold">*</span>}
-                                                    </label>
-                                                    {item.description && (
-                                                      <p className="text-xs leading-5 text-on-surface-variant">{item.description}</p>
+                                              {!isLockedItem ? (
+                                                <div
+                                                  className={`pointer-events-none absolute inset-y-4 left-0 w-1 rounded-full ${
+                                                    resp.isChecked
+                                                      ? "bg-[#22c55e]"
+                                                      : overdueMeta
+                                                      ? "bg-[#fb923c]"
+                                                      : "bg-[#6366f1]"
+                                                  }`}
+                                                />
+                                              ) : null}
+                                              <button
+                                                type="button"
+                                                disabled={!canVerifyChecklistItem}
+                                                onClick={() => {
+                                                  if (!canVerifyChecklistItem) return;
+                                                  setChecklistResponses((prev) => ({
+                                                    ...prev,
+                                                    [item.id]: {
+                                                      ...prev[item.id],
+                                                      isChecked: !resp.isChecked,
+                                                    },
+                                                  }));
+                                                }}
+                                                className={`group relative flex w-full items-start justify-between gap-4 bg-transparent text-left transition-all ${
+                                                  !canVerifyChecklistItem
+                                                    ? "cursor-not-allowed"
+                                                    : resp.isChecked
+                                                    ? "hover:scale-[1.005]"
+                                                    : "hover:scale-[1.005]"
+                                                }`}
+                                              >
+                                                <div className="flex min-w-0 flex-1 items-start gap-3">
+                                                  <span
+                                                    className={`mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-[14px] border text-sm font-bold transition-all ${
+                                                      isLockedItem
+                                                        ? "border-outline-variant/50 bg-surface text-on-surface-variant"
+                                                        : resp.isChecked
+                                                        ? "border-[#22c55e]/35 bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-white shadow-[0_14px_24px_-16px_rgba(34,197,94,0.85)]"
+                                                        : "border-[#6366f1]/25 bg-gradient-to-br from-[#7c3aed] via-[#6366f1] to-[#4f46e5] text-white shadow-[0_16px_28px_-18px_rgba(99,102,241,0.9)]"
+                                                    }`}
+                                                  >
+                                                    {isLockedItem ? (
+                                                      <Lock size={14} />
+                                                    ) : resp.isChecked ? (
+                                                      <Check size={16} />
+                                                    ) : (
+                                                      <span>3D</span>
                                                     )}
+                                                  </span>
+                                                  <div className="min-w-0 flex-1 space-y-1.5">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                      <span className="ds-label text-on-surface-variant">Verification Item</span>
+                                                      <span
+                                                        className={`rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] ${
+                                                          isLockedItem
+                                                            ? "bg-surface text-on-surface-variant"
+                                                          : resp.isChecked
+                                                            ? "bg-[#22c55e]/12 text-[#15803d]"
+                                                            : canVerifyChecklistItem
+                                                              ? "bg-[#6366f1]/12 text-[#4f46e5]"
+                                                              : "bg-[#fb923c]/12 text-[#c76628]"
+                                                        }`}
+                                                      >
+                                                        {isLockedItem
+                                                          ? "Locked"
+                                                          : resp.isChecked
+                                                            ? "Verified"
+                                                            : canVerifyChecklistItem
+                                                              ? "Tap To Verify"
+                                                              : "Upload Required"}
+                                                      </span>
+                                                    </div>
+                                                    <div className="block text-sm font-semibold leading-5 text-on-surface">
+                                                      {item.label} {item.isMandatory && <span className="text-red-500 font-bold">*</span>}
+                                                    </div>
+                                                    {item.description ? (
+                                                      <p className="text-xs leading-5 text-on-surface-variant">{item.description}</p>
+                                                    ) : null}
                                                   </div>
                                                 </div>
                                                 <div className="shrink-0 self-center text-right">
@@ -5080,11 +6908,17 @@
                                                     {item.deadlineDuration || 2} {item.deadlineUnit === "HOURS" ? "HR" : item.deadlineUnit === "DAYS" ? "DAY" : "BD"}
                                                   </div>
                                                 </div>
-                                              </div>
+                                              </button>
 
                                               {isLockedItem && (
                                                 <div className="rounded-xl border border-outline-variant/60 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
                                                   Complete the current checklist item first to unlock this step.
+                                                </div>
+                                              )}
+
+                                              {!isLockedItem && !resp.isChecked && !canVerifyChecklistItem && (
+                                                <div className="rounded-xl border border-[#fb923c]/30 bg-[#fb923c]/6 px-3 py-2 text-[11px] text-on-surface-variant">
+                                                  Upload every required document for this filing step before verification becomes available.
                                                 </div>
                                               )}
 
@@ -5279,25 +7113,23 @@
                                 {queryProcessingEnabled ? (
                                   <>
                                     <div className="card-top-accent-orange overflow-hidden rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
-                                      <div className="flex flex-col gap-3 px-4 py-3 lg:flex-row lg:items-start">
-                                        <div className="min-w-0 flex-1">
-                                          <div className="space-y-2">
-                                            <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
-                                              <span className="h-7 rounded-sm bg-[#fb923c]" aria-hidden="true" />
-                                              <h3 className="ds-h3 text-[#c76628]">Query Processing</h3>
-                                            </div>
-                                            <p className="pl-[17px] text-sm text-on-surface-variant">
-                                              {activeNodeOpenQueries.length > 0
-                                                ? `${activeNodeOpenQueries.length} active quer${activeNodeOpenQueries.length > 1 ? "ies require" : "y requires"} attention.`
-                                                : queryProcessingStage === "CLEARED"
-                                                  ? "All recorded queries are cleared for this filing stage."
-                                                  : queryProcessingStage === "NO_QUERY"
-                                                    ? "No query has been raised for this filing stage."
-                                                    : "Track query intake and response status for this filing stage."}
-                                            </p>
+                                      <div className="flex items-start justify-between gap-3 px-4 py-3">
+                                        <div className="min-w-0 flex-1 space-y-1">
+                                          <div className="flex items-center gap-2">
+                                            <span className="h-4 w-0.5 rounded-full bg-[#fb923c]" aria-hidden="true" />
+                                            <h3 className="text-sm font-bold uppercase tracking-wide text-[#c76628]">Query Processing</h3>
                                           </div>
+                                          <p className="text-xs text-on-surface-variant">
+                                            {activeNodeOpenQueries.length > 0
+                                              ? `${activeNodeOpenQueries.length} active quer${activeNodeOpenQueries.length > 1 ? "ies require" : "y requires"} attention.`
+                                              : queryProcessingStage === "CLEARED"
+                                                ? "All recorded queries are cleared for this filing stage."
+                                                : queryProcessingStage === "NO_QUERY"
+                                                  ? "No query has been raised for this filing stage."
+                                                  : "Track query intake and response status for this filing stage."}
+                                          </p>
                                         </div>
-                                        <div className="flex shrink-0 items-center justify-end gap-3 self-start lg:ml-auto">
+                                        <div className="flex shrink-0 items-center gap-2 self-start">
                                           {queryProcessingWarning ? (
                                             <WarningNoteToggle
                                               title={queryProcessingWarning.title}
@@ -5308,40 +7140,32 @@
                                               }
                                             />
                                           ) : null}
-                                          <label className="inline-flex min-w-[220px] items-center justify-between gap-4 rounded-xl border border-[#fb923c]/20 bg-[#fb923c]/8 px-4 py-2 text-sm text-on-surface">
-                                            <span className="ds-label text-[#c76628]">{queryProcessingToggleEnabled ? "Queries On" : "Queries Off"}</span>
-                                            <span className="relative inline-flex h-6 w-11 shrink-0 items-center">
-                                              <input
-                                                type="checkbox"
-                                                checked={queryProcessingToggleEnabled}
-                                                disabled={isSavingQueryProcessingDecision || activeNodeOpenQueries.length > 0}
-                                                onChange={() =>
-                                                  void handlePersistFilingToggleState(
-                                                    "query_processing",
-                                                    !queryProcessingToggleEnabled,
-                                                    !queryProcessingToggleEnabled
-                                                      ? {
-                                                          ...(queryProcessingState ?? {}),
-                                                          stage:
-                                                            typeof queryProcessingState?.stage === "string" && queryProcessingState.stage.trim()
-                                                              ? queryProcessingState.stage
-                                                              : "AWAITING_QUERY_DECISION",
-                                                        }
-                                                      : {
-                                                          ...(queryProcessingState ?? {}),
-                                                          stage: undefined,
-                                                        },
-                                                    !queryProcessingToggleEnabled
-                                                      ? "Query processing enabled for this workflow stage."
-                                                      : "Query processing disabled for this workflow stage.",
-                                                  )
-                                                }
-                                                className="peer sr-only"
+                                          <div className="inline-flex items-center gap-2 rounded-xl border border-[#fb923c]/20 bg-[#fb923c]/8 px-3 py-1.5 text-sm text-on-surface">
+                                            <span className="ds-label text-[#c76628] whitespace-nowrap">{queryProcessingToggleEnabled ? "Queries On" : "Queries Off"}</span>
+                                            <button
+                                              type="button"
+                                              role="switch"
+                                              aria-checked={queryProcessingToggleEnabled}
+                                              aria-label={queryProcessingToggleEnabled ? "Turn query processing off" : "Turn query processing on"}
+                                              disabled={isSavingQueryProcessingDecision || (queryProcessingToggleEnabled && activeNodeQueries.length > 0)}
+                                              onClick={() => void handleQueryProcessingToggleChange()}
+                                              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-all ${
+                                                queryProcessingToggleEnabled
+                                                  ? "border-[#fb923c]/45 bg-[#fb923c]/20"
+                                                  : "border-[#fb923c]/25 bg-surface-container-low"
+                                              } ${
+                                                isSavingQueryProcessingDecision || (queryProcessingToggleEnabled && activeNodeQueries.length > 0)
+                                                  ? "cursor-not-allowed opacity-60"
+                                                  : "hover:shadow-[0_8px_18px_-14px_rgba(251,146,60,0.7)]"
+                                              }`}
+                                            >
+                                              <span
+                                                className={`pointer-events-none absolute top-0.5 h-5 w-5 rounded-full border border-[#fb923c]/20 bg-surface shadow-sm transition-transform ${
+                                                  queryProcessingToggleEnabled ? "translate-x-5" : "translate-x-0.5"
+                                                }`}
                                               />
-                                              <span className="absolute inset-0 rounded-full border border-[#fb923c]/25 bg-surface-container-low transition-colors peer-checked:border-[#fb923c]/45 peer-checked:bg-[#fb923c]/20 peer-disabled:cursor-not-allowed peer-disabled:opacity-60" />
-                                              <span className="pointer-events-none absolute left-0.5 top-0.5 h-5 w-5 rounded-full border border-[#fb923c]/20 bg-surface shadow-sm transition-transform peer-checked:translate-x-5 peer-disabled:opacity-60" />
-                                            </span>
-                                          </label>
+                                            </button>
+                                          </div>
                                         </div>
                                       </div>
 
@@ -5662,103 +7486,152 @@
                                               </details>
                                             );
                                           })}
+                                          </div>
+                                        </div>
+                                      </Modal>
+                                    ) : null}
+
+                                    <Modal
+                                      open={queryToggleOffModalOpen}
+                                      title="Turn Off Query Processing"
+                                      description="Add remarks before switching query processing off for this filing stage."
+                                      onClose={handleCloseQueryToggleOffModal}
+                                      className="max-w-lg"
+                                    >
+                                      <div className="space-y-5">
+                                        <div className="rounded-[24px] border border-[#fb923c]/18 bg-[linear-gradient(135deg,rgba(251,146,60,0.09),rgba(255,255,255,0.02))] px-4 py-3 shadow-[0_18px_36px_-30px_rgba(251,146,60,0.35)]">
+                                          <div className="flex items-start gap-3">
+                                            <span className="mt-0.5 h-10 w-1.5 rounded-full bg-[#fb923c]" aria-hidden="true" />
+                                            <div className="space-y-1">
+                                              <p className="text-sm font-medium text-on-surface">
+                                                Query processing can be turned off only when no query has been posted for this stage.
+                                              </p>
+                                              <p className="text-xs text-on-surface-variant">
+                                                Add a short operational reason so the team understands why the query path was not needed.
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        <div className="rounded-[24px] border border-outline-variant/18 bg-surface-container-low/35 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
+                                          <div className="space-y-2">
+                                            <label className="ds-label block text-on-surface-variant">
+                                              Remarks for turning off query processing *
+                                            </label>
+                                            <textarea
+                                              rows={4}
+                                              value={queryToggleOffRemarks}
+                                              onChange={(e) => setQueryToggleOffRemarks(e.target.value)}
+                                              placeholder="Explain why query processing is being turned off..."
+                                              className="w-full rounded-[18px] border border-outline-variant/20 bg-surface px-4 py-3 text-sm shadow-[0_14px_28px_-24px_rgba(15,23,42,0.2)]"
+                                              disabled={loading === "filing-toggle-query_processing"}
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="flex justify-end gap-2 border-t border-outline-variant/14 pt-1">
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={handleCloseQueryToggleOffModal}
+                                            disabled={loading === "filing-toggle-query_processing"}
+                                            className="rounded-2xl px-5"
+                                          >
+                                            Cancel
+                                          </Button>
+                                          <Button
+                                            type="button"
+                                            onClick={() => void handleConfirmQueryProcessingToggleOff()}
+                                            disabled={loading === "filing-toggle-query_processing"}
+                                            className="rounded-2xl px-5"
+                                          >
+                                            {loading === "filing-toggle-query_processing" ? "Saving..." : "Turn Off"}
+                                          </Button>
                                         </div>
                                       </div>
-                                          </Modal>
-                                        ) : null}
-                                    <div className="card-top-accent overflow-hidden rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
-                                      <div className="space-y-4 px-4 py-4">
-                                        <SectionHeading
-                                          title="Complete Step"
-                                          description="Choose the next action for this filing stage and record completion notes before moving forward."
-                                        />
-                                        <div className="rounded-xl border border-outline-variant/60 bg-surface-container-low px-4 py-3">
-                                          <span className="ds-label block text-on-surface-variant">Current Stage</span>
-                                          <p className="mt-1 text-sm font-medium text-on-surface">{activeNodeDisplayName}</p>
-                                          {(activeNodeRun.node.sectionName || activeNodeRun.node.branchName) && (
-                                            <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
-                                              {[activeNodeRun.node.sectionName, activeNodeRun.node.branchName].filter(Boolean).join(" / ")}
-                                            </p>
-                                          )}
-                                        </div>
-                                        <div className="space-y-1">
-                                          <label className="ds-label text-on-surface block">
-                                            Completion Comments / Remarks {activeNodeRun.node.commentsRequired && <span className="text-red-500 font-bold">*</span>}
-                                          </label>
+                                    </Modal>
+                                    <div className="xl:col-span-2">
+                                      <div className="overflow-hidden rounded-[24px] border border-outline-variant/40 bg-surface shadow-[0_22px_48px_-34px_rgba(15,23,42,0.22)]">
+                                        <div className="space-y-6 px-5 py-5">
+                                          <div className="flex items-start gap-4">
+                                            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-[linear-gradient(135deg,rgba(124,58,237,0.16),rgba(196,181,253,0.18))] text-[#5b34ea] shadow-[0_18px_32px_-22px_rgba(91,52,234,0.45)]">
+                                              <Mail size={24} />
+                                            </span>
+                                            <div className="space-y-1">
+                                              <h3 className="text-[1.1rem] font-semibold text-on-surface">
+                                                Completion Comments / Remarks {activeNodeRun.node.commentsRequired ? <span className="text-red-500 font-bold">*</span> : null}
+                                              </h3>
+                                              <p className="text-sm text-on-surface-variant">
+                                                Provide checklist execution remarks or record the final outcome.
+                                              </p>
+                                            </div>
+                                          </div>
+
                                           <textarea
-                                            rows={3}
+                                            rows={4}
                                             value={nodeRemarks}
                                             onChange={(e) => setNodeRemarks(e.target.value)}
-                                            placeholder="Provide checklist execution remarks or check outcome..."
-                                            className="w-full text-sm font-sans"
+                                            placeholder="Enter comments, observations, or checklist outcome..."
+                                            className="min-h-[112px] w-full rounded-[16px] border border-outline-variant/45 bg-surface px-5 py-4 text-sm font-sans shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]"
                                             disabled={loading !== null || isActiveStageBlocked}
                                             required={activeNodeRun.node.commentsRequired}
                                           />
-                                        </div>
-                                        <div className="space-y-2">
-                                          {outgoingEdges.length > 0 ? (
-                                            activeNodeRun.node.nodeType === "DECISION" ? (
-                                              null
-                                            ) : (
+
+                                          <div className="border-t border-outline-variant/20 pt-6">
+                                            <div className="flex items-start gap-4">
+                                              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-[linear-gradient(135deg,rgba(124,58,237,0.16),rgba(196,181,253,0.18))] text-[#5b34ea]">
+                                                <Boxes size={20} />
+                                              </span>
                                               <div className="space-y-1">
-                                                <label className="ds-label text-on-surface block">Select Next Workflow Stage *</label>
-                                                <select
-                                                  value={selectedNextNodeKey}
-                                                  onChange={(e) => setSelectedNextNodeKey(e.target.value)}
-                                                  required
-                                                  disabled={loading !== null || isActiveStageBlocked}
-                                                  className="w-full text-sm"
-                                                >
-                                                  <option value="">-- Choose Next Stage --</option>
-                                                  {outgoingEdges.map((edge: any) => {
-                                                    const targetNode = targetNodesMap.get(edge.targetKey);
-                                                    return (
-                                                      <option key={edge.targetKey} value={edge.targetKey}>
-                                                        {[targetNode?.sectionName, targetNode?.branchName, targetNode?.name || edge.targetKey]
-                                                          .filter(Boolean)
-                                                          .join(" / ")} {edge.label ? `(${edge.label})` : ""}
-                                                      </option>
-                                                    );
-                                                  })}
-                                                </select>
+                                                <h3 className="text-[1.05rem] font-semibold text-on-surface">Workflow Completion</h3>
+                                                <p className="text-sm text-on-surface-variant">
+                                                  Confirm this filing step to unlock the next eligible workflow stage.
+                                                </p>
                                               </div>
-                                            )
-                                          ) : (
-                                            <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
-                                              Completing this node will finalize the Filing workflow and transition the job stage to <strong>FILED</strong>.
                                             </div>
-                                          )}
-                                        </div>
-                                        <div className="flex flex-wrap justify-end gap-2 pt-1">
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              disabled={loading !== null || isActiveStageBlocked}
-                                              onClick={handleSaveFilingDraft}
-                                              className="gap-2"
-                                            >
-                                            <Database size={14} />
-                                            Save Draft
-                                          </Button>
-                                          {hasPreviousFilingStage ? (
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              disabled={loading !== null}
-                                              onClick={() => setGoBackOpen(true)}
-                                              className="gap-2 text-xs"
-                                            >
-                                              <Undo2 size={14} />
-                                              Jump Back to Earlier Stage
-                                            </Button>
-                                          ) : null}
-                                          <Button
-                                            type="submit"
-                                            disabled={loading !== null || isActiveStageBlocked}
-                                            className="w-full sm:w-auto sm:min-w-[280px]"
-                                          >
-                                            {loading === "filing-complete" ? "Completing Stage..." : outgoingEdges.length > 0 ? "Complete & Move to Next Stage" : "Complete & File Customs Bill"}
-                                          </Button>
+
+                                            <div className="mt-5">
+                                              <SlideToComplete
+                                                key={activeNodeRun.id}
+                                                disabled={loading !== null || isActiveStageBlocked}
+                                                text={outgoingEdges.length > 0 ? "Slide to complete this step" : "Slide to file customs bill"}
+                                                helperText="Slide all the way to the right"
+                                                accessibleName={`Slide to complete ${activeNodeRun.node.name}`}
+                                                onComplete={completeActiveFilingNode}
+                                              />
+                                            </div>
+
+                                            {outgoingEdges.length === 0 ? (
+                                              <div className="mt-5 rounded-[18px] border border-outline-variant/35 bg-surface-container-low/35 p-4 text-sm text-on-surface-variant">
+                                                Completing this node will finalize the Filing workflow and transition the job stage to <strong>FILED</strong>.
+                                              </div>
+                                            ) : null}
+
+                                            <div className="flex flex-wrap gap-3 border-t border-outline-variant/18 pt-2">
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                disabled={loading !== null || isActiveStageBlocked}
+                                                onClick={handleSaveFilingDraft}
+                                                className="gap-2 rounded-[16px] px-5"
+                                              >
+                                                <Database size={16} />
+                                                Save Draft
+                                              </Button>
+                                              {hasPreviousFilingStage ? (
+                                                <Button
+                                                  type="button"
+                                                  variant="outline"
+                                                  disabled={loading !== null}
+                                                  onClick={() => setGoBackOpen(true)}
+                                                  className="gap-2 rounded-[16px] border-[#00cec4]/40 bg-[#00cec4]/4 px-5 text-[#00a9b2]"
+                                                >
+                                                  <Undo2 size={16} />
+                                                  Jump Back to Earlier Stage
+                                                </Button>
+                                              ) : null}
+                                            </div>
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
@@ -5851,6 +7724,18 @@
 
                             </form>
 
+                            {showFilingCompletionBanner && completionBannerCompletedRun ? (
+                              <FilingCompletionBanner
+                                completedNodeRun={completionBannerCompletedRun}
+                                nextNodeRun={completionBannerNextNodeRun}
+                                nextNodeSequence={completionBannerNextNodeSequence}
+                                nextNodeSubtitle={completionBannerNextNodeSubtitle}
+                                upcomingNodeLabel={completionBannerUpcomingNodeLabel}
+                                upcomingNodeSubtitle={completionBannerUpcomingNodeSubtitle}
+                                workflowCompleted={filingCompletionBanner?.workflowCompleted === true}
+                              />
+                            ) : null}
+
                             <Modal
                               open={goBackOpen}
                               title="Jump Back To Earlier Stage"
@@ -5938,8 +7823,206 @@
                         )}
                     </div>
                   )}
+                  </div>
+                )}
+              </div>
+            </MilestoneCard>
+                ) : null}
+
+                {/* 6. FILED */}
+                {showFiledStage ? (
+                <MilestoneCard
+                  stageKey="FILED"
+                  isExpanded={expandedStageKey === "FILED"}
+                  isSpotlit={stageFocusKey === "FILED"}
+                  onToggle={handleMilestoneToggle}
+                  title="Filed / Complete"
+                  description="The customs clearance filing process is completed."
+                  isCompleted={activeStepIndex >= 5}
+                  isActive={activeStepIndex === 5}
+                  isLocked={activeStepIndex < 5}
+                  percentage={filedPercentage}
+                  validationState={filedValidationState}
+                  statusLabel={activeStepIndex >= 5 ? "Completed" : "Locked"}
+                  assignedUser={job.primaryOwner?.name || "Operations Team"}
+                  dueDate={job.estimatedClosureDate ? new Date(job.estimatedClosureDate).toLocaleDateString("en-IN") : null}
+                  completedAt={activeStepIndex >= 5 ? (job.updatedAt ? new Date(job.updatedAt).toLocaleString("en-IN") : null) : null}
+                  summary={null}
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-green-600/10 text-green-600">
+                        <Check size={20} />
+                      </span>
+                      <div className="space-y-1">
+                        <h4 className="ds-h3 text-on-surface">Customs Filing Complete</h4>
+                        <Badge variant="success">Filed</Badge>
+                      </div>
+                    </div>
+                    <p className="max-w-xl text-sm text-[#00cec4] font-medium font-sans">
+                      All checklist preparation checks have been validated and the customs declaration has been filed.
+                    </p>
+                  </div>
+                </MilestoneCard>
+                ) : null}
+              </div>
+            ) : (
+              <div className="min-h-[320px] rounded-xl border border-outline-variant bg-surface p-6 shadow-sm">
+
+          {activeTab === "overview" && (
+            <div className="space-y-6">
+              <div className="grid gap-5 xl:grid-cols-12">
+                <section className="rounded-[24px] border border-outline-variant/35 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] xl:col-span-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="ds-icon-badge">
+                        <Package size={16} />
+                      </span>
+                      <div>
+                        <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-on-surface">Job Summary</h3>
+                      </div>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => navigateToWorkspaceTab("additionalData")}>
+                      View Details
+                    </Button>
+                  </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {overviewSummaryItems.map((item) => (
+                      <div key={item.label} className="flex items-start gap-3 rounded-[18px] border border-outline-variant/25 bg-surface-container-low/25 px-3 py-3">
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#00cec4]/10 text-[#00cec4]">
+                          {item.icon}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="ds-label">{item.label}</p>
+                          <p className="mt-1 text-sm font-medium text-on-surface">{item.value}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="rounded-[24px] border border-outline-variant/35 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] xl:col-span-4">
+                  <div className="flex items-center gap-3">
+                    <span className="ds-icon-badge">
+                      <CalendarDays size={16} />
+                    </span>
+                    <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-on-surface">Important Dates</h3>
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    {overviewDateItems.map((item) => (
+                      <div key={item.label} className="flex items-center justify-between gap-3 rounded-[18px] border border-outline-variant/25 bg-surface-container-low/25 px-3 py-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#00cec4]/10 text-[#00cec4]">
+                            {item.icon}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="ds-label">{item.label}</p>
+                            <p className="mt-1 text-sm font-medium text-on-surface">{item.value}</p>
+                          </div>
+                        </div>
+                        <span
+                          className={cn(
+                            "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold",
+                            item.badge.tone === "destructive"
+                              ? "bg-red-500/10 text-red-500"
+                              : item.badge.tone === "warning"
+                                ? "bg-[#fb923c]/12 text-[#fb923c]"
+                                : item.badge.tone === "success"
+                                  ? "bg-green-500/10 text-green-600"
+                                  : "bg-surface-container text-on-surface-variant",
+                          )}
+                        >
+                          {item.badge.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="rounded-[24px] border border-outline-variant/35 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] xl:col-span-4">
+                  <div className="flex items-center gap-3">
+                    <span className="ds-icon-badge">
+                      <Zap size={16} />
+                    </span>
+                    <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-on-surface">Quick Actions</h3>
+                  </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {workspaceQuickActions.map((action) => (
+                      <button
+                        key={action.label}
+                        type="button"
+                        onClick={action.onClick}
+                        className="flex min-h-[92px] items-start gap-3 rounded-[18px] border border-outline-variant/25 bg-surface px-3 py-3 text-left shadow-[0_12px_28px_-24px_rgba(15,23,42,0.18)] transition hover:border-[#00cec4]/35 hover:bg-surface-container-low/30"
+                      >
+                        <span
+                          className={cn(
+                            "flex size-9 shrink-0 items-center justify-center rounded-xl",
+                            action.accent === "orange"
+                              ? "bg-[#fb923c]/12 text-[#fb923c]"
+                              : action.accent === "violet"
+                                ? "bg-[#6366f1]/10 text-[#4f46e5]"
+                                : "bg-[#00cec4]/10 text-[#00cec4]",
+                          )}
+                        >
+                          {action.icon}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-on-surface">{action.label}</p>
+                          <p className="mt-1 text-xs text-on-surface-variant">{action.note}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              </div>
+
+              <section className="rounded-[24px] border border-outline-variant/35 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)]">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="ds-icon-badge">
+                      <History size={16} />
+                    </span>
+                    <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-on-surface">Recent Activity</h3>
+                  </div>
+                  <Button type="button" variant="outline" onClick={() => navigateToWorkspaceTab("audit")}>
+                    View All Activity
+                  </Button>
                 </div>
-              )}
+                <div className="mt-4 overflow-hidden rounded-[20px] border border-outline-variant/25">
+                  {overviewRecentLogs.length === 0 ? (
+                    <div className="px-4 py-6 text-sm text-on-surface-variant">
+                      No recent job activity has been recorded yet.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-outline-variant/20">
+                      {overviewRecentLogs.map((log: any) => (
+                        <div key={log.id} className="grid gap-3 px-4 py-3 md:grid-cols-[minmax(0,240px)_minmax(0,1fr)_190px_160px] md:items-center">
+                          <div className="flex items-center gap-3">
+                            <span className={cn(
+                              "flex size-8 shrink-0 items-center justify-center rounded-full",
+                              String(log.event || "").includes("QUERY") || String(log.event || "").includes("query")
+                                ? "bg-[#fb923c]/12 text-[#fb923c]"
+                                : "bg-[#00cec4]/10 text-[#00cec4]",
+                            )}>
+                              {String(log.event || "").includes("QUERY") || String(log.event || "").includes("query") ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
+                            </span>
+                            <p className="text-sm font-medium text-on-surface">{String(log.event || "Activity").replace(/_/g, " ")}</p>
+                          </div>
+                          <p className="text-sm text-on-surface-variant">{log.remarks || "Operational update recorded for this job."}</p>
+                          <p className="text-sm text-on-surface-variant ds-numeric">
+                            {log.timestamp ? new Date(log.timestamp).toLocaleString("en-IN") : "Not available"}
+                          </p>
+                          <div className="md:text-right">
+                            <span className="inline-flex rounded-full bg-surface-container-low px-2.5 py-1 text-xs font-medium text-on-surface-variant">
+                              {log.actor?.name || "System"}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </section>
             </div>
           )}
 
@@ -5962,7 +8045,7 @@
                     <span className="ds-label block text-on-surface">Billing expected terms</span>
 
                     <div className="space-y-1">
-                      <label className="ds-label block">Expected Advance Amount (₹) *</label>
+                      <label className="ds-label block">Expected Advance Amount (â‚¹) *</label>
                       <input
                         type="number"
                         value={expectedAdvance}
@@ -6042,7 +8125,7 @@
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                          <label className="ds-label block">Amount Paid (₹) *</label>
+                          <label className="ds-label block">Amount Paid (â‚¹) *</label>
                           <input
                             type="number"
                             required
@@ -6115,9 +8198,9 @@
                         {job.customerAdvance.receipts.map((r: any) => (
                           <div key={r.id} className="p-3 bg-surface-container-low border border-outline-variant/40 rounded-2xl flex items-center justify-between text-xs">
                             <div>
-                              <span className="font-bold text-[#00cec4] block">₹{Number(r.amount).toLocaleString("en-IN")}</span>
+                              <span className="font-bold text-[#00cec4] block">â‚¹{Number(r.amount).toLocaleString("en-IN")}</span>
                               <span className="text-[10px] text-on-surface-variant block uppercase mt-0.5">
-                                {r.paymentMethod} • Ref: {r.referenceNumber || "—"}
+                                {r.paymentMethod} â€¢ Ref: {r.referenceNumber || "â€”"}
                               </span>
                             </div>
                             <span className="text-[10px] text-on-surface-variant font-mono">
@@ -6225,7 +8308,7 @@
 
                           {/* Amount */}
                           <div className="space-y-1 md:col-span-1">
-                            <label className="ds-label">Amount (₹) *</label>
+                            <label className="ds-label">Amount (â‚¹) *</label>
                             <input
                               type="number"
                               required
@@ -6298,10 +8381,10 @@
                           <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-outline-variant/20 pb-3">
                             <div>
                               <span className="text-xs text-on-surface-variant block">
-                                Ref: {req.id} • Requested by: <strong>{req.requestedBy?.name}</strong>
+                                Ref: {req.id} â€¢ Requested by: <strong>{req.requestedBy?.name}</strong>
                               </span>
                               <span className="text-lg text-[#00cec4] block mt-1 ds-numeric">
-                                ₹{sum.toLocaleString("en-IN")}{" "}
+                                â‚¹{sum.toLocaleString("en-IN")}{" "}
                                 {req.isUrgent && (
                                   <span className="text-[10px] px-2 py-0.5 rounded bg-red-100 text-red-700 border border-red-200 ml-2">
                                     URGENT
@@ -6346,7 +8429,7 @@
                                 <span className="text-on-surface">
                                   <strong className="text-on-surface-variant uppercase">{l.category}</strong>: {l.purpose}
                                 </span>
-                                <span className="font-mono ds-numeric text-on-surface-variant">₹{Number(l.amount).toLocaleString("en-IN")}</span>
+                                <span className="font-mono ds-numeric text-on-surface-variant">â‚¹{Number(l.amount).toLocaleString("en-IN")}</span>
                               </div>
                             ))}
                           </div>
@@ -6411,7 +8494,7 @@
                               <div>
                                 <span className="font-semibold text-green-700 block">Payment Disbursed via {p.paymentMethod}</span>
                                 <span className="text-[10px] text-on-surface-variant">
-                                  Txn Ref: {p.transactionReference} • Paid by {p.paidBy?.name}
+                                  Txn Ref: {p.transactionReference} â€¢ Paid by {p.paidBy?.name}
                                 </span>
                               </div>
                               <span className="text-[10px] text-on-surface-variant font-mono font-bold">
@@ -6484,7 +8567,7 @@
                               <span className="ds-label text-[#00cec4] block">Post Payment Disbursement Confirmation</span>
                               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                                 <div>
-                                  <label className="ds-label block">Amount Disbursed (₹) *</label>
+                                  <label className="ds-label block">Amount Disbursed (â‚¹) *</label>
                                   <input
                                     type="number"
                                     required
@@ -6661,7 +8744,8 @@
               )}
             </div>
           )}
-      </div>
+              </div>
+            )}
 
       <Modal
         open={executionTimelineModalOpen}
@@ -6698,7 +8782,7 @@
                       </div>
                       <span className="text-[11px] text-on-surface-variant">
                         Started {new Date(run.startedAt).toLocaleString("en-IN")}
-                        {run.completedAt ? ` • Finished ${new Date(run.completedAt).toLocaleString("en-IN")}` : ""}
+                        {run.completedAt ? ` â€¢ Finished ${new Date(run.completedAt).toLocaleString("en-IN")}` : ""}
                       </span>
                     </div>
 
@@ -6978,7 +9062,11 @@
           </Modal>
         )}
 
-        {isCustomDocumentModalOpen && (
+        {/* â”€â”€ Closing Two-Column Wrapper Divs â”€â”€ */}
+        </div>
+      </div>
+
+      {isCustomDocumentModalOpen && (
           <Modal
             open={true}
             onClose={() => {
@@ -7054,7 +9142,7 @@
           </Modal>
         )}
 
-        {viewingVersion && (
+        {viewingVersion && viewingVersion.type === "checklist" && (
           <Modal
             open={true}
             onClose={() => setViewingVersion(null)}
@@ -7245,3 +9333,7 @@
       </main>
     );
   }
+
+
+
+

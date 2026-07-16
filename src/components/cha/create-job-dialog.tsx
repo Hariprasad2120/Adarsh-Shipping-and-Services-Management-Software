@@ -686,10 +686,12 @@ export function CreateJobDialog({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-        <div className="bg-[var(--color-surface)] border border-outline-variant/50 w-full max-w-3xl rounded-2xl shadow-xl overflow-hidden my-8">
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="flex min-h-[calc(100vh-2rem)] items-start justify-center py-3 sm:items-center">
+        <div className="flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-outline-variant/50 bg-[var(--color-surface)] shadow-xl max-h-[calc(100vh-2rem)]">
           {/* Modal Header */}
-          <div className="flex items-center justify-between bg-surface-container-low px-6 py-4.5 border-b border-outline-variant/30">
+          <div className="shrink-0 border-b border-outline-variant/30 bg-surface-container-low px-6 py-4.5">
+            <div className="flex items-center justify-between gap-3">
             <h2 className="ds-h2 text-on-surface flex items-center gap-2 m-0 border-0 pb-0">
               <FilePlus className="text-[#00cec4]" size={20} /> Initialize Customs Clearance Job
             </h2>
@@ -705,11 +707,12 @@ export function CreateJobDialog({
               </button>
             </div>
           </div>
+          </div>
 
           {/* Modal Form */}
           <form
             onSubmit={handleCreateJob}
-            className="p-7 space-y-6 max-h-[75vh] overflow-y-auto overscroll-contain"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-7 space-y-6"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Branch Selection */}
@@ -1292,6 +1295,7 @@ export function CreateJobDialog({
               </Button>
             </div>
           </form>
+        </div>
         </div>
       </div>
 
