@@ -233,7 +233,7 @@ export function RequirementDocumentCard({
   return (
     <div
       className={cn(
-        "flex h-full flex-col rounded-[24px] border border-outline-variant/50 bg-surface p-6 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.18)] transition-all",
+        "flex h-full min-h-[260px] flex-col rounded-[24px] border border-outline-variant/50 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.18)] transition-all",
         selected ? "ring-2 ring-[#00cec4]/25 shadow-[0_22px_44px_-32px_rgba(0,206,196,0.28)]" : "hover:-translate-y-px",
       )}
       onClick={() => onSelect?.(requirement.id)}
@@ -255,18 +255,18 @@ export function RequirementDocumentCard({
         </button>
       </div>
 
-      <div className="mt-5 flex-1">
-        <div className="rounded-2xl border border-[#fb923c]/20 bg-[#fb923c]/8 px-4 py-4">
+      <div className="mt-4 flex-1">
+        <div className="rounded-2xl border border-[#fb923c]/20 bg-[#fb923c]/8 px-4 py-3.5">
           <div className="flex items-start gap-3">
             <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#fb923c]/12 text-[#fb923c]">
               <Circle size={10} fill="currentColor" />
             </span>
             <div className="min-w-0">
-              <p className="text-base font-semibold text-[#fb923c]">{isNa ? "Marked as N/A" : isExempted ? "Exemption Declared" : "Awaiting Upload"}</p>
+              <p className="text-sm font-semibold text-[#fb923c]">{isNa ? "Marked as N/A" : isExempted ? "Exemption Declared" : "Awaiting Upload"}</p>
               {requirement.requirementItem?.description ? (
-                <p className="mt-1 text-sm text-on-surface-variant">{requirement.requirementItem.description}</p>
+                <p className="mt-1 text-xs text-on-surface-variant">{requirement.requirementItem.description}</p>
               ) : null}
-              <p className="mt-1 text-sm text-on-surface-variant">
+              <p className="mt-1 text-xs text-on-surface-variant">
                 {isExempted
                   ? `${metadataLabel}: ${requirement.exception?.user?.name || "Unknown"} • ${formatDateTime(requirement.exception?.createdAt)}`
                   : "This requirement is still waiting for an uploaded file or an approved exception."}
@@ -276,7 +276,7 @@ export function RequirementDocumentCard({
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/20 pt-4">
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/20 pt-3.5">
         <div className="flex flex-wrap gap-2">
           {isExempted ? (
             <Button
@@ -309,7 +309,7 @@ export function RequirementDocumentCard({
             </>
           )}
         </div>
-        <Button type="button" size="sm" className="min-w-[220px] gap-2" disabled={loadingKey !== null} onClick={() => onUpload(requirement.id)}>
+        <Button type="button" size="sm" className="min-w-[160px] gap-2" disabled={loadingKey !== null} onClick={() => onUpload(requirement.id)}>
           <Upload size={14} />
           {isExempted ? "Upload File Anyway" : "Upload File"}
         </Button>
@@ -396,19 +396,19 @@ export function UploadedWorkflowDocumentCard({
   return (
     <div
       className={cn(
-        "rounded-[28px] border border-[#00cec4]/35 bg-surface p-5 shadow-[0_22px_48px_-36px_rgba(15,23,42,0.18)] transition-all",
+        "flex h-full min-h-[260px] flex-col rounded-[24px] border border-[#00cec4]/35 bg-surface p-5 shadow-[0_22px_48px_-36px_rgba(15,23,42,0.18)] transition-all",
         selected ? "ring-2 ring-[#00cec4]/25 shadow-[0_24px_52px_-34px_rgba(0,206,196,0.24)]" : "hover:-translate-y-px",
       )}
       onClick={() => onSelect?.(requirement.id)}
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex h-full flex-col gap-3.5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <span className="ds-icon-badge">
               <FileText size={18} />
             </span>
             <div>
-              <h3 className="text-[1.1rem] font-semibold text-on-surface">{requirement.name}</h3>
+              <h3 className="text-[1.05rem] font-semibold text-on-surface">{requirement.name}</h3>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -423,14 +423,14 @@ export function UploadedWorkflowDocumentCard({
           </div>
         </div>
 
-        <div className="rounded-[24px] border border-outline-variant/45 bg-surface px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.32)]">
-          <div className="flex flex-col gap-4 border-b border-outline-variant/20 pb-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="rounded-[20px] border border-outline-variant/45 bg-surface px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.32)]">
+          <div className="flex flex-col gap-3 border-b border-outline-variant/20 pb-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 items-center gap-4">
               <span className="ds-icon-badge shrink-0">
                 <FileText size={18} />
               </span>
               <div className="min-w-0">
-                <button type="button" className="ds-plain flex min-w-0 items-center gap-2 text-left text-[1.05rem] font-semibold text-on-surface" onClick={() => onPreview(requirement.id)}>
+                <button type="button" className="ds-plain flex min-w-0 items-center gap-2 text-left text-sm font-semibold text-on-surface" onClick={() => onPreview(requirement.id)}>
                   <span className="truncate">{version.fileName}</span>
                   <ArrowUpRight size={16} className="shrink-0 text-[#00cec4]" />
                 </button>
@@ -454,7 +454,7 @@ export function UploadedWorkflowDocumentCard({
             </div>
           </div>
 
-          <div className="mt-4 grid gap-4 border border-outline-variant/20 bg-surface-container-low/25 px-2 py-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-3 grid gap-2 border border-outline-variant/20 bg-surface-container-low/25 px-2 py-2 md:grid-cols-2 xl:grid-cols-4">
             <DocumentMetaItem label="Source" value={version.source === "FILING_WORKFLOW" ? "Filing Workflow" : "Documents Page"} />
             <DocumentMetaItem label="Uploaded By" value={version.uploadedBy?.name || "Unknown"} />
             <DocumentMetaItem label="Uploaded On" value={<span className="ds-numeric">{formatDateOnly(version.uploadedAt)}</span>} />
@@ -462,7 +462,7 @@ export function UploadedWorkflowDocumentCard({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="mt-auto flex flex-wrap items-center gap-3 border-t border-outline-variant/20 pt-3.5">
           <Button type="button" variant="outline" className="gap-2" onClick={() => onPreview(requirement.id)}>
             <Eye size={16} />
             View File
@@ -480,7 +480,7 @@ export function UploadedWorkflowDocumentCard({
           >
             Mark as N/A
           </Button>
-          <Button type="button" className="ml-auto gap-2" onClick={() => onUpload(requirement.id)} disabled={loadingKey !== null}>
+          <Button type="button" className="ml-auto min-w-[160px] gap-2" onClick={() => onUpload(requirement.id)} disabled={loadingKey !== null}>
             <Upload size={16} />
             Re-upload
           </Button>

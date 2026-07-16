@@ -1,7 +1,7 @@
 "use client";
 
 import { DateInput } from "@/components/ui/date-input";
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FileText, Upload, CheckCircle2, AlertTriangle, FolderOpen, ArrowRight, ShieldCheck, AlertCircle, Plus, Trash2, Check, Database, ExternalLink, Undo2, Mail, History, ChevronDown, ChevronRight, Pencil, Lock, BarChart2, CreditCard, ClipboardList, HelpCircle, Clock3, LoaderCircle, LockKeyhole, Search, Maximize2, Copy, UserRound, CalendarDays, Building2, Package, MapPin, Plane, Ship, Bookmark, RefreshCcw, Zap, Boxes, Moon, MoreVertical, X, } from "lucide-react";
@@ -61,6 +61,56 @@ const STAGES = [
   { key: "FILING", label: "Filing Stage" },
   { key: "FILED", label: "Filed / Complete" },
 ];
+
+const CHA_OVERVIEW_BANNER_ART = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 420" fill="none">
+  <rect width="1600" height="420" fill="#EAF4FF"/>
+  <path d="M0 112C148 76 280 70 412 88C544 106 690 148 862 136C1034 124 1224 52 1600 76V420H0V112Z" fill="#D8ECFF"/>
+  <path d="M0 150C162 126 314 132 490 158C666 184 806 212 968 194C1130 176 1298 108 1600 118V420H0V150Z" fill="#C9E4FF"/>
+  <path d="M1210 116H1248V258H1210V116Z" fill="#8CB9E8"/>
+  <path d="M1272 82H1310V258H1272V82Z" fill="#79AADF"/>
+  <path d="M1370 108H1408V258H1370V108Z" fill="#8CB9E8"/>
+  <path d="M1248 116L1338 168H1158L1248 116Z" fill="#7CAFE3"/>
+  <path d="M1310 82L1422 152H1198L1310 82Z" fill="#72A6DD"/>
+  <path d="M1408 108L1512 170H1304L1408 108Z" fill="#83B4E5"/>
+  <path d="M934 116L1088 104L1222 138L1314 160L1268 296L866 296L894 178L934 116Z" fill="#103F73"/>
+  <path d="M922 178H1288L1262 314H840L856 274L922 178Z" fill="#0E315B"/>
+  <rect x="962" y="96" width="30" height="80" rx="4" fill="#E4EEF8"/>
+  <rect x="1044" y="76" width="22" height="98" rx="4" fill="#E4EEF8"/>
+  <path d="M1054 70C1064 58 1072 42 1074 24C1078 46 1088 60 1102 72L1054 70Z" fill="#E4EEF8"/>
+  <rect x="928" y="148" width="52" height="30" fill="#BA473A"/>
+  <rect x="980" y="148" width="52" height="30" fill="#D17D52"/>
+  <rect x="1032" y="148" width="52" height="30" fill="#4E7FB7"/>
+  <rect x="1084" y="148" width="52" height="30" fill="#CC6547"/>
+  <rect x="1136" y="148" width="52" height="30" fill="#4E7FB7"/>
+  <rect x="926" y="118" width="58" height="30" fill="#4E7FB7"/>
+  <rect x="984" y="118" width="58" height="30" fill="#D17D52"/>
+  <rect x="1042" y="118" width="58" height="30" fill="#4E7FB7"/>
+  <rect x="1100" y="118" width="58" height="30" fill="#CC6547"/>
+  <rect x="1158" y="118" width="58" height="30" fill="#4E7FB7"/>
+  <path d="M0 322C194 294 394 288 608 304C822 320 1124 352 1600 330V420H0V322Z" fill="#5FA7E6"/>
+  <path d="M0 342C188 322 438 316 664 334C890 352 1148 388 1600 360V420H0V342Z" fill="#408FD6"/>
+  <path d="M754 60C800 18 884 10 930 56" stroke="#9AD0F8" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 12"/>
+  <path d="M742 84C828 30 930 26 1016 74" stroke="#9AD0F8" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 14"/>
+</svg>
+`)}`;
+
+const CHA_OVERVIEW_MAP_ART = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" fill="none">
+  <rect width="900" height="420" rx="30" fill="#F8FBFF"/>
+  <path d="M98 250C180 192 250 176 338 170C446 162 560 198 650 182C714 170 764 140 818 92" stroke="#2563EB" stroke-width="5" stroke-linecap="round" stroke-dasharray="12 14"/>
+  <circle cx="126" cy="250" r="14" fill="#22C55E"/>
+  <circle cx="126" cy="250" r="26" fill="#22C55E" fill-opacity=".14"/>
+  <circle cx="792" cy="96" r="14" fill="#2563EB"/>
+  <circle cx="792" cy="96" r="26" fill="#2563EB" fill-opacity=".14"/>
+  <circle cx="470" cy="188" r="16" fill="#0EA5E9"/>
+  <circle cx="470" cy="188" r="34" fill="#0EA5E9" fill-opacity=".12"/>
+  <path d="M454 188H486" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <path d="M462 180L486 188L462 196" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M132 130C240 76 374 54 520 72C644 88 742 136 828 204" stroke="#BFDBFE" stroke-width="2.5" stroke-dasharray="10 12"/>
+  <path d="M86 328C210 258 338 244 512 270C632 288 728 326 820 300" stroke="#DBEAFE" stroke-width="2.5" stroke-dasharray="8 12"/>
+</svg>
+`)}`;
 
 type WorkspaceTab =
   | "overview"
@@ -223,6 +273,7 @@ function normalizeContainerEntries(value: unknown): ContainerEntry[] {
 
   return normalized.length ? normalized : [getDefaultContainerEntry()];
 }
+
 
 function normalizeAdditionalDataDraft(value: unknown): AdditionalDataDraft | null {
   if (!value || typeof value !== "object") {
@@ -719,6 +770,8 @@ function SlideToComplete({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const thumbWidth = 80;
   const horizontalInset = 6;
+  const contentStart = 96;
+  const mobileContentStart = 104;
 
   useEffect(() => {
     const updateMaxDistance = () => {
@@ -845,7 +898,10 @@ function SlideToComplete({
         className="absolute inset-y-[6px] left-[6px] rounded-full bg-[linear-gradient(90deg,rgba(99,102,241,0.16),rgba(99,102,241,0.04))] transition-[width] duration-300 ease-out"
         style={{ width: `${Math.max(thumbWidth, sliderPos + thumbWidth)}px` }}
       />
-      <div className="pointer-events-none absolute inset-y-0 left-0 hidden items-center pl-[108px] text-sm text-[#6366f1]/45 md:flex">
+      <div
+        className="pointer-events-none absolute inset-y-0 left-0 hidden items-center text-sm text-[#6366f1]/45 md:flex"
+        style={{ paddingLeft: `${contentStart}px` }}
+      >
         <span className="animate-[workflow-chevron_1.15s_ease-in-out_infinite] font-semibold">{">"}</span>
         <span className="ml-2 animate-[workflow-chevron_1.15s_ease-in-out_infinite_0.12s] font-semibold">{">"}</span>
         <span className="ml-2 animate-[workflow-chevron_1.15s_ease-in-out_infinite_0.24s] font-semibold">{">"}</span>
@@ -859,15 +915,21 @@ function SlideToComplete({
       >
         <ArrowRight size={22} className="text-white shrink-0" style={{ color: '#ffffff', stroke: '#ffffff' }} />
       </div>
-      <div className="pointer-events-none absolute inset-x-[170px] top-1/2 hidden -translate-y-1/2 items-center gap-4 md:flex">
+      <div
+        className="pointer-events-none absolute right-5 top-1/2 hidden -translate-y-1/2 items-center gap-4 md:flex"
+        style={{ left: `${contentStart + 54}px` }}
+      >
         <div className="h-px flex-1 bg-[#93c5fd]/50" />
         <div className="h-1.5 w-1.5 rounded-full bg-[#60a5fa]/70" />
         <div className="h-px flex-1 bg-[#93c5fd]/50" />
       </div>
-      <div className="relative z-10 grid h-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-[170px] pr-6">
-        <div className="justify-self-center text-center leading-none">
+      <div
+        className="relative z-10 grid h-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 pr-4 sm:pr-6"
+        style={{ paddingLeft: `${mobileContentStart}px` }}
+      >
+        <div className="min-w-0 justify-self-center text-center leading-none">
           <p className="text-[10px] uppercase tracking-[0.2em] text-[#818cf8]">{isSubmitting ? "Completing..." : "Slide to"}</p>
-          <p className="mt-1 text-[15px] font-bold uppercase tracking-wide text-on-surface">
+          <p className="mt-1 truncate text-[13px] font-bold uppercase tracking-wide text-on-surface sm:text-[15px]">
             <span className="text-[#6366f1]">{isSubmitting ? "completing" : "complete"}</span> this step
           </p>
         </div>
@@ -4770,6 +4832,33 @@ export function JobWorkspaceClient({
     { key: "audit", label: "Audit" },
   ];
   const currentStageLabel = STAGES[Math.max(activeStepIndex, 0)]?.label ?? "Pending";
+  const isOverviewTab = activeTab === "overview";
+  const overviewThemeVars = {
+    "--cha-overview-primary": "#2563EB",
+    "--cha-overview-primary-hover": "#1D4ED8",
+    "--cha-overview-primary-active": "#1E40AF",
+    "--cha-overview-soft": "#EFF6FF",
+    "--cha-overview-border": "#BFDBFE",
+    "--cha-overview-page": "#F8FAFC",
+    "--cha-overview-card": "#FFFFFF",
+    "--cha-overview-text": "#0F172A",
+    "--cha-overview-text-muted": "#475569",
+    "--cha-overview-line": "#E2E8F0",
+    "--cha-overview-primary-dark": "#60A5FA",
+    "--cha-overview-primary-hover-dark": "#93C5FD",
+    "--cha-overview-primary-active-dark": "#3B82F6",
+    "--cha-overview-page-dark": "#020617",
+    "--cha-overview-card-dark": "#111827",
+    "--cha-overview-card-alt-dark": "#0F172A",
+    "--cha-overview-elevated-dark": "#1E293B",
+    "--cha-overview-text-dark": "#F8FAFC",
+    "--cha-overview-text-muted-dark": "#CBD5E1",
+    "--cha-overview-line-dark": "#263449",
+  } as CSSProperties;
+  const shipmentModeName = String(job.shipmentType?.name || job.jobType?.movementDirection || "Clearance");
+  const shipmentModeUpper = shipmentModeName.toUpperCase();
+  const shipmentModeIcon =
+    shipmentModeUpper.includes("AIR") ? <Plane size={18} /> : shipmentModeUpper.includes("SEA") ? <Ship size={18} /> : <Boxes size={18} />;
   const topJobBadges = [
     { label: job.jobType?.name || "JOB TYPE", variant: "secondary" as const },
     ...(job.shipmentType?.name ? [{ label: job.shipmentType.name, variant: "secondary" as const }] : []),
@@ -4821,15 +4910,21 @@ export function JobWorkspaceClient({
     },
   ];
   const overviewSummaryItems = [
-    { label: "Shipment Type", value: job.shipmentType?.name || "Not set", icon: <Package size={14} /> },
-    { label: job.shipmentType?.name?.toUpperCase() === "AIR" ? "Flight Date" : "Vessel / Flight Date", value: vesselInwardDate ? new Date(vesselInwardDate).toLocaleDateString("en-IN") : "Not set", icon: job.shipmentType?.name?.toUpperCase() === "AIR" ? <Plane size={14} /> : <Ship size={14} /> },
+    { label: "Shipment Type", value: job.shipmentType?.name || shipmentModeName || "Not set", icon: <Package size={14} /> },
+    { label: job.shipmentType?.name?.toUpperCase() === "AIR" ? "Flight / Voyage" : "Vessel / Voyage", value: job.flightNumber || job.vesselName || job.carrierName || "Not set", icon: job.shipmentType?.name?.toUpperCase() === "AIR" ? <Plane size={14} /> : <Ship size={14} /> },
     { label: "Port of Discharge", value: job.portOfDischarge || job.port?.name || job.branch?.name || "Not set", icon: <MapPin size={14} /> },
-    { label: "ETA", value: job.eta ? new Date(job.eta).toLocaleDateString("en-IN") : "Not set", icon: <Clock3 size={14} /> },
-    { label: job.shipmentType?.name?.toUpperCase() === "AIR" ? "Carrier / Flight" : "Carrier / Vessel", value: job.carrierName || job.flightNumber || job.vesselName || "Not set", icon: job.shipmentType?.name?.toUpperCase() === "AIR" ? <Plane size={14} /> : <Ship size={14} /> },
-    { label: manifestLabel, value: manifestPreview || "Pending", icon: <FileText size={14} /> },
-    { label: "Country of Origin", value: job.countryOfOrigin || job.originCountry || "Not set", icon: <MapPin size={14} /> },
-    { label: "No. of Packages", value: job.packageCount || job.numberOfPackages || populatedContainerCount || "Not set", icon: <Package size={14} /> },
-  ].filter((item) => item.value && item.value !== "Not set");
+    { label: "Bill of Lading", value: job.additionalData?.mblNumber || job.additionalData?.hblNumber || manifestPreview || "Not set", icon: <FileText size={14} /> },
+    { label: "No. of Packages", value: job.packageCount || job.numberOfPackages || "Not set", icon: <Package size={14} /> },
+    {
+      label: "Container Number",
+      value:
+        normalizeContainerEntries(job.additionalData?.containerDetails)
+          .map((entry) => entry.containerNumber)
+          .filter(Boolean)
+          .join(", ") || "Not set",
+      icon: <Boxes size={14} />,
+    },
+  ];
   const overviewDateItems = [
     {
       label: "DO Validity",
@@ -4857,6 +4952,50 @@ export function JobWorkspaceClient({
     },
   ].filter((item) => item.value);
   const overviewRecentLogs = (job.auditLogs || []).slice(0, 4);
+  const liveStatusTitle =
+    job.status === "COMPLETED"
+      ? "Completed"
+      : activeStepIndex >= 5
+        ? "Filed and Completed"
+        : activeStepIndex >= 4
+          ? "At Filing Stage"
+          : activeStepIndex >= 3
+            ? "Checklist In Approval"
+            : activeStepIndex >= 2
+              ? "Checklist In Preparation"
+              : activeStepIndex >= 1
+                ? "Additional Data In Progress"
+                : "Document Collection In Progress";
+  const liveStatusLocation = job.portOfDischarge || job.port?.name || job.branch?.name || "Tracking location unavailable";
+  const liveStatusOrigin = job.countryOfOrigin || job.originCountry || job.customer?.branchName || "Origin pending";
+  const liveStatusDestination = job.portOfDischarge || job.port?.name || job.branch?.name || "Destination pending";
+  const overviewWorkflowStages = [
+    {
+      key: "OVERVIEW",
+      label: "Overview",
+      isCompleted: true,
+      isCurrent: false,
+      percent: null as number | null,
+      onClick: () => navigateToWorkspaceTab("overview"),
+    },
+    ...STAGES.map((stage, index) => {
+      let percent: number | null = null;
+      if (stage.key === "DOCUMENT_COLLECTION") percent = docPercentage;
+      if (stage.key === "ADDITIONAL_DATA") percent = additionalDataPercentage;
+      if (stage.key === "CHECKLIST_PREPARATION") percent = checklistPrepPercentage;
+      if (stage.key === "CHECKLIST_APPROVAL") percent = checklistApprovalPercentage;
+      if (stage.key === "FILING") percent = filingPercentage;
+      if (stage.key === "FILED") percent = filedPercentage;
+      return {
+        key: stage.key,
+        label: stage.label,
+        isCompleted: index < activeStepIndex,
+        isCurrent: index === activeStepIndex,
+        percent,
+        onClick: () => openWorkflowStage(stage.key),
+      };
+    }),
+  ];
   const workspaceQuickActions = [
     { label: "Upload Document", note: "Add new document", icon: <Upload size={16} />, onClick: () => navigateToWorkspaceTab("docs"), accent: "cyan" as const, visible: true },
     { label: "Add Query", note: "Raise a new query", icon: <AlertCircle size={16} />, onClick: () => navigateToWorkspaceTab("filing"), accent: "orange" as const, visible: activeStepIndex >= 4 },
@@ -4866,7 +5005,7 @@ export function JobWorkspaceClient({
     { label: "Job Activity", note: "View all activities", icon: <History size={16} />, onClick: () => navigateToWorkspaceTab("audit"), accent: "violet" as const, visible: true },
   ].filter((action) => action.visible);
   const workflowNavigator = (
-    <div className="border-t border-outline-variant/20 bg-surface px-5 py-3">
+    <div className="border-t border-[#2563eb]/14 bg-[linear-gradient(180deg,rgba(241,246,255,0.78),rgba(255,255,255,0.96))] px-5 py-3 dark:bg-[linear-gradient(180deg,rgba(18,24,36,0.9),rgba(14,20,31,0.98))]">
       <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
         <div className="min-w-0 flex-1">
           <nav className="flex flex-wrap items-center gap-2 pr-2">
@@ -4874,19 +5013,19 @@ export function JobWorkspaceClient({
               type="button"
               onClick={() => navigateToWorkspaceTab("overview")}
               className={`group flex items-center gap-2 rounded-full border px-3 py-1.5 text-left transition-all hover:bg-surface-container-low/70 ${activeTab === "overview"
-                  ? "border-[#00cec4]/30 bg-[#00cec4]/8"
+                  ? "border-[#2563eb]/30 bg-[#2563eb]/8"
                   : "border-outline-variant/35 bg-surface"
                 }`}
             >
               <span
                 className={`flex size-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${activeTab === "overview"
-                    ? "bg-[#00cec4] text-white"
+                    ? "bg-[#2563eb] text-white"
                     : "border border-outline-variant/60 bg-surface text-on-surface-variant"
                   }`}
               >
                 <Boxes size={10} />
               </span>
-              <span className={`whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.14em] ${activeTab === "overview" ? "text-[#00cec4]" : "text-on-surface-variant"
+              <span className={`whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.14em] ${activeTab === "overview" ? "text-[#2563eb] dark:text-[#9ab8ff]" : "text-on-surface-variant"
                 }`}>
                 Overview
               </span>
@@ -4901,27 +5040,27 @@ export function JobWorkspaceClient({
 
               if (stage.key === "DOCUMENT_COLLECTION") {
                 percent = docPercentage;
-                statusColor = isCompleted || isActive ? "text-[#00cec4]" : "text-on-surface-variant/50";
+                statusColor = isCompleted || isActive ? "text-[#2563eb] dark:text-[#9ab8ff]" : "text-on-surface-variant/50";
               } else if (stage.key === "ADDITIONAL_DATA") {
                 percent = additionalDataPercentage;
-                statusColor = isCompleted || isActive ? "text-[#00cec4]" : "text-on-surface-variant/50";
+                statusColor = isCompleted || isActive ? "text-[#2563eb] dark:text-[#9ab8ff]" : "text-on-surface-variant/50";
               } else if (stage.key === "CHECKLIST_PREPARATION") {
                 percent = checklistPrepPercentage;
-                statusColor = isCompleted || isActive || currentChecklistVersion ? "text-[#00cec4]" : "text-on-surface-variant/50";
+                statusColor = isCompleted || isActive || currentChecklistVersion ? "text-[#2563eb] dark:text-[#9ab8ff]" : "text-on-surface-variant/50";
               } else if (stage.key === "CHECKLIST_APPROVAL") {
                 percent = checklistApprovalPercentage;
                 statusColor =
                   isCompleted || isActive || (activeStepIndex === 2 && currentChecklistVersion)
                     ? checklistWorkflow?.currentApprovalStage === "INTERNAL"
                       ? "text-[#fb923c]"
-                      : "text-[#00cec4]"
+                      : "text-[#2563eb] dark:text-[#9ab8ff]"
                     : "text-on-surface-variant/50";
               } else if (stage.key === "FILING") {
                 percent = filingPercentage;
-                statusColor = isCompleted || isActive ? "text-[#00cec4]" : "text-on-surface-variant/50";
+                statusColor = isCompleted || isActive ? "text-[#2563eb] dark:text-[#9ab8ff]" : "text-on-surface-variant/50";
               } else if (stage.key === "FILED") {
                 percent = filedPercentage;
-                statusColor = isCompleted ? "text-[#00cec4]" : "text-on-surface-variant/50";
+                statusColor = isCompleted ? "text-[#2563eb] dark:text-[#9ab8ff]" : "text-on-surface-variant/50";
               }
 
               const isClickable = !isLocked || stage.key === "CHECKLIST_APPROVAL";
@@ -4943,13 +5082,13 @@ export function JobWorkspaceClient({
                     }}
                     disabled={!isClickable}
                     className={`group flex items-center gap-2 rounded-full border px-3 py-1.5 text-left transition-all ${isClickable ? "hover:bg-surface-container-low/70" : "cursor-not-allowed opacity-55"
-                      } ${isHighlighted ? "border-[#00cec4]/30 bg-[#00cec4]/8" : "border-outline-variant/35 bg-surface"}`}
+                      } ${isHighlighted ? "border-[#2563eb]/30 bg-[#2563eb]/8" : "border-outline-variant/35 bg-surface"}`}
                   >
                     <span
                       className={`flex size-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold transition-all ${isCompleted
-                          ? "bg-[#59c7bf] text-white"
+                          ? "bg-[#2563eb] text-white"
                           : isActive
-                            ? "border border-[#59c7bf] bg-surface text-[#59c7bf] shadow-[0_10px_24px_-18px_rgba(89,199,191,0.9)]"
+                            ? "border border-[#2563eb] bg-surface text-[#2563eb] shadow-[0_10px_24px_-18px_rgba(37,99,235,0.9)] dark:text-[#9ab8ff]"
                             : "border border-outline-variant/60 bg-surface text-on-surface-variant"
                         }`}
                     >
@@ -4965,7 +5104,7 @@ export function JobWorkspaceClient({
                     </span>
                   </button>
                   {index < STAGES.length - 1 ? (
-                    <span className={`hidden h-px w-5 rounded-full lg:block ${index < activeStepIndex ? "bg-[#59c7bf]" : "bg-outline-variant/45"}`} />
+                    <span className={`hidden h-px w-5 rounded-full lg:block ${index < activeStepIndex ? "bg-[#2563eb]" : "bg-outline-variant/45"}`} />
                   ) : null}
                 </div>
               );
@@ -4974,21 +5113,21 @@ export function JobWorkspaceClient({
         </div>
 
         <div className="grid grid-cols-1 gap-2 self-start xl:grid-cols-2 xl:self-auto">
-          <div className="rounded-[20px] border border-outline-variant/25 bg-surface px-4 py-3 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.22)]">
-            <p className="ds-label text-on-surface-variant">Stage</p>
-            <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface">
-              {STAGES[Math.max(activeStepIndex, 0)]?.label ?? "Pending"}
-            </p>
-          </div>
-          <div className="rounded-[20px] border border-outline-variant/25 bg-surface px-4 py-3 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.22)]">
-            <p className="ds-label text-on-surface-variant">Progress</p>
-            <p className="mt-2 text-lg font-semibold text-[#00cec4] ds-numeric">{stageProgress}%</p>
-            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-outline-variant/20">
-              <div
-                className="h-full rounded-full bg-[linear-gradient(90deg,#00cec4_0%,#18b7cb_100%)] transition-all duration-500"
-                style={{ width: `${stageProgress}%` }}
-              />
+            <div className="rounded-[20px] border border-[#2563eb]/18 bg-surface px-4 py-3 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.22)]">
+              <p className="ds-label text-on-surface-variant">Stage</p>
+              <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface">
+                {STAGES[Math.max(activeStepIndex, 0)]?.label ?? "Pending"}
+              </p>
             </div>
+            <div className="rounded-[20px] border border-[#2563eb]/18 bg-surface px-4 py-3 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.22)]">
+              <p className="ds-label text-on-surface-variant">Progress</p>
+              <p className="mt-2 text-lg font-semibold text-[#2563eb] dark:text-[#9ab8ff] ds-numeric">{stageProgress}%</p>
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-outline-variant/20">
+                <div
+                  className="h-full rounded-full bg-[linear-gradient(90deg,#2563eb_0%,#38bdf8_100%)] transition-all duration-500"
+                  style={{ width: `${stageProgress}%` }}
+                />
+              </div>
           </div>
         </div>
       </div>
@@ -4997,6 +5136,175 @@ export function JobWorkspaceClient({
 
   return (
     <main className="w-full space-y-5 overflow-x-hidden pb-6">
+      {isOverviewTab ? (
+        <div style={overviewThemeVars} className="space-y-4">
+          <section className="rounded-[28px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] px-5 py-5 shadow-[0_18px_38px_-30px_rgba(15,23,42,0.18)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <div className="min-w-0 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {topJobBadges.map((badge) => (
+                    <Badge key={`${badge.label}-${badge.variant}`} variant={badge.variant} className="uppercase">
+                      {badge.label}
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <h1 className="ds-h1 ds-numeric text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{job.jobNumber}</h1>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(job.jobNumber);
+                      toast.success("Job number copied.");
+                    }}
+                    className="rounded-full border border-[var(--cha-overview-line)] p-2 text-[var(--cha-overview-text-muted)] transition hover:border-[var(--cha-overview-primary)] hover:text-[var(--cha-overview-primary)] dark:border-[var(--cha-overview-line-dark)] dark:text-[var(--cha-overview-text-muted-dark)] dark:hover:text-[var(--cha-overview-primary-dark)]"
+                    aria-label="Copy job number"
+                  >
+                    <Copy size={14} />
+                  </button>
+                </div>
+                <p className="text-sm text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{job.title}</p>
+              </div>
+
+              <div className="flex items-center gap-2 self-start">
+                {canDeleteJob ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 border-red-500/35 text-red-500 hover:bg-transparent"
+                      disabled={loading !== null || Boolean(activeDeletionRequest)}
+                      onClick={() => setDeleteModalMode("delete")}
+                    >
+                      <Trash2 className="mr-1.5 size-3.5" />
+                      Delete Job
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      mode="icon"
+                      className="shrink-0"
+                      aria-label="More job actions"
+                      onClick={() => toast.info("Additional job actions remain in the workspace controls below.")}
+                    >
+                      <MoreVertical size={15} />
+                    </Button>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          </section>
+
+          <section
+            className="relative overflow-hidden rounded-[28px] border border-[var(--cha-overview-border)] bg-[var(--cha-overview-card)] shadow-[0_22px_48px_-34px_rgba(15,23,42,0.22)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]"
+            style={{
+              backgroundImage: `linear-gradient(90deg, rgba(239,246,255,0.96) 0%, rgba(239,246,255,0.9) 34%, rgba(219,234,254,0.55) 54%, rgba(191,219,254,0.16) 100%), url("${CHA_OVERVIEW_BANNER_ART}")`,
+              backgroundPosition: "center",
+              backgroundSize: "cover",
+            }}
+          >
+            <div className="absolute inset-0 hidden dark:block" style={{ background: "linear-gradient(90deg, rgba(2,6,23,0.82) 0%, rgba(15,23,42,0.72) 38%, rgba(15,23,42,0.38) 60%, rgba(15,23,42,0.16) 100%)" }} />
+            <div className="relative flex min-h-[174px] items-center px-5 py-5">
+              <div className="w-full max-w-[1120px] rounded-[24px] border border-white/65 bg-white/78 shadow-[0_26px_44px_-32px_rgba(15,23,42,0.35)] backdrop-blur-xl dark:border-white/8 dark:bg-[rgba(15,23,42,0.82)]">
+                <div className="grid xl:grid-cols-[repeat(7,minmax(0,1fr))]">
+                  {overviewMetaItems.map((item, itemIndex) => (
+                    <div
+                      key={item.label}
+                      className={cn(
+                        "flex min-h-[104px] items-start gap-3 px-4 py-4",
+                        itemIndex < overviewMetaItems.length - 1 && "border-b border-white/45 xl:border-b-0 xl:border-r xl:border-r-[#dbeafe] dark:border-white/6",
+                      )}
+                    >
+                      <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] shadow-[inset_0_0_0_1px_rgba(37,99,235,0.1)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
+                        {item.icon}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="ds-label text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{item.label}</p>
+                        <p className="mt-1 text-sm font-semibold text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{item.value}</p>
+                        {item.secondary ? (
+                          <p className="mt-1 text-xs text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{item.secondary}</p>
+                        ) : null}
+                        {item.label === "Manager" && canUpdateJob ? (
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingManager(true)}
+                            className="mt-2 rounded-full border border-[var(--cha-overview-border)] bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--cha-overview-primary)] transition-colors hover:bg-[var(--cha-overview-soft)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[rgba(30,41,59,0.85)] dark:text-[var(--cha-overview-primary-dark)]"
+                          >
+                            Change
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-[24px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] px-4 py-4 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+              <div className="min-w-0 flex-1 overflow-x-auto pb-1">
+                <div className="flex min-w-max items-center gap-0">
+                  {overviewWorkflowStages.map((stage, index) => (
+                    <div key={stage.key} className="flex items-center">
+                      <button
+                        type="button"
+                        onClick={stage.onClick}
+                        className="flex items-center gap-3 rounded-full px-3 py-2 text-left transition hover:bg-[var(--cha-overview-soft)]/70 dark:hover:bg-[rgba(30,41,59,0.72)]"
+                      >
+                        <span
+                          className={cn(
+                            "flex size-7 items-center justify-center rounded-full border text-[11px] font-semibold ds-numeric",
+                            stage.isCompleted || stage.isCurrent
+                              ? "border-[var(--cha-overview-primary)] bg-[var(--cha-overview-primary)] text-white dark:border-[var(--cha-overview-primary-dark)] dark:bg-[var(--cha-overview-primary-dark)]"
+                              : "border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] text-[var(--cha-overview-text-muted)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-alt-dark)] dark:text-[var(--cha-overview-text-muted-dark)]",
+                          )}
+                        >
+                          {stage.isCompleted ? <Check size={12} /> : index}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className={cn(
+                            "whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.14em]",
+                            stage.isCurrent
+                              ? "text-[var(--cha-overview-primary)] dark:text-[var(--cha-overview-primary-dark)]"
+                              : "text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]",
+                          )}>
+                            {stage.label}
+                          </span>
+                          {typeof stage.percent === "number" ? (
+                            <span className="text-[10px] ds-numeric text-[var(--cha-overview-primary)] dark:text-[var(--cha-overview-primary-dark)]">{stage.percent}%</span>
+                          ) : null}
+                        </span>
+                      </button>
+                      {index < overviewWorkflowStages.length - 1 ? (
+                        <span className="mx-1 h-px w-8 rounded-full bg-[var(--cha-overview-line)] dark:bg-[var(--cha-overview-line-dark)]" />
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:min-w-[278px]">
+                <div className="rounded-[18px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] px-4 py-3 dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-alt-dark)]">
+                  <p className="ds-label text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">Stage</p>
+                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{currentStageLabel}</p>
+                </div>
+                <div className="rounded-[18px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] px-4 py-3 dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-alt-dark)]">
+                  <p className="ds-label text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">Progress</p>
+                  <p className="mt-2 text-xl font-semibold ds-numeric text-[var(--cha-overview-primary)] dark:text-[var(--cha-overview-primary-dark)]">{stageProgress}%</p>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--cha-overview-line)]/80 dark:bg-[var(--cha-overview-line-dark)]">
+                    <div
+                      className="h-full rounded-full bg-[linear-gradient(90deg,#2563EB_0%,#1D4ED8_100%)] dark:bg-[linear-gradient(90deg,#60A5FA_0%,#3B82F6_100%)]"
+                      style={{ width: `${stageProgress}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      ) : (
+        <>
       {dueDateWarnings.map((warning) => (
         <ChaDueDateWarningNote
           key={warning.notificationId}
@@ -5010,7 +5318,7 @@ export function JobWorkspaceClient({
       ))}
 
       {/* â”€â”€ Job Header â”€â”€ */}
-      <section className="border-b border-outline-variant/20 px-1 pb-4">
+      <section className="overflow-hidden rounded-[30px] border border-[#2563eb]/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(243,247,255,0.97))] px-5 py-5 shadow-[0_24px_56px_-40px_rgba(15,23,42,0.24)] dark:bg-[linear-gradient(180deg,rgba(18,24,36,0.98),rgba(14,20,31,0.98))]">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex min-w-0 items-center gap-3">
             <Button type="button" variant="outline" mode="icon" onClick={() => router.back()} aria-label="Go back">
@@ -5022,7 +5330,7 @@ export function JobWorkspaceClient({
                 <ChevronRight size={14} />
                 <span>Jobs</span>
                 <ChevronRight size={14} />
-                <span className="ds-numeric text-[#00cec4]">{job.jobNumber}</span>
+                <span className="ds-numeric text-[#2563eb] dark:text-[#9ab8ff]">{job.jobNumber}</span>
               </div>
             </div>
           </div>
@@ -5081,10 +5389,10 @@ export function JobWorkspaceClient({
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-[28px] border border-outline-variant/45 bg-surface shadow-[0_22px_54px_-42px_rgba(15,23,42,0.34)]">
+      <section className="overflow-hidden rounded-[32px] border border-[#2563eb]/18 bg-surface shadow-[0_22px_54px_-42px_rgba(15,23,42,0.34)]">
         <div className="min-w-0">
           {/* Top row: identity + actions */}
-          <div className="flex flex-col gap-3 px-5 pt-5 pb-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative flex flex-col gap-3 px-5 pt-5 pb-4 lg:flex-row lg:items-center lg:justify-between">
             {/* Left: title block */}
             <div className="min-w-0 flex-1 space-y-1">
               {/* Pill badges row */}
@@ -5103,7 +5411,7 @@ export function JobWorkspaceClient({
                     await navigator.clipboard.writeText(job.jobNumber);
                     toast.success("Job number copied.");
                   }}
-                  className="rounded-full border border-outline-variant/30 p-2 text-on-surface-variant transition hover:border-[#00cec4]/40 hover:text-[#00cec4]"
+                  className="rounded-full border border-outline-variant/30 p-2 text-on-surface-variant transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:hover:text-[#9ab8ff]"
                   aria-label="Copy job number"
                 >
                   <Copy size={14} />
@@ -5142,13 +5450,13 @@ export function JobWorkspaceClient({
           </div>
 
           {/* Meta row: customer Â· owner Â· manager â€” full width, no stacking */}
-          <div className="grid gap-3 border-t border-outline-variant/20 bg-surface-container-low/25 px-5 py-4 md:grid-cols-2 xl:grid-cols-[repeat(7,minmax(0,1fr))]">
+          <div className="grid gap-3 border-t border-[#2563eb]/12 bg-surface-container-low/25 px-5 py-4 md:grid-cols-2 xl:grid-cols-[repeat(7,minmax(0,1fr))]">
             {overviewMetaItems.map((item) => (
               <div
                 key={item.label}
-                className="flex items-start gap-3 rounded-[18px] border border-outline-variant/25 bg-surface px-3 py-3 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.18)]"
+                className="flex items-start gap-3 rounded-[18px] border border-[#2563eb]/14 bg-surface px-3 py-3 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.18)]"
               >
-                <span className="ds-icon-badge shrink-0">{item.icon}</span>
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#2563eb]/10 text-[#2563eb] dark:text-[#9ab8ff]">{item.icon}</span>
                 <div className="min-w-0">
                   <p className="ds-label">{item.label}</p>
                   <p className="mt-1 truncate text-sm font-semibold text-on-surface">{item.value}</p>
@@ -5159,7 +5467,7 @@ export function JobWorkspaceClient({
                     <button
                       type="button"
                       onClick={() => setIsEditingManager(true)}
-                      className="mt-2 rounded-full border border-[#00cec4]/25 bg-[#00cec4]/8 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#00cec4] transition-colors hover:bg-[#00cec4]/14"
+                      className="mt-2 rounded-full border border-[#2563eb]/25 bg-[#2563eb]/8 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2563eb] transition-colors hover:bg-[#2563eb]/14 dark:text-[#9ab8ff]"
                     >
                       Change
                     </button>
@@ -5171,6 +5479,8 @@ export function JobWorkspaceClient({
           {workflowNavigator}
         </div>
       </section>
+        </>
+      )}
 
       {!job.assignedManagerId && (
         <div className="rounded-2xl border border-[#fb923c]/35 bg-[#fb923c]/10 p-4">
@@ -5637,7 +5947,7 @@ export function JobWorkspaceClient({
                           </Button>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="grid gap-4 xl:grid-cols-2">
                           {sortedUploadedWorkflowDocuments.length > 0 ? (
                             sortedUploadedWorkflowDocuments.map((req: WorkflowDocumentRequirement) => {
                               const currentVersion = req.versions.find((version) => version.isCurrent) || req.versions[0];
@@ -5649,7 +5959,7 @@ export function JobWorkspaceClient({
                                   ref={(element) => {
                                     documentRequirementCardRefs.current[req.id] = element;
                                   }}
-                                  className={highlightedDocumentReqId === req.id ? "animate-doc-missing-blink" : ""}
+                                  className={cn("h-full", highlightedDocumentReqId === req.id ? "animate-doc-missing-blink" : "")}
                                 >
                                   <UploadedWorkflowDocumentCard
                                     requirement={req}
@@ -5693,7 +6003,7 @@ export function JobWorkspaceClient({
                               );
                             })
                           ) : (
-                            <div className="rounded-[24px] border border-outline-variant/60 bg-surface p-8 text-center text-sm text-on-surface-variant shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
+                            <div className="xl:col-span-2 rounded-[24px] border border-outline-variant/60 bg-surface p-8 text-center text-sm text-on-surface-variant shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
                               No uploaded documents match the current search and filter state yet.
                             </div>
                           )}
@@ -5962,7 +6272,7 @@ export function JobWorkspaceClient({
                                 <p>{proceedErrors[0]}</p>
                               </div>
                             ) : null}
-                            <div className="w-full sm:min-w-[320px] sm:w-auto">
+                            <div className="w-full">
                               <SlideToComplete
                                 key="document-stage-slider"
                                 disabled={loading !== null || !!firstUnresolvedMandatoryDocumentId}
@@ -6302,7 +6612,7 @@ export function JobWorkspaceClient({
                         </Button>
                       ) : null}
                       {job.stage === "ADDITIONAL_DATA" ? (
-                        <div className="w-full sm:w-auto sm:min-w-[320px] pt-1">
+                        <div className="w-full pt-1">
                           <SlideToComplete
                             key="additional-data-slider"
                             disabled={loading !== null || !additionalDataComplete || manifestConfigMissing}
@@ -8278,16 +8588,14 @@ export function JobWorkspaceClient({
 
               {activeTab === "overview" && (
                 <div className="space-y-6">
-                  <div className="grid gap-5 xl:grid-cols-12">
-                    <section className="rounded-[24px] border border-outline-variant/35 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] xl:col-span-4">
+                  <div style={overviewThemeVars} className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1.33fr)_minmax(0,1.2fr)_minmax(0,1fr)]">
+                    <section className="h-full rounded-[24px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <span className="ds-icon-badge">
+                          <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                             <Package size={16} />
                           </span>
-                          <div>
-                            <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-on-surface">Job Summary</h3>
-                          </div>
+                          <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Job Summary</h3>
                         </div>
                         <Button type="button" variant="outline" size="sm" onClick={() => navigateToWorkspaceTab("additionalData")}>
                           View Details
@@ -8295,36 +8603,38 @@ export function JobWorkspaceClient({
                       </div>
                       <div className="mt-4 grid gap-3 sm:grid-cols-2">
                         {overviewSummaryItems.map((item) => (
-                          <div key={item.label} className="flex items-start gap-3 rounded-[18px] border border-outline-variant/25 bg-surface-container-low/25 px-3 py-3">
-                            <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#00cec4]/10 text-[#00cec4]">
-                              {item.icon}
-                            </span>
-                            <div className="min-w-0">
-                              <p className="ds-label">{item.label}</p>
-                              <p className="mt-1 text-sm font-medium text-on-surface">{item.value}</p>
+                          <div key={item.label} className="rounded-[18px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-soft)]/55 px-3 py-3 dark:border-[var(--cha-overview-line-dark)] dark:bg-[rgba(15,23,42,0.84)]">
+                            <div className="flex items-start gap-3">
+                              <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--cha-overview-primary)] shadow-[inset_0_0_0_1px_rgba(37,99,235,0.08)] dark:bg-[rgba(30,41,59,0.9)] dark:text-[var(--cha-overview-primary-dark)]">
+                                {item.icon}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="ds-label text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{item.label}</p>
+                                <p className="mt-1 text-sm font-medium text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{item.value}</p>
+                              </div>
                             </div>
                           </div>
                         ))}
                       </div>
                     </section>
 
-                    <section className="rounded-[24px] border border-outline-variant/35 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] xl:col-span-4">
+                    <section className="h-full rounded-[24px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
                       <div className="flex items-center gap-3">
-                        <span className="ds-icon-badge">
+                        <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                           <CalendarDays size={16} />
                         </span>
-                        <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-on-surface">Important Dates</h3>
+                        <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Important Dates</h3>
                       </div>
                       <div className="mt-4 space-y-3">
                         {overviewDateItems.map((item) => (
-                          <div key={item.label} className="flex items-center justify-between gap-3 rounded-[18px] border border-outline-variant/25 bg-surface-container-low/25 px-3 py-3">
+                          <div key={item.label} className="flex items-center justify-between gap-3 rounded-[18px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] px-3 py-3 dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-alt-dark)]">
                             <div className="flex min-w-0 items-center gap-3">
-                              <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#00cec4]/10 text-[#00cec4]">
+                              <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                                 {item.icon}
                               </span>
                               <div className="min-w-0">
-                                <p className="ds-label">{item.label}</p>
-                                <p className="mt-1 text-sm font-medium text-on-surface">{item.value}</p>
+                                <p className="ds-label text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{item.label}</p>
+                                <p className="mt-1 text-sm font-medium text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{item.value}</p>
                               </div>
                             </div>
                             <span
@@ -8346,12 +8656,12 @@ export function JobWorkspaceClient({
                       </div>
                     </section>
 
-                    <section className="rounded-[24px] border border-outline-variant/35 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] xl:col-span-4">
+                    <section className="h-full rounded-[24px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
                       <div className="flex items-center gap-3">
-                        <span className="ds-icon-badge">
+                        <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                           <Zap size={16} />
                         </span>
-                        <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-on-surface">Quick Actions</h3>
+                        <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Quick Actions</h3>
                       </div>
                       <div className="mt-4 grid gap-3 sm:grid-cols-2">
                         {workspaceQuickActions.map((action) => (
@@ -8359,23 +8669,14 @@ export function JobWorkspaceClient({
                             key={action.label}
                             type="button"
                             onClick={action.onClick}
-                            className="flex min-h-[92px] items-start gap-3 rounded-[18px] border border-outline-variant/25 bg-surface px-3 py-3 text-left shadow-[0_12px_28px_-24px_rgba(15,23,42,0.18)] transition hover:border-[#00cec4]/35 hover:bg-surface-container-low/30"
+                            className="flex min-h-[92px] items-start gap-3 rounded-[18px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] px-3 py-3 text-left shadow-[0_12px_28px_-24px_rgba(15,23,42,0.18)] transition hover:-translate-y-px hover:border-[var(--cha-overview-primary)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-alt-dark)] dark:hover:border-[var(--cha-overview-primary-dark)]"
                           >
-                            <span
-                              className={cn(
-                                "flex size-9 shrink-0 items-center justify-center rounded-xl",
-                                action.accent === "orange"
-                                  ? "bg-[#fb923c]/12 text-[#fb923c]"
-                                  : action.accent === "violet"
-                                    ? "bg-[#6366f1]/10 text-[#4f46e5]"
-                                    : "bg-[#00cec4]/10 text-[#00cec4]",
-                              )}
-                            >
+                            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                               {action.icon}
                             </span>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-on-surface">{action.label}</p>
-                              <p className="mt-1 text-xs text-on-surface-variant">{action.note}</p>
+                              <p className="text-sm font-medium text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{action.label}</p>
+                              <p className="mt-1 text-xs text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{action.note}</p>
                             </div>
                           </button>
                         ))}
@@ -8383,46 +8684,50 @@ export function JobWorkspaceClient({
                     </section>
                   </div>
 
-                  <section className="rounded-[24px] border border-outline-variant/35 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)]">
+                  <section style={overviewThemeVars} className="rounded-[24px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-3">
-                        <span className="ds-icon-badge">
+                        <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                           <History size={16} />
                         </span>
-                        <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-on-surface">Recent Activity</h3>
+                        <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Recent Activity</h3>
                       </div>
                       <Button type="button" variant="outline" onClick={() => navigateToWorkspaceTab("audit")}>
                         View All Activity
                       </Button>
                     </div>
-                    <div className="mt-4 overflow-hidden rounded-[20px] border border-outline-variant/25">
+                    <div className="mt-4 overflow-hidden rounded-[20px] border border-[var(--cha-overview-line)] dark:border-[var(--cha-overview-line-dark)]">
                       {overviewRecentLogs.length === 0 ? (
-                        <div className="px-4 py-6 text-sm text-on-surface-variant">
+                        <div className="px-4 py-6 text-sm text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">
                           No recent job activity has been recorded yet.
                         </div>
                       ) : (
-                        <div className="divide-y divide-outline-variant/20">
+                        <div className="divide-y divide-[var(--cha-overview-line)] dark:divide-[var(--cha-overview-line-dark)]">
                           {overviewRecentLogs.map((log: any) => (
-                            <div key={log.id} className="grid gap-3 px-4 py-3 md:grid-cols-[minmax(0,240px)_minmax(0,1fr)_190px_160px] md:items-center">
+                            <div key={log.id} className="grid gap-3 px-4 py-3 md:grid-cols-[minmax(0,240px)_minmax(0,1fr)_130px_100px_160px] md:items-center">
                               <div className="flex items-center gap-3">
                                 <span className={cn(
                                   "flex size-8 shrink-0 items-center justify-center rounded-full",
                                   String(log.event || "").includes("QUERY") || String(log.event || "").includes("query")
                                     ? "bg-[#fb923c]/12 text-[#fb923c]"
-                                    : "bg-[#00cec4]/10 text-[#00cec4]",
+                                    : "bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]",
                                 )}>
                                   {String(log.event || "").includes("QUERY") || String(log.event || "").includes("query") ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
                                 </span>
-                                <p className="text-sm font-medium text-on-surface">{String(log.event || "Activity").replace(/_/g, " ")}</p>
+                                <p className="text-sm font-medium uppercase tracking-[0.08em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{String(log.event || "Activity").replace(/_/g, " ")}</p>
                               </div>
-                              <p className="text-sm text-on-surface-variant">{log.remarks || "Operational update recorded for this job."}</p>
-                              <p className="text-sm text-on-surface-variant ds-numeric">
-                                {log.timestamp ? new Date(log.timestamp).toLocaleString("en-IN") : "Not available"}
+                              <p className="text-sm text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{log.remarks || "Operational update recorded for this job."}</p>
+                              <p className="text-sm ds-numeric text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">
+                                {log.timestamp ? new Date(log.timestamp).toLocaleDateString("en-IN") : "Not available"}
                               </p>
-                              <div className="md:text-right">
-                                <span className="inline-flex rounded-full bg-surface-container-low px-2.5 py-1 text-xs font-medium text-on-surface-variant">
+                              <p className="text-sm ds-numeric text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">
+                                {log.timestamp ? new Date(log.timestamp).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : ""}
+                              </p>
+                              <div className="flex items-center justify-between gap-2 md:justify-end">
+                                <span className="inline-flex rounded-full bg-[var(--cha-overview-soft)] px-2.5 py-1 text-xs font-medium text-[var(--cha-overview-text-muted)] dark:bg-[rgba(30,41,59,0.9)] dark:text-[var(--cha-overview-text-muted-dark)]">
                                   {log.actor?.name || "System"}
                                 </span>
+                                <span className="size-2 rounded-full bg-green-500" />
                               </div>
                             </div>
                           ))}

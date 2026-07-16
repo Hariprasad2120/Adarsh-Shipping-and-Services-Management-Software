@@ -36,7 +36,7 @@ import {
   getChaPriorityBadgeVariant,
   getChaStageBadgeVariant,
 } from "@/lib/cha-badges";
-import { ChaMetricCard, ChaSectionShell } from "./_components/cha-operations-shared";
+import { ChaControlPanel, ChaMetricCard, ChaPageHeader, ChaSectionShell } from "./_components/cha-operations-shared";
 
 export default async function ChaDashboard() {
   const session = await auth();
@@ -291,21 +291,18 @@ export default async function ChaDashboard() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[28px] border border-outline-variant/22 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,252,0.96))] px-5 py-4 shadow-[0_20px_48px_-36px_rgba(15,23,42,0.18)] dark:bg-[linear-gradient(180deg,rgba(19,26,33,0.98),rgba(23,31,39,0.98))]">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-sm text-on-surface-variant">
+      <ChaPageHeader
+        eyebrow={
+          <>
             <span>CHA</span>
             <ChevronRight size={14} />
             <span>Dashboard</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="ds-icon-badge">
-              <Sparkles size={16} />
-            </span>
-            <h1 className="ds-h1 text-on-surface">CHA Dashboard</h1>
-          </div>
-        </div>
-      </section>
+          </>
+        }
+        title="CHA Dashboard"
+        description="A logistics control tower view for customs clearance, live filing queues, due-date risk, and assigned execution."
+        icon={<Sparkles size={20} />}
+      />
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
         {metrics.map((metric) => (
@@ -320,70 +317,49 @@ export default async function ChaDashboard() {
         ))}
       </div>
 
-      <div className="relative overflow-hidden rounded-[32px] border border-outline-variant/22 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,251,253,0.97))] shadow-[0_24px_56px_-40px_rgba(15,23,42,0.18)] dark:bg-[linear-gradient(180deg,rgba(19,26,33,0.98),rgba(23,31,39,0.98))]">
-        <div className="pointer-events-none absolute inset-[1px] rounded-[31px] bg-[linear-gradient(180deg,rgba(255,255,255,0.5),rgba(255,255,255,0.12))] dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))]" />
-        <div className="pointer-events-none absolute left-10 top-0 h-24 w-52 rounded-full bg-[#00cec4]/[0.11] blur-3xl" />
-        <div className="pointer-events-none absolute right-12 top-10 h-20 w-40 rounded-full bg-[#fb923c]/[0.08] blur-3xl" />
-        <div className="pointer-events-none absolute right-24 top-4 h-24 w-32 rounded-full bg-[#7dd3fc]/[0.1] blur-3xl dark:bg-[#38bdf8]/[0.08]" />
-
-        <div className="relative border-b border-outline-variant/25 px-5 py-5">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex items-start gap-3">
-              <span className="ds-icon-badge">
-                <UserCheck size={18} className="text-[#00cec4]" />
-              </span>
-              <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-[1.55rem] font-semibold tracking-[-0.04em] text-on-surface">My Assigned Jobs</h2>
-                  <span className="rounded-full border border-outline-variant/20 bg-white/55 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-on-surface-variant backdrop-blur dark:bg-white/[0.04]">
-                    Priority Queue
-                  </span>
-                </div>
-                <p className="text-sm text-on-surface-variant">
-                  Open or manage the jobs currently assigned to you.
-                </p>
+      <ChaControlPanel
+        title="My Assigned Jobs"
+        description="Open or manage the jobs currently assigned to you."
+        icon={<UserCheck size={18} />}
+        actions={
+          <>
+            <div className="flex items-center gap-3 rounded-[22px] border border-[#2563eb]/16 bg-surface-container-low/65 px-4 py-3 shadow-[0_16px_32px_-28px_rgba(15,23,42,0.18)]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/45 bg-surface shadow-[0_12px_20px_-18px_rgba(15,23,42,0.24)] dark:border-white/10">
+                <Sparkles size={16} className="text-[#2563eb] dark:text-[#7aa2ff]" />
+              </div>
+              <div>
+                <p className="ds-label">Assigned Now</p>
+                <p className="ds-numeric text-sm text-on-surface">{myJobs.length}</p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-3 rounded-[22px] border border-outline-variant/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(245,248,251,0.88))] px-4 py-3 shadow-[0_16px_32px_-28px_rgba(15,23,42,0.18)] backdrop-blur dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))]">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/45 bg-white/75 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.24)] dark:border-white/10 dark:bg-white/[0.03]">
-                  <Sparkles size={16} className="text-[#00b8af] dark:text-[#63e3d7]" />
-                </div>
-                <div>
-                  <p className="ds-label">Assigned Now</p>
-                  <p className="ds-numeric text-sm text-on-surface">{myJobs.length}</p>
-                </div>
-              </div>
-
-              <DashboardCreateJob
-                currentUserId={session.user.id}
-                options={{
-                  branches,
-                  customers,
-                  jobTypes,
-                  shipmentTypes,
-                  users,
-                  managers: eligibleManagers,
-                  teamGroups,
-                  branchNumberingRules,
-                }}
-              />
-              <Link href="/cha/jobs">
-                <Button variant="outline" size="sm" className="gap-1.5 rounded-2xl">
-                  View All
-                  <ArrowRight className="size-3.5" />
-                </Button>
-              </Link>
-              <Link href="/cha/settings">
-                <Button variant="outline" size="sm" className="gap-1.5 rounded-2xl">
-                  <Settings size={14} /> Settings
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-
+            <DashboardCreateJob
+              currentUserId={session.user.id}
+              options={{
+                branches,
+                customers,
+                jobTypes,
+                shipmentTypes,
+                users,
+                managers: eligibleManagers,
+                teamGroups,
+                branchNumberingRules,
+              }}
+            />
+            <Link href="/cha/jobs">
+              <Button variant="outline" size="sm" className="gap-1.5 rounded-2xl">
+                View All
+                <ArrowRight className="size-3.5" />
+              </Button>
+            </Link>
+            <Link href="/cha/settings">
+              <Button variant="outline" size="sm" className="gap-1.5 rounded-2xl">
+                <Settings size={14} /> Settings
+              </Button>
+            </Link>
+          </>
+        }
+      >
         <DataTable className="w-full">
           {myJobs.length === 0 ? (
             <>
@@ -429,9 +405,9 @@ export default async function ChaDashboard() {
               <DataTableBody>
                 {myJobs.map((job) => (
                   <ClickableRow key={job.id} href={`/cha/jobs/${job.id}`}>
-                    <DataTableCell className="font-medium text-[#00cec4]">
+                    <DataTableCell className="font-medium text-[#2563eb] dark:text-[#7aa2ff]">
                       <div className="flex items-center gap-2">
-                        <Link href={`/cha/jobs/${job.id}`} className="transition-colors hover:text-[#00b5ad]">
+                        <Link href={`/cha/jobs/${job.id}`} className="transition-colors hover:text-[#1d4ed8] dark:hover:text-[#9ab8ff]">
                           {job.jobNumber}
                         </Link>
                         {section49WarningMap.get(job.id) ? (
@@ -480,7 +456,7 @@ export default async function ChaDashboard() {
             </>
           )}
         </DataTable>
-      </div>
+      </ChaControlPanel>
 
       <div className="grid gap-6 xl:grid-cols-3">
         <ChaSectionShell
@@ -488,6 +464,7 @@ export default async function ChaDashboard() {
           description="Operational items that still need a decision or next-step action."
           icon={<AlertCircle size={16} />}
           count={pendingActions.length}
+          accent="orange"
         >
           <div className="space-y-3 p-5">
             {pendingActions.length === 0 ? (
@@ -497,11 +474,11 @@ export default async function ChaDashboard() {
                 <Link
                   key={item.id}
                   href={item.href}
-                  className="flex items-start gap-3 rounded-[20px] border border-outline-variant/25 bg-surface-container-low/35 px-4 py-3 transition hover:border-[#00cec4]/35 hover:bg-surface"
+                  className="flex items-start gap-3 rounded-[20px] border border-outline-variant/25 bg-surface-container-low/35 px-4 py-3 transition hover:border-[#2563eb]/35 hover:bg-surface"
                 >
                   <span
                     className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${
-                      item.tone === "orange" ? "bg-[#fb923c]/12 text-[#fb923c]" : "bg-[#00cec4]/10 text-[#00cec4]"
+                      item.tone === "orange" ? "bg-[#fb923c]/12 text-[#fb923c]" : "bg-[#2563eb]/10 text-[#2563eb] dark:text-[#7aa2ff]"
                     }`}
                   >
                     <AlertCircle size={15} />
@@ -521,6 +498,7 @@ export default async function ChaDashboard() {
           description="Current validity and deadline signals across visible CHA jobs."
           icon={<AlertCircle size={16} />}
           count={expiringItems.length}
+          accent="orange"
         >
           <div className="space-y-3 p-5">
             {expiringItems.length === 0 ? (
@@ -530,7 +508,7 @@ export default async function ChaDashboard() {
                 <Link
                   key={item.id}
                   href={item.href}
-                  className="flex items-start justify-between gap-3 rounded-[20px] border border-outline-variant/25 bg-surface-container-low/35 px-4 py-3 transition hover:border-[#00cec4]/35 hover:bg-surface"
+                  className="flex items-start justify-between gap-3 rounded-[20px] border border-outline-variant/25 bg-surface-container-low/35 px-4 py-3 transition hover:border-[#2563eb]/35 hover:bg-surface"
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium uppercase tracking-[0.08em] text-on-surface">{item.label}</p>
@@ -555,6 +533,7 @@ export default async function ChaDashboard() {
           description="Latest CHA audit events across the jobs visible to your organisation."
           icon={<History size={16} />}
           count={recentActivity.length}
+          accent="violet"
         >
           <div className="space-y-3 p-5">
             {recentActivity.length === 0 ? (
@@ -574,7 +553,7 @@ export default async function ChaDashboard() {
                   <p className="mt-1 text-xs text-on-surface-variant">{log.remarks || "Operational event logged."}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-on-surface-variant">
                     {log.job ? (
-                      <Link href={`/cha/jobs/${log.job.id}`} className="text-[#00cec4] hover:underline">
+                      <Link href={`/cha/jobs/${log.job.id}`} className="text-[#2563eb] hover:underline dark:text-[#7aa2ff]">
                         {log.job.jobNumber}
                       </Link>
                     ) : null}

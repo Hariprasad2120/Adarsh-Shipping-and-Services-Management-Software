@@ -5,22 +5,34 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Briefcase, CheckCircle2, ChevronRight, Filter, MoreVertical, Plus, Search, Users } from "lucide-react";
 import { CreateJobDialog } from "@/components/cha/create-job-dialog";
 import { ClickableRow } from "@/components/clickable-row";
-import {DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableFooter,DataTableHead,DataTableHeader,} from "@/components/data-table";
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableEmpty,
+  DataTableFooter,
+  DataTableHead,
+  DataTableHeader,
+} from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { FilterMenu } from "@/components/ui/filter-menu";
 import { JobFilingQueryWarningIndicator } from "@/app/(dashboard)/cha/_components/job-filing-query-warning-indicator";
-import {
-  ChaDueDateWarningsIndicator,
-} from "@/app/(dashboard)/cha/_components/cha-due-date-warnings-indicator";
+import { ChaDueDateWarningsIndicator } from "@/app/(dashboard)/cha/_components/cha-due-date-warnings-indicator";
 import type { DueDateWarningViewModel } from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
 import {
   formatChaBadgeLabel,
   getChaPriorityBadgeVariant,
   getChaStageBadgeVariant,
 } from "@/lib/cha-badges";
-import { ChaMetricCard, ChaSectionShell, ChaVisibleRecords } from "../_components/cha-operations-shared";
+import {
+  ChaControlPanel,
+  ChaMetricCard,
+  ChaPageHeader,
+  ChaSectionShell,
+  ChaVisibleRecords,
+} from "../_components/cha-operations-shared";
 
 type MovementDirection = "IMPORT" | "EXPORT" | "BOTH" | "OTHER" | null;
 
@@ -296,162 +308,155 @@ export function JobsClient({
     const badgeText = isActiveSection ? "Operational Queue" : "Filed Archive";
 
     return (
-    <div className="py-1">
-      <ChaSectionShell
-        title={title}
-        description={description}
-        icon={icon}
-        badge={badgeText}
-        count={data.total}
-        actions={<ChaVisibleRecords visible={data.items.length} total={data.total} tone={isActiveSection ? "cyan" : "green"} />}
-      >
-        <div className="overflow-hidden rounded-b-[30px]">
-        <DataTable className="w-full">
-        <DataTableHeader>
-          <tr>
-            <DataTableHead className="py-4">Job Number</DataTableHead>
-            <DataTableHead className="py-4">Job Title</DataTableHead>
-            <DataTableHead className="py-4">Customer</DataTableHead>
-            <DataTableHead className="py-4">Job Type</DataTableHead>
-            <DataTableHead className="py-4">BOE / SB Number</DataTableHead>
-            <DataTableHead className="py-4">Created On</DataTableHead>
-            <DataTableHead className="py-4">Current Stage</DataTableHead>
-            <DataTableHead className="py-4">Priority</DataTableHead>
-            <DataTableHead className="py-4">Owner</DataTableHead>
-            <DataTableHead className="py-4 text-right">Actions</DataTableHead>
-          </tr>
-        </DataTableHeader>
-        <DataTableBody>
-          {data.items.length === 0 ? (
-            <DataTableEmpty
-              colSpan={10}
-              message={
-                <div className="flex flex-col items-center justify-center p-14 text-center text-on-surface-variant">
-                  <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[28px] border border-outline-variant/25 bg-surface-container-low shadow-[0_22px_48px_-34px_rgba(15,23,42,0.3)]">
-                    <Briefcase size={32} className="text-outline-variant" />
+      <div className="py-1">
+        <ChaSectionShell
+          title={title}
+          description={description}
+          icon={icon}
+          badge={badgeText}
+          count={data.total}
+          accent={isActiveSection ? "cyan" : "green"}
+          actions={<ChaVisibleRecords visible={data.items.length} total={data.total} tone={isActiveSection ? "cyan" : "green"} />}
+        >
+          <div className="overflow-hidden rounded-b-[30px]">
+            <DataTable className="w-full">
+              <DataTableHeader>
+                <tr>
+                  <DataTableHead className="py-4">Job Number</DataTableHead>
+                  <DataTableHead className="py-4">Job Title</DataTableHead>
+                  <DataTableHead className="py-4">Customer</DataTableHead>
+                  <DataTableHead className="py-4">Job Type</DataTableHead>
+                  <DataTableHead className="py-4">BOE / SB Number</DataTableHead>
+                  <DataTableHead className="py-4">Created On</DataTableHead>
+                  <DataTableHead className="py-4">Current Stage</DataTableHead>
+                  <DataTableHead className="py-4">Priority</DataTableHead>
+                  <DataTableHead className="py-4">Owner</DataTableHead>
+                  <DataTableHead className="py-4 text-right">Actions</DataTableHead>
+                </tr>
+              </DataTableHeader>
+              <DataTableBody>
+                {data.items.length === 0 ? (
+                  <DataTableEmpty
+                    colSpan={10}
+                    message={
+                      <div className="flex flex-col items-center justify-center p-14 text-center text-on-surface-variant">
+                        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[28px] border border-outline-variant/25 bg-surface-container-low shadow-[0_22px_48px_-34px_rgba(15,23,42,0.3)]">
+                          <Briefcase size={32} className="text-outline-variant" />
+                        </div>
+                        <p className="text-sm text-on-surface">{emptyTitle}</p>
+                        <p className="mt-1 text-xs">{emptyText}</p>
+                      </div>
+                    }
+                  />
+                ) : (
+                  data.items.map((job) => (
+                    <ClickableRow key={job.id} href={`/cha/jobs/${job.id}`}>
+                      <DataTableCell className="py-5 font-medium text-[#2563eb] dark:text-[#7aa2ff]">
+                        <div className="flex items-center gap-2">
+                          <span>{job.jobNumber}</span>
+                          <ChaDueDateWarningsIndicator warnings={job.dueDateWarnings} />
+                          {job.filingQueryWarning ? (
+                            <JobFilingQueryWarningIndicator jobId={job.id} warning={job.filingQueryWarning} />
+                          ) : null}
+                        </div>
+                      </DataTableCell>
+                      <DataTableCell className="py-5">
+                        <div className="min-w-0">
+                          <p className="truncate text-on-surface">{job.title}</p>
+                          <p className="mt-1 truncate text-xs text-on-surface-variant">{job.branchName}</p>
+                        </div>
+                      </DataTableCell>
+                      <DataTableCell className="py-5">{job.customerName}</DataTableCell>
+                      <DataTableCell className="py-5 ds-label">{job.jobTypeName}</DataTableCell>
+                      <DataTableCell className="py-5 ds-numeric text-on-surface-variant">
+                        {getFilingReference(job) || "Pending"}
+                      </DataTableCell>
+                      <DataTableCell className="py-5 text-on-surface-variant">
+                        {formatJobDate(job.createdAt)}
+                      </DataTableCell>
+                      <DataTableCell className="py-5">
+                        <Badge variant={getChaStageBadgeVariant(job.stage)} className="uppercase">
+                          {formatChaBadgeLabel(job.stage)}
+                        </Badge>
+                      </DataTableCell>
+                      <DataTableCell className="py-5">
+                        <Badge variant={getChaPriorityBadgeVariant(job.priority)} className="uppercase">
+                          {job.priority}
+                        </Badge>
+                      </DataTableCell>
+                      <DataTableCell className="py-5 text-on-surface-variant">{job.ownerName}</DataTableCell>
+                      <DataTableCell className="py-5 text-right">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          mode="icon"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            router.push(`/cha/jobs/${job.id}`);
+                          }}
+                          aria-label={`Open ${job.jobNumber}`}
+                        >
+                          <MoreVertical size={14} />
+                        </Button>
+                      </DataTableCell>
+                    </ClickableRow>
+                  ))
+                )}
+              </DataTableBody>
+              {data.totalPages > 1 ? (
+                <DataTableFooter>
+                  <span className="text-xs text-on-surface-variant">
+                    Page <span className="text-on-surface">{data.page}</span> of{" "}
+                    <span className="text-on-surface">{data.totalPages}</span> ({data.total} jobs)
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={data.page === 1}
+                      onClick={() => handlePageChange(tableKey, data.page - 1)}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={data.page === data.totalPages}
+                      onClick={() => handlePageChange(tableKey, data.page + 1)}
+                    >
+                      Next
+                    </Button>
                   </div>
-                  <p className="text-sm text-on-surface">{emptyTitle}</p>
-                  <p className="mt-1 text-xs">{emptyText}</p>
-                </div>
-              }
-            />
-          ) : (
-            data.items.map((job) => (
-              <ClickableRow key={job.id} href={`/cha/jobs/${job.id}`}>
-                <DataTableCell className="py-5 font-medium text-[#00cec4]">
-                  <div className="flex items-center gap-2">
-                    <span>{job.jobNumber}</span>
-                    <ChaDueDateWarningsIndicator warnings={job.dueDateWarnings} />
-                    {job.filingQueryWarning ? (
-                      <JobFilingQueryWarningIndicator jobId={job.id} warning={job.filingQueryWarning} />
-                    ) : null}
-                  </div>
-                </DataTableCell>
-                <DataTableCell className="py-5">
-                  <div className="min-w-0">
-                    <p className="truncate text-on-surface">{job.title}</p>
-                    <p className="mt-1 truncate text-xs text-on-surface-variant">{job.branchName}</p>
-                  </div>
-                </DataTableCell>
-                <DataTableCell className="py-5">{job.customerName}</DataTableCell>
-                <DataTableCell className="py-5 ds-label">{job.jobTypeName}</DataTableCell>
-                <DataTableCell className="py-5 ds-numeric text-on-surface-variant">
-                  {getFilingReference(job) || "Pending"}
-                </DataTableCell>
-                <DataTableCell className="py-5 text-on-surface-variant">
-                  {formatJobDate(job.createdAt)}
-                </DataTableCell>
-                <DataTableCell className="py-5">
-                  <Badge variant={getChaStageBadgeVariant(job.stage)} className="uppercase">
-                    {formatChaBadgeLabel(job.stage)}
-                  </Badge>
-                </DataTableCell>
-                <DataTableCell className="py-5">
-                  <Badge
-                    variant={getChaPriorityBadgeVariant(job.priority)}
-                    className="uppercase"
-                  >
-                    {job.priority}
-                  </Badge>
-                </DataTableCell>
-                <DataTableCell className="py-5 text-on-surface-variant">{job.ownerName}</DataTableCell>
-                <DataTableCell className="py-5 text-right">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    mode="icon"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      router.push(`/cha/jobs/${job.id}`);
-                    }}
-                    aria-label={`Open ${job.jobNumber}`}
-                  >
-                    <MoreVertical size={14} />
-                  </Button>
-                </DataTableCell>
-              </ClickableRow>
-            ))
-          )}
-        </DataTableBody>
-        {data.totalPages > 1 ? (
-          <DataTableFooter>
-            <span className="text-xs text-on-surface-variant">
-              Page <span className="text-on-surface">{data.page}</span> of{" "}
-              <span className="text-on-surface">{data.totalPages}</span> ({data.total} jobs)
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={data.page === 1}
-                onClick={() => handlePageChange(tableKey, data.page - 1)}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={data.page === data.totalPages}
-                onClick={() => handlePageChange(tableKey, data.page + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </DataTableFooter>
-        ) : null}
-      </DataTable>
+                </DataTableFooter>
+              ) : null}
+            </DataTable>
+          </div>
+        </ChaSectionShell>
       </div>
-      </ChaSectionShell>
-    </div>
-  );
+    );
   };
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[26px] border border-outline-variant/35 bg-surface px-5 py-4 shadow-[0_18px_42px_-34px_rgba(15,23,42,0.28)]">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-              <span>CHA</span>
-              <ChevronRight size={14} />
-              <span>Jobs</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="ds-icon-badge">
-                <Briefcase size={16} />
-              </span>
-              <h1 className="ds-h1 text-on-surface">Jobs</h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" mode="icon" onClick={() => setIsFilterPanelOpen((current) => !current)} aria-label="Toggle filters">
-              <Filter size={16} />
-            </Button>
-          </div>
-        </div>
-      </section>
+      <ChaPageHeader
+        eyebrow={
+          <>
+            <span>CHA</span>
+            <ChevronRight size={14} />
+            <span>Jobs</span>
+          </>
+        }
+        title="Jobs"
+        description="Run the CHA operations queue from one place with faster search, filter, and handoff control."
+        icon={<Briefcase size={20} />}
+        actions={
+          <Button variant="outline" mode="icon" onClick={() => setIsFilterPanelOpen((current) => !current)} aria-label="Toggle filters">
+            <Filter size={16} />
+          </Button>
+        }
+      />
 
       <div className="grid gap-4 xl:grid-cols-4">
         {summaryCards.map((card) => (
@@ -466,23 +471,31 @@ export function JobsClient({
         ))}
       </div>
 
-      <div className="relative overflow-hidden rounded-[30px] border border-outline-variant/40 bg-surface shadow-[0_28px_72px_-48px_rgba(15,23,42,0.28)]">
-        <div className="pointer-events-none absolute left-6 top-0 h-20 w-40 rounded-full bg-[#00cec4]/[0.08] blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 right-10 h-20 w-32 rounded-full bg-[#fb923c]/[0.08] blur-3xl" />
-        <div className="relative grid gap-5 p-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.8fr)]">
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="ds-icon-badge">
-                <Search size={16} />
-              </span>
-              <div className="space-y-1">
-                <h2 className="ds-h2 text-on-surface">Job Command Center</h2>
-                <p className="text-sm text-on-surface-variant">
-                  Search, narrow, and launch the next customs job without losing context.
-                </p>
-              </div>
+      <ChaControlPanel
+        title="Job Command Center"
+        description="Search, narrow, and launch the next customs job without losing context."
+        icon={<Search size={16} />}
+        actions={
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-[20px] border border-[#2563eb]/16 bg-surface px-4 py-3 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.28)]">
+              <p className="ds-label">Queues</p>
+              <p className="ds-numeric text-lg text-on-surface">
+                {activeJobsData.total + completedJobsData.total}
+              </p>
+              <p className="text-xs text-on-surface-variant">Visible jobs across both sections</p>
             </div>
-
+            <div className="rounded-[20px] border border-outline-variant/20 bg-surface px-4 py-3 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.28)]">
+              <p className="ds-label">Focus</p>
+              <p className="text-lg font-semibold text-on-surface">
+                {assignedToMe ? "My Queue" : "Shared Queue"}
+              </p>
+              <p className="text-xs text-on-surface-variant">{assignedViewNote}</p>
+            </div>
+          </div>
+        }
+      >
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.8fr)]">
+          <div className="space-y-4">
             <div className="relative min-w-0">
               <span className="absolute inset-y-0 left-4 flex items-center text-on-surface-variant">
                 <Search size={16} />
@@ -509,9 +522,9 @@ export function JobsClient({
                       key={pill.key}
                       type="button"
                       onClick={() => removeFilter(pill.key)}
-                      className="rounded-full border border-[#00cec4]/25 bg-[#00cec4]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-[#00cec4] transition hover:bg-[#00cec4]/16"
+                      className="rounded-full border border-[#2563eb]/25 bg-[#2563eb]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-[#2563eb] transition hover:bg-[#2563eb]/16 dark:text-[#9ab8ff]"
                     >
-                      {pill.label} ×
+                      {pill.label} x
                     </button>
                   ))}
                   <Button type="button" variant="outline" size="sm" onClick={resetFilters}>
@@ -526,138 +539,118 @@ export function JobsClient({
             </div>
           </div>
 
-          <div className="flex flex-col justify-between gap-4 rounded-[24px] border border-outline-variant/25 bg-surface-container-low/65 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]">
-            <div className="space-y-2">
-              <p className="ds-label">Live Controls</p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[20px] border border-outline-variant/20 bg-surface px-4 py-3 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.28)]">
-                  <p className="ds-label">Queues</p>
-                  <p className="ds-numeric text-lg text-on-surface">
-                    {activeJobsData.total + completedJobsData.total}
-                  </p>
-                  <p className="text-xs text-on-surface-variant">Visible jobs across both sections</p>
-                </div>
-                <div className="rounded-[20px] border border-outline-variant/20 bg-surface px-4 py-3 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.28)]">
-                  <p className="ds-label">Focus</p>
-                  <p className="text-lg font-semibold text-on-surface">
-                    {assignedToMe ? "My Queue" : "Shared Queue"}
-                  </p>
-                  <p className="text-xs text-on-surface-variant">{assignedViewNote}</p>
-                </div>
-              </div>
-            </div>
-
+          <div className="flex flex-col justify-end gap-4 rounded-[24px] border border-[#2563eb]/16 bg-surface-container-low/65 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]">
             <div className="flex flex-wrap items-center justify-end gap-2">
-            <FilterMenu
-              open={isFilterPanelOpen}
-              onOpenChange={setIsFilterPanelOpen}
-              activeCount={activeFilterCount}
-              title="Filters"
-              ariaLabel="Open filters"
-              contentClassName="w-[320px] max-h-[70vh] overflow-y-auto"
-            >
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="ds-label block">Workflow Stage</label>
-                  <DropdownSelect
-                    value={stage}
-                    onValueChange={setStage}
-                    placeholder="All Workflow Stages"
-                    options={[
-                      { value: "", label: "All Workflow Stages" },
-                      { value: "DOCUMENT_COLLECTION", label: "Document Collection" },
-                      { value: "ADDITIONAL_DATA", label: "Additional Data" },
-                      { value: "CHECKLIST_PREPARATION", label: "Checklist Prep" },
-                      { value: "CHECKLIST_APPROVAL", label: "Checklist Approval" },
-                      { value: "FILING", label: "Filing Stage" },
-                      { value: "FILED", label: "Filed / Completed" },
-                    ]}
-                  />
-                </div>
+              <FilterMenu
+                open={isFilterPanelOpen}
+                onOpenChange={setIsFilterPanelOpen}
+                activeCount={activeFilterCount}
+                title="Filters"
+                ariaLabel="Open filters"
+                contentClassName="w-[320px] max-h-[70vh] overflow-y-auto"
+              >
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="ds-label block">Workflow Stage</label>
+                    <DropdownSelect
+                      value={stage}
+                      onValueChange={setStage}
+                      placeholder="All Workflow Stages"
+                      options={[
+                        { value: "", label: "All Workflow Stages" },
+                        { value: "DOCUMENT_COLLECTION", label: "Document Collection" },
+                        { value: "ADDITIONAL_DATA", label: "Additional Data" },
+                        { value: "CHECKLIST_PREPARATION", label: "Checklist Prep" },
+                        { value: "CHECKLIST_APPROVAL", label: "Checklist Approval" },
+                        { value: "FILING", label: "Filing Stage" },
+                        { value: "FILED", label: "Filed / Completed" },
+                      ]}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <label className="ds-label block">Status</label>
-                  <DropdownSelect
-                    value={status}
-                    onValueChange={setStatus}
-                    placeholder="All Statuses"
-                    options={[
-                      { value: "", label: "All Statuses" },
-                      { value: "ACTIVE", label: "Active" },
-                      { value: "HOLD", label: "Hold" },
-                      { value: "CANCELLED", label: "Cancelled" },
-                      { value: "COMPLETED", label: "Completed" },
-                    ]}
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <label className="ds-label block">Status</label>
+                    <DropdownSelect
+                      value={status}
+                      onValueChange={setStatus}
+                      placeholder="All Statuses"
+                      options={[
+                        { value: "", label: "All Statuses" },
+                        { value: "ACTIVE", label: "Active" },
+                        { value: "HOLD", label: "Hold" },
+                        { value: "CANCELLED", label: "Cancelled" },
+                        { value: "COMPLETED", label: "Completed" },
+                      ]}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <label className="ds-label block">Priority</label>
-                  <DropdownSelect
-                    value={priority}
-                    onValueChange={setPriority}
-                    placeholder="All Priorities"
-                    options={[
-                      { value: "", label: "All Priorities" },
-                      { value: "LOW", label: "Low" },
-                      { value: "MEDIUM", label: "Medium" },
-                      { value: "HIGH", label: "High" },
-                    ]}
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <label className="ds-label block">Priority</label>
+                    <DropdownSelect
+                      value={priority}
+                      onValueChange={setPriority}
+                      placeholder="All Priorities"
+                      options={[
+                        { value: "", label: "All Priorities" },
+                        { value: "LOW", label: "Low" },
+                        { value: "MEDIUM", label: "Medium" },
+                        { value: "HIGH", label: "High" },
+                      ]}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <label className="ds-label block">Branch</label>
-                  <DropdownSelect
-                    value={branchId}
-                    onValueChange={setBranchId}
-                    placeholder="All Branches"
-                    options={[
-                      { value: "", label: "All Branches" },
-                      ...options.branches.map((branch) => ({
-                        value: branch.id,
-                        label: branch.name,
-                      })),
-                    ]}
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <label className="ds-label block">Branch</label>
+                    <DropdownSelect
+                      value={branchId}
+                      onValueChange={setBranchId}
+                      placeholder="All Branches"
+                      options={[
+                        { value: "", label: "All Branches" },
+                        ...options.branches.map((branch) => ({
+                          value: branch.id,
+                          label: branch.name,
+                        })),
+                      ]}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <label className="ds-label block">Job Type</label>
-                  <DropdownSelect
-                    value={jobTypeId}
-                    onValueChange={setJobTypeId}
-                    placeholder="All Job Types"
-                    options={[
-                      { value: "", label: "All Job Types" },
-                      ...options.jobTypes.map((jobType) => ({
-                        value: jobType.id,
-                        label: jobType.name,
-                      })),
-                    ]}
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <label className="ds-label block">Job Type</label>
+                    <DropdownSelect
+                      value={jobTypeId}
+                      onValueChange={setJobTypeId}
+                      placeholder="All Job Types"
+                      options={[
+                        { value: "", label: "All Job Types" },
+                        ...options.jobTypes.map((jobType) => ({
+                          value: jobType.id,
+                          label: jobType.name,
+                        })),
+                      ]}
+                    />
+                  </div>
 
-                <label className="flex items-center gap-3 rounded-xl border border-outline-variant/30 px-4 py-3 text-sm text-on-surface">
-                  <input
-                    type="checkbox"
-                    checked={assignedToMe}
-                    onChange={(event) => setAssignedToMe(event.target.checked)}
-                    className="h-4 w-4 rounded"
-                  />
-                  Assigned to me
-                </label>
+                  <label className="flex items-center gap-3 rounded-xl border border-outline-variant/30 px-4 py-3 text-sm text-on-surface">
+                    <input
+                      type="checkbox"
+                      checked={assignedToMe}
+                      onChange={(event) => setAssignedToMe(event.target.checked)}
+                      className="h-4 w-4 rounded"
+                    />
+                    Assigned to me
+                  </label>
 
-                <div className="flex items-center justify-between gap-3 border-t border-outline-variant/20 pt-4">
-                  <Button variant="outline" onClick={resetFilters} className="flex-1">
-                    Reset
-                  </Button>
-                  <Button onClick={applyFilters} className="flex-1">
-                    Apply Filters
-                  </Button>
+                  <div className="flex items-center justify-between gap-3 border-t border-outline-variant/20 pt-4">
+                    <Button variant="outline" onClick={resetFilters} className="flex-1">
+                      Reset
+                    </Button>
+                    <Button onClick={applyFilters} className="flex-1">
+                      Apply Filters
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </FilterMenu>
+              </FilterMenu>
               <Button
                 onClick={applyFilters}
                 variant="outline"
@@ -671,7 +664,7 @@ export function JobsClient({
             </div>
           </div>
         </div>
-      </div>
+      </ChaControlPanel>
 
       {renderTable({
         title: "Active Jobs",

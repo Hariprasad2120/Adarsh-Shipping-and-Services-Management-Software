@@ -1008,26 +1008,63 @@ export function SettingsForm({
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Filing Workflows</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
-                <div className="flex items-start gap-3">
-                  <Workflow size={20} className="mt-0.5 text-primary" />
-                  <div>
-                    <p className="text-sm font-semibold text-on-surface">Node-based filing blueprint</p>
-                    <p className="mt-1 text-xs text-on-surface-variant">Manage Import BE, Export SB, RMS, Open Bill, and custom routes in the workflow builder.</p>
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Filing Workflows</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <Workflow size={20} className="mt-0.5 text-primary" />
+                    <div>
+                      <p className="text-sm font-semibold text-on-surface">Node-based filing blueprint</p>
+                      <p className="mt-1 text-xs text-on-surface-variant">Manage Import BE, Export SB, RMS, Open Bill, and custom routes in the workflow builder.</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <Button type="button" variant="outline" className="w-full justify-between" onClick={() => router.push("/cha/settings/filing-workflows")}>
-                Manage Filing Workflows
-                <ChevronRight size={16} />
-              </Button>
-            </CardContent>
-          </Card>
+                <Button type="button" variant="outline" className="w-full justify-between" onClick={() => router.push("/cha/settings/filing-workflows")}>
+                  Manage Filing Workflows
+                  <ChevronRight size={16} />
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Shipment Intelligence</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-xl border border-dashed border-outline-variant/70 bg-surface p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-semibold text-on-surface">Live shipment tracking</p>
+                        <Badge variant="warning" className="border-[#fb923c]/50 bg-[#fb923c]/10 text-[#fb923c] dark:text-[#fdba74]">
+                          Future Work
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-on-surface-variant">
+                        This overview widget is currently disabled. Enablement, external tracking integration, and map intelligence are planned for a later release.
+                      </p>
+                    </div>
+                    <label className="flex items-center gap-2 rounded-full border border-outline-variant/70 bg-surface-container-low px-3 py-1.5 text-xs text-on-surface-variant">
+                      <input
+                        type="checkbox"
+                        checked={false}
+                        disabled
+                        aria-label="Enable live shipment tracking"
+                      />
+                      Coming soon
+                    </label>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-outline-variant/60 bg-surface-container-low p-3 text-xs text-on-surface-variant">
+                  Keep this off for now. The setting is shown only as a placeholder so future rollout can be controlled from CHA settings once the backend configuration is ready.
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </section>
       ) : null}
 
