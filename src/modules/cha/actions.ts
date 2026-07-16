@@ -1562,4 +1562,23 @@ export async function deleteFilingAttachmentAction(
   }
 }
 
+export async function updateFilingAttachmentValidityAction(
+  jobId: string,
+  attachmentId: string,
+  validityDate: string | null,
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify();
+    const parsedValidityDate =
+      typeof validityDate === "string" && validityDate.trim().length > 0
+        ? new Date(validityDate)
+        : null;
+    const result = await chaService.updateFilingAttachmentValidity(userId, orgId, jobId, attachmentId, parsedValidityDate);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update filing attachment validity date" };
+  }
+}
+
 

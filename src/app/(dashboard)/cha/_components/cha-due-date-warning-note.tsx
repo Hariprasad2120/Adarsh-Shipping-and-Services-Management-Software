@@ -27,7 +27,11 @@ export function ChaDueDateWarningNote({
           </div>
           <div className="space-y-2">
             <p className="ds-label !text-[#fb923c]">
-              {warning.type === "DELIVERY_ORDER" ? "DELIVERY ORDER VALIDITY ALERT" : "SECTION 49 VALIDITY ALERT"}
+              {warning.type === "DELIVERY_ORDER"
+                ? "DELIVERY ORDER VALIDITY ALERT"
+                : warning.type === "FILING_ATTACHMENT"
+                  ? "DOCUMENT VALIDITY ALERT"
+                  : "SECTION 49 VALIDITY ALERT"}
             </p>
             <p className="text-sm leading-relaxed text-on-surface">{warning.message}</p>
           </div>

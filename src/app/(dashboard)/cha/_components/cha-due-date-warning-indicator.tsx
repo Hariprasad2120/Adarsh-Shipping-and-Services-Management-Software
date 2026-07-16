@@ -9,7 +9,8 @@ import { WarningIndicatorPopover } from "@/components/ui/warning-indicator-popov
 export type DueDateWarningViewModel = {
   jobId: string;
   jobNumber: string;
-  type: "DELIVERY_ORDER" | "SECTION49";
+  type: "DELIVERY_ORDER" | "SECTION49" | "FILING_ATTACHMENT";
+  subjectLabel?: string | null;
   severity: "expired" | "expiring";
   daysUntilExpiry: number;
   validityDate: string;
@@ -25,7 +26,12 @@ type ChaDueDateWarningIndicatorProps = {
 };
 
 function getEyebrow(warning: DueDateWarningViewModel) {
-  const prefix = warning.type === "DELIVERY_ORDER" ? "DELIVERY ORDER" : "SECTION 49";
+  const prefix =
+    warning.type === "DELIVERY_ORDER"
+      ? "DELIVERY ORDER"
+      : warning.type === "FILING_ATTACHMENT"
+        ? "DOCUMENT VALIDITY"
+        : "SECTION 49";
   return warning.severity === "expired" ? `${prefix} EXPIRED` : `${prefix} EXPIRING`;
 }
 
@@ -38,7 +44,13 @@ export function ChaDueDateWarningIndicator({
 
   return (
     <WarningIndicatorPopover
-      ariaLabel={`${warning.type === "DELIVERY_ORDER" ? "Delivery Order" : "Section 49"} due date warning`}
+      ariaLabel={`${
+        warning.type === "DELIVERY_ORDER"
+          ? "Delivery Order"
+          : warning.type === "FILING_ATTACHMENT"
+            ? warning.subjectLabel || "Document"
+            : "Section 49"
+      } due date warning`}
       tone={warning.severity === "expired" ? "destructive" : "warning"}
       eyebrow={getEyebrow(warning)}
       description={warning.message}

@@ -3351,25 +3351,10 @@ export async function upsertAdditionalData(
     throw new Error("The extension date must be after the original Delivery Order validity date.");
   }
 
-  if (manifestConfig.isManifestMandatory) {
-    if (manifestConfig.manifestRequirement === "IGM" && !importGeneralManifest) {
-      throw new Error("IGM Number is required for this clearance type.");
-    }
-    if (manifestConfig.manifestRequirement === "EGM" && !exportGeneralManifest) {
-      throw new Error("EGM Number is required for this clearance type.");
-    }
-    if (manifestConfig.manifestRequirement === "BOTH" && (!importGeneralManifest || !exportGeneralManifest)) {
-      throw new Error("Both IGM and EGM numbers are required for this clearance type.");
-    }
-    if (manifestConfig.manifestRequirement === "CUSTOM" && !customManifestValue) {
-      throw new Error(`${manifestConfig.manifestLabel} is required for this clearance type.`);
-    }
-  }
-
-  const nextStatus = isAdditionalDataComplete({
-    vesselInwardDate,
-    importGeneralManifest,
-    exportGeneralManifest,
+    const nextStatus = isAdditionalDataComplete({
+      vesselInwardDate,
+      importGeneralManifest,
+      exportGeneralManifest,
     customManifestValue,
     deliveryOrderValidity,
   }, manifestConfig) ? "COMPLETED" : "PENDING";
@@ -3541,12 +3526,13 @@ export type Section49ValidityWarning = {
   severity: "expired" | "expiring";
 };
 
-export type ChaDueDateWarningType = "DELIVERY_ORDER" | "SECTION49";
+export type ChaDueDateWarningType = "DELIVERY_ORDER" | "SECTION49" | "FILING_ATTACHMENT";
 
 export type ChaDueDateWarning = {
   jobId: string;
   jobNumber: string;
   type: ChaDueDateWarningType;
+  subjectLabel?: string | null;
   validityDate: Date;
   daysUntilExpiry: number;
   severity: "expired" | "expiring";
@@ -3581,15 +3567,24 @@ const DO_DOCUMENT_REQUIREMENT_NAME = "Delivery Order";
 const SECTION49_DOCUMENT_NAME = "Section 49";
 const DELIVERY_ORDER_VALIDITY_NOTIFICATION_KINDS = ["CHA_DELIVERY_ORDER_VALIDITY_EXPIRED", "CHA_DELIVERY_ORDER_VALIDITY_EXPIRING"];
 const SECTION49_VALIDITY_NOTIFICATION_KINDS = ["CHA_SECTION49_VALIDITY_EXPIRED", "CHA_SECTION49_VALIDITY_EXPIRING"];
+const FILING_ATTACHMENT_VALIDITY_NOTIFICATION_KINDS = ["CHA_FILING_ATTACHMENT_VALIDITY_EXPIRED", "CHA_FILING_ATTACHMENT_VALIDITY_EXPIRING"];
 const CHA_DUE_DATE_WARNING_NOTIFICATION_KINDS = [
   ...DELIVERY_ORDER_VALIDITY_NOTIFICATION_KINDS,
   ...SECTION49_VALIDITY_NOTIFICATION_KINDS,
+  ...FILING_ATTACHMENT_VALIDITY_NOTIFICATION_KINDS,
 ];
 
 function getDueDateWarningAction(type: ChaDueDateWarningType, jobId: string) {
   if (type === "DELIVERY_ORDER") {
     return {
       link: `/cha/jobs/${jobId}?tab=additionalData&focus=deliveryOrderExtensionDate`,
+      actionLabel: "Go To",
+    };
+  }
+
+  if (type === "FILING_ATTACHMENT") {
+    return {
+      link: `/cha/jobs/${jobId}?tab=filing`,
       actionLabel: "Go To",
     };
   }
@@ -3607,13 +3602,21 @@ function getDueDateWarningNotificationKind(type: ChaDueDateWarningType, severity
       : "CHA_DELIVERY_ORDER_VALIDITY_EXPIRING";
   }
 
+  if (type === "FILING_ATTACHMENT") {
+    return severity === "expired"
+      ? "CHA_FILING_ATTACHMENT_VALIDITY_EXPIRED"
+      : "CHA_FILING_ATTACHMENT_VALIDITY_EXPIRING";
+  }
+
   return severity === "expired"
     ? "CHA_SECTION49_VALIDITY_EXPIRED"
     : "CHA_SECTION49_VALIDITY_EXPIRING";
 }
 
-function getDueDateWarningLabel(type: ChaDueDateWarningType) {
-  return type === "DELIVERY_ORDER" ? "Delivery Order validity" : "Section 49 validity";
+function getDueDateWarningLabel(type: ChaDueDateWarningType, subjectLabel?: string | null) {
+  if (type === "DELIVERY_ORDER") return "Delivery Order validity";
+  if (type === "FILING_ATTACHMENT") return `${subjectLabel || "Document"} validity`;
+  return "Section 49 validity";
 }
 
 function buildDueDateWarningMessage(
@@ -3621,8 +3624,9 @@ function buildDueDateWarningMessage(
   severity: "expired" | "expiring",
   validityDate: Date,
   daysUntilExpiry: number,
+  subjectLabel?: string | null,
 ) {
-  const label = getDueDateWarningLabel(type);
+  const label = getDueDateWarningLabel(type, subjectLabel);
   return severity === "expired"
     ? `${label} expired on ${validityDate.toLocaleDateString("en-IN")}.`
     : `${label} is expiring in ${daysUntilExpiry} day(s) on ${validityDate.toLocaleDateString("en-IN")}.`;
@@ -3632,8 +3636,11 @@ function getDueDateWarningStateKey(
   type: ChaDueDateWarningType,
   severity: "expired" | "expiring",
   validityDate: Date,
+  entityKey?: string | null,
 ) {
-  return `${type}:${severity}:${validityDate.toISOString().slice(0, 10)}`;
+  return entityKey
+    ? `${type}:${entityKey}:${severity}:${validityDate.toISOString().slice(0, 10)}`
+    : `${type}:${severity}:${validityDate.toISOString().slice(0, 10)}`;
 }
 
 function buildDueDateWarningLookupKey(
@@ -3641,8 +3648,9 @@ function buildDueDateWarningLookupKey(
   type: ChaDueDateWarningType,
   severity: "expired" | "expiring",
   validityDate: Date,
+  entityKey?: string | null,
 ) {
-  return `${jobId}:${getDueDateWarningStateKey(type, severity, validityDate)}`;
+  return `${jobId}:${getDueDateWarningStateKey(type, severity, validityDate, entityKey)}`;
 }
 
 function getDaysUntilExpiry(validityDate: Date, today: Date) {
@@ -3655,6 +3663,7 @@ function buildChaDueDateWarning(params: {
   jobId: string;
   jobNumber: string;
   type: ChaDueDateWarningType;
+  subjectLabel?: string | null;
   validityDate: Date;
   today: Date;
   notificationId: string;
@@ -3670,10 +3679,11 @@ function buildChaDueDateWarning(params: {
     jobId: params.jobId,
     jobNumber: params.jobNumber,
     type: params.type,
+    subjectLabel: params.subjectLabel ?? null,
     validityDate: params.validityDate,
     daysUntilExpiry,
     severity,
-    message: buildDueDateWarningMessage(params.type, severity, params.validityDate, daysUntilExpiry),
+    message: buildDueDateWarningMessage(params.type, severity, params.validityDate, daysUntilExpiry, params.subjectLabel),
     notificationId: params.notificationId,
     link: action.link,
     actionLabel: action.actionLabel,
@@ -3949,7 +3959,7 @@ export async function listChaDueDateWarnings(
         ],
       };
 
-  const [deliveryOrderJobs, section49Jobs, existingNotifications] = await Promise.all([
+  const [deliveryOrderJobs, section49Jobs, filingAttachmentsWithValidity, existingNotifications] = await Promise.all([
     db.chaJob.findMany({
       where: {
         ...getActiveChaJobWhere(orgId),
@@ -4000,6 +4010,38 @@ export async function listChaDueDateWarnings(
         filingSection49Flag: {
           select: {
             validityDate: true,
+          },
+        },
+      },
+    }),
+    db.filingAttachment.findMany({
+      where: {
+        validityDate: { lte: threshold },
+        instance: {
+          job: {
+            ...getActiveChaJobWhere(orgId),
+            ...(options.jobId ? { id: options.jobId } : {}),
+            status: "ACTIVE",
+            stage: { not: "FILED" },
+            ...accessWhere,
+          },
+        },
+      },
+      select: {
+        id: true,
+        fileName: true,
+        validityDate: true,
+        documentRequirementLabel: true,
+        checklistItem: { select: { label: true } },
+        photoRequirement: { select: { label: true } },
+        instance: {
+          select: {
+            job: {
+              select: {
+                id: true,
+                jobNumber: true,
+              },
+            },
           },
         },
       },
@@ -4057,6 +4099,7 @@ export async function listChaDueDateWarnings(
     jobId: string;
     jobNumber: string;
     type: ChaDueDateWarningType;
+    subjectLabel?: string | null;
     validityDate: Date;
     severity: "expired" | "expiring";
   }> = [];
@@ -4066,6 +4109,7 @@ export async function listChaDueDateWarnings(
     jobId: string;
     jobNumber: string;
     type: ChaDueDateWarningType;
+    subjectLabel?: string | null;
     validityDate: Date;
     severity: "expired" | "expiring";
   }> = [];
@@ -4085,6 +4129,7 @@ export async function listChaDueDateWarnings(
       jobId: job.id,
       jobNumber: job.jobNumber,
       type: "DELIVERY_ORDER",
+      subjectLabel: null,
       validityDate,
       severity,
     });
@@ -4105,6 +4150,40 @@ export async function listChaDueDateWarnings(
       jobId: job.id,
       jobNumber: job.jobNumber,
       type: "SECTION49",
+      subjectLabel: null,
+      validityDate,
+      severity,
+    });
+  }
+
+  for (const attachment of filingAttachmentsWithValidity) {
+    const validityDate = attachment.validityDate;
+    if (!validityDate) {
+      continue;
+    }
+    const daysUntilExpiry = getDaysUntilExpiry(validityDate, today);
+    if (daysUntilExpiry > 4) {
+      continue;
+    }
+    const severity = daysUntilExpiry < 0 ? "expired" : "expiring";
+    const subjectLabel =
+      attachment.documentRequirementLabel
+      || attachment.checklistItem?.label
+      || attachment.photoRequirement?.label
+      || attachment.fileName
+      || "Document";
+    candidates.push({
+      lookupKey: buildDueDateWarningLookupKey(
+        attachment.instance.job.id,
+        "FILING_ATTACHMENT",
+        severity,
+        validityDate,
+        attachment.id,
+      ),
+      jobId: attachment.instance.job.id,
+      jobNumber: attachment.instance.job.jobNumber,
+      type: "FILING_ATTACHMENT",
+      subjectLabel,
       validityDate,
       severity,
     });
@@ -4136,6 +4215,7 @@ export async function listChaDueDateWarnings(
             candidate.severity,
             candidate.validityDate,
             getDaysUntilExpiry(candidate.validityDate, today),
+            candidate.subjectLabel,
           ),
           link: action.link,
           payload: {
@@ -4143,6 +4223,7 @@ export async function listChaDueDateWarnings(
             warningType: candidate.type,
             severity: candidate.severity,
             validityDate: candidate.validityDate.toISOString(),
+            subjectLabel: candidate.subjectLabel ?? null,
             stateKey,
           },
           priority: "normal",
@@ -4175,6 +4256,7 @@ export async function listChaDueDateWarnings(
         jobId: candidate.jobId,
         jobNumber: candidate.jobNumber,
         type: candidate.type,
+        subjectLabel: candidate.subjectLabel ?? null,
         validityDate: candidate.validityDate,
         today,
         notificationId: notification.id,
@@ -8971,6 +9053,7 @@ async function createFilingNodeRunWithResponses(
     };
     startedAt: Date;
     orgId: string;
+    preserveExistingProgress?: boolean;
   },
 ) {
   const nodeRun = await tx.filingNodeRun.create({
@@ -9003,10 +9086,62 @@ async function createFilingNodeRunWithResponses(
       update: {
         nodeRunId: nodeRun.id,
         dueAt,
-        completedAt: null,
-        delayRemarks: null,
-        delayRemarkedAt: null,
-        fileKey: null,
+        ...(params.preserveExistingProgress
+          ? {}
+          : {
+              completedAt: null,
+              delayRemarks: null,
+              delayRemarkedAt: null,
+              fileKey: null,
+              isChecked: false,
+              remarks: null,
+            }),
+      },
+    });
+  }
+
+  if (params.preserveExistingProgress) {
+    await tx.filingAttachment.updateMany({
+      where: {
+        instanceId: params.instanceId,
+        nodeRun: {
+          is: {
+            nodeId: params.node.id,
+          },
+        },
+      },
+      data: {
+        nodeRunId: nodeRun.id,
+      },
+    });
+
+    await tx.filingFieldValue.updateMany({
+      where: {
+        instanceId: params.instanceId,
+        nodeId: params.node.id,
+      },
+      data: {
+        nodeRunId: nodeRun.id,
+      },
+    });
+
+    await tx.filingToggleState.updateMany({
+      where: {
+        instanceId: params.instanceId,
+        nodeId: params.node.id,
+      },
+      data: {
+        nodeRunId: nodeRun.id,
+      },
+    });
+
+    await tx.filingWorkflowQuery.updateMany({
+      where: {
+        instanceId: params.instanceId,
+        nodeId: params.node.id,
+      },
+      data: {
+        nodeRunId: nodeRun.id,
       },
     });
   }
@@ -11090,6 +11225,7 @@ export async function revertFilingWorkflowToPreviousStage(
       node: targetNode,
       startedAt: now,
       orgId,
+      preserveExistingProgress: true,
     });
     const slaDueDate = await calculateSlaDueDate(now, targetNode.slaDuration, targetNode.slaUnit, orgId);
     await tx.filingNodeRun.update({
@@ -13160,4 +13296,98 @@ export async function deleteFilingAttachment(
   });
 
   return true;
+}
+
+export async function updateFilingAttachmentValidity(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  attachmentId: string,
+  validityDate: Date | null,
+) {
+  const job = await db.chaJob.findFirstOrThrow({
+    where: { id: jobId, orgId },
+    select: {
+      id: true,
+      primaryOwnerId: true,
+      assignedManagerId: true,
+      assignments: {
+        select: {
+          userId: true,
+        },
+      },
+    },
+  });
+
+  await assertCanAccessFiling(actorId, job);
+
+  const attachment = await db.filingAttachment.findUniqueOrThrow({
+    where: { id: attachmentId },
+    include: {
+      instance: {
+        select: {
+          jobId: true,
+        },
+      },
+      checklistItem: {
+        select: {
+          label: true,
+        },
+      },
+      photoRequirement: {
+        select: {
+          label: true,
+        },
+      },
+    },
+  });
+
+  if (attachment.instance.jobId !== jobId) {
+    throw new Error("Attachment does not belong to this job.");
+  }
+
+  const updatedAttachment = await db.$transaction(async (tx) => {
+    const nextAttachment = await tx.filingAttachment.update({
+      where: { id: attachmentId },
+      data: {
+        validityDate,
+      },
+    });
+
+    await tx.chaDocumentVersion.updateMany({
+      where: {
+        source: "FILING_WORKFLOW",
+        fileKey: attachment.fileKey,
+        workflowNodeRunId: attachment.nodeRunId,
+      },
+      data: {
+        validityDate,
+      },
+    });
+
+    return nextAttachment;
+  });
+
+  const attachmentLabel =
+    attachment.documentRequirementLabel
+    || attachment.checklistItem?.label
+    || attachment.photoRequirement?.label
+    || attachment.fileName;
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "FilingAttachment",
+    entityId: attachmentId,
+    event: "FILING_ATTACHMENT_VALIDITY_UPDATED",
+    actorId,
+    remarks: validityDate
+      ? `Updated validity date for ${attachmentLabel} to ${validityDate.toLocaleDateString("en-IN")}`
+      : `Cleared validity date for ${attachmentLabel}`,
+    metadata: {
+      validityDate: validityDate?.toISOString() ?? null,
+    },
+  });
+
+  return updatedAttachment;
 }
