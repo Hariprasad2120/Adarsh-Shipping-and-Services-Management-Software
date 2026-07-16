@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-16T04:00:15.694Z",
+  "generatedAt": "2026-07-16T10:31:36.096Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -7,9 +7,9 @@
   },
   "stats": {
     "totalAppRoutes": 203,
-    "totalApiRoutes": 177,
+    "totalApiRoutes": 181,
     "totalPrismaModels": 277,
-    "totalModuleServices": 76,
+    "totalModuleServices": 81,
     "totalComponents": 93
   },
   "appRoutes": [
@@ -1804,6 +1804,38 @@
     {
       "path": "/api/customer-portal/auth/logout",
       "filePath": "src/app/api/customer-portal/auth/logout/route.ts",
+      "module": "customer-portal",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/customer-portal/checklist-files/[versionId]",
+      "filePath": "src/app/api/customer-portal/checklist-files/[versionId]/route.ts",
+      "module": "customer-portal",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/customer-portal/checklists/[checklistId]/decision",
+      "filePath": "src/app/api/customer-portal/checklists/[checklistId]/decision/route.ts",
+      "module": "customer-portal",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/customer-portal/documents/[versionId]",
+      "filePath": "src/app/api/customer-portal/documents/[versionId]/route.ts",
+      "module": "customer-portal",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/customer-portal/shipments/[shipmentId]/documents",
+      "filePath": "src/app/api/customer-portal/shipments/[shipmentId]/documents/route.ts",
       "module": "customer-portal",
       "methods": [
         "POST"
@@ -10701,7 +10733,31 @@
         "revokeAllPortalSessions",
         "verifyPortalPassword",
         "shouldLockPortalAccount",
+        "getPortalLockoutUntil",
         "recordPortalAuthAudit"
+      ]
+    },
+    {
+      "module": "customer-portal",
+      "fileName": "checklists.ts",
+      "filePath": "src/modules/customer-portal/checklists.ts",
+      "exportedFunctions": [
+        "submitPortalChecklistDecision"
+      ]
+    },
+    {
+      "module": "customer-portal",
+      "fileName": "dashboard.ts",
+      "filePath": "src/modules/customer-portal/dashboard.ts",
+      "exportedFunctions": [
+        "getCustomerPortalDashboardData",
+        "buildActionRequiredItems",
+        "buildRecentUpdates",
+        "buildOutstandingQueries",
+        "buildDocumentStatusSummary",
+        "buildPendingChecklistDecisions",
+        "buildNotificationSummary",
+        "buildServiceFeedback"
       ]
     },
     {
@@ -10715,8 +10771,30 @@
     },
     {
       "module": "customer-portal",
+      "fileName": "shipments.ts",
+      "filePath": "src/modules/customer-portal/shipments.ts",
+      "exportedFunctions": [
+        "parseCustomerPortalShipmentFilters",
+        "getCustomerPortalShipmentsData",
+        "getCustomerPortalShipmentDetailData"
+      ]
+    },
+    {
+      "module": "customer-portal",
       "fileName": "auth.test.ts",
       "filePath": "src/modules/customer-portal/__tests__/auth.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "customer-portal",
+      "fileName": "dashboard.test.ts",
+      "filePath": "src/modules/customer-portal/__tests__/dashboard.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "customer-portal",
+      "fileName": "shipments.test.ts",
+      "filePath": "src/modules/customer-portal/__tests__/shipments.test.ts",
       "exportedFunctions": []
     },
     {
@@ -11755,9 +11833,9 @@
     },
     "customer-portal": {
       "appRoutes": 0,
-      "apiRoutes": 2,
+      "apiRoutes": 6,
       "prismaModels": 0,
-      "serviceFiles": 3,
+      "serviceFiles": 8,
       "components": 0
     },
     "dashboard": {
@@ -12310,6 +12388,18 @@
         "name": "CHA Audit Logging",
         "module": "cha",
         "status": "Implemented"
+      },
+      {
+        "name": "CHA Customer Portal Dashboard",
+        "module": "cha",
+        "status": "Implemented",
+        "description": "Customer account shipment overview with action-required, document status, queries, notifications, and feedback prompts."
+      },
+      {
+        "name": "CHA Customer Portal Shipments",
+        "module": "cha",
+        "status": "Implemented",
+        "description": "Customer-scoped shipment catalogue and per-shipment read-only workspace with status, documents, checklist decisions, queries, and recent updates."
       },
       {
         "name": "Gmail/Google Workspace Integration",

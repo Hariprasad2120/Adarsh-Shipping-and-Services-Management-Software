@@ -4,6 +4,7 @@ import { getNow } from "@/lib/clock";
 import {
   clearPortalSessionCookie,
   createPortalSession,
+  getPortalLockoutUntil,
   getPortalRequestMeta,
   getPortalSessionToken,
   recordPortalAuthAudit,
@@ -14,6 +15,7 @@ import {
 
 export async function loginCustomerPortal(email: string, password: string) {
   const normalizedEmail = email.trim().toLowerCase();
+  const now = await getNow();
   const portalUser = await db.customerPortalUser.findFirst({
     where: { email: normalizedEmail },
     include: {
@@ -31,19 +33,22 @@ export async function loginCustomerPortal(email: string, password: string) {
     throw new Error("Invalid email or password.");
   }
 
+  if (portalUser.lockedUntil && portalUser.lockedUntil.getTime() > now.getTime()) {
+    throw new Error("This portal account is temporarily locked. Please try again later.");
+  }
+
   const passwordMatches = portalUser.passwordHash
     ? await compare(password, portalUser.passwordHash)
     : false;
 
   if (!passwordMatches) {
-    const now = await getNow();
     const shouldLock = await shouldLockPortalAccount(portalUser.failedLoginCount);
 
     await db.customerPortalUser.update({
       where: { id: portalUser.id },
       data: {
         failedLoginCount: portalUser.failedLoginCount + 1,
-        lockedAt: shouldLock ? now : portalUser.lockedAt,
+        lockedUntil: shouldLock ? getPortalLockoutUntil(now) : null,
       },
     });
 
@@ -62,13 +67,12 @@ export async function loginCustomerPortal(email: string, password: string) {
     portalUser.status !== "ACTIVE" ||
     portalUser.revokedAt ||
     portalUser.suspendedAt ||
-    portalUser.lockedAt ||
+    (portalUser.lockedUntil && portalUser.lockedUntil.getTime() > now.getTime()) ||
     !portalUser.customer.isPortalEnabled
   ) {
     throw new Error("This portal account is not active.");
   }
 
-  const now = await getNow();
   const { ip, userAgent } = await getPortalRequestMeta();
   const token = await createPortalSession({
     portalUserId: portalUser.id,
@@ -85,7 +89,7 @@ export async function loginCustomerPortal(email: string, password: string) {
       data: {
         failedLoginCount: 0,
         lastLoginAt: now,
-        lockedAt: null,
+        lockedUntil: null,
       },
     }),
     recordPortalAuthAudit({

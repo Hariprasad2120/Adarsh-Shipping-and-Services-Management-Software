@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-16T04:00:15.694Z
+> Generated at: 2026-07-16T10:31:36.096Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -8,9 +8,9 @@
 | Metric | Count |
 |---|---|
 | App Routes (Pages) | 203 |
-| API Routes | 177 |
+| API Routes | 181 |
 | Prisma Models | 277 |
-| Module Service Files | 76 |
+| Module Service Files | 81 |
 | UI Components | 93 |
 
 ## Modules Overview
@@ -29,7 +29,7 @@
 | core | 2 | 0 | 72 | 5 | 0 |
 | crm | 59 | 4 | 26 | 7 | 1 |
 | cron | 0 | 7 | 0 | 0 | 0 |
-| customer-portal | 0 | 2 | 0 | 3 | 0 |
+| customer-portal | 0 | 6 | 0 | 8 | 0 |
 | dashboard | 1 | 0 | 0 | 0 | 0 |
 | dev | 0 | 1 | 0 | 0 | 0 |
 | expense | 1 | 0 | 0 | 0 | 0 |
@@ -127,6 +127,10 @@
 | GET | `/api/cron/tracking-alerts` | cron |
 | POST | `/api/customer-portal/auth/login` | customer-portal |
 | POST | `/api/customer-portal/auth/logout` | customer-portal |
+| GET | `/api/customer-portal/checklist-files/[versionId]` | customer-portal |
+| POST | `/api/customer-portal/checklists/[checklistId]/decision` | customer-portal |
+| GET | `/api/customer-portal/documents/[versionId]` | customer-portal |
+| POST | `/api/customer-portal/shipments/[shipmentId]/documents` | customer-portal |
 | GET | `/api/dev/clear-auth-cookies` | dev |
 | GET | `/api/google-chat/admin` | google-chat |
 | POST | `/api/google-chat/debug` | google-chat |
@@ -773,9 +777,14 @@
 - **service.ts**: addTimelineEvent, getTimelineEvents, addNote, getNotes, deleteNote, addAttachment, getAttachments, deleteAttachment, listLeads, listEnquiries, getLead, createLead, updateLead, deleteLead, listContacts, getContact, createContact, updateContact, listAccounts, getAccount, createAccount, updateAccount, listDeals, getDeal, createDeal, updateDealStage, updateDeal, listActivities, createActivity, updateActivity, deleteActivity, listProducts, createProduct, listVendors, createVendor, listInvoices, getInvoice, createInvoice, listProjects, createProject
 
 ### customer-portal
-- **auth.ts**: hashPortalToken, buildPortalLink, getPortalRequestMeta, validatePortalPassword, hashPortalPassword, createPortalSession, setPortalSessionCookie, clearPortalSessionCookie, getPortalSessionToken, getPortalSession, requirePortalSession, revokePortalSession, revokeAllPortalSessions, verifyPortalPassword, shouldLockPortalAccount, recordPortalAuthAudit
+- **auth.ts**: hashPortalToken, buildPortalLink, getPortalRequestMeta, validatePortalPassword, hashPortalPassword, createPortalSession, setPortalSessionCookie, clearPortalSessionCookie, getPortalSessionToken, getPortalSession, requirePortalSession, revokePortalSession, revokeAllPortalSessions, verifyPortalPassword, shouldLockPortalAccount, getPortalLockoutUntil, recordPortalAuthAudit
+- **checklists.ts**: submitPortalChecklistDecision
+- **dashboard.ts**: getCustomerPortalDashboardData, buildActionRequiredItems, buildRecentUpdates, buildOutstandingQueries, buildDocumentStatusSummary, buildPendingChecklistDecisions, buildNotificationSummary, buildServiceFeedback
 - **service.ts**: loginCustomerPortal, logoutCustomerPortal
+- **shipments.ts**: parseCustomerPortalShipmentFilters, getCustomerPortalShipmentsData, getCustomerPortalShipmentDetailData
 - **auth.test.ts**: no exports detected
+- **dashboard.test.ts**: no exports detected
+- **shipments.test.ts**: no exports detected
 
 ### google-chat
 - **cards.ts**: buildConnectCard, buildHelpCard, buildStatusCard, buildTasksCard, buildAiResponseCard, buildErrorCard, buildNotificationCard, buildSpaceLinkedCard, buildPrivacyCard, buildProcessingCard
@@ -889,6 +898,8 @@
 | CHA Expenses | cha | ✅ Implemented |
 | Document Version Control | cha | ✅ Implemented |
 | CHA Audit Logging | cha | ✅ Implemented |
+| CHA Customer Portal Dashboard | cha | ✅ Implemented |
+| CHA Customer Portal Shipments | cha | ✅ Implemented |
 | Gmail/Google Workspace Integration | communication | ✅ Implemented |
 | Google Chat Integration | communication | ✅ Implemented |
 | Email Dispatch Queue | communication | ✅ Implemented |
