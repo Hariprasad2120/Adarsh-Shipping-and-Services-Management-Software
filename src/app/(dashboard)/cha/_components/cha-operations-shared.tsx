@@ -51,7 +51,7 @@ export function getAccentTheme(accent: AccentTone) {
 export function CargoShipGraphic() {
   return (
     <svg
-      className="pointer-events-none absolute right-6 bottom-0 h-16 w-auto opacity-15 dark:opacity-10 text-cha-primary hidden md:block"
+      className="pointer-events-none absolute right-6 bottom-0 hidden h-16 w-auto text-[#00cec4] opacity-15 dark:opacity-10 md:block"
       viewBox="0 0 400 100"
       fill="currentColor"
     >
@@ -103,25 +103,24 @@ export function ChaPageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-[24px] border border-cha-border bg-cha-surface p-6 shadow-sm dark:border-cha-border-strong dark:bg-cha-surface">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.06),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.99),rgba(248,250,252,0.98))] dark:bg-[radial-gradient(circle_at_top_left,rgba(96,165,250,0.1),transparent_35%),linear-gradient(180deg,rgba(17,24,39,0.98),rgba(15,23,42,0.98))]" />
+    <section className="relative overflow-hidden rounded-xl border border-outline-variant/40 bg-surface p-6 shadow-sm">
       <CargoShipGraphic />
       <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-2">
           {eyebrow && (
-            <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wider text-cha-text-muted">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wider text-[#00cec4]">
               {eyebrow}
             </div>
           )}
           <div className="flex items-start gap-4">
             {icon && (
-              <span className="flex size-12 items-center justify-center rounded-xl bg-cha-primary-soft text-cha-primary shadow-inner">
+              <span className="ds-icon-badge size-12">
                 {icon}
               </span>
             )}
             <div className="space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight text-cha-text-primary uppercase font-display">{title}</h1>
-              {description && <p className="text-sm text-cha-text-secondary max-w-2xl">{description}</p>}
+              <h1 className="ds-h1 text-on-surface">{title}</h1>
+              {description && <p className="max-w-2xl text-sm text-on-surface-variant">{description}</p>}
             </div>
           </div>
         </div>
@@ -161,8 +160,8 @@ export function ChaMetricCard({
       />
       <div className="relative flex items-start justify-between gap-4">
         <div className="space-y-1.5">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-cha-text-muted">{title}</p>
-          <div className="ds-numeric text-3xl font-bold tracking-tight text-cha-text-primary">{value}</div>
+          <p className="text-[10px] uppercase tracking-wider text-cha-text-muted">{title}</p>
+          <div className="ds-numeric text-3xl tracking-tight text-cha-text-primary">{value}</div>
           {note && <p className="text-xs text-cha-text-muted">{note}</p>}
         </div>
         <span className={cn("flex size-10 items-center justify-center rounded-xl", tone.icon)}>
@@ -183,7 +182,7 @@ export function ChaControlPanel({
   title: string;
   description?: string;
   icon?: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
   actions?: ReactNode;
 }) {
   return (
@@ -197,14 +196,14 @@ export function ChaControlPanel({
               </span>
             )}
             <div className="space-y-0.5">
-              <h2 className="text-lg font-bold text-cha-text-primary uppercase font-display">{title}</h2>
+              <h2 className="text-lg text-cha-text-primary uppercase font-display">{title}</h2>
               {description && <p className="text-xs text-cha-text-muted">{description}</p>}
             </div>
           </div>
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </div>
       </div>
-      <div className="relative p-5 bg-cha-surface-subtle">{children}</div>
+      {children ? <div className="relative bg-cha-surface-subtle p-5">{children}</div> : null}
     </section>
   );
 }
@@ -214,7 +213,6 @@ export function ChaSectionShell({
   description,
   icon,
   badge,
-  count,
   actions,
   children,
   accent = "blue",
@@ -242,15 +240,10 @@ export function ChaSectionShell({
             )}
             <div className="space-y-0.5">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base font-bold text-cha-text-primary uppercase font-display">{title}</h2>
+                <h2 className="text-base text-cha-text-primary uppercase font-display">{title}</h2>
                 {badge && (
-                  <span className={cn("rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider", tone.badge)}>
+                  <span className={cn("rounded-full px-2 py-0.5 text-[9px] uppercase tracking-wider", tone.badge)}>
                     {badge}
-                  </span>
-                )}
-                {count !== undefined && (
-                  <span className={cn("ds-numeric rounded-full px-2 py-0.5 text-[9px] font-bold", tone.count)}>
-                    {count}
                   </span>
                 )}
               </div>
@@ -277,13 +270,13 @@ export function ChaVisibleRecords({
   const theme = getAccentTheme(tone);
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-cha-border bg-cha-surface-subtle px-3 py-2 text-xs dark:border-cha-border-strong">
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cha-surface border border-cha-border shadow-sm dark:border-cha-border-strong">
-        <span className={cn("ds-numeric font-bold", theme.count)}>{visible}</span>
+    <div className="flex items-center gap-3 px-3 py-2 text-xs">
+      <div className="grid h-9 w-9 place-items-center rounded-lg border border-cha-border bg-cha-surface shadow-sm dark:border-cha-border-strong">
+        <span className={cn("ds-numeric leading-none", theme.count)}>{visible}</span>
       </div>
       <div>
-        <p className="text-[9px] font-semibold uppercase tracking-wider text-cha-text-muted">Visible Records</p>
-        <p className="ds-numeric font-semibold text-cha-text-primary">
+        <p className="text-[9px] uppercase tracking-wider text-cha-text-muted">Visible Records</p>
+        <p className="ds-numeric text-cha-text-primary">
           {visible} / {total}
         </p>
       </div>

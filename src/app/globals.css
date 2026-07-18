@@ -63,6 +63,15 @@ body {
   -ms-overflow-style: auto;
 }
 
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 [data-main-shell-scroll="true"] {
   scrollbar-gutter: stable;
   scrollbar-width: thin;
@@ -1691,6 +1700,22 @@ button.cha-link:active:not(:disabled) {
     opacity: 0.95;
     transform: translateX(3px);
   }
+}
+
+@keyframes current-stage-number-blink {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(32, 231, 223, 0.3);
+  }
+  50% {
+    opacity: 0.62;
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0);
+  }
+}
+
+.animate-current-stage-number {
+  animation: current-stage-number-blink 1.15s ease-in-out infinite;
 }
 
 @keyframes workflow-confetti {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,7 @@ const TONE_STYLES: Record<
   WarningIndicatorTone,
   {
     trigger: string;
+    triggerStyle: CSSProperties;
     pulse: string;
     shell: string;
     icon: string;
@@ -29,17 +30,19 @@ const TONE_STYLES: Record<
   }
 > = {
   warning: {
-    trigger: "border-[#fb923c]/45 bg-[#fb923c]/10 text-[#fb923c]",
+    trigger: "",
+    triggerStyle: { background: "rgba(251,146,60,0.10)", color: "#fb923c" },
     pulse: "animate-pulse-orange",
     shell: "border-[#fb923c]/30",
-    icon: "text-[#fb923c]",
+    icon: "text-current",
     eyebrow: "!text-[#fb923c]",
   },
   destructive: {
-    trigger: "border-red-500/40 bg-red-500/10 text-red-400",
+    trigger: "",
+    triggerStyle: { background: "rgba(239,68,68,0.10)", color: "#f87171" },
     pulse: "animate-pulse-red",
     shell: "border-red-500/30",
-    icon: "text-red-400",
+    icon: "text-current",
     eyebrow: "!text-red-400",
   },
 };
@@ -142,10 +145,11 @@ export function WarningIndicatorPopover({
         aria-expanded={isOpen}
         aria-haspopup="dialog"
         className={cn(
-          "inline-flex h-7 w-7 items-center justify-center rounded-lg border shadow-sm transition-transform duration-200 hover:scale-105 focus-visible:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00cec4]/30",
+          "ds-icon-badge size-9 rounded-2xl border-0 shadow-none transition-transform duration-200 hover:scale-105 focus-visible:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00cec4]/30",
           toneStyles.trigger,
           toneStyles.pulse,
         )}
+        style={toneStyles.triggerStyle}
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();

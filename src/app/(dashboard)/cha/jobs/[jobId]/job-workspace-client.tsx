@@ -4,7 +4,7 @@ import { DateInput } from "@/components/ui/date-input";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { FileText, Upload, CheckCircle2, AlertTriangle, FolderOpen, ArrowRight, ShieldCheck, AlertCircle, Plus, Trash2, Check, Database, ExternalLink, Undo2, RotateCcw, Mail, History, ChevronDown, ChevronRight, Pencil, Lock, BarChart2, CreditCard, ClipboardList, HelpCircle, Clock3, LoaderCircle, LockKeyhole, Search, Maximize2, Copy, UserRound, CalendarDays, Building2, Package, MapPin, Plane, Ship, Bookmark, RefreshCcw, Zap, Boxes, Moon, MoreVertical, X, } from "lucide-react";
+import { FileText, Upload, CheckCircle2, AlertTriangle, FolderOpen, ArrowRight, ShieldCheck, AlertCircle, Plus, Trash2, Check, Database, ExternalLink, Undo2, RotateCcw, Mail, History, ChevronDown, ChevronLeft, ChevronRight, Pencil, Lock, BarChart2, CreditCard, ClipboardList, HelpCircle, Clock3, LoaderCircle, LockKeyhole, Search, Maximize2, Copy, UserRound, CalendarDays, Building2, Package, MapPin, Plane, Ship, Bookmark, RefreshCcw, Zap, Boxes, Moon, X, } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileUploadField } from "@/components/ui/file-upload-field";
@@ -1142,6 +1142,7 @@ export function JobWorkspaceClient({
   const stageFocusTimeoutRef = useRef<number | null>(null);
   const pendingStageNavigationRef = useRef<string | null>(null);
   const pendingStageScrollRef = useRef<string | null>(null);
+  const overviewStageScrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setActiveTab((currentTab) => {
@@ -5086,19 +5087,19 @@ export function JobWorkspaceClient({
   const currentStageLabel = STAGES[Math.max(activeStepIndex, 0)]?.label ?? "Pending";
   const isOverviewTab = activeTab === "overview";
   const overviewThemeVars = {
-    "--cha-overview-primary": "#2563EB",
-    "--cha-overview-primary-hover": "#1D4ED8",
-    "--cha-overview-primary-active": "#1E40AF",
-    "--cha-overview-soft": "#EFF6FF",
-    "--cha-overview-border": "#BFDBFE",
+    "--cha-overview-primary": "#20e7df",
+    "--cha-overview-primary-hover": "#12d8d0",
+    "--cha-overview-primary-active": "#00b8af",
+    "--cha-overview-soft": "rgba(32,231,223,0.12)",
+    "--cha-overview-border": "rgba(32,231,223,0.24)",
     "--cha-overview-page": "#F8FAFC",
     "--cha-overview-card": "#FFFFFF",
     "--cha-overview-text": "#0F172A",
     "--cha-overview-text-muted": "#475569",
     "--cha-overview-line": "#E2E8F0",
-    "--cha-overview-primary-dark": "#60A5FA",
-    "--cha-overview-primary-hover-dark": "#93C5FD",
-    "--cha-overview-primary-active-dark": "#3B82F6",
+    "--cha-overview-primary-dark": "#20e7df",
+    "--cha-overview-primary-hover-dark": "#12d8d0",
+    "--cha-overview-primary-active-dark": "#00b8af",
     "--cha-overview-page-dark": "#020617",
     "--cha-overview-card-dark": "#111827",
     "--cha-overview-card-alt-dark": "#0F172A",
@@ -5165,8 +5166,8 @@ export function JobWorkspaceClient({
     { label: "Shipment Type", value: job.shipmentType?.name || shipmentModeName || "Not set", icon: <Package size={14} /> },
     { label: job.shipmentType?.name?.toUpperCase() === "AIR" ? "Flight / Voyage" : "Vessel / Voyage", value: job.flightNumber || job.vesselName || job.carrierName || "Not set", icon: job.shipmentType?.name?.toUpperCase() === "AIR" ? <Plane size={14} /> : <Ship size={14} /> },
     { label: "Port of Discharge", value: job.portOfDischarge || job.port?.name || job.branch?.name || "Not set", icon: <MapPin size={14} /> },
-    { label: "Bill of Lading", value: job.additionalData?.mblNumber || job.additionalData?.hblNumber || manifestPreview || "Not set", icon: <FileText size={14} /> },
-    { label: "No. of Packages", value: job.packageCount || job.numberOfPackages || "Not set", icon: <Package size={14} /> },
+    { label: "Bill of Lading", value: job.additionalData?.mblNumber || job.additionalData?.hblNumber || manifestPreview || "Not set", icon: <FileText size={14} />, numeric: true },
+    { label: "No. of Packages", value: job.packageCount || job.numberOfPackages || "Not set", icon: <Package size={14} />, numeric: true },
     {
       label: "Container Number",
       value:
@@ -5175,6 +5176,7 @@ export function JobWorkspaceClient({
           .filter(Boolean)
           .join(", ") || "Not set",
       icon: <Boxes size={14} />,
+      numeric: true,
     },
   ];
   const overviewDateItems = [
@@ -5390,81 +5392,68 @@ export function JobWorkspaceClient({
     <main className="w-full space-y-5 overflow-x-hidden pb-6">
       {isOverviewTab ? (
         <div style={overviewThemeVars} className="space-y-4">
-          <section className="rounded-[28px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] px-5 py-5 shadow-[0_18px_38px_-30px_rgba(15,23,42,0.18)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-              <div className="min-w-0 space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  {topJobBadges.map((badge) => (
-                    <Badge key={`${badge.label}-${badge.variant}`} variant={badge.variant} className="uppercase">
-                      {badge.label}
-                    </Badge>
-                  ))}
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="ds-h1 ds-numeric text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{job.jobNumber}</h1>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await navigator.clipboard.writeText(job.jobNumber);
-                      toast.success("Job number copied.");
-                    }}
-                    className="rounded-full border border-[var(--cha-overview-line)] p-2 text-[var(--cha-overview-text-muted)] transition hover:border-[var(--cha-overview-primary)] hover:text-[var(--cha-overview-primary)] dark:border-[var(--cha-overview-line-dark)] dark:text-[var(--cha-overview-text-muted-dark)] dark:hover:text-[var(--cha-overview-primary-dark)]"
-                    aria-label="Copy job number"
-                  >
-                    <Copy size={14} />
-                  </button>
-                </div>
-                <p className="text-sm text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{job.title}</p>
-              </div>
-
-              <div className="flex items-center gap-2 self-start">
-                {canDeleteJob ? (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="shrink-0 border-red-500/35 text-red-500 hover:bg-transparent"
-                      disabled={loading !== null || Boolean(activeDeletionRequest)}
-                      onClick={() => setDeleteModalMode("delete")}
-                    >
-                      <Trash2 className="mr-1.5 size-3.5" />
-                      Delete Job
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      mode="icon"
-                      className="shrink-0"
-                      aria-label="More job actions"
-                      onClick={() => toast.info("Additional job actions remain in the workspace controls below.")}
-                    >
-                      <MoreVertical size={15} />
-                    </Button>
-                  </>
-                ) : null}
-              </div>
-            </div>
-          </section>
-
           <section
-            className="relative overflow-hidden rounded-[28px] border border-[var(--cha-overview-border)] bg-[var(--cha-overview-card)] shadow-[0_22px_48px_-34px_rgba(15,23,42,0.22)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]"
+            className="relative overflow-hidden rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] shadow-[0_18px_38px_-30px_rgba(15,23,42,0.18)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]"
             style={{
-              backgroundImage: `linear-gradient(90deg, rgba(239,246,255,0.96) 0%, rgba(239,246,255,0.9) 34%, rgba(219,234,254,0.55) 54%, rgba(191,219,254,0.16) 100%), url("${CHA_OVERVIEW_BANNER_ART}")`,
-              backgroundPosition: "center",
+              backgroundImage: `linear-gradient(90deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.94) 46%, rgba(239,246,255,0.72) 68%, rgba(219,234,254,0.34) 100%), url("${CHA_OVERVIEW_BANNER_ART}")`,
+              backgroundPosition: "right center",
               backgroundSize: "cover",
             }}
           >
-            <div className="absolute inset-0 hidden dark:block" style={{ background: "linear-gradient(90deg, rgba(2,6,23,0.82) 0%, rgba(15,23,42,0.72) 38%, rgba(15,23,42,0.38) 60%, rgba(15,23,42,0.16) 100%)" }} />
-            <div className="relative flex min-h-[174px] items-center px-5 py-5">
-              <div className="w-full max-w-[1120px] rounded-[24px] border border-white/65 bg-white/78 shadow-[0_26px_44px_-32px_rgba(15,23,42,0.35)] backdrop-blur-xl dark:border-white/8 dark:bg-[rgba(15,23,42,0.82)]">
+            <div className="absolute inset-0 hidden dark:block" style={{ background: "linear-gradient(90deg, rgba(17,24,39,0.96) 0%, rgba(17,24,39,0.88) 48%, rgba(15,23,42,0.62) 74%, rgba(15,23,42,0.36) 100%)" }} />
+            <div className="relative space-y-5 px-5 py-5">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                <div className="min-w-0 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {topJobBadges.map((badge) => (
+                      <Badge key={`${badge.label}-${badge.variant}`} variant={badge.variant} className="uppercase">
+                        {badge.label}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h1 className="ds-h1 ds-numeric text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{job.jobNumber}</h1>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(job.jobNumber);
+                        toast.success("Job number copied.");
+                      }}
+                      className="rounded-full border border-[var(--cha-overview-line)] p-2 text-[var(--cha-overview-text-muted)] transition hover:border-[var(--cha-overview-primary)] hover:text-[var(--cha-overview-primary)] dark:border-[var(--cha-overview-line-dark)] dark:text-[var(--cha-overview-text-muted-dark)] dark:hover:text-[var(--cha-overview-primary-dark)]"
+                      aria-label="Copy job number"
+                    >
+                      <Copy size={14} />
+                    </button>
+                  </div>
+                  <p className="text-sm text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{job.title}</p>
+                </div>
+
+                <div className="flex items-center gap-2 self-start">
+                  {canDeleteJob ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0 !border-red-500/45 !bg-white !text-red-500 hover:!border-red-600 hover:!bg-white hover:!text-red-600 dark:!bg-surface [&_svg]:!text-red-500 [&_svg]:!stroke-red-500"
+                        disabled={loading !== null || Boolean(activeDeletionRequest)}
+                        onClick={() => setDeleteModalMode("delete")}
+                      >
+                        <Trash2 className="mr-1.5 size-3.5" />
+                        Delete Job
+                      </Button>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="w-full rounded-xl border border-white/65 bg-white/78 shadow-[0_26px_44px_-32px_rgba(15,23,42,0.35)] backdrop-blur-xl dark:border-white/8 dark:bg-[rgba(15,23,42,0.82)]">
                 <div className="flex flex-col xl:flex-row w-full divide-y xl:divide-y-0 xl:divide-x divide-[#dbeafe] dark:divide-white/6">
                   {overviewMetaItems.map((item) => (
                     <div
                       key={item.label}
                       className="flex min-h-[104px] items-start gap-3 px-4 py-4 flex-auto min-w-[140px]"
                     >
-                      <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] shadow-[inset_0_0_0_1px_rgba(37,99,235,0.1)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
+                      <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#20e7df]/12 text-[#12d8d0] shadow-[inset_0_0_0_1px_rgba(32,231,223,0.18)]">
                         {item.icon}
                       </span>
                       <div className="min-w-0 flex-1">
@@ -5482,7 +5471,7 @@ export function JobWorkspaceClient({
                           <button
                             type="button"
                             onClick={() => setIsEditingManager(true)}
-                            className="mt-2 rounded-full border border-[var(--cha-overview-border)] bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--cha-overview-primary)] transition-colors hover:bg-[var(--cha-overview-soft)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[rgba(30,41,59,0.85)] dark:text-[var(--cha-overview-primary-dark)]"
+                            className="mt-2 rounded-full border border-[#20e7df]/50 bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#00b8af] transition-colors hover:bg-[#20e7df]/12 hover:text-[#00a9a5] dark:bg-[rgba(30,41,59,0.85)] dark:text-[#20e7df]"
                           >
                             Change
                           </button>
@@ -5495,65 +5484,81 @@ export function JobWorkspaceClient({
             </div>
           </section>
 
-          <section className="rounded-[24px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] px-4 py-4 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-              <div className="min-w-0 flex-1 overflow-x-auto pb-1">
-                <div className="flex min-w-max items-center gap-0">
-                  {overviewWorkflowStages.map((stage, index) => (
-                    <div key={stage.key} className="flex items-center">
-                      <button
-                        type="button"
-                        onClick={stage.onClick}
-                        className="flex items-center gap-3 rounded-full px-3 py-2 text-left transition hover:bg-[var(--cha-overview-soft)]/70 dark:hover:bg-[rgba(30,41,59,0.72)]"
-                      >
-                        <span
-                          className={cn(
-                            "flex size-7 items-center justify-center rounded-full border text-[11px] font-semibold ds-numeric",
-                            stage.isCompleted || stage.isCurrent
-                              ? "border-[var(--cha-overview-primary)] bg-[var(--cha-overview-primary)] text-white dark:border-[var(--cha-overview-primary-dark)] dark:bg-[var(--cha-overview-primary-dark)]"
-                              : "border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] text-[var(--cha-overview-text-muted)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-alt-dark)] dark:text-[var(--cha-overview-text-muted-dark)]",
-                          )}
-                        >
-                          {stage.isCompleted ? <Check size={12} /> : index}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <span className={cn(
-                            "whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.14em]",
-                            stage.isCurrent
-                              ? "text-[var(--cha-overview-primary)] dark:text-[var(--cha-overview-primary-dark)]"
-                              : "text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]",
-                          )}>
-                            {stage.label}
-                          </span>
-                          {typeof stage.percent === "number" ? (
-                            <span className="text-[10px] ds-numeric text-[var(--cha-overview-primary)] dark:text-[var(--cha-overview-primary-dark)]">{stage.percent}%</span>
-                          ) : null}
-                        </span>
-                      </button>
-                      {index < overviewWorkflowStages.length - 1 ? (
-                        <span className="mx-1 h-px w-8 rounded-full bg-[var(--cha-overview-line)] dark:bg-[var(--cha-overview-line-dark)]" />
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
+          <section className="rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] px-4 py-4 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
+            <div className="mb-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="ds-label text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">Progress</p>
+                <p className="ds-numeric text-sm text-[var(--cha-overview-primary)] dark:text-[var(--cha-overview-primary-dark)]">{stageProgress}%</p>
               </div>
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[var(--cha-overview-line)]/80 dark:bg-[var(--cha-overview-line-dark)]">
+                <div
+                  className="h-full rounded-full bg-[linear-gradient(90deg,#20e7df_0%,#12d8d0_100%)]"
+                  style={{ width: `${stageProgress}%` }}
+                />
+              </div>
+            </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:min-w-[278px]">
-                <div className="rounded-[18px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] px-4 py-3 dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-alt-dark)]">
-                  <p className="ds-label text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">Stage</p>
-                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{currentStageLabel}</p>
-                </div>
-                <div className="rounded-[18px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] px-4 py-3 dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-alt-dark)]">
-                  <p className="ds-label text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">Progress</p>
-                  <p className="mt-2 text-xl font-semibold ds-numeric text-[var(--cha-overview-primary)] dark:text-[var(--cha-overview-primary-dark)]">{stageProgress}%</p>
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--cha-overview-line)]/80 dark:bg-[var(--cha-overview-line-dark)]">
-                    <div
-                      className="h-full rounded-full bg-[linear-gradient(90deg,#2563EB_0%,#1D4ED8_100%)] dark:bg-[linear-gradient(90deg,#60A5FA_0%,#3B82F6_100%)]"
-                      style={{ width: `${stageProgress}%` }}
-                    />
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <button
+                  type="button"
+                  aria-label="Scroll workflow stages left"
+                  onClick={() => overviewStageScrollerRef.current?.scrollBy({ left: -320, behavior: "smooth" })}
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--cha-overview-text-muted)] transition hover:bg-[var(--cha-overview-soft)] hover:text-[#20e7df]"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <div ref={overviewStageScrollerRef} className="no-scrollbar min-w-0 flex-1 overflow-x-auto">
+                  <div className="flex min-w-max items-center gap-0">
+                    {overviewWorkflowStages.map((stage, index) => (
+                      <div key={stage.key} className="flex items-center">
+                        <button
+                          type="button"
+                          onClick={stage.onClick}
+                          className="flex items-center gap-3 rounded-full px-3 py-2 text-left transition hover:bg-[var(--cha-overview-soft)]/70 dark:hover:bg-[rgba(30,41,59,0.72)]"
+                        >
+                          <span
+                            className={cn(
+                              "flex size-7 items-center justify-center rounded-full border text-[11px] font-semibold ds-numeric",
+                              stage.isCurrent && "animate-current-stage-number",
+                              stage.isCompleted || stage.isCurrent
+                                ? "border-[var(--cha-overview-primary)] bg-white text-[var(--cha-overview-primary)] dark:border-[var(--cha-overview-primary-dark)] dark:bg-white dark:text-[var(--cha-overview-primary-dark)]"
+                                : "border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] text-[var(--cha-overview-text-muted)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-alt-dark)] dark:text-[var(--cha-overview-text-muted-dark)]",
+                            )}
+                          >
+                            {stage.isCompleted ? <Check size={12} /> : index}
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <span className={cn(
+                              "whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.14em]",
+                              stage.isCurrent
+                                ? "text-[var(--cha-overview-primary)] dark:text-[var(--cha-overview-primary-dark)]"
+                                : "text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]",
+                            )}>
+                              {stage.label}
+                            </span>
+                            {typeof stage.percent === "number" ? (
+                              <span className="text-[10px] ds-numeric text-[var(--cha-overview-primary)] dark:text-[var(--cha-overview-primary-dark)]">{stage.percent}%</span>
+                            ) : null}
+                          </span>
+                        </button>
+                        {index < overviewWorkflowStages.length - 1 ? (
+                          <span className="mx-1 h-px w-8 rounded-full bg-[var(--cha-overview-line)] dark:bg-[var(--cha-overview-line-dark)]" />
+                        ) : null}
+                      </div>
+                    ))}
                   </div>
                 </div>
+                <button
+                  type="button"
+                  aria-label="Scroll workflow stages right"
+                  onClick={() => overviewStageScrollerRef.current?.scrollBy({ left: 320, behavior: "smooth" })}
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--cha-overview-text-muted)] transition hover:bg-[var(--cha-overview-soft)] hover:text-[#20e7df]"
+                >
+                  <ChevronRight size={18} />
+                </button>
               </div>
+
             </div>
           </section>
         </div>
@@ -5608,23 +5613,12 @@ export function JobWorkspaceClient({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="shrink-0 border-red-500/35 text-red-500 hover:bg-surface"
+                    className="shrink-0 !border-red-500/45 !bg-white !text-red-500 hover:!border-red-600 hover:!bg-white hover:!text-red-600 dark:!bg-surface [&_svg]:!text-red-500 [&_svg]:!stroke-red-500"
                     disabled={loading !== null || Boolean(activeDeletionRequest)}
                     onClick={() => setDeleteModalMode("delete")}
                   >
                     <Trash2 className="mr-1.5 size-3.5" />
                     {activeDeletionRequest ? "Deletion Pending" : "Delete"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    mode="icon"
-                    className="shrink-0"
-                    aria-label="More job actions"
-                    onClick={() => toast.info("Additional job actions remain in the workspace controls below.")}
-                  >
-                    <MoreVertical size={15} />
                   </Button>
                 </>
               ) : null}
@@ -9047,18 +9041,24 @@ export function JobWorkspaceClient({
               ) : null}
             </div>
           ) : (
-            <div className="min-h-[320px] rounded-xl border border-outline-variant bg-surface p-6 shadow-sm">
+            <div
+              className={cn(
+                "min-h-[320px] rounded-xl",
+                activeTab === "overview" ? "bg-transparent p-0 shadow-none" : "bg-surface p-6 shadow-sm",
+              )}
+            >
 
               {activeTab === "overview" && (
                 <div className="space-y-6">
-                  <div style={overviewThemeVars} className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1.33fr)_minmax(0,1.2fr)_minmax(0,1fr)]">
-                    <section className="h-full rounded-[24px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
+                  <section style={overviewThemeVars} className="rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
+                    <div className="grid items-stretch gap-8 xl:grid-cols-3">
+                    <section className="h-full">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                             <Package size={16} />
                           </span>
-                          <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Job Summary</h3>
+                          <h3 className="ds-h3 text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Job Summary</h3>
                         </div>
                         <Button type="button" variant="outline" size="sm" onClick={() => navigateToWorkspaceTab("additionalData")}>
                           View Details
@@ -9066,14 +9066,14 @@ export function JobWorkspaceClient({
                       </div>
                       <div className="mt-4 grid gap-3 sm:grid-cols-2">
                         {overviewSummaryItems.map((item) => (
-                          <div key={item.label} className="rounded-[18px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-soft)]/55 px-3 py-3 dark:border-[var(--cha-overview-line-dark)] dark:bg-[rgba(15,23,42,0.84)]">
+                          <div key={item.label} className="px-3 py-3">
                             <div className="flex items-start gap-3">
-                              <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--cha-overview-primary)] shadow-[inset_0_0_0_1px_rgba(37,99,235,0.08)] dark:bg-[rgba(30,41,59,0.9)] dark:text-[var(--cha-overview-primary-dark)]">
+                              <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--cha-overview-primary)] dark:bg-[rgba(30,41,59,0.9)] dark:text-[var(--cha-overview-primary-dark)]">
                                 {item.icon}
                               </span>
                               <div className="min-w-0">
                                 <p className="ds-label text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{item.label}</p>
-                                <p className="mt-1 text-sm font-medium text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{item.value}</p>
+                                <p className={cn("mt-1 text-sm text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]", item.numeric && "ds-numeric")}>{item.value}</p>
                               </div>
                             </div>
                           </div>
@@ -9081,23 +9081,23 @@ export function JobWorkspaceClient({
                       </div>
                     </section>
 
-                    <section className="h-full rounded-[24px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
+                    <section className="h-full xl:border-l xl:border-[var(--cha-overview-line)] xl:pl-8 xl:dark:border-[var(--cha-overview-line-dark)]">
                       <div className="flex items-center gap-3">
                         <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                           <CalendarDays size={16} />
                         </span>
-                        <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Important Dates</h3>
+                        <h3 className="ds-h3 text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Important Dates</h3>
                       </div>
                       <div className="mt-4 space-y-3">
                         {overviewDateItems.map((item) => (
-                          <div key={item.label} className="flex items-center justify-between gap-3 rounded-[18px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] px-3 py-3 dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-alt-dark)]">
+                          <div key={item.label} className="flex items-center justify-between gap-3 rounded-[18px] bg-[var(--cha-overview-card)] px-3 py-3 dark:bg-[var(--cha-overview-card-alt-dark)]">
                             <div className="flex min-w-0 items-center gap-3">
                               <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                                 {item.icon}
                               </span>
                               <div className="min-w-0">
                                 <p className="ds-label text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{item.label}</p>
-                                <p className="mt-1 text-sm font-medium text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{item.value}</p>
+                                <p className="mt-1 text-sm ds-numeric text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{item.value}</p>
                               </div>
                             </div>
                             <span
@@ -9119,53 +9119,64 @@ export function JobWorkspaceClient({
                       </div>
                     </section>
 
-                    <section className="h-full rounded-[24px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
+                    <section className="h-full xl:border-l xl:border-[var(--cha-overview-line)] xl:pl-8 xl:dark:border-[var(--cha-overview-line-dark)]">
                       <div className="flex items-center gap-3">
                         <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                           <Zap size={16} />
                         </span>
-                        <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Quick Actions</h3>
+                        <h3 className="ds-h3 text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Quick Actions</h3>
                       </div>
-                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <div className="mt-4 grid gap-3">
                         {workspaceQuickActions.map((action) => (
-                          <button
+                          <div
                             key={action.label}
-                            type="button"
-                            onClick={action.onClick}
-                            className="flex min-h-[92px] items-start gap-3 rounded-[18px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] px-3 py-3 text-left shadow-[0_12px_28px_-24px_rgba(15,23,42,0.18)] transition hover:-translate-y-px hover:border-[var(--cha-overview-primary)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-alt-dark)] dark:hover:border-[var(--cha-overview-primary-dark)]"
+                            className="flex min-h-[76px] items-center justify-between gap-3 rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] px-3 py-2 text-left shadow-[0_12px_28px_-24px_rgba(15,23,42,0.18)] transition hover:-translate-y-px hover:border-[var(--cha-overview-primary)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-alt-dark)] dark:hover:border-[var(--cha-overview-primary-dark)]"
                           >
-                            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
-                              {action.icon}
-                            </span>
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{action.label}</p>
-                              <p className="mt-1 text-xs text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{action.note}</p>
+                            <div className="flex min-w-0 items-center gap-3">
+                              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
+                                {action.icon}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="text-sm text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{action.label}</p>
+                                <p className="mt-1 text-xs text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{action.note}</p>
+                              </div>
                             </div>
-                          </button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-auto w-fit shrink-0 !border-transparent !bg-transparent px-0 py-0 text-xs uppercase tracking-[0.14em] !text-[#00cec4] !shadow-none hover:!border-transparent hover:!bg-transparent hover:!text-[#00b8af] hover:!shadow-none"
+                              onClick={action.onClick}
+                            >
+                              Open
+                              <ArrowRight size={14} />
+                            </Button>
+                          </div>
                         ))}
                       </div>
                     </section>
-                  </div>
+                    </div>
+                  </section>
 
-                  <section style={overviewThemeVars} className="rounded-[24px] border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
+                  <section style={overviewThemeVars} className="rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-3">
                         <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                           <History size={16} />
                         </span>
-                        <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Recent Activity</h3>
+                        <h3 className="ds-h3 text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Recent Activity</h3>
                       </div>
                       <Button type="button" variant="outline" onClick={() => navigateToWorkspaceTab("audit")}>
                         View All Activity
                       </Button>
                     </div>
-                    <div className="mt-4 overflow-hidden rounded-[20px] border border-[var(--cha-overview-line)] dark:border-[var(--cha-overview-line-dark)]">
+                    <div className="mt-4 overflow-hidden rounded-[20px]">
                       {overviewRecentLogs.length === 0 ? (
                         <div className="px-4 py-6 text-sm text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">
                           No recent job activity has been recorded yet.
                         </div>
                       ) : (
-                        <div className="divide-y divide-[var(--cha-overview-line)] dark:divide-[var(--cha-overview-line-dark)]">
+                        <div>
                           {overviewRecentLogs.map((log: any) => (
                             <div key={log.id} className="grid gap-3 px-4 py-3 md:grid-cols-[minmax(0,240px)_minmax(0,1fr)_130px_100px_160px] md:items-center">
                               <div className="flex items-center gap-3">
@@ -9177,7 +9188,7 @@ export function JobWorkspaceClient({
                                 )}>
                                   {String(log.event || "").includes("QUERY") || String(log.event || "").includes("query") ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
                                 </span>
-                                <p className="text-sm font-medium uppercase tracking-[0.08em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{String(log.event || "Activity").replace(/_/g, " ")}</p>
+                                <p className="ds-label text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{String(log.event || "Activity").replace(/_/g, " ")}</p>
                               </div>
                               <p className="text-sm text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{log.remarks || "Operational update recorded for this job."}</p>
                               <p className="text-sm ds-numeric text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">

@@ -1,7 +1,7 @@
 "use client";
 
 import { Filter } from "lucide-react";
-import {DropdownMenu,DropdownMenuContent,DropdownMenuLabel,DropdownMenuSeparator,DropdownMenuTrigger,} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export function FilterMenu({
   activeCount,
@@ -10,7 +10,6 @@ export function FilterMenu({
   contentClassName = "w-[360px]",
   onOpenChange,
   open,
-  title,
 }: {
   activeCount?: number;
   ariaLabel?: string;
@@ -18,7 +17,7 @@ export function FilterMenu({
   contentClassName?: string;
   onOpenChange: (open: boolean) => void;
   open: boolean;
-  title: string;
+  title?: string;
 }) {
   return (
     <DropdownMenu modal={false} open={open} onOpenChange={onOpenChange}>
@@ -36,9 +35,7 @@ export function FilterMenu({
           ) : null}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className={`${contentClassName} rounded-2xl p-3`}>
-        <DropdownMenuLabel className="px-0 pb-2 text-sm font-semibold text-on-surface">{title}</DropdownMenuLabel>
-        <DropdownMenuSeparator className="mx-0 my-0 mb-3" />
+      <DropdownMenuContent align="end" className={`${contentClassName} rounded-2xl !p-0`}>
         {children}
       </DropdownMenuContent>
     </DropdownMenu>
