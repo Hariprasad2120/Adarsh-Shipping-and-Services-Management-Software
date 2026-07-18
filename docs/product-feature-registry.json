@@ -87,6 +87,8 @@
     { "name": "CHA Expenses", "module": "cha", "status": "Implemented" },
     { "name": "Document Version Control", "module": "cha", "status": "Implemented" },
     { "name": "CHA Audit Logging", "module": "cha", "status": "Implemented" },
+    { "name": "CHA Customer Portal Dashboard", "module": "cha", "status": "Implemented", "description": "Customer account shipment overview with action-required, document status, queries, notifications, and feedback prompts." },
+    { "name": "CHA Customer Portal Shipments", "module": "cha", "status": "Implemented", "description": "Customer-scoped shipment catalogue and per-shipment read-only workspace with status, documents, checklist decisions, queries, and recent updates." },
 
     { "name": "Gmail/Google Workspace Integration", "module": "communication", "status": "Implemented" },
     { "name": "Google Chat Integration", "module": "communication", "status": "Implemented" },

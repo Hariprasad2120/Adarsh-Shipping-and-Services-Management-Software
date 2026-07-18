@@ -1,231 +1,377 @@
 import Link from "next/link";
-import { requirePortalSession } from "@/modules/customer-portal/auth";
-import { listPortalShipments } from "@/modules/customer-portal/service";
-import { PortalShipmentsFilterPanel } from "../_components/client-actions";
+import type { ReactNode } from "react";
+import {
+  ExternalLink,
+  Filter,
+  FolderKanban,
+  ListFilter,
+  PackageCheck,
+  Search,
+  TriangleAlert,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import type { PortalShipmentScope } from "@/modules/customer-portal/types";
-
-function formatPortalDate(value: Date) {
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(value);
-}
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableEmpty,
+  DataTableHead,
+  DataTableHeader,
+  DataTableToolbar,
+} from "@/components/data-table";
+import { getChaJobStatusBadgeVariant, getChaPriorityBadgeVariant, getChaStageBadgeVariant } from "@/lib/cha-badges";
+import { requirePortalSession } from "@/modules/customer-portal/auth";
+import {
+  getCustomerPortalShipmentsData,
+  parseCustomerPortalShipmentFilters,
+} from "@/modules/customer-portal/shipments";
 
 export default async function CustomerPortalShipmentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    scope?: string;
-    search?: string;
-    mode?: string;
-    trade?: string;
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const session = await requirePortalSession();
-  const params = await searchParams;
-
-  const scope: PortalShipmentScope =
-    params.scope === "active" || params.scope === "action" || params.scope === "completed" || params.scope === "all"
-      ? params.scope
-      : "all";
-  const search = params.search ?? "";
-  const mode = params.mode ?? "all";
-  const trade = params.trade ?? "all";
-
-  const shipments = await listPortalShipments(session.portalUserId, {
-    scope,
-    search,
-  });
-
-  const filteredShipments = shipments.filter((shipment) => {
-    if (mode !== "all") {
-      const modeKey = mode.toLowerCase();
-      const isSea = shipment.clearanceType.toLowerCase().includes("sea") || shipment.clearanceType.toLowerCase().includes("ocean");
-      const isAir = shipment.clearanceType.toLowerCase().includes("air");
-      if (modeKey === "sea" && !isSea) return false;
-      if (modeKey === "air" && !isAir) return false;
-    }
-    if (trade !== "all") {
-      const tradeKey = trade.toLowerCase();
-      const isImport = shipment.shipmentType.toLowerCase().includes("import");
-      const isExport = shipment.shipmentType.toLowerCase().includes("export");
-      if (tradeKey === "import" && !isImport) return false;
-      if (tradeKey === "export" && !isExport) return false;
-    }
-    return true;
-  });
-
-  const actionRequiredCount = filteredShipments.filter((shipment) => shipment.actions.hasActionRequired).length;
-  const averageProgress =
-    filteredShipments.length > 0
-      ? Math.round(filteredShipments.reduce((sum, shipment) => sum + shipment.progressPercent, 0) / filteredShipments.length)
-      : 0;
-  const openQueryCount = filteredShipments.reduce((sum, shipment) => sum + shipment.actions.openQueryCount, 0);
+  const filters = parseCustomerPortalShipmentFilters(await searchParams);
+  const data = await getCustomerPortalShipmentsData(session, filters);
 
   return (
-    <div className="space-y-6 font-sans">
-      <section className="rounded-[28px] border border-outline-variant/60 bg-surface p-6 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.35)]">
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-          <div className="space-y-3">
-            <p className="ds-label text-[#00cec4]">Customer shipment command view</p>
-            <div>
-              <h2 className="ds-h2">Shipment Logbook</h2>
-              <p className="mt-2 max-w-3xl text-sm text-on-surface-variant">
-                Track every clearance job from one live board with action signals, progress visibility, and a direct route into each shipment file.
-              </p>
-            </div>
+    <div className="space-y-6">
+      <section className="card-top-accent rounded-[24px] border border-outline-variant/50 bg-surface px-5 py-5 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
+            <p className="ds-label">CHA Customer Shipments</p>
+            <h2 className="ds-h1 text-on-surface">Shipment Catalogue</h2>
+            <p className="max-w-3xl text-sm text-on-surface-variant">
+              Browse the CHA jobs linked to {session.portalUser.customer.name}, narrow them by status and stage, and
+              open each shipment&apos;s workspace for read-only documents, checklist decisions, queries, recent updates,
+              and optional extra customer uploads.
+            </p>
           </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="card-top-accent rounded-2xl border border-outline-variant/45 bg-surface-container-low/55 p-4">
-              <p className="ds-label">Visible Shipments</p>
-              <p className="mt-2 ds-numeric text-2xl text-on-surface">{filteredShipments.length}</p>
-              <p className="mt-1 text-xs text-on-surface-variant">Matching current filters</p>
-            </div>
-            <div className="card-top-accent-orange rounded-2xl border border-outline-variant/45 bg-surface-container-low/55 p-4">
-              <p className="ds-label">Action Required</p>
-              <p className="mt-2 ds-numeric text-2xl text-on-surface">{actionRequiredCount}</p>
-              <p className="mt-1 text-xs text-on-surface-variant">Jobs awaiting customer response</p>
-            </div>
-            <div className="card-top-accent rounded-2xl border border-outline-variant/45 bg-surface-container-low/55 p-4">
-              <p className="ds-label">Average Progress</p>
-              <p className="mt-2 ds-numeric text-2xl text-on-surface">{averageProgress}%</p>
-              <p className="mt-1 text-xs text-on-surface-variant">{openQueryCount} open query threads</p>
-            </div>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/customer-portal/dashboard">
+              <Button variant="outline" size="sm" className="gap-1.5">
+                Dashboard
+                <ExternalLink className="size-3.5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-outline-variant/60 bg-surface p-5 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.3)]">
-        <PortalShipmentsFilterPanel
-          initialSearch={search}
-          initialScope={scope}
-          initialMode={mode}
-          initialTrade={trade}
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          title="Total Shipments"
+          value={data.summary.totalShipments}
+          helper="All CHA jobs linked to this customer account"
+          icon={<FolderKanban size={16} />}
+        />
+        <StatCard
+          title="Active Shipments"
+          value={data.summary.activeShipments}
+          helper="Shipments still moving through the CHA workflow"
+          icon={<PackageCheck size={16} />}
+        />
+        <StatCard
+          title="Awaiting Customer Action"
+          value={data.summary.awaitingCustomerAction}
+          helper="Jobs with checklist or query follow-up"
+          icon={<TriangleAlert size={16} />}
+          tone={data.summary.awaitingCustomerAction > 0 ? "warning" : "primary"}
+        />
+        <StatCard
+          title="Recently Completed"
+          value={data.summary.recentlyCompletedShipments}
+          helper="Filed or completed shipments from the last 30 days"
+          icon={<PackageCheck size={16} />}
         />
       </section>
 
-      <div className="overflow-hidden rounded-[28px] border border-outline-variant/60 bg-surface shadow-[0_24px_70px_-48px_rgba(15,23,42,0.28)]">
-        {filteredShipments.length === 0 ? (
-          <div className="space-y-2 py-16 text-center text-sm font-medium text-on-surface-variant">
-            <p>No shipments match the selected filters.</p>
-            <p className="text-xs opacity-60">Try adjustments or reset all parameters.</p>
+      <Card className="card-top-accent rounded-[24px] border border-outline-variant/45">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-3">
+            <span className="ds-icon-badge">
+              <Filter size={16} />
+            </span>
+            <div>
+              <CardTitle>Search And Filters</CardTitle>
+              <p className="text-xs text-on-surface-variant">Server-side filters scoped only to this customer account.</p>
+            </div>
           </div>
-        ) : (
-          <>
-            <div className="hidden md:block">
-              <table className="ds-table">
-                <thead>
-                  <tr>
-                    <th>Job Number</th>
-                    <th>Reference</th>
-                    <th>Transit</th>
-                    <th>Trade</th>
-                    <th>Current Stage</th>
-                    <th>Action State</th>
-                    <th>Ops Pulse</th>
-                    <th>Progress</th>
-                    <th>Updated</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredShipments.map((shipment) => (
-                    <tr key={shipment.id} className="ds-row-link" style={{ cursor: "pointer" }}>
-                      <td className="font-medium text-on-surface">
-                        <Link href={`/customer-portal/shipments/${shipment.id}`} className="hover:underline">
-                          {shipment.jobNumber}
-                        </Link>
-                      </td>
-                      <td className="text-on-surface-variant">{shipment.customerRef || shipment.title || "—"}</td>
-                      <td className="text-on-surface-variant font-medium">{shipment.clearanceType}</td>
-                      <td className="text-on-surface-variant font-medium">{shipment.shipmentType}</td>
-                      <td className="font-semibold text-on-surface">{shipment.currentStage}</td>
-                      <td>
-                        <Badge
-                          variant={shipment.actions.hasActionRequired ? "warning" : "default"}
-                          style={{
-                            backgroundColor: shipment.actions.hasActionRequired ? "rgba(251,146,60,0.1)" : "rgba(0,206,196,0.1)",
-                            color: shipment.actions.hasActionRequired ? "#fb923c" : "#00cec4",
-                            border: "none",
-                          }}
-                        >
-                          {shipment.actions.hasActionRequired ? "ACTION REQUIRED" : "ACTIVE"}
-                        </Badge>
-                      </td>
-                      <td className="text-xs text-on-surface-variant">
-                        <span className="block">
-                          Docs: <span className="ds-numeric text-on-surface">{shipment.actions.pendingDocumentCount}</span>
-                        </span>
-                        <span className="mt-1 block">
-                          Queries: <span className="ds-numeric text-on-surface">{shipment.actions.openQueryCount}</span>
-                        </span>
-                      </td>
-                      <td>
-                        <div className="min-w-[140px] space-y-2">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-on-surface-variant">Completion</span>
-                            <span className="ds-numeric font-semibold text-[#00cec4]">{shipment.progressPercent}%</span>
-                          </div>
-                          <div className="h-2 overflow-hidden rounded-full bg-surface-container">
-                            <div className="h-full rounded-full bg-[#00cec4]" style={{ width: `${shipment.progressPercent}%` }} />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="ds-numeric text-on-surface-variant">{formatPortalDate(shipment.lastUpdatedAt)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        </CardHeader>
+        <CardContent>
+          <form className="grid grid-cols-1 gap-4 lg:grid-cols-12" method="get">
+            <div className="lg:col-span-4">
+              <label className="ds-label block">Search</label>
+              <div className="relative mt-2">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-variant" />
+                <input
+                  name="q"
+                  defaultValue={data.filters.q}
+                  placeholder="Job number, shipment title, or customer ref"
+                  className="w-full pl-10"
+                />
+              </div>
             </div>
 
-            <div className="block divide-y divide-outline-variant/30 md:hidden">
-              {filteredShipments.map((shipment) => (
-                <Link
-                  key={shipment.id}
-                  href={`/customer-portal/shipments/${shipment.id}`}
-                  className="block bg-surface p-4 transition-colors hover:bg-surface-container-low"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-[#00cec4]">{shipment.jobNumber}</p>
-                      <h4 className="mt-0.5 text-sm font-bold text-on-surface">
-                        {shipment.customerRef || shipment.title || "No Reference"}
-                      </h4>
-                    </div>
-                    <span className="ds-numeric text-xs font-bold text-[#00cec4]">{shipment.progressPercent}%</span>
-                  </div>
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-container">
-                    <div className="h-full rounded-full bg-[#00cec4]" style={{ width: `${shipment.progressPercent}%` }} />
-                  </div>
-                  <div className="mt-4 flex items-end justify-between">
-                    <div className="space-y-1">
-                      <p className="text-[11px] font-medium text-on-surface-variant">
-                        {shipment.clearanceType} • {shipment.shipmentType} • {shipment.currentStage}
-                      </p>
-                      <p className="text-[11px] text-on-surface-variant">
-                        Docs {shipment.actions.pendingDocumentCount} • Queries {shipment.actions.openQueryCount}
-                      </p>
-                    </div>
-                    <Badge
-                      variant={shipment.actions.hasActionRequired ? "warning" : "default"}
-                      className="text-[10px]"
-                      style={{
-                        backgroundColor: shipment.actions.hasActionRequired ? "rgba(251,146,60,0.1)" : "rgba(0,206,196,0.1)",
-                        color: shipment.actions.hasActionRequired ? "#fb923c" : "#00cec4",
-                        border: "none",
-                      }}
-                    >
-                      {shipment.actions.hasActionRequired ? "ACTION" : "ACTIVE"}
-                    </Badge>
-                  </div>
-                </Link>
-              ))}
+            <FilterSelect
+              name="stage"
+              label="Stage"
+              value={data.filters.stage ?? ""}
+              options={data.filterOptions.stages}
+            />
+            <FilterSelect
+              name="status"
+              label="Status"
+              value={data.filters.status ?? ""}
+              options={data.filterOptions.statuses.map((value) => ({ value, label: value.replaceAll("_", " ") }))}
+            />
+            <FilterSelect
+              name="priority"
+              label="Priority"
+              value={data.filters.priority ?? ""}
+              options={data.filterOptions.priorities.map((value) => ({ value, label: value.replaceAll("_", " ") }))}
+            />
+            <FilterSelect
+              name="attention"
+              label="Attention"
+              value={data.filters.attention}
+              options={[
+                { value: "all", label: "All Shipments" },
+                { value: "needs_action", label: "Needs Customer Action" },
+              ]}
+            />
+            <FilterSelect
+              name="completion"
+              label="Completion"
+              value={data.filters.completion}
+              options={[
+                { value: "all", label: "All States" },
+                { value: "recent", label: "Recently Completed" },
+              ]}
+            />
+            <FilterSelect
+              name="sort"
+              label="Sort"
+              value={data.filters.sort}
+              options={[
+                { value: "updatedAt_desc", label: "Last Updated" },
+                { value: "createdAt_desc", label: "Created Date" },
+                { value: "eta_asc", label: "Target / ETA" },
+              ]}
+            />
+
+            <div className="flex items-end gap-2 lg:col-span-12">
+              <Button size="sm" type="submit" className="gap-1.5">
+                <ListFilter className="size-3.5" />
+                Apply Filters
+              </Button>
+              <Link href="/customer-portal/shipments">
+                <Button variant="outline" size="sm">Reset</Button>
+              </Link>
+              <p className="ml-auto text-xs text-on-surface-variant">
+                Showing <span className="ds-numeric text-on-surface">{data.totalResults}</span> shipment{data.totalResults === 1 ? "" : "s"}
+              </p>
             </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <DataTable className="border border-outline-variant/45">
+        <DataTableToolbar className="bg-surface">
+          <div className="flex items-center gap-3">
+            <span className="ds-icon-badge">
+              <FolderKanban size={16} />
+            </span>
+            <div>
+              <h2 className="ds-h2 text-on-surface">Shipments</h2>
+              <p className="text-xs text-on-surface-variant">Read-only view of customer-scoped CHA jobs and follow-up indicators.</p>
+            </div>
+          </div>
+        </DataTableToolbar>
+        {data.sectionErrors.shipments ? (
+          <SectionErrorRow colSpan={8} message={data.sectionErrors.shipments} />
+        ) : (
+          <>
+            <DataTableHeader>
+              <tr>
+                <DataTableHead>Shipment</DataTableHead>
+                <DataTableHead>Customer Ref</DataTableHead>
+                <DataTableHead>Current Stage</DataTableHead>
+                <DataTableHead>Status</DataTableHead>
+                <DataTableHead>Priority</DataTableHead>
+                <DataTableHead>Attention</DataTableHead>
+                <DataTableHead>Last Updated</DataTableHead>
+                <DataTableHead>Target / ETA</DataTableHead>
+              </tr>
+            </DataTableHeader>
+            <DataTableBody>
+              {data.shipments.length === 0 ? (
+                <DataTableEmpty
+                  colSpan={8}
+                  message={data.summary.totalShipments === 0
+                    ? "No CHA shipments are linked to this customer account yet."
+                    : "No shipments match the current filters."}
+                />
+              ) : (
+                data.shipments.map((shipment) => (
+                  <tr key={shipment.id}>
+                    <DataTableCell className="font-medium">
+                      <Link href={shipment.href} className="text-[#00cec4] transition-colors hover:text-[#00b8af]">
+                        {shipment.jobNumber}
+                      </Link>
+                      <div className="mt-1 text-xs text-on-surface-variant">{shipment.title}</div>
+                    </DataTableCell>
+                    <DataTableCell className="text-on-surface-variant">{shipment.customerRef || "—"}</DataTableCell>
+                    <DataTableCell>
+                      <Badge variant={getChaStageBadgeVariant(shipment.stageKey)}>{shipment.stageLabel}</Badge>
+                    </DataTableCell>
+                    <DataTableCell>
+                      <Badge variant={getChaJobStatusBadgeVariant(shipment.status)}>{shipment.status.replaceAll("_", " ")}</Badge>
+                    </DataTableCell>
+                    <DataTableCell>
+                      <Badge variant={getChaPriorityBadgeVariant(shipment.priority)}>{shipment.priority.replaceAll("_", " ")}</Badge>
+                    </DataTableCell>
+                    <DataTableCell>
+                      {shipment.hasCustomerAction ? (
+                        <div className="space-y-2">
+                          <Badge variant="warning">Needs Follow-Up</Badge>
+                          <div className="text-xs text-on-surface-variant">
+                            {buildAttentionSummary(shipment)}
+                          </div>
+                        </div>
+                      ) : (
+                        <Badge variant="success">Up To Date</Badge>
+                      )}
+                    </DataTableCell>
+                    <DataTableCell className="text-on-surface-variant">
+                      <div>{formatDateTime(shipment.updatedAt)}</div>
+                      {shipment.recentUpdateAt ? (
+                        <div className="mt-1 text-xs">Visible update {formatDateTime(shipment.recentUpdateAt)}</div>
+                      ) : null}
+                    </DataTableCell>
+                    <DataTableCell className="text-on-surface-variant">
+                      {shipment.estimatedClosureDate ? formatDate(shipment.estimatedClosureDate) : "—"}
+                    </DataTableCell>
+                  </tr>
+                ))
+              )}
+            </DataTableBody>
           </>
         )}
-      </div>
+      </DataTable>
     </div>
   );
+}
+
+function FilterSelect({
+  label,
+  name,
+  value,
+  options,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <div className="lg:col-span-2">
+      <label className="ds-label block">{label}</label>
+      <select name={name} defaultValue={value} className="mt-2 w-full">
+        <option value="">All</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function StatCard({
+  title,
+  value,
+  helper,
+  icon,
+  tone = "primary",
+}: {
+  title: string;
+  value: number;
+  helper: string;
+  icon: ReactNode;
+  tone?: "primary" | "warning";
+}) {
+  const iconStyle = tone === "warning"
+    ? { background: "rgba(251,146,60,0.10)", color: "#fb923c" }
+    : undefined;
+
+  return (
+    <Card
+      className={`rounded-[24px] border-outline-variant/40 bg-surface p-5 ${
+        tone === "warning" ? "card-top-accent-orange" : "card-top-accent"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div className="space-y-2">
+          <p className="ds-label">{title}</p>
+          <p className={`text-3xl ds-numeric ${tone === "warning" && value > 0 ? "text-[#fb923c]" : "text-on-surface"}`}>
+            {value}
+          </p>
+        </div>
+        <span className="ds-icon-badge" style={iconStyle}>
+          {icon}
+        </span>
+      </div>
+      <p className="mt-3 text-xs text-on-surface-variant">{helper}</p>
+    </Card>
+  );
+}
+
+function SectionErrorRow({ colSpan, message }: { colSpan: number; message: string }) {
+  return (
+    <>
+      <DataTableHeader>
+        <tr>
+          <DataTableHead>Section Status</DataTableHead>
+        </tr>
+      </DataTableHeader>
+      <DataTableBody>
+        <DataTableEmpty colSpan={colSpan} message={message} />
+      </DataTableBody>
+    </>
+  );
+}
+
+function buildAttentionSummary(shipment: {
+  pendingDocumentCount: number;
+  pendingChecklistCount: number;
+  openQueryCount: number;
+}) {
+  const parts: string[] = [];
+  if (shipment.pendingDocumentCount > 0) parts.push(`${shipment.pendingDocumentCount} doc`);
+  if (shipment.pendingChecklistCount > 0) parts.push(`${shipment.pendingChecklistCount} checklist`);
+  if (shipment.openQueryCount > 0) parts.push(`${shipment.openQueryCount} query`);
+  return parts.join(" • ");
+}
+
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }

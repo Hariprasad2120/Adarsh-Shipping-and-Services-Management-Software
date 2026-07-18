@@ -1,15 +1,13 @@
-import { PortalSecurityForm } from "../_components/client-actions";
+import { requirePortalSession } from "@/modules/customer-portal/auth";
+import { PortalPlaceholder } from "../_components/portal-placeholder";
 
-export default function CustomerPortalSecurityPage() {
+export default async function CustomerPortalSecurityPage() {
+  await requirePortalSession();
+
   return (
-    <div className="rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-sm">
-      <h2 className="ds-h2">Security</h2>
-      <p className="mt-2 text-sm text-on-surface-variant">
-        Change your password and revoke other active sessions.
-      </p>
-      <div className="mt-4">
-        <PortalSecurityForm />
-      </div>
-    </div>
+    <PortalPlaceholder
+      title="Security"
+      description="Password management and multi-session controls were removed with the old portal feature set. This route stays in place so the new security flow can be rebuilt intentionally."
+    />
   );
 }

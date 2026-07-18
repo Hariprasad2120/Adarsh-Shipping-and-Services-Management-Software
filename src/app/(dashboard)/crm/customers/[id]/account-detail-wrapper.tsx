@@ -5,38 +5,72 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { deleteAccountAction } from "@/modules/crm/actions";
-import {
-  inviteCustomerPortalUserAction,
-  resendCustomerPortalInvitationAction,
-  suspendCustomerPortalUserAction,
-} from "@/modules/customer-portal/actions";
 import { NotesPanel } from "../../_components/notes-panel";
-import { AttachmentsPanel } from "../../_components/attachments-panel";
-import { ActivitiesPanel } from "../../_components/activities-panel";
 import { TimelinePanel } from "../../_components/timeline-panel";
-import {Edit2,Trash2,Users,Briefcase,FileText,Plus,Eye,Search,ChevronDown,X,Building,Mail,Phone,MapPin,FileText as StatementIcon,DollarSign,TrendingUp,User as UserIcon,MoreHorizontal,ArrowRight} from "lucide-react";
+import {Edit2,Users,FileText,Plus,Search,ChevronDown,X,Building,MapPin,FileText as StatementIcon,DollarSign,TrendingUp,User as UserIcon,MoreHorizontal,ArrowRight} from "lucide-react";
+
+type CustomerContact = {
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+};
+
+type CustomerInvoice = {
+  id: string;
+  invoiceNumber?: string | null;
+  type?: string | null;
+  status?: string | null;
+  total?: number | null;
+  date?: string | Date | null;
+};
+
+type CustomerAccountListItem = {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  invoices?: CustomerInvoice[] | null;
+};
+
+type CustomerAccountDetail = CustomerAccountListItem & {
+  billingAddress?: string | null;
+  companyName?: string | null;
+  contacts?: CustomerContact[] | null;
+  creditLimit?: number | null;
+  currency?: string | null;
+  customerSubType?: string | null;
+  firstName?: string | null;
+  gstTreatment?: string | null;
+  industry?: string | null;
+  language?: string | null;
+  lastName?: string | null;
+  pan?: string | null;
+  paymentTerms?: string | null;
+  phone?: string | null;
+  placeOfSupply?: string | null;
+  salutation?: string | null;
+  shippingAddress?: string | null;
+  status?: string | null;
+};
 
 interface AccountDetailWrapperProps {
-  account: any;
-  notes: any[];
-  attachments: any[];
-  activities: any[];
-  timeline: any[];
-  invoices: any[];
-  accounts: any[];
-  portalUsers: any[];
+  account: CustomerAccountDetail;
+  notes: unknown[];
+  attachments: unknown[];
+  activities: unknown[];
+  timeline: unknown[];
+  invoices: CustomerInvoice[];
+  accounts: CustomerAccountListItem[];
   search: string;
 }
 
 export function AccountDetailWrapper({
   account,
   notes,
-  attachments,
-  activities,
   timeline,
   invoices,
   accounts,
-  portalUsers,
   search: initialSearch,
 }: AccountDetailWrapperProps) {
   const router = useRouter();
@@ -49,7 +83,6 @@ export function AccountDetailWrapper({
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [showMoreActions, setShowMoreActions] = useState(false);
   const [showNewTxnDropdown, setShowNewTxnDropdown] = useState(false);
-  const [portalContactId, setPortalContactId] = useState(account.contacts?.[0]?.id ?? "");
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this customer? This will delete all linked contacts too!")) return;
@@ -74,9 +107,9 @@ export function AccountDetailWrapper({
   };
 
   // Integration Calculations
-  const totalInvoiced = invoices.reduce((sum, inv) => sum + inv.total, 0);
+  const totalInvoiced = invoices.reduce((sum, inv) => sum + (inv.total ?? 0), 0);
   const unpaidInvoices = invoices.filter(inv => inv.status !== "PAID" && inv.status !== "CANCELLED");
-  const overdueTotal = unpaidInvoices.reduce((sum, inv) => sum + inv.total, 0);
+  const overdueTotal = unpaidInvoices.reduce((sum, inv) => sum + (inv.total ?? 0), 0);
 
   // Helper to format currency
   const fmtCurrency = (val: number) => {
@@ -88,9 +121,9 @@ export function AccountDetailWrapper({
   };
 
   // Helper to compute balance for a list item
-  const getListItemBalance = (acc: any) => {
-    const listUnpaid = acc.invoices?.filter((inv: any) => inv.status !== "PAID" && inv.status !== "CANCELLED") || [];
-    return listUnpaid.reduce((sum: number, inv: any) => sum + inv.total, 0);
+  const getListItemBalance = (acc: CustomerAccountListItem) => {
+    const listUnpaid = acc.invoices?.filter((inv) => inv.status !== "PAID" && inv.status !== "CANCELLED") || [];
+    return listUnpaid.reduce((sum, inv) => sum + (inv.total ?? 0), 0);
   };
 
   return (
@@ -365,7 +398,7 @@ export function AccountDetailWrapper({
                       </tr>
                     </thead>
                     <tbody>
-                      {account.contacts.map((c: any) => (
+                      {account.contacts.map((c) => (
                         <tr key={c.id} className="ds-row-link" onClick={() => router.push(`/crm/contacts/${c.id}`)}>
                           <td className="px-4 py-2 font-bold text-white hover:text-[#00cec4] transition-all">
                             {c.firstName ? `${c.firstName} ` : ""}{c.lastName}
@@ -546,12 +579,6 @@ export function AccountDetailWrapper({
                           <span className="text-white font-semibold">{account.language || "English"}</span>
                         </div>
                         <div>
-                          <span className="text-slate-400 block mb-0.5">Portal Status</span>
-                          <span className={`font-semibold ${account.isPortalEnabled ? "text-[#00cec4]" : "text-slate-400"}`}>
-                            {account.isPortalEnabled ? "Portal Access Allowed" : "Portal Access Disabled"}
-                          </span>
-                        </div>
-                        <div>
                           <span className="text-slate-400 block mb-0.5">Status</span>
                           <span className="text-emerald-400 font-bold uppercase">{account.status || "ACTIVE"}</span>
                         </div>
@@ -589,98 +616,6 @@ export function AccountDetailWrapper({
                           <span className="text-slate-400 font-medium">Total Billed</span>
                           <span className="text-[#00cec4] font-bold text-sm ds-numeric">{fmtCurrency(totalInvoiced)}</span>
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="card-top-accent bg-[#0f1319] border border-[#1c212a]/50 rounded-xl p-5 space-y-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <h3 className="text-xs font-bold text-white uppercase tracking-wider">Customer Portal</h3>
-                          <p className="mt-1 text-[11px] text-slate-400">Invite customer contacts and track portal access.</p>
-                        </div>
-                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${account.isPortalEnabled ? "bg-[#00cec4]/10 text-[#00cec4]" : "bg-[#161f28] text-slate-400"}`}>
-                          {account.isPortalEnabled ? "Enabled" : "Disabled"}
-                        </span>
-                      </div>
-
-                      <div className="space-y-3">
-                        <select
-                          value={portalContactId}
-                          onChange={(event) => setPortalContactId(event.target.value)}
-                          className="w-full rounded-lg border border-[#1c212a] bg-[#0a0d12] px-3 py-2 text-sm text-white"
-                        >
-                          {account.contacts?.map((contact: any) => (
-                            <option key={contact.id} value={contact.id}>
-                              {`${contact.firstName ?? ""} ${contact.lastName ?? ""}`.trim() || contact.email || contact.id}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          type="button"
-                          className="w-full rounded-xl bg-[#00cec4] px-4 py-2 text-xs font-bold uppercase tracking-wider text-white"
-                          onClick={async () => {
-                            const res = await inviteCustomerPortalUserAction(account.id, portalContactId);
-                            if (!res.ok) {
-                              toast.error(res.error);
-                              return;
-                            }
-                            toast.success("Portal invitation sent");
-                            router.refresh();
-                          }}
-                        >
-                          Invite Selected Contact
-                        </button>
-                      </div>
-
-                      <div className="space-y-3">
-                        {portalUsers.length === 0 ? (
-                          <p className="text-xs italic text-slate-500">No portal users have been invited yet.</p>
-                        ) : (
-                          portalUsers.map((portalUser: any) => (
-                            <div key={portalUser.id} className="rounded-xl border border-[#1c212a]/40 bg-[#0a0d12]/60 p-3">
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <p className="text-sm font-semibold text-white">{portalUser.name}</p>
-                                  <p className="text-[11px] text-slate-400">{portalUser.email}</p>
-                                  <p className="mt-1 text-[10px] uppercase tracking-wider text-slate-500">
-                                    {portalUser.status} • Last login {portalUser.lastLoginAt ? new Date(portalUser.lastLoginAt).toLocaleString() : "Never"}
-                                  </p>
-                                </div>
-                                <div className="flex gap-2">
-                                  <button
-                                    type="button"
-                                    className="text-[11px] font-semibold text-[#00cec4] hover:underline"
-                                    onClick={async () => {
-                                      const res = await resendCustomerPortalInvitationAction(portalUser.id, account.id);
-                                      if (!res.ok) {
-                                        toast.error(res.error);
-                                        return;
-                                      }
-                                      toast.success("Invitation resent");
-                                    }}
-                                  >
-                                    Resend
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="text-[11px] font-semibold text-[#fb923c] hover:underline"
-                                    onClick={async () => {
-                                      const res = await suspendCustomerPortalUserAction(portalUser.id, account.id, "Suspended by account manager");
-                                      if (!res.ok) {
-                                        toast.error(res.error);
-                                        return;
-                                      }
-                                      toast.success("Portal user suspended");
-                                      router.refresh();
-                                    }}
-                                  >
-                                    Suspend
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        )}
                       </div>
                     </div>
 
@@ -749,7 +684,7 @@ export function AccountDetailWrapper({
                     <div className="p-12 text-center text-slate-500 text-xs italic">No invoices or quotations issued for this customer.</div>
                   ) : (
                     <div className="space-y-2">
-                      {invoices.map((inv: any) => {
+                      {invoices.map((inv) => {
                         const href = inv.type === "QUOTE"
                           ? `/crm/quotes/${inv.id}`
                           : inv.type === "SALES_ORDER"
@@ -806,7 +741,7 @@ export function AccountDetailWrapper({
                             <td colSpan={5} className="text-center p-8 text-slate-500 italic text-xs">No records available to show.</td>
                           </tr>
                         ) : (
-                          invoices.map((inv: any) => (
+                          invoices.map((inv) => (
                             <tr key={inv.id} className="ds-row-link" onClick={() => {
                               const href = inv.type === "QUOTE" ? `/crm/quotes/${inv.id}` : `/crm/invoices/${inv.id}`;
                               router.push(href);

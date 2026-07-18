@@ -4,6 +4,7 @@ import { randomUUID, createHash } from "crypto";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
+import { LOGIN_LOCKOUT_MS, LOGIN_MAX_ATTEMPTS } from "@/lib/session-config";
 import { maskIp, deviceLabel, extractRequestMeta } from "@/lib/session-service";
 import type { Prisma } from "@/generated/prisma/client";
 import { PORTAL_COOKIE_NAME, PORTAL_LOGIN_PATH } from "./config";
@@ -12,7 +13,6 @@ const IS_PROD = process.env.NODE_ENV === "production";
 const PORTAL_SESSION_MAX_AGE_S = 7 * 24 * 60 * 60;
 const PORTAL_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 const PORTAL_ABSOLUTE_TIMEOUT_MS = 7 * 24 * 60 * 60 * 1000;
-const PORTAL_LOGIN_MAX_ATTEMPTS = 5;
 
 const COMMON_PASSWORDS = new Set([
   "password",
@@ -156,11 +156,19 @@ export async function getPortalSession() {
     session.portalUser.status !== "ACTIVE" ||
     !session.portalUser.customer.isPortalEnabled ||
     session.portalUser.revokedAt ||
-    session.portalUser.suspendedAt
+    session.portalUser.suspendedAt ||
+    (session.portalUser.lockedUntil && session.portalUser.lockedUntil.getTime() > now.getTime())
   ) {
     await db.customerPortalSession.update({
       where: { token },
-      data: { status: "REVOKED", revokedAt: now, revokeReason: "ACCOUNT_DISABLED" },
+      data: {
+        status: "REVOKED",
+        revokedAt: now,
+        revokeReason:
+          session.portalUser.lockedUntil && session.portalUser.lockedUntil.getTime() > now.getTime()
+            ? "ACCOUNT_LOCKED"
+            : "ACCOUNT_DISABLED",
+      },
     }).catch(() => null);
     return null;
   }
@@ -213,7 +221,11 @@ export async function verifyPortalPassword(portalUserId: string, password: strin
 }
 
 export async function shouldLockPortalAccount(failedLoginCount: number) {
-  return failedLoginCount + 1 >= PORTAL_LOGIN_MAX_ATTEMPTS;
+  return failedLoginCount + 1 >= LOGIN_MAX_ATTEMPTS;
+}
+
+export function getPortalLockoutUntil(now: Date) {
+  return new Date(now.getTime() + LOGIN_LOCKOUT_MS);
 }
 
 export async function recordPortalAuthAudit(input: {

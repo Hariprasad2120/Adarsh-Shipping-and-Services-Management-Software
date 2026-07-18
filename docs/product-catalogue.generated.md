@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-17T12:38:16.362Z
+> Generated at: 2026-07-18T05:41:15.417Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -8,9 +8,9 @@
 | Metric | Count |
 |---|---|
 | App Routes (Pages) | 203 |
-| API Routes | 192 |
+| API Routes | 195 |
 | Prisma Models | 277 |
-| Module Service Files | 80 |
+| Module Service Files | 85 |
 | UI Components | 93 |
 
 ## Modules Overview
@@ -29,7 +29,7 @@
 | core | 2 | 0 | 72 | 5 | 0 |
 | crm | 59 | 4 | 26 | 7 | 1 |
 | cron | 0 | 7 | 0 | 0 | 0 |
-| customer-portal | 0 | 16 | 0 | 7 | 0 |
+| customer-portal | 0 | 19 | 0 | 12 | 0 |
 | dashboard | 1 | 0 | 0 | 0 | 0 |
 | dev | 0 | 1 | 0 | 0 | 0 |
 | expense | 1 | 0 | 0 | 0 | 0 |
@@ -132,9 +132,11 @@
 | POST | `/api/customer-portal/auth/logout` | customer-portal |
 | GET | `/api/customer-portal/checklist-files/[id]` | customer-portal |
 | POST | `/api/customer-portal/checklists/respond` | customer-portal |
+| POST | `/api/customer-portal/checklists/[checklistId]/decision` | customer-portal |
 | GET | `/api/customer-portal/document-versions/[id]` | customer-portal |
 | POST | `/api/customer-portal/documents/confirm` | customer-portal |
 | POST | `/api/customer-portal/documents/upload` | customer-portal |
+| GET | `/api/customer-portal/documents/[versionId]` | customer-portal |
 | POST | `/api/customer-portal/notifications/read-all` | customer-portal |
 | POST | `/api/customer-portal/notifications/[id]/read` | customer-portal |
 | PATCH | `/api/customer-portal/profile/preferences` | customer-portal |
@@ -142,6 +144,7 @@
 | POST | `/api/customer-portal/ratings` | customer-portal |
 | POST | `/api/customer-portal/security/logout-all` | customer-portal |
 | PATCH | `/api/customer-portal/security/password` | customer-portal |
+| POST | `/api/customer-portal/shipments/[shipmentId]/documents` | customer-portal |
 | GET | `/api/dev/clear-auth-cookies` | dev |
 | GET | `/api/google-chat/admin` | google-chat |
 | POST | `/api/google-chat/debug` | google-chat |
@@ -789,12 +792,17 @@
 
 ### customer-portal
 - **actions.ts**: inviteCustomerPortalUserAction, resendCustomerPortalInvitationAction, suspendCustomerPortalUserAction, createCustomerPortalQueryAction, getPortalFeatureFlagAction, setPortalFeatureFlagAction
-- **auth.ts**: hashPortalToken, buildPortalLink, getPortalRequestMeta, validatePortalPassword, hashPortalPassword, createPortalSession, setPortalSessionCookie, clearPortalSessionCookie, getPortalSessionToken, getPortalSession, requirePortalSession, revokePortalSession, revokeAllPortalSessions, verifyPortalPassword, shouldLockPortalAccount, recordPortalAuthAudit
+- **auth.ts**: hashPortalToken, buildPortalLink, getPortalRequestMeta, validatePortalPassword, hashPortalPassword, createPortalSession, setPortalSessionCookie, clearPortalSessionCookie, getPortalSessionToken, getPortalSession, requirePortalSession, revokePortalSession, revokeAllPortalSessions, verifyPortalPassword, shouldLockPortalAccount, getPortalLockoutUntil, recordPortalAuthAudit
+- **checklists.ts**: submitPortalChecklistDecision
 - **config.ts**: no exports detected
+- **dashboard.ts**: getCustomerPortalDashboardData, buildActionRequiredItems, buildRecentUpdates, buildOutstandingQueries, buildDocumentStatusSummary, buildPendingChecklistDecisions, buildNotificationSummary, buildServiceFeedback
 - **feature-flags.ts**: getPortalFeatureFlag, setPortalFeatureFlag
 - **service.ts**: inviteCustomerPortalUser, listCustomerPortalUsers, syncCustomerPortalUsersForCrmCustomer, activateCustomerPortalAccount, loginCustomerPortal, logoutCustomerPortal, logoutCustomerPortalAllDevices, requestCustomerPortalPasswordReset, resetCustomerPortalPassword, updatePortalNotificationPreferences, listPortalShipments, getPortalDashboard, getPortalShipmentDetail, listPortalNotifications, markPortalNotificationRead, markAllPortalNotificationsRead, uploadPortalDocument, confirmPortalDocumentSubmission, getPortalDocumentVersion, submitPortalChecklistDecision, listPortalQueries, replyToPortalQuery, createInternalCustomerQuery, listPortalRatingCategories, submitPortalShipmentRating, suspendCustomerPortalUser, resendCustomerPortalInvitation, getCustomerPortalProfile, changeCustomerPortalPassword
+- **shipments.ts**: parseCustomerPortalShipmentFilters, getCustomerPortalShipmentsData, getCustomerPortalShipmentDetailData
 - **types.ts**: no exports detected
 - **auth.test.ts**: no exports detected
+- **dashboard.test.ts**: no exports detected
+- **shipments.test.ts**: no exports detected
 
 ### google-chat
 - **cards.ts**: buildConnectCard, buildHelpCard, buildStatusCard, buildTasksCard, buildAiResponseCard, buildErrorCard, buildNotificationCard, buildSpaceLinkedCard, buildPrivacyCard, buildProcessingCard
@@ -908,6 +916,8 @@
 | CHA Expenses | cha | ✅ Implemented |
 | Document Version Control | cha | ✅ Implemented |
 | CHA Audit Logging | cha | ✅ Implemented |
+| CHA Customer Portal Dashboard | cha | ✅ Implemented |
+| CHA Customer Portal Shipments | cha | ✅ Implemented |
 | Gmail/Google Workspace Integration | communication | ✅ Implemented |
 | Google Chat Integration | communication | ✅ Implemented |
 | Email Dispatch Queue | communication | ✅ Implemented |
