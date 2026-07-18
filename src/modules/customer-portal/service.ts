@@ -7,6 +7,7 @@ import { getNow } from "@/lib/clock";
 import { sendEmail } from "@/lib/email";
 import { can, ForbiddenError } from "@/lib/rbac";
 import type { Prisma } from "@/generated/prisma/client";
+import type { PortalShipmentDetailView } from "./types";
 import {
   buildPortalLink,
   clearPortalSessionCookie,
@@ -198,7 +199,7 @@ function getActionRequiredFlags(job: {
   const checklistPending =
     job.checklistWorkflow &&
     job.checklistWorkflow.currentApprovalStage === "CUSTOMER" &&
-    ["CUSTOMER_APPROVAL_PENDING", "CUSTOMER_APPROVAL_WAITING_WINDOW"].includes(job.checklistWorkflow.status);
+    ["CUSTOMER_APPROVAL_PENDING", "CUSTOMER_APPROVAL_WAITING_WINDOW"].includes(job.checklistWorkflow.status || "");
   const openQueries = job.customerQueryThreads.filter(
     (thread: { status: string; requiresCustomerAction: boolean }) =>
       thread.status !== "CLOSED" && thread.status !== "RESOLVED",
@@ -723,11 +724,25 @@ export async function listPortalShipments(portalUserId: string, filters: PortalS
     include: {
       jobType: true,
       shipmentType: true,
-      primaryOwner: { select: { name: true, email: true, designation: true } },
-      assignedManager: { select: { name: true, email: true, designation: true } },
+      primaryOwner: { select: { name: true, email: true, personalPhone: true, designation: true } },
+      assignedManager: { select: { name: true, email: true, personalPhone: true, designation: true } },
       additionalData: true,
       documentRequirements: {
         include: {
+          requirementItem: {
+            include: {
+              category: true,
+            },
+          },
+          exception: {
+            include: {
+              user: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
           customerSubmissions: {
             where: { customerId: portalUser.customerId },
             include: { versions: { orderBy: { uploadedAt: "desc" }, take: 1 } },
@@ -775,6 +790,7 @@ export async function listPortalShipments(portalUserId: string, filters: PortalS
           : 0,
         actions,
         scope: statusScope,
+        documentRequirements: job.documentRequirements,
       };
     })
     .filter((job) => {
@@ -811,7 +827,7 @@ export async function getPortalDashboard(portalUserId: string) {
   };
 }
 
-export async function getPortalShipmentDetail(portalUserId: string, jobId: string): Promise<unknown> {
+export async function getPortalShipmentDetail(portalUserId: string, jobId: string): Promise<PortalShipmentDetailView> {
   const portalUser = await getPortalUserContext(portalUserId);
   const job = await db.chaJob.findFirst({
     where: {
@@ -825,11 +841,25 @@ export async function getPortalShipmentDetail(portalUserId: string, jobId: strin
       customer: true,
       jobType: true,
       shipmentType: true,
-      primaryOwner: { select: { name: true, email: true, designation: true } },
-      assignedManager: { select: { name: true, email: true, designation: true } },
+      primaryOwner: { select: { name: true, email: true, personalPhone: true, designation: true } },
+      assignedManager: { select: { name: true, email: true, personalPhone: true, designation: true } },
       additionalData: true,
       documentRequirements: {
         include: {
+          requirementItem: {
+            include: {
+              category: true,
+            },
+          },
+          exception: {
+            include: {
+              user: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
           versions: { where: { isCurrent: true }, take: 1, orderBy: { uploadedAt: "desc" } },
           customerSubmissions: {
             where: { customerId: portalUser.customerId },
@@ -862,11 +892,20 @@ export async function getPortalShipmentDetail(portalUserId: string, jobId: strin
     orderBy: { sortOrder: "asc" },
   });
   const currentStage = stageMappings.find((entry) => entry.internalStageKey === job.stage);
+  const auditLogs = await db.customerPortalAuditLog.findMany({
+    where: {
+      orgId: portalUser.orgId,
+      customerId: portalUser.customerId,
+      jobId,
+    },
+    orderBy: { createdAt: "desc" },
+  });
   return {
     job,
     stageMappings,
     currentStage,
     actions: getActionRequiredFlags(job),
+    auditLogs,
   };
 }
 
@@ -1035,6 +1074,79 @@ export async function uploadPortalDocument(params: {
   });
 
   return submission;
+}
+
+export async function confirmPortalDocumentSubmission(params: {
+  portalUserId: string;
+  jobId: string;
+  requirementId: string;
+}) {
+  const { portalUser, requirement } = await ensureSubmissionAccess(params.portalUserId, params.jobId, params.requirementId);
+
+  const submission = await db.customerDocumentSubmission.findFirst({
+    where: {
+      customerId: portalUser.customerId,
+      jobId: params.jobId,
+      requirementId: params.requirementId,
+    },
+    include: { versions: { orderBy: { uploadedAt: "desc" } } },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  if (!submission || !submission.currentVersionId) {
+    throw new Error("Upload a file before sending it for verification.");
+  }
+
+  if (submission.status === "UNDER_REVIEW" || submission.status === "ACCEPTED") {
+    return submission;
+  }
+
+  if (["REJECTED", "REUPLOAD_REQUIRED", "CLARIFICATION_REQUIRED"].includes(submission.status)) {
+    throw new Error("This document needs a corrected upload before it can be sent again.");
+  }
+
+  const updated = await db.customerDocumentSubmission.update({
+    where: { id: submission.id },
+    data: { status: "UNDER_REVIEW" },
+    include: { versions: { orderBy: { uploadedAt: "desc" } } },
+  });
+
+  await writePortalAudit({
+    orgId: portalUser.orgId,
+    customerId: portalUser.customerId,
+    portalUserId: portalUser.id,
+    jobId: params.jobId,
+    entityType: "CustomerDocumentSubmission",
+    entityId: updated.id,
+    event: "DOCUMENT_SUBMITTED_FOR_REVIEW",
+    remarks: `${requirement.name} was confirmed by the customer and sent for verification.`,
+  });
+
+  const primaryOwnerId = await jobOwnerIdOrNull(portalUser.orgId, params.jobId);
+  if (primaryOwnerId) {
+    const { createNotification } = await import("@/modules/notifications/service");
+    await createNotification({
+      userId: primaryOwnerId,
+      orgId: portalUser.orgId,
+      kind: "CHA_CUSTOMER_DOCUMENT_UPLOADED",
+      title: `Customer confirmed document for ${params.jobId}`,
+      body: `${portalUser.name} marked ${requirement.name} ready for verification.`,
+      link: `/cha/jobs/${params.jobId}`,
+    });
+  }
+
+  await notifyPortalUsers({
+    orgId: portalUser.orgId,
+    customerId: portalUser.customerId,
+    portalUserIds: [portalUser.id],
+    jobId: params.jobId,
+    kind: "PORTAL_DOCUMENT_UPLOADED",
+    title: `${requirement.name} sent for verification`,
+    body: `Your upload has been confirmed and is now with the CHA team for review.`,
+    link: `/customer-portal/shipments/${params.jobId}?tab=documents`,
+  });
+
+  return updated;
 }
 
 async function jobOwnerIdOrNull(orgId: string, jobId: string) {

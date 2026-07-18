@@ -7,7 +7,9 @@ import {ChevronRight,Edit,Plus,Save,Search,ShieldCheck,Trash2,Truck,Users,Workfl
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {updateSettingsAction,createJobTypeAction,updateJobTypeManifestConfigAction,deleteJobTypeAction,createShipmentTypeAction,deleteShipmentTypeAction,createTeamGroupAction,deleteTeamGroupAction,upsertDocumentCategoryAction,deleteDocumentCategoryAction,upsertDocumentItemAction,deleteDocumentItemAction,} from "@/modules/cha/actions";
+import {updateSettingsAction,createJobTypeAction,updateJobTypeManifestConfigAction,deleteJobTypeAction,createShipmentTypeAction,deleteShipmentTypeAction,createTeamGroupAction,deleteTeamGroupAction,upsertDocumentCategoryAction,deleteDocumentCategoryAction,upsertDocumentItemAction,deleteDocumentItemAction} from "@/modules/cha/actions";
+import { setPortalFeatureFlagAction } from "@/modules/customer-portal/actions";
+import { ChaPageHeader } from "../_components/cha-operations-shared";
 
 interface SettingsFormProps {
   initialSettings: {
@@ -19,6 +21,7 @@ interface SettingsFormProps {
     expenseCategories: string[];
     jobNumberPrefix?: string;
     jobNumberNextNum?: number;
+    portalUploadsEnabled: boolean;
   };
   availableRoles: string[];
   availableEmployees: { id: string; name: string }[];
@@ -99,6 +102,7 @@ export function SettingsForm({
   const [activeTab, setActiveTab] = useState<SettingsTab>("overview");
   const [selfApprovalAllowed, setSelfApprovalAllowed] = useState(initialSettings.selfApprovalAllowed);
   const [managerApprovalPolicy, setManagerApprovalPolicy] = useState(initialSettings.managerApprovalPolicy);
+  const [portalUploadsEnabled, setPortalUploadsEnabled] = useState(initialSettings.portalUploadsEnabled);
   const [jobCreatorRoles, setJobCreatorRoles] = useState<string[]>(initialSettings.jobCreatorRoles);
   const [jobCreatorUsers, setJobCreatorUsers] = useState<string[]>(initialSettings.jobCreatorUsers);
   const [expenseCategories, setExpenseCategories] = useState<string[]>(initialSettings.expenseCategories);
@@ -457,11 +461,15 @@ export function SettingsForm({
         })),
       });
 
-      if (res.ok) {
+      const portalRes = await setPortalFeatureFlagAction("CUSTOMER_PORTAL_SHIPMENT_UPLOADS", portalUploadsEnabled);
+
+      if (res.ok && portalRes.ok) {
         toast.success("CHA operational settings updated successfully.");
         router.refresh();
-      } else {
+      } else if (!res.ok) {
         toast.error(res.error || "Failed to update settings.");
+      } else {
+        toast.error(portalRes.error || "Failed to update customer portal uploads setting.");
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
@@ -737,6 +745,20 @@ export function SettingsForm({
                   <ChevronRight size={16} className="text-on-surface-variant" />
                 </button>
               ))}
+
+              <a
+                href="/customer-portal"
+                target="_blank"
+                rel="noreferrer"
+                className="ds-plain card-left-accent-orange hover-cyan flex w-full items-center justify-between rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-left shadow-sm transition-all"
+                style={{ borderLeftColor: "#fb923c" }}
+              >
+                <span>
+                  <span className="block text-sm font-medium text-[#fb923c] uppercase">Customer Portal Access ➔</span>
+                  <span className="block text-xs text-on-surface-variant">Navigate to customer portal login & tracking dashboard</span>
+                </span>
+                <ChevronRight size={16} className="text-[#fb923c]" />
+              </a>
             </CardContent>
           </Card>
         </section>
@@ -932,6 +954,19 @@ export function SettingsForm({
                 <span>
                   <span className="block text-sm font-semibold text-on-surface">Allow Self-Approval</span>
                   <span className="mt-1 block text-xs text-on-surface-variant">Job owners with permission can approve without routing.</span>
+                </span>
+              </label>
+
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
+                <input
+                  type="checkbox"
+                  checked={portalUploadsEnabled}
+                  onChange={(event) => setPortalUploadsEnabled(event.target.checked)}
+                  className="mt-1"
+                />
+                <span>
+                  <span className="block text-sm font-semibold text-[#00cec4]">Enable Customer Portal Document Uploads</span>
+                  <span className="mt-1 block text-xs text-on-surface-variant">Allow authorized customer portal contacts to upload KYC and shipment documents.</span>
                 </span>
               </label>
               <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">

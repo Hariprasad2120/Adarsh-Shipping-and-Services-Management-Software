@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-16T10:03:28.533Z",
+  "generatedAt": "2026-07-17T12:38:16.362Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -7,9 +7,9 @@
   },
   "stats": {
     "totalAppRoutes": 203,
-    "totalApiRoutes": 190,
+    "totalApiRoutes": 192,
     "totalPrismaModels": 277,
-    "totalModuleServices": 77,
+    "totalModuleServices": 80,
     "totalComponents": 93
   },
   "appRoutes": [
@@ -1529,6 +1529,14 @@
       ]
     },
     {
+      "path": "/api/cha/customer-documents/[id]",
+      "filePath": "src/app/api/cha/customer-documents/[id]/route.ts",
+      "module": "cha",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
       "path": "/api/cha/documents/[id]",
       "filePath": "src/app/api/cha/documents/[id]/route.ts",
       "module": "cha",
@@ -1848,6 +1856,14 @@
       "module": "customer-portal",
       "methods": [
         "GET"
+      ]
+    },
+    {
+      "path": "/api/customer-portal/documents/confirm",
+      "filePath": "src/app/api/customer-portal/documents/confirm/route.ts",
+      "module": "customer-portal",
+      "methods": [
+        "POST"
       ]
     },
     {
@@ -10399,6 +10415,7 @@
         "uploadFilingAttachmentAction",
         "upsertFilingShipmentDetailsAction",
         "deleteFilingAttachmentAction",
+        "acceptCustomerDocumentSubmissionAction",
         "updateFilingAttachmentValidityAction"
       ]
     },
@@ -10437,6 +10454,7 @@
         "listJobs",
         "resolveDriveFolderForCategory",
         "uploadDocumentVersion",
+        "acceptCustomerDocumentSubmission",
         "createJobCustomDocumentRequirementAndUpload",
         "deleteDocumentVersion",
         "declareDocumentException",
@@ -10796,7 +10814,9 @@
         "inviteCustomerPortalUserAction",
         "resendCustomerPortalInvitationAction",
         "suspendCustomerPortalUserAction",
-        "createCustomerPortalQueryAction"
+        "createCustomerPortalQueryAction",
+        "getPortalFeatureFlagAction",
+        "setPortalFeatureFlagAction"
       ]
     },
     {
@@ -10824,6 +10844,21 @@
     },
     {
       "module": "customer-portal",
+      "fileName": "config.ts",
+      "filePath": "src/modules/customer-portal/config.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "customer-portal",
+      "fileName": "feature-flags.ts",
+      "filePath": "src/modules/customer-portal/feature-flags.ts",
+      "exportedFunctions": [
+        "getPortalFeatureFlag",
+        "setPortalFeatureFlag"
+      ]
+    },
+    {
+      "module": "customer-portal",
       "fileName": "service.ts",
       "filePath": "src/modules/customer-portal/service.ts",
       "exportedFunctions": [
@@ -10844,6 +10879,7 @@
         "markPortalNotificationRead",
         "markAllPortalNotificationsRead",
         "uploadPortalDocument",
+        "confirmPortalDocumentSubmission",
         "getPortalDocumentVersion",
         "submitPortalChecklistDecision",
         "listPortalQueries",
@@ -10856,6 +10892,12 @@
         "getCustomerPortalProfile",
         "changeCustomerPortalPassword"
       ]
+    },
+    {
+      "module": "customer-portal",
+      "fileName": "types.ts",
+      "filePath": "src/modules/customer-portal/types.ts",
+      "exportedFunctions": []
     },
     {
       "module": "customer-portal",
@@ -11362,6 +11404,11 @@
       "filePath": "src/components/ams/form-preview-modal.tsx"
     },
     {
+      "module": "auth",
+      "fileName": "monolith-logistics-login.tsx",
+      "filePath": "src/components/auth/monolith-logistics-login.tsx"
+    },
+    {
       "module": "shared",
       "fileName": "auto-breadcrumb.tsx",
       "filePath": "src/components/auto-breadcrumb.tsx"
@@ -11647,11 +11694,6 @@
       "filePath": "src/components/landing-page/HRModule.tsx"
     },
     {
-      "module": "login",
-      "fileName": "harbor-scene-3d.tsx",
-      "filePath": "src/components/login/harbor-scene-3d.tsx"
-    },
-    {
       "module": "shared",
       "fileName": "main-shell.tsx",
       "filePath": "src/components/main-shell.tsx"
@@ -11853,11 +11895,11 @@
       "apiRoutes": 1,
       "prismaModels": 0,
       "serviceFiles": 0,
-      "components": 0
+      "components": 1
     },
     "cha": {
       "appRoutes": 12,
-      "apiRoutes": 3,
+      "apiRoutes": 4,
       "prismaModels": 35,
       "serviceFiles": 6,
       "components": 2
@@ -11899,9 +11941,9 @@
     },
     "customer-portal": {
       "appRoutes": 0,
-      "apiRoutes": 15,
+      "apiRoutes": 16,
       "prismaModels": 0,
-      "serviceFiles": 4,
+      "serviceFiles": 7,
       "components": 0
     },
     "dashboard": {
@@ -11972,7 +12014,7 @@
       "apiRoutes": 0,
       "prismaModels": 0,
       "serviceFiles": 0,
-      "components": 1
+      "components": 0
     },
     "mobile": {
       "appRoutes": 0,

@@ -4,7 +4,7 @@ import { DateInput } from "@/components/ui/date-input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {CreditCard,Search,Filter,DollarSign,AlertCircle,Clock,CheckCircle2,HelpCircle,XCircle,FileText,User,ExternalLink,MessageSquare,} from "lucide-react";
+import {CreditCard,Search,Filter,DollarSign,AlertCircle,Clock,CheckCircle2,HelpCircle,XCircle,FileText,User,ExternalLink,MessageSquare,ChevronRight} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import * as actions from "@/modules/cha/actions";
@@ -13,6 +13,7 @@ import {
   formatChaBadgeLabel,
   getChaDocumentStatusBadgeVariant,
 } from "@/lib/cha-badges";
+import { ChaPageHeader } from "../_components/cha-operations-shared";
 
 interface ExpensesClientProps {
   initialExpenses: any[];
@@ -164,10 +165,24 @@ export function ExpensesClient({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Page Header */}
+      <ChaPageHeader
+        eyebrow={
+          <>
+            <span>CHA</span>
+            <ChevronRight size={14} />
+            <span>Expenses</span>
+          </>
+        }
+        title="Expenses"
+        description="Track and process expense disbursement requests across active custom clearance jobs."
+        icon={<CreditCard size={20} />}
+      />
+
       {/* Filters */}
       <div className="rounded-xl border border-outline-variant/60 bg-surface p-5 space-y-4 shadow-sm">
-        <div className="flex items-center gap-2 text-[#00cec4]">
+        <div className="flex items-center gap-2 text-cha-primary">
           <Filter size={16} />
           <span className="ds-label tracking-wider font-semibold">Queue Filters</span>
         </div>
@@ -245,7 +260,7 @@ export function ExpensesClient({
                       </span>
                       <Link
                         href={`/cha/jobs/${req.jobId}`}
-                        className="text-xs font-bold text-[#00cec4] hover:underline flex items-center gap-1"
+                        className="text-xs font-bold text-cha-primary hover:underline flex items-center gap-1"
                       >
                         Job: {req.job.jobNumber} <ExternalLink size={10} />
                       </Link>
@@ -258,7 +273,7 @@ export function ExpensesClient({
                       </span>
                     </div>
 
-                    <span className="text-xl text-[#00cec4] block mt-1.5 ds-numeric">
+                    <span className="text-xl text-cha-primary block mt-1.5 ds-numeric">
                       ₹{sum.toLocaleString("en-IN")}{" "}
                       {isUrgent && (
                         <Badge variant="destructive" className="ml-2 align-middle text-[10px] uppercase">
@@ -397,8 +412,8 @@ export function ExpensesClient({
 
                 {/* Pay Post Form popup */}
                 {payRequestId === req.id && (
-                  <form onSubmit={handlePostPayment} className="p-4 border border-[#00cec4]/40 bg-[#00cec4]/5 rounded-xl space-y-4">
-                    <span className="ds-label text-[#00cec4] block">Disburse Bank Payout Details</span>
+                  <form onSubmit={handlePostPayment} className="p-4 border border-cha-primary/45 bg-cha-primary/5 rounded-xl space-y-4">
+                    <span className="ds-label text-cha-primary block">Disburse Bank Payout Details</span>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                       <div>
                         <label className="ds-label block">Amount Paid (₹) *</label>

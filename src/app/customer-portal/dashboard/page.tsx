@@ -1,17 +1,14 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { getPortalDashboard } from "@/modules/customer-portal/service";
-import { Badge } from "@/components/ui/badge";
+import { PortalShipHeroCard } from "../_components/client-actions";
 import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-  DataTablePrimaryLinkCell,
-  DataTableRow,
-} from "@/components/data-table";
+  CheckSquare,
+  MessageSquare,
+  TrendingUp,
+  Package,
+} from "lucide-react";
 
 function formatPortalDate(value: Date) {
   return new Intl.DateTimeFormat("en-IN", {
@@ -23,185 +20,236 @@ function formatPortalDate(value: Date) {
   }).format(value);
 }
 
+const DEFAULT_STAGES = [
+  { key: "DOCUMENT_COLLECTION", label: "Documents" },
+  { key: "ADDITIONAL_DATA", label: "Verification" },
+  { key: "CHECKLIST_PREPARATION", label: "Checklist Prep" },
+  { key: "CHECKLIST_APPROVAL", label: "Approvals" },
+  { key: "FILING", label: "Filing" },
+  { key: "COMPLETED", label: "Out of Charge" },
+  { key: "FILED", label: "Delivered" },
+];
+
 export default async function CustomerPortalDashboardPage() {
   const session = await requirePortalSession();
   const data = await getPortalDashboard(session.portalUserId);
+
+  const priorityShipment = data.activeShipments[0] || null;
+
+  // Determine timeline progress percent
+  let activeStageIndex = 0;
+  if (priorityShipment) {
+    const internalStage = priorityShipment.status === "FILED" || priorityShipment.currentStage.toLowerCase().includes("complete") ? "FILED" : "FILING";
+    const foundIndex = DEFAULT_STAGES.findIndex(s => s.key === internalStage || priorityShipment.currentStage.toLowerCase().includes(s.label.toLowerCase()));
+    activeStageIndex = foundIndex !== -1 ? foundIndex : 3; // default to 3 (Approvals) if not found
+  }
+  const timelineProgress = `${Math.round((activeStageIndex / (DEFAULT_STAGES.length - 1)) * 100)}%`;
+
   return (
-    <div className="space-y-6">
-      <section className="rounded-2xl border border-outline-variant/60 bg-surface p-6 shadow-sm">
-        <p className="ds-label">Welcome</p>
-        <h2 className="ds-h2 mt-2">{data.customerName}</h2>
-        <p className="mt-2 text-sm text-on-surface-variant">
-          Signed in as {data.portalUserName}. Track active shipments, complete pending actions, and review recent updates.
-        </p>
-      </section>
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        {Object.entries(data.stats).map(([key, value]) => (
-          <div key={key} className="card-top-accent rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
-            <p className="ds-label">{key}</p>
-            <p className="mt-2 text-3xl ds-numeric">{value}</p>
-          </div>
-        ))}
-      </section>
-      <section className="space-y-6">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h3 className="ds-h3">Active Shipments</h3>
-              <p className="mt-1 text-sm text-on-surface-variant">Live shipments currently in progress for your account.</p>
-            </div>
-            <Link href="/customer-portal/shipments?scope=active" className="text-sm font-medium text-[#00cec4] hover:text-[#00b8af] hover:underline">
-              View all
-            </Link>
-          </div>
-          <DataTable>
-            <DataTableHeader>
-              <tr>
-                <DataTableHead className="w-[28%]">Job</DataTableHead>
-                <DataTableHead className="w-[20%]">Stage</DataTableHead>
-                <DataTableHead className="w-[18%]">Documents</DataTableHead>
-                <DataTableHead className="w-[20%]">Action</DataTableHead>
-                <DataTableHead className="w-[14%] whitespace-nowrap">Updated</DataTableHead>
-              </tr>
-            </DataTableHeader>
-            <DataTableBody>
-              {data.activeShipments.length === 0 ? (
-                <DataTableEmpty colSpan={5} message="No active shipments are available right now." />
-              ) : (
-                data.activeShipments.map((shipment) => (
-                  <DataTableRow key={shipment.id}>
-                    <DataTablePrimaryLinkCell href={`/customer-portal/shipments/${shipment.id}`} className="align-top">
-                      <div className="min-w-0">
-                        <p className="font-medium text-on-surface">{shipment.jobNumber}</p>
-                        <p className="truncate text-xs text-on-surface-variant">
-                          {shipment.customerRef || shipment.title}
-                        </p>
-                      </div>
-                    </DataTablePrimaryLinkCell>
-                    <DataTableCell className="align-top">
-                      <div className="space-y-1">
-                        <p>{shipment.currentStage}</p>
-                        <Badge variant={shipment.actions.hasActionRequired ? "warning" : "default"} className="w-fit">
-                          {shipment.actions.hasActionRequired ? "ACTION REQUIRED" : "ACTIVE"}
-                        </Badge>
-                      </div>
-                    </DataTableCell>
-                    <DataTableCell className="align-top">
-                      <div className="flex items-center gap-2 whitespace-nowrap">
-                        <Badge variant={shipment.actions.pendingDocumentCount > 0 ? "warning" : "success"}>
-                          {shipment.actions.pendingDocumentCount > 0 ? "PENDING" : "UP TO DATE"}
-                        </Badge>
-                        <span className="text-xs text-on-surface-variant">
-                          {shipment.actions.pendingDocumentCount > 0
-                            ? `${shipment.actions.pendingDocumentCount} pending`
-                            : "No pending uploads"}
-                        </span>
-                      </div>
-                    </DataTableCell>
-                    <DataTableCell className="align-top">
-                      <div className="space-y-1">
-                        <p className="text-sm text-on-surface">
-                          {shipment.actions.hasActionRequired ? "Action needed" : "Tracking only"}
-                        </p>
-                        <p className="text-xs text-on-surface-variant">
-                          {shipment.actions.checklistPending
-                            ? "Checklist approval pending"
-                            : shipment.actions.openQueryCount > 0
-                              ? `${shipment.actions.openQueryCount} open quer${shipment.actions.openQueryCount === 1 ? "y" : "ies"}`
-                              : shipment.contactName ?? "Support assigned"}
-                        </p>
-                      </div>
-                    </DataTableCell>
-                    <DataTableCell className="align-top whitespace-nowrap">{formatPortalDate(shipment.lastUpdatedAt)}</DataTableCell>
-                  </DataTableRow>
-                ))
-              )}
-            </DataTableBody>
-          </DataTable>
+    <div className="space-y-6 font-sans">
+      {/* Welcome row */}
+      <div className="portal-welcome-row font-sans">
+        <div>
+          <h1>Good morning, {data.portalUserName}</h1>
+          <p className="text-on-surface-variant font-medium">
+            Manage your compliance files, track customs clearance, and complete checklist approvals for <span className="font-semibold text-on-surface">{data.customerName}</span>.
+          </p>
         </div>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h3 className="ds-h3">Completed Shipments</h3>
-              <p className="mt-1 text-sm text-on-surface-variant">Recently closed shipments retained for tracking history and ratings.</p>
-            </div>
-            <Link href="/customer-portal/shipments?scope=completed" className="text-sm font-medium text-[#00cec4] hover:text-[#00b8af] hover:underline">
-              View all
-            </Link>
-          </div>
-          <DataTable>
-            <DataTableHeader>
-              <tr>
-                <DataTableHead>Job</DataTableHead>
-                <DataTableHead>Final Stage</DataTableHead>
-                <DataTableHead>Status</DataTableHead>
-                <DataTableHead>Rating</DataTableHead>
-                <DataTableHead>Contact</DataTableHead>
-                <DataTableHead>Updated</DataTableHead>
-              </tr>
-            </DataTableHeader>
-            <DataTableBody>
-              {data.completedShipments.length === 0 ? (
-                <DataTableEmpty colSpan={6} message="No completed shipments are available yet." />
-              ) : (
-                data.completedShipments.map((shipment) => (
-                  <DataTableRow key={shipment.id}>
-                    <DataTablePrimaryLinkCell href={`/customer-portal/shipments/${shipment.id}`}>
-                      <div className="min-w-0">
-                        <p className="font-medium text-on-surface">{shipment.jobNumber}</p>
-                        <p className="truncate text-xs text-on-surface-variant">
-                          {shipment.customerRef || shipment.title}
-                        </p>
-                      </div>
-                    </DataTablePrimaryLinkCell>
-                    <DataTableCell>{shipment.currentStage}</DataTableCell>
-                    <DataTableCell>
-                      <Badge variant="success">COMPLETED</Badge>
-                    </DataTableCell>
-                    <DataTableCell>
-                      <Badge variant={shipment.actions.ratingPending ? "warning" : "secondary"}>
-                        {shipment.actions.ratingPending ? "PENDING" : "SUBMITTED"}
-                      </Badge>
-                    </DataTableCell>
-                    <DataTableCell>{shipment.contactName ?? "Customer support assigned"}</DataTableCell>
-                    <DataTableCell>{formatPortalDate(shipment.lastUpdatedAt)}</DataTableCell>
-                  </DataTableRow>
-                ))
-              )}
-            </DataTableBody>
-          </DataTable>
+        <div className="portal-live-chip shrink-0 select-none">
+          <i></i> Live CHA updates connected
         </div>
-      </section>
-      <section className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-sm">
-          <h3 className="ds-h3">Action Required</h3>
-          <div className="mt-4 space-y-3">
+      </div>
+
+      {/* Hero row: Priority shipment cargo 3D + Action centre */}
+      <section className="portal-grid portal-hero-grid font-sans">
+        <PortalShipHeroCard shipment={priorityShipment} />
+
+        <article className="portal-card portal-actions-panel">
+          <div className="portal-section-title font-sans">
+            <h2>Action centre</h2>
+            <span>{data.stats.shipmentsRequiringAction} item(s) need attention</span>
+          </div>
+
+          <div className="portal-action-list font-sans">
             {data.actionRequired.length === 0 ? (
-              <p className="text-sm text-on-surface-variant">No customer action is pending right now.</p>
+              <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-6 text-center space-y-2">
+                <CheckSquare className="size-8 text-[#00cec4] mx-auto opacity-50" />
+                <p className="text-xs font-semibold text-on-surface">All tasks completed!</p>
+                <p className="text-[10px] text-on-surface-variant">There are no pending actions on your active shipments.</p>
+              </div>
             ) : (
-              data.actionRequired.map((shipment) => (
-                <Link key={shipment.id} href={`/customer-portal/shipments/${shipment.id}`} className="block rounded-xl border border-outline-variant/60 p-4 hover-cyan">
-                  <p className="text-sm font-medium">{shipment.jobNumber}</p>
-                  <p className="mt-1 text-xs text-on-surface-variant">{shipment.currentStage}</p>
-                </Link>
-              ))
+              data.actionRequired.map((shipment) => {
+                const hasChecklist = shipment.actions.checklistPending;
+                const hasQuery = shipment.actions.openQueryCount > 0;
+                
+                let iconClass = "portal-action-icon";
+                let actionText = "Awaiting review";
+                let btnLabel = "Review now";
+
+                if (hasChecklist) {
+                  iconClass = "portal-action-icon warning";
+                  actionText = "Review and approve the draft customs checklist before filing.";
+                  btnLabel = "Approve Draft";
+                } else if (hasQuery) {
+                  iconClass = "portal-action-icon danger";
+                  actionText = `Customs raised query. Provide composition details to resume clearance.`;
+                  btnLabel = "Resolve Query";
+                }
+
+                return (
+                  <Link
+                    key={shipment.id}
+                    href={`/customer-portal/shipments/${shipment.id}`}
+                    className="portal-action-item"
+                  >
+                    <div className={iconClass}>
+                      <CheckSquare size={18} />
+                    </div>
+                    <div className="portal-action-copy">
+                      <strong>{shipment.jobNumber}</strong>
+                      <span>{actionText}</span>
+                    </div>
+                    <button className="portal-action-cta primary">{btnLabel}</button>
+                  </Link>
+                );
+              })
             )}
           </div>
-        </div>
-        <div className="rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-sm">
-          <h3 className="ds-h3">Recent Notifications</h3>
-          <div className="mt-4 space-y-3">
+        </article>
+      </section>
+
+      {/* Metrics Row */}
+      <section className="portal-grid portal-metrics font-sans">
+        <article className="portal-card portal-metric-card">
+          <div className="portal-metric-top">
+            <div className="portal-metric-icon">
+              <Package size={16} />
+            </div>
+            <span className="portal-metric-change">Live tracking</span>
+          </div>
+          <div className="portal-metric-value ds-numeric">{String(data.stats.activeShipments).padStart(2, "0")}</div>
+          <div className="portal-metric-label">Active shipments</div>
+        </article>
+
+        <article className="portal-card portal-metric-card">
+          <div className="portal-metric-top">
+            <div className="portal-metric-icon" style={{ color: "#fb923c" }}>
+              <CheckSquare size={16} />
+            </div>
+            <span className="portal-metric-change" style={{ color: "#fb923c" }}>
+              {data.stats.checklistsAwaitingApproval} pending
+            </span>
+          </div>
+          <div className="portal-metric-value ds-numeric">{String(data.stats.completedShipments).padStart(2, "0")}</div>
+          <div className="portal-metric-label">Completed jobs</div>
+        </article>
+
+        <article className="portal-card portal-metric-card">
+          <div className="portal-metric-top">
+            <div className="portal-metric-icon" style={{ color: "#ef4444" }}>
+              <MessageSquare size={16} />
+            </div>
+            <span className="portal-metric-change" style={{ color: "#ef4444" }}>
+              Needs response
+            </span>
+          </div>
+          <div className="portal-metric-value ds-numeric">{String(data.stats.openQueries).padStart(2, "0")}</div>
+          <div className="portal-metric-label">Open query threads</div>
+        </article>
+
+        <article className="portal-card portal-metric-card">
+          <div className="portal-metric-top">
+            <div className="portal-metric-icon" style={{ color: "#22c55e" }}>
+              <TrendingUp size={16} />
+            </div>
+            <span className="portal-metric-change" style={{ color: "#22c55e" }}>
+              Active SLA
+            </span>
+          </div>
+          <div className="portal-metric-value ds-numeric">100%</div>
+          <div className="portal-metric-label">Clearance compliance</div>
+        </article>
+      </section>
+
+      {/* Clearance journey + Notifications */}
+      <section className="portal-grid portal-lower-grid font-sans">
+        <article className="portal-card portal-timeline-card flex flex-col justify-between">
+          <div className="portal-section-title font-sans">
+            <h2>Live customs clearance journey</h2>
+            {priorityShipment ? (
+              <span>Tracking Priority {priorityShipment.jobNumber}</span>
+            ) : (
+              <span>No active shipments</span>
+            )}
+          </div>
+
+          {priorityShipment ? (
+            <div className="portal-timeline" style={{ "--portal-timeline-progress": timelineProgress } as CSSProperties}>
+              {DEFAULT_STAGES.map((stage, idx) => {
+                let statusClass = "";
+                if (idx < activeStageIndex) statusClass = "done";
+                else if (idx === activeStageIndex) statusClass = "active";
+
+                return (
+                  <div key={stage.key} className={`portal-stage ${statusClass}`}>
+                    <div className="portal-stage-dot">
+                      {idx < activeStageIndex ? "✓" : idx + 1}
+                    </div>
+                    <strong>{stage.label}</strong>
+                    <span>{idx === activeStageIndex ? "Live" : idx < activeStageIndex ? "Passed" : "Upcoming"}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-portal-muted text-xs">
+              Timeline will activate when a shipment is processed.
+            </div>
+          )}
+        </article>
+
+        <article className="portal-card portal-activity-card">
+          <div className="portal-section-title font-sans">
+            <h2>Live activity log</h2>
+            <Link href="/customer-portal/notifications" className="text-xs text-[#00cec4] hover:underline">
+              View all
+            </Link>
+          </div>
+
+          <div className="portal-activity-list font-sans">
             {data.recentNotifications.length === 0 ? (
-              <p className="text-sm text-on-surface-variant">No notifications yet.</p>
+              <p className="text-xs text-on-surface-variant p-6 text-center italic">No recent activity logged.</p>
             ) : (
               data.recentNotifications.map((notification) => (
-                <div key={notification.id} className="rounded-xl border border-outline-variant/60 p-4">
-                  <p className="text-sm font-medium">{notification.title}</p>
-                  <p className="mt-1 text-xs text-on-surface-variant">{notification.body}</p>
+                <div key={notification.id} className="portal-activity-item">
+                  <div className="portal-activity-dot">⚡</div>
+                  <div>
+                    <strong>{notification.title}</strong>
+                    <p>{notification.body}</p>
+                  </div>
+                  <span className="portal-activity-time">{formatPortalDate(notification.createdAt).split(",")[1]}</span>
                 </div>
               ))
             )}
           </div>
+        </article>
+      </section>
+
+      {/* Expansion ecosystem card */}
+      <section className="portal-card portal-expansion-row font-sans">
+        <div>
+          <strong>Built for the complete Monolith ecosystem</strong>
+          <p>
+            Customs clearance tracking is fully enabled. Additional Monolith modules will expand here without structural layout changes.
+          </p>
+        </div>
+        <div className="portal-module-chips font-sans select-none">
+          <span className="active">CHA Live</span>
+          <span>Freight</span>
+          <span>CRM</span>
+          <span>Finance</span>
+          <span>Support</span>
+          <span>Analytics</span>
         </div>
       </section>
     </div>

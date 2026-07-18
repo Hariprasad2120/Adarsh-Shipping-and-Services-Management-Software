@@ -96,6 +96,9 @@ export default async function ChaSettingsPage() {
     "Miscellaneous",
   ]);
 
+  const { getPortalFeatureFlag } = await import("@/modules/customer-portal/feature-flags");
+  const portalUploadsEnabled = await getPortalFeatureFlag(orgId, "CUSTOMER_PORTAL_SHIPMENT_UPLOADS");
+
   return (
     <div className="w-full max-w-none space-y-4">
       <SettingsForm
@@ -108,6 +111,7 @@ export default async function ChaSettingsPage() {
           expenseCategories: parsedExpenseCategories,
           jobNumberPrefix: settings.jobNumberPrefix,
           jobNumberNextNum: settings.jobNumberNextNum,
+          portalUploadsEnabled: portalUploadsEnabled,
         }}
         availableRoles={Array.from(new Set(availableRoles))}
         availableEmployees={activeEmployees}

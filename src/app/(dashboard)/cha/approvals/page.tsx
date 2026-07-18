@@ -3,8 +3,13 @@ import { redirect } from "next/navigation";
 import { can } from "@/lib/rbac";
 import { listManagerChecklistApprovals, listManagerJobDeletionRequests } from "@/modules/cha/service";
 import Link from "next/link";
-import { CheckSquare, ArrowRight, Trash2 } from "lucide-react";
+import { CheckSquare, ArrowRight, Trash2, ChevronRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  ChaPageHeader,
+  ChaSectionShell,
+} from "../_components/cha-operations-shared";
+import { Badge } from "@/components/ui/badge";
 
 export default async function ChaApprovalsPage() {
   const session = await auth();
@@ -27,124 +32,147 @@ export default async function ChaApprovalsPage() {
     : [];
 
   return (
-    <div className="space-y-6">
-      {/* Checklist Queue */}
-      <div className="rounded-xl border border-outline-variant/60 bg-surface shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between border-b border-outline-variant/30 px-6 py-4">
-          <div>
-            <h2 className="ds-h2 text-on-surface flex items-center gap-2">
-              <CheckSquare size={18} className="text-[#00cec4]" />
-              YOUR APPROVALS
-            </h2>
-            <p className="mt-1 text-xs text-on-surface-variant">
-              Pending job checklist audits assigned to you for review and approval.
-            </p>
-          </div>
-        </div>
+    <div className="space-y-8">
+      {/* Page Header */}
+      <ChaPageHeader
+        eyebrow={
+          <>
+            <span>CHA</span>
+            <ChevronRight size={14} />
+            <span>Checklist Approvals</span>
+          </>
+        }
+        title="Checklist Approvals"
+        description="Audit, check, and sign off on pending job checklist audits and job deletion reviews."
+        icon={<CheckCircle2 size={20} />}
+      />
 
-        {approvals.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 text-center text-on-surface-variant">
-            <CheckSquare size={48} className="text-outline-variant mb-3" />
-            <p className="text-sm font-semibold">Your review approvals queue is clear!</p>
-            <p className="text-xs mt-1">Pending job checklist audits assigned to you will appear here.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="ds-table">
-              <thead>
-                <tr>
-                  <th>Job Number</th>
-                  <th>Job Scope / Title</th>
-                  <th>Customer Account</th>
-                  <th>Uploaded By</th>
-                  <th>Date Submitted</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {approvals.map((app) => {
-                  const job = app.checklistImport.job;
-                  return (
-                    <tr key={app.id} className="ds-row-link">
-                      <td className="font-semibold text-[#00cec4]">{job.jobNumber}</td>
-                      <td className="font-medium max-w-xs truncate">{job.title}</td>
-                      <td>{job.customer.name}</td>
-                      <td>{app.checklistImport.uploadedBy?.name || "System"}</td>
-                      <td className="font-mono text-xs text-on-surface-variant">
-                        {new Date(app.checklistImport.uploadedAt).toDateString()}
+      {/* Checklist Queue */}
+      <ChaSectionShell
+        title="Pending Approvals"
+        description="Pending job checklist audits assigned to you for review and approval."
+        icon={<CheckSquare size={16} />}
+        count={approvals.length}
+        accent="blue"
+      >
+        <div className="overflow-hidden rounded-b-[20px]">
+          {approvals.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-12 text-center text-cha-text-secondary">
+              <CheckSquare size={48} className="text-cha-text-muted mb-3" />
+              <p className="text-sm font-semibold">Your review approvals queue is clear!</p>
+              <p className="text-xs mt-1">Pending job checklist audits assigned to you will appear here.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="ds-table">
+                <thead>
+                  <tr>
+                    <th className="px-6 py-4">Job Number</th>
+                    <th className="px-6 py-4">Job Scope / Title</th>
+                    <th className="px-6 py-4">Customer Account</th>
+                    <th className="px-6 py-4">Uploaded By</th>
+                    <th className="px-6 py-4">Date Submitted</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {approvals.map((app) => {
+                    const job = app.checklistImport.job;
+                    return (
+                      <tr key={app.id} className="hover:bg-cha-primary-soft/30 transition-colors">
+                        <td className="px-6 py-4 font-semibold text-cha-primary dark:text-blue-400">
+                          {job.jobNumber}
+                        </td>
+                        <td className="px-6 py-4 font-medium max-w-xs truncate text-cha-text-primary">
+                          {job.title}
+                        </td>
+                        <td className="px-6 py-4 text-cha-text-secondary">{job.customer.name}</td>
+                        <td className="px-6 py-4 text-cha-text-secondary">
+                          {app.checklistImport.uploadedBy?.name || "System"}
+                        </td>
+                        <td className="px-6 py-4 ds-numeric text-cha-text-secondary">
+                          {new Date(app.checklistImport.uploadedAt).toLocaleDateString("en-IN", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <Link href={`/cha/jobs/${job.id}`}>
+                            <button className="flex items-center gap-1 bg-cha-primary text-white hover:bg-cha-primary-hover px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all shadow-sm">
+                              Audit & Review <ArrowRight size={12} />
+                            </button>
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </ChaSectionShell>
+
+      {/* Deletion Queue */}
+      <ChaSectionShell
+        title="Job Deletion Requests"
+        description="Direct manager review queue for destructive CHA job deletion requests."
+        icon={<Trash2 size={16} />}
+        count={deletionRequests.length}
+        accent="orange"
+      >
+        <div className="overflow-hidden rounded-b-[20px]">
+          {deletionRequests.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-12 text-center text-cha-text-secondary">
+              <Trash2 size={48} className="text-cha-text-muted mb-3" />
+              <p className="text-sm font-semibold">No pending CHA deletion requests.</p>
+              <p className="text-xs mt-1">Deletion approvals assigned to you will appear here.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="ds-table">
+                <thead>
+                  <tr>
+                    <th className="px-6 py-4">Job Number</th>
+                    <th className="px-6 py-4">Customer</th>
+                    <th className="px-6 py-4">Requested By</th>
+                    <th className="px-6 py-4">Requested At</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deletionRequests.map((request) => (
+                    <tr key={request.id} className="hover:bg-cha-primary-soft/30 transition-colors">
+                      <td className="px-6 py-4 font-semibold text-red-500">
+                        {request.jobNumberSnapshot}
                       </td>
-                      <td className="text-right">
-                        <Link href={`/cha/jobs/${job.id}`}>
-                          <Button size="sm" className="inline-flex items-center gap-1.5">
-                            Audit & Review <ArrowRight size={12} />
-                          </Button>
+                      <td className="px-6 py-4 text-cha-text-secondary">{request.job.customer.name}</td>
+                      <td className="px-6 py-4 text-cha-text-secondary">{request.requestedBy.name}</td>
+                      <td className="px-6 py-4 ds-numeric text-cha-text-secondary">
+                        {new Date(request.requestedAt).toLocaleString("en-IN")}
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge className="bg-amber-500/10 text-amber-600 border border-amber-500/20 uppercase text-[9px] font-bold">
+                          {request.status}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Link href={`/cha/jobs/${request.jobId}`}>
+                          <button className="flex items-center gap-1 bg-cha-primary text-white hover:bg-cha-primary-hover px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all shadow-sm">
+                            Review Request <ArrowRight size={12} />
+                          </button>
                         </Link>
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      <div className="rounded-xl border border-outline-variant/60 bg-surface shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between border-b border-outline-variant/30 px-6 py-4">
-          <div>
-            <h2 className="ds-h2 text-on-surface flex items-center gap-2">
-              <Trash2 size={18} className="text-red-500" />
-              JOB DELETION REQUESTS
-            </h2>
-            <p className="mt-1 text-xs text-on-surface-variant">
-              Direct manager review queue for destructive CHA job deletion requests.
-            </p>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-
-        {deletionRequests.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-10 text-center text-on-surface-variant">
-            <Trash2 size={42} className="text-outline-variant mb-3" />
-            <p className="text-sm font-semibold">No pending CHA deletion requests.</p>
-            <p className="text-xs mt-1">Deletion approvals assigned to you will appear here.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="ds-table">
-              <thead>
-                <tr>
-                  <th>Job Number</th>
-                  <th>Customer</th>
-                  <th>Requested By</th>
-                  <th>Requested At</th>
-                  <th>Status</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {deletionRequests.map((request) => (
-                  <tr key={request.id} className="ds-row-link">
-                    <td className="font-semibold text-red-500">{request.jobNumberSnapshot}</td>
-                    <td>{request.job.customer.name}</td>
-                    <td>{request.requestedBy.name}</td>
-                    <td className="text-xs text-on-surface-variant">
-                      {new Date(request.requestedAt).toLocaleString("en-IN")}
-                    </td>
-                    <td className="ds-label">{request.status}</td>
-                    <td className="text-right">
-                      <Link href={`/cha/jobs/${request.jobId}`}>
-                        <Button size="sm" className="inline-flex items-center gap-1.5">
-                          Review Request <ArrowRight size={12} />
-                        </Button>
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      </ChaSectionShell>
     </div>
   );
 }

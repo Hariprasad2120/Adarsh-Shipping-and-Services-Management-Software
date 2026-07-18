@@ -1562,6 +1562,20 @@ export async function deleteFilingAttachmentAction(
   }
 }
 
+export async function acceptCustomerDocumentSubmissionAction(
+  jobId: string,
+  requirementId: string,
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.document.upload");
+    const result = await chaService.acceptCustomerDocumentSubmission(userId, orgId, jobId, requirementId);
+    revalidatePath(`/cha/jobs/${jobId}`);
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to accept customer document submission" };
+  }
+}
+
 export async function updateFilingAttachmentValidityAction(
   jobId: string,
   attachmentId: string,

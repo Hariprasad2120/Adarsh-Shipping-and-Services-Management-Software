@@ -1256,6 +1256,49 @@ export function JobWorkspaceClient({
     section49Flag?.isEnabled,
   ]);
 
+  const getDisplayWorkflowRequirement = useCallback((rawReq: any) => {
+    const chaCurrentVersion = rawReq.versions?.find((version: any) => version.isCurrent) || rawReq.versions?.[0] || null;
+    if (chaCurrentVersion) {
+      return {
+        ...rawReq,
+        usesCustomerSubmission: false,
+        customerSubmission: rawReq.customerSubmissions?.[0] ?? null,
+      };
+    }
+
+    const customerSubmission = rawReq.customerSubmissions?.[0] ?? null;
+    const customerVersion = customerSubmission?.versions?.[0] ?? null;
+    if (!customerSubmission || !customerVersion) {
+      return {
+        ...rawReq,
+        usesCustomerSubmission: false,
+        customerSubmission: null,
+      };
+    }
+
+    return {
+      ...rawReq,
+      status: customerSubmission.status === "ACCEPTED" ? "UPLOADED" : customerSubmission.status,
+      usesCustomerSubmission: true,
+      customerSubmission,
+      versions: [
+        {
+          id: customerVersion.id,
+          fileKey: `/api/cha/customer-documents/${customerVersion.id}`,
+          fileName: customerVersion.fileName,
+          mimeType: customerVersion.mimeType || "application/octet-stream",
+          sizeBytes: customerVersion.sizeBytes,
+          checksum: customerVersion.checksum,
+          uploadedById: customerSubmission.portalUserId,
+          uploadedBy: { name: customerSubmission.portalUser?.name || "Customer Portal" },
+          uploadedAt: customerVersion.uploadedAt,
+          isCurrent: true,
+          source: "CUSTOMER_PORTAL",
+        },
+      ],
+    };
+  }, []);
+
   const bulkNaEligibleRequirements = useMemo(
     () =>
       visibleDocumentRequirements.filter(
@@ -1278,10 +1321,46 @@ export function JobWorkspaceClient({
   const [isDocumentDrawerOpen, setIsDocumentDrawerOpen] = useState(true);
   const [documentDrawerTab, setDocumentDrawerTab] = useState<"preview" | "details">("preview");
 
+  const previewDrawerRef = useRef<HTMLDivElement>(null);
+  const dropzoneRef = useRef<HTMLDivElement>(null);
+  const [previewOffset, setPreviewOffset] = useState(0);
+
+  const updatePreviewOffset = useCallback(() => {
+    if (!selectedDocumentRequirementId || !isDocumentDrawerOpen) {
+      setPreviewOffset(0);
+      return;
+    }
+    // Small delay to ensure DOM is updated and height has settled
+    setTimeout(() => {
+      const cardElement = documentRequirementCardRefs.current[selectedDocumentRequirementId];
+      const dropzoneElement = dropzoneRef.current;
+      if (cardElement && dropzoneElement) {
+        const cardRect = cardElement.getBoundingClientRect();
+        const dropzoneRect = dropzoneElement.getBoundingClientRect();
+        const gap = 20; // space-y-5 is 20px gap
+        const naturalDrawerTop = dropzoneRect.bottom + gap;
+        const offset = Math.max(0, cardRect.top - naturalDrawerTop);
+        setPreviewOffset(offset);
+      }
+    }, 50);
+  }, [selectedDocumentRequirementId, isDocumentDrawerOpen]);
+
+  useEffect(() => {
+    updatePreviewOffset();
+    window.addEventListener("scroll", updatePreviewOffset, { passive: true });
+    window.addEventListener("resize", updatePreviewOffset);
+    return () => {
+      window.removeEventListener("scroll", updatePreviewOffset);
+      window.removeEventListener("resize", updatePreviewOffset);
+    };
+  }, [updatePreviewOffset]);
+
   const filteredWorkflowDocuments = useMemo(() => {
     const normalizedQuery = documentSearchQuery.trim().toLowerCase();
-    return visibleDocumentRequirements.filter((rawReq: any) => {
-      const req = rawReq as WorkflowDocumentRequirement;
+    return visibleDocumentRequirements
+      .map((rawReq: any) => getDisplayWorkflowRequirement(rawReq))
+      .filter((rawReq: any) => {
+      const req = rawReq as WorkflowDocumentRequirement & { customerSubmission?: any; usesCustomerSubmission?: boolean };
       const currentVersion = req.versions.find((version) => version.isCurrent) || req.versions[0];
       const matchesQuery =
         !normalizedQuery ||
@@ -1296,24 +1375,30 @@ export function JobWorkspaceClient({
 
       if (!matchesQuery) return false;
 
-      if (documentsFilterMode === "UPLOADED") return req.status === "UPLOADED";
+      if (documentsFilterMode === "UPLOADED") return !!currentVersion && !["REUPLOAD_REQUIRED", "CLARIFICATION_REQUIRED", "REJECTED"].includes(req.status);
       if (documentsFilterMode === "EXCEPTIONS") return req.status === "NOT_AVAILABLE" || !!req.exception;
-      if (documentsFilterMode === "PENDING") return req.status !== "UPLOADED" && !(req.status === "NOT_AVAILABLE" || !!req.exception);
+      if (documentsFilterMode === "PENDING") {
+        if (req.status === "NOT_AVAILABLE" || !!req.exception) return false;
+        return !currentVersion || ["REUPLOAD_REQUIRED", "CLARIFICATION_REQUIRED", "REJECTED"].includes(req.status);
+      }
       return true;
     });
-  }, [documentSearchQuery, documentsFilterMode, visibleDocumentRequirements]);
+  }, [documentSearchQuery, documentsFilterMode, getDisplayWorkflowRequirement, visibleDocumentRequirements]);
 
   const topRequirementCards = useMemo(
     () =>
-      filteredWorkflowDocuments.filter((req: WorkflowDocumentRequirement) => req.status !== "UPLOADED"),
+      filteredWorkflowDocuments.filter((req: any) => {
+        const currentVersion = req.versions.find((version: WorkflowDocumentVersion) => version.isCurrent) || req.versions[0];
+        return !currentVersion || ["REUPLOAD_REQUIRED", "CLARIFICATION_REQUIRED", "REJECTED"].includes(req.status);
+      }),
     [filteredWorkflowDocuments],
   );
 
   const uploadedWorkflowDocuments = useMemo(
     () =>
-      filteredWorkflowDocuments.filter((req: WorkflowDocumentRequirement) => {
-        const currentVersion = req.versions.find((version) => version.isCurrent) || req.versions[0];
-        return req.status === "UPLOADED" && !!currentVersion;
+      filteredWorkflowDocuments.filter((req: any) => {
+        const currentVersion = req.versions.find((version: any) => version.isCurrent) || req.versions[0];
+        return !!currentVersion && !["REUPLOAD_REQUIRED", "CLARIFICATION_REQUIRED", "REJECTED"].includes(req.status);
       }),
     [filteredWorkflowDocuments],
   );
@@ -2465,6 +2550,17 @@ export function JobWorkspaceClient({
                 ...req,
                 status: "UPLOADED",
                 exception: null,
+                customerSubmissions: Array.isArray(req.customerSubmissions)
+                  ? req.customerSubmissions.map((submission: any, index: number) =>
+                      index === 0
+                        ? {
+                            ...submission,
+                            status: submission.status === "ACCEPTED" ? "ACCEPTED" : "SUPERSEDED",
+                            reviewerComment: submission.status === "ACCEPTED" ? submission.reviewerComment : "Superseded by CHA upload.",
+                          }
+                        : submission,
+                    )
+                  : req.customerSubmissions,
                 versions: [
                   {
                     ...version,
@@ -2489,6 +2585,58 @@ export function JobWorkspaceClient({
       } else {
         toast.error(res.error || "Upload failed.");
       }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleAcceptCustomerDocument = async (reqId: string) => {
+    setLoading(`customer-accept-${reqId}`);
+    try {
+      const res = await actions.acceptCustomerDocumentSubmissionAction(job.id, reqId);
+      if (!res.ok) {
+        toast.error(res.error || "Failed to accept customer upload.");
+        return;
+      }
+
+      const acceptedVersion = res.data?.acceptedVersion;
+      const acceptedSubmission = res.data?.submission;
+      setDocumentRequirements((current) =>
+        current.map((req) =>
+          req.id === reqId
+            ? {
+                ...req,
+                status: "UPLOADED",
+                exception: null,
+                customerSubmissions: Array.isArray(req.customerSubmissions)
+                  ? req.customerSubmissions.map((submission: any, index: number) =>
+                      index === 0 && acceptedSubmission
+                        ? acceptedSubmission
+                        : submission,
+                    )
+                  : acceptedSubmission
+                    ? [acceptedSubmission]
+                    : req.customerSubmissions,
+                versions: acceptedVersion
+                  ? [
+                      {
+                        ...acceptedVersion,
+                        isCurrent: true,
+                      },
+                      ...req.versions.map((existing: any) => ({ ...existing, isCurrent: false })),
+                    ]
+                  : req.versions,
+              }
+            : req,
+        ),
+      );
+      setSelectedDocumentRequirementId(reqId);
+      setIsDocumentDrawerOpen(true);
+      setDocumentDrawerTab("preview");
+      toast.success("Customer document accepted and saved as submitted.");
+      refreshJobInBackground();
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
     } finally {
@@ -4919,7 +5067,10 @@ export function JobWorkspaceClient({
     ? previewUrls[selectedWorkflowDocumentVersion.id] || selectedWorkflowDocumentVersion.fileKey || `/api/cha/documents/${selectedWorkflowDocumentVersion.id}`
     : null;
   const selectedDocumentDownloadUrl = selectedWorkflowDocumentVersion
-    ? previewUrls[selectedWorkflowDocumentVersion.id] || selectedWorkflowDocumentVersion.fileKey || `/api/cha/documents/${selectedWorkflowDocumentVersion.id}?download=true`
+    ? previewUrls[selectedWorkflowDocumentVersion.id] ||
+      (selectedWorkflowDocumentVersion.source === "CUSTOMER_PORTAL"
+        ? `/api/cha/customer-documents/${selectedWorkflowDocumentVersion.id}?download=true`
+        : selectedWorkflowDocumentVersion.fileKey || `/api/cha/documents/${selectedWorkflowDocumentVersion.id}?download=true`)
     : null;
   const deliveryOrderValiditySummary = getValiditySummary(deliveryOrderValidity || null);
   const workspaceTabs: { key: WorkspaceTab; label: string; count?: number }[] = [
@@ -5307,23 +5458,25 @@ export function JobWorkspaceClient({
             <div className="absolute inset-0 hidden dark:block" style={{ background: "linear-gradient(90deg, rgba(2,6,23,0.82) 0%, rgba(15,23,42,0.72) 38%, rgba(15,23,42,0.38) 60%, rgba(15,23,42,0.16) 100%)" }} />
             <div className="relative flex min-h-[174px] items-center px-5 py-5">
               <div className="w-full max-w-[1120px] rounded-[24px] border border-white/65 bg-white/78 shadow-[0_26px_44px_-32px_rgba(15,23,42,0.35)] backdrop-blur-xl dark:border-white/8 dark:bg-[rgba(15,23,42,0.82)]">
-                <div className="grid xl:grid-cols-[repeat(7,minmax(0,1fr))]">
-                  {overviewMetaItems.map((item, itemIndex) => (
+                <div className="flex flex-col xl:flex-row w-full divide-y xl:divide-y-0 xl:divide-x divide-[#dbeafe] dark:divide-white/6">
+                  {overviewMetaItems.map((item) => (
                     <div
                       key={item.label}
-                      className={cn(
-                        "flex min-h-[104px] items-start gap-3 px-4 py-4",
-                        itemIndex < overviewMetaItems.length - 1 && "border-b border-white/45 xl:border-b-0 xl:border-r xl:border-r-[#dbeafe] dark:border-white/6",
-                      )}
+                      className="flex min-h-[104px] items-start gap-3 px-4 py-4 flex-auto min-w-[140px]"
                     >
                       <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] shadow-[inset_0_0_0_1px_rgba(37,99,235,0.1)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                         {item.icon}
                       </span>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="ds-label text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{item.label}</p>
-                        <p className="mt-1 text-sm font-semibold text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{item.value}</p>
+                        <p className="mt-1 text-sm font-semibold text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)] break-words">{item.value}</p>
                         {item.secondary ? (
-                          <p className="mt-1 text-xs text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{item.secondary}</p>
+                          <p 
+                            className="mt-1 text-xs text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)] break-all leading-normal"
+                            title={item.secondary}
+                          >
+                            {item.secondary}
+                          </p>
                         ) : null}
                         {item.label === "Manager" && canUpdateJob ? (
                           <button
@@ -5478,12 +5631,12 @@ export function JobWorkspaceClient({
             </div>
           </div>
 
-          {/* Meta row: customer Â· owner Â· manager â€” full width, no stacking */}
-          <div className="grid items-stretch gap-3 border-t border-[#2563eb]/12 bg-surface-container-low/25 px-5 py-4 md:grid-cols-2 xl:grid-cols-[repeat(7,minmax(0,1fr))] xl:gap-0">
+          {/* Meta row: customer · owner · manager — full width, no stacking */}
+          <div className="flex flex-col xl:flex-row w-full divide-y xl:divide-y-0 xl:divide-x divide-[#dbeafe] dark:divide-white/6 border-t border-[#2563eb]/12 bg-surface-container-low/25 px-5 py-4">
             {overviewMetaItems.map((item) => (
               <div
                 key={item.label}
-                className="flex h-full items-start gap-3 rounded-[18px] border border-[#2563eb]/14 bg-surface px-3 py-3 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.18)] xl:min-h-[84px] xl:rounded-none xl:border-y-0 xl:border-l-0 xl:border-r xl:border-r-[#dbeafe] xl:bg-transparent xl:px-4 xl:py-1.5 xl:shadow-none xl:last:border-r-0 dark:xl:border-r-white/8"
+                className="flex h-full items-start gap-3 px-4 py-3 flex-auto min-w-[140px]"
               >
                 <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#2563eb]/10 text-[#2563eb] xl:mt-0.5 dark:text-[#9ab8ff]">{item.icon}</span>
                 <div className="flex min-h-[52px] min-w-0 flex-1 flex-col overflow-hidden">
@@ -5500,7 +5653,7 @@ export function JobWorkspaceClient({
                     <button
                       type="button"
                       onClick={() => setIsEditingManager(true)}
-                      className="mt-auto self-start pt-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2563eb] transition-colors hover:text-[#1d4ed8] dark:text-[#9ab8ff] dark:hover:text-white"
+                      className="mt-auto self-start pt-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2563eb] transition-colors hover:text-[#1d4ed8] dark:text-[#9ab8ff] dark:hover:text-white ds-plain"
                     >
                       Change
                     </button>
@@ -5982,9 +6135,14 @@ export function JobWorkspaceClient({
 
                         <div className="grid gap-4 xl:grid-cols-2">
                           {sortedUploadedWorkflowDocuments.length > 0 ? (
-                            sortedUploadedWorkflowDocuments.map((req: WorkflowDocumentRequirement) => {
-                              const currentVersion = req.versions.find((version) => version.isCurrent) || req.versions[0];
+                            sortedUploadedWorkflowDocuments.map((req: any) => {
+                              const currentVersion = req.versions.find((version: WorkflowDocumentVersion) => version.isCurrent) || req.versions[0];
                               if (!currentVersion) return null;
+                              const customerSubmission = req.customerSubmission ?? null;
+                              const usesCustomerSubmission = Boolean(req.usesCustomerSubmission && customerSubmission);
+                              const canAcceptCustomerSubmission =
+                                usesCustomerSubmission &&
+                                ["UPLOADED", "UNDER_REVIEW", "CLARIFICATION_REQUIRED", "REUPLOAD_REQUIRED"].includes(customerSubmission.status);
 
                               return (
                                 <div
@@ -6031,6 +6189,44 @@ export function JobWorkspaceClient({
                                     }}
                                     onMarkNa={handleMarkNotAvailable}
                                     onUpload={setUploadDocumentModalReqId}
+                                    uploadButtonLabel={usesCustomerSubmission ? "Upload CHA Copy" : undefined}
+                                    helperContent={
+                                      usesCustomerSubmission ? (
+                                        <div className="space-y-2">
+                                          <div className="flex flex-wrap items-center gap-2">
+                                            <Badge variant="secondary">CUSTOMER PORTAL</Badge>
+                                            {customerSubmission.portalUser?.name ? (
+                                              <span className="text-xs text-on-surface-variant">
+                                                Uploaded by {customerSubmission.portalUser.name}
+                                              </span>
+                                            ) : null}
+                                          </div>
+                                          <p className="text-sm font-semibold text-on-surface">
+                                            Customer-uploaded file awaiting CHA decision
+                                          </p>
+                                          <p className="text-xs text-on-surface-variant">
+                                            Accept this file to save it as the submitted CHA document, or upload the CHA copy yourself if you need to replace it.
+                                          </p>
+                                          {customerSubmission.reviewerComment ? (
+                                            <p className="text-xs text-[#fb923c]">{customerSubmission.reviewerComment}</p>
+                                          ) : null}
+                                        </div>
+                                      ) : null
+                                    }
+                                    footerActions={
+                                      canAcceptCustomerSubmission ? (
+                                        <Button
+                                          type="button"
+                                          size="sm"
+                                          className="gap-2"
+                                          disabled={loading !== null}
+                                          onClick={() => handleAcceptCustomerDocument(req.id)}
+                                        >
+                                          <CheckCircle2 size={14} />
+                                          {loading === `customer-accept-${req.id}` ? "Accepting..." : "Accept Customer Upload"}
+                                        </Button>
+                                      ) : null
+                                    }
                                   />
                                 </div>
                               );
@@ -6259,9 +6455,7 @@ export function JobWorkspaceClient({
                                         selected={selectedWorkflowDocumentRequirement?.id === req.id}
                                         onSelect={(requirementId) => {
                                           setSelectedDocumentRequirementId(requirementId);
-                                          const selectedRequirement = filteredWorkflowDocuments.find((entry: WorkflowDocumentRequirement) => entry.id === requirementId);
-                                          const selectedVersion = selectedRequirement?.versions.find((version: WorkflowDocumentVersion) => version.isCurrent) || selectedRequirement?.versions?.[0];
-                                          setIsDocumentDrawerOpen(Boolean(selectedVersion));
+                                          setIsDocumentDrawerOpen(true);
                                           setDocumentDrawerTab("preview");
                                         }}
                                         onUndo={handleRemoveException}
@@ -6291,12 +6485,6 @@ export function JobWorkspaceClient({
                           )}
                         </div>
 
-                        <DocumentDropzone
-                          requirement={selectedWorkflowDocumentRequirement}
-                          disabled={loading !== null}
-                          onInputChange={handleUploadDoc}
-                        />
-
                         {job.stage === "DOCUMENT_COLLECTION" && (
                           <div className="flex flex-col gap-3 border-t border-outline-variant/25 pt-4 sm:items-end">
                             {proceedErrors ? (
@@ -6317,22 +6505,46 @@ export function JobWorkspaceClient({
                         )}
                       </div>
 
-                      <FilingDocumentPreviewDrawer
-                        open={isDocumentDrawerOpen}
-                        requirement={selectedWorkflowDocumentRequirement}
-                        version={selectedWorkflowDocumentVersion}
-                        previewUrl={selectedDocumentPreviewUrl}
-                        downloadUrl={selectedDocumentDownloadUrl}
-                        loadingPreview={loadingPreview}
-                        activeTab={documentDrawerTab}
-                        currentStepLabel={`${workflowProgressPercent}% Uploaded • ${workflowCurrentStepLabel}`}
-                        currentStageLabel={currentStageLabel}
-                        dueDate={job.estimatedClosureDate || null}
-                        onClose={() => setIsDocumentDrawerOpen(false)}
-                        onTabChange={setDocumentDrawerTab}
-                        onPreviewLoad={() => setLoadingPreview(false)}
-                        onPreviewError={() => setLoadingPreview(false)}
-                      />
+                      <div className="space-y-5 xl:sticky xl:top-24 w-full xl:w-[360px] flex-shrink-0">
+                        <div ref={dropzoneRef}>
+                          <DocumentDropzone
+                            requirement={selectedWorkflowDocumentRequirement}
+                            requirementsList={filteredWorkflowDocuments}
+                            onRequirementIdChange={(id) => {
+                              setSelectedDocumentRequirementId(id);
+                              setIsDocumentDrawerOpen(true);
+                              setDocumentDrawerTab("preview");
+                            }}
+                            disabled={loading !== null}
+                            onInputChange={handleUploadDoc}
+                          />
+                        </div>
+
+                        <div 
+                          ref={previewDrawerRef}
+                          style={{
+                            transform: `translateY(${previewOffset}px)`,
+                            transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                          }}
+                        >
+                          <FilingDocumentPreviewDrawer
+                            open={isDocumentDrawerOpen}
+                            requirement={selectedWorkflowDocumentRequirement}
+                            version={selectedWorkflowDocumentVersion}
+                            previewUrl={selectedDocumentPreviewUrl}
+                            downloadUrl={selectedDocumentDownloadUrl}
+                            loadingPreview={loadingPreview}
+                            activeTab={documentDrawerTab}
+                            currentStepLabel={`${workflowProgressPercent}% Uploaded • ${workflowCurrentStepLabel}`}
+                            currentStageLabel={currentStageLabel}
+                            dueDate={job.estimatedClosureDate || null}
+                            onClose={() => setIsDocumentDrawerOpen(false)}
+                            onTabChange={setDocumentDrawerTab}
+                            onPreviewLoad={() => setLoadingPreview(false)}
+                            onPreviewError={() => setLoadingPreview(false)}
+                          />
+                        </div>
+                      </div>
                     </div>
 
                   </div>

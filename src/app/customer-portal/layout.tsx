@@ -1,8 +1,9 @@
 import { headers } from "next/headers";
 import type { ReactNode } from "react";
-import { PackageCheck } from "lucide-react";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
-import { PortalHeaderNav, PortalLogoutButton } from "./_components/client-actions";
+import { PortalShellClient } from "./_components/client-actions";
+import { db } from "@/lib/db";
+import "./portal-styles.css";
 
 export default async function CustomerPortalLayout({
   children,
@@ -17,44 +18,162 @@ export default async function CustomerPortalLayout({
   ) {
     return <>{children}</>;
   }
+
   const session = await requirePortalSession();
-  const navigationItems = [
-    { href: "/customer-portal/dashboard", label: "Dashboard" },
-    { href: "/customer-portal/shipments", label: "Shipments" },
-    { href: "/customer-portal/notifications", label: "Notifications" },
-    { href: "/customer-portal/profile", label: "Profile" },
-    { href: "/customer-portal/security", label: "Security" },
-  ];
+
+  // Query live counts for dashboard & sidebar badges
+  const [
+    activeShipmentsCount,
+    unreadNotificationsCount,
+    pendingApprovalsCount,
+    latestJobWithCoordinator,
+    customerAccount,
+  ] = await Promise.all([
+    db.chaJob.count({
+      where: {
+        orgId: session.orgId,
+        customerId: session.customerId,
+        status: "ACTIVE",
+        stage: { not: "FILED" },
+        deletedAt: null,
+      },
+    }),
+    db.customerPortalNotification.count({
+      where: {
+        portalUserId: session.portalUserId,
+        readAt: null,
+      },
+    }),
+    db.chaJob.count({
+      where: {
+        orgId: session.orgId,
+        customerId: session.customerId,
+        status: "ACTIVE",
+        deletedAt: null,
+        checklistWorkflow: {
+          currentApprovalStage: "CUSTOMER",
+        },
+      },
+    }),
+    db.chaJob.findFirst({
+      where: {
+        orgId: session.orgId,
+        customerId: session.customerId,
+        status: "ACTIVE",
+        deletedAt: null,
+      },
+      orderBy: { updatedAt: "desc" },
+      include: {
+        primaryOwner: {
+          select: {
+            name: true,
+            email: true,
+            personalPhone: true,
+            designation: true,
+          },
+        },
+        assignedManager: {
+          select: {
+            name: true,
+            email: true,
+            personalPhone: true,
+            designation: true,
+          },
+        },
+      },
+    }),
+    db.crmAccount.findUnique({
+      where: { id: session.customerId },
+      include: {
+        owner: {
+          select: {
+            name: true,
+            email: true,
+            personalPhone: true,
+            designation: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  // Determine assigned support contact (coordinator)
+  let coordinator: {
+    name: string;
+    email: string;
+    phone?: string | null;
+    designation?: string | null;
+    officeHours?: string | null;
+    escalationName?: string | null;
+    escalationEmail?: string | null;
+  } | null = null;
+
+  const primaryOwner = latestJobWithCoordinator?.primaryOwner;
+  const assignedManager = latestJobWithCoordinator?.assignedManager;
+  const accountOwner = customerAccount?.owner;
+
+  if (primaryOwner) {
+    coordinator = {
+      name: primaryOwner.name,
+      email: primaryOwner.email,
+      phone: primaryOwner.personalPhone,
+      designation: primaryOwner.designation || "Primary Coordinator",
+      officeHours: "9:00 AM - 6:00 PM (IST)",
+      escalationName: assignedManager?.name || "Operations Manager",
+      escalationEmail: assignedManager?.email || "ops-escalations@monolith.com",
+    };
+  } else if (assignedManager) {
+    coordinator = {
+      name: assignedManager.name,
+      email: assignedManager.email,
+      phone: assignedManager.personalPhone,
+      designation: assignedManager.designation || "Assigned Manager",
+      officeHours: "9:00 AM - 6:00 PM (IST)",
+      escalationName: "Operations Director",
+      escalationEmail: "ops-escalations@monolith.com",
+    };
+  } else if (accountOwner) {
+    coordinator = {
+      name: accountOwner.name,
+      email: accountOwner.email,
+      phone: accountOwner.personalPhone,
+      designation: accountOwner.designation || "Account Manager",
+      officeHours: "9:30 AM - 6:30 PM (IST)",
+      escalationName: "CRM Coordinator",
+      escalationEmail: "crm-escalations@monolith.com",
+    };
+  } else {
+    // Standard default fallback support contact
+    coordinator = {
+      name: "Monolith Support",
+      email: "support@adarshshipping.com",
+      phone: "+91 44 2490 1234",
+      designation: "Customer Care Desk",
+      officeHours: "24/7 Operations Support",
+      escalationName: "Operations Escalation Desk",
+      escalationEmail: "escalation@adarshshipping.com",
+    };
+  }
+
+  const portalUserContext = {
+    name: session.portalUser.name,
+    email: session.portalUser.email,
+    designation: session.portalUser.contact?.designation || "Authorized Contact",
+    customer: {
+      id: session.customerId,
+      name: session.portalUser.customer.name,
+    },
+  };
 
   return (
-    <main className="min-h-screen bg-background text-on-surface">
-      <div className="sticky top-0 z-40 w-full shrink-0 bg-background/95 shadow-sm backdrop-blur-sm">
-        <header className="border-b border-outline-variant/60 bg-surface/90 backdrop-blur-sm">
-          <div className="mx-auto flex min-h-14 w-full max-w-[1400px] items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
-            <div className="flex min-w-0 shrink-0 items-center gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#00cec4]/10">
-                <PackageCheck size={16} className="text-[#00cec4]" />
-              </div>
-              <div className="min-w-0">
-                <h1 className="ds-h3 heading-icon-none truncate text-on-surface">Customer Portal</h1>
-              </div>
-            </div>
-
-            <PortalHeaderNav items={navigationItems} />
-
-            <div className="ml-auto hidden min-w-0 shrink-0 items-center gap-3 xl:flex">
-              <div className="truncate text-[13px] text-on-surface-variant">
-                {session.portalUser.customer.name}
-              </div>
-              <PortalLogoutButton />
-            </div>
-          </div>
-        </header>
-      </div>
-
-      <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-8 px-6 py-8 lg:px-8">
-        {children}
-      </div>
-    </main>
+    <PortalShellClient
+      portalUser={portalUserContext}
+      unreadNotificationsCount={unreadNotificationsCount}
+      pendingApprovalsCount={pendingApprovalsCount}
+      activeShipmentsCount={activeShipmentsCount}
+      coordinator={coordinator}
+    >
+      {children}
+    </PortalShellClient>
   );
 }

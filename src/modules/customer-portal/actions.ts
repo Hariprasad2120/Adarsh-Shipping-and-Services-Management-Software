@@ -90,3 +90,30 @@ export async function createCustomerPortalQueryAction(input: {
     return { ok: false, error: error instanceof Error ? error.message : "Failed to create query" };
   }
 }
+
+export async function getPortalFeatureFlagAction(flag: "CUSTOMER_PORTAL_SHIPMENT_UPLOADS"): Promise<ActionResult<boolean>> {
+  try {
+    const session = await auth();
+    if (!session?.user?.orgId) throw new Error("Unauthorized");
+    const { getPortalFeatureFlag } = await import("./feature-flags");
+    const value = await getPortalFeatureFlag(session.user.orgId, flag);
+    return { ok: true, data: value };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Failed to read feature flag" };
+  }
+}
+
+export async function setPortalFeatureFlagAction(flag: "CUSTOMER_PORTAL_SHIPMENT_UPLOADS", value: boolean): Promise<ActionResult<boolean>> {
+  try {
+    const session = await auth();
+    if (!session?.user?.orgId) throw new Error("Unauthorized");
+    await requirePermission(session.user.id, "cha.settings.manage");
+    const { setPortalFeatureFlag } = await import("./feature-flags");
+    await setPortalFeatureFlag(session.user.orgId, flag, value);
+    revalidatePath("/cha/settings");
+    return { ok: true, data: value };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Failed to update feature flag" };
+  }
+}
+

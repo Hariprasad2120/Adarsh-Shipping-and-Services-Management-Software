@@ -80,6 +80,11 @@ type RequirementDocumentCardProps = {
   onMarkNa: (requirementId: string) => void;
   onSelect?: (requirementId: string) => void;
   selected?: boolean;
+  showActionMenu?: boolean;
+  showExceptionActions?: boolean;
+  uploadButtonLabel?: string;
+  hideUploadWhenExempted?: boolean;
+  uploadDisabled?: boolean;
 };
 
 type UploadedWorkflowDocumentCardProps = {
@@ -95,6 +100,14 @@ type UploadedWorkflowDocumentCardProps = {
   onUpload: (requirementId: string) => void;
   onSelect?: (requirementId: string) => void;
   selected?: boolean;
+  showActionMenu?: boolean;
+  showExceptionActions?: boolean;
+  showDeleteAction?: boolean;
+  uploadButtonLabel?: string;
+  statusOverride?: string;
+  helperContent?: React.ReactNode;
+  footerActions?: React.ReactNode;
+  uploadDisabled?: boolean;
 };
 
 type WorkflowDocumentsSectionHeaderProps = {
@@ -127,6 +140,8 @@ type DocumentMetaItemProps = {
 
 type DocumentDropzoneProps = {
   requirement: WorkflowDocumentRequirement | null;
+  requirementsList?: WorkflowDocumentRequirement[];
+  onRequirementIdChange?: (id: string) => void;
   maxFileSizeLabel?: string;
   disabled: boolean;
   onInputChange: (requirementId: string, event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -168,6 +183,21 @@ function getDocumentStatusBadge(status: string) {
   if (status === "UPLOADED") {
     return <Badge variant="success">UPLOADED</Badge>;
   }
+  if (status === "ACCEPTED") {
+    return <Badge variant="success">ACCEPTED</Badge>;
+  }
+  if (status === "UNDER_REVIEW") {
+    return <Badge variant="secondary">UNDER REVIEW</Badge>;
+  }
+  if (status === "CLARIFICATION_REQUIRED") {
+    return <Badge variant="warning">CLARIFICATION REQUIRED</Badge>;
+  }
+  if (status === "REUPLOAD_REQUIRED") {
+    return <Badge variant="warning">REUPLOAD REQUIRED</Badge>;
+  }
+  if (status === "REJECTED") {
+    return <Badge variant="destructive">REJECTED</Badge>;
+  }
   if (status === "NOT_AVAILABLE") {
     return <Badge variant="warning">NOT AVAILABLE</Badge>;
   }
@@ -175,8 +205,24 @@ function getDocumentStatusBadge(status: string) {
 }
 
 function DocumentStatusBadge({ status }: { status: string }) {
-  if (status === "UPLOADED") {
+  if (status === "UPLOADED" || status === "ACCEPTED") {
     return <span className="rounded-full bg-green-500/12 px-3 py-1 text-sm font-medium text-green-700 dark:text-green-300">Uploaded</span>;
+  }
+
+  if (status === "UNDER_REVIEW") {
+    return <span className="rounded-full bg-surface-container-low px-3 py-1 text-sm font-medium text-on-surface-variant">Under Review</span>;
+  }
+
+  if (status === "CLARIFICATION_REQUIRED") {
+    return <span className="rounded-full bg-[#fb923c]/12 px-3 py-1 text-sm font-medium text-[#fb923c]">Clarification Required</span>;
+  }
+
+  if (status === "REUPLOAD_REQUIRED") {
+    return <span className="rounded-full bg-[#fb923c]/12 px-3 py-1 text-sm font-medium text-[#fb923c]">Re-upload Needed</span>;
+  }
+
+  if (status === "REJECTED") {
+    return <span className="rounded-full bg-red-500/12 px-3 py-1 text-sm font-medium text-red-600 dark:text-red-300">Rejected</span>;
   }
 
   if (status === "NOT_AVAILABLE") {
@@ -225,10 +271,16 @@ export function RequirementDocumentCard({
   onMarkNa,
   onSelect,
   selected = false,
+  showActionMenu = true,
+  showExceptionActions = true,
+  uploadButtonLabel,
+  hideUploadWhenExempted = false,
+  uploadDisabled = false,
 }: RequirementDocumentCardProps) {
   const isExempted = requirement.status === "NOT_AVAILABLE" || !!requirement.exception;
   const isNa = requirement.exception?.reason === "N/A";
   const metadataLabel = isNa ? "Marked by" : "Declared by";
+  const shouldShowUpload = !hideUploadWhenExempted || !isExempted;
 
   return (
     <div
@@ -246,13 +298,15 @@ export function RequirementDocumentCard({
             {getDocumentStatusBadge(requirement.status)}
           </div>
         </div>
-        <button
-          type="button"
-          className="ds-plain flex h-10 w-10 items-center justify-center rounded-xl border border-outline-variant/60 bg-surface text-on-surface-variant shadow-sm transition hover:border-[#00cec4]/45 hover:text-[#00cec4]"
-          aria-label={`More actions for ${requirement.name}`}
-        >
-          <MoreHorizontal size={18} />
-        </button>
+        {showActionMenu ? (
+          <button
+            type="button"
+            className="ds-plain flex h-10 w-10 items-center justify-center rounded-xl border border-outline-variant/60 bg-surface text-on-surface-variant shadow-sm transition hover:border-[#00cec4]/45 hover:text-[#00cec4]"
+            aria-label={`More actions for ${requirement.name}`}
+          >
+            <MoreHorizontal size={18} />
+          </button>
+        ) : null}
       </div>
 
       <div className="mt-4 flex-1">
@@ -278,41 +332,45 @@ export function RequirementDocumentCard({
 
       <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/20 pt-3.5">
         <div className="flex flex-wrap gap-2">
-          {isExempted ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="gap-2 border-[#fb923c]/50 text-[#fb923c] hover:bg-surface"
-              disabled={loadingKey !== null}
-              onClick={() => onUndo(requirement.id)}
-            >
-              <Undo2 size={14} />
-              {isNa ? "Undo N/A" : "Undo Exemption"}
-            </Button>
-          ) : (
-            <>
-              <Button type="button" variant="outline" size="sm" className="gap-2" disabled={loadingKey !== null} onClick={() => onDeclareExemption(requirement.id)}>
-                <ShieldCheck size={14} />
-                Declare Exemption
-              </Button>
+          {showExceptionActions ? (
+            isExempted ? (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 className="gap-2 border-[#fb923c]/50 text-[#fb923c] hover:bg-surface"
                 disabled={loadingKey !== null}
-                onClick={() => onMarkNa(requirement.id)}
+                onClick={() => onUndo(requirement.id)}
               >
-                Mark as N/A
+                <Undo2 size={14} />
+                {isNa ? "Undo N/A" : "Undo Exemption"}
               </Button>
-            </>
-          )}
+            ) : (
+              <>
+                <Button type="button" variant="outline" size="sm" className="gap-2" disabled={loadingKey !== null} onClick={() => onDeclareExemption(requirement.id)}>
+                  <ShieldCheck size={14} />
+                  Declare Exemption
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 border-[#fb923c]/50 text-[#fb923c] hover:bg-surface"
+                  disabled={loadingKey !== null}
+                  onClick={() => onMarkNa(requirement.id)}
+                >
+                  Mark as N/A
+                </Button>
+              </>
+            )
+          ) : null}
         </div>
-        <Button type="button" size="sm" className="min-w-[160px] gap-2" disabled={loadingKey !== null} onClick={() => onUpload(requirement.id)}>
-          <Upload size={14} />
-          {isExempted ? "Upload File Anyway" : "Upload File"}
-        </Button>
+        {shouldShowUpload ? (
+          <Button type="button" size="sm" className="min-w-[160px] gap-2" disabled={loadingKey !== null || uploadDisabled} onClick={() => onUpload(requirement.id)}>
+            <Upload size={14} />
+            {uploadButtonLabel || (isExempted ? "Upload File Anyway" : "Upload File")}
+          </Button>
+        ) : null}
       </div>
     </div>
   );
@@ -389,9 +447,18 @@ export function UploadedWorkflowDocumentCard({
   onUpload,
   onSelect,
   selected = false,
+  showActionMenu = true,
+  showExceptionActions = true,
+  showDeleteAction = true,
+  uploadButtonLabel,
+  statusOverride,
+  helperContent,
+  footerActions,
+  uploadDisabled = false,
 }: UploadedWorkflowDocumentCardProps) {
   const canDeleteCurrentVersion = canDelete || currentUserId === version.uploadedById;
   const fileSize = formatFileSize(version.sizeBytes);
+  const headerStatus = statusOverride || requirement.status;
 
   return (
     <div
@@ -412,14 +479,16 @@ export function UploadedWorkflowDocumentCard({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <DocumentStatusBadge status="UPLOADED" />
-            <button
-              type="button"
-              className="ds-plain flex h-10 w-10 items-center justify-center rounded-xl border border-outline-variant/60 bg-surface text-on-surface-variant shadow-sm transition hover:border-[#00cec4]/45 hover:text-[#00cec4]"
-              aria-label={`More actions for ${requirement.name}`}
-            >
-              <MoreHorizontal size={18} />
-            </button>
+            <DocumentStatusBadge status={headerStatus} />
+            {showActionMenu ? (
+              <button
+                type="button"
+                className="ds-plain flex h-10 w-10 items-center justify-center rounded-xl border border-outline-variant/60 bg-surface text-on-surface-variant shadow-sm transition hover:border-[#00cec4]/45 hover:text-[#00cec4]"
+                aria-label={`More actions for ${requirement.name}`}
+              >
+                <MoreHorizontal size={18} />
+              </button>
+            ) : null}
           </div>
         </div>
 
@@ -438,7 +507,7 @@ export function UploadedWorkflowDocumentCard({
             </div>
             <div className="flex items-center gap-3">
               <span className="ds-numeric text-sm text-on-surface-variant">{fileSize}</span>
-              {canDeleteCurrentVersion ? (
+              {showDeleteAction && canDeleteCurrentVersion ? (
                 <Button
                   type="button"
                   variant="outline"
@@ -455,35 +524,51 @@ export function UploadedWorkflowDocumentCard({
           </div>
 
           <div className="mt-3 grid gap-2 border border-outline-variant/20 bg-surface-container-low/25 px-2 py-2 md:grid-cols-2 xl:grid-cols-4">
-            <DocumentMetaItem label="Source" value={version.source === "FILING_WORKFLOW" ? "Filing Workflow" : "Documents Page"} />
+            <DocumentMetaItem
+              label="Source"
+              value={
+                version.source === "FILING_WORKFLOW"
+                  ? "Filing Workflow"
+                  : version.source === "CUSTOMER_PORTAL"
+                    ? "Customer Portal"
+                    : "Documents Page"
+              }
+            />
             <DocumentMetaItem label="Uploaded By" value={version.uploadedBy?.name || "Unknown"} />
             <DocumentMetaItem label="Uploaded On" value={<span className="ds-numeric">{formatDateOnly(version.uploadedAt)}</span>} />
             <DocumentMetaItem label="Validity" value={version.validityDate ? <span className="ds-numeric">{formatDateOnly(version.validityDate)}</span> : "Not required"} accent={version.validityDate ? "default" : "success"} />
           </div>
         </div>
 
+        {helperContent ? <div className="rounded-[20px] border border-outline-variant/35 bg-surface-container-low/45 p-3">{helperContent}</div> : null}
+
         <div className="mt-auto flex flex-wrap items-center gap-3 border-t border-outline-variant/20 pt-3.5">
           <Button type="button" variant="outline" className="gap-2" onClick={() => onPreview(requirement.id)}>
             <Eye size={16} />
             View File
           </Button>
-          <Button type="button" variant="outline" className="gap-2" onClick={() => onDeclareExemption(requirement.id)} disabled={loadingKey !== null}>
-            <ShieldCheck size={16} />
-            Declare Exemption
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="gap-2 border-[#fb923c]/50 text-[#fb923c] hover:bg-surface"
-            onClick={() => onMarkNa(requirement.id)}
-            disabled={loadingKey !== null}
-          >
-            Mark as N/A
-          </Button>
-          <Button type="button" className="ml-auto min-w-[160px] gap-2" onClick={() => onUpload(requirement.id)} disabled={loadingKey !== null}>
+          {showExceptionActions ? (
+            <>
+              <Button type="button" variant="outline" className="gap-2" onClick={() => onDeclareExemption(requirement.id)} disabled={loadingKey !== null}>
+                <ShieldCheck size={16} />
+                Declare Exemption
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="gap-2 border-[#fb923c]/50 text-[#fb923c] hover:bg-surface"
+                onClick={() => onMarkNa(requirement.id)}
+                disabled={loadingKey !== null}
+              >
+                Mark as N/A
+              </Button>
+            </>
+          ) : null}
+          <Button type="button" className="ml-auto min-w-[160px] gap-2" onClick={() => onUpload(requirement.id)} disabled={loadingKey !== null || uploadDisabled}>
             <Upload size={16} />
-            Re-upload
+            {uploadButtonLabel || "Re-upload"}
           </Button>
+          {footerActions}
         </div>
       </div>
     </div>
@@ -522,16 +607,16 @@ export function FilingDocumentPreviewDrawer({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
 
-  if (!open || !requirement || !version) {
+  if (!open || !requirement) {
     return null;
   }
 
-  const mimeType = version.mimeType || "application/octet-stream";
-  const isImage = mimeType.startsWith("image/");
-  const isPdf = mimeType === "application/pdf";
-  const canPreview = Boolean(previewUrl) && (isImage || isPdf);
-  const sourceLabel = version.source === "FILING_WORKFLOW" ? "Filing Workflow" : "Documents Page";
-  const fileSize = formatFileSize(version.sizeBytes);
+  const mimeType = version?.mimeType || "application/octet-stream";
+  const isImage = version ? mimeType.startsWith("image/") : false;
+  const isPdf = version ? mimeType === "application/pdf" : false;
+  const canPreview = version ? (Boolean(previewUrl) && (isImage || isPdf)) : false;
+  const sourceLabel = version?.source === "FILING_WORKFLOW" ? "Filing Workflow" : "Documents Page";
+  const fileSize = version ? formatFileSize(version.sizeBytes) : "";
   const exceptionState = requirement.exception?.reason
     ? requirement.exception.reason === "N/A"
       ? "Marked as N/A"
@@ -586,7 +671,19 @@ export function FilingDocumentPreviewDrawer({
           <div className="space-y-5">
             <div className="overflow-hidden rounded-[24px] border border-outline-variant/35 bg-surface shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
               <div className="relative flex min-h-[340px] items-center justify-center overflow-hidden border-b border-outline-variant/15 bg-surface-container-low/25 px-6 py-8">
-                {canPreview ? (
+                {!version ? (
+                  <div className="space-y-4 text-center">
+                    <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-[24px] border border-amber-500/20 bg-amber-500/10 text-amber-500">
+                      <FileText size={40} />
+                    </span>
+                    <div className="space-y-1">
+                      <p className="text-[1.05rem] font-semibold text-on-surface">No Document Uploaded</p>
+                    </div>
+                    <p className="mx-auto max-w-[240px] text-sm text-on-surface-variant">
+                      Use the Quick Upload section or click the document card actions to add a file.
+                    </p>
+                  </div>
+                ) : canPreview ? (
                   <>
                     {loadingPreview ? (
                       <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface/80">
@@ -628,100 +725,123 @@ export function FilingDocumentPreviewDrawer({
                 )}
               </div>
 
-              <div className="space-y-4 px-6 py-5">
-                <div className="text-center">
-                  <p className="text-[1.7rem] font-semibold tracking-[-0.03em] text-on-surface">{version.fileName}</p>
-                  <p className="mt-2 text-base text-on-surface-variant">{fileSize}</p>
-                </div>
+              {version ? (
+                <div className="space-y-4 px-6 py-5">
+                  <div className="text-center">
+                    <p className="text-[1.7rem] font-semibold tracking-[-0.03em] text-on-surface">{version.fileName}</p>
+                    <p className="mt-2 text-base text-on-surface-variant">{fileSize}</p>
+                  </div>
 
-                <div className="flex items-center justify-center gap-4">
-                  <Button type="button" variant="outline" mode="icon" onClick={() => setImageScale((current) => Math.max(0.75, current - 0.1))} disabled={!isImage}>
-                    <ZoomOut size={16} />
-                  </Button>
-                  <Button type="button" variant="outline" mode="icon" onClick={() => setImageScale((current) => Math.min(2.5, current + 0.1))} disabled={!isImage}>
-                    <ZoomIn size={16} />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    mode="icon"
-                    onClick={() => {
-                      if (previewUrl) {
-                        window.open(previewUrl, "_blank", "noopener,noreferrer");
-                      }
-                    }}
-                    disabled={!previewUrl}
-                  >
-                    <Maximize2 size={16} />
-                  </Button>
-                  <a href={downloadUrl || undefined} download={version.fileName} aria-label={`Download ${version.fileName}`}>
-                    <Button type="button" variant="outline" mode="icon" disabled={!downloadUrl}>
-                      <Download size={16} />
+                  <div className="flex items-center justify-center gap-4">
+                    <Button type="button" variant="outline" mode="icon" onClick={() => setImageScale((current) => Math.max(0.75, current - 0.1))} disabled={!isImage}>
+                      <ZoomOut size={16} />
                     </Button>
-                  </a>
+                    <Button type="button" variant="outline" mode="icon" onClick={() => setImageScale((current) => Math.min(2.5, current + 0.1))} disabled={!isImage}>
+                      <ZoomIn size={16} />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      mode="icon"
+                      onClick={() => {
+                        if (previewUrl) {
+                          window.open(previewUrl, "_blank", "noopener,noreferrer");
+                        }
+                      }}
+                      disabled={!previewUrl}
+                    >
+                      <Maximize2 size={16} />
+                    </Button>
+                    <a href={downloadUrl || undefined} download={version.fileName} aria-label={`Download ${version.fileName}`}>
+                      <Button type="button" variant="outline" mode="icon" disabled={!downloadUrl}>
+                        <Download size={16} />
+                      </Button>
+                    </a>
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </div>
 
-            <div className="space-y-4">
-              <h4 className="text-[1.1rem] font-semibold text-on-surface">Document Health</h4>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-green-500/10 text-green-600">
-                      <CheckCircle2 size={14} />
-                    </span>
-                    <span className="text-on-surface">File uploaded</span>
+            {version ? (
+              <div className="space-y-4">
+                <h4 className="text-[1.1rem] font-semibold text-on-surface">Document Health</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-green-500/10 text-green-600">
+                        <CheckCircle2 size={14} />
+                      </span>
+                      <span className="text-on-surface">File uploaded</span>
+                    </div>
+                    <span className="text-on-surface-variant">{formatDateTime(version.uploadedAt)}</span>
                   </div>
-                  <span className="text-on-surface-variant">{formatDateTime(version.uploadedAt)}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant">
-                      <Circle size={10} fill="currentColor" />
-                    </span>
-                    <span className="text-on-surface">Virus scan</span>
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant">
+                        <Circle size={10} fill="currentColor" />
+                      </span>
+                      <span className="text-on-surface">Virus scan</span>
+                    </div>
+                    <span className="rounded-full bg-surface-container-low px-3 py-1 text-xs font-medium text-on-surface-variant">Not checked</span>
                   </div>
-                  <span className="rounded-full bg-surface-container-low px-3 py-1 text-xs font-medium text-on-surface-variant">Not checked</span>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant">
-                      <Circle size={10} fill="currentColor" />
-                    </span>
-                    <span className="text-on-surface">File integrity</span>
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant">
+                        <Circle size={10} fill="currentColor" />
+                      </span>
+                      <span className="text-on-surface">File integrity</span>
+                    </div>
+                    <span className="rounded-full bg-surface-container-low px-3 py-1 text-xs font-medium text-on-surface-variant">Not checked</span>
                   </div>
-                  <span className="rounded-full bg-surface-container-low px-3 py-1 text-xs font-medium text-on-surface-variant">Not checked</span>
                 </div>
               </div>
-            </div>
+            ) : null}
 
             <div className="border-t border-outline-variant/20 pt-5">
               <h4 className="text-[1.1rem] font-semibold text-on-surface">Workflow Context</h4>
               <div className="mt-4 space-y-1">
                 <DocumentDetailRow label="Step" value={<span>{currentStageLabel}</span>} />
-                <DocumentDetailRow label="Current Status" value={<span className="rounded-full bg-[#00cec4]/10 px-3 py-1 text-xs font-medium text-[#00cec4]">{currentStepLabel}</span>} />
-                <DocumentDetailRow label="Due Date" value={dueDate ? <span className="ds-numeric">{formatDateOnly(dueDate)}</span> : "Not scheduled"} />
-                <DocumentDetailRow label="Submitted By" value={version.uploadedBy?.name || "Unknown"} />
-                <DocumentDetailRow label="Requirement Status" value={requirement.status.replace(/_/g, " ")} />
-                <DocumentDetailRow label="Validity" value={version.validityDate ? formatDateOnly(version.validityDate) : "Not required"} />
-                <DocumentDetailRow label="Source" value={sourceLabel} />
+                {version ? (
+                  <>
+                    <DocumentDetailRow label="Current Status" value={<span className="rounded-full bg-[#00cec4]/10 px-3 py-1 text-xs font-medium text-[#00cec4]">{currentStepLabel}</span>} />
+                    <DocumentDetailRow label="Due Date" value={dueDate ? <span className="ds-numeric">{formatDateOnly(dueDate)}</span> : "Not scheduled"} />
+                    <DocumentDetailRow label="Submitted By" value={version.uploadedBy?.name || "Unknown"} />
+                    <DocumentDetailRow label="Requirement Status" value={requirement.status.replace(/_/g, " ")} />
+                    <DocumentDetailRow label="Validity" value={version.validityDate ? formatDateOnly(version.validityDate) : "Not required"} />
+                    <DocumentDetailRow label="Source" value={sourceLabel} />
+                  </>
+                ) : (
+                  <>
+                    <DocumentDetailRow label="Requirement Status" value={requirement.status.replace(/_/g, " ")} />
+                    <DocumentDetailRow label="Due Date" value={dueDate ? <span className="ds-numeric">{formatDateOnly(dueDate)}</span> : "Not scheduled"} />
+                  </>
+                )}
               </div>
             </div>
           </div>
         ) : (
           <div className="space-y-1">
             <DocumentDetailRow label="Document Requirement" value={requirement.name} />
-            <DocumentDetailRow label="Original File Name" value={version.fileName} />
-            <DocumentDetailRow label="MIME Type" value={mimeType} />
-            <DocumentDetailRow label="File Size" value={<span className="ds-numeric">{fileSize}</span>} />
-            <DocumentDetailRow label="Source" value={sourceLabel} />
-            <DocumentDetailRow label="Uploaded By" value={version.uploadedBy?.name || "Unknown"} />
-            <DocumentDetailRow label="Uploaded On" value={<span className="ds-numeric">{formatDateTime(version.uploadedAt)}</span>} />
-            <DocumentDetailRow label="Validity" value={version.validityDate ? formatDateOnly(version.validityDate) : "Not required"} />
-            <DocumentDetailRow label="Linked Job Stage" value={currentStageLabel} />
-            <DocumentDetailRow label="Requirement Status" value={requirement.status.replace(/_/g, " ")} />
-            <DocumentDetailRow label="Version State" value={version.isCurrent ? "Current Version" : "Previous Version"} />
+            {version ? (
+              <>
+                <DocumentDetailRow label="Original File Name" value={version.fileName} />
+                <DocumentDetailRow label="MIME Type" value={mimeType} />
+                <DocumentDetailRow label="File Size" value={<span className="ds-numeric">{fileSize}</span>} />
+                <DocumentDetailRow label="Source" value={sourceLabel} />
+                <DocumentDetailRow label="Uploaded By" value={version.uploadedBy?.name || "Unknown"} />
+                <DocumentDetailRow label="Uploaded On" value={<span className="ds-numeric">{formatDateTime(version.uploadedAt)}</span>} />
+                <DocumentDetailRow label="Validity" value={version.validityDate ? formatDateOnly(version.validityDate) : "Not required"} />
+                <DocumentDetailRow label="Linked Job Stage" value={currentStageLabel} />
+                <DocumentDetailRow label="Requirement Status" value={requirement.status.replace(/_/g, " ")} />
+                <DocumentDetailRow label="Version State" value={version.isCurrent ? "Current Version" : "Previous Version"} />
+              </>
+            ) : (
+              <>
+                <DocumentDetailRow label="Mandatory" value={requirement.isMandatory ? "Yes" : "No"} />
+                <DocumentDetailRow label="Linked Job Stage" value={currentStageLabel} />
+                <DocumentDetailRow label="Requirement Status" value={requirement.status.replace(/_/g, " ")} />
+              </>
+            )}
             <DocumentDetailRow label="Exception State" value={exceptionState} />
             {requirement.exception?.createdAt ? (
               <DocumentDetailRow label="Exception Recorded On" value={<span className="ds-numeric">{formatDateTime(requirement.exception.createdAt)}</span>} />
@@ -809,27 +929,55 @@ export function WorkflowProgressPanel({
   );
 }
 
-export function DocumentDropzone({ requirement, maxFileSizeLabel = "15MB", disabled, onInputChange }: DocumentDropzoneProps) {
+export function DocumentDropzone({
+  requirement,
+  requirementsList,
+  onRequirementIdChange,
+  maxFileSizeLabel = "15MB",
+  disabled,
+  onInputChange,
+}: DocumentDropzoneProps) {
   const inputId = requirement ? `workflow-document-dropzone-${requirement.id}` : "workflow-document-dropzone-disabled";
   const [isDragActive, setIsDragActive] = React.useState(false);
 
   return (
     <div className="rounded-[24px] border border-outline-variant/60 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <div>
+      <div className="mb-4 flex flex-col gap-2">
+        <div className="flex items-center justify-between">
           <p className="ds-label">Quick Upload</p>
+          {requirement ? getDocumentStatusBadge(requirement.status) : null}
+        </div>
+        {requirementsList && requirementsList.length > 0 ? (
+          <div className="mt-1">
+            <select
+              value={requirement?.id || ""}
+              onChange={(e) => onRequirementIdChange?.(e.target.value)}
+              className="w-full text-xs rounded-xl border border-outline-variant/60 bg-surface px-3 py-2 font-medium text-on-surface shadow-sm focus:border-[#00cec4] focus:ring-1 focus:ring-[#00cec4] dark:bg-surface-container-low"
+              disabled={disabled}
+            >
+              <option value="" disabled>Select document slot to upload...</option>
+              {requirementsList.map((req) => {
+                const statusLabel = req.status === "UPLOADED" ? "🟢 [Uploaded]" : "⏳ [Pending]";
+                return (
+                  <option key={req.id} value={req.id}>
+                    {statusLabel} {req.name} {req.isMandatory ? "*" : ""}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        ) : (
           <p className="mt-1 text-sm text-on-surface-variant">
             {requirement ? `Uploading to ${requirement.name}` : "Select a document card to upload into the correct slot."}
           </p>
-        </div>
-        {requirement ? getDocumentStatusBadge(requirement.status) : null}
+        )}
       </div>
       <label
         htmlFor={inputId}
         className={cn(
           "flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-[24px] border border-dashed border-outline-variant/60 bg-surface px-6 py-10 text-center transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/40",
           isDragActive ? "border-[#00cec4]/70 bg-surface-container-low/50" : "",
-          disabled || !requirement ? "pointer-events-none cursor-not-allowed opacity-60" : "",
+          disabled || !requirement ? "pointer-events-none cursor-not-allowed opacity-60 bg-surface-container-low/10" : "",
         )}
         onDragOver={(event) => {
           if (disabled || !requirement) return;

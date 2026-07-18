@@ -222,7 +222,7 @@ export default async function ChaDashboard() {
       value: activeJobsCount,
       note: "Jobs currently in operations",
       icon: <Briefcase size={16} />,
-      accent: "cyan" as const,
+      accent: "blue" as const,
     },
     {
       title: "Checklists Pending",
@@ -236,7 +236,7 @@ export default async function ChaDashboard() {
       value: pendingFilingsCount,
       note: "Awaiting customs BOE/SB submissions",
       icon: <FileText size={16} />,
-      accent: "cyan" as const,
+      accent: "blue" as const,
     },
     {
       title: "Urgent Expenses",
@@ -267,7 +267,7 @@ export default async function ChaDashboard() {
       label: "Pending filing submission",
       note: item.job.jobNumber,
       href: `/cha/jobs/${item.job.id}?tab=filing`,
-      tone: "cyan" as const,
+      tone: "blue" as const,
     })),
     ...filingQueryWarnings.slice(0, 3).map((warning) => ({
       id: `query-${warning.jobId}`,

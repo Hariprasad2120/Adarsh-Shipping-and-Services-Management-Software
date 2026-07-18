@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { isBlockedApiPath, isBlockedRoutePath } from "@/lib/app-edition";
 import { SESSION_COOKIE_NAME } from "@/lib/session-config";
+import { PORTAL_COOKIE_NAME, PORTAL_LOGIN_PATH } from "@/modules/customer-portal/config";
 
 /**
  * Next.js 16 Proxy — runs before every matched request.
@@ -31,12 +32,6 @@ const PUBLIC_PATHS = [
 
 // Static asset prefixes — always public
 const STATIC_PREFIXES = ["/_next", "/favicon.ico", "/Logo", "/logo"];
-
-// Monolith-isolated session cookie names ONLY. Legacy authjs/next-auth
-// cookies (potentially shared with AMS on localhost) must never pass this
-// check — a request carrying only a foreign cookie is treated as
-// unauthenticated and redirected to /login.
-const SESSION_COOKIE_NAMES = [SESSION_COOKIE_NAME];
 
 const MOBILE_CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -70,16 +65,18 @@ function isPublicPath(pathname: string): boolean {
   return false;
 }
 
-function hasSessionCookie(req: NextRequest): boolean {
-  for (const name of SESSION_COOKIE_NAMES) {
-    if (req.cookies.get(name)?.value) return true;
-  }
-  return false;
+function isPortalProtectedPath(pathname: string): boolean {
+  return pathname.startsWith("/customer-portal/") && pathname !== PORTAL_LOGIN_PATH;
+}
+
+function hasCookie(req: NextRequest, name: string): boolean {
+  return Boolean(req.cookies.get(name)?.value);
 }
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isMobileApi = pathname.startsWith("/api/mobile");
+  const isPortalRequest = isPortalProtectedPath(pathname);
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-current-pathname", pathname);
 
@@ -113,10 +110,14 @@ export function proxy(req: NextRequest) {
   }
 
   // Protected path — check for session cookie
-  if (!hasSessionCookie(req)) {
-    const loginUrl = new URL("/login", req.url);
+  const hasRequiredCookie = isPortalRequest
+    ? hasCookie(req, PORTAL_COOKIE_NAME)
+    : hasCookie(req, SESSION_COOKIE_NAME);
+
+  if (!hasRequiredCookie) {
+    const loginUrl = new URL(isPortalRequest ? PORTAL_LOGIN_PATH : "/login", req.url);
     // Preserve intended destination for post-login redirect
-    if (pathname !== "/dashboard") {
+    if ((isPortalRequest && pathname !== "/customer-portal/dashboard") || (!isPortalRequest && pathname !== "/dashboard")) {
       loginUrl.searchParams.set("callbackUrl", pathname);
     }
     return NextResponse.redirect(loginUrl);

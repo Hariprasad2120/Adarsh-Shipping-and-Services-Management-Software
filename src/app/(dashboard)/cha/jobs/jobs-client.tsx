@@ -249,7 +249,7 @@ export function JobsClient({
       value: activeJobsData.total,
       note: "Jobs currently in operations",
       icon: <Briefcase size={16} />,
-      accent: "cyan" as const,
+      accent: "blue" as const,
     },
     {
       title: "Completed Jobs",
@@ -270,7 +270,7 @@ export function JobsClient({
       value: assignedViewLabel,
       note: assignedViewNote,
       icon: <Users size={16} />,
-      accent: "cyan" as const,
+      accent: "blue" as const,
     },
   ];
 
@@ -315,8 +315,8 @@ export function JobsClient({
           icon={icon}
           badge={badgeText}
           count={data.total}
-          accent={isActiveSection ? "cyan" : "green"}
-          actions={<ChaVisibleRecords visible={data.items.length} total={data.total} tone={isActiveSection ? "cyan" : "green"} />}
+          accent={isActiveSection ? "blue" : "green"}
+          actions={<ChaVisibleRecords visible={data.items.length} total={data.total} tone={isActiveSection ? "blue" : "green"} />}
         >
           <div className="overflow-hidden rounded-b-[30px]">
             <DataTable className="w-full">
@@ -494,175 +494,177 @@ export function JobsClient({
           </div>
         }
       >
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.8fr)]">
-          <div className="space-y-4">
-            <div className="relative min-w-0">
-              <span className="absolute inset-y-0 left-4 flex items-center text-on-surface-variant">
-                <Search size={16} />
-              </span>
-              <input
-                type="text"
-                placeholder="Search job #, customer, reference, or title..."
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    applyFilters();
-                  }
-                }}
-                className="h-14 w-full rounded-[20px] border border-outline-variant/25 bg-surface-container-low/70 pl-11 pr-4 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_16px_40px_-34px_rgba(15,23,42,0.3)]"
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              {activePills.length > 0 ? (
-                <>
-                  {activePills.map((pill) => (
-                    <button
-                      key={pill.key}
-                      type="button"
-                      onClick={() => removeFilter(pill.key)}
-                      className="rounded-full border border-[#2563eb]/25 bg-[#2563eb]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-[#2563eb] transition hover:bg-[#2563eb]/16 dark:text-[#9ab8ff]"
-                    >
-                      {pill.label} x
-                    </button>
-                  ))}
-                  <Button type="button" variant="outline" size="sm" onClick={resetFilters}>
-                    Clear All
-                  </Button>
-                </>
-              ) : (
-                <span className="rounded-full border border-outline-variant/25 bg-surface-container-low px-3 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-on-surface-variant">
-                  No active filters
-                </span>
-              )}
-            </div>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="relative flex-1">
+            <span className="absolute inset-y-0 left-4 flex items-center text-on-surface-variant">
+              <Search size={16} />
+            </span>
+            <input
+              type="text"
+              placeholder="Search job #, customer, reference, or title..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  applyFilters();
+                }
+              }}
+              className="h-11 w-full rounded-xl border border-outline-variant/25 bg-surface-container-low/70 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-cha-primary/30"
+            />
           </div>
 
-          <div className="flex flex-col justify-end gap-4 rounded-[24px] border border-[#2563eb]/16 bg-surface-container-low/65 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]">
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <FilterMenu
-                open={isFilterPanelOpen}
-                onOpenChange={setIsFilterPanelOpen}
-                activeCount={activeFilterCount}
-                title="Filters"
-                ariaLabel="Open filters"
-                contentClassName="w-[320px] max-h-[70vh] overflow-y-auto"
-              >
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="ds-label block">Workflow Stage</label>
-                    <DropdownSelect
-                      value={stage}
-                      onValueChange={setStage}
-                      placeholder="All Workflow Stages"
-                      options={[
-                        { value: "", label: "All Workflow Stages" },
-                        { value: "DOCUMENT_COLLECTION", label: "Document Collection" },
-                        { value: "ADDITIONAL_DATA", label: "Additional Data" },
-                        { value: "CHECKLIST_PREPARATION", label: "Checklist Prep" },
-                        { value: "CHECKLIST_APPROVAL", label: "Checklist Approval" },
-                        { value: "FILING", label: "Filing Stage" },
-                        { value: "FILED", label: "Filed / Completed" },
-                      ]}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="ds-label block">Status</label>
-                    <DropdownSelect
-                      value={status}
-                      onValueChange={setStatus}
-                      placeholder="All Statuses"
-                      options={[
-                        { value: "", label: "All Statuses" },
-                        { value: "ACTIVE", label: "Active" },
-                        { value: "HOLD", label: "Hold" },
-                        { value: "CANCELLED", label: "Cancelled" },
-                        { value: "COMPLETED", label: "Completed" },
-                      ]}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="ds-label block">Priority</label>
-                    <DropdownSelect
-                      value={priority}
-                      onValueChange={setPriority}
-                      placeholder="All Priorities"
-                      options={[
-                        { value: "", label: "All Priorities" },
-                        { value: "LOW", label: "Low" },
-                        { value: "MEDIUM", label: "Medium" },
-                        { value: "HIGH", label: "High" },
-                      ]}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="ds-label block">Branch</label>
-                    <DropdownSelect
-                      value={branchId}
-                      onValueChange={setBranchId}
-                      placeholder="All Branches"
-                      options={[
-                        { value: "", label: "All Branches" },
-                        ...options.branches.map((branch) => ({
-                          value: branch.id,
-                          label: branch.name,
-                        })),
-                      ]}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="ds-label block">Job Type</label>
-                    <DropdownSelect
-                      value={jobTypeId}
-                      onValueChange={setJobTypeId}
-                      placeholder="All Job Types"
-                      options={[
-                        { value: "", label: "All Job Types" },
-                        ...options.jobTypes.map((jobType) => ({
-                          value: jobType.id,
-                          label: jobType.name,
-                        })),
-                      ]}
-                    />
-                  </div>
-
-                  <label className="flex items-center gap-3 rounded-xl border border-outline-variant/30 px-4 py-3 text-sm text-on-surface">
-                    <input
-                      type="checkbox"
-                      checked={assignedToMe}
-                      onChange={(event) => setAssignedToMe(event.target.checked)}
-                      className="h-4 w-4 rounded"
-                    />
-                    Assigned to me
-                  </label>
-
-                  <div className="flex items-center justify-between gap-3 border-t border-outline-variant/20 pt-4">
-                    <Button variant="outline" onClick={resetFilters} className="flex-1">
-                      Reset
-                    </Button>
-                    <Button onClick={applyFilters} className="flex-1">
-                      Apply Filters
-                    </Button>
-                  </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <FilterMenu
+              open={isFilterPanelOpen}
+              onOpenChange={setIsFilterPanelOpen}
+              activeCount={activeFilterCount}
+              title="Filters"
+              ariaLabel="Open filters"
+              contentClassName="w-[320px] max-h-[70vh] overflow-y-auto"
+            >
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="ds-label block">Workflow Stage</label>
+                  <DropdownSelect
+                    value={stage}
+                    onValueChange={setStage}
+                    placeholder="All Workflow Stages"
+                    options={[
+                      { value: "", label: "All Workflow Stages" },
+                      { value: "DOCUMENT_COLLECTION", label: "Document Collection" },
+                      { value: "ADDITIONAL_DATA", label: "Additional Data" },
+                      { value: "CHECKLIST_PREPARATION", label: "Checklist Prep" },
+                      { value: "CHECKLIST_APPROVAL", label: "Checklist Approval" },
+                      { value: "FILING", label: "Filing Stage" },
+                      { value: "FILED", label: "Filed / Completed" },
+                    ]}
+                  />
                 </div>
-              </FilterMenu>
-              <Button
-                onClick={applyFilters}
-                variant="outline"
-                className="rounded-2xl px-5"
-              >
-                Apply Search
-              </Button>
-              <Button onClick={() => setIsModalOpen(true)} className="flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl px-5">
-                <Plus className="size-4" /> Create Job
-              </Button>
-            </div>
+
+                <div className="space-y-2">
+                  <label className="ds-label block">Status</label>
+                  <DropdownSelect
+                    value={status}
+                    onValueChange={setStatus}
+                    placeholder="All Statuses"
+                    options={[
+                      { value: "", label: "All Statuses" },
+                      { value: "ACTIVE", label: "Active" },
+                      { value: "HOLD", label: "Hold" },
+                      { value: "CANCELLED", label: "Cancelled" },
+                      { value: "COMPLETED", label: "Completed" },
+                    ]}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="ds-label block">Priority</label>
+                  <DropdownSelect
+                    value={priority}
+                    onValueChange={setPriority}
+                    placeholder="All Priorities"
+                    options={[
+                      { value: "", label: "All Priorities" },
+                      { value: "LOW", label: "Low" },
+                      { value: "MEDIUM", label: "Medium" },
+                      { value: "HIGH", label: "High" },
+                    ]}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="ds-label block">Branch</label>
+                  <DropdownSelect
+                    value={branchId}
+                    onValueChange={setBranchId}
+                    placeholder="All Branches"
+                    options={[
+                      { value: "", label: "All Branches" },
+                      ...options.branches.map((branch) => ({
+                        value: branch.id,
+                        label: branch.name,
+                      })),
+                    ]}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="ds-label block">Job Type</label>
+                  <DropdownSelect
+                    value={jobTypeId}
+                    onValueChange={setJobTypeId}
+                    placeholder="All Job Types"
+                    options={[
+                      { value: "", label: "All Job Types" },
+                      ...options.jobTypes.map((jobType) => ({
+                        value: jobType.id,
+                        label: jobType.name,
+                      })),
+                    ]}
+                  />
+                </div>
+
+                <label className="flex items-center gap-3 rounded-xl border border-outline-variant/30 px-4 py-3 text-sm text-on-surface">
+                  <input
+                    type="checkbox"
+                    checked={assignedToMe}
+                    onChange={(event) => setAssignedToMe(event.target.checked)}
+                    className="h-4 w-4 rounded"
+                  />
+                  Assigned to me
+                </label>
+
+                <div className="flex items-center justify-between gap-3 border-t border-outline-variant/20 pt-4">
+                  <Button variant="outline" onClick={resetFilters} className="flex-1">
+                    Reset
+                  </Button>
+                  <Button onClick={applyFilters} className="flex-1">
+                    Apply Filters
+                  </Button>
+                </div>
+              </div>
+            </FilterMenu>
+
+            <Button
+              onClick={applyFilters}
+              variant="outline"
+              className="h-11 rounded-xl px-5 text-xs font-semibold uppercase tracking-wider"
+            >
+              Apply Search
+            </Button>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="h-11 flex items-center justify-center gap-1.5 bg-cha-primary hover:bg-cha-primary-hover text-white px-5 rounded-xl text-xs font-semibold uppercase tracking-wider shadow-sm transition-colors"
+            >
+              <Plus className="size-4" /> Create Job
+            </button>
           </div>
+        </div>
+
+        {/* Active pills underneath */}
+        <div className="flex flex-wrap items-center gap-2 mt-3">
+          {activePills.length > 0 ? (
+            <>
+              {activePills.map((pill) => (
+                <button
+                  key={pill.key}
+                  type="button"
+                  onClick={() => removeFilter(pill.key)}
+                  className="rounded-full border border-cha-primary/25 bg-cha-primary/10 px-3 py-1 text-[10px] font-bold tracking-[0.08em] text-cha-primary transition hover:bg-cha-primary/16"
+                >
+                  {pill.label} x
+                </button>
+              ))}
+              <Button type="button" variant="outline" size="sm" onClick={resetFilters} className="h-7 text-[10px] rounded-full">
+                Clear All
+              </Button>
+            </>
+          ) : (
+            <span className="rounded-full border border-outline-variant/25 bg-surface-container-low px-3 py-1 text-[10px] font-semibold tracking-[0.08em] text-on-surface-variant">
+              No active filters
+            </span>
+          )}
         </div>
       </ChaControlPanel>
 

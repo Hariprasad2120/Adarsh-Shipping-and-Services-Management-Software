@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac";
+import fs from "fs/promises";
+import path from "path";
 
 function getDriveFileId(fileKey: string): string | null {
   const match = fileKey.match(/\/file\/d\/([^/]+)\//);
@@ -62,6 +64,18 @@ export async function GET(
 
     const { searchParams } = new URL(request.url);
     const forceDownload = searchParams.get("download") === "true";
+
+    const localFilePath = path.join(process.cwd(), "public", fileKey);
+    const localFileStat = await fs.stat(localFilePath).catch(() => null);
+    if (localFileStat?.isFile()) {
+      const fileBuffer = await fs.readFile(localFilePath);
+      const headers = new Headers();
+      headers.set("Content-Type", mimeType);
+      headers.set("Content-Length", fileBuffer.length.toString());
+      headers.set("X-Content-Type-Options", "nosniff");
+      headers.set("Content-Disposition", `${forceDownload ? "attachment" : "inline"}; filename="${filename}"`);
+      return new Response(fileBuffer, { headers });
+    }
 
     // Serve real file from Google Drive when fileKey is a Drive URL
     if (fileKey.startsWith("https://drive.google.com/")) {

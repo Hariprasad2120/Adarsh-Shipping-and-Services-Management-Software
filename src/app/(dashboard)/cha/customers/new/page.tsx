@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
-import { AccountForm } from "@/app/(dashboard)/crm/customers/account-form";
+import { NewCustomerClient } from "./new-customer-client";
 
 export default async function ChaNewCustomerPage() {
   const session = await auth();
@@ -27,7 +27,8 @@ export default async function ChaNewCustomerPage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <AccountForm employees={employees} />
+      <NewCustomerClient employees={employees} />
     </div>
   );
 }
+

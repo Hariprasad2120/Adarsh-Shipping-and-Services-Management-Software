@@ -2024,6 +2024,48 @@ export async function createJob(
       await tx.chaJobDocumentRequirement.createMany({
         data: jobRequirementsData,
       });
+
+      // Sync customer KYC documents to the new job requirements
+      try {
+        const customer = await tx.crmAccount.findUnique({
+          where: { id: data.customerId },
+          select: { remarks: true },
+        });
+        if (customer?.remarks) {
+          let remarksObj: any = null;
+          try {
+            remarksObj = JSON.parse(customer.remarks);
+          } catch {}
+          if (remarksObj && remarksObj.kyc && typeof remarksObj.kyc === "object") {
+            const createdRequirements = await tx.chaJobDocumentRequirement.findMany({
+              where: { jobId: job.id, category: "KYC For Customers" },
+            });
+            for (const req of createdRequirements) {
+              const kycDoc = remarksObj.kyc[req.name];
+              if (kycDoc && kycDoc.fileKey) {
+                await tx.chaDocumentVersion.create({
+                  data: {
+                    requirementId: req.id,
+                    fileKey: kycDoc.fileKey,
+                    fileName: kycDoc.fileName || req.name,
+                    mimeType: "application/octet-stream",
+                    sizeBytes: kycDoc.fileSize || 0,
+                    uploadedById: actorId,
+                    uploadedAt: kycDoc.uploadedAt ? new Date(kycDoc.uploadedAt) : new Date(),
+                    isCurrent: true,
+                  },
+                });
+                await tx.chaJobDocumentRequirement.update({
+                  where: { id: req.id },
+                  data: { status: "UPLOADED" },
+                });
+              }
+            }
+          }
+        }
+      } catch (err: any) {
+        console.warn("[KYC Sync] Failed to sync customer KYC to new job:", err.message || err);
+      }
     }
 
     // 4. Initialize Filing
@@ -2437,7 +2479,16 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
           include: {
             versions: { include: { uploadedBy: { select: { name: true } } } },
             exception: { include: { user: { select: { name: true } } } },
-            requirementItem: { include: { category: true } }
+            requirementItem: { include: { category: true } },
+            customerSubmissions: {
+              include: {
+                portalUser: { select: { id: true, name: true, email: true } },
+                reviewedBy: { select: { id: true, name: true } },
+                versions: { orderBy: { uploadedAt: "desc" } },
+              },
+              orderBy: { updatedAt: "desc" },
+              take: 1,
+            },
           }
         },
         additionalData: { select: getAdditionalDataSelect(manifestSchema.customManifestValue) },
@@ -2844,6 +2895,46 @@ export async function uploadDocumentVersion(
       data: { status: "UPLOADED" },
     });
 
+    // Sync to customer KYC if it matches "KYC For Customers" category
+    if (req.category === "KYC For Customers") {
+      try {
+        const job = await tx.chaJob.findUnique({
+          where: { id: jobId },
+          select: { customerId: true },
+        });
+        if (job?.customerId) {
+          const customer = await tx.crmAccount.findUnique({
+            where: { id: job.customerId },
+            select: { remarks: true },
+          });
+          let remarksObj: any = {};
+          if (customer?.remarks) {
+            try {
+              remarksObj = JSON.parse(customer.remarks);
+              if (typeof remarksObj !== "object" || remarksObj === null) {
+                remarksObj = { userRemarks: customer.remarks };
+              }
+            } catch {
+              remarksObj = { userRemarks: customer.remarks };
+            }
+          }
+          remarksObj.kyc = remarksObj.kyc || {};
+          remarksObj.kyc[req.name] = {
+            fileKey,
+            fileName: storedFileName,
+            fileSize: fileData.sizeBytes,
+            uploadedAt: uploadedAt.toISOString(),
+          };
+          await tx.crmAccount.update({
+            where: { id: job.customerId },
+            data: { remarks: JSON.stringify(remarksObj) },
+          });
+        }
+      } catch (err: any) {
+        console.warn("[KYC Sync] Failed to sync job KYC to customer:", err.message || err);
+      }
+    }
+
     // Clear any previous exception
     await tx.chaDocumentException.deleteMany({
       where: { requirementId },
@@ -2893,6 +2984,90 @@ export async function uploadDocumentVersion(
   }
 
   return result;
+}
+
+export async function acceptCustomerDocumentSubmission(
+  actorId: string,
+  orgId: string,
+  jobId: string,
+  requirementId: string,
+) {
+  const requirement = await db.chaJobDocumentRequirement.findFirstOrThrow({
+    where: { id: requirementId, jobId, job: getActiveChaJobWhere(orgId) },
+    include: {
+      customerSubmissions: {
+        include: {
+          portalUser: { select: { id: true, name: true, email: true } },
+          versions: { orderBy: { uploadedAt: "desc" } },
+        },
+        orderBy: { updatedAt: "desc" },
+        take: 1,
+      },
+    },
+  });
+
+  const submission = requirement.customerSubmissions[0];
+  const currentCustomerVersion = submission?.versions[0];
+
+  if (!submission || !currentCustomerVersion) {
+    throw new Error("No customer-uploaded document is available for acceptance.");
+  }
+
+  if (submission.status === "ACCEPTED" && requirement.status === "UPLOADED") {
+    return {
+      acceptedVersion: requirement,
+      submission,
+    };
+  }
+
+  const acceptedVersion = await uploadDocumentVersion(
+    actorId,
+    orgId,
+    jobId,
+    requirementId,
+    {
+      fileKey: currentCustomerVersion.fileKey,
+      fileName: currentCustomerVersion.fileName,
+      mimeType: currentCustomerVersion.mimeType || "application/octet-stream",
+      sizeBytes: currentCustomerVersion.sizeBytes,
+      checksum: currentCustomerVersion.checksum || undefined,
+    },
+    undefined,
+    null,
+  );
+
+  const reviewedAt = await getNow();
+  const updatedSubmission = await db.customerDocumentSubmission.update({
+    where: { id: submission.id },
+    data: {
+      status: "ACCEPTED",
+      reviewedById: actorId,
+      reviewedAt,
+      reviewerComment: null,
+      internalRemark: "Accepted into CHA document workflow.",
+    },
+    include: {
+      portalUser: { select: { id: true, name: true, email: true } },
+      reviewedBy: { select: { id: true, name: true } },
+      versions: { orderBy: { uploadedAt: "desc" } },
+    },
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId,
+    entityType: "CustomerDocumentSubmission",
+    entityId: submission.id,
+    event: "CUSTOMER_DOCUMENT_ACCEPTED",
+    actorId,
+    newState: "ACCEPTED",
+    remarks: `Accepted customer document for ${requirement.name}.`,
+  });
+
+  return {
+    acceptedVersion,
+    submission: updatedSubmission,
+  };
 }
 
 export async function createJobCustomDocumentRequirementAndUpload(

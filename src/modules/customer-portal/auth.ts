@@ -6,11 +6,9 @@ import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
 import { maskIp, deviceLabel, extractRequestMeta } from "@/lib/session-service";
 import type { Prisma } from "@/generated/prisma/client";
+import { PORTAL_COOKIE_NAME, PORTAL_LOGIN_PATH } from "./config";
 
 const IS_PROD = process.env.NODE_ENV === "production";
-const PORTAL_COOKIE_NAME = IS_PROD
-  ? "__Host-monolith.customer-portal-session"
-  : "monolith.dev.customer-portal-session";
 const PORTAL_SESSION_MAX_AGE_S = 7 * 24 * 60 * 60;
 const PORTAL_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 const PORTAL_ABSOLUTE_TIMEOUT_MS = 7 * 24 * 60 * 60 * 1000;
@@ -180,7 +178,7 @@ export async function getPortalSession() {
 export async function requirePortalSession() {
   const session = await getPortalSession();
   if (!session) {
-    redirect("/customer-portal/login");
+    redirect(PORTAL_LOGIN_PATH);
   }
   return session;
 }

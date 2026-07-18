@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
-import { AccountForm } from "@/app/(dashboard)/crm/customers/account-form";
+import { EditCustomerClient } from "./edit-customer-client";
 
 export default async function ChaEditCustomerPage({
   params,
@@ -39,7 +39,7 @@ export default async function ChaEditCustomerPage({
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <AccountForm initialData={account} employees={employees} />
+      <EditCustomerClient initialData={JSON.parse(JSON.stringify(account))} employees={employees} />
     </div>
   );
 }

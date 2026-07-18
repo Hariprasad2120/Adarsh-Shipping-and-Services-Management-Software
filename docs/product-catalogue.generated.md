@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-16T10:03:28.533Z
+> Generated at: 2026-07-17T12:38:16.362Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -8,9 +8,9 @@
 | Metric | Count |
 |---|---|
 | App Routes (Pages) | 203 |
-| API Routes | 190 |
+| API Routes | 192 |
 | Prisma Models | 277 |
-| Module Service Files | 77 |
+| Module Service Files | 80 |
 | UI Components | 93 |
 
 ## Modules Overview
@@ -22,14 +22,14 @@
 | admin | 9 | 6 | 0 | 0 | 0 |
 | ams | 18 | 17 | 17 | 11 | 3 |
 | attendance | 7 | 10 | 9 | 1 | 0 |
-| auth | 0 | 1 | 0 | 0 | 0 |
-| cha | 12 | 3 | 35 | 6 | 2 |
+| auth | 0 | 1 | 0 | 0 | 1 |
+| cha | 12 | 4 | 35 | 6 | 2 |
 | cha-ui-showcase | 1 | 1 | 0 | 0 | 0 |
 | communication | 11 | 18 | 2 | 1 | 0 |
 | core | 2 | 0 | 72 | 5 | 0 |
 | crm | 59 | 4 | 26 | 7 | 1 |
 | cron | 0 | 7 | 0 | 0 | 0 |
-| customer-portal | 0 | 15 | 0 | 4 | 0 |
+| customer-portal | 0 | 16 | 0 | 7 | 0 |
 | dashboard | 1 | 0 | 0 | 0 | 0 |
 | dev | 0 | 1 | 0 | 0 | 0 |
 | expense | 1 | 0 | 0 | 0 | 0 |
@@ -39,7 +39,7 @@
 | items | 0 | 0 | 0 | 0 | 17 |
 | landing-page | 0 | 0 | 0 | 0 | 5 |
 | lms | 5 | 0 | 5 | 0 | 0 |
-| login | 1 | 0 | 0 | 0 | 1 |
+| login | 1 | 0 | 0 | 0 | 0 |
 | mobile | 0 | 18 | 0 | 0 | 0 |
 | mona | 0 | 2 | 0 | 7 | 5 |
 | notifications | 1 | 9 | 4 | 2 | 1 |
@@ -93,6 +93,7 @@
 | GET, POST | `/api/attendance/sync/biometric` | attendance |
 |  | `/api/auth/[...nextauth]` | auth |
 | GET | `/api/cha/checklist-files/[id]` | cha |
+| GET | `/api/cha/customer-documents/[id]` | cha |
 | GET | `/api/cha/documents/[id]` | cha |
 | GET | `/api/cha/due-date-warnings` | cha |
 | GET, POST | `/api/cha-ui-showcase` | cha-ui-showcase |
@@ -132,6 +133,7 @@
 | GET | `/api/customer-portal/checklist-files/[id]` | customer-portal |
 | POST | `/api/customer-portal/checklists/respond` | customer-portal |
 | GET | `/api/customer-portal/document-versions/[id]` | customer-portal |
+| POST | `/api/customer-portal/documents/confirm` | customer-portal |
 | POST | `/api/customer-portal/documents/upload` | customer-portal |
 | POST | `/api/customer-portal/notifications/read-all` | customer-portal |
 | POST | `/api/customer-portal/notifications/[id]/read` | customer-portal |
@@ -759,9 +761,9 @@
 - **service.ts**: punchIn, punchOut, getMonthAttendance, getLeaveTypes, createLeaveType, getLeaveBalances, initLeaveBalancesForUser, getLeaveRequests, createLeaveRequest, decideLeaveRequest, createOTEntry, decideOT, getOTEntries, getHolidays, createHoliday, getMonthlyReport
 
 ### cha
-- **actions.ts**: ensureSettingsAndDefaultsAction, updateSettingsAction, createJobAction, getNextJobNumberPreviewAction, submitJobDeletionAction, decideJobDeletionRequestAction, retryJobChatCleanupAction, createJobTypeAction, updateJobTypeManifestConfigAction, createShipmentTypeAction, deleteShipmentTypeAction, deleteJobTypeAction, updateJobTypeFilingFlowCategoryAction, createTeamGroupAction, deleteTeamGroupAction, getJobDetailsAction, listJobsAction, uploadDocumentVersionAction, createJobCustomDocumentUploadAction, deleteDocumentVersionAction, declareDocumentExceptionAction, markDocumentNotAvailableAction, importChecklistExcelAction, uploadChecklistFileAction, upsertAdditionalDataAction, setDoExtensionDateAction, submitChecklistInternalDecisionAction, submitChecklistCustomerDecisionAction, sendChecklistCustomerMailAction, proceedAdditionalDataAction, submitChecklistForApprovalAction, checklistManagerActionAction, selfApproveChecklistAction, adjustEstimatedFilingDateAction, markAsFiledAction, updateCustomerAdvanceExpectedAction, recordCustomerAdvanceReceiptAction, declareAdvanceNotRequiredAction, createExpenseRequestAction, triggerUrgentExpenseEscalationAction, setExpenseStatusAction, postExpensePaymentAction, acknowledgeExpenseReceiptAction, raisePaymentQueryAction, resolvePaymentQueryAction, listAllExpensesAction, listManagerChecklistApprovalsAction, upsertDocumentCategoryAction, deleteDocumentCategoryAction, upsertDocumentItemAction, deleteDocumentItemAction, removeDocumentExceptionAction, proceedDocumentStageAction, setDoUploadToggleAction, setDoExtensionToggleAction, uploadDeliveryOrderDocumentAction, deleteDeliveryOrderDocumentAction, updateSection49ValidityAction, applySection49ExtensionAction, updateJobDetailsAction, submitChecklistOwnerDecisionAction, saveFilingWorkflowDraftAction, loadStarterFilingWorkflowAction, publishFilingWorkflowAction, getFilingWorkflowDetailsAction, deleteFilingWorkflowTemplateAction, getFilingWorkflowInstanceAction, startFilingWorkflowAction, completeFilingNodeAction, saveFilingNodeDraftAction, revertFilingStageAction, redirectBlockedFilingStageAction, resumeBlockedFilingStageAction, toggleFilingSection49Action, getFilingSection49Action, createFilingWorkflowQueryAction, updateFilingWorkflowQueryStatusAction, addFilingWorkflowQueryCommentAction, upsertFilingWorkflowToggleStateAction, uploadFilingAttachmentAction, upsertFilingShipmentDetailsAction, deleteFilingAttachmentAction, updateFilingAttachmentValidityAction
+- **actions.ts**: ensureSettingsAndDefaultsAction, updateSettingsAction, createJobAction, getNextJobNumberPreviewAction, submitJobDeletionAction, decideJobDeletionRequestAction, retryJobChatCleanupAction, createJobTypeAction, updateJobTypeManifestConfigAction, createShipmentTypeAction, deleteShipmentTypeAction, deleteJobTypeAction, updateJobTypeFilingFlowCategoryAction, createTeamGroupAction, deleteTeamGroupAction, getJobDetailsAction, listJobsAction, uploadDocumentVersionAction, createJobCustomDocumentUploadAction, deleteDocumentVersionAction, declareDocumentExceptionAction, markDocumentNotAvailableAction, importChecklistExcelAction, uploadChecklistFileAction, upsertAdditionalDataAction, setDoExtensionDateAction, submitChecklistInternalDecisionAction, submitChecklistCustomerDecisionAction, sendChecklistCustomerMailAction, proceedAdditionalDataAction, submitChecklistForApprovalAction, checklistManagerActionAction, selfApproveChecklistAction, adjustEstimatedFilingDateAction, markAsFiledAction, updateCustomerAdvanceExpectedAction, recordCustomerAdvanceReceiptAction, declareAdvanceNotRequiredAction, createExpenseRequestAction, triggerUrgentExpenseEscalationAction, setExpenseStatusAction, postExpensePaymentAction, acknowledgeExpenseReceiptAction, raisePaymentQueryAction, resolvePaymentQueryAction, listAllExpensesAction, listManagerChecklistApprovalsAction, upsertDocumentCategoryAction, deleteDocumentCategoryAction, upsertDocumentItemAction, deleteDocumentItemAction, removeDocumentExceptionAction, proceedDocumentStageAction, setDoUploadToggleAction, setDoExtensionToggleAction, uploadDeliveryOrderDocumentAction, deleteDeliveryOrderDocumentAction, updateSection49ValidityAction, applySection49ExtensionAction, updateJobDetailsAction, submitChecklistOwnerDecisionAction, saveFilingWorkflowDraftAction, loadStarterFilingWorkflowAction, publishFilingWorkflowAction, getFilingWorkflowDetailsAction, deleteFilingWorkflowTemplateAction, getFilingWorkflowInstanceAction, startFilingWorkflowAction, completeFilingNodeAction, saveFilingNodeDraftAction, revertFilingStageAction, redirectBlockedFilingStageAction, resumeBlockedFilingStageAction, toggleFilingSection49Action, getFilingSection49Action, createFilingWorkflowQueryAction, updateFilingWorkflowQueryStatusAction, addFilingWorkflowQueryCommentAction, upsertFilingWorkflowToggleStateAction, uploadFilingAttachmentAction, upsertFilingShipmentDetailsAction, deleteFilingAttachmentAction, acceptCustomerDocumentSubmissionAction, updateFilingAttachmentValidityAction
 - **checklist-email-automation.ts**: queueChecklistMainCustomerEmail, finalizeChecklistMainCustomerEmail
-- **service.ts**: ensureDefaultDocumentRequirements, getNextChaJobNumberPreview, ensureSettingsAndDefaults, logChaAudit, getChecklistInternalApproverIds, createJob, createJobType, updateJobTypeManifestConfig, updateJobTypeFilingFlowCategory, deleteJobType, upsertBranchNumberingRules, createShipmentType, deleteShipmentType, createTeamGroup, deleteTeamGroup, listJobTypesForSelection, listJobTypesForSettings, getJobDetails, listJobs, resolveDriveFolderForCategory, uploadDocumentVersion, createJobCustomDocumentRequirementAndUpload, deleteDocumentVersion, declareDocumentException, markDocumentNotAvailable, verifyDocumentGate, upsertAdditionalData, proceedAdditionalDataStage, setDeliveryOrderUploadToggle, setDeliveryOrderExtensionToggle, setDeliveryOrderExtensionDate, listSection49ValidityWarnings, listChaDueDateWarnings, uploadDeliveryOrderDocument, applyDeliveryOrderExtension, listDeliveryOrderExtensions, uploadChecklistFile, submitChecklistInternalDecision, sendChecklistCustomerMail, submitChecklistCustomerDecision, importChecklistExcel, submitChecklistForApproval, checklistManagerAction, selfApproveChecklist, adjustEstimatedFilingDate, markAsFiled, updateCustomerAdvanceExpected, recordCustomerAdvanceReceipt, declareAdvanceNotRequired, createExpenseRequest, triggerUrgentExpenseEscalation, setExpenseStatus, postExpensePayment, acknowledgeExpenseReceipt, raisePaymentQuery, resolvePaymentQuery, listAllExpenses, listManagerChecklistApprovals, listManagerJobDeletionRequests, submitJobDeletion, decideJobDeletionRequest, retryJobChatCleanup, upsertDocumentCategory, deleteDocumentCategory, upsertDocumentItem, deleteDocumentItem, removeDocumentException, proceedDocumentStage, getEligibleManagers, updateJobDetails, submitChecklistOwnerDecision, ensureDefaultFilingWorkflows, calculateSlaDueDate, listFilingWorkflows, getFilingWorkflowDetails, loadStarterFilingWorkflowDraft, saveFilingWorkflowDraft, publishFilingWorkflow, deleteFilingWorkflowTemplate, getFilingWorkflowInstance, startFilingWorkflow, completeFilingNode, revertFilingWorkflowToPreviousStage, toggleFilingSection49, getFilingSection49, updateFilingSection49Validity, applyFilingSection49Extension, redirectBlockedFilingWorkflowStage, resumeBlockedFilingWorkflowStage, saveFilingNodeDraft, runFilingWorkflowQueryReminderCron, listFilingQueryEscalationWarnings, createFilingWorkflowQuery, addFilingWorkflowQueryComment, updateFilingWorkflowQueryStatus, deleteDeliveryOrderDocument, upsertFilingWorkflowToggleState, uploadFilingAttachment, upsertFilingShipmentDetails, deleteFilingAttachment, updateFilingAttachmentValidity
+- **service.ts**: ensureDefaultDocumentRequirements, getNextChaJobNumberPreview, ensureSettingsAndDefaults, logChaAudit, getChecklistInternalApproverIds, createJob, createJobType, updateJobTypeManifestConfig, updateJobTypeFilingFlowCategory, deleteJobType, upsertBranchNumberingRules, createShipmentType, deleteShipmentType, createTeamGroup, deleteTeamGroup, listJobTypesForSelection, listJobTypesForSettings, getJobDetails, listJobs, resolveDriveFolderForCategory, uploadDocumentVersion, acceptCustomerDocumentSubmission, createJobCustomDocumentRequirementAndUpload, deleteDocumentVersion, declareDocumentException, markDocumentNotAvailable, verifyDocumentGate, upsertAdditionalData, proceedAdditionalDataStage, setDeliveryOrderUploadToggle, setDeliveryOrderExtensionToggle, setDeliveryOrderExtensionDate, listSection49ValidityWarnings, listChaDueDateWarnings, uploadDeliveryOrderDocument, applyDeliveryOrderExtension, listDeliveryOrderExtensions, uploadChecklistFile, submitChecklistInternalDecision, sendChecklistCustomerMail, submitChecklistCustomerDecision, importChecklistExcel, submitChecklistForApproval, checklistManagerAction, selfApproveChecklist, adjustEstimatedFilingDate, markAsFiled, updateCustomerAdvanceExpected, recordCustomerAdvanceReceipt, declareAdvanceNotRequired, createExpenseRequest, triggerUrgentExpenseEscalation, setExpenseStatus, postExpensePayment, acknowledgeExpenseReceipt, raisePaymentQuery, resolvePaymentQuery, listAllExpenses, listManagerChecklistApprovals, listManagerJobDeletionRequests, submitJobDeletion, decideJobDeletionRequest, retryJobChatCleanup, upsertDocumentCategory, deleteDocumentCategory, upsertDocumentItem, deleteDocumentItem, removeDocumentException, proceedDocumentStage, getEligibleManagers, updateJobDetails, submitChecklistOwnerDecision, ensureDefaultFilingWorkflows, calculateSlaDueDate, listFilingWorkflows, getFilingWorkflowDetails, loadStarterFilingWorkflowDraft, saveFilingWorkflowDraft, publishFilingWorkflow, deleteFilingWorkflowTemplate, getFilingWorkflowInstance, startFilingWorkflow, completeFilingNode, revertFilingWorkflowToPreviousStage, toggleFilingSection49, getFilingSection49, updateFilingSection49Validity, applyFilingSection49Extension, redirectBlockedFilingWorkflowStage, resumeBlockedFilingWorkflowStage, saveFilingNodeDraft, runFilingWorkflowQueryReminderCron, listFilingQueryEscalationWarnings, createFilingWorkflowQuery, addFilingWorkflowQueryComment, updateFilingWorkflowQueryStatus, deleteDeliveryOrderDocument, upsertFilingWorkflowToggleState, uploadFilingAttachment, upsertFilingShipmentDetails, deleteFilingAttachment, updateFilingAttachmentValidity
 - **cha.test.ts**: no exports detected
 - **checklist-email-automation.test.ts**: no exports detected
 - **do-extension.test.ts**: no exports detected
@@ -786,9 +788,12 @@
 - **service.ts**: addTimelineEvent, getTimelineEvents, addNote, getNotes, deleteNote, addAttachment, getAttachments, deleteAttachment, listLeads, listEnquiries, getLead, createLead, updateLead, deleteLead, listContacts, getContact, createContact, updateContact, listAccounts, getAccount, createAccount, updateAccount, listDeals, getDeal, createDeal, updateDealStage, updateDeal, listActivities, createActivity, updateActivity, deleteActivity, listProducts, createProduct, listVendors, createVendor, listInvoices, getInvoice, createInvoice, listProjects, createProject
 
 ### customer-portal
-- **actions.ts**: inviteCustomerPortalUserAction, resendCustomerPortalInvitationAction, suspendCustomerPortalUserAction, createCustomerPortalQueryAction
+- **actions.ts**: inviteCustomerPortalUserAction, resendCustomerPortalInvitationAction, suspendCustomerPortalUserAction, createCustomerPortalQueryAction, getPortalFeatureFlagAction, setPortalFeatureFlagAction
 - **auth.ts**: hashPortalToken, buildPortalLink, getPortalRequestMeta, validatePortalPassword, hashPortalPassword, createPortalSession, setPortalSessionCookie, clearPortalSessionCookie, getPortalSessionToken, getPortalSession, requirePortalSession, revokePortalSession, revokeAllPortalSessions, verifyPortalPassword, shouldLockPortalAccount, recordPortalAuthAudit
-- **service.ts**: inviteCustomerPortalUser, listCustomerPortalUsers, syncCustomerPortalUsersForCrmCustomer, activateCustomerPortalAccount, loginCustomerPortal, logoutCustomerPortal, logoutCustomerPortalAllDevices, requestCustomerPortalPasswordReset, resetCustomerPortalPassword, updatePortalNotificationPreferences, listPortalShipments, getPortalDashboard, getPortalShipmentDetail, listPortalNotifications, markPortalNotificationRead, markAllPortalNotificationsRead, uploadPortalDocument, getPortalDocumentVersion, submitPortalChecklistDecision, listPortalQueries, replyToPortalQuery, createInternalCustomerQuery, listPortalRatingCategories, submitPortalShipmentRating, suspendCustomerPortalUser, resendCustomerPortalInvitation, getCustomerPortalProfile, changeCustomerPortalPassword
+- **config.ts**: no exports detected
+- **feature-flags.ts**: getPortalFeatureFlag, setPortalFeatureFlag
+- **service.ts**: inviteCustomerPortalUser, listCustomerPortalUsers, syncCustomerPortalUsersForCrmCustomer, activateCustomerPortalAccount, loginCustomerPortal, logoutCustomerPortal, logoutCustomerPortalAllDevices, requestCustomerPortalPasswordReset, resetCustomerPortalPassword, updatePortalNotificationPreferences, listPortalShipments, getPortalDashboard, getPortalShipmentDetail, listPortalNotifications, markPortalNotificationRead, markAllPortalNotificationsRead, uploadPortalDocument, confirmPortalDocumentSubmission, getPortalDocumentVersion, submitPortalChecklistDecision, listPortalQueries, replyToPortalQuery, createInternalCustomerQuery, listPortalRatingCategories, submitPortalShipmentRating, suspendCustomerPortalUser, resendCustomerPortalInvitation, getCustomerPortalProfile, changeCustomerPortalPassword
+- **types.ts**: no exports detected
 - **auth.test.ts**: no exports detected
 
 ### google-chat

@@ -1384,8 +1384,8 @@ main input[type="checkbox"]:not(.hidden):checked::after {
 
 /* ─── Neon Approval/Rejection Buttons (CHA Module) ─── */
 @keyframes neon-pulse-approve {
-  0%, 100% { box-shadow: 0 0 4px rgba(0, 206, 196, 0.25), inset 0 0 2px rgba(0, 206, 196, 0.1); }
-  50% { box-shadow: 0 0 10px rgba(0, 206, 196, 0.5), inset 0 0 4px rgba(0, 206, 196, 0.2); }
+  0%, 100% { box-shadow: 0 0 4px var(--cha-primary-ring), inset 0 0 2px var(--cha-primary-ring); }
+  50% { box-shadow: 0 0 12px var(--cha-primary-ring), inset 0 0 4px var(--cha-primary-ring); }
 }
 
 @keyframes neon-pulse-reject {
@@ -1393,18 +1393,21 @@ main input[type="checkbox"]:not(.hidden):checked::after {
   50% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.5), inset 0 0 4px rgba(239, 68, 68, 0.2); }
 }
 
-/* Primary Cyan Neon Buttons in CHA */
+/* Primary Blue Buttons in CHA */
 .cha-btn-neon-approve,
 .cha-module button:not(.ds-plain)[data-variant="default"],
 .cha-module button:not(.ds-plain):not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]) {
-  border: 1px solid #00cec4 !important;
-  background: #00cec4 !important;
+  border: 1px solid var(--cha-primary) !important;
+  background: var(--cha-primary) !important;
   color: #ffffff !important;
+  border-radius: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   cursor: pointer;
 }
 
-/* Ensure ALL descendants of cyan buttons render as white in rest state */
+/* Ensure ALL descendants of blue buttons render as white in rest state */
 .cha-btn-neon-approve *,
 .cha-module button:not(.ds-plain)[data-variant="default"] *,
 .cha-module button:not(.ds-plain):not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]) * {
@@ -1414,14 +1417,14 @@ main input[type="checkbox"]:not(.hidden):checked::after {
 .cha-btn-neon-approve:hover:not(:disabled),
 .cha-module button:not(.ds-plain)[data-variant="default"]:hover:not(:disabled),
 .cha-module button:not(.ds-plain):not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]):hover {
-  background: #00b8af !important;
+  background: var(--cha-primary-hover) !important;
   color: #ffffff !important;
-  box-shadow: 0 0 16px rgba(0, 206, 196, 0.5), 0 0 5px rgba(0, 206, 196, 0.3) !important;
+  box-shadow: 0 0 16px var(--cha-primary-ring), 0 4px 12px var(--cha-primary-ring) !important;
   animation: neon-pulse-approve 2s infinite ease-in-out !important;
-  transform: translateY(-1px); /* hover lift reinstated for all buttons — design decision 2026-07-06 */
+  transform: translateY(-1px);
 }
 
-/* Ensure ALL descendants of cyan buttons render as white on hover */
+/* Ensure ALL descendants of blue buttons render as white on hover */
 .cha-btn-neon-approve:hover:not(:disabled) *,
 .cha-module button:not(.ds-plain)[data-variant="default"]:hover:not(:disabled) *,
 .cha-module button:not(.ds-plain):not([class*="bg-"]):not([class*="border-"]):not([class*="variant-"]):not([class*="text-red-"]):not([class*="destructive"]):not(.hidden):not([disabled]):hover * {
@@ -1435,11 +1438,32 @@ main input[type="checkbox"]:not(.hidden):checked::after {
   scale: 0.96 !important;
 }
 
-/* Upload label buttons (solid cyan labels only — dashed dropzone labels keep their own style) */
+/* Outline variant buttons in CHA — blue border + blue text */
+.cha-module button:not(.ds-plain)[data-variant="outline"] {
+  border: 1px solid var(--cha-primary-border) !important;
+  background: var(--cha-surface) !important;
+  color: var(--cha-primary) !important;
+  border-radius: 12px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.cha-module button:not(.ds-plain)[data-variant="outline"] * {
+  color: var(--cha-primary) !important;
+}
+
+.cha-module button:not(.ds-plain)[data-variant="outline"]:hover:not(:disabled) {
+  border-color: var(--cha-primary) !important;
+  background: var(--cha-primary-soft) !important;
+  box-shadow: 0 0 12px var(--cha-primary-ring) !important;
+  transform: translateY(-1px);
+}
+
+/* Upload label buttons (solid blue labels — dashed dropzone labels keep their own style) */
 .cha-module label[class*="bg-[#00cec4]"] {
-  border: 1px solid #00cec4 !important;
-  background: #00cec4 !important;
+  border: 1px solid var(--cha-primary) !important;
+  background: var(--cha-primary) !important;
   color: #ffffff !important;
+  border-radius: 12px !important;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   cursor: pointer;
 }
@@ -1449,11 +1473,11 @@ main input[type="checkbox"]:not(.hidden):checked::after {
 }
 
 .cha-module label[class*="bg-[#00cec4]"]:hover {
-  background: #00b8af !important;
+  background: var(--cha-primary-hover) !important;
   color: #ffffff !important;
-  box-shadow: 0 0 16px rgba(0, 206, 196, 0.5), 0 0 5px rgba(0, 206, 196, 0.3) !important;
+  box-shadow: 0 0 16px var(--cha-primary-ring), 0 4px 12px var(--cha-primary-ring) !important;
   animation: neon-pulse-approve 2s infinite ease-in-out !important;
-  transform: translateY(-1px); /* hover lift reinstated for all buttons — design decision 2026-07-06 */
+  transform: translateY(-1px);
 }
 
 .cha-module label[class*="bg-[#00cec4]"]:hover * {
@@ -1717,3 +1741,62 @@ button.cha-link:active:not(:disabled) {
     transition: none !important;
   }
 }
+
+/* --- CHA Logistics Theme Redesign --- */
+:root {
+  --cha-primary: #2563eb;
+  --cha-primary-hover: #1d4ed8;
+  --cha-primary-active: #1e40af;
+  --cha-primary-soft: #eff6ff;
+  --cha-primary-muted: #dbeafe;
+  --cha-primary-border: #bfdbfe;
+  --cha-primary-ring: rgba(37, 99, 235, 0.28);
+  --cha-background: #f8fafc;
+  --cha-surface: #ffffff;
+  --cha-surface-subtle: #f8fafc;
+  --cha-surface-elevated: #ffffff;
+  --cha-text-primary: #0f172a;
+  --cha-text-secondary: #475569;
+  --cha-text-muted: #64748b;
+  --cha-border: #e2e8f0;
+  --cha-border-strong: #cbd5e1;
+}
+
+html.dark {
+  --cha-primary: #60a5fa;
+  --cha-primary-hover: #93c5fd;
+  --cha-primary-active: #3b82f6;
+  --cha-primary-soft: rgba(37, 99, 235, 0.16);
+  --cha-primary-muted: rgba(59, 130, 246, 0.22);
+  --cha-primary-border: rgba(96, 165, 250, 0.35);
+  --cha-primary-ring: rgba(96, 165, 250, 0.32);
+  --cha-background: #020617;
+  --cha-surface: #111827;
+  --cha-surface-subtle: #0f172a;
+  --cha-surface-elevated: #1e293b;
+  --cha-text-primary: #f8fafc;
+  --cha-text-secondary: #cbd5e1;
+  --cha-text-muted: #94a3b8;
+  --cha-border: #263449;
+  --cha-border-strong: #334155;
+}
+
+@theme inline {
+  --color-cha-primary: var(--cha-primary);
+  --color-cha-primary-hover: var(--cha-primary-hover);
+  --color-cha-primary-active: var(--cha-primary-active);
+  --color-cha-primary-soft: var(--cha-primary-soft);
+  --color-cha-primary-muted: var(--cha-primary-muted);
+  --color-cha-primary-border: var(--cha-primary-border);
+  --color-cha-primary-ring: var(--cha-primary-ring);
+  --color-cha-background: var(--cha-background);
+  --color-cha-surface: var(--cha-surface);
+  --color-cha-surface-subtle: var(--cha-surface-subtle);
+  --color-cha-surface-elevated: var(--cha-surface-elevated);
+  --color-cha-text-primary: var(--cha-text-primary);
+  --color-cha-text-secondary: var(--cha-text-secondary);
+  --color-cha-text-muted: var(--cha-text-muted);
+  --color-cha-border: var(--cha-border);
+  --color-cha-border-strong: var(--cha-border-strong);
+}
+
