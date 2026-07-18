@@ -38,10 +38,10 @@ export function DataTable({
   );
 
   return (
-    <div className={cn("w-full overflow-hidden rounded-xl bg-surface text-on-surface shadow-sm", className)}>
+    <div className={cn("w-full overflow-hidden rounded-xl border border-outline-variant/60 bg-surface text-on-surface shadow-sm", className)}>
       {toolbar}
       <div className="overflow-x-auto">
-        <table className={cn("ds-table min-w-full w-full text-sm", tableClassName)} {...props}>
+        <table className={cn("ds-table ds-table-contained min-w-full w-full text-sm", tableClassName)} {...props}>
           {otherChildren}
         </table>
       </div>
@@ -76,7 +76,7 @@ export function DataTableRow({
   className,
   ...props
 }: HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("group transition-colors hover:bg-surface-container-low/80", className)} {...props} />;
+  return <tr className={cn("group transition-colors hover:bg-surface-container-low/45", className)} {...props} />;
 }
 
 export function DataTableHead({
@@ -86,7 +86,7 @@ export function DataTableHead({
   return (
     <th
       className={cn(
-        "px-5 py-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-on-surface-variant",
+        "px-5 py-4 text-left text-xs font-medium uppercase tracking-[0.14em] text-on-surface-variant",
         className
       )}
       {...props}
@@ -98,7 +98,7 @@ export function DataTableCell({
   className,
   ...props
 }: TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-5 py-2.5 align-middle text-sm font-normal text-on-surface", className)} {...props} />;
+  return <td className={cn("px-5 py-4 align-middle text-sm font-normal text-on-surface", className)} {...props} />;
 }
 
 export function DataTablePrimaryLinkCell({
@@ -117,7 +117,7 @@ export function DataTablePrimaryLinkCell({
       <Link
         href={href}
         className={cn(
-          "flex w-full items-center px-5 py-2.5 text-inherit transition-colors hover:text-[#00b5ad] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#00cec4]/30",
+          "flex w-full items-center px-5 py-4 text-inherit transition-colors hover:text-[#00b5ad] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#00cec4]/30",
           linkClassName,
         )}
       >

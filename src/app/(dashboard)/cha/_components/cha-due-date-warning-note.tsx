@@ -19,7 +19,7 @@ export function ChaDueDateWarningNote({
   const [isPending, startTransition] = useTransition();
 
   return (
-    <div className="card-left-accent-orange rounded-[24px] border border-[#fb923c]/35 bg-surface">
+    <div className="card-left-accent-orange rounded-xl border border-[#fb923c]/35 bg-surface">
       <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4">
           <div className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#fb923c]/45 bg-[#fb923c]/10 text-[#fb923c] shadow-sm">

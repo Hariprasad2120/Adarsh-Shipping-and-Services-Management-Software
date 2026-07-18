@@ -3,7 +3,6 @@
 
 import * as React from "react";
 import {
-  ArrowUpRight,
   CheckCircle2,
   Circle,
   Download,
@@ -11,10 +10,9 @@ import {
   FileText,
   Filter,
   Maximize2,
-  MoreHorizontal,
   Search,
   ShieldCheck,
-  Trash2,
+  Trash,
   Undo2,
   Upload,
   X,
@@ -24,6 +22,16 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -62,7 +70,7 @@ export type WorkflowDocumentRequirement = {
   versions: WorkflowDocumentVersion[];
 };
 
-type FilterMode = "ALL" | "PENDING" | "UPLOADED" | "EXCEPTIONS";
+type FilterMode = "ALL" | "PENDING" | "UPLOADED" | "DECLARED_EXEMPTION" | "MARKED_NA";
 
 export type WorkflowProgressStep = {
   key: string;
@@ -80,7 +88,6 @@ type RequirementDocumentCardProps = {
   onMarkNa: (requirementId: string) => void;
   onSelect?: (requirementId: string) => void;
   selected?: boolean;
-  showActionMenu?: boolean;
   showExceptionActions?: boolean;
   uploadButtonLabel?: string;
   hideUploadWhenExempted?: boolean;
@@ -93,6 +100,7 @@ type UploadedWorkflowDocumentCardProps = {
   loadingKey: string | null;
   currentUserId: string;
   canDelete: boolean;
+  downloadUrl: string | null;
   onPreview: (requirementId: string) => void;
   onDelete: (requirementId: string, versionId: string, fileName: string) => void;
   onDeclareExemption: (requirementId: string) => void;
@@ -100,7 +108,6 @@ type UploadedWorkflowDocumentCardProps = {
   onUpload: (requirementId: string) => void;
   onSelect?: (requirementId: string) => void;
   selected?: boolean;
-  showActionMenu?: boolean;
   showExceptionActions?: boolean;
   showDeleteAction?: boolean;
   uploadButtonLabel?: string;
@@ -115,7 +122,7 @@ type WorkflowDocumentsSectionHeaderProps = {
   searchValue: string;
   onSearchChange: (value: string) => void;
   filterMode: FilterMode;
-  onFilterToggle: () => void;
+  onFilterChange: (value: FilterMode) => void;
 };
 
 type WorkflowProgressPanelProps = {
@@ -125,11 +132,6 @@ type WorkflowProgressPanelProps = {
   eyebrow?: string;
   title?: string;
   helperNote?: string;
-};
-
-type FilingDocumentsPageHeaderProps = {
-  title?: string;
-  subtitle?: string;
 };
 
 type DocumentMetaItemProps = {
@@ -206,58 +208,46 @@ function getDocumentStatusBadge(status: string) {
 
 function DocumentStatusBadge({ status }: { status: string }) {
   if (status === "UPLOADED" || status === "ACCEPTED") {
-    return <span className="rounded-full bg-green-500/12 px-3 py-1 text-sm font-medium text-green-700 dark:text-green-300">Uploaded</span>;
+    return <Badge variant="success">UPLOADED</Badge>;
   }
 
   if (status === "UNDER_REVIEW") {
-    return <span className="rounded-full bg-surface-container-low px-3 py-1 text-sm font-medium text-on-surface-variant">Under Review</span>;
+    return <Badge variant="secondary">UNDER REVIEW</Badge>;
   }
 
   if (status === "CLARIFICATION_REQUIRED") {
-    return <span className="rounded-full bg-[#fb923c]/12 px-3 py-1 text-sm font-medium text-[#fb923c]">Clarification Required</span>;
+    return <Badge variant="warning">CLARIFICATION REQUIRED</Badge>;
   }
 
   if (status === "REUPLOAD_REQUIRED") {
-    return <span className="rounded-full bg-[#fb923c]/12 px-3 py-1 text-sm font-medium text-[#fb923c]">Re-upload Needed</span>;
+    return <Badge variant="warning">REUPLOAD NEEDED</Badge>;
   }
 
   if (status === "REJECTED") {
-    return <span className="rounded-full bg-red-500/12 px-3 py-1 text-sm font-medium text-red-600 dark:text-red-300">Rejected</span>;
+    return <Badge variant="destructive">REJECTED</Badge>;
   }
 
   if (status === "NOT_AVAILABLE") {
-    return <span className="rounded-full bg-[#fb923c]/12 px-3 py-1 text-sm font-medium text-[#fb923c]">Not Available</span>;
+    return <Badge variant="warning">NOT AVAILABLE</Badge>;
   }
 
-  return <span className="rounded-full bg-surface-container-low px-3 py-1 text-sm font-medium text-on-surface-variant">Pending</span>;
+  return <Badge variant="secondary">PENDING</Badge>;
 }
 
 function DocumentDetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 py-2">
-      <span className="text-sm text-on-surface-variant">{label}</span>
+      <span className="ds-label">{label}</span>
       <span className="max-w-[60%] text-right text-sm text-on-surface">{value}</span>
     </div>
   );
 }
 
-export function FilingDocumentsPageHeader({
-  title = "Filing Workflow Documents",
-  subtitle = "Upload and manage documents required for your workflow.",
-}: FilingDocumentsPageHeaderProps) {
+function PreviewSectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2 text-sm text-on-surface-variant">
-        <span>Documents</span>
-        <span aria-hidden="true" className="text-on-surface-variant/60">
-          &gt;
-        </span>
-        <span className="text-on-surface">{title}</span>
-      </div>
-      <div className="space-y-1">
-        <h2 className="text-[2.15rem] font-semibold tracking-[-0.04em] text-on-surface">{title}</h2>
-        <p className="text-base text-on-surface-variant">{subtitle}</p>
-      </div>
+    <div className="flex items-center gap-3">
+      <span className="h-8 w-1 shrink-0 rounded-full bg-[#00cec4]" aria-hidden="true" />
+      <h4 className="ds-h3 text-on-surface">{children}</h4>
     </div>
   );
 }
@@ -271,7 +261,6 @@ export function RequirementDocumentCard({
   onMarkNa,
   onSelect,
   selected = false,
-  showActionMenu = true,
   showExceptionActions = true,
   uploadButtonLabel,
   hideUploadWhenExempted = false,
@@ -285,32 +274,23 @@ export function RequirementDocumentCard({
   return (
     <div
       className={cn(
-        "flex h-full min-h-[260px] flex-col rounded-[24px] border border-outline-variant/50 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.18)] transition-all",
+        "flex h-full min-h-[260px] flex-col rounded-xl border border-[#00cec4]/35 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.18)] transition-all",
         selected ? "ring-2 ring-[#00cec4]/25 shadow-[0_22px_44px_-32px_rgba(0,206,196,0.28)]" : "hover:-translate-y-px",
       )}
       onClick={() => onSelect?.(requirement.id)}
     >
       <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-[1.1rem] font-semibold text-on-surface">{requirement.name}</h3>
-            {requirement.isMandatory ? <Badge variant="warning">MANDATORY</Badge> : <Badge variant="secondary">OPTIONAL</Badge>}
-            {getDocumentStatusBadge(requirement.status)}
-          </div>
+        <div className="min-w-0">
+          <h3 className="ds-h3 text-on-surface">{requirement.name}</h3>
         </div>
-        {showActionMenu ? (
-          <button
-            type="button"
-            className="ds-plain flex h-10 w-10 items-center justify-center rounded-xl border border-outline-variant/60 bg-surface text-on-surface-variant shadow-sm transition hover:border-[#00cec4]/45 hover:text-[#00cec4]"
-            aria-label={`More actions for ${requirement.name}`}
-          >
-            <MoreHorizontal size={18} />
-          </button>
-        ) : null}
+        <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2">
+          {requirement.isMandatory ? <Badge variant="warning">MANDATORY</Badge> : <Badge variant="secondary">OPTIONAL</Badge>}
+          {getDocumentStatusBadge(requirement.status)}
+        </div>
       </div>
 
       <div className="mt-4 flex-1">
-        <div className="rounded-2xl border border-[#fb923c]/20 bg-[#fb923c]/8 px-4 py-3.5">
+        <div className="rounded-xl border border-[#fb923c]/20 bg-[#fb923c]/8 px-4 py-3.5">
           <div className="flex items-start gap-3">
             <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#fb923c]/12 text-[#fb923c]">
               <Circle size={10} fill="currentColor" />
@@ -330,7 +310,7 @@ export function RequirementDocumentCard({
         </div>
       </div>
 
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/20 pt-3.5">
+      <div className="mt-auto flex flex-wrap items-center justify-end gap-3 border-t border-outline-variant/20 pt-3.5">
         <div className="flex flex-wrap gap-2">
           {showExceptionActions ? (
             isExempted ? (
@@ -381,9 +361,17 @@ export function WorkflowDocumentsSectionHeader({
   searchValue,
   onSearchChange,
   filterMode,
-  onFilterToggle,
+  onFilterChange,
 }: WorkflowDocumentsSectionHeaderProps) {
   const title = uploadedCount === 1 ? "Uploaded Document" : "Uploaded Documents";
+  const filterOptions: Array<{ value: FilterMode; label: string }> = [
+    { value: "ALL", label: "All Documents" },
+    { value: "UPLOADED", label: "Uploaded" },
+    { value: "PENDING", label: "Pending" },
+    { value: "DECLARED_EXEMPTION", label: "Declared Exemption" },
+    { value: "MARKED_NA", label: "Marked as N/A" },
+  ];
+  const selectedFilterLabel = filterOptions.find((option) => option.value === filterMode)?.label ?? "All Documents";
 
   return (
     <div className="space-y-4">
@@ -391,7 +379,7 @@ export function WorkflowDocumentsSectionHeader({
         <div className="flex min-w-0 items-center gap-4">
           <span className="block h-8 w-1.5 rounded-full bg-[#00cec4]" aria-hidden="true" />
           <div className="min-w-0">
-            <h3 className="text-[1.1rem] font-semibold text-on-surface">{title}</h3>
+            <h3 className="ds-h3 text-on-surface">{title}</h3>
             <p className="mt-1 text-sm text-on-surface-variant">
               Review uploaded document files, metadata, and workflow context.
             </p>
@@ -407,14 +395,35 @@ export function WorkflowDocumentsSectionHeader({
               className="pl-10"
             />
           </div>
-          <Button type="button" variant="outline" mode="icon" aria-label={`Filter documents. Current filter ${filterMode}`} onClick={onFilterToggle}>
-            <Filter size={16} />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                mode="icon"
+                aria-label={`Filter documents. Current filter ${selectedFilterLabel}`}
+                className="!h-11 !w-11 !min-w-11 shrink-0 !px-0"
+              >
+                <Filter size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="ds-label">Document Status</DropdownMenuLabel>
+              <DropdownMenuRadioGroup value={filterMode} onValueChange={(value) => onFilterChange(value as FilterMode)}>
+                <DropdownMenuRadioItem value="ALL">All Documents</DropdownMenuRadioItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioItem value="UPLOADED">Uploaded</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="PENDING">Pending</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="DECLARED_EXEMPTION">Declared Exemption</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="MARKED_NA">Marked as N/A</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <span className="ds-label">Filter</span>
-        <Badge variant={filterMode === "ALL" ? "secondary" : "default"}>{filterMode}</Badge>
+        <Badge variant={filterMode === "ALL" ? "secondary" : "default"}>{selectedFilterLabel}</Badge>
       </div>
     </div>
   );
@@ -424,7 +433,7 @@ export function DocumentMetaItem({ label, value, accent = "default" }: DocumentM
   return (
     <div
       className={cn(
-        "border-r border-outline-variant/30 px-4 py-2 last:border-r-0 md:border-r-0 xl:border-r xl:last:border-r-0",
+        "min-w-0 border-r border-outline-variant/30 px-3 py-1.5 last:border-r-0",
         accent === "success" ? "bg-green-500/6" : accent === "warning" ? "bg-[#fb923c]/8" : "",
       )}
     >
@@ -440,6 +449,7 @@ export function UploadedWorkflowDocumentCard({
   loadingKey,
   currentUserId,
   canDelete,
+  downloadUrl,
   onPreview,
   onDelete,
   onDeclareExemption,
@@ -447,7 +457,6 @@ export function UploadedWorkflowDocumentCard({
   onUpload,
   onSelect,
   selected = false,
-  showActionMenu = true,
   showExceptionActions = true,
   showDeleteAction = true,
   uploadButtonLabel,
@@ -463,46 +472,45 @@ export function UploadedWorkflowDocumentCard({
   return (
     <div
       className={cn(
-        "flex h-full min-h-[260px] flex-col rounded-[24px] border border-[#00cec4]/35 bg-surface p-5 shadow-[0_22px_48px_-36px_rgba(15,23,42,0.18)] transition-all",
+        "flex h-full min-h-[260px] flex-col rounded-xl border border-[#00cec4]/35 bg-surface p-5 shadow-[0_22px_48px_-36px_rgba(15,23,42,0.18)] transition-all",
         selected ? "ring-2 ring-[#00cec4]/25 shadow-[0_24px_52px_-34px_rgba(0,206,196,0.24)]" : "hover:-translate-y-px",
       )}
       onClick={() => onSelect?.(requirement.id)}
     >
       <div className="flex h-full flex-col gap-3.5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <span className="ds-icon-badge">
               <FileText size={18} />
             </span>
-            <div>
-              <h3 className="text-[1.05rem] font-semibold text-on-surface">{requirement.name}</h3>
+            <div className="min-w-0">
+              <h3 className="ds-h3 text-on-surface">{requirement.name}</h3>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center">
             <DocumentStatusBadge status={headerStatus} />
-            {showActionMenu ? (
-              <button
-                type="button"
-                className="ds-plain flex h-10 w-10 items-center justify-center rounded-xl border border-outline-variant/60 bg-surface text-on-surface-variant shadow-sm transition hover:border-[#00cec4]/45 hover:text-[#00cec4]"
-                aria-label={`More actions for ${requirement.name}`}
-              >
-                <MoreHorizontal size={18} />
-              </button>
-            ) : null}
           </div>
         </div>
 
-        <div className="rounded-[20px] border border-outline-variant/45 bg-surface px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.32)]">
-          <div className="flex flex-col gap-3 border-b border-outline-variant/20 pb-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="overflow-hidden rounded-xl border border-outline-variant/45 bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.32)]">
+          <div className="flex flex-col gap-3 px-4 py-3.5 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 items-center gap-4">
-              <span className="ds-icon-badge shrink-0">
-                <FileText size={18} />
-              </span>
               <div className="min-w-0">
-                <button type="button" className="ds-plain flex min-w-0 items-center gap-2 text-left text-sm font-semibold text-on-surface" onClick={() => onPreview(requirement.id)}>
+                <a
+                  href={downloadUrl || undefined}
+                  download={version.fileName}
+                  className="flex min-w-0 items-center gap-2 text-left text-sm font-semibold text-on-surface transition-colors hover:text-[#00cec4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00cec4]/40"
+                  aria-label={`Download ${version.fileName}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (!downloadUrl) {
+                      event.preventDefault();
+                    }
+                  }}
+                >
                   <span className="truncate">{version.fileName}</span>
-                  <ArrowUpRight size={16} className="shrink-0 text-[#00cec4]" />
-                </button>
+                  <Download size={16} className="shrink-0 text-[#00cec4]" />
+                </a>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -513,17 +521,18 @@ export function UploadedWorkflowDocumentCard({
                   variant="outline"
                   mode="icon"
                   size="sm"
-                  className="border-red-500/20 text-red-500 hover:bg-red-500/10 hover:text-red-600"
+                  className="ds-plain !h-9 !w-9 !min-w-9 !rounded-xl !border-red-500/35 !bg-surface !p-0 !text-red-500 hover:!border-red-500 hover:!bg-red-500/10 hover:!text-red-600"
                   onClick={() => onDelete(requirement.id, version.id, version.fileName)}
                   disabled={loadingKey !== null}
+                  aria-label={`Delete ${version.fileName}`}
                 >
-                  <Trash2 size={16} />
+                  <Trash className="h-4 w-3.5" strokeWidth={1.9} />
                 </Button>
               ) : null}
             </div>
           </div>
 
-          <div className="mt-3 grid gap-2 border border-outline-variant/20 bg-surface-container-low/25 px-2 py-2 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-4 gap-0 bg-surface-container-low/25 px-3 py-2 [&>*]:w-full">
             <DocumentMetaItem
               label="Source"
               value={
@@ -540,9 +549,9 @@ export function UploadedWorkflowDocumentCard({
           </div>
         </div>
 
-        {helperContent ? <div className="rounded-[20px] border border-outline-variant/35 bg-surface-container-low/45 p-3">{helperContent}</div> : null}
+        {helperContent ? <div className="rounded-xl border border-outline-variant/35 bg-surface-container-low/45 p-3">{helperContent}</div> : null}
 
-        <div className="mt-auto flex flex-wrap items-center gap-3 border-t border-outline-variant/20 pt-3.5">
+        <div className="mt-auto flex flex-wrap items-center justify-end gap-3 border-t border-outline-variant/20 pt-3.5">
           <Button type="button" variant="outline" className="gap-2" onClick={() => onPreview(requirement.id)}>
             <Eye size={16} />
             View File
@@ -564,7 +573,7 @@ export function UploadedWorkflowDocumentCard({
               </Button>
             </>
           ) : null}
-          <Button type="button" className="ml-auto min-w-[160px] gap-2" onClick={() => onUpload(requirement.id)} disabled={loadingKey !== null || uploadDisabled}>
+          <Button type="button" className="min-w-[160px] gap-2" onClick={() => onUpload(requirement.id)} disabled={loadingKey !== null || uploadDisabled}>
             <Upload size={16} />
             {uploadButtonLabel || "Re-upload"}
           </Button>
@@ -617,6 +626,8 @@ export function FilingDocumentPreviewDrawer({
   const canPreview = version ? (Boolean(previewUrl) && (isImage || isPdf)) : false;
   const sourceLabel = version?.source === "FILING_WORKFLOW" ? "Filing Workflow" : "Documents Page";
   const fileSize = version ? formatFileSize(version.sizeBytes) : "";
+  const previewDocumentNameClass = "ds-label text-on-surface";
+  const previewIconButtonClass = "!h-11 !w-11 !min-w-11 !rounded-xl !p-0";
   const exceptionState = requirement.exception?.reason
     ? requirement.exception.reason === "N/A"
       ? "Marked as N/A"
@@ -624,16 +635,19 @@ export function FilingDocumentPreviewDrawer({
     : "None";
 
   return (
-    <aside className="rounded-[28px] border border-outline-variant/45 bg-surface px-6 py-5 shadow-[0_24px_60px_-38px_rgba(15,23,42,0.22)] xl:sticky xl:top-24">
+    <aside className="rounded-xl border border-outline-variant/45 bg-surface px-6 py-5 shadow-[0_24px_60px_-38px_rgba(15,23,42,0.22)] xl:sticky xl:top-24">
       <div className="space-y-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-2">
-            <div className="flex flex-wrap items-center gap-3">
-              <h3 className="truncate text-[1.9rem] font-semibold tracking-[-0.04em] text-on-surface">{requirement.name}</h3>
-              <DocumentStatusBadge status={requirement.status} />
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 h-9 w-1 shrink-0 rounded-full bg-[#00cec4]" aria-hidden="true" />
+              <div className="min-w-0 space-y-2">
+                <h3 className="ds-h3 truncate text-on-surface">{requirement.name}</h3>
+                <DocumentStatusBadge status={requirement.status} />
+              </div>
             </div>
           </div>
-          <Button type="button" variant="outline" mode="icon" onClick={onClose} aria-label="Close document preview drawer">
+          <Button type="button" variant="outline" mode="icon" className={previewIconButtonClass} onClick={onClose} aria-label="Close document preview drawer">
             <X size={16} />
           </Button>
         </div>
@@ -669,15 +683,15 @@ export function FilingDocumentPreviewDrawer({
 
         {activeTab === "preview" ? (
           <div className="space-y-5">
-            <div className="overflow-hidden rounded-[24px] border border-outline-variant/35 bg-surface shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
-              <div className="relative flex min-h-[340px] items-center justify-center overflow-hidden border-b border-outline-variant/15 bg-surface-container-low/25 px-6 py-8">
+            <div className="overflow-hidden rounded-xl border border-outline-variant/35 bg-surface shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
+              <div className="relative flex min-h-[340px] items-center justify-center overflow-hidden border-b border-outline-variant/15 bg-surface-container-low/25">
                 {!version ? (
-                  <div className="space-y-4 text-center">
-                    <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-[24px] border border-amber-500/20 bg-amber-500/10 text-amber-500">
+                  <div className="space-y-4 p-6 text-center">
+                    <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-500">
                       <FileText size={40} />
                     </span>
                     <div className="space-y-1">
-                      <p className="text-[1.05rem] font-semibold text-on-surface">No Document Uploaded</p>
+                      <p className="ds-h3 text-on-surface">No Document Uploaded</p>
                     </div>
                     <p className="mx-auto max-w-[240px] text-sm text-on-surface-variant">
                       Use the Quick Upload section or click the document card actions to add a file.
@@ -695,7 +709,7 @@ export function FilingDocumentPreviewDrawer({
                         key={previewStateKey}
                         src={previewUrl!}
                         alt={version.fileName}
-                        className="max-h-[320px] max-w-full object-contain transition-transform"
+                        className="h-full max-h-[340px] w-full object-contain transition-transform"
                         style={{ transform: `scale(${imageScale})` }}
                         onLoad={onPreviewLoad}
                         onError={onPreviewError}
@@ -703,19 +717,19 @@ export function FilingDocumentPreviewDrawer({
                     ) : (
                       <iframe
                         src={previewUrl!}
-                        className="h-[320px] w-full border-0"
+                        className="h-[340px] w-full border-0"
                         title={version.fileName}
                         onLoad={onPreviewLoad}
                       />
                     )}
                   </>
                 ) : (
-                  <div className="space-y-4 text-center">
-                    <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-[24px] border border-[#00cec4]/20 bg-[#00cec4]/10 text-[#00cec4]">
+                  <div className="space-y-4 p-6 text-center">
+                    <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-xl border border-[#00cec4]/20 bg-[#00cec4]/10 text-[#00cec4]">
                       <FileText size={40} />
                     </span>
                     <div className="space-y-1">
-                      <p className="text-[1.05rem] font-semibold text-on-surface">{version.fileName}</p>
+                      <p className={previewDocumentNameClass}>{version.fileName}</p>
                       <p className="text-sm text-on-surface-variant">{fileSize}</p>
                     </div>
                     <p className="mx-auto max-w-[240px] text-sm text-on-surface-variant">
@@ -726,23 +740,24 @@ export function FilingDocumentPreviewDrawer({
               </div>
 
               {version ? (
-                <div className="space-y-4 px-6 py-5">
+                <div className="space-y-3 px-4 py-3.5">
                   <div className="text-center">
-                    <p className="text-[1.7rem] font-semibold tracking-[-0.03em] text-on-surface">{version.fileName}</p>
-                    <p className="mt-2 text-base text-on-surface-variant">{fileSize}</p>
+                    <p className={previewDocumentNameClass}>{version.fileName}</p>
+                    <p className="mt-1.5 text-sm text-on-surface-variant">{fileSize}</p>
                   </div>
 
-                  <div className="flex items-center justify-center gap-4">
-                    <Button type="button" variant="outline" mode="icon" onClick={() => setImageScale((current) => Math.max(0.75, current - 0.1))} disabled={!isImage}>
+                  <div className="flex items-center justify-center gap-3">
+                    <Button type="button" variant="outline" mode="icon" className={previewIconButtonClass} onClick={() => setImageScale((current) => Math.max(0.75, current - 0.1))} disabled={!isImage}>
                       <ZoomOut size={16} />
                     </Button>
-                    <Button type="button" variant="outline" mode="icon" onClick={() => setImageScale((current) => Math.min(2.5, current + 0.1))} disabled={!isImage}>
+                    <Button type="button" variant="outline" mode="icon" className={previewIconButtonClass} onClick={() => setImageScale((current) => Math.min(2.5, current + 0.1))} disabled={!isImage}>
                       <ZoomIn size={16} />
                     </Button>
                     <Button
                       type="button"
                       variant="outline"
                       mode="icon"
+                      className={previewIconButtonClass}
                       onClick={() => {
                         if (previewUrl) {
                           window.open(previewUrl, "_blank", "noopener,noreferrer");
@@ -753,7 +768,7 @@ export function FilingDocumentPreviewDrawer({
                       <Maximize2 size={16} />
                     </Button>
                     <a href={downloadUrl || undefined} download={version.fileName} aria-label={`Download ${version.fileName}`}>
-                      <Button type="button" variant="outline" mode="icon" disabled={!downloadUrl}>
+                      <Button type="button" variant="outline" mode="icon" className={previewIconButtonClass} disabled={!downloadUrl}>
                         <Download size={16} />
                       </Button>
                     </a>
@@ -764,7 +779,7 @@ export function FilingDocumentPreviewDrawer({
 
             {version ? (
               <div className="space-y-4">
-                <h4 className="text-[1.1rem] font-semibold text-on-surface">Document Health</h4>
+                <PreviewSectionHeading>Document Health</PreviewSectionHeading>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3 text-sm">
                     <div className="flex items-center gap-3">
@@ -798,7 +813,7 @@ export function FilingDocumentPreviewDrawer({
             ) : null}
 
             <div className="border-t border-outline-variant/20 pt-5">
-              <h4 className="text-[1.1rem] font-semibold text-on-surface">Workflow Context</h4>
+              <PreviewSectionHeading>Workflow Context</PreviewSectionHeading>
               <div className="mt-4 space-y-1">
                 <DocumentDetailRow label="Step" value={<span>{currentStageLabel}</span>} />
                 {version ? (
@@ -862,11 +877,11 @@ export function WorkflowProgressPanel({
   helperNote = "N/A and exempted documents are excluded from the progress calculation.",
 }: WorkflowProgressPanelProps) {
   return (
-    <aside className="rounded-[24px] border border-outline-variant/60 bg-surface p-5 shadow-[0_20px_46px_-34px_rgba(15,23,42,0.16)] xl:sticky xl:top-24">
+    <aside className="rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-[0_20px_46px_-34px_rgba(15,23,42,0.16)] xl:sticky xl:top-24">
       <div className="space-y-5">
         <div>
           <p className="ds-label text-[#00cec4]">{eyebrow}</p>
-          <h3 className="mt-2 text-xl font-semibold text-on-surface">{title}</h3>
+          <h3 className="ds-h3 mt-2 text-on-surface">{title}</h3>
         </div>
 
         <div className="space-y-4">
@@ -905,11 +920,11 @@ export function WorkflowProgressPanel({
           })}
         </div>
 
-        <div className="rounded-[22px] border border-outline-variant/55 bg-surface-container-low/55 p-4">
+        <div className="rounded-xl border border-outline-variant/55 bg-surface-container-low/55 p-4">
           <div className="flex items-end justify-between gap-3">
             <div>
               <p className="ds-label">Overall Progress</p>
-              <p className="mt-2 text-2xl font-semibold text-on-surface">{overallProgress}%</p>
+              <p className="ds-numeric mt-2 text-2xl text-on-surface">{overallProgress}%</p>
             </div>
             <span className="rounded-full border border-[#00cec4]/25 bg-[#00cec4]/10 px-3 py-1 text-xs font-medium text-[#00cec4]">
               {currentStepLabel}
@@ -939,9 +954,14 @@ export function DocumentDropzone({
 }: DocumentDropzoneProps) {
   const inputId = requirement ? `workflow-document-dropzone-${requirement.id}` : "workflow-document-dropzone-disabled";
   const [isDragActive, setIsDragActive] = React.useState(false);
+  const requirementOptions =
+    requirementsList?.map((req) => ({
+      value: req.id,
+      label: `${req.status === "UPLOADED" ? "[Uploaded]" : "[Pending]"} ${req.name}${req.isMandatory ? " *" : ""}`,
+    })) ?? [];
 
   return (
-    <div className="rounded-[24px] border border-outline-variant/60 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
+    <div className="rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
       <div className="mb-4 flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <p className="ds-label">Quick Upload</p>
@@ -949,22 +969,16 @@ export function DocumentDropzone({
         </div>
         {requirementsList && requirementsList.length > 0 ? (
           <div className="mt-1">
-            <select
-              value={requirement?.id || ""}
-              onChange={(e) => onRequirementIdChange?.(e.target.value)}
-              className="w-full text-xs rounded-xl border border-outline-variant/60 bg-surface px-3 py-2 font-medium text-on-surface shadow-sm focus:border-[#00cec4] focus:ring-1 focus:ring-[#00cec4] dark:bg-surface-container-low"
+            <DropdownSelect
+              ariaLabel="Select document slot to upload"
+              contentClassName="rounded-xl"
               disabled={disabled}
-            >
-              <option value="" disabled>Select document slot to upload...</option>
-              {requirementsList.map((req) => {
-                const statusLabel = req.status === "UPLOADED" ? "🟢 [Uploaded]" : "⏳ [Pending]";
-                return (
-                  <option key={req.id} value={req.id}>
-                    {statusLabel} {req.name} {req.isMandatory ? "*" : ""}
-                  </option>
-                );
-              })}
-            </select>
+              onValueChange={(value) => onRequirementIdChange?.(value)}
+              options={requirementOptions}
+              placeholder="Select document slot to upload..."
+              triggerClassName="rounded-xl border-[#00cec4]/45 text-sm"
+              value={requirement?.id || ""}
+            />
           </div>
         ) : (
           <p className="mt-1 text-sm text-on-surface-variant">
@@ -975,7 +989,7 @@ export function DocumentDropzone({
       <label
         htmlFor={inputId}
         className={cn(
-          "flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-[24px] border border-dashed border-outline-variant/60 bg-surface px-6 py-10 text-center transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/40",
+          "flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-outline-variant/60 bg-surface px-6 py-10 text-center transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/40",
           isDragActive ? "border-[#00cec4]/70 bg-surface-container-low/50" : "",
           disabled || !requirement ? "pointer-events-none cursor-not-allowed opacity-60 bg-surface-container-low/10" : "",
         )}

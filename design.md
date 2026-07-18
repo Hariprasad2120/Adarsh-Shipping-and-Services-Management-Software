@@ -366,11 +366,13 @@ Form label: `text-sm`, `font-medium`, `text-on-surface`.
 
 ### 7.1 Canonical Table Implementation
 
-Tables must follow this exact wrapper hierarchy for visible rounded corners, proper clipping, and theme compatibility:
+Prefer the shared `DataTable` component from `src/components/data-table.tsx` for application tables. It provides the rounded shell, border, horizontal scroll wrapper, header band, cell spacing, and clean row treatment shown in the CHA jobs reference.
+
+When writing markup directly, tables should follow this wrapper hierarchy for visible rounded corners, proper clipping, and theme compatibility:
 
 ```tsx
 {/* Outer shell: provides rounded corners, clipping, border, and background */}
-<div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+<div className="overflow-hidden rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
   
   {/* Optional: Toolbar section */}
   <div className="p-4 border-b border-outline-variant">
@@ -382,12 +384,12 @@ Tables must follow this exact wrapper hierarchy for visible rounded corners, pro
     <table className="ds-table">
       <thead>
         <tr>
-          <th className="px-6 py-3">Column Header</th>
+          <th>Column Header</th>
         </tr>
       </thead>
       <tbody>
         <tr className="ds-row-link">
-          <td className="px-6 py-4">Cell data</td>
+          <td>Cell data</td>
         </tr>
       </tbody>
     </table>
@@ -398,14 +400,15 @@ Tables must follow this exact wrapper hierarchy for visible rounded corners, pro
 ```
 
 **Rules:**
-- **Border radius** belongs on the outer `overflow-hidden` container — never on `<table>` directly
+- **Border radius** belongs on the `DataTable`/outer `overflow-hidden` container for component tables. Raw `table.ds-table` includes a fallback rounded shell for legacy/direct markup.
 - **`overflow-x-auto`** goes on the inner scroll wrapper — not on the clipping container
 - **`ds-table`** uses `border-separate` + `border-spacing: 0` — never use `border-collapse`
-- **`ds-table th`** has `background-color: var(--color-surface-container-low)` — provides subtle header distinction
-- **Last row** has `border-bottom: none` — prevents double border with container
+- **`ds-table th`** has `background-color: var(--color-surface-container-low)` — provides the gray header band used across data tables
+- **`ds-table th` / `td`** own the default table padding (`20px` horizontal, `16px` vertical); avoid per-table padding overrides unless the table is intentionally dense
+- **Body rows** do not show visible horizontal dividers by default; the outer shell and header band provide the table structure
 - **Ordinary data cells** use `font-weight: 400` — only name/identifier columns use `font-medium`
-- **Row separators** use `var(--color-outline-variant)` — never hard-coded hex borders
-- **Do not** use `divide-y` on `<tbody>` — the `ds-table td` border-bottom handles separation
+- **Clickable rows** use `ds-row-link` for a subtle cyan left rail and surface tint on hover
+- **Do not** use `divide-y` on `<tbody>` — the canonical table body is clean and undivided
 - **Do not** add `bg-[#0f1319]` or other hard-coded backgrounds — use `bg-surface`
 
 ---

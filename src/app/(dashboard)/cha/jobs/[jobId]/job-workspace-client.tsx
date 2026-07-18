@@ -14,7 +14,6 @@ import * as actions from "@/modules/cha/actions";
 import { DoValidityPanel } from "./do-validity-panel";
 import {
   FilingDocumentPreviewDrawer,
-  FilingDocumentsPageHeader,
   DocumentDropzone,
   RequirementDocumentCard,
   UploadedWorkflowDocumentCard,
@@ -547,22 +546,18 @@ function MilestoneCard({
   currentStageCard,
 }: MilestoneCardProps) {
   const cardBorderClass = isActive
-    ? "border-[#7c3aed]/35 bg-surface shadow-[0_28px_60px_-38px_rgba(99,102,241,0.45)]"
+    ? "border-[#00cec4]/35 bg-surface shadow-[0_28px_60px_-38px_rgba(0,206,196,0.32)]"
     : isCompleted
-      ? "border-emerald-400/25 bg-surface"
+      ? "border-[#00cec4]/25 bg-surface"
       : "border-outline-variant/30 bg-surface-container-low/30 opacity-70";
 
-  const badgeVariant = isCompleted
-    ? "success"
-    : isActive
-      ? "default"
-      : "secondary";
+  const badgeVariant = "secondary";
 
   return (
     <div
       id={`workflow-stage-${stageKey.toLowerCase()}`}
       data-stage-key={stageKey}
-      className={`overflow-hidden rounded-[28px] border bg-surface transition-all duration-500 ${cardBorderClass} ${isSpotlit
+      className={`overflow-hidden rounded-xl border bg-surface transition-all duration-500 ${cardBorderClass} ${isSpotlit
           ? "ring-2 ring-[#00cec4]/30 shadow-[0_28px_56px_-34px_rgba(0,206,196,0.4)]"
           : ""
         }`}
@@ -576,12 +571,12 @@ function MilestoneCard({
         className={`select-none flex flex-col gap-4 px-5 py-5 lg:flex-row lg:items-center lg:justify-between ${isLocked ? "cursor-not-allowed" : "cursor-pointer hover:bg-surface-container-low/45"
           }`}
       >
-        <div className="flex min-w-0 items-start gap-4 lg:flex-1">
+        <div className="flex min-w-0 items-center gap-4 lg:flex-1">
           <span
-            className={`mt-0.5 flex size-11 shrink-0 items-center justify-center rounded-[16px] text-xs font-bold transition-all ${isCompleted
-                ? "bg-green-600 text-white shadow-[0_16px_32px_-20px_rgba(22,163,74,0.9)]"
+            className={`flex size-11 shrink-0 items-center justify-center rounded-full text-xs transition-all ${isCompleted
+                ? "border border-[#00cec4] bg-surface text-[#00cec4]"
                 : isActive
-                  ? "bg-gradient-to-br from-[#7c3aed] via-[#6366f1] to-[#4f46e5] text-white shadow-[0_20px_36px_-18px_rgba(99,102,241,0.8)]"
+                  ? "border border-[#00cec4] bg-surface text-[#00cec4]"
                   : "border border-outline-variant bg-surface text-on-surface-variant/40"
               }`}
           >
@@ -592,7 +587,7 @@ function MilestoneCard({
               <span className="ds-label">Workflow Stage</span>
               <Badge
                 variant={badgeVariant}
-                className={`uppercase font-semibold tracking-wider text-[10px] ${isActive ? "bg-[#6366f1]/10 text-[#6366f1]" : ""
+                className={`uppercase tracking-wider text-[10px] ${isCompleted || isActive ? "!border-[#00cec4]/35 !bg-transparent !text-[#00cec4]" : ""
                   }`}
               >
                 {statusLabel ?? (isCompleted ? "Completed" : isActive ? "Active" : "Locked")}
@@ -605,7 +600,6 @@ function MilestoneCard({
             </div>
             <h3 className="ds-h3 flex items-center gap-2 text-on-surface tracking-wide">
               {title}
-              {isCompleted && <span className="text-green-600 text-xs font-normal font-sans">(Completed)</span>}
             </h3>
             <p className="max-w-xl text-sm leading-relaxed text-on-surface-variant">{description}</p>
           </div>
@@ -649,7 +643,7 @@ function MilestoneCard({
       )}
 
       {!isExpanded && isCompleted && summary && (
-        <div className="rounded-b-[28px] border-t border-outline-variant/20 bg-surface-container-low/50 px-5 py-3">
+        <div className="rounded-b-xl border-t border-outline-variant/20 bg-surface-container-low/50 px-5 py-3">
           {summary}
         </div>
       )}
@@ -1317,7 +1311,7 @@ export function JobWorkspaceClient({
   }, [visibleDocumentRequirements]);
 
   const [documentSearchQuery, setDocumentSearchQuery] = useState("");
-  const [documentsFilterMode, setDocumentsFilterMode] = useState<"ALL" | "PENDING" | "UPLOADED" | "EXCEPTIONS">("ALL");
+  const [documentsFilterMode, setDocumentsFilterMode] = useState<"ALL" | "PENDING" | "UPLOADED" | "DECLARED_EXEMPTION" | "MARKED_NA">("ALL");
   const [selectedDocumentRequirementId, setSelectedDocumentRequirementId] = useState<string | null>(null);
   const [isDocumentDrawerOpen, setIsDocumentDrawerOpen] = useState(true);
   const [documentDrawerTab, setDocumentDrawerTab] = useState<"preview" | "details">("preview");
@@ -1377,7 +1371,8 @@ export function JobWorkspaceClient({
       if (!matchesQuery) return false;
 
       if (documentsFilterMode === "UPLOADED") return !!currentVersion && !["REUPLOAD_REQUIRED", "CLARIFICATION_REQUIRED", "REJECTED"].includes(req.status);
-      if (documentsFilterMode === "EXCEPTIONS") return req.status === "NOT_AVAILABLE" || !!req.exception;
+      if (documentsFilterMode === "DECLARED_EXEMPTION") return !!req.exception && req.exception.reason !== "N/A";
+      if (documentsFilterMode === "MARKED_NA") return req.status === "NOT_AVAILABLE" || req.exception?.reason === "N/A";
       if (documentsFilterMode === "PENDING") {
         if (req.status === "NOT_AVAILABLE" || !!req.exception) return false;
         return !currentVersion || ["REUPLOAD_REQUIRED", "CLARIFICATION_REQUIRED", "REJECTED"].includes(req.status);
@@ -1497,16 +1492,39 @@ export function JobWorkspaceClient({
     : null;
 
   useEffect(() => {
+    if (activeTab !== "docs" || !selectedDocumentRequirementId) {
+      return;
+    }
+
+    const handleDocumentPointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+
+      const clickedInsideDocumentCard = Object.values(documentRequirementCardRefs.current).some((cardElement) =>
+        cardElement?.contains(target),
+      );
+      const clickedInsidePreviewDrawer = previewDrawerRef.current?.contains(target);
+      const clickedInsideDropzone = dropzoneRef.current?.contains(target);
+      const clickedInsideOverlay = target instanceof Element && Boolean(target.closest('[role="dialog"], [data-radix-popper-content-wrapper]'));
+
+      if (clickedInsideDocumentCard || clickedInsidePreviewDrawer || clickedInsideDropzone || clickedInsideOverlay) {
+        return;
+      }
+
+      setSelectedDocumentRequirementId(null);
+      setIsDocumentDrawerOpen(false);
+      setPreviewOffset(0);
+    };
+
+    document.addEventListener("pointerdown", handleDocumentPointerDown);
+    return () => document.removeEventListener("pointerdown", handleDocumentPointerDown);
+  }, [activeTab, selectedDocumentRequirementId]);
+
+  useEffect(() => {
     if (viewingVersion) {
       setLoadingPreview(true);
     }
   }, [viewingVersion?.id]);
-
-  useEffect(() => {
-    if (!selectedWorkflowDocumentVersion) {
-      setIsDocumentDrawerOpen(false);
-    }
-  }, [selectedWorkflowDocumentVersion]);
 
   useEffect(() => {
     if (initialTab && ["overview", "docs", "additionalData", "checklist", "filing", "advances", "expenses", "audit"].includes(initialTab)) {
@@ -5031,14 +5049,6 @@ export function JobWorkspaceClient({
 
   const showFilingStage = activeStepIndex >= 4;
   const showFiledStage = activeStepIndex >= 5;
-  const cycleDocumentsFilterMode = () => {
-    setDocumentsFilterMode((current) => {
-      if (current === "ALL") return "PENDING";
-      if (current === "PENDING") return "UPLOADED";
-      if (current === "UPLOADED") return "EXCEPTIONS";
-      return "ALL";
-    });
-  };
   const uploadExcludedRequirements = useMemo(
     () =>
       visibleDocumentRequirements.filter((req: any) => req.status === "NOT_AVAILABLE" || !!req.exception),
@@ -5071,7 +5081,7 @@ export function JobWorkspaceClient({
     ? previewUrls[selectedWorkflowDocumentVersion.id] ||
       (selectedWorkflowDocumentVersion.source === "CUSTOMER_PORTAL"
         ? `/api/cha/customer-documents/${selectedWorkflowDocumentVersion.id}?download=true`
-        : selectedWorkflowDocumentVersion.fileKey || `/api/cha/documents/${selectedWorkflowDocumentVersion.id}?download=true`)
+        : `/api/cha/documents/${selectedWorkflowDocumentVersion.id}?download=true`)
     : null;
   const deliveryOrderValiditySummary = getValiditySummary(deliveryOrderValidity || null);
   const workspaceTabs: { key: WorkspaceTab; label: string; count?: number }[] = [
@@ -5258,140 +5268,9 @@ export function JobWorkspaceClient({
     { label: "Request Expense", note: "Raise expense request", icon: <CreditCard size={16} />, onClick: () => navigateToWorkspaceTab("expenses"), accent: "cyan" as const, visible: true },
     { label: "Job Activity", note: "View all activities", icon: <History size={16} />, onClick: () => navigateToWorkspaceTab("audit"), accent: "violet" as const, visible: true },
   ].filter((action) => action.visible);
-  const workflowNavigator = (
-    <div className="border-t border-[#2563eb]/14 bg-[linear-gradient(180deg,rgba(241,246,255,0.78),rgba(255,255,255,0.96))] px-5 py-3 dark:bg-[linear-gradient(180deg,rgba(18,24,36,0.9),rgba(14,20,31,0.98))]">
-      <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
-        <div className="min-w-0 flex-1">
-          <nav className="flex flex-wrap items-center gap-2 pr-2">
-            <button
-              type="button"
-              onClick={() => navigateToWorkspaceTab("overview")}
-              className={`group flex items-center gap-2 rounded-full border px-3 py-1.5 text-left transition-all hover:bg-surface-container-low/70 ${activeTab === "overview"
-                  ? "border-[#2563eb]/30 bg-[#2563eb]/8"
-                  : "border-outline-variant/35 bg-surface"
-                }`}
-            >
-              <span
-                className={`flex size-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${activeTab === "overview"
-                    ? "bg-[#2563eb] text-white"
-                    : "border border-outline-variant/60 bg-surface text-on-surface-variant"
-                  }`}
-              >
-                <Boxes size={10} />
-              </span>
-              <span className={`whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.14em] ${activeTab === "overview" ? "text-[#2563eb] dark:text-[#9ab8ff]" : "text-on-surface-variant"
-                }`}>
-                Overview
-              </span>
-            </button>
-            {STAGES.map((stage, index) => {
-              const isCompleted = index < activeStepIndex;
-              const isActive = index === activeStepIndex;
-              const isLocked = index > activeStepIndex;
-
-              let percent = 0;
-              let statusColor = "text-on-surface-variant";
-
-              if (stage.key === "DOCUMENT_COLLECTION") {
-                percent = docPercentage;
-                statusColor = isCompleted || isActive ? "text-[#2563eb] dark:text-[#9ab8ff]" : "text-on-surface-variant/50";
-              } else if (stage.key === "ADDITIONAL_DATA") {
-                percent = additionalDataPercentage;
-                statusColor = isCompleted || isActive ? "text-[#2563eb] dark:text-[#9ab8ff]" : "text-on-surface-variant/50";
-              } else if (stage.key === "CHECKLIST_PREPARATION") {
-                percent = checklistPrepPercentage;
-                statusColor = isCompleted || isActive || currentChecklistVersion ? "text-[#2563eb] dark:text-[#9ab8ff]" : "text-on-surface-variant/50";
-              } else if (stage.key === "CHECKLIST_APPROVAL") {
-                percent = checklistApprovalPercentage;
-                statusColor =
-                  isCompleted || isActive || (activeStepIndex === 2 && currentChecklistVersion)
-                    ? checklistWorkflow?.currentApprovalStage === "INTERNAL"
-                      ? "text-[#fb923c]"
-                      : "text-[#2563eb] dark:text-[#9ab8ff]"
-                    : "text-on-surface-variant/50";
-              } else if (stage.key === "FILING") {
-                percent = filingPercentage;
-                statusColor = isCompleted || isActive ? "text-[#2563eb] dark:text-[#9ab8ff]" : "text-on-surface-variant/50";
-              } else if (stage.key === "FILED") {
-                percent = filedPercentage;
-                statusColor = isCompleted ? "text-[#2563eb] dark:text-[#9ab8ff]" : "text-on-surface-variant/50";
-              }
-
-              const isClickable = !isLocked || stage.key === "CHECKLIST_APPROVAL";
-              const isHighlighted =
-                (activeTab === "docs" && stage.key === "DOCUMENT_COLLECTION") ||
-                (activeTab === "additionalData" && stage.key === "ADDITIONAL_DATA") ||
-                (activeTab === "checklist" && stage.key === "CHECKLIST_PREPARATION" && !currentChecklistVersion) ||
-                (activeTab === "checklist" && stage.key === "CHECKLIST_APPROVAL" && !!currentChecklistVersion) ||
-                (activeTab === "filing" && stage.key === "FILING") ||
-                (activeTab === "filing" && stage.key === "FILED" && activeStepIndex >= 5);
-
-              return (
-                <div key={stage.key} className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!isClickable) return;
-                      openWorkflowStage(stage.key);
-                    }}
-                    disabled={!isClickable}
-                    className={`group flex items-center gap-2 rounded-full border px-3 py-1.5 text-left transition-all ${isClickable ? "hover:bg-surface-container-low/70" : "cursor-not-allowed opacity-55"
-                      } ${isHighlighted ? "border-[#2563eb]/30 bg-[#2563eb]/8" : "border-outline-variant/35 bg-surface"}`}
-                  >
-                    <span
-                      className={`flex size-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold transition-all ${isCompleted
-                          ? "bg-[#2563eb] text-white"
-                          : isActive
-                            ? "border border-[#2563eb] bg-surface text-[#2563eb] shadow-[0_10px_24px_-18px_rgba(37,99,235,0.9)] dark:text-[#9ab8ff]"
-                            : "border border-outline-variant/60 bg-surface text-on-surface-variant"
-                        }`}
-                    >
-                      {isCompleted ? <Check size={10} /> : index + 1}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className={`whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.14em] ${isHighlighted ? statusColor : "text-on-surface-variant"}`}>
-                        {stage.label}
-                      </span>
-                      {(isCompleted || isActive) && stage.key !== "FILED" ? (
-                        <span className={`text-[9px] font-semibold ds-numeric ${statusColor}`}>{percent}%</span>
-                      ) : null}
-                    </span>
-                  </button>
-                  {index < STAGES.length - 1 ? (
-                    <span className={`hidden h-px w-5 rounded-full lg:block ${index < activeStepIndex ? "bg-[#2563eb]" : "bg-outline-variant/45"}`} />
-                  ) : null}
-                </div>
-              );
-            })}
-          </nav>
-        </div>
-
-        <div className="grid grid-cols-1 gap-2 self-start xl:grid-cols-2 xl:self-auto">
-            <div className="rounded-[20px] border border-[#2563eb]/18 bg-surface px-4 py-3 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.22)]">
-              <p className="ds-label text-on-surface-variant">Stage</p>
-              <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface">
-                {STAGES[Math.max(activeStepIndex, 0)]?.label ?? "Pending"}
-              </p>
-            </div>
-            <div className="rounded-[20px] border border-[#2563eb]/18 bg-surface px-4 py-3 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.22)]">
-              <p className="ds-label text-on-surface-variant">Progress</p>
-              <p className="mt-2 text-lg font-semibold text-[#2563eb] dark:text-[#9ab8ff] ds-numeric">{stageProgress}%</p>
-              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-outline-variant/20">
-                <div
-                  className="h-full rounded-full bg-[linear-gradient(90deg,#2563eb_0%,#38bdf8_100%)] transition-all duration-500"
-                  style={{ width: `${stageProgress}%` }}
-                />
-              </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <main className="w-full space-y-5 overflow-x-hidden pb-6">
-      {isOverviewTab ? (
-        <div style={overviewThemeVars} className="space-y-4">
+      <div style={overviewThemeVars} className="space-y-4">
           <section
             className="relative overflow-hidden rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] shadow-[0_18px_38px_-30px_rgba(15,23,42,0.18)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]"
             style={{
@@ -5561,9 +5440,8 @@ export function JobWorkspaceClient({
 
             </div>
           </section>
-        </div>
-      ) : (
-        <>
+      </div>
+
       {dueDateWarnings.map((warning) => (
         <ChaDueDateWarningNote
           key={warning.notificationId}
@@ -5575,92 +5453,6 @@ export function JobWorkspaceClient({
           }}
         />
       ))}
-
-      <section className="overflow-hidden rounded-[32px] border border-[#2563eb]/18 bg-surface shadow-[0_22px_54px_-42px_rgba(15,23,42,0.34)]">
-        <div className="min-w-0">
-          {/* Top row: identity + actions */}
-          <div className="relative flex flex-col gap-3 px-5 pt-5 pb-4 lg:flex-row lg:items-center lg:justify-between">
-            {/* Left: title block */}
-            <div className="min-w-0 flex-1 space-y-1">
-              {/* Pill badges row */}
-              <div className="flex flex-wrap items-center gap-2">
-                {topJobBadges.map((badge) => (
-                  <Badge key={`${badge.label}-${badge.variant}`} variant={badge.variant} className="uppercase">
-                    {badge.label}
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <h1 className="ds-h1 ds-numeric text-on-surface">{job.jobNumber}</h1>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await navigator.clipboard.writeText(job.jobNumber);
-                    toast.success("Job number copied.");
-                  }}
-                  className="rounded-full border border-outline-variant/30 p-2 text-on-surface-variant transition hover:border-[#2563eb]/40 hover:text-[#2563eb] dark:hover:text-[#9ab8ff]"
-                  aria-label="Copy job number"
-                >
-                  <Copy size={14} />
-                </button>
-              </div>
-              <p className="max-w-3xl text-sm leading-relaxed text-on-surface-variant">{job.title}</p>
-            </div>
-
-            <div className="flex items-center gap-2 self-start">
-              {canDeleteJob ? (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0 !border-red-500/45 !bg-white !text-red-500 hover:!border-red-600 hover:!bg-white hover:!text-red-600 dark:!bg-surface [&_svg]:!text-red-500 [&_svg]:!stroke-red-500"
-                    disabled={loading !== null || Boolean(activeDeletionRequest)}
-                    onClick={() => setDeleteModalMode("delete")}
-                  >
-                    <Trash2 className="mr-1.5 size-3.5" />
-                    {activeDeletionRequest ? "Deletion Pending" : "Delete"}
-                  </Button>
-                </>
-              ) : null}
-            </div>
-          </div>
-
-          {/* Meta row: customer · owner · manager — full width, no stacking */}
-          <div className="flex flex-col xl:flex-row w-full divide-y xl:divide-y-0 xl:divide-x divide-[#dbeafe] dark:divide-white/6 border-t border-[#2563eb]/12 bg-surface-container-low/25 px-5 py-4">
-            {overviewMetaItems.map((item) => (
-              <div
-                key={item.label}
-                className="flex h-full items-start gap-3 px-4 py-3 flex-auto min-w-[140px]"
-              >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#2563eb]/10 text-[#2563eb] xl:mt-0.5 dark:text-[#9ab8ff]">{item.icon}</span>
-                <div className="flex min-h-[52px] min-w-0 flex-1 flex-col overflow-hidden">
-                  <p className="ds-label leading-none">{item.label}</p>
-                  <p className="mt-1.5 text-sm font-semibold leading-5 text-on-surface break-words [overflow-wrap:anywhere]">
-                    {item.value}
-                  </p>
-                  {item.secondary ? (
-                    <p className="mt-1 text-[11px] leading-4 text-on-surface-variant break-all">
-                      {item.secondary}
-                    </p>
-                  ) : null}
-                  {item.label === "Manager" && canUpdateJob ? (
-                    <button
-                      type="button"
-                      onClick={() => setIsEditingManager(true)}
-                      className="mt-auto self-start pt-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2563eb] transition-colors hover:text-[#1d4ed8] dark:text-[#9ab8ff] dark:hover:text-white ds-plain"
-                    >
-                      Change
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            ))}
-          </div>
-          {workflowNavigator}
-        </div>
-      </section>
-        </>
-      )}
 
       {!job.assignedManagerId && (
         <div className="rounded-2xl border border-[#fb923c]/35 bg-[#fb923c]/10 p-4">
@@ -6086,8 +5878,6 @@ export function JobWorkspaceClient({
                   }
                 >
                   <div className="space-y-6">
-                    <FilingDocumentsPageHeader />
-
                     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
                       <div className="space-y-5">
                         <WorkflowDocumentsSectionHeader
@@ -6095,7 +5885,7 @@ export function JobWorkspaceClient({
                           searchValue={documentSearchQuery}
                           onSearchChange={setDocumentSearchQuery}
                           filterMode={documentsFilterMode}
-                          onFilterToggle={cycleDocumentsFilterMode}
+                          onFilterChange={setDocumentsFilterMode}
                         />
 
                         <div className="flex flex-wrap items-center gap-3">
@@ -6152,7 +5942,13 @@ export function JobWorkspaceClient({
                                     loadingKey={loading}
                                     currentUserId={currentUserId}
                                     canDelete={Boolean(canDeleteDoc || canManageSettings || currentUserId === job.primaryOwnerId)}
-                                    selected={selectedWorkflowDocumentRequirement?.id === req.id}
+                                    downloadUrl={
+                                      previewUrls[currentVersion.id] ||
+                                      (currentVersion.source === "CUSTOMER_PORTAL"
+                                        ? `/api/cha/customer-documents/${currentVersion.id}?download=true`
+                                        : `/api/cha/documents/${currentVersion.id}?download=true`)
+                                    }
+                                    selected={selectedDocumentRequirementId === req.id}
                                     onSelect={(requirementId) => {
                                       setSelectedDocumentRequirementId(requirementId);
                                       setIsDocumentDrawerOpen(true);
@@ -6419,20 +6215,17 @@ export function JobWorkspaceClient({
                         ) : null}
 
                         <div className="space-y-4">
-                          <div className="space-y-3">
-                            <p className="ds-label text-[#00cec4]">Pending By Category</p>
-                            <p className="text-sm text-on-surface-variant">
-                              Categories follow CHA settings. Only documents configured under each heading are shown there.
-                            </p>
-                          </div>
                           {groupedPendingWorkflowDocuments.length > 0 ? (
                             groupedPendingWorkflowDocuments.map((group) => (
-                              <section key={group.categoryName} className="space-y-4 rounded-[24px] border border-outline-variant/45 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
-                                <div className="space-y-1 border-b border-outline-variant/20 pb-4">
-                                  <p className="text-lg font-semibold text-on-surface">{group.categoryName}</p>
-                                  <p className="text-sm text-on-surface-variant">
-                                    {group.requirements.length} requirement{group.requirements.length === 1 ? "" : "s"} pending action in this category.
-                                  </p>
+                              <section key={group.categoryName} className="space-y-4">
+                                <div className="flex items-start gap-3">
+                                  <span className="mt-0.5 h-9 w-1 shrink-0 rounded-full bg-[#00cec4]" aria-hidden="true" />
+                                  <div className="min-w-0 space-y-1">
+                                    <p className="ds-h3 text-on-surface">{group.categoryName}</p>
+                                    <p className="text-sm text-on-surface-variant">
+                                      {group.requirements.length} requirement{group.requirements.length === 1 ? "" : "s"} pending action in this category.
+                                    </p>
+                                  </div>
                                 </div>
                                 <div className="grid gap-4 xl:grid-cols-2">
                                   {group.requirements.map((req: WorkflowDocumentRequirement) => (
@@ -6446,7 +6239,7 @@ export function JobWorkspaceClient({
                                       <RequirementDocumentCard
                                         requirement={req}
                                         loadingKey={loading}
-                                        selected={selectedWorkflowDocumentRequirement?.id === req.id}
+                                        selected={selectedDocumentRequirementId === req.id}
                                         onSelect={(requirementId) => {
                                           setSelectedDocumentRequirementId(requirementId);
                                           setIsDocumentDrawerOpen(true);
@@ -9050,9 +8843,8 @@ export function JobWorkspaceClient({
 
               {activeTab === "overview" && (
                 <div className="space-y-6">
-                  <section style={overviewThemeVars} className="rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
-                    <div className="grid items-stretch gap-8 xl:grid-cols-3">
-                    <section className="h-full">
+                  <div style={overviewThemeVars} className="grid items-stretch gap-4 xl:grid-cols-3">
+                    <section className="h-full rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
@@ -9081,7 +8873,7 @@ export function JobWorkspaceClient({
                       </div>
                     </section>
 
-                    <section className="h-full xl:border-l xl:border-[var(--cha-overview-line)] xl:pl-8 xl:dark:border-[var(--cha-overview-line-dark)]">
+                    <section className="h-full rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
                       <div className="flex items-center gap-3">
                         <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                           <CalendarDays size={16} />
@@ -9119,7 +8911,7 @@ export function JobWorkspaceClient({
                       </div>
                     </section>
 
-                    <section className="h-full xl:border-l xl:border-[var(--cha-overview-line)] xl:pl-8 xl:dark:border-[var(--cha-overview-line-dark)]">
+                    <section className="h-full rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
                       <div className="flex items-center gap-3">
                         <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                           <Zap size={16} />
@@ -9155,8 +8947,7 @@ export function JobWorkspaceClient({
                         ))}
                       </div>
                     </section>
-                    </div>
-                  </section>
+                  </div>
 
                   <section style={overviewThemeVars} className="rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -552,7 +552,7 @@ export function TodoClient({
           </div>
         </div>
 
-        <DataTable className="rounded-none border-0 shadow-none">
+        <DataTable>
           <DataTableHeader>
             <tr>
               <DataTableHead>Task</DataTableHead>

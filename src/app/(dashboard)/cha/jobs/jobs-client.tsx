@@ -467,10 +467,7 @@ export function JobsClient({
           actions={<ChaVisibleRecords visible={data.items.length} total={data.total} tone={isActiveSection ? "blue" : "green"} />}
         >
           <div className="overflow-hidden">
-            <DataTable
-              className="w-full !rounded-none shadow-none"
-              tableClassName="[&_td]:!border-b-0 [&_th]:!border-b-0 [&_th]:![background:var(--color-surface-container-low)] [&_tbody_tr:hover]:![background:transparent] [&_tbody_tr:hover]:!shadow-none"
-            >
+            <DataTable>
               <DataTableHeader>
                 <tr>
                   <DataTableHead className="py-4">Job Number</DataTableHead>
