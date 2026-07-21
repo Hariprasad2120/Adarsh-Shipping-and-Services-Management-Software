@@ -18,7 +18,6 @@ import {
   Settings,
   ArrowRight,
   Sparkles,
-  ChevronRight,
   History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -292,13 +291,7 @@ export default async function ChaDashboard() {
   return (
     <div className="space-y-8">
       <ChaPageHeader
-        eyebrow={
-          <>
-            <span>CHA</span>
-            <ChevronRight size={14} />
-            <span>Dashboard</span>
-          </>
-        }
+        eyebrow={null}
         title="CHA Dashboard"
         description="A logistics control tower view for customs clearance, live filing queues, due-date risk, and assigned execution."
         icon={<Sparkles size={20} />}
@@ -321,18 +314,9 @@ export default async function ChaDashboard() {
         title="My Assigned Jobs"
         description="Open or manage the jobs currently assigned to you."
         icon={<UserCheck size={18} />}
+        contentClassName="!p-0"
         actions={
           <>
-            <div className="flex items-center gap-3 rounded-[22px] border border-[#2563eb]/16 bg-surface-container-low/65 px-4 py-3 shadow-[0_16px_32px_-28px_rgba(15,23,42,0.18)]">
-              <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/45 bg-surface shadow-[0_12px_20px_-18px_rgba(15,23,42,0.24)] dark:border-white/10">
-                <Sparkles size={16} className="text-[#2563eb] dark:text-[#7aa2ff]" />
-              </div>
-              <div>
-                <p className="ds-label">Assigned Now</p>
-                <p className="ds-numeric text-sm text-on-surface">{myJobs.length}</p>
-              </div>
-            </div>
-
             <DashboardCreateJob
               currentUserId={session.user.id}
               options={{
@@ -360,7 +344,7 @@ export default async function ChaDashboard() {
           </>
         }
       >
-        <DataTable className="w-full">
+        <DataTable className="w-full rounded-none border-0 shadow-none">
           {myJobs.length === 0 ? (
             <>
               <DataTableHeader>
@@ -405,9 +389,9 @@ export default async function ChaDashboard() {
               <DataTableBody>
                 {myJobs.map((job) => (
                   <ClickableRow key={job.id} href={`/cha/jobs/${job.id}`}>
-                    <DataTableCell className="font-medium text-[#2563eb] dark:text-[#7aa2ff]">
+                    <DataTableCell className="font-medium text-[#00cec4]">
                       <div className="flex items-center gap-2">
-                        <Link href={`/cha/jobs/${job.id}`} className="transition-colors hover:text-[#1d4ed8] dark:hover:text-[#9ab8ff]">
+                        <Link href={`/cha/jobs/${job.id}`} className="transition-colors hover:text-[#00b8af]">
                           {job.jobNumber}
                         </Link>
                         {section49WarningMap.get(job.id) ? (
@@ -474,17 +458,17 @@ export default async function ChaDashboard() {
                 <Link
                   key={item.id}
                   href={item.href}
-                  className="flex items-start gap-3 rounded-[20px] border border-outline-variant/25 bg-surface-container-low/35 px-4 py-3 transition hover:border-[#2563eb]/35 hover:bg-surface"
+                  className="flex items-start gap-3 rounded-xl border border-outline-variant/25 bg-surface-container-low/35 px-4 py-3 transition hover:border-[#00cec4]/35 hover:bg-surface"
                 >
                   <span
-                    className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${
-                      item.tone === "orange" ? "bg-[#fb923c]/12 text-[#fb923c]" : "bg-[#2563eb]/10 text-[#2563eb] dark:text-[#7aa2ff]"
+                    className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                      item.tone === "orange" ? "bg-[#fb923c]/12 text-[#fb923c]" : "bg-[#00cec4]/10 text-[#00cec4]"
                     }`}
                   >
                     <AlertCircle size={15} />
                   </span>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-on-surface">{item.label}</p>
+                    <p className="text-xs font-normal uppercase tracking-[0.12em] text-on-surface">{item.label}</p>
                     <p className="mt-1 truncate text-xs text-on-surface-variant">{item.note}</p>
                   </div>
                 </Link>
@@ -508,10 +492,10 @@ export default async function ChaDashboard() {
                 <Link
                   key={item.id}
                   href={item.href}
-                  className="flex items-start justify-between gap-3 rounded-[20px] border border-outline-variant/25 bg-surface-container-low/35 px-4 py-3 transition hover:border-[#2563eb]/35 hover:bg-surface"
+                  className="flex items-start justify-between gap-3 rounded-xl border border-outline-variant/25 bg-surface-container-low/35 px-4 py-3 transition hover:border-[#00cec4]/35 hover:bg-surface"
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium uppercase tracking-[0.08em] text-on-surface">{item.label}</p>
+                    <p className="text-xs font-normal uppercase tracking-[0.12em] text-on-surface">{item.label}</p>
                     <p className="mt-1 text-xs text-on-surface-variant">{item.note}</p>
                     <p className="mt-1 text-xs text-on-surface-variant">{item.message}</p>
                   </div>
@@ -542,10 +526,10 @@ export default async function ChaDashboard() {
               recentActivity.map((log) => (
                 <div
                   key={log.id}
-                  className="rounded-[20px] border border-outline-variant/25 bg-surface-container-low/35 px-4 py-3"
+                  className="rounded-xl border border-outline-variant/25 bg-surface-container-low/35 px-4 py-3"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-on-surface">{log.event.replace(/_/g, " ")}</p>
+                    <p className="text-xs font-normal uppercase tracking-[0.12em] text-on-surface">{log.event.replace(/_/g, " ")}</p>
                     <span className="text-xs text-on-surface-variant ds-numeric">
                       {log.timestamp.toLocaleString("en-IN")}
                     </span>
@@ -553,7 +537,7 @@ export default async function ChaDashboard() {
                   <p className="mt-1 text-xs text-on-surface-variant">{log.remarks || "Operational event logged."}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-on-surface-variant">
                     {log.job ? (
-                      <Link href={`/cha/jobs/${log.job.id}`} className="text-[#2563eb] hover:underline dark:text-[#7aa2ff]">
+                      <Link href={`/cha/jobs/${log.job.id}`} className="text-[#00cec4] hover:text-[#00b8af] hover:underline">
                         {log.job.jobNumber}
                       </Link>
                     ) : null}

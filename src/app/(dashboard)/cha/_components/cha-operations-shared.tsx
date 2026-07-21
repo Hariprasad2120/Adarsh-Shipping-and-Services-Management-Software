@@ -119,7 +119,9 @@ export function ChaPageHeader({
               </span>
             )}
             <div className="space-y-1">
-              <h1 className="ds-h1 text-on-surface">{title}</h1>
+              <h1 className="text-2xl font-medium uppercase leading-none tracking-[0.075em] text-on-surface">
+                {title}
+              </h1>
               {description && <p className="max-w-2xl text-sm text-on-surface-variant">{description}</p>}
             </div>
           </div>
@@ -160,7 +162,11 @@ export function ChaMetricCard({
       />
       <div className="relative flex items-start justify-between gap-4">
         <div className="space-y-1.5">
-          <p className="text-[10px] uppercase tracking-wider text-cha-text-muted">{title}</p>
+          <p
+            className="text-[11px] font-medium uppercase leading-none tracking-[0.08em] text-on-surface-variant"
+          >
+            {title}
+          </p>
           <div className="ds-numeric text-3xl tracking-tight text-cha-text-primary">{value}</div>
           {note && <p className="text-xs text-cha-text-muted">{note}</p>}
         </div>
@@ -178,16 +184,18 @@ export function ChaControlPanel({
   icon,
   children,
   actions,
+  contentClassName,
 }: {
   title: string;
   description?: string;
   icon?: ReactNode;
   children?: ReactNode;
   actions?: ReactNode;
+  contentClassName?: string;
 }) {
   return (
     <section className="relative overflow-hidden rounded-2xl border border-cha-border bg-cha-surface shadow-sm dark:border-cha-border-strong">
-      <div className="relative border-b border-cha-border px-5 py-4 dark:border-cha-border-strong">
+      <div className="relative px-5 py-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             {icon && (
@@ -196,14 +204,17 @@ export function ChaControlPanel({
               </span>
             )}
             <div className="space-y-0.5">
-              <h2 className="text-lg text-cha-text-primary uppercase font-display">{title}</h2>
+              <h2 className="text-lg font-medium uppercase leading-none tracking-[0.075em] text-on-surface">
+                {title}
+              </h2>
               {description && <p className="text-xs text-cha-text-muted">{description}</p>}
             </div>
           </div>
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </div>
+        <div className="pointer-events-none absolute inset-x-5 bottom-0 border-b border-outline-variant/60 dark:border-outline-variant" />
       </div>
-      {children ? <div className="relative bg-cha-surface-subtle p-5">{children}</div> : null}
+      {children ? <div className={cn("relative bg-cha-surface-subtle p-5", contentClassName)}>{children}</div> : null}
     </section>
   );
 }
@@ -230,7 +241,7 @@ export function ChaSectionShell({
 
   return (
     <section className={cn("relative overflow-hidden rounded-2xl border bg-cha-surface shadow-sm", tone.border)}>
-      <div className="relative border-b border-cha-border px-5 py-4 dark:border-cha-border-strong">
+      <div className="relative px-5 py-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             {icon && (
@@ -240,7 +251,9 @@ export function ChaSectionShell({
             )}
             <div className="space-y-0.5">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base text-cha-text-primary uppercase font-display">{title}</h2>
+                <h2 className="text-lg font-medium uppercase leading-none tracking-[0.075em] text-on-surface">
+                  {title}
+                </h2>
                 {badge && (
                   <span className={cn("rounded-full px-2 py-0.5 text-[9px] uppercase tracking-wider", tone.badge)}>
                     {badge}
@@ -252,6 +265,7 @@ export function ChaSectionShell({
           </div>
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </div>
+        <div className="pointer-events-none absolute inset-x-5 bottom-0 border-b border-outline-variant/60 dark:border-outline-variant" />
       </div>
       <div className="relative">{children}</div>
     </section>

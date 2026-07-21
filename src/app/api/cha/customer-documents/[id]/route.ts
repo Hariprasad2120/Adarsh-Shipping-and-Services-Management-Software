@@ -2,6 +2,8 @@ import fs from "fs/promises";
 import path from "path";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { createFileResponseHeaders, createPlaceholderImageBuffer, createPreviewPdfBuffer } from "@/lib/document-preview";
+import { downloadFile, extractDriveFileId } from "@/lib/google-drive-client";
 import { can } from "@/lib/rbac";
 
 export async function GET(
@@ -47,16 +49,57 @@ export async function GET(
     return new Response("Access Denied", { status: 403 });
   }
 
-  const absolutePath = path.join(process.cwd(), "public", documentVersion.fileKey);
-  const fileBuffer = await fs.readFile(absolutePath);
+  const filename = documentVersion.fileName;
+  const mimeType = documentVersion.mimeType || "application/octet-stream";
+  const fileKey = documentVersion.fileKey || "";
   const { searchParams } = new URL(request.url);
   const forceDownload = searchParams.get("download") === "true";
 
-  return new Response(fileBuffer, {
-    headers: {
-      "Content-Type": documentVersion.mimeType || "application/octet-stream",
-      "Content-Disposition": `${forceDownload ? "attachment" : "inline"}; filename="${documentVersion.fileName}"`,
-      "X-Content-Type-Options": "nosniff",
-    },
+  const absolutePath = path.join(process.cwd(), "public", fileKey);
+  const localFileStat = await fs.stat(absolutePath).catch(() => null);
+  if (localFileStat?.isFile()) {
+    const fileBuffer = await fs.readFile(absolutePath);
+    const headers = createFileResponseHeaders({
+      filename,
+      mimeType,
+      contentLength: fileBuffer.length,
+      forceDownload,
+    });
+    return new Response(fileBuffer, { headers });
+  }
+
+  const driveFileId = extractDriveFileId(fileKey);
+  if (driveFileId && !driveFileId.startsWith("mock-")) {
+    try {
+      const fileBuffer = await downloadFile(driveFileId);
+      const headers = createFileResponseHeaders({
+        filename,
+        mimeType,
+        contentLength: fileBuffer.length,
+        forceDownload,
+      });
+      return new Response(new Uint8Array(fileBuffer), { headers });
+    } catch (error) {
+      console.error("Error downloading Drive customer document preview:", error);
+    }
+  }
+
+  const contentBuffer = mimeType === "application/pdf"
+    ? createPreviewPdfBuffer({
+      title: `Customer document preview - ${filename}`,
+      detail: "This is a secure mock preview of the uploaded customer document.",
+      sizeBytes: documentVersion.sizeBytes,
+    })
+    : mimeType.startsWith("image/")
+      ? createPlaceholderImageBuffer()
+      : Buffer.from(`Mock Content of ${filename}\nSize: ${documentVersion.sizeBytes} bytes`);
+
+  const headers = createFileResponseHeaders({
+    filename,
+    mimeType,
+    contentLength: contentBuffer.length,
+    forceDownload,
   });
+
+  return new Response(new Uint8Array(contentBuffer), { headers });
 }

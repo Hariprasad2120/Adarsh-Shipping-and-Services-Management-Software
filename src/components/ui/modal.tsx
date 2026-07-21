@@ -12,9 +12,10 @@ type ModalProps = {
   onClose: () => void;
   children: React.ReactNode;
   className?: string;
+  titleClassName?: string;
 };
 
-export function Modal({ open, title, description, onClose, children, className }: ModalProps) {
+export function Modal({ open, title, description, onClose, children, className, titleClassName }: ModalProps) {
   React.useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -42,7 +43,7 @@ export function Modal({ open, title, description, onClose, children, className }
       >
         <div className="flex items-start justify-between gap-4 border-b border-outline-variant/35 bg-surface-container-low px-6 py-5">
           <div className="min-w-0">
-            <h2 className="ds-h2 text-on-surface">{title}</h2>
+            <h2 className={cn("ds-h2 text-on-surface", titleClassName)}>{title}</h2>
             {description ? <p className="mt-1 text-sm text-on-surface-variant">{description}</p> : null}
           </div>
           <button

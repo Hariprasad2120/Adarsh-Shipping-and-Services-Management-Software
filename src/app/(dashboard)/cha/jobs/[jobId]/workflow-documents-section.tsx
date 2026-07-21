@@ -4,6 +4,7 @@
 import * as React from "react";
 import {
   CheckCircle2,
+  Ban,
   Circle,
   Download,
   Eye,
@@ -100,7 +101,6 @@ type UploadedWorkflowDocumentCardProps = {
   loadingKey: string | null;
   currentUserId: string;
   canDelete: boolean;
-  downloadUrl: string | null;
   onPreview: (requirementId: string) => void;
   onDelete: (requirementId: string, versionId: string, fileName: string) => void;
   onDeclareExemption: (requirementId: string) => void;
@@ -181,6 +181,14 @@ function formatFileSize(sizeBytes?: number | null) {
   return `${(sizeBytes / 1024).toFixed(1)} KB`;
 }
 
+function OrangeDocumentBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <Badge variant="warning" className="!border-[#fb923c]/35 !bg-[#fb923c]/10 !text-[#fb923c]">
+      {children}
+    </Badge>
+  );
+}
+
 function getDocumentStatusBadge(status: string) {
   if (status === "UPLOADED") {
     return <Badge variant="success">UPLOADED</Badge>;
@@ -201,7 +209,7 @@ function getDocumentStatusBadge(status: string) {
     return <Badge variant="destructive">REJECTED</Badge>;
   }
   if (status === "NOT_AVAILABLE") {
-    return <Badge variant="warning">NOT AVAILABLE</Badge>;
+    return <OrangeDocumentBadge>NOT AVAILABLE</OrangeDocumentBadge>;
   }
   return <Badge variant="secondary">PENDING</Badge>;
 }
@@ -228,7 +236,7 @@ function DocumentStatusBadge({ status }: { status: string }) {
   }
 
   if (status === "NOT_AVAILABLE") {
-    return <Badge variant="warning">NOT AVAILABLE</Badge>;
+    return <OrangeDocumentBadge>NOT AVAILABLE</OrangeDocumentBadge>;
   }
 
   return <Badge variant="secondary">PENDING</Badge>;
@@ -245,9 +253,9 @@ function DocumentDetailRow({ label, value }: { label: string; value: React.React
 
 function PreviewSectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="h-8 w-1 shrink-0 rounded-full bg-[#00cec4]" aria-hidden="true" />
-      <h4 className="ds-h3 text-on-surface">{children}</h4>
+    <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-4">
+      <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+      <h4 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">{children}</h4>
     </div>
   );
 }
@@ -270,6 +278,13 @@ export function RequirementDocumentCard({
   const isNa = requirement.exception?.reason === "N/A";
   const metadataLabel = isNa ? "Marked by" : "Declared by";
   const shouldShowUpload = !hideUploadWhenExempted || !isExempted;
+  const statusPanelClass = isNa
+    ? "border-outline-variant/60 bg-surface-container-low"
+    : "border-[#fb923c]/20 bg-[#fb923c]/8";
+  const statusIconClass = isNa
+    ? "bg-surface-container text-on-surface-variant"
+    : "bg-[#fb923c]/12 text-[#fb923c]";
+  const statusHeadingClass = isNa ? "text-on-surface-variant" : "text-[#fb923c]";
 
   return (
     <div
@@ -281,22 +296,22 @@ export function RequirementDocumentCard({
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h3 className="ds-h3 text-on-surface">{requirement.name}</h3>
+          <h3 className="text-base font-normal uppercase tracking-[0.12em] text-on-surface">{requirement.name}</h3>
         </div>
         <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2">
-          {requirement.isMandatory ? <Badge variant="warning">MANDATORY</Badge> : <Badge variant="secondary">OPTIONAL</Badge>}
+          {requirement.isMandatory ? <OrangeDocumentBadge>MANDATORY</OrangeDocumentBadge> : <Badge variant="secondary">OPTIONAL</Badge>}
           {getDocumentStatusBadge(requirement.status)}
         </div>
       </div>
 
       <div className="mt-4 flex-1">
-        <div className="rounded-xl border border-[#fb923c]/20 bg-[#fb923c]/8 px-4 py-3.5">
+        <div className={cn("rounded-xl border px-4 py-3.5", statusPanelClass)}>
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#fb923c]/12 text-[#fb923c]">
-              <Circle size={10} fill="currentColor" />
+            <span className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl", statusIconClass)}>
+              {isNa ? <Ban size={15} /> : isExempted ? <Circle size={10} fill="currentColor" /> : <Upload size={15} />}
             </span>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-[#fb923c]">{isNa ? "Marked as N/A" : isExempted ? "Exemption Declared" : "Awaiting Upload"}</p>
+              <p className={cn("text-xs font-normal uppercase tracking-[0.12em]", statusHeadingClass)}>{isNa ? "Marked as N/A" : isExempted ? "Exemption Declared" : "Awaiting Upload"}</p>
               {requirement.requirementItem?.description ? (
                 <p className="mt-1 text-xs text-on-surface-variant">{requirement.requirementItem.description}</p>
               ) : null}
@@ -376,10 +391,10 @@ export function WorkflowDocumentsSectionHeader({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="flex min-w-0 items-center gap-4">
-          <span className="block h-8 w-1.5 rounded-full bg-[#00cec4]" aria-hidden="true" />
+        <div className="grid min-w-0 grid-cols-[4px_minmax(0,1fr)] items-start gap-4">
+          <span className="mt-0.5 h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
           <div className="min-w-0">
-            <h3 className="ds-h3 text-on-surface">{title}</h3>
+            <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">{title}</h3>
             <p className="mt-1 text-sm text-on-surface-variant">
               Review uploaded document files, metadata, and workflow context.
             </p>
@@ -421,7 +436,7 @@ export function WorkflowDocumentsSectionHeader({
           </DropdownMenu>
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <span className="ds-label">Filter</span>
         <Badge variant={filterMode === "ALL" ? "secondary" : "default"}>{selectedFilterLabel}</Badge>
       </div>
@@ -449,7 +464,6 @@ export function UploadedWorkflowDocumentCard({
   loadingKey,
   currentUserId,
   canDelete,
-  downloadUrl,
   onPreview,
   onDelete,
   onDeclareExemption,
@@ -484,7 +498,7 @@ export function UploadedWorkflowDocumentCard({
               <FileText size={18} />
             </span>
             <div className="min-w-0">
-              <h3 className="ds-h3 text-on-surface">{requirement.name}</h3>
+              <h3 className="text-base font-normal uppercase tracking-[0.12em] text-on-surface">{requirement.name}</h3>
             </div>
           </div>
           <div className="flex shrink-0 items-center">
@@ -496,21 +510,10 @@ export function UploadedWorkflowDocumentCard({
           <div className="flex flex-col gap-3 px-4 py-3.5 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 items-center gap-4">
               <div className="min-w-0">
-                <a
-                  href={downloadUrl || undefined}
-                  download={version.fileName}
-                  className="flex min-w-0 items-center gap-2 text-left text-sm font-semibold text-on-surface transition-colors hover:text-[#00cec4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00cec4]/40"
-                  aria-label={`Download ${version.fileName}`}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    if (!downloadUrl) {
-                      event.preventDefault();
-                    }
-                  }}
-                >
+                <div className="flex min-w-0 items-center gap-2 text-left text-sm font-semibold text-on-surface">
                   <span className="truncate">{version.fileName}</span>
                   <Download size={16} className="shrink-0 text-[#00cec4]" />
-                </a>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -601,7 +604,19 @@ export function FilingDocumentPreviewDrawer({
   onPreviewError,
 }: FilingDocumentPreviewDrawerProps) {
   const [imageScale, setImageScale] = React.useState(1);
+  const [pdfPreviewState, setPdfPreviewState] = React.useState<{ key: string; url: string } | null>(null);
+  const onPreviewErrorRef = React.useRef(onPreviewError);
   const previewStateKey = `${version?.id || "none"}-${activeTab}`;
+  const pdfPreviewKey = `${version?.id || "none"}:${previewUrl || ""}`;
+  const effectivePdfPreviewUrl = previewUrl?.startsWith("blob:")
+    ? previewUrl
+    : pdfPreviewState?.key === pdfPreviewKey
+      ? pdfPreviewState.url
+      : null;
+
+  React.useEffect(() => {
+    onPreviewErrorRef.current = onPreviewError;
+  }, [onPreviewError]);
 
   React.useEffect(() => {
     if (!open) return;
@@ -615,6 +630,40 @@ export function FilingDocumentPreviewDrawer({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
+
+  React.useEffect(() => {
+    if (!open || !version || version.mimeType !== "application/pdf" || !previewUrl || previewUrl.startsWith("blob:")) {
+      return;
+    }
+
+    let isCancelled = false;
+    let objectUrl: string | null = null;
+
+    fetch(previewUrl, { credentials: "include" })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load PDF preview.");
+        }
+        return response.blob();
+      })
+      .then((blob) => {
+        if (isCancelled) return;
+        objectUrl = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+        setPdfPreviewState({ key: pdfPreviewKey, url: objectUrl });
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          onPreviewErrorRef.current();
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [open, pdfPreviewKey, previewUrl, version]);
 
   if (!open || !requirement) {
     return null;
@@ -642,7 +691,7 @@ export function FilingDocumentPreviewDrawer({
             <div className="flex items-start gap-3">
               <span className="mt-0.5 h-9 w-1 shrink-0 rounded-full bg-[#00cec4]" aria-hidden="true" />
               <div className="min-w-0 space-y-2">
-                <h3 className="ds-h3 truncate text-on-surface">{requirement.name}</h3>
+                <h3 className="truncate text-base font-normal uppercase tracking-[0.12em] text-on-surface">{requirement.name}</h3>
                 <DocumentStatusBadge status={requirement.status} />
               </div>
             </div>
@@ -691,7 +740,7 @@ export function FilingDocumentPreviewDrawer({
                       <FileText size={40} />
                     </span>
                     <div className="space-y-1">
-                      <p className="ds-h3 text-on-surface">No Document Uploaded</p>
+                      <p className="text-base font-normal uppercase tracking-[0.12em] text-on-surface">No Document Uploaded</p>
                     </div>
                     <p className="mx-auto max-w-[240px] text-sm text-on-surface-variant">
                       Use the Quick Upload section or click the document card actions to add a file.
@@ -714,13 +763,17 @@ export function FilingDocumentPreviewDrawer({
                         onLoad={onPreviewLoad}
                         onError={onPreviewError}
                       />
-                    ) : (
+                    ) : effectivePdfPreviewUrl ? (
                       <iframe
-                        src={previewUrl!}
+                        src={effectivePdfPreviewUrl}
                         className="h-[340px] w-full border-0"
                         title={version.fileName}
                         onLoad={onPreviewLoad}
                       />
+                    ) : (
+                      <div className="flex h-[340px] w-full items-center justify-center p-6 text-sm text-on-surface-variant">
+                        Loading PDF preview...
+                      </div>
                     )}
                   </>
                 ) : (
@@ -879,9 +932,12 @@ export function WorkflowProgressPanel({
   return (
     <aside className="rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-[0_20px_46px_-34px_rgba(15,23,42,0.16)] xl:sticky xl:top-24">
       <div className="space-y-5">
-        <div>
+        <div className="space-y-1">
           <p className="ds-label text-[#00cec4]">{eyebrow}</p>
-          <h3 className="ds-h3 mt-2 text-on-surface">{title}</h3>
+          <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-4">
+            <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+            <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">{title}</h3>
+          </div>
         </div>
 
         <div className="space-y-4">

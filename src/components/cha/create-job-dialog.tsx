@@ -2,6 +2,7 @@
 
 import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
@@ -99,8 +100,8 @@ function CreateJobBenefit({
   description: string;
 }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <span className="flex h-9 w-9 items-center justify-center rounded-[16px] border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-primary-soft)] text-[var(--cha-create-primary)]">
+    <div className="flex items-center justify-center gap-3 px-4 py-3 text-left">
+      <span className="flex h-9 w-9 items-center justify-center text-[var(--cha-create-primary)]">
         <Icon size={16} />
       </span>
       <div className="min-w-0">
@@ -170,34 +171,34 @@ function CreateJobSuccessOverlay({
   onAutoFinish: () => void;
   reducedMotion: boolean;
 }) {
-  if (!summary) return null;
+  if (!summary || typeof document === "undefined") return null;
 
   const { Icon: TransportIcon, label: transportLabel } = getShipmentVisual(summary.shipmentTypeName);
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {open ? (
         <motion.div
           animate={{ opacity: 1 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/78 p-3 backdrop-blur-md sm:p-4"
+          className="fixed inset-0 z-[100] grid min-h-dvh place-items-center bg-[rgba(15,23,42,0.72)] p-3 backdrop-blur-md sm:p-4"
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >
           <motion.div
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="relative max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl overflow-y-auto rounded-[24px] border border-[rgba(148,163,184,0.18)] bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(15,23,42,0.94))] p-5 text-slate-50 shadow-[0_32px_100px_-38px_rgba(15,23,42,0.95)] sm:max-h-[calc(100dvh-2rem)] sm:rounded-[28px] sm:p-8"
+            className="relative mx-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl overflow-y-auto rounded-[24px] border border-[rgba(0,206,196,0.22)] bg-[linear-gradient(180deg,rgba(15,23,42,0.99),rgba(17,24,39,0.98))] p-5 !text-slate-50 shadow-[0_32px_100px_-38px_rgba(15,23,42,0.95)] sm:max-h-[calc(100dvh-2rem)] sm:rounded-[28px] sm:p-8"
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             initial={{ opacity: 0, y: 24, scale: 0.97 }}
             transition={{ duration: 0.32, ease: "easeOut" }}
           >
             <div className="pointer-events-none absolute inset-0 opacity-50">
-              <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,rgba(96,165,250,0.22),transparent_60%)]" />
-              <div className="absolute right-10 top-8 h-40 w-80 rounded-full bg-[radial-gradient(circle,rgba(37,99,235,0.18),transparent_70%)] blur-2xl" />
+              <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,rgba(0,206,196,0.22),transparent_60%)]" />
+              <div className="absolute right-10 top-8 h-40 w-80 rounded-full bg-[radial-gradient(circle,rgba(0,206,196,0.18),transparent_70%)] blur-2xl" />
               <div
                 className="absolute inset-0 opacity-20"
                 style={{
                   backgroundImage:
-                    "radial-gradient(circle at 1px 1px, rgba(191,219,254,0.5) 1px, transparent 0)",
+                    "radial-gradient(circle at 1px 1px, rgba(153,246,228,0.5) 1px, transparent 0)",
                   backgroundSize: "28px 28px",
                 }}
               />
@@ -210,16 +211,16 @@ function CreateJobSuccessOverlay({
                     <CircleDot size={12} />
                     Workflow launched
                   </div>
-                  <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                  <h2 className="text-2xl font-semibold tracking-tight !text-white sm:text-3xl">
                     Customs Clearance Job Created
                   </h2>
-                  <p className="max-w-2xl text-sm text-slate-300">
+                  <p className="max-w-2xl text-sm !text-slate-200">
                     The shipment workflow has been initialized successfully.
                   </p>
                 </div>
                 <motion.button
                   animate={reducedMotion ? { scale: 1 } : { scale: [1, 1.04, 1] }}
-                  className="flex h-12 w-12 items-center justify-center rounded-full border border-[rgba(96,165,250,0.24)] bg-[rgba(37,99,235,0.18)] text-[var(--cha-create-success-primary,#60A5FA)] shadow-[0_0_0_10px_rgba(37,99,235,0.08)] sm:h-14 sm:w-14"
+                  className="flex h-12 w-12 items-center justify-center rounded-full border border-[rgba(0,206,196,0.24)] bg-[rgba(0,206,196,0.18)] text-[var(--cha-create-success-primary,#00cec4)] shadow-[0_0_0_10px_rgba(0,206,196,0.08)] sm:h-14 sm:w-14"
                   transition={reducedMotion ? { duration: 0 } : { duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
                   type="button"
                 >
@@ -228,30 +229,30 @@ function CreateJobSuccessOverlay({
               </div>
 
               <div className="rounded-[20px] border border-[rgba(148,163,184,0.18)] bg-[rgba(15,23,42,0.72)] p-4 sm:rounded-[24px] sm:p-6">
-                <div className="relative overflow-hidden rounded-[20px] border border-[rgba(96,165,250,0.16)] bg-[linear-gradient(180deg,rgba(15,23,42,0.95),rgba(2,6,23,0.9))] px-4 py-5 sm:rounded-[22px] sm:px-5 sm:py-6">
-                  <div className="absolute inset-x-6 top-1/2 h-px -translate-y-1/2 border-t border-dashed border-[rgba(96,165,250,0.35)] sm:inset-x-10" />
+                <div className="relative overflow-hidden rounded-[20px] border border-[rgba(0,206,196,0.16)] bg-[linear-gradient(180deg,rgba(15,23,42,0.95),rgba(2,6,23,0.9))] px-4 py-5 sm:rounded-[22px] sm:px-5 sm:py-6">
+                  <div className="absolute inset-x-6 top-1/2 h-px -translate-y-1/2 border-t border-dashed border-[rgba(0,206,196,0.35)] sm:inset-x-10" />
                   <div className="absolute left-8 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-emerald-400 shadow-[0_0_0_8px_rgba(16,185,129,0.12)] sm:left-12" />
                   <div className="absolute right-8 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-emerald-400 shadow-[0_0_0_8px_rgba(16,185,129,0.12)] sm:right-12" />
 
                   {reducedMotion ? (
                     <div className="relative grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
                       <div>
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Origin</p>
-                        <p className="mt-1 text-sm font-semibold text-white">Job Initialized</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] !text-slate-300">Origin</p>
+                        <p className="mt-1 text-sm font-semibold !text-white">Job Initialized</p>
                       </div>
-                      <div className="flex items-center justify-center rounded-full border border-[rgba(96,165,250,0.24)] bg-[rgba(37,99,235,0.18)] p-3 text-[var(--cha-create-success-primary,#60A5FA)]">
+                      <div className="flex items-center justify-center rounded-full border border-[rgba(0,206,196,0.24)] bg-[rgba(0,206,196,0.18)] p-3 text-[var(--cha-create-success-primary,#00cec4)]">
                         <TransportIcon size={22} />
                       </div>
                       <div className="md:text-right">
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Destination</p>
-                        <p className="mt-1 text-sm font-semibold text-white">Workflow Active</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] !text-slate-300">Destination</p>
+                        <p className="mt-1 text-sm font-semibold !text-white">Workflow Active</p>
                       </div>
                     </div>
                   ) : (
                     <div className="relative h-20 sm:h-24">
                       <motion.div
                         animate={{ x: ["0%", "88%"] }}
-                        className="absolute top-1/2 z-10 flex -translate-y-1/2 items-center gap-3 rounded-full border border-[rgba(96,165,250,0.24)] bg-[rgba(15,23,42,0.92)] px-4 py-2 text-[var(--cha-create-success-primary,#60A5FA)] shadow-[0_20px_40px_-28px_rgba(37,99,235,0.7)]"
+                        className="absolute top-1/2 z-10 flex -translate-y-1/2 items-center gap-3 rounded-full border border-[rgba(0,206,196,0.24)] bg-[rgba(15,23,42,0.92)] px-4 py-2 text-[var(--cha-create-success-primary,#00cec4)] shadow-[0_20px_40px_-28px_rgba(0,206,196,0.7)]"
                         initial={{ x: "0%" }}
                         transition={{ duration: 1.2, ease: [0.2, 0.8, 0.2, 1] }}
                       >
@@ -268,7 +269,7 @@ function CreateJobSuccessOverlay({
                             transition={{ delay: 0.28 + index * 0.18, duration: 0.24 }}
                           >
                             <span className="h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_0_8px_rgba(16,185,129,0.14)]" />
-                            <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400">{label}</span>
+                            <span className="text-[10px] uppercase tracking-[0.14em] !text-slate-300">{label}</span>
                           </motion.div>
                         ))}
                       </div>
@@ -288,26 +289,26 @@ function CreateJobSuccessOverlay({
                     className="rounded-2xl border border-[rgba(148,163,184,0.16)] bg-[rgba(15,23,42,0.68)] px-4 py-3"
                     key={item.label}
                   >
-                    <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
-                    <p className="mt-1 text-sm font-semibold text-white">{item.value}</p>
+                    <p className="text-[11px] uppercase tracking-[0.16em] !text-slate-300">{item.label}</p>
+                    <p className="mt-1 text-sm font-semibold !text-white">{item.value}</p>
                   </div>
                 ))}
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-xs text-slate-400">
+                <p className="text-xs !text-slate-300">
                   Redirecting back to CHA shortly.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Button
-                    className="ds-plain rounded-2xl border border-[rgba(148,163,184,0.18)] bg-[rgba(15,23,42,0.72)] px-5 py-2.5 text-sm text-white hover:border-[rgba(96,165,250,0.32)] hover:bg-[rgba(15,23,42,0.88)]"
+                    className="ds-plain rounded-2xl border border-[rgba(148,163,184,0.18)] bg-[rgba(15,23,42,0.72)] px-5 py-2.5 text-sm text-white hover:border-[rgba(0,206,196,0.32)] hover:bg-[rgba(15,23,42,0.88)]"
                     onClick={onCreateAnother}
                     type="button"
                   >
                     Create Another Job
                   </Button>
                   <Button
-                    className="!border-[var(--cha-create-success-primary,#60A5FA)] !bg-[var(--cha-create-success-primary,#2563EB)] !text-white hover:!bg-[#1D4ED8]"
+                    className="!border-[var(--cha-create-success-primary,#00cec4)] !bg-[var(--cha-create-success-primary,#00cec4)] !text-white hover:!bg-[#00b8af]"
                     onClick={onOpenJob}
                     type="button"
                   >
@@ -329,7 +330,8 @@ function CreateJobSuccessOverlay({
           </motion.div>
         </motion.div>
       ) : null}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 
@@ -1085,11 +1087,11 @@ export function CreateJobDialog({
         className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(2,6,23,0.66)] p-4 backdrop-blur-md animate-in fade-in duration-200"
         style={
           {
-            "--cha-create-primary": "#2563EB",
-            "--cha-create-primary-hover": "#1D4ED8",
-            "--cha-create-primary-active": "#1E40AF",
-            "--cha-create-primary-soft": "#EFF6FF",
-            "--cha-create-primary-border": "#BFDBFE",
+            "--cha-create-primary": "#00cec4",
+            "--cha-create-primary-hover": "#00b8af",
+            "--cha-create-primary-active": "#00a9b2",
+            "--cha-create-primary-soft": "rgba(0,206,196,0.10)",
+            "--cha-create-primary-border": "rgba(0,206,196,0.32)",
             "--cha-create-card": "#FFFFFF",
             "--cha-create-card-alt": "#F8FAFC",
             "--cha-create-text": "#0F172A",
@@ -1097,30 +1099,30 @@ export function CreateJobDialog({
             "--cha-create-muted": "#64748B",
             "--cha-create-border": "#E2E8F0",
             "--cha-create-divider": "rgba(148,163,184,0.22)",
-            "--cha-create-ring": "rgba(37,99,235,0.16)",
+            "--cha-create-ring": "rgba(0,206,196,0.16)",
           } as React.CSSProperties
         }
       >
         <div className="flex min-h-[calc(100dvh-2rem)] items-start justify-center py-2 sm:items-center sm:py-3">
-          <div className="flex h-[calc(100dvh-1rem)] w-full max-w-[1120px] flex-col overflow-hidden rounded-[26px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] shadow-[0_28px_82px_-42px_rgba(15,23,42,0.4)] dark:border-[#263449] dark:bg-[#111827] dark:[--cha-create-primary:#60A5FA] dark:[--cha-create-primary-hover:#93C5FD] dark:[--cha-create-primary-active:#3B82F6] dark:[--cha-create-primary-soft:rgba(37,99,235,0.16)] dark:[--cha-create-primary-border:#263449] dark:[--cha-create-card:#111827] dark:[--cha-create-card-alt:#0F172A] dark:[--cha-create-text:#F8FAFC] dark:[--cha-create-secondary:#CBD5E1] dark:[--cha-create-muted:#94A3B8] dark:[--cha-create-border:#263449] dark:[--cha-create-divider:rgba(148,163,184,0.18)] dark:[--cha-create-ring:rgba(96,165,250,0.18)] sm:h-[calc(100dvh-2rem)]">
-            <div className="relative overflow-hidden border-b border-[var(--cha-create-divider)] bg-[linear-gradient(135deg,rgba(239,246,255,0.95),rgba(248,250,252,0.92)_52%,rgba(219,234,254,0.68))] px-5 py-4 dark:bg-[linear-gradient(135deg,rgba(15,23,42,0.96),rgba(17,24,39,0.94)_48%,rgba(30,41,59,0.96))] sm:px-6">
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-[34%] overflow-hidden opacity-90">
+          <div className="flex h-[calc(100dvh-1rem)] w-full max-w-[1120px] flex-col overflow-hidden rounded-[26px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] shadow-[0_28px_82px_-42px_rgba(15,23,42,0.4)] dark:border-[#263449] dark:bg-[#111827] dark:[--cha-create-primary:#00cec4] dark:[--cha-create-primary-hover:#5eead4] dark:[--cha-create-primary-active:#00b8af] dark:[--cha-create-primary-soft:rgba(0,206,196,0.16)] dark:[--cha-create-primary-border:rgba(0,206,196,0.28)] dark:[--cha-create-card:#111827] dark:[--cha-create-card-alt:#0F172A] dark:[--cha-create-text:#F8FAFC] dark:[--cha-create-secondary:#CBD5E1] dark:[--cha-create-muted:#94A3B8] dark:[--cha-create-border:#263449] dark:[--cha-create-divider:rgba(148,163,184,0.18)] dark:[--cha-create-ring:rgba(0,206,196,0.18)] sm:h-[calc(100dvh-2rem)]">
+            <div className="relative overflow-hidden border-b border-[var(--cha-create-divider)] bg-[var(--cha-create-card)] px-5 py-4 dark:bg-[var(--cha-create-card)] sm:px-6">
+              <div className="pointer-events-none absolute inset-y-0 -right-24 w-[32%] overflow-hidden opacity-75">
                 <svg className="absolute inset-0 h-full w-full" fill="none" viewBox="0 0 540 220">
-                  <path d="M40 152C96 116 156 102 214 108C262 112 314 136 382 126C432 118 472 84 514 48" stroke="rgba(37,99,235,0.28)" strokeDasharray="6 8" strokeLinecap="round" strokeWidth="2" />
-                  <path d="M82 176C144 142 214 142 272 158C340 176 400 174 468 136" stroke="rgba(59,130,246,0.18)" strokeDasharray="4 10" strokeLinecap="round" strokeWidth="2" />
+                  <path d="M40 152C96 116 156 102 214 108C262 112 314 136 382 126C432 118 472 84 514 48" stroke="rgba(0,206,196,0.28)" strokeDasharray="6 8" strokeLinecap="round" strokeWidth="2" />
+                  <path d="M82 176C144 142 214 142 272 158C340 176 400 174 468 136" stroke="rgba(0,184,175,0.18)" strokeDasharray="4 10" strokeLinecap="round" strokeWidth="2" />
                 </svg>
                 <div className="absolute right-[20%] top-[22%] text-[var(--cha-create-primary)]/60"><Plane size={18} /></div>
                 <div className="absolute right-[38%] top-[62%] text-[var(--cha-create-primary)]/60"><Ship size={18} /></div>
                 <div className="absolute right-[8%] top-[46%] text-[var(--cha-create-primary)]/60"><Package2 size={18} /></div>
               </div>
               <div className="relative z-10 flex items-start justify-between gap-3">
-                <div className="max-w-[620px] space-y-3 pr-2">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-[16px] border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-primary-soft)] text-[var(--cha-create-primary)] shadow-[0_16px_34px_-28px_rgba(37,99,235,0.48)]">
+                <div className="flex max-w-[720px] items-center gap-4 pr-2">
+                  <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-primary-soft)] text-[var(--cha-create-primary)] shadow-[0_16px_34px_-28px_rgba(0,206,196,0.48)]">
                     <FilePlus size={21} />
                   </div>
-                  <div className="space-y-1.5">
-                    <h2 className="max-w-[520px] text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[var(--cha-create-text)] sm:text-[24px]">
-                      Initialize Customs Clearance Job
+                  <div className="min-w-0 space-y-1.5">
+                    <h2 className="max-w-[620px] text-xl font-medium uppercase leading-none tracking-[0.075em] text-[var(--cha-create-text)] sm:text-2xl">
+                      INITIALIZE CUSTOMS CLEARANCE JOB
                     </h2>
                     <p className="max-w-[520px] text-[13px] leading-5 text-[var(--cha-create-secondary)]">
                       Start a new CHA shipment workflow and capture initial details.
@@ -1132,7 +1134,7 @@ export function CreateJobDialog({
                   <button onClick={() => onOpenChange(false)} className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)]/88 text-[var(--cha-create-secondary)] transition hover:border-[var(--cha-create-primary-border)] hover:bg-[var(--cha-create-primary-soft)] hover:text-[var(--cha-create-primary)]" type="button" aria-label="Close job creation dialog"><X size={17} /></button>
                 </div>
               </div>
-              <div className="relative z-10 mt-4 grid gap-1 rounded-[18px] border border-[var(--cha-create-primary-border)] bg-[rgba(255,255,255,0.72)] p-1.5 shadow-[0_18px_36px_-34px_rgba(37,99,235,0.26)] backdrop-blur-sm dark:bg-[rgba(15,23,42,0.62)] md:grid-cols-3">
+              <div className="relative z-10 mt-4 grid gap-1 p-1.5 md:grid-cols-3">
                 <CreateJobBenefit icon={Route} title="End-to-end visibility" description="Track every milestone" />
                 <CreateJobBenefit icon={BadgeCheck} title="Compliance first" description="Built-in validations and documents" />
                 <CreateJobBenefit icon={Rocket} title="Operational excellence" description="Faster clearance, fewer delays" />
@@ -1140,7 +1142,7 @@ export function CreateJobDialog({
             </div>
             <form onSubmit={handleCreateJob} className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 py-5 sm:px-7 sm:py-6">
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
-              <div className="rounded-[22px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card-alt)] p-4 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.22)] sm:p-5">
+              <div className="rounded-[22px] bg-transparent p-4 sm:p-5">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--cha-create-divider)] pb-4">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--cha-create-muted)]">Job Initialization</p>
@@ -1751,7 +1753,7 @@ export function CreateJobDialog({
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={creating} className="rounded-2xl !border-[var(--cha-create-primary)] !bg-[var(--cha-create-primary)] px-6 !text-white shadow-[0_22px_46px_-28px_rgba(37,99,235,0.58)] hover:!bg-[var(--cha-create-primary-hover)]">
+                  <Button type="submit" disabled={creating} className="rounded-2xl !border-[var(--cha-create-primary)] !bg-[var(--cha-create-primary)] px-6 !text-white shadow-[0_22px_46px_-28px_rgba(0,206,196,0.58)] hover:!bg-[var(--cha-create-primary-hover)]">
                     {creating ? "Launching Job..." : "Create & Launch Job"}
                   </Button>
                 </div>

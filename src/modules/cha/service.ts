@@ -11399,8 +11399,7 @@ export async function revertFilingWorkflowToPreviousStage(
       },
       orderBy: [
         { completedAt: "desc" },
-        { updatedAt: "desc" },
-        { createdAt: "desc" },
+        { id: "desc" },
       ],
     });
     if (!targetRun) {

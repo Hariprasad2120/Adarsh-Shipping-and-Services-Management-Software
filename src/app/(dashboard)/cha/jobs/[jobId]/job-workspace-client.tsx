@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { FileText, Upload, CheckCircle2, AlertTriangle, FolderOpen, ArrowRight, ShieldCheck, AlertCircle, Plus, Trash2, Check, Database, ExternalLink, Undo2, RotateCcw, Mail, History, ChevronDown, ChevronLeft, ChevronRight, Pencil, Lock, BarChart2, CreditCard, ClipboardList, HelpCircle, Clock3, LoaderCircle, LockKeyhole, Search, Maximize2, Copy, UserRound, CalendarDays, Building2, Package, MapPin, Plane, Ship, Bookmark, RefreshCcw, Zap, Boxes, Moon, X, } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { FileUploadField } from "@/components/ui/file-upload-field";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
@@ -398,11 +399,11 @@ function SectionHeading({
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="min-w-0 flex-1 space-y-1">
-        <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
-          <span className="h-7 rounded-sm bg-[#00cec4]" aria-hidden="true" />
-          <h3 className="ds-h3 text-on-surface">{title}</h3>
+        <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-4">
+          <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+          <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">{title}</h3>
         </div>
-        {description ? <p className="pl-[17px] text-xs text-on-surface-variant">{description}</p> : null}
+        {description ? <p className="pl-5 text-sm text-on-surface-variant">{description}</p> : null}
       </div>
       {aside ? <div className="shrink-0">{aside}</div> : null}
     </div>
@@ -505,7 +506,6 @@ interface MilestoneCardProps {
   isExpanded: boolean;
   isSpotlit?: boolean;
   onToggle: (stageKey: string) => void;
-  currentStageCard?: React.ReactNode;
 }
 
 interface FilingWorkflowStatusBannerProps {
@@ -543,7 +543,6 @@ function MilestoneCard({
   isExpanded,
   isSpotlit = false,
   onToggle,
-  currentStageCard,
 }: MilestoneCardProps) {
   const cardBorderClass = isActive
     ? "border-[#00cec4]/35 bg-surface shadow-[0_28px_60px_-38px_rgba(0,206,196,0.32)]"
@@ -582,7 +581,8 @@ function MilestoneCard({
           >
             {isCompleted ? <Check size={14} /> : isLocked ? <Lock size={12} /> : percentage + "%"}
           </span>
-          <div className="min-w-0 flex-1 space-y-2">
+          <div className="grid min-w-0 flex-1 grid-cols-[4px_minmax(0,1fr)] items-start gap-x-4 gap-y-1">
+            <div aria-hidden="true" />
             <div className="flex flex-wrap items-center gap-2">
               <span className="ds-label">Workflow Stage</span>
               <Badge
@@ -598,18 +598,16 @@ function MilestoneCard({
                 </span>
               ) : null}
             </div>
-            <h3 className="ds-h3 flex items-center gap-2 text-on-surface tracking-wide">
-              {title}
-            </h3>
-            <p className="max-w-xl text-sm leading-relaxed text-on-surface-variant">{description}</p>
+            <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+            <div>
+              <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">
+                {title}
+              </h3>
+            </div>
+            <div aria-hidden="true" />
+            <p className="max-w-xl text-sm leading-snug text-on-surface-variant">{description}</p>
           </div>
         </div>
-
-        {currentStageCard && (
-          <div className="hidden lg:block lg:flex-1 lg:max-w-md px-4">
-            {currentStageCard}
-          </div>
-        )}
 
         <div className="flex items-center gap-4 self-end lg:self-center">
           {/* Inline Stats */}
@@ -675,93 +673,57 @@ function FilingWorkflowStatusBanner({
     ? new Date(latestCompletedStep.completedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
     : null;
 
+  const activeDescription =
+    activeStatusDescription ||
+    activeNodeSubtitle ||
+    "Complete this active stage to continue the filing workflow.";
+
   return (
-    <div className="rounded-xl border border-[#8b5cf6]/20 bg-surface p-4 shadow-sm">
-      <div className="grid gap-3 lg:grid-cols-3">
-        <div className="flex min-w-0 items-center gap-3 rounded-[18px] border border-[#8b5cf6]/20 bg-surface px-4 py-3">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-[#8b5cf6]/24 bg-[#8b5cf6]/10 text-[#8b5cf6]">
-            <CheckCircle2 size={18} strokeWidth={2.2} />
-          </span>
-          <div className="min-w-0 space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b5cf6]">Previous Stage Complete</span>
-            </div>
-            <p className="truncate text-sm font-semibold text-on-surface">
-              {latestCompletedStep?.nodeName || "No prior stage"}
-            </p>
-            <p className="truncate text-[11px] text-on-surface-variant">
-              {latestCompletedStep
-                ? `Completed successfully${latestCompletedStep.completedByName ? " and handed off." : "."}`
-                : "This is the first active filing stage."}
-            </p>
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] text-on-surface-variant">
-              {latestCompletedStep?.completedByName ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <UserRound size={11} />
-                  <span className="truncate">
-                    By <span className="font-medium text-[#8b5cf6]">{latestCompletedStep.completedByName}</span>
-                  </span>
-                </span>
-              ) : null}
-              {latestCompletedDateLabel ? (
-                <span className="inline-flex items-center gap-1.5 ds-numeric">
-                  <CalendarDays size={11} />
-                  {latestCompletedDateLabel}
-                </span>
-              ) : null}
-              {latestCompletedTimeLabel ? (
-                <span className="inline-flex items-center gap-1.5 ds-numeric">
-                  <Clock3 size={11} />
-                  {latestCompletedTimeLabel}
-                </span>
-              ) : null}
-            </div>
-          </div>
+    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)_32px_minmax(0,1fr)] lg:items-center">
+      <div className="flex min-h-[92px] min-w-0 items-center gap-3 rounded-xl border border-outline-variant/45 bg-surface px-4 py-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#00cec4]/35 bg-[#00cec4]/10 text-[#00cec4]">
+          <CheckCircle2 size={17} strokeWidth={2.2} />
+        </span>
+        <div className="min-w-0 space-y-0.5">
+          <span className="ds-label text-[#00a9b2]">Previous</span>
+          <p className="truncate text-sm font-medium text-on-surface">{latestCompletedStep?.nodeName || "No prior stage"}</p>
+          <p className="truncate text-xs text-on-surface-variant">
+            {latestCompletedDateLabel ? [latestCompletedDateLabel, latestCompletedTimeLabel].filter(Boolean).join(" | ") : "First active stage"}
+          </p>
         </div>
+      </div>
 
-        <div className="flex min-w-0 items-center gap-3 rounded-[18px] border border-[#8b5cf6]/20 bg-surface px-4 py-3">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-[#8b5cf6]/24 bg-[#8b5cf6]/10 text-[#8b5cf6]">
-            <FolderOpen size={18} />
-          </span>
-          <div className="min-w-0 space-y-1">
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b5cf6]">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#8b5cf6]" />
-              {statusLabel}
-            </span>
-            <p className="truncate text-sm font-semibold text-on-surface">
-              {activeNodeSequence ? (
-                <span className="ds-numeric mr-1.5 text-[#8b5cf6]">{String(activeNodeSequence).padStart(2, "0")}.</span>
-              ) : null}
-              {activeNodeName}
-            </p>
-            {activeStatusDescription ? (
-              <p className="truncate text-[11px] text-on-surface-variant">{activeStatusDescription}</p>
-            ) : activeNodeSubtitle ? (
-              <p className="truncate text-[11px] text-on-surface-variant">{activeNodeSubtitle}</p>
-            ) : (
-              <p className="truncate text-[11px] text-on-surface-variant">Complete this active stage to continue the filing workflow.</p>
-            )}
-          </div>
+      <div className="hidden items-center lg:flex">
+        <span className="h-px w-full bg-outline-variant/70" />
+      </div>
+
+      <div className="relative flex min-h-[92px] min-w-0 items-center gap-3 overflow-hidden rounded-xl border border-[#00cec4]/35 bg-[#00cec4]/8 px-4 py-3">
+        <span className="absolute inset-x-4 top-0 h-0.5 rounded-b-full bg-[#00cec4]" aria-hidden="true" />
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#00cec4]/40 bg-surface text-[#00cec4]">
+          <FolderOpen size={17} />
+        </span>
+        <div className="min-w-0 space-y-0.5">
+          <span className="ds-label text-[#00a9b2]">{statusLabel}</span>
+          <p className="truncate text-sm font-medium text-on-surface">
+            {activeNodeSequence ? <span className="ds-numeric mr-1.5 text-[#00a9b2]">{String(activeNodeSequence).padStart(2, "0")}.</span> : null}
+            {activeNodeName}
+          </p>
+          <p className="truncate text-xs text-on-surface-variant">{activeDescription}</p>
         </div>
+      </div>
 
-        <div className="flex min-w-0 items-center gap-3 rounded-[18px] border border-[#8b5cf6]/20 bg-surface px-4 py-3">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-[#8b5cf6]/24 bg-[#8b5cf6]/10 text-[#8b5cf6]">
-            <ArrowRight size={18} />
-          </span>
-          <div className="min-w-0 space-y-1">
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b5cf6]">
-              <Clock3 size={11} />
-              Up Next
-            </span>
-            <p className="truncate text-sm font-medium text-on-surface">
-              {nextStageName || "Workflow Completion"}
-            </p>
-            <p className="truncate text-[11px] text-on-surface-variant">
-              {nextStageName
-                ? "Opens after the current stage is completed."
-                : "Filing workflow finalizes after this step."}
-            </p>
-          </div>
+      <div className="hidden items-center lg:flex">
+        <span className="h-px w-full bg-outline-variant/70" />
+      </div>
+
+      <div className="flex min-h-[92px] min-w-0 items-center gap-3 rounded-xl border border-outline-variant/45 bg-surface px-4 py-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-outline-variant/70 bg-surface-container-low text-on-surface-variant">
+          <ArrowRight size={17} />
+        </span>
+        <div className="min-w-0 space-y-0.5">
+          <span className="ds-label text-on-surface-variant">Up Next</span>
+          <p className="truncate text-sm font-medium text-on-surface">{nextStageName || "Workflow Completion"}</p>
+          <p className="truncate text-xs text-on-surface-variant">{nextStageName ? "Unlocks after completion" : "Finalizes after this step"}</p>
         </div>
       </div>
     </div>
@@ -877,9 +839,9 @@ function SlideToComplete({
       aria-valuetext={isSubmitting ? "Completing step" : `${progressPercent}% complete`}
       aria-busy={isSubmitting}
       className={cn(
-        "relative h-[60px] w-full overflow-hidden rounded-full border border-[#c7d2fe] bg-surface shadow-[0_14px_28px_-18px_rgba(99,102,241,0.24)] outline-none select-none",
+        "relative h-[60px] w-full overflow-visible rounded-full border border-[#00cec4]/30 bg-surface shadow-[0_14px_28px_-18px_rgba(0,206,196,0.24)] outline-none select-none",
         disabled || isSubmitting ? "cursor-not-allowed opacity-70" : "cursor-ew-resize touch-none",
-        "focus-visible:ring-2 focus-visible:ring-[#8b5cf6]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "focus-visible:ring-2 focus-visible:ring-[#00cec4]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       )}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -908,11 +870,11 @@ function SlideToComplete({
       }}
     >
       <div
-        className="absolute inset-y-[6px] left-[6px] rounded-full bg-[linear-gradient(90deg,rgba(99,102,241,0.16),rgba(99,102,241,0.04))] transition-[width] duration-300 ease-out"
+        className="absolute inset-y-[6px] left-[6px] rounded-full bg-[linear-gradient(90deg,rgba(0,206,196,0.16),rgba(0,206,196,0.04))] transition-[width] duration-300 ease-out"
         style={{ width: `${Math.max(thumbWidth, sliderPos + thumbWidth)}px` }}
       />
       <div
-        className="pointer-events-none absolute inset-y-0 left-0 hidden items-center text-sm text-[#6366f1]/45 md:flex"
+        className="pointer-events-none absolute inset-y-0 left-0 hidden items-center text-sm text-[#00cec4]/45 md:flex"
         style={{ paddingLeft: `${contentStart}px` }}
       >
         <span className="animate-[workflow-chevron_1.15s_ease-in-out_infinite] font-semibold">{">"}</span>
@@ -921,33 +883,35 @@ function SlideToComplete({
       </div>
       <div
         className={cn(
-          "absolute left-[6px] top-[6px] flex h-[48px] w-[80px] items-center justify-center rounded-full border border-[#818cf8] bg-[linear-gradient(135deg,#6366f1,#4f46e5)] shadow-[0_10px_22px_-10px_rgba(79,70,229,0.75)]",
+          "absolute left-[6px] top-[6px] flex h-[48px] w-[80px] items-center justify-center rounded-full border border-[#00cec4] bg-[linear-gradient(135deg,#00cec4,#00b8af)] shadow-[0_10px_22px_-10px_rgba(0,206,196,0.75)]",
           isDragging ? "" : "transition-transform duration-300 ease-out",
         )}
         style={{ transform: `translateX(${sliderPos}px) scale(${isDragging ? 1.04 : 1})` }}
       >
         <ArrowRight size={22} className="text-white shrink-0" style={{ color: '#ffffff', stroke: '#ffffff' }} />
       </div>
-      <div
-        className="pointer-events-none absolute right-5 top-1/2 hidden -translate-y-1/2 items-center gap-4 md:flex"
-        style={{ left: `${contentStart + 54}px` }}
-      >
-        <div className="h-px flex-1 bg-[#93c5fd]/50" />
-        <div className="h-1.5 w-1.5 rounded-full bg-[#60a5fa]/70" />
-        <div className="h-px flex-1 bg-[#93c5fd]/50" />
-      </div>
+      <span
+        className="pointer-events-none absolute top-1/2 hidden h-px -translate-y-1/2 bg-[#00cec4]/35 md:block"
+        style={{ left: `${contentStart + 54}px`, right: "calc(50% + 190px)" }}
+        aria-hidden="true"
+      />
+      <span
+        className="pointer-events-none absolute top-1/2 hidden h-px -translate-y-1/2 bg-[#00cec4]/35 md:block"
+        style={{ left: "calc(50% + 125px)", width: "170px" }}
+        aria-hidden="true"
+      />
       <div
         className="relative z-10 grid h-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 pr-4 sm:pr-6"
         style={{ paddingLeft: `${mobileContentStart}px` }}
       >
         <div className="min-w-0 justify-self-center text-center leading-none">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[#818cf8]">{isSubmitting ? "Completing..." : "Slide to"}</p>
-          <p className="mt-1 truncate text-[13px] font-bold uppercase tracking-wide text-on-surface sm:text-[15px]">
-            <span className="text-[#6366f1]">{isSubmitting ? "completing" : "complete"}</span> this step
+          <p className="text-[10px] font-normal uppercase tracking-[0.12em] text-[#00a9b2]">{isSubmitting ? "Completing..." : "Slide to"}</p>
+          <p className="mt-1 truncate text-sm font-normal uppercase tracking-[0.10em] text-on-surface">
+            <span className="text-[#00a9b2]">{isSubmitting ? "completing" : "complete"}</span> this step
           </p>
         </div>
         <span className="hidden items-center gap-1.5 text-[11px] text-on-surface-variant sm:inline-flex">
-          <LockKeyhole size={12} className="text-[#6366f1]" />
+          <LockKeyhole size={12} className="text-[#00cec4]" />
           {helperText}
         </span>
       </div>
@@ -983,25 +947,25 @@ function FilingAttachmentValidityRow({
   const validityEnabled = hasValidityDate || isEditingValidity;
 
   return (
-    <div className="rounded-xl border border-outline-variant/35 bg-surface px-2.5 py-2">
-      <div className="flex items-start gap-2.5">
-        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-outline-variant/35 bg-surface-container-low">
-          <FileText className="size-3.5 text-on-surface" aria-hidden={true} />
+    <div className="rounded-xl border border-outline-variant/35 bg-surface px-3 py-3">
+      <div className="flex items-start gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-[#00cec4]/25 bg-[#00cec4]/10 text-[#00a9b2]">
+          <FileText className="size-4" aria-hidden={true} />
         </span>
-        <div className="min-w-0 flex-1 space-y-1.5">
+        <div className="min-w-0 flex-1 space-y-2">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1 space-y-1">
               <a
                 href={attachment.fileKey}
                 target="_blank"
                 rel="noreferrer"
-                className="block truncate pr-2 text-[12px] font-medium text-on-surface transition-colors hover:text-[#00cec4] hover:underline"
+                className="block truncate pr-2 text-sm font-medium text-on-surface transition-colors hover:text-[#00cec4] hover:underline"
               >
                 {attachment.fileName}
               </a>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-on-surface-variant">
-                <span>Selected</span>
-                <span className="uppercase tracking-[0.12em]">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-on-surface-variant">
+                <span className="ds-label">Selected</span>
+                <span className="ds-numeric">
                   {attachment.uploadedAt ? `Uploaded ${new Date(attachment.uploadedAt).toLocaleDateString("en-IN")}` : "Uploaded"}
                 </span>
                 {validitySummary ? (
@@ -1024,7 +988,7 @@ function FilingAttachmentValidityRow({
                 role="switch"
                 aria-checked={validityEnabled}
                 onClick={() => onToggleValidity(!validityEnabled)}
-                className={`ds-plain inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] transition-all ${validityEnabled
+                className={`ds-plain inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] transition-all ${validityEnabled
                     ? "border-[#00cec4]/35 bg-[#00cec4]/10 text-[#0f766e]"
                     : "border-outline-variant/35 bg-surface text-on-surface-variant"
                   }`}
@@ -1047,7 +1011,7 @@ function FilingAttachmentValidityRow({
                 aria-label="Remove file"
                 title="Remove file"
                 onClick={onRemove}
-                className="group ds-plain inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-outline-variant/25 bg-surface text-on-surface-variant transition-all duration-200 hover:border-red-500/25 hover:bg-red-500/8 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/25"
+                className="group ds-plain inline-flex size-8 shrink-0 items-center justify-center rounded-xl border border-outline-variant/25 bg-surface text-on-surface-variant transition-all duration-200 hover:border-red-500/25 hover:bg-red-500/8 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/25"
               >
                 <X className="size-3.5 shrink-0 transition-transform duration-200 group-hover:rotate-90" aria-hidden={true} />
               </button>
@@ -1206,8 +1170,9 @@ export function JobWorkspaceClient({
   const [openWarningNote, setOpenWarningNote] = useState<"bill-filing" | "query-processing" | null>(null);
   const hasSavedAdditionalData = Boolean(job.additionalData?.updatedAt);
   const additionalDataStageLocked = job.stage === "FILING" || job.stage === "FILED";
+  const additionalDataStageAvailable = job.stage !== "DOCUMENT_COLLECTION" && !additionalDataStageLocked;
   const [isAdditionalDataEditing, setIsAdditionalDataEditing] = useState(
-    () => !hasSavedAdditionalData && !additionalDataStageLocked,
+    () => !hasSavedAdditionalData && additionalDataStageAvailable,
   );
 
   useEffect(() => {
@@ -1216,8 +1181,8 @@ export function JobWorkspaceClient({
   }, [job.filingSection49Flag]);
 
   useEffect(() => {
-    setIsAdditionalDataEditing(!Boolean(job.additionalData?.updatedAt) && job.stage !== "FILING" && job.stage !== "FILED");
-  }, [job.id]);
+    setIsAdditionalDataEditing(!Boolean(job.additionalData?.updatedAt) && job.stage !== "DOCUMENT_COLLECTION" && job.stage !== "FILING" && job.stage !== "FILED");
+  }, [job.additionalData?.updatedAt, job.id, job.stage]);
 
 
   const [dueDateWarnings, setDueDateWarnings] = useState<DueDateWarningViewModel[]>(job.dueDateWarnings ?? []);
@@ -1464,6 +1429,7 @@ export function JobWorkspaceClient({
   const [exceptionReason, setExceptionReason] = useState("");
   const [activeDocReqId, setActiveDocReqId] = useState<string | null>(null);
   const [uploadDocumentModalReqId, setUploadDocumentModalReqId] = useState<string | null>(null);
+  const [bulkNaConfirmOpen, setBulkNaConfirmOpen] = useState(false);
   const [isCustomDocumentModalOpen, setIsCustomDocumentModalOpen] = useState(false);
   const [customDocumentName, setCustomDocumentName] = useState("");
   const [customDocumentFile, setCustomDocumentFile] = useState<File | null>(null);
@@ -2045,7 +2011,7 @@ export function JobWorkspaceClient({
       value: String(activeNodeOpenQueries.length),
       note: activeNodeOpenQueries[0]?.title || latestStageQuery?.title || "No active cases",
       icon: <ShieldCheck size={18} />,
-      tone: "violet" as const,
+      tone: "cyan" as const,
     },
     {
       key: "received",
@@ -2790,13 +2756,17 @@ export function JobWorkspaceClient({
       return;
     }
 
-    const confirmed = window.confirm(
-      `Mark ${bulkNaEligibleRequirements.length} visible pending document requirement(s) as N/A?`,
-    );
-    if (!confirmed) {
+    setBulkNaConfirmOpen(true);
+  };
+
+  const handleConfirmMarkAllNotAvailable = async () => {
+    if (bulkNaEligibleRequirements.length === 0) {
+      setBulkNaConfirmOpen(false);
+      toast.error("There are no visible pending documents to mark as N/A.");
       return;
     }
 
+    setBulkNaConfirmOpen(false);
     setLoading("na-all");
     try {
       const updatedIds = new Set<string>();
@@ -3467,16 +3437,8 @@ export function JobWorkspaceClient({
               },
             ]),
           );
-          setFilingToggleStates(
-            shouldPreserveDraft
-              ? { ...toggleStatesForNode, ...currentDraftSnapshot.filingToggleStates }
-              : toggleStatesForNode,
-          );
-          setFilingToggleStateDetails(
-            shouldPreserveDraft
-              ? { ...toggleStateDetailsForNode, ...currentDraftSnapshot.filingToggleStateDetails }
-              : toggleStateDetailsForNode,
-          );
+          setFilingToggleStates(toggleStatesForNode);
+          setFilingToggleStateDetails(toggleStateDetailsForNode);
           const queryProcessingDetails = toggleStateDetailsForNode.query_processing?.state as Record<string, unknown> | null | undefined;
           const serverQueryReferenceNumber =
             typeof queryProcessingDetails?.queryReferenceNumber === "string" ? queryProcessingDetails.queryReferenceNumber : "";
@@ -3815,7 +3777,7 @@ export function JobWorkspaceClient({
   }, []);
 
   useEffect(() => {
-    if (!isAdditionalDataEditing || additionalDataLocked || manifestConfigMissing) {
+    if (!isAdditionalDataEditing || !additionalDataStageAvailable || additionalDataLocked || manifestConfigMissing) {
       return;
     }
     if (importGeneralManifest !== "" && !isValidManifest(importGeneralManifest)) {
@@ -3857,6 +3819,7 @@ export function JobWorkspaceClient({
     };
   }, [
     additionalDataLocked,
+    additionalDataStageAvailable,
     buildAdditionalDataPayload,
     containerEntries,
     customManifestValue,
@@ -3981,11 +3944,6 @@ export function JobWorkspaceClient({
       return;
     }
 
-    if (activeNodeQueries.length > 0) {
-      toast.error("Query processing cannot be turned off after a query has been recorded for this filing stage.");
-      return;
-    }
-
     setQueryToggleOffRemarks("");
     setQueryToggleOffModalOpen(true);
   };
@@ -4010,6 +3968,7 @@ export function JobWorkspaceClient({
 
     if (didDisable) {
       setQueryToggleOffModalOpen(false);
+      setQueryProcessingPanelExpanded(false);
       setQueryToggleOffRemarks("");
     }
   };
@@ -5264,9 +5223,9 @@ export function JobWorkspaceClient({
     { label: "Upload Document", note: "Add new document", icon: <Upload size={16} />, onClick: () => navigateToWorkspaceTab("docs"), accent: "cyan" as const, visible: true },
     { label: "Add Query", note: "Raise a new query", icon: <AlertCircle size={16} />, onClick: () => navigateToWorkspaceTab("filing"), accent: "orange" as const, visible: activeStepIndex >= 4 },
     { label: "View Workflow", note: "See filing workflow", icon: <Zap size={16} />, onClick: () => navigateToWorkspaceTab("filing"), accent: "cyan" as const, visible: true },
-    { label: "Bill Filing", note: "Manage bill filing", icon: <FileText size={16} />, onClick: () => navigateToWorkspaceTab("filing"), accent: "violet" as const, visible: activeStepIndex >= 4 },
+    { label: "Bill Filing", note: "Manage bill filing", icon: <FileText size={16} />, onClick: () => navigateToWorkspaceTab("filing"), accent: "cyan" as const, visible: activeStepIndex >= 4 },
     { label: "Request Expense", note: "Raise expense request", icon: <CreditCard size={16} />, onClick: () => navigateToWorkspaceTab("expenses"), accent: "cyan" as const, visible: true },
-    { label: "Job Activity", note: "View all activities", icon: <History size={16} />, onClick: () => navigateToWorkspaceTab("audit"), accent: "violet" as const, visible: true },
+    { label: "Job Activity", note: "View all activities", icon: <History size={16} />, onClick: () => navigateToWorkspaceTab("audit"), accent: "cyan" as const, visible: true },
   ].filter((action) => action.visible);
   return (
     <main className="w-full space-y-5 overflow-x-hidden pb-6">
@@ -5521,7 +5480,7 @@ export function JobWorkspaceClient({
       <div className="space-y-3">
         <aside className="hidden">
           <div className="border-b border-outline-variant/20 px-2 pb-3">
-            <h2 className="text-sm font-bold uppercase tracking-[0.18em] text-on-surface">Workflow</h2>
+            <h2 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">Workflow</h2>
             <p className="mt-1 text-xs text-on-surface-variant">Secondary stage navigator</p>
           </div>
 
@@ -5665,7 +5624,7 @@ export function JobWorkspaceClient({
                     }}
                     disabled={isLocked && stage.key !== "CHECKLIST_APPROVAL"}
                     className={`group relative flex w-full flex-col gap-2 rounded-[18px] p-3 text-left transition-all ${isHighlighted
-                        ? "bg-gradient-to-r from-[#7c3aed]/12 via-[#6366f1]/10 to-[#8b5cf6]/8 text-[#4f46e5] shadow-[0_20px_40px_-28px_rgba(99,102,241,0.65)]"
+                        ? "bg-gradient-to-r from-[#00cec4]/12 via-[#00cec4]/10 to-[#00b8af]/8 text-[#00a9b2] shadow-[0_20px_40px_-28px_rgba(0,206,196,0.65)]"
                         : isLocked
                           ? "cursor-not-allowed opacity-50"
                           : "hover:bg-surface-container-low/80"
@@ -5673,7 +5632,7 @@ export function JobWorkspaceClient({
                   >
                     {/* Left border indicator for highlighted step */}
                     {isHighlighted && (
-                      <span className="absolute left-0 top-3 bottom-3 w-1 rounded-r-md bg-gradient-to-b from-[#7c3aed] to-[#6366f1]" />
+                      <span className="absolute left-0 top-3 bottom-3 w-1 rounded-r-md bg-gradient-to-b from-[#00cec4] to-[#00b8af]" />
                     )}
 
                     {/* Header block with circle and stage label */}
@@ -5682,14 +5641,14 @@ export function JobWorkspaceClient({
                         className={`flex size-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition-all ${isCompleted
                             ? "bg-green-600 text-white shadow-[0_14px_28px_-18px_rgba(22,163,74,0.8)]"
                             : isHighlighted
-                              ? "bg-gradient-to-br from-[#7c3aed] via-[#6366f1] to-[#4f46e5] text-white shadow-[0_18px_34px_-18px_rgba(99,102,241,0.9)]"
+                              ? "bg-gradient-to-br from-[#00cec4] via-[#00c4b6] to-[#00a9b2] text-white shadow-[0_18px_34px_-18px_rgba(0,206,196,0.9)]"
                               : "border border-outline-variant bg-surface text-on-surface-variant"
                           }`}
                       >
                         {isCompleted ? <Check size={11} /> : isLocked ? <Lock size={9} /> : index + 1}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className={`text-xs font-bold uppercase tracking-wide truncate ${isHighlighted ? "text-[#4f46e5]" : "text-on-surface"
+                        <p className={`text-xs font-bold uppercase tracking-wide truncate ${isHighlighted ? "text-[#00a9b2]" : "text-on-surface"
                           }`}>
                           {stage.label}
                         </p>
@@ -5738,7 +5697,7 @@ export function JobWorkspaceClient({
 
                   {/* Connector line */}
                   {index < STAGES.length - 1 && (
-                    <div className={`ml-[15px] h-4 w-[2px] rounded-full ${index < activeStepIndex ? "bg-gradient-to-b from-green-500 to-green-400" : index === activeStepIndex ? "bg-gradient-to-b from-[#7c3aed]/45 to-[#6366f1]/20" : "bg-outline-variant/40"
+                    <div className={`ml-[15px] h-4 w-[2px] rounded-full ${index < activeStepIndex ? "bg-gradient-to-b from-green-500 to-green-400" : index === activeStepIndex ? "bg-gradient-to-b from-[#00cec4]/45 to-[#00cec4]/20" : "bg-outline-variant/40"
                       }`} />
                   )}
                 </div>
@@ -5757,19 +5716,19 @@ export function JobWorkspaceClient({
                 type="button"
                 onClick={() => { setActiveTab(item.key); }}
                 className={`flex w-full items-center gap-2.5 rounded-[18px] px-3 py-2.5 text-left transition-all ${activeTab === item.key
-                    ? "bg-gradient-to-r from-[#7c3aed]/10 to-[#6366f1]/8 text-[#4f46e5]"
+                    ? "bg-gradient-to-r from-[#00cec4]/10 to-[#00b8af]/8 text-[#00a9b2]"
                     : "hover:bg-surface-container-low text-on-surface-variant"
                   }`}
               >
                 <span className={`flex size-6 shrink-0 items-center justify-center rounded-lg ${activeTab === item.key
-                    ? "bg-[#6366f1]/12 text-[#4f46e5]"
+                    ? "bg-[#00cec4]/12 text-[#00a9b2]"
                     : "bg-surface-container-low text-on-surface-variant"
                   }`}>
                   {item.icon}
                 </span>
                 <span className="text-xs font-semibold uppercase tracking-wider">{item.label}</span>
                 {item.count !== undefined && item.count > 0 && (
-                  <span className={`ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-bold ds-numeric ${activeTab === item.key ? "bg-[#6366f1] text-white" : "bg-surface-container text-on-surface-variant"
+                  <span className={`ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-bold ds-numeric ${activeTab === item.key ? "bg-[#00cec4] text-white" : "bg-surface-container text-on-surface-variant"
                     }`}>
                     {item.count}
                   </span>
@@ -5781,10 +5740,10 @@ export function JobWorkspaceClient({
           {/* Overall Progress footer */}
           <div className="border-t border-outline-variant/30 px-4 py-4">
             <p className="ds-label text-on-surface-variant">Overall Progress</p>
-            <p className="ds-numeric mt-1 text-3xl font-bold text-[#4f46e5]">{stageProgress}%</p>
+            <p className="ds-numeric mt-1 text-3xl font-bold text-[#00a9b2]">{stageProgress}%</p>
             <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-outline-variant/25">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-[#7c3aed] via-[#6366f1] to-[#22c55e] transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-[#00cec4] via-[#00b8af] to-[#22c55e] transition-all duration-500"
                 style={{ width: `${stageProgress}%` }}
               />
             </div>
@@ -5823,7 +5782,7 @@ export function JobWorkspaceClient({
               <div className="rounded-[28px] border border-outline-variant/35 bg-surface px-6 py-5 shadow-[0_22px_52px_-38px_rgba(15,23,42,0.34)]">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <span className="flex size-12 items-center justify-center rounded-[18px] bg-gradient-to-br from-[#7c3aed] via-[#6366f1] to-[#4f46e5] text-white shadow-[0_18px_36px_-18px_rgba(99,102,241,0.9)]">
+                    <span className="flex size-12 items-center justify-center rounded-[18px] bg-gradient-to-br from-[#00cec4] via-[#00c4b6] to-[#00a9b2] text-white shadow-[0_18px_36px_-18px_rgba(0,206,196,0.9)]">
                       {stageIcons[activeTab]}
                     </span>
                     <div>
@@ -5834,9 +5793,9 @@ export function JobWorkspaceClient({
                   <a
                     href="#"
                     onClick={(e) => { e.preventDefault(); toast.info("Help instructions loading..."); }}
-                    className="flex items-center gap-1.5 rounded-full border border-[#6366f1]/20 bg-[#6366f1]/8 px-3 py-2 text-xs font-bold text-[#4f46e5] transition-colors hover:bg-[#6366f1]/14"
+                    className="flex items-center gap-1.5 rounded-full border border-[#00cec4]/20 bg-[#00cec4]/8 px-3 py-2 text-xs font-bold text-[#00a9b2] transition-colors hover:bg-[#00cec4]/14"
                   >
-                    <HelpCircle size={15} className="rounded-full border border-[#6366f1]/30 p-0.5" />
+                    <HelpCircle size={15} className="rounded-full border border-[#00cec4]/30 p-0.5" />
                     Help
                   </a>
                 </div>
@@ -5888,7 +5847,7 @@ export function JobWorkspaceClient({
                           onFilterChange={setDocumentsFilterMode}
                         />
 
-                        <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-wrap items-center justify-end gap-3">
                           <Button
                             type="button"
                             variant="outline"
@@ -5942,12 +5901,6 @@ export function JobWorkspaceClient({
                                     loadingKey={loading}
                                     currentUserId={currentUserId}
                                     canDelete={Boolean(canDeleteDoc || canManageSettings || currentUserId === job.primaryOwnerId)}
-                                    downloadUrl={
-                                      previewUrls[currentVersion.id] ||
-                                      (currentVersion.source === "CUSTOMER_PORTAL"
-                                        ? `/api/cha/customer-documents/${currentVersion.id}?download=true`
-                                        : `/api/cha/documents/${currentVersion.id}?download=true`)
-                                    }
                                     selected={selectedDocumentRequirementId === req.id}
                                     onSelect={(requirementId) => {
                                       setSelectedDocumentRequirementId(requirementId);
@@ -6022,8 +5975,9 @@ export function JobWorkspaceClient({
                               );
                             })
                           ) : (
-                            <div className="xl:col-span-2 rounded-[24px] border border-outline-variant/60 bg-surface p-8 text-center text-sm text-on-surface-variant shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
-                              No uploaded documents match the current search and filter state yet.
+                            <div className="xl:col-span-2 flex items-center justify-center gap-3 rounded-xl border border-dashed border-outline-variant/60 bg-surface p-8 text-center text-sm text-on-surface-variant shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
+                              <Search size={18} className="shrink-0 text-[#00cec4]" />
+                              <span>No uploaded documents match the current search and filter state yet.</span>
                             </div>
                           )}
                         </div>
@@ -6033,7 +5987,10 @@ export function JobWorkspaceClient({
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                               <div>
                                 <p className="ds-label text-[#00cec4]">Section 49 Controls</p>
-                                <h3 className="mt-2 text-lg font-semibold text-on-surface">Manage Section 49 validity and extension workflow</h3>
+                                <div className="mt-2 grid grid-cols-[4px_minmax(0,1fr)] items-center gap-4">
+                                  <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+                                  <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">Manage Section 49 validity and extension workflow</h3>
+                                </div>
                                 <p className="mt-1 text-sm text-on-surface-variant">
                                   Keep the saved validity date current and attach extension evidence when customs warns of expiry.
                                 </p>
@@ -6181,7 +6138,10 @@ export function JobWorkspaceClient({
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                               <div>
                                 <p className="ds-label text-[#fb923c]">Exemption Draft</p>
-                                <h3 className="mt-2 text-lg font-semibold text-on-surface">{activeExceptionRequirement.name}</h3>
+                                <div className="mt-2 grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
+                                  <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+                                  <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">{activeExceptionRequirement.name}</h3>
+                                </div>
                                 <p className="mt-1 text-sm text-on-surface-variant">
                                   Record the business reason for handling this requirement without a file upload.
                                 </p>
@@ -6218,10 +6178,10 @@ export function JobWorkspaceClient({
                           {groupedPendingWorkflowDocuments.length > 0 ? (
                             groupedPendingWorkflowDocuments.map((group) => (
                               <section key={group.categoryName} className="space-y-4">
-                                <div className="flex items-start gap-3">
-                                  <span className="mt-0.5 h-9 w-1 shrink-0 rounded-full bg-[#00cec4]" aria-hidden="true" />
+                                <div className="grid grid-cols-[4px_minmax(0,1fr)] items-start gap-3">
+                                  <span className="mt-0.5 h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
                                   <div className="min-w-0 space-y-1">
-                                    <p className="ds-h3 text-on-surface">{group.categoryName}</p>
+                                    <p className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">{group.categoryName}</p>
                                     <p className="text-sm text-on-surface-variant">
                                       {group.requirements.length} requirement{group.requirements.length === 1 ? "" : "s"} pending action in this category.
                                     </p>
@@ -6382,23 +6342,6 @@ export function JobWorkspaceClient({
                   }
                 >
                   <div className="space-y-4">
-                    <div className="flex flex-col gap-3 border-b border-outline-variant/20 pb-4 md:flex-row md:items-start md:justify-between">
-                      <SectionHeading
-                        title="CHA Additional Data"
-                        description="Capture manifest and delivery-order validity details before checklist preparation."
-                      />
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span
-                          className={`inline-flex min-h-8 items-center rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider ${additionalDataComplete
-                              ? "border-[#00cec4]/40 bg-[#00cec4]/10 text-[#00cec4]"
-                              : "border-[#fb923c]/40 bg-[#fb923c]/10 text-[#fb923c]"
-                            }`}
-                        >
-                          {additionalDataComplete ? "Complete" : "Pending"}
-                        </span>
-                      </div>
-                    </div>
-
                     {job.stage === "DOCUMENT_COLLECTION" ? (
                       <div className="flex items-start gap-3 rounded-2xl border border-[#fb923c]/40 bg-surface p-4">
                         <AlertTriangle size={22} className="mt-0.5 shrink-0 text-[#fb923c]" />
@@ -7118,29 +7061,6 @@ export function JobWorkspaceClient({
                   assignedUser={job.assignedManager?.name || job.primaryOwner?.name || "Filing Team"}
                   dueDate={job.estimatedClosureDate ? new Date(job.estimatedClosureDate).toLocaleDateString("en-IN") : null}
                   completedAt={activeStepIndex > 4 ? (job.filing?.updatedAt ? new Date(job.filing.updatedAt).toLocaleString("en-IN") : null) : null}
-                  currentStageCard={
-                    activeStepIndex === 4 && activeNodeRun ? (
-                      <div className="flex min-w-0 items-center gap-3 rounded-[18px] border border-green-500/18 bg-[linear-gradient(135deg,rgba(16,185,129,0.06),rgba(0,206,196,0.02))] px-4 py-3">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-green-500/10 text-green-600 dark:text-green-300">
-                          <FolderOpen size={20} />
-                        </span>
-                        <div className="min-w-0 space-y-0.5">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="ds-label text-on-surface-variant !text-[9px]">Current Stage</span>
-                          </div>
-                          <p className="text-sm font-semibold text-on-surface truncate">
-                            {activeNodeSequence ? `${activeNodeSequence}. ` : ""}
-                            {activeNodeRun.node?.name || activeNodeRun.nodeKey}
-                          </p>
-                          {activeNodeSubtitle && (
-                            <p className="text-xs text-on-surface-variant truncate">
-                              {activeNodeSubtitle}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ) : null
-                  }
                   summary={
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                       {job.filing?.billOfEntryNumber && (
@@ -7362,87 +7282,43 @@ export function JobWorkspaceClient({
                                               (requirement: any) => requirement.required !== false && !!activeNodeDocumentAttachmentsByKey.get(requirement.key),
                                             ).length;
                                             const isCompleted = requiredDocumentUploadedCount >= requiredDocumentTotal;
-                                            const liveCompletionPercent = requiredDocumentTotal > 0 ? Math.round((requiredDocumentUploadedCount / requiredDocumentTotal) * 100) : 100;
                                             
                                             return (
                                               <div className="space-y-3 pt-3 border-t border-outline-variant/30 mt-3">
                                                 <h4 className="ds-label text-on-surface">Stage Checklist Verification</h4>
                                                 <div
-                                                  className={`relative overflow-hidden rounded-[22px] border p-3.5 space-y-2.5 transition-all duration-200 ${
+                                                  className={`relative overflow-hidden rounded-xl border px-4 py-4 transition-all duration-200 ${
                                                     isCompleted
-                                                      ? "border-[#22c55e]/30 bg-surface shadow-[0_18px_36px_-26px_rgba(34,197,94,0.22)]"
-                                                      : "border-[#6366f1]/22 bg-surface shadow-[0_20px_40px_-30px_rgba(99,102,241,0.22)]"
+                                                      ? "border-[#22c55e]/28 bg-surface shadow-[0_16px_34px_-28px_rgba(34,197,94,0.28)]"
+                                                      : "border-[#00cec4]/28 bg-surface shadow-[0_16px_34px_-28px_rgba(0,206,196,0.28)]"
                                                   }`}
                                                 >
-                                                  <div className={`pointer-events-none absolute inset-y-4 left-0 w-1 rounded-full ${isCompleted ? "bg-[#22c55e]" : "bg-[#6366f1]"}`} />
+                                                  <div className={`pointer-events-none absolute inset-y-4 left-0 w-1 rounded-r-sm ${isCompleted ? "bg-[#22c55e]" : "bg-[#00cec4]"}`} />
                                                   
-                                                  <div className="flex w-full items-start justify-between gap-4 bg-transparent text-left">
-                                                    <div className="flex min-w-0 flex-1 items-start gap-2.5">
+                                                  <div className="flex w-full items-center gap-3 bg-transparent text-left">
+                                                    <div className="flex min-w-0 flex-1 items-center gap-3">
                                                       <span
-                                                        className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-[12px] border text-xs font-bold transition-all ${
+                                                        className={`flex size-9 shrink-0 items-center justify-center rounded-xl border text-xs font-medium transition-all ${
                                                           isCompleted
-                                                            ? "border-[#22c55e]/35 bg-[#22c55e] text-white shadow-[0_14px_24px_-16px_rgba(34,197,94,0.45)]"
-                                                            : "border-[#6366f1]/25 bg-[#6366f1] text-white shadow-[0_16px_28px_-18px_rgba(99,102,241,0.45)]"
+                                                            ? "border-[#22c55e]/30 bg-[#22c55e]/12 text-[#15803d]"
+                                                            : "border-[#00cec4]/30 bg-[#00cec4]/12 text-[#00a9b2]"
                                                         }`}
                                                       >
-                                                        {isCompleted ? <Check size={16} /> : <span className="ds-numeric">01</span>}
+                                                        {isCompleted ? <Check size={16} /> : <Upload size={16} />}
                                                       </span>
-                                                      <div className="min-w-0 flex-1 space-y-1.5">
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                          <span className="ds-label text-on-surface-variant">Verification Item</span>
-                                                          <span
-                                                            className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] ${
-                                                              isCompleted ? "bg-[#22c55e]/12 text-[#15803d]" : "bg-[#fb923c]/12 text-[#c76628]"
-                                                            }`}
-                                                          >
-                                                            {isCompleted ? "Verified" : "Upload Required"}
-                                                          </span>
+                                                      <div className="flex min-h-9 min-w-0 flex-1 items-center">
+                                                        <div className="text-base font-normal uppercase leading-none tracking-[0.10em] text-on-surface">
+                                                          Filing Document Verification <span className="text-red-500">*</span>
                                                         </div>
-                                                        <div className="block text-[13px] font-semibold leading-5 text-on-surface">
-                                                          Filing Document Verification <span className="text-red-500 font-bold">*</span>
-                                                        </div>
-                                                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                                                          <span
-                                                            className={`rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] ${
-                                                              isCompleted ? "bg-[#22c55e]/12 text-[#15803d]" : "bg-[#fb923c]/12 text-[#c76628]"
-                                                            }`}
-                                                          >
-                                                            {isCompleted ? "Verified Live" : "Uploads Pending"}
-                                                          </span>
-                                                          <span className="rounded-full bg-surface-container-low px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-on-surface-variant font-mono">
-                                                            Docs {requiredDocumentUploadedCount}/{requiredDocumentTotal}
-                                                          </span>
-                                                        </div>
-                                                        <div className="space-y-1 pt-0.5">
-                                                          <div className="flex items-center justify-between gap-3 text-[10px] text-on-surface-variant">
-                                                            <span>Live completion</span>
-                                                            <span className="ds-numeric">{liveCompletionPercent}%</span>
-                                                          </div>
-                                                          <div className="h-1 overflow-hidden rounded-full bg-surface-container-low">
-                                                            <div
-                                                              className={`h-full rounded-full transition-all duration-300 ${isCompleted ? "bg-[#22c55e]" : "bg-[#00cec4]"}`}
-                                                              style={{ width: `${liveCompletionPercent}%` }}
-                                                            />
-                                                          </div>
-                                                        </div>
-                                                      </div>
-                                                    </div>
-                                                    <div className="shrink-0 self-center text-right">
-                                                      <div className="ds-label text-on-surface-variant font-bold">Item 1 of 1</div>
-                                                      <div className="mt-0.5 text-[12px] leading-4 text-on-surface-variant ds-numeric font-mono">
-                                                        2 BD
                                                       </div>
                                                     </div>
                                                   </div>
 
-                                                  <div className="ml-10 space-y-2">
-                                                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-outline-variant/20 pt-2.5">
-                                                      <label className="ds-label block">Required Documents</label>
-                                                      <span className="text-[11px] text-on-surface-variant ds-numeric font-mono">
-                                                        Uploaded {requiredDocumentUploadedCount} / {requiredDocumentTotal}
-                                                      </span>
+                                                  <div className="ml-12 mt-3 space-y-3">
+                                                    <div>
+                                                      <label className="ds-label block">Required Document</label>
                                                     </div>
-                                                    <div className="space-y-2.5">
+                                                    <div className="space-y-3">
                                                       {activeNodeDocumentRequirements.map((requirement: any) => {
                                                         const uploadedAttachment = activeNodeDocumentAttachmentsByKey.get(requirement.key);
                                                         return (
@@ -7494,18 +7370,6 @@ export function JobWorkspaceClient({
                                                       })}
                                                     </div>
                                                   </div>
-                                                  
-                                                  {!isCompleted && (
-                                                    <div className="rounded-xl border border-[#fb923c]/30 bg-[#fb923c]/6 px-3 py-2 text-[11px] text-on-surface-variant">
-                                                      Upload every required document for this filing step before verification becomes available.
-                                                    </div>
-                                                  )}
-                                                  
-                                                  {isCompleted && (
-                                                    <div className="rounded-xl border border-outline-variant/60 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
-                                                      Completed and ready.
-                                                    </div>
-                                                  )}
                                                 </div>
                                               </div>
                                             );
@@ -7536,46 +7400,11 @@ export function JobWorkspaceClient({
                                                 (item.minUploads || 0) === 0 ||
                                                 checklistItemAttachments.length >= (item.minUploads || 0);
                                               const isCurrentItem = index === currentChecklistItemIndex;
-                                              const isCompletedItem =
-                                                resp.isChecked &&
-                                                (!item.requiresRemarks || !!resp.remarks?.trim()) &&
-                                                (!overdueMeta || !item.delayRemarksRequired || !!resp.delayRemarks?.trim()) &&
-                                                checklistUploadsReady;
                                               const isLockedItem = index > currentChecklistItemIndex;
                                               const canVerifyChecklistItem =
                                                 !isLockedItem &&
                                                 (resp.isChecked ||
                                                   (isCurrentItem && mandatoryNodeDocumentsReady && mandatoryPhotoRequirementsReady && checklistUploadsReady));
-                                              const requiredDocumentTotal = activeNodeDocumentRequirements.filter((requirement: any) => requirement.required !== false).length;
-                                              const requiredDocumentUploadedCount = activeNodeDocumentRequirements.filter(
-                                                (requirement: any) => requirement.required !== false && !!activeNodeDocumentAttachmentsByKey.get(requirement.key),
-                                              ).length;
-                                              const mandatoryPhotoTotal = (activeNodeRun.node.photoRequirements || []).filter(
-                                                (requirement: any) => requirement.isMandatory,
-                                              ).length;
-                                              const mandatoryPhotoUploadedCount = (activeNodeRun.node.photoRequirements || []).filter((requirement: any) => {
-                                                const uploadedCount = activeNodeAttachments.filter(
-                                                  (attachment: any) => attachment.photoRequirementId === requirement.id,
-                                                ).length;
-                                                return uploadedCount >= (requirement.minPhotos || 1);
-                                              }).length;
-                                              const supportingUploadTarget = item.minUploads || 0;
-                                              const liveCompletionChecks = [
-                                                requiredDocumentTotal > 0 ? requiredDocumentUploadedCount / requiredDocumentTotal : 1,
-                                                mandatoryPhotoTotal > 0 ? mandatoryPhotoUploadedCount / mandatoryPhotoTotal : 1,
-                                                supportingUploadTarget > 0 ? Math.min(checklistItemAttachments.length / supportingUploadTarget, 1) : 1,
-                                                resp.isChecked ? 1 : 0,
-                                              ];
-                                              const liveCompletionPercent = Math.round(
-                                                (liveCompletionChecks.reduce((total, value) => total + value, 0) / liveCompletionChecks.length) * 100,
-                                              );
-                                              const liveStatusLabel = isLockedItem
-                                                ? "Waiting"
-                                                : resp.isChecked
-                                                  ? "Verified Live"
-                                                  : canVerifyChecklistItem
-                                                    ? "Ready to Verify"
-                                                    : "Uploads Pending";
                                               return (
                                                 <div
                                                   key={item.id}
@@ -7585,7 +7414,7 @@ export function JobWorkspaceClient({
                                                         ? "border-[#fb923c]/35 bg-surface shadow-[0_18px_38px_-30px_rgba(251,146,60,0.22)]"
                                                         : resp.isChecked
                                                           ? "border-[#22c55e]/30 bg-surface shadow-[0_18px_36px_-26px_rgba(34,197,94,0.22)]"
-                                                          : "border-[#6366f1]/22 bg-surface shadow-[0_20px_40px_-30px_rgba(99,102,241,0.22)]"
+                                                          : "border-[#00cec4]/22 bg-surface shadow-[0_20px_40px_-30px_rgba(0,206,196,0.22)]"
                                                     }`}
                                                 >
                                                   {!isLockedItem ? (
@@ -7594,7 +7423,7 @@ export function JobWorkspaceClient({
                                                           ? "bg-[#22c55e]"
                                                           : overdueMeta
                                                             ? "bg-[#fb923c]"
-                                                            : "bg-[#6366f1]"
+                                                            : "bg-[#00cec4]"
                                                         }`}
                                                     />
                                                   ) : null}
@@ -7624,7 +7453,7 @@ export function JobWorkspaceClient({
                                                             ? "border-outline-variant/50 bg-surface text-on-surface-variant"
                                                             : resp.isChecked
                                                               ? "border-[#22c55e]/35 bg-[#22c55e] text-white shadow-[0_14px_24px_-16px_rgba(34,197,94,0.45)]"
-                                                              : "border-[#6366f1]/25 bg-[#6366f1] text-white shadow-[0_16px_28px_-18px_rgba(99,102,241,0.45)]"
+                                                              : "border-[#00cec4]/25 bg-[#00cec4] text-white shadow-[0_16px_28px_-18px_rgba(0,206,196,0.45)]"
                                                           }`}
                                                       >
                                                         {isLockedItem ? (
@@ -7635,86 +7464,13 @@ export function JobWorkspaceClient({
                                                           <span className="ds-numeric">{String(index + 1).padStart(2, "0")}</span>
                                                         )}
                                                       </span>
-                                                      <div className="min-w-0 flex-1 space-y-1.5">
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                          <span className="ds-label text-on-surface-variant">Verification Item</span>
-                                                          <span
-                                                            className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] ${isLockedItem
-                                                                ? "bg-surface text-on-surface-variant"
-                                                                : resp.isChecked
-                                                                  ? "bg-[#22c55e]/12 text-[#15803d]"
-                                                                  : canVerifyChecklistItem
-                                                                    ? "bg-[#6366f1]/12 text-[#4f46e5]"
-                                                                    : "bg-[#fb923c]/12 text-[#c76628]"
-                                                              }`}
-                                                          >
-                                                            {isLockedItem
-                                                              ? "Locked"
-                                                              : resp.isChecked
-                                                                ? "Verified"
-                                                                : canVerifyChecklistItem
-                                                                  ? "Tap To Verify"
-                                                                  : "Upload Required"}
-                                                          </span>
-                                                        </div>
+                                                      <div className="min-w-0 flex-1 space-y-1">
                                                         <div className="block text-[13px] font-semibold leading-5 text-on-surface">
                                                           {item.label} {item.isMandatory && <span className="text-red-500 font-bold">*</span>}
                                                         </div>
                                                         {item.description ? (
                                                           <p className="text-[11px] leading-4 text-on-surface-variant">{item.description}</p>
                                                         ) : null}
-                                                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                                                          <span
-                                                            className={`rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] ${isLockedItem
-                                                                ? "bg-surface text-on-surface-variant"
-                                                                : resp.isChecked
-                                                                  ? "bg-[#22c55e]/12 text-[#15803d]"
-                                                                  : canVerifyChecklistItem
-                                                                    ? "bg-[#00cec4]/12 text-[#0f766e]"
-                                                                    : "bg-[#fb923c]/12 text-[#c76628]"
-                                                              }`}
-                                                          >
-                                                            {liveStatusLabel}
-                                                          </span>
-                                                          {requiredDocumentTotal > 0 ? (
-                                                            <span className="rounded-full bg-surface-container-low px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-on-surface-variant">
-                                                              Docs {requiredDocumentUploadedCount}/{requiredDocumentTotal}
-                                                            </span>
-                                                          ) : null}
-                                                          {mandatoryPhotoTotal > 0 ? (
-                                                            <span className="rounded-full bg-surface-container-low px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-on-surface-variant">
-                                                              Photos {mandatoryPhotoUploadedCount}/{mandatoryPhotoTotal}
-                                                            </span>
-                                                          ) : null}
-                                                          {item.allowsUpload ? (
-                                                            <span className="rounded-full bg-surface-container-low px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-on-surface-variant">
-                                                              Files {checklistItemAttachments.length}/{supportingUploadTarget || 0}
-                                                            </span>
-                                                          ) : null}
-                                                        </div>
-                                                        <div className="space-y-1 pt-0.5">
-                                                          <div className="flex items-center justify-between gap-3 text-[10px] text-on-surface-variant">
-                                                            <span>Live completion</span>
-                                                            <span className="ds-numeric">{liveCompletionPercent}%</span>
-                                                          </div>
-                                                          <div className="h-1 overflow-hidden rounded-full bg-surface-container-low">
-                                                            <div
-                                                              className={`h-full rounded-full transition-all duration-300 ${resp.isChecked
-                                                                  ? "bg-[#22c55e]"
-                                                                  : canVerifyChecklistItem
-                                                                    ? "bg-[#00cec4]"
-                                                                    : "bg-[#6366f1]"
-                                                                }`}
-                                                              style={{ width: `${liveCompletionPercent}%` }}
-                                                            />
-                                                          </div>
-                                                        </div>
-                                                      </div>
-                                                    </div>
-                                                    <div className="shrink-0 self-center text-right">
-                                                      <div className="ds-label text-on-surface-variant">Item {index + 1} of {activeChecklistItems.length}</div>
-                                                      <div className="mt-0.5 text-[12px] leading-4 text-on-surface-variant ds-numeric">
-                                                        {item.deadlineDuration || 2} {item.deadlineUnit === "HOURS" ? "HR" : item.deadlineUnit === "DAYS" ? "DAY" : "BD"}
                                                       </div>
                                                     </div>
                                                   </button>
@@ -7727,12 +7483,8 @@ export function JobWorkspaceClient({
 
                                                   {!isLockedItem && isCurrentItem && activeNodeDocumentRequirements.length > 0 && (
                                                     <div className="ml-10 space-y-2">
-                                                      <div className="flex flex-wrap items-center justify-between gap-2">
+                                                      <div>
                                                         <label className="ds-label block">Required Documents</label>
-                                                        <span className="text-[11px] text-on-surface-variant ds-numeric">
-                                                          Uploaded {activeNodeDocumentRequirements.filter((requirement: any) => !!activeNodeDocumentAttachmentsByKey.get(requirement.key)).length} /{" "}
-                                                          {activeNodeDocumentRequirements.filter((requirement: any) => requirement.required !== false).length}
-                                                        </span>
                                                       </div>
                                                       <div className="space-y-2.5">
                                                         {activeNodeDocumentRequirements.map((requirement: any) => {
@@ -7785,18 +7537,6 @@ export function JobWorkspaceClient({
                                                           );
                                                         })}
                                                       </div>
-                                                    </div>
-                                                  )}
-
-                                                  {!isLockedItem && !resp.isChecked && !canVerifyChecklistItem && (
-                                                    <div className="rounded-xl border border-[#fb923c]/30 bg-[#fb923c]/6 px-3 py-2 text-[11px] text-on-surface-variant">
-                                                      Upload every required document for this filing step before verification becomes available.
-                                                    </div>
-                                                  )}
-
-                                                  {!isLockedItem && !isCurrentItem && isCompletedItem && (
-                                                    <div className="rounded-xl border border-outline-variant/60 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
-                                                      Completed and ready. You can move to the next checklist item.
                                                     </div>
                                                   )}
 
@@ -8002,13 +7742,13 @@ export function JobWorkspaceClient({
                                     {queryProcessingEnabled ? (
                                       <>
                                         <div className="card-top-accent-orange overflow-hidden rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
-                                          <div className="flex items-start justify-between gap-3 px-4 py-3">
+                                          <div className="flex items-start justify-between gap-3 px-5 py-4">
                                             <div className="min-w-0 flex-1 space-y-1">
-                                              <div className="flex items-center gap-2">
-                                                <span className="h-4 w-0.5 rounded-full bg-[#fb923c]" aria-hidden="true" />
-                                                <h3 className="text-sm font-bold uppercase tracking-wide text-[#c76628]">Query Processing</h3>
+                                              <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-4">
+                                                <span className="h-7 w-1 rounded-sm bg-[#fb923c]" aria-hidden="true" />
+                                                <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-[#c76628]">Query Processing</h3>
                                               </div>
-                                              <p className="text-xs text-on-surface-variant">
+                                              <p className="pl-5 text-sm text-on-surface-variant">
                                                 {activeNodeOpenQueries.length > 0
                                                   ? `${activeNodeOpenQueries.length} active quer${activeNodeOpenQueries.length > 1 ? "ies require" : "y requires"} attention.`
                                                   : queryProcessingStage === "CLEARED"
@@ -8029,43 +7769,44 @@ export function JobWorkspaceClient({
                                                   }
                                                 />
                                               ) : null}
-                                              <div className="inline-flex items-center gap-2 rounded-xl border border-[#fb923c]/20 bg-[#fb923c]/8 px-3 py-1.5 text-sm text-on-surface">
+                                              <button
+                                                type="button"
+                                                role="switch"
+                                                aria-checked={queryProcessingToggleEnabled}
+                                                aria-label={queryProcessingToggleEnabled ? "Turn query processing off" : "Turn query processing on"}
+                                                disabled={isSavingQueryProcessingDecision}
+                                                onClick={() => void handleQueryProcessingToggleChange()}
+                                                className={`inline-flex items-center gap-2 rounded-xl border border-[#fb923c]/20 bg-[#fb923c]/8 px-3 py-1.5 text-sm text-on-surface transition-all ${isSavingQueryProcessingDecision
+                                                    ? "cursor-not-allowed opacity-60"
+                                                    : "hover:shadow-[0_8px_18px_-14px_rgba(251,146,60,0.7)]"
+                                                  }`}
+                                              >
                                                 <span className="ds-label text-[#c76628] whitespace-nowrap">{queryProcessingToggleEnabled ? "Queries On" : "Queries Off"}</span>
-                                                <button
-                                                  type="button"
-                                                  role="switch"
-                                                  aria-checked={queryProcessingToggleEnabled}
-                                                  aria-label={queryProcessingToggleEnabled ? "Turn query processing off" : "Turn query processing on"}
-                                                  disabled={isSavingQueryProcessingDecision || (queryProcessingToggleEnabled && activeNodeQueries.length > 0)}
-                                                  onClick={() => void handleQueryProcessingToggleChange()}
+                                                <span
                                                   className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-all ${queryProcessingToggleEnabled
                                                       ? "border-[#fb923c]/45 bg-[#fb923c]/20"
                                                       : "border-[#fb923c]/25 bg-surface-container-low"
-                                                    } ${isSavingQueryProcessingDecision || (queryProcessingToggleEnabled && activeNodeQueries.length > 0)
-                                                      ? "cursor-not-allowed opacity-60"
-                                                      : "hover:shadow-[0_8px_18px_-14px_rgba(251,146,60,0.7)]"
                                                     }`}
+                                                  aria-hidden="true"
                                                 >
                                                   <span
                                                     className={`pointer-events-none absolute top-[2px] left-[2px] h-[18px] w-[18px] rounded-full border border-[#fb923c]/20 bg-surface shadow-sm transition-transform ${queryProcessingToggleEnabled ? "translate-x-[20px]" : "translate-x-0"
                                                       }`}
                                                   />
-                                                </button>
-                                              </div>
+                                                </span>
+                                              </button>
                                             </div>
                                           </div>
 
                                           {/* Query summary cards */}
-                                          <div className="grid grid-cols-3 gap-3 px-4 py-3 border-t border-outline-variant/15">
+                                          <div className="grid grid-cols-3 gap-3 px-4 py-3">
                                             {filingSummaryCards
                                               .filter((card) => card.key === "queries" || card.key === "open-cases" || card.key === "received")
                                               .map((card) => {
                                                 const toneClasses =
                                                   card.tone === "orange"
                                                     ? "border-[#fb923c]/30 bg-[linear-gradient(135deg,rgba(251,146,60,0.10),rgba(255,255,255,0.02))] text-[#c76628]"
-                                                    : card.tone === "violet"
-                                                      ? "border-[#6366f1]/22 bg-[linear-gradient(135deg,rgba(99,102,241,0.09),rgba(255,255,255,0.02))] text-[#4f46e5]"
-                                                      : "border-[#00cec4]/25 bg-[linear-gradient(135deg,rgba(0,206,196,0.09),rgba(255,255,255,0.02))] text-[#0f766e]";
+                                                    : "border-[#00cec4]/25 bg-[linear-gradient(135deg,rgba(0,206,196,0.09),rgba(255,255,255,0.02))] text-[#0f766e]";
                                                 return (
                                                   <div
                                                     key={card.key}
@@ -8425,10 +8166,10 @@ export function JobWorkspaceClient({
                                                 <span className="mt-0.5 h-10 w-1.5 rounded-full bg-[#fb923c]" aria-hidden="true" />
                                                 <div className="space-y-1">
                                                   <p className="text-sm font-medium text-on-surface">
-                                                    Query processing can be turned off only when no query has been posted for this stage.
+                                                    Query processing can be turned off for this filing stage after adding operational remarks.
                                                   </p>
                                                   <p className="text-xs text-on-surface-variant">
-                                                    Add a short operational reason so the team understands why the query path was not needed.
+                                                    Existing query records remain in the audit trail; this only closes the active query-processing path.
                                                   </p>
                                                 </div>
                                               </div>
@@ -8475,12 +8216,12 @@ export function JobWorkspaceClient({
                                           <div className="flex min-h-full w-full flex-col overflow-hidden rounded-[24px] border border-outline-variant/40 bg-surface shadow-[0_22px_48px_-34px_rgba(15,23,42,0.22)]">
                                             <div className="flex flex-1 flex-col space-y-6 px-5 py-5">
                                               <div className="flex items-start gap-4">
-                                                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-[linear-gradient(135deg,rgba(124,58,237,0.16),rgba(196,181,253,0.18))] text-[#5b34ea] shadow-[0_18px_32px_-22px_rgba(91,52,234,0.45)]">
-                                                  <Mail size={24} />
+                                                <span className="ds-icon-badge size-12 shrink-0">
+                                                  <ClipboardList size={20} />
                                                 </span>
-                                                <div className="space-y-1">
-                                                  <h3 className="text-[1.1rem] font-semibold text-on-surface">
-                                                    Completion Comments / Remarks {activeNodeRun.node.commentsRequired ? <span className="text-red-500 font-bold">*</span> : null}
+                                                <div className="space-y-0.5">
+                                                  <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">
+                                                    Completion Comments / Remarks {activeNodeRun.node.commentsRequired ? <span className="text-red-500">*</span> : null}
                                                   </h3>
                                                   <p className="text-sm text-on-surface-variant">
                                                     Provide checklist execution remarks or record the final outcome.
@@ -8512,68 +8253,7 @@ export function JobWorkspaceClient({
                                   </div>
 
                                   {activeNodeRun ? (
-                                    <div className="xl:col-span-2">
-                                      <div className="rounded-xl border border-outline-variant/40 bg-surface p-4 shadow-sm">
-                                        <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-                                          <div className="min-w-0 flex-1">
-                                            <SlideToComplete
-                                              key={activeNodeRun.id}
-                                              disabled={loading !== null || isActiveStageBlocked}
-                                              text={outgoingEdges.length > 0 ? "Slide to complete this step" : "Slide to file customs bill"}
-                                              helperText="Slide all the way to the right"
-                                              accessibleName={`Slide to complete ${activeNodeRun.node.name}`}
-                                              onComplete={completeActiveFilingNode}
-                                            />
-                                          </div>
-                                          <div className="flex flex-wrap gap-3 xl:shrink-0">
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              disabled={loading !== null || isActiveStageBlocked}
-                                              onClick={handleSaveFilingDraft}
-                                              className="gap-2 rounded-[16px] px-5"
-                                            >
-                                              <Database size={16} />
-                                              Save Draft
-                                            </Button>
-                                            {hasPreviousFilingStage ? (
-                                              <Button
-                                                type="button"
-                                                variant="outline"
-                                                disabled={loading !== null}
-                                                onClick={() => {
-                                                  setGoBackMode("previous");
-                                                  setGoBackReason("");
-                                                  setSelectedJumpBackNodeKey(jumpBackTargets[0]?.nodeKey || "");
-                                                  setGoBackOpen(true);
-                                                }}
-                                                className="gap-2 rounded-[16px] border-[#00cec4]/40 bg-[#00cec4]/4 px-5 text-[#00a9b2]"
-                                              >
-                                                <Undo2 size={16} />
-                                                Jump Back to Earlier Stage
-                                              </Button>
-                                            ) : null}
-                                            {canReturnToCurrentStage ? (
-                                              <Button
-                                                type="button"
-                                                variant="outline"
-                                                disabled={loading !== null}
-                                                onClick={() => {
-                                                  setGoBackMode("return");
-                                                  setGoBackReason("");
-                                                  setSelectedJumpBackNodeKey(returnToCurrentTarget?.nodeKey || "");
-                                                  setGoBackOpen(true);
-                                                }}
-                                                className="gap-2 rounded-[16px] border-[#2563eb]/35 bg-[#2563eb]/5 px-5 text-[#2563eb] dark:text-[#9ab8ff]"
-                                              >
-                                                <RotateCcw size={16} />
-                                                Jump Back to Current Stage
-                                              </Button>
-                                            ) : null}
-                                          </div>
-                                        </div>
-                                      </div>
-
+                                    <div className="space-y-4 xl:col-span-2">
                                       <FilingWorkflowStatusBanner
                                         activeNodeName={activeNodeRun.node.name}
                                         activeNodeSequence={activeNodeSequence}
@@ -8585,6 +8265,64 @@ export function JobWorkspaceClient({
                                         activeStatusLabel={filingBannerStatus.label}
                                         activeStatusDescription={filingBannerStatus.description}
                                       />
+                                      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+                                        <div className="min-w-0 flex-1">
+                                          <SlideToComplete
+                                            key={activeNodeRun.id}
+                                            disabled={loading !== null || isActiveStageBlocked}
+                                            text={outgoingEdges.length > 0 ? "Slide to complete this step" : "Slide to file customs bill"}
+                                            helperText="Slide all the way to the right"
+                                            accessibleName={`Slide to complete ${activeNodeRun.node.name}`}
+                                            onComplete={completeActiveFilingNode}
+                                          />
+                                        </div>
+                                        <div className="flex flex-wrap gap-3 xl:shrink-0">
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            disabled={loading !== null || isActiveStageBlocked}
+                                            onClick={handleSaveFilingDraft}
+                                            className="gap-2 rounded-[16px] px-5"
+                                          >
+                                            <Database size={16} />
+                                            Save Draft
+                                          </Button>
+                                          {hasPreviousFilingStage ? (
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              disabled={loading !== null}
+                                              onClick={() => {
+                                                setGoBackMode("previous");
+                                                setGoBackReason("");
+                                                setSelectedJumpBackNodeKey(jumpBackTargets[0]?.nodeKey || "");
+                                                setGoBackOpen(true);
+                                              }}
+                                              className="gap-2 rounded-[16px] border-[#00cec4]/40 bg-[#00cec4]/4 px-5 text-[#00a9b2]"
+                                            >
+                                              <Undo2 size={16} />
+                                              Jump Back to Earlier Stage
+                                            </Button>
+                                          ) : null}
+                                          {canReturnToCurrentStage ? (
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              disabled={loading !== null}
+                                              onClick={() => {
+                                                setGoBackMode("return");
+                                                setGoBackReason("");
+                                                setSelectedJumpBackNodeKey(returnToCurrentTarget?.nodeKey || "");
+                                                setGoBackOpen(true);
+                                              }}
+                                              className="gap-2 rounded-[16px] border-[#2563eb]/35 bg-[#2563eb]/5 px-5 text-[#2563eb] dark:text-[#9ab8ff]"
+                                            >
+                                              <RotateCcw size={16} />
+                                              Jump Back to Current Stage
+                                            </Button>
+                                          ) : null}
+                                        </div>
+                                      </div>
                                     </div>
                                   ) : null}
 
@@ -8707,18 +8445,18 @@ export function JobWorkspaceClient({
                                     ) : (
                                       <label className="block space-y-1.5">
                                         <span className="ds-label">Select Earlier Stage *</span>
-                                        <select
+                                        <DropdownSelect
+                                          ariaLabel="Select earlier filing stage"
                                           value={selectedJumpBackNodeKey}
-                                          onChange={(e) => setSelectedJumpBackNodeKey(e.target.value)}
-                                          className="w-full text-sm"
-                                        >
-                                          <option value="">-- Choose Earlier Stage --</option>
-                                          {jumpBackTargets.map((target: any) => (
-                                            <option key={target.nodeKey} value={target.nodeKey}>
-                                              {target.nodeName} {target.completedAt ? `(${new Date(target.completedAt).toLocaleString("en-IN")})` : ""}
-                                            </option>
-                                          ))}
-                                        </select>
+                                          onValueChange={setSelectedJumpBackNodeKey}
+                                          placeholder="Choose earlier stage"
+                                          options={jumpBackTargets.map((target: any) => ({
+                                            value: target.nodeKey,
+                                            label: `${target.nodeName}${target.completedAt ? ` (${new Date(target.completedAt).toLocaleString("en-IN")})` : ""}`,
+                                          }))}
+                                          triggerClassName="rounded-xl"
+                                          contentClassName="rounded-xl border-[#00cec4]/25"
+                                        />
                                       </label>
                                     )}
                                     <label className="block space-y-1.5">
@@ -8728,7 +8466,7 @@ export function JobWorkspaceClient({
                                         value={goBackReason}
                                         onChange={(e) => setGoBackReason(e.target.value)}
                                         placeholder={goBackMode === "return" ? "Explain why the workflow should return to the current filing stage..." : "Explain why this filing stage must be reworked..."}
-                                        className="w-full text-sm"
+                                        className="min-h-28 w-full resize-none rounded-xl border border-[#00cec4]/45 bg-surface px-4 py-3 text-sm text-on-surface shadow-[0_12px_26px_-22px_rgba(0,206,196,0.28)] outline-none transition placeholder:text-placeholder focus:border-[#00cec4]/70 focus:shadow-[0_0_0_3px_rgba(0,206,196,0.16)]"
                                         required
                                       />
                                     </label>
@@ -8767,7 +8505,10 @@ export function JobWorkspaceClient({
                                     <CheckCircle2 size={18} />
                                   </span>
                                   <div className="space-y-1">
-                                    <h4 className="ds-h3 text-on-surface">Customs Filing Workflow Complete</h4>
+                                    <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
+                                      <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+                                      <h4 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">Customs Filing Workflow Complete</h4>
+                                    </div>
                                     <Badge variant="success">Filed</Badge>
                                   </div>
                                 </div>
@@ -8822,7 +8563,10 @@ export function JobWorkspaceClient({
                         <Check size={20} />
                       </span>
                       <div className="space-y-1">
-                        <h4 className="ds-h3 text-on-surface">Customs Filing Complete</h4>
+                        <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
+                          <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+                          <h4 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">Customs Filing Complete</h4>
+                        </div>
                         <Badge variant="success">Filed</Badge>
                       </div>
                     </div>
@@ -8845,12 +8589,15 @@ export function JobWorkspaceClient({
                 <div className="space-y-6">
                   <div style={overviewThemeVars} className="grid items-stretch gap-4 xl:grid-cols-3">
                     <section className="h-full rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
-                      <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center justify-between gap-3 border-b border-[var(--cha-overview-line)] pb-4 dark:border-[var(--cha-overview-line-dark)]">
                         <div className="flex items-center gap-3">
                           <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                             <Package size={16} />
                           </span>
-                          <h3 className="ds-h3 text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Job Summary</h3>
+                          <div className="space-y-0.5">
+                            <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Job Summary</h3>
+                            <p className="text-xs text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">Key shipment and clearance details for this job.</p>
+                          </div>
                         </div>
                         <Button type="button" variant="outline" size="sm" onClick={() => navigateToWorkspaceTab("additionalData")}>
                           View Details
@@ -8874,11 +8621,14 @@ export function JobWorkspaceClient({
                     </section>
 
                     <section className="h-full rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 border-b border-[var(--cha-overview-line)] pb-4 dark:border-[var(--cha-overview-line-dark)]">
                         <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                           <CalendarDays size={16} />
                         </span>
-                        <h3 className="ds-h3 text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Important Dates</h3>
+                        <div className="space-y-0.5">
+                          <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Important Dates</h3>
+                          <p className="text-xs text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">Validity and deadline signals for this shipment.</p>
+                        </div>
                       </div>
                       <div className="mt-4 space-y-3">
                         {overviewDateItems.map((item) => (
@@ -8912,11 +8662,14 @@ export function JobWorkspaceClient({
                     </section>
 
                     <section className="h-full rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 border-b border-[var(--cha-overview-line)] pb-4 dark:border-[var(--cha-overview-line-dark)]">
                         <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                           <Zap size={16} />
                         </span>
-                        <h3 className="ds-h3 text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Quick Actions</h3>
+                        <div className="space-y-0.5">
+                          <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Quick Actions</h3>
+                          <p className="text-xs text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">Common job actions and workspace shortcuts.</p>
+                        </div>
                       </div>
                       <div className="mt-4 grid gap-3">
                         {workspaceQuickActions.map((action) => (
@@ -8950,12 +8703,15 @@ export function JobWorkspaceClient({
                   </div>
 
                   <section style={overviewThemeVars} className="rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-3 border-b border-[var(--cha-overview-line)] pb-4 dark:border-[var(--cha-overview-line-dark)] sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-3">
                         <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                           <History size={16} />
                         </span>
-                        <h3 className="ds-h3 text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Recent Activity</h3>
+                        <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
+                          <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+                          <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Recent Activity</h3>
+                        </div>
                       </div>
                       <Button type="button" variant="outline" onClick={() => navigateToWorkspaceTab("audit")}>
                         View All Activity
@@ -9007,7 +8763,10 @@ export function JobWorkspaceClient({
               {activeTab === "advances" && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="ds-h3 text-on-surface">Client Advance Collections</h3>
+                    <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
+                      <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+                      <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">Client Advance Collections</h3>
+                    </div>
                     <span className={`text-xs font-bold uppercase tracking-wider ${job.customerAdvance.status === "FULLY_RECEIVED" ? "text-green-600" : "text-[#fb923c]"
                       }`}>
                       Collection: {job.customerAdvance.status.replace(/_/g, " ")}
@@ -9197,7 +8956,10 @@ export function JobWorkspaceClient({
                 <div className="space-y-4">
                   {/* Create expense request */}
                   <div className="border border-outline-variant p-4 rounded-xl space-y-4 bg-surface-container-low">
-                    <h3 className="ds-h3 text-on-surface">New Clearance Expense Request</h3>
+                    <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
+                      <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+                      <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">New Clearance Expense Request</h3>
+                    </div>
 
                     <form onSubmit={handleCreateExpenseRequest} className="space-y-4">
                       {/* Urgent switch */}
@@ -9332,7 +9094,10 @@ export function JobWorkspaceClient({
 
                   {/* List of requested expenses */}
                   <div className="space-y-4">
-                    <h3 className="ds-h3 text-on-surface border-b border-outline-variant/30 pb-2">Expenses Queue</h3>
+                    <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3 border-b border-outline-variant/30 pb-2">
+                      <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+                      <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">Expenses Queue</h3>
+                    </div>
 
                     {job.expenseRequests?.length === 0 ? (
                       <p className="text-xs text-on-surface-variant italic">No expenses requested for this job clearance.</p>
@@ -9372,7 +9137,7 @@ export function JobWorkspaceClient({
                                   <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${isAck
                                       ? "bg-green-100 text-green-700"
                                       : isPaid
-                                        ? "bg-blue-100 text-blue-700"
+                                        ? "bg-[#00cec4]/10 text-[#00a9b2]"
                                         : isQuery
                                           ? "bg-orange-100 text-orange-700"
                                           : "bg-surface-container-high text-on-surface-variant border border-outline-variant"
@@ -9684,7 +9449,10 @@ export function JobWorkspaceClient({
               {/* PANEL: AUDIT LOGS */}
               {activeTab === "audit" && (
                 <div className="space-y-4">
-                  <h3 className="ds-h3 text-on-surface">Job Auditing History Trail</h3>
+                  <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
+                    <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+                    <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">Job Auditing History Trail</h3>
+                  </div>
 
                   {job.auditLogs?.length === 0 ? (
                     <p className="text-xs text-on-surface-variant">No audit log records for this clearance.</p>
@@ -10038,6 +9806,55 @@ export function JobWorkspaceClient({
             </Modal>
           )}
 
+          <Modal
+            open={bulkNaConfirmOpen}
+            onClose={() => {
+              if (loading === "na-all") return;
+              setBulkNaConfirmOpen(false);
+            }}
+            title="Mark Documents As N/A"
+            description="Confirm this bulk document action before updating the visible pending requirements."
+            className="max-w-lg"
+            titleClassName="text-lg font-medium leading-none tracking-[0.075em]"
+          >
+            <div className="space-y-5">
+              <div className="flex items-start gap-3 rounded-xl border border-[#fb923c]/30 bg-[#fb923c]/8 px-4 py-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#fb923c]/30 bg-[#fb923c]/12 text-[#fb923c]">
+                  <AlertTriangle size={18} />
+                </span>
+                <div className="min-w-0 space-y-1">
+                  <p className="text-sm font-medium text-on-surface">
+                    Mark {bulkNaEligibleRequirements.length} visible pending document requirement(s) as N/A?
+                  </p>
+                  <p className="text-xs leading-5 text-on-surface-variant">
+                    This will record each selected requirement as not available and add an audit entry. Uploaded or already resolved documents will not be changed.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setBulkNaConfirmOpen(false)}
+                  disabled={loading === "na-all"}
+                  className="rounded-xl px-5 text-xs font-medium uppercase tracking-[0.12em]"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleConfirmMarkAllNotAvailable}
+                  disabled={loading === "na-all" || bulkNaEligibleRequirements.length === 0}
+                  variant="outline"
+                  className="rounded-xl !border-[#fb923c]/45 !bg-surface px-5 text-xs font-medium uppercase tracking-[0.12em] !text-[#fb923c] !shadow-none hover:!border-[#fb923c]/70 hover:!bg-surface hover:!text-[#f97316] hover:!shadow-[0_0_0_3px_rgba(251,146,60,0.18),0_10px_24px_-18px_rgba(251,146,60,0.75)] hover:!animate-none focus-visible:!ring-[#fb923c]/35"
+                >
+                  {loading === "na-all" ? "Marking..." : "Mark As N/A"}
+                </Button>
+              </div>
+            </div>
+          </Modal>
+
           {/* â”€â”€ Closing Two-Column Wrapper Divs â”€â”€ */}
         </div>
       </div>
@@ -10179,7 +9996,10 @@ export function JobWorkspaceClient({
                       <FileText size={32} />
                     </div>
                     <div className="space-y-2 max-w-md">
-                      <h4 className="ds-h3 text-sm text-on-surface">Preview Unavailable</h4>
+                      <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
+                        <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+                        <h4 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">Preview Unavailable</h4>
+                      </div>
                       <p className="text-xs text-on-surface-variant leading-relaxed font-sans">
                         Word, Excel, or binary formats cannot be previewed directly in the browser. You can download this file to view it locally.
                       </p>

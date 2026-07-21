@@ -70,7 +70,6 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
           <Button
             size="sm"
             variant="outline"
-            className="rounded-full border-[#00cec4]/30 bg-surface text-[#00a99f] hover:bg-[#00cec4]/[0.06]"
             onClick={() => run("/api/notifications/read-all", "Marked all as read")}
           >
             <CheckCheck className="mr-1.5 size-4" />
@@ -79,7 +78,6 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
           <Button
             size="sm"
             variant="outline"
-            className="rounded-full border-[#00cec4]/30 bg-surface text-[#00a99f] hover:bg-[#00cec4]/[0.06]"
             onClick={() => run("/api/notifications/dismiss-all", "Dismissed all notifications")}
           >
             <Trash2 className="mr-1.5 size-4" />
@@ -149,7 +147,6 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
                       <Button
                         size="sm"
                         variant="outline"
-                        className="rounded-full border-[#00cec4]/30 bg-surface text-[#00a99f] hover:bg-[#00cec4]/[0.06]"
                         onClick={() => run(`/api/notifications/${notification.id}/read`, "Marked as read")}
                       >
                         <Eye className="mr-1.5 size-4" />
@@ -159,7 +156,6 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
                     {notification.requiresAck && !notification.acknowledgedAt ? (
                       <Button
                         size="sm"
-                        className="rounded-full border-0 bg-[#00cec4] text-white hover:bg-[#00b8af]"
                         onClick={() => run(`/api/notifications/${notification.id}/ack`, "Notification acknowledged")}
                       >
                         <CheckCheck className="mr-1.5 size-4" />
@@ -170,7 +166,6 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
                       <Button
                         size="sm"
                         variant="outline"
-                        className="rounded-full border-[#00cec4]/30 bg-surface text-[#00a99f] hover:bg-[#00cec4]/[0.06]"
                         onClick={async () => {
                           const res = await fetch(`/api/notifications/${notification.id}/open`, { method: "POST" });
                           const data = (await res.json()) as { link?: string | null };
@@ -190,7 +185,6 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
                       <Button
                         size="sm"
                         variant="outline"
-                        className="rounded-full border-[#00cec4]/30 bg-surface text-[#00a99f] hover:bg-[#00cec4]/[0.06]"
                         onClick={() => run(`/api/notifications/${notification.id}/dismiss`, "Notification dismissed")}
                       >
                         <Trash2 className="mr-1.5 size-4" />

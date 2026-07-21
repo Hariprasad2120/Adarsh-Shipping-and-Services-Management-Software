@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, CheckCircle2, Info, OctagonAlert, TriangleAlert, X } from "lucide-react";
+import { X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button-1";
 import { cn } from "@/lib/utils";
@@ -76,20 +76,11 @@ function markRemoteToastsShown(notificationIds: string[]) {
   }
 }
 
-function getAccentClass(variant: ToastVariant | undefined) {
-  if (variant === "warning") return "text-amber-500";
-  if (variant === "destructive") return "text-rose-500";
-  if (variant === "success") return "text-emerald-500";
-  return "text-[#00cec4]";
-}
-
 function getNotificationCardTone(variant: ToastVariant | undefined) {
   if (variant === "warning") {
     return {
       border: "border-[#fb923c]/40 hover:border-[#fb923c]/70",
       glow: "hover:shadow-[0_18px_36px_-28px_rgba(251,146,60,0.34)]",
-      iconBg: "bg-[#fb923c]/10",
-      iconBorder: "border-[#fb923c]/20",
       closeBorder: "border-[#fb923c]/30 hover:border-[#fb923c]/65",
       closeText: "text-[#fb923c] hover:text-[#ea580c]",
     };
@@ -98,8 +89,6 @@ function getNotificationCardTone(variant: ToastVariant | undefined) {
     return {
       border: "border-rose-400/40 hover:border-rose-500/70",
       glow: "hover:shadow-[0_18px_36px_-28px_rgba(244,63,94,0.28)]",
-      iconBg: "bg-rose-500/10",
-      iconBorder: "border-rose-400/20",
       closeBorder: "border-rose-400/30 hover:border-rose-500/65",
       closeText: "text-rose-500 hover:text-rose-600",
     };
@@ -108,8 +97,6 @@ function getNotificationCardTone(variant: ToastVariant | undefined) {
     return {
       border: "border-emerald-400/40 hover:border-emerald-500/70",
       glow: "hover:shadow-[0_18px_36px_-28px_rgba(16,185,129,0.26)]",
-      iconBg: "bg-emerald-500/10",
-      iconBorder: "border-emerald-400/20",
       closeBorder: "border-emerald-400/30 hover:border-emerald-500/65",
       closeText: "text-emerald-500 hover:text-emerald-600",
     };
@@ -118,19 +105,9 @@ function getNotificationCardTone(variant: ToastVariant | undefined) {
   return {
     border: "border-[#00cec4]/35 hover:border-[#00cec4]/65",
     glow: "hover:shadow-[0_18px_36px_-28px_rgba(0,206,196,0.28)]",
-    iconBg: "bg-[#00cec4]/10",
-    iconBorder: "border-[#00cec4]/20",
     closeBorder: "border-[#00cec4]/30 hover:border-[#00cec4]/60",
     closeText: "text-[#00a99f] hover:text-[#00857e]",
   };
-}
-
-function renderIcon(variant: ToastVariant | undefined, className: string) {
-  if (variant === "success") return <CheckCircle2 className={className} strokeWidth={1.9} />;
-  if (variant === "destructive") return <OctagonAlert className={className} strokeWidth={1.9} />;
-  if (variant === "warning") return <TriangleAlert className={className} strokeWidth={1.9} />;
-  if (variant === "info" || variant === "primary") return <Info className={className} strokeWidth={1.9} />;
-  return <Bell className={className} strokeWidth={1.9} />;
 }
 
 function NotificationToastCard({
@@ -148,7 +125,6 @@ function NotificationToastCard({
   onClose?: () => void;
   actions?: React.ReactNode;
 }) {
-  const accentClass = getAccentClass(variant);
   const tone = getNotificationCardTone(variant);
 
   return (
@@ -160,25 +136,11 @@ function NotificationToastCard({
         tone.glow,
       )}
     >
-      <div className="absolute left-0 top-0 h-full w-1.5 bg-current opacity-80" />
       <div className="relative flex gap-4">
-        <div
-          className={cn(
-            "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border",
-            tone.iconBg,
-            tone.iconBorder,
-          )}
-        >
-          {renderIcon(variant, cn("size-5", accentClass))}
-        </div>
-
         <div className="min-w-0 flex-1 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1">
-              <h3
-                className="text-sm uppercase leading-none text-on-surface"
-                style={{ fontFamily: "var(--font-kiona-sans)", letterSpacing: "0.18em" }}
-              >
+              <h3 className="text-sm font-medium uppercase leading-5 tracking-[0.08em] text-on-surface">
                 {title}
               </h3>
               {body ? <p className="text-sm leading-6 text-on-surface-variant">{body}</p> : null}
@@ -330,7 +292,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             <Button
               size="sm"
               variant="outline"
-              className="rounded-full border-[#00cec4]/30 bg-surface/95 px-4 text-[#00a99f] shadow-[var(--shadow-ambient)] backdrop-blur-xl hover:bg-[#00cec4]/[0.06]"
+              className="shadow-[var(--shadow-ambient)] backdrop-blur-xl"
               onClick={async () => {
                 setLocalToasts([]);
                 await postAction("/api/notifications/dismiss-all");
@@ -359,7 +321,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                       <Button
                         size="sm"
                         variant="outline"
-                        className="rounded-full border-[#00cec4]/30 bg-surface text-[#00a99f] hover:bg-[#00cec4]/[0.06]"
                         onClick={async () => {
                           const res = await fetch(`/api/notifications/${toast.id}/open`, { method: "POST" });
                           const data = (await res.json()) as { link?: string | null };
@@ -374,7 +335,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                       <Button
                         size="sm"
                         variant="default"
-                        className="rounded-full border-0 bg-[#00cec4] text-white hover:bg-[#00b8af]"
                         onClick={async () => {
                           await postAction(`/api/notifications/${toast.id}/ack`);
                           setRemoteToasts((current) => current.filter((entry) => entry.id !== toast.id));
@@ -401,7 +361,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 onClose={() => setLocalToasts((current) => current.filter((entry) => entry.id !== toast.id))}
                 actions={
                   toast.actionLabel && toast.onAction ? (
-                      <Button size="sm" className="rounded-full border-0 bg-[#00cec4] text-white hover:bg-[#00b8af]" onClick={() => void toast.onAction?.()}>
+                      <Button size="sm" onClick={() => void toast.onAction?.()}>
                         {toast.actionLabel}
                       </Button>
                   ) : null
