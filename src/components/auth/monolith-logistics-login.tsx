@@ -342,7 +342,7 @@ export function MonolithLogisticsLogin() {
 
           <div className={styles.cardHeading}>
             <span>LIVE OPERATIONS</span>
-            <h1 className="ds-h1">LOG IN TO YOUR<br />COMMAND CENTER</h1>
+            <h1>LOG IN TO YOUR<br />COMMAND CENTER</h1>
             <p>Credential checks remain encrypted end-to-end across your secure operations workspace.</p>
           </div>
 

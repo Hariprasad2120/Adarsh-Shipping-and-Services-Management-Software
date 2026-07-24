@@ -125,10 +125,11 @@ These are defined in `design-tokens.ts` under `colors.status` and are approved e
 | Role | CSS Variable | Font | Loaded In |
 |---|---|---|---|
 | Body / Sans | `--font-geist-sans` | Geist Sans | `layout.tsx` via `next/font/google` |
-| Display / Headings | `--font-kiona-sans` | Kiona Sans | `layout.tsx` via `next/font/local` |
+| Display / Headings | `--font-display` | Geist Sans | `@theme inline` maps to `var(--font-geist-sans)` |
+| Kiona Decorative | `--font-kiona-sans` | Kiona Sans | Logo/special decorative exceptions only |
 | Mono / Numeric | `--font-geist-mono` | Geist Mono | `layout.tsx` via `next/font/google` |
 
-> **Important:** The `@theme inline` block maps `--font-sans` and `--font-display` to `var(--font-geist-sans)`. The Kiona display font is available via `var(--font-kiona-sans)` directly. The `.ds-h*` heading classes use `var(--font-display)` which currently resolves to Geist Sans. For Kiona headings, use `font-family: var(--font-kiona-sans)` explicitly or apply it via `design-tokens.ts` → `fonts.display`.
+> **Important:** The CHA typography showcase uses `.ds-h*` on `--font-display`, and `@theme inline` maps `--font-display` to `var(--font-geist-sans)`. Do not force Kiona on `.ds-h*`; Kiona is reserved for logo/special decorative exceptions.
 
 ### 4.2 Font Size Scale
 
@@ -148,19 +149,19 @@ These are defined in `design-tokens.ts` under `colors.status` and are approved e
 
 | Class | Font | Size | Weight | Tracking | Transform |
 |---|---|---|---|---|---|
-| `.ds-h1` | `var(--font-display)` | 24px (`--text-3xl`) | Inherited | -0.015em | UPPERCASE |
-| `.ds-h2` | `var(--font-display)` | 20px (`--text-2xl`) | Inherited | -0.015em | UPPERCASE |
-| `.ds-h3` | `var(--font-display)` | 18px (`--text-xl`) | Inherited | -0.01em | UPPERCASE |
+| `.ds-h1` | `var(--font-display)` | 30px (`--text-4xl`) | 400 | 0.22em | UPPERCASE |
+| `.ds-h2` | `var(--font-display)` | 24px (`--text-3xl`) | 400 | 0.20em | UPPERCASE |
+| `.ds-h3` | `var(--font-display)` | 20px (`--text-2xl`) | 400 | 0.18em | UPPERCASE |
 | `.ds-label` | Inherited | 10px (`--text-xs`) | 400 | 0.12em | UPPERCASE |
 | `.ds-numeric` | `var(--font-mono)` | Inherited | 400 | — | tabular-nums, slashed-zero |
 
 ### 4.4 Font-Weight Rules
 
 - Body text: `400` (default, no override needed)
-- Headings (`.ds-h*`): No explicit `font-weight` set — inherits from context
+- Headings (`.ds-h*`): `400`
 - Numeric (`.ds-numeric`): `400 !important`
 - Labels (`.ds-label`): `400`
-- Buttons: `500` (medium, set in button component)
+- Buttons: `500`; default text is 12px and `sm` text is 10px
 
 ---
 
@@ -187,6 +188,8 @@ These are defined in `design-tokens.ts` under `colors.status` and are approved e
 | ambient-hover | `--shadow-ambient-hover` | `0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)` | Hover elevation |
 | card | TS only | `0 14px 28px -24px rgba(0,0,0,0.12)` | Stat card shadow |
 | card-hover | TS only | `0 20px 36px -20px rgba(0,0,0,0.16)` | Stat card hover |
+| cyan-hover-glow | CSS recipe | `0 0 0 3px rgba(0,206,196,0.14), 0 10px 24px -18px rgba(0,206,196,0.75)` | Button hover and subtle row/action glow |
+| orange-hover-glow | CSS recipe | `0 0 0 3px rgba(251,146,60,0.16), 0 10px 24px -18px rgba(251,146,60,0.75)` | Warning button hover |
 
 Dark mode has its own shadow values (more contrast). See `globals.css` `html.dark` block.
 
@@ -198,26 +201,27 @@ Dark mode has its own shadow values (more contrast). See `globals.css` `html.dar
 
 Re-exports from `button-1.tsx`. Import from either path.
 
-The canonical button look is the neon treatment (adopted app-wide 2026-07-06, confirmed after review):
+The canonical button look is the CHA operational treatment: compact uppercase text, rounded-xl geometry, and a slight neon glow in the background on hover.
 
 | Variant | Appearance |
 |---|---|
-| `default` | Cyan `#00cec4` bg + cyan border, white text; hover `#00b8af` + cyan neon glow `0 0 16px rgba(0,206,196,.5), 0 0 5px rgba(0,206,196,.3)` + `neon-pulse-approve` pulse |
-| `outline` | Surface bg, cyan `#00cec4/45` border, cyan text; hover: full-cyan border, no fill tint, glow `0 0 12px rgba(0,206,196,.3)` |
-| `destructive` | Red `#ef4444` bg + red border, white text; hover `#dc2626` + red glow + `neon-pulse-reject` pulse |
+| `default` | Cyan `#00cec4` bg + cyan border, white text; hover `#00b8af` with subtle cyan ring/glow `0 0 0 3px rgba(0,206,196,.16), 0 10px 24px -18px rgba(0,206,196,.85)` |
+| `outline` | Surface bg, cyan `#00cec4/45` border, cyan text; hover: full-cyan border, `bg-surface-container-low`, subtle cyan ring/glow `0 0 0 3px rgba(0,206,196,.14), 0 10px 24px -18px rgba(0,206,196,.75)` |
+| `destructive` | Red `#ef4444` bg + red border, white text; hover `#dc2626` with subtle red ring/glow |
 | `inverse` | Transparent bg, current text color, hover black/10 |
 | `disabled` | `opacity-50` + `pointer-events-none` (any variant) |
 
 Implementation note:
 - Shared `Button` renders `data-variant`, `data-size`, and `data-mode` attributes. Global CHA styling in `globals.css` must target these attributes instead of inferring button role from utility-class substrings, otherwise tinted `outline` buttons can be incorrectly promoted to solid fills.
+- Ordinary `<button>` controls inside `<main>` also receive the subtle CHA cyan hover glow unless they opt out with `.ds-plain`, use `data-mode="icon"`, or are destructive. This keeps tabs, filters, and legacy action buttons consistent while preserving specialized control shapes.
 
 **Hover motion (applies to ALL buttons, every variant and extension):** buttons lift `translateY(-1px)` on hover, return to `translateY(0)` and compress to `scale(0.96)` on press. This is baked into the shared Button base classes (`hover:-translate-y-px active:translate-y-0 active:scale-[0.96]`, `transition-all duration-200`) and mirrored by the `.cha-module` cascade — do not remove it or override it per-button.
 
 | Size | Height |
 |---|---|
-| `sm` | 32px (`h-8`) |
-| `md` | 40px (`h-10`) |
-| `lg` | 44px (`h-11`) |
+| `sm` | 32px (`h-8`), 10px text |
+| `md` | 40px (`h-10`), 12px text |
+| `lg` | 44px (`h-11`), 12px text |
 
 | Mode | Behavior |
 |---|---|
@@ -232,27 +236,27 @@ import { Button } from "@/components/ui/button";
 <Button variant="default" mode="icon"><Settings size={16} /></Button>
 ```
 
-#### 6.1.1 CHA-approved button extensions (review decisions, 2026-07-05)
+#### 6.1.1 Shared Button Extensions
 
 These two patterns are **sanctioned CHA defaults** — reuse them as-is; do not invent new variants of the same role.
 
 | Pattern | Recipe | Use |
 |---|---|---|
-| **Orange outline (warning-state action)** | `<Button variant="outline" className="border-[#fb923c]/50 text-[#fb923c] hover:bg-surface">` | Actions that toggle/clear a warning state (Mark All N/A, Assign Manager, Deactivate Section 49). Orange neon hover keeps border/text orange with no tint fill; lifts `-1px` on hover like every button (§6.1). |
+| **Orange outline (warning-state action)** | `<Button variant="outline" className="border-[#fb923c]/50 text-[#fb923c] hover:bg-surface-container-low">` or `.ds-button-warning` | Actions that toggle/clear a warning state. Orange hover keeps border/text orange with no tint fill; lifts `-1px` on hover like every button (§6.1). |
 | **Tonal tinted (severity popover actions)** | `<Button size="sm" className="flex-1 border {tone}/25 bg-{tone}/12 text-{tone} hover:bg-{tone}/18">` where tone ∈ red-500 · `#fb923c` · orange-500 · `#00cec4` · outline-variant (neutral) | Action rows inside warning-indicator popovers. **Size, padding and text size come from `size="sm"` (h-8, px-3, 12px)** — never override with `h-8`/`h-7`/`text-xs`. Tint colors are the approved part; geometry stays standard. |
 | **Warning heading / eyebrow** | Warning = `!text-[#fb923c]`; destructive = `!text-red-400` on `.ds-label` eyebrows/headings | Warning popover headings, due-date alert eyebrows, DO validity alerts, Section 49 alerts, and similar warning-note titles must match the icon tone exactly. Do not leave them on the default muted label color, and do not mix cyan heading bars into warning cards. |
 | **Warning card shell** | Use `card-top-accent-orange` for warning popovers/floating notes and `card-left-accent-orange` for persistent inline warning cards | Warning surfaces such as DO validity alerts, Section 49 alerts, filing query warnings, and inline due-date notes should carry the same orange accent-border treatment as other CHA alert cards instead of plain neutral borders. |
 
-> History: the neon look + universal hover lift was adopted 2026-07-06, briefly reverted by mistake the same day, then **restored and confirmed as final** (see §16). The neon treatment above IS the design system for buttons.
+> Current decision: slight CHA hover glow is canonical for buttons. Broad animated pulse cascades are not canonical.
 
 #### 6.1.2 Button-adjacent patterns (canonical, 2026-07-06)
 
 | Pattern | Recipe | Rules |
 |---|---|---|
 | **Upload dropzone** | `flex w-full cursor-pointer items-center gap-2 rounded-xl border border-dashed border-outline-variant/50 bg-surface px-4 py-3 text-sm text-on-surface-variant transition hover:border-[#00cec4]/60 hover:bg-surface-container-low/40` | The ONE dropzone recipe (button or label). Untinted `bg-surface` at rest (2026-07-07 review); neutral dashed border that turns cyan on hover. No `rounded-2xl`, no per-screen variants. |
-| **Text-link button** | `className="ds-plain cha-link …"` + own size/weight classes (`button.cha-link` in `globals.css`) | ADOPTED 2026-07-07: no background fill, cyan text `#00cec4` (hover `#00b8af` + underline), **neon hover animation kept** (`neon-pulse-approve` glow + `translateY(-1px)` lift, `scale(0.96)` press). `ds-plain` is mandatory so the button cascade never fills them. Orange/green semantic links (Raise Query, Acknowledge Receipt, etc.) keep their own colors and are NOT converted. |
+| **Text-link button** | `className="ds-plain cha-link …"` + own size/weight classes (`button.cha-link` in `globals.css`) | No background fill, cyan text `#00cec4` (hover `#00b8af` + underline), standard `translateY(-1px)` lift and `scale(0.96)` press. `ds-plain` is mandatory so compatibility cascades never fill them. Orange/green semantic links keep their own colors and are NOT converted. |
 | **Minimum size** | `size="sm"` (h-8 / 32px, 12px text) | Smallest sanctioned button. No `h-7`, no `h-8 text-xs py-1` overrides — geometry comes from the size token only. |
-| **`.ds-plain` opt-out** | Add `ds-plain` as the first class on any `<button>` that must NOT be neon (dashed dropzone buttons, quick-action tiles) | The `.cha-module` neon cascade excludes `button.ds-plain` (`:not(.ds-plain)` on every button selector). Without it, the cascade's `[class*=…]` matching force-restyles tile-style buttons into solid neon buttons. (Text-link buttons deliberately do NOT carry it — reverted to original cascade behavior 2026-07-07.) |
+| **`.ds-plain` opt-out** | Add `ds-plain` as the first class on any `<button>` that must keep a non-standard visual shape (dashed dropzone buttons, quick-action tiles) | The `.cha-module` compatibility cascade excludes `button.ds-plain` (`:not(.ds-plain)` on every button selector). Without it, the cascade's `[class*=…]` matching can restyle tile-style buttons into solid cyan buttons. |
 
 Canonical implementation:
 
@@ -276,6 +280,12 @@ Use `src/components/ui/file-upload-field.tsx` as the default upload primitive ac
 | `CardHeader` | Top section with padding |
 | `CardContent` | Body section with spacing |
 | `CardTitle` | `<h3>` with `.ds-h3` |
+
+Canonical CHA card pattern:
+- Use `rounded-xl border border-outline-variant/60 bg-surface text-on-surface shadow-sm`.
+- Use `card-top-accent` for dashboard/stat/summary cards and `card-left-accent` for list/detail rows.
+- Card section titles use `.ds-h3`, matching the CHA typography showcase: Geist/display, uppercase, 20px, 0.18em tracking, 400 weight.
+- Pair titles with `.ds-icon-badge` and a short `text-sm text-on-surface-variant` subtitle when the card has a header row.
 
 ```tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -342,9 +352,9 @@ Form label: `text-sm`, `font-medium`, `text-on-surface`.
 
 | Class | Effect | Use |
 |---|---|---|
-| `.ds-h1` | 24px uppercase heading | Page titles |
-| `.ds-h2` | 20px uppercase heading | Section titles |
-| `.ds-h3` | 18px uppercase heading | Card/panel titles |
+| `.ds-h1` | 30px Geist/display uppercase heading, 0.22em tracking | Page titles and CHA job-number display |
+| `.ds-h2` | 24px Geist/display uppercase heading, 0.20em tracking | Section titles |
+| `.ds-h3` | 20px Geist/display uppercase heading, 0.18em tracking | Card/panel titles |
 | `.ds-label` | 10px uppercase, muted color | Table headers, form labels |
 | `.ds-numeric` | Geist Mono, tabular-nums | Numbers, money, stats |
 | `.ds-icon-badge` | 36×36 frosted glass icon container | Stat cards, feature icons |
@@ -353,6 +363,16 @@ Form label: `text-sm`, `font-medium`, `text-on-surface`.
 | `.ds-row-link` | Clickable row with cyan hover | Table rows that navigate |
 | `.hover-cyan` | Cyan glow on hover | Cards, list items |
 | `.ds-shell-lg` | `border-radius: 24px` | Modal outer shell |
+| `.ds-button` | Solid cyan operational button | Primary links and actions outside React `Button` |
+| `.ds-button-outline` | Cyan outline operational button | Secondary links and filter actions outside React `Button` |
+| `.ds-button-warning` | Orange outline operational button | Warning/escalation actions outside React `Button` |
+| `.ds-app-body` | Token-backed full-height app background/text | Customer portal and standalone auth surfaces |
+| `.ds-portal-shell` | 252px sidebar + flexible content grid | Customer-facing portal shell |
+| `.ds-sidebar` | Sticky token-backed navigation sidebar | Customer-facing portal and future external workspaces |
+| `.ds-topbar` | Sticky token-backed top bar | Customer-facing portal and external workspaces |
+| `.ds-nav-item` | Sidebar/mobile navigation row with cyan active state | App navigation links and actions |
+| `.ds-progress-bar` | Cyan progress meter with token-backed track | Shipment, workflow, and completion progress |
+| `.ds-timeline` / `.ds-stage` | Horizontal milestone tracker | CHA/customer-facing workflow stages |
 | `.ds-dark-banner` | Preserves white text in light mode | Dark-background hero sections |
 | `.card-cyan-outline` | Thin cyan outline border | Workspace cards, data-entry panels, highlighted information cards |
 | `.card-top-accent` | Cyan top accent + cyan-tinted border | Primary stat cards, emphasized section cards |
@@ -476,7 +496,13 @@ These are approved exceptions to the "no Tailwind color" rule.
 - Form grids: `grid-cols-1 sm:grid-cols-2`
 - Table layouts: Full-width, horizontal scroll on mobile
 
-### 10.1 Page Shell (DashboardShell)
+### 10.1 Customer Portal Shell
+
+The customer portal uses the shared CHA-style operational shell, not a separate glass/illustrated theme. Use `ds-app-body`, `ds-portal-shell`, `ds-sidebar`, `ds-topbar`, `ds-nav-item`, `ds-mobile-nav`, `Card`, `Button`, `Badge`, `DataTable`, and the accent utilities from this file. Do not reintroduce `portal-styles.css`, `portal-*` visual classes, custom portal CSS variables, or standalone dark-only shipping-dashboard chrome.
+
+Customer-facing shipment visuals should be operational cards with `card-top-accent`, `card-left-accent`, `ds-progress-bar`, and `ds-timeline` / `ds-stage`. Cyan remains interactive/progress, orange remains action-required/warning.
+
+### 10.2 Page Shell (DashboardShell)
 
 All dashboard pages are wrapped by `DashboardShell` (`src/app/(dashboard)/_components/dashboard-shell.tsx`). It provides:
 - `WelcomeBar` (top bar with search, date, theme toggle)
@@ -581,9 +607,13 @@ The following exceptions are approved where narrow reading constraints are neces
 ---
 
 ## 16. CHA UI Review Decisions (live)
+- **2026-07-21 · design.md correction — CHA typography and button hover glow promoted** — `.ds-h*` now matches the CHA typography showcase: Geist/display, uppercase, 400 weight, wide display tracking (`0.22em / 0.20em / 0.18em`) with `ds-h1/ds-h2/ds-h3` at `30px / 24px / 20px`. Shared `Button` and `.ds-button*` now carry the slight cyan/orange/red hover glow used by CHA instead of flat ambient-only hover. (id `manual-cha-heading-button-glow`)
+- **2026-07-21 · design.md fix — Portal buttons and headings tightened** *(superseded by `manual-cha-heading-button-glow`)* — shared buttons now use 12px default / 10px small text with 0.08em tracking. The temporary Kiona heading correction in this entry was wrong and has been replaced by the CHA showcase Geist/display heading contract above. (id `manual-button-heading-tighten`)
+- **2026-07-21 · design.md decision — Buttons use restrained shared treatment** — supersedes `manual-neon-restore`, `manual-btn-neon`, and `manual-cha-link`: shared `Button`, `.ds-button`, `.ds-button-outline`, `.ds-button-warning`, and CHA compatibility button selectors use cyan/orange operational styling with ambient hover elevation only. Broad neon glow and `neon-pulse-*` effects are not canonical. (id `manual-button-restraint`)
+- **2026-07-21 · design.md migration — CHA design promoted to shared portal system** — customer portal now uses shared `ds-app-body`, `ds-portal-shell`, `ds-sidebar`, `ds-topbar`, `ds-nav-item`, `ds-progress-bar`, and `ds-timeline` utilities; removed `portal-styles.css` dependency and replaced the separate glass/illustrated portal shell with CHA-style operational cards, tokens, shared `Button`, `Badge`, `Card`, and `DataTable` treatments (id `manual-cha-portal-system`)
 - **2026-07-07 · design.md decision — Form field contract locked to outlined h-11 controls** — `Input`, `DateInput`, and `DropdownSelect` now explicitly share the single-line field geometry (`h-11`, `rounded-xl`, matching padding) and dropdown triggers are documented as outlined surface-backed form fields, not solid CTA buttons; compact `h-8` selectors remain allowed only for dense embedded card/list rows (id `manual-form-field-contract`)
 - **2026-07-07 · design.md decision — Badge typography + CHA mappings normalized** — shared `Badge` updated to lighter `font-medium` text with wider tracking, and CHA dashboard / jobs list / workspace status-priority-document chips now resolve through one shared mapping contract (`src/lib/cha-badges.ts`) instead of inline pill styles (id `manual-cha-badge-contract`)
-- **2026-07-07 · design.md decision — Text-link buttons = cha-link (no fill, cyan text, animation kept)** — supersedes `manual-textlink-full-revert`: new `button.cha-link` class in globals.css (transparent bg, #00cec4 text, hover #00b8af + underline + neon-pulse glow + 1px lift); applied with `ds-plain` to Register Payout ×2, Audit Status, Review Status, Change, Assign Manager Now, Go to Settings. Orange/green semantic links unchanged (id `manual-cha-link`)
+- **2026-07-07 · design.md decision — Text-link buttons = cha-link (no fill, cyan text, standard lift)** *(superseded by `manual-button-restraint` above)* — supersedes `manual-textlink-full-revert`: new `button.cha-link` class in globals.css (transparent bg, #00cec4 text, hover #00b8af + underline + 1px lift); applied with `ds-plain` to Register Payout ×2, Audit Status, Review Status, Change, Assign Manager Now, Go to Settings. Orange/green semantic links unchanged (id `manual-cha-link`)
 - **2026-07-07 · design.md decision — Text-link buttons FULLY REVERTED to original** — supersedes `manual-textlink-old` and the earlier font-medium migration + ds-plain tagging: all text-link buttons in expenses-client and job-workspace are byte-identical to the pre-audit originals (original weights, plain "Audit Status" text button, no ds-plain guards, original cascade behavior). §6.1.2 text-link row cleared — no standardized recipe (id `manual-textlink-full-revert`)
 - **2026-07-07 · design.md decision — Text-link buttons reverted to old design system** — font-medium downgrade reversed: cyan links back to `font-bold`, orange to `font-semibold`, green to `font-bold`, muted secondary ("Audit Status") back to a text button (`text-on-surface-variant hover:text-on-surface font-semibold`) instead of an outline Button; ds-plain kept/added on all (§6.1.2 updated; 10 undoable history entries) (id `manual-textlink-old`)
 - **2026-07-07 · design.md decision — Dropzone background untinted (old-UI look)** — `bg-surface-container-low` fill removed from all 5 dropzones: rest = `border-dashed border-outline-variant/50 bg-surface`, hover = `border-[#00cec4]/60 bg-surface-container-low/40` (§6.1.2 updated; 2 undoable history entries). Text-link buttons intentionally unchanged.
@@ -598,7 +628,7 @@ The following exceptions are approved where narrow reading constraints are neces
 - **2026-07-06 · design.md fix — ds-plain: settings quick-action tile** — replaced `className="card-left-accent hover-cyan flex w-full items-center justify-between rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-left shadow-sm transition-all"` with `className="ds-plain card-left-accent hover-cyan flex w-full items-center justify-between rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-left shadow-sm transition-all"` (2 file(s), id `bybnw8gr`)
 - **2026-07-06 · design.md fix — ds-plain: showcase text-link demo (cyan)** — replaced `className="font-medium text-[#00cec4] hover:underline bg-transparent border-0"` with `className="ds-plain font-medium text-[#00cec4] hover:underline bg-transparent border-0"` (1 file(s), id `hm7zsdy2`)
 - **2026-07-06 · design.md fix — ds-plain: showcase text-link demo (ds-label)** — replaced `className="ds-label text-[#00cec4] hover:underline bg-transparent border-0"` with `className="ds-plain ds-label text-[#00cec4] hover:underline bg-transparent border-0"` (1 file(s), id `yyat98dy`)
-- **2026-07-06 · design.md decision — Neon buttons RESTORED and confirmed final** — the `manual-neon-revert` rollback clobbered user CSS by mistake; reinstated: neon `button-1.tsx` variants, the full `.cha-module` cascade in `globals.css` (with the narrowed `label[class*="bg-[#00cec4]"]` selector and all hover lifts), and the §6.1 neon spec. Workspace approve/reject keep proper `default`/`destructive` variants (visually identical under the cascade) (id `manual-neon-restore`)
+- **2026-07-06 · design.md decision — Neon buttons RESTORED** *(superseded by `manual-button-restraint` above)* — the `manual-neon-revert` rollback clobbered user CSS by mistake; reinstated previous neon `button-1.tsx` variants, the full `.cha-module` cascade in `globals.css`, and the §6.1 neon spec. Workspace approve/reject kept proper `default`/`destructive` variants (id `manual-neon-restore`)
 - **2026-07-06 · design.md decision — Section panel recipe is strict** — §7.2 exception for `rounded-2xl/3xl` featured shells removed; the workflow-builder shell converted to the standard section-panel recipe (`rounded-xl border-outline-variant/60`) (id `manual-panel-strict`)
 - **2026-07-06 · design.md decision — Neon adoption REVERTED** *(superseded by `manual-neon-restore` above)* — reverses `manual-btn-neon` + `manual-lift-back`: §6.1 restored to the original spec (plain cyan/outline/destructive, color-shift hover only), `button-1.tsx` reverted, the entire `.cha-module` neon button cascade (globals.css 1318–1512, incl. `neon-pulse-*` keyframes and all hover lifts) deleted, and the workspace `cha-btn-neon-approve/reject` classes replaced with proper `default`/`destructive` variants (id `manual-neon-revert`)
 - **2026-07-05 · design.md decision — Orange outline button sanctioned as CHA default** — `border-[#fb923c]/50 text-[#fb923c] hover:bg-[#fb923c]/10` on `Button variant="outline"` documented in §6.1.1 (manual entry, no code change)
@@ -623,7 +653,7 @@ The following exceptions are approved where narrow reading constraints are neces
 - **2026-07-05 · design.md migration — Numerics: redundant ds-numeric font-mono** — replaced `ds-numeric font-mono` with `ds-numeric` (2 file(s), id `e0xq254f`)
 - **2026-07-05 · design.md migration — Numerics: expenses total xl font-bold** — replaced `text-xl font-bold text-[#00cec4] block mt-1.5 ds-numeric` with `text-xl text-[#00cec4] block mt-1.5 ds-numeric` (1 file(s), id `qgci3i3r`)
 - **2026-07-05 · design.md migration — Numerics: workspace total lg font-bold** — replaced `text-lg font-bold text-[#00cec4] block mt-1 ds-numeric` with `text-lg text-[#00cec4] block mt-1 ds-numeric` (1 file(s), id `z63ipxt0`)
-- **2026-07-06 · design.md decision — Shared Button spec = CHA neon look** — §6.1 rewritten: default/outline/destructive now specify cyan/red neon borders, glow shadows and `neon-pulse-*` hover pulse, baked natively into `src/components/ui/button-1.tsx` (no longer only via the `.cha-module` cascade) (id `manual-btn-neon`)
+- **2026-07-06 · design.md decision — Shared Button spec = CHA neon look** *(superseded by `manual-button-restraint` above)* — §6.1 rewritten: default/outline/destructive specified cyan/red neon borders, glow shadows and hover pulse, baked natively into `src/components/ui/button-1.tsx` (no longer only via the `.cha-module` cascade) (id `manual-btn-neon`)
 - **2026-07-07 · design.md fix — Shared Button outline role locked via data-variant** — `src/components/ui/button-1.tsx` now emits `data-variant` / `data-size` / `data-mode`, and the `.cha-module` cascade in `src/app/globals.css` keys off those markers so `outline` buttons keep their respective cyan/orange/red outline treatment instead of being force-filled by substring-based selectors (id `manual-button-variant-data`)
 - **2026-07-06 · design.md decision — Hover lift reinstated for ALL buttons** — reverses the 2026-07-05 `manual-lift` removal: `hover:-translate-y-px active:translate-y-0 active:scale-[0.96]` added to the shared Button base, and `transform: translateY(-1px)` restored in the `.cha-module` cyan/label/outline/orange hover rules in `globals.css` (id `manual-lift-back`)
 - **2026-07-06 · design.md migration — Upload dropzones unified to one recipe** — workspace dropzones A/B replaced with the extension-modal recipe (`rounded-xl border-dashed border-[#00cec4]/45 bg-surface-container-low hover:bg-surface-container`); `.cha-module` label cascade selector narrowed to `label[class*="bg-[#00cec4]"]` so dashed dropzones are no longer force-restyled (§6.1.2) (id `manual-dropzone`)

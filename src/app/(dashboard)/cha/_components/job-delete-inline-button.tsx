@@ -85,7 +85,7 @@ export function JobDeleteInlineButton({
         size={compact ? "sm" : "md"}
         disabled={disabled}
         title={disabled ? disabledLabel : undefined}
-        className={compact ? "h-8 px-3 text-xs" : undefined}
+        className={compact ? "h-8 px-3 text-xs uppercase tracking-[0.12em]" : "text-xs uppercase tracking-[0.12em]"}
         onClick={() => setOpen(true)}
       >
         <Trash2 className={compact ? "size-3.5" : "mr-2 size-4"} />
@@ -95,6 +95,7 @@ export function JobDeleteInlineButton({
       <Modal
         open={open}
         title="Delete CHA Job"
+        titleClassName="font-[family:var(--font-kiona-sans)] tracking-[0.12em]"
         description={`Confirm deletion for ${jobNumber}. This may affect related CHA workflow records and cannot be undone from the UI.`}
         onClose={resetState}
         className="max-w-2xl"
@@ -135,7 +136,13 @@ export function JobDeleteInlineButton({
           </div>
 
           <div className="flex items-center justify-end gap-3">
-            <Button type="button" variant="outline" onClick={resetState} disabled={submitting}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetState}
+              disabled={submitting}
+              className="text-xs uppercase tracking-[0.12em]"
+            >
               Cancel
             </Button>
             <Button
@@ -143,6 +150,7 @@ export function JobDeleteInlineButton({
               variant="destructive"
               disabled={!isConfirmed || submitting}
               onClick={handleDelete}
+              className="text-xs uppercase tracking-[0.12em]"
             >
               {submitting ? "Processing..." : "Confirm Delete"}
             </Button>

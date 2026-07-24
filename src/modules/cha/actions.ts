@@ -190,6 +190,59 @@ export async function retryJobChatCleanupAction(
   }
 }
 
+export async function deleteAllChaJobsForTestingAction(
+  confirmationPhrase: string,
+): Promise<ActionResponse<{ deletedJobs: number; deletedAuditLogs: number }>> {
+  try {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("This testing utility is disabled in production.");
+    }
+
+    const { userId, orgId } = await getAuthAndVerify("cha.job.delete.approve");
+    if (confirmationPhrase !== "DELETE ALL CHA JOBS") {
+      throw new Error("Enter DELETE ALL CHA JOBS to confirm.");
+    }
+
+    const actor = await db.user.findUnique({
+      where: { id: userId },
+      select: {
+        isPlatformAdmin: true,
+        roles: { select: { role: { select: { name: true } } } },
+      },
+    });
+    const isAdminActor =
+      actor?.isPlatformAdmin === true ||
+      actor?.roles.some((entry) => ["Admin", "Management", "Director"].includes(entry.role.name));
+    if (!isAdminActor) {
+      throw new Error("Only admin accounts can use this testing utility.");
+    }
+
+    const result = await db.$transaction(async (tx) => {
+      const deletedAuditLogs = await tx.chaAuditLog.deleteMany({
+        where: { orgId, jobId: { not: null } },
+      });
+      const deletedJobs = await tx.chaJob.deleteMany({
+        where: { orgId },
+      });
+
+      return {
+        deletedJobs: deletedJobs.count,
+        deletedAuditLogs: deletedAuditLogs.count,
+      };
+    });
+
+    revalidatePath("/cha");
+    revalidatePath("/cha/jobs");
+    revalidatePath("/cha/approvals");
+    revalidatePath("/communication/job-spaces");
+    revalidatePath("/communication");
+
+    return { ok: true, data: result };
+  } catch (err: unknown) {
+    return { ok: false, error: err instanceof Error ? err.message : "Failed to delete CHA jobs" };
+  }
+}
+
 export async function createJobTypeAction(data: {
   name: string;
   movementDirection: "IMPORT" | "EXPORT" | "BOTH" | "OTHER";

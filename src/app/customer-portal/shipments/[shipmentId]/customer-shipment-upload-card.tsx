@@ -76,7 +76,7 @@ export function CustomerShipmentUploadCard({ shipmentId }: { shipmentId: string 
   };
 
   return (
-    <Card className="rounded-[24px] border border-outline-variant/45">
+    <Card className="rounded-xl border border-outline-variant/45">
       <CardHeader>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center gap-3">

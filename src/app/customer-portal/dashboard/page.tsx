@@ -31,7 +31,7 @@ export default async function CustomerPortalDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="card-top-accent rounded-[24px] border border-outline-variant/50 bg-surface px-5 py-5 shadow-sm">
+      <section className="card-top-accent rounded-xl border border-outline-variant/50 bg-surface px-5 py-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
             <p className="ds-label">CHA Customer Dashboard</p>
@@ -135,7 +135,7 @@ function StatCard({
   return (
     <Link href={href} className="block">
       <Card
-        className={`rounded-[24px] border-outline-variant/40 bg-surface p-5 transition-all hover:-translate-y-0.5 hover-cyan ${
+        className={`rounded-xl border-outline-variant/40 bg-surface p-5 transition-all hover:-translate-y-0.5 hover-cyan ${
           tone === "warning" ? "card-top-accent-orange" : "card-top-accent"
         }`}
       >
@@ -229,7 +229,7 @@ function RecentUpdatesPanel({
   const error = data.sectionErrors.recentUpdates;
 
   return (
-    <Card className="card-top-accent rounded-[24px] border border-outline-variant/45">
+    <Card className="card-top-accent rounded-xl border border-outline-variant/45">
       <CardHeader className="pb-4">
         <div className="flex items-center gap-3">
           <span className="ds-icon-badge">
@@ -358,7 +358,7 @@ function ShipmentSnapshotCard({
   const summary = data.shipmentSnapshot;
 
   return (
-    <Card className="card-top-accent rounded-[24px] border border-outline-variant/45">
+    <Card className="card-top-accent rounded-xl border border-outline-variant/45">
       <CardHeader>
         <div className="flex items-center gap-3">
           <span className="ds-icon-badge">
@@ -402,7 +402,7 @@ function DocumentStatusCard({
   const counts = data.documentStatus.counts;
 
   return (
-    <Card className="card-top-accent rounded-[24px] border border-outline-variant/45">
+    <Card className="card-top-accent rounded-xl border border-outline-variant/45">
       <CardHeader>
         <div className="flex items-center gap-3">
           <span className="ds-icon-badge">
@@ -477,7 +477,7 @@ function NotificationSummaryCard({
   const error = data.sectionErrors.notificationSummary;
 
   return (
-    <Card className="card-top-accent rounded-[24px] border border-outline-variant/45">
+    <Card className="card-top-accent rounded-xl border border-outline-variant/45">
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -552,7 +552,7 @@ function ServiceFeedbackCard({
     data.serviceFeedback.pending.length === 0 && data.serviceFeedback.recentSubmitted.length === 0;
 
   return (
-    <Card className="card-top-accent rounded-[24px] border border-outline-variant/45">
+    <Card className="card-top-accent rounded-xl border border-outline-variant/45">
       <CardHeader>
         <div className="flex items-center gap-3">
           <span className="ds-icon-badge">

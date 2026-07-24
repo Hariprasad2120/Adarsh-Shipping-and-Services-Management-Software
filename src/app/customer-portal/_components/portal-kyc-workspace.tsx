@@ -327,7 +327,7 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
 
   return (
     <div className="space-y-6 font-sans">
-      <section className="rounded-[28px] border border-outline-variant/60 bg-surface p-6 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.35)]">
+      <section className="card-top-accent rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
@@ -345,17 +345,17 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="card-top-accent rounded-2xl border border-outline-variant/45 bg-surface-container-low/55 p-4">
+            <div className="card-top-accent rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
               <p className="ds-label">Pending</p>
               <p className="mt-2 ds-numeric text-2xl text-on-surface">{totalPending}</p>
               <p className="mt-1 text-xs text-on-surface-variant">Customer action required</p>
             </div>
-            <div className="card-top-accent rounded-2xl border border-outline-variant/45 bg-surface-container-low/55 p-4">
+            <div className="card-top-accent rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
               <p className="ds-label">Uploaded</p>
               <p className="mt-2 ds-numeric text-2xl text-on-surface">{totalUploaded}</p>
               <p className="mt-1 text-xs text-on-surface-variant">Files already on record</p>
             </div>
-            <div className="card-top-accent-orange rounded-2xl border border-outline-variant/45 bg-surface-container-low/55 p-4">
+            <div className="card-top-accent-orange rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
               <p className="ds-label">N/A / Exempt</p>
               <p className="mt-2 ds-numeric text-2xl text-on-surface">{totalExceptions}</p>
               <p className="mt-1 text-xs text-on-surface-variant">Visible internal handling</p>
@@ -364,7 +364,7 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-outline-variant/55 bg-surface p-5 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.3)]">
+      <section className="rounded-xl border border-outline-variant/55 bg-surface p-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="relative min-w-0 flex-1 lg:max-w-md">
             <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
@@ -386,11 +386,7 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
                 key={item.key}
                 type="button"
                 onClick={() => setFilterMode(item.key as FilterMode)}
-                className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition-all ${
-                  filterMode === item.key
-                    ? "bg-[#00cec4] text-white shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
-                    : "border border-outline-variant/45 bg-surface-container-low text-on-surface-variant hover:bg-surface"
-                }`}
+                className={filterMode === item.key ? "ds-button" : "ds-button-outline"}
               >
                 {item.label}
               </button>
@@ -399,49 +395,49 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
         </div>
 
         {!kycUploadsAllowed ? (
-          <div className="mt-4 rounded-2xl border border-[#fb923c]/30 bg-[#fb923c]/10 p-4 text-sm text-[#fb923c]">
+          <div className="mt-4 rounded-xl border border-[#fb923c]/30 bg-[#fb923c]/10 p-4 text-sm text-[#fb923c]">
             Uploads are currently disabled for this customer by the CHA operations team.
           </div>
         ) : null}
       </section>
 
       {filteredShipments.length === 0 ? (
-        <section className="rounded-[28px] border border-outline-variant/55 bg-surface p-12 text-center shadow-[0_24px_70px_-48px_rgba(15,23,42,0.3)]">
+        <section className="rounded-xl border border-outline-variant/55 bg-surface p-6 text-center shadow-sm">
           <UploadCloud className="mx-auto size-10 text-[#00cec4] opacity-60" />
-          <h3 className="mt-4 text-sm font-semibold uppercase tracking-[0.16em] text-on-surface">No matching shipments</h3>
+          <h3 className="ds-h3 mt-4 text-on-surface">No matching shipments</h3>
           <p className="mt-2 text-sm text-on-surface-variant">
             Try another search term or switch filters to view shipment requirements.
           </p>
         </section>
       ) : (
-        <section className="rounded-[28px] border border-outline-variant/55 bg-surface shadow-[0_24px_70px_-48px_rgba(15,23,42,0.3)]">
-          <div className="divide-y divide-outline-variant/20">
+        <section className="rounded-xl border border-outline-variant/55 bg-surface shadow-sm">
+          <div className="space-y-0">
             {filteredShipments.map((group) => {
               const isExpanded = expandedShipmentId === group.shipment.id;
               const uploadsDisabled = !kycUploadsAllowed || group.uploadLocked;
               const categoryGroups = groupRequirementsByCategory(group.requirements);
 
               return (
-                <div key={group.shipment.id} className="p-4 sm:p-5">
+                <div key={group.shipment.id} className="border-b border-outline-variant/20 p-4 last:border-b-0 sm:p-5">
                   <button
                     type="button"
                     onClick={() => toggleShipment(group.shipment.id)}
-                    className="w-full rounded-[24px] border border-outline-variant/35 bg-surface-container-low/35 p-4 text-left transition hover:border-[#00cec4]/45 hover:bg-surface"
+                    className="w-full rounded-xl border border-outline-variant/35 bg-surface-container-low/35 p-4 text-left transition hover:border-[#00cec4]/45 hover:bg-surface"
                   >
                     <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                       <div className="flex items-start gap-3">
-                        <span className="mt-1 flex h-9 w-9 items-center justify-center rounded-2xl border border-outline-variant/35 bg-surface text-[#00cec4]">
+                        <span className="mt-1 flex h-9 w-9 items-center justify-center rounded-xl border border-outline-variant/35 bg-surface text-[#00cec4]">
                           {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                         </span>
                         <div className="min-w-0 space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="ds-label text-[#00cec4]">{group.shipment.jobNumber}</p>
                             <Badge variant="secondary">{group.shipment.currentStage.toUpperCase()}</Badge>
-                            <Badge variant="outline">{group.shipment.clearanceType.toUpperCase()}</Badge>
+                            <Badge variant="secondary">{group.shipment.clearanceType.toUpperCase()}</Badge>
                             {group.uploadLocked ? <Badge variant="success">PREVIEW ONLY</Badge> : null}
                           </div>
                           <div className="min-w-0">
-                            <h3 className="truncate text-xl font-semibold text-on-surface">
+                            <h3 className="ds-h3 truncate text-on-surface">
                               {group.shipment.customerRef || group.shipment.title || group.shipment.jobNumber}
                             </h3>
                             <p className="mt-1 text-sm text-on-surface-variant">
@@ -463,15 +459,15 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3 xl:justify-end">
-                        <div className="rounded-2xl border border-outline-variant/35 bg-surface px-4 py-3">
+                        <div className="rounded-xl border border-outline-variant/35 bg-surface px-4 py-3">
                           <p className="ds-label">Completion</p>
                           <p className="mt-1 ds-numeric text-lg text-on-surface">
                             {group.completedCount}/{group.totalCount}
                           </p>
                         </div>
-                        <div className="rounded-2xl border border-outline-variant/35 bg-surface px-4 py-3">
+                        <div className="rounded-xl border border-outline-variant/35 bg-surface px-4 py-3">
                           <p className="ds-label">Shipment File</p>
-                          <Link href={`/customer-portal/shipments/${group.shipment.id}?tab=documents`} className="mt-1 inline-block text-sm font-semibold text-[#00cec4] hover:underline">
+                          <Link href={`/customer-portal/shipments/${group.shipment.id}?tab=documents`} className="ds-button-outline mt-2">
                             Open shipment file
                           </Link>
                         </div>
@@ -482,7 +478,7 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
                   {isExpanded ? (
                     <div className="mt-4 space-y-4">
                       {group.uploadLocked ? (
-                        <div className="rounded-2xl border border-green-500/25 bg-green-500/10 p-4 text-sm text-on-surface">
+                        <div className="rounded-xl border border-green-500/25 bg-green-500/10 p-4 text-sm text-on-surface">
                           All required documentation for this shipment is already completed. You can preview files here, and upload actions are locked.
                         </div>
                       ) : null}
@@ -491,7 +487,7 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
                         {categoryGroups.map((categoryGroup) => (
                           <section
                             key={`${group.shipment.id}-${categoryGroup.categoryName}`}
-                            className="space-y-4 rounded-[24px] border border-outline-variant/45 bg-surface p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]"
+                            className="space-y-4 rounded-xl border border-outline-variant/45 bg-surface p-5 shadow-sm"
                           >
                             <div className="space-y-1 border-b border-outline-variant/20 pb-4">
                               <p className="text-lg font-semibold text-on-surface">{categoryGroup.categoryName}</p>
@@ -650,7 +646,7 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
       >
         {uploadTarget ? (
           <div className="space-y-5">
-            <div className="rounded-2xl border border-outline-variant/35 bg-surface-container-low/55 p-4">
+            <div className="rounded-xl border border-outline-variant/35 bg-surface-container-low/55 p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="ds-label text-[#00cec4]">{uploadTarget.jobNumber}</span>
                 <Badge variant="secondary">{uploadTarget.requirement.currentStage.toUpperCase()}</Badge>

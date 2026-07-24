@@ -38,7 +38,7 @@ export function DataTable({
   );
 
   return (
-    <div className={cn("w-full overflow-hidden rounded-xl border border-outline-variant/60 bg-surface text-on-surface shadow-sm", className)}>
+    <div className={cn("card-top-accent w-full overflow-hidden rounded-xl border border-outline-variant/60 bg-surface text-on-surface shadow-sm", className)}>
       {toolbar}
       <div className="overflow-x-auto">
         <table className={cn("ds-table ds-table-contained min-w-full w-full text-sm", tableClassName)} {...props}>

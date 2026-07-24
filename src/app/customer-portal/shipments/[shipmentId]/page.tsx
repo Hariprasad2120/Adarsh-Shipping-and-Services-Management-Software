@@ -109,7 +109,7 @@ function ShipmentOverviewCard({
   const shipment = data.shipment;
 
   return (
-    <Card className="rounded-[24px] border border-outline-variant/45">
+    <Card className="rounded-xl border border-outline-variant/45">
       <CardHeader>
         <div className="flex items-center gap-3">
           <span className="ds-icon-badge">
@@ -231,7 +231,7 @@ function RecentUpdatesCard({
   const error = data.sectionErrors.recentUpdates;
 
   return (
-    <Card className="rounded-[24px] border border-outline-variant/45">
+    <Card className="rounded-xl border border-outline-variant/45">
       <CardHeader>
         <div className="flex items-center gap-3">
           <span className="ds-icon-badge">
@@ -262,7 +262,7 @@ function RecentUpdatesCard({
                     <div
                       className={`relative mt-1 flex h-11 w-11 items-center justify-center rounded-full border ${
                         isActive
-                          ? "border-[#00cec4]/40 bg-[#00cec4]/10 shadow-[0_0_0_6px_rgba(0,206,196,0.12)]"
+                          ? "border-[#00cec4]/40 bg-[#00cec4]/10"
                           : "border-[#00cec4]/30 bg-[#00cec4]/[0.06]"
                       }`}
                     >

@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { requirePermission } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import {
   listJobs,
@@ -51,7 +51,9 @@ export default async function ChaJobsPage({
   const assignedToMe = params.assignedToMe === "true";
   const activePage = typeof params.activePage === "string" ? parseInt(params.activePage, 10) : 1;
   const completedPage = typeof params.completedPage === "string" ? parseInt(params.completedPage, 10) : 1;
-  const showCreateNew = params.new === "true";
+  const requestedCreateNew = params.new === "true";
+  const canCreateJob = await can(session.user.id, "cha.job.create");
+  const showCreateNew = requestedCreateNew && canCreateJob;
 
   // All queries are independent — run in parallel
   const [
@@ -214,6 +216,8 @@ export default async function ChaJobsPage({
         branchNumberingRules,
       }}
       showCreateNew={showCreateNew}
+      showCreatePermissionDenied={requestedCreateNew && !canCreateJob}
+      canCreateJob={canCreateJob}
       currentUserId={session.user.id}
     />
   );

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CreateJobDialog } from "./create-job-dialog";
+import { CreateJobPermissionGuard } from "./create-job-permission-guard";
 
 interface DashboardCreateJobProps {
   options: {
@@ -14,7 +15,7 @@ interface DashboardCreateJobProps {
     shipmentTypes: { id: string; name: string }[];
     users: { id: string; name: string; email: string }[];
     managers: { id: string; name: string; email: string; branchId: string | null }[];
-    teamGroups: { id: string; name: string; memberIds: any }[];
+    teamGroups: { id: string; name: string; memberIds: unknown }[];
     branchNumberingRules: {
       branchId: string;
       prefix: string;
@@ -28,12 +29,14 @@ interface DashboardCreateJobProps {
     }[];
   };
   currentUserId: string;
+  canCreateJob: boolean;
 }
 
-export function DashboardCreateJob({ options, currentUserId }: DashboardCreateJobProps) {
+export function DashboardCreateJob({ options, currentUserId, canCreateJob }: DashboardCreateJobProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isOpen, setIsOpen] = useState(() => searchParams.get("new") === "true");
+  const requestedCreateNew = searchParams.get("new") === "true";
+  const [isOpen, setIsOpen] = useState(() => requestedCreateNew && canCreateJob);
 
   const handleCreated = () => {
     // If we've successfully created the job, we should clear new=true from query parameters if present, and refresh the route
@@ -53,16 +56,21 @@ export function DashboardCreateJob({ options, currentUserId }: DashboardCreateJo
 
   return (
     <>
-      <Button size="sm" className="gap-2" onClick={() => setIsOpen(true)}>
-        <Plus size={14} /> New Job
-      </Button>
-      <CreateJobDialog
-        open={isOpen}
-        onOpenChange={handleOpenChange}
-        options={options}
-        currentUserId={currentUserId}
-        onCreated={handleCreated}
-      />
+      {canCreateJob ? (
+        <>
+          <Button size="sm" className="gap-2" onClick={() => setIsOpen(true)}>
+            <Plus size={14} /> New Job
+          </Button>
+          <CreateJobDialog
+            open={isOpen}
+            onOpenChange={handleOpenChange}
+            options={options}
+            currentUserId={currentUserId}
+            onCreated={handleCreated}
+          />
+        </>
+      ) : null}
+      <CreateJobPermissionGuard open={requestedCreateNew && !canCreateJob} fallbackHref="/cha" />
     </>
   );
 }

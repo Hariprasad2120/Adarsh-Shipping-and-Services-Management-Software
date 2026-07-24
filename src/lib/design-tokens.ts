@@ -3,6 +3,11 @@ export const colors = {
   accent: "#00cec4",
   accentHover: "#00b8af",
   accentSubtle: "rgba(0, 206, 196, 0.10)",
+  accentBorder: "rgba(0, 206, 196, 0.35)",
+  accentFocusRing: "rgba(14, 137, 149, 0.14)",
+  warning: "#fb923c",
+  warningSubtle: "rgba(251, 146, 60, 0.10)",
+  warningBorder: "rgba(251, 146, 60, 0.35)",
 
   // Primary (light: deep teal, dark: cyan)
   primary: {
@@ -98,6 +103,7 @@ export const radius = {
   xl: "12px",
   "2xl": "16px",
   "3xl": "20px",
+  cardLg: "24px",
   full: "9999px",
 } as const;
 
@@ -118,6 +124,8 @@ export const shadows = {
   ambientHover: "0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)",
   card: "0 14px 28px -24px rgba(0,0,0,0.12)",
   cardHover: "0 20px 36px -20px rgba(0,0,0,0.16)",
+  accentCard: "inset 0 2px 0 #00cec4, 0 18px 40px -34px rgba(0,206,196,0.16)",
+  warningCard: "inset 0 2px 0 #fb923c, 0 18px 40px -34px rgba(251,146,60,0.18)",
 } as const;
 
 export const fonts = {

@@ -24,6 +24,8 @@ type NotificationRow = {
   };
 };
 
+const NOTIFICATION_ACTION_CLASS = "!text-sm !font-medium uppercase tracking-[0.14em]";
+
 function getNotificationIcon(notification: NotificationRow) {
   if (notification.dismissedAt) return Trash2;
   if (notification.acknowledgedAt) return CheckCircle2;
@@ -70,6 +72,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
           <Button
             size="sm"
             variant="outline"
+            className={NOTIFICATION_ACTION_CLASS}
             onClick={() => run("/api/notifications/read-all", "Marked all as read")}
           >
             <CheckCheck className="mr-1.5 size-4" />
@@ -78,6 +81,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
           <Button
             size="sm"
             variant="outline"
+            className={NOTIFICATION_ACTION_CLASS}
             onClick={() => run("/api/notifications/dismiss-all", "Dismissed all notifications")}
           >
             <Trash2 className="mr-1.5 size-4" />
@@ -147,6 +151,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
                       <Button
                         size="sm"
                         variant="outline"
+                        className={NOTIFICATION_ACTION_CLASS}
                         onClick={() => run(`/api/notifications/${notification.id}/read`, "Marked as read")}
                       >
                         <Eye className="mr-1.5 size-4" />
@@ -156,6 +161,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
                     {notification.requiresAck && !notification.acknowledgedAt ? (
                       <Button
                         size="sm"
+                        className={NOTIFICATION_ACTION_CLASS}
                         onClick={() => run(`/api/notifications/${notification.id}/ack`, "Notification acknowledged")}
                       >
                         <CheckCheck className="mr-1.5 size-4" />
@@ -166,6 +172,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
                       <Button
                         size="sm"
                         variant="outline"
+                        className={NOTIFICATION_ACTION_CLASS}
                         onClick={async () => {
                           const res = await fetch(`/api/notifications/${notification.id}/open`, { method: "POST" });
                           const data = (await res.json()) as { link?: string | null };
@@ -185,6 +192,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
                       <Button
                         size="sm"
                         variant="outline"
+                        className={NOTIFICATION_ACTION_CLASS}
                         onClick={() => run(`/api/notifications/${notification.id}/dismiss`, "Notification dismissed")}
                       >
                         <Trash2 className="mr-1.5 size-4" />

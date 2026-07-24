@@ -185,7 +185,7 @@ export function ChecklistDecisionsClient({
         {reviewChecklist ? (
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_360px]">
             <section className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-outline-variant/35 bg-surface-container-low/35 px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-outline-variant/35 bg-surface-container-low/35 px-4 py-3">
                 <div className="min-w-0">
                   <p className="ds-label">Visible File</p>
                   <p className="mt-1 text-sm text-on-surface">
@@ -198,7 +198,7 @@ export function ChecklistDecisionsClient({
                   </a>
                 ) : null}
               </div>
-              <div className="overflow-hidden rounded-2xl border border-outline-variant/35 bg-surface-container-low/20">
+              <div className="overflow-hidden rounded-xl border border-outline-variant/35 bg-surface-container-low/20">
                 {reviewChecklist.downloadHref ? (
                   <iframe
                     title={`${reviewChecklist.checklistLabel} preview`}
@@ -213,7 +213,7 @@ export function ChecklistDecisionsClient({
               </div>
             </section>
 
-            <section className="space-y-4 rounded-2xl border border-outline-variant/35 bg-surface p-5">
+            <section className="space-y-4 rounded-xl border border-outline-variant/35 bg-surface p-5">
               <div>
                 <p className="ds-label">Portal Status</p>
                 <div className="mt-2 flex flex-wrap gap-2">

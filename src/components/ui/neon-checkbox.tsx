@@ -55,7 +55,7 @@ const NeonCheckbox: React.FC<NeonCheckboxProps> = ({
           <div className={cn(
             "absolute inset-0 rounded border bg-[var(--checkbox-surface)] transition-all duration-300 neon-checkbox__box",
             isChecked 
-              ? 'border-[var(--primary)] bg-[rgba(0,206,196,0.12)] shadow-[0_0_0_3px_rgba(0,206,196,0.10)]' 
+              ? 'border-[var(--primary)] bg-[rgba(0,206,196,0.12)]'
               : 'border-[var(--primary-dark)]'
           )}>
             <div className="absolute inset-[1px] flex items-center justify-center neon-checkbox__check-container">
@@ -71,12 +71,7 @@ const NeonCheckbox: React.FC<NeonCheckboxProps> = ({
                 <path d="M3,12.5l7,7L21,5"></path>
               </svg>
             </div>
-            
-            <div className={cn(
-              "absolute -inset-0.5 rounded bg-[var(--primary)] blur-sm transition-opacity duration-300 neon-checkbox__glow",
-              isChecked ? 'opacity-30' : 'opacity-0'
-            )} />
-            
+
             <div className="absolute inset-0 rounded overflow-hidden neon-checkbox__borders">
               {[...Array(4)].map((_, i) => (
                 <span 

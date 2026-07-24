@@ -57,11 +57,106 @@ function escapeChecklistMailHtml(value: string) {
     .replaceAll("'", "&#39;");
 }
 
-function buildChecklistCustomerMailHtml(body: string) {
+function formatChecklistMailBodyHtml(body: string) {
   return body
     .split(/\r?\n/)
     .map((line) => escapeChecklistMailHtml(line))
     .join("<br />");
+}
+
+function buildChecklistCustomerMailContent(params: {
+  body: string;
+  jobNumber: string;
+  customerName: string;
+  customerReference?: string | null;
+  checklistFileName: string;
+  checklistVersionLabel: string;
+  approvalVisibleAt: Date;
+}) {
+  const referenceRows: Array<[string, string] | null> = [
+    ["Customer", params.customerName],
+    ["Job / Shipment Ref", params.jobNumber],
+    params.customerReference ? ["Customer Ref", params.customerReference] : null,
+    ["Checklist File", params.checklistFileName],
+    ["Version", params.checklistVersionLabel],
+    ["Approval Opens", params.approvalVisibleAt.toLocaleString("en-IN")],
+  ];
+  const visibleReferenceRows = referenceRows.filter((row): row is [string, string] => Boolean(row));
+
+  const bodyText = params.body.trim() || `Please review the attached approved checklist for job ${params.jobNumber}.`;
+  const html = `
+    <div style="margin:0;padding:0;background:#f7f9fb;font-family:Arial,Helvetica,sans-serif;color:#191c1e;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f7f9fb;margin:0;padding:24px 12px;">
+        <tr>
+          <td align="center">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;background:#ffffff;border:1px solid #d9e3e1;border-radius:18px;overflow:hidden;box-shadow:0 18px 48px rgba(15,23,42,0.10);">
+              <tr>
+                <td style="padding:22px 26px;border-top:5px solid #00cec4;background:#ffffff;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td style="vertical-align:middle;">
+                        <table role="presentation" cellspacing="0" cellpadding="0">
+                          <tr>
+                            <td style="width:44px;height:44px;border-radius:14px;background:#e9fbfa;border:1px solid rgba(0,206,196,0.35);text-align:center;vertical-align:middle;color:#00a9a5;font-size:16px;font-weight:700;letter-spacing:0.08em;">AS</td>
+                            <td style="padding-left:12px;">
+                              <p style="margin:0;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#00a9a5;font-weight:700;">Adarsh Shipping</p>
+                              <p style="margin:4px 0 0 0;font-size:12px;color:#404947;">Customs clearance desk</p>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                      <td align="right" style="vertical-align:middle;">
+                        <span style="display:inline-block;border:1px solid rgba(0,206,196,0.35);border-radius:999px;padding:7px 11px;color:#00a9a5;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;font-weight:700;">Checklist Review</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:4px 26px 24px 26px;">
+                  <h1 style="margin:0 0 12px 0;font-size:24px;line-height:1.25;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#191c1e;">Checklist Approval Required</h1>
+                  <p style="margin:0 0 18px 0;font-size:14px;line-height:1.7;color:#404947;">Dear ${escapeChecklistMailHtml(params.customerName)},</p>
+                  <div style="margin:0 0 18px 0;padding:18px;border-radius:14px;background:#f2f4f6;border:1px solid #d9e3e1;font-size:14px;line-height:1.7;color:#191c1e;">
+                    ${formatChecklistMailBodyHtml(bodyText)}
+                  </div>
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:separate;border-spacing:0;margin:0 0 18px 0;border:1px solid #d9e3e1;border-radius:14px;overflow:hidden;">
+                    ${visibleReferenceRows.map(([label, value]) => `
+                      <tr>
+                        <td style="width:38%;padding:12px 14px;background:#f2f4f6;border-bottom:1px solid #d9e3e1;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#404947;">${escapeChecklistMailHtml(label)}</td>
+                        <td style="padding:12px 14px;border-bottom:1px solid #d9e3e1;font-size:14px;color:#191c1e;font-weight:600;">${escapeChecklistMailHtml(value)}</td>
+                      </tr>
+                    `).join("")}
+                  </table>
+                  <p style="margin:0 0 18px 0;font-size:13px;line-height:1.7;color:#404947;">The approved checklist is attached to this email. Please review it and share your approval or comments as required.</p>
+                  <p style="margin:0;font-size:14px;line-height:1.7;color:#191c1e;">Regards,<br /><strong>Adarsh Shipping</strong></p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:14px 26px;background:#f2f4f6;border-top:1px solid #d9e3e1;color:#707977;font-size:11px;line-height:1.5;">
+                  This is an operational message from Adarsh Shipping CHA workflow. Attachments are shared for review and approval.
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+  `.trim();
+
+  const text = [
+    `Dear ${params.customerName},`,
+    "",
+    bodyText,
+    "",
+    ...visibleReferenceRows.map(([label, value]) => `${label}: ${value}`),
+    "",
+    "The approved checklist is attached to this email.",
+    "",
+    "Regards,",
+    "Adarsh Shipping",
+  ].join("\n");
+
+  return { html, text };
 }
 
 type FilingFieldDefinition = {
@@ -2024,48 +2119,6 @@ export async function createJob(
       await tx.chaJobDocumentRequirement.createMany({
         data: jobRequirementsData,
       });
-
-      // Sync customer KYC documents to the new job requirements
-      try {
-        const customer = await tx.crmAccount.findUnique({
-          where: { id: data.customerId },
-          select: { remarks: true },
-        });
-        if (customer?.remarks) {
-          let remarksObj: any = null;
-          try {
-            remarksObj = JSON.parse(customer.remarks);
-          } catch {}
-          if (remarksObj && remarksObj.kyc && typeof remarksObj.kyc === "object") {
-            const createdRequirements = await tx.chaJobDocumentRequirement.findMany({
-              where: { jobId: job.id, category: "KYC For Customers" },
-            });
-            for (const req of createdRequirements) {
-              const kycDoc = remarksObj.kyc[req.name];
-              if (kycDoc && kycDoc.fileKey) {
-                await tx.chaDocumentVersion.create({
-                  data: {
-                    requirementId: req.id,
-                    fileKey: kycDoc.fileKey,
-                    fileName: kycDoc.fileName || req.name,
-                    mimeType: "application/octet-stream",
-                    sizeBytes: kycDoc.fileSize || 0,
-                    uploadedById: actorId,
-                    uploadedAt: kycDoc.uploadedAt ? new Date(kycDoc.uploadedAt) : new Date(),
-                    isCurrent: true,
-                  },
-                });
-                await tx.chaJobDocumentRequirement.update({
-                  where: { id: req.id },
-                  data: { status: "UPLOADED" },
-                });
-              }
-            }
-          }
-        }
-      } catch (err: any) {
-        console.warn("[KYC Sync] Failed to sync customer KYC to new job:", err.message || err);
-      }
     }
 
     // 4. Initialize Filing
@@ -5078,6 +5131,7 @@ export async function sendChecklistCustomerMail(
   const delayMinutes = await getChecklistCustomerApprovalDelayMinutesForJob(orgId, job.jobTypeId);
   const sentAt = await getNow();
   const approvalVisibleAt = new Date(sentAt.getTime() + delayMinutes * 60_000);
+  const customerName = job.customer?.name?.trim() || recipients[0]?.name || "Customer";
   const driveFileId = driveClient.extractDriveFileId(currentFileVersion.fileKey);
   if (!driveFileId || driveFileId.startsWith("mock-")) {
     throw new Error("Checklist attachment is not available in Google Drive for customer mail.");
@@ -5104,15 +5158,25 @@ export async function sendChecklistCustomerMail(
       content: attachment.content,
     })),
   ];
+  const mailContent = buildChecklistCustomerMailContent({
+    body: input.body,
+    jobNumber: job.jobNumber,
+    customerName,
+    customerReference: job.customerRef ?? null,
+    checklistFileName: attachmentMetadata.name || currentFileVersion.originalFileName,
+    checklistVersionLabel: `Version ${currentFileVersion.versionNumber}`,
+    approvalVisibleAt,
+  });
 
   let messageId: string | null = null;
   try {
-    const accessToken = await getValidAccessToken(actorId);
+    await getValidAccessToken(actorId);
     const message = await sendGmailEmail({
       userId: actorId,
       to: recipients.map((recipient) => recipient.email).join(", "),
       subject: input.subject.trim(),
-      body: input.body,
+      body: mailContent.html,
+      textBody: mailContent.text,
       attachments,
     });
     messageId = typeof message?.id === "string" ? message.id : null;
@@ -5129,8 +5193,8 @@ export async function sendChecklistCustomerMail(
     await sendProviderEmail({
       to: recipients.map((recipient) => recipient.email).join(", "),
       subject: input.subject.trim(),
-      html: buildChecklistCustomerMailHtml(input.body),
-      text: input.body,
+      html: mailContent.html,
+      text: mailContent.text,
       attachments: attachments.map((attachment) => ({
         filename: attachment.filename,
         mimeType: attachment.mimeType,

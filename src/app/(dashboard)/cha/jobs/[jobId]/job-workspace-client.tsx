@@ -62,6 +62,14 @@ const STAGES = [
   { key: "FILED", label: "Filed / Complete" },
 ];
 
+const WORKFLOW_UI_STAGES = [
+  { key: "DOCUMENT_COLLECTION", label: "Doc Collection" },
+  { key: "ADDITIONAL_DATA", label: "Additional Data" },
+  { key: "CHECKLIST", label: "Checklist" },
+  { key: "FILING", label: "Filing Stage" },
+  { key: "FILED", label: "Filed / Complete" },
+];
+
 const CHA_OVERVIEW_BANNER_ART = `data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 420" fill="none">
   <rect width="1600" height="420" fill="#EAF4FF"/>
@@ -138,6 +146,19 @@ type AdditionalDataDraft = {
   deliveryOrderValidity: string;
 };
 
+function hasAdditionalDataDraftContent(draft: AdditionalDataDraft) {
+  return Boolean(
+    draft.vesselInwardDate ||
+    draft.deliveryOrderValidity ||
+    draft.importGeneralManifest ||
+    draft.exportGeneralManifest ||
+    draft.customManifestValue ||
+    draft.mblNumber ||
+    draft.hblNumber ||
+    draft.containerEntries.some((entry) => entry.containerNumber.trim()),
+  );
+}
+
 type FilingNodeDraft = {
   checklistResponses: Record<string, { isChecked: boolean; remarks?: string; fileKey?: string; delayRemarks?: string }>;
   filingFieldValues: Record<string, string>;
@@ -158,6 +179,10 @@ function getAdditionalDataDraftStorageKey(jobId: string) {
   return `cha_additional_data_draft:${jobId}`;
 }
 
+function getAdditionalDataManualSaveStorageKey(jobId: string) {
+  return `cha_additional_data_saved:${jobId}`;
+}
+
 function formatSummaryList(items: string[]) {
   if (items.length === 0) return "";
   if (items.length === 1) return items[0];
@@ -174,6 +199,14 @@ function getDefaultTabForStage(stage: string): WorkspaceTab {
   if (stage === "CHECKLIST_PREPARATION" || stage === "CHECKLIST_APPROVAL") return "checklist";
   if (stage === "FILING" || stage === "FILED") return "filing";
   return "docs";
+}
+
+function getWorkflowUiStageKey(stage: string) {
+  return stage === "CHECKLIST_PREPARATION" || stage === "CHECKLIST_APPROVAL" ? "CHECKLIST" : stage;
+}
+
+function getWorkflowUiStageIndex(stage: string) {
+  return WORKFLOW_UI_STAGES.findIndex((item) => item.key === getWorkflowUiStageKey(stage));
 }
 
 function getValiditySummary(validityDate?: string | null) {
@@ -890,16 +923,6 @@ function SlideToComplete({
       >
         <ArrowRight size={22} className="text-white shrink-0" style={{ color: '#ffffff', stroke: '#ffffff' }} />
       </div>
-      <span
-        className="pointer-events-none absolute top-1/2 hidden h-px -translate-y-1/2 bg-[#00cec4]/35 md:block"
-        style={{ left: `${contentStart + 54}px`, right: "calc(50% + 190px)" }}
-        aria-hidden="true"
-      />
-      <span
-        className="pointer-events-none absolute top-1/2 hidden h-px -translate-y-1/2 bg-[#00cec4]/35 md:block"
-        style={{ left: "calc(50% + 125px)", width: "170px" }}
-        aria-hidden="true"
-      />
       <div
         className="relative z-10 grid h-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 pr-4 sm:pr-6"
         style={{ paddingLeft: `${mobileContentStart}px` }}
@@ -1090,10 +1113,10 @@ export function JobWorkspaceClient({
     if (initialTab) {
       if (initialTab === "docs") return "DOCUMENT_COLLECTION";
       if (initialTab === "additionalData") return "ADDITIONAL_DATA";
-      if (initialTab === "checklist") return job.stage === "CHECKLIST_APPROVAL" ? "CHECKLIST_APPROVAL" : "CHECKLIST_PREPARATION";
+      if (initialTab === "checklist") return "CHECKLIST";
       if (initialTab === "filing") return job.stage === "FILED" ? "FILED" : "FILING";
     }
-    return job.stage;
+    return getWorkflowUiStageKey(job.stage);
   });
   const [stageFocusKey, setStageFocusKey] = useState<string | null>(null);
   const stageScrollAnimationRef = useRef<number | null>(null);
@@ -1168,11 +1191,11 @@ export function JobWorkspaceClient({
   const [section49ExtensionDate, setSection49ExtensionDate] = useState("");
   const [section49ExtensionFile, setSection49ExtensionFile] = useState<File | null>(null);
   const [openWarningNote, setOpenWarningNote] = useState<"bill-filing" | "query-processing" | null>(null);
-  const hasSavedAdditionalData = Boolean(job.additionalData?.updatedAt);
-  const additionalDataStageLocked = job.stage === "FILING" || job.stage === "FILED";
-  const additionalDataStageAvailable = job.stage !== "DOCUMENT_COLLECTION" && !additionalDataStageLocked;
+  const additionalDataStageAvailable = job.stage !== "DOCUMENT_COLLECTION";
+  const additionalDataManualSaveStorageKey = getAdditionalDataManualSaveStorageKey(job.id);
+  const [hasManuallySavedAdditionalData, setHasManuallySavedAdditionalData] = useState(false);
   const [isAdditionalDataEditing, setIsAdditionalDataEditing] = useState(
-    () => !hasSavedAdditionalData && additionalDataStageAvailable,
+    () => job.stage === "ADDITIONAL_DATA",
   );
 
   useEffect(() => {
@@ -1181,8 +1204,21 @@ export function JobWorkspaceClient({
   }, [job.filingSection49Flag]);
 
   useEffect(() => {
-    setIsAdditionalDataEditing(!Boolean(job.additionalData?.updatedAt) && job.stage !== "DOCUMENT_COLLECTION" && job.stage !== "FILING" && job.stage !== "FILED");
-  }, [job.additionalData?.updatedAt, job.id, job.stage]);
+    if (job.stage !== "ADDITIONAL_DATA") {
+      setHasManuallySavedAdditionalData(false);
+      return;
+    }
+
+    try {
+      setHasManuallySavedAdditionalData(localStorage.getItem(additionalDataManualSaveStorageKey) === "true");
+    } catch {
+      setHasManuallySavedAdditionalData(false);
+    }
+  }, [additionalDataManualSaveStorageKey, job.stage]);
+
+  useEffect(() => {
+    setIsAdditionalDataEditing(job.stage === "ADDITIONAL_DATA" && !hasManuallySavedAdditionalData);
+  }, [hasManuallySavedAdditionalData, job.id, job.stage]);
 
 
   const [dueDateWarnings, setDueDateWarnings] = useState<DueDateWarningViewModel[]>(job.dueDateWarnings ?? []);
@@ -1690,6 +1726,15 @@ export function JobWorkspaceClient({
     }
   };
 
+  const markAdditionalDataManuallySaved = () => {
+    setHasManuallySavedAdditionalData(true);
+    try {
+      localStorage.setItem(additionalDataManualSaveStorageKey, "true");
+    } catch {
+      // localStorage unavailable
+    }
+  };
+
   useEffect(() => {
     if (!additionalDataDraftHydratedRef.current) return;
 
@@ -1900,11 +1945,27 @@ export function JobWorkspaceClient({
   const canResumePendingBlockedStage = !!filingInstance?.canResumePendingBlockedStage;
   const jumpBackTargets = filingInstance?.jumpBackTargets || [];
   const returnToCurrentTarget = filingInstance?.returnToCurrentTarget || null;
-  const canReturnToCurrentStage = Boolean(
-    returnToCurrentTarget &&
+  const getWorkflowNodeOrder = (nodeKey: string | null | undefined) => {
+    if (!nodeKey || !filingInstance?.version?.nodes) return null;
+    const index = filingInstance.version.nodes.findIndex((node: any) => node.key === nodeKey);
+    return index >= 0 ? index : null;
+  };
+  const activeNodeOrder = getWorkflowNodeOrder(activeNodeRun?.nodeKey);
+  const returnToCurrentNodeOrder = getWorkflowNodeOrder(returnToCurrentTarget?.nodeKey);
+  const returnToCurrentIsActuallyCurrent = Boolean(
     activeNodeRun &&
-    returnToCurrentTarget.nodeKey !== activeNodeRun.nodeKey,
+    returnToCurrentTarget &&
+    (
+      returnToCurrentTarget.nodeRunId === activeNodeRun.id ||
+      returnToCurrentTarget.nodeKey === activeNodeRun.nodeKey ||
+      (
+        typeof activeNodeOrder === "number" &&
+        typeof returnToCurrentNodeOrder === "number" &&
+        returnToCurrentNodeOrder <= activeNodeOrder
+      )
+    ),
   );
+  const showReturnToCurrentStageShortcut = Boolean(returnToCurrentTarget && activeNodeRun);
   const isActiveStageBlocked = !!activeNodePrerequisiteStatus?.isBlocked;
   const hasShipmentBillNumberField = activeNodeFieldKeys.has("bill_number");
   const activeNodeHasConditionalFields = visibleNodeConditionalSections.some(
@@ -2219,7 +2280,9 @@ export function JobWorkspaceClient({
       (!requiresCustomManifest || customManifestValue !== "")
     ))
   );
-  const additionalDataLocked = additionalDataStageLocked || (hasSavedAdditionalData && !isAdditionalDataEditing);
+  const hasPersistedAdditionalData = hasManuallySavedAdditionalData || activeStepIndex > 1;
+  const canEditAdditionalData = canUpdateJob && additionalDataStageAvailable && hasPersistedAdditionalData;
+  const additionalDataLocked = !additionalDataStageAvailable || !canUpdateJob || (hasPersistedAdditionalData && !isAdditionalDataEditing);
 
   const addContainerEntry = () => {
     setContainerEntries((current) => [...current, getDefaultContainerEntry()]);
@@ -2277,7 +2340,7 @@ export function JobWorkspaceClient({
       if (activeTab === "docs") setExpandedStageKey("DOCUMENT_COLLECTION");
       else if (activeTab === "additionalData") setExpandedStageKey("ADDITIONAL_DATA");
       else if (activeTab === "checklist") {
-        setExpandedStageKey(currentChecklistVersion ? "CHECKLIST_APPROVAL" : "CHECKLIST_PREPARATION");
+        setExpandedStageKey("CHECKLIST");
       }
       else if (activeTab === "filing") setExpandedStageKey(job.stage === "FILED" ? "FILED" : "FILING");
     } else {
@@ -2335,27 +2398,28 @@ export function JobWorkspaceClient({
   };
 
   const openWorkflowStage = (stageKey: string) => {
+    const uiStageKey = getWorkflowUiStageKey(stageKey);
     const targetTab =
-      stageKey === "DOCUMENT_COLLECTION"
+      uiStageKey === "DOCUMENT_COLLECTION"
         ? "docs"
-        : stageKey === "ADDITIONAL_DATA"
+        : uiStageKey === "ADDITIONAL_DATA"
           ? "additionalData"
-          : stageKey === "CHECKLIST_PREPARATION" || stageKey === "CHECKLIST_APPROVAL"
+          : uiStageKey === "CHECKLIST"
             ? "checklist"
             : "filing";
 
-    pendingStageNavigationRef.current = stageKey;
-    pendingStageScrollRef.current = stageKey;
-    setExpandedStageKey(stageKey);
+    pendingStageNavigationRef.current = uiStageKey;
+    pendingStageScrollRef.current = uiStageKey;
+    setExpandedStageKey(uiStageKey);
 
     setActiveTab(targetTab);
 
-    if (activeTab === targetTab && expandedStageKey === stageKey) {
+    if (activeTab === targetTab && expandedStageKey === uiStageKey) {
       pendingStageScrollRef.current = null;
-      animateStageScrollIntoView(stageKey);
+      animateStageScrollIntoView(uiStageKey);
     }
 
-    setStageFocusKey(stageKey);
+    setStageFocusKey(uiStageKey);
     if (stageFocusTimeoutRef.current !== null) {
       window.clearTimeout(stageFocusTimeoutRef.current);
     }
@@ -2382,7 +2446,7 @@ export function JobWorkspaceClient({
       return;
     }
     if (tab === "checklist") {
-      openWorkflowStage(job.stage === "CHECKLIST_APPROVAL" ? "CHECKLIST_APPROVAL" : "CHECKLIST_PREPARATION");
+      openWorkflowStage("CHECKLIST");
       return;
     }
     if (tab === "filing") {
@@ -2925,6 +2989,7 @@ export function JobWorkspaceClient({
         lastAdditionalDataAutosaveKeyRef.current = payloadKey;
         if (!silent) {
           clearAdditionalDataDraft();
+          markAdditionalDataManuallySaved();
           toast.success("Additional Data saved successfully.");
           setIsAdditionalDataEditing(false);
           router.refresh();
@@ -3787,6 +3852,20 @@ export function JobWorkspaceClient({
       return;
     }
 
+    const currentDraft: AdditionalDataDraft = {
+      vesselInwardDate,
+      importGeneralManifest,
+      exportGeneralManifest,
+      customManifestValue,
+      containerEntries,
+      mblNumber,
+      hblNumber,
+      deliveryOrderValidity,
+    };
+    if (!hasAdditionalDataDraftContent(currentDraft)) {
+      return;
+    }
+
     const payload = buildAdditionalDataPayload();
     const payloadKey = JSON.stringify(payload);
     if (payloadKey === lastAdditionalDataAutosaveKeyRef.current) {
@@ -4153,6 +4232,44 @@ export function JobWorkspaceClient({
         router.refresh();
       } else {
         toast.error(res.error || "Failed to jump back to the selected filing stage.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleReturnToCurrentStage = async () => {
+    if (!activeNodeRun || !returnToCurrentTarget?.nodeKey) {
+      toast.error("No current filing stage is available right now.");
+      return;
+    }
+    if (returnToCurrentIsActuallyCurrent) {
+      toast.info("This is the current filing stage.");
+      return;
+    }
+
+    const currentFilingDraftStorageKey = filingDraftStorageKey;
+    setLoading("filing-go-back");
+    try {
+      const res = await actions.revertFilingStageAction(
+        job.id,
+        activeNodeRun.id,
+        returnToCurrentTarget.nodeKey,
+        "Returned to the latest current filing stage from the workspace shortcut.",
+      );
+      if (res.ok) {
+        clearFilingNodeDraft(currentFilingDraftStorageKey);
+        toast.success(`Returned to ${res.data?.reopenedNodeName || "the current stage"}.`);
+        setGoBackOpen(false);
+        setGoBackMode("previous");
+        setGoBackReason("");
+        setSelectedJumpBackNodeKey("");
+        await loadFilingData();
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to return to the current filing stage.");
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
@@ -4913,6 +5030,21 @@ export function JobWorkspaceClient({
     if (checklistWorkflow?.currentApprovalStage === "INTERNAL") return "Awaiting Internal";
     return "Pending Upload";
   }, [checklistWorkflow, approvedCustomerDecision]);
+  const checklistCombinedPercentage = activeStepIndex > 3
+    ? 100
+    : Math.round((checklistPrepPercentage + checklistApprovalPercentage) / 2);
+  const checklistCombinedValidationState = currentChecklistVersion
+    ? checklistApprovalValidationState
+    : checklistPrepValidationState;
+  const checklistCombinedStatusLabel = activeStepIndex > 3
+    ? "Approved"
+    : activeStepIndex === 3
+      ? checklistWorkflow?.currentApprovalStage === "CUSTOMER" ? "Waiting Customer" : "Waiting Approval"
+      : currentChecklistVersion
+        ? "Waiting Approval"
+        : activeStepIndex === 2
+          ? "Awaiting Upload"
+          : "Locked";
 
   const filingPercentage = activeStepIndex > 4 ? 100 : filingInstance?.activeNodeRun ? 50 : 0;
   const filingValidationState = isActiveStageBlocked ? "Blocked" : activeStepIndex > 4 ? "Filed" : "Active";
@@ -4920,11 +5052,11 @@ export function JobWorkspaceClient({
   const filedPercentage = activeStepIndex >= 5 ? 100 : 0;
   const filedValidationState = activeStepIndex >= 5 ? "Completed" : "Locked";
 
-  const stageProgress = activeStepIndex >= 0 ? Math.round(((activeStepIndex + 1) / STAGES.length) * 100) : 0;
+  const workflowUiActiveStageIndex = getWorkflowUiStageIndex(job.stage);
+  const stageProgress = workflowUiActiveStageIndex >= 0 ? Math.round(((workflowUiActiveStageIndex + 1) / WORKFLOW_UI_STAGES.length) * 100) : 0;
   const showDocumentCollectionStage = true;
   const showAdditionalDataStage = activeStepIndex >= 1;
   const showChecklistPreparationStage = activeStepIndex >= 2;
-  const showChecklistApprovalStage = activeStepIndex >= 2 && !!currentChecklistVersion;
   const activeNodeSequence = useMemo(() => {
     const activeNodeKey = activeNodeRun?.nodeKey;
     if (!activeNodeKey || !filingInstance?.version?.nodes) return null;
@@ -5201,19 +5333,18 @@ export function JobWorkspaceClient({
       percent: null as number | null,
       onClick: () => navigateToWorkspaceTab("overview"),
     },
-    ...STAGES.map((stage, index) => {
+    ...WORKFLOW_UI_STAGES.map((stage, index) => {
       let percent: number | null = null;
       if (stage.key === "DOCUMENT_COLLECTION") percent = docPercentage;
       if (stage.key === "ADDITIONAL_DATA") percent = additionalDataPercentage;
-      if (stage.key === "CHECKLIST_PREPARATION") percent = checklistPrepPercentage;
-      if (stage.key === "CHECKLIST_APPROVAL") percent = checklistApprovalPercentage;
+      if (stage.key === "CHECKLIST") percent = checklistCombinedPercentage;
       if (stage.key === "FILING") percent = filingPercentage;
       if (stage.key === "FILED") percent = filedPercentage;
       return {
         key: stage.key,
         label: stage.label,
-        isCompleted: index < activeStepIndex,
-        isCurrent: index === activeStepIndex,
+        isCompleted: index < workflowUiActiveStageIndex,
+        isCurrent: index === workflowUiActiveStageIndex,
         percent,
         onClick: () => openWorkflowStage(stage.key),
       };
@@ -5485,10 +5616,10 @@ export function JobWorkspaceClient({
           </div>
 
           <nav className="space-y-2 pt-3">
-            {STAGES.map((stage, index) => {
-              const isCompleted = index < activeStepIndex;
-              const isActive = index === activeStepIndex;
-              const isLocked = index > activeStepIndex;
+            {WORKFLOW_UI_STAGES.map((stage, index) => {
+              const isCompleted = index < workflowUiActiveStageIndex;
+              const isActive = index === workflowUiActiveStageIndex;
+              const isLocked = index > workflowUiActiveStageIndex;
 
               let percent = 0;
               let valState = "";
@@ -5524,38 +5655,26 @@ export function JobWorkspaceClient({
                   statusBg = "bg-surface-container-low/50";
                   statusLabel = "Locked";
                 }
-              } else if (stage.key === "CHECKLIST_PREPARATION") {
-                percent = checklistPrepPercentage;
-                valState = checklistPrepValidationState;
-                if (isCompleted || currentChecklistVersion) {
-                  statusColor = "text-green-500";
-                  statusBg = "bg-green-500/10";
-                  statusLabel = "Completed";
-                } else if (isActive) {
-                  statusColor = "text-[#00cec4]";
-                  statusBg = "bg-[#00cec4]/10";
-                  statusLabel = "In Progress";
-                } else {
-                  statusColor = "text-on-surface-variant/40";
-                  statusBg = "bg-surface-container-low/50";
-                  statusLabel = "Locked";
-                }
-              } else if (stage.key === "CHECKLIST_APPROVAL") {
-                percent = checklistApprovalPercentage;
-                valState = checklistApprovalValidationState;
+              } else if (stage.key === "CHECKLIST") {
+                percent = checklistCombinedPercentage;
+                valState = checklistCombinedValidationState;
                 if (isCompleted) {
                   statusColor = "text-green-500";
                   statusBg = "bg-green-500/10";
                   statusLabel = "Completed";
-                } else if (isActive || (activeStepIndex === 2 && currentChecklistVersion)) {
+                } else if (isActive) {
                   if (checklistWorkflow?.currentApprovalStage === "CUSTOMER") {
                     statusColor = "text-[#00cec4]";
                     statusBg = "bg-[#00cec4]/10";
                     statusLabel = "Awaiting Customer";
-                  } else {
+                  } else if (currentChecklistVersion) {
                     statusColor = "text-[#fb923c]";
                     statusBg = "bg-[#fb923c]/10";
                     statusLabel = "Awaiting Internal";
+                  } else {
+                    statusColor = "text-[#00cec4]";
+                    statusBg = "bg-[#00cec4]/10";
+                    statusLabel = "Awaiting Upload";
                   }
                 } else {
                   statusColor = "text-on-surface-variant/40";
@@ -5595,15 +5714,14 @@ export function JobWorkspaceClient({
               const stageTab = (
                 stage.key === "DOCUMENT_COLLECTION" ? "docs"
                   : stage.key === "ADDITIONAL_DATA" ? "additionalData"
-                    : stage.key === "CHECKLIST_PREPARATION" || stage.key === "CHECKLIST_APPROVAL" ? "checklist"
+                    : stage.key === "CHECKLIST" ? "checklist"
                       : "filing"
               ) as WorkspaceTab;
 
               const isHighlighted =
                 (activeTab === "docs" && stage.key === "DOCUMENT_COLLECTION") ||
                 (activeTab === "additionalData" && stage.key === "ADDITIONAL_DATA") ||
-                (activeTab === "checklist" && stage.key === "CHECKLIST_PREPARATION" && !currentChecklistVersion) ||
-                (activeTab === "checklist" && stage.key === "CHECKLIST_APPROVAL" && !!currentChecklistVersion) ||
+                (activeTab === "checklist" && stage.key === "CHECKLIST") ||
                 (activeTab === "filing" && stage.key === "FILING") ||
                 (activeTab === "filing" && stage.key === "FILED" && activeStepIndex >= 5);
 
@@ -5616,13 +5734,13 @@ export function JobWorkspaceClient({
                   <button
                     type="button"
                     onClick={() => {
-                      if (isLocked && stage.key !== "CHECKLIST_APPROVAL") {
+                      if (isLocked) {
                         return;
                       }
                       setActiveTab(stageTab);
                       setExpandedStageKey(stage.key);
                     }}
-                    disabled={isLocked && stage.key !== "CHECKLIST_APPROVAL"}
+                    disabled={isLocked}
                     className={`group relative flex w-full flex-col gap-2 rounded-[18px] p-3 text-left transition-all ${isHighlighted
                         ? "bg-gradient-to-r from-[#00cec4]/12 via-[#00cec4]/10 to-[#00b8af]/8 text-[#00a9b2] shadow-[0_20px_40px_-28px_rgba(0,206,196,0.65)]"
                         : isLocked
@@ -5696,8 +5814,8 @@ export function JobWorkspaceClient({
                   </button>
 
                   {/* Connector line */}
-                  {index < STAGES.length - 1 && (
-                    <div className={`ml-[15px] h-4 w-[2px] rounded-full ${index < activeStepIndex ? "bg-gradient-to-b from-green-500 to-green-400" : index === activeStepIndex ? "bg-gradient-to-b from-[#00cec4]/45 to-[#00cec4]/20" : "bg-outline-variant/40"
+                  {index < WORKFLOW_UI_STAGES.length - 1 && (
+                    <div className={`ml-[15px] h-4 w-[2px] rounded-full ${index < workflowUiActiveStageIndex ? "bg-gradient-to-b from-green-500 to-green-400" : index === workflowUiActiveStageIndex ? "bg-gradient-to-b from-[#00cec4]/45 to-[#00cec4]/20" : "bg-outline-variant/40"
                       }`} />
                   )}
                 </div>
@@ -5748,7 +5866,7 @@ export function JobWorkspaceClient({
               />
             </div>
             <p className="mt-1.5 text-[10px] text-on-surface-variant">
-              {activeStepIndex} of {STAGES.length} stages completed
+              {workflowUiActiveStageIndex} of {WORKFLOW_UI_STAGES.length} stages completed
             </p>
           </div>
         </aside>
@@ -6561,33 +6679,14 @@ export function JobWorkspaceClient({
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-2 pt-4 sm:flex-row sm:justify-end">
-                      {hasSavedAdditionalData && !additionalDataStageLocked ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          disabled={loading !== null || isAdditionalDataEditing || !canUpdateJob}
-                          onClick={() => setIsAdditionalDataEditing(true)}
-                          className="w-full sm:w-auto"
-                        >
-                          <Pencil className="mr-2 size-4" />
-                          Edit Additional Data
-                        </Button>
-                      ) : null}
-                      {!additionalDataLocked ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          disabled={loading !== null || job.stage === "DOCUMENT_COLLECTION" || manifestConfigMissing}
-                          onClick={handleSaveAdditionalData}
-                          className="w-full sm:w-auto"
-                        >
-                          <Database className="mr-2 size-4" />
-                          {loading === "additional-data-save" ? "Saving..." : "Save Additional Data"}
-                        </Button>
-                      ) : null}
+                    <div
+                      className={`grid gap-3 pt-4 lg:items-center ${canEditAdditionalData || !additionalDataLocked
+                          ? "lg:grid-cols-[minmax(0,1fr)_minmax(220px,280px)]"
+                          : "lg:grid-cols-1"
+                        }`}
+                    >
                       {job.stage === "ADDITIONAL_DATA" ? (
-                        <div className="w-full pt-1">
+                        <div className="w-full">
                           <SlideToComplete
                             key="additional-data-slider"
                             disabled={loading !== null || !additionalDataComplete || manifestConfigMissing}
@@ -6596,37 +6695,79 @@ export function JobWorkspaceClient({
                           />
                         </div>
                       ) : null}
+                      {canEditAdditionalData || !additionalDataLocked ? (
+                        <div className="flex justify-end">
+                          {canEditAdditionalData && additionalDataLocked ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              disabled={loading !== null || isAdditionalDataEditing}
+                              onClick={() => setIsAdditionalDataEditing(true)}
+                              className="w-full"
+                            >
+                              <Pencil className="mr-2 size-4" />
+                              Edit Additional Data
+                            </Button>
+                          ) : null}
+                          {!additionalDataLocked ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              disabled={loading !== null || job.stage === "DOCUMENT_COLLECTION" || manifestConfigMissing}
+                              onClick={handleSaveAdditionalData}
+                              className="w-full"
+                            >
+                              <Database className="mr-2 size-4" />
+                              {loading === "additional-data-save" ? "Saving..." : "Save Additional Data"}
+                            </Button>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </MilestoneCard>
               ) : null}
 
-              {/* 3. CHECKLIST_PREPARATION */}
+              {/* 3. CHECKLIST */}
               {showChecklistPreparationStage ? (
                 <MilestoneCard
-                  stageKey="CHECKLIST_PREPARATION"
-                  isExpanded={expandedStageKey === "CHECKLIST_PREPARATION"}
-                  isSpotlit={stageFocusKey === "CHECKLIST_PREPARATION"}
+                  stageKey="CHECKLIST"
+                  isExpanded={expandedStageKey === "CHECKLIST"}
+                  isSpotlit={stageFocusKey === "CHECKLIST"}
                   onToggle={handleMilestoneToggle}
-                  title="Checklist Preparation"
-                  description="Upload the customs checklist file for review."
-                  isCompleted={!!currentChecklistVersion}
-                  isActive={activeStepIndex === 2}
+                  title="Checklist Preparation & Approval"
+                  description="Upload the customs checklist file and route approvals through internal and customer review."
+                  isCompleted={activeStepIndex > 3}
+                  isActive={activeStepIndex === 2 || activeStepIndex === 3}
                   isLocked={activeStepIndex < 2}
-                  percentage={checklistPrepPercentage}
-                  validationState={checklistPrepValidationState}
+                  percentage={checklistCombinedPercentage}
+                  validationState={checklistCombinedValidationState}
+                  statusLabel={checklistCombinedStatusLabel}
+                  assignedUser={currentChecklistVersion ? job.assignedManager?.name || "Approval Team" : undefined}
+                  dueDate={currentChecklistVersion ? customerApprovalVisibleAt ? customerApprovalVisibleAt.toLocaleString("en-IN") : (job.estimatedClosureDate ? new Date(job.estimatedClosureDate).toLocaleDateString("en-IN") : null) : null}
+                  completedAt={activeStepIndex > 3 ? (approvedCustomerDecision?.actedAt ? new Date(approvedCustomerDecision.actedAt).toLocaleString("en-IN") : approvedInternalDecision?.actedAt ? new Date(approvedInternalDecision.actedAt).toLocaleString("en-IN") : null) : null}
                   summary={
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="text-on-surface-variant">Checklist File:</span>
-                      {currentChecklistVersion ? (
-                        <span className="font-semibold text-on-surface font-mono">{currentChecklistVersion.originalFileName} (V{currentChecklistVersion.versionNumber})</span>
-                      ) : (
-                        <span className="text-red-500 italic">No checklist uploaded yet</span>
-                      )}
+                    <div className="grid gap-3 text-xs sm:grid-cols-3">
+                      <div className="sm:col-span-2">
+                        <span className="text-on-surface-variant">Checklist File:</span>{" "}
+                        {currentChecklistVersion ? (
+                          <span className="font-mono font-semibold text-on-surface">{currentChecklistVersion.originalFileName} (V{currentChecklistVersion.versionNumber})</span>
+                        ) : (
+                          <span className="italic text-red-500">No checklist uploaded yet</span>
+                        )}
+                      </div>
+                      <div className="flex gap-4 sm:justify-end">
+                        <span className={approvedInternalDecision ? "text-green-600" : "text-orange-500"}>
+                          Internal: {approvedInternalDecision ? "Approved" : "Pending"}
+                        </span>
+                        <span className={approvedCustomerDecision ? "text-green-600" : "text-orange-500"}>
+                          Customer: {approvedCustomerDecision ? "Approved" : "Pending"}
+                        </span>
+                      </div>
                     </div>
                   }
                 >
-                  <div className="space-y-4">
+                  <div className="space-y-5">
                     {!job.assignedManagerId && (
                       <div className="bg-surface border border-[#fb923c]/40 p-4 rounded-2xl flex items-start gap-3">
                         <AlertTriangle size={24} className="text-[#fb923c] shrink-0 mt-0.5" />
@@ -6751,44 +6892,7 @@ export function JobWorkspaceClient({
                       ) : null}
                     </div>
                   </div>
-                </MilestoneCard>
-              ) : null}
-
-              {/* 4. CHECKLIST_APPROVAL */}
-              {showChecklistApprovalStage ? (
-                <MilestoneCard
-                  stageKey="CHECKLIST_APPROVAL"
-                  isExpanded={expandedStageKey === "CHECKLIST_APPROVAL"}
-                  isSpotlit={stageFocusKey === "CHECKLIST_APPROVAL"}
-                  onToggle={handleMilestoneToggle}
-                  title="Checklist Approval"
-                  description="Route and track checklist approvals through internal and customer review."
-                  isCompleted={activeStepIndex > 3}
-                  isActive={activeStepIndex === 3 || (activeStepIndex === 2 && !!currentChecklistVersion)}
-                  isLocked={activeStepIndex < 2 || !currentChecklistVersion}
-                  percentage={checklistApprovalPercentage}
-                  validationState={checklistApprovalValidationState}
-                  statusLabel={activeStepIndex > 3 ? "Approved" : activeStepIndex === 3 ? (checklistWorkflow?.currentApprovalStage === "CUSTOMER" ? "Waiting Customer" : "Waiting Approval") : "Locked"}
-                  assignedUser={job.assignedManager?.name || "Approval Team"}
-                  dueDate={customerApprovalVisibleAt ? customerApprovalVisibleAt.toLocaleString("en-IN") : (job.estimatedClosureDate ? new Date(job.estimatedClosureDate).toLocaleDateString("en-IN") : null)}
-                  completedAt={activeStepIndex > 3 ? (approvedCustomerDecision?.actedAt ? new Date(approvedCustomerDecision.actedAt).toLocaleString("en-IN") : approvedInternalDecision?.actedAt ? new Date(approvedInternalDecision.actedAt).toLocaleString("en-IN") : null) : null}
-                  summary={
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                      <div>
-                        <span className="text-on-surface-variant block text-[10px] uppercase">Internal Approval</span>
-                        <span className={`font-semibold ${approvedInternalDecision ? "text-green-600" : "text-orange-500"}`}>
-                          {approvedInternalDecision ? `Approved by ${getUserName(approvedInternalDecision.actedById || approvedInternalDecision.assignedToId)}` : "Pending"}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-on-surface-variant block text-[10px] uppercase">Customer Approval</span>
-                        <span className={`font-semibold ${approvedCustomerDecision ? "text-green-600" : "text-orange-500"}`}>
-                          {approvedCustomerDecision ? "Approved" : "Pending"}
-                        </span>
-                      </div>
-                    </div>
-                  }
-                >
+                  <div className="border-t border-outline-variant/25 pt-5">
                   <div className="space-y-4">
                     <div className="card-cyan-outline rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4 shadow-sm">
                       <div className="space-y-3">
@@ -6916,19 +7020,28 @@ export function JobWorkspaceClient({
                       </div>
                       {checklistWorkflow?.currentApprovalStage === "CUSTOMER" && !latestCustomerMailLog ? (
                         <div className="space-y-3">
-                          <input
-                            value={customerMailSubject}
-                            onChange={(e) => setCustomerMailSubject(e.target.value)}
-                            placeholder={`Checklist Approval Required - ${job.jobNumber}`}
-                            className="w-full"
-                          />
-                          <textarea
-                            rows={4}
-                            value={customerMailBody}
-                            onChange={(e) => setCustomerMailBody(e.target.value)}
-                            placeholder={`Please review the attached approved checklist for job ${job.jobNumber}.`}
-                            className="ds-textarea w-full"
-                          />
+                          <div className="space-y-1.5">
+                            <label className="ds-label block">Email Subject</label>
+                            <input
+                              value={customerMailSubject}
+                              onChange={(e) => setCustomerMailSubject(e.target.value)}
+                              placeholder={`Checklist Approval Required - ${job.jobNumber}`}
+                              className="w-full"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="ds-label block">Email Content</label>
+                            <textarea
+                              rows={5}
+                              value={customerMailBody}
+                              onChange={(e) => setCustomerMailBody(e.target.value)}
+                              placeholder={`Please review the attached approved checklist for job ${job.jobNumber}.`}
+                              className="ds-textarea w-full"
+                            />
+                            <p className="text-xs text-on-surface-variant">
+                              This content is placed inside the branded customer email template.
+                            </p>
+                          </div>
                           <FileUploadField
                             id="customer-mail-attachments-customer"
                             label="Additional Attachments"
@@ -7039,6 +7152,7 @@ export function JobWorkspaceClient({
                         </div>
                       )}
                     </div>
+                  </div>
                   </div>
                 </MilestoneCard>
               ) : null}
@@ -7401,6 +7515,10 @@ export function JobWorkspaceClient({
                                                 checklistItemAttachments.length >= (item.minUploads || 0);
                                               const isCurrentItem = index === currentChecklistItemIndex;
                                               const isLockedItem = index > currentChecklistItemIndex;
+                                              const checklistItemDescription =
+                                                typeof item.description === "string" && item.description.trim().length > 0
+                                                  ? item.description.trim()
+                                                  : "Complete the activity for this stage, confirm the required details are accurate, and mark it done once the supporting work is ready to move forward.";
                                               const canVerifyChecklistItem =
                                                 !isLockedItem &&
                                                 (resp.isChecked ||
@@ -7408,72 +7526,58 @@ export function JobWorkspaceClient({
                                               return (
                                                 <div
                                                   key={item.id}
-                                                  className={`relative overflow-hidden rounded-[22px] border p-3.5 space-y-2.5 transition-all duration-200 ${isLockedItem
+                                                  className={`relative overflow-hidden rounded-xl border p-4 space-y-2.5 transition-all duration-200 ${isLockedItem
                                                       ? "border-outline-variant/60 bg-surface-container-low/75 opacity-70"
                                                       : overdueMeta
                                                         ? "border-[#fb923c]/35 bg-surface shadow-[0_18px_38px_-30px_rgba(251,146,60,0.22)]"
                                                         : resp.isChecked
-                                                          ? "border-[#22c55e]/30 bg-surface shadow-[0_18px_36px_-26px_rgba(34,197,94,0.22)]"
+                                                          ? "border-[#00cec4]/22 bg-surface shadow-[0_20px_40px_-30px_rgba(0,206,196,0.22)]"
                                                           : "border-[#00cec4]/22 bg-surface shadow-[0_20px_40px_-30px_rgba(0,206,196,0.22)]"
-                                                    }`}
+                                                      }`}
                                                 >
                                                   {!isLockedItem ? (
                                                     <div
                                                       className={`pointer-events-none absolute inset-y-4 left-0 w-1 rounded-full ${resp.isChecked
-                                                          ? "bg-[#22c55e]"
+                                                          ? "bg-[#00cec4]"
                                                           : overdueMeta
                                                             ? "bg-[#fb923c]"
                                                             : "bg-[#00cec4]"
                                                         }`}
                                                     />
                                                   ) : null}
-                                                  <button
-                                                    type="button"
+                                                  <NeonCheckbox
                                                     disabled={!canVerifyChecklistItem}
-                                                    onClick={() => {
-                                                      if (!canVerifyChecklistItem) return;
+                                                    checked={resp.isChecked}
+                                                    onChange={(event) => {
+                                                      if (!canVerifyChecklistItem) {
+                                                        event.preventDefault();
+                                                        return;
+                                                      }
                                                       setChecklistResponses((prev) => ({
                                                         ...prev,
                                                         [item.id]: {
                                                           ...prev[item.id],
-                                                          isChecked: !resp.isChecked,
+                                                          isChecked: event.target.checked,
                                                         },
                                                       }));
                                                     }}
-                                                    className={`group relative flex w-full items-start justify-between gap-4 bg-transparent text-left transition-all ${!canVerifyChecklistItem
+                                                    className={`group relative flex w-full items-start bg-transparent text-left transition-all [&>div:first-child]:mt-1 [&_.neon-checkbox__box]:!bg-surface [&_.neon-checkbox__box]:!shadow-none [&_.neon-checkbox__glow]:!opacity-0 ${!canVerifyChecklistItem
                                                         ? "cursor-not-allowed"
                                                         : resp.isChecked
                                                           ? "hover:scale-[1.005]"
                                                           : "hover:scale-[1.005]"
                                                       }`}
-                                                  >
-                                                    <div className="flex min-w-0 flex-1 items-start gap-2.5">
-                                                      <span
-                                                        className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-[12px] border text-xs font-bold transition-all ${isLockedItem
-                                                            ? "border-outline-variant/50 bg-surface text-on-surface-variant"
-                                                            : resp.isChecked
-                                                              ? "border-[#22c55e]/35 bg-[#22c55e] text-white shadow-[0_14px_24px_-16px_rgba(34,197,94,0.45)]"
-                                                              : "border-[#00cec4]/25 bg-[#00cec4] text-white shadow-[0_16px_28px_-18px_rgba(0,206,196,0.45)]"
-                                                          }`}
-                                                      >
-                                                        {isLockedItem ? (
-                                                          <Lock size={14} />
-                                                        ) : resp.isChecked ? (
-                                                          <Check size={16} />
-                                                        ) : (
-                                                          <span className="ds-numeric">{String(index + 1).padStart(2, "0")}</span>
-                                                        )}
-                                                      </span>
-                                                      <div className="min-w-0 flex-1 space-y-1">
-                                                        <div className="block text-[13px] font-semibold leading-5 text-on-surface">
+                                                    label={
+                                                      <span className="block min-w-0 flex-1 space-y-1">
+                                                        <span className="block font-[family:var(--font-kiona-sans)] text-lg uppercase leading-6 tracking-[0.12em] text-on-surface">
                                                           {item.label} {item.isMandatory && <span className="text-red-500 font-bold">*</span>}
-                                                        </div>
-                                                        {item.description ? (
-                                                          <p className="text-[11px] leading-4 text-on-surface-variant">{item.description}</p>
-                                                        ) : null}
-                                                      </div>
-                                                    </div>
-                                                  </button>
+                                                        </span>
+                                                        <span className="block max-w-3xl font-[family:var(--font-geist-sans)] text-sm font-normal leading-5 text-on-surface-variant">
+                                                          {checklistItemDescription}
+                                                        </span>
+                                                      </span>
+                                                    }
+                                                  />
 
                                                   {isLockedItem && (
                                                     <div className="rounded-xl border border-outline-variant/60 bg-surface px-3 py-2 text-[11px] text-on-surface-variant">
@@ -7805,8 +7909,8 @@ export function JobWorkspaceClient({
                                               .map((card) => {
                                                 const toneClasses =
                                                   card.tone === "orange"
-                                                    ? "border-[#fb923c]/30 bg-[linear-gradient(135deg,rgba(251,146,60,0.10),rgba(255,255,255,0.02))] text-[#c76628]"
-                                                    : "border-[#00cec4]/25 bg-[linear-gradient(135deg,rgba(0,206,196,0.09),rgba(255,255,255,0.02))] text-[#0f766e]";
+                                                    ? "border-[#fb923c]/30 text-[#c76628]"
+                                                    : "border-[#00cec4]/25 text-[#0f766e]";
                                                 return (
                                                   <div
                                                     key={card.key}
@@ -8304,21 +8408,16 @@ export function JobWorkspaceClient({
                                               Jump Back to Earlier Stage
                                             </Button>
                                           ) : null}
-                                          {canReturnToCurrentStage ? (
+                                          {showReturnToCurrentStageShortcut ? (
                                             <Button
                                               type="button"
                                               variant="outline"
                                               disabled={loading !== null}
-                                              onClick={() => {
-                                                setGoBackMode("return");
-                                                setGoBackReason("");
-                                                setSelectedJumpBackNodeKey(returnToCurrentTarget?.nodeKey || "");
-                                                setGoBackOpen(true);
-                                              }}
+                                              onClick={() => void handleReturnToCurrentStage()}
                                               className="gap-2 rounded-[16px] border-[#2563eb]/35 bg-[#2563eb]/5 px-5 text-[#2563eb] dark:text-[#9ab8ff]"
                                             >
                                               <RotateCcw size={16} />
-                                              Jump Back to Current Stage
+                                              {loading === "filing-go-back" ? "Returning..." : "Jump Back to Current Stage"}
                                             </Button>
                                           ) : null}
                                         </div>
@@ -8708,10 +8807,7 @@ export function JobWorkspaceClient({
                         <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
                           <History size={16} />
                         </span>
-                        <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
-                          <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
-                          <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Recent Activity</h3>
-                        </div>
+                        <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Recent Activity</h3>
                       </div>
                       <Button type="button" variant="outline" onClick={() => navigateToWorkspaceTab("audit")}>
                         View All Activity
@@ -9570,6 +9666,7 @@ export function JobWorkspaceClient({
             open={deleteModalMode === "delete"}
             onClose={resetDeletionModalState}
             title="Delete CHA Job"
+            titleClassName="font-[family:var(--font-kiona-sans)] tracking-[0.12em]"
             description={
               canDirectDeleteJob
                 ? `This will immediately remove ${job.jobNumber} from the active CHA workspace. Related records stay in history, but this action is destructive and should be used carefully.`
@@ -9579,7 +9676,7 @@ export function JobWorkspaceClient({
           >
             <div className="space-y-4">
               <div className="rounded-2xl border border-red-200/70 bg-red-50/40 p-4 text-sm text-on-surface">
-                <p className="text-red-600">Permanent action</p>
+                <p className="ds-label text-red-600">Permanent action</p>
                 <p className="mt-1 text-on-surface-variant">
                   Deleting this job affects linked CHA workflows, audit visibility, and operational references.
                 </p>
@@ -9623,13 +9720,19 @@ export function JobWorkspaceClient({
               </div>
 
               <div className="flex flex-wrap justify-end gap-2">
-                <Button variant="outline" onClick={resetDeletionModalState} disabled={loading !== null}>
+                <Button
+                  variant="outline"
+                  onClick={resetDeletionModalState}
+                  disabled={loading !== null}
+                  className="text-xs uppercase tracking-[0.12em]"
+                >
                   Cancel
                 </Button>
                 <Button
                   variant="destructive"
                   disabled={!deleteInputsMatch || loading === "job-delete"}
                   onClick={handleSubmitJobDeletion}
+                  className="text-xs uppercase tracking-[0.12em]"
                 >
                   {loading === "job-delete"
                     ? "Processing..."
@@ -9645,12 +9748,13 @@ export function JobWorkspaceClient({
             open={deleteModalMode === "approve"}
             onClose={resetDeletionModalState}
             title="Approve Job Deletion"
+            titleClassName="font-[family:var(--font-kiona-sans)] tracking-[0.12em]"
             description={`Approve the pending deletion request for ${job.jobNumber}. This will immediately soft-delete the job after approval.`}
             className="max-w-2xl"
           >
             <div className="space-y-4">
               <div className="rounded-2xl border border-red-200/70 bg-red-50/40 p-4 text-sm text-on-surface">
-                <p className="text-red-600">Manager approval required</p>
+                <p className="ds-label text-red-600">Manager approval required</p>
                 <p className="mt-1 text-on-surface-variant">
                   Confirm the exact job number and type <span className="text-on-surface">delete job</span> to execute this deletion request.
                 </p>
@@ -9690,12 +9794,18 @@ export function JobWorkspaceClient({
               </div>
 
               <div className="flex flex-wrap justify-end gap-2">
-                <Button variant="outline" onClick={resetDeletionModalState} disabled={loading !== null}>
+                <Button
+                  variant="outline"
+                  onClick={resetDeletionModalState}
+                  disabled={loading !== null}
+                  className="text-xs uppercase tracking-[0.12em]"
+                >
                   Cancel
                 </Button>
                 <Button
                   disabled={!deleteInputsMatch || loading === "job-delete-approve"}
                   onClick={handleApproveDeletionRequest}
+                  className="text-xs uppercase tracking-[0.12em]"
                 >
                   {loading === "job-delete-approve" ? "Deleting..." : "Approve & Delete"}
                 </Button>
@@ -9707,6 +9817,7 @@ export function JobWorkspaceClient({
             open={deleteModalMode === "reject"}
             onClose={resetDeletionModalState}
             title="Reject Job Deletion Request"
+            titleClassName="font-[family:var(--font-kiona-sans)] tracking-[0.12em]"
             description={`Reject the pending deletion request for ${job.jobNumber}. A rejection reason is required and the job will remain active.`}
             className="max-w-2xl"
           >
@@ -9723,13 +9834,19 @@ export function JobWorkspaceClient({
               </div>
 
               <div className="flex flex-wrap justify-end gap-2">
-                <Button variant="outline" onClick={resetDeletionModalState} disabled={loading !== null}>
+                <Button
+                  variant="outline"
+                  onClick={resetDeletionModalState}
+                  disabled={loading !== null}
+                  className="text-xs uppercase tracking-[0.12em]"
+                >
                   Cancel
                 </Button>
                 <Button
                   variant="destructive"
                   disabled={!deleteDecisionRemarks.trim() || loading === "job-delete-reject"}
                   onClick={handleRejectDeletionRequest}
+                  className="text-xs uppercase tracking-[0.12em]"
                 >
                   {loading === "job-delete-reject" ? "Rejecting..." : "Reject Request"}
                 </Button>

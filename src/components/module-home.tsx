@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { CarbonIconType } from "@carbon/icons-react";
+import type { ComponentType, ReactNode } from "react";
 import {
   AlarmClockCheck,
   ArrowRight,
@@ -20,7 +20,8 @@ type ModuleQuickLink = {
   href: string;
   label: string;
   description: string;
-  icon: any;
+  icon: ComponentType<{ size?: number; className?: string }>;
+  action?: ReactNode;
 };
 
 function getStatIcon(label: string, tone: ModuleStat["tone"]) {
@@ -53,9 +54,11 @@ export function ModuleHome({
   description: string;
   stats: ModuleStat[];
   quickLinks: ModuleQuickLink[];
-  pageIcon?: any;
+  pageIcon?: ComponentType<{ size?: number; className?: string }>;
 }) {
+  void title;
   void description;
+  void PageIcon;
 
   return (
     <div className="space-y-6 font-sans">
@@ -103,33 +106,52 @@ export function ModuleHome({
           <div className="grid gap-4 lg:grid-cols-2">
             {quickLinks.map((item, index) => {
               const Icon = item.icon;
+              const cardContent = (
+                <div className="flex items-start gap-3.5">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4] transition duration-300 group-hover:scale-105 group-hover:bg-[#00cec4]/14">
+                    <Icon size={18} />
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <ArrowUpRight className="size-4 shrink-0 text-[#00cec4]" />
+                      <h3 className="ds-h3 text-primary">{item.label}</h3>
+                    </div>
+
+                    <p className="mt-1.5 text-sm leading-6 text-on-surface-variant">{item.description}</p>
+
+                    {item.action ? (
+                      item.action
+                    ) : (
+                      <div className="mt-4 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.1rem] text-[#00cec4] transition duration-300 group-hover:gap-3 group-hover:text-[#00b8af] dark:group-hover:text-[#00cec4]">
+                        Open module
+                        <ArrowRight className="size-4" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+
+              const cardClassName =
+                "group rounded-[24px] border border-outline-variant/20 bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:border-[#00cec4]/30 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-surface dark:hover:border-primary/40 dark:hover:shadow-ambient-hover [animation:fade-in-up_0.5s_cubic-bezier(0.22,1,0.36,1)_both]";
+              const animationStyle = { animationDelay: `${160 + index * 75}ms` };
+
+              if (item.action) {
+                return (
+                  <article key={item.href} className={cardClassName} style={animationStyle}>
+                    {cardContent}
+                  </article>
+                );
+              }
 
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="group rounded-[24px] border border-outline-variant/20 bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:border-[#00cec4]/30 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-surface dark:hover:border-primary/40 dark:hover:shadow-ambient-hover [animation:fade-in-up_0.5s_cubic-bezier(0.22,1,0.36,1)_both]"
-                  style={{ animationDelay: `${160 + index * 75}ms` }}
+                  className={cardClassName}
+                  style={animationStyle}
                 >
-                  <div className="flex items-start gap-3.5">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4] transition duration-300 group-hover:scale-105 group-hover:bg-[#00cec4]/14">
-                      <Icon size={18} />
-                    </div>
-
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <ArrowUpRight className="size-4 shrink-0 text-[#00cec4]" />
-                        <h3 className="ds-h3 text-primary">{item.label}</h3>
-                      </div>
-
-                      <p className="mt-1.5 text-sm leading-6 text-on-surface-variant">{item.description}</p>
-
-                      <div className="mt-4 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.1rem] text-[#00cec4] transition duration-300 group-hover:gap-3 group-hover:text-[#00b8af] dark:group-hover:text-[#00cec4]">
-                        Open module
-                        <ArrowRight className="size-4" />
-                      </div>
-                    </div>
-                  </div>
+                  {cardContent}
                 </Link>
               );
             })}

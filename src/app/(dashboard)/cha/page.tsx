@@ -2,7 +2,7 @@ import { ClickableRow } from "@/components/clickable-row";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { requirePermission } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import Link from "next/link";
 import { ensureSettingsAndDefaults, getEligibleManagers, listChaDueDateWarnings, listFilingQueryEscalationWarnings, listJobTypesForSelection, listSection49ValidityWarnings } from "@/modules/cha/service";
 import { DashboardCreateJob } from "@/components/cha/dashboard-create-job";
@@ -45,6 +45,7 @@ export default async function ChaDashboard() {
   if (!orgId) redirect("/setup");
 
   await requirePermission(session.user.id, "cha.access");
+  const canCreateJob = await can(session.user.id, "cha.job.create");
 
   const [
     activeJobsCount,
@@ -319,6 +320,7 @@ export default async function ChaDashboard() {
           <>
             <DashboardCreateJob
               currentUserId={session.user.id}
+              canCreateJob={canCreateJob}
               options={{
                 branches,
                 customers,

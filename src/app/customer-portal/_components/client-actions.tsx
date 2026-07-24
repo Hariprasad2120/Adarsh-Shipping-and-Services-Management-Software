@@ -628,23 +628,21 @@ export function PortalShellClient({
   };
 
   return (
-    <div className="portal-body">
-      <div className="portal-shell">
+    <div className="ds-app-body">
+      <div className="ds-portal-shell">
         {/* Sidebar Desktop */}
-        <aside className="portal-sidebar">
-          <div className="portal-brand">
-            <div className="portal-brand-mark">
-              <span></span>
-            </div>
+        <aside className="ds-sidebar">
+          <div className="ds-brand">
+            <div className="ds-brand-mark" aria-hidden="true" />
             <div>
-              <strong>Monolith</strong>
-              <small>Customer Portal</small>
+              <strong className="block text-sm uppercase tracking-[0.12em] text-on-surface">Monolith</strong>
+              <small className="ds-label block">Customer Portal</small>
             </div>
           </div>
 
           <div>
-            <div className="portal-nav-group-title font-sans">Workspace</div>
-            <nav className="portal-nav-list font-sans">
+            <div className="ds-nav-group-title font-sans">Workspace</div>
+            <nav className="ds-nav-list font-sans">
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
@@ -652,12 +650,12 @@ export function PortalShellClient({
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`portal-nav-item ${active ? "active" : ""}`}
+                    className={`ds-nav-item ${active ? "is-active" : ""}`}
                   >
                     <Icon />
                     <span>{item.label}</span>
                     {item.badge !== undefined && (
-                      <span className="badge">{item.badge}</span>
+                      <span className="ds-nav-badge">{item.badge}</span>
                     )}
                   </Link>
                 );
@@ -666,12 +664,12 @@ export function PortalShellClient({
           </div>
 
           <div>
-            <div className="portal-nav-group-title font-sans">Account</div>
-            <nav className="portal-nav-list font-sans">
+            <div className="ds-nav-group-title font-sans">Account</div>
+            <nav className="ds-nav-list font-sans">
               <Link
                 href="/customer-portal/profile"
-                className={`portal-nav-item ${
-                  pathname === "/customer-portal/profile" || pathname === "/customer-portal/security" ? "active" : ""
+                className={`ds-nav-item ${
+                  pathname === "/customer-portal/profile" || pathname === "/customer-portal/security" ? "is-active" : ""
                 }`}
               >
                 <Settings />
@@ -683,7 +681,7 @@ export function PortalShellClient({
                   router.push("/customer-portal/login");
                   router.refresh();
                 }}
-                className="portal-nav-item w-full text-left"
+                className="ds-nav-item w-full"
               >
                 <LogOut />
                 <span>Logout</span>
@@ -691,29 +689,29 @@ export function PortalShellClient({
             </nav>
           </div>
 
-          <div className="portal-sidebar-spacer"></div>
+          <div className="flex-1"></div>
 
           {coordinator && (
-            <div className="portal-support-card font-sans">
-              <strong>Need assistance?</strong>
-              <p>Your assigned CHA coordinator is available for shipment or document queries.</p>
-              <button onClick={() => setContactModalOpen(true)}>Contact coordinator</button>
+            <div className="ds-support-card font-sans space-y-3">
+              <strong className="block text-sm text-on-surface">Need assistance?</strong>
+              <p className="text-xs leading-5 text-on-surface-variant">Your assigned CHA coordinator is available for shipment or document queries.</p>
+              <Button variant="outline" size="sm" className="w-full" onClick={() => setContactModalOpen(true)}>Contact coordinator</Button>
             </div>
           )}
         </aside>
 
         {/* Main Workspace */}
-        <main className="portal-main">
+        <main className="flex min-w-0 flex-col">
           {/* Topbar */}
-          <header className="portal-topbar">
-            <div className="portal-topbar-title font-sans">
-              <small>Customer Portal / {pathname.split("/").pop()}</small>
-              <strong>{portalUser.customer.name}</strong>
+          <header className="ds-topbar">
+            <div className="font-sans">
+              <small className="ds-label block">Customer Portal / {pathname.split("/").pop()}</small>
+              <strong className="block text-base text-on-surface">{portalUser.customer.name}</strong>
             </div>
 
-            <div className="portal-top-actions font-sans">
+            <div className="flex items-center gap-3 font-sans">
               <button
-                className="portal-icon-button"
+                className="ds-icon-button"
                 onClick={toggleTheme}
                 aria-label="Toggle theme"
               >
@@ -721,37 +719,37 @@ export function PortalShellClient({
               </button>
               <Link
                 href="/customer-portal/notifications"
-                className="portal-icon-button"
+                className="ds-icon-button"
                 aria-label="Notifications"
               >
-                {unreadNotificationsCount > 0 && <span className="dot"></span>}
+                {unreadNotificationsCount > 0 && <span className="ds-alert-dot"></span>}
                 <Bell />
               </Link>
               <div
-                className="portal-profile-badge"
+                className="flex cursor-pointer items-center gap-2 rounded-xl border border-outline-variant bg-surface px-2 py-1 transition hover:border-[#00cec4]/35"
                 onClick={() => router.push("/customer-portal/profile")}
               >
-                <div className="portal-avatar">{getInitials(portalUser.name)}</div>
-                <div>
-                  <strong>{portalUser.name}</strong>
-                  <span>{portalUser.designation ?? "Portal contact"}</span>
+                <div className="ds-avatar">{getInitials(portalUser.name)}</div>
+                <div data-portal-designation>
+                  <strong className="block text-xs text-on-surface">{portalUser.name}</strong>
+                  <span className="block text-[10px] text-on-surface-variant">{portalUser.designation ?? "Portal contact"}</span>
                 </div>
               </div>
             </div>
           </header>
 
           {/* Children View */}
-          <div className="portal-content">{children}</div>
+          <div className="ds-portal-content">{children}</div>
         </main>
       </div>
 
       {/* Mobile bottom navigation bar */}
-      <nav className="portal-mobile-nav font-sans">
+      <nav className="ds-mobile-nav font-sans">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
           return (
-            <Link key={item.href} href={item.href} className={active ? "active" : ""}>
+            <Link key={item.href} href={item.href} className={active ? "is-active" : ""}>
               <Icon />
               <span>{item.label.split(" ")[0]}</span>
             </Link>
@@ -766,14 +764,12 @@ export function PortalShellClient({
           onClick={() => setContactModalOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-2xl border border-outline-variant/60 bg-surface p-6 shadow-2xl relative overflow-hidden font-sans space-y-4"
+            className="card-top-accent w-full max-w-md rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-2xl relative overflow-hidden font-sans space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="card-top-accent absolute inset-x-0 top-0 h-1 bg-[#00cec4]"></div>
-            
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="text-lg font-bold text-on-surface uppercase font-display tracking-wide">
+                <h3 className="ds-h3 text-on-surface">
                   CHA Support Coordinator
                 </h3>
                 <p className="text-xs text-on-surface-variant mt-1">
@@ -855,26 +851,17 @@ export function PortalShellClient({
 }
 
 export function PortalShipHeroCard({ shipment }: { shipment: PortalShipmentSummary | null }) {
-  const [transform, setTransform] = useState("rotateX(2deg) rotateY(-9deg) translateZ(0)");
   const router = useRouter();
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setTransform(`rotateX(${2 - y * 8}deg) rotateY(${-9 + x * 12}deg) translate3d(${x * 8}px, ${y * 5}px, 0)`);
-  };
-
-  const handleMouseLeave = () => {
-    setTransform("rotateX(2deg) rotateY(-9deg) translateZ(0)");
-  };
 
   if (!shipment) {
     return (
-      <article className="portal-card portal-shipment-hero flex flex-col justify-center items-center text-center p-8">
-        <div className="portal-eyebrow">Priority Shipment</div>
-        <p className="text-sm text-portal-muted mt-3">No active shipments in progress.</p>
-        <p className="text-xs text-portal-muted/60 mt-1">When shipments are logged, they will appear here live.</p>
+      <article className="card-top-accent flex min-h-[260px] flex-col items-center justify-center rounded-xl border border-outline-variant/60 bg-surface p-6 text-center shadow-sm">
+        <div className="ds-icon-badge mb-4">
+          <Ship size={18} />
+        </div>
+        <p className="ds-label">Priority Shipment</p>
+        <p className="mt-3 text-sm text-on-surface">No active shipments in progress.</p>
+        <p className="mt-1 text-xs text-on-surface-variant">When shipments are logged, they will appear here live.</p>
       </article>
     );
   }
@@ -885,64 +872,42 @@ export function PortalShipHeroCard({ shipment }: { shipment: PortalShipmentSumma
 
   return (
     <article
-      className="portal-card portal-shipment-hero flex flex-col justify-between"
+      className="card-top-accent flex min-h-[260px] flex-col justify-between rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm transition hover:-translate-y-0.5 hover-cyan"
       onClick={() => router.push(`/customer-portal/shipments/${shipment.id}`)}
       style={{ cursor: "pointer" }}
     >
-      <div className="portal-hero-top">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="portal-eyebrow">Priority shipment</div>
-          <div className="portal-shipment-id text-on-surface">{shipment.jobNumber}</div>
-          <div className="portal-shipment-meta">
+          <div className="ds-label text-[#00cec4]">Priority shipment</div>
+          <div className="ds-h1 mt-2 text-on-surface">{shipment.jobNumber}</div>
+          <div className="mt-2 text-xs text-on-surface-variant">
             {shipment.clearanceType} · {shipment.shipmentType} · Ref: {manifest}
           </div>
         </div>
-        <div className="portal-status-pill">{stage}</div>
+        <Badge variant="default">{stage}</Badge>
       </div>
 
-      <div
-        className="portal-ship-scene"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-      >
-        <div className="portal-orbit"></div>
-        <div className="portal-globe"></div>
-        <div
-          className="portal-cargo-ship"
-          style={{ transform }}
-        >
-          <div className="portal-ship-containers">
-            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-          </div>
-          <div className="portal-ship-bridge"></div>
-          <div className="portal-ship-deck"></div>
-          <div className="portal-ship-hull"></div>
-          <div className="portal-sea"></div>
+      <div className="my-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="card-left-accent rounded-xl border border-outline-variant/40 bg-surface-container-low p-4">
+          <p className="ds-label">Origin</p>
+          <p className="mt-2 text-sm text-on-surface">Export Hub</p>
         </div>
-        <div className="portal-route-line">
-          <span className="start"></span>
-          <span className="moving"></span>
-          <span className="end"></span>
+        <div className="card-left-accent rounded-xl border border-outline-variant/40 bg-surface-container-low p-4">
+          <p className="ds-label">Destination</p>
+          <p className="mt-2 text-sm text-on-surface">Customs Clearance</p>
+        </div>
+        <div className="card-left-accent rounded-xl border border-outline-variant/40 bg-surface-container-low p-4">
+          <p className="ds-label">Progress</p>
+          <p className="ds-numeric mt-2 text-sm text-on-surface">{progress}%</p>
         </div>
       </div>
 
-      <div className="portal-route-labels font-sans">
-        <div>
-          <strong>Origin Port</strong>
-          <span>Export Hub</span>
+      <div className="font-sans">
+        <div className="mb-2 flex items-center justify-between text-xs">
+          <strong className="text-on-surface">{progress}% clearance completed</strong>
+          <span className="text-on-surface-variant">Live Tracking</span>
         </div>
-        <div style={{ textAlign: "right" }}>
-          <strong>Destination</strong>
-          <span>Customs Clearance</span>
-        </div>
-      </div>
-
-      <div className="portal-progress-wrap font-sans">
-        <div className="portal-progress-head">
-          <strong>{progress}% clearance completed</strong>
-          <span>Live Tracking</span>
-        </div>
-        <div className="portal-progress-bar">
+        <div className="ds-progress-bar">
           <span style={{ width: `${progress}%` }}></span>
         </div>
       </div>
@@ -1020,11 +985,7 @@ export function PortalShipmentsFilterPanel({
             key={tab.key}
             type="button"
             onClick={() => handleScopeChange(tab.key)}
-            className={`rounded-xl px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-all ${
-              scope === tab.key
-                ? "bg-[#00cec4] text-white shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
-                : "border border-outline-variant/40 bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
-            }`}
+            className={scope === tab.key ? "ds-button" : "ds-button-outline"}
           >
             {tab.label}
           </button>
@@ -1084,7 +1045,7 @@ export function PortalShipmentsFilterPanel({
             setTrade("all");
             router.push("/customer-portal/shipments");
           }}
-          className="w-full rounded-xl border border-outline-variant/40 bg-surface-container-low px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-on-surface-variant transition-all hover:bg-surface"
+          className="ds-button-outline w-full"
         >
           Reset Filters
         </button>
@@ -1172,7 +1133,7 @@ export function PortalShipmentWorkspace({
   const currentStageIdx = DEFAULT_STAGES.findIndex(s => s.key === internalStage || (currentStage?.label || "").toLowerCase().includes(s.label.toLowerCase()));
   const activeStageIndex = currentStageIdx !== -1 ? currentStageIdx : 3;
   const timelineProgress = `${Math.round((activeStageIndex / (DEFAULT_STAGES.length - 1)) * 100)}%`;
-  const timelineStyle = { "--portal-timeline-progress": timelineProgress } as CSSProperties;
+  const timelineStyle = { "--ds-timeline-progress": timelineProgress } as CSSProperties;
   const ratingAvailable = job.status === "COMPLETED" || job.stage === "FILED";
 
   return (
@@ -1198,7 +1159,7 @@ export function PortalShipmentWorkspace({
                 {job.status}
               </Badge>
             </div>
-            <h2 className="text-xl font-bold text-on-surface uppercase font-display tracking-wide mt-1.5">
+            <h2 className="ds-h1 mt-1.5 text-on-surface">
               {job.customerRef || job.title || "CHA Shipment"}
             </h2>
             <p className="text-xs text-on-surface-variant font-semibold mt-1">
@@ -1209,7 +1170,7 @@ export function PortalShipmentWorkspace({
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push("/customer-portal/shipments")}
-              className="px-4 py-2 border border-outline-variant/40 bg-surface-container-low hover:bg-surface text-xs font-semibold uppercase tracking-wider rounded-xl transition-all"
+              className="ds-button-outline"
             >
               Back to logbook
             </button>
@@ -1232,7 +1193,7 @@ export function PortalShipmentWorkspace({
 
         {/* Horizontal Timeline Clearance steps */}
         <div className="border-t border-outline-variant/20 pt-6">
-          <div className="portal-timeline" style={timelineStyle}>
+          <div className="ds-timeline" style={timelineStyle}>
             {DEFAULT_STAGES.map((stage, idx) => {
               let statusClass = "";
               if (idx < activeStageIndex) statusClass = "done";
@@ -1247,10 +1208,10 @@ export function PortalShipmentWorkspace({
               return (
                 <div
                   key={stage.key}
-                  className={`portal-stage ${statusClass} cursor-pointer`}
+                  className={`ds-stage ${statusClass} cursor-pointer`}
                   onClick={() => setSelectedDrawerStage({ ...mapping, statusClass, index: idx + 1 })}
                 >
-                  <div className="portal-stage-dot">
+                  <div className="ds-stage-dot">
                     {idx < activeStageIndex ? "✓" : idx + 1}
                   </div>
                   <strong>{stage.label}</strong>
@@ -1335,7 +1296,7 @@ export function PortalShipmentWorkspace({
               </div>
 
               <div className="ds-form-section border-t border-outline-variant/20 pt-6">
-                <h3 className="ds-h3 font-sans">Shipment specifications</h3>
+              <h3 className="ds-h3">Shipment specifications</h3>
                 <div className="grid grid-cols-2 gap-4 pt-4 text-xs font-sans">
                   <div>
                     <span className="text-on-surface-variant font-medium block">Vessel / Voyage</span>
@@ -1359,7 +1320,7 @@ export function PortalShipmentWorkspace({
 
             {/* Coordinator assigned contact details card */}
             <div className="rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm space-y-4 h-fit">
-              <h3 className="text-sm font-bold text-on-surface uppercase tracking-wide">
+              <h3 className="ds-h3 text-on-surface">
                 Clearance Coordinator
               </h3>
               
@@ -1408,7 +1369,7 @@ export function PortalShipmentWorkspace({
         {activeTab === "documents" && (
           <div className="rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm space-y-6">
             <div>
-              <h3 className="ds-h3 font-sans">Clearance documents checklist</h3>
+              <h3 className="ds-h3">Clearance documents checklist</h3>
               <p className="text-xs text-on-surface-variant mt-1">
                 Upload required KYC, manifest, or regulatory certificates. Pending uploads will block checklist approvals.
               </p>
@@ -1449,7 +1410,7 @@ export function PortalShipmentWorkspace({
                         {latestVersion && (
                           <a
                             href={`/api/customer-portal/document-versions/${latestVersion.id}`}
-                            className="px-3 py-1.5 border border-[#00cec4]/40 bg-[#00cec4]/5 text-[#00cec4] hover:bg-[#00cec4]/10 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5"
+                            className="ds-button-outline"
                             target="_blank"
                             rel="noreferrer"
                           >
@@ -1476,7 +1437,7 @@ export function PortalShipmentWorkspace({
         {activeTab === "approvals" && (
           <div className="rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm space-y-6">
             <div>
-              <h3 className="ds-h3 font-sans">Draft checklist approval</h3>
+              <h3 className="ds-h3">Draft checklist approval</h3>
               <p className="text-xs text-on-surface-variant mt-1">
                 Confirm and approve the operational checklist draft. This is required before filing can be submitted to customs.
               </p>
@@ -1497,7 +1458,7 @@ export function PortalShipmentWorkspace({
                   {job.checklistWorkflow.currentFileVersion && (
                     <a
                       href={`/api/customer-portal/checklist-files/${job.checklistWorkflow.currentFileVersion.id}`}
-                      className="px-4 py-2 border border-[#00cec4]/40 bg-[#00cec4]/5 text-[#00cec4] hover:bg-[#00cec4]/10 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-2"
+                      className="ds-button-outline"
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -1528,7 +1489,7 @@ export function PortalShipmentWorkspace({
         {activeTab === "queries" && (
           <div className="rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm space-y-6">
             <div>
-              <h3 className="ds-h3 font-sans">Secure communication threads</h3>
+              <h3 className="ds-h3">Secure communication threads</h3>
               <p className="text-xs text-on-surface-variant mt-1">
                 Direct operational communication channel with the customs clearing team handling your file.
               </p>
@@ -1598,7 +1559,7 @@ export function PortalShipmentWorkspace({
         {activeTab === "rating" && (
           <div className="rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm space-y-6">
             <div>
-              <h3 className="ds-h3 font-sans">Service rating</h3>
+              <h3 className="ds-h3">Service rating</h3>
               <p className="text-xs text-on-surface-variant mt-1">
                 Share your experience after the shipment is completed so the CHA team can improve service quality.
               </p>
@@ -1624,7 +1585,7 @@ export function PortalShipmentWorkspace({
         {activeTab === "activity" && (
           <div className="rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm space-y-6">
             <div>
-              <h3 className="ds-h3 font-sans">Portal activity audit trail</h3>
+              <h3 className="ds-h3">Portal activity audit trail</h3>
               <p className="text-xs text-on-surface-variant mt-1">
                 Cryptographic transaction and upload ledger logging portal user events.
               </p>
@@ -1680,7 +1641,7 @@ export function PortalShipmentWorkspace({
               <div className="flex justify-between items-start">
                 <div>
                   <span className="ds-label text-xs tracking-wider">CHA Milestone {selectedDrawerStage.index}</span>
-                  <h3 className="text-lg font-bold text-on-surface uppercase font-display tracking-wide mt-1">
+                  <h3 className="ds-h3 mt-1 text-on-surface">
                     {selectedDrawerStage.label}
                   </h3>
                 </div>
@@ -1762,7 +1723,7 @@ export function PortalShipmentWorkspace({
                   {coordinator.escalationEmail && (
                     <a
                       href={`mailto:${coordinator.escalationEmail}?subject=Escalation request: Job ${job.jobNumber}`}
-                      className="block text-[#fb923c] hover:underline mt-1 font-semibold uppercase tracking-wider"
+                      className="ds-button-warning mt-3"
                     >
                       Raise SLA Escalation
                     </a>

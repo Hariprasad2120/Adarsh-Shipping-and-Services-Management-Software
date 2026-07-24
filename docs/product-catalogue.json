@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-21T04:57:43.292Z",
+  "generatedAt": "2026-07-21T08:13:56.274Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -10,7 +10,7 @@
     "totalApiRoutes": 195,
     "totalPrismaModels": 277,
     "totalModuleServices": 85,
-    "totalComponents": 93
+    "totalComponents": 94
   },
   "appRoutes": [
     {
@@ -10364,6 +10364,7 @@
         "submitJobDeletionAction",
         "decideJobDeletionRequestAction",
         "retryJobChatCleanupAction",
+        "deleteAllChaJobsForTestingAction",
         "createJobTypeAction",
         "updateJobTypeManifestConfigAction",
         "createShipmentTypeAction",
@@ -11500,6 +11501,11 @@
     },
     {
       "module": "cha",
+      "fileName": "create-job-permission-guard.tsx",
+      "filePath": "src/components/cha/create-job-permission-guard.tsx"
+    },
+    {
+      "module": "cha",
       "fileName": "dashboard-create-job.tsx",
       "filePath": "src/components/cha/dashboard-create-job.tsx"
     },
@@ -11972,7 +11978,7 @@
       "apiRoutes": 4,
       "prismaModels": 35,
       "serviceFiles": 6,
-      "components": 2
+      "components": 3
     },
     "cha-ui-showcase": {
       "appRoutes": 1,

@@ -543,10 +543,13 @@
 .cardHeading h1 {
   margin: 14px 0 12px;
   color: #f1fbff;
-  font-size: clamp(25px, 2.05vw, 35px);
+  max-width: 100%;
+  font-family: var(--font-kiona-sans), var(--font-geist-sans), sans-serif;
+  font-size: clamp(24px, 3.7vw, 36px);
   font-weight: 520;
-  line-height: 1.13;
-  letter-spacing: .045em;
+  line-height: 1.18;
+  letter-spacing: .075em;
+  text-wrap: balance;
 }
 
 .cardHeading p {
@@ -601,14 +604,29 @@
   height: 100%;
   padding: 0 12px;
   border: 0;
+  border-radius: 0;
   outline: 0;
   color: #eafaff;
   background: transparent;
+  background-clip: padding-box;
+  caret-color: var(--cyan);
+  color-scheme: dark;
   font-size: 12px;
 }
 
 .inputShell input::placeholder {
   color: rgba(194, 221, 229, .4);
+}
+
+.inputShell input:-webkit-autofill,
+.inputShell input:-webkit-autofill:hover,
+.inputShell input:-webkit-autofill:focus,
+.inputShell input:-webkit-autofill:active {
+  border: 0;
+  -webkit-text-fill-color: #eafaff;
+  caret-color: var(--cyan);
+  box-shadow: 0 0 0 1000px rgba(4, 18, 34, .98) inset;
+  transition: background-color 9999s ease-in-out 0s;
 }
 
 .passwordToggle {
@@ -1074,7 +1092,10 @@
   .mobileBrand { margin-bottom: 35px; }
   .mobileBrand strong { font-size: 19px; }
   .locale { top: 26px; right: 20px; }
-  .cardHeading h1 { font-size: 26px; }
+  .cardHeading h1 {
+    font-size: clamp(23px, 7.2vw, 30px);
+    letter-spacing: .055em;
+  }
   .formMeta { align-items: flex-start; }
 }
 

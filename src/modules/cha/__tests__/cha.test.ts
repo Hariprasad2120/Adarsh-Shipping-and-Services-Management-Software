@@ -524,6 +524,48 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(mandatory.length).toBe(6); // Bill of Lading, Invoice, Packing List, IEC, GST, AD Code
   });
 
+  it("2.1. should not auto-upload customer KYC files into a newly created job", async () => {
+    await chaService.ensureSettingsAndDefaults(org.id);
+    await db.crmAccount.update({
+      where: { id: customer.id },
+      data: {
+        remarks: JSON.stringify({
+          kyc: {
+            "Company Address Proof": {
+              fileKey: "existing-customer-address-proof-key",
+              fileName: "company-address-proof.pdf",
+              fileSize: 12345,
+              uploadedAt: new Date("2026-01-01T00:00:00.000Z").toISOString(),
+            },
+          },
+        }),
+      },
+    });
+    const importJobType = await db.chaJobType.findFirstOrThrow({
+      where: { orgId: org.id, name: "Import Clearance" },
+    });
+
+    const job = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: `CHA-KYC-NO-COPY-${Date.now()}`,
+      title: "KYC copy prevention check",
+      customerId: customer.id,
+      jobTypeId: importJobType.id,
+      branchId: branch.id,
+      priority: "LOW",
+      primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
+      assignments: [],
+    });
+
+    const companyAddressProof = await db.chaJobDocumentRequirement.findFirstOrThrow({
+      where: { jobId: job.id, name: "Company Address Proof" },
+      include: { versions: true },
+    });
+
+    expect(companyAddressProof.status).toBe("PENDING");
+    expect(companyAddressProof.versions).toHaveLength(0);
+  });
+
   it("3. should handle document gates, uploads and exceptions", async () => {
     const job = await db.chaJob.findFirstOrThrow({ where: { orgId: org.id, jobNumber: "CHA-JOB-999" } });
     const reqs = await db.chaJobDocumentRequirement.findMany({ where: { jobId: job.id } });

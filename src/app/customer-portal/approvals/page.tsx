@@ -26,7 +26,7 @@ export default async function CustomerPortalApprovalsPage() {
         {pendingApprovals.length === 0 ? (
           <div className="col-span-2 rounded-xl border border-outline-variant/40 bg-surface p-12 text-center space-y-3">
             <CheckSquare className="size-10 text-[#00cec4] mx-auto opacity-50" />
-            <h3 className="text-sm font-semibold text-on-surface uppercase tracking-wide">
+            <h3 className="ds-h3 text-on-surface">
               No Pending Approvals
             </h3>
             <p className="text-xs text-on-surface-variant max-w-sm mx-auto">
@@ -37,10 +37,8 @@ export default async function CustomerPortalApprovalsPage() {
           pendingApprovals.map((shipment) => (
             <div
               key={shipment.id}
-              className="portal-card p-5 relative overflow-hidden flex flex-col justify-between"
+              className="card-top-accent-orange flex flex-col justify-between rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-sm relative overflow-hidden"
             >
-              <div className="card-top-accent absolute inset-x-0 top-0 h-1 bg-orange-400"></div>
-
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="ds-label text-xs tracking-wider">{shipment.jobNumber}</span>
@@ -57,7 +55,7 @@ export default async function CustomerPortalApprovalsPage() {
                   </Badge>
                 </div>
 
-                <h3 className="text-sm font-bold text-on-surface uppercase">
+                <h3 className="ds-h3 text-on-surface">
                   {shipment.customerRef || shipment.title || "Customs Checklist"}
                 </h3>
                 <p className="text-xs text-on-surface-variant font-medium">
@@ -68,7 +66,7 @@ export default async function CustomerPortalApprovalsPage() {
               <div className="border-t border-outline-variant/20 mt-4 pt-4 flex justify-end">
                 <Link
                   href={`/customer-portal/shipments/${shipment.id}?tab=approvals`}
-                  className="px-4 py-2 bg-[#00cec4] hover:bg-[#00b8af] text-[#071014] text-xs font-semibold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5"
+                  className="ds-button"
                 >
                   <span>Review & Approve</span>
                   <ArrowRight size={14} />

@@ -45,6 +45,7 @@ type NotificationContextValue = {
 
 const NotificationContext = createContext<NotificationContextValue | null>(null);
 const REMOTE_TOAST_SHOWN_PREFIX = "remote-toast-shown:";
+const NOTIFICATION_ACTION_CLASS = "!text-sm !font-medium uppercase tracking-[0.14em]";
 
 function getRemoteToastShownStorageKey(notificationId: string) {
   return `${REMOTE_TOAST_SHOWN_PREFIX}${notificationId}`;
@@ -292,7 +293,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             <Button
               size="sm"
               variant="outline"
-              className="shadow-[var(--shadow-ambient)] backdrop-blur-xl"
+              className={cn(NOTIFICATION_ACTION_CLASS, "shadow-[var(--shadow-ambient)] backdrop-blur-xl")}
               onClick={async () => {
                 setLocalToasts([]);
                 await postAction("/api/notifications/dismiss-all");
@@ -321,6 +322,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                       <Button
                         size="sm"
                         variant="outline"
+                        className={NOTIFICATION_ACTION_CLASS}
                         onClick={async () => {
                           const res = await fetch(`/api/notifications/${toast.id}/open`, { method: "POST" });
                           const data = (await res.json()) as { link?: string | null };
@@ -335,6 +337,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                       <Button
                         size="sm"
                         variant="default"
+                        className={NOTIFICATION_ACTION_CLASS}
                         onClick={async () => {
                           await postAction(`/api/notifications/${toast.id}/ack`);
                           setRemoteToasts((current) => current.filter((entry) => entry.id !== toast.id));
@@ -361,7 +364,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 onClose={() => setLocalToasts((current) => current.filter((entry) => entry.id !== toast.id))}
                 actions={
                   toast.actionLabel && toast.onAction ? (
-                      <Button size="sm" onClick={() => void toast.onAction?.()}>
+                      <Button size="sm" className={NOTIFICATION_ACTION_CLASS} onClick={() => void toast.onAction?.()}>
                         {toast.actionLabel}
                       </Button>
                   ) : null

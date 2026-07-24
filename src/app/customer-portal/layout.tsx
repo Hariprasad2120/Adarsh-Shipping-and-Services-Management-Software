@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { PortalShellClient } from "./_components/client-actions";
 import { db } from "@/lib/db";
-import "./portal-styles.css";
 
 export default async function CustomerPortalLayout({
   children,

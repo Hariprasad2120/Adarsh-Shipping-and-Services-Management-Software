@@ -689,7 +689,6 @@ export function FilingDocumentPreviewDrawer({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-2">
             <div className="flex items-start gap-3">
-              <span className="mt-0.5 h-9 w-1 shrink-0 rounded-full bg-[#00cec4]" aria-hidden="true" />
               <div className="min-w-0 space-y-2">
                 <h3 className="truncate text-base font-normal uppercase tracking-[0.12em] text-on-surface">{requirement.name}</h3>
                 <DocumentStatusBadge status={requirement.status} />

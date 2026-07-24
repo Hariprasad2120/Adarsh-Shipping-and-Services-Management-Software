@@ -39,7 +39,7 @@ export default async function CustomerPortalShipmentsPage({
 
   return (
     <div className="space-y-6">
-      <section className="card-top-accent rounded-[24px] border border-outline-variant/50 bg-surface px-5 py-5 shadow-sm">
+      <section className="card-top-accent rounded-xl border border-outline-variant/50 bg-surface px-5 py-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
             <p className="ds-label">CHA Customer Shipments</p>
@@ -89,7 +89,7 @@ export default async function CustomerPortalShipmentsPage({
         />
       </section>
 
-      <Card className="card-top-accent rounded-[24px] border border-outline-variant/45">
+      <Card className="card-top-accent rounded-xl border border-outline-variant/45">
         <CardHeader className="pb-4">
           <div className="flex items-center gap-3">
             <span className="ds-icon-badge">
@@ -311,7 +311,7 @@ function StatCard({
 
   return (
     <Card
-      className={`rounded-[24px] border-outline-variant/40 bg-surface p-5 ${
+      className={`rounded-xl border-outline-variant/40 bg-surface p-5 ${
         tone === "warning" ? "card-top-accent-orange" : "card-top-accent"
       }`}
     >

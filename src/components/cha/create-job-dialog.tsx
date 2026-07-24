@@ -26,7 +26,6 @@ import {
   Rocket,
   Route,
   Search,
-  ShieldCheck,
   Ship,
   TrainFront,
   Truck,
@@ -1631,7 +1630,7 @@ export function CreateJobDialog({
                             key={g.id}
                             type="button"
                             onClick={() => handleAddTeamGroup(g)}
-                            className="flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-left text-xs font-semibold text-[var(--cha-create-text)] transition hover:bg-[var(--cha-create-primary-soft)] hover:text-[var(--cha-create-primary)]"
+                            className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-[var(--cha-create-text)] transition hover:bg-[var(--cha-create-primary-soft)] hover:text-[var(--cha-create-primary)]"
                           >
                             <span>{g.name}</span>
                             <span className="rounded-full bg-[var(--cha-create-card-alt)] px-2 py-1 text-[10px] font-semibold text-[var(--cha-create-muted)]">
@@ -1651,7 +1650,7 @@ export function CreateJobDialog({
                           key={u.id}
                           type="button"
                           onClick={() => handleAddTeamUser(u)}
-                          className="flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-left text-xs text-[var(--cha-create-text)] transition hover:bg-[var(--cha-create-primary-soft)] hover:text-[var(--cha-create-primary)]"
+                          className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs text-[var(--cha-create-text)] transition hover:bg-[var(--cha-create-primary-soft)] hover:text-[var(--cha-create-primary)]"
                         >
                           {u.name} ({u.email})
                         </button>
@@ -1672,7 +1671,7 @@ export function CreateJobDialog({
                   return (
                     <div
                       key={assignment.userId || index}
-                      className="flex items-center justify-between gap-3 rounded-[22px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card-alt)] p-4 shadow-[0_18px_38px_-34px_rgba(15,23,42,0.24)] transition"
+                      className="flex items-center justify-between gap-3 rounded-xl border border-[var(--cha-create-border)] bg-[var(--cha-create-card-alt)] p-4 shadow-[0_18px_38px_-34px_rgba(15,23,42,0.24)] transition"
                     >
                       <div className="space-y-1 flex-1 mr-3">
                         <span className="text-xs font-semibold text-on-surface block">
@@ -1695,18 +1694,18 @@ export function CreateJobDialog({
                         type="button"
                         variant="outline"
                         mode="icon"
-                        size="sm"
+                        size="md"
                         onClick={() => handleRemoveAssignment(index)}
                         aria-label="Remove assignment"
-                        className="ds-plain rounded-xl border-red-500/35 bg-transparent text-red-500 shadow-sm hover:border-red-500/50 hover:bg-transparent hover:text-red-600 hover:shadow-[0_0_12px_rgba(239,68,68,0.18)]"
+                        className="ds-plain !h-10 !w-10 !min-w-10 shrink-0 rounded-xl border border-red-500/45 bg-surface !px-0 text-red-500 shadow-sm hover:border-red-500/70 hover:bg-red-500/10 hover:text-red-600 hover:shadow-[0_0_12px_rgba(239,68,68,0.22)]"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 className="size-5" strokeWidth={2.1} />
                       </Button>
                     </div>
                   );
                 })}
                 {assignments.length === 0 && (
-                  <p className="col-span-2 rounded-[18px] border border-dashed border-[var(--cha-create-border)] bg-[var(--cha-create-card-alt)] p-3 text-center text-xs italic text-[var(--cha-create-muted)]">
+                  <p className="col-span-2 rounded-xl border border-dashed border-[var(--cha-create-border)] bg-[var(--cha-create-card-alt)] p-3 text-center text-xs italic text-[var(--cha-create-muted)]">
                     No team members assigned yet. Add one above.
                   </p>
                 )}
@@ -1731,20 +1730,8 @@ export function CreateJobDialog({
             {/* Action Buttons */}
               </div>
 
-            <div className="shrink-0 border-t border-[var(--cha-create-divider)] bg-[linear-gradient(180deg,rgba(255,255,255,0.84),rgba(255,255,255,0.98))] pt-4 backdrop-blur-md dark:bg-[linear-gradient(180deg,rgba(17,24,39,0.86),rgba(17,24,39,0.98))]">
-              <div className="flex flex-col gap-3 rounded-[22px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] p-3 shadow-[0_24px_54px_-38px_rgba(15,23,42,0.35)] dark:bg-[var(--cha-create-card-alt)] sm:p-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex items-start gap-3 rounded-[18px] border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-primary-soft)] px-4 py-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-card)] text-[var(--cha-create-primary)]">
-                    <ShieldCheck size={18} />
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-[var(--cha-create-text)]">Data Security</p>
-                    <p className="text-xs text-[var(--cha-create-secondary)]">
-                      Information is encrypted and access is role-based.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <div className="shrink-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.84),rgba(255,255,255,0.98))] pt-4 backdrop-blur-md dark:bg-[linear-gradient(180deg,rgba(17,24,39,0.86),rgba(17,24,39,0.98))]">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
                   <Button
                     type="button"
                     variant="outline"
@@ -1756,7 +1743,6 @@ export function CreateJobDialog({
                   <Button type="submit" disabled={creating} className="rounded-2xl !border-[var(--cha-create-primary)] !bg-[var(--cha-create-primary)] px-6 !text-white shadow-[0_22px_46px_-28px_rgba(0,206,196,0.58)] hover:!bg-[var(--cha-create-primary-hover)]">
                     {creating ? "Launching Job..." : "Create & Launch Job"}
                   </Button>
-                </div>
               </div>
             </div>
             </div>

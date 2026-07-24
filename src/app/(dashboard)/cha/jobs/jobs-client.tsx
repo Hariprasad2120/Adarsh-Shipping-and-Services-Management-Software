@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Briefcase, CheckCircle2, Filter, Plus, Search, Users } from "lucide-react";
 import { CreateJobDialog } from "@/components/cha/create-job-dialog";
+import { CreateJobPermissionGuard } from "@/components/cha/create-job-permission-guard";
 import { ClickableRow } from "@/components/clickable-row";
 import {
   DataTable,
@@ -104,6 +105,8 @@ interface JobsClientProps {
     }[];
   };
   showCreateNew: boolean;
+  showCreatePermissionDenied: boolean;
+  canCreateJob: boolean;
   currentUserId: string;
 }
 
@@ -169,6 +172,8 @@ export function JobsClient({
   filters,
   options,
   showCreateNew,
+  showCreatePermissionDenied,
+  canCreateJob,
   currentUserId,
 }: JobsClientProps) {
   const router = useRouter();
@@ -181,7 +186,7 @@ export function JobsClient({
   const [branchId, setBranchId] = useState(filters.branchId || "");
   const [jobTypeId, setJobTypeId] = useState(filters.jobTypeId || "");
   const [assignedToMe, setAssignedToMe] = useState(filters.assignedToMe || false);
-  const [isModalOpen, setIsModalOpen] = useState(showCreateNew);
+  const [isModalOpen, setIsModalOpen] = useState(showCreateNew && canCreateJob);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [activeFilterType, setActiveFilterType] = useState<FilterPanelKey>("stage");
 
@@ -670,13 +675,15 @@ export function JobsClient({
               >
                 Apply Search
               </Button>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(true)}
-                className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[#00cec4] px-5 text-xs font-semibold uppercase tracking-wider text-white shadow-sm transition-colors hover:bg-[#00b8af]"
-              >
-                <Plus className="size-4" /> Create Job
-              </button>
+              {canCreateJob ? (
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(true)}
+                  className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[#00cec4] px-5 text-xs font-semibold uppercase tracking-wider text-white shadow-sm transition-colors hover:bg-[#00b8af]"
+                >
+                  <Plus className="size-4" /> Create Job
+                </button>
+              ) : null}
             </div>
           </div>
         }
@@ -718,12 +725,15 @@ export function JobsClient({
         tableKey: "completed",
       })}
 
-      <CreateJobDialog
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        options={options}
-        currentUserId={currentUserId}
-      />
+      {canCreateJob ? (
+        <CreateJobDialog
+          open={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          options={options}
+          currentUserId={currentUserId}
+        />
+      ) : null}
+      <CreateJobPermissionGuard open={showCreatePermissionDenied} fallbackHref="/cha/jobs" />
     </div>
   );
 }

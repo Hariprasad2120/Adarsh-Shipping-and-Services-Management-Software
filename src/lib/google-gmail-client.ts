@@ -50,23 +50,44 @@ function buildRawMessage(params: {
   cc?: string;
   subject: string;
   body: string;
+  textBody?: string;
   threadId?: string;
   attachments?: GmailMessageAttachment[];
 }) {
+  const textBody = params.textBody ?? params.body.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  const encodeBodyPart = (value: string) => Buffer.from(value, "utf8").toString("base64").replace(/(.{76})/g, "$1\r\n");
+  const encodeHeaderValue = (value: string) => value.replace(/[\\"]/g, "\\$&");
   const attachments = params.attachments ?? [];
   if (attachments.length === 0) {
+    const altBoundary = `alt_${Date.now().toString(36)}`;
     const headers = [
       `To: ${params.to}`,
       params.cc ? `Cc: ${params.cc}` : null,
       `Subject: ${params.subject}`,
-      `Content-Type: text/html; charset="UTF-8"`,
+      "MIME-Version: 1.0",
+      `Content-Type: multipart/alternative; boundary="${altBoundary}"`,
       params.threadId ? `In-Reply-To: ${params.threadId}` : null,
       params.threadId ? `References: ${params.threadId}` : null,
       "",
-      params.body,
     ].filter(Boolean);
 
-    return Buffer.from(headers.join("\r\n")).toString("base64url");
+    const parts = [
+      `--${altBoundary}`,
+      'Content-Type: text/plain; charset="UTF-8"',
+      "Content-Transfer-Encoding: base64",
+      "",
+      encodeBodyPart(textBody),
+      "",
+      `--${altBoundary}`,
+      'Content-Type: text/html; charset="UTF-8"',
+      "Content-Transfer-Encoding: base64",
+      "",
+      encodeBodyPart(params.body),
+      "",
+      `--${altBoundary}--`,
+    ];
+
+    return Buffer.from([...headers, ...parts].join("\r\n")).toString("base64url");
   }
 
   const mixedBoundary = `mixed_${Date.now().toString(36)}`;
@@ -87,18 +108,25 @@ function buildRawMessage(params: {
   parts.push(`Content-Type: multipart/alternative; boundary="${altBoundary}"`);
   parts.push("");
   parts.push(`--${altBoundary}`);
-  parts.push('Content-Type: text/html; charset="UTF-8"');
-  parts.push("Content-Transfer-Encoding: 7bit");
+  parts.push('Content-Type: text/plain; charset="UTF-8"');
+  parts.push("Content-Transfer-Encoding: base64");
   parts.push("");
-  parts.push(params.body);
+  parts.push(encodeBodyPart(textBody));
+  parts.push("");
+  parts.push(`--${altBoundary}`);
+  parts.push('Content-Type: text/html; charset="UTF-8"');
+  parts.push("Content-Transfer-Encoding: base64");
+  parts.push("");
+  parts.push(encodeBodyPart(params.body));
   parts.push("");
   parts.push(`--${altBoundary}--`);
 
   for (const attachment of attachments) {
+    const filename = encodeHeaderValue(attachment.filename);
     parts.push(`--${mixedBoundary}`);
-    parts.push(`Content-Type: ${attachment.mimeType}; name="${attachment.filename}"`);
+    parts.push(`Content-Type: ${attachment.mimeType}; name="${filename}"`);
     parts.push("Content-Transfer-Encoding: base64");
-    parts.push(`Content-Disposition: attachment; filename="${attachment.filename}"`);
+    parts.push(`Content-Disposition: attachment; filename="${filename}"`);
     parts.push("");
     parts.push(attachment.content.toString("base64").replace(/(.{76})/g, "$1\r\n"));
     parts.push("");
@@ -284,6 +312,7 @@ export async function sendEmail(params: {
   cc?: string;
   subject: string;
   body: string;
+  textBody?: string;
   threadId?: string;
   attachments?: GmailMessageAttachment[];
 }): Promise<any> {
@@ -318,6 +347,7 @@ export async function createDraft(params: {
   cc?: string;
   subject: string;
   body: string;
+  textBody?: string;
   attachments?: GmailDraftAttachment[];
 }): Promise<{ id: string; message: { id: string } }> {
   const token = await getValidAccessToken(params.userId);
