@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "crypto";
 import { db } from "@/lib/db";
+import { requireProductionSecret } from "@/lib/security";
 import {
   SESSION_ABSOLUTE_TIMEOUT_HOURS,
   SESSION_ACTIVITY_THROTTLE_MS,
@@ -19,7 +20,7 @@ import {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const secret = () =>
-  process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "monolith";
+  requireProductionSecret("AUTH_SECRET", process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET, "monolith")!;
 
 /** sha256(value + secret) — used for IPs and for logging token references. */
 export function hashWithSecret(value: string): string {

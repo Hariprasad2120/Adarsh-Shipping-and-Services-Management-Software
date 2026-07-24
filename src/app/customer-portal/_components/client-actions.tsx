@@ -1090,6 +1090,7 @@ export function PortalShipmentWorkspace({
   };
 
   const { job, stageMappings, currentStage } = detail;
+  const additionalData = job.additionalData as any;
 
   // 1. Delivery Order Validity calculation
   const getDoValidityWarning = (additionalData: PortalShipmentDetailView["job"]["additionalData"]) => {
@@ -1163,7 +1164,7 @@ export function PortalShipmentWorkspace({
               {job.customerRef || job.title || "CHA Shipment"}
             </h2>
             <p className="text-xs text-on-surface-variant font-semibold mt-1">
-              Mode: {job.jobType?.name} · Trade: {job.shipmentType?.name} · Destination Port: {job.additionalData?.portOfLoading || "Customs Port"}
+              Mode: {job.jobType?.name} · Trade: {job.shipmentType?.name} · Destination Port: {additionalData?.portOfLoading || "Customs Port"}
             </p>
           </div>
 
@@ -1259,37 +1260,37 @@ export function PortalShipmentWorkspace({
                   <div>
                     <span className="text-on-surface-variant font-medium block">Vessel Inward Date</span>
                     <strong className="text-on-surface text-sm block mt-1">
-                      {formatDate(job.additionalData?.vesselInwardDate)}
+                      {formatDate(additionalData?.vesselInwardDate)}
                     </strong>
                   </div>
                   <div>
                     <span className="text-on-surface-variant font-medium block">Import General Manifest (IGM)</span>
                     <strong className="text-on-surface text-sm block mt-1">
-                      {job.additionalData?.importGeneralManifest || "—"}
+                      {additionalData?.importGeneralManifest || "—"}
                     </strong>
                   </div>
                   <div>
                     <span className="text-on-surface-variant font-medium block">Export General Manifest (EGM)</span>
                     <strong className="text-on-surface text-sm block mt-1">
-                      {job.additionalData?.exportGeneralManifest || "—"}
+                      {additionalData?.exportGeneralManifest || "—"}
                     </strong>
                   </div>
                   <div className="pt-2">
                     <span className="text-on-surface-variant font-medium block">Delivery Order Validity</span>
                     <strong className="text-on-surface text-sm block mt-1">
-                      {formatDate(job.additionalData?.deliveryOrderValidity)}
+                      {formatDate(additionalData?.deliveryOrderValidity)}
                     </strong>
                   </div>
                   <div className="pt-2">
                     <span className="text-on-surface-variant font-medium block">Customs Assessed Value</span>
                     <strong className="text-on-surface text-sm block mt-1 ds-numeric">
-                      {job.additionalData?.assessedValue ? `₹${job.additionalData.assessedValue.toLocaleString()}` : "Pending"}
+                      {additionalData?.assessedValue ? `₹${additionalData.assessedValue.toLocaleString()}` : "Pending"}
                     </strong>
                   </div>
                   <div className="pt-2">
                     <span className="text-on-surface-variant font-medium block">Duty Payment Status</span>
                     <strong className="text-on-surface text-sm block mt-1">
-                      {job.additionalData?.dutyPaid ? "Paid" : "Awaiting assessment"}
+                      {additionalData?.dutyPaid ? "Paid" : "Awaiting assessment"}
                     </strong>
                   </div>
                 </div>
@@ -1300,19 +1301,19 @@ export function PortalShipmentWorkspace({
                 <div className="grid grid-cols-2 gap-4 pt-4 text-xs font-sans">
                   <div>
                     <span className="text-on-surface-variant font-medium block">Vessel / Voyage</span>
-                    <strong className="text-on-surface mt-1 block">{job.additionalData?.vesselName || "—"}</strong>
+                    <strong className="text-on-surface mt-1 block">{additionalData?.vesselName || "—"}</strong>
                   </div>
                   <div>
                     <span className="text-on-surface-variant font-medium block">Port of Loading</span>
-                    <strong className="text-on-surface mt-1 block">{job.additionalData?.portOfLoading || "—"}</strong>
+                    <strong className="text-on-surface mt-1 block">{additionalData?.portOfLoading || "—"}</strong>
                   </div>
                   <div>
                     <span className="text-on-surface-variant font-medium block">Bill of Lading / Airway Bill</span>
-                    <strong className="text-on-surface mt-1 block">{job.additionalData?.billOfLadingNo || "—"}</strong>
+                    <strong className="text-on-surface mt-1 block">{additionalData?.billOfLadingNo || "—"}</strong>
                   </div>
                   <div>
                     <span className="text-on-surface-variant font-medium block">Container Numbers</span>
-                    <strong className="text-on-surface mt-1 block">{job.additionalData?.containerNumbers || "—"}</strong>
+                    <strong className="text-on-surface mt-1 block">{additionalData?.containerNumbers || "—"}</strong>
                   </div>
                 </div>
               </div>

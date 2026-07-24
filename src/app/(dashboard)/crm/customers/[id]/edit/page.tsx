@@ -52,7 +52,7 @@ export default async function EditAccountPage({ params }: EditAccountPageProps) 
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <AccountForm initialData={account} employees={employees} />
+      <AccountForm initialData={account as any} employees={employees} />
     </div>
   );
 }

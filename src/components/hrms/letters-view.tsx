@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import {AlertTriangle,CheckCircle2,Eye,FileCheck,FilePenLine,ImagePlus,Loader2,Mail,Plus,RefreshCw,Save,Send,Shield,Trash,Upload,WandSparkles,} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -660,7 +661,7 @@ export function LettersView() {
                       <div className="ds-form-section space-y-3">
                         <h3 className="ds-h3 font-semibold text-on-surface">Preview</h3>
                         <div className="rounded-2xl border border-outline-variant bg-surface-container-low p-5">
-                          <div className="prose max-w-none text-on-surface" dangerouslySetInnerHTML={{ __html: editorHtml }} />
+                          <div className="prose max-w-none text-on-surface" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(editorHtml) }} />
                         </div>
                       </div>
                     </div>

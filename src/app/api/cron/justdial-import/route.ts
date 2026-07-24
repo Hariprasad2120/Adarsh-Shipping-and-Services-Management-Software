@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireCronSecret } from "@/lib/security";
 import { createImportLog, setImportingLock } from "@/modules/crm/lead-source.service";
 import { runJustdialImport } from "@/modules/crm/justdial-import.service";
 
 export async function GET(req: NextRequest) {
-  const secret = req.headers.get("x-cron-secret");
-  
-  // Also allow query param check in dev
-  const querySecret = req.nextUrl.searchParams.get("secret");
-  const isAuthorized = (secret === process.env.CRON_SECRET) || (querySecret === process.env.CRON_SECRET);
-  
-  if (process.env.NODE_ENV === "production" && !isAuthorized) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const cronError = requireCronSecret(req);
+  if (cronError) return cronError;
 
   try {
     const configs = await db.crmLeadSourceJustdialConfig.findMany({

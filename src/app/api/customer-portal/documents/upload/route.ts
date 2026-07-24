@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
+import { getClientIp, rateLimit, sanitizeText } from "@/lib/security";
 import { getPortalSession } from "@/modules/customer-portal/auth";
 import { uploadPortalDocument } from "@/modules/customer-portal/service";
 
 export async function POST(request: Request) {
+  const limited = rateLimit(`portal-upload:${getClientIp(request)}`, {
+    limit: 20,
+    windowMs: 60_000,
+  });
+  if (!limited.ok) return limited.response;
+
   const session = await getPortalSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
@@ -11,7 +18,7 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const jobId = String(formData.get("jobId") || "");
     const requirementId = String(formData.get("requirementId") || "");
-    const comment = String(formData.get("comment") || "");
+    const comment = sanitizeText(String(formData.get("comment") || ""), 1000);
     const file = formData.get("file");
     if (!(file instanceof File)) {
       throw new Error("A file is required.");

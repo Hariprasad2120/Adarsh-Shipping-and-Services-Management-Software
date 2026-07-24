@@ -1,3 +1,5 @@
+import { contentDisposition } from "@/lib/security";
+
 const ONE_PIXEL_PNG_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
@@ -71,6 +73,6 @@ export function createFileResponseHeaders(params: {
   headers.set("Content-Security-Policy", "default-src 'self'; frame-ancestors 'self';");
   headers.set("X-Frame-Options", "SAMEORIGIN");
   headers.set("X-Content-Type-Options", "nosniff");
-  headers.set("Content-Disposition", `${params.forceDownload ? "attachment" : "inline"}; filename="${params.filename.replace(/"/g, "'")}"`);
+  headers.set("Content-Disposition", contentDisposition(params.filename, params.forceDownload ? "attachment" : "inline"));
   return headers;
 }

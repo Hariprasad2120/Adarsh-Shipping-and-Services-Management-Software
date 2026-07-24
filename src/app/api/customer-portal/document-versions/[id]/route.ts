@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
+import { createFileResponseHeaders } from "@/lib/document-preview";
+import { resolveInside } from "@/lib/security";
 import { getPortalSession } from "@/modules/customer-portal/auth";
 import { getPortalDocumentVersion } from "@/modules/customer-portal/service";
+
+const PORTAL_UPLOAD_ROOT = path.resolve(
+  process.env.CUSTOMER_PORTAL_UPLOAD_ROOT || path.join(process.cwd(), "storage", "customer-portal-uploads"),
+);
 
 export async function GET(
   _request: Request,
@@ -17,13 +23,26 @@ export async function GET(
   if (!version) {
     return new Response("Not found", { status: 404 });
   }
-  const absolutePath = path.join(process.cwd(), "public", version.fileKey);
-  const buffer = await fs.readFile(absolutePath);
+  let absolutePath: string;
+  try {
+    absolutePath = version.fileKey.startsWith("customer-portal-local:")
+      ? resolveInside(PORTAL_UPLOAD_ROOT, version.fileKey.slice("customer-portal-local:".length))
+      : resolveInside(path.join(process.cwd(), "public"), version.fileKey);
+  } catch {
+    return new Response("Invalid file path", { status: 400 });
+  }
+
+  const buffer = await fs.readFile(absolutePath).catch(() => null);
+  if (!buffer) {
+    return new Response("Not found", { status: 404 });
+  }
+  const headers = createFileResponseHeaders({
+    filename: version.fileName,
+    mimeType: version.mimeType,
+    contentLength: buffer.length,
+    forceDownload: false,
+  });
   return new NextResponse(buffer, {
-    headers: {
-      "Content-Type": version.mimeType,
-      "Content-Disposition": `inline; filename="${version.fileName}"`,
-      "X-Content-Type-Options": "nosniff",
-    },
+    headers,
   });
 }

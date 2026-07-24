@@ -16,11 +16,13 @@ type ModuleStat = {
   tone?: "teal" | "blue" | "amber" | "slate";
 };
 
+type ModuleIcon = ComponentType<any>;
+
 type ModuleQuickLink = {
   href: string;
   label: string;
   description: string;
-  icon: ComponentType<{ size?: number; className?: string }>;
+  icon: ModuleIcon;
   action?: ReactNode;
 };
 
@@ -54,7 +56,7 @@ export function ModuleHome({
   description: string;
   stats: ModuleStat[];
   quickLinks: ModuleQuickLink[];
-  pageIcon?: ComponentType<{ size?: number; className?: string }>;
+  pageIcon?: ModuleIcon;
 }) {
   void title;
   void description;

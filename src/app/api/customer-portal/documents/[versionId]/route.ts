@@ -2,6 +2,13 @@ import { getPortalSession } from "@/modules/customer-portal/auth";
 import { db } from "@/lib/db";
 import { createFileResponseHeaders, createPlaceholderImageBuffer, createPreviewPdfBuffer } from "@/lib/document-preview";
 import * as driveClient from "@/lib/google-drive-client";
+import { resolveInside } from "@/lib/security";
+import fs from "fs/promises";
+import path from "path";
+
+const PORTAL_UPLOAD_ROOT = path.resolve(
+  process.env.CUSTOMER_PORTAL_UPLOAD_ROOT || path.join(process.cwd(), "storage", "customer-portal-uploads"),
+);
 
 function getDriveFileId(fileKey: string): string | null {
   const match = fileKey.match(/\/file\/d\/([^/]+)\//);
@@ -43,8 +50,22 @@ export async function GET(
 
     let contentBuffer: Buffer;
     const driveFileId = fileKey.startsWith("https://drive.google.com/") ? getDriveFileId(fileKey) : null;
-    if (driveFileId && !driveFileId.startsWith("mock-")) {
+    if (fileKey.startsWith("customer-portal-local:")) {
+      let filePath: string;
+      try {
+        filePath = resolveInside(PORTAL_UPLOAD_ROOT, fileKey.slice("customer-portal-local:".length));
+      } catch {
+        return new Response("Invalid file path", { status: 400 });
+      }
+      const file = await fs.readFile(filePath).catch(() => null);
+      if (!file) {
+        return new Response("Document file not found", { status: 404 });
+      }
+      contentBuffer = file;
+    } else if (driveFileId && !driveFileId.startsWith("mock-")) {
       contentBuffer = await driveClient.downloadFile(driveFileId);
+    } else if (process.env.NODE_ENV === "production") {
+      return new Response("Document file not found", { status: 404 });
     } else if (mimeType === "application/pdf") {
       contentBuffer = createPreviewPdfBuffer({
         title: `Customer portal document - ${filename}`,

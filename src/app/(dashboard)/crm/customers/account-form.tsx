@@ -240,7 +240,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
     fd.set("name", nameToSave);
 
     const res = isEdit
-      ? await updateAccountAction(initialData.id, fd)
+      ? await updateAccountAction(initialData.id!, fd)
       : await createAccountAction(fd);
 
     setIsSubmitting(false);

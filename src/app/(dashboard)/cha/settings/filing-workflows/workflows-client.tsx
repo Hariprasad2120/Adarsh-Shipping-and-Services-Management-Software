@@ -2049,8 +2049,12 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       return;
     }
     const result = await actions.getFilingWorkflowDetailsAction(copySourceTemplateId);
-    if (!result.ok || !result.data) {
+    if (!result.ok) {
       toast.error(result.error || "Failed to copy workflow.");
+      return;
+    }
+    if (!result.data) {
+      toast.error("Failed to copy workflow.");
       return;
     }
 

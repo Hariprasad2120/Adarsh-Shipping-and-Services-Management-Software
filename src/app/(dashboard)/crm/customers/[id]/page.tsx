@@ -73,7 +73,7 @@ export default async function AccountDetailPage({ params, searchParams }: Accoun
         activities={activities}
         timeline={timeline}
         invoices={invoices}
-        accounts={accounts}
+        accounts={accounts as any}
         search={search}
       />
     </Suspense>

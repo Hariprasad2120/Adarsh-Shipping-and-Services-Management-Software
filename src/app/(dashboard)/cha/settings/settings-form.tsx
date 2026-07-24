@@ -463,14 +463,17 @@ export function SettingsForm({
 
       const portalRes = await setPortalFeatureFlagAction("CUSTOMER_PORTAL_SHIPMENT_UPLOADS", portalUploadsEnabled);
 
-      if (res.ok && portalRes.ok) {
-        toast.success("CHA operational settings updated successfully.");
-        router.refresh();
-      } else if (!res.ok) {
+      if (!res.ok) {
         toast.error(res.error || "Failed to update settings.");
-      } else {
-        toast.error(portalRes.error || "Failed to update customer portal uploads setting.");
+        return;
       }
+      if (!portalRes.ok) {
+        toast.error(portalRes.error || "Failed to update customer portal uploads setting.");
+        return;
+      }
+
+      toast.success("CHA operational settings updated successfully.");
+      router.refresh();
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred.");
     } finally {

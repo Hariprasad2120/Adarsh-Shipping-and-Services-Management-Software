@@ -8313,7 +8313,7 @@ function buildDefaultFilingWorkflowSeed() {
     return node;
   };
 
-  const addStage = (input: Parameters<typeof buildDefaultWorkflowNode>[0]) =>
+  const addStage = (input: Omit<Parameters<typeof buildDefaultWorkflowNode>[0], "sortOrder"> & { sortOrder?: number }) =>
     addNode(buildDefaultWorkflowNode({ ...input, nodeType: input.nodeType ?? "SECTION", sortOrder: sortOrder++ }));
   const addEdge = (sourceKey: string, targetKey: string, label: string) => {
     edges.push({ sourceKey, targetKey, label });
@@ -10668,8 +10668,8 @@ export async function getFilingWorkflowInstance(orgId: string, jobId: string): P
         if (aOrder !== bOrder) {
           return bOrder - aOrder;
         }
-        const aTime = new Date(a.completedAt || a.updatedAt || a.createdAt).getTime();
-        const bTime = new Date(b.completedAt || b.updatedAt || b.createdAt).getTime();
+        const aTime = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+        const bTime = b.completedAt ? new Date(b.completedAt).getTime() : 0;
         return bTime - aTime;
       })
       .map((run) => ({

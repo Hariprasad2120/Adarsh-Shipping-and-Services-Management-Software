@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { validateSession } from "@/lib/session-service";
 
 export async function getMobileUser(request: Request) {
   const authHeader = request.headers.get("Authorization");
@@ -12,6 +13,11 @@ export async function getMobileUser(request: Request) {
   }
 
   try {
+    const validation = await validateSession(token);
+    if (!validation.valid) {
+      return null;
+    }
+
     const session = await db.userSession.findFirst({
       where: {
         token,
@@ -33,12 +39,6 @@ export async function getMobileUser(request: Request) {
     if (!session || !session.user) {
       return null;
     }
-
-    // Touch the session lastSeenAt
-    await db.userSession.update({
-      where: { id: session.id },
-      data: { lastSeenAt: new Date() },
-    });
 
     return session.user;
   } catch (error) {

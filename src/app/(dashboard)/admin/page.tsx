@@ -9,6 +9,15 @@ import { redirect } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { AdminChaTestingAction } from "./admin-cha-testing-action";
 import { db } from "@/lib/db";
+import type { ComponentType, ReactNode } from "react";
+
+type AdminQuickLink = {
+  href: string;
+  label: string;
+  icon: ComponentType<any>;
+  description: string;
+  action?: ReactNode;
+};
 
 export default async function AdminPage() {
   const session = await auth();
@@ -32,7 +41,7 @@ export default async function AdminPage() {
   ]);
   const section = getVisibleSectionById(caps, "admin");
 
-  const quickLinks =
+  const quickLinks: AdminQuickLink[] =
     section?.items.map((item) => ({
       href: item.href,
       label: item.label,

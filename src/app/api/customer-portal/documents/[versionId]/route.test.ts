@@ -114,7 +114,7 @@ describe("GET /api/customer-portal/documents/[versionId]", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("content-disposition")).toBe('attachment; filename="invoice.pdf"');
+    expect(response.headers.get("content-disposition")).toContain('attachment; filename="invoice.pdf"');
     expect(mockedDriveClient.downloadFile).toHaveBeenCalledWith("file-123");
   });
 
@@ -140,7 +140,7 @@ describe("GET /api/customer-portal/documents/[versionId]", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("content-disposition")).toBe('attachment; filename="bill-of-lading.pdf"');
+    expect(response.headers.get("content-disposition")).toContain('attachment; filename="bill-of-lading.pdf"');
     expect(mockedDriveClient.downloadFile).toHaveBeenCalledWith("file-cha-123");
     expect(mockedDb.customerDocumentVersion.findFirst).not.toHaveBeenCalled();
   });

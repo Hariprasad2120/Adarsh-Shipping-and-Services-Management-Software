@@ -144,7 +144,6 @@ export function CustomerShipmentUploadCard({ shipmentId }: { shipmentId: string 
 
           <FileUploadField
             id="customer-upload-file"
-            name="customer-upload-file"
             label="File Upload"
             compact={false}
             accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,.csv,.zip"

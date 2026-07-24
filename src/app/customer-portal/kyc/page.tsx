@@ -11,6 +11,6 @@ export default async function CustomerPortalKycPage() {
   ]);
 
   return (
-    <PortalKycWorkspace shipments={shipments} kycUploadsAllowed={kycUploadsAllowed} />
+    <PortalKycWorkspace shipments={shipments as any} kycUploadsAllowed={kycUploadsAllowed} />
   );
 }

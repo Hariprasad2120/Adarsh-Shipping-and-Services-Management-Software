@@ -605,7 +605,7 @@ export function AccountDetailWrapper({
                         <div className="pt-3 flex justify-between items-center text-xs">
                           <span className="text-slate-400 font-medium">Credit Limit</span>
                           <span className="text-white font-bold text-sm ds-numeric">
-                            {account.creditLimit > 0 ? fmtCurrency(account.creditLimit) : "Unlimited"}
+                            {(account.creditLimit ?? 0) > 0 ? fmtCurrency(account.creditLimit ?? 0) : "Unlimited"}
                           </span>
                         </div>
                         <div className="pt-3 flex justify-between items-center text-xs">
@@ -661,7 +661,7 @@ export function AccountDetailWrapper({
 
               {/* NOTES / COMMENTS TAB */}
               {activeTab === "NOTES" && (
-                <NotesPanel relatedToType="ACCOUNT" relatedToId={account.id} initialNotes={notes} />
+                <NotesPanel relatedToType="ACCOUNT" relatedToId={account.id} initialNotes={notes as any} />
               )}
 
               {/* TRANSACTIONS TAB */}
@@ -701,7 +701,7 @@ export function AccountDetailWrapper({
                             <div>
                               <span className="font-bold text-white text-sm group-hover:text-[#00cec4] transition-colors">{inv.invoiceNumber}</span>
                               <span className="text-[11px] text-slate-400 block mt-0.5">
-                                {inv.type} • Date: {new Date(inv.date).toLocaleDateString("en-IN")} • Amount: {fmtCurrency(inv.total)}
+                                {inv.type} • Date: {inv.date ? new Date(inv.date).toLocaleDateString("en-IN") : "-"} • Amount: {fmtCurrency(inv.total ?? 0)}
                               </span>
                             </div>
                             <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider ${
@@ -746,10 +746,10 @@ export function AccountDetailWrapper({
                               const href = inv.type === "QUOTE" ? `/crm/quotes/${inv.id}` : `/crm/invoices/${inv.id}`;
                               router.push(href);
                             }}>
-                              <td className="px-4 py-2 ds-numeric">{new Date(inv.date).toLocaleDateString("en-IN")}</td>
+                              <td className="px-4 py-2 ds-numeric">{inv.date ? new Date(inv.date).toLocaleDateString("en-IN") : "-"}</td>
                               <td className="px-4 py-2 text-xs font-semibold">{inv.type}</td>
                               <td className="px-4 py-2 font-semibold text-white">{inv.invoiceNumber}</td>
-                              <td className="px-4 py-2 ds-numeric font-bold">{fmtCurrency(inv.total)}</td>
+                              <td className="px-4 py-2 ds-numeric font-bold">{fmtCurrency(inv.total ?? 0)}</td>
                               <td className="px-4 py-2">
                                 <span className={`px-1.5 py-0.5 text-[8px] font-bold rounded uppercase tracking-wider ${
                                   inv.status === "PAID" ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"
@@ -768,7 +768,7 @@ export function AccountDetailWrapper({
 
               {/* TIMELINE / HISTORY LOG TAB */}
               {activeTab === "TIMELINE" && (
-                <TimelinePanel events={timeline} />
+                <TimelinePanel events={timeline as any} />
               )}
 
             </div>

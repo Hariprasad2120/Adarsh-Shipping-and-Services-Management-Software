@@ -4,6 +4,7 @@ import { loadUserPermissions } from "@/lib/rbac";
 import { chatWithMona, clearConversation } from "@/modules/mona/service";
 import type { MonaContext } from "@/modules/mona/types";
 import { mobileJson, mobileOptions } from "@/lib/mobile-cors";
+import { getClientIp, rateLimit, sanitizeText } from "@/lib/security";
 
 export async function OPTIONS() {
   return mobileOptions();
@@ -27,6 +28,11 @@ export async function POST(request: Request) {
 
     const userId = user.id;
     const chatSessionId = sessionId || "default";
+    const limited = rateLimit(`mobile-mona:${userId}:${getClientIp(request)}`, {
+      limit: 60,
+      windowMs: 60_000,
+    });
+    if (!limited.ok) return limited.response;
 
     // Handle clear action
     if (action === "clear") {
@@ -35,16 +41,10 @@ export async function POST(request: Request) {
     }
 
     // Validate message
-    if (!message || typeof message !== "string" || message.trim().length === 0) {
+    const cleanMessage = typeof message === "string" ? sanitizeText(message, 2000) : "";
+    if (!cleanMessage) {
       return mobileJson(
         { error: "Message is required" },
-        400
-      );
-    }
-
-    if (message.length > 2000) {
-      return mobileJson(
-        { error: "Message too long (max 2000 characters)" },
         400
       );
     }
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     // Call Mona
     const response = await chatWithMona(
       context,
-      message.trim(),
+      cleanMessage,
       chatSessionId
     );
 

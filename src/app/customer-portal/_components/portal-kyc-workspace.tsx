@@ -517,7 +517,6 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
                                       currentUserId=""
                                       canDelete={false}
                                       showDeleteAction={false}
-                                      showActionMenu={false}
                                       showExceptionActions={false}
                                       uploadDisabled={uploadsDisabled}
                                       statusOverride={status}
@@ -593,7 +592,6 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
                                     key={requirement.id}
                                     requirement={workflowRequirement}
                                     loadingKey={uploading && uploadTarget?.requirement.id === requirement.id ? `doc-${requirement.id}` : null}
-                                    showActionMenu={false}
                                     showExceptionActions={false}
                                     hideUploadWhenExempted={true}
                                     uploadDisabled={uploadsDisabled}

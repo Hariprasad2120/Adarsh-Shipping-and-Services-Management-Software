@@ -94,7 +94,7 @@ describe("GET /api/customer-portal/checklist-files/[versionId]", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("content-disposition")).toBe('attachment; filename="Checklist V3.pdf"');
+    expect(response.headers.get("content-disposition")).toContain('attachment; filename="Checklist V3.pdf"');
     expect(mockedDriveClient.downloadFile).toHaveBeenCalledWith("checklist-123");
   });
 });

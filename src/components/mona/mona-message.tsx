@@ -4,6 +4,7 @@ import { MonaAvatarSmall } from "./mona-avatar";
 import type { MonaChatMessage } from "./mona-provider";
 import { motion } from "framer-motion";
 import { Copy, Check } from "lucide-react";
+import DOMPurify from "isomorphic-dompurify";
 import { useState, useCallback } from "react";
 
 /**
@@ -88,7 +89,7 @@ export function MonaMessage({ message }: { message: MonaChatMessage }) {
           <div
             className="mona-prose"
             dangerouslySetInnerHTML={{
-              __html: renderMonaMarkdown(message.content),
+              __html: DOMPurify.sanitize(renderMonaMarkdown(message.content)),
             }}
           />
 

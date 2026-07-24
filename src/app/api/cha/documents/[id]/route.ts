@@ -5,6 +5,7 @@ import fs from "fs/promises";
 import path from "path";
 import { createFileResponseHeaders, createPlaceholderImageBuffer, createPreviewPdfBuffer } from "@/lib/document-preview";
 import { downloadFile, extractDriveFileId } from "@/lib/google-drive-client";
+import { resolveInside } from "@/lib/security";
 
 export async function GET(
   request: Request,
@@ -62,17 +63,21 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const forceDownload = searchParams.get("download") === "true";
 
-    const localFilePath = path.join(process.cwd(), "public", fileKey);
-    const localFileStat = await fs.stat(localFilePath).catch(() => null);
-    if (localFileStat?.isFile()) {
-      const fileBuffer = await fs.readFile(localFilePath);
-      const headers = createFileResponseHeaders({
-        filename,
-        mimeType,
-        contentLength: fileBuffer.length,
-        forceDownload,
-      });
-      return new Response(fileBuffer, { headers });
+    try {
+      const localFilePath = resolveInside(path.join(process.cwd(), "public"), fileKey);
+      const localFileStat = await fs.stat(localFilePath).catch(() => null);
+      if (localFileStat?.isFile()) {
+        const fileBuffer = await fs.readFile(localFilePath);
+        const headers = createFileResponseHeaders({
+          filename,
+          mimeType,
+          contentLength: fileBuffer.length,
+          forceDownload,
+        });
+        return new Response(fileBuffer, { headers });
+      }
+    } catch {
+      return new Response("Invalid file path", { status: 400 });
     }
 
     const driveFileId = extractDriveFileId(fileKey);
@@ -89,6 +94,10 @@ export async function GET(
       } catch (error) {
         console.error("Error downloading Drive document preview:", error);
       }
+    }
+
+    if (process.env.NODE_ENV === "production") {
+      return new Response("Document file not found", { status: 404 });
     }
 
     // Dev/mock fallback — synthetic content for placeholder keys

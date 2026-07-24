@@ -7,6 +7,7 @@ import { getNow } from "@/lib/clock";
 import { sendEmail } from "@/lib/email";
 import { can, ForbiddenError } from "@/lib/rbac";
 import type { Prisma } from "@/generated/prisma/client";
+import { assertAllowedFile, resolveInside, sanitizeFilename, sanitizeText } from "@/lib/security";
 import type { PortalShipmentDetailView } from "./types";
 import {
   buildPortalLink,
@@ -31,7 +32,11 @@ const PORTAL_ALLOWED_FILE_TYPES = new Set([
   "image/png",
   "image/webp",
 ]);
+const PORTAL_ALLOWED_FILE_EXTENSIONS = new Set([".pdf", ".jpg", ".jpeg", ".png", ".webp"]);
 const PORTAL_MAX_FILE_SIZE = 10 * 1024 * 1024;
+const PORTAL_UPLOAD_ROOT = path.resolve(
+  process.env.CUSTOMER_PORTAL_UPLOAD_ROOT || path.join(process.cwd(), "storage", "customer-portal-uploads"),
+);
 const CUSTOMER_PORTAL_DEFAULT_PASSWORD =
   process.env.CUSTOMER_PORTAL_DEFAULT_PASSWORD?.trim() || "Password@123";
 
@@ -196,10 +201,11 @@ function getActionRequiredFlags(job: {
     if (!requirement.isMandatory) return false;
     return !submission || ["REJECTED", "REUPLOAD_REQUIRED", "CLARIFICATION_REQUIRED"].includes(submission.status);
   });
-  const checklistPending =
+  const checklistPending = Boolean(
     job.checklistWorkflow &&
     job.checklistWorkflow.currentApprovalStage === "CUSTOMER" &&
-    ["CUSTOMER_APPROVAL_PENDING", "CUSTOMER_APPROVAL_WAITING_WINDOW"].includes(job.checklistWorkflow.status || "");
+    ["CUSTOMER_APPROVAL_PENDING", "CUSTOMER_APPROVAL_WAITING_WINDOW"].includes(job.checklistWorkflow.status || ""),
+  );
   const openQueries = job.customerQueryThreads.filter(
     (thread: { status: string; requiresCustomerAction: boolean }) =>
       thread.status !== "CLOSED" && thread.status !== "RESOLVED",
@@ -891,7 +897,7 @@ export async function getPortalShipmentDetail(portalUserId: string, jobId: strin
     where: { orgId: portalUser.orgId, isVisible: true },
     orderBy: { sortOrder: "asc" },
   });
-  const currentStage = stageMappings.find((entry) => entry.internalStageKey === job.stage);
+  const currentStage = stageMappings.find((entry) => entry.internalStageKey === job.stage) ?? null;
   const auditLogs = await db.customerPortalAuditLog.findMany({
     where: {
       orgId: portalUser.orgId,
@@ -953,19 +959,21 @@ export async function uploadPortalDocument(params: {
   comment?: string;
 }) {
   const { portalUser, requirement } = await ensureSubmissionAccess(params.portalUserId, params.jobId, params.requirementId);
-  if (!PORTAL_ALLOWED_FILE_TYPES.has(params.file.type)) {
-    throw new Error("Unsupported file type.");
-  }
-  if (params.file.size > PORTAL_MAX_FILE_SIZE) {
-    throw new Error("File exceeds the 10 MB upload limit.");
-  }
+  assertAllowedFile({
+    file: params.file,
+    allowedTypes: PORTAL_ALLOWED_FILE_TYPES,
+    allowedExtensions: PORTAL_ALLOWED_FILE_EXTENSIONS,
+    maxSizeBytes: PORTAL_MAX_FILE_SIZE,
+  });
   const buffer = Buffer.from(await params.file.arrayBuffer());
-  const uploadsDir = path.join(process.cwd(), "public", "uploads", "customer-portal", portalUser.orgId, params.jobId);
+  const uploadsDir = resolveInside(PORTAL_UPLOAD_ROOT, portalUser.orgId, params.jobId);
   await fs.mkdir(uploadsDir, { recursive: true });
-  const safeName = `${Date.now()}-${params.file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-  const absolutePath = path.join(uploadsDir, safeName);
+  const displayName = sanitizeFilename(params.file.name);
+  const safeName = `${Date.now()}-${displayName}`;
+  const absolutePath = resolveInside(uploadsDir, safeName);
   await fs.writeFile(absolutePath, buffer);
-  const fileKey = path.relative(path.join(process.cwd(), "public"), absolutePath).replace(/\\/g, "/");
+  const fileKey = `customer-portal-local:${path.relative(PORTAL_UPLOAD_ROOT, absolutePath).replace(/\\/g, "/")}`;
+  const customerComment = sanitizeText(params.comment ?? "", 1000) || null;
 
   const now = await getNow();
   const submission = await db.$transaction(async (tx) => {
@@ -982,7 +990,7 @@ export async function uploadPortalDocument(params: {
         where: { id: existing.id },
         data: {
           status: "UPLOADED",
-          customerComment: params.comment,
+          customerComment,
           reviewerComment: null,
           internalRemark: null,
           reviewedAt: null,
@@ -993,7 +1001,7 @@ export async function uploadPortalDocument(params: {
         data: {
           submissionId: existing.id,
           fileKey,
-          fileName: params.file.name,
+          fileName: displayName,
           mimeType: params.file.type || "application/octet-stream",
           sizeBytes: params.file.size,
           uploadedAt: now,
@@ -1012,14 +1020,14 @@ export async function uploadPortalDocument(params: {
         jobId: params.jobId,
         requirementId: params.requirementId,
         portalUserId: portalUser.id,
-        customerComment: params.comment,
+        customerComment,
       },
     });
     const version = await tx.customerDocumentVersion.create({
       data: {
         submissionId: created.id,
         fileKey,
-        fileName: params.file.name,
+        fileName: displayName,
         mimeType: params.file.type || "application/octet-stream",
         sizeBytes: params.file.size,
         uploadedAt: now,
@@ -1040,7 +1048,7 @@ export async function uploadPortalDocument(params: {
     entityType: "CustomerDocumentSubmission",
     entityId: submission.id,
     event: "DOCUMENT_UPLOADED",
-    remarks: `Uploaded ${params.file.name} for ${requirement.name}.`,
+    remarks: `Uploaded ${displayName} for ${requirement.name}.`,
   });
 
   const primaryOwnerId = await jobOwnerIdOrNull(portalUser.orgId, params.jobId);
@@ -1055,7 +1063,7 @@ export async function uploadPortalDocument(params: {
           orgId: portalUser.orgId,
           kind: "CHA_CUSTOMER_DOCUMENT_UPLOADED",
           title: `Customer document uploaded for ${params.jobId}`,
-          body: `${portalUser.name} uploaded ${params.file.name}.`,
+          body: `${portalUser.name} uploaded ${displayName}.`,
           link: `/cha/jobs/${params.jobId}`,
         }),
       ),
@@ -1179,6 +1187,7 @@ export async function submitPortalChecklistDecision(params: {
   remarks?: string;
 }) {
   const portalUser = await getPortalUserContext(params.portalUserId);
+  const remarks = params.remarks ? sanitizeText(params.remarks, 2000) : undefined;
   const job = await db.chaJob.findFirst({
     where: {
       id: params.jobId,
@@ -1221,7 +1230,7 @@ export async function submitPortalChecklistDecision(params: {
       checklistId: params.checklistId,
       portalUserId: portalUser.id,
       decision: params.decision,
-      remarks: params.remarks,
+      remarks,
       submittedAt: now,
     },
   });
@@ -1233,7 +1242,7 @@ export async function submitPortalChecklistDecision(params: {
           fileVersionId: currentFileVersionId,
           stage: "CUSTOMER",
         action: params.decision,
-        remarks: params.remarks,
+        remarks,
         actedById: portalUser.id,
         assignedToId: portalUser.id,
         actedAt: now,
@@ -1279,7 +1288,7 @@ export async function submitPortalChecklistDecision(params: {
     entityType: "CustomerChecklistResponse",
     entityId: params.checklistId,
     event: params.decision === "APPROVED" ? "CHECKLIST_APPROVED" : "CHECKLIST_REJECTED",
-    remarks: params.remarks,
+    remarks,
   });
 
   await notifyPortalUsers({
@@ -1315,6 +1324,10 @@ export async function replyToPortalQuery(params: {
   body: string;
 }) {
   const portalUser = await getPortalUserContext(params.portalUserId);
+  const body = sanitizeText(params.body, 2000);
+  if (!body) {
+    throw new Error("Reply message is required.");
+  }
   const thread = await db.customerQueryThread.findFirst({
     where: {
       id: params.threadId,
@@ -1332,7 +1345,7 @@ export async function replyToPortalQuery(params: {
       jobId: thread.jobId,
       threadId: thread.id,
       authorPortalUserId: portalUser.id,
-      body: params.body.trim(),
+      body,
     },
   });
   await db.customerQueryThread.update({
@@ -1351,7 +1364,7 @@ export async function replyToPortalQuery(params: {
     entityType: "CustomerQueryThread",
     entityId: thread.id,
     event: "QUERY_RESPONDED",
-    remarks: params.body.trim(),
+    remarks: body,
   });
   return message;
 }

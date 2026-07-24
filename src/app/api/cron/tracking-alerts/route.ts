@@ -9,19 +9,14 @@
  */
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireCronSecret } from "@/lib/security";
 import { detectOfflineEmployees } from "@/modules/hrms/on-duty";
 import { autoCloseExpiredSessions } from "@/modules/hrms/mobile-attendance";
 
 export async function GET(request: Request) {
   try {
-    // Simple auth via cron secret
-    const url = new URL(request.url);
-    const secret = url.searchParams.get("secret");
-    const cronSecret = process.env.CRON_SECRET;
-
-    if (cronSecret && secret !== cronSecret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const cronError = requireCronSecret(request);
+    if (cronError) return cronError;
 
     // Get all organizations with active tracking
     const orgs = await db.locationTrackingSession.findMany({

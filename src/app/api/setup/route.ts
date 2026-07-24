@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hash } from "bcryptjs";
 import { z } from "zod";
+import { forbiddenJson, requireProductionSecret, sanitizedString } from "@/lib/security";
 
 export async function GET() {
   const admin = await db.user.findFirst({ where: { isPlatformAdmin: true, active: true } });
@@ -9,13 +10,29 @@ export async function GET() {
 }
 
 const setupSchema = z.object({
-  name: z.string().min(1),
+  name: sanitizedString(120).pipe(z.string().min(1)),
   email: z.string().email(),
   password: z.string().min(8),
-  orgName: z.string().min(1),
+  orgName: sanitizedString(160).pipe(z.string().min(1)),
 });
 
 export async function POST(req: NextRequest) {
+  if (process.env.NODE_ENV === "production") {
+    let setupSecret: string;
+    try {
+      setupSecret = requireProductionSecret("SETUP_SECRET", process.env.SETUP_SECRET)!;
+    } catch {
+      return forbiddenJson("Setup secret is not configured.", 503);
+    }
+    const provided =
+      req.headers.get("x-setup-secret") ||
+      req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
+      req.nextUrl.searchParams.get("secret");
+    if (provided !== setupSecret) {
+      return forbiddenJson("Unauthorized", 401);
+    }
+  }
+
   // Block if admin already exists
   const existing = await db.user.findFirst({ where: { isPlatformAdmin: true } });
   if (existing) {

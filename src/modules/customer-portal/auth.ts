@@ -8,6 +8,7 @@ import { LOGIN_LOCKOUT_MS, LOGIN_MAX_ATTEMPTS } from "@/lib/session-config";
 import { maskIp, deviceLabel, extractRequestMeta } from "@/lib/session-service";
 import type { Prisma } from "@/generated/prisma/client";
 import { PORTAL_COOKIE_NAME, PORTAL_LOGIN_PATH } from "./config";
+import { requireProductionSecret } from "@/lib/security";
 
 const IS_PROD = process.env.NODE_ENV === "production";
 const PORTAL_SESSION_MAX_AGE_S = 7 * 24 * 60 * 60;
@@ -27,7 +28,11 @@ const COMMON_PASSWORDS = new Set([
 ]);
 
 function portalSecret() {
-  return process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "monolith-customer-portal";
+  return requireProductionSecret(
+    "AUTH_SECRET",
+    process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+    "monolith-customer-portal",
+  )!;
 }
 
 export function hashPortalToken(token: string) {

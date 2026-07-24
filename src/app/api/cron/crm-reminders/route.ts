@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireCronSecret } from "@/lib/security";
 import { triggerAllDueCrmLeadReminders } from "@/modules/notifications/service";
 
 export async function GET(req: NextRequest) {
-  const secret = req.headers.get("x-cron-secret");
-  const url = new URL(req.url);
-  const querySecret = url.searchParams.get("secret");
-
-  if (
-    secret !== process.env.CRON_SECRET &&
-    querySecret !== process.env.CRON_SECRET &&
-    process.env.NODE_ENV !== "development"
-  ) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const cronError = requireCronSecret(req);
+  if (cronError) return cronError;
 
   await triggerAllDueCrmLeadReminders();
   return NextResponse.json({ success: true });

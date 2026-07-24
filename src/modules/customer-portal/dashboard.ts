@@ -427,19 +427,20 @@ export function buildRecentUpdates(
   const stageMap = buildStageMap(stageMappings);
 
   return audits
-    .filter((audit) => CUSTOMER_SAFE_AUDIT_EVENTS.has(audit.event))
+    .filter((audit) => CUSTOMER_SAFE_AUDIT_EVENTS.has(audit.event) && audit.job)
     .slice(0, MAX_RECENT_UPDATES)
     .map((audit) => {
-      const stageLabel = formatStageLabel(audit.newState || audit.job.stage, stageMap);
+      const job = audit.job!;
+      const stageLabel = formatStageLabel(audit.newState || job.stage, stageMap);
       return {
         id: audit.id,
         title: buildAuditTitle(audit, stageMap),
         detail: audit.remarks || "Shipment activity was updated.",
-        jobId: audit.jobId ?? audit.job.id,
-        jobNumber: audit.job.jobNumber,
+        jobId: audit.jobId ?? job.id,
+        jobNumber: job.jobNumber,
         stageLabel,
         occurredAt: audit.timestamp.toISOString(),
-        href: shipmentHref(audit.job.id),
+        href: shipmentHref(job.id),
       };
     });
 }

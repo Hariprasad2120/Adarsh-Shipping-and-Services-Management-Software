@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getClientIp, rateLimit } from "@/lib/security";
 import {
   requestCustomerPortalPasswordReset,
   resetCustomerPortalPassword,
@@ -16,6 +17,12 @@ const resetSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const limited = rateLimit(`portal-reset-request:${getClientIp(request)}`, {
+      limit: 10,
+      windowMs: 60_000,
+    });
+    if (!limited.ok) return limited.response;
+
     const body = requestSchema.parse(await request.json());
     await requestCustomerPortalPasswordReset(body.email);
     return NextResponse.json({ ok: true });
@@ -26,6 +33,12 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    const limited = rateLimit(`portal-reset:${getClientIp(request)}`, {
+      limit: 10,
+      windowMs: 60_000,
+    });
+    if (!limited.ok) return limited.response;
+
     const body = resetSchema.parse(await request.json());
     await resetCustomerPortalPassword(body.token, body.password);
     return NextResponse.json({ ok: true });
