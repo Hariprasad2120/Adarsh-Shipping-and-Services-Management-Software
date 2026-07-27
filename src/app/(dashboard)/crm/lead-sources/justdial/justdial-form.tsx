@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -69,20 +70,20 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
         {/* Import Mode */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-300">Import Trigger Mode</label>
-          <select
+          <NativeSelect
             name="importMode"
             defaultValue={initialConfig?.importMode || "MANUAL"}
             className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
           >
             <option value="MANUAL">Manual Execution Only</option>
             <option value="SCHEDULED">Scheduled Automatic Sync</option>
-          </select>
+          </NativeSelect>
         </div>
 
         {/* Schedule Interval */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-300">Sync Interval (If Scheduled)</label>
-          <select
+          <NativeSelect
             name="scheduleInterval"
             defaultValue={initialConfig?.scheduleInterval || "1h"}
             className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
@@ -91,7 +92,7 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
             <option value="15m">Every 15 Minutes</option>
             <option value="30m">Every 30 Minutes</option>
             <option value="1h">Every 1 Hour</option>
-          </select>
+          </NativeSelect>
         </div>
 
 
@@ -111,20 +112,20 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
         {/* Duplicate Handling */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-300">On Duplicate Found</label>
-          <select
+          <NativeSelect
             name="duplicateHandling"
             defaultValue={initialConfig?.duplicateHandling || "UPDATE_EXISTING"}
             className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
           >
             <option value="UPDATE_EXISTING">Update Timeline & Last Seen (Recommended)</option>
             <option value="SKIP">Skip & Ignore</option>
-          </select>
+          </NativeSelect>
         </div>
 
         {/* Default Owner */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-300">Default Lead Owner</label>
-          <select
+          <NativeSelect
             name="defaultOwnerId"
             defaultValue={initialConfig?.defaultOwnerId || ""}
             className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
@@ -135,13 +136,13 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
                 {e.name}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
 
         {/* Default Stage */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-300">Default Pipeline Stage</label>
-          <select
+          <NativeSelect
             name="defaultStage"
             defaultValue={initialConfig?.defaultStage || "NEW"}
             className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
@@ -149,7 +150,7 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
             <option value="NEW">New Lead</option>
             <option value="CONTACTED">Contacted</option>
             <option value="QUALIFIED">Qualified</option>
-          </select>
+          </NativeSelect>
         </div>
 
         {/* Active Toggle */}

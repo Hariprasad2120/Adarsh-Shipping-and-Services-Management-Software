@@ -200,11 +200,7 @@ export function ChecklistDecisionsClient({
               </div>
               <div className="overflow-hidden rounded-xl border border-outline-variant/35 bg-surface-container-low/20">
                 {reviewChecklist.downloadHref ? (
-                  <iframe
-                    title={`${reviewChecklist.checklistLabel} preview`}
-                    src={previewHref(reviewChecklist.downloadHref)}
-                    className="h-[65vh] w-full bg-surface"
-                  />
+                  <FilePreview checklist={reviewChecklist} />
                 ) : (
                   <div className="flex h-[65vh] items-center justify-center px-6 text-center text-sm text-on-surface-variant">
                     A preview is not available for this checklist file.
@@ -257,25 +253,27 @@ export function ChecklistDecisionsClient({
                 </div>
               ) : null}
 
-              <div className="flex flex-wrap gap-3 pt-2">
+              <div className="flex flex-col gap-3 pt-1">
+                <div className="flex gap-3">
+                  <Button
+                    variant="destructive"
+                    className="h-10 flex-1 basis-0 px-4"
+                    disabled={isPending && activeChecklistId === reviewChecklist.id}
+                    onClick={() => handleDecision(reviewChecklist.id, "REJECTED")}
+                  >
+                    {isPending && activeChecklistId === reviewChecklist.id ? "Submitting..." : "Reject"}
+                  </Button>
+                  <Button
+                    className="h-10 flex-1 basis-0 px-4"
+                    disabled={isPending && activeChecklistId === reviewChecklist.id}
+                    onClick={() => handleDecision(reviewChecklist.id, "APPROVED")}
+                  >
+                    {isPending && activeChecklistId === reviewChecklist.id ? "Submitting..." : "Approve"}
+                  </Button>
+                </div>
                 <Button
-                  size="sm"
-                  disabled={isPending && activeChecklistId === reviewChecklist.id}
-                  onClick={() => handleDecision(reviewChecklist.id, "APPROVED")}
-                >
-                  {isPending && activeChecklistId === reviewChecklist.id ? "Submitting..." : "Approve Checklist"}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  disabled={isPending && activeChecklistId === reviewChecklist.id}
-                  onClick={() => handleDecision(reviewChecklist.id, "REJECTED")}
-                >
-                  {isPending && activeChecklistId === reviewChecklist.id ? "Submitting..." : "Reject Checklist"}
-                </Button>
-                <Button
-                  size="sm"
                   variant="outline"
+                  className="w-full"
                   disabled={isPending && activeChecklistId === reviewChecklist.id}
                   onClick={() => setReviewChecklistId(null)}
                 >
@@ -290,6 +288,53 @@ export function ChecklistDecisionsClient({
   );
 }
 
+function FilePreview({ checklist }: { checklist: ChecklistItem }) {
+  const src = previewHref(checklist.downloadHref ?? "");
+  const isImagePreview = isPreviewableImage(checklist);
+
+  if (isImagePreview) {
+    return (
+      <div className="flex h-[65vh] items-center justify-center bg-surface p-4">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={`${checklist.checklistLabel} preview`}
+          className="max-h-full max-w-full rounded-lg object-contain"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <object
+      aria-label={`${checklist.checklistLabel} preview`}
+      data={src}
+      type={checklist.mimeType ?? undefined}
+      className="h-[65vh] w-full bg-surface"
+    >
+      <div className="flex h-[65vh] flex-col items-center justify-center gap-3 px-6 text-center text-sm text-on-surface-variant">
+        <p>This file type cannot be previewed in the browser.</p>
+        {checklist.downloadHref ? (
+          <a href={checklist.downloadHref}>
+            <Button variant="outline" size="sm" className="h-10 min-w-40 justify-center px-4">
+              Download File
+            </Button>
+          </a>
+        ) : null}
+      </div>
+    </object>
+  );
+}
+
+function isPreviewableImage(checklist: ChecklistItem) {
+  const mimeType = checklist.mimeType?.toLowerCase() ?? "";
+  const fileName = checklist.fileName?.toLowerCase() ?? "";
+  return (
+    mimeType.startsWith("image/") ||
+    /\.(png|jpe?g|webp|gif|bmp|svg)$/.test(fileName)
+  );
+}
+
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString("en-IN", {
     day: "2-digit",
@@ -301,5 +346,7 @@ function formatDateTime(value: string) {
 }
 
 function previewHref(href: string) {
-  return href.replace("?download=true", "");
+  if (!href) return "";
+  const [pathname] = href.split("?");
+  return pathname;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -221,7 +222,7 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
 
               <div className="space-y-1">
                 <label className="ds-label block text-slate-400">Parent Group Account</label>
-                <select
+                <NativeSelect
                   value={formData.parentAccountId}
                   onChange={(e) => setFormData({ ...formData, parentAccountId: e.target.value })}
                   className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs"
@@ -230,13 +231,13 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
                   {groupAccountsList.map((g) => (
                     <option key={g.id} value={g.id}>{g.name}</option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="ds-label block text-slate-400">Classification (Root Type)</label>
-                  <select
+                  <NativeSelect
                     value={formData.rootType}
                     onChange={(e) => setFormData({ ...formData, rootType: e.target.value as any })}
                     className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs"
@@ -244,11 +245,11 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
                     {rootTypes.map((t) => (
                       <option key={t} value={t}>{t}</option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div className="space-y-1">
                   <label className="ds-label block text-slate-400">Account Function Type</label>
-                  <select
+                  <NativeSelect
                     value={formData.accountType}
                     onChange={(e) => setFormData({ ...formData, accountType: e.target.value as any })}
                     className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs"
@@ -256,7 +257,7 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
                     {accountTypes.map((t) => (
                       <option key={t} value={t}>{t}</option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
               </div>
 
@@ -286,7 +287,7 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="ds-label block text-slate-400">Branch Mapping</label>
-                  <select
+                  <NativeSelect
                     value={formData.branchId}
                     onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
                     className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs"
@@ -295,7 +296,7 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
                     {branches.map((b) => (
                       <option key={b.id} value={b.id}>{b.name}</option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div className="flex items-center gap-2 pt-5 select-none">
                   <input

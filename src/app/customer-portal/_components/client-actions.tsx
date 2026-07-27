@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, useTransition } from "react";
@@ -389,18 +390,18 @@ export function PortalRatingForm({ jobId, categories }: { jobId: string; categor
     >
       <div className="space-y-2">
         <label className="ds-label block">Overall Rating</label>
-        <select value={overallRating} onChange={(event) => setOverallRating(Number(event.target.value))}>
+        <NativeSelect value={overallRating} onChange={(event) => setOverallRating(Number(event.target.value))}>
           {[1, 2, 3, 4, 5].map((value) => (
             <option key={value} value={value}>
               {value}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </div>
       {categories.map((category) => (
         <div key={category.key} className="space-y-2">
           <label className="ds-label block">{category.label}</label>
-          <select
+          <NativeSelect
             value={ratings[category.key]}
             onChange={(event) =>
               setRatings((current) => ({ ...current, [category.key]: Number(event.target.value) }))
@@ -411,7 +412,7 @@ export function PortalRatingForm({ jobId, categories }: { jobId: string; categor
                 {value}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       ))}
       <Input value={remarks} onChange={(event) => setRemarks(event.target.value)} placeholder="Remarks" />
@@ -1010,7 +1011,7 @@ export function PortalShipmentsFilterPanel({
           </button>
         </div>
 
-        <select
+        <NativeSelect
           value={mode}
           onChange={(e) => {
             setMode(e.target.value);
@@ -1021,9 +1022,9 @@ export function PortalShipmentsFilterPanel({
           <option value="all">All Transit Modes</option>
           <option value="sea">Ocean Freight</option>
           <option value="air">Air Freight</option>
-        </select>
+        </NativeSelect>
 
-        <select
+        <NativeSelect
           value={trade}
           onChange={(e) => {
             setTrade(e.target.value);
@@ -1034,7 +1035,7 @@ export function PortalShipmentsFilterPanel({
           <option value="all">All Trade Types</option>
           <option value="import">Import Clearance</option>
           <option value="export">Export Clearance</option>
-        </select>
+        </NativeSelect>
 
         <button
           type="button"

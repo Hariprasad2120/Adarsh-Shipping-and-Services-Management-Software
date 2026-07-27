@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -128,7 +129,7 @@ export function PayrollClient({ initialBatches, settingsConfigured }: PayrollCli
         <div className="flex flex-col sm:flex-row sm:items-end gap-4">
           <div className="flex-1 space-y-1">
             <label className="ds-label block text-slate-400">Select Month</label>
-            <select
+            <NativeSelect
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-sm"
@@ -136,19 +137,19 @@ export function PayrollClient({ initialBatches, settingsConfigured }: PayrollCli
               {months.map((m, idx) => (
                 <option key={m} value={idx}>{m}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="flex-1 space-y-1">
             <label className="ds-label block text-slate-400">Select Year</label>
-            <select
+            <NativeSelect
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-sm"
             >
               <option value={2026}>2026</option>
               <option value={2027}>2027</option>
-            </select>
+            </NativeSelect>
           </div>
 
           <button

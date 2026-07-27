@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { Target, Award, Heart, MessageSquare, Plus, Save, Loader2, Calendar } from "lucide-react";
@@ -291,7 +292,7 @@ export function PmsView() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Feedback Recipient</label>
-              <select
+              <NativeSelect
                 value={feedbackTo}
                 onChange={(e) => setFeedbackTo(e.target.value)}
                 className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#00c4b6]"
@@ -301,11 +302,11 @@ export function PmsView() {
                     {c.name} ({c.employeeNo})
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Feedback Type</label>
-              <select
+              <NativeSelect
                 value={feedbackType}
                 onChange={(e) => setFeedbackType(e.target.value)}
                 className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#00c4b6]"
@@ -313,7 +314,7 @@ export function PmsView() {
                 <option value="PEER_TO_PEER">Peer to Peer</option>
                 <option value="MANAGER_REVIEW">Manager Review</option>
                 <option value="SELF_REVIEW">Self Review</option>
-              </select>
+              </NativeSelect>
             </div>
           </div>
           <div className="space-y-1">

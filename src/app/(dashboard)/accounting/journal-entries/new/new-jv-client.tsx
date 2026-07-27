@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import { toast } from "sonner";
@@ -126,7 +127,7 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
 
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Branch Dimension</label>
-            <select
+            <NativeSelect
               value={branchId}
               onChange={(e) => setBranchId(e.target.value)}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
@@ -135,7 +136,7 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">
@@ -174,7 +175,7 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
               {/* Account Dropdown */}
               <div className="flex-1 space-y-1 w-full">
                 <label className="ds-label text-slate-500 md:hidden">Account</label>
-                <select
+                <NativeSelect
                   required
                   value={line.accountId}
                   onChange={(e) => handleLineChange(idx, "accountId", e.target.value)}
@@ -184,7 +185,7 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
                   {accounts.map((a) => (
                     <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
 
               {/* Debit */}

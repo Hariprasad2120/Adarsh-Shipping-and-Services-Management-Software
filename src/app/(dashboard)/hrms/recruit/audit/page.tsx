@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useEffect, useCallback } from "react";
 import { Search } from "@carbon/icons-react";
 import {DataTable,DataTableBody,DataTableCell,DataTableHead,DataTableHeader,DataTableRow,DataTableEmpty,} from "@/components/data-table";
@@ -70,7 +71,7 @@ export default function RecruitAuditPage() {
             className="w-full rounded-xl py-2 pl-9 pr-3 text-sm"
           />
         </div>
-        <select
+        <NativeSelect
           value={action}
           onChange={(e) => setAction(e.target.value)}
           className="rounded-xl px-3 py-2 text-sm"
@@ -83,7 +84,7 @@ export default function RecruitAuditPage() {
           <option value="recruit.screening">Screening events</option>
           <option value="recruit.interview">Interview events</option>
           <option value="recruit.settings">Settings changes</option>
-        </select>
+        </NativeSelect>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">

@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -158,7 +159,7 @@ export function NewInvoiceClient({
           
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Customer *</label>
-            <select
+            <NativeSelect
               required
               value={customerId}
               onChange={(e) => setCustomerId(e.target.value)}
@@ -168,12 +169,12 @@ export function NewInvoiceClient({
               {customers.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Branch Mapping</label>
-            <select
+            <NativeSelect
               value={branchId}
               onChange={(e) => setBranchId(e.target.value)}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
@@ -182,7 +183,7 @@ export function NewInvoiceClient({
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">
@@ -197,7 +198,7 @@ export function NewInvoiceClient({
 
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Bank Details</label>
-            <select
+            <NativeSelect
               value={bankDetails}
               onChange={(e) => setBankDetails(e.target.value)}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
@@ -208,7 +209,7 @@ export function NewInvoiceClient({
                   {acc.accountName} ({acc.accountCode})
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           {/* Hidden Due Date (will default to postingDate + 30 days) */}
@@ -265,7 +266,7 @@ export function NewInvoiceClient({
               {/* Currency */}
               <div className="w-full md:w-24 space-y-1">
                 <label className="ds-label text-slate-500 md:hidden">Currency</label>
-                <select
+                <NativeSelect
                   value={item.currency || "INR"}
                   onChange={(e) => handleItemChange(idx, "currency", e.target.value)}
                   className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
@@ -274,7 +275,7 @@ export function NewInvoiceClient({
                   <option value="USD">USD</option>
                   <option value="EUR">EUR</option>
                   <option value="SGD">SGD</option>
-                </select>
+                </NativeSelect>
               </div>
 
               {/* Exchange Rate */}
@@ -371,7 +372,7 @@ export function NewInvoiceClient({
               </div>
               <div className="space-y-1">
                 <label className="ds-label block text-slate-400">Tax Rate (GST)</label>
-                <select
+                <NativeSelect
                   value={taxRate}
                   onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
                   className="bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-mono w-28 text-white"
@@ -381,7 +382,7 @@ export function NewInvoiceClient({
                   <option value="12">12%</option>
                   <option value="18">18%</option>
                   <option value="28">28%</option>
-                </select>
+                </NativeSelect>
               </div>
             </div>
           </div>

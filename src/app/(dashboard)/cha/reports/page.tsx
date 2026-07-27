@@ -1,7 +1,9 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
+import { listCompletedChaJobsForReports } from "@/modules/cha/job-report";
 import {
   TrendingUp,
   AlertTriangle,
@@ -9,6 +11,9 @@ import {
   FileText,
   ChevronRight,
   BarChart2,
+  Search,
+  Download,
+  ExternalLink,
 } from "lucide-react";
 import {
   ChaPageHeader,
@@ -16,7 +21,11 @@ import {
   ChaSectionShell,
 } from "../_components/cha-operations-shared";
 
-export default async function ChaReportsPage() {
+export default async function ChaReportsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string | string[] }>;
+}) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -25,9 +34,13 @@ export default async function ChaReportsPage() {
 
   // Require audit view permission
   await requirePermission(session.user.id, "cha.audit.view");
+  const resolvedSearchParams = await searchParams;
+  const jobReportQuery = Array.isArray(resolvedSearchParams.q)
+    ? resolvedSearchParams.q[0] || ""
+    : resolvedSearchParams.q || "";
 
   // Parallelize all independent queries
-  const [stageCounts, advances, expenses, delayedFilings, auditLogsRaw] = await Promise.all([
+  const [stageCounts, advances, expenses, delayedFilings, auditLogsRaw, completedReportJobs] = await Promise.all([
     db.chaJob.groupBy({
       by: ["stage"],
       where: { orgId, deletedAt: null },
@@ -60,6 +73,7 @@ export default async function ChaReportsPage() {
       },
       take: 15,
     }),
+    listCompletedChaJobsForReports(orgId, jobReportQuery),
   ]);
 
   const stageMap: Record<string, number> = {
@@ -193,6 +207,104 @@ export default async function ChaReportsPage() {
               <span className="ds-numeric text-emerald-600 dark:text-emerald-400">{stageMap.FILED}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-cha-border bg-cha-surface p-6 shadow-sm dark:border-cha-border-strong">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <FileText size={18} className="text-cha-primary" />
+              <h2 className="ds-h2 text-cha-text-primary">Completed Job MIS Reports</h2>
+            </div>
+            <p className="text-xs text-cha-text-secondary">
+              Search by job number. Reports are generated only after the job reaches FILED / COMPLETE.
+            </p>
+          </div>
+          <form className="flex w-full gap-2 lg:max-w-xl">
+            <div className="relative min-w-0 flex-1">
+              <span className="absolute inset-y-0 left-3 flex items-center text-cha-text-secondary">
+                <Search size={16} />
+              </span>
+              <input
+                name="q"
+                defaultValue={jobReportQuery}
+                placeholder="Search completed job number..."
+                className="h-11 w-full pl-10 text-sm"
+              />
+            </div>
+            <button className="rounded-xl bg-[#00cec4] px-5 text-xs font-medium uppercase tracking-wide text-white transition-all hover:bg-[#00b8af]">
+              Search
+            </button>
+          </form>
+        </div>
+
+        <div className="mt-5 overflow-hidden rounded-xl border border-cha-border dark:border-cha-border-strong">
+          <table className="ds-table">
+            <thead>
+              <tr>
+                <th>Job Number</th>
+                <th>Customer</th>
+                <th>Filed On</th>
+                <th>Expense MIS</th>
+                <th>Report Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {completedReportJobs.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center text-xs italic text-cha-text-secondary">
+                    No completed jobs found for this report search.
+                  </td>
+                </tr>
+              ) : (
+                completedReportJobs.map((job) => {
+                  const requested = job.expenseRequests.reduce(
+                    (total, request) => total + request.lines.reduce((sum, line) => sum + Number(line.amount), 0),
+                    0,
+                  );
+                  const paid = job.expenseRequests.reduce(
+                    (total, request) => total + request.payments.reduce((sum, payment) => sum + Number(payment.amountPaid), 0),
+                    0,
+                  );
+                  return (
+                    <tr key={job.id}>
+                      <td>
+                        <div className="font-medium text-cha-primary">{job.jobNumber}</div>
+                        <div className="text-[10px] text-cha-text-secondary">{job.title}</div>
+                      </td>
+                      <td>{job.customer.name}</td>
+                      <td className="ds-numeric">
+                        {job.filing?.actualFilingDate
+                          ? new Date(job.filing.actualFilingDate).toLocaleDateString("en-IN")
+                          : new Date(job.updatedAt).toLocaleDateString("en-IN")}
+                      </td>
+                      <td className="ds-numeric">
+                        Requested INR {requested.toLocaleString("en-IN")} / Paid INR {paid.toLocaleString("en-IN")}
+                      </td>
+                      <td>
+                        <div className="flex flex-wrap gap-2">
+                          <Link
+                            href={`/api/cha/reports/jobs/${job.id}`}
+                            target="_blank"
+                            className="inline-flex items-center gap-1 rounded-xl border border-cha-primary/45 bg-surface px-3 py-2 text-xs font-medium uppercase tracking-wide text-cha-primary"
+                          >
+                            <ExternalLink size={13} /> View PDF
+                          </Link>
+                          <Link
+                            href={`/api/cha/reports/jobs/${job.id}?download=true`}
+                            className="inline-flex items-center gap-1 rounded-xl bg-[#00cec4] px-3 py-2 text-xs font-medium uppercase tracking-wide text-white"
+                          >
+                            <Download size={13} /> Download
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 

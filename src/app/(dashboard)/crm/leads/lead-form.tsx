@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -222,7 +223,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Lead Source</label>
-            <select
+            <NativeSelect
               name="source"
               defaultValue={initialData?.source || "Cold Call"}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -230,11 +231,11 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               {sources.map((src) => (
                 <option key={src} value={src}>{src}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Lead Status</label>
-            <select
+            <NativeSelect
               name="status"
               defaultValue={initialData?.status || "NEW"}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -242,11 +243,11 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               {statuses.map((st) => (
                 <option key={st} value={st}>{st.replace("_", " ")}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Rating</label>
-            <select
+            <NativeSelect
               name="rating"
               defaultValue={initialData?.rating || "Warm"}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -254,7 +255,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               {ratings.map((rt) => (
                 <option key={rt} value={rt}>{rt}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Industry Segment</label>
@@ -278,7 +279,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Lead Owner (HRMS Linked) *</label>
-            <select
+            <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -288,7 +289,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               {employees.map((emp) => (
                 <option key={emp.id} value={emp.id}>{emp.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
         </div>
       </div>

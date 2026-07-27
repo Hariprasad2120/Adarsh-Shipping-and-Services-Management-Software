@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -179,7 +180,7 @@ export function GoogleChatLiveViewFrame({
         {/* URL selector */}
         <div className="flex items-center gap-2 shrink-0">
           <label className="ds-label">Chat URL:</label>
-          <select
+          <NativeSelect
             value={selectedUrl}
             onChange={(e) => {
               setSelectedUrl(e.target.value);
@@ -191,7 +192,7 @@ export function GoogleChatLiveViewFrame({
                 {url}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       </div>
 

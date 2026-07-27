@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -109,7 +110,7 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
               <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Category
               </label>
-              <select
+              <NativeSelect
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full rounded-lg border border-outline-variant/60 bg-surface px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#00cec4] transition"
@@ -118,14 +119,14 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Priority
               </label>
-              <select
+              <NativeSelect
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as any)}
                 className="w-full rounded-lg border border-outline-variant/60 bg-surface px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#00cec4] transition"
@@ -135,7 +136,7 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
                     {p.label}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
           </div>
 

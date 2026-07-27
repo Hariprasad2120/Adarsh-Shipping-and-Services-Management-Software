@@ -1,7 +1,8 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FileText, Upload, CheckCircle2, AlertTriangle, FolderOpen, ArrowRight, ShieldCheck, AlertCircle, Plus, Trash2, Check, Database, ExternalLink, Undo2, RotateCcw, Mail, History, ChevronDown, ChevronLeft, ChevronRight, Pencil, Lock, BarChart2, CreditCard, ClipboardList, HelpCircle, Clock3, LoaderCircle, LockKeyhole, Search, Maximize2, Copy, UserRound, CalendarDays, Building2, Package, MapPin, Plane, Ship, Bookmark, RefreshCcw, Zap, Boxes, Moon, X, } from "lucide-react";
@@ -47,10 +48,39 @@ interface JobWorkspaceClientProps {
   canInternalApproveChecklist: boolean;
   canCustomerApproveChecklist: boolean;
   canUpdateJob: boolean;
+  canRequestExpenses: boolean;
+  canManageExpenses: boolean;
+  canPayExpenses: boolean;
   internalApproversCount: number;
   initialTab?: string;
   focusField?: string;
   managers?: { id: string; name: string; email: string; branchId: string | null }[];
+}
+
+function getPaymentProofLinks(paymentProofKey?: string | null) {
+  if (!paymentProofKey) return [];
+  try {
+    const parsed = JSON.parse(paymentProofKey);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((entry): entry is string => typeof entry === "string" && entry.trim().length > 0);
+    }
+  } catch {
+    // Older payments stored a single URL directly.
+  }
+  return [paymentProofKey];
+}
+
+function getReceiptLinks(receiptKey?: string | null) {
+  if (!receiptKey) return [];
+  try {
+    const parsed = JSON.parse(receiptKey);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((entry): entry is string => typeof entry === "string" && entry.trim().length > 0);
+    }
+  } catch {
+    // Older line items stored a single URL directly.
+  }
+  return [receiptKey];
 }
 
 const STAGES = [
@@ -67,6 +97,7 @@ const WORKFLOW_UI_STAGES = [
   { key: "ADDITIONAL_DATA", label: "Additional Data" },
   { key: "CHECKLIST", label: "Checklist" },
   { key: "FILING", label: "Filing Stage" },
+  { key: "EXPENSES", label: "Expenses" },
   { key: "FILED", label: "Filed / Complete" },
 ];
 
@@ -146,6 +177,18 @@ type AdditionalDataDraft = {
   deliveryOrderValidity: string;
 };
 
+type FilingValidationWarning = {
+  message: string;
+  details: string[];
+  fieldKeys: string[];
+  checklistItemIds: string[];
+  checklistRemarkItemIds: string[];
+  checklistDelayRemarkItemIds: string[];
+  documentRequirementKeys: string[];
+  photoRequirementIds: string[];
+  miscKeys: string[];
+};
+
 function hasAdditionalDataDraftContent(draft: AdditionalDataDraft) {
   return Boolean(
     draft.vesselInwardDate ||
@@ -172,6 +215,7 @@ type FilingNodeDraft = {
   filingQueryStatusUpdates: Record<string, string>;
   filingQueryTitle: string;
   nodeRemarks: string;
+  nodeDelayRemarks: string;
   selectedNextNodeKey: string;
 };
 
@@ -197,12 +241,15 @@ function getFilingNodeDraftStorageKey(jobId: string, nodeRunId: string) {
 function getDefaultTabForStage(stage: string): WorkspaceTab {
   if (stage === "ADDITIONAL_DATA") return "additionalData";
   if (stage === "CHECKLIST_PREPARATION" || stage === "CHECKLIST_APPROVAL") return "checklist";
-  if (stage === "FILING" || stage === "FILED") return "filing";
+  if (stage === "FILING") return "filing";
+  if (stage === "FILED") return "expenses";
   return "docs";
 }
 
 function getWorkflowUiStageKey(stage: string) {
-  return stage === "CHECKLIST_PREPARATION" || stage === "CHECKLIST_APPROVAL" ? "CHECKLIST" : stage;
+  if (stage === "CHECKLIST_PREPARATION" || stage === "CHECKLIST_APPROVAL") return "CHECKLIST";
+  if (stage === "FILED") return "EXPENSES";
+  return stage;
 }
 
 function getWorkflowUiStageIndex(stage: string) {
@@ -375,6 +422,7 @@ function normalizeFilingNodeDraft(value: unknown): FilingNodeDraft | null {
         : {},
     filingQueryTitle: typeof draft.filingQueryTitle === "string" ? draft.filingQueryTitle : "",
     nodeRemarks: typeof draft.nodeRemarks === "string" ? draft.nodeRemarks : "",
+    nodeDelayRemarks: typeof draft.nodeDelayRemarks === "string" ? draft.nodeDelayRemarks : "",
     selectedNextNodeKey: typeof draft.selectedNextNodeKey === "string" ? draft.selectedNextNodeKey : "",
   };
 }
@@ -434,7 +482,7 @@ function SectionHeading({
       <div className="min-w-0 flex-1 space-y-1">
         <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-4">
           <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
-          <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">{title}</h3>
+          <h3 className="ds-h3 text-on-surface">{title}</h3>
         </div>
         {description ? <p className="pl-5 text-sm text-on-surface-variant">{description}</p> : null}
       </div>
@@ -550,6 +598,7 @@ interface FilingWorkflowStatusBannerProps {
     nodeName: string;
     completedAt: string | null;
     completedByName: string | null;
+    status?: string;
   }>;
   nextStageName: string | null;
   isBlocked: boolean;
@@ -589,7 +638,7 @@ function MilestoneCard({
     <div
       id={`workflow-stage-${stageKey.toLowerCase()}`}
       data-stage-key={stageKey}
-      className={`overflow-hidden rounded-xl border bg-surface transition-all duration-500 ${cardBorderClass} ${isSpotlit
+      className={`scroll-mt-32 overflow-hidden rounded-xl border bg-surface transition-all duration-500 ${cardBorderClass} ${isSpotlit
           ? "ring-2 ring-[#00cec4]/30 shadow-[0_28px_56px_-34px_rgba(0,206,196,0.4)]"
           : ""
         }`}
@@ -633,7 +682,7 @@ function MilestoneCard({
             </div>
             <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
             <div>
-              <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">
+              <h3 className="ds-h3 text-on-surface">
                 {title}
               </h3>
             </div>
@@ -719,7 +768,11 @@ function FilingWorkflowStatusBanner({
         </span>
         <div className="min-w-0 space-y-0.5">
           <span className="ds-label text-[#00a9b2]">Previous</span>
-          <p className="truncate text-sm font-medium text-on-surface">{latestCompletedStep?.nodeName || "No prior stage"}</p>
+          <p className="truncate text-sm font-medium text-on-surface">
+            {latestCompletedStep
+              ? `${latestCompletedStep.nodeName}${latestCompletedStep.status === "SKIPPED" ? " (Skipped)" : ""}`
+              : "No prior stage"}
+          </p>
           <p className="truncate text-xs text-on-surface-variant">
             {latestCompletedDateLabel ? [latestCompletedDateLabel, latestCompletedTimeLabel].filter(Boolean).join(" | ") : "First active stage"}
           </p>
@@ -797,6 +850,11 @@ function SlideToComplete({
 
   const progressRatio = maxDistance > 0 ? sliderPos / maxDistance : 0;
   const progressPercent = Math.round(progressRatio * 100);
+  const actionVerb = text.toLowerCase().includes("skip") ? "skip" : text.toLowerCase().includes("file") ? "file" : "complete";
+  const actionVerbPresent = actionVerb === "skip" ? "skip" : actionVerb === "file" ? "file" : "complete";
+  const actionVerbProgress = actionVerb === "skip" ? "Skipping..." : actionVerb === "file" ? "Filing..." : "Completing...";
+  const actionVerbGerund = actionVerb === "skip" ? "skipping" : actionVerb === "file" ? "filing" : "completing";
+  const actionObject = actionVerb === "skip" ? "this stage" : actionVerb === "file" ? "customs bill" : "this step";
 
   const triggerCompletion = async () => {
     if (disabled || isSubmitting) return;
@@ -869,7 +927,7 @@ function SlideToComplete({
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={progressPercent}
-      aria-valuetext={isSubmitting ? "Completing step" : `${progressPercent}% complete`}
+      aria-valuetext={isSubmitting ? `${actionVerbGerund} ${actionObject}` : `${progressPercent}% complete`}
       aria-busy={isSubmitting}
       className={cn(
         "relative h-[60px] w-full overflow-visible rounded-full border border-[#00cec4]/30 bg-surface shadow-[0_14px_28px_-18px_rgba(0,206,196,0.24)] outline-none select-none",
@@ -928,9 +986,9 @@ function SlideToComplete({
         style={{ paddingLeft: `${mobileContentStart}px` }}
       >
         <div className="min-w-0 justify-self-center text-center leading-none">
-          <p className="text-[10px] font-normal uppercase tracking-[0.12em] text-[#00a9b2]">{isSubmitting ? "Completing..." : "Slide to"}</p>
-          <p className="mt-1 truncate text-sm font-normal uppercase tracking-[0.10em] text-on-surface">
-            <span className="text-[#00a9b2]">{isSubmitting ? "completing" : "complete"}</span> this step
+          <p className="text-[10px] font-normal uppercase tracking-[0.12em] text-[#00a9b2]">{isSubmitting ? actionVerbProgress : "Slide to"}</p>
+          <p className="mt-1 truncate text-sm font-normal uppercase tracking-[0.04em] text-on-surface">
+            <span className="text-[#00a9b2]">{isSubmitting ? actionVerbGerund : actionVerbPresent}</span> {actionObject}
           </p>
         </div>
         <span className="hidden items-center gap-1.5 text-[11px] text-on-surface-variant sm:inline-flex">
@@ -1093,6 +1151,9 @@ export function JobWorkspaceClient({
   canInternalApproveChecklist,
   canCustomerApproveChecklist,
   canUpdateJob,
+  canRequestExpenses,
+  canManageExpenses,
+  canPayExpenses,
   internalApproversCount,
   initialTab,
   focusField,
@@ -1107,7 +1168,7 @@ export function JobWorkspaceClient({
     if (initialTab && ["overview", "docs", "additionalData", "checklist", "filing", "advances", "expenses", "audit"].includes(initialTab)) {
       return initialTab as WorkspaceTab;
     }
-    return "overview";
+    return getDefaultTabForStage(job.stage);
   });
   const [expandedStageKey, setExpandedStageKey] = useState<string | null>(() => {
     if (initialTab) {
@@ -1123,6 +1184,7 @@ export function JobWorkspaceClient({
   const stageFocusTimeoutRef = useRef<number | null>(null);
   const pendingStageNavigationRef = useRef<string | null>(null);
   const pendingStageScrollRef = useRef<string | null>(null);
+  const initialStageScrollHandledRef = useRef(false);
   const overviewStageScrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1137,7 +1199,7 @@ export function JobWorkspaceClient({
   useEffect(() => {
     return () => {
       if (stageScrollAnimationRef.current !== null) {
-        cancelAnimationFrame(stageScrollAnimationRef.current);
+        window.clearTimeout(stageScrollAnimationRef.current);
       }
       if (stageFocusTimeoutRef.current !== null) {
         window.clearTimeout(stageFocusTimeoutRef.current);
@@ -1159,6 +1221,28 @@ export function JobWorkspaceClient({
     pendingStageScrollRef.current = null;
     animateStageScrollIntoView(pendingStage);
   }, [activeTab, expandedStageKey]);
+
+  useEffect(() => {
+    if (activeTab !== "expenses") return;
+    window.setTimeout(() => {
+      const scroller = overviewStageScrollerRef.current;
+      if (!scroller) return;
+      scroller.scrollTo({ left: scroller.scrollWidth, behavior: "smooth" });
+    }, 80);
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (initialStageScrollHandledRef.current || initialTab === "overview") {
+      return;
+    }
+    const activeStageKey = getWorkflowUiStageKey(job.stage);
+    const activeStageTab = getDefaultTabForStage(job.stage);
+    if (activeTab !== activeStageTab || expandedStageKey !== activeStageKey) {
+      return;
+    }
+    initialStageScrollHandledRef.current = true;
+    window.setTimeout(() => animateStageScrollIntoView(activeStageKey), 120);
+  }, [activeTab, expandedStageKey, initialTab, job.stage]);
 
   // Submitting States
   const [loading, setLoading] = useState<string | null>(null);
@@ -1640,6 +1724,7 @@ export function JobWorkspaceClient({
   const [filingInstance, setFilingInstance] = useState<any>(null);
   const [activeNodeRun, setActiveNodeRun] = useState<any>(null);
   const [filingCompletionAnnouncement, setFilingCompletionAnnouncement] = useState("");
+  const [filingValidationWarning, setFilingValidationWarning] = useState<FilingValidationWarning | null>(null);
   const [checklistResponses, setChecklistResponses] = useState<Record<string, { isChecked: boolean; remarks?: string; fileKey?: string; delayRemarks?: string }>>({});
   const [filingFieldValues, setFilingFieldValues] = useState<Record<string, string>>({});
   const [filingToggleStates, setFilingToggleStates] = useState<Record<string, boolean>>({});
@@ -1661,7 +1746,9 @@ export function JobWorkspaceClient({
   const [goBackMode, setGoBackMode] = useState<"previous" | "return">("previous");
   const [goBackReason, setGoBackReason] = useState("");
   const [selectedJumpBackNodeKey, setSelectedJumpBackNodeKey] = useState("");
+  const [blockedPrerequisiteModalOpen, setBlockedPrerequisiteModalOpen] = useState(false);
   const [nodeRemarks, setNodeRemarks] = useState("");
+  const [nodeDelayRemarks, setNodeDelayRemarks] = useState("");
   const [selectedNextNodeKey, setSelectedNextNodeKey] = useState<string>("");
   const additionalDataAutosaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const filingAutosaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1776,6 +1863,10 @@ export function JobWorkspaceClient({
     if (!filingInstance || !activeNodeRun) return [];
     return filingInstance.version?.edges?.filter((e: any) => e.sourceKey === activeNodeRun.nodeKey) || [];
   }, [filingInstance, activeNodeRun]);
+  const isFinalFilingNode = Boolean(
+    activeNodeRun &&
+    (activeNodeRun.node?.nodeType === "END" || outgoingEdges.length === 0),
+  );
 
   const targetNodesMap = useMemo(() => {
     if (!filingInstance) return new Map();
@@ -1824,6 +1915,24 @@ export function JobWorkspaceClient({
 
     return map;
   }, [activeNodeRun?.id, filingInstance?.attachments]);
+  const activeNodeDocumentRequirements = useMemo(() => {
+    const raw =
+      activeNodeRun?.node?.documentRequirementsJson ??
+      activeNodeRun?.node?.documentRequirements ??
+      activeWorkflowVersionNode?.documentRequirementsJson ??
+      activeWorkflowVersionNode?.documentRequirements ??
+      [];
+    return Array.isArray(raw) ? raw : [];
+  }, [
+    activeNodeRun?.node?.documentRequirements,
+    activeNodeRun?.node?.documentRequirementsJson,
+    activeWorkflowVersionNode?.documentRequirements,
+    activeWorkflowVersionNode?.documentRequirementsJson,
+  ]);
+  const activeNodeHasConfiguredStageUploads =
+    activeNodeDocumentRequirements.length > 0 || (activeNodeRun?.node?.photoRequirements?.length ?? 0) > 0;
+  const isLegacyStageChecklistUpload = (item: any) => activeNodeHasConfiguredStageUploads && item.allowsUpload;
+  const checklistItemAllowsDirectUpload = (item: any) => item.allowsUpload && !isLegacyStageChecklistUpload(item);
   const currentChecklistItemIndex = useMemo(() => {
     if (activeChecklistItems.length === 0) return -1;
 
@@ -1836,7 +1945,7 @@ export function JobWorkspaceClient({
       const overdueMeta = overdueChecklistItems.find((entry: any) => entry.checklistItemId === item.id);
       if (overdueMeta && item.delayRemarksRequired && !resp.delayRemarks?.trim()) return false;
 
-      if (item.allowsUpload && (item.minUploads || 0) > 0 && getAttachmentCount(item.id) < item.minUploads) {
+      if (checklistItemAllowsDirectUpload(item) && (item.minUploads || 0) > 0 && getAttachmentCount(item.id) < item.minUploads) {
         return false;
       }
 
@@ -1845,7 +1954,15 @@ export function JobWorkspaceClient({
 
     const firstPendingIndex = activeChecklistItems.findIndex((item: any) => !isItemReady(item));
     return firstPendingIndex === -1 ? activeChecklistItems.length - 1 : firstPendingIndex;
-  }, [activeChecklistItems, checklistAttachmentsByItem, checklistResponses, overdueChecklistItems]);
+  }, [
+    activeChecklistItems,
+    activeNodeDocumentRequirements.length,
+    activeNodeHasConfiguredStageUploads,
+    activeNodeRun?.node?.name,
+    checklistAttachmentsByItem,
+    checklistResponses,
+    overdueChecklistItems,
+  ]);
   const markChecklistItemForReverification = (
     checklistItemId: string,
     updates?: Partial<{ remarks?: string; fileKey?: string; delayRemarks?: string }>,
@@ -1921,26 +2038,22 @@ export function JobWorkspaceClient({
       }),
     [activeNodeConditionalSections],
   );
-  const activeNodeDocumentRequirements = useMemo(() => {
-    const raw =
-      activeNodeRun?.node?.documentRequirementsJson ??
-      activeNodeRun?.node?.documentRequirements ??
-      activeWorkflowVersionNode?.documentRequirementsJson ??
-      activeWorkflowVersionNode?.documentRequirements ??
-      [];
-    return Array.isArray(raw) ? raw : [];
-  }, [
-    activeNodeRun?.node?.documentRequirements,
-    activeNodeRun?.node?.documentRequirementsJson,
-    activeWorkflowVersionNode?.documentRequirements,
-    activeWorkflowVersionNode?.documentRequirementsJson,
-  ]);
   const activeNodeFieldKeys = useMemo(
     () => new Set(activeNodeFieldDefinitions.map((field: any) => field.key)),
     [activeNodeFieldDefinitions],
   );
   const activeNodeDisplayName = activeNodeRun?.node?.name || "";
   const activeNodePrerequisiteStatus = filingInstance?.activeNodePrerequisiteStatus || null;
+  const firstMissingPrerequisiteNodeKey = activeNodePrerequisiteStatus?.missingNodeKeys?.[0] || null;
+  const firstMissingPrerequisiteNodeName = firstMissingPrerequisiteNodeKey
+    ? targetNodesMap.get(firstMissingPrerequisiteNodeKey)?.name || firstMissingPrerequisiteNodeKey
+    : null;
+  const activeNodeSlaDueDate = activeNodeRun?.slaDueDate ? new Date(activeNodeRun.slaDueDate) : null;
+  const activeNodeIsOverdue = !!activeNodeSlaDueDate && activeNodeSlaDueDate.getTime() < Date.now();
+  const activeNodeDelayRemarksRequired = activeNodeIsOverdue && activeNodeRun?.node?.delayRemarksRequired !== false;
+  const activeNodeDelayDays = activeNodeSlaDueDate
+    ? Math.max(1, Math.ceil((Date.now() - activeNodeSlaDueDate.getTime()) / (24 * 60 * 60 * 1000)))
+    : 0;
   const pendingBlockedStage = filingInstance?.pendingBlockedStage || null;
   const canResumePendingBlockedStage = !!filingInstance?.canResumePendingBlockedStage;
   const jumpBackTargets = filingInstance?.jumpBackTargets || [];
@@ -1968,6 +2081,11 @@ export function JobWorkspaceClient({
   const showReturnToCurrentStageShortcut = Boolean(returnToCurrentTarget && activeNodeRun);
   const isActiveStageBlocked = !!activeNodePrerequisiteStatus?.isBlocked;
   const hasShipmentBillNumberField = activeNodeFieldKeys.has("bill_number");
+  const activeNodeHasOnlyOptionalChecklistItems =
+    activeChecklistItems.length > 0 && activeChecklistItems.every((item: any) => item.isMandatory === false);
+  const isSkippingActiveOptionalNode =
+    (!!activeNodeRun?.node?.canBeSkipped || activeNodeHasOnlyOptionalChecklistItems) &&
+    activeChecklistItems.every((item: any) => !checklistResponses[item.id]?.isChecked);
   const activeNodeHasConditionalFields = visibleNodeConditionalSections.some(
     (section: any) => Array.isArray(section?.unlocksFields) && section.unlocksFields.length > 0,
   );
@@ -2142,6 +2260,18 @@ export function JobWorkspaceClient({
   }, [activeNodeRun?.id]);
 
   useEffect(() => {
+    if (isActiveStageBlocked && (activeNodePrerequisiteStatus?.missingNodeKeys || []).length > 0) {
+      setBlockedPrerequisiteModalOpen(true);
+      return;
+    }
+    setBlockedPrerequisiteModalOpen(false);
+  }, [
+    activeNodeRun?.id,
+    isActiveStageBlocked,
+    activeNodePrerequisiteStatus?.missingNodeKeys,
+  ]);
+
+  useEffect(() => {
     if (!queryProcessingActive) {
       setQueryProcessingPanelExpanded(false);
     }
@@ -2171,9 +2301,12 @@ export function JobWorkspaceClient({
   // Expense Request Form State
   const [expenseUrgent, setExpenseUrgent] = useState(false);
   const [expenseUrgencyReason, setExpenseUrgencyReason] = useState("");
+  const [expenseUpiNumber, setExpenseUpiNumber] = useState("");
+  const [expenseUpiId, setExpenseUpiId] = useState("");
+  const [expandedJobExpenseId, setExpandedJobExpenseId] = useState<string | null>(job.expenseRequests?.[0]?.id ?? null);
   const [expenseLines, setExpenseLines] = useState<
-    { category: string; purpose: string; amount: string; requiredDate: string; remarks: string }[]
-  >([{ category: expenseCategories[0] || "", purpose: "", amount: "", requiredDate: "", remarks: "" }]);
+    { category: string; purpose: string; amount: string; requiredDate: string; remarks: string; receiptFiles: File[] }[]
+  >([{ category: expenseCategories[0] || "", purpose: "", amount: "", requiredDate: "", remarks: "", receiptFiles: [] }]);
 
   // Expense Escalation Form State
   const [escUrgencyReason, setEscUrgencyReason] = useState("");
@@ -2188,6 +2321,7 @@ export function JobWorkspaceClient({
   const [payDate, setPayDate] = useState("");
   const [payMethod, setPayMethod] = useState("BANK_TRANSFER");
   const [payRef, setPayRef] = useState("");
+  const [payProofFiles, setPayProofFiles] = useState<File[]>([]);
 
   // Query Form State
   const [queryRequestId, setQueryRequestId] = useState<string | null>(null);
@@ -2199,6 +2333,8 @@ export function JobWorkspaceClient({
   const [expReviewId, setExpReviewId] = useState<string | null>(null);
   const [expReviewStatus, setExpReviewStatus] = useState<string>("");
   const [expReviewRemarks, setExpReviewRemarks] = useState("");
+  const [expenseClarificationId, setExpenseClarificationId] = useState<string | null>(null);
+  const [expenseClarificationText, setExpenseClarificationText] = useState("");
   const [deleteModalMode, setDeleteModalMode] = useState<"delete" | "approve" | "reject" | null>(null);
   const [deleteConfirmJobNumber, setDeleteConfirmJobNumber] = useState("");
   const [deleteConfirmPhrase, setDeleteConfirmPhrase] = useState("");
@@ -2324,6 +2460,16 @@ export function JobWorkspaceClient({
   const canDirectDeleteJob =
     canApproveDeleteJob &&
     job.assignments?.some((assignment: any) => assignment.userId === currentUserId && assignment.responsibility === "APPROVAL");
+  const isConcernedExpenseManager =
+    job.primaryOwnerId === currentUserId ||
+    job.assignedManagerId === currentUserId ||
+    job.assignments?.some((assignment: any) => assignment.userId === currentUserId && assignment.responsibility === "APPROVAL");
+  const isAssignedExpenseAccountsUser = job.assignments?.some(
+    (assignment: any) => assignment.userId === currentUserId && assignment.responsibility === "ACCOUNTS",
+  );
+  const canReviewExpenseRequests = Boolean(canManageExpenses || isConcernedExpenseManager);
+  const canProcessExpensePayments = Boolean(canPayExpenses || isAssignedExpenseAccountsUser);
+  const canCreateExpenseRequests = Boolean(canRequestExpenses);
   const deleteInputsMatch =
     deleteConfirmJobNumber.trim() === job.jobNumber &&
     deleteConfirmPhrase.trim().toLowerCase() === "delete job";
@@ -2331,7 +2477,7 @@ export function JobWorkspaceClient({
   const currentChecklistVersion = checklistWorkflow?.currentFileVersion ?? checklistWorkflow?.fileVersions?.[0] ?? null;
 
   useEffect(() => {
-    if (["docs", "additionalData", "checklist", "filing"].includes(activeTab)) {
+    if (["docs", "additionalData", "checklist", "filing", "expenses"].includes(activeTab)) {
       if (pendingStageNavigationRef.current) {
         setExpandedStageKey(pendingStageNavigationRef.current);
         pendingStageNavigationRef.current = null;
@@ -2357,30 +2503,13 @@ export function JobWorkspaceClient({
       return;
     }
 
-    const startY = window.scrollY;
-    const targetY = Math.max(0, window.scrollY + target.getBoundingClientRect().top - 126);
-    const distance = targetY - startY;
-    const duration = 520;
-    const startTime = performance.now();
-
     if (stageScrollAnimationRef.current !== null) {
-      cancelAnimationFrame(stageScrollAnimationRef.current);
+      window.clearTimeout(stageScrollAnimationRef.current);
+      stageScrollAnimationRef.current = null;
     }
 
-    const easeInOutQuint = (value: number) =>
-      value < 0.5 ? 16 * value * value * value * value * value : 1 - Math.pow(-2 * value + 2, 5) / 2;
-
-    const render = (timestamp: number) => {
-      const elapsed = timestamp - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = easeInOutQuint(progress);
-      window.scrollTo({ top: startY + distance * eased, behavior: "auto" });
-
-      if (progress < 1) {
-        stageScrollAnimationRef.current = requestAnimationFrame(render);
-        return;
-      }
-
+    target.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+    stageScrollAnimationRef.current = window.setTimeout(() => {
       target.animate(
         [
           { transform: "translateY(10px) scale(0.985)", filter: "brightness(0.985)" },
@@ -2392,13 +2521,12 @@ export function JobWorkspaceClient({
           easing: "cubic-bezier(0.22, 1, 0.36, 1)",
         },
       );
-    };
-
-    stageScrollAnimationRef.current = requestAnimationFrame(render);
+      stageScrollAnimationRef.current = null;
+    }, 360);
   };
 
   const openWorkflowStage = (stageKey: string) => {
-    const uiStageKey = getWorkflowUiStageKey(stageKey);
+    const uiStageKey = stageKey === "FILED" || stageKey === "EXPENSES" ? stageKey : getWorkflowUiStageKey(stageKey);
     const targetTab =
       uiStageKey === "DOCUMENT_COLLECTION"
         ? "docs"
@@ -2406,13 +2534,19 @@ export function JobWorkspaceClient({
           ? "additionalData"
           : uiStageKey === "CHECKLIST"
             ? "checklist"
-            : "filing";
+            : uiStageKey === "EXPENSES"
+              ? "expenses"
+              : "filing";
 
     pendingStageNavigationRef.current = uiStageKey;
     pendingStageScrollRef.current = uiStageKey;
     setExpandedStageKey(uiStageKey);
 
     setActiveTab(targetTab);
+
+    window.setTimeout(() => {
+      animateStageScrollIntoView(uiStageKey);
+    }, 80);
 
     if (activeTab === targetTab && expandedStageKey === uiStageKey) {
       pendingStageScrollRef.current = null;
@@ -2454,6 +2588,11 @@ export function JobWorkspaceClient({
       return;
     }
     setActiveTab(tab);
+    if (tab === "overview") {
+      window.setTimeout(() => {
+        animateStageScrollIntoView("OVERVIEW");
+      }, 80);
+    }
   };
 
   const checklistApprovals = checklistWorkflow?.approvals ?? [];
@@ -2507,18 +2646,74 @@ export function JobWorkspaceClient({
       approval.fileVersionId === currentChecklistVersion?.id &&
       approval.stage === "CUSTOMER",
   );
+  const latestCustomerResponse = (checklistWorkflow?.customerResponses ?? []).find((response: any) => {
+    if (!currentChecklistVersion?.uploadedAt) return true;
+    return new Date(response.submittedAt).getTime() >= new Date(currentChecklistVersion.uploadedAt).getTime();
+  }) ?? null;
+  const portalCustomerDecision = latestCustomerResponse
+    ? {
+      id: `portal-response-${latestCustomerResponse.id}`,
+      fileVersionId: currentChecklistVersion?.id,
+      stage: "CUSTOMER",
+      action: latestCustomerResponse.decision,
+      assignedToId: null,
+      actedById: null,
+      actedAt: latestCustomerResponse.submittedAt,
+      remarks: latestCustomerResponse.remarks,
+      portalUser: latestCustomerResponse.portalUser,
+      source: "CUSTOMER_PORTAL",
+    }
+    : null;
   const approvedInternalDecision =
     currentInternalApprovals.find((approval: any) => approval.action === "APPROVED") ?? null;
   const approvedCustomerDecision =
-    currentCustomerApprovals.find((approval: any) => approval.action === "APPROVED") ?? null;
+    currentCustomerApprovals.find((approval: any) => approval.action === "APPROVED") ??
+    (portalCustomerDecision?.action === "APPROVED" ? portalCustomerDecision : null);
+  const rejectedCustomerDecision =
+    currentCustomerApprovals.find((approval: any) => approval.action === "REJECTED") ??
+    (portalCustomerDecision?.action === "REJECTED" ? portalCustomerDecision : null);
+  const finalCustomerDecision = approvedCustomerDecision ?? rejectedCustomerDecision;
+  const isChecklistCustomerReworkRequired =
+    checklistWorkflow?.status === "CUSTOMER_REWORK_REQUIRED" ||
+    Boolean(rejectedCustomerDecision);
+  const getCustomerResponseForVersion = (version: any) => {
+    if (!version?.uploadedAt) return null;
+    const uploadedAt = new Date(version.uploadedAt).getTime();
+    const nextVersion = (checklistWorkflow?.fileVersions ?? [])
+      .filter((entry: any) => new Date(entry.uploadedAt).getTime() > uploadedAt)
+      .sort((a: any, b: any) => new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime())[0];
+    const nextUploadedAt = nextVersion ? new Date(nextVersion.uploadedAt).getTime() : Number.POSITIVE_INFINITY;
+
+    return (checklistWorkflow?.customerResponses ?? []).find((response: any) => {
+      const submittedAt = new Date(response.submittedAt).getTime();
+      return submittedAt >= uploadedAt && submittedAt < nextUploadedAt;
+    }) ?? null;
+  };
   const getChecklistVersionStatus = (versionId?: string | null) => {
     if (!versionId) return null;
+    const version = checklistWorkflow?.fileVersions?.find((entry: any) => entry.id === versionId);
+    const customerResponseForVersion = getCustomerResponseForVersion(version);
+    if (customerResponseForVersion?.decision === "REJECTED") {
+      return { label: "Customer Rejected", variant: "destructive" as const };
+    }
+    if (customerResponseForVersion?.decision === "APPROVED") {
+      return { label: "Customer Approved", variant: "success" as const };
+    }
     const versionApprovals = checklistApprovals.filter((approval: any) => approval.fileVersionId === versionId);
+    if (versionId === currentChecklistVersion?.id && rejectedCustomerDecision) {
+      return { label: "Customer Rejected", variant: "destructive" as const };
+    }
+    if (versionId === currentChecklistVersion?.id && approvedCustomerDecision) {
+      return { label: "Customer Approved", variant: "success" as const };
+    }
     if (versionApprovals.some((approval: any) => approval.action === "REJECTED")) {
       return { label: "Rejected", variant: "destructive" as const };
     }
-    if (versionApprovals.some((approval: any) => approval.action === "APPROVED")) {
-      return { label: "Approved", variant: "success" as const };
+    if (versionApprovals.some((approval: any) => approval.stage === "CUSTOMER" && approval.action === "APPROVED")) {
+      return { label: "Customer Approved", variant: "success" as const };
+    }
+    if (versionApprovals.some((approval: any) => approval.stage === "INTERNAL" && approval.action === "APPROVED")) {
+      return { label: "Internal Approved", variant: "warning" as const };
     }
     return null;
   };
@@ -2530,6 +2725,32 @@ export function JobWorkspaceClient({
     currentCustomerApprovals.some((approval: any) => approval.assignedToId === currentUserId && approval.action === "PENDING");
   const getUserName = (userId?: string | null) =>
     users.find((user) => user.id === userId)?.name || "Unknown";
+  const getDecisionActorLabel = (decision: any) => {
+    if (decision?.portalUser?.name) return `${decision.portalUser.name} (Customer Portal)`;
+    if (decision?.portalUser?.email) return `${decision.portalUser.email} (Customer Portal)`;
+    return getUserName(decision?.actedById || decision?.assignedToId);
+  };
+  const displayChecklistApprovals = useMemo(() => {
+    if (!portalCustomerDecision) return checklistApprovals;
+    const hasRecordedCustomerDecision = checklistApprovals.some(
+      (approval: any) =>
+        approval.fileVersionId === currentChecklistVersion?.id &&
+        approval.stage === "CUSTOMER" &&
+        approval.action !== "PENDING",
+    );
+    if (hasRecordedCustomerDecision) return checklistApprovals;
+    return [
+      ...checklistApprovals.filter(
+        (approval: any) =>
+          !(
+            approval.fileVersionId === currentChecklistVersion?.id &&
+            approval.stage === "CUSTOMER" &&
+            approval.action === "PENDING"
+          ),
+      ),
+      portalCustomerDecision,
+    ];
+  }, [checklistApprovals, currentChecklistVersion?.id, portalCustomerDecision]);
   const pendingCustomerApproverNames = Array.from(
     new Set(
       currentCustomerApprovals
@@ -2564,6 +2785,32 @@ export function JobWorkspaceClient({
       router.refresh();
     });
   };
+  const shouldAutoRefreshCustomerDecision =
+    checklistWorkflow?.currentApprovalStage === "CUSTOMER" &&
+    !finalCustomerDecision &&
+    !isChecklistCustomerReworkRequired;
+
+  useEffect(() => {
+    if (!shouldAutoRefreshCustomerDecision) {
+      return;
+    }
+
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible") {
+        refreshJobInBackground();
+      }
+    };
+
+    const interval = window.setInterval(refreshIfVisible, 5000);
+    window.addEventListener("focus", refreshIfVisible);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refreshIfVisible);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+    };
+  }, [shouldAutoRefreshCustomerDecision]);
   const getUploadValidityDate = () => new Date().toISOString().slice(0, 10);
 
   // Document version upload handler
@@ -3580,6 +3827,11 @@ export function JobWorkspaceClient({
             ? currentDraftSnapshot.nodeRemarks
             : activeRun?.remarks || "",
         );
+        setNodeDelayRemarks(
+          activeRun && previousActiveNodeRunId === activeRun.id && currentDraftSnapshot.nodeDelayRemarks.trim()
+            ? currentDraftSnapshot.nodeDelayRemarks
+            : activeRun?.delayRemarks || "",
+        );
         return instanceRes.data;
       } else {
         toast.error(instanceRes.error || "Failed to load filing workflow. Check that a workflow is published in CHA Settings.");
@@ -3638,6 +3890,7 @@ export function JobWorkspaceClient({
     filingQueryStatusUpdates,
     filingQueryTitle,
     nodeRemarks,
+    nodeDelayRemarks,
     selectedNextNodeKey,
   });
 
@@ -3685,6 +3938,7 @@ export function JobWorkspaceClient({
     try {
       const result = await actions.saveFilingNodeDraftAction(job.id, activeNodeRun.id, {
         remarks: currentDraft.nodeRemarks,
+        delayRemarks: currentDraft.nodeDelayRemarks,
         checklistItemResponses: activeChecklistItems.map((item: any) => {
           const response = currentDraft.checklistResponses[item.id] || {
             isChecked: false,
@@ -3726,6 +3980,7 @@ export function JobWorkspaceClient({
       filingAutosaveErrorShownRef.current = false;
       lastFilingAutosaveKeyRef.current = payloadKey;
       if (!silent) {
+        setFilingValidationWarning(null);
         toast.success(`Saved draft for ${activeNodeRun.node.name}.`);
       }
       return true;
@@ -3778,6 +4033,7 @@ export function JobWorkspaceClient({
       setFilingQueryStatusUpdates(parsedDraft.filingQueryStatusUpdates);
       setFilingQueryResponderNames(parsedDraft.filingQueryResponderNames);
       setNodeRemarks(parsedDraft.nodeRemarks);
+      setNodeDelayRemarks(parsedDraft.nodeDelayRemarks);
       setSelectedNextNodeKey(parsedDraft.selectedNextNodeKey);
     } catch {
       clearFilingNodeDraft(filingDraftStorageKey);
@@ -3802,6 +4058,7 @@ export function JobWorkspaceClient({
       !!filingQueryReferenceNumber.trim() ||
       !!filingQueryTitle.trim() ||
       !!nodeRemarks.trim() ||
+      !!nodeDelayRemarks.trim() ||
       !!selectedNextNodeKey.trim();
 
     try {
@@ -3826,6 +4083,7 @@ export function JobWorkspaceClient({
     filingQueryTitle,
     filingToggleStateDetails,
     filingToggleStates,
+    nodeDelayRemarks,
     nodeRemarks,
     selectedNextNodeKey,
   ]);
@@ -3969,6 +4227,24 @@ export function JobWorkspaceClient({
     selectedNextNodeKey,
   ]);
 
+  useEffect(() => {
+    setFilingValidationWarning(null);
+  }, [activeNodeRun?.id]);
+
+  const showFilingValidationWarning = (warning: FilingValidationWarning) => {
+    setFilingValidationWarning(warning);
+    toast.error(warning.message);
+    window.setTimeout(() => {
+      filingActiveNodeCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  };
+
+  const clearFilingValidationWarning = () => {
+    if (filingValidationWarning) {
+      setFilingValidationWarning(null);
+    }
+  };
+
   const handlePersistFilingToggleState = async (
     sectionKey: string,
     isEnabled: boolean,
@@ -4079,59 +4355,146 @@ export function JobWorkspaceClient({
   const completeActiveFilingNode = async () => {
     if (!activeNodeRun) return false;
     const currentFilingDraftStorageKey = filingDraftStorageKey;
+    const validationWarning: FilingValidationWarning = {
+      message: "Complete the highlighted required fields before finishing this stage.",
+      details: [],
+      fieldKeys: [],
+      checklistItemIds: [],
+      checklistRemarkItemIds: [],
+      checklistDelayRemarkItemIds: [],
+      documentRequirementKeys: [],
+      photoRequirementIds: [],
+      miscKeys: [],
+    };
+    const addValidationDetail = (detail: string) => {
+      if (!validationWarning.details.includes(detail)) {
+        validationWarning.details.push(detail);
+      }
+    };
 
     if (isActiveStageBlocked) {
-      toast.error("Complete the missing prerequisite stage before continuing this filing stage.");
+      showFilingValidationWarning({
+        ...validationWarning,
+        message: "Complete the missing prerequisite stage before continuing this filing stage.",
+        details: activeNodePrerequisiteStatus?.missingNodeNames?.length
+          ? activeNodePrerequisiteStatus.missingNodeNames.map((name: string) => `Prerequisite stage: ${name}`)
+          : ["A prerequisite filing stage is still incomplete."],
+      });
       return false;
     }
 
-    if (queryProcessingEnabled && !queryProcessingResolved) {
-      toast.error("Resolve query processing before moving to the next filing step.");
-      return false;
-    }
+    if (!isSkippingActiveOptionalNode) {
+      if (queryProcessingEnabled && !queryProcessingResolved) {
+        addValidationDetail("Resolve query processing before moving to the next filing step.");
+        validationWarning.miscKeys.push("queryProcessing");
+      }
 
-    if (activeNodeRun.node.commentsRequired && !nodeRemarks.trim()) {
-      toast.error(`Comments are mandatory to complete stage: ${activeNodeRun.node.name}.`);
-      return false;
-    }
+      if (activeNodeRun.node.commentsRequired && !nodeRemarks.trim()) {
+        addValidationDetail(`Completion comments are required for ${activeNodeRun.node.name}.`);
+        validationWarning.miscKeys.push("nodeRemarks");
+      }
 
-    if (activeNodeRun.node.requireAllMandatoryChecklistItems) {
+      if (activeNodeDelayRemarksRequired && !nodeDelayRemarks.trim()) {
+        addValidationDetail("Stage delay remarks are required because this stage crossed its SLA.");
+        validationWarning.miscKeys.push("nodeDelayRemarks");
+      }
+
+      for (const field of activeNodeFieldDefinitions) {
+        if (field.required === false) continue;
+        if (!String(filingFieldValues[field.key] ?? "").trim()) {
+          addValidationDetail(`${field.label || field.key} is required.`);
+          validationWarning.fieldKeys.push(field.key);
+        }
+      }
+
+      for (const section of visibleNodeConditionalSections) {
+        if (!filingToggleStates[section.key]) continue;
+        for (const field of section.unlocksFields ?? []) {
+          if (field.required === false) continue;
+          if (!String(filingFieldValues[field.key] ?? "").trim()) {
+            addValidationDetail(`${field.label || field.key} is required.`);
+            validationWarning.fieldKeys.push(field.key);
+          }
+        }
+        for (const requirement of section.unlocksDocuments ?? []) {
+          if (requirement.required === false) continue;
+          if (!activeNodeDocumentAttachmentsByKey.get(requirement.key)) {
+            addValidationDetail(`${requirement.label || requirement.key} upload is required.`);
+            validationWarning.documentRequirementKeys.push(requirement.key);
+          }
+        }
+      }
+
+      if (activeNodeRun.node.requireAllMandatoryChecklistItems) {
+        for (const item of activeChecklistItems) {
+          if (item.isMandatory) {
+            const resp = checklistResponses[item.id];
+            if (!resp || !resp.isChecked) {
+              addValidationDetail(`Mandatory checklist item "${item.label}" must be checked.`);
+              validationWarning.checklistItemIds.push(item.id);
+            }
+          }
+        }
+      }
+
       for (const item of activeChecklistItems) {
-        if (item.isMandatory) {
-          const resp = checklistResponses[item.id];
-          if (!resp || !resp.isChecked) {
-            toast.error(`Mandatory checklist item "${item.label}" must be checked.`);
-            return false;
+        const resp = checklistResponses[item.id];
+        if (item.requiresRemarks && resp?.isChecked && !resp.remarks?.trim()) {
+          addValidationDetail(`Remarks are required for checklist item "${item.label}".`);
+          validationWarning.checklistItemIds.push(item.id);
+          validationWarning.checklistRemarkItemIds.push(item.id);
+        }
+        const matchingOverdue = overdueChecklistItems.find((entry: any) => entry.checklistItemId === item.id);
+        if (matchingOverdue && resp?.isChecked && item.delayRemarksRequired && !resp.delayRemarks?.trim()) {
+          addValidationDetail(`Delay remarks are required for overdue checklist item "${item.label}".`);
+          validationWarning.checklistItemIds.push(item.id);
+          validationWarning.checklistDelayRemarkItemIds.push(item.id);
+        }
+        const checklistItemAttachments = checklistAttachmentsByItem.get(item.id) || [];
+        if (
+          checklistItemAllowsDirectUpload(item) &&
+          (item.minUploads || 0) > 0 &&
+          checklistItemAttachments.length < (item.minUploads || 0)
+        ) {
+          addValidationDetail(`Supporting upload is required for checklist item "${item.label}".`);
+          validationWarning.checklistItemIds.push(item.id);
+        }
+      }
+
+      const currentAttachments = filingInstance?.attachments?.filter(
+        (a: any) => a.nodeRunId === activeNodeRun.id
+      ) || [];
+      for (const requirement of activeNodeDocumentRequirements) {
+        if (requirement.required === false) continue;
+        if (!activeNodeDocumentAttachmentsByKey.get(requirement.key)) {
+          addValidationDetail(`${requirement.label || requirement.key} upload is required.`);
+          validationWarning.documentRequirementKeys.push(requirement.key);
+        }
+      }
+      for (const pr of activeNodeRun.node.photoRequirements) {
+        if (pr.isMandatory) {
+          const uploadedCount = currentAttachments.filter((a: any) => a.photoRequirementId === pr.id).length;
+          if (uploadedCount < pr.minPhotos) {
+            addValidationDetail(`Mandatory upload "${pr.label}" requires at least ${pr.minPhotos} file(s). Uploaded ${uploadedCount}.`);
+            validationWarning.photoRequirementIds.push(pr.id);
           }
         }
       }
     }
 
-    for (const item of activeChecklistItems) {
-      const resp = checklistResponses[item.id];
-      if (item.requiresRemarks && resp?.isChecked && !resp.remarks?.trim()) {
-        toast.error(`Remarks are required for checklist item "${item.label}".`);
-        return false;
-      }
-      const matchingOverdue = overdueChecklistItems.find((entry: any) => entry.checklistItemId === item.id);
-      if (matchingOverdue && resp?.isChecked && item.delayRemarksRequired && !resp.delayRemarks?.trim()) {
-        toast.error(`Delay remarks are required for overdue checklist item "${item.label}".`);
-        return false;
-      }
+    if (validationWarning.details.length > 0) {
+      validationWarning.fieldKeys = Array.from(new Set(validationWarning.fieldKeys));
+      validationWarning.checklistItemIds = Array.from(new Set(validationWarning.checklistItemIds));
+      validationWarning.checklistRemarkItemIds = Array.from(new Set(validationWarning.checklistRemarkItemIds));
+      validationWarning.checklistDelayRemarkItemIds = Array.from(new Set(validationWarning.checklistDelayRemarkItemIds));
+      validationWarning.documentRequirementKeys = Array.from(new Set(validationWarning.documentRequirementKeys));
+      validationWarning.photoRequirementIds = Array.from(new Set(validationWarning.photoRequirementIds));
+      validationWarning.miscKeys = Array.from(new Set(validationWarning.miscKeys));
+      showFilingValidationWarning(validationWarning);
+      return false;
     }
 
-    const currentAttachments = filingInstance?.attachments?.filter(
-      (a: any) => a.nodeRunId === activeNodeRun.id
-    ) || [];
-    for (const pr of activeNodeRun.node.photoRequirements) {
-      if (pr.isMandatory) {
-        const uploadedCount = currentAttachments.filter((a: any) => a.photoRequirementId === pr.id).length;
-        if (uploadedCount < pr.minPhotos) {
-          toast.error(`Mandatory photo upload "${pr.label}" requires at least ${pr.minPhotos} photo(s). Uploaded ${uploadedCount}.`);
-          return false;
-        }
-      }
-    }
+    clearFilingValidationWarning();
 
     setLoading("filing-complete");
     try {
@@ -4163,6 +4526,7 @@ export function JobWorkspaceClient({
 
       const res = await actions.completeFilingNodeAction(job.id, activeNodeRun.id, {
         remarks: nodeRemarks,
+        delayRemarks: nodeDelayRemarks,
         checklistItemResponses: responsesList,
         fieldValues: Object.entries(filingFieldValues).map(([fieldKey, value]) => ({ fieldKey, value })),
         toggleStates: Object.entries(filingToggleStateDetails).map(([sectionKey, entry]) => ({
@@ -4175,12 +4539,25 @@ export function JobWorkspaceClient({
 
       if (res.ok) {
         clearFilingNodeDraft(currentFilingDraftStorageKey);
-        toast.success(`Completed stage: ${completedNodeName}`);
+        toast.success(
+          res.data?.resumedBlockedNodeName
+            ? `Completed ${completedNodeName}. Resumed ${res.data.resumedBlockedNodeName}.`
+            : isSkippingActiveOptionalNode
+              ? `Skipped stage: ${completedNodeName}`
+              : `Completed stage: ${completedNodeName}`,
+        );
         const refreshedInstance = await loadFilingData();
+        if (isFinalFilingNode || refreshedInstance?.status === "COMPLETED") {
+          setActiveTab("expenses");
+          setExpandedStageKey("EXPENSES");
+          setStageFocusKey(null);
+        }
         setFilingCompletionAnnouncement(
           refreshedInstance?.status === "COMPLETED"
-            ? `${completedNodeName} completed. Workflow completed successfully.`
-            : `${completedNodeName} completed. ${refreshedInstance?.activeNodeRun?.node?.name || "Next step"} is now unlocked.`,
+            ? `${completedNodeName} ${isSkippingActiveOptionalNode ? "skipped" : "completed"}. Workflow completed successfully.`
+            : res.data?.resumedBlockedNodeName
+              ? `${completedNodeName} completed. ${res.data.resumedBlockedNodeName} resumed automatically.`
+              : `${completedNodeName} ${isSkippingActiveOptionalNode ? "skipped" : "completed"}. ${refreshedInstance?.activeNodeRun?.node?.name || "Next step"} is now unlocked.`,
         );
         startRefreshTransition(() => {
           router.refresh();
@@ -4744,7 +5121,7 @@ export function JobWorkspaceClient({
       });
 
       if (res.ok) {
-        toast.success(`Recorded advance payment receipt of â‚¹${amountNum}`);
+        toast.success(`Recorded advance payment receipt of Rs. ${amountNum}`);
         setReceiptAmount("");
         setReceiptDate("");
         setReceiptRef("");
@@ -4770,7 +5147,7 @@ export function JobWorkspaceClient({
   const handleAddExpenseLine = () => {
     setExpenseLines([
       ...expenseLines,
-      { category: expenseCategories[0] || "", purpose: "", amount: "", requiredDate: "", remarks: "" },
+      { category: expenseCategories[0] || "", purpose: "", amount: "", requiredDate: "", remarks: "", receiptFiles: [] },
     ]);
   };
 
@@ -4790,8 +5167,7 @@ export function JobWorkspaceClient({
       category: l.category,
       purpose: l.purpose,
       amount: parseFloat(l.amount) || 0,
-      requiredDate: l.requiredDate ? new Date(l.requiredDate) : new Date(),
-      supportingDocumentKey: `cha/expenses/support_${Math.random().toString(36).substring(5)}`,
+      requiredDate: l.requiredDate || "",
       remarks: l.remarks || undefined,
     }));
 
@@ -4802,18 +5178,25 @@ export function JobWorkspaceClient({
 
     setLoading("expense-request");
     try {
-      const res = await actions.createExpenseRequestAction(job.id, {
-        isUrgent: expenseUrgent,
-        urgencyReason: expenseUrgent ? expenseUrgencyReason : undefined,
-        lines,
+      const formData = new FormData();
+      formData.set("isUrgent", expenseUrgent ? "true" : "false");
+      formData.set("urgencyReason", expenseUrgent ? expenseUrgencyReason : "");
+      formData.set("upiNumber", expenseUpiNumber);
+      formData.set("upiId", expenseUpiId);
+      formData.set("linesJson", JSON.stringify(lines));
+      expenseLines.forEach((line, lineIndex) => {
+        line.receiptFiles.forEach((file) => formData.append(`receiptAttachment:${lineIndex}`, file));
       });
+      const res = await actions.createExpenseRequestWithAttachmentAction(job.id, formData);
 
       if (res.ok) {
-        toast.success("Expense request dispatched to accounts.");
+        toast.success("Expense request sent for review.");
         // Reset
         setExpenseUrgent(false);
         setExpenseUrgencyReason("");
-        setExpenseLines([{ category: expenseCategories[0] || "", purpose: "", amount: "", requiredDate: "", remarks: "" }]);
+        setExpenseUpiNumber("");
+        setExpenseUpiId("");
+        setExpenseLines([{ category: expenseCategories[0] || "", purpose: "", amount: "", requiredDate: "", remarks: "", receiptFiles: [] }]);
         router.refresh();
       } else {
         toast.error(res.error || "Failed to dispatch expense.");
@@ -4850,20 +5233,26 @@ export function JobWorkspaceClient({
     }
   };
 
-  // Admin review action status change
-  const handleExpenseReview = async () => {
-    if (!expReviewId || !expReviewStatus) return;
-    if ((expReviewStatus === "CLARIFICATION_REQUIRED" || expReviewStatus === "REJECTED") && !expReviewRemarks.trim()) {
+  const handleExpenseReview = async (
+    requestIdOverride?: string,
+    statusOverride?: "CLARIFICATION_REQUIRED" | "APPROVED" | "REJECTED",
+    remarksOverride?: string,
+  ) => {
+    const requestId = requestIdOverride || expReviewId;
+    const decision = statusOverride || expReviewStatus;
+    const remarks = remarksOverride ?? expReviewRemarks;
+    if (!requestId || !["CLARIFICATION_REQUIRED", "APPROVED", "REJECTED"].includes(decision)) return;
+    if ((decision === "CLARIFICATION_REQUIRED" || decision === "REJECTED") && !remarks.trim()) {
       toast.error("Review remarks explanation is mandatory for rejections or clarifications.");
       return;
     }
 
-    setLoading(`review-${expReviewId}`);
+    setLoading(`review-${requestId}`);
     try {
-      const res = await actions.setExpenseStatusAction(
-        expReviewId,
-        expReviewStatus as any,
-        expReviewRemarks
+      const res = await actions.reviewExpenseRequestAction(
+        requestId,
+        decision as "CLARIFICATION_REQUIRED" | "APPROVED" | "REJECTED",
+        remarks
       );
 
       if (res.ok) {
@@ -4881,24 +5270,63 @@ export function JobWorkspaceClient({
     }
   };
 
+  const handleExpenseClarification = async () => {
+    if (!expenseClarificationId || !expenseClarificationText.trim()) {
+      toast.error("Enter clarification details before submitting.");
+      return;
+    }
+    setLoading(`clarify-${expenseClarificationId}`);
+    try {
+      const res = await actions.submitExpenseClarificationAction(expenseClarificationId, expenseClarificationText);
+      if (res.ok) {
+        toast.success("Clarification submitted for review.");
+        setExpenseClarificationId(null);
+        setExpenseClarificationText("");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to submit clarification.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleReadyForExpenseDisbursement = async (requestId: string) => {
+    setLoading(`ready-${requestId}`);
+    try {
+      const res = await actions.markExpenseReadyForDisbursementAction(requestId);
+      if (res.ok) {
+        toast.success("Expense marked ready for disbursement.");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to mark expense ready for disbursement.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   // Post payment disburse details
   const handlePostExpensePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!payRequestId || !payAmount || !payDate || !payRef) {
-      toast.error("All payment disburse fields are mandatory.");
+    if (!payRequestId || !payAmount || !payDate || !payRef || payProofFiles.length === 0) {
+      toast.error("All payment disburse fields and payment proof are mandatory.");
       return;
     }
 
     setLoading(`pay-${payRequestId}`);
     try {
-      const mockProofKey = `cha/expenses/proof_${Math.random().toString(36).substring(7)}_receipt.jpg`;
-      const res = await actions.postExpensePaymentAction(payRequestId, {
-        amountPaid: parseFloat(payAmount),
-        paymentDate: new Date(payDate),
-        paymentMethod: payMethod,
-        transactionReference: payRef,
-        paymentProofKey: mockProofKey,
-      });
+      const formData = new FormData();
+      formData.set("amountPaid", payAmount);
+      formData.set("paymentDate", payDate);
+      formData.set("paymentMethod", payMethod);
+      formData.set("transactionReference", payRef);
+      payProofFiles.forEach((proofFile) => formData.append("paymentProof", proofFile));
+      const res = await actions.postExpensePaymentAction(payRequestId, formData);
 
       if (res.ok) {
         toast.success("Expense payout posted. Requester notified.");
@@ -4906,6 +5334,7 @@ export function JobWorkspaceClient({
         setPayAmount("");
         setPayDate("");
         setPayRef("");
+        setPayProofFiles([]);
         router.refresh();
       } else {
         toast.error(res.error || "Payout post failed.");
@@ -5025,11 +5454,12 @@ export function JobWorkspaceClient({
   }, [checklistWorkflow, approvedInternalDecision, approvedCustomerDecision, activeStepIndex]);
 
   const checklistApprovalValidationState = useMemo(() => {
+    if (rejectedCustomerDecision) return "Customer Rework Required";
     if (approvedCustomerDecision) return "Approved";
     if (checklistWorkflow?.currentApprovalStage === "CUSTOMER") return "Awaiting Customer";
     if (checklistWorkflow?.currentApprovalStage === "INTERNAL") return "Awaiting Internal";
     return "Pending Upload";
-  }, [checklistWorkflow, approvedCustomerDecision]);
+  }, [checklistWorkflow, approvedCustomerDecision, rejectedCustomerDecision]);
   const checklistCombinedPercentage = activeStepIndex > 3
     ? 100
     : Math.round((checklistPrepPercentage + checklistApprovalPercentage) / 2);
@@ -5038,6 +5468,8 @@ export function JobWorkspaceClient({
     : checklistPrepValidationState;
   const checklistCombinedStatusLabel = activeStepIndex > 3
     ? "Approved"
+    : isChecklistCustomerReworkRequired
+      ? "Customer Rework"
     : activeStepIndex === 3
       ? checklistWorkflow?.currentApprovalStage === "CUSTOMER" ? "Waiting Customer" : "Waiting Approval"
       : currentChecklistVersion
@@ -5046,6 +5478,24 @@ export function JobWorkspaceClient({
           ? "Awaiting Upload"
           : "Locked";
 
+  const customerDecisionToastKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!finalCustomerDecision?.action || finalCustomerDecision.action === "PENDING") return;
+    const toastKey = `${finalCustomerDecision.id}-${finalCustomerDecision.action}`;
+    if (customerDecisionToastKeyRef.current === toastKey) return;
+    customerDecisionToastKeyRef.current = toastKey;
+    const actorLabel = getDecisionActorLabel(finalCustomerDecision);
+    if (finalCustomerDecision.action === "REJECTED") {
+      toast.error(`Customer rejected the checklist. Rework upload is required.`, {
+        description: actorLabel,
+      });
+      return;
+    }
+    toast.success(`Customer approved the checklist. Filing is ready.`, {
+      description: actorLabel,
+    });
+  }, [finalCustomerDecision]);
+
   const filingPercentage = activeStepIndex > 4 ? 100 : filingInstance?.activeNodeRun ? 50 : 0;
   const filingValidationState = isActiveStageBlocked ? "Blocked" : activeStepIndex > 4 ? "Filed" : "Active";
 
@@ -5053,7 +5503,11 @@ export function JobWorkspaceClient({
   const filedValidationState = activeStepIndex >= 5 ? "Completed" : "Locked";
 
   const workflowUiActiveStageIndex = getWorkflowUiStageIndex(job.stage);
-  const stageProgress = workflowUiActiveStageIndex >= 0 ? Math.round(((workflowUiActiveStageIndex + 1) / WORKFLOW_UI_STAGES.length) * 100) : 0;
+  const stageProgress = activeStepIndex >= 5
+    ? 100
+    : workflowUiActiveStageIndex >= 0
+      ? Math.round(((workflowUiActiveStageIndex + 1) / WORKFLOW_UI_STAGES.length) * 100)
+      : 0;
   const showDocumentCollectionStage = true;
   const showAdditionalDataStage = activeStepIndex >= 1;
   const showChecklistPreparationStage = activeStepIndex >= 2;
@@ -5074,7 +5528,7 @@ export function JobWorkspaceClient({
   const filingCompletedSteps = useMemo(
     () =>
       (filingInstance?.nodeRuns || [])
-        .filter((run: any) => run.status === "COMPLETED")
+        .filter((run: any) => run.status === "COMPLETED" || run.status === "SKIPPED")
         .sort(
           (left: any, right: any) =>
             new Date(right.completedAt || right.updatedAt || right.createdAt).getTime() -
@@ -5085,9 +5539,61 @@ export function JobWorkspaceClient({
           nodeName: run.node?.name || run.nodeName || "Completed Stage",
           completedAt: run.completedAt || run.updatedAt || run.createdAt,
           completedByName: run.completedBy?.name || run.completedByName || null,
+          status: run.status,
         })),
     [filingInstance?.nodeRuns],
   );
+  const finalFilingReviewStages = useMemo(() => {
+    if (!filingInstance?.nodeRuns) return [];
+
+    const nodeOrder = new Map<string, number>(
+      (filingInstance.version?.nodes || []).map((node: any, index: number) => [node.key, index]),
+    );
+    const responsesByRun = new Map<string, any[]>();
+    for (const response of filingInstance.responses || []) {
+      if (!response.nodeRunId) continue;
+      const current = responsesByRun.get(response.nodeRunId) || [];
+      current.push(response);
+      responsesByRun.set(response.nodeRunId, current);
+    }
+
+    return (filingInstance.nodeRuns || [])
+      .filter((run: any) => run.status === "COMPLETED" || run.status === "SKIPPED")
+      .filter((run: any) => run.nodeKey !== activeNodeRun?.nodeKey)
+      .sort((left: any, right: any) => {
+        const leftOrder = nodeOrder.get(left.nodeKey) ?? Number.MAX_SAFE_INTEGER;
+        const rightOrder = nodeOrder.get(right.nodeKey) ?? Number.MAX_SAFE_INTEGER;
+        if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+        return new Date(left.startedAt || left.createdAt).getTime() - new Date(right.startedAt || right.createdAt).getTime();
+      })
+      .map((run: any, index: number) => {
+        const responses = responsesByRun.get(run.id) || [];
+        const completedResponses = responses.filter((response: any) => response.isChecked);
+        const attachments = Array.isArray(run.attachments) ? run.attachments : [];
+        const fieldValues = Array.isArray(run.fieldValues) ? run.fieldValues : [];
+        const queries = Array.isArray(run.queries) ? run.queries : [];
+        const openQueries = queries.filter((query: any) => query.status !== "CLOSED");
+        return {
+          id: run.id,
+          sequence: index + 1,
+          nodeName: run.node?.name || run.nodeKey || "Completed Stage",
+          sectionLabel: [run.node?.sectionName, run.node?.branchName].filter(Boolean).join(" / "),
+          status: run.status,
+          startedAt: run.startedAt || run.createdAt || null,
+          completedAt: run.completedAt || run.updatedAt || null,
+          completedByName: run.completedBy?.name || null,
+          remarks: typeof run.remarks === "string" && run.remarks.trim() ? run.remarks.trim() : null,
+          delayRemarks: typeof run.delayRemarks === "string" && run.delayRemarks.trim() ? run.delayRemarks.trim() : null,
+          checklistCompletedCount: completedResponses.length,
+          checklistTotalCount: responses.length || (run.node?.checklistItems || []).filter((item: any) => item.isActive !== false).length,
+          completedResponses,
+          attachments,
+          fieldValues,
+          queries,
+          openQueryCount: openQueries.length,
+        };
+      });
+  }, [activeNodeRun?.nodeKey, filingInstance?.nodeRuns, filingInstance?.responses, filingInstance?.version?.nodes]);
   const latestCompletedRunForActiveNode = useMemo(() => {
     if (!activeNodeRun?.nodeKey) return null;
     return (filingInstance?.nodeRuns || [])
@@ -5099,10 +5605,12 @@ export function JobWorkspaceClient({
       )[0] ?? null;
   }, [activeNodeRun?.nodeKey, filingInstance?.nodeRuns]);
   const filingBannerStatus = useMemo(() => {
-    if (loading === "complete-filing-node") {
+    if (loading === "filing-complete") {
       return {
-        label: "Completing...",
-        description: "Final handoff is in progress for this filing stage.",
+        label: isFinalFilingNode ? "Filing..." : "Completing...",
+        description: isFinalFilingNode
+          ? "Final workflow closure is in progress. The job will move to FILED."
+          : "Final handoff is in progress for this filing stage.",
       };
     }
     if (isActiveStageBlocked) {
@@ -5134,11 +5642,13 @@ export function JobWorkspaceClient({
     activeNodeRun?.updatedAt,
     activeNodeSubtitle,
     isActiveStageBlocked,
+    isFinalFilingNode,
     latestCompletedRunForActiveNode,
     loading,
   ]);
 
   const showFilingStage = activeStepIndex >= 4;
+  const showExpenseStage = true;
   const showFiledStage = activeStepIndex >= 5;
   const uploadExcludedRequirements = useMemo(
     () =>
@@ -5187,28 +5697,6 @@ export function JobWorkspaceClient({
   ];
   const currentStageLabel = STAGES[Math.max(activeStepIndex, 0)]?.label ?? "Pending";
   const isOverviewTab = activeTab === "overview";
-  const overviewThemeVars = {
-    "--cha-overview-primary": "#20e7df",
-    "--cha-overview-primary-hover": "#12d8d0",
-    "--cha-overview-primary-active": "#00b8af",
-    "--cha-overview-soft": "rgba(32,231,223,0.12)",
-    "--cha-overview-border": "rgba(32,231,223,0.24)",
-    "--cha-overview-page": "#F8FAFC",
-    "--cha-overview-card": "#FFFFFF",
-    "--cha-overview-text": "#0F172A",
-    "--cha-overview-text-muted": "#475569",
-    "--cha-overview-line": "#E2E8F0",
-    "--cha-overview-primary-dark": "#20e7df",
-    "--cha-overview-primary-hover-dark": "#12d8d0",
-    "--cha-overview-primary-active-dark": "#00b8af",
-    "--cha-overview-page-dark": "#020617",
-    "--cha-overview-card-dark": "#111827",
-    "--cha-overview-card-alt-dark": "#0F172A",
-    "--cha-overview-elevated-dark": "#1E293B",
-    "--cha-overview-text-dark": "#F8FAFC",
-    "--cha-overview-text-muted-dark": "#CBD5E1",
-    "--cha-overview-line-dark": "#263449",
-  } as CSSProperties;
   const shipmentModeName = String(job.shipmentType?.name || job.jobType?.movementDirection || "Clearance");
   const shipmentModeUpper = shipmentModeName.toUpperCase();
   const shipmentModeIcon =
@@ -5340,11 +5828,14 @@ export function JobWorkspaceClient({
       if (stage.key === "CHECKLIST") percent = checklistCombinedPercentage;
       if (stage.key === "FILING") percent = filingPercentage;
       if (stage.key === "FILED") percent = filedPercentage;
+      if (stage.key === "EXPENSES") percent = null;
+      const isFiledComplete = stage.key === "FILED" && activeStepIndex >= 5;
+      const isExpenseCurrent = stage.key === "EXPENSES" && activeTab === "expenses";
       return {
         key: stage.key,
         label: stage.label,
-        isCompleted: index < workflowUiActiveStageIndex,
-        isCurrent: index === workflowUiActiveStageIndex,
+        isCompleted: isFiledComplete || (stage.key !== "EXPENSES" && !isExpenseCurrent && index < workflowUiActiveStageIndex),
+        isCurrent: isExpenseCurrent || index === workflowUiActiveStageIndex,
         percent,
         onClick: () => openWorkflowStage(stage.key),
       };
@@ -5355,14 +5846,14 @@ export function JobWorkspaceClient({
     { label: "Add Query", note: "Raise a new query", icon: <AlertCircle size={16} />, onClick: () => navigateToWorkspaceTab("filing"), accent: "orange" as const, visible: activeStepIndex >= 4 },
     { label: "View Workflow", note: "See filing workflow", icon: <Zap size={16} />, onClick: () => navigateToWorkspaceTab("filing"), accent: "cyan" as const, visible: true },
     { label: "Bill Filing", note: "Manage bill filing", icon: <FileText size={16} />, onClick: () => navigateToWorkspaceTab("filing"), accent: "cyan" as const, visible: activeStepIndex >= 4 },
-    { label: "Request Expense", note: "Raise expense request", icon: <CreditCard size={16} />, onClick: () => navigateToWorkspaceTab("expenses"), accent: "cyan" as const, visible: true },
+    { label: "Request Expense", note: "Raise expense request", icon: <CreditCard size={16} />, onClick: () => navigateToWorkspaceTab("expenses"), accent: "cyan" as const, visible: canCreateExpenseRequests },
     { label: "Job Activity", note: "View all activities", icon: <History size={16} />, onClick: () => navigateToWorkspaceTab("audit"), accent: "cyan" as const, visible: true },
   ].filter((action) => action.visible);
   return (
-    <main className="w-full space-y-5 overflow-x-hidden pb-6">
-      <div style={overviewThemeVars} className="space-y-4">
+    <main className="cha-job-workspace w-full space-y-5 overflow-x-hidden pb-6">
+      <div className="space-y-4">
           <section
-            className="relative overflow-hidden rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] shadow-[0_18px_38px_-30px_rgba(15,23,42,0.18)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]"
+            className="ds-section-panel relative overflow-hidden"
             style={{
               backgroundImage: `linear-gradient(90deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.94) 46%, rgba(239,246,255,0.72) 68%, rgba(219,234,254,0.34) 100%), url("${CHA_OVERVIEW_BANNER_ART}")`,
               backgroundPosition: "right center",
@@ -5381,20 +5872,20 @@ export function JobWorkspaceClient({
                     ))}
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <h1 className="ds-h1 ds-numeric text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{job.jobNumber}</h1>
+                    <h1 className="ds-h1 ds-numeric text-on-surface">{job.jobNumber}</h1>
                     <button
                       type="button"
                       onClick={async () => {
                         await navigator.clipboard.writeText(job.jobNumber);
                         toast.success("Job number copied.");
                       }}
-                      className="rounded-full border border-[var(--cha-overview-line)] p-2 text-[var(--cha-overview-text-muted)] transition hover:border-[var(--cha-overview-primary)] hover:text-[var(--cha-overview-primary)] dark:border-[var(--cha-overview-line-dark)] dark:text-[var(--cha-overview-text-muted-dark)] dark:hover:text-[var(--cha-overview-primary-dark)]"
+                      className="ds-plain rounded-full border border-outline-variant p-2 text-on-surface-variant transition hover:border-[#00cec4] hover:text-[#00cec4]"
                       aria-label="Copy job number"
                     >
                       <Copy size={14} />
                     </button>
                   </div>
-                  <p className="text-sm text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{job.title}</p>
+                  <p className="text-sm text-on-surface-variant">{job.title}</p>
                 </div>
 
                 <div className="flex items-center gap-2 self-start">
@@ -5426,11 +5917,11 @@ export function JobWorkspaceClient({
                         {item.icon}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="ds-label text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{item.label}</p>
-                        <p className="mt-1 text-sm font-semibold text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)] break-words">{item.value}</p>
+                        <p className="ds-label">{item.label}</p>
+                        <p className="mt-1 break-words text-sm font-medium text-on-surface">{item.value}</p>
                         {item.secondary ? (
                           <p 
-                            className="mt-1 text-xs text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)] break-all leading-normal"
+                            className="mt-1 break-all text-xs leading-normal text-on-surface-variant"
                             title={item.secondary}
                           >
                             {item.secondary}
@@ -5453,17 +5944,14 @@ export function JobWorkspaceClient({
             </div>
           </section>
 
-          <section className="rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] px-4 py-4 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
+          <section className="ds-section-panel px-4 py-4">
             <div className="mb-4">
               <div className="flex items-center justify-between gap-3">
-                <p className="ds-label text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">Progress</p>
-                <p className="ds-numeric text-sm text-[var(--cha-overview-primary)] dark:text-[var(--cha-overview-primary-dark)]">{stageProgress}%</p>
+                <p className="ds-label">Progress</p>
+                <p className="ds-numeric text-sm text-[#00cec4]">{stageProgress}%</p>
               </div>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[var(--cha-overview-line)]/80 dark:bg-[var(--cha-overview-line-dark)]">
-                <div
-                  className="h-full rounded-full bg-[linear-gradient(90deg,#20e7df_0%,#12d8d0_100%)]"
-                  style={{ width: `${stageProgress}%` }}
-                />
+              <div className="ds-progress-bar mt-2 w-full">
+                <span style={{ width: `${stageProgress}%` }} />
               </div>
             </div>
 
@@ -5473,7 +5961,7 @@ export function JobWorkspaceClient({
                   type="button"
                   aria-label="Scroll workflow stages left"
                   onClick={() => overviewStageScrollerRef.current?.scrollBy({ left: -320, behavior: "smooth" })}
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--cha-overview-text-muted)] transition hover:bg-[var(--cha-overview-soft)] hover:text-[#20e7df]"
+                  className="ds-plain ds-workflow-link flex size-8 shrink-0 items-center justify-center text-on-surface-variant hover:text-[#00cec4]"
                 >
                   <ChevronLeft size={18} />
                 </button>
@@ -5484,15 +5972,15 @@ export function JobWorkspaceClient({
                         <button
                           type="button"
                           onClick={stage.onClick}
-                          className="flex items-center gap-3 rounded-full px-3 py-2 text-left transition hover:bg-[var(--cha-overview-soft)]/70 dark:hover:bg-[rgba(30,41,59,0.72)]"
+                          className="ds-plain ds-workflow-link flex items-center gap-3 px-3 py-2 text-left"
                         >
                           <span
                             className={cn(
                               "flex size-7 items-center justify-center rounded-full border text-[11px] font-semibold ds-numeric",
                               stage.isCurrent && "animate-current-stage-number",
                               stage.isCompleted || stage.isCurrent
-                                ? "border-[var(--cha-overview-primary)] bg-white text-[var(--cha-overview-primary)] dark:border-[var(--cha-overview-primary-dark)] dark:bg-white dark:text-[var(--cha-overview-primary-dark)]"
-                                : "border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] text-[var(--cha-overview-text-muted)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-alt-dark)] dark:text-[var(--cha-overview-text-muted-dark)]",
+                                ? "ds-workflow-dot-active bg-surface"
+                                : "ds-workflow-dot",
                             )}
                           >
                             {stage.isCompleted ? <Check size={12} /> : index}
@@ -5501,18 +5989,18 @@ export function JobWorkspaceClient({
                             <span className={cn(
                               "whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.14em]",
                               stage.isCurrent
-                                ? "text-[var(--cha-overview-primary)] dark:text-[var(--cha-overview-primary-dark)]"
-                                : "text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]",
+                                ? "text-[#00cec4]"
+                                : "text-on-surface",
                             )}>
                               {stage.label}
                             </span>
                             {typeof stage.percent === "number" ? (
-                              <span className="text-[10px] ds-numeric text-[var(--cha-overview-primary)] dark:text-[var(--cha-overview-primary-dark)]">{stage.percent}%</span>
+                              <span className="ds-numeric text-[10px] text-[#00cec4]">{stage.percent}%</span>
                             ) : null}
                           </span>
                         </button>
                         {index < overviewWorkflowStages.length - 1 ? (
-                          <span className="mx-1 h-px w-8 rounded-full bg-[var(--cha-overview-line)] dark:bg-[var(--cha-overview-line-dark)]" />
+                          <span className="mx-1 h-px w-8 rounded-full bg-outline-variant" />
                         ) : null}
                       </div>
                     ))}
@@ -5522,7 +6010,7 @@ export function JobWorkspaceClient({
                   type="button"
                   aria-label="Scroll workflow stages right"
                   onClick={() => overviewStageScrollerRef.current?.scrollBy({ left: 320, behavior: "smooth" })}
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--cha-overview-text-muted)] transition hover:bg-[var(--cha-overview-soft)] hover:text-[#20e7df]"
+                  className="ds-plain ds-workflow-link flex size-8 shrink-0 items-center justify-center text-on-surface-variant hover:text-[#00cec4]"
                 >
                   <ChevronRight size={18} />
                 </button>
@@ -5543,6 +6031,25 @@ export function JobWorkspaceClient({
           }}
         />
       ))}
+
+      {filingValidationWarning ? (
+        <div className="card-left-accent-orange rounded-xl border border-red-500/35 bg-surface p-4 shadow-[0_18px_38px_-30px_rgba(239,68,68,0.38)]">
+          <div className="flex items-start gap-3">
+            <span className="ds-icon-badge animate-pulse-red shrink-0" style={{ background: "rgba(239,68,68,0.10)", color: "#f87171" }}>
+              <AlertTriangle size={18} />
+            </span>
+            <div className="min-w-0 space-y-2">
+              <p className="ds-label !text-red-500">Filing Stage Warning</p>
+              <p className="text-sm font-medium text-on-surface">{filingValidationWarning.message}</p>
+              <ul className="grid gap-1 text-xs text-on-surface-variant md:grid-cols-2">
+                {filingValidationWarning.details.slice(0, 6).map((detail) => (
+                  <li key={detail}>{detail}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {!job.assignedManagerId && (
         <div className="rounded-2xl border border-[#fb923c]/35 bg-[#fb923c]/10 p-4">
@@ -5611,15 +6118,17 @@ export function JobWorkspaceClient({
       <div className="space-y-3">
         <aside className="hidden">
           <div className="border-b border-outline-variant/20 px-2 pb-3">
-            <h2 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">Workflow</h2>
+            <h2 className="ds-h3 text-on-surface">Workflow</h2>
             <p className="mt-1 text-xs text-on-surface-variant">Secondary stage navigator</p>
           </div>
 
           <nav className="space-y-2 pt-3">
             {WORKFLOW_UI_STAGES.map((stage, index) => {
-              const isCompleted = index < workflowUiActiveStageIndex;
-              const isActive = index === workflowUiActiveStageIndex;
-              const isLocked = index > workflowUiActiveStageIndex;
+              const isFiledComplete = stage.key === "FILED" && activeStepIndex >= 5;
+              const isExpenseCurrent = stage.key === "EXPENSES" && activeTab === "expenses";
+              const isCompleted = isFiledComplete || (stage.key !== "EXPENSES" && !isExpenseCurrent && index < workflowUiActiveStageIndex);
+              const isActive = isExpenseCurrent || index === workflowUiActiveStageIndex;
+              const isLocked = stage.key !== "EXPENSES" && !isFiledComplete && index > workflowUiActiveStageIndex;
 
               let percent = 0;
               let valState = "";
@@ -5709,25 +6218,31 @@ export function JobWorkspaceClient({
                   statusBg = "bg-surface-container-low/50";
                   statusLabel = "Locked";
                 }
+              } else if (stage.key === "EXPENSES") {
+                percent = 0;
+                valState = "Open";
+                if (isActive) {
+                  statusColor = "text-[#00cec4]";
+                  statusBg = "bg-[#00cec4]/10";
+                  statusLabel = "Open";
+                } else {
+                  statusColor = "text-[#00cec4]";
+                  statusBg = "bg-[#00cec4]/10";
+                  statusLabel = "Open";
+                }
               }
-
-              const stageTab = (
-                stage.key === "DOCUMENT_COLLECTION" ? "docs"
-                  : stage.key === "ADDITIONAL_DATA" ? "additionalData"
-                    : stage.key === "CHECKLIST" ? "checklist"
-                      : "filing"
-              ) as WorkspaceTab;
 
               const isHighlighted =
                 (activeTab === "docs" && stage.key === "DOCUMENT_COLLECTION") ||
                 (activeTab === "additionalData" && stage.key === "ADDITIONAL_DATA") ||
                 (activeTab === "checklist" && stage.key === "CHECKLIST") ||
                 (activeTab === "filing" && stage.key === "FILING") ||
-                (activeTab === "filing" && stage.key === "FILED" && activeStepIndex >= 5);
+                (activeTab === "filing" && stage.key === "FILED" && activeStepIndex >= 5) ||
+                (activeTab === "expenses" && stage.key === "EXPENSES");
 
               const createdDate = new Date(job.createdAt || Date.now());
               const stageDate = new Date(createdDate.getTime() + index * 45 * 60 * 1000);
-              const formattedDate = stageDate.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }) + " â€¢ " + stageDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+              const formattedDate = stageDate.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }) + " - " + stageDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
 
               return (
                 <div key={stage.key} className="relative">
@@ -5737,8 +6252,7 @@ export function JobWorkspaceClient({
                       if (isLocked) {
                         return;
                       }
-                      setActiveTab(stageTab);
-                      setExpandedStageKey(stage.key);
+                      openWorkflowStage(stage.key);
                     }}
                     disabled={isLocked}
                     className={`group relative flex w-full flex-col gap-2 rounded-[18px] p-3 text-left transition-all ${isHighlighted
@@ -5796,10 +6310,10 @@ export function JobWorkspaceClient({
                         <span>{isCompleted ? "Closed:" : "Due:"}</span>
                         <span className="ds-numeric text-on-surface">
                           {isCompleted
-                            ? formattedDate.split(" â€¢ ")[0]
+                            ? formattedDate.split(" - ")[0]
                             : job.estimatedClosureDate
                               ? new Date(job.estimatedClosureDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })
-                              : "â€”"
+                              : "-"
                           }
                         </span>
                       </div>
@@ -5832,7 +6346,7 @@ export function JobWorkspaceClient({
               <button
                 key={item.key}
                 type="button"
-                onClick={() => { setActiveTab(item.key); }}
+                onClick={() => navigateToWorkspaceTab(item.key)}
                 className={`flex w-full items-center gap-2.5 rounded-[18px] px-3 py-2.5 text-left transition-all ${activeTab === item.key
                     ? "bg-gradient-to-r from-[#00cec4]/10 to-[#00b8af]/8 text-[#00a9b2]"
                     : "hover:bg-surface-container-low text-on-surface-variant"
@@ -5873,7 +6387,7 @@ export function JobWorkspaceClient({
 
         <div className="min-w-0 space-y-3">
           {/* Secondary tab header card */}
-          {activeTab !== "overview" && !["docs", "additionalData", "checklist", "filing"].includes(activeTab) && (() => {
+          {activeTab !== "overview" && !["docs", "additionalData", "checklist", "filing", "expenses"].includes(activeTab) && (() => {
             const stageDescriptions: Record<string, string> = {
               docs: "Upload required customs documents or declare exceptions to pass the document verification gate.",
               additionalData: "Enter vessel inward date, manifest numbers, delivery order validity, and container details.",
@@ -5921,8 +6435,8 @@ export function JobWorkspaceClient({
             );
           })()}
 
-          {/* â”€â”€ Tab Panels â”€â”€ */}
-          {["docs", "additionalData", "checklist", "filing"].includes(activeTab) ? (
+          {/* Tab Panels */}
+          {["docs", "additionalData", "checklist", "filing", "expenses"].includes(activeTab) ? (
             <div className="space-y-6">
               {/* 1. DOCUMENT_COLLECTION */}
               {showDocumentCollectionStage ? (
@@ -6107,7 +6621,7 @@ export function JobWorkspaceClient({
                                 <p className="ds-label text-[#00cec4]">Section 49 Controls</p>
                                 <div className="mt-2 grid grid-cols-[4px_minmax(0,1fr)] items-center gap-4">
                                   <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
-                                  <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">Manage Section 49 validity and extension workflow</h3>
+                                  <h3 className="ds-h3 text-on-surface">Manage Section 49 validity and extension workflow</h3>
                                 </div>
                                 <p className="mt-1 text-sm text-on-surface-variant">
                                   Keep the saved validity date current and attach extension evidence when customs warns of expiry.
@@ -6258,7 +6772,7 @@ export function JobWorkspaceClient({
                                 <p className="ds-label text-[#fb923c]">Exemption Draft</p>
                                 <div className="mt-2 grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
                                   <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
-                                  <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">{activeExceptionRequirement.name}</h3>
+                                  <h3 className="ds-h3 text-on-surface">{activeExceptionRequirement.name}</h3>
                                 </div>
                                 <p className="mt-1 text-sm text-on-surface-variant">
                                   Record the business reason for handling this requirement without a file upload.
@@ -6299,7 +6813,7 @@ export function JobWorkspaceClient({
                                 <div className="grid grid-cols-[4px_minmax(0,1fr)] items-start gap-3">
                                   <span className="mt-0.5 h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
                                   <div className="min-w-0 space-y-1">
-                                    <p className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">{group.categoryName}</p>
+                                    <p className="ds-h3 text-on-surface">{group.categoryName}</p>
                                     <p className="text-sm text-on-surface-variant">
                                       {group.requirements.length} requirement{group.requirements.length === 1 ? "" : "s"} pending action in this category.
                                     </p>
@@ -6438,22 +6952,22 @@ export function JobWorkspaceClient({
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                       <div>
                         <span className="text-on-surface-variant block text-[10px] uppercase">Vessel Inward Date</span>
-                        <span className="font-semibold text-on-surface ds-numeric">{vesselInwardDate ? new Date(vesselInwardDate).toLocaleDateString("en-IN") : "â€”"}</span>
+                        <span className="font-semibold text-on-surface ds-numeric">{vesselInwardDate ? new Date(vesselInwardDate).toLocaleDateString("en-IN") : "-"}</span>
                       </div>
                       <div>
                         <span className="text-on-surface-variant block text-[10px] uppercase">DO Validity</span>
-                        <span className="font-semibold text-on-surface ds-numeric">{deliveryOrderValidity ? new Date(deliveryOrderValidity).toLocaleDateString("en-IN") : "â€”"}</span>
+                        <span className="font-semibold text-on-surface ds-numeric">{deliveryOrderValidity ? new Date(deliveryOrderValidity).toLocaleDateString("en-IN") : "-"}</span>
                       </div>
                       {requiresIgm && (
                         <div>
                           <span className="text-on-surface-variant block text-[10px] uppercase">IGM Number</span>
-                          <span className="font-semibold text-on-surface font-mono">{importGeneralManifest || "â€”"}</span>
+                          <span className="font-semibold text-on-surface font-mono">{importGeneralManifest || "-"}</span>
                         </div>
                       )}
                       {requiresEgm && (
                         <div>
                           <span className="text-on-surface-variant block text-[10px] uppercase">EGM Number</span>
-                          <span className="font-semibold text-on-surface font-mono">{exportGeneralManifest || "â€”"}</span>
+                          <span className="font-semibold text-on-surface font-mono">{exportGeneralManifest || "-"}</span>
                         </div>
                       )}
                     </div>
@@ -6782,7 +7296,7 @@ export function JobWorkspaceClient({
                               onClick={() => setIsEditingManager(true)}
                               className="ds-plain cha-link mt-2 text-xs font-semibold hover:underline uppercase tracking-wider"
                             >
-                              Assign Manager Now â†’
+                              Assign Manager Now -&gt;
                             </button>
                           )}
                         </div>
@@ -6798,6 +7312,26 @@ export function JobWorkspaceClient({
                           Any file format is allowed here. The uploaded file will move into internal approval automatically.
                         </p>
 
+                        {isChecklistCustomerReworkRequired ? (
+                          <div className="card-left-accent-orange rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+                            <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                              <div className="space-y-1">
+                                <p className="text-sm font-medium text-on-surface">Customer rejected the latest checklist.</p>
+                                <p className="text-xs text-on-surface-variant">
+                                  Upload a reworked checklist file here. The replacement will restart internal approval and will move directly to Filing after employee approval.
+                                </p>
+                                {rejectedCustomerDecision?.remarks ? (
+                                  <p className="text-xs text-on-surface">
+                                    Reason: {rejectedCustomerDecision.remarks}
+                                  </p>
+                                ) : null}
+                              </div>
+                              <Badge variant="destructive" className="uppercase">
+                                Rework Required
+                              </Badge>
+                            </div>
+                          </div>
+                        ) : null}
 
                         <FileUploadField
                           id="checklist-file-upload"
@@ -6992,10 +7526,28 @@ export function JobWorkspaceClient({
 
                     <div className="card-cyan-outline rounded-xl border border-outline-variant/60 bg-surface p-4 space-y-4 shadow-sm">
                       <div className="space-y-3">
-                        <SectionHeading title="Customer Approval" />
+                        <SectionHeading
+                          title="Customer Approval"
+                          aside={
+                            finalCustomerDecision ? (
+                              <Badge
+                                variant={finalCustomerDecision.action === "REJECTED" ? "destructive" : "success"}
+                                className="uppercase"
+                              >
+                                {finalCustomerDecision.action === "REJECTED" ? "Rejected" : "Approved"}
+                              </Badge>
+                            ) : checklistWorkflow?.currentApprovalStage === "CUSTOMER" ? (
+                              <Badge variant="warning" className="uppercase">Pending</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="uppercase">Locked</Badge>
+                            )
+                          }
+                        />
                         <p className="text-sm text-on-surface">
-                          {approvedCustomerDecision
-                            ? `Approved by ${getUserName(approvedCustomerDecision.actedById || approvedCustomerDecision.assignedToId)} on behalf of concerned job users on ${approvedCustomerDecision.actedAt ? new Date(approvedCustomerDecision.actedAt).toLocaleString("en-IN") : "Pending"}`
+                          {rejectedCustomerDecision
+                            ? `Rejected by ${getDecisionActorLabel(rejectedCustomerDecision)} on ${rejectedCustomerDecision.actedAt ? new Date(rejectedCustomerDecision.actedAt).toLocaleString("en-IN") : "recorded time unavailable"}. Reworked upload is required.`
+                            : approvedCustomerDecision
+                              ? `Approved by ${getDecisionActorLabel(approvedCustomerDecision)} on ${approvedCustomerDecision.actedAt ? new Date(approvedCustomerDecision.actedAt).toLocaleString("en-IN") : "recorded time unavailable"}. Filing is ready.`
                             : checklistWorkflow?.currentApprovalStage === "CUSTOMER" && !latestCustomerMailLog
                               ? "Internal approval is complete. Send the customer mail here to unlock customer approval."
                               : checklistWorkflow?.currentApprovalStage === "CUSTOMER" && latestCustomerMailLog && !customerApprovalDelayElapsed
@@ -7010,6 +7562,16 @@ export function JobWorkspaceClient({
                           <p className="text-xs text-on-surface-variant">
                             Mail recipients: {(latestCustomerMailLog.recipients || []).join(", ")}. Attachment: {latestCustomerMailLog.attachmentFileName || currentChecklistVersion?.originalFileName || "Checklist file"}.
                           </p>
+                        ) : null}
+                        {finalCustomerDecision?.remarks ? (
+                          <div className={cn(
+                            "rounded-xl border px-4 py-3 text-xs",
+                            finalCustomerDecision.action === "REJECTED"
+                              ? "border-red-500/25 bg-red-500/10 text-on-surface"
+                              : "border-green-500/25 bg-green-500/10 text-on-surface",
+                          )}>
+                            Customer remarks: {finalCustomerDecision.remarks}
+                          </div>
                         ) : null}
                         {checklistWorkflow?.currentApprovalStage === "CUSTOMER" && !approvedCustomerDecision ? (
                           <p className="text-xs text-on-surface-variant">
@@ -7097,7 +7659,7 @@ export function JobWorkspaceClient({
                               disabled={loading !== null}
                               onClick={() => handleChecklistCustomerDecision("APPROVED")}
                             >
-                              Approve
+                              Approve on behalf of customer
                             </Button>
                           </div>
                         </>
@@ -7108,14 +7670,14 @@ export function JobWorkspaceClient({
                       <div className="flex items-center justify-between">
                         <span className="ds-label">Approval History</span>
                         <span className="text-[11px] text-on-surface-variant">
-                          {checklistApprovals.length} entries
+                          {displayChecklistApprovals.length} entries
                         </span>
                       </div>
-                      {checklistApprovals.length === 0 ? (
+                      {displayChecklistApprovals.length === 0 ? (
                         <p className="text-xs text-on-surface-variant">No approval history recorded yet.</p>
                       ) : (
                         <div className="space-y-4">
-                          {checklistApprovals
+                          {displayChecklistApprovals
                             .slice()
                             .reverse()
                             .map((approval: any, index: number, approvals: any[]) => (
@@ -7130,14 +7692,29 @@ export function JobWorkspaceClient({
                                   <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                                     <div className="space-y-1">
                                       <p className="text-sm font-semibold text-on-surface">
-                                        {approval.stage.replace(/_/g, " ")} â€¢ {approval.action.replace(/_/g, " ")}
+                                        {approval.stage.replace(/_/g, " ")} - {approval.action.replace(/_/g, " ")}
                                       </p>
                                       <p className="text-xs text-on-surface-variant">
-                                        Assigned to <span className="text-on-surface">{getUserName(approval.assignedToId)}</span>
-                                        {approval.actedById ? ` â€¢ acted by ${getUserName(approval.actedById)}` : ""}
+                                        {approval.source === "CUSTOMER_PORTAL" ? (
+                                          <>
+                                            Submitted by <span className="text-on-surface">{getDecisionActorLabel(approval)}</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            Assigned to <span className="text-on-surface">{getUserName(approval.assignedToId)}</span>
+                                            {approval.actedById ? ` - acted by ${getUserName(approval.actedById)}` : ""}
+                                          </>
+                                        )}
                                       </p>
                                     </div>
-                                    <span className="text-[11px] text-on-surface-variant ds-numeric md:text-right">
+                                    <span className={cn(
+                                      "text-[11px] ds-numeric md:text-right",
+                                      approval.action === "REJECTED"
+                                        ? "text-red-500"
+                                        : approval.action === "APPROVED"
+                                          ? "text-[#00cec4]"
+                                          : "text-on-surface-variant",
+                                    )}>
                                       {approval.actedAt ? new Date(approval.actedAt).toLocaleString("en-IN") : "Pending"}
                                     </span>
                                   </div>
@@ -7191,7 +7768,7 @@ export function JobWorkspaceClient({
                       )}
                       <div>
                         <span className="text-on-surface-variant block text-[10px] uppercase">Filing Date</span>
-                        <span className="font-semibold text-on-surface ds-numeric">{job.filing?.actualFilingDate ? new Date(job.filing.actualFilingDate).toLocaleDateString("en-IN") : "â€”"}</span>
+                        <span className="font-semibold text-on-surface ds-numeric">{job.filing?.actualFilingDate ? new Date(job.filing.actualFilingDate).toLocaleDateString("en-IN") : "-"}</span>
                       </div>
                     </div>
                   }
@@ -7243,7 +7820,7 @@ export function JobWorkspaceClient({
                                 <p className="max-w-3xl text-sm text-on-surface-variant leading-relaxed">
                                   No active filing workflow instance found. Ensure a workflow is published in{" "}
                                   <a href="/cha/settings/filing-workflows" className="text-[#00cec4] underline underline-offset-2">
-                                    CHA Settings â†’ Filing Workflows
+                                    CHA Settings -&gt; Filing Workflows
                                   </a>
                                   , then start the workflow below.
                                 </p>
@@ -7359,35 +7936,239 @@ export function JobWorkspaceClient({
                                           </div>
                                         </div>
                                       ) : null}
+                                      {isFinalFilingNode ? (
+                                        <div className="space-y-3 bg-surface p-4 transition-all">
+                                          <div className="flex items-start gap-3">
+                                            <span className="ds-icon-badge shrink-0">
+                                              <ShieldCheck size={18} />
+                                            </span>
+                                            <div className="min-w-0 space-y-1">
+                                              <h4 className="ds-h3 text-on-surface">Final Filing Closure</h4>
+                                              <p className="text-sm leading-5 text-on-surface-variant">
+                                                Review every completed filing stage before submitting this final step. Submitting this stage will close the filing workflow, record the audit event, and move the job to FILED.
+                                              </p>
+                                            </div>
+                                          </div>
+
+                                          <div className="space-y-3 rounded-xl border border-outline-variant/45 bg-surface-container-low/35 p-3">
+                                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                              <div className="space-y-1">
+                                                <p className="ds-label text-on-surface-variant">Completed Stage Overview</p>
+                                                <p className="text-sm text-on-surface">
+                                                  {finalFilingReviewStages.length} stage{finalFilingReviewStages.length === 1 ? "" : "s"} ready for final review.
+                                                </p>
+                                              </div>
+                                              <div className="flex flex-wrap gap-2">
+                                                <Badge variant="secondary">
+                                                  {finalFilingReviewStages.reduce((total: number, stage: any) => total + stage.attachments.length, 0)} Files
+                                                </Badge>
+                                                <Badge variant="secondary">
+                                                  {finalFilingReviewStages.reduce((total: number, stage: any) => total + stage.checklistCompletedCount, 0)} Checks
+                                                </Badge>
+                                                <Badge variant={finalFilingReviewStages.some((stage: any) => stage.openQueryCount > 0) ? "warning" : "success"}>
+                                                  {finalFilingReviewStages.reduce((total: number, stage: any) => total + stage.openQueryCount, 0)} Open Queries
+                                                </Badge>
+                                              </div>
+                                            </div>
+
+                                            {finalFilingReviewStages.length > 0 ? (
+                                              <div className="max-h-[520px] space-y-3 overflow-y-auto pr-1">
+                                                {finalFilingReviewStages.map((stage: any) => (
+                                                  <details
+                                                    key={stage.id}
+                                                    className="group overflow-hidden rounded-xl border border-outline-variant/50 bg-surface"
+                                                    open={stage.sequence <= 3}
+                                                  >
+                                                    <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-3 py-3 hover:bg-surface-container-low/45">
+                                                      <div className="flex min-w-0 items-start gap-3">
+                                                        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-[#00cec4]/30 bg-[#00cec4]/10 text-[#00a9b2]">
+                                                          <span className="ds-numeric text-xs">{String(stage.sequence).padStart(2, "0")}</span>
+                                                        </span>
+                                                        <div className="min-w-0 space-y-1">
+                                                          <div className="flex flex-wrap items-center gap-2">
+                                                            <h5 className="truncate text-sm font-medium text-on-surface">{stage.nodeName}</h5>
+                                                            <Badge variant={stage.status === "SKIPPED" ? "secondary" : "success"}>{stage.status}</Badge>
+                                                          </div>
+                                                          {stage.sectionLabel ? (
+                                                            <p className="ds-label text-on-surface-variant">{stage.sectionLabel}</p>
+                                                          ) : null}
+                                                          <p className="text-xs text-on-surface-variant">
+                                                            {stage.completedAt ? `Completed ${new Date(stage.completedAt).toLocaleString("en-IN")}` : "Completion time not recorded"}
+                                                            {stage.completedByName ? ` by ${stage.completedByName}` : ""}
+                                                          </p>
+                                                        </div>
+                                                      </div>
+                                                      <div className="flex shrink-0 items-center gap-2">
+                                                        <span className="ds-numeric text-xs text-on-surface-variant">
+                                                          {stage.checklistCompletedCount}/{stage.checklistTotalCount || 0}
+                                                        </span>
+                                                        <ChevronRight className="mt-1 size-4 text-on-surface-variant transition-transform group-open:hidden" />
+                                                        <ChevronDown className="mt-1 hidden size-4 text-on-surface-variant group-open:block" />
+                                                      </div>
+                                                    </summary>
+
+                                                    <div className="space-y-3 border-t border-outline-variant/35 px-3 py-3">
+                                                      <div className="grid gap-2 sm:grid-cols-3">
+                                                        <div className="rounded-xl border border-outline-variant/35 bg-surface-container-low px-3 py-2">
+                                                          <p className="ds-label text-on-surface-variant">Checks</p>
+                                                          <p className="ds-numeric mt-1 text-sm text-on-surface">{stage.checklistCompletedCount}/{stage.checklistTotalCount || 0}</p>
+                                                        </div>
+                                                        <div className="rounded-xl border border-outline-variant/35 bg-surface-container-low px-3 py-2">
+                                                          <p className="ds-label text-on-surface-variant">Files</p>
+                                                          <p className="ds-numeric mt-1 text-sm text-on-surface">{stage.attachments.length}</p>
+                                                        </div>
+                                                        <div className="rounded-xl border border-outline-variant/35 bg-surface-container-low px-3 py-2">
+                                                          <p className="ds-label text-on-surface-variant">Queries</p>
+                                                          <p className="ds-numeric mt-1 text-sm text-on-surface">{stage.queries.length} total / {stage.openQueryCount} open</p>
+                                                        </div>
+                                                      </div>
+
+                                                      {stage.remarks || stage.delayRemarks ? (
+                                                        <div className="space-y-2">
+                                                          {stage.remarks ? (
+                                                            <div className="rounded-xl border border-outline-variant/35 bg-surface-container-low px-3 py-2">
+                                                              <p className="ds-label text-on-surface-variant">Remarks</p>
+                                                              <p className="mt-1 text-sm leading-5 text-on-surface">{stage.remarks}</p>
+                                                            </div>
+                                                          ) : null}
+                                                          {stage.delayRemarks ? (
+                                                            <div className="card-left-accent-orange rounded-xl border border-[#fb923c]/30 bg-surface px-3 py-2">
+                                                              <p className="ds-label !text-[#fb923c]">Delay Remarks</p>
+                                                              <p className="mt-1 text-sm leading-5 text-on-surface">{stage.delayRemarks}</p>
+                                                            </div>
+                                                          ) : null}
+                                                        </div>
+                                                      ) : (
+                                                        <div className="rounded-xl border border-outline-variant/35 bg-surface-container-low px-3 py-2 text-sm text-on-surface-variant">
+                                                          No remarks recorded for this stage.
+                                                        </div>
+                                                      )}
+
+                                                      {stage.completedResponses.length > 0 ? (
+                                                        <div className="space-y-2">
+                                                          <p className="ds-label text-on-surface-variant">Completed Checklist</p>
+                                                          <div className="grid gap-2 md:grid-cols-2">
+                                                            {stage.completedResponses.slice(0, 6).map((response: any) => (
+                                                              <div key={response.id || response.checklistItemId} className="rounded-xl border border-outline-variant/35 bg-surface-container-low px-3 py-2">
+                                                                <div className="flex items-start gap-2">
+                                                                  <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-[#00a9b2]" />
+                                                                  <div className="min-w-0">
+                                                                    <p className="text-sm text-on-surface">{response.checklistItem?.label || "Checklist item"}</p>
+                                                                    {response.remarks ? (
+                                                                      <p className="mt-1 text-xs leading-4 text-on-surface-variant">{response.remarks}</p>
+                                                                    ) : null}
+                                                                  </div>
+                                                                </div>
+                                                              </div>
+                                                            ))}
+                                                          </div>
+                                                          {stage.completedResponses.length > 6 ? (
+                                                            <p className="text-xs text-on-surface-variant">
+                                                              +{stage.completedResponses.length - 6} more checklist item{stage.completedResponses.length - 6 === 1 ? "" : "s"} completed.
+                                                            </p>
+                                                          ) : null}
+                                                        </div>
+                                                      ) : null}
+
+                                                      {stage.fieldValues.length > 0 ? (
+                                                        <div className="space-y-2">
+                                                          <p className="ds-label text-on-surface-variant">Captured Data</p>
+                                                          <div className="grid gap-2 md:grid-cols-2">
+                                                            {stage.fieldValues.slice(0, 6).map((field: any) => (
+                                                              <div key={field.id || field.fieldKey} className="rounded-xl border border-outline-variant/35 bg-surface-container-low px-3 py-2">
+                                                                <p className="ds-label text-on-surface-variant">{String(field.fieldKey || "Field").replace(/_/g, " ")}</p>
+                                                                <p className="mt-1 truncate text-sm text-on-surface">
+                                                                  {field.valueJson === null || field.valueJson === undefined || field.valueJson === ""
+                                                                    ? "Not recorded"
+                                                                    : typeof field.valueJson === "object"
+                                                                      ? JSON.stringify(field.valueJson)
+                                                                      : String(field.valueJson)}
+                                                                </p>
+                                                              </div>
+                                                            ))}
+                                                          </div>
+                                                        </div>
+                                                      ) : null}
+
+                                                      {stage.attachments.length > 0 ? (
+                                                        <div className="space-y-2">
+                                                          <p className="ds-label text-on-surface-variant">Uploaded Files</p>
+                                                          <div className="grid gap-2 md:grid-cols-2">
+                                                            {stage.attachments.map((attachment: any) => (
+                                                              <a
+                                                                key={attachment.id}
+                                                                href={attachment.fileKey}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="flex min-w-0 items-start gap-2 rounded-xl border border-outline-variant/35 bg-surface-container-low px-3 py-2 text-sm text-on-surface transition hover:border-[#00cec4]/55 hover:text-[#00a9b2]"
+                                                              >
+                                                                <ExternalLink size={14} className="mt-0.5 shrink-0 text-[#00a9b2]" />
+                                                                <span className="min-w-0 flex-1">
+                                                                  <span className="block truncate">{attachment.fileName || "Uploaded file"}</span>
+                                                                  <span className="mt-0.5 block truncate text-xs text-on-surface-variant">
+                                                                    {[attachment.checklistItem?.label, attachment.photoRequirement?.label, attachment.uploadedBy?.name ? `by ${attachment.uploadedBy.name}` : null]
+                                                                      .filter(Boolean)
+                                                                      .join(" / ") || "Workflow upload"}
+                                                                  </span>
+                                                                </span>
+                                                              </a>
+                                                            ))}
+                                                          </div>
+                                                        </div>
+                                                      ) : null}
+                                                    </div>
+                                                  </details>
+                                                ))}
+                                              </div>
+                                            ) : (
+                                              <div className="rounded-xl border border-dashed border-outline-variant/60 px-4 py-5 text-sm text-on-surface-variant">
+                                                No completed filing stages are available yet.
+                                              </div>
+                                            )}
+                                          </div>
+
+                                        </div>
+                                      ) : null}
                                       {(activeNodeFieldDefinitions.length > 0 || activeNodeDocumentRequirements.length > 0) ? (
                                         <div className="space-y-3 pt-1">
                                           {activeNodeFieldDefinitions.length > 0 ? (
                                             <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
-                                              {activeNodeFieldDefinitions.map((field: any) => (
-                                                <div key={field.key} className="space-y-1">
-                                                  <label className="ds-label block text-on-surface-variant">
-                                                    {field.label} {field.required !== false ? "*" : ""}
-                                                  </label>
-                                                  {field.type === "DATE" ? (
-                                                    <DateInput
-                                                      value={filingFieldValues[field.key] || ""}
-                                                      onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                                                      className="w-full"
-                                                    />
-                                                  ) : (
-                                                    <input
-                                                      value={filingFieldValues[field.key] || ""}
-                                                      onChange={(e) =>
-                                                        field.key === "bill_number"
-                                                          ? setBillNumberEverywhere(e.target.value)
-                                                          : setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))
-                                                      }
-                                                      placeholder={field.placeholder || field.label}
-                                                      className="w-full text-sm"
-                                                    />
-                                                  )}
-                                                </div>
-                                              ))}
+                                              {activeNodeFieldDefinitions.map((field: any) => {
+                                                const isMissingField =
+                                                  filingValidationWarning?.fieldKeys.includes(field.key) &&
+                                                  !String(filingFieldValues[field.key] ?? "").trim();
+                                                return (
+                                                  <div
+                                                    key={field.key}
+                                                    className={cn(
+                                                      "space-y-1 rounded-xl transition-all",
+                                                      isMissingField && "animate-pulse-red border border-red-500/30 bg-surface p-2",
+                                                    )}
+                                                  >
+                                                    <label className="ds-label block text-on-surface-variant">
+                                                      {field.label} {field.required !== false ? "*" : ""}
+                                                    </label>
+                                                    {field.type === "DATE" ? (
+                                                      <DateInput
+                                                        value={filingFieldValues[field.key] || ""}
+                                                        onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                                                        className={cn("w-full", isMissingField && "!border-red-500/60")}
+                                                      />
+                                                    ) : (
+                                                      <input
+                                                        value={filingFieldValues[field.key] || ""}
+                                                        onChange={(e) =>
+                                                          field.key === "bill_number"
+                                                            ? setBillNumberEverywhere(e.target.value)
+                                                            : setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))
+                                                        }
+                                                        placeholder={field.placeholder || field.label}
+                                                        className={cn("w-full text-sm", isMissingField && "!border-red-500/60")}
+                                                      />
+                                                    )}
+                                                  </div>
+                                                );
+                                              })}
                                             </div>
                                           ) : null}
                                           {activeChecklistItems.length === 0 && activeNodeDocumentRequirements.length > 0 && (() => {
@@ -7396,7 +8177,12 @@ export function JobWorkspaceClient({
                                               (requirement: any) => requirement.required !== false && !!activeNodeDocumentAttachmentsByKey.get(requirement.key),
                                             ).length;
                                             const isCompleted = requiredDocumentUploadedCount >= requiredDocumentTotal;
-                                            
+                                            const hasMissingStandaloneDocuments = activeNodeDocumentRequirements.some(
+                                              (requirement: any) =>
+                                                requirement.required !== false &&
+                                                !activeNodeDocumentAttachmentsByKey.get(requirement.key),
+                                            );
+
                                             return (
                                               <div className="space-y-3 pt-3 border-t border-outline-variant/30 mt-3">
                                                 <h4 className="ds-label text-on-surface">Stage Checklist Verification</h4>
@@ -7404,11 +8190,13 @@ export function JobWorkspaceClient({
                                                   className={`relative overflow-hidden rounded-xl border px-4 py-4 transition-all duration-200 ${
                                                     isCompleted
                                                       ? "border-[#22c55e]/28 bg-surface shadow-[0_16px_34px_-28px_rgba(34,197,94,0.28)]"
-                                                      : "border-[#00cec4]/28 bg-surface shadow-[0_16px_34px_-28px_rgba(0,206,196,0.28)]"
+                                                      : hasMissingStandaloneDocuments
+                                                        ? "animate-pulse-red border-red-500/35 bg-surface shadow-[0_16px_34px_-28px_rgba(239,68,68,0.38)]"
+                                                        : "border-[#00cec4]/28 bg-surface shadow-[0_16px_34px_-28px_rgba(0,206,196,0.28)]"
                                                   }`}
                                                 >
-                                                  <div className={`pointer-events-none absolute inset-y-4 left-0 w-1 rounded-r-sm ${isCompleted ? "bg-[#22c55e]" : "bg-[#00cec4]"}`} />
-                                                  
+                                                  <div className={`pointer-events-none absolute inset-y-4 left-0 w-1 rounded-r-sm ${isCompleted ? "bg-[#22c55e]" : hasMissingStandaloneDocuments ? "bg-red-500" : "bg-[#00cec4]"}`} />
+
                                                   <div className="flex w-full items-center gap-3 bg-transparent text-left">
                                                     <div className="flex min-w-0 flex-1 items-center gap-3">
                                                       <span
@@ -7421,7 +8209,7 @@ export function JobWorkspaceClient({
                                                         {isCompleted ? <Check size={16} /> : <Upload size={16} />}
                                                       </span>
                                                       <div className="flex min-h-9 min-w-0 flex-1 items-center">
-                                                        <div className="text-base font-normal uppercase leading-none tracking-[0.10em] text-on-surface">
+                                                      <div className="text-base font-normal uppercase leading-none tracking-[0.04em] text-on-surface">
                                                           Filing Document Verification <span className="text-red-500">*</span>
                                                         </div>
                                                       </div>
@@ -7433,10 +8221,19 @@ export function JobWorkspaceClient({
                                                       <label className="ds-label block">Required Document</label>
                                                     </div>
                                                     <div className="space-y-3">
-                                                      {activeNodeDocumentRequirements.map((requirement: any) => {
-                                                        const uploadedAttachment = activeNodeDocumentAttachmentsByKey.get(requirement.key);
+                                                        {activeNodeDocumentRequirements.map((requirement: any) => {
+                                                          const uploadedAttachment = activeNodeDocumentAttachmentsByKey.get(requirement.key);
+                                                        const isMissingDocument =
+                                                          requirement.required !== false &&
+                                                          !uploadedAttachment;
                                                         return (
-                                                          <div key={requirement.key} className="space-y-2">
+                                                          <div
+                                                            key={requirement.key}
+                                                            className={cn(
+                                                              "space-y-2 rounded-xl transition-all",
+                                                              isMissingDocument && "animate-pulse-red border border-red-500/30 bg-surface p-2",
+                                                            )}
+                                                          >
                                                             <FileUploadField
                                                               id={`node-document-upload-standalone-${activeNodeRun.id}-${requirement.key}`}
                                                               compact
@@ -7510,11 +8307,43 @@ export function JobWorkspaceClient({
                                                   return uploadedCount >= (requirement.minPhotos || 1);
                                                 });
                                               const checklistUploadsReady =
-                                                !item.allowsUpload ||
+                                                !checklistItemAllowsDirectUpload(item) ||
                                                 (item.minUploads || 0) === 0 ||
                                                 checklistItemAttachments.length >= (item.minUploads || 0);
                                               const isCurrentItem = index === currentChecklistItemIndex;
                                               const isLockedItem = index > currentChecklistItemIndex;
+                                              const checklistRemarksReady = !item.requiresRemarks || Boolean(resp.remarks?.trim());
+                                              const checklistDelayRemarksReady =
+                                                !overdueMeta ||
+                                                item.delayRemarksRequired === false ||
+                                                Boolean(resp.delayRemarks?.trim());
+                                              const checklistItemComplete =
+                                                resp.isChecked &&
+                                                checklistRemarksReady &&
+                                                checklistDelayRemarksReady &&
+                                                checklistUploadsReady &&
+                                                mandatoryNodeDocumentsReady &&
+                                                mandatoryPhotoRequirementsReady;
+                                              const hasValidationMissingChecklistItem =
+                                                (filingValidationWarning?.checklistItemIds.includes(item.id) && !resp.isChecked) ||
+                                                (isCurrentItem &&
+                                                  activeNodeDocumentRequirements.some(
+                                                    (requirement: any) =>
+                                                      requirement.required !== false &&
+                                                      !activeNodeDocumentAttachmentsByKey.get(requirement.key),
+                                                  )) ||
+                                                (isCurrentItem &&
+                                                  (activeNodeRun.node.photoRequirements || []).some((requirement: any) => {
+                                                    const uploadedCount = activeNodeAttachments.filter(
+                                                      (attachment: any) => attachment.photoRequirementId === requirement.id,
+                                                    ).length;
+                                                    return (
+                                                      requirement.isMandatory &&
+                                                      uploadedCount < (requirement.minPhotos || 1)
+                                                    );
+                                                  }));
+                                              const shouldBlinkChecklistItem =
+                                                !isLockedItem && (!checklistItemComplete || Boolean(hasValidationMissingChecklistItem));
                                               const checklistItemDescription =
                                                 typeof item.description === "string" && item.description.trim().length > 0
                                                   ? item.description.trim()
@@ -7528,20 +8357,18 @@ export function JobWorkspaceClient({
                                                   key={item.id}
                                                   className={`relative overflow-hidden rounded-xl border p-4 space-y-2.5 transition-all duration-200 ${isLockedItem
                                                       ? "border-outline-variant/60 bg-surface-container-low/75 opacity-70"
-                                                      : overdueMeta
-                                                        ? "border-[#fb923c]/35 bg-surface shadow-[0_18px_38px_-30px_rgba(251,146,60,0.22)]"
-                                                        : resp.isChecked
-                                                          ? "border-[#00cec4]/22 bg-surface shadow-[0_20px_40px_-30px_rgba(0,206,196,0.22)]"
-                                                          : "border-[#00cec4]/22 bg-surface shadow-[0_20px_40px_-30px_rgba(0,206,196,0.22)]"
+                                                      : checklistItemComplete
+                                                        ? "border-green-500/30 bg-green-500/10 shadow-[0_20px_40px_-30px_rgba(34,197,94,0.32)]"
+                                                        : shouldBlinkChecklistItem
+                                                          ? "animate-pulse-red border-red-500/30 bg-surface shadow-[0_18px_38px_-30px_rgba(239,68,68,0.26)]"
+                                                          : "border-outline-variant/60 bg-surface"
                                                       }`}
                                                 >
                                                   {!isLockedItem ? (
                                                     <div
-                                                      className={`pointer-events-none absolute inset-y-4 left-0 w-1 rounded-full ${resp.isChecked
-                                                          ? "bg-[#00cec4]"
-                                                          : overdueMeta
-                                                            ? "bg-[#fb923c]"
-                                                            : "bg-[#00cec4]"
+                                                      className={`pointer-events-none absolute inset-y-4 left-0 w-1 rounded-full ${checklistItemComplete
+                                                          ? "bg-green-500"
+                                                          : "bg-red-500"
                                                         }`}
                                                     />
                                                   ) : null}
@@ -7591,10 +8418,19 @@ export function JobWorkspaceClient({
                                                         <label className="ds-label block">Required Documents</label>
                                                       </div>
                                                       <div className="space-y-2.5">
-                                                        {activeNodeDocumentRequirements.map((requirement: any) => {
-                                                          const uploadedAttachment = activeNodeDocumentAttachmentsByKey.get(requirement.key);
+                                                          {activeNodeDocumentRequirements.map((requirement: any) => {
+                                                            const uploadedAttachment = activeNodeDocumentAttachmentsByKey.get(requirement.key);
+                                                          const isMissingDocument =
+                                                            requirement.required !== false &&
+                                                            !uploadedAttachment;
                                                           return (
-                                                            <div key={requirement.key} className="space-y-2">
+                                                            <div
+                                                              key={requirement.key}
+                                                              className={cn(
+                                                                "space-y-2 rounded-xl transition-all",
+                                                                isMissingDocument && "animate-pulse-red border border-red-500/30 bg-surface p-2",
+                                                              )}
+                                                            >
                                                               <FileUploadField
                                                                 id={`node-document-upload-inline-${activeNodeRun.id}-${requirement.key}`}
                                                                 compact
@@ -7645,7 +8481,14 @@ export function JobWorkspaceClient({
                                                   )}
 
                                                   {!isLockedItem && overdueMeta && (
-                                                    <div className="rounded-2xl border border-[#fb923c]/35 bg-surface px-3 py-2 text-xs text-on-surface">
+                                                    <div
+                                                      className={cn(
+                                                        "rounded-2xl border border-[#fb923c]/35 bg-surface px-3 py-2 text-xs text-on-surface",
+                                                        filingValidationWarning?.checklistDelayRemarkItemIds.includes(item.id) &&
+                                                        !resp.delayRemarks?.trim() &&
+                                                          "animate-pulse-red !border-red-500/35",
+                                                      )}
+                                                    >
                                                       <div className="flex flex-wrap items-center gap-3">
                                                         <span className="font-semibold text-[#fb923c] uppercase tracking-wide">Overdue</span>
                                                         <span className="ds-numeric">Due: {new Date(overdueMeta.dueAt).toLocaleDateString("en-IN")}</span>
@@ -7666,14 +8509,26 @@ export function JobWorkspaceClient({
                                                             }));
                                                           }}
                                                           placeholder="Explain why this checklist item crossed its deadline..."
-                                                          className="w-full text-xs"
+                                                          className={cn(
+                                                            "w-full text-xs",
+                                                            filingValidationWarning?.checklistDelayRemarkItemIds.includes(item.id) &&
+                                                            !resp.delayRemarks?.trim() &&
+                                                              "!border-red-500/60",
+                                                          )}
                                                         />
                                                       </div>
                                                     </div>
                                                   )}
 
                                                   {!isLockedItem && resp.isChecked && item.requiresRemarks && (
-                                                    <div className="ml-10 space-y-1.5">
+                                                    <div
+                                                      className={cn(
+                                                        "ml-10 space-y-1.5 rounded-xl transition-all",
+                                                        filingValidationWarning?.checklistRemarkItemIds.includes(item.id) &&
+                                                        !resp.remarks?.trim() &&
+                                                          "animate-pulse-red border border-red-500/30 bg-surface p-2",
+                                                      )}
+                                                    >
                                                       <label className="ds-label block">Remarks / Notes *</label>
                                                       <input
                                                         type="text"
@@ -7689,13 +8544,24 @@ export function JobWorkspaceClient({
                                                           }));
                                                         }}
                                                         placeholder="Enter required verification details..."
-                                                        className="w-full text-xs"
+                                                        className={cn(
+                                                          "w-full text-xs",
+                                                          filingValidationWarning?.checklistRemarkItemIds.includes(item.id) &&
+                                                          !resp.remarks?.trim() &&
+                                                            "!border-red-500/60",
+                                                        )}
                                                       />
                                                     </div>
                                                   )}
 
-                                                  {!isLockedItem && item.allowsUpload && (
-                                                    <div className="ml-10 space-y-2">
+                                                  {!isLockedItem && checklistItemAllowsDirectUpload(item) && (
+                                                    <div
+                                                      className={cn(
+                                                        "ml-10 space-y-2 rounded-xl transition-all",
+                                                        !checklistUploadsReady &&
+                                                          "animate-pulse-red border border-red-500/30 bg-surface p-2",
+                                                      )}
+                                                    >
                                                       <div className="flex flex-wrap items-center justify-between gap-2">
                                                         <label className="ds-label block">Supporting File / Photo</label>
                                                         <span className="text-[11px] text-on-surface-variant ds-numeric">
@@ -7785,33 +8651,55 @@ export function JobWorkspaceClient({
                                             </div>
                                             {filingToggleStates[section.key] && section.unlocksFields?.length > 0 && (
                                               <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
-                                                {section.unlocksFields.map((field: any) => (
-                                                  <div key={field.key} className="space-y-1">
-                                                    <label className="ds-label block text-on-surface-variant">
-                                                      {field.label} {field.required !== false ? "*" : ""}
-                                                    </label>
-                                                    {field.type === "DATE" ? (
-                                                      <DateInput
-                                                        value={filingFieldValues[field.key] || ""}
-                                                        onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                                                        className="w-full"
-                                                      />
-                                                    ) : (
-                                                      <input
-                                                        value={filingFieldValues[field.key] || ""}
-                                                        onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                                                        placeholder={field.placeholder || field.label}
-                                                        className="w-full text-sm"
-                                                      />
-                                                    )}
-                                                  </div>
-                                                ))}
+                                                {section.unlocksFields.map((field: any) => {
+                                                  const isMissingField =
+                                                    filingValidationWarning?.fieldKeys.includes(field.key) &&
+                                                    !String(filingFieldValues[field.key] ?? "").trim();
+                                                  return (
+                                                    <div
+                                                      key={field.key}
+                                                      className={cn(
+                                                        "space-y-1 rounded-xl transition-all",
+                                                        isMissingField && "animate-pulse-red border border-red-500/30 bg-surface p-2",
+                                                      )}
+                                                    >
+                                                      <label className="ds-label block text-on-surface-variant">
+                                                        {field.label} {field.required !== false ? "*" : ""}
+                                                      </label>
+                                                      {field.type === "DATE" ? (
+                                                        <DateInput
+                                                          value={filingFieldValues[field.key] || ""}
+                                                          onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                                                          className={cn("w-full", isMissingField && "!border-red-500/60")}
+                                                        />
+                                                      ) : (
+                                                        <input
+                                                          value={filingFieldValues[field.key] || ""}
+                                                          onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                                                          placeholder={field.placeholder || field.label}
+                                                          className={cn("w-full text-sm", isMissingField && "!border-red-500/60")}
+                                                        />
+                                                      )}
+                                                    </div>
+                                                  );
+                                                })}
                                               </div>
                                             )}
                                             {filingToggleStates[section.key] && section.unlocksDocuments?.length > 0 && (
                                               <div className="space-y-1.5">
-                                                {section.unlocksDocuments.map((requirement: any) => (
-                                                  <div key={requirement.key} className="rounded-xl border border-outline-variant/60 bg-surface p-3">
+                                                {section.unlocksDocuments.map((requirement: any) => {
+                                                  const uploadedAttachment = activeNodeDocumentAttachmentsByKey.get(requirement.key);
+                                                  const isMissingDocument =
+                                                    requirement.required !== false &&
+                                                    !uploadedAttachment;
+                                                  return (
+                                                  <div
+                                                    key={requirement.key}
+                                                    className={cn(
+                                                      "rounded-xl border border-outline-variant/60 bg-surface p-3",
+                                                      isMissingDocument && "animate-pulse-red !border-red-500/35",
+                                                    )}
+                                                  >
                                                     <div className="flex items-center justify-between gap-3">
                                                       <div>
                                                         <div className="text-xs font-semibold text-on-surface">
@@ -7831,8 +8719,42 @@ export function JobWorkspaceClient({
                                                         />
                                                       </div>
                                                     </div>
+                                                    {uploadedAttachment ? (
+                                                      <div className="mt-3">
+                                                        <FilingAttachmentValidityRow
+                                                          attachment={uploadedAttachment}
+                                                          draftValidityDate={
+                                                            attachmentValidityDrafts[uploadedAttachment.id]
+                                                            ?? toDateInputValue(uploadedAttachment.validityDate)
+                                                          }
+                                                          isEditingValidity={
+                                                            attachmentValidityEditors[uploadedAttachment.id]
+                                                            ?? Boolean(uploadedAttachment.validityDate)
+                                                          }
+                                                          isSaving={loading === `filing-attachment-validity-${uploadedAttachment.id}`}
+                                                          onDraftChange={(value) =>
+                                                            setAttachmentValidityDrafts((prev) => ({
+                                                              ...prev,
+                                                              [uploadedAttachment.id]: value,
+                                                            }))
+                                                          }
+                                                          onRemove={() => void handleDeleteFilingPhoto(uploadedAttachment.id)}
+                                                          onSaveValidity={(value) => void handleUpdateFilingAttachmentValidity(uploadedAttachment.id, value)}
+                                                          onToggleValidity={(enabled) => {
+                                                            setAttachmentValidityEditors((prev) => ({
+                                                              ...prev,
+                                                              [uploadedAttachment.id]: enabled,
+                                                            }));
+                                                            if (!enabled && uploadedAttachment.validityDate) {
+                                                              void handleUpdateFilingAttachmentValidity(uploadedAttachment.id, null);
+                                                            }
+                                                          }}
+                                                        />
+                                                      </div>
+                                                    ) : null}
                                                   </div>
-                                                ))}
+                                                );
+                                                })}
                                               </div>
                                             )}
                                           </div>
@@ -7850,7 +8772,7 @@ export function JobWorkspaceClient({
                                             <div className="min-w-0 flex-1 space-y-1">
                                               <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-4">
                                                 <span className="h-7 w-1 rounded-sm bg-[#fb923c]" aria-hidden="true" />
-                                                <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-[#c76628]">Query Processing</h3>
+                                                <h3 className="ds-h3 text-[#fb923c]">Query Processing</h3>
                                               </div>
                                               <p className="pl-5 text-sm text-on-surface-variant">
                                                 {activeNodeOpenQueries.length > 0
@@ -8324,11 +9246,13 @@ export function JobWorkspaceClient({
                                                   <ClipboardList size={20} />
                                                 </span>
                                                 <div className="space-y-0.5">
-                                                  <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">
-                                                    Completion Comments / Remarks {activeNodeRun.node.commentsRequired ? <span className="text-red-500">*</span> : null}
+                                              <h3 className="ds-h3 text-on-surface">
+                                                    {isFinalFilingNode ? "Final Filing Remarks" : "Completion Comments / Remarks"} {activeNodeRun.node.commentsRequired ? <span className="text-red-500">*</span> : null}
                                                   </h3>
                                                   <p className="text-sm text-on-surface-variant">
-                                                    Provide checklist execution remarks or record the final outcome.
+                                                    {isFinalFilingNode
+                                                      ? "Record the final filing outcome or any closing note for the audit trail."
+                                                      : "Provide checklist execution remarks or record the final outcome."}
                                                   </p>
                                                 </div>
                                               </div>
@@ -8339,14 +9263,55 @@ export function JobWorkspaceClient({
                                                 value={nodeRemarks}
                                                 onChange={(e) => setNodeRemarks(e.target.value)}
                                                 placeholder="Enter comments, observations, or checklist outcome..."
-                                                className="min-h-[112px] flex-1 w-full resize-none overflow-hidden rounded-[16px] border border-outline-variant/45 bg-surface px-5 py-4 text-sm font-sans shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]"
+                                                className={cn(
+                                                  "min-h-[112px] flex-1 w-full resize-none overflow-hidden rounded-[16px] border border-outline-variant/45 bg-surface px-5 py-4 text-sm font-sans shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]",
+                                                  filingValidationWarning?.miscKeys.includes("nodeRemarks") &&
+                                                  !nodeRemarks.trim() &&
+                                                    "animate-pulse-red !border-red-500/60",
+                                                )}
                                                 disabled={loading !== null || isActiveStageBlocked}
                                                 required={activeNodeRun.node.commentsRequired}
                                               />
 
-                                              {outgoingEdges.length === 0 ? (
+                                              {activeNodeIsOverdue ? (
+                                                <div
+                                                  className={cn(
+                                                    "card-left-accent-orange space-y-3 rounded-xl border border-[#fb923c]/35 bg-surface p-4",
+                                                    filingValidationWarning?.miscKeys.includes("nodeDelayRemarks") &&
+                                                    !nodeDelayRemarks.trim() &&
+                                                      "animate-pulse-red !border-red-500/35",
+                                                  )}
+                                                >
+                                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                                    <label className="ds-label block !text-[#fb923c]">
+                                                      Stage Delay Remarks {activeNodeDelayRemarksRequired ? "*" : ""}
+                                                    </label>
+                                                    {activeNodeSlaDueDate ? (
+                                                      <span className="ds-numeric text-xs text-on-surface-variant">
+                                                        Due: {activeNodeSlaDueDate.toLocaleDateString("en-IN")} · {activeNodeDelayDays} day(s) delayed
+                                                      </span>
+                                                    ) : null}
+                                                  </div>
+                                                  <textarea
+                                                    rows={3}
+                                                    value={nodeDelayRemarks}
+                                                    onChange={(e) => setNodeDelayRemarks(e.target.value)}
+                                                    placeholder="Explain why this filing stage crossed its SLA..."
+                                                    className={cn(
+                                                      "w-full resize-y text-sm",
+                                                      filingValidationWarning?.miscKeys.includes("nodeDelayRemarks") &&
+                                                      !nodeDelayRemarks.trim() &&
+                                                        "!border-red-500/60",
+                                                    )}
+                                                    disabled={loading !== null || isActiveStageBlocked}
+                                                    required={activeNodeDelayRemarksRequired}
+                                                  />
+                                                </div>
+                                              ) : null}
+
+                                              {isFinalFilingNode ? (
                                                 <div className="rounded-[18px] border border-outline-variant/35 bg-surface-container-low/35 p-4 text-sm text-on-surface-variant">
-                                                  Completing this node will finalize the Filing workflow and transition the job stage to <strong>FILED</strong>.
+                                                  Completing this node will finalize the filing workflow and transition the job stage to <strong>FILED</strong>.
                                                 </div>
                                               ) : null}
                                             </div>
@@ -8365,7 +9330,7 @@ export function JobWorkspaceClient({
                                         completedSteps={filingCompletedSteps}
                                         nextStageName={outgoingEdges.length > 0 ? nextWorkflowTargetLabel : null}
                                         isBlocked={isActiveStageBlocked}
-                                        isCompleting={loading === "complete-filing-node"}
+                                        isCompleting={loading === "filing-complete"}
                                         activeStatusLabel={filingBannerStatus.label}
                                         activeStatusDescription={filingBannerStatus.description}
                                       />
@@ -8374,9 +9339,15 @@ export function JobWorkspaceClient({
                                           <SlideToComplete
                                             key={activeNodeRun.id}
                                             disabled={loading !== null || isActiveStageBlocked}
-                                            text={outgoingEdges.length > 0 ? "Slide to complete this step" : "Slide to file customs bill"}
+                                            text={
+                                              isSkippingActiveOptionalNode
+                                                ? "Slide to skip this stage"
+                                                : !isFinalFilingNode
+                                                  ? "Slide to complete this step"
+                                                  : "Slide to mark job filed"
+                                            }
                                             helperText="Slide all the way to the right"
-                                            accessibleName={`Slide to complete ${activeNodeRun.node.name}`}
+                                            accessibleName={`Slide to ${isFinalFilingNode ? "mark job filed" : isSkippingActiveOptionalNode ? "skip" : "complete"} ${activeNodeRun.node.name}`}
                                             onComplete={completeActiveFilingNode}
                                           />
                                         </div>
@@ -8434,8 +9405,17 @@ export function JobWorkspaceClient({
                                           const reqAttachments = filingInstance.attachments?.filter(
                                             (a: any) => a.nodeRunId === activeNodeRun.id && a.photoRequirementId === pr.id
                                           ) || [];
+                                          const isMissingPhotoRequirement =
+                                            pr.isMandatory &&
+                                            reqAttachments.length < (pr.minPhotos || 1);
                                           return (
-                                            <div key={pr.id} className="p-4 rounded-2xl border border-dashed border-outline-variant/60 bg-surface space-y-3">
+                                            <div
+                                              key={pr.id}
+                                              className={cn(
+                                                "p-4 rounded-2xl border border-dashed border-outline-variant/60 bg-surface space-y-3",
+                                                isMissingPhotoRequirement && "animate-pulse-red !border-red-500/35",
+                                              )}
+                                            >
                                               <div>
                                                 <h5 className="text-xs font-semibold text-on-surface">
                                                   {pr.label} {pr.isMandatory && <span className="text-red-500 font-bold">*</span>}
@@ -8606,7 +9586,7 @@ export function JobWorkspaceClient({
                                   <div className="space-y-1">
                                     <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
                                       <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
-                                      <h4 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">Customs Filing Workflow Complete</h4>
+                                      <h4 className="ds-h3 text-on-surface">Customs Filing Workflow Complete</h4>
                                     </div>
                                     <Badge variant="success">Filed</Badge>
                                   </div>
@@ -8636,7 +9616,492 @@ export function JobWorkspaceClient({
                 </MilestoneCard>
               ) : null}
 
-              {/* 6. FILED */}
+              {/* 6. EXPENSES */}
+              {showExpenseStage ? (
+                <MilestoneCard
+                  stageKey="EXPENSES"
+                  isExpanded={expandedStageKey === "EXPENSES"}
+                  isSpotlit={stageFocusKey === "EXPENSES"}
+                  onToggle={handleMilestoneToggle}
+                  title="Expenses"
+                  description="Submit and manage expense disbursement requests for this job."
+                  isCompleted={false}
+                  isActive={activeTab === "expenses"}
+                  isLocked={false}
+                  percentage={0}
+                  validationState="Open"
+                  statusLabel="Open"
+                  assignedUser={job.assignedManager?.name || job.primaryOwner?.name || "Operations Team"}
+                  dueDate={null}
+                  completedAt={null}
+                  summary={null}
+                >
+                  <div className="grid gap-6 xl:grid-cols-[minmax(360px,0.95fr)_minmax(420px,1.05fr)] xl:gap-0">
+                    {canCreateExpenseRequests ? (
+                    <div className="space-y-4 bg-surface xl:pr-6">
+                      <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
+                        <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+                        <h4 className="ds-h3 text-on-surface">New Clearance Expense Request</h4>
+                      </div>
+
+                      <form onSubmit={handleCreateExpenseRequest} className="space-y-4">
+                        <div className="flex flex-col justify-between gap-4 rounded-xl border border-outline-variant/60 bg-surface p-4">
+                          <div className="flex items-start space-x-3">
+                            <NeonCheckbox
+                              checked={expenseUrgent}
+                              onChange={(e) => setExpenseUrgent(e.target.checked)}
+                              className="mt-1"
+                              label={
+                                <div>
+                                  <span className="block text-sm font-semibold text-on-surface">Escalate to URGENT Payment</span>
+                                  <span className="text-xs text-on-surface-variant">
+                                    Request accounts to disburse payment immediately to resolve critical port blocks.
+                                  </span>
+                                </div>
+                              }
+                            />
+                          </div>
+
+                          {expenseUrgent ? (
+                            <div className="max-w-md flex-1 space-y-1">
+                              <label className="ds-label block text-[#fb923c]">
+                                Urgency Explanation Justification (REQUIRED) *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. Demurrage free days end tomorrow"
+                                value={expenseUrgencyReason}
+                                onChange={(e) => setExpenseUrgencyReason(e.target.value)}
+                                className="w-full border-[#fb923c]/50 text-xs font-sans"
+                              />
+                            </div>
+                          ) : null}
+                        </div>
+
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <div className="space-y-1">
+                            <label className="ds-label">UPI Number</label>
+                            <input
+                              type="text"
+                              placeholder="Payee mobile number"
+                              value={expenseUpiNumber}
+                              onChange={(e) => setExpenseUpiNumber(e.target.value)}
+                              className="h-9 w-full text-xs"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="ds-label">UPI ID</label>
+                            <input
+                              type="text"
+                              placeholder="name@bank"
+                              value={expenseUpiId}
+                              onChange={(e) => setExpenseUpiId(e.target.value)}
+                              className="h-9 w-full text-xs"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/30 pb-2">
+                            <span className="ds-label">Expense Line Items</span>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={handleAddExpenseLine}
+                              className="flex items-center gap-1 border-[#00cec4] text-[#00cec4]"
+                            >
+                              <Plus size={12} /> Add Line Item
+                            </Button>
+                          </div>
+
+                          <div className="space-y-3">
+                            {expenseLines.map((line, index) => (
+                              <div key={index} className="grid grid-cols-1 items-end gap-3 border-b border-outline-variant/20 pb-3 md:grid-cols-2 md:border-b-0 md:pb-0">
+                                <div className="space-y-1">
+                                  <label className="ds-label">Category</label>
+                                  <NativeSelect
+                                    value={line.category}
+                                    onChange={(e) => handleExpenseLineChange(index, "category", e.target.value)}
+                                    className="h-9 w-full text-xs"
+                                  >
+                                    {expenseCategories.map((cat) => (
+                                      <option key={cat} value={cat}>
+                                        {cat}
+                                      </option>
+                                    ))}
+                                  </NativeSelect>
+                                </div>
+
+                                <div className="space-y-1">
+                                  <label className="ds-label">Purpose / Purpose *</label>
+                                  <input
+                                    type="text"
+                                    required
+                                    placeholder="Reason for payment"
+                                    value={line.purpose}
+                                    onChange={(e) => handleExpenseLineChange(index, "purpose", e.target.value)}
+                                    className="h-9 w-full text-xs"
+                                  />
+                                </div>
+
+                                <div className="space-y-1">
+                                  <label className="ds-label">Amount (Rs.) *</label>
+                                  <input
+                                    type="number"
+                                    required
+                                    placeholder="Amount"
+                                    value={line.amount}
+                                    onChange={(e) => handleExpenseLineChange(index, "amount", e.target.value)}
+                                    className="h-9 w-full text-xs font-mono ds-numeric"
+                                  />
+                                </div>
+
+                                <div className="space-y-1">
+                                  <label className="ds-label">Required Date</label>
+                                  <DateInput
+                                    value={line.requiredDate}
+                                    onChange={(e) => handleExpenseLineChange(index, "requiredDate", e.target.value)}
+                                    className="h-9 w-full text-xs"
+                                  />
+                                </div>
+
+                                <div className="md:col-span-2">
+                                  <FileUploadField
+                                    id={`job-expense-line-receipts-${index}`}
+                                    label="Line Receipt Attachments"
+                                    accept="image/*,application/pdf"
+                                    multiple
+                                    compact
+                                    triggerText="Drag and drop receipts, or choose files"
+                                    helperText="Optional. Add one or more receipts for this expense line."
+                                    selectedFiles={line.receiptFiles.map((file) => ({
+                                      file,
+                                      name: file.name,
+                                      sizeBytes: file.size,
+                                    }))}
+                                    onInputChange={(event) =>
+                                      setExpenseLines((current) =>
+                                        current.map((entry, lineIndex) =>
+                                          lineIndex === index
+                                            ? { ...entry, receiptFiles: Array.from(event.currentTarget.files || []) }
+                                            : entry,
+                                        ),
+                                      )
+                                    }
+                                    onClear={() =>
+                                      setExpenseLines((current) =>
+                                        current.map((entry, lineIndex) =>
+                                          lineIndex === index ? { ...entry, receiptFiles: [] } : entry,
+                                        ),
+                                      )
+                                    }
+                                    onRemoveSelectedFile={(_, fileIndex) =>
+                                      setExpenseLines((current) =>
+                                        current.map((entry, lineIndex) =>
+                                          lineIndex === index
+                                            ? {
+                                                ...entry,
+                                                receiptFiles: entry.receiptFiles.filter((__, receiptIndex) => receiptIndex !== fileIndex),
+                                              }
+                                            : entry,
+                                        ),
+                                      )
+                                    }
+                                  />
+                                </div>
+
+                                {expenseLines.length > 1 ? (
+                                  <div className="flex items-center justify-end md:col-span-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveExpenseLine(index)}
+                                      className="p-1.5 text-red-500 hover:text-red-700"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end pt-2">
+                          <Button type="submit" disabled={loading !== null}>
+                            Dispatch Expense Request
+                          </Button>
+                        </div>
+                      </form>
+                    </div>
+                    ) : (
+                      <div className="bg-surface xl:pr-6">
+                        <p className="text-sm font-medium text-on-surface">Expense records are view-only for your role.</p>
+                        <p className="mt-1 text-xs text-on-surface-variant">
+                          You can track status, line items, payout details, and approval history after the filing stage is complete.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="space-y-4 bg-surface xl:border-l xl:border-outline-variant/50 xl:pl-6">
+                      <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
+                        <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+                        <h4 className="ds-h3 text-on-surface">Expenses Queue</h4>
+                      </div>
+
+                      {job.expenseRequests?.length === 0 ? (
+                        <p className="text-xs italic text-on-surface-variant">No expenses requested for this job clearance.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {job.expenseRequests.map((request: any) => {
+                            const amount = request.lines.reduce((total: number, line: any) => total + Number(line.amount), 0);
+                            const canReviewThisExpense =
+                              canReviewExpenseRequests &&
+                              String(request.status) === "UNDER_REVIEW";
+                            const canClarifyThisExpense =
+                              request.requestedById === currentUserId && String(request.status) === "CLARIFICATION_REQUIRED";
+                            const canMarkReadyThisExpense =
+                              canProcessExpensePayments && String(request.status) === "APPROVED";
+                            const canPayThisExpense =
+                              canProcessExpensePayments &&
+                              ["APPROVED", "READY_FOR_DISBURSEMENT"].includes(String(request.status));
+                            return (
+                              <div key={request.id} className="space-y-3 rounded-xl border border-outline-variant/45 bg-surface p-4">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <div>
+                                    <p className="text-sm font-medium text-on-surface ds-numeric">Rs. {amount.toLocaleString("en-IN")}</p>
+                                    <p className="mt-0.5 text-xs text-on-surface-variant">
+                                      Ref: {request.id} - Requested by {request.requestedBy?.name || "Team Member"}
+                                    </p>
+                                  </div>
+                                  <Badge variant="secondary">{String(request.status || "SUBMITTED").replace(/_/g, " ")}</Badge>
+                                </div>
+                                <div className="grid gap-2 md:grid-cols-2">
+                                  {request.lines.map((line: any) => (
+                                    <div key={line.id} className="rounded-lg border border-outline-variant/35 bg-surface-container-low p-3">
+                                      <p className="ds-label">{line.category}</p>
+                                      <p className="mt-1 text-xs text-on-surface">{line.purpose}</p>
+                                      <p className="mt-2 text-xs text-on-surface-variant ds-numeric">
+                                        Rs. {Number(line.amount).toLocaleString("en-IN")} due {new Date(line.requiredDate).toLocaleDateString("en-IN")}
+                                      </p>
+                                      {getReceiptLinks(line.supportingDocumentKey).length ? (
+                                        <div className="mt-2 flex flex-wrap gap-2">
+                                          {getReceiptLinks(line.supportingDocumentKey).map((receiptLink, receiptIndex) => (
+                                            <a
+                                              key={`${receiptLink}-${receiptIndex}`}
+                                              href={receiptLink}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="inline-flex text-xs font-medium text-[#00cec4] hover:underline"
+                                            >
+                                              Receipt {receiptIndex + 1}
+                                            </a>
+                                          ))}
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  ))}
+                                </div>
+                                {request.upiNumber || request.upiId ? (
+                                  <div className="grid gap-2 rounded-lg border border-outline-variant/35 bg-surface p-3 md:grid-cols-2">
+                                    {request.upiNumber ? (
+                                      <div>
+                                        <p className="ds-label">UPI Number</p>
+                                        <p className="mt-1 text-xs text-on-surface ds-numeric">{request.upiNumber}</p>
+                                      </div>
+                                    ) : null}
+                                    {request.upiId ? (
+                                      <div>
+                                        <p className="ds-label">UPI ID</p>
+                                        <p className="mt-1 text-xs text-on-surface">{request.upiId}</p>
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                ) : null}
+                                {request.payments?.length ? (
+                                  <div className="rounded-lg border border-green-600/20 bg-green-600/10 p-3 text-xs text-on-surface">
+                                    {request.payments.map((payment: any) => (
+                                      <div key={payment.id}>
+                                        <p>
+                                          Processed Rs. {Number(payment.amountPaid).toLocaleString("en-IN")} via {payment.paymentMethod}
+                                          {payment.transactionReference ? ` (${payment.transactionReference})` : ""}.
+                                        </p>
+                                        {getPaymentProofLinks(payment.paymentProofKey).length ? (
+                                          <div className="mt-1 flex flex-wrap gap-2">
+                                            {getPaymentProofLinks(payment.paymentProofKey).map((proofLink, index) => (
+                                              <a
+                                                key={`${proofLink}-${index}`}
+                                                href={proofLink}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex text-xs font-medium text-[#00cec4] hover:underline"
+                                              >
+                                                View payment proof {index + 1}
+                                              </a>
+                                            ))}
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : null}
+                                {request.statusHistory?.length ? (
+                                  <div className="space-y-1 border-t border-outline-variant/30 pt-3">
+                                    <p className="ds-label">Approval History</p>
+                                    {request.statusHistory.slice(0, 4).map((entry: any) => (
+                                      <p key={entry.id} className="text-xs text-on-surface-variant">
+                                        {String(entry.status).replace(/_/g, " ")} - {entry.remarks || "No remarks"} -{" "}
+                                        {new Date(entry.createdAt).toLocaleString("en-IN")}
+                                      </p>
+                                    ))}
+                                  </div>
+                                ) : null}
+                                {expReviewId === request.id ? (
+                                  <div className="grid gap-2 rounded-lg border border-outline-variant/45 bg-surface p-3 md:grid-cols-[minmax(0,1fr)_auto]">
+                                    <input
+                                      type="text"
+                                      value={expReviewRemarks}
+                                      onChange={(e) => setExpReviewRemarks(e.target.value)}
+                                      placeholder={expReviewStatus === "REJECTED" ? "Rejection reason" : "Clarification required"}
+                                      className="text-xs"
+                                    />
+                                    <Button size="sm" variant={expReviewStatus === "REJECTED" ? "destructive" : "default"} onClick={() => handleExpenseReview(request.id, expReviewStatus as "CLARIFICATION_REQUIRED" | "APPROVED" | "REJECTED", expReviewRemarks)} disabled={loading !== null}>
+                                      Submit Decision
+                                    </Button>
+                                  </div>
+                                ) : null}
+                                {expenseClarificationId === request.id ? (
+                                  <div className="grid gap-2 rounded-lg border border-outline-variant/45 bg-surface p-3 md:grid-cols-[minmax(0,1fr)_auto]">
+                                    <input
+                                      type="text"
+                                      value={expenseClarificationText}
+                                      onChange={(e) => setExpenseClarificationText(e.target.value)}
+                                      placeholder="Enter clarification response"
+                                      className="text-xs"
+                                    />
+                                    <Button size="sm" onClick={handleExpenseClarification} disabled={loading !== null}>
+                                      Submit Clarification
+                                    </Button>
+                                  </div>
+                                ) : null}
+                                {payRequestId === request.id ? (
+                                  <form onSubmit={handlePostExpensePayment} className="grid gap-2 rounded-lg border border-outline-variant/45 bg-surface p-3 md:grid-cols-6">
+                                    <input
+                                      type="number"
+                                      required
+                                      value={payAmount}
+                                      onChange={(e) => setPayAmount(e.target.value)}
+                                      placeholder="Amount paid"
+                                      className="h-10 text-xs ds-numeric"
+                                    />
+                                    <DateInput required value={payDate} onChange={(e) => setPayDate(e.target.value)} className="h-10 text-xs" />
+                                    <NativeSelect
+                                      value={payMethod}
+                                      onChange={(e) => setPayMethod(e.target.value)}
+                                      className="h-10 text-xs"
+                                    >
+                                      <option value="BANK_TRANSFER">Bank Transfer IMPS</option>
+                                      <option value="NEFT">NEFT / RTGS</option>
+                                      <option value="UPI">UPI</option>
+                                      <option value="CASH">Cash Drawer</option>
+                                    </NativeSelect>
+                                    <input
+                                      type="text"
+                                      required
+                                      value={payRef}
+                                      onChange={(e) => setPayRef(e.target.value)}
+                                      placeholder="Transaction reference"
+                                      className="h-10 text-xs"
+                                    />
+                                    <FileUploadField
+                                      id={`workspace-payment-proof-inline-${request.id}`}
+                                      accept="image/*,application/pdf"
+                                      multiple
+                                      compact
+                                      triggerText="Drag and drop payment proofs, or choose files"
+                                      helperText="Images and PDFs accepted. Multiple files can be selected together."
+                                      selectedFiles={payProofFiles.map((file) => ({
+                                        file,
+                                        name: file.name,
+                                        sizeBytes: file.size,
+                                      }))}
+                                      uploading={loading === `pay-${request.id}`}
+                                      onInputChange={(event) => setPayProofFiles(Array.from(event.currentTarget.files || []))}
+                                      onClear={() => setPayProofFiles([])}
+                                      onRemoveSelectedFile={(_, index) =>
+                                        setPayProofFiles((current) => current.filter((__, fileIndex) => fileIndex !== index))
+                                      }
+                                    />
+                                    <Button type="submit" size="sm" disabled={loading !== null}>
+                                      Confirm Disbursement
+                                    </Button>
+                                  </form>
+                                ) : null}
+                                {canReviewThisExpense || canClarifyThisExpense || canMarkReadyThisExpense || canPayThisExpense ? (
+                                  <div className="flex flex-wrap justify-end gap-2 border-t border-outline-variant/30 pt-3">
+                                    {canReviewThisExpense ? (
+                                      <>
+                                        <Button type="button" variant="outline" size="sm" onClick={() => {
+                                          setExpReviewId(request.id);
+                                          setExpReviewStatus("CLARIFICATION_REQUIRED");
+                                          setExpReviewRemarks("");
+                                        }}>
+                                          Require Clarification
+                                        </Button>
+                                        <Button type="button" variant="destructive" size="sm" onClick={() => {
+                                          setExpReviewId(request.id);
+                                          setExpReviewStatus("REJECTED");
+                                          setExpReviewRemarks("");
+                                        }}>
+                                          Reject
+                                        </Button>
+                                        <Button type="button" size="sm" onClick={() => handleExpenseReview(request.id, "APPROVED", "")} disabled={loading !== null}>
+                                          Approve
+                                        </Button>
+                                      </>
+                                    ) : null}
+                                    {canClarifyThisExpense ? (
+                                      <Button type="button" variant="outline" size="sm" onClick={() => {
+                                        setExpenseClarificationId(request.id);
+                                        setExpenseClarificationText(request.clarificationResponse || "");
+                                      }}>
+                                        Submit Clarification
+                                      </Button>
+                                    ) : null}
+                                    {canMarkReadyThisExpense ? (
+                                      <Button type="button" variant="outline" size="sm" onClick={() => handleReadyForExpenseDisbursement(request.id)} disabled={loading !== null}>
+                                        Ready for Disbursement
+                                      </Button>
+                                    ) : null}
+                                    {canPayThisExpense ? (
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        onClick={() => {
+                                          setPayRequestId(request.id);
+                                          setPayAmount(String(amount));
+                                          setPayDate(new Date().toISOString().slice(0, 10));
+                                          setPayRef("");
+                                          setPayProofFiles([]);
+                                        }}
+                                      >
+                                        Process Payment
+                                      </Button>
+                                    ) : null}
+                                  </div>
+                                ) : null}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </MilestoneCard>
+              ) : null}
+
+              {/* 7. FILED */}
               {showFiledStage ? (
                 <MilestoneCard
                   stageKey="FILED"
@@ -8646,7 +10111,7 @@ export function JobWorkspaceClient({
                   title="Filed / Complete"
                   description="The customs clearance filing process is completed."
                   isCompleted={activeStepIndex >= 5}
-                  isActive={activeStepIndex === 5}
+                  isActive={false}
                   isLocked={activeStepIndex < 5}
                   percentage={filedPercentage}
                   validationState={filedValidationState}
@@ -8664,7 +10129,7 @@ export function JobWorkspaceClient({
                       <div className="space-y-1">
                         <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
                           <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
-                          <h4 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">Customs Filing Complete</h4>
+                          <h4 className="ds-h3 text-on-surface">Customs Filing Complete</h4>
                         </div>
                         <Badge variant="success">Filed</Badge>
                       </div>
@@ -8685,17 +10150,17 @@ export function JobWorkspaceClient({
             >
 
               {activeTab === "overview" && (
-                <div className="space-y-6">
-                  <div style={overviewThemeVars} className="grid items-stretch gap-4 xl:grid-cols-3">
-                    <section className="h-full rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
-                      <div className="flex items-center justify-between gap-3 border-b border-[var(--cha-overview-line)] pb-4 dark:border-[var(--cha-overview-line-dark)]">
+                <div id="workflow-stage-overview" className="scroll-mt-32 space-y-6">
+                  <div className="grid items-stretch gap-4 xl:grid-cols-3">
+                    <section className="ds-section-panel h-full p-5">
+                      <div className="ds-section-panel-header flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
+                          <span className="ds-icon-badge">
                             <Package size={16} />
                           </span>
                           <div className="space-y-0.5">
-                            <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Job Summary</h3>
-                            <p className="text-xs text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">Key shipment and clearance details for this job.</p>
+                            <h3 className="ds-h3 text-on-surface">Job Summary</h3>
+                            <p className="text-xs text-on-surface-variant">Key shipment and clearance details for this job.</p>
                           </div>
                         </div>
                         <Button type="button" variant="outline" size="sm" onClick={() => navigateToWorkspaceTab("additionalData")}>
@@ -8706,12 +10171,12 @@ export function JobWorkspaceClient({
                         {overviewSummaryItems.map((item) => (
                           <div key={item.label} className="px-3 py-3">
                             <div className="flex items-start gap-3">
-                              <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--cha-overview-primary)] dark:bg-[rgba(30,41,59,0.9)] dark:text-[var(--cha-overview-primary-dark)]">
+                              <span className="ds-icon-badge !size-8">
                                 {item.icon}
                               </span>
                               <div className="min-w-0">
-                                <p className="ds-label text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{item.label}</p>
-                                <p className={cn("mt-1 text-sm text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]", item.numeric && "ds-numeric")}>{item.value}</p>
+                                <p className="ds-label">{item.label}</p>
+                                <p className={cn("mt-1 text-sm text-on-surface", item.numeric && "ds-numeric")}>{item.value}</p>
                               </div>
                             </div>
                           </div>
@@ -8719,26 +10184,26 @@ export function JobWorkspaceClient({
                       </div>
                     </section>
 
-                    <section className="h-full rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
-                      <div className="flex items-center gap-3 border-b border-[var(--cha-overview-line)] pb-4 dark:border-[var(--cha-overview-line-dark)]">
-                        <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
+                    <section className="ds-section-panel h-full p-5">
+                      <div className="ds-section-panel-header flex items-center gap-3">
+                        <span className="ds-icon-badge">
                           <CalendarDays size={16} />
                         </span>
                         <div className="space-y-0.5">
-                          <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Important Dates</h3>
-                          <p className="text-xs text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">Validity and deadline signals for this shipment.</p>
+                          <h3 className="ds-h3 text-on-surface">Important Dates</h3>
+                          <p className="text-xs text-on-surface-variant">Validity and deadline signals for this shipment.</p>
                         </div>
                       </div>
                       <div className="mt-4 space-y-3">
                         {overviewDateItems.map((item) => (
-                          <div key={item.label} className="flex items-center justify-between gap-3 rounded-[18px] bg-[var(--cha-overview-card)] px-3 py-3 dark:bg-[var(--cha-overview-card-alt-dark)]">
+                          <div key={item.label} className="ds-inset-row flex items-center justify-between gap-3 px-3 py-3">
                             <div className="flex min-w-0 items-center gap-3">
-                              <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
+                              <span className="ds-icon-badge !size-8">
                                 {item.icon}
                               </span>
                               <div className="min-w-0">
-                                <p className="ds-label text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{item.label}</p>
-                                <p className="mt-1 text-sm ds-numeric text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{item.value}</p>
+                                <p className="ds-label">{item.label}</p>
+                                <p className="ds-numeric mt-1 text-sm text-on-surface">{item.value}</p>
                               </div>
                             </div>
                             <span
@@ -8760,29 +10225,29 @@ export function JobWorkspaceClient({
                       </div>
                     </section>
 
-                    <section className="h-full rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
-                      <div className="flex items-center gap-3 border-b border-[var(--cha-overview-line)] pb-4 dark:border-[var(--cha-overview-line-dark)]">
-                        <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
+                    <section className="ds-section-panel h-full p-5">
+                      <div className="ds-section-panel-header flex items-center gap-3">
+                        <span className="ds-icon-badge">
                           <Zap size={16} />
                         </span>
                         <div className="space-y-0.5">
-                          <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Quick Actions</h3>
-                          <p className="text-xs text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">Common job actions and workspace shortcuts.</p>
+                          <h3 className="ds-h3 text-on-surface">Quick Actions</h3>
+                          <p className="text-xs text-on-surface-variant">Common job actions and workspace shortcuts.</p>
                         </div>
                       </div>
                       <div className="mt-4 grid gap-3">
                         {workspaceQuickActions.map((action) => (
                           <div
                             key={action.label}
-                            className="flex min-h-[76px] items-center justify-between gap-3 rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] px-3 py-2 text-left shadow-[0_12px_28px_-24px_rgba(15,23,42,0.18)] transition hover:-translate-y-px hover:border-[var(--cha-overview-primary)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-alt-dark)] dark:hover:border-[var(--cha-overview-primary-dark)]"
+                            className="ds-action-row flex min-h-[76px] items-center justify-between gap-3 px-3 py-2 text-left"
                           >
                             <div className="flex min-w-0 items-center gap-3">
-                              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
+                              <span className="ds-icon-badge">
                                 {action.icon}
                               </span>
                               <div className="min-w-0">
-                                <p className="text-sm text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{action.label}</p>
-                                <p className="mt-1 text-xs text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{action.note}</p>
+                                <p className="text-sm text-on-surface">{action.label}</p>
+                                <p className="mt-1 text-xs text-on-surface-variant">{action.note}</p>
                               </div>
                             </div>
                             <Button
@@ -8801,13 +10266,13 @@ export function JobWorkspaceClient({
                     </section>
                   </div>
 
-                  <section style={overviewThemeVars} className="rounded-xl border border-[var(--cha-overview-line)] bg-[var(--cha-overview-card)] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)] dark:border-[var(--cha-overview-line-dark)] dark:bg-[var(--cha-overview-card-dark)]">
-                    <div className="flex flex-col gap-3 border-b border-[var(--cha-overview-line)] pb-4 dark:border-[var(--cha-overview-line-dark)] sm:flex-row sm:items-center sm:justify-between">
+                  <section className="ds-section-panel p-5">
+                    <div className="ds-section-panel-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-3">
-                        <span className="flex size-10 items-center justify-center rounded-[14px] bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]">
+                        <span className="ds-icon-badge">
                           <History size={16} />
                         </span>
-                        <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">Recent Activity</h3>
+                        <h3 className="ds-h3 text-on-surface">Recent Activity</h3>
                       </div>
                       <Button type="button" variant="outline" onClick={() => navigateToWorkspaceTab("audit")}>
                         View All Activity
@@ -8815,7 +10280,7 @@ export function JobWorkspaceClient({
                     </div>
                     <div className="mt-4 overflow-hidden rounded-[20px]">
                       {overviewRecentLogs.length === 0 ? (
-                        <div className="px-4 py-6 text-sm text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">
+                        <div className="px-4 py-6 text-sm text-on-surface-variant">
                           No recent job activity has been recorded yet.
                         </div>
                       ) : (
@@ -8827,21 +10292,21 @@ export function JobWorkspaceClient({
                                   "flex size-8 shrink-0 items-center justify-center rounded-full",
                                   String(log.event || "").includes("QUERY") || String(log.event || "").includes("query")
                                     ? "bg-[#fb923c]/12 text-[#fb923c]"
-                                    : "bg-[var(--cha-overview-soft)] text-[var(--cha-overview-primary)] dark:bg-[rgba(96,165,250,0.12)] dark:text-[var(--cha-overview-primary-dark)]",
+                                    : "bg-[#00cec4]/10 text-[#00cec4]",
                                 )}>
                                   {String(log.event || "").includes("QUERY") || String(log.event || "").includes("query") ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
                                 </span>
-                                <p className="ds-label text-[var(--cha-overview-text)] dark:text-[var(--cha-overview-text-dark)]">{String(log.event || "Activity").replace(/_/g, " ")}</p>
+                                <p className="ds-label text-on-surface">{String(log.event || "Activity").replace(/_/g, " ")}</p>
                               </div>
-                              <p className="text-sm text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">{log.remarks || "Operational update recorded for this job."}</p>
-                              <p className="text-sm ds-numeric text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">
+                              <p className="text-sm text-on-surface-variant">{log.remarks || "Operational update recorded for this job."}</p>
+                              <p className="ds-numeric text-sm text-on-surface-variant">
                                 {log.timestamp ? new Date(log.timestamp).toLocaleDateString("en-IN") : "Not available"}
                               </p>
-                              <p className="text-sm ds-numeric text-[var(--cha-overview-text-muted)] dark:text-[var(--cha-overview-text-muted-dark)]">
+                              <p className="ds-numeric text-sm text-on-surface-variant">
                                 {log.timestamp ? new Date(log.timestamp).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : ""}
                               </p>
                               <div className="flex items-center justify-between gap-2 md:justify-end">
-                                <span className="inline-flex rounded-full bg-[var(--cha-overview-soft)] px-2.5 py-1 text-xs font-medium text-[var(--cha-overview-text-muted)] dark:bg-[rgba(30,41,59,0.9)] dark:text-[var(--cha-overview-text-muted-dark)]">
+                                <span className="inline-flex rounded-full bg-surface-container-low px-2.5 py-1 text-xs font-medium text-on-surface-variant">
                                   {log.actor?.name || "System"}
                                 </span>
                                 <span className="size-2 rounded-full bg-green-500" />
@@ -8861,7 +10326,7 @@ export function JobWorkspaceClient({
                   <div className="flex items-center justify-between">
                     <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
                       <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
-                      <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">Client Advance Collections</h3>
+                      <h3 className="ds-h3 text-on-surface">Client Advance Collections</h3>
                     </div>
                     <span className={`text-xs font-bold uppercase tracking-wider ${job.customerAdvance.status === "FULLY_RECEIVED" ? "text-green-600" : "text-[#fb923c]"
                       }`}>
@@ -8876,7 +10341,7 @@ export function JobWorkspaceClient({
                         <span className="ds-label block text-on-surface">Billing expected terms</span>
 
                         <div className="space-y-1">
-                          <label className="ds-label block">Expected Advance Amount (â‚¹) *</label>
+                          <label className="ds-label block">Expected Advance Amount (Rs.) *</label>
                           <input
                             type="number"
                             value={expectedAdvance}
@@ -8896,7 +10361,7 @@ export function JobWorkspaceClient({
 
                         <div className="space-y-1">
                           <label className="ds-label block">Assigned Collections Agent</label>
-                          <select
+                          <NativeSelect
                             value={advanceAssigneeId}
                             onChange={(e) => setAdvanceAssigneeId(e.target.value)}
                             className="w-full text-xs"
@@ -8907,7 +10372,7 @@ export function JobWorkspaceClient({
                                 {u.name}
                               </option>
                             ))}
-                          </select>
+                          </NativeSelect>
                         </div>
 
                         <div className="flex gap-2">
@@ -8956,7 +10421,7 @@ export function JobWorkspaceClient({
 
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
-                              <label className="ds-label block">Amount Paid (â‚¹) *</label>
+                              <label className="ds-label block">Amount Paid (Rs.) *</label>
                               <input
                                 type="number"
                                 required
@@ -8979,16 +10444,17 @@ export function JobWorkspaceClient({
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
                               <label className="ds-label block">Payment Method *</label>
-                              <select
+                              <NativeSelect
                                 value={receiptMethod}
                                 onChange={(e) => setReceiptMethod(e.target.value)}
                                 className="w-full text-xs"
                               >
                                 <option value="NEFT">NEFT / RTGS</option>
                                 <option value="BANK_TRANSFER">Bank IMPS</option>
+                                <option value="UPI">UPI</option>
                                 <option value="CASH">Cash</option>
                                 <option value="CHEQUE">Cheque</option>
-                              </select>
+                              </NativeSelect>
                             </div>
                             <div className="space-y-1">
                               <label className="ds-label block">Txn Reference Ref</label>
@@ -9029,9 +10495,9 @@ export function JobWorkspaceClient({
                             {job.customerAdvance.receipts.map((r: any) => (
                               <div key={r.id} className="p-3 bg-surface-container-low border border-outline-variant/40 rounded-2xl flex items-center justify-between text-xs">
                                 <div>
-                                  <span className="font-bold text-[#00cec4] block">â‚¹{Number(r.amount).toLocaleString("en-IN")}</span>
+                                  <span className="font-bold text-[#00cec4] block">Rs. {Number(r.amount).toLocaleString("en-IN")}</span>
                                   <span className="text-[10px] text-on-surface-variant block uppercase mt-0.5">
-                                    {r.paymentMethod} â€¢ Ref: {r.referenceNumber || "â€”"}
+                                    {r.paymentMethod} - Ref: {r.referenceNumber || "-"}
                                   </span>
                                 </div>
                                 <span className="text-[10px] text-on-surface-variant font-mono">
@@ -9051,10 +10517,10 @@ export function JobWorkspaceClient({
               {activeTab === "expenses" && (
                 <div className="space-y-4">
                   {/* Create expense request */}
-                  <div className="border border-outline-variant p-4 rounded-xl space-y-4 bg-surface-container-low">
+                  <div className="space-y-4 rounded-xl border border-outline-variant bg-surface p-4">
                     <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
                       <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
-                      <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">New Clearance Expense Request</h3>
+                      <h3 className="ds-h3 text-on-surface">New Clearance Expense Request</h3>
                     </div>
 
                     <form onSubmit={handleCreateExpenseRequest} className="space-y-4">
@@ -9093,6 +10559,29 @@ export function JobWorkspaceClient({
                         )}
                       </div>
 
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <div className="space-y-1">
+                          <label className="ds-label">UPI Number</label>
+                          <input
+                            type="text"
+                            placeholder="Payee mobile number"
+                            value={expenseUpiNumber}
+                            onChange={(e) => setExpenseUpiNumber(e.target.value)}
+                            className="h-9 w-full text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="ds-label">UPI ID</label>
+                          <input
+                            type="text"
+                            placeholder="name@bank"
+                            value={expenseUpiId}
+                            onChange={(e) => setExpenseUpiId(e.target.value)}
+                            className="h-9 w-full text-xs"
+                          />
+                        </div>
+                      </div>
+
                       {/* Multi-lines lists */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between border-b border-outline-variant/30 pb-2">
@@ -9114,7 +10603,7 @@ export function JobWorkspaceClient({
                               {/* category */}
                               <div className="space-y-1 md:col-span-1">
                                 <label className="ds-label">Category</label>
-                                <select
+                                <NativeSelect
                                   value={line.category}
                                   onChange={(e) => handleExpenseLineChange(index, "category", e.target.value)}
                                   className="w-full text-xs h-9"
@@ -9124,7 +10613,7 @@ export function JobWorkspaceClient({
                                       {cat}
                                     </option>
                                   ))}
-                                </select>
+                                </NativeSelect>
                               </div>
 
                               {/* Purpose */}
@@ -9142,7 +10631,7 @@ export function JobWorkspaceClient({
 
                               {/* Amount */}
                               <div className="space-y-1 md:col-span-1">
-                                <label className="ds-label">Amount (â‚¹) *</label>
+                                <label className="ds-label">Amount (Rs.) *</label>
                                 <input
                                   type="number"
                                   required
@@ -9163,9 +10652,53 @@ export function JobWorkspaceClient({
                                 />
                               </div>
 
-                              {/* Actions */}
-                              <div className="flex justify-end h-9 items-center col-span-1">
-                                {expenseLines.length > 1 && (
+                              <div className={expenseLines.length > 1 ? "md:col-span-5" : "md:col-span-6"}>
+                                <FileUploadField
+                                  id={`job-expense-inline-line-receipts-${index}`}
+                                  label="Line Receipt Attachments"
+                                  accept="image/*,application/pdf"
+                                  multiple
+                                  compact
+                                  triggerText="Drag and drop receipts, or choose files"
+                                  helperText="Optional. Add one or more receipts for this expense line."
+                                  selectedFiles={line.receiptFiles.map((file) => ({
+                                    file,
+                                    name: file.name,
+                                    sizeBytes: file.size,
+                                  }))}
+                                  onInputChange={(event) =>
+                                    setExpenseLines((current) =>
+                                      current.map((entry, lineIndex) =>
+                                        lineIndex === index
+                                          ? { ...entry, receiptFiles: Array.from(event.currentTarget.files || []) }
+                                          : entry,
+                                      ),
+                                    )
+                                  }
+                                  onClear={() =>
+                                    setExpenseLines((current) =>
+                                      current.map((entry, lineIndex) =>
+                                        lineIndex === index ? { ...entry, receiptFiles: [] } : entry,
+                                      ),
+                                    )
+                                  }
+                                  onRemoveSelectedFile={(_, fileIndex) =>
+                                    setExpenseLines((current) =>
+                                      current.map((entry, lineIndex) =>
+                                        lineIndex === index
+                                          ? {
+                                              ...entry,
+                                              receiptFiles: entry.receiptFiles.filter((__, receiptIndex) => receiptIndex !== fileIndex),
+                                            }
+                                          : entry,
+                                      ),
+                                    )
+                                  }
+                                />
+                              </div>
+
+                              {expenseLines.length > 1 ? (
+                                <div className="flex items-center justify-end col-span-1">
                                   <button
                                     type="button"
                                     onClick={() => handleRemoveExpenseLine(index)}
@@ -9173,8 +10706,8 @@ export function JobWorkspaceClient({
                                   >
                                     <Trash2 size={16} />
                                   </button>
-                                )}
-                              </div>
+                                </div>
+                              ) : null}
                             </div>
                           ))}
                         </div>
@@ -9192,7 +10725,7 @@ export function JobWorkspaceClient({
                   <div className="space-y-4">
                     <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3 border-b border-outline-variant/30 pb-2">
                       <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
-                      <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">Expenses Queue</h3>
+                      <h3 className="ds-h3 text-on-surface">Expenses Queue</h3>
                     </div>
 
                     {job.expenseRequests?.length === 0 ? (
@@ -9204,32 +10737,55 @@ export function JobWorkspaceClient({
                           const isAck = req.status === "RECEIPT_ACKNOWLEDGED";
                           const isQuery = req.status === "QUERY_RAISED";
                           const sum = req.lines.reduce((tot: number, l: any) => tot + Number(l.amount), 0);
+                          const canReviewThisExpense = canReviewExpenseRequests && req.status === "UNDER_REVIEW";
+                          const canClarifyThisExpense = req.requestedById === currentUserId && req.status === "CLARIFICATION_REQUIRED";
+                          const canMarkReadyThisExpense = canProcessExpensePayments && req.status === "APPROVED";
+                          const canPayThisExpense = canProcessExpensePayments && ["APPROVED", "READY_FOR_DISBURSEMENT"].includes(req.status);
+                          const isExpanded = expandedJobExpenseId === req.id;
 
                           return (
                             <div
                               key={req.id}
-                              className={`p-4 rounded-2xl border space-y-4 transition-all ${req.isUrgent
+                              className={`overflow-hidden rounded-xl border bg-surface transition-all ${req.isUrgent
                                   ? "border-red-200 bg-red-50/5"
                                   : "border-outline-variant"
                                 }`}
                             >
                               {/* Title Bar */}
-                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-outline-variant/20 pb-3">
-                                <div>
-                                  <span className="text-xs text-on-surface-variant block">
-                                    Ref: {req.id} â€¢ Requested by: <strong>{req.requestedBy?.name}</strong>
+                              <div className="grid gap-3 bg-surface px-4 py-3 md:grid-cols-[minmax(0,1.3fr)_110px_110px_auto] md:items-center">
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedJobExpenseId(isExpanded ? null : req.id)}
+                                  className="ds-plain flex min-w-0 items-start gap-3 text-left"
+                                >
+                                  <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border border-outline-variant/45 bg-surface text-on-surface-variant">
+                                    <ChevronDown size={15} className={`transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                                   </span>
-                                  <span className="text-lg text-[#00cec4] block mt-1 ds-numeric">
-                                    â‚¹{sum.toLocaleString("en-IN")}{" "}
+                                  <span className="min-w-0">
+                                    <span className="block truncate text-xs text-on-surface-variant">
+                                      Ref: {req.id}
+                                    </span>
+                                    <span className="mt-0.5 block truncate text-sm font-medium text-on-surface">
+                                      {req.lines[0]?.category || "Expense"} • {req.lines.length} line{req.lines.length === 1 ? "" : "s"}
+                                    </span>
+                                    <span className="mt-0.5 block truncate text-xs text-on-surface-variant">
+                                      Requested by {req.requestedBy?.name || "Team Member"}
+                                    </span>
                                     {req.isUrgent && (
-                                      <span className="text-[10px] px-2 py-0.5 rounded bg-red-100 text-red-700 border border-red-200 ml-2">
+                                      <span className="mt-1 inline-flex rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] uppercase text-red-500">
                                         URGENT
                                       </span>
                                     )}
                                   </span>
+                                </button>
+
+                                <div className="flex items-center justify-between gap-2 md:block">
+                                  <span className="ds-label md:hidden">Amount</span>
+                                  <span className="text-sm text-[#00cec4] ds-numeric">Rs. {sum.toLocaleString("en-IN")}</span>
                                 </div>
 
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center justify-between gap-2 md:block md:text-center">
+                                  <span className="ds-label md:hidden">Status</span>
                                   <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${isAck
                                       ? "bg-green-100 text-green-700"
                                       : isPaid
@@ -9240,9 +10796,11 @@ export function JobWorkspaceClient({
                                     }`}>
                                     Status: {req.status.replace(/_/g, " ")}
                                   </span>
+                                </div>
 
+                                <div className="flex flex-wrap items-center justify-end gap-2">
                                   {/* Escalation button */}
-                                  {req.status === "SUBMITTED" && (
+                                  {req.status === "UNDER_REVIEW" && !req.isUrgent && (
                                     <Button
                                       size="sm"
                                       variant="outline"
@@ -9257,17 +10815,53 @@ export function JobWorkspaceClient({
                                 </div>
                               </div>
 
+                              {isExpanded ? (
+                              <div className="space-y-4 border-t border-outline-variant/25 p-4">
                               {/* Lines lists */}
                               <div className="space-y-1.5 pl-2 border-l border-outline-variant/40">
                                 {req.lines.map((l: any) => (
-                                  <div key={l.id} className="text-xs flex justify-between">
-                                    <span className="text-on-surface">
-                                      <strong className="text-on-surface-variant uppercase">{l.category}</strong>: {l.purpose}
-                                    </span>
-                                    <span className="font-mono ds-numeric text-on-surface-variant">â‚¹{Number(l.amount).toLocaleString("en-IN")}</span>
+                                  <div key={l.id} className="flex flex-col gap-1 text-xs md:flex-row md:items-center md:justify-between">
+                                    <div>
+                                      <span className="text-on-surface">
+                                        <strong className="text-on-surface-variant uppercase">{l.category}</strong>: {l.purpose}
+                                      </span>
+                                      {getReceiptLinks(l.supportingDocumentKey).length ? (
+                                        <span className="ml-0 inline-flex flex-wrap gap-2 md:ml-2">
+                                          {getReceiptLinks(l.supportingDocumentKey).map((receiptLink, receiptIndex) => (
+                                            <a
+                                              key={`${receiptLink}-${receiptIndex}`}
+                                              href={receiptLink}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="font-medium text-[#00cec4] hover:underline"
+                                            >
+                                              Receipt {receiptIndex + 1}
+                                            </a>
+                                          ))}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                    <span className="font-mono ds-numeric text-on-surface-variant">Rs. {Number(l.amount).toLocaleString("en-IN")}</span>
                                   </div>
                                 ))}
                               </div>
+
+                              {req.upiNumber || req.upiId ? (
+                                <div className="grid gap-2 rounded-lg border border-outline-variant/35 bg-surface p-3 md:grid-cols-2">
+                                  {req.upiNumber ? (
+                                    <div>
+                                      <p className="ds-label">UPI Number</p>
+                                      <p className="mt-1 text-xs text-on-surface ds-numeric">{req.upiNumber}</p>
+                                    </div>
+                                  ) : null}
+                                  {req.upiId ? (
+                                    <div>
+                                      <p className="ds-label">UPI ID</p>
+                                      <p className="mt-1 text-xs text-on-surface">{req.upiId}</p>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              ) : null}
 
                               {/* Rework / Escalation Alerts */}
                               {req.isUrgent && req.urgencyReason && (
@@ -9329,8 +10923,23 @@ export function JobWorkspaceClient({
                                   <div>
                                     <span className="font-semibold text-green-700 block">Payment Disbursed via {p.paymentMethod}</span>
                                     <span className="text-[10px] text-on-surface-variant">
-                                      Txn Ref: {p.transactionReference} â€¢ Paid by {p.paidBy?.name}
+                                      Txn Ref: {p.transactionReference} - Paid by {p.paidBy?.name}
                                     </span>
+                                    {getPaymentProofLinks(p.paymentProofKey).length ? (
+                                      <div className="mt-1 flex flex-wrap gap-2">
+                                        {getPaymentProofLinks(p.paymentProofKey).map((proofLink, index) => (
+                                          <a
+                                            key={`${proofLink}-${index}`}
+                                            href={proofLink}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex font-medium text-[#00cec4] hover:underline"
+                                          >
+                                            View payment proof {index + 1}
+                                          </a>
+                                        ))}
+                                      </div>
+                                    ) : null}
                                   </div>
                                   <span className="text-[10px] text-on-surface-variant font-mono font-bold">
                                     {new Date(p.paymentDate).toDateString()}
@@ -9364,33 +10973,40 @@ export function JobWorkspaceClient({
                               {expReviewId === req.id && (
                                 <div className="p-4 border border-outline-variant/60 bg-surface rounded-2xl space-y-3">
                                   <span className="ds-label block text-on-surface">Administrative Expense Review</span>
-                                  <div className="grid grid-cols-2 gap-3">
-                                    <select
-                                      value={expReviewStatus}
-                                      onChange={(e) => setExpReviewStatus(e.target.value)}
-                                      className="text-xs w-full"
-                                    >
-                                      <option value="">Choose Review Decision</option>
-                                      <option value="UNDER_REVIEW">UNDER REVIEW</option>
-                                      <option value="CLARIFICATION_REQUIRED">CLARIFICATION REQUIRED</option>
-                                      <option value="APPROVED">APPROVED</option>
-                                      <option value="READY_FOR_DISBURSEMENT">READY FOR DISBURSEMENT</option>
-                                      <option value="REJECTED">REJECTED</option>
-                                    </select>
-                                    <input
-                                      type="text"
-                                      placeholder="Review notes (Required for clarification/rejections)..."
-                                      value={expReviewRemarks}
-                                      onChange={(e) => setExpReviewRemarks(e.target.value)}
-                                      className="text-xs w-full"
-                                    />
-                                  </div>
+                                  <input
+                                    type="text"
+                                    placeholder={expReviewStatus === "REJECTED" ? "Rejection reason..." : "Clarification required..."}
+                                    value={expReviewRemarks}
+                                    onChange={(e) => setExpReviewRemarks(e.target.value)}
+                                    className="text-xs w-full"
+                                  />
                                   <div className="flex justify-end gap-2">
                                     <Button variant="outline" size="sm" onClick={() => setExpReviewId(null)}>
                                       Cancel
                                     </Button>
-                                    <Button size="sm" onClick={handleExpenseReview} disabled={loading !== null}>
+                                    <Button size="sm" variant={expReviewStatus === "REJECTED" ? "destructive" : "default"} onClick={() => handleExpenseReview(req.id, expReviewStatus as "CLARIFICATION_REQUIRED" | "APPROVED" | "REJECTED", expReviewRemarks)} disabled={loading !== null}>
                                       Post Decision
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+
+                              {expenseClarificationId === req.id && (
+                                <div className="p-4 border border-outline-variant/60 bg-surface rounded-2xl space-y-3">
+                                  <span className="ds-label block text-on-surface">Clarification Response</span>
+                                  <input
+                                    type="text"
+                                    placeholder="Enter clarification response..."
+                                    value={expenseClarificationText}
+                                    onChange={(e) => setExpenseClarificationText(e.target.value)}
+                                    className="text-xs w-full"
+                                  />
+                                  <div className="flex justify-end gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => setExpenseClarificationId(null)}>
+                                      Cancel
+                                    </Button>
+                                    <Button size="sm" onClick={handleExpenseClarification} disabled={loading !== null}>
+                                      Submit Clarification
                                     </Button>
                                   </div>
                                 </div>
@@ -9400,9 +11016,9 @@ export function JobWorkspaceClient({
                               {payRequestId === req.id && (
                                 <form onSubmit={handlePostExpensePayment} className="p-4 border border-[#00cec4]/40 bg-[#00cec4]/5 rounded-2xl space-y-4">
                                   <span className="ds-label text-[#00cec4] block">Post Payment Disbursement Confirmation</span>
-                                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                  <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                                     <div>
-                                      <label className="ds-label block">Amount Disbursed (â‚¹) *</label>
+                                      <label className="ds-label block">Amount Disbursed (Rs.) *</label>
                                       <input
                                         type="number"
                                         required
@@ -9422,15 +11038,16 @@ export function JobWorkspaceClient({
                                     </div>
                                     <div>
                                       <label className="ds-label block">Payment Method *</label>
-                                      <select
+                                      <NativeSelect
                                         value={payMethod}
                                         onChange={(e) => setPayMethod(e.target.value)}
                                         className="w-full text-xs h-8"
                                       >
                                         <option value="BANK_TRANSFER">Bank Transfer IMPS</option>
                                         <option value="NEFT">NEFT / RTGS</option>
+                                        <option value="UPI">UPI</option>
                                         <option value="CASH">Cash Drawer</option>
-                                      </select>
+                                      </NativeSelect>
                                     </div>
                                     <div>
                                       <label className="ds-label block">Txn Reference ID *</label>
@@ -9443,13 +11060,35 @@ export function JobWorkspaceClient({
                                         className="w-full text-xs h-8"
                                       />
                                     </div>
+                                    <div>
+                                      <FileUploadField
+                                        id={`workspace-payment-proof-${req.id}`}
+                                        label="Payment Proof *"
+                                        accept="image/*,application/pdf"
+                                        multiple
+                                        compact
+                                        triggerText="Drag and drop payment proofs, or choose files"
+                                        helperText="Images and PDFs accepted. Multiple files can be selected together."
+                                        selectedFiles={payProofFiles.map((file) => ({
+                                          file,
+                                          name: file.name,
+                                          sizeBytes: file.size,
+                                        }))}
+                                        uploading={loading === `pay-${req.id}`}
+                                        onInputChange={(event) => setPayProofFiles(Array.from(event.currentTarget.files || []))}
+                                        onClear={() => setPayProofFiles([])}
+                                        onRemoveSelectedFile={(_, index) =>
+                                          setPayProofFiles((current) => current.filter((__, fileIndex) => fileIndex !== index))
+                                        }
+                                      />
+                                    </div>
                                   </div>
                                   <div className="flex justify-end gap-2">
                                     <Button variant="outline" size="sm" onClick={() => setPayRequestId(null)}>
                                       Cancel
                                     </Button>
                                     <Button type="submit" size="sm" disabled={loading !== null}>
-                                      Confirm Disbursal
+                                      Confirm Disbursement
                                     </Button>
                                   </div>
                                 </form>
@@ -9479,37 +11118,74 @@ export function JobWorkspaceClient({
 
                               {/* Action buttons footer */}
                               <div className="flex justify-end gap-2 border-t border-outline-variant/10 pt-3 text-xs">
-                                {/* Accounts / Pay Review */}
-                                {req.status !== "PAID" && req.status !== "RECEIPT_ACKNOWLEDGED" && req.status !== "REJECTED" && (
+                                {canReviewThisExpense ? (
+                                  <>
+                                    <button
+                                      onClick={() => {
+                                        setExpReviewId(req.id);
+                                        setExpReviewStatus("CLARIFICATION_REQUIRED");
+                                        setExpReviewRemarks("");
+                                      }}
+                                      className="ds-plain cha-link hover:underline font-semibold"
+                                    >
+                                      Require Clarification
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setExpReviewId(req.id);
+                                        setExpReviewStatus("REJECTED");
+                                        setExpReviewRemarks("");
+                                      }}
+                                      className="ds-plain text-red-600 hover:underline font-semibold"
+                                    >
+                                      Reject
+                                    </button>
+                                    <button
+                                      onClick={() => handleExpenseReview(req.id, "APPROVED", "")}
+                                      disabled={loading !== null}
+                                      className="ds-plain cha-link hover:underline font-bold"
+                                    >
+                                      Approve
+                                    </button>
+                                  </>
+                                ) : null}
+
+                                {canClarifyThisExpense ? (
                                   <button
                                     onClick={() => {
-                                      setExpReviewId(req.id);
-                                      setExpReviewStatus(req.status);
-                                      setExpReviewRemarks("");
+                                      setExpenseClarificationId(req.id);
+                                      setExpenseClarificationText(req.clarificationResponse || "");
                                     }}
                                     className="ds-plain cha-link hover:underline font-semibold"
                                   >
-                                    Review Status
+                                    Submit Clarification
                                   </button>
-                                )}
+                                ) : null}
 
-                                {/* Accounts Payout */}
-                                {(req.status === "APPROVED" || req.status === "READY_FOR_DISBURSEMENT" || req.isUrgent) &&
-                                  req.status !== "PAID" &&
-                                  req.status !== "RECEIPT_ACKNOWLEDGED" &&
-                                  req.status !== "REJECTED" && (
-                                    <button
-                                      onClick={() => {
-                                        setPayRequestId(req.id);
-                                        setPayAmount(String(sum));
-                                        setPayDate(new Date().toISOString().slice(0, 10));
-                                        setPayRef("");
-                                      }}
-                                      className="ds-plain cha-link hover:underline font-bold"
-                                    >
-                                      Disburse Payment
-                                    </button>
-                                  )}
+                                {canMarkReadyThisExpense ? (
+                                  <button
+                                    onClick={() => handleReadyForExpenseDisbursement(req.id)}
+                                    disabled={loading !== null}
+                                    className="ds-plain cha-link hover:underline font-semibold"
+                                  >
+                                    Ready for Disbursement
+                                  </button>
+                                ) : null}
+
+                                {canPayThisExpense ? (
+                                  <button
+                                    onClick={() => {
+                                      setPayRequestId(req.id);
+                                      setPayAmount(String(sum));
+                                      setPayDate(new Date().toISOString().slice(0, 10));
+                                      setPayRef("");
+                                      setPayProofFiles([]);
+                                    }}
+                                    className="ds-plain cha-link hover:underline font-bold"
+                                  >
+                                    Register Payout
+                                  </button>
+                                ) : null}
 
                                 {/* Requester Ack / Query */}
                                 {isPaid && (
@@ -9533,6 +11209,8 @@ export function JobWorkspaceClient({
                                   </>
                                 )}
                               </div>
+                              </div>
+                              ) : null}
                             </div>
                           );
                         })}
@@ -9547,7 +11225,7 @@ export function JobWorkspaceClient({
                 <div className="space-y-4">
                   <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
                     <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
-                    <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">Job Auditing History Trail</h3>
+                    <h3 className="ds-h3 text-on-surface">Job Auditing History Trail</h3>
                   </div>
 
                   {job.auditLogs?.length === 0 ? (
@@ -9620,7 +11298,7 @@ export function JobWorkspaceClient({
                         </div>
                         <span className="text-[11px] text-on-surface-variant">
                           Started {new Date(run.startedAt).toLocaleString("en-IN")}
-                          {run.completedAt ? ` â€¢ Finished ${new Date(run.completedAt).toLocaleString("en-IN")}` : ""}
+                          {run.completedAt ? ` - Finished ${new Date(run.completedAt).toLocaleString("en-IN")}` : ""}
                         </span>
                       </div>
 
@@ -9972,9 +11650,59 @@ export function JobWorkspaceClient({
             </div>
           </Modal>
 
-          {/* â”€â”€ Closing Two-Column Wrapper Divs â”€â”€ */}
+          {/* Closing Two-Column Wrapper Divs */}
         </div>
       </div>
+
+      {blockedPrerequisiteModalOpen && isActiveStageBlocked ? (
+        <Modal
+          open={true}
+          onClose={() => setBlockedPrerequisiteModalOpen(false)}
+          title="Prerequisite Required"
+          description="Complete the required filing stage before continuing this stage."
+          className="max-w-lg"
+        >
+          <div className="space-y-5">
+            <div className="flex items-start gap-3 rounded-xl border border-[#fb923c]/30 bg-surface px-4 py-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#fb923c]/30 bg-[#fb923c]/12 text-[#fb923c]">
+                <AlertTriangle size={18} />
+              </span>
+              <div className="min-w-0 space-y-1">
+                <p className="text-sm font-medium text-on-surface">
+                  {activeNodeRun?.node?.name || "This stage"} is waiting on {(activeNodePrerequisiteStatus?.missingNodeNames || []).join(", ") || "a prerequisite stage"}.
+                </p>
+                <p className="text-xs leading-5 text-on-surface-variant">
+                  A skipped prerequisite does not count as completed. Go to the required stage, tick the required work, complete it, then return here to continue.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setBlockedPrerequisiteModalOpen(false)}
+                disabled={loading !== null}
+              >
+                Close
+              </Button>
+              {firstMissingPrerequisiteNodeKey ? (
+                <Button
+                  type="button"
+                  disabled={loading !== null}
+                  onClick={() => {
+                    setBlockedPrerequisiteModalOpen(false);
+                    void handleRedirectBlockedStage(firstMissingPrerequisiteNodeKey);
+                  }}
+                >
+                  <ArrowRight size={14} />
+                  Go To {firstMissingPrerequisiteNodeName}
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        </Modal>
+      ) : null}
 
       {isCustomDocumentModalOpen && (
         <Modal
@@ -10115,7 +11843,7 @@ export function JobWorkspaceClient({
                     <div className="space-y-2 max-w-md">
                       <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
                         <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
-                        <h4 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">Preview Unavailable</h4>
+                        <h4 className="ds-h3 text-on-surface">Preview Unavailable</h4>
                       </div>
                       <p className="text-xs text-on-surface-variant leading-relaxed font-sans">
                         Word, Excel, or binary formats cannot be previewed directly in the browser. You can download this file to view it locally.
@@ -10162,7 +11890,7 @@ export function JobWorkspaceClient({
           <div className="space-y-4 pt-2">
             <div className="space-y-1.5">
               <label className="ds-label block">Select Manager</label>
-              <select
+              <NativeSelect
                 value={selectedManagerId}
                 onChange={(e) => setSelectedManagerId(e.target.value)}
                 className="w-full text-sm rounded-2xl"
@@ -10173,7 +11901,7 @@ export function JobWorkspaceClient({
                     {m.name} ({m.email})
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">

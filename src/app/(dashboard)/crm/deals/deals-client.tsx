@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -202,7 +203,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                         {/* Dropdown to quick shift stage */}
                         <div className="pt-2 border-t border-[#1c212a]/30 flex items-center justify-between gap-1.5">
                           <span className="text-[9px] text-slate-500 truncate">Owner: {deal.owner.name.split(" ")[0]}</span>
-                          <select
+                          <NativeSelect
                             value={deal.stage}
                             onChange={(e) => handleStageChange(deal.id, e.target.value)}
                             disabled={updatingId === deal.id}
@@ -211,7 +212,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                             {STAGES.map((st) => (
                               <option key={st} value={st}>{st.replace("_", " ")}</option>
                             ))}
-                          </select>
+                          </NativeSelect>
                         </div>
                       </div>
                     ))

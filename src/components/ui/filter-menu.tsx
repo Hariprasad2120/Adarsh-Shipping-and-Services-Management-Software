@@ -8,6 +8,7 @@ export function FilterMenu({
   ariaLabel = "Open filters",
   children,
   contentClassName = "w-[360px]",
+  label,
   onOpenChange,
   open,
 }: {
@@ -15,6 +16,7 @@ export function FilterMenu({
   ariaLabel?: string;
   children: React.ReactNode;
   contentClassName?: string;
+  label?: string;
   onOpenChange: (open: boolean) => void;
   open: boolean;
   title?: string;
@@ -24,10 +26,11 @@ export function FilterMenu({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="relative inline-flex h-10 items-center justify-center rounded-xl border border-outline-variant/40 bg-surface px-3 text-on-surface transition hover:border-[#00cec4]/45 hover:text-[#008b85]"
+          className="relative inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-outline-variant/40 bg-surface px-3 text-on-surface transition hover:border-[#00cec4]/45 hover:text-[#008b85]"
           aria-label={ariaLabel}
         >
           <Filter className="h-4 w-4" />
+          {label ? <span className="text-xs font-medium uppercase">{label}</span> : null}
           {activeCount && activeCount > 0 ? (
             <span className="absolute -right-1.5 -top-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#00cec4] px-1 text-[10px] font-semibold text-white">
               {activeCount}

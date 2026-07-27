@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 /**
  * CHA UI Showcase — visual inventory of every element style found in the CHA
  * module. Each block recreates the exact markup/classes used in the source
@@ -1305,11 +1306,11 @@ export function ShowcaseClient() {
             notes="Two select experiences still coexist, but DropdownSelect is now explicitly the shared outlined field trigger with the same h-11 geometry as Input."
           >
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <select className="w-full text-sm" defaultValue="">
+              <NativeSelect className="w-full text-sm" defaultValue="">
                 <option value="">All Statuses (native select)</option>
                 <option>SUBMITTED</option>
                 <option>APPROVED</option>
-              </select>
+              </NativeSelect>
               <div className="flex h-11 items-center rounded-xl border border-[rgba(0,206,196,0.55)] bg-surface px-4 py-2.5 text-xs text-on-surface-variant">
                 DropdownSelect (shared, outlined, h-11) — see /cha/jobs filters and create-job dialog
               </div>
@@ -1427,8 +1428,8 @@ export function ShowcaseClient() {
                   <span className="absolute inset-y-0 left-3 flex items-center text-on-surface-variant"><Search size={16} /></span>
                   <input type="text" placeholder="Search job #, customer, requester..." className="h-11 pl-10 pr-4 w-full text-sm font-sans" />
                 </div>
-                <select className="w-full text-sm font-sans" defaultValue=""><option value="">All Statuses</option></select>
-                <select className="w-full text-sm font-sans" defaultValue=""><option value="">All Urgency levels</option></select>
+                <NativeSelect className="w-full text-sm font-sans" defaultValue=""><option value="">All Statuses</option></NativeSelect>
+                <NativeSelect className="w-full text-sm font-sans" defaultValue=""><option value="">All Urgency levels</option></NativeSelect>
                 <div className="flex gap-2 col-span-1 md:col-span-4 justify-end">
                   <Button variant="outline" className="text-xs">Reset Filters</Button>
                   <Button className="text-xs px-6">Apply Filters</Button>
@@ -1530,7 +1531,7 @@ export function ShowcaseClient() {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-1">
                       <label className="ds-label block">Customs Branch Office *</label>
-                      <select className="w-full text-sm"><option>Chennai (MAA)</option></select>
+                      <NativeSelect className="w-full text-sm"><option>Chennai (MAA)</option></NativeSelect>
                     </div>
                     <div className="space-y-1">
                       <label className="ds-label block">Job Ref Number</label>
@@ -1559,7 +1560,7 @@ export function ShowcaseClient() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div className="space-y-1">
                         <label className="ds-label block">Customs Branch Office *</label>
-                        <select className="w-full text-sm"><option>Chennai (MAA)</option></select>
+                        <NativeSelect className="w-full text-sm"><option>Chennai (MAA)</option></NativeSelect>
                       </div>
                       <div className="space-y-1">
                         <label className="ds-label block">Job Ref Number</label>

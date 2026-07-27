@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useEffect, useCallback } from "react";
 import { Add, Search } from "@carbon/icons-react";
 import {DataTable,DataTableBody,DataTableCell,DataTableHead,DataTableHeader,DataTableRow,DataTableEmpty,} from "@/components/data-table";
@@ -161,7 +162,7 @@ export default function CareerApplicationsPage() {
             className="w-full rounded-xl py-2 pl-9 pr-3 text-sm"
           />
         </div>
-        <select
+        <NativeSelect
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           className="rounded-xl px-3 py-2 text-sm"
@@ -170,7 +171,7 @@ export default function CareerApplicationsPage() {
           {Object.keys(STATUS_COLORS).map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
-        </select>
+        </NativeSelect>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">

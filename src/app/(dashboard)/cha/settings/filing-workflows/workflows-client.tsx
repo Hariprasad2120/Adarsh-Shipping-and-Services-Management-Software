@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {AlertTriangle,CheckCircle2,ChevronDown,ChevronUp,Plus,RefreshCw,Save,Trash2,Workflow,X,PanelLeft,PanelRight,Settings2,ZoomIn,ZoomOut,} from "lucide-react";
@@ -131,6 +132,7 @@ type NodeDraft = {
   slaDuration: number;
   slaUnit: "BUSINESS_DAYS" | "CALENDAR_DAYS";
   commentsRequired: boolean;
+  delayRemarksRequired: boolean;
   canBeSkipped: boolean;
   canBeRevisited: boolean;
   approvalRequired: boolean;
@@ -159,7 +161,7 @@ const MIN_ZOOM = 0.45;
 const MAX_ZOOM = 2.2;
 const QUERY_PROCESSING_SECTION_KEY = "query_processing";
 const FLAT_TOOLBAR_BUTTON_CLASS =
-  "ds-plain shadow-none hover:shadow-none active:shadow-none hover:translate-y-0 active:translate-y-0 active:scale-100";
+  "ds-plain !text-[10px] !tracking-[0.06em] shadow-none hover:shadow-none active:shadow-none hover:translate-y-0 active:translate-y-0 active:scale-100";
 
 function createDefaultNodeActionConfig(): NodeActionConfigDraft {
   return {
@@ -352,6 +354,10 @@ function normalizeNodeActionConfig(value: any): NodeActionConfigDraft {
   };
 }
 
+function isLegacyStageChecklistUpload(item: ChecklistItemDraft, node: Pick<NodeDraft, "name" | "photoRequirements">) {
+  return item.allowsUpload && node.photoRequirements.length > 0 && item.label.trim().toLowerCase() === node.name.trim().toLowerCase();
+}
+
 function getTemplateEditorSettings(value: any) {
   const settings = value && typeof value === "object" ? value : {};
   return {
@@ -374,7 +380,7 @@ function getDefaultWorkflowScopeLabel(clearanceTypeName?: string | null, filingF
 }
 
 function normalizeNode(node: any, index: number): NodeDraft {
-  return {
+  const normalizedNode: NodeDraft = {
     id: node.id || createId("node"),
     key: node.key || `${slugify(node.name || "node")}_${index + 1}`,
     name: node.name || `Node ${index + 1}`,
@@ -393,6 +399,7 @@ function normalizeNode(node: any, index: number): NodeDraft {
     slaDuration: Number(node.slaDuration ?? 2),
     slaUnit: node.slaUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : "BUSINESS_DAYS",
     commentsRequired: !!node.commentsRequired,
+    delayRemarksRequired: node.delayRemarksRequired !== false,
     canBeSkipped: !!node.canBeSkipped,
     canBeRevisited: node.canBeRevisited !== false,
     approvalRequired: !!node.approvalRequired,
@@ -412,6 +419,14 @@ function normalizeNode(node: any, index: number): NodeDraft {
       ? (node.conditionalSectionsJson ?? node.conditionalSections).map(normalizeConditionalSection)
       : [],
     actionConfig: normalizeNodeActionConfig(node.actionConfigJson ?? node.actionConfig),
+  };
+  return {
+    ...normalizedNode,
+    checklistItems: normalizedNode.checklistItems.map((item: ChecklistItemDraft) =>
+      isLegacyStageChecklistUpload(item, normalizedNode)
+        ? { ...item, allowsUpload: false, minUploads: 0, maxUploads: null }
+        : item,
+    ),
   };
 }
 
@@ -685,6 +700,7 @@ function createWorkflowStageNode(
     slaDuration: 2,
     slaUnit: "BUSINESS_DAYS",
     commentsRequired: false,
+    delayRemarksRequired: true,
     canBeSkipped: !!options.canBeSkipped,
     canBeRevisited: true,
     approvalRequired: false,
@@ -720,6 +736,11 @@ function createWorkflowChecklistNode(
     conditionalSections?: ConditionalSectionDraft[];
   } = {},
 ): NodeDraft {
+  const checklistOptions =
+    Array.isArray(options.photoRequirements) && options.photoRequirements.length > 0
+      ? { ...options, allowsUpload: false, minUploads: 0, maxUploads: null }
+      : options;
+
   return {
     id: createId("node"),
     key,
@@ -739,6 +760,7 @@ function createWorkflowChecklistNode(
     slaDuration: Number(options.deadlineDuration ?? 2),
     slaUnit: options.deadlineUnit || "BUSINESS_DAYS",
     commentsRequired: false,
+    delayRemarksRequired: options.delayRemarksRequired !== false,
     canBeSkipped: !!options.canBeSkipped,
     canBeRevisited: true,
     approvalRequired: false,
@@ -746,7 +768,7 @@ function createWorkflowChecklistNode(
     requireAllMandatoryChecklistItems: options.isMandatory === false ? false : true,
     requireMandatoryPhotos: !!options.allowsUpload,
       allowedRoles: [],
-      checklistItems: [createChecklistItemDraft(label, 1, options)],
+      checklistItems: [createChecklistItemDraft(label, 1, checklistOptions)],
       photoRequirements: options.photoRequirements || (options.allowsUpload ? [createStageUploadSlot(`${label} document`, options)] : []),
       fieldDefinitions: options.fieldDefinitions || [],
       documentRequirements: options.documentRequirements || [],
@@ -781,6 +803,7 @@ function createWorkflowNotificationNode(
     slaDuration: 1,
     slaUnit: "BUSINESS_DAYS",
     commentsRequired: false,
+    delayRemarksRequired: false,
     canBeSkipped: false,
     canBeRevisited: true,
     approvalRequired: false,
@@ -2260,7 +2283,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
         </div>
 
         <div className="flex w-full flex-wrap items-start gap-2">
-          <select
+          <NativeSelect
             value={selectedTemplateId || ""}
             onChange={(event) => {
               const nextValue = event.target.value || null;
@@ -2277,12 +2300,12 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 {template.name}{template.settingsJson?.isDefault ? " (Default)" : ""}
               </option>
             ))}
-          </select>
+          </NativeSelect>
           <Button variant="outline" onClick={createNewWorkflow}>
             <Plus size={16} />
             New Workflow
           </Button>
-          <select
+          <NativeSelect
             value={selectedClearanceTypeId}
             onChange={(event) => setSelectedClearanceTypeId(event.target.value)}
             className="min-w-44 text-sm"
@@ -2294,8 +2317,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 {jobType.name}
               </option>
             ))}
-          </select>
-          <select
+          </NativeSelect>
+          <NativeSelect
             value={selectedFilingFlowCategory}
             onChange={(event) => setSelectedFilingFlowCategory(event.target.value as FilingFlowCategory)}
             className="min-w-40 text-sm"
@@ -2305,7 +2328,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
             <option value="IMPORT_BE">Import BE</option>
             <option value="EXPORT_SB">Export SB</option>
             <option value="CUSTOM">Custom</option>
-          </select>
+          </NativeSelect>
           {isWorkflowReadOnly ? (
             <>
               <Button variant="outline" onClick={forkDraft}>
@@ -2398,7 +2421,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 </div>
                 <div className="space-y-2 rounded-xl border border-outline-variant bg-surface p-3">
                   <label className="ds-label block">Copy Existing Workflow</label>
-                  <select
+                  <NativeSelect
                     value={copySourceTemplateId}
                     onChange={(event) => setCopySourceTemplateId(event.target.value)}
                     className="w-full text-sm"
@@ -2409,7 +2432,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                         {template.name}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                   <Button variant="outline" className="w-full" onClick={() => void copyWorkflowIntoNewDraft()}>
                     <RefreshCw size={16} />
                     Copy Into New Workflow
@@ -2475,12 +2498,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
 
         <main className="min-w-0 flex-1 bg-surface">
           <div className="flex h-full min-h-0 flex-col overflow-hidden border border-outline-variant/60 bg-surface">
-            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-outline-variant px-3 py-2">
-              <div className="min-w-0">
-                <p className="ds-label">Canvas</p>
-                <p className="max-w-2xl text-xs text-on-surface-variant">Blueprint mode: drag nodes, connect handles, zoom with wheel, and route branches without leaving this canvas.</p>
-              </div>
-              <div className="flex max-w-full flex-nowrap items-center justify-end gap-1.5 overflow-x-auto pb-1">
+            <div className="border-b border-outline-variant px-3 py-1">
+              <div className="flex w-full max-w-full flex-nowrap items-center justify-center gap-1.5 overflow-x-auto py-1">
                 <Button variant="outline" size="sm" className={FLAT_TOOLBAR_BUTTON_CLASS} onClick={() => setPaletteOpen(true)}>
                   <PanelLeft size={14} />
                   Tools
@@ -2866,14 +2885,14 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                   </div>
                   <div className="space-y-1.5">
                     <label className="ds-label block">SLA Unit</label>
-                    <select
+                    <NativeSelect
                       value={selectedNode.slaUnit}
                       onChange={(event) => updateSelectedNode((node) => ({ ...node, slaUnit: event.target.value as NodeDraft["slaUnit"] }))}
                       className="w-full text-sm"
                     >
                       <option value="BUSINESS_DAYS">Business Days</option>
                       <option value="CALENDAR_DAYS">Calendar Days</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm text-on-surface">
@@ -2881,6 +2900,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     { label: "Active", checked: selectedNode.isActive, buildUpdate: (checked: boolean) => ({ isActive: checked }) },
                     { label: "Start Node", checked: selectedNode.isStart, buildUpdate: (checked: boolean) => ({ isStart: checked }) },
                     { label: "Completion Remarks", checked: selectedNode.commentsRequired, buildUpdate: (checked: boolean) => ({ commentsRequired: checked }) },
+                    { label: "Delay Remarks Required", checked: selectedNode.delayRemarksRequired, buildUpdate: (checked: boolean) => ({ delayRemarksRequired: checked }) },
                     { label: "Allow Double-Back", checked: selectedNode.canBeRevisited, buildUpdate: (checked: boolean) => ({ canBeRevisited: checked }) },
                     { label: "Approval Required", checked: selectedNode.approvalRequired, buildUpdate: (checked: boolean) => ({ approvalRequired: checked }) },
                     { label: "Checklist Gate", checked: selectedNode.requireAllMandatoryChecklistItems, buildUpdate: (checked: boolean) => ({ requireAllMandatoryChecklistItems: checked }) },
@@ -2966,7 +2986,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                       <>
                         <div className="space-y-1.5">
                           <label className="ds-label block">Prerequisite Mode</label>
-                          <select
+                          <NativeSelect
                             value={selectedNode.actionConfig.prerequisiteGate.mode}
                             onChange={(event) =>
                               updateSelectedNode((node) => ({
@@ -2984,7 +3004,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                           >
                             <option value="ALL">All selected stages must be completed</option>
                             <option value="ANY">Any one selected stage may unlock this stage</option>
-                          </select>
+                          </NativeSelect>
                         </div>
                         <div className="space-y-2">
                           <label className="ds-label block">Required Stages</label>
@@ -3049,7 +3069,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
                         <label className="ds-label block">Node Type</label>
-                        <select
+                        <NativeSelect
                           value={selectedNode.nodeType}
                           onChange={(event) => updateSelectedNode((node) => ({ ...node, nodeType: event.target.value as NodeDraft["nodeType"] }))}
                           className="w-full text-sm"
@@ -3060,7 +3080,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                           <option value="DECISION">Decision</option>
                           <option value="SECTION">Section</option>
                           <option value="END">End</option>
-                        </select>
+                        </NativeSelect>
                       </div>
                       <div className="space-y-1.5">
                         <label className="ds-label block">Sort Order</label>
@@ -3174,7 +3194,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                           />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                          <select
+                          <NativeSelect
                             value={field.type}
                             onChange={(event) => updateFieldDefinition(field.id, (current) => ({ ...current, type: event.target.value as FieldDefinitionDraft["type"] }))}
                             className="w-full text-sm"
@@ -3182,7 +3202,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                             <option value="TEXT">Text</option>
                             <option value="TEXTAREA">Textarea</option>
                             <option value="DATE">Date</option>
-                          </select>
+                          </NativeSelect>
                           <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
                             <input
                               type="checkbox"
@@ -3383,14 +3403,14 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                           </div>
                           <div className="space-y-1.5">
                             <label className="ds-label block">Deadline Unit</label>
-                            <select
+                            <NativeSelect
                               value={item.deadlineUnit}
                               onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, deadlineUnit: event.target.value as ChecklistItemDraft["deadlineUnit"] }))}
                               className="w-full text-sm"
                             >
                               <option value="BUSINESS_DAYS">Business Days</option>
                               <option value="CALENDAR_DAYS">Calendar Days</option>
-                            </select>
+                            </NativeSelect>
                           </div>
                         </div>
 
@@ -3537,14 +3557,14 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                               </div>
                               <div className="space-y-1.5">
                                 <label className="ds-label block">Validity Unit</label>
-                                <select
+                                <NativeSelect
                                   value={photo.validityUnit}
                                   onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, validityUnit: event.target.value as ValidityUnit }))}
                                   className="w-full text-sm"
                                 >
                                   <option value="BUSINESS_DAYS">Business Days</option>
                                   <option value="CALENDAR_DAYS">Calendar Days</option>
-                                </select>
+                                </NativeSelect>
                               </div>
                               <div className="space-y-1.5">
                                 <label className="ds-label block">Warn Before</label>
@@ -3559,14 +3579,14 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                               </div>
                               <div className="space-y-1.5">
                                 <label className="ds-label block">Warning Unit</label>
-                                <select
+                                <NativeSelect
                                   value={photo.warningBeforeUnit}
                                   onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, warningBeforeUnit: event.target.value as ValidityUnit }))}
                                   className="w-full text-sm"
                                 >
                                   <option value="BUSINESS_DAYS">Business Days</option>
                                   <option value="CALENDAR_DAYS">Calendar Days</option>
-                                </select>
+                                </NativeSelect>
                               </div>
                             </div>
                           ) : null}

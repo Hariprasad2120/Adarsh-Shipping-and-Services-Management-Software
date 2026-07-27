@@ -1,3 +1,4 @@
+import { NativeSelect } from "@/components/ui/native-select";
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -133,7 +134,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
 
             {/* Status Filter */}
             <div className="relative min-w-[200px]">
-              <select
+              <NativeSelect
                 name="status"
                 defaultValue={status}
                 className="w-full pl-3 pr-8 py-1.5 bg-surface-container-low rounded-lg text-sm text-on-surface focus:outline-none"
@@ -144,7 +145,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
                     {s.replace("_", " ")}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
 
             <button

@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -1128,7 +1129,7 @@ function TimeTrackerPanel({ lead, workTimeLogs, quotes, timeline }: { lead: any;
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Activity Type *</label>
-              <select
+              <NativeSelect
                 value={activityType}
                 onChange={(e) => setActivityType(e.target.value)}
                 className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-slate-300 focus:outline-none focus:border-[#00cec4]"
@@ -1136,7 +1137,7 @@ function TimeTrackerPanel({ lead, workTimeLogs, quotes, timeline }: { lead: any;
                 {Object.entries(activityLabels).map(([key, value]) => (
                   <option key={key} value={key}>{value}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -1595,7 +1596,7 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                           <div className="grid grid-cols-3 items-center gap-3">
                             <div className="col-span-1">
                               <label className="text-slate-500 font-bold uppercase text-[9px] block mb-1">Quality Rating</label>
-                              <select
+                              <NativeSelect
                                 value={rating}
                                 onChange={(e) => setRating(parseInt(e.target.value))}
                                 className="w-full bg-[#0a0d12] border border-[#1c212a] text-white px-2 py-1 rounded text-xs focus:outline-none"
@@ -1605,7 +1606,7 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                                 <option value={3}>⭐⭐⭐ (3/5)</option>
                                 <option value={2}>⭐⭐ (2/5)</option>
                                 <option value={1}>⭐ (1/5)</option>
-                              </select>
+                              </NativeSelect>
                             </div>
                             <div className="col-span-2">
                               <label className="text-slate-500 font-bold uppercase text-[9px] block mb-1">Comments / Action items</label>

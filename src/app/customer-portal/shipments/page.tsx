@@ -1,3 +1,4 @@
+import { NativeSelect } from "@/components/ui/native-select";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
@@ -280,14 +281,14 @@ function FilterSelect({
   return (
     <div className="lg:col-span-2">
       <label className="ds-label block">{label}</label>
-      <select name={name} defaultValue={value} className="mt-2 w-full">
+      <NativeSelect name={name} defaultValue={value} className="mt-2 w-full">
         <option value="">All</option>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
         ))}
-      </select>
+      </NativeSelect>
     </div>
   );
 }

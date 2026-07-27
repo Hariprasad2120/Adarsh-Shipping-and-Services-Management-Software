@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import {FileText,Plus,RefreshCw,TrendingUp,FileCheck2,Undo2,Trash2,} from "lucide-react";
@@ -535,7 +536,7 @@ export function QuotationsClient({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="ds-label block">Customer</label>
-                  <select
+                  <NativeSelect
                     value={quotCustomer}
                     onChange={(e) => setQuotCustomer(e.target.value)}
                     required
@@ -547,7 +548,7 @@ export function QuotationsClient({
                         {c.name}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div className="space-y-2">
                   <label className="ds-label block">Valid Until</label>
@@ -610,7 +611,7 @@ export function QuotationsClient({
                         />
                       </div>
                       <div className="col-span-1">
-                        <select
+                        <NativeSelect
                           value={item.taxRate}
                           onChange={(e) => handleQuotItemChange(idx, "taxRate", parseInt(e.target.value) || 0)}
                           className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-[10px] text-center"
@@ -620,7 +621,7 @@ export function QuotationsClient({
                           <option value="12">12%</option>
                           <option value="18">18%</option>
                           <option value="28">28%</option>
-                        </select>
+                        </NativeSelect>
                       </div>
                       <div className="col-span-1 text-center">
                         {quotItems.length > 1 && (
@@ -722,7 +723,7 @@ export function QuotationsClient({
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <label className="ds-label block">Note Type</label>
-                  <select
+                  <NativeSelect
                     value={noteType}
                     onChange={(e) => setNoteType(e.target.value as any)}
                     required
@@ -730,11 +731,11 @@ export function QuotationsClient({
                   >
                     <option value="CREDIT">Credit Note (Return/Discount)</option>
                     <option value="DEBIT">Debit Note (Extra Charge)</option>
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div className="space-y-2">
                   <label className="ds-label block">Customer</label>
-                  <select
+                  <NativeSelect
                     value={noteCustomer}
                     onChange={(e) => setNoteCustomer(e.target.value)}
                     required
@@ -746,11 +747,11 @@ export function QuotationsClient({
                         {c.name}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div className="space-y-2">
                   <label className="ds-label block">Link Sales Invoice (Optional)</label>
-                  <select
+                  <NativeSelect
                     value={noteInvoice}
                     onChange={(e) => setNoteInvoice(e.target.value)}
                     className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs"
@@ -761,7 +762,7 @@ export function QuotationsClient({
                         {inv.invoiceNumber} (₹{inv.grandTotal})
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
               </div>
 
@@ -839,7 +840,7 @@ export function QuotationsClient({
                         />
                       </div>
                       <div className="col-span-1">
-                        <select
+                        <NativeSelect
                           value={item.taxRate}
                           onChange={(e) => handleNoteItemChange(idx, "taxRate", parseInt(e.target.value) || 0)}
                           className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-[10px] text-center"
@@ -849,7 +850,7 @@ export function QuotationsClient({
                           <option value="12">12%</option>
                           <option value="18">18%</option>
                           <option value="28">28%</option>
-                        </select>
+                        </NativeSelect>
                       </div>
                       <div className="col-span-1 text-center">
                         {noteItems.length > 1 && (

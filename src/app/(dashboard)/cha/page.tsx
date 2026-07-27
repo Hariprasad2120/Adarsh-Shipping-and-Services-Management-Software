@@ -276,10 +276,10 @@ export default async function ChaDashboard() {
       href: `/cha/jobs/${warning.jobId}?tab=filing`,
       tone: "orange" as const,
     })),
-  ].slice(0, 6);
+  ].slice(0, 4);
 
   const expiringItems = dueDateWarnings
-    .slice(0, 6)
+    .slice(0, 4)
     .map((warning) => ({
       id: warning.notificationId,
       label: warning.type.replace(/_/g, " "),
@@ -444,7 +444,7 @@ export default async function ChaDashboard() {
         </DataTable>
       </ChaControlPanel>
 
-      <div className="grid gap-6 xl:grid-cols-3">
+      <div className="grid items-start gap-6 xl:grid-cols-3">
         <ChaSectionShell
           title="Pending Actions"
           description="Operational items that still need a decision or next-step action."
@@ -452,7 +452,7 @@ export default async function ChaDashboard() {
           count={pendingActions.length}
           accent="orange"
         >
-          <div className="space-y-3 p-5">
+          <div className="space-y-2.5 p-4">
             {pendingActions.length === 0 ? (
               <p className="text-sm text-on-surface-variant">No pending actions are waiting right now.</p>
             ) : (
@@ -460,10 +460,10 @@ export default async function ChaDashboard() {
                 <Link
                   key={item.id}
                   href={item.href}
-                  className="flex items-start gap-3 rounded-xl border border-outline-variant/25 bg-surface-container-low/35 px-4 py-3 transition hover:border-[#00cec4]/35 hover:bg-surface"
+                  className="flex items-start gap-3 rounded-xl border border-outline-variant/25 bg-surface-container-low/35 px-3.5 py-2.5 transition hover:border-[#00cec4]/35 hover:bg-surface"
                 >
                   <span
-                    className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                    className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
                       item.tone === "orange" ? "bg-[#fb923c]/12 text-[#fb923c]" : "bg-[#00cec4]/10 text-[#00cec4]"
                     }`}
                   >
@@ -486,7 +486,7 @@ export default async function ChaDashboard() {
           count={expiringItems.length}
           accent="orange"
         >
-          <div className="space-y-3 p-5">
+          <div className="space-y-2.5 p-4">
             {expiringItems.length === 0 ? (
               <p className="text-sm text-on-surface-variant">No immediate expiry or deadline warnings were found.</p>
             ) : (
@@ -494,7 +494,7 @@ export default async function ChaDashboard() {
                 <Link
                   key={item.id}
                   href={item.href}
-                  className="flex items-start justify-between gap-3 rounded-xl border border-outline-variant/25 bg-surface-container-low/35 px-4 py-3 transition hover:border-[#00cec4]/35 hover:bg-surface"
+                  className="flex items-start justify-between gap-3 rounded-xl border border-outline-variant/25 bg-surface-container-low/35 px-3.5 py-2.5 transition hover:border-[#00cec4]/35 hover:bg-surface"
                 >
                   <div className="min-w-0">
                     <p className="text-xs font-normal uppercase tracking-[0.12em] text-on-surface">{item.label}</p>
@@ -518,17 +518,17 @@ export default async function ChaDashboard() {
           title="Recent Activity"
           description="Latest CHA audit events across the jobs visible to your organisation."
           icon={<History size={16} />}
-          count={recentActivity.length}
+          count={Math.min(recentActivity.length, 4)}
           accent="violet"
         >
-          <div className="space-y-3 p-5">
+          <div className="space-y-2.5 p-4">
             {recentActivity.length === 0 ? (
               <p className="text-sm text-on-surface-variant">No recent activity has been recorded yet.</p>
             ) : (
-              recentActivity.map((log) => (
+              recentActivity.slice(0, 4).map((log) => (
                 <div
                   key={log.id}
-                  className="rounded-xl border border-outline-variant/25 bg-surface-container-low/35 px-4 py-3"
+                  className="rounded-xl border border-outline-variant/25 bg-surface-container-low/35 px-3.5 py-2.5"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-xs font-normal uppercase tracking-[0.12em] text-on-surface">{log.event.replace(/_/g, " ")}</p>

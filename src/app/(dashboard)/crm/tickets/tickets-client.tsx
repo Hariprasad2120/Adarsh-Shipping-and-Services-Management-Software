@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -154,7 +155,7 @@ export function TicketsClient({
             })}
           </div>
 
-          <select
+          <NativeSelect
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
             className="rounded-lg border border-outline-variant/60 bg-surface px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:border-[#00cec4] transition"
@@ -164,7 +165,7 @@ export function TicketsClient({
             <option value="MEDIUM">Medium</option>
             <option value="HIGH">High</option>
             <option value="URGENT">Urgent</option>
-          </select>
+          </NativeSelect>
         </div>
       </div>
 
@@ -247,7 +248,7 @@ export function TicketsClient({
                           <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
                             Assignee
                           </label>
-                          <select
+                          <NativeSelect
                             value={ticket.assignee?.id || ""}
                             onChange={(e) => handleAssigneeChange(ticket.id, e.target.value)}
                             disabled={assignPending}
@@ -259,14 +260,14 @@ export function TicketsClient({
                                 {u.name}
                               </option>
                             ))}
-                          </select>
+                          </NativeSelect>
                         </div>
 
                         <div className="space-y-1">
                           <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
                             Status
                           </label>
-                          <select
+                          <NativeSelect
                             value={ticket.status}
                             onChange={(e) => handleStatusChange(ticket.id, e.target.value)}
                             disabled={statusPending}
@@ -276,7 +277,7 @@ export function TicketsClient({
                             <option value="IN_PROGRESS">In Progress</option>
                             <option value="RESOLVED">Resolved</option>
                             <option value="CLOSED">Closed</option>
-                          </select>
+                          </NativeSelect>
                         </div>
                       </div>
                     ) : (

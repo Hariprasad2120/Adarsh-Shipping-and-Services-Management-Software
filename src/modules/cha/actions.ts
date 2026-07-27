@@ -3,12 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { requirePermission } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { tracePerformance } from "@/lib/performance";
 import * as chaService from "./service";
 
 type ActionResponse<T = any> = { ok: true; data: T } | { ok: false; error: string };
+
+function revalidateExpensePaths(jobId?: string | null) {
+  revalidatePath("/cha/expenses");
+  revalidatePath("/expense");
+  if (jobId) revalidatePath(`/cha/jobs/${jobId}`);
+}
 
 // Helper to authenticate and check permissions
 async function getAuthAndVerify(permission?: string) {
@@ -25,6 +31,67 @@ async function getAuthAndVerify(permission?: string) {
     await requirePermission(userId, permission);
   }
   return { userId, orgId };
+}
+
+const EXPENSE_ATTACHMENT_MIME_PREFIX = "image/";
+const EXPENSE_ATTACHMENT_PDF_MIME = "application/pdf";
+const EXPENSE_ATTACHMENT_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tif", ".tiff", ".heic", ".heif"];
+
+function readString(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : "";
+}
+
+function getOptionalExpenseAttachment(formData: FormData, key: string) {
+  const file = formData.get(key);
+  if (!(file instanceof File) || file.size === 0) {
+    return null;
+  }
+  const mimeType = file.type || "application/octet-stream";
+  const fileName = file.name.toLowerCase();
+  const hasAllowedExtension = EXPENSE_ATTACHMENT_EXTENSIONS.some((extension) => fileName.endsWith(extension));
+  if (!mimeType.startsWith(EXPENSE_ATTACHMENT_MIME_PREFIX) && mimeType !== EXPENSE_ATTACHMENT_PDF_MIME && !hasAllowedExtension) {
+    throw new Error("Receipt attachments must be an image or PDF file.");
+  }
+  return file;
+}
+
+function getExpenseAttachments(formData: FormData, key: string) {
+  const files = formData
+    .getAll(key)
+    .filter((file): file is File => file instanceof File && file.size > 0);
+  for (const file of files) {
+    const mimeType = file.type || "application/octet-stream";
+    const fileName = file.name.toLowerCase();
+    const hasAllowedExtension = EXPENSE_ATTACHMENT_EXTENSIONS.some((extension) => fileName.endsWith(extension));
+    if (!mimeType.startsWith(EXPENSE_ATTACHMENT_MIME_PREFIX) && mimeType !== EXPENSE_ATTACHMENT_PDF_MIME && !hasAllowedExtension) {
+      throw new Error("Receipt attachments must be image or PDF files.");
+    }
+  }
+  return files;
+}
+
+async function buildLineReceiptUploads(formData: FormData, lineCount: number) {
+  const uploads: {
+    lineIndex: number;
+    fileData: { fileName: string; mimeType: string; sizeBytes: number };
+    fileBuffer: Buffer;
+  }[] = [];
+  for (let lineIndex = 0; lineIndex < lineCount; lineIndex += 1) {
+    const files = getExpenseAttachments(formData, `receiptAttachment:${lineIndex}`);
+    for (const file of files) {
+      uploads.push({
+        lineIndex,
+        fileData: {
+          fileName: file.name,
+          mimeType: file.type || "application/octet-stream",
+          sizeBytes: file.size,
+        },
+        fileBuffer: Buffer.from(await file.arrayBuffer()),
+      });
+    }
+  }
+  return uploads;
 }
 
 async function getRequestMetadata() {
@@ -834,6 +901,8 @@ export async function createExpenseRequestAction(
   data: {
     isUrgent: boolean;
     urgencyReason?: string;
+    upiNumber?: string;
+    upiId?: string;
     lines: {
       category: string;
       purpose: string;
@@ -847,11 +916,144 @@ export async function createExpenseRequestAction(
   try {
     const { userId, orgId } = await getAuthAndVerify("cha.expense.request");
     const request = await chaService.createExpenseRequest(userId, orgId, jobId, data);
-    revalidatePath(`/cha/jobs/${jobId}`);
-    revalidatePath("/cha/expenses");
+    revalidateExpensePaths(jobId);
     return { ok: true, data: request };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to submit expense request" };
+  }
+}
+
+export async function createExpenseRequestWithAttachmentAction(
+  jobId: string,
+  formData: FormData
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.expense.request");
+    const linesValue = readString(formData, "linesJson");
+    const lines = JSON.parse(linesValue || "[]") as {
+      category: string;
+      purpose: string;
+      amount: number;
+      requiredDate: string;
+      remarks?: string;
+    }[];
+    const receiptFile = getOptionalExpenseAttachment(formData, "receiptAttachment");
+    const lineReceiptUploads = await buildLineReceiptUploads(formData, lines.length);
+
+    const request = await chaService.createExpenseRequest(userId, orgId, jobId, {
+      isUrgent: readString(formData, "isUrgent") === "true",
+      urgencyReason: readString(formData, "urgencyReason") || undefined,
+      upiNumber: readString(formData, "upiNumber") || undefined,
+      upiId: readString(formData, "upiId") || undefined,
+      lines: lines.map((line) => ({
+        category: line.category,
+        purpose: line.purpose,
+        amount: Number(line.amount),
+        requiredDate: line.requiredDate ? new Date(line.requiredDate) : new Date(),
+        remarks: line.remarks || undefined,
+      })),
+      receiptFileData: receiptFile
+        ? {
+            fileName: receiptFile.name,
+            mimeType: receiptFile.type || "application/octet-stream",
+            sizeBytes: receiptFile.size,
+          }
+        : undefined,
+      receiptFileBuffer: receiptFile ? Buffer.from(await receiptFile.arrayBuffer()) : undefined,
+      receiptFilesByLineIndex: lineReceiptUploads,
+    });
+    revalidateExpensePaths(jobId);
+    return { ok: true, data: request };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to submit expense request" };
+  }
+}
+
+export async function createDirectExpenseRequestAction(
+  data: {
+    jobId?: string;
+    expenseScope: "JOB" | "OTHER";
+    directPurpose?: string;
+    approvalRoute: "MANAGER_THEN_ACCOUNTS" | "DIRECT_ACCOUNTS";
+    isUrgent: boolean;
+    urgencyReason?: string;
+    upiNumber?: string;
+    upiId?: string;
+    lines: {
+      category: string;
+      purpose: string;
+      amount: number;
+      requiredDate: Date;
+      supportingDocumentKey?: string;
+      remarks?: string;
+    }[];
+  }
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.expense.request");
+    const request = await chaService.createDirectExpenseRequest(userId, orgId, data);
+    revalidateExpensePaths(request.jobId);
+    return { ok: true, data: request };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to submit direct expense request" };
+  }
+}
+
+export async function createDirectExpenseRequestWithAttachmentAction(
+  formData: FormData
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.expense.request");
+    const amount = Number(readString(formData, "amount"));
+    const linesJson = readString(formData, "linesJson");
+    const parsedLines = linesJson
+      ? JSON.parse(linesJson)
+      : [{
+          category: readString(formData, "category") || "Miscellaneous",
+          purpose: readString(formData, "purpose"),
+          amount,
+          requiredDate: readString(formData, "requiredDate") ? new Date(readString(formData, "requiredDate")) : new Date(),
+        }];
+    if (!Array.isArray(parsedLines) || parsedLines.length === 0) {
+      return { ok: false, error: "Add at least one expense line." };
+    }
+    const lines = parsedLines.map((line: any) => ({
+      category: typeof line?.category === "string" && line.category.trim() ? line.category.trim() : "Miscellaneous",
+      purpose: typeof line?.purpose === "string" ? line.purpose.trim() : "",
+      amount: Number(line?.amount),
+      requiredDate: line?.requiredDate ? new Date(line.requiredDate) : new Date(),
+      remarks: typeof line?.remarks === "string" && line.remarks.trim() ? line.remarks.trim() : undefined,
+    }));
+    if (lines.some((line) => !line.purpose || !Number.isFinite(line.amount) || line.amount <= 0 || Number.isNaN(line.requiredDate.getTime()))) {
+      return { ok: false, error: "Each expense line needs a purpose, valid amount, and valid date." };
+    }
+    const receiptFile = getOptionalExpenseAttachment(formData, "receiptAttachment");
+    const lineReceiptUploads = await buildLineReceiptUploads(formData, lines.length);
+
+    const request = await chaService.createDirectExpenseRequest(userId, orgId, {
+      jobId: readString(formData, "jobId") || undefined,
+      expenseScope: readString(formData, "expenseScope") === "OTHER" ? "OTHER" : "JOB",
+      directPurpose: readString(formData, "directPurpose") || undefined,
+      approvalRoute: readString(formData, "approvalRoute") === "DIRECT_ACCOUNTS" ? "DIRECT_ACCOUNTS" : "MANAGER_THEN_ACCOUNTS",
+      isUrgent: readString(formData, "isUrgent") === "true",
+      urgencyReason: readString(formData, "urgencyReason") || undefined,
+      upiNumber: readString(formData, "upiNumber") || undefined,
+      upiId: readString(formData, "upiId") || undefined,
+      lines,
+      receiptFileData: receiptFile
+        ? {
+            fileName: receiptFile.name,
+            mimeType: receiptFile.type || "application/octet-stream",
+            sizeBytes: receiptFile.size,
+          }
+        : undefined,
+      receiptFileBuffer: receiptFile ? Buffer.from(await receiptFile.arrayBuffer()) : undefined,
+      receiptFilesByLineIndex: lineReceiptUploads,
+    });
+    revalidateExpensePaths(request.jobId);
+    return { ok: true, data: request };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to submit direct expense request" };
   }
 }
 
@@ -862,10 +1064,81 @@ export async function triggerUrgentExpenseEscalationAction(
   try {
     const { userId, orgId } = await getAuthAndVerify("cha.expense.request");
     const request = await chaService.triggerUrgentExpenseEscalation(userId, orgId, requestId, urgencyReason);
-    revalidatePath("/cha/expenses");
+    revalidateExpensePaths(request.jobId);
     return { ok: true, data: request };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to escalate expense to urgent" };
+  }
+}
+
+export async function reviewExpenseRequestAction(
+  requestId: string,
+  decision: "CLARIFICATION_REQUIRED" | "APPROVED" | "REJECTED",
+  remarks?: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.access");
+    const request = await chaService.reviewExpenseRequest(userId, orgId, requestId, decision, remarks);
+    revalidateExpensePaths(request.jobId);
+    return { ok: true, data: request };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to review expense request" };
+  }
+}
+
+export async function approveAccountsExpenseRequestAction(
+  requestId: string,
+  remarks?: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.access");
+    const request = await chaService.approveAccountsExpenseRequest(userId, orgId, requestId, remarks);
+    revalidateExpensePaths(request.jobId);
+    return { ok: true, data: request };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to approve expense from Accounts" };
+  }
+}
+
+export async function routeExpenseRequestToManagerAction(
+  requestId: string,
+  remarks?: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.access");
+    const request = await chaService.routeExpenseRequestToManager(userId, orgId, requestId, remarks);
+    revalidateExpensePaths(request.jobId);
+    return { ok: true, data: request };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to route expense to manager" };
+  }
+}
+
+export async function submitExpenseClarificationAction(
+  requestId: string,
+  clarificationText: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.expense.request");
+    const request = await chaService.submitExpenseClarification(userId, orgId, requestId, clarificationText);
+    revalidateExpensePaths(request.jobId);
+    return { ok: true, data: request };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to submit expense clarification" };
+  }
+}
+
+export async function markExpenseReadyForDisbursementAction(
+  requestId: string,
+  remarks?: string
+): Promise<ActionResponse> {
+  try {
+    const { userId, orgId } = await getAuthAndVerify("cha.access");
+    const request = await chaService.markExpenseReadyForDisbursement(userId, orgId, requestId, remarks);
+    revalidateExpensePaths(request.jobId);
+    return { ok: true, data: request };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to mark expense ready for disbursement" };
   }
 }
 
@@ -875,9 +1148,9 @@ export async function setExpenseStatusAction(
   remarks?: string
 ): Promise<ActionResponse> {
   try {
-    const { userId, orgId } = await getAuthAndVerify("cha.expense.manage");
+    const { userId, orgId } = await getAuthAndVerify("cha.access");
     const request = await chaService.setExpenseStatus(userId, orgId, requestId, status, remarks);
-    revalidatePath("/cha/expenses");
+    revalidateExpensePaths(request.jobId);
     return { ok: true, data: request };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to update expense status" };
@@ -886,19 +1159,61 @@ export async function setExpenseStatusAction(
 
 export async function postExpensePaymentAction(
   requestId: string,
-  paymentData: {
-    amountPaid: number;
-    paymentDate: Date;
-    paymentMethod: string;
-    transactionReference: string;
-    paymentProofKey: string;
-    remarks?: string;
-  }
+  formData: FormData
 ): Promise<ActionResponse> {
   try {
-    const { userId, orgId } = await getAuthAndVerify("cha.expense.pay");
-    const payment = await chaService.postExpensePayment(userId, orgId, requestId, paymentData);
-    revalidatePath("/cha/expenses");
+    const { userId, orgId } = await getAuthAndVerify("cha.access");
+    const amountPaidValue = formData.get("amountPaid");
+    const paymentDateValue = formData.get("paymentDate");
+    const paymentMethodValue = formData.get("paymentMethod");
+    const transactionReferenceValue = formData.get("transactionReference");
+    const remarksValue = formData.get("remarks");
+    const proofFiles = formData
+      .getAll("paymentProof")
+      .filter((file): file is File => file instanceof File && file.size > 0);
+
+    if (typeof amountPaidValue !== "string" || Number(amountPaidValue) <= 0) {
+      return { ok: false, error: "Enter a valid payout amount." };
+    }
+    if (typeof paymentDateValue !== "string" || !paymentDateValue.trim()) {
+      return { ok: false, error: "Enter the payment date." };
+    }
+    if (typeof paymentMethodValue !== "string" || !paymentMethodValue.trim()) {
+      return { ok: false, error: "Select a payment method." };
+    }
+    if (typeof transactionReferenceValue !== "string" || !transactionReferenceValue.trim()) {
+      return { ok: false, error: "Enter the transaction reference." };
+    }
+    if (proofFiles.length === 0) {
+      return { ok: false, error: "Attach payment proof before marking the expense as paid." };
+    }
+    for (const proofFile of proofFiles) {
+      const proofMimeType = proofFile.type || "application/octet-stream";
+      const proofFileName = proofFile.name.toLowerCase();
+      const proofHasAllowedExtension = EXPENSE_ATTACHMENT_EXTENSIONS.some((extension) => proofFileName.endsWith(extension));
+      if (!proofMimeType.startsWith(EXPENSE_ATTACHMENT_MIME_PREFIX) && proofMimeType !== EXPENSE_ATTACHMENT_PDF_MIME && !proofHasAllowedExtension) {
+        return { ok: false, error: "Payment proof must be image or PDF files." };
+      }
+    }
+
+    const payment = await chaService.postExpensePayment(userId, orgId, requestId, {
+      amountPaid: Number(amountPaidValue),
+      paymentDate: new Date(paymentDateValue),
+      paymentMethod: paymentMethodValue,
+      transactionReference: transactionReferenceValue,
+      proofFiles: await Promise.all(
+        proofFiles.map(async (proofFile) => ({
+          fileData: {
+            fileName: proofFile.name,
+            mimeType: proofFile.type || "application/octet-stream",
+            sizeBytes: proofFile.size,
+          },
+          fileBuffer: Buffer.from(await proofFile.arrayBuffer()),
+        })),
+      ),
+      remarks: typeof remarksValue === "string" && remarksValue.trim() ? remarksValue.trim() : undefined,
+    });
+    revalidateExpensePaths(payment.request.jobId);
     return { ok: true, data: payment };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to disburse expense payment" };
@@ -911,7 +1226,7 @@ export async function acknowledgeExpenseReceiptAction(
   try {
     const { userId, orgId } = await getAuthAndVerify("cha.expense.request");
     const request = await chaService.acknowledgeExpenseReceipt(userId, orgId, requestId);
-    revalidatePath("/cha/expenses");
+    revalidateExpensePaths(request.jobId);
     return { ok: true, data: request };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to acknowledge payment receipt" };
@@ -925,7 +1240,7 @@ export async function raisePaymentQueryAction(
   try {
     const { userId, orgId } = await getAuthAndVerify("cha.expense.request");
     const query = await chaService.raisePaymentQuery(userId, orgId, requestId, queryText);
-    revalidatePath("/cha/expenses");
+    revalidateExpensePaths();
     return { ok: true, data: query };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to raise payment query" };
@@ -939,7 +1254,7 @@ export async function resolvePaymentQueryAction(
   try {
     const { userId, orgId } = await getAuthAndVerify("cha.expense.pay");
     const query = await chaService.resolvePaymentQuery(userId, orgId, queryId, resolutionText);
-    revalidatePath("/cha/expenses");
+    revalidateExpensePaths();
     return { ok: true, data: query };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to resolve payment query" };
@@ -952,8 +1267,9 @@ export async function listAllExpensesAction(filters: {
   isUrgent?: boolean;
 }): Promise<ActionResponse> {
   try {
-    const { orgId } = await getAuthAndVerify("cha.expense.manage");
-    const expenses = await chaService.listAllExpenses(orgId, filters);
+    const { userId, orgId } = await getAuthAndVerify("cha.access");
+    const canViewAll = (await can(userId, "cha.expense.manage")) || (await can(userId, "cha.expense.pay"));
+    const expenses = await chaService.listAllExpenses(orgId, filters, { userId, canViewAll });
     return { ok: true, data: expenses };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to query expense requests" };
@@ -1338,6 +1654,7 @@ export async function completeFilingNodeAction(
   nodeRunId: string,
   data: {
     remarks?: string;
+    delayRemarks?: string;
     transitionReason?: string;
     checklistItemResponses: {
       checklistItemId: string;
@@ -1366,6 +1683,7 @@ export async function saveFilingNodeDraftAction(
   nodeRunId: string,
   data: {
     remarks?: string;
+    delayRemarks?: string;
     checklistItemResponses: {
       checklistItemId: string;
       isChecked: boolean;

@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -209,7 +210,7 @@ export function KpiClient({ departments }: KpiClientProps) {
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
                         Department
                       </label>
-                      <select
+                      <NativeSelect
                         value={selectedDept}
                         onChange={(e) => setSelectedDept(e.target.value)}
                         className="w-full rounded-lg border border-outline-variant/60 bg-surface px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#00cec4] transition"
@@ -220,7 +221,7 @@ export function KpiClient({ departments }: KpiClientProps) {
                             {d.name}
                           </option>
                         ))}
-                      </select>
+                      </NativeSelect>
                     </div>
 
                     {/* Metrics Add Area */}

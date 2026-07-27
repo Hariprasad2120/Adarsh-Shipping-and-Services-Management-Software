@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState, useEffect } from "react";
 import { Calendar, Search, Plus, Download, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import { toast } from "sonner";
@@ -250,7 +251,7 @@ export function LeaveTracker({ onFetchHolidays }: LeaveTrackerProps) {
               <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                 <div className="flex items-center gap-1">
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Location:</span>
-                  <select
+                  <NativeSelect
                     value={locationFilter}
                     onChange={(e) => setLocationFilter(e.target.value)}
                     className="text-xs font-semibold bg-white border border-slate-200 rounded-lg p-1 outline-none"
@@ -258,12 +259,12 @@ export function LeaveTracker({ onFetchHolidays }: LeaveTrackerProps) {
                     <option value="All">All Locations</option>
                     <option value="Chennai">Chennai</option>
                     <option value="All Locations">All Locations</option>
-                  </select>
+                  </NativeSelect>
                 </div>
 
                 <div className="flex items-center gap-1">
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Shifts:</span>
-                  <select
+                  <NativeSelect
                     value={shiftFilter}
                     onChange={(e) => setShiftFilter(e.target.value)}
                     className="text-xs font-semibold bg-white border border-slate-200 rounded-lg p-1 outline-none"
@@ -271,7 +272,7 @@ export function LeaveTracker({ onFetchHolidays }: LeaveTrackerProps) {
                     <option value="All">All Shifts</option>
                     <option value="General">General</option>
                     <option value="All Shifts">All Shifts</option>
-                  </select>
+                  </NativeSelect>
                 </div>
 
                 {/* Add Holidays option */}

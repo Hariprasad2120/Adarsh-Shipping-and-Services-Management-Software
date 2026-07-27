@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import type { ReactNode } from "react";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
+import { getCustomerPortalApprovalQueue } from "@/modules/customer-portal/shipments";
 import { PortalShellClient } from "./_components/client-actions";
 import { db } from "@/lib/db";
 
@@ -21,13 +22,8 @@ export default async function CustomerPortalLayout({
   const session = await requirePortalSession();
 
   // Query live counts for dashboard & sidebar badges
-  const [
-    activeShipmentsCount,
-    unreadNotificationsCount,
-    pendingApprovalsCount,
-    latestJobWithCoordinator,
-    customerAccount,
-  ] = await Promise.all([
+  const [activeShipmentsCount, unreadPortalNotificationsCount, pendingApprovals, latestJobWithCoordinator, customerAccount] =
+    await Promise.all([
     db.chaJob.count({
       where: {
         orgId: session.orgId,
@@ -43,17 +39,7 @@ export default async function CustomerPortalLayout({
         readAt: null,
       },
     }),
-    db.chaJob.count({
-      where: {
-        orgId: session.orgId,
-        customerId: session.customerId,
-        status: "ACTIVE",
-        deletedAt: null,
-        checklistWorkflow: {
-          currentApprovalStage: "CUSTOMER",
-        },
-      },
-    }),
+    getCustomerPortalApprovalQueue(session),
     db.chaJob.findFirst({
       where: {
         orgId: session.orgId,
@@ -95,6 +81,8 @@ export default async function CustomerPortalLayout({
       },
     }),
   ]);
+  const pendingApprovalsCount = pendingApprovals.length;
+  const unreadNotificationsCount = unreadPortalNotificationsCount + pendingApprovalsCount;
 
   // Determine assigned support contact (coordinator)
   let coordinator: {

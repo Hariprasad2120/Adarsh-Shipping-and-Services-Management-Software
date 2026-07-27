@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -94,7 +95,7 @@ export default function NewJobPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="ds-label mb-1 block">Workplace Type</label>
-                <select
+                <NativeSelect
                   value={form.workplaceType}
                   onChange={(e) => set("workplaceType", e.target.value)}
                   className="w-full rounded-xl px-3 py-2 text-sm"
@@ -102,11 +103,11 @@ export default function NewJobPage() {
                   <option value="ONSITE">On-site</option>
                   <option value="HYBRID">Hybrid</option>
                   <option value="REMOTE">Remote</option>
-                </select>
+                </NativeSelect>
               </div>
               <div>
                 <label className="ds-label mb-1 block">Employment Type</label>
-                <select
+                <NativeSelect
                   value={form.employmentType}
                   onChange={(e) => set("employmentType", e.target.value)}
                   className="w-full rounded-xl px-3 py-2 text-sm"
@@ -115,7 +116,7 @@ export default function NewJobPage() {
                   <option value="PART_TIME">Part Time</option>
                   <option value="CONTRACT">Contract</option>
                   <option value="INTERNSHIP">Internship</option>
-                </select>
+                </NativeSelect>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -172,7 +173,7 @@ export default function NewJobPage() {
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="ds-label mb-1 block">Currency</label>
-              <select
+              <NativeSelect
                 value={form.salaryCcy}
                 onChange={(e) => set("salaryCcy", e.target.value)}
                 className="w-full rounded-xl px-3 py-2 text-sm"
@@ -181,7 +182,7 @@ export default function NewJobPage() {
                 <option value="USD">USD</option>
                 <option value="AED">AED</option>
                 <option value="EUR">EUR</option>
-              </select>
+              </NativeSelect>
             </div>
             <div>
               <label className="ds-label mb-1 block">Min (annual)</label>

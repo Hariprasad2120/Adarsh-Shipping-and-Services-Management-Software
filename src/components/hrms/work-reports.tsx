@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { Plus, Check, X, Clock, HelpCircle, User, MapPin, Send } from "lucide-react";
@@ -140,7 +141,7 @@ export function WorkReportsView() {
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <select
+          <NativeSelect
             value={filter}
             onChange={(e) => setFilter(e.target.value as any)}
             className="text-xs font-bold bg-white border border-slate-200 rounded-lg p-1.5 outline-none cursor-pointer"
@@ -148,7 +149,7 @@ export function WorkReportsView() {
             <option value="all">Reportees + My Data</option>
             <option value="my">My Data</option>
             <option value="reportees">Reportees Only</option>
-          </select>
+          </NativeSelect>
 
           <button
             type="button"
@@ -481,7 +482,7 @@ export function WorkReportsView() {
 
               <div className="flex flex-col gap-1">
                 <label className="font-bold text-slate-500">Worked On</label>
-                <select
+                <NativeSelect
                   value={newReport.workedOn}
                   onChange={(e) => setNewReport({ ...newReport, workedOn: e.target.value as any })}
                   className="p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[#00c4b6]"
@@ -489,7 +490,7 @@ export function WorkReportsView() {
                   <option value="Office">Office</option>
                   <option value="Home">Home</option>
                   <option value="Others">Others</option>
-                </select>
+                </NativeSelect>
               </div>
 
               <div className="flex flex-col gap-1">

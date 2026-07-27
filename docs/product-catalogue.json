@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-24T06:41:12.811Z",
+  "generatedAt": "2026-07-27T14:27:26.358Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -7,10 +7,10 @@
   },
   "stats": {
     "totalAppRoutes": 203,
-    "totalApiRoutes": 195,
+    "totalApiRoutes": 197,
     "totalPrismaModels": 277,
-    "totalModuleServices": 85,
-    "totalComponents": 94
+    "totalModuleServices": 86,
+    "totalComponents": 95
   },
   "appRoutes": [
     {
@@ -1547,6 +1547,22 @@
     {
       "path": "/api/cha/due-date-warnings",
       "filePath": "src/app/api/cha/due-date-warnings/route.ts",
+      "module": "cha",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/cha/expense-artifacts/[...path]",
+      "filePath": "src/app/api/cha/expense-artifacts/[...path]/route.ts",
+      "module": "cha",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/cha/reports/jobs/[jobId]",
+      "filePath": "src/app/api/cha/reports/jobs/[jobId]/route.ts",
       "module": "cha",
       "methods": [
         "GET"
@@ -7807,6 +7823,13 @@
         "orgId",
         "status",
         "requestedById",
+        "expenseScope",
+        "directPurpose",
+        "approvalRoute",
+        "routedManagerId",
+        "upiNumber",
+        "upiId",
+        "clarificationResponse",
         "createdAt",
         "updatedAt",
         "isUrgent",
@@ -9416,6 +9439,7 @@
         "slaDuration",
         "slaUnit",
         "commentsRequired",
+        "delayRemarksRequired",
         "canBeSkipped",
         "canBeRevisited",
         "approvalRequired",
@@ -9578,6 +9602,8 @@
         "slaDueDate",
         "completedById",
         "remarks",
+        "delayRemarks",
+        "delayRemarkedAt",
         "resolutionJson",
         "instance",
         "node",
@@ -10397,7 +10423,15 @@
         "recordCustomerAdvanceReceiptAction",
         "declareAdvanceNotRequiredAction",
         "createExpenseRequestAction",
+        "createExpenseRequestWithAttachmentAction",
+        "createDirectExpenseRequestAction",
+        "createDirectExpenseRequestWithAttachmentAction",
         "triggerUrgentExpenseEscalationAction",
+        "reviewExpenseRequestAction",
+        "approveAccountsExpenseRequestAction",
+        "routeExpenseRequestToManagerAction",
+        "submitExpenseClarificationAction",
+        "markExpenseReadyForDisbursementAction",
         "setExpenseStatusAction",
         "postExpensePaymentAction",
         "acknowledgeExpenseReceiptAction",
@@ -10455,6 +10489,15 @@
     },
     {
       "module": "cha",
+      "fileName": "job-report.ts",
+      "filePath": "src/modules/cha/job-report.ts",
+      "exportedFunctions": [
+        "listCompletedChaJobsForReports",
+        "generateCompletedChaJobReport"
+      ]
+    },
+    {
+      "module": "cha",
       "fileName": "service.ts",
       "filePath": "src/modules/cha/service.ts",
       "exportedFunctions": [
@@ -10499,6 +10542,7 @@
         "submitChecklistInternalDecision",
         "sendChecklistCustomerMail",
         "submitChecklistCustomerDecision",
+        "submitPortalCustomerChecklistDecision",
         "importChecklistExcel",
         "submitChecklistForApproval",
         "checklistManagerAction",
@@ -10510,6 +10554,13 @@
         "declareAdvanceNotRequired",
         "createExpenseRequest",
         "triggerUrgentExpenseEscalation",
+        "reviewExpenseRequest",
+        "listExpenseJobOptions",
+        "createDirectExpenseRequest",
+        "approveAccountsExpenseRequest",
+        "routeExpenseRequestToManager",
+        "submitExpenseClarification",
+        "markExpenseReadyForDisbursement",
         "setExpenseStatus",
         "postExpensePayment",
         "acknowledgeExpenseReceipt",
@@ -10949,7 +11000,8 @@
       "exportedFunctions": [
         "parseCustomerPortalShipmentFilters",
         "getCustomerPortalShipmentsData",
-        "getCustomerPortalShipmentDetailData"
+        "getCustomerPortalShipmentDetailData",
+        "getCustomerPortalApprovalQueue"
       ]
     },
     {
@@ -11916,6 +11968,11 @@
     },
     {
       "module": "ui",
+      "fileName": "native-select.tsx",
+      "filePath": "src/components/ui/native-select.tsx"
+    },
+    {
+      "module": "ui",
       "fileName": "neon-checkbox.tsx",
       "filePath": "src/components/ui/neon-checkbox.tsx"
     },
@@ -11975,9 +12032,9 @@
     },
     "cha": {
       "appRoutes": 12,
-      "apiRoutes": 4,
+      "apiRoutes": 6,
       "prismaModels": 35,
-      "serviceFiles": 6,
+      "serviceFiles": 7,
       "components": 3
     },
     "cha-ui-showcase": {
@@ -12174,7 +12231,7 @@
       "apiRoutes": 0,
       "prismaModels": 0,
       "serviceFiles": 0,
-      "components": 16
+      "components": 17
     },
     "users": {
       "appRoutes": 0,

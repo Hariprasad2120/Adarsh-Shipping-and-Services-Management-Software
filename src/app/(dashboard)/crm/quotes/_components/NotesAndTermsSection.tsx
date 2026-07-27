@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useEffect, useRef, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { BookmarkPlus, ChevronDown, CreditCard, Save, Trash2, X } from "lucide-react";
@@ -224,7 +225,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
             <label htmlFor="bankDetailsId" className="mb-1 block text-[11px] font-medium text-[#6b7280]">
               Select bank account for this document
             </label>
-            <select
+            <NativeSelect
               id="bankDetailsId"
               className="w-full rounded-xl border bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none"
               {...form.register("bankDetailsId")}
@@ -235,7 +236,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
                   {b.bankName} · {b.accountNumber}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           {selectedBank && (

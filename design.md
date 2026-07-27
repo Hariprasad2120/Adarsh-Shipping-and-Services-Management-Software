@@ -19,6 +19,7 @@
 - CHA jobs move from Document Collection to Additional Data before Checklist Preparation.
 - Additional Data captures Vessel Inward Date, IGM, EGM, and Delivery Order Validity; all four fields are required before checklist import is available.
 - Delivery Order Validity warnings use orange alert treatment in the persistent dashboard header when expiry is within four calendar days, and destructive treatment only for expired status labels.
+- CHA job workspace detail screens use `.cha-job-workspace` to soften dense panel borders and workflow connector lines while preserving the standard global card/table border treatment elsewhere.
 
 ---
 
@@ -149,11 +150,13 @@ These are defined in `design-tokens.ts` under `colors.status` and are approved e
 
 | Class | Font | Size | Weight | Tracking | Transform |
 |---|---|---|---|---|---|
-| `.ds-h1` | `var(--font-display)` | 30px (`--text-4xl`) | 400 | 0.22em | UPPERCASE |
-| `.ds-h2` | `var(--font-display)` | 24px (`--text-3xl`) | 400 | 0.20em | UPPERCASE |
-| `.ds-h3` | `var(--font-display)` | 20px (`--text-2xl`) | 400 | 0.18em | UPPERCASE |
+| `.ds-h1` | `var(--font-display)` | 30px (`--text-4xl`) | 400 | 0.04em | UPPERCASE |
+| `.ds-h2` | `var(--font-display)` | 24px (`--text-3xl`) | 400 | 0.04em | UPPERCASE |
+| `.ds-h3` | `var(--font-display)` | 20px (`--text-2xl`) | 400 | 0.04em | UPPERCASE |
 | `.ds-label` | Inherited | 10px (`--text-xs`) | 400 | 0.12em | UPPERCASE |
 | `.ds-numeric` | `var(--font-mono)` | Inherited | 400 | — | tabular-nums, slashed-zero |
+
+Real heading tags (`h1`-`h6`) must not use looser ad hoc tracking such as `tracking-wider`, `tracking-widest`, or `tracking-[...]`. The global stylesheet normalizes those heading overrides back to `0.04em`; labels, badges, tabs, and numeric displays are separate treatments.
 
 ### 4.4 Font-Weight Rules
 
@@ -284,7 +287,7 @@ Use `src/components/ui/file-upload-field.tsx` as the default upload primitive ac
 Canonical CHA card pattern:
 - Use `rounded-xl border border-outline-variant/60 bg-surface text-on-surface shadow-sm`.
 - Use `card-top-accent` for dashboard/stat/summary cards and `card-left-accent` for list/detail rows.
-- Card section titles use `.ds-h3`, matching the CHA typography showcase: Geist/display, uppercase, 20px, 0.18em tracking, 400 weight.
+- Card section titles use `.ds-h3`: Geist/display, uppercase, 20px, 0.04em tracking, 400 weight.
 - Pair titles with `.ds-icon-badge` and a short `text-sm text-on-surface-variant` subtitle when the card has a header row.
 
 ```tsx
@@ -352,9 +355,9 @@ Form label: `text-sm`, `font-medium`, `text-on-surface`.
 
 | Class | Effect | Use |
 |---|---|---|
-| `.ds-h1` | 30px Geist/display uppercase heading, 0.22em tracking | Page titles and CHA job-number display |
-| `.ds-h2` | 24px Geist/display uppercase heading, 0.20em tracking | Section titles |
-| `.ds-h3` | 20px Geist/display uppercase heading, 0.18em tracking | Card/panel titles |
+| `.ds-h1` | 30px Geist/display uppercase heading, 0.04em tracking | Page titles and CHA job-number display |
+| `.ds-h2` | 24px Geist/display uppercase heading, 0.04em tracking | Section titles |
+| `.ds-h3` | 20px Geist/display uppercase heading, 0.04em tracking | Card/panel titles |
 | `.ds-label` | 10px uppercase, muted color | Table headers, form labels |
 | `.ds-numeric` | Geist Mono, tabular-nums | Numbers, money, stats |
 | `.ds-icon-badge` | 36×36 frosted glass icon container | Stat cards, feature icons |
@@ -373,6 +376,16 @@ Form label: `text-sm`, `font-medium`, `text-on-surface`.
 | `.ds-nav-item` | Sidebar/mobile navigation row with cyan active state | App navigation links and actions |
 | `.ds-progress-bar` | Cyan progress meter with token-backed track | Shipment, workflow, and completion progress |
 | `.ds-timeline` / `.ds-stage` | Horizontal milestone tracker | CHA/customer-facing workflow stages |
+| `.ds-section-panel` | Neutral rounded operational panel shell | Reusable panels that do not need cyan/orange accent bars |
+| `.ds-section-panel-header` | Standard bottom divider for panel headers | Header rows inside `.ds-section-panel` |
+| `.ds-inset-row` | Subtle inset row background | Repeated compact detail/date rows |
+| `.ds-action-row` | Interactive row with standard border and hover elevation | Quick-action/detail rows that behave like clickable controls |
+| `.ds-workflow-link` / `.ds-workflow-dot` | Compact horizontal workflow-stage controls | Stage scrollers and inline workflow progress controls |
+| `.ds-filter-chip` | Removable active-filter pill | Search/filter summaries and active filter chips |
+| `.ds-state-dot` | Small cyan active-state dot | Selected filters, active menu items, compact state markers |
+| `.ds-menu-option` / `.ds-menu-option-active` | Token-backed menu/list option row | Filter popovers and compact option lists |
+| `.ds-empty-icon` | Large neutral empty-state icon container | Table and panel empty states |
+| `.ds-action-icon` + tone suffixes | Compact color-coded icon action | View/edit/delete actions using `-view`, `-edit`, `-delete` |
 | `.ds-dark-banner` | Preserves white text in light mode | Dark-background hero sections |
 | `.card-cyan-outline` | Thin cyan outline border | Workspace cards, data-entry panels, highlighted information cards |
 | `.card-top-accent` | Cyan top accent + cyan-tinted border | Primary stat cards, emphasized section cards |
@@ -607,7 +620,8 @@ The following exceptions are approved where narrow reading constraints are neces
 ---
 
 ## 16. CHA UI Review Decisions (live)
-- **2026-07-21 · design.md correction — CHA typography and button hover glow promoted** — `.ds-h*` now matches the CHA typography showcase: Geist/display, uppercase, 400 weight, wide display tracking (`0.22em / 0.20em / 0.18em`) with `ds-h1/ds-h2/ds-h3` at `30px / 24px / 20px`. Shared `Button` and `.ds-button*` now carry the slight cyan/orange/red hover glow used by CHA instead of flat ambient-only hover. (id `manual-cha-heading-button-glow`)
+- **2026-07-21 · design.md correction — CHA typography and button hover glow promoted** *(heading tracking superseded by `manual-heading-tracking-standardized`)* — `.ds-h*` uses Geist/display, uppercase, 400 weight, with `ds-h1/ds-h2/ds-h3` at `30px / 24px / 20px`. Shared `Button` and `.ds-button*` now carry the slight cyan/orange/red hover glow used by CHA instead of flat ambient-only hover. (id `manual-cha-heading-button-glow`)
+- **2026-07-24 · design.md correction — Shared heading tracking standardized** — `.ds-h*` keeps the shared Geist/display uppercase heading sizes and 400 weight, but all heading levels now use `0.04em` tracking so page, section, and card titles remain consistent. Real heading tags with ad hoc Tailwind tracking utilities are normalized back to this value. (id `manual-heading-tracking-standardized`)
 - **2026-07-21 · design.md fix — Portal buttons and headings tightened** *(superseded by `manual-cha-heading-button-glow`)* — shared buttons now use 12px default / 10px small text with 0.08em tracking. The temporary Kiona heading correction in this entry was wrong and has been replaced by the CHA showcase Geist/display heading contract above. (id `manual-button-heading-tighten`)
 - **2026-07-21 · design.md decision — Buttons use restrained shared treatment** — supersedes `manual-neon-restore`, `manual-btn-neon`, and `manual-cha-link`: shared `Button`, `.ds-button`, `.ds-button-outline`, `.ds-button-warning`, and CHA compatibility button selectors use cyan/orange operational styling with ambient hover elevation only. Broad neon glow and `neon-pulse-*` effects are not canonical. (id `manual-button-restraint`)
 - **2026-07-21 · design.md migration — CHA design promoted to shared portal system** — customer portal now uses shared `ds-app-body`, `ds-portal-shell`, `ds-sidebar`, `ds-topbar`, `ds-nav-item`, `ds-progress-bar`, and `ds-timeline` utilities; removed `portal-styles.css` dependency and replaced the separate glass/illustrated portal shell with CHA-style operational cards, tokens, shared `Button`, `Badge`, `Card`, and `DataTable` treatments (id `manual-cha-portal-system`)

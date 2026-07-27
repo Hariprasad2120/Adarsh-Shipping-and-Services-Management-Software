@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import type { ChangeEvent } from "react";
@@ -202,7 +203,7 @@ export function LineItemRow({
         </div>
       </td>
       <td className="min-w-[90px] px-2 py-2">
-        <select
+        <NativeSelect
           className="h-9 w-full rounded-xl border bg-white px-2 text-[12px] text-[#1f2937] outline-none"
           value={currency}
           onChange={(e) => handleCurrencyChange(e.target.value)}
@@ -212,7 +213,7 @@ export function LineItemRow({
               {c.code}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </td>
       <td className="min-w-[100px] px-2 py-2">
         <input
@@ -231,7 +232,7 @@ export function LineItemRow({
         />
       </td>
       <td className="min-w-[100px] px-2 py-2">
-        <select
+        <NativeSelect
           className="h-9 w-full rounded-xl border bg-white px-2 text-[12px] text-[#1f2937] outline-none"
           {...form.register(`lineItems.${index}.unit`)}
         >
@@ -240,7 +241,7 @@ export function LineItemRow({
               {unit}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </td>
       <td className="min-w-[90px] px-2 py-2">
         <input
@@ -279,7 +280,7 @@ export function LineItemRow({
         {errors?.rate ? <p className="mt-1 text-[11px] text-[#fe4242]">{errors.rate.message}</p> : null}
       </td>
       <td className="min-w-[110px] px-2 py-2">
-        <select
+        <NativeSelect
           className="h-9 w-full rounded-xl border bg-white px-2 text-[12px] text-[#1f2937] outline-none"
           {...form.register(`lineItems.${index}.tax`)}
         >
@@ -289,10 +290,10 @@ export function LineItemRow({
               {tax}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </td>
       <td className="min-w-[110px] px-2 py-2">
-        <select
+        <NativeSelect
           className="h-9 w-full rounded-xl border bg-white px-2 text-[12px] text-[#1f2937] outline-none"
           {...form.register(`lineItems.${index}.tds`)}
         >
@@ -301,7 +302,7 @@ export function LineItemRow({
               {tds}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </td>
       <td className="min-w-[120px] px-2 py-3 text-right text-[13px] font-mono font-medium text-[#1f2937]">
         ₹ {formatMoney(amount ?? 0)}

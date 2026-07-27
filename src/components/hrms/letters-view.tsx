@@ -1,3 +1,4 @@
+import { NativeSelect } from "@/components/ui/native-select";
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect */
 "use client";
 
@@ -758,7 +759,7 @@ export function LettersView() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="ds-label">Recipient Employee</label>
-              <select
+              <NativeSelect
                 value={wizardUserId}
                 onChange={(event) => {
                   const value = event.target.value;
@@ -773,12 +774,12 @@ export function LettersView() {
                 {employees.map((employee) => (
                   <option key={employee.id} value={employee.id}>{employee.name} ({employee.email})</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
 
             <div className="space-y-2">
               <label className="ds-label">Letter Format</label>
-              <select
+              <NativeSelect
                 value={wizardTemplateId}
                 onChange={(event) => {
                   const value = event.target.value;
@@ -793,7 +794,7 @@ export function LettersView() {
                 {templates.filter((template) => template.isActive).map((template) => (
                   <option key={template.id} value={template.id}>{template.name} (v{template.version})</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
           </div>
 

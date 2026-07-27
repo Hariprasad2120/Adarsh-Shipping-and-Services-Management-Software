@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import React from "react";
 import { HelpCircle, Search } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
@@ -99,14 +100,14 @@ export function ItemPrimaryInfoSection({ form }: ItemPrimaryInfoSectionProps) {
       </FieldRow>
 
       <FieldRow label="Unit" id="item-unit" help error={errors.unit?.message}>
-        <select id="item-unit" className={selectCls} {...register("unit")}>
+        <NativeSelect id="item-unit" className={selectCls} {...register("unit")}>
           <option value="">— Select unit —</option>
           {UNITS.map((u) => (
             <option key={u} value={u}>
               {u}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </FieldRow>
 
       <FieldRow label="SKU" id="item-sku" help error={errors.sku?.message}>
@@ -161,27 +162,27 @@ export function ItemPrimaryInfoSection({ form }: ItemPrimaryInfoSectionProps) {
 
       {taxPreference === "Taxable" && (
         <FieldRow label="Tax Rate" id="item-tax-rate" error={errors.taxRate?.message}>
-          <select id="item-tax-rate" className={selectCls} {...register("taxRate")}>
+          <NativeSelect id="item-tax-rate" className={selectCls} {...register("taxRate")}>
             <option value="">— Select GST rate —</option>
             {GST_RATES.map((r) => (
               <option key={r} value={r}>
                 {r}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </FieldRow>
       )}
 
       {taxPreference === "Non-Taxable" && (
         <FieldRow label="Exemption Reason" id="item-exemption" error={errors.exemptionReason?.message}>
-          <select id="item-exemption" className={selectCls} {...register("exemptionReason")}>
+          <NativeSelect id="item-exemption" className={selectCls} {...register("exemptionReason")}>
             <option value="">— Select reason —</option>
             {EXEMPTION_REASONS.map((r) => (
               <option key={r} value={r}>
                 {r}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </FieldRow>
       )}
     </div>

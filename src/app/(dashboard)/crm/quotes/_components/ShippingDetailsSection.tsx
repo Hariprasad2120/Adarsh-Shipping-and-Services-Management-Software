@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import type { UseFormReturn } from "react-hook-form";
 import type { QuoteFormValues } from "../_lib/types";
 
@@ -49,7 +50,7 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
 
         <div>
           <label className="mb-1 block text-[12px] font-medium text-[#374151]">INCOTERM</label>
-          <select
+          <NativeSelect
             className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
             {...form.register("incoterm")}
           >
@@ -59,12 +60,12 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
                 {term}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
 
         <div>
           <label className="mb-1 block text-[12px] font-medium text-[#374151]">Container type</label>
-          <select
+          <NativeSelect
             className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
             {...form.register("containerType")}
           >
@@ -74,7 +75,7 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
                 {containerType}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
 
         {fields.slice(4).map((field) => (

@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -35,7 +36,7 @@ export function ItemsPagination({
           <label htmlFor="perPage" className="sr-only">
             Items per page
           </label>
-          <select
+          <NativeSelect
             id="perPage"
             value={perPage}
             onChange={(e) => {
@@ -49,7 +50,7 @@ export function ItemsPagination({
                 {n} per page
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
 
         <button

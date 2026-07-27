@@ -1,15 +1,13 @@
 import Link from "next/link";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
-import { listPortalShipments } from "@/modules/customer-portal/service";
+import { getCustomerPortalApprovalQueue } from "@/modules/customer-portal/shipments";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { CheckSquare, ArrowRight } from "lucide-react";
 
 export default async function CustomerPortalApprovalsPage() {
   const session = await requirePortalSession();
-  const shipments = await listPortalShipments(session.portalUserId, { scope: "active" });
-
-  // Filter shipments that need checklist approvals
-  const pendingApprovals = shipments.filter((s) => s.actions.checklistPending);
+  const pendingApprovals = await getCustomerPortalApprovalQueue(session);
 
   return (
     <div className="space-y-6 font-sans">
@@ -34,42 +32,40 @@ export default async function CustomerPortalApprovalsPage() {
             </p>
           </div>
         ) : (
-          pendingApprovals.map((shipment) => (
+          pendingApprovals.map((approval) => (
             <div
-              key={shipment.id}
+              key={approval.id}
               className="card-top-accent-orange flex flex-col justify-between rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-sm relative overflow-hidden"
             >
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="ds-label text-xs tracking-wider">{shipment.jobNumber}</span>
+                  <span className="ds-label text-xs tracking-wider">{approval.jobNumber}</span>
                   <Badge
                     variant="warning"
-                    style={{
-                      backgroundColor: "rgba(251,146,60,0.1)",
-                      color: "#fb923c",
-                      border: "none",
-                      fontSize: "10px",
-                    }}
                   >
                     Checklist Pending
                   </Badge>
                 </div>
 
                 <h3 className="ds-h3 text-on-surface">
-                  {shipment.customerRef || shipment.title || "Customs Checklist"}
+                  {approval.customerRef || approval.jobTitle || approval.checklistLabel}
                 </h3>
                 <p className="text-xs text-on-surface-variant font-medium">
-                  Stage: {shipment.currentStage} · Updated: {new Date(shipment.lastUpdatedAt).toLocaleDateString()}
+                  Stage: {approval.stageLabel} · Updated: {formatDate(approval.updatedAt)}
                 </p>
+                {approval.fileName ? (
+                  <p className="text-xs text-on-surface-variant">{approval.fileName}</p>
+                ) : null}
               </div>
 
               <div className="border-t border-outline-variant/20 mt-4 pt-4 flex justify-end">
                 <Link
-                  href={`/customer-portal/shipments/${shipment.id}?tab=approvals`}
-                  className="ds-button"
+                  href={approval.href}
                 >
-                  <span>Review & Approve</span>
-                  <ArrowRight size={14} />
+                  <Button size="sm" className="gap-2">
+                    <span>Review And Approve</span>
+                    <ArrowRight size={14} />
+                  </Button>
                 </Link>
               </div>
             </div>
@@ -78,4 +74,12 @@ export default async function CustomerPortalApprovalsPage() {
       </div>
     </div>
   );
+}
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }

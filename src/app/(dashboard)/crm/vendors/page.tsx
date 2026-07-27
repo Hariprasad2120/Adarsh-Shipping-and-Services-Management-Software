@@ -1,3 +1,4 @@
+import { NativeSelect } from "@/components/ui/native-select";
 import React from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -191,7 +192,7 @@ export default async function CrmVendorsPage({ searchParams }: { searchParams: P
             </div>
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Vendor Owner *</label>
-              <select
+              <NativeSelect
                 name="ownerId"
                 className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#00c4b6]"
                 required
@@ -199,7 +200,7 @@ export default async function CrmVendorsPage({ searchParams }: { searchParams: P
                 {employees.map((emp) => (
                   <option key={emp.id} value={emp.id}>{emp.name}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <button
               type="submit"

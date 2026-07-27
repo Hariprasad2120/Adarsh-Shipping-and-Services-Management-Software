@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps, prefer-const, @typescript-eslint/no-require-imports, react-hooks/immutability, react-hooks/set-state-in-effect */
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -2298,14 +2299,14 @@ export default function MonolithMessenger() {
 
               <div className="space-y-1.5 border-t border-outline-variant/60 pt-3">
                 <label className="ds-label block font-semibold text-on-surface-variant">Who can manage memberships</label>
-                <select
+                <NativeSelect
                   value={spaceSettingsPermissions}
                   onChange={(e) => setSpaceSettingsPermissions(e.target.value)}
                   className="w-full bg-surface text-xs focus:ring-0 focus:outline-none"
                 >
                   <option value="all">Owners, managers, and members</option>
                   <option value="managers">Owners and managers only</option>
-                </select>
+                </NativeSelect>
               </div>
 
               <div className="flex justify-end space-x-2 pt-2.5 border-t border-outline-variant/60">

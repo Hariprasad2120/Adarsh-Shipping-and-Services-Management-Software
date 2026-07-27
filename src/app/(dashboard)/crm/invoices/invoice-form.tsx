@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -190,7 +191,7 @@ export function InvoiceForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Document Type *</label>
-            <select
+            <NativeSelect
               value={type}
               onChange={(e) => setType(e.target.value)}
               disabled={isEdit || invoiceTypes.length === 1}
@@ -199,7 +200,7 @@ export function InvoiceForm({
               {invoiceTypes.map((t) => (
                 <option key={t} value={t}>{t.replace("_", " ")}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Document Number *</label>
@@ -226,7 +227,7 @@ export function InvoiceForm({
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Bank Details</label>
-            <select
+            <NativeSelect
               name="bankDetails"
               defaultValue={initialData?.bankDetails || ""}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -237,7 +238,7 @@ export function InvoiceForm({
                   {acc.accountName} ({acc.accountCode})
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           {(type === "INVOICE" || type === "DEBIT_NOTE") ? (
             <input
@@ -269,7 +270,7 @@ export function InvoiceForm({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Customer (Account)</label>
-            <select
+            <NativeSelect
               name="accountId"
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
@@ -279,11 +280,11 @@ export function InvoiceForm({
               {accounts.map((acc) => (
                 <option key={acc.id} value={acc.id}>{acc.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Contact Person</label>
-            <select
+            <NativeSelect
               name="contactId"
               defaultValue={initialData?.contactId || ""}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -294,12 +295,12 @@ export function InvoiceForm({
                 .map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
-            </select>
+            </NativeSelect>
           </div>
           {type === "PURCHASE_ORDER" && (
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Vendor (Suppliers)</label>
-              <select
+              <NativeSelect
                 name="vendorId"
                 defaultValue={initialData?.vendorId || ""}
                 className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -308,13 +309,13 @@ export function InvoiceForm({
                 {vendors.map((v) => (
                   <option key={v.id} value={v.id}>{v.name}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
           )}
           <input type="hidden" name="status" value={initialData?.status || "DRAFT"} />
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Document Owner *</label>
-            <select
+            <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -324,7 +325,7 @@ export function InvoiceForm({
               {employees.map((emp) => (
                 <option key={emp.id} value={emp.id}>{emp.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
         </div>
       </div>
@@ -377,7 +378,7 @@ export function InvoiceForm({
                       />
                     </td>
                     <td className="px-4 py-2">
-                      <select
+                      <NativeSelect
                         value={item.currency}
                         onChange={(e) => handleItemChange(index, "currency", e.target.value)}
                         className="w-full px-2 py-1 bg-[#0a0d12] border border-[#1c212a] rounded text-white focus:outline-none focus:border-[#00c4b6]"
@@ -386,7 +387,7 @@ export function InvoiceForm({
                         <option value="USD">USD</option>
                         <option value="EUR">EUR</option>
                         <option value="SGD">SGD</option>
-                      </select>
+                      </NativeSelect>
                     </td>
                     <td className="px-4 py-2">
                       <input
@@ -423,7 +424,7 @@ export function InvoiceForm({
                       />
                     </td>
                     <td className="px-4 py-2">
-                      <select
+                      <NativeSelect
                         value={item.taxPercent}
                         onChange={(e) => handleItemChange(index, "taxPercent", e.target.value)}
                         className="w-full px-2 py-1 bg-[#0a0d12] border border-[#1c212a] rounded text-white focus:outline-none focus:border-[#00c4b6]"
@@ -433,7 +434,7 @@ export function InvoiceForm({
                         <option value="12">12% Service</option>
                         <option value="18">18% Standard GST</option>
                         <option value="28">28% High Slab</option>
-                      </select>
+                      </NativeSelect>
                     </td>
                     <td className="px-4 py-2 text-right font-bold text-white text-sm">
                       ₹{itemAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

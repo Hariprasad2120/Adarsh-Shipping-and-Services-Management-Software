@@ -255,7 +255,7 @@ function PreviewSectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-4">
       <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
-      <h4 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">{children}</h4>
+      <h4 className="ds-h3 text-on-surface">{children}</h4>
     </div>
   );
 }
@@ -394,7 +394,7 @@ export function WorkflowDocumentsSectionHeader({
         <div className="grid min-w-0 grid-cols-[4px_minmax(0,1fr)] items-start gap-4">
           <span className="mt-0.5 h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
           <div className="min-w-0">
-            <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">{title}</h3>
+            <h3 className="ds-h3 text-on-surface">{title}</h3>
             <p className="mt-1 text-sm text-on-surface-variant">
               Review uploaded document files, metadata, and workflow context.
             </p>
@@ -935,7 +935,7 @@ export function WorkflowProgressPanel({
           <p className="ds-label text-[#00cec4]">{eyebrow}</p>
           <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-4">
             <span className="h-7 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
-            <h3 className="text-xl font-normal uppercase tracking-[0.10em] text-on-surface">{title}</h3>
+            <h3 className="ds-h3 text-on-surface">{title}</h3>
           </div>
         </div>
 

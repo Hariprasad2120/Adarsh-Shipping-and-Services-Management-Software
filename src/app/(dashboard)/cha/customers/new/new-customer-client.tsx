@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -376,7 +377,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   <div className="grid grid-cols-12 gap-2">
                     <div className="col-span-3">
                       <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Salutation</label>
-                      <select
+                      <NativeSelect
                         value={salutation}
                         onChange={(e) => setSalutation(e.target.value)}
                         className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
@@ -386,7 +387,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                         <option value="Mrs.">Mrs.</option>
                         <option value="Ms.">Ms.</option>
                         <option value="Dr.">Dr.</option>
-                      </select>
+                      </NativeSelect>
                     </div>
                     <div className="col-span-4">
                       <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">First Name *</label>
@@ -428,7 +429,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Industry Segment</label>
-                  <select
+                  <NativeSelect
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value)}
                     className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
@@ -438,11 +439,11 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     <option value="Trading & Retail">Trading & Retail</option>
                     <option value="Imports / Exports">Imports / Exports</option>
                     <option value="Chemicals">Chemicals</option>
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Customer Language</label>
-                  <select
+                  <NativeSelect
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
                     className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
@@ -451,14 +452,14 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     <option value="Hindi">Hindi</option>
                     <option value="Tamil">Tamil</option>
                     <option value="Telugu">Telugu</option>
-                  </select>
+                  </NativeSelect>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">GST Treatment</label>
-                  <select
+                  <NativeSelect
                     value={gstTreatment}
                     onChange={(e) => setGstTreatment(e.target.value)}
                     className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
@@ -469,7 +470,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     <option value="Consumer">Consumer</option>
                     <option value="Overseas">Overseas</option>
                     <option value="SEZ">SEZ</option>
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">GSTIN</label>
@@ -753,7 +754,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
               </div>
               <div>
                 <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Currency Preference</label>
-                <select
+                <NativeSelect
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
                   className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
@@ -761,14 +762,14 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   <option value="INR">INR- Indian Rupee</option>
                   <option value="USD">USD- US Dollar</option>
                   <option value="EUR">EUR- Euro</option>
-                </select>
+                </NativeSelect>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Opening Balance Branch</label>
-                <select
+                <NativeSelect
                   value={openingBalanceBranch}
                   onChange={(e) => setOpeningBalanceBranch(e.target.value)}
                   className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
@@ -776,7 +777,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   <option value="Chennai">Chennai</option>
                   <option value="Mumbai">Mumbai</option>
                   <option value="Delhi">Delhi</option>
-                </select>
+                </NativeSelect>
               </div>
               <div>
                 <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Opening Balance Amount</label>
@@ -789,7 +790,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
               </div>
               <div>
                 <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Payment Terms</label>
-                <select
+                <NativeSelect
                   value={paymentTerms}
                   onChange={(e) => setPaymentTerms(e.target.value)}
                   className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
@@ -798,13 +799,13 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   <option value="Net 30">Net 30</option>
                   <option value="Net 45">Net 45</option>
                   <option value="Due on Receipt">Due on Receipt</option>
-                </select>
+                </NativeSelect>
               </div>
             </div>
 
             <div>
               <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Account Owner / Account Manager</label>
-              <select
+              <NativeSelect
                 value={ownerId}
                 onChange={(e) => setOwnerId(e.target.value)}
                 className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
@@ -814,7 +815,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     {emp.name}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
           </div>
         )}

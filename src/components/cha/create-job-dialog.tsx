@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -1080,10 +1081,12 @@ export function CreateJobDialog({
   const activeBranch = options.branches.find((branch) => branch.id === newBranchId);
   const activeCustomer = options.customers.find((customer) => customer.id === newCustomerId);
 
-  return (
+  if (!open || typeof document === "undefined") return null;
+
+  return createPortal(
     <>
       <div
-        className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(2,6,23,0.66)] p-4 backdrop-blur-md animate-in fade-in duration-200"
+        className="fixed inset-0 z-50 flex h-dvh w-dvw items-center justify-center overflow-hidden bg-[rgba(2,6,23,0.66)] p-4 backdrop-blur-md animate-in fade-in duration-200"
         style={
           {
             "--cha-create-primary": "#00cec4",
@@ -1102,8 +1105,7 @@ export function CreateJobDialog({
           } as React.CSSProperties
         }
       >
-        <div className="flex min-h-[calc(100dvh-2rem)] items-start justify-center py-2 sm:items-center sm:py-3">
-          <div className="flex h-[calc(100dvh-1rem)] w-full max-w-[1120px] flex-col overflow-hidden rounded-[26px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] shadow-[0_28px_82px_-42px_rgba(15,23,42,0.4)] dark:border-[#263449] dark:bg-[#111827] dark:[--cha-create-primary:#00cec4] dark:[--cha-create-primary-hover:#5eead4] dark:[--cha-create-primary-active:#00b8af] dark:[--cha-create-primary-soft:rgba(0,206,196,0.16)] dark:[--cha-create-primary-border:rgba(0,206,196,0.28)] dark:[--cha-create-card:#111827] dark:[--cha-create-card-alt:#0F172A] dark:[--cha-create-text:#F8FAFC] dark:[--cha-create-secondary:#CBD5E1] dark:[--cha-create-muted:#94A3B8] dark:[--cha-create-border:#263449] dark:[--cha-create-divider:rgba(148,163,184,0.18)] dark:[--cha-create-ring:rgba(0,206,196,0.18)] sm:h-[calc(100dvh-2rem)]">
+        <div className="flex h-[calc(100dvh-2rem)] w-full max-w-[1120px] flex-col overflow-hidden rounded-[26px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] shadow-[0_28px_82px_-42px_rgba(15,23,42,0.4)] dark:border-[#263449] dark:bg-[#111827] dark:[--cha-create-primary:#00cec4] dark:[--cha-create-primary-hover:#5eead4] dark:[--cha-create-primary-active:#00b8af] dark:[--cha-create-primary-soft:rgba(0,206,196,0.16)] dark:[--cha-create-primary-border:rgba(0,206,196,0.28)] dark:[--cha-create-card:#111827] dark:[--cha-create-card-alt:#0F172A] dark:[--cha-create-text:#F8FAFC] dark:[--cha-create-secondary:#CBD5E1] dark:[--cha-create-muted:#94A3B8] dark:[--cha-create-border:#263449] dark:[--cha-create-divider:rgba(148,163,184,0.18)] dark:[--cha-create-ring:rgba(0,206,196,0.18)]">
             <div className="relative overflow-hidden border-b border-[var(--cha-create-divider)] bg-[var(--cha-create-card)] px-5 py-4 dark:bg-[var(--cha-create-card)] sm:px-6">
               <div className="pointer-events-none absolute inset-y-0 -right-24 w-[32%] overflow-hidden opacity-75">
                 <svg className="absolute inset-0 h-full w-full" fill="none" viewBox="0 0 540 220">
@@ -1332,7 +1334,7 @@ export function CreateJobDialog({
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                       <label className="space-y-1">
                         <span className="ds-label block">Movement Direction</span>
-                        <select
+                        <NativeSelect
                           value={newJobTypeMovementDirection}
                           onChange={(e) => setNewJobTypeMovementDirection(e.target.value as "IMPORT" | "EXPORT" | "BOTH" | "OTHER")}
                           className={CHA_CREATE_INPUT_CLASS}
@@ -1341,11 +1343,11 @@ export function CreateJobDialog({
                           <option value="EXPORT">Export</option>
                           <option value="BOTH">Both</option>
                           <option value="OTHER">Other / Custom</option>
-                        </select>
+                        </NativeSelect>
                       </label>
                       <label className="space-y-1">
                         <span className="ds-label block">Manifest Requirement</span>
-                        <select
+                        <NativeSelect
                           value={newJobTypeManifestRequirement}
                           onChange={(e) => setNewJobTypeManifestRequirement(e.target.value as "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM")}
                           className={CHA_CREATE_INPUT_CLASS}
@@ -1355,7 +1357,7 @@ export function CreateJobDialog({
                           <option value="BOTH">Both</option>
                           <option value="NONE">None</option>
                           <option value="CUSTOM">Custom</option>
-                        </select>
+                        </NativeSelect>
                       </label>
                     </div>
                     {newJobTypeManifestRequirement === "CUSTOM" ? (
@@ -1748,7 +1750,6 @@ export function CreateJobDialog({
             </div>
           </form>
         </div>
-        </div>
       </div>
 
       <CreateJobSuccessOverlay
@@ -1759,6 +1760,7 @@ export function CreateJobDialog({
         onAutoFinish={() => finishCreateFlow(false)}
         reducedMotion={!!reducedMotion}
       />
-    </>
+    </>,
+    document.body,
   );
 }

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { can } from "@/lib/rbac";
 import { listManagerChecklistApprovals, listManagerJobDeletionRequests } from "@/modules/cha/service";
 import Link from "next/link";
-import { CheckSquare, ArrowRight, Trash2, ChevronRight, CheckCircle2 } from "lucide-react";
+import { CheckSquare, ArrowRight, Trash2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   ChaPageHeader,
@@ -35,13 +35,7 @@ export default async function ChaApprovalsPage() {
     <div className="space-y-8">
       {/* Page Header */}
       <ChaPageHeader
-        eyebrow={
-          <>
-            <span>CHA</span>
-            <ChevronRight size={14} />
-            <span>Checklist Approvals</span>
-          </>
-        }
+        eyebrow={null}
         title="Checklist Approvals"
         description="Audit, check, and sign off on pending job checklist audits and job deletion reviews."
         icon={<CheckCircle2 size={20} />}

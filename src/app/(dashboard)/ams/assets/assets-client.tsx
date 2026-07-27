@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import { toast } from "sonner";
@@ -148,7 +149,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <select
+                <NativeSelect
                   value={deprecMonth}
                   onChange={(e) => setDeprecMonth(parseInt(e.target.value))}
                   className="bg-[#161f28] border border-[#1c212a] text-white rounded-xl px-3 py-1.5 text-xs font-semibold"
@@ -156,15 +157,15 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                   {months.map((m, idx) => (
                     <option key={m} value={idx}>{m}</option>
                   ))}
-                </select>
-                <select
+                </NativeSelect>
+                <NativeSelect
                   value={deprecYear}
                   onChange={(e) => setDeprecYear(parseInt(e.target.value))}
                   className="bg-[#161f28] border border-[#1c212a] text-white rounded-xl px-3 py-1.5 text-xs font-semibold"
                 >
                   <option value={2026}>2026</option>
                   <option value={2027}>2027</option>
-                </select>
+                </NativeSelect>
               </div>
             </div>
 
@@ -330,7 +331,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="ds-label">Branch Mapping</label>
-                    <select
+                    <NativeSelect
                       value={formData.branchId}
                       onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
                       className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-sm"
@@ -339,7 +340,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                       {branches.map(b => (
                         <option key={b.id} value={b.id}>{b.name}</option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
               </div>
@@ -353,7 +354,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1">
                     <label className="ds-label">Asset Account (Fixed Asset)</label>
-                    <select
+                    <NativeSelect
                       value={formData.assetAccount}
                       onChange={(e) => setFormData({ ...formData, assetAccount: e.target.value })}
                       className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-sm"
@@ -362,12 +363,12 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                       {fixedAssetAccounts.map(a => (
                         <option key={a.id} value={a.id}>{a.accountName} ({a.accountCode})</option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   </div>
 
                   <div className="space-y-1">
                     <label className="ds-label">Depreciation Account (Expense)</label>
-                    <select
+                    <NativeSelect
                       value={formData.depreciationAccount}
                       onChange={(e) => setFormData({ ...formData, depreciationAccount: e.target.value })}
                       className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-sm"
@@ -376,12 +377,12 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                       {expenseAccounts.map(a => (
                         <option key={a.id} value={a.id}>{a.accountName} ({a.accountCode})</option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   </div>
 
                   <div className="space-y-1">
                     <label className="ds-label">Accumulated Depr. (Asset Offset)</label>
-                    <select
+                    <NativeSelect
                       value={formData.accumulatedDepreciationAccount}
                       onChange={(e) => setFormData({ ...formData, accumulatedDepreciationAccount: e.target.value })}
                       className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-sm"
@@ -390,7 +391,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                       {accumulatedAccounts.map(a => (
                         <option key={a.id} value={a.id}>{a.accountName} ({a.accountCode})</option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
               </div>

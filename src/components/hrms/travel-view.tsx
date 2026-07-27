@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { Plane, DollarSign, Plus, Save, Loader2, AlertCircle, Calendar, MapPin, Receipt, CheckCircle, Clock } from "lucide-react";
@@ -226,7 +227,7 @@ export function TravelView() {
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Category</label>
-              <select
+              <NativeSelect
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#00c4b6]"
@@ -236,7 +237,7 @@ export function TravelView() {
                 <option value="CAB">Cab / Taxi</option>
                 <option value="FLIGHT">Flight / Transport</option>
                 <option value="OTHER">Other Receipts</option>
-              </select>
+              </NativeSelect>
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">

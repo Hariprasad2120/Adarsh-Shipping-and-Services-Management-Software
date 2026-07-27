@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Add, Search } from "@carbon/icons-react";
@@ -77,7 +78,7 @@ export default function EmployerJobsPage() {
             className="w-full rounded-xl py-2 pl-9 pr-3 text-sm"
           />
         </div>
-        <select
+        <NativeSelect
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           className="rounded-xl px-3 py-2 text-sm"
@@ -88,7 +89,7 @@ export default function EmployerJobsPage() {
           <option value="PAUSED">Paused</option>
           <option value="FILLED">Filled</option>
           <option value="CLOSED">Closed</option>
-        </select>
+        </NativeSelect>
       </div>
 
       {/* Table */}

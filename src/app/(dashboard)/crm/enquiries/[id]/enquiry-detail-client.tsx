@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -364,7 +365,7 @@ export function EnquiryDetailClient({
           {lead.status === "FOLLOW_UP" && isManager && (
             <div className="flex items-center gap-2 p-2 bg-[#161f28] rounded-xl border border-[#1c212a] shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-2">Assign Owner:</span>
-              <select
+              <NativeSelect
                 value={selectedOwnerId}
                 onChange={(e) => setSelectedOwnerId(e.target.value)}
                 className="bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white px-2 py-1.5 focus:outline-none focus:border-[#00cec4]"
@@ -375,7 +376,7 @@ export function EnquiryDetailClient({
                     {u.name}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
               <button
                 onClick={handleAssignOwner}
                 disabled={isAssigning}
@@ -528,14 +529,14 @@ export function EnquiryDetailClient({
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Cargo Mode</label>
-                      <select
+                      <NativeSelect
                         value={enquiryType}
                         onChange={(e) => setEnquiryType(e.target.value as any)}
                         className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white"
                       >
                         <option value="Sea">Sea Enquiry</option>
                         <option value="Air">Air Enquiry</option>
-                      </select>
+                      </NativeSelect>
                     </div>
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Commodity</label>
@@ -730,7 +731,7 @@ export function EnquiryDetailClient({
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Cargo Category</label>
-                      <select
+                      <NativeSelect
                         value={perishableType}
                         onChange={(e) => setPerishableType(e.target.value)}
                         className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#fb923c]"
@@ -741,7 +742,7 @@ export function EnquiryDetailClient({
                         <option value="Pharmaceuticals">Pharmaceuticals / Medicine</option>
                         <option value="Chemicals">Temperature-sensitive Chemicals</option>
                         <option value="Dairy">Dairy Products</option>
-                      </select>
+                      </NativeSelect>
                     </div>
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Required Temp (°C)</label>

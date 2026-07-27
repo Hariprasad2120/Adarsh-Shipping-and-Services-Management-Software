@@ -1,6 +1,5 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Briefcase, CheckCircle2, Filter, Plus, Search, Users } from "lucide-react";
@@ -23,8 +22,8 @@ import { JobFilingQueryWarningIndicator } from "@/app/(dashboard)/cha/_component
 import { ChaDueDateWarningsIndicator } from "@/app/(dashboard)/cha/_components/cha-due-date-warnings-indicator";
 import type { DueDateWarningViewModel } from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
 import { formatChaBadgeLabel, getChaPriorityBadgeVariant } from "@/lib/cha-badges";
-import { colors } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
+import type { BadgeVariant } from "@/components/ui/badge";
 import {
   ChaControlPanel,
   ChaMetricCard,
@@ -149,21 +148,11 @@ function formatChaStageShortLabel(stage?: string | null) {
   }
 }
 
-function getChaStageBadgeStyle(stage?: string | null): CSSProperties {
-  const tone =
-    stage === "DOCUMENT_COLLECTION" ? colors.status.meeting_pending :
-    stage === "ADDITIONAL_DATA" ? colors.status.reviewers_assigned :
-    stage === "CHECKLIST_PREPARATION" ? colors.status.self_assessment_open :
-    stage === "CHECKLIST_APPROVAL" ? colors.status.management_review :
-    stage === "FILING" ? colors.status.reviewer_rating :
-    stage === "FILED" ? colors.status.meeting_live :
-    colors.status.closed;
-
-  return {
-    backgroundColor: tone.bg,
-    borderColor: tone.border,
-    color: tone.text,
-  };
+function getChaStageBadgeVariant(stage?: string | null): BadgeVariant {
+  if (stage === "FILED") return "success";
+  if (stage === "FILING" || stage === "CHECKLIST_APPROVAL") return "warning";
+  if (stage === "DOCUMENT_COLLECTION" || stage === "ADDITIONAL_DATA" || stage === "CHECKLIST_PREPARATION") return "default";
+  return "secondary";
 }
 
 export function JobsClient({
@@ -364,17 +353,15 @@ export function JobsClient({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition",
-        selected
-          ? "bg-surface-container text-on-surface"
-          : "text-on-surface-variant hover:bg-surface-container-low/65 hover:text-on-surface",
+        "ds-plain ds-menu-option py-2 text-sm",
+        selected && "ds-menu-option-active",
       )}
     >
       <span className="min-w-0">
         <span className="block truncate">{label}</span>
         {note ? <span className="mt-0.5 block truncate text-xs text-on-surface-variant">{note}</span> : null}
       </span>
-      {selected ? <span className="h-2 w-2 shrink-0 rounded-full bg-[#00cec4]" /> : null}
+      {selected ? <span className="ds-state-dot" /> : null}
     </button>
   );
 
@@ -459,7 +446,6 @@ export function JobsClient({
   }) => {
     const isActiveSection = tableKey === "active";
     const icon = isActiveSection ? <Briefcase size={16} /> : <CheckCircle2 size={16} />;
-    const badgeText = isActiveSection ? "Operational Queue" : "Filed Archive";
 
     return (
       <div className="py-1">
@@ -467,7 +453,6 @@ export function JobsClient({
           title={title}
           description={description}
           icon={icon}
-          badge={badgeText}
           accent={isActiveSection ? "blue" : "green"}
           actions={<ChaVisibleRecords visible={data.items.length} total={data.total} tone={isActiveSection ? "blue" : "green"} />}
         >
@@ -492,8 +477,8 @@ export function JobsClient({
                     colSpan={9}
                     message={
                       <div className="flex flex-col items-center justify-center p-14 text-center text-on-surface-variant">
-                        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[28px] border border-outline-variant/25 bg-surface-container-low shadow-[0_22px_48px_-34px_rgba(15,23,42,0.3)]">
-                          <Briefcase size={32} className="text-outline-variant" />
+                        <div className="ds-empty-icon mb-4">
+                          <Briefcase size={32} />
                         </div>
                         <p className="text-sm text-on-surface">{emptyTitle}</p>
                         <p className="mt-1 text-xs">{emptyText}</p>
@@ -527,7 +512,7 @@ export function JobsClient({
                         {formatJobDate(job.createdAt)}
                       </DataTableCell>
                       <DataTableCell className="py-5">
-                        <Badge variant="secondary" className="uppercase" style={getChaStageBadgeStyle(job.stage)}>
+                        <Badge variant={getChaStageBadgeVariant(job.stage)} className="uppercase">
                           {formatChaStageShortLabel(job.stage)}
                         </Badge>
                       </DataTableCell>
@@ -616,7 +601,7 @@ export function JobsClient({
                     applyFilters();
                   }
                 }}
-                className="h-11 w-full rounded-xl border border-outline-variant/25 bg-surface-container-low/70 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-cha-primary/30"
+                className="h-11 w-full pl-11 pr-4 text-sm"
               />
             </div>
 
@@ -631,24 +616,22 @@ export function JobsClient({
               >
                 <div className="overflow-hidden bg-surface">
                   <div className="grid min-h-[240px] grid-cols-1 sm:grid-cols-[156px_minmax(0,1fr)]">
-                    <div className="bg-surface">
+                    <div className="border-b border-outline-variant/50 bg-surface-container-low sm:border-b-0 sm:border-r">
                       {filterTypes.map((item) => (
                         <button
                           key={item.key}
                           type="button"
                           onClick={() => setActiveFilterType(item.key)}
                           className={cn(
-                            "flex w-full items-center justify-between gap-2 px-3 py-3 text-left transition",
-                            activeFilterType === item.key
-                              ? "bg-surface-container text-on-surface"
-                              : "bg-surface text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface",
+                            "ds-plain ds-menu-option gap-2",
+                            activeFilterType === item.key && "ds-menu-option-active",
                           )}
                         >
                           <span className="min-w-0">
                             <span className="ds-label block truncate text-on-surface">{item.label}</span>
                             <span className="mt-1 block truncate text-xs text-on-surface-variant">{item.value}</span>
                           </span>
-                          {item.active ? <span className="h-2 w-2 shrink-0 rounded-full bg-[#00cec4]" /> : null}
+                          {item.active ? <span className="ds-state-dot" /> : null}
                         </button>
                       ))}
                     </div>
@@ -658,11 +641,11 @@ export function JobsClient({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <Button variant="outline" onClick={resetFilters} className="flex-1 rounded-none shadow-none">
+                <div className="flex items-center justify-between gap-2 border-t border-outline-variant/50 bg-surface p-3">
+                  <Button variant="outline" onClick={resetFilters} className="flex-1">
                     Reset
                   </Button>
-                  <Button onClick={applyFilters} className="flex-1 rounded-none shadow-none">
+                  <Button onClick={applyFilters} className="flex-1">
                     Apply Filters
                   </Button>
                 </div>
@@ -671,18 +654,18 @@ export function JobsClient({
               <Button
                 onClick={applyFilters}
                 variant="outline"
-                className="h-11 rounded-xl px-5 text-xs font-semibold uppercase tracking-wider"
+                className="h-11 px-5"
               >
                 Apply Search
               </Button>
               {canCreateJob ? (
-                <button
+                <Button
                   type="button"
                   onClick={() => setIsModalOpen(true)}
-                  className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[#00cec4] px-5 text-xs font-semibold uppercase tracking-wider text-white shadow-sm transition-colors hover:bg-[#00b8af]"
+                  className="h-11 px-5"
                 >
                   <Plus className="size-4" /> Create Job
-                </button>
+                </Button>
               ) : null}
             </div>
           </div>
@@ -695,7 +678,7 @@ export function JobsClient({
                 key={pill.key}
                 type="button"
                 onClick={() => removeFilter(pill.key)}
-                className="rounded-full border border-cha-primary/25 bg-cha-primary/10 px-3 py-1 text-[10px] tracking-[0.08em] text-cha-primary transition hover:bg-cha-primary/16"
+                className="ds-plain ds-filter-chip"
               >
                 {pill.label} x
               </button>

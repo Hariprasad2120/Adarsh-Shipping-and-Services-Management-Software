@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -188,31 +189,31 @@ export function NewPaymentClient({
           
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Payment Type</label>
-            <select
+            <NativeSelect
               value={paymentType}
               onChange={(e) => setPaymentType(e.target.value as any)}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
             >
               <option value="RECEIVE">Receipt (Receive Cash)</option>
               <option value="PAY">Payment (Disburse Cash)</option>
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Party Class</label>
-            <select
+            <NativeSelect
               value={partyType}
               onChange={(e) => setPartyType(e.target.value as any)}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
             >
               <option value="CUSTOMER">Customer / Client</option>
               <option value="SUPPLIER">Vendor / Supplier</option>
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Select Party *</label>
-            <select
+            <NativeSelect
               required
               value={partyId}
               onChange={(e) => setPartyId(e.target.value)}
@@ -222,7 +223,7 @@ export function NewPaymentClient({
               {activeParties.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">
@@ -255,7 +256,7 @@ export function NewPaymentClient({
 
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Paid From Account (Source)</label>
-            <select
+            <NativeSelect
               required
               value={paidFromAccountId}
               onChange={(e) => setPaidFromAccountId(e.target.value)}
@@ -271,12 +272,12 @@ export function NewPaymentClient({
                   <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
                 ))
               )}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Paid To Account (Destination)</label>
-            <select
+            <NativeSelect
               required
               value={paidToAccountId}
               onChange={(e) => setPaidToAccountId(e.target.value)}
@@ -292,7 +293,7 @@ export function NewPaymentClient({
                   <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName} ({a.accountType})</option>
                 ))
               )}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">
@@ -311,7 +312,7 @@ export function NewPaymentClient({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Branch Mapping</label>
-            <select
+            <NativeSelect
               value={branchId}
               onChange={(e) => setBranchId(e.target.value)}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs"
@@ -320,7 +321,7 @@ export function NewPaymentClient({
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">General Remarks</label>

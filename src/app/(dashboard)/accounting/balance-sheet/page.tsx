@@ -1,3 +1,4 @@
+import { NativeSelect } from "@/components/ui/native-select";
 import React from "react";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -50,7 +51,7 @@ export default async function BalanceSheetReportPage({ searchParams }: BSPagePro
         <form method="GET" className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-xs">
           <div className="space-y-1 md:col-span-2">
             <label className="ds-label block text-slate-400">Branch Dimension</label>
-            <select
+            <NativeSelect
               name="branchId"
               defaultValue={branchId || ""}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2"
@@ -59,7 +60,7 @@ export default async function BalanceSheetReportPage({ searchParams }: BSPagePro
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">

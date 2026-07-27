@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import { Fragment, useState, useTransition, FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -1292,7 +1293,7 @@ export function OtClient({
                   className="w-full rounded-lg border border-outline-variant bg-surface pl-9 pr-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-[#00cec4]"
                 />
               </div>
-              <select
+              <NativeSelect
                 value={shiftFilter}
                 onChange={(e) => setShiftFilter(e.target.value)}
                 className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
@@ -1302,7 +1303,7 @@ export function OtClient({
                 {shifts.map((shift) => (
                   <option key={shift.id} value={shift.id}>{shift.name}</option>
                 ))}
-              </select>
+              </NativeSelect>
               <DateInput
                 value={dateFromFilter}
                 onChange={(e) => setDateFromFilter(e.target.value)}
@@ -1731,7 +1732,7 @@ export function OtClient({
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Type</label>
-                    <select
+                    <NativeSelect
                       value={holidayType}
                       onChange={(e) => setHolidayType(e.target.value)}
                       className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
@@ -1739,11 +1740,11 @@ export function OtClient({
                       <option value="NATIONAL">National Holiday</option>
                       <option value="COMPANY">Company Holiday</option>
                       <option value="RESTRICTED">Restricted Holiday</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Branch Applicability</label>
-                    <select
+                    <NativeSelect
                       value={holidayBranch}
                       onChange={(e) => setHolidayBranch(e.target.value)}
                       className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
@@ -1752,7 +1753,7 @@ export function OtClient({
                       {adminData?.branches.map((b) => (
                         <option key={b.id} value={b.id}>{b.name}</option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   </div>
                   <Button type="submit" disabled={isPending} className="w-full bg-sky-500 hover:bg-sky-600 text-white">
                     {isPending ? "Adding..." : "Add Holiday"}
@@ -1834,7 +1835,7 @@ export function OtClient({
                 <form onSubmit={handleSaveLop} className="space-y-4">
                   <div className="space-y-1">
                     <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Employee</label>
-                    <select
+                    <NativeSelect
                       required
                       value={lopUser}
                       onChange={(e) => setLopUser(e.target.value)}
@@ -1844,7 +1845,7 @@ export function OtClient({
                       {adminData?.employees.map((emp) => (
                         <option key={emp.id} value={emp.id}>{emp.name} ({emp.employeeNumber ? `#${emp.employeeNumber}` : "No ID"})</option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">LOP Days</label>
@@ -2086,18 +2087,18 @@ export function OtClient({
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleAssignShift} className="grid gap-4 sm:grid-cols-3">
-                  <select value={shiftAssignmentUserId} onChange={(e) => setShiftAssignmentUserId(e.target.value)} className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm">
+                  <NativeSelect value={shiftAssignmentUserId} onChange={(e) => setShiftAssignmentUserId(e.target.value)} className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm">
                     <option value="">Select employee</option>
                     {adminData?.employees.map((employee) => (
                       <option key={employee.id} value={employee.id}>{employee.name}</option>
                     ))}
-                  </select>
-                  <select value={shiftAssignmentShiftId} onChange={(e) => setShiftAssignmentShiftId(e.target.value)} className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm">
+                  </NativeSelect>
+                  <NativeSelect value={shiftAssignmentShiftId} onChange={(e) => setShiftAssignmentShiftId(e.target.value)} className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm">
                     <option value="">Select shift</option>
                     {shifts.filter((shift) => shift.isActive).map((shift) => (
                       <option key={shift.id} value={shift.id}>{shift.name}</option>
                     ))}
-                  </select>
+                  </NativeSelect>
                   <DateInput value={shiftAssignmentStartDate} onChange={(e) => setShiftAssignmentStartDate(e.target.value)} className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
                   <div className="sm:col-span-3">
                     <Button type="submit" disabled={isPending} className="bg-[#00cec4] hover:bg-[#00b2a9] text-white">
@@ -2252,14 +2253,14 @@ export function OtClient({
                           Employee Number / ID
                           <span className="text-[9px] text-[#00cec4] font-black uppercase">(Matches ID)</span>
                         </label>
-                        <select
+                        <NativeSelect
                           value={importMappings.employeeNumber}
                           onChange={(e) => setImportMappings({ ...importMappings, employeeNumber: e.target.value })}
                           className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
                         >
                           <option value="">-- Don&apos;t Map / Optional --</option>
                           {csvHeaders.map((h) => <option key={h} value={h}>{h}</option>)}
-                        </select>
+                        </NativeSelect>
                       </div>
 
                       <div className="space-y-1">
@@ -2267,14 +2268,14 @@ export function OtClient({
                           Official Email Address
                           <span className="text-[9px] text-[#00cec4] font-black uppercase">(Matches Email)</span>
                         </label>
-                        <select
+                        <NativeSelect
                           value={importMappings.officialEmail}
                           onChange={(e) => setImportMappings({ ...importMappings, officialEmail: e.target.value })}
                           className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
                         >
                           <option value="">-- Don&apos;t Map / Optional --</option>
                           {csvHeaders.map((h) => <option key={h} value={h}>{h}</option>)}
-                        </select>
+                        </NativeSelect>
                       </div>
 
                       <div className="space-y-1">
@@ -2282,14 +2283,14 @@ export function OtClient({
                           Employee Name
                           <span className="text-[9px] text-[#00cec4] font-black uppercase">(Matches Name)</span>
                         </label>
-                        <select
+                        <NativeSelect
                           value={importMappings.employeeName}
                           onChange={(e) => setImportMappings({ ...importMappings, employeeName: e.target.value })}
                           className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
                         >
                           <option value="">-- Don&apos;t Map / Optional --</option>
                           {csvHeaders.map((h) => <option key={h} value={h}>{h}</option>)}
-                        </select>
+                        </NativeSelect>
                       </div>
 
                       <div className="space-y-1">
@@ -2297,7 +2298,7 @@ export function OtClient({
                           Attendance Date *
                           <span className="text-[9px] text-rose-500 font-black uppercase">(Required)</span>
                         </label>
-                        <select
+                        <NativeSelect
                           value={importMappings.attendanceDate}
                           onChange={(e) => setImportMappings({ ...importMappings, attendanceDate: e.target.value })}
                           required
@@ -2305,49 +2306,49 @@ export function OtClient({
                         >
                           <option value="">-- Select Column --</option>
                           {csvHeaders.map((h) => <option key={h} value={h}>{h}</option>)}
-                        </select>
+                        </NativeSelect>
                       </div>
 
                       <div className="space-y-1">
                         <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
                           Check-in / Clock-in Time
                         </label>
-                        <select
+                        <NativeSelect
                           value={importMappings.checkIn}
                           onChange={(e) => setImportMappings({ ...importMappings, checkIn: e.target.value })}
                           className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
                         >
                           <option value="">-- Don&apos;t Map / Optional --</option>
                           {csvHeaders.map((h) => <option key={h} value={h}>{h}</option>)}
-                        </select>
+                        </NativeSelect>
                       </div>
 
                       <div className="space-y-1">
                         <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
                           Check-out / Clock-out Time
                         </label>
-                        <select
+                        <NativeSelect
                           value={importMappings.checkOut}
                           onChange={(e) => setImportMappings({ ...importMappings, checkOut: e.target.value })}
                           className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
                         >
                           <option value="">-- Don&apos;t Map / Optional --</option>
                           {csvHeaders.map((h) => <option key={h} value={h}>{h}</option>)}
-                        </select>
+                        </NativeSelect>
                       </div>
 
                       <div className="space-y-1">
                         <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
                           Total Hours Worked
                         </label>
-                        <select
+                        <NativeSelect
                           value={importMappings.totalHours}
                           onChange={(e) => setImportMappings({ ...importMappings, totalHours: e.target.value })}
                           className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
                         >
                           <option value="">-- Don&apos;t Map / Auto-calculate --</option>
                           {csvHeaders.map((h) => <option key={h} value={h}>{h}</option>)}
-                        </select>
+                        </NativeSelect>
                       </div>
                     </div>
 

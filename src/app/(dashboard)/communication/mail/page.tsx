@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useEffect } from "react";
 import { Search, Mail, Star, Trash, Inbox, Send, Paperclip, ExternalLink, Link2, Download, RefreshCw, Plus, AlertCircle, MoreVertical, Reply, ReplyAll, Forward, MessageSquare, Trash2, Printer, Languages, FileText, CheckCircle, ShieldAlert, AlertTriangle, Eye, Clock, ChevronDown, ChevronRight, ChevronUp, Bookmark, CalendarRange, AlertOctagon, ShoppingBag, Users, Tag, Settings, Folder, File, HelpCircle, CheckCircle2 } from "lucide-react";
 import DOMPurify from "isomorphic-dompurify";
@@ -750,7 +751,7 @@ export default function MailPortal() {
 
               {/* Link to Job Option */}
               <div className="flex items-center space-x-2">
-                <select
+                <NativeSelect
                   value={selectedJobId}
                   onChange={(e) => setSelectedJobId(e.target.value)}
                   className="text-xs bg-surface border border-outline-variant rounded-xl p-1.5 focus:outline-none"
@@ -759,9 +760,9 @@ export default function MailPortal() {
                   {jobs.map((job) => (
                     <option key={job.id} value={job.id}>{job.jobNumber} - {job.title}</option>
                   ))}
-                </select>
+                </NativeSelect>
 
-                <select
+                <NativeSelect
                   value={linkCategory}
                   onChange={(e) => setLinkCategory(e.target.value)}
                   className="text-xs bg-surface border border-outline-variant rounded-xl p-1.5 focus:outline-none"
@@ -770,7 +771,7 @@ export default function MailPortal() {
                   <option value="02 Job Documents">Documents</option>
                   <option value="03 User Uploads">Uploads</option>
                   <option value="06 Invoices and Billing">Billing</option>
-                </select>
+                </NativeSelect>
 
                 <button
                   onClick={handleLinkJob}
@@ -1220,7 +1221,7 @@ export default function MailPortal() {
                 {chatSpacesLoading ? (
                   <div className="text-xs text-on-surface-variant">Loading spaces...</div>
                 ) : (
-                  <select
+                  <NativeSelect
                     value={selectedSpaceId}
                     onChange={(e) => setSelectedSpaceId(e.target.value)}
                     className="w-full text-xs bg-surface border border-outline-variant rounded-xl p-2.5 focus:outline-none"
@@ -1231,7 +1232,7 @@ export default function MailPortal() {
                         {space.displayName}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 )}
               </div>
 

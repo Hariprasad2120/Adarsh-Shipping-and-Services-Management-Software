@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -317,7 +318,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             <label className="ds-label mb-1.5 block">Primary Contact Name</label>
             <div className="grid grid-cols-12 gap-2">
               <div className="col-span-3">
-                <select
+                <NativeSelect
                   name="salutation"
                   defaultValue={initialData?.salutation || ""}
                   className="w-full px-3 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
@@ -328,7 +329,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   <option value="Ms.">Ms.</option>
                   <option value="Miss">Miss</option>
                   <option value="Dr.">Dr.</option>
-                </select>
+                </NativeSelect>
               </div>
               <div className="col-span-4">
                 <input
@@ -437,7 +438,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
           </div>
           <div>
             <label className="ds-label mb-1.5 block">Customer Language</label>
-            <select
+            <NativeSelect
               name="language"
               defaultValue={initialData?.language || "English"}
               className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
@@ -447,7 +448,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
               <option value="Tamil">Tamil</option>
               <option value="Telugu">Telugu</option>
               <option value="Spanish">Spanish</option>
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className="ds-label mb-1.5 block">Communication Channels</label>
@@ -514,7 +515,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="ds-label mb-1.5 block">GST Treatment *</label>
-                <select
+                <NativeSelect
                   name="gstTreatment"
                   defaultValue={initialData?.gstTreatment || "Registered Business - Regular"}
                   className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
@@ -522,11 +523,11 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   {gstTreatments.map((t) => (
                     <option key={t} value={t}>{t}</option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
               <div>
                 <label className="ds-label mb-1.5 block">Place of Supply *</label>
-                <select
+                <NativeSelect
                   name="placeOfSupply"
                   defaultValue={initialData?.placeOfSupply || "Tamil Nadu"}
                   className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
@@ -534,7 +535,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   {indianStates.map((state) => (
                     <option key={state} value={state}>{state}</option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
             </div>
 
@@ -589,7 +590,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-[var(--color-outline-variant)]">
               <div>
                 <label className="ds-label mb-1.5 block">Currency</label>
-                <select
+                <NativeSelect
                   name="currency"
                   defaultValue={initialData?.currency || "INR- Indian Rupee"}
                   className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
@@ -597,12 +598,12 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   {currencies.map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
 
               <div>
                 <label className="ds-label mb-1.5 block">Opening Balance Branch</label>
-                <select
+                <NativeSelect
                   name="openingBalanceBranch"
                   defaultValue={initialData?.openingBalanceBranch || "Chennai"}
                   className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
@@ -610,7 +611,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   {locations.map((loc) => (
                     <option key={loc} value={loc}>{loc}</option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
 
               <div>
@@ -638,7 +639,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
               </div>
               <div>
                 <label className="ds-label mb-1.5 block">Payment Terms</label>
-                <select
+                <NativeSelect
                   name="paymentTerms"
                   defaultValue={initialData?.paymentTerms || "Net 30"}
                   className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
@@ -646,11 +647,11 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   {paymentTermsList.map((term) => (
                     <option key={term} value={term}>{term}</option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
               <div>
                 <label className="ds-label mb-1.5 block">Account Owner *</label>
-                <select
+                <NativeSelect
                   name="ownerId"
                   defaultValue={initialData?.ownerId || ""}
                   className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
@@ -660,7 +661,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   {employees.map((emp) => (
                     <option key={emp.id} value={emp.id}>{emp.name}</option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
             </div>
 

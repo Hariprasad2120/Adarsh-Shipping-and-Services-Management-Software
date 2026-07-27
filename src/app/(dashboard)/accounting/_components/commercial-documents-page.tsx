@@ -1,3 +1,4 @@
+import { NativeSelect } from "@/components/ui/native-select";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -110,7 +111,7 @@ export async function CommercialDocumentsPage({
 
           {showTypeFilter && !typeFilter ? (
             <div className="relative min-w-[200px]">
-              <select
+              <NativeSelect
                 name="type"
                 defaultValue={selectedType}
                 className="w-full rounded-lg border border-[#1c212a] bg-[#0a0d12] py-1.5 pl-3 pr-8 text-sm text-slate-300 focus:border-[#00c4b6] focus:outline-none"
@@ -120,7 +121,7 @@ export async function CommercialDocumentsPage({
                 <option value="INVOICE">Invoices</option>
                 <option value="SALES_ORDER">Sales Orders</option>
                 <option value="PURCHASE_ORDER">Purchase Orders</option>
-              </select>
+              </NativeSelect>
             </div>
           ) : null}
 

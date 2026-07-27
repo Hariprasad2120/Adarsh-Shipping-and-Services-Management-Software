@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useActionState, useState } from "react";
 import { createSlabAction } from "./actions";
 import { Button } from "@/components/ui/button";
@@ -28,11 +29,11 @@ export function SlabForm() {
       <div>
         <Label>Grade</Label>
         <div className="mt-1.5">
-          <select value={grade} onChange={(e) => setGrade(e.target.value)} className={selectClass}>
+          <NativeSelect value={grade} onChange={(e) => setGrade(e.target.value)} className={selectClass}>
             {["A+", "A", "B+", "B", "C+", "C", "D"].map((g) => (
               <option key={g} value={g} className="bg-surface">{g}</option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">

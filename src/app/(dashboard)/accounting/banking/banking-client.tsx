@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import { ArrowLeftRight, Coins, Building, Activity, Plus } from "lucide-react";
@@ -293,7 +294,7 @@ export function BankingClient({ bankAccounts, transactions, leafAccounts }: Bank
 
               <div className="space-y-2">
                 <label className="ds-label block">From (Source Account)</label>
-                <select
+                <NativeSelect
                   value={fromAccount}
                   onChange={(e) => setFromAccount(e.target.value)}
                   required
@@ -305,12 +306,12 @@ export function BankingClient({ bankAccounts, transactions, leafAccounts }: Bank
                       {acc.accountName} ({acc.accountCode})
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
 
               <div className="space-y-2">
                 <label className="ds-label block">To (Destination Account)</label>
-                <select
+                <NativeSelect
                   value={toAccount}
                   onChange={(e) => setToAccount(e.target.value)}
                   required
@@ -322,7 +323,7 @@ export function BankingClient({ bankAccounts, transactions, leafAccounts }: Bank
                       {acc.accountName} ({acc.accountCode})
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

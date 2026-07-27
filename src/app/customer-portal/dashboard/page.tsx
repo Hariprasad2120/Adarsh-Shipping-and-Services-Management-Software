@@ -100,7 +100,6 @@ export default async function CustomerPortalDashboardPage() {
         </div>
 
         <div className="space-y-6 xl:col-span-5">
-          <ShipmentSnapshotCard data={dashboard} />
           <DocumentStatusCard data={dashboard} />
           <NotificationSummaryCard data={dashboard} />
         </div>
@@ -350,49 +349,6 @@ function OutstandingQueriesTable({
   );
 }
 
-function ShipmentSnapshotCard({
-  data,
-}: {
-  data: Awaited<ReturnType<typeof getCustomerPortalDashboardData>>;
-}) {
-  const summary = data.shipmentSnapshot;
-
-  return (
-    <Card className="card-top-accent rounded-xl border border-outline-variant/45">
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <span className="ds-icon-badge">
-            <BriefcaseBusiness size={16} />
-          </span>
-          <div>
-            <CardTitle>My Shipments Snapshot</CardTitle>
-            <p className="text-xs text-on-surface-variant">A quick job-level view of your CHA account activity.</p>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {data.sectionErrors.shipmentSnapshot ? (
-          <SectionFallback message={data.sectionErrors.shipmentSnapshot} />
-        ) : summary.totalJobs === 0 ? (
-          <SectionFallback message="No CHA jobs are linked to this customer account yet." />
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            <SnapshotMetric label="Total Jobs" value={summary.totalJobs} />
-            <SnapshotMetric label="Active Jobs" value={summary.activeJobs} />
-            <SnapshotMetric label="In Progress" value={summary.inProgressJobs} />
-            <SnapshotMetric
-              label="Awaiting Customer"
-              value={summary.awaitingCustomerJobs}
-              tone={summary.awaitingCustomerJobs > 0 ? "warning" : "primary"}
-            />
-            <SnapshotMetric label="Recently Completed" value={summary.recentlyCompletedJobs} />
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 function DocumentStatusCard({
   data,
 }: {
@@ -626,23 +582,6 @@ function ServiceFeedbackCard({
         )}
       </CardContent>
     </Card>
-  );
-}
-
-function SnapshotMetric({
-  label,
-  value,
-  tone = "primary",
-}: {
-  label: string;
-  value: number;
-  tone?: "primary" | "warning";
-}) {
-  return (
-    <div className={`rounded-xl border px-4 py-4 ${tone === "warning" ? "border-[#fb923c]/35 bg-[#fb923c]/[0.06]" : "border-outline-variant/45 bg-surface-container-low/30"}`}>
-      <p className="ds-label">{label}</p>
-      <p className={`mt-2 text-2xl ds-numeric ${tone === "warning" ? "text-[#fb923c]" : "text-on-surface"}`}>{value}</p>
-    </div>
   );
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useTransition, FormEvent } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -247,7 +248,7 @@ export function ExtensionsClient({
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
                     Active Appraisal Cycle
                   </label>
-                  <select
+                  <NativeSelect
                     value={appraisalId}
                     onChange={(e) => setAppraisalId(e.target.value)}
                     className="w-full rounded-lg border border-outline-variant/60 bg-surface px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#00cec4] transition"
@@ -258,7 +259,7 @@ export function ExtensionsClient({
                         {a.employee.name} — {a.cycle.name}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
 
                 <div className="space-y-1.5">

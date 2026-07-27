@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useTransition, FormEvent } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -299,7 +300,7 @@ export function TicketDetailClient({
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
                       Ticket Status
                     </label>
-                    <select
+                    <NativeSelect
                       value={ticket.status}
                       onChange={(e) => handleStatusChange(e.target.value)}
                       disabled={statusPending}
@@ -309,14 +310,14 @@ export function TicketDetailClient({
                       <option value="IN_PROGRESS">In Progress</option>
                       <option value="RESOLVED">Resolved</option>
                       <option value="CLOSED">Closed</option>
-                    </select>
+                    </NativeSelect>
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
                       Assign Ticket To
                     </label>
-                    <select
+                    <NativeSelect
                       value={ticket.assignee?.id || ""}
                       onChange={(e) => handleAssigneeChange(e.target.value)}
                       disabled={assignPending}
@@ -328,7 +329,7 @@ export function TicketDetailClient({
                           {u.name}
                         </option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
               ) : (

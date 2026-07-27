@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import type { UseFormReturn } from "react-hook-form";
 import { Controller } from "react-hook-form";
 import { Search } from "lucide-react";
@@ -64,7 +65,7 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
         </FormRow>
 
         <FormRow label="Place of Supply" error={errors.placeOfSupply?.message}>
-          <select
+          <NativeSelect
             aria-label="Place of Supply"
             className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
             {...form.register("placeOfSupply")}
@@ -75,11 +76,11 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
                 {code} - {name}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </FormRow>
 
         <FormRow label="Location" helperText={`Source of Supply: ${sourceOfSupply}`}>
-          <select
+          <NativeSelect
             aria-label="Location"
             className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
             {...form.register("location")}
@@ -89,7 +90,7 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
                 {location}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </FormRow>
       </div>
     </section>

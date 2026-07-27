@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -82,7 +83,7 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Linked Account (Company) *</label>
-            <select
+            <NativeSelect
               name="accountId"
               defaultValue={initialData?.accountId || ""}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -92,7 +93,7 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
               {accounts.map((acc) => (
                 <option key={acc.id} value={acc.id}>{acc.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Designation</label>
@@ -181,7 +182,7 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Contact Owner *</label>
-            <select
+            <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -191,7 +192,7 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
               {employees.map((emp) => (
                 <option key={emp.id} value={emp.id}>{emp.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Street Address</label>

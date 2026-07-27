@@ -182,6 +182,33 @@ describe("customer portal dashboard", () => {
     expect(pending).toHaveLength(0);
   });
 
+  it("shows pending checklist decisions immediately after internal approval before mail visibility is set", () => {
+    const pending = buildPendingChecklistDecisions(
+      [
+        {
+          id: "check-1",
+          jobId: "job-1",
+          status: "CUSTOMER_APPROVAL_PENDING",
+          currentApprovalStage: "CUSTOMER",
+          customerApprovalVisibleAt: null,
+          updatedAt: new Date("2026-07-15T10:00:00.000Z"),
+          currentFileVersion: { versionNumber: 3, originalFileName: "checklist-v3.pdf" },
+          job: { id: "job-1", jobNumber: "CHA-1", title: "Shipment 1", customerRef: null, stage: "CHECKLIST_APPROVAL" },
+        },
+      ] satisfies PendingChecklistInput,
+      [],
+      [],
+      {},
+      new Date("2026-07-16T10:00:00.000Z"),
+    );
+
+    expect(pending).toHaveLength(1);
+    expect(pending[0]).toMatchObject({
+      id: "check-1",
+      visibleAt: "2026-07-15T10:00:00.000Z",
+    });
+  });
+
   it("shows only completed shipments without a rating in pending service feedback", () => {
     const feedback = buildServiceFeedback(
       [

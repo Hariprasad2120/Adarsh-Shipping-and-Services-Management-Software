@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { CheckSquare, Square, Plus, Save, Loader2, Calendar, User, Trash, CheckCircle } from "lucide-react";
@@ -168,7 +169,7 @@ export function TasksView() {
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Assignee</label>
-              <select
+              <NativeSelect
                 value={assigneeId}
                 onChange={(e) => setAssigneeId(e.target.value)}
                 className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#00c4b6]"
@@ -178,7 +179,7 @@ export function TasksView() {
                     {c.name}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Due Date</label>
@@ -191,7 +192,7 @@ export function TasksView() {
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Priority</label>
-              <select
+              <NativeSelect
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as any)}
                 className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#00c4b6]"
@@ -199,7 +200,7 @@ export function TasksView() {
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
                 <option value="HIGH">High</option>
-              </select>
+              </NativeSelect>
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">

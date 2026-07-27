@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -174,7 +175,7 @@ export default function NewCandidatePage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="ds-label mb-1 block">Source</label>
-              <select
+              <NativeSelect
                 value={form.source}
                 onChange={(e) => set("source", e.target.value)}
                 className="w-full rounded-xl px-3 py-2 text-sm"
@@ -186,7 +187,7 @@ export default function NewCandidatePage() {
                 <option value="LINKEDIN">LinkedIn</option>
                 <option value="CAMPUS">Campus Hire</option>
                 <option value="OTHER">Other</option>
-              </select>
+              </NativeSelect>
             </div>
             <div>
               <label className="ds-label mb-1 block">Source Details</label>

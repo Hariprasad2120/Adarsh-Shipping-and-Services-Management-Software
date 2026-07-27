@@ -1,3 +1,4 @@
+import { NativeSelect } from "@/components/ui/native-select";
 import React from "react";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -66,7 +67,7 @@ export default async function GeneralLedgerReportPage({ searchParams }: GLPagePr
         <form method="GET" className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-xs">
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Ledger Account</label>
-            <select
+            <NativeSelect
               name="accountId"
               defaultValue={accountId || ""}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2"
@@ -75,12 +76,12 @@ export default async function GeneralLedgerReportPage({ searchParams }: GLPagePr
               {leafAccounts.map((a) => (
                 <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Branch Dimension</label>
-            <select
+            <NativeSelect
               name="branchId"
               defaultValue={branchId || ""}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2"
@@ -89,7 +90,7 @@ export default async function GeneralLedgerReportPage({ searchParams }: GLPagePr
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="grid grid-cols-2 gap-2">

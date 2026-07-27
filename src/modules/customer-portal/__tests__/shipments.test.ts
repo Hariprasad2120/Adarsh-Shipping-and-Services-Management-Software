@@ -34,6 +34,7 @@ vi.mock("@/lib/db", () => ({
 const { db } = await import("@/lib/db");
 const { getNow } = await import("@/lib/clock");
 const {
+  getCustomerPortalApprovalQueue,
   getCustomerPortalShipmentDetailData,
   getCustomerPortalShipmentsData,
   parseCustomerPortalShipmentFilters,
@@ -171,6 +172,49 @@ describe("customer portal shipments", () => {
     expect(result.shipments[0]?.pendingDocumentCount).toBe(0);
     expect(result.shipments[0]?.pendingChecklistCount).toBe(1);
     expect(result.shipments[0]?.hasCustomerAction).toBe(true);
+  });
+
+  it("lists customer approvals immediately after internal approval before mail visibility is set", async () => {
+    mockedDb.chaChecklist.findMany.mockResolvedValue([
+      {
+        id: "check-1",
+        jobId: "job-1",
+        status: "CUSTOMER_APPROVAL_PENDING",
+        currentApprovalStage: "CUSTOMER",
+        customerApprovalVisibleAt: null,
+        updatedAt: new Date("2026-07-15T10:00:00.000Z"),
+        currentFileVersion: {
+          id: "file-ver-1",
+          versionNumber: 2,
+          originalFileName: "Checklist V2.pdf",
+        },
+        job: {
+          id: "job-1",
+          jobNumber: "CHA-001",
+          title: "Shipment One",
+          customerRef: "AC-100",
+          stage: "CHECKLIST_APPROVAL",
+        },
+      },
+    ] as never);
+
+    const session: ShipmentsSession = {
+      orgId: "org-1",
+      portalUser: {
+        id: "portal-user-1",
+        customerId: "cust-1",
+        customer: { name: "Acme Imports" },
+      },
+    };
+
+    const approvals = await getCustomerPortalApprovalQueue(session);
+
+    expect(approvals).toHaveLength(1);
+    expect(approvals[0]).toMatchObject({
+      id: "check-1",
+      jobNumber: "CHA-001",
+      visibleAt: "2026-07-15T10:00:00.000Z",
+    });
   });
 
   it("returns null for shipment detail outside the signed-in customer scope", async () => {

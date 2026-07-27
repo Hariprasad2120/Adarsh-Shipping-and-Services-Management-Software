@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import {Ship,Plus,TrendingUp,Percent,Calendar,DollarSign,AlertCircle,FileCheck2,} from "lucide-react";
@@ -386,7 +387,7 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
 
               <div className="space-y-2">
                 <label className="ds-label block">Customer</label>
-                <select
+                <NativeSelect
                   value={customer}
                   onChange={(e) => setCustomer(e.target.value)}
                   required
@@ -398,7 +399,7 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
                       {c.name}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
 
               <div className="space-y-2">

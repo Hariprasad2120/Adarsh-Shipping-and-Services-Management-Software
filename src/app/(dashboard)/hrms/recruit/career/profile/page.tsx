@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useEffect } from "react";
 
 type Profile = {
@@ -129,7 +130,7 @@ export default function CareerProfilePage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="ds-label mb-1 block">Workplace Preference</label>
-                <select
+                <NativeSelect
                   value={profile.workplacePreference}
                   onChange={(e) => set("workplacePreference", e.target.value)}
                   className="w-full rounded-xl px-3 py-2 text-sm"
@@ -138,11 +139,11 @@ export default function CareerProfilePage() {
                   <option value="REMOTE">Remote</option>
                   <option value="HYBRID">Hybrid</option>
                   <option value="ONSITE">On-site</option>
-                </select>
+                </NativeSelect>
               </div>
               <div>
                 <label className="ds-label mb-1 block">Seniority</label>
-                <select
+                <NativeSelect
                   value={profile.seniority ?? ""}
                   onChange={(e) => set("seniority", e.target.value || null)}
                   className="w-full rounded-xl px-3 py-2 text-sm"
@@ -153,7 +154,7 @@ export default function CareerProfilePage() {
                   <option value="SENIOR">Senior</option>
                   <option value="LEAD">Lead / Manager</option>
                   <option value="EXECUTIVE">Executive</option>
-                </select>
+                </NativeSelect>
               </div>
             </div>
             <div>
@@ -180,7 +181,7 @@ export default function CareerProfilePage() {
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="ds-label mb-1 block">Currency</label>
-              <select
+              <NativeSelect
                 value={profile.compensationCcy}
                 onChange={(e) => set("compensationCcy", e.target.value)}
                 className="w-full rounded-xl px-3 py-2 text-sm"
@@ -188,7 +189,7 @@ export default function CareerProfilePage() {
                 <option value="INR">INR</option>
                 <option value="USD">USD</option>
                 <option value="AED">AED</option>
-              </select>
+              </NativeSelect>
             </div>
             <div>
               <label className="ds-label mb-1 block">Min (annual)</label>
@@ -248,7 +249,7 @@ export default function CareerProfilePage() {
           {profile.alertsEnabled && (
             <div>
               <label className="ds-label mb-1 block">Frequency</label>
-              <select
+              <NativeSelect
                 value={profile.alertFrequency}
                 onChange={(e) => set("alertFrequency", e.target.value)}
                 className="w-full rounded-xl px-3 py-2 text-sm"
@@ -256,7 +257,7 @@ export default function CareerProfilePage() {
                 <option value="INSTANT">Instant</option>
                 <option value="DAILY">Daily digest</option>
                 <option value="WEEKLY">Weekly digest</option>
-              </select>
+              </NativeSelect>
             </div>
           )}
         </div>

@@ -1,3 +1,4 @@
+import { NativeSelect } from "@/components/ui/native-select";
 import React from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -160,7 +161,7 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
             </div>
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Linked Client Account *</label>
-              <select
+              <NativeSelect
                 name="accountId"
                 className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#00c4b6]"
                 required
@@ -169,7 +170,7 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
                 {accounts.map((acc) => (
                   <option key={acc.id} value={acc.id}>{acc.name}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -190,7 +191,7 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Status</label>
-                <select
+                <NativeSelect
                   name="status"
                   defaultValue="PLANNING"
                   className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -199,11 +200,11 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
                   <option value="IN_PROGRESS">In Progress</option>
                   <option value="ON_HOLD">On Hold</option>
                   <option value="COMPLETED">Completed</option>
-                </select>
+                </NativeSelect>
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Project Owner *</label>
-                <select
+                <NativeSelect
                   name="ownerId"
                   className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#00c4b6]"
                   required
@@ -211,7 +212,7 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
                   {employees.map((emp) => (
                     <option key={emp.id} value={emp.id}>{emp.name}</option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
             </div>
             <div>

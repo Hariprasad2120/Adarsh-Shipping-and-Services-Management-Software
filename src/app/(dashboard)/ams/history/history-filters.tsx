@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarIcon, X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -210,7 +211,7 @@ export function HistoryFilters({
         onClear={handleDateClear}
       />
 
-      <select
+      <NativeSelect
         value={stage}
         onChange={(e) => setStage(e.target.value)}
         className="border border-outline-variant/60 bg-surface rounded-xl px-4 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-[#00cec4]/15 focus:border-[#00cec4]/50 transition"
@@ -221,7 +222,7 @@ export function HistoryFilters({
             {s.replace(/_/g, " ")}
           </option>
         ))}
-      </select>
+      </NativeSelect>
 
       <button
         type="submit"

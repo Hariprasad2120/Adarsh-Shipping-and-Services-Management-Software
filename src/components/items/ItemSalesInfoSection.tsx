@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import React from "react";
 import type { UseFormReturn } from "react-hook-form";
 import type { ItemFormSchema } from "@/lib/items/validation";
@@ -84,14 +85,14 @@ export function ItemSalesInfoSection({ form }: ItemSalesInfoSectionProps) {
         id="item-sales-account"
         error={errors.salesAccount?.message}
       >
-        <select id="item-sales-account" className={selectCls} {...register("salesAccount")}>
+        <NativeSelect id="item-sales-account" className={selectCls} {...register("salesAccount")}>
           <option value="">— Select account —</option>
           {SALES_ACCOUNTS.map((a) => (
             <option key={a} value={a}>
               {a}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </FieldRow>
 
       <FieldRow label="Description" id="item-sales-desc" error={errors.salesDescription?.message}>

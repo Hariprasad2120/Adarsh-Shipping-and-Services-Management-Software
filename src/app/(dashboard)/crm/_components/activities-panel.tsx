@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import { toast } from "sonner";
@@ -216,7 +217,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
 
               <div>
                 <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Priority</label>
-                <select
+                <NativeSelect
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
                   className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#00c4b6]"
@@ -224,7 +225,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                   <option value="LOW">Low</option>
                   <option value="NORMAL">Normal</option>
                   <option value="HIGH">High</option>
-                </select>
+                </NativeSelect>
               </div>
             </div>
 

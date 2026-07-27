@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -98,7 +99,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Owner *</label>
-            <select
+            <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -108,11 +109,11 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
               {employees.map((emp) => (
                 <option key={emp.id} value={emp.id}>{emp.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Account (Company) *</label>
-            <select
+            <NativeSelect
               name="accountId"
               defaultValue={initialData?.accountId || ""}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -122,11 +123,11 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
               {accounts.map((acc) => (
                 <option key={acc.id} value={acc.id}>{acc.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Primary Contact</label>
-            <select
+            <NativeSelect
               name="contactId"
               defaultValue={initialData?.contactId || ""}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -135,7 +136,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
               {contacts.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
         </div>
       </div>
@@ -150,7 +151,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Deal Stage</label>
-            <select
+            <NativeSelect
               name="stage"
               value={stage}
               onChange={(e) => handleStageChange(e.target.value)}
@@ -159,7 +160,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
               {stagesList.map((st) => (
                 <option key={st} value={st}>{st.replace("_", " ")}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Deal Value (INR)</label>
@@ -210,7 +211,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Service Type</label>
-            <select
+            <NativeSelect
               name="serviceType"
               defaultValue={initialData?.serviceType || "Freight Forwarding"}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -218,11 +219,11 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
               {serviceTypes.map((t) => (
                 <option key={t} value={t}>{t}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Logistics Category</label>
-            <select
+            <NativeSelect
               name="logisticsCategory"
               defaultValue={initialData?.logisticsCategory || "Import"}
               className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
@@ -230,7 +231,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
               {logisticsCategories.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Competitor</label>

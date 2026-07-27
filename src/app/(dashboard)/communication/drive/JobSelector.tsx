@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useRouter } from "next/navigation";
 
 export default function JobSelector({
@@ -12,7 +13,7 @@ export default function JobSelector({
   const router = useRouter();
 
   return (
-    <select
+    <NativeSelect
       value={selectedJobId}
       onChange={(e) => {
         const val = e.target.value;
@@ -30,6 +31,6 @@ export default function JobSelector({
           {j.jobNumber} - {j.title}
         </option>
       ))}
-    </select>
+    </NativeSelect>
   );
 }

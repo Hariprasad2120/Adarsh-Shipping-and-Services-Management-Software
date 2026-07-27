@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { UserCheck, CheckCircle2, ChevronRight, Lock, Save, Loader2, AlertCircle } from "lucide-react";
@@ -198,7 +199,7 @@ export function OnboardingView() {
                   </div>
                   <div className="space-y-1">
                     <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Gender</label>
-                    <select
+                    <NativeSelect
                       value={personal.gender}
                       onChange={(e) => setPersonal({ ...personal, gender: e.target.value })}
                       className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
@@ -206,7 +207,7 @@ export function OnboardingView() {
                       <option value="MALE">Male</option>
                       <option value="FEMALE">Female</option>
                       <option value="OTHER">Other</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
               </div>

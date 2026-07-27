@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Search } from "@carbon/icons-react";
@@ -76,7 +77,7 @@ export default function ApplicationsPage() {
             className="w-full rounded-xl py-2 pl-9 pr-3 text-sm"
           />
         </div>
-        <select
+        <NativeSelect
           value={stage}
           onChange={(e) => setStage(e.target.value)}
           className="rounded-xl px-3 py-2 text-sm"
@@ -85,7 +86,7 @@ export default function ApplicationsPage() {
           {RECRUIT_APP_STAGES.map((s) => (
             <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
           ))}
-        </select>
+        </NativeSelect>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">

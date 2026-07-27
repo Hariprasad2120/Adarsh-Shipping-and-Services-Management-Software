@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -859,7 +860,7 @@ export function SettingsForm({
                       </label>
                       <label className="space-y-1.5">
                         <span className="ds-label">Financial Year Format</span>
-                        <select
+                        <NativeSelect
                           value={rule.financialYearFormat}
                           onChange={(event) => updateBranchRule(rule.branchId, { financialYearFormat: event.target.value })}
                           className="w-full text-sm"
@@ -869,7 +870,7 @@ export function SettingsForm({
                           <option value="YYYY-YYYY">YYYY-YYYY</option>
                           <option value="YY-YY">YY-YY</option>
                           <option value="YYYYYY">YYYYYY</option>
-                        </select>
+                        </NativeSelect>
                       </label>
                     </div>
                   </div>
@@ -1121,22 +1122,22 @@ export function SettingsForm({
                   </label>
                   <label className="space-y-1.5">
                     <span className="ds-label">Direction</span>
-                    <select value={newJobTypeMovementDirection} onChange={(event) => setNewJobTypeMovementDirection(event.target.value as "IMPORT" | "EXPORT" | "BOTH" | "OTHER")} className="w-full text-sm">
+                    <NativeSelect value={newJobTypeMovementDirection} onChange={(event) => setNewJobTypeMovementDirection(event.target.value as "IMPORT" | "EXPORT" | "BOTH" | "OTHER")} className="w-full text-sm">
                       <option value="IMPORT">Import</option>
                       <option value="EXPORT">Export</option>
                       <option value="BOTH">Both</option>
                       <option value="OTHER">Other</option>
-                    </select>
+                    </NativeSelect>
                   </label>
                   <label className="space-y-1.5">
                     <span className="ds-label">Manifest</span>
-                    <select value={newJobTypeManifestRequirement} onChange={(event) => setNewJobTypeManifestRequirement(event.target.value as "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM")} className="w-full text-sm">
+                    <NativeSelect value={newJobTypeManifestRequirement} onChange={(event) => setNewJobTypeManifestRequirement(event.target.value as "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM")} className="w-full text-sm">
                       <option value="IGM">IGM</option>
                       <option value="EGM">EGM</option>
                       <option value="BOTH">Both</option>
                       <option value="NONE">None</option>
                       <option value="CUSTOM">Custom</option>
-                    </select>
+                    </NativeSelect>
                   </label>
                   <div className="flex items-end">
                     <Button type="button" disabled={addingJobType || !newJobTypeName.trim()} onClick={handleAddJobType} className="w-full">
@@ -1179,22 +1180,22 @@ export function SettingsForm({
                       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                         <label className="space-y-1.5">
                           <span className="ds-label">Direction</span>
-                          <select value={jobType.movementDirection || "OTHER"} onChange={(event) => handleJobTypeFieldChange(jobType.id, "movementDirection", event.target.value)} className="w-full text-sm">
+                          <NativeSelect value={jobType.movementDirection || "OTHER"} onChange={(event) => handleJobTypeFieldChange(jobType.id, "movementDirection", event.target.value)} className="w-full text-sm">
                             <option value="IMPORT">Import</option>
                             <option value="EXPORT">Export</option>
                             <option value="BOTH">Both</option>
                             <option value="OTHER">Other</option>
-                          </select>
+                          </NativeSelect>
                         </label>
                         <label className="space-y-1.5">
                           <span className="ds-label">Manifest</span>
-                          <select value={jobType.manifestRequirement || "NONE"} onChange={(event) => handleJobTypeFieldChange(jobType.id, "manifestRequirement", event.target.value)} className="w-full text-sm">
+                          <NativeSelect value={jobType.manifestRequirement || "NONE"} onChange={(event) => handleJobTypeFieldChange(jobType.id, "manifestRequirement", event.target.value)} className="w-full text-sm">
                             <option value="IGM">IGM</option>
                             <option value="EGM">EGM</option>
                             <option value="BOTH">Both</option>
                             <option value="NONE">None</option>
                             <option value="CUSTOM">Custom</option>
-                          </select>
+                          </NativeSelect>
                         </label>
                         {jobType.manifestRequirement === "CUSTOM" ? (
                           <label className="space-y-1.5 md:col-span-2">
@@ -1208,12 +1209,12 @@ export function SettingsForm({
                         </label>
                         <label className="space-y-1.5">
                           <span className="ds-label">Filing Flow</span>
-                          <select value={jobType.filingFlowCategory || ""} onChange={(event) => handleJobTypeFieldChange(jobType.id, "filingFlowCategory", event.target.value || null)} className="w-full text-sm">
+                          <NativeSelect value={jobType.filingFlowCategory || ""} onChange={(event) => handleJobTypeFieldChange(jobType.id, "filingFlowCategory", event.target.value || null)} className="w-full text-sm">
                             <option value="">Catch-all Template</option>
                             <option value="IMPORT_BE">Import / Bill of Entry</option>
                             <option value="EXPORT_SB">Export / Shipping Bill</option>
                             <option value="CUSTOM">Custom Flow</option>
-                          </select>
+                          </NativeSelect>
                         </label>
                         <div className="grid grid-cols-2 gap-2 self-end">
                           <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2 text-xs text-on-surface">

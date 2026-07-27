@@ -1,3 +1,4 @@
+import { NativeSelect } from "@/components/ui/native-select";
 import Link from "next/link";
 import { Fragment } from "react";
 import { auth } from "@/lib/auth";
@@ -233,14 +234,14 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
               </h2>
               <div className="space-y-1.5">
                 <Label>Team Lead</Label>
-                <select name="tlId" required className={selectClass}>
+                <NativeSelect name="tlId" required className={selectClass}>
                   <option value="" className="bg-surface">Choose TL</option>
                   {tlUsers.map((tl) => (
                     <option key={tl.id} value={tl.id} className="bg-surface">
                       {tl.employeeNumber ? `${tl.employeeNumber} – ` : ""}{toTitleCase(tl.name)}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
               <div className="space-y-1.5">
                 <Label>Employees (select one or more)</Label>
@@ -362,14 +363,14 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Se
               </h2>
               <div className="space-y-1.5">
                 <Label>Manager</Label>
-                <select name="managerId" required className={selectClass}>
+                <NativeSelect name="managerId" required className={selectClass}>
                   <option value="" className="bg-surface">Choose Manager</option>
                   {managerUsers.map((mgr) => (
                     <option key={mgr.id} value={mgr.id} className="bg-surface">
                       {mgr.employeeNumber ? `${mgr.employeeNumber} – ` : ""}{toTitleCase(mgr.name)}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
               <div className="space-y-1.5">
                 <Label>Team Leads (select one or more)</Label>

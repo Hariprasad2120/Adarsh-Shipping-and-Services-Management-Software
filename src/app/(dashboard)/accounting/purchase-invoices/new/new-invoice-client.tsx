@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import { toast } from "sonner";
@@ -122,7 +123,7 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
           
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Supplier *</label>
-            <select
+            <NativeSelect
               required
               value={supplierId}
               onChange={(e) => setSupplierId(e.target.value)}
@@ -132,12 +133,12 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
               {suppliers.map((v) => (
                 <option key={v.id} value={v.id}>{v.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">
             <label className="ds-label block text-slate-400">Branch Mapping</label>
-            <select
+            <NativeSelect
               value={branchId}
               onChange={(e) => setBranchId(e.target.value)}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
@@ -146,7 +147,7 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">

@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { updateLeadStatusAction } from "@/modules/crm/actions";
@@ -308,25 +309,25 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Direction</label>
-                  <select
+                  <NativeSelect
                     value={seaType}
                     onChange={(e) => setSeaType(e.target.value as any)}
                     className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
                   >
                     <option value="Import">Import</option>
                     <option value="Export">Export</option>
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Load Type</label>
-                  <select
+                  <NativeSelect
                     value={seaLclFcl}
                     onChange={(e) => setSeaLclFcl(e.target.value as any)}
                     className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
                   >
                     <option value="LCL">LCL (Less than Container Load)</option>
                     <option value="FCL">FCL (Full Container Load)</option>
-                  </select>
+                  </NativeSelect>
                 </div>
               </div>
 
@@ -421,7 +422,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Incoterm</label>
-                  <select
+                  <NativeSelect
                     value={seaIncoterm}
                     onChange={(e) => setSeaIncoterm(e.target.value)}
                     className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
@@ -429,7 +430,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     {incotermOptions.map((inc) => (
                       <option key={inc} value={inc}>{inc}</option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Location / Port of Entry</label>
@@ -467,7 +468,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Shipment Planning</label>
-                  <select
+                  <NativeSelect
                     value={seaShipmentPlanning}
                     onChange={(e) => setSeaShipmentPlanning(e.target.value)}
                     className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
@@ -475,18 +476,18 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     {planningOptions.map((opt) => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Shipments Done Before?</label>
-                  <select
+                  <NativeSelect
                     value={seaShipmentsDone}
                     onChange={(e) => setSeaShipmentsDone(e.target.value as any)}
                     className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
                   >
                     <option value="Yes">Yes</option>
                     <option value="No">No</option>
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Purpose of Cargo</label>
@@ -550,14 +551,14 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                       onChange={(e) => setAirWeight(e.target.value)}
                       className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00cec4]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
                     />
-                    <select
+                    <NativeSelect
                       value={airWeightUnit}
                       onChange={(e) => setAirWeightUnit(e.target.value)}
                       className="bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-slate-300 px-1 focus:outline-none"
                     >
                       <option value="KG">KG</option>
                       <option value="Lbs">Lbs</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
                 <div>
@@ -571,7 +572,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                       onChange={(e) => setAirDimensions(e.target.value)}
                       className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00cec4]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
                     />
-                    <select
+                    <NativeSelect
                       value={airDimensionsUnit}
                       onChange={(e) => setAirDimensionsUnit(e.target.value)}
                       className="bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-slate-300 px-1 focus:outline-none"
@@ -580,7 +581,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                       <option value="mm">mm</option>
                       <option value="inch">inch</option>
                       <option value="meter">meter</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
               </div>
@@ -597,7 +598,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                       onChange={(e) => setAirPackages(e.target.value)}
                       className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00cec4]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
                     />
-                    <select
+                    <NativeSelect
                       value={airPackagesUnit}
                       onChange={(e) => setAirPackagesUnit(e.target.value)}
                       className="bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-slate-300 px-1 focus:outline-none"
@@ -606,12 +607,12 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                       <option value="Box">Box</option>
                       <option value="pallet">pallet</option>
                       <option value="cartons">cartons</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Incoterm</label>
-                  <select
+                  <NativeSelect
                     value={airIncoterm}
                     onChange={(e) => setAirIncoterm(e.target.value)}
                     className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
@@ -619,7 +620,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     {incotermOptions.map((inc) => (
                       <option key={inc} value={inc}>{inc}</option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Location</label>
@@ -657,7 +658,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Shipment Planning</label>
-                  <select
+                  <NativeSelect
                     value={airShipmentPlanning}
                     onChange={(e) => setAirShipmentPlanning(e.target.value)}
                     className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
@@ -665,18 +666,18 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     {planningOptions.map((opt) => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Shipments Done Before?</label>
-                  <select
+                  <NativeSelect
                     value={airShipmentsDone}
                     onChange={(e) => setAirShipmentsDone(e.target.value as any)}
                     className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
                   >
                     <option value="Yes">Yes</option>
                     <option value="No">No</option>
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Purpose of Cargo</label>
