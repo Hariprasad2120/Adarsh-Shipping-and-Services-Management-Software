@@ -1,15 +1,42 @@
 "use client";
 
-import { Fragment, startTransition, useEffect, useMemo, useState } from "react";
-import {CalendarClock,CheckCircle2,ChevronRight,ListChecks,Pencil,Plus,Trash2,X,} from "lucide-react";
-import {Badge,DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableHead,DataTableHeader,DataTableRow,} from "@/components/data-table";
+import {
+  Fragment,
+  startTransition,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  BellRing,
+  CalendarClock,
+  CheckCircle2,
+  ChevronDown,
+  ClipboardCheck,
+  ListChecks,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
+import {
+  WorkspaceAction,
+  WorkspaceBadge,
+  WorkspaceCheckbox,
+  WorkspaceDialog,
+  WorkspaceEmptyState,
+  WorkspaceField,
+  WorkspaceInput,
+  WorkspaceMetric,
+  WorkspacePage,
+  WorkspacePageHeader,
+  WorkspacePanel,
+  WorkspacePanelHeader,
+  WorkspaceProgress,
+  WorkspaceSelect,
+  WorkspaceTextarea,
+} from "@/components/monolith";
 import { useNotifications } from "@/components/notifications/notification-provider";
-import { Button } from "@/components/monolith/button-1";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
-import { DropdownSelect } from "@/components/monolith/dropdown-select";
-import { Input } from "@/components/monolith/input";
-import { Label } from "@/components/monolith/label";
-import { NeonCheckbox } from "@/components/monolith/neon-checkbox";
 
 type TodoStatus = "PENDING" | "COMPLETED";
 type TodoFilter = "ALL" | "PENDING" | "COMPLETED" | "UPCOMING_ALERTS";
@@ -65,20 +92,12 @@ type TodoDraft = {
   subtasks: TodoDraftSubtask[];
 };
 
-const STATUS_OPTIONS = [
-  { value: "PENDING", label: "Pending" },
-  { value: "COMPLETED", label: "Completed" },
-] as const;
-
-const FILTER_OPTIONS = [
+const FILTER_OPTIONS: { value: TodoFilter; label: string }[] = [
   { value: "ALL", label: "All tasks" },
   { value: "PENDING", label: "Pending tasks" },
   { value: "COMPLETED", label: "Completed tasks" },
   { value: "UPCOMING_ALERTS", label: "Upcoming alerts" },
-] as const;
-
-const todoFieldClassName =
-  "border-[#F9D972]/55 hover:border-[#F9D972]/85 hover:shadow-[0_4px_12px_rgba(0,206,196,0.08)] focus:border-[#F9D972] focus:ring-[#F9D972]/15";
+];
 
 function createDraftSubtask(
   partial?: Partial<TodoDraftSubtask>,
@@ -91,23 +110,25 @@ function createDraftSubtask(
   };
 }
 
-const EMPTY_DRAFT: TodoDraft = {
-  title: "",
-  description: "",
-  dueDate: "",
-  reminderEnabled: false,
-  alertAt: "",
-  status: "PENDING",
-  subtasks: [createDraftSubtask()],
-};
+function createEmptyDraft(): TodoDraft {
+  return {
+    title: "",
+    description: "",
+    dueDate: "",
+    reminderEnabled: false,
+    alertAt: "",
+    status: "PENDING",
+    subtasks: [createDraftSubtask()],
+  };
+}
 
 function formatDate(value: string | null) {
-  if (!value) return "-";
+  if (!value) return "No due date";
   return new Date(value).toLocaleDateString("en-IN");
 }
 
 function formatDateTime(value: string | null) {
-  if (!value) return "-";
+  if (!value) return "Not scheduled";
   return new Date(value).toLocaleString("en-IN", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -115,33 +136,17 @@ function formatDateTime(value: string | null) {
 }
 
 function toDateInputValue(value: string | null) {
-  if (!value) return "";
-  return value.slice(0, 10);
+  return value?.slice(0, 10) ?? "";
 }
 
 function toDateTimeLocalValue(value: string | null) {
   if (!value) return "";
   const date = new Date(value);
-  const tzOffset = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
-}
-
-function getTaskStatusTone(status: TodoStatus) {
-  if (status === "COMPLETED")
-    return "border-emerald-200 bg-emerald-50 text-emerald-700";
-
-  return "border-amber-200 bg-amber-50 text-amber-700";
+  const timezoneOffset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
 }
 
 function normalizeDraft(draft: TodoDraft) {
-  const subtasks = draft.subtasks
-    .map((subtask) => ({
-      id: subtask.id,
-      label: subtask.label.trim(),
-      completed: subtask.completed,
-    }))
-    .filter((subtask) => subtask.label.length > 0);
-
   return {
     title: draft.title.trim(),
     description: draft.description,
@@ -149,7 +154,13 @@ function normalizeDraft(draft: TodoDraft) {
     reminderEnabled: draft.reminderEnabled,
     alertAt: draft.reminderEnabled ? draft.alertAt : "",
     status: draft.status,
-    subtasks,
+    subtasks: draft.subtasks
+      .map((subtask) => ({
+        id: subtask.id,
+        label: subtask.label.trim(),
+        completed: subtask.completed,
+      }))
+      .filter((subtask) => subtask.label.length > 0),
   };
 }
 
@@ -157,9 +168,9 @@ function validateDraft(draft: TodoDraft) {
   if (!draft.title.trim()) return "Task title is required.";
 
   if (draft.reminderEnabled) {
-    if (!draft.alertAt)
+    if (!draft.alertAt) {
       return "Alert date and time is required when reminder is enabled.";
-
+    }
     if (new Date(draft.alertAt).getTime() < Date.now()) {
       return "Alert date and time cannot be in the past.";
     }
@@ -168,56 +179,19 @@ function validateDraft(draft: TodoDraft) {
   const labels = draft.subtasks
     .map((subtask) => subtask.label.trim())
     .filter(Boolean);
-
-  if (
-    labels.length !== new Set(labels.map((label) => label.toLowerCase())).size
-  ) {
+  const uniqueLabels = new Set(labels.map((label) => label.toLowerCase()));
+  if (labels.length !== uniqueLabels.size) {
     return "Checklist items must be unique.";
   }
 
   return null;
 }
 
-async function parseApiError(res: Response) {
-  const data = (await res.json().catch(() => null)) as {
+async function parseApiError(response: Response) {
+  const data = (await response.json().catch(() => null)) as {
     error?: string;
   } | null;
-
   return data?.error ?? "Something went wrong.";
-}
-
-function StatsCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-}) {
-  return (
-    <article
-      className="group rounded-[24px] border border-mono-border/35 bg-mono-card p-5 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_18px_36px_-22px_rgba(15,23,42,0.28)]"
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F9D972]/10 transition duration-300 group-hover:scale-105 group-hover:bg-[#F9D972]/16">
-          {icon}
-        </div>
-
-        <span className="text-[11px] uppercase tracking-[0.18em] text-mono-muted transition duration-300 group-hover:text-mono-text">
-          Live
-        </span>
-      </div>
-
-      <p className="mt-6 text-[2.2rem] font-extralight leading-none tracking-[-0.04em] text-mono-text transition duration-300 group-hover:text-[#008f88]">
-        {value}
-      </p>
-
-      <p className="mt-1.5 text-sm text-mono-muted transition duration-300 group-hover:text-mono-text">
-        {label}
-      </p>
-    </article>
-  );
 }
 
 export function TodoClient({
@@ -230,10 +204,9 @@ export function TodoClient({
   initialTasks: TodoTaskRow[];
 }) {
   const { success, error } = useNotifications();
-
   const [tasks, setTasks] = useState<TodoTaskRow[]>(initialTasks);
   const [filter, setFilter] = useState<TodoFilter>("ALL");
-  const [draft, setDraft] = useState<TodoDraft>(EMPTY_DRAFT);
+  const [draft, setDraft] = useState<TodoDraft>(() => createEmptyDraft());
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [clockNow, setClockNow] = useState(() => Date.now());
@@ -241,62 +214,58 @@ export function TodoClient({
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
 
   useEffect(() => {
-    const interval = window.setInterval(() => {
-      setClockNow(Date.now());
-    }, 30000);
-
+    const interval = window.setInterval(() => setClockNow(Date.now()), 30000);
     return () => window.clearInterval(interval);
   }, []);
 
   useEffect(() => {
     if (!highlightedTaskId) return;
-
     const task = initialTasks.find((entry) => entry.id === highlightedTaskId);
     if (!task) return;
-
-    startTransition(() => {
-      beginEdit(task);
-    });
+    startTransition(() => beginEdit(task));
   }, [highlightedTaskId, initialTasks]);
 
   const filteredTasks = useMemo(() => {
-    if (filter === "PENDING")
+    if (filter === "PENDING") {
       return tasks.filter((task) => task.status === "PENDING");
-
-    if (filter === "COMPLETED")
+    }
+    if (filter === "COMPLETED") {
       return tasks.filter((task) => task.status === "COMPLETED");
-
+    }
     if (filter === "UPCOMING_ALERTS") {
       return tasks.filter(
         (task) =>
-          task.status === "PENDING" &&
-          task.reminderEnabled &&
-          task.alertAt &&
-          new Date(task.alertAt).getTime() >= clockNow,
+          task.status === "PENDING"
+          && task.reminderEnabled
+          && task.alertAt
+          && new Date(task.alertAt).getTime() >= clockNow,
       );
     }
-
     return tasks;
   }, [clockNow, filter, tasks]);
 
   const stats = useMemo(() => {
     const checklistItems = tasks.flatMap((task) => task.subtasks);
-
     return {
       total: tasks.length,
       pending: tasks.filter((task) => task.status === "PENDING").length,
       completed: tasks.filter((task) => task.status === "COMPLETED").length,
       upcomingAlerts: tasks.filter(
         (task) =>
-          task.status === "PENDING" &&
-          task.reminderEnabled &&
-          task.alertAt &&
-          new Date(task.alertAt).getTime() >= clockNow,
+          task.status === "PENDING"
+          && task.reminderEnabled
+          && task.alertAt
+          && new Date(task.alertAt).getTime() >= clockNow,
       ).length,
-      checklistCompleted: checklistItems.filter((item) => item.completed)
-        .length,
+      checklistCompleted: checklistItems.filter((item) => item.completed).length,
+      checklistTotal: checklistItems.length,
     };
   }, [clockNow, tasks]);
+
+  function resetForm() {
+    setDraft(createEmptyDraft());
+    setEditingTaskId(null);
+  }
 
   function openCreateTask() {
     resetForm();
@@ -306,14 +275,6 @@ export function TodoClient({
   function closeTaskForm() {
     resetForm();
     setIsTaskFormOpen(false);
-  }
-
-  function resetForm() {
-    setDraft({
-      ...EMPTY_DRAFT,
-      subtasks: [createDraftSubtask()],
-    });
-    setEditingTaskId(null);
   }
 
   function beginEdit(task: TodoTaskRow) {
@@ -360,59 +321,50 @@ export function TodoClient({
 
   function removeDraftSubtask(localId: string) {
     setDraft((current) => {
-      const nextSubtasks = current.subtasks.filter(
+      const subtasks = current.subtasks.filter(
         (subtask) => subtask.localId !== localId,
       );
-
       return {
         ...current,
-        subtasks:
-          nextSubtasks.length > 0 ? nextSubtasks : [createDraftSubtask()],
+        subtasks: subtasks.length > 0 ? subtasks : [createDraftSubtask()],
       };
     });
   }
 
   async function saveTask() {
     const validationMessage = validateDraft(draft);
-
     if (validationMessage) {
       error("Validation failed", validationMessage);
       return;
     }
 
     setIsSaving(true);
-
-    const payload = normalizeDraft(draft);
-
-    const res = await fetch(
+    const response = await fetch(
       editingTaskId ? `/api/todos/${editingTaskId}` : "/api/todos",
       {
         method: editingTaskId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(normalizeDraft(draft)),
       },
     );
 
-    if (!res.ok) {
-      error("Unable to save task", await parseApiError(res));
+    if (!response.ok) {
+      error("Unable to save task", await parseApiError(response));
       setIsSaving(false);
       return;
     }
 
-    const task = (await res.json()) as TodoTaskRow;
-
+    const task = (await response.json()) as TodoTaskRow;
     setTasks((current) => {
       const next = editingTaskId
         ? current.map((entry) => (entry.id === task.id ? task : entry))
         : [task, ...current];
-
       return next.sort(
         (left, right) =>
-          new Date(right.createdAt).getTime() -
-          new Date(left.createdAt).getTime(),
+          new Date(right.createdAt).getTime()
+          - new Date(left.createdAt).getTime(),
       );
     });
-
     success(editingTaskId ? "Task updated" : "Task created");
     resetForm();
     setIsTaskFormOpen(false);
@@ -420,579 +372,432 @@ export function TodoClient({
   }
 
   async function updateStatus(taskId: string, status: TodoStatus) {
-    const res = await fetch(`/api/todos/${taskId}`, {
+    const response = await fetch(`/api/todos/${taskId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mode: "status", status }),
     });
-
-    if (!res.ok) {
-      error("Unable to update task", await parseApiError(res));
+    if (!response.ok) {
+      error("Unable to update task", await parseApiError(response));
       return;
     }
-
-    const updated = (await res.json()) as TodoTaskRow;
-
+    const updated = (await response.json()) as TodoTaskRow;
     setTasks((current) =>
       current.map((entry) => (entry.id === updated.id ? updated : entry)),
     );
-
-    success(
-      status === "COMPLETED" ? "Task completed" : "Task moved to pending",
-    );
+    success(status === "COMPLETED" ? "Task completed" : "Task moved to pending");
   }
 
   async function toggleSubtask(subtaskId: string, completed: boolean) {
-    const res = await fetch(`/api/todos/subtasks/${subtaskId}`, {
+    const response = await fetch(`/api/todos/subtasks/${subtaskId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ completed }),
     });
-
-    if (!res.ok) {
-      error("Unable to update checklist item", await parseApiError(res));
+    if (!response.ok) {
+      error("Unable to update checklist item", await parseApiError(response));
       return;
     }
-
-    const updated = (await res.json()) as TodoTaskRow;
-
+    const updated = (await response.json()) as TodoTaskRow;
     setTasks((current) =>
       current.map((entry) => (entry.id === updated.id ? updated : entry)),
     );
-
-    if (editingTaskId === updated.id) {
-      beginEdit(updated);
-    }
+    if (editingTaskId === updated.id) beginEdit(updated);
   }
 
   async function removeTask(taskId: string) {
-    const confirmed = window.confirm("Delete this task?");
-    if (!confirmed) return;
-
-    const res = await fetch(`/api/todos/${taskId}`, { method: "DELETE" });
-
-    if (!res.ok) {
-      error("Unable to delete task", await parseApiError(res));
+    if (!window.confirm("Delete this task?")) return;
+    const response = await fetch(`/api/todos/${taskId}`, { method: "DELETE" });
+    if (!response.ok) {
+      error("Unable to delete task", await parseApiError(response));
       return;
     }
-
     setTasks((current) => current.filter((entry) => entry.id !== taskId));
-
     if (editingTaskId === taskId) {
       resetForm();
       setIsTaskFormOpen(false);
     }
-
     success("Task deleted");
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-end">
-        <Button
-          onClick={openCreateTask}
-          className="border-0 bg-cyan-500 text-white shadow-[0_14px_28px_-18px_rgba(6,182,212,0.55)] hover:bg-cyan-600"
-        >
-          <Plus className="mr-1 size-4" />
-          Create task
-        </Button>
-      </div>
+    <WorkspacePage>
+      <WorkspacePageHeader
+        eyebrow="Personal work queue"
+        title="To-Do"
+        icon={<ClipboardCheck size={21} aria-hidden="true" />}
+        description={`Plan follow-ups, reminders, and nested checklists for ${currentUserName}.`}
+        actions={
+          <WorkspaceAction onClick={openCreateTask}>
+            <Plus size={15} aria-hidden="true" />
+            Create task
+          </WorkspaceAction>
+        }
+      />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatsCard
-          icon={
-            <CheckCircle2 className="size-5 text-[#F9D972]" strokeWidth={1.9} />
-          }
+      <section className="mnx-workspace-metrics" aria-label="Task summary">
+        <WorkspaceMetric
+          icon={<ListChecks size={17} aria-hidden="true" />}
           label="Total tasks"
           value={stats.total}
+          detail="All personal tasks"
         />
-        <StatsCard
-          icon={<Plus className="size-5 text-amber-600" strokeWidth={1.9} />}
+        <WorkspaceMetric
+          icon={<CalendarClock size={17} aria-hidden="true" />}
           label="Pending"
           value={stats.pending}
+          detail="Still in progress"
         />
-        <StatsCard
-          icon={
-            <CheckCircle2
-              className="size-5 text-emerald-600"
-              strokeWidth={1.9}
-            />
-          }
+        <WorkspaceMetric
+          icon={<CheckCircle2 size={17} aria-hidden="true" />}
           label="Completed"
           value={stats.completed}
+          detail={`${stats.checklistCompleted}/${stats.checklistTotal} checklist items done`}
         />
-        <StatsCard
-          icon={
-            <ListChecks className="size-5 text-sky-600" strokeWidth={1.9} />
+        <WorkspaceMetric
+          icon={<BellRing size={17} aria-hidden="true" />}
+          label="Upcoming alerts"
+          value={stats.upcomingAlerts}
+          detail="Scheduled reminders ahead"
+        />
+      </section>
+
+      <WorkspacePanel>
+        <WorkspacePanelHeader
+          eyebrow="Task ledger"
+          title="Your tasks"
+          description="Expand a task to review its checklist, reminder, and actions."
+          actions={
+            <WorkspaceSelect
+              aria-label="Task filter"
+              value={filter}
+              onChange={(event) => setFilter(event.target.value as TodoFilter)}
+            >
+              {FILTER_OPTIONS.map((option) => (
+                <option value={option.value} key={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </WorkspaceSelect>
           }
-          label="Checklist done"
-          value={stats.checklistCompleted}
         />
-      </div>
 
-      <div className="monolith-shell-lg overflow-hidden border border-mono-border/40 bg-mono-card shadow-sm">
-        <div className="space-y-4 border-b border-mono-border/30 px-5 py-4">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-mono-text">Your tasks</p>
-              <p className="text-xs text-mono-muted">
-                Build normal tasks, nested checklists, and quick checkbox-style
-                follow-ups.
-              </p>
-            </div>
-
-            <div className="w-full max-w-[260px]">
-              <DropdownSelect
-                ariaLabel="Task filter"
-                onValueChange={(value) => setFilter(value as TodoFilter)}
-                options={[...FILTER_OPTIONS]}
-                value={filter}
-              />
-            </div>
+        {filteredTasks.length === 0 ? (
+          <div className="mnx-panel-state">
+            <WorkspaceEmptyState
+              title="No tasks match this view"
+              description="Change the filter or create a task to start your personal work queue."
+            />
           </div>
-        </div>
+        ) : (
+          <div className="mnx-todo-list">
+            {filteredTasks.map((task) => {
+              const isExpanded = expandedTaskId === task.id;
+              const isHighlighted = highlightedTaskId === task.id;
 
-        <DataTable>
-          <DataTableHeader>
-            <tr>
-              <DataTableHead>Task</DataTableHead>
-              <DataTableHead>Progress</DataTableHead>
-              <DataTableHead>Due date</DataTableHead>
-              <DataTableHead>Alert</DataTableHead>
-              <DataTableHead>Status</DataTableHead>
-              <DataTableHead>Updated</DataTableHead>
-              <DataTableHead className="text-right">Actions</DataTableHead>
-            </tr>
-          </DataTableHeader>
-
-          <DataTableBody>
-            {filteredTasks.length === 0 ? (
-              <DataTableEmpty
-                colSpan={7}
-                message="No tasks match the current filter."
-              />
-            ) : (
-              filteredTasks.map((task) => {
-                const isHighlighted = highlightedTaskId === task.id;
-                const isExpanded = expandedTaskId === task.id;
-
-                return (
-                  <Fragment key={task.id}>
-                    <DataTableRow
+              return (
+                <Fragment key={task.id}>
+                  <article
+                    className={`mnx-todo-record${isHighlighted ? " is-highlighted" : ""}`}
+                  >
+                    <button
+                      type="button"
+                      className="mnx-todo-summary"
                       onClick={() =>
                         setExpandedTaskId(isExpanded ? null : task.id)
                       }
-                      className={`cursor-pointer transition-colors hover:bg-mono-soft ${
-                        isHighlighted ? "bg-[#F9D972]/6" : ""
-                      }`}
+                      aria-expanded={isExpanded}
                     >
-                      <DataTableCell className="min-w-[260px] align-middle">
-                        <p className="truncate font-medium text-mono-text">
-                          {task.title}
-                        </p>
-                      </DataTableCell>
-
-                      <DataTableCell className="align-middle">
-                        {task.progress.total > 0 ? (
-                          <div className="min-w-[130px] space-y-1.5">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="font-medium text-mono-text">
-                                {task.progress.completed}/{task.progress.total}
-                              </span>
-                              <span className="text-mono-muted">
-                                {task.progress.percent}%
-                              </span>
-                            </div>
-
-                            <div className="h-2 overflow-hidden rounded-full bg-mono-soft">
-                              <div
-                                className="h-full rounded-full bg-[#F9D972] transition-[width]"
-                                style={{ width: `${task.progress.percent}%` }}
-                              />
-                            </div>
-                          </div>
+                      <span className="mnx-todo-check">
+                        {task.status === "COMPLETED" ? (
+                          <CheckCircle2 size={18} aria-hidden="true" />
                         ) : (
-                          <span className="text-sm text-mono-muted">
-                            No checklist
-                          </span>
+                          <ListChecks size={18} aria-hidden="true" />
                         )}
-                      </DataTableCell>
-
-                      <DataTableCell className="whitespace-nowrap align-middle">
+                      </span>
+                      <span className="mnx-todo-primary">
+                        <b>{task.title}</b>
+                        <small>
+                          Updated {formatDateTime(task.updatedAt)}
+                        </small>
+                      </span>
+                      <span className="mnx-todo-progress">
+                        <b>
+                          {task.progress.total > 0
+                            ? `${task.progress.completed}/${task.progress.total}`
+                            : "No checklist"}
+                        </b>
+                        <WorkspaceProgress
+                          label={`${task.title} checklist progress`}
+                          value={task.progress.percent}
+                        />
+                      </span>
+                      <span className="mnx-todo-date">
+                        <CalendarClock size={13} aria-hidden="true" />
                         {formatDate(task.dueDate)}
-                      </DataTableCell>
-
-                      <DataTableCell className="whitespace-nowrap align-middle">
-                        <div className="inline-flex items-center gap-2 text-sm text-mono-text">
-                          <CalendarClock className="size-4 text-mono-muted" />
-                          {formatDateTime(task.alertAt)}
-                        </div>
-                      </DataTableCell>
-
-                      <DataTableCell className="align-middle">
-                        <Badge
-                          className={`border ${getTaskStatusTone(task.status)}`}
-                        >
-                          {task.status === "COMPLETED"
-                            ? "Completed"
-                            : "Pending"}
-                        </Badge>
-                      </DataTableCell>
-
-                      <DataTableCell className="whitespace-nowrap align-middle">
-                        {formatDateTime(task.updatedAt)}
-                      </DataTableCell>
-
-                      <DataTableCell className="text-right align-middle">
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setExpandedTaskId(isExpanded ? null : task.id);
-                          }}
-                          className="inline-flex text-outline-variant transition-colors hover:text-[#00b5ad]"
-                          aria-label={`Expand task ${task.title}`}
-                        >
-                          <ChevronRight
-                            className={`size-4 transition-transform duration-200 ${
-                              isExpanded ? "rotate-90" : ""
-                            }`}
-                          />
-                        </button>
-                      </DataTableCell>
-                    </DataTableRow>
+                      </span>
+                      <WorkspaceBadge
+                        variant={task.status === "COMPLETED" ? "success" : "warning"}
+                      >
+                        {task.status === "COMPLETED" ? "Completed" : "Pending"}
+                      </WorkspaceBadge>
+                      <ChevronDown
+                        size={16}
+                        className={isExpanded ? "is-open" : ""}
+                        aria-hidden="true"
+                      />
+                    </button>
 
                     {isExpanded ? (
-                      <DataTableRow
-                        className={isHighlighted ? "bg-[#F9D972]/6" : undefined}
-                      >
-                        <DataTableCell
-                          colSpan={7}
-                          className="bg-mono-soft/30 px-6 py-5"
-                        >
-                          <div className="space-y-4">
-                            {task.description ? (
-                              <p className="max-w-3xl text-sm text-mono-muted">
-                                {task.description}
-                              </p>
-                            ) : (
-                              <p className="text-sm text-mono-muted">
-                                No description added.
-                              </p>
-                            )}
+                      <div className="mnx-todo-detail">
+                        <p>{task.description || "No description added."}</p>
+                        <div className="mnx-chip-row">
+                          {task.reminderEnabled ? (
+                            <WorkspaceBadge variant="accent">Reminder on</WorkspaceBadge>
+                          ) : null}
+                          {task.alertTriggeredAt ? (
+                            <WorkspaceBadge variant="success">Alert sent</WorkspaceBadge>
+                          ) : null}
+                          <WorkspaceBadge variant="neutral">
+                            {formatDateTime(task.alertAt)}
+                          </WorkspaceBadge>
+                        </div>
 
-                            <div className="flex flex-wrap gap-2">
-                              {task.reminderEnabled ? (
-                                <Badge className="border border-sky-200 bg-sky-50 text-sky-700">
-                                  Reminder on
-                                </Badge>
-                              ) : null}
-
-                              {task.alertTriggeredAt ? (
-                                <Badge className="border border-violet-200 bg-violet-50 text-violet-700">
-                                  Alert sent
-                                </Badge>
-                              ) : null}
-
-                              {task.subtasks.length > 0 ? (
-                                <Badge className="border border-[#F9D972]/25 bg-[#F9D972]/10 text-[#008f88]">
-                                  {task.subtasks.length} items
-                                </Badge>
-                              ) : null}
-                            </div>
-
-                            {task.subtasks.length > 0 ? (
-                              <div className="grid gap-2 md:grid-cols-2">
-                                {task.subtasks.map((subtask) => (
-                                  <div
-                                    key={subtask.id}
-                                    onClick={(event) => event.stopPropagation()}
-                                    className="flex items-center gap-3 rounded-xl border border-mono-border/25 bg-mono-card px-3 py-2 text-sm text-mono-text"
-                                  >
-                                    <NeonCheckbox
-                                      checked={subtask.completed}
-                                      onChange={(event) =>
-                                        void toggleSubtask(
-                                          subtask.id,
-                                          event.target.checked,
-                                        )
-                                      }
-                                      label={
-                                        <span
-                                          className={
-                                            subtask.completed
-                                              ? "text-mono-muted line-through"
-                                              : ""
-                                          }
-                                        >
-                                          {subtask.label}
-                                        </span>
-                                      }
-                                    />
-                                  </div>
-                                ))}
+                        {task.subtasks.length > 0 ? (
+                          <div className="mnx-checklist">
+                            {task.subtasks.map((subtask) => (
+                              <div className="mnx-checklist-item" key={subtask.id}>
+                                <WorkspaceCheckbox
+                                  checked={subtask.completed}
+                                  onChange={(event) =>
+                                    void toggleSubtask(
+                                      subtask.id,
+                                      event.target.checked,
+                                    )
+                                  }
+                                  label={
+                                    <span className={subtask.completed ? "is-complete" : ""}>
+                                      {subtask.label}
+                                    </span>
+                                  }
+                                />
                               </div>
-                            ) : (
-                              <p className="text-sm text-mono-muted">
-                                No checklist added.
-                              </p>
-                            )}
-
-                            <div
-                              onClick={(event) => event.stopPropagation()}
-                              className="flex flex-wrap gap-2 pt-2"
-                            >
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => beginEdit(task)}
-                              >
-                                <Pencil className="mr-1 size-3.5" />
-                                Edit
-                              </Button>
-
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  void updateStatus(
-                                    task.id,
-                                    task.status === "COMPLETED"
-                                      ? "PENDING"
-                                      : "COMPLETED",
-                                  )
-                                }
-                              >
-                                {task.status === "COMPLETED"
-                                  ? "Reopen"
-                                  : "Complete"}
-                              </Button>
-
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => void removeTask(task.id)}
-                              >
-                                <Trash2 className="mr-1 size-3.5" />
-                                Delete
-                              </Button>
-                            </div>
+                            ))}
                           </div>
-                        </DataTableCell>
-                      </DataTableRow>
+                        ) : (
+                          <p>No checklist added.</p>
+                        )}
+
+                        <div className="mnx-record-actions">
+                          <WorkspaceAction
+                            size="compact"
+                            variant="secondary"
+                            onClick={() => beginEdit(task)}
+                          >
+                            <Pencil size={14} aria-hidden="true" />
+                            Edit
+                          </WorkspaceAction>
+                          <WorkspaceAction
+                            size="compact"
+                            variant="secondary"
+                            onClick={() =>
+                              void updateStatus(
+                                task.id,
+                                task.status === "COMPLETED"
+                                  ? "PENDING"
+                                  : "COMPLETED",
+                              )
+                            }
+                          >
+                            {task.status === "COMPLETED" ? "Reopen" : "Complete"}
+                          </WorkspaceAction>
+                          <WorkspaceAction
+                            size="compact"
+                            variant="destructive"
+                            onClick={() => void removeTask(task.id)}
+                          >
+                            <Trash2 size={14} aria-hidden="true" />
+                            Delete
+                          </WorkspaceAction>
+                        </div>
+                      </div>
                     ) : null}
-                  </Fragment>
-                );
-              })
-            )}
-          </DataTableBody>
-        </DataTable>
-      </div>
+                  </article>
+                </Fragment>
+              );
+            })}
+          </div>
+        )}
+      </WorkspacePanel>
 
-      {isTaskFormOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6">
-          <Card className="monolith-shell-lg max-h-[90vh] w-full max-w-3xl overflow-hidden border-mono-border/40 bg-mono-card shadow-2xl">
-            <CardHeader className="flex flex-row items-start justify-between gap-4 border-b border-mono-border/30">
-              <div>
-                <CardTitle>
-                  {editingTaskId ? "Edit Task" : "Create Task"}
-                </CardTitle>
-                <p className="mt-1 text-sm text-mono-muted">
-                  Build standard tasks or checklist-style to-dos with subtasks
-                  and reminders.
-                </p>
-              </div>
+      <WorkspaceDialog
+        open={isTaskFormOpen}
+        onClose={closeTaskForm}
+        eyebrow={editingTaskId ? "Update task" : "New task"}
+        title={editingTaskId ? "Edit task" : "Create task"}
+        description="Build a standard task or a checklist with an optional scheduled reminder."
+        footer={
+          <>
+            <WorkspaceAction
+              variant="secondary"
+              onClick={closeTaskForm}
+              disabled={isSaving}
+            >
+              Cancel
+            </WorkspaceAction>
+            <WorkspaceAction onClick={() => void saveTask()} disabled={isSaving}>
+              {isSaving
+                ? "Saving…"
+                : editingTaskId
+                  ? "Save changes"
+                  : "Create task"}
+            </WorkspaceAction>
+          </>
+        }
+      >
+        <div className="mnx-stack">
+          <WorkspaceField label="Task title" htmlFor="task-title" required>
+            <WorkspaceInput
+              id="task-title"
+              value={draft.title}
+              onChange={(event) =>
+                setDraft((current) => ({
+                  ...current,
+                  title: event.target.value,
+                }))
+              }
+              placeholder="Create a new task"
+            />
+          </WorkspaceField>
 
-              <button
-                type="button"
-                onClick={closeTaskForm}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-mono-muted transition hover:bg-mono-soft hover:text-mono-text"
-                aria-label="Close task form"
+          <WorkspaceField label="Notes" htmlFor="task-description">
+            <WorkspaceTextarea
+              id="task-description"
+              rows={4}
+              value={draft.description}
+              onChange={(event) =>
+                setDraft((current) => ({
+                  ...current,
+                  description: event.target.value,
+                }))
+              }
+              placeholder="Add details, context, or links"
+            />
+          </WorkspaceField>
+
+          <div className="mnx-form-grid">
+            <WorkspaceField label="Due date" htmlFor="task-due-date">
+              <WorkspaceInput
+                id="task-due-date"
+                type="date"
+                value={draft.dueDate}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    dueDate: event.target.value,
+                  }))
+                }
+              />
+            </WorkspaceField>
+            <WorkspaceField label="Status" htmlFor="task-status">
+              <WorkspaceSelect
+                id="task-status"
+                value={draft.status}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    status: event.target.value as TodoStatus,
+                  }))
+                }
               >
-                <X className="size-5" />
-              </button>
-            </CardHeader>
+                <option value="PENDING">Pending</option>
+                <option value="COMPLETED">Completed</option>
+              </WorkspaceSelect>
+            </WorkspaceField>
+          </div>
 
-            <CardContent className="max-h-[calc(90vh-96px)] space-y-4 overflow-y-auto p-6">
-              <div className="space-y-2">
-                <Label htmlFor="task-title">Task title</Label>
-                <Input
-                  id="task-title"
-                  value={draft.title}
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      title: event.target.value,
-                    }))
-                  }
-                  placeholder="Create a new task"
-                  className={todoFieldClassName}
-                />
+          <section className="mnx-form-section">
+            <div className="mnx-form-section-header">
+              <div>
+                <h3>Checklist</h3>
+                <p>Add smaller steps and track each one independently.</p>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="task-description">Notes</Label>
-                <textarea
-                  id="task-description"
-                  value={draft.description}
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      description: event.target.value,
-                    }))
-                  }
-                  placeholder="Add details, context, or links"
-                  rows={4}
-                  className="w-full resize-none overflow-y-auto rounded-xl border border-[#F9D972]/55 bg-mono-card px-4 py-3 text-sm text-mono-text shadow-sm outline-none transition hover:border-[#F9D972]/85 hover:shadow-[0_4px_12px_rgba(0,206,196,0.08)] focus:border-[#F9D972] focus:ring-2 focus:ring-[#F9D972]/15"
-                />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="task-due-date">Due date</Label>
-                  <Input
-                    id="task-due-date"
-                    type="date"
-                    value={draft.dueDate}
+              <WorkspaceAction
+                size="compact"
+                variant="secondary"
+                onClick={addDraftSubtask}
+              >
+                <Plus size={14} aria-hidden="true" />
+                Add item
+              </WorkspaceAction>
+            </div>
+            <div className="mnx-stack">
+              {draft.subtasks.map((subtask, index) => (
+                <div className="mnx-draft-checklist-item" key={subtask.localId}>
+                  <WorkspaceCheckbox
+                    checked={subtask.completed}
                     onChange={(event) =>
-                      setDraft((current) => ({
-                        ...current,
-                        dueDate: event.target.value,
-                      }))
+                      updateDraftSubtask(subtask.localId, {
+                        completed: event.target.checked,
+                      })
                     }
-                    className={todoFieldClassName}
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="task-status">Status</Label>
-                  <DropdownSelect
-                    ariaLabel="Task status"
-                    onValueChange={(value) =>
-                      setDraft((current) => ({
-                        ...current,
-                        status: value as TodoStatus,
-                      }))
+                  <WorkspaceInput
+                    value={subtask.label}
+                    onChange={(event) =>
+                      updateDraftSubtask(subtask.localId, {
+                        label: event.target.value,
+                      })
                     }
-                    options={[...STATUS_OPTIONS]}
-                    triggerClassName={todoFieldClassName}
-                    value={draft.status}
+                    placeholder={`Checklist item ${index + 1}`}
                   />
+                  <button
+                    type="button"
+                    className="mnx-draft-remove"
+                    onClick={() => removeDraftSubtask(subtask.localId)}
+                    aria-label={`Remove checklist item ${index + 1}`}
+                  >
+                    <X size={15} />
+                  </button>
                 </div>
-              </div>
+              ))}
+            </div>
+          </section>
 
-              <div className="space-y-3 rounded-[22px] border border-mono-border/35 bg-mono-soft/50 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-mono-text">
-                      Checklist
-                    </p>
-                    <p className="text-xs text-mono-muted">
-                      Add subtasks and track them with checkboxes.
-                    </p>
-                  </div>
-
-                  <Button size="sm" variant="outline" onClick={addDraftSubtask}>
-                    <Plus className="mr-1 size-3.5" />
-                    Add item
-                  </Button>
-                </div>
-
-                <div className="space-y-2">
-                  {draft.subtasks.map((subtask, index) => (
-                    <div
-                      key={subtask.localId}
-                      className="flex items-center gap-3 rounded-2xl border border-mono-border/30 bg-mono-card px-3 py-2.5"
-                    >
-                      <NeonCheckbox
-                        checked={subtask.completed}
-                        onChange={(event) =>
-                          updateDraftSubtask(subtask.localId, {
-                            completed: event.target.checked,
-                          })
-                        }
-                      />
-
-                      <Input
-                        value={subtask.label}
-                        onChange={(event) =>
-                          updateDraftSubtask(subtask.localId, {
-                            label: event.target.value,
-                          })
-                        }
-                        placeholder={`Checklist item ${index + 1}`}
-                        className={`${todoFieldClassName} h-10 border-0 shadow-none hover:shadow-none focus:ring-0`}
-                      />
-
-                      <button
-                        type="button"
-                        onClick={() => removeDraftSubtask(subtask.localId)}
-                        className="flex h-8 w-8 items-center justify-center rounded-full text-mono-muted transition hover:bg-rose-50 hover:text-rose-600"
-                        aria-label={`Remove checklist item ${index + 1}`}
-                      >
-                        <X className="size-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 rounded-2xl border border-mono-border/35 bg-mono-soft/70 px-4 py-3 text-sm text-mono-text">
-                <NeonCheckbox
-                  checked={draft.reminderEnabled}
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      reminderEnabled: event.target.checked,
-                      alertAt: event.target.checked ? current.alertAt : "",
-                    }))
-                  }
-                  label="Enable reminder"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="task-alert-at">Alert date and time</Label>
-                <Input
-                  id="task-alert-at"
-                  type="datetime-local"
-                  value={draft.alertAt}
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      alertAt: event.target.value,
-                    }))
-                  }
-                  disabled={!draft.reminderEnabled}
-                  className={todoFieldClassName}
-                />
-                <p className="text-xs text-mono-muted">
-                  Reminders are stored in the database and shown once when
-                  triggered.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap justify-end gap-2 border-t border-mono-border/30 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={closeTaskForm}
-                  disabled={isSaving}
-                >
-                  Cancel
-                </Button>
-
-                <Button
-                  onClick={() => void saveTask()}
-                  disabled={isSaving}
-                  className="border-0 bg-[#F9D972] text-white shadow-[0_14px_28px_-18px_rgba(0,174,198,0.45)] hover:bg-[#E8C85D]"
-                >
-                  {editingTaskId ? "Save changes" : "Create task"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <section className="mnx-form-section">
+            <WorkspaceCheckbox
+              checked={draft.reminderEnabled}
+              onChange={(event) =>
+                setDraft((current) => ({
+                  ...current,
+                  reminderEnabled: event.target.checked,
+                  alertAt: event.target.checked ? current.alertAt : "",
+                }))
+              }
+              label="Enable reminder"
+            />
+            <WorkspaceField
+              label="Alert date and time"
+              htmlFor="task-alert-at"
+              hint="Reminders are stored and shown once when triggered."
+              required={draft.reminderEnabled}
+            >
+              <WorkspaceInput
+                id="task-alert-at"
+                type="datetime-local"
+                value={draft.alertAt}
+                disabled={!draft.reminderEnabled}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    alertAt: event.target.value,
+                  }))
+                }
+              />
+            </WorkspaceField>
+          </section>
         </div>
-      ) : null}
-    </div>
+      </WorkspaceDialog>
+    </WorkspacePage>
   );
 }

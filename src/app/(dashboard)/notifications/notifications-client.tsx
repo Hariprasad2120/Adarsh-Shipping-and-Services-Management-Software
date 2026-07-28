@@ -1,10 +1,25 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Bell, CheckCheck, CheckCircle2, Clock3, ExternalLink, Eye, Info, Trash2, TriangleAlert } from "lucide-react";
-import { Button } from "@/components/monolith/button-1";
+import {
+  Bell,
+  CheckCheck,
+  CheckCircle2,
+  Clock3,
+  ExternalLink,
+  Eye,
+  Info,
+  Trash2,
+  TriangleAlert,
+} from "lucide-react";
+import {
+  WorkspaceAction,
+  WorkspaceBadge,
+  WorkspaceEmptyState,
+  WorkspacePanel,
+  WorkspacePanelHeader,
+} from "@/components/monolith";
 import { useNotifications } from "@/components/notifications/notification-provider";
-import { cn } from "@/lib/utils";
 
 type NotificationRow = {
   id: string;
@@ -24,8 +39,6 @@ type NotificationRow = {
   };
 };
 
-const NOTIFICATION_ACTION_CLASS = "!text-sm !font-medium uppercase tracking-[0.14em]";
-
 function getNotificationIcon(notification: NotificationRow) {
   if (notification.dismissedAt) return Trash2;
   if (notification.acknowledgedAt) return CheckCircle2;
@@ -34,21 +47,28 @@ function getNotificationIcon(notification: NotificationRow) {
   return Info;
 }
 
-function getNotificationAccent(notification: NotificationRow) {
-  if (notification.dismissedAt) return "text-mono-muted/50";
-  if (notification.acknowledgedAt) return "text-emerald-500";
-  if (notification.requiresAck) return "text-amber-500";
-  return "text-[#F9D972]";
+function getNotificationStatus(notification: NotificationRow): {
+  label: string;
+  variant: "danger" | "neutral" | "success" | "warning" | "accent";
+} {
+  if (notification.dismissedAt) {
+    return { label: "Dismissed", variant: "neutral" };
+  }
+  if (notification.acknowledgedAt) {
+    return { label: "Acknowledged", variant: "success" };
+  }
+  if (notification.requiresAck && !notification.readAt) {
+    return { label: "Action required", variant: "warning" };
+  }
+  if (notification.readAt) return { label: "Read", variant: "neutral" };
+  return { label: "Unread", variant: "accent" };
 }
 
-function getNotificationStatus(notification: NotificationRow) {
-  if (notification.dismissedAt) return { label: "Dismissed", className: "border-mono-border bg-mono-soft text-mono-muted" };
-  if (notification.acknowledgedAt) return { label: "Acknowledged", className: "border-emerald-200 bg-emerald-50 text-emerald-600" };
-  if (notification.readAt) return { label: "Read", className: "border-[#F9D972]/20 bg-[#F9D972]/10 text-[#008f88]" };
-  return { label: "Unread", className: "border-[#F9D972]/25 bg-[#F9D972]/12 text-[#008f88]" };
-}
-
-export function NotificationsClient({ notifications }: { notifications: NotificationRow[] }) {
+export function NotificationsClient({
+  notifications,
+}: {
+  notifications: NotificationRow[];
+}) {
   const router = useRouter();
   const { success, error } = useNotifications();
 
@@ -62,142 +82,143 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
     router.refresh();
   }
 
+  async function openNotification(notification: NotificationRow) {
+    const res = await fetch(`/api/notifications/${notification.id}/open`, {
+      method: "POST",
+    });
+    const data = (await res.json()) as { link?: string | null };
+    if (!res.ok || !data.link) {
+      error("Unable to open notification");
+      return;
+    }
+    router.push(data.link);
+    router.refresh();
+  }
+
   return (
-    <div className="space-y-5">
-      <div className="monolith-shell-lg flex flex-col gap-4 border border-mono-border/45 bg-mono-card/85 px-5 py-5 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1.5">
-          <p className="text-sm text-mono-muted">Only your notifications appear here.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            className={NOTIFICATION_ACTION_CLASS}
-            onClick={() => run("/api/notifications/read-all", "Marked all as read")}
-          >
-            <CheckCheck className="mr-1.5 size-4" />
-            Mark all read
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className={NOTIFICATION_ACTION_CLASS}
-            onClick={() => run("/api/notifications/dismiss-all", "Dismissed all notifications")}
-          >
-            <Trash2 className="mr-1.5 size-4" />
-            Dismiss all
-          </Button>
-        </div>
-      </div>
+    <WorkspacePanel>
+      <WorkspacePanelHeader
+        eyebrow="Notification stream"
+        title={`${notifications.length} result${notifications.length === 1 ? "" : "s"}`}
+        description="Only notifications delivered to your account appear here."
+        actions={
+          <>
+            <WorkspaceAction
+              size="compact"
+              variant="secondary"
+              onClick={() => run("/api/notifications/read-all", "Marked all as read")}
+            >
+              <CheckCheck size={14} aria-hidden="true" />
+              Mark all read
+            </WorkspaceAction>
+            <WorkspaceAction
+              size="compact"
+              variant="destructive"
+              onClick={() =>
+                run("/api/notifications/dismiss-all", "Dismissed all notifications")
+              }
+            >
+              <Trash2 size={14} aria-hidden="true" />
+              Dismiss all
+            </WorkspaceAction>
+          </>
+        }
+      />
 
       {notifications.length === 0 ? (
-        <div className="monolith-shell-lg border border-dashed border-mono-border/60 bg-mono-card/70 px-6 py-14 text-center shadow-[0_18px_36px_-32px_rgba(15,23,42,0.12)] backdrop-blur-xl">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F9D972]/10 text-[#F9D972]">
-            <Bell className="size-6" />
-          </div>
-          <h2 className="monolith-h2 text-mono-accent">No notifications found</h2>
-          <p className="mt-2 text-sm text-mono-muted">You are all caught up for the selected filters.</p>
+        <div className="mnx-panel-state">
+          <WorkspaceEmptyState
+            title="No notifications found"
+            description="You’re all caught up for the selected filters."
+          />
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="mnx-notification-list">
           {notifications.map((notification) => {
             const Icon = getNotificationIcon(notification);
-            const accentClass = getNotificationAccent(notification);
             const status = getNotificationStatus(notification);
 
             return (
-              <article
-                key={notification.id}
-                className={cn(
-                  "monolith-shell-lg group border border-mono-border/40 bg-mono-card/85 px-5 py-5 backdrop-blur-xl transition-all duration-200",
-                  "shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] hover:border-[#F9D972]/45 hover:shadow-[0_24px_50px_-36px_rgba(0,206,196,0.25)]",
-                )}
-              >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="flex min-w-0 gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#F9D972]/10">
-                      <Icon className={cn("size-5", accentClass)} strokeWidth={1.9} />
+              <article className="mnx-notification-record" key={notification.id}>
+                <div className="mnx-record-layout">
+                  <span className="mnx-record-icon">
+                    <Icon size={19} strokeWidth={1.8} aria-hidden="true" />
+                  </span>
+                  <div className="mnx-record-copy">
+                    <div className="mnx-chip-row">
+                      <WorkspaceBadge variant={status.variant}>
+                        {status.label}
+                      </WorkspaceBadge>
+                      {notification.source ? (
+                        <WorkspaceBadge variant="neutral">
+                          {notification.source}
+                        </WorkspaceBadge>
+                      ) : null}
                     </div>
-
-                    <div className="min-w-0 space-y-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className={cn("rounded-full border px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em]", status.className)}>
-                          {status.label}
-                        </span>
-                        {notification.source ? (
-                          <span className="rounded-full border border-mono-border/50 bg-mono-card/70 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-mono-muted">
-                            {notification.source}
-                          </span>
-                        ) : null}
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <h2 className="monolith-h3 text-mono-accent">{notification.title}</h2>
-                        {notification.body ? <p className="max-w-3xl text-sm leading-6 text-mono-muted">{notification.body}</p> : null}
-                      </div>
-
-                      <div className="flex flex-wrap gap-4 text-[11px] font-medium uppercase tracking-[0.16em] text-mono-muted">
-                        <span className="inline-flex items-center gap-1.5">
-                          <Clock3 className="size-3.5 text-[#F9D972]" />
-                          {new Date(notification.createdAt).toLocaleString("en-IN")}
-                        </span>
-                        <span>{notification.kind.replaceAll("_", " ")}</span>
-                      </div>
+                    <h2>{notification.title}</h2>
+                    {notification.body ? <p>{notification.body}</p> : null}
+                    <div className="mnx-record-meta">
+                      <span>
+                        <Clock3 size={12} aria-hidden="true" />
+                        {new Date(notification.createdAt).toLocaleString("en-IN")}
+                      </span>
+                      <span>{notification.kind.replaceAll("_", " ")}</span>
                     </div>
                   </div>
-
-                  <div className="flex flex-wrap gap-2 lg:max-w-[360px] lg:justify-end">
+                  <div className="mnx-record-actions">
                     {!notification.readAt ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className={NOTIFICATION_ACTION_CLASS}
-                        onClick={() => run(`/api/notifications/${notification.id}/read`, "Marked as read")}
+                      <WorkspaceAction
+                        size="compact"
+                        variant="secondary"
+                        onClick={() =>
+                          run(
+                            `/api/notifications/${notification.id}/read`,
+                            "Marked as read",
+                          )
+                        }
                       >
-                        <Eye className="mr-1.5 size-4" />
+                        <Eye size={14} aria-hidden="true" />
                         Read
-                      </Button>
+                      </WorkspaceAction>
                     ) : null}
                     {notification.requiresAck && !notification.acknowledgedAt ? (
-                      <Button
-                        size="sm"
-                        className={NOTIFICATION_ACTION_CLASS}
-                        onClick={() => run(`/api/notifications/${notification.id}/ack`, "Notification acknowledged")}
+                      <WorkspaceAction
+                        size="compact"
+                        onClick={() =>
+                          run(
+                            `/api/notifications/${notification.id}/ack`,
+                            "Notification acknowledged",
+                          )
+                        }
                       >
-                        <CheckCheck className="mr-1.5 size-4" />
+                        <CheckCheck size={14} aria-hidden="true" />
                         {notification.labels.acknowledge}
-                      </Button>
+                      </WorkspaceAction>
                     ) : null}
                     {notification.link ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className={NOTIFICATION_ACTION_CLASS}
-                        onClick={async () => {
-                          const res = await fetch(`/api/notifications/${notification.id}/open`, { method: "POST" });
-                          const data = (await res.json()) as { link?: string | null };
-                          if (!res.ok || !data.link) {
-                            error("Unable to open notification");
-                            return;
-                          }
-                          router.push(data.link);
-                          router.refresh();
-                        }}
+                      <WorkspaceAction
+                        size="compact"
+                        variant="secondary"
+                        onClick={() => openNotification(notification)}
                       >
-                        <ExternalLink className="mr-1.5 size-4" />
+                        <ExternalLink size={14} aria-hidden="true" />
                         {notification.labels.open}
-                      </Button>
+                      </WorkspaceAction>
                     ) : null}
                     {!notification.dismissedAt ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className={NOTIFICATION_ACTION_CLASS}
-                        onClick={() => run(`/api/notifications/${notification.id}/dismiss`, "Notification dismissed")}
+                      <WorkspaceAction
+                        size="compact"
+                        variant="destructive"
+                        onClick={() =>
+                          run(
+                            `/api/notifications/${notification.id}/dismiss`,
+                            "Notification dismissed",
+                          )
+                        }
                       >
-                        <Trash2 className="mr-1.5 size-4" />
+                        <Trash2 size={14} aria-hidden="true" />
                         Dismiss
-                      </Button>
+                      </WorkspaceAction>
                     ) : null}
                   </div>
                 </div>
@@ -206,6 +227,6 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
           })}
         </div>
       )}
-    </div>
+    </WorkspacePanel>
   );
 }

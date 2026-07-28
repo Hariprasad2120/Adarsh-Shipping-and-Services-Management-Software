@@ -4,13 +4,16 @@ Last updated: 2026-07-28
 
 ## Current milestone
 
-The production migration foundation is implemented and verified. No new
-individual module was migrated in this foundation session.
+The production migration foundation and post-foundation batch 001 are
+implemented and verified.
 
 - Source audit: 211 page routes and 7 layouts.
 - Protected visual reference: `/dashboard`.
-- Previously migrated before this session: `/account/security`.
-- Pending individual route migrations: 209.
+- Migrated routes: `/account/security`, `/notifications`,
+  `/product-catalogue`, and `/todo`.
+- Migrated shared surfaces: authenticated user profile menu plus common
+  permission, empty, loading, error, and not-found states.
+- Pending individual route migrations: 206.
 - Exhaustive route/layout record: [UI route and layout audit](ui-route-audit.md).
 
 ## Status definitions
@@ -30,7 +33,7 @@ Route discovery scans `src/app/**/page.tsx`, removes route-group segments,
 retains dynamic segments, and calculates layout ancestry. The generated audit is
 the route-by-route source of truth.
 
-| Route family | Discovered | Protected | Previously migrated | Pending |
+| Route family | Discovered | Protected | Migrated | Pending |
 | --- | ---: | ---: | ---: | ---: |
 | `/` | 1 | 0 | 0 | 1 |
 | `/account` | 1 | 0 | 1 | 0 |
@@ -48,12 +51,12 @@ the route-by-route source of truth.
 | `/hrms` | 38 | 0 | 0 | 38 |
 | `/lms` | 5 | 0 | 0 | 5 |
 | `/login` | 1 | 0 | 0 | 1 |
-| `/notifications` | 1 | 0 | 0 | 1 |
-| `/product-catalogue` | 1 | 0 | 0 | 1 |
+| `/notifications` | 1 | 0 | 1 | 0 |
+| `/product-catalogue` | 1 | 0 | 1 | 0 |
 | `/setup` | 1 | 0 | 0 | 1 |
-| `/todo` | 1 | 0 | 0 | 1 |
+| `/todo` | 1 | 0 | 1 | 0 |
 | `/verify` | 1 | 0 | 0 | 1 |
-| **Total** | **211** | **1** | **1** | **209** |
+| **Total** | **211** | **1** | **4** | **206** |
 
 An import from `@/components/monolith` is not proof of route migration. A route
 remains pending until its rendered presentation and behavior satisfy the
@@ -130,6 +133,16 @@ Both `OLD UI code` and `_design-reference` are excluded from production
 TypeScript. They are also excluded from ESLint and are not imported by
 production source.
 
+Batch 001 archive:
+`OLD UI code/legacy-ui-before-monolith-batch-001-aed95fe.zip`
+
+- Source commit: `aed95fe`
+- Entries: 9 targeted route/shell files with original relative paths.
+- Size: 26,781 bytes.
+- SHA-256:
+  `676DAB6A2C6FC519F3616B880C1689562B868F0E1AF03CBE6B4A22C7554C7738`
+- Archive listing verification: passed.
+
 ## Quality log: foundation
 
 Passed:
@@ -170,3 +183,44 @@ unrelated to the UI foundation.
 | Reference | `/dashboard` | Protected | Normalized to shared primitives; visual contract retained. |
 | Pre-foundation 001 | `/account/security` | Verified previously | Migration predates this foundation-only session. |
 | Foundation | No module routes | Foundation ready | Audit, backup, tokens, themes, AppShell, layouts, dashboard normalization. |
+| Batch 001 | `/product-catalogue`, `/todo`, `/notifications` | Verified | Full Monolith composition; profile menu and common authenticated states included. |
+
+## Quality log: batch 001
+
+Passed:
+
+- Verified the batch archive checksum and all 9 archived relative paths.
+- Targeted ESLint for every changed TypeScript/TSX file and both updated/new
+  migration scripts.
+- Focused TypeScript: `npx tsc --noEmit -p tsconfig.ui-migration.json`.
+- Production TypeScript:
+  `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`.
+- Relevant Vitest suites: 27 tests across shared Monolith primitives, common
+  states, shell routing/layout, navigation, and session security.
+- Production build:
+  `NODE_OPTIONS=--max-old-space-size=8192 npm run build`.
+  - Prisma Client generated.
+  - Next.js production compilation and TypeScript passed.
+  - 315 static pages generated.
+- Authenticated Playwright verification using the Webpack development server:
+  - `/product-catalogue`, `/todo`, and `/notifications`;
+  - Light, Night, and Violet themes;
+  - 1440×1000 desktop, 1024×900 tablet, and 390×844 mobile;
+  - user profile menu and all common state compositions;
+  - 45 screenshots with route, theme, legacy-composition, and horizontal
+    overflow assertions;
+  - Product Catalogue search/module/blueprint interactions, To-Do dialog and
+    task expansion, Notifications filters, and profile actions.
+
+The migrated routes have no active imports from the replaced data table,
+legacy card/button/input/select/modal composition, no inline color utilities,
+and no legacy visual class families. Legacy global form/button/checkbox rules
+are explicitly excluded while `data-dashboard-shell="true"` is active.
+
+Repository-wide `npm run lint` was executed with an 8 GB heap. It still reaches
+the pre-existing findings in Prisma seed scripts, maintenance scripts,
+accounting, CHA, and other pending modules recorded by the foundation handoff.
+All batch 001 files pass targeted ESLint.
+
+The build retains the existing non-fatal Turbopack NFT trace warning from the
+customer-portal checklist-file route.

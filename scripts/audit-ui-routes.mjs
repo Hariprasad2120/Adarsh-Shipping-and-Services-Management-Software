@@ -5,7 +5,13 @@ import { fileURLToPath } from "node:url";
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const appRoot = path.join(repositoryRoot, "src", "app");
 const outputPath = path.join(repositoryRoot, "docs", "ui-route-audit.md");
-const knownMonolithRoutes = new Set(["/dashboard", "/account/security"]);
+const knownMonolithRoutes = new Set([
+  "/dashboard",
+  "/account/security",
+  "/notifications",
+  "/product-catalogue",
+  "/todo",
+]);
 
 function walk(directory, targetName, found = []) {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
@@ -72,6 +78,7 @@ function shellFor(pageSource, route) {
 function stateFor(route) {
   if (route === "/dashboard") return "Protected reference";
   if (route === "/account/security") return "Migrated before this foundation session";
+  if (knownMonolithRoutes.has(route)) return "Migrated in batch 001";
   return "Pending module migration";
 }
 
@@ -160,12 +167,12 @@ const lines = [
   `- Page routes: **${pages.length}**`,
   `- Layouts: **${layouts.length}**`,
   `- Protected visual reference routes: **${pages.filter((page) => page.state === "Protected reference").length}**`,
-  `- Previously migrated routes: **${pages.filter((page) => page.state.startsWith("Migrated")).length}**`,
+  `- Migrated routes: **${pages.filter((page) => page.state.startsWith("Migrated")).length}**`,
   `- Pending individual module migrations: **${pages.filter((page) => page.state === "Pending module migration").length}**`,
   "",
   "## Route families",
   "",
-  "| Family | Discovered | Protected | Previously migrated | Pending |",
+  "| Family | Discovered | Protected | Migrated | Pending |",
   "| --- | ---: | ---: | ---: | ---: |",
   ...[...familyCounts.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
@@ -197,7 +204,8 @@ const lines = [
   "- Route groups are removed from public URLs; dynamic segments remain in bracket form.",
   "- Layout coverage is calculated from filesystem ancestry.",
   "- `/dashboard` remains the protected visual reference and is not redesigned.",
-  "- `/account/security` was already migrated before this foundation-only session.",
+  "- `/account/security` was migrated before the foundation session.",
+  "- `/notifications`, `/product-catalogue`, and `/todo` were migrated in batch 001.",
   "- Every other route remains pending until its own presentation, behavior, RBAC,",
   "  themes, and responsive layout are verified in a later module batch.",
   "",

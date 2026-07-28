@@ -78,6 +78,9 @@ describe("CHA dashboard shell layout safeguards", () => {
     expect(dashboardShellSwitcherSource).toContain("MONOLITH_MIGRATED_ROUTES");
     expect(dashboardShellSwitcherSource).toContain('"/dashboard"');
     expect(dashboardShellSwitcherSource).toContain('"/account/security"');
+    expect(dashboardShellSwitcherSource).toContain('"/notifications"');
+    expect(dashboardShellSwitcherSource).toContain('"/product-catalogue"');
+    expect(dashboardShellSwitcherSource).toContain('"/todo"');
     expect(dashboardShellSwitcherSource).toContain("usesMonolithShell");
   });
 });

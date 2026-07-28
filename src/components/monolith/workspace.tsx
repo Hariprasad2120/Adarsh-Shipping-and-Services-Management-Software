@@ -59,6 +59,146 @@ export function WorkspacePanel({
   return <MonolithSurface as="section" className={className} {...props} />;
 }
 
+interface WorkspaceMetricProps extends React.HTMLAttributes<HTMLElement> {
+  icon?: React.ReactNode;
+  label: React.ReactNode;
+  value: React.ReactNode;
+  detail?: React.ReactNode;
+}
+
+export function WorkspaceMetric({
+  className,
+  detail,
+  icon,
+  label,
+  value,
+  ...props
+}: WorkspaceMetricProps) {
+  return (
+    <article className={cn("mnx-workspace-metric", className)} {...props}>
+      <div>
+        {icon ? <span>{icon}</span> : null}
+        <MonolithSpecLabel>{label}</MonolithSpecLabel>
+      </div>
+      <strong>{value}</strong>
+      {detail ? <p>{detail}</p> : null}
+    </article>
+  );
+}
+
+interface WorkspaceFieldProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "children"> {
+  children: React.ReactNode;
+  label: React.ReactNode;
+  htmlFor?: string;
+  hint?: React.ReactNode;
+  required?: boolean;
+}
+
+export function WorkspaceField({
+  children,
+  className,
+  hint,
+  htmlFor,
+  label,
+  required,
+  ...props
+}: WorkspaceFieldProps) {
+  return (
+    <div className={cn("mnx-field", className)} {...props}>
+      <label htmlFor={htmlFor}>
+        {label}
+        {required ? <span aria-hidden="true"> *</span> : null}
+      </label>
+      {children}
+      {hint ? <p>{hint}</p> : null}
+    </div>
+  );
+}
+
+export const WorkspaceInput = React.forwardRef<
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement>
+>(({ className, type, ...props }, ref) => (
+  <input
+    ref={ref}
+    type={type}
+    className={cn("mnx-field-control", className)}
+    {...props}
+  />
+));
+
+WorkspaceInput.displayName = "WorkspaceInput";
+
+export const WorkspaceTextarea = React.forwardRef<
+  HTMLTextAreaElement,
+  React.TextareaHTMLAttributes<HTMLTextAreaElement>
+>(({ className, ...props }, ref) => (
+  <textarea
+    ref={ref}
+    className={cn("mnx-field-control mnx-field-textarea", className)}
+    {...props}
+  />
+));
+
+WorkspaceTextarea.displayName = "WorkspaceTextarea";
+
+export const WorkspaceSelect = React.forwardRef<
+  HTMLSelectElement,
+  React.SelectHTMLAttributes<HTMLSelectElement>
+>(({ children, className, ...props }, ref) => (
+  <select
+    ref={ref}
+    className={cn("mnx-field-control mnx-field-select", className)}
+    {...props}
+  >
+    {children}
+  </select>
+));
+
+WorkspaceSelect.displayName = "WorkspaceSelect";
+
+interface WorkspaceCheckboxProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> {
+  label?: React.ReactNode;
+}
+
+export const WorkspaceCheckbox = React.forwardRef<
+  HTMLInputElement,
+  WorkspaceCheckboxProps
+>(({ className, label, ...props }, ref) => (
+  <label className={cn("mnx-checkbox", className)}>
+    <input ref={ref} type="checkbox" {...props} />
+    <span aria-hidden="true" />
+    {label ? <em>{label}</em> : null}
+  </label>
+));
+
+WorkspaceCheckbox.displayName = "WorkspaceCheckbox";
+
+export function WorkspaceProgress({
+  label,
+  value,
+}: {
+  label: string;
+  value: number;
+}) {
+  const normalizedValue = Math.max(0, Math.min(100, value));
+
+  return (
+    <div
+      className="mnx-progress"
+      role="progressbar"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={normalizedValue}
+    >
+      <span style={{ width: `${normalizedValue}%` }} />
+    </div>
+  );
+}
+
 interface WorkspacePanelHeaderProps
   extends Omit<React.HTMLAttributes<HTMLElement>, "title"> {
   eyebrow?: string;
@@ -213,5 +353,53 @@ export function WorkspaceEmptyTableRow({
         <div className="mnx-empty-state mnx-table-empty-state">{children}</div>
       </td>
     </tr>
+  );
+}
+
+const workspaceStateVariants = cva("mnx-workspace-state", {
+  variants: {
+    variant: {
+      danger: "mnx-workspace-state-danger",
+      empty: "mnx-workspace-state-empty",
+      loading: "mnx-workspace-state-loading",
+      permission: "mnx-workspace-state-permission",
+    },
+  },
+  defaultVariants: {
+    variant: "empty",
+  },
+});
+
+interface WorkspaceStateProps
+  extends Omit<React.HTMLAttributes<HTMLElement>, "title">,
+    VariantProps<typeof workspaceStateVariants> {
+  action?: React.ReactNode;
+  description: React.ReactNode;
+  eyebrow: string;
+  icon: React.ReactNode;
+  title: React.ReactNode;
+}
+
+export function WorkspaceState({
+  action,
+  className,
+  description,
+  eyebrow,
+  icon,
+  title,
+  variant,
+  ...props
+}: WorkspaceStateProps) {
+  return (
+    <section
+      className={cn(workspaceStateVariants({ variant }), className)}
+      {...props}
+    >
+      <span className="mnx-workspace-state-icon">{icon}</span>
+      <MonolithSpecLabel as="p">{eyebrow}</MonolithSpecLabel>
+      <h1>{title}</h1>
+      <p>{description}</p>
+      {action ? <div className="mnx-workspace-state-action">{action}</div> : null}
+    </section>
   );
 }

@@ -3,6 +3,10 @@ import { redirect } from "next/navigation";
 import { listTodoTasks } from "@/modules/todo/service";
 import { TodoClient } from "./todo-client";
 
+export const metadata = {
+  title: "To-Do | Adarsh Shipping",
+};
+
 export default async function TodoPage({
   searchParams,
 }: {

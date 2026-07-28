@@ -11,8 +11,10 @@ import {
   Menu,
   Moon,
   Search,
+  ShieldCheck,
   Sparkles,
   Sun,
+  UserRound,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -33,6 +35,8 @@ export interface MonolithAppShellProps {
   children: React.ReactNode;
   caps: Caps;
   enabledModuleIds: string[];
+  isPlatformAdmin: boolean;
+  userEmail: string;
   userName: string;
 }
 
@@ -71,6 +75,8 @@ function MonolithAppShellBody({
   children,
   caps,
   enabledModuleIds,
+  isPlatformAdmin,
+  userEmail,
   userName,
 }: MonolithAppShellProps) {
   const pathname = usePathname();
@@ -80,6 +86,7 @@ function MonolithAppShellBody({
   const [theme, setTheme] = useState<MonolithTheme>("light");
   const [themeLoaded, setThemeLoaded] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const documentStateRef = useRef<{
@@ -89,6 +96,7 @@ function MonolithAppShellBody({
     themeClasses: string[];
   } | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const profileRef = useRef<HTMLDivElement | null>(null);
   const visibleSections = useMemo(
     () => getVisibleSections(caps, enabledModuleIds),
     [caps, enabledModuleIds],
@@ -173,6 +181,7 @@ function MonolithAppShellBody({
         toggleChat();
       }
       if (event.key === "Escape") {
+        setProfileOpen(false);
         setSearchOpen(false);
         setMobileOpen(false);
       }
@@ -181,6 +190,20 @@ function MonolithAppShellBody({
     window.addEventListener("keydown", handleKeyboard);
     return () => window.removeEventListener("keydown", handleKeyboard);
   }, [toggleChat]);
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (
+        profileRef.current
+        && !profileRef.current.contains(event.target as Node)
+      ) {
+        setProfileOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, []);
 
   function selectTheme(nextTheme: MonolithTheme) {
     setTheme(nextTheme);
@@ -301,9 +324,55 @@ function MonolithAppShellBody({
               })}
             </div>
 
-            <button type="button" className="mnx-topbar-avatar" aria-label="Open profile menu">
-              {initials(userName)}
-            </button>
+            <div className="mnx-profile-menu" ref={profileRef}>
+              <button
+                type="button"
+                className="mnx-topbar-avatar"
+                aria-label="Open profile menu"
+                aria-expanded={profileOpen}
+                aria-haspopup="menu"
+                onClick={() => setProfileOpen((current) => !current)}
+              >
+                {initials(userName)}
+              </button>
+              {profileOpen ? (
+                <section className="mnx-profile-popover" role="menu">
+                  <header>
+                    <span>{initials(userName)}</span>
+                    <div>
+                      <MonolithProfileLabel />
+                      <b>{userName}</b>
+                      <small>{userEmail}</small>
+                    </div>
+                  </header>
+                  <div className="mnx-profile-context">
+                    <span><UserRound size={14} /></span>
+                    <div>
+                      <b>{isPlatformAdmin ? "Platform administrator" : "Workspace member"}</b>
+                      <small>Adarsh Shipping &amp; Services</small>
+                    </div>
+                  </div>
+                  <nav>
+                    <Link
+                      href="/account/security"
+                      role="menuitem"
+                      onClick={() => setProfileOpen(false)}
+                    >
+                      <ShieldCheck size={16} />
+                      <span><b>Security &amp; sessions</b><small>Review signed-in devices</small></span>
+                    </Link>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => performLogout()}
+                    >
+                      <LogOut size={16} />
+                      <span><b>Sign out</b><small>End this workspace session</small></span>
+                    </button>
+                  </nav>
+                </section>
+              ) : null}
+            </div>
           </div>
         </header>
 
@@ -349,4 +418,8 @@ function MonolithAppShellBody({
       ) : null}
     </div>
   );
+}
+
+function MonolithProfileLabel() {
+  return <em>USER PROFILE</em>;
 }

@@ -18,6 +18,9 @@ function normalizePathname(pathname: string | null) {
 const MONOLITH_MIGRATED_ROUTES = new Set([
   "/dashboard",
   "/account/security",
+  "/notifications",
+  "/product-catalogue",
+  "/todo",
 ]);
 
 export function usesMonolithShell(pathname: string | null) {
@@ -28,13 +31,17 @@ export function DashboardShellSwitcher({
   children,
   caps,
   enabledModuleIds,
+  isPlatformAdmin,
   sessionToken,
+  userEmail,
   userName,
 }: {
   children: React.ReactNode;
   caps: Caps;
   enabledModuleIds: string[];
+  isPlatformAdmin: boolean;
   sessionToken: string;
+  userEmail: string;
   userName: string;
 }) {
   const pathname = normalizePathname(usePathname());
@@ -42,7 +49,13 @@ export function DashboardShellSwitcher({
 
   if (isMonolithRoute) {
     return (
-      <MonolithAppShell caps={caps} userName={userName} enabledModuleIds={enabledModuleIds}>
+      <MonolithAppShell
+        caps={caps}
+        enabledModuleIds={enabledModuleIds}
+        isPlatformAdmin={isPlatformAdmin}
+        userEmail={userEmail}
+        userName={userName}
+      >
         {children}
       </MonolithAppShell>
     );

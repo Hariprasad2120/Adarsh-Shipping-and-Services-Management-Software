@@ -477,9 +477,9 @@ html.dark .shadow-2xl {
   }
 }
 
-main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-main select,
-main textarea {
+html:not([data-dashboard-shell="true"]) main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+html:not([data-dashboard-shell="true"]) main select,
+html:not([data-dashboard-shell="true"]) main textarea {
   appearance: none !important;
   -webkit-appearance: none !important;
   outline: none !important;
@@ -494,18 +494,18 @@ main textarea {
   box-shadow: none !important;
 }
 
-main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):hover,
-main select:hover,
-main textarea:hover {
+html:not([data-dashboard-shell="true"]) main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):hover,
+html:not([data-dashboard-shell="true"]) main select:hover,
+html:not([data-dashboard-shell="true"]) main textarea:hover {
   border-color: rgba(0, 206, 196, 0.4) !important;
 }
 
-main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
-main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus-visible,
-main select:focus,
-main select:focus-visible,
-main textarea:focus,
-main textarea:focus-visible {
+html:not([data-dashboard-shell="true"]) main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+html:not([data-dashboard-shell="true"]) main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus-visible,
+html:not([data-dashboard-shell="true"]) main select:focus,
+html:not([data-dashboard-shell="true"]) main select:focus-visible,
+html:not([data-dashboard-shell="true"]) main textarea:focus,
+html:not([data-dashboard-shell="true"]) main textarea:focus-visible {
   outline: none !important;
   outline-offset: 0 !important;
   outline-color: transparent !important;
@@ -513,7 +513,7 @@ main textarea:focus-visible {
   box-shadow: 0 0 0 3px rgba(14, 137, 149, 0.14) !important;
 }
 
-main textarea {
+html:not([data-dashboard-shell="true"]) main textarea {
   resize: none;
   overflow-y: auto;
 }
@@ -549,18 +549,18 @@ main textarea {
 }
 
 /* Global placeholder color for both themes */
-main input::placeholder,
-main select::placeholder,
-main textarea::placeholder {
+html:not([data-dashboard-shell="true"]) main input::placeholder,
+html:not([data-dashboard-shell="true"]) main select::placeholder,
+html:not([data-dashboard-shell="true"]) main textarea::placeholder {
   color: var(--color-placeholder) !important;
 }
 
 /* Default table cell colors — semantic tokens, non-!important so explicit classes win */
-main table th {
+html:not([data-dashboard-shell="true"]) main table th {
   color: var(--color-on-surface-variant);
 }
 
-main table td {
+html:not([data-dashboard-shell="true"]) main table td {
   color: var(--color-on-surface);
 }
 
@@ -1105,7 +1105,7 @@ html.dark .cha-module .ds-table tbody tr:hover {
   transform: translateY(0) scale(0.96);
 }
 
-main button:not(.ds-plain):not([data-mode="icon"]):not([data-variant="destructive"]):hover {
+html:not([data-dashboard-shell="true"]) main button:not(.ds-plain):not([data-mode="icon"]):not([data-variant="destructive"]):hover {
   box-shadow: 0 0 0 3px rgba(0, 206, 196, 0.12), 0 10px 24px -18px rgba(0, 206, 196, 0.75);
 }
 
@@ -1651,7 +1651,7 @@ html.light main .ds-dark-banner [class*="text-white/56"] {
 }
 
 /* Global Neon styling for default checkboxes */
-main input[type="checkbox"]:not(.hidden) {
+html:not([data-dashboard-shell="true"]) main input[type="checkbox"]:not(.hidden) {
   appearance: none;
   -webkit-appearance: none;
   width: 16px;
@@ -1665,13 +1665,13 @@ main input[type="checkbox"]:not(.hidden) {
   box-shadow: 0 0 0 rgba(0, 206, 196, 0);
 }
 
-main input[type="checkbox"]:not(.hidden):checked {
+html:not([data-dashboard-shell="true"]) main input[type="checkbox"]:not(.hidden):checked {
   background-color: rgba(0, 206, 196, 0.12) !important;
   border-color: #00cec4 !important;
   box-shadow: none;
 }
 
-main input[type="checkbox"]:not(.hidden):checked::after {
+html:not([data-dashboard-shell="true"]) main input[type="checkbox"]:not(.hidden):checked::after {
   content: "✓";
   position: absolute;
   top: 50%;
@@ -1846,7 +1846,7 @@ html.light main .ds-dark-banner [class*="text-white/56"] {
 }
 
 /* Global Neon styling for default checkboxes */
-main input[type="checkbox"]:not(.hidden) {
+html:not([data-dashboard-shell="true"]) main input[type="checkbox"]:not(.hidden) {
   appearance: none;
   -webkit-appearance: none;
   width: 16px;
@@ -1860,13 +1860,13 @@ main input[type="checkbox"]:not(.hidden) {
   box-shadow: 0 0 0 rgba(0, 206, 196, 0);
 }
 
-main input[type="checkbox"]:not(.hidden):checked {
+html:not([data-dashboard-shell="true"]) main input[type="checkbox"]:not(.hidden):checked {
   background-color: rgba(0, 206, 196, 0.12) !important;
   border-color: #00cec4 !important;
   box-shadow: none;
 }
 
-main input[type="checkbox"]:not(.hidden):checked::after {
+html:not([data-dashboard-shell="true"]) main input[type="checkbox"]:not(.hidden):checked::after {
   content: "✓";
   position: absolute;
   top: 50%;

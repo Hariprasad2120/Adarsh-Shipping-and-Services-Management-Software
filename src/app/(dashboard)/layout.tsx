@@ -39,6 +39,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <SessionSync />
         <DashboardShellSwitcher
           caps={caps}
+          isPlatformAdmin={session.user.isPlatformAdmin}
+          userEmail={session.user.email}
           userName={session.user.name}
           sessionToken={session.user.sessionNonce}
           enabledModuleIds={enabledModuleIds}

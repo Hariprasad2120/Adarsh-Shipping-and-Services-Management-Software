@@ -1,11 +1,22 @@
-import { Button } from "@/components/monolith/button-1";
-import { DropdownSelect } from "@/components/monolith/dropdown-select";
-import { Input } from "@/components/monolith/input";
+import { Bell, Filter } from "lucide-react";
+import {
+  WorkspaceAction,
+  WorkspaceField,
+  WorkspaceInput,
+  WorkspacePage,
+  WorkspacePageHeader,
+  WorkspacePanel,
+  WorkspaceSelect,
+} from "@/components/monolith";
 import { auth } from "@/lib/auth";
 import { getNotificationPolicy } from "@/modules/notifications/policy";
 import { listUserNotifications } from "@/modules/notifications/service";
 import { redirect } from "next/navigation";
 import { NotificationsClient } from "./notifications-client";
+
+export const metadata = {
+  title: "Notifications | Adarsh Shipping",
+};
 
 export default async function NotificationsPage({
   searchParams,
@@ -16,13 +27,15 @@ export default async function NotificationsPage({
   if (!session) redirect("/login");
 
   const params = await searchParams;
+  const status = stringParam(params.status, "all");
+  const requiresAck = stringParam(params.requiresAck, "all");
   const notifications = await listUserNotifications(session.user.id, {
-    status: typeof params.status === "string" ? (params.status as "all" | "unread" | "read" | "acknowledged" | "dismissed") : "all",
-    requiresAck: typeof params.requiresAck === "string" ? (params.requiresAck as "all" | "yes" | "no") : "all",
-    kind: typeof params.kind === "string" ? params.kind : undefined,
-    source: typeof params.source === "string" ? params.source : undefined,
-    from: typeof params.from === "string" ? params.from : undefined,
-    to: typeof params.to === "string" ? params.to : undefined,
+    status: status as "all" | "unread" | "read" | "acknowledged" | "dismissed",
+    requiresAck: requiresAck as "all" | "yes" | "no",
+    kind: stringParam(params.kind),
+    source: stringParam(params.source),
+    from: stringParam(params.from),
+    to: stringParam(params.to),
   });
 
   const rows = notifications.map((notification) => {
@@ -47,73 +60,87 @@ export default async function NotificationsPage({
   });
 
   return (
-    <div className="space-y-5">
-      <form className="monolith-shell-lg grid gap-3 border border-mono-border/45 bg-white/78 p-5 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.16)] backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-5">
-        <NotificationFilters
-          requiresAck={typeof params.requiresAck === "string" ? params.requiresAck : "all"}
-          status={typeof params.status === "string" ? params.status : "all"}
-        />
-        <Input
-          name="kind"
-          defaultValue={typeof params.kind === "string" ? params.kind : ""}
-          placeholder="Notification kind"
-          className="border-mono-border/60 bg-white"
-        />
-        <Input
-          name="from"
-          type="date"
-          defaultValue={typeof params.from === "string" ? params.from : ""}
-          className="border-mono-border/60 bg-white"
-        />
-        <div className="flex gap-2">
-          <Input
-            name="to"
-            type="date"
-            defaultValue={typeof params.to === "string" ? params.to : ""}
-            className="w-full border-mono-border/60 bg-white"
-          />
-          <Button type="submit" size="sm" className="rounded-full border-0 bg-[#F9D972] px-4 text-white hover:bg-[#E8C85D]">
-            Filter
-          </Button>
-        </div>
-      </form>
+    <WorkspacePage>
+      <WorkspacePageHeader
+        eyebrow="Personal inbox"
+        title="Notifications"
+        icon={<Bell size={21} aria-hidden="true" />}
+        description="Review operational updates, required acknowledgements, reminders, and linked workspace activity."
+      />
+
+      <WorkspacePanel>
+        <form className="mnx-notification-filters">
+          <div className="mnx-toolbar">
+            <div className="mnx-toolbar-copy">
+              <h2>Filter notification history</h2>
+              <p>Use one or more fields to narrow your personal notification stream.</p>
+            </div>
+            <WorkspaceAction type="submit" size="compact">
+              <Filter size={14} aria-hidden="true" />
+              Apply filters
+            </WorkspaceAction>
+          </div>
+          <div className="mnx-filter-grid mnx-filter-grid-wide">
+            <WorkspaceField label="Status" htmlFor="notification-status">
+              <WorkspaceSelect id="notification-status" name="status" defaultValue={status}>
+                <option value="all">All statuses</option>
+                <option value="unread">Unread</option>
+                <option value="read">Read</option>
+                <option value="acknowledged">Acknowledged</option>
+                <option value="dismissed">Dismissed</option>
+              </WorkspaceSelect>
+            </WorkspaceField>
+            <WorkspaceField label="Acknowledgement" htmlFor="notification-ack">
+              <WorkspaceSelect id="notification-ack" name="requiresAck" defaultValue={requiresAck}>
+                <option value="all">Required or not</option>
+                <option value="yes">Required</option>
+                <option value="no">Not required</option>
+              </WorkspaceSelect>
+            </WorkspaceField>
+            <WorkspaceField label="Kind" htmlFor="notification-kind">
+              <WorkspaceInput
+                id="notification-kind"
+                name="kind"
+                defaultValue={stringParam(params.kind)}
+                placeholder="e.g. TODO_REMINDER"
+              />
+            </WorkspaceField>
+            <WorkspaceField label="Source" htmlFor="notification-source">
+              <WorkspaceInput
+                id="notification-source"
+                name="source"
+                defaultValue={stringParam(params.source)}
+                placeholder="e.g. HRMS"
+              />
+            </WorkspaceField>
+            <WorkspaceField label="From" htmlFor="notification-from">
+              <WorkspaceInput
+                id="notification-from"
+                name="from"
+                type="date"
+                defaultValue={stringParam(params.from)}
+              />
+            </WorkspaceField>
+            <WorkspaceField label="To" htmlFor="notification-to">
+              <WorkspaceInput
+                id="notification-to"
+                name="to"
+                type="date"
+                defaultValue={stringParam(params.to)}
+              />
+            </WorkspaceField>
+          </div>
+        </form>
+      </WorkspacePanel>
 
       <NotificationsClient notifications={rows} />
-    </div>
+    </WorkspacePage>
   );
 }
 
-function NotificationFilters({
-  status,
-  requiresAck,
-}: {
-  status: string;
-  requiresAck: string;
-}) {
-  return (
-    <>
-      <DropdownSelect
-        name="status"
-        defaultValue={status}
-        triggerClassName="border-mono-border/60 bg-white"
-        options={[
-          { value: "all", label: "All statuses" },
-          { value: "unread", label: "Unread" },
-          { value: "read", label: "Read" },
-          { value: "acknowledged", label: "Acknowledged" },
-          { value: "dismissed", label: "Dismissed" },
-        ]}
-      />
-      <DropdownSelect
-        name="requiresAck"
-        defaultValue={requiresAck}
-        triggerClassName="border-mono-border/60 bg-white"
-        options={[
-          { value: "all", label: "Ack required or not" },
-          { value: "yes", label: "Ack required" },
-          { value: "no", label: "No ack required" },
-        ]}
-      />
-    </>
-  );
+function stringParam(
+  value: string | string[] | undefined,
+  fallback = "",
+) {
+  return typeof value === "string" ? value : fallback;
 }
