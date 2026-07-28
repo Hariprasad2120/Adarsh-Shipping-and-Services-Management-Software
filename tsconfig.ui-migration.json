@@ -8,10 +8,12 @@
     "next-env.d.ts",
     "src/types/next-auth.d.ts",
     "src/app/(dashboard)/_components/dashboard-shell-switcher.tsx",
+    "src/app/(dashboard)/dashboard/**/*.tsx",
     "src/app/(dashboard)/account/security/page.tsx",
     "src/app/(dashboard)/account/security/sessions-client.tsx",
     "src/components/monolith/index.ts",
-    "src/components/monolith/monolith-dashboard-shell.tsx",
+    "src/components/monolith/app-shell.tsx",
+    "src/components/monolith/foundation.tsx",
     "src/components/monolith/workspace.tsx",
     "src/lib/route-labels.ts"
   ],

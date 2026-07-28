@@ -59,7 +59,7 @@ describe("CHA dashboard shell layout safeguards", () => {
     expect(dashboardLayoutSource).toContain("DashboardShellSwitcher");
     expect(dashboardShellSwitcherSource).toContain("usePathname");
     expect(dashboardShellSwitcherSource).toContain("DashboardChromeProvider");
-    expect(dashboardShellSwitcherSource).toContain("MonolithDashboardShell");
+    expect(dashboardShellSwitcherSource).toContain("MonolithAppShell");
     expect(mainShellSource).toContain('pl-0');
     expect(mainShellSource).toContain('lg:pl-[var(--sidebar-width)]');
     expect(sidebarSource).toContain('role="dialog"');

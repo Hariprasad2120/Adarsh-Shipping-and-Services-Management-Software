@@ -1,4 +1,5 @@
 export * from "./alert";
+export * from "./app-shell";
 export * from "./badge";
 export * from "./button";
 export * from "./card";
@@ -8,6 +9,7 @@ export * from "./dropdown-select";
 export * from "./file-upload-field";
 export * from "./filter-menu";
 export * from "./folder-icon";
+export * from "./foundation";
 export * from "./input";
 export * from "./label";
 export * from "./modal";

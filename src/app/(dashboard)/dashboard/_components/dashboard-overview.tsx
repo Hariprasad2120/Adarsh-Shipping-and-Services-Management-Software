@@ -8,6 +8,12 @@ import {
   Megaphone,
 } from "lucide-react";
 import Link from "next/link";
+import {
+  MonolithBadge,
+  MonolithEmptyState,
+  MonolithSpecLabel,
+  MonolithSurface,
+} from "@/components/monolith/foundation";
 import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 import type { DashboardSessionUser } from "./dashboard-types";
@@ -91,7 +97,7 @@ export function DashboardOverview({
 
       <header className="mnx-dashboard-section-heading">
         <div>
-          <span className="mnx-dashboard-spec-label">PERSONAL PULSE</span>
+          <MonolithSpecLabel>PERSONAL PULSE</MonolithSpecLabel>
           <h2>Your day at a glance</h2>
         </div>
         <p>Company signals, assigned work, and the next date on your calendar.</p>
@@ -114,10 +120,10 @@ export function DashboardOverview({
       </section>
 
       <section className="mnx-dashboard-grid">
-        <article className="mnx-panel mnx-feed-panel">
+        <MonolithSurface className="mnx-feed-panel">
           <header className="mnx-panel-heading">
             <div>
-              <span className="mnx-dashboard-spec-label">MY COMMAND FEED</span>
+              <MonolithSpecLabel>MY COMMAND FEED</MonolithSpecLabel>
               <h2>A clear start to the day</h2>
             </div>
             <span className="mnx-user-email">{sessionUser.email}</span>
@@ -151,10 +157,10 @@ export function DashboardOverview({
                 <>
                   <h3>{nextTask.title}</h3>
                   <p>Due {formatDate(nextTask.dueDate)}</p>
-                  <span className={`mnx-badge mnx-priority-${nextTask.priority.toLowerCase()}`}>
+                  <MonolithBadge className={`mnx-priority-${nextTask.priority.toLowerCase()}`}>
                     <i />
                     {nextTask.priority} priority
-                  </span>
+                  </MonolithBadge>
                 </>
               ) : (
                 <div className="mnx-empty-compact">
@@ -164,12 +170,12 @@ export function DashboardOverview({
               )}
             </article>
           </div>
-        </article>
+        </MonolithSurface>
 
-        <article className="mnx-panel mnx-task-panel">
+        <MonolithSurface className="mnx-task-panel">
           <header className="mnx-panel-heading">
             <div>
-              <span className="mnx-dashboard-spec-label">OPEN WORK</span>
+              <MonolithSpecLabel>OPEN WORK</MonolithSpecLabel>
               <h2>Task pipeline</h2>
             </div>
             <span className="mnx-count-pill">{data.recentTasks.length} active</span>
@@ -183,28 +189,28 @@ export function DashboardOverview({
                   <h3>{task.title}</h3>
                   <p>Due {formatDate(task.dueDate)}</p>
                 </div>
-                <span className={`mnx-badge mnx-priority-${task.priority.toLowerCase()}`}>
+                <MonolithBadge className={`mnx-priority-${task.priority.toLowerCase()}`}>
                   {task.priority}
-                </span>
+                </MonolithBadge>
               </article>
             )) : (
-              <div className="mnx-empty-state">
+              <MonolithEmptyState>
                 <CheckCircle2 size={24} />
                 <h3>The board is clear</h3>
                 <p>No pending tasks require your attention.</p>
-              </div>
+              </MonolithEmptyState>
             )}
           </div>
 
           <Link className="mnx-text-link" href="/todo">
             Open task workspace <ArrowUpRight size={14} />
           </Link>
-        </article>
+        </MonolithSurface>
 
-        <article className="mnx-panel mnx-schedule-panel">
+        <MonolithSurface className="mnx-schedule-panel">
           <header className="mnx-panel-heading">
             <div>
-              <span className="mnx-dashboard-spec-label">WEEKLY RHYTHM</span>
+              <MonolithSpecLabel>WEEKLY RHYTHM</MonolithSpecLabel>
               <h2>Work schedule</h2>
             </div>
             <CalendarDays size={19} />
@@ -215,16 +221,16 @@ export function DashboardOverview({
               <article className={day.isToday ? "is-today" : ""} key={day.key}>
                 <time><b>{day.weekday}</b><span>{day.date}</span></time>
                 <div><b>{day.label}</b><span>{day.hours}</span></div>
-                {day.isToday ? <span className="mnx-badge mnx-badge-warning"><i />Today</span> : null}
+                {day.isToday ? <MonolithBadge tone="warning"><i />Today</MonolithBadge> : null}
               </article>
             ))}
           </div>
-        </article>
+        </MonolithSurface>
 
-        <article className="mnx-panel mnx-holiday-panel">
+        <MonolithSurface className="mnx-holiday-panel">
           <header className="mnx-panel-heading">
             <div>
-              <span className="mnx-dashboard-spec-label">UP NEXT</span>
+              <MonolithSpecLabel>UP NEXT</MonolithSpecLabel>
               <h2>Company calendar</h2>
             </div>
             <Landmark size={19} />
@@ -243,13 +249,13 @@ export function DashboardOverview({
               </div>
             </div>
           ) : (
-            <div className="mnx-empty-state">
+            <MonolithEmptyState>
               <CalendarDays size={24} />
               <h3>No holiday scheduled</h3>
               <p>The company calendar has no upcoming entry.</p>
-            </div>
+            </MonolithEmptyState>
           )}
-        </article>
+        </MonolithSurface>
       </section>
     </div>
   );

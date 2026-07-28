@@ -2,6 +2,7 @@
 
 import { Building2, Sparkles, Users2 } from "lucide-react";
 import { useState } from "react";
+import { MonolithPage } from "@/components/monolith/foundation";
 import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 import { AttendanceCommand } from "./_components/attendance-command";
@@ -157,7 +158,7 @@ export function HrmsPortalClient({
   }
 
   return (
-    <div className="mnx-dashboard-page">
+    <MonolithPage>
       <AttendanceCommand
         profile={profile}
         loading={attendanceLoading}
@@ -202,6 +203,6 @@ export function HrmsPortalClient({
           />
         ) : null}
       </div>
-    </div>
+    </MonolithPage>
   );
 }

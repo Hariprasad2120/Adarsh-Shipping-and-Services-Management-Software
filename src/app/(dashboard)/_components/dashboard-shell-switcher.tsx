@@ -2,7 +2,7 @@
 
 import { DashboardChromeProvider } from "@/components/dashboard-chrome";
 import { MainShell } from "@/components/main-shell";
-import { MonolithDashboardShell } from "@/components/monolith/monolith-dashboard-shell";
+import { MonolithAppShell } from "@/components/monolith/app-shell";
 import { PageAnimator } from "@/components/page-animator";
 import { Sidebar } from "@/components/sidebar";
 import { usePathname } from "next/navigation";
@@ -42,9 +42,9 @@ export function DashboardShellSwitcher({
 
   if (isMonolithRoute) {
     return (
-      <MonolithDashboardShell caps={caps} userName={userName} enabledModuleIds={enabledModuleIds}>
+      <MonolithAppShell caps={caps} userName={userName} enabledModuleIds={enabledModuleIds}>
         {children}
-      </MonolithDashboardShell>
+      </MonolithAppShell>
     );
   }
 

@@ -15,6 +15,11 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import {
+  MonolithAction,
+  MonolithBadge,
+  MonolithSpecLabel,
+} from "@/components/monolith/foundation";
 import type { UserProfile } from "@/modules/hrms/types";
 import type { PunchAction } from "./dashboard-types";
 
@@ -171,13 +176,13 @@ export function AttendanceCommand({
       <div className="mnx-attendance-panel">
         <header className="mnx-attendance-header">
           <div>
-            <span className="mnx-dashboard-spec-label">LIVE ATTENDANCE</span>
+            <MonolithSpecLabel>LIVE ATTENDANCE</MonolithSpecLabel>
             <h2>{status.label}</h2>
           </div>
-          <span className={`mnx-badge mnx-badge-${status.tone}`}>
+          <MonolithBadge tone={status.tone}>
             <i />
             {profile.attendanceStatus.replaceAll("_", " ")}
-          </span>
+          </MonolithBadge>
         </header>
 
         <div className="mnx-attendance-clock">
@@ -196,50 +201,48 @@ export function AttendanceCommand({
 
         <div className="mnx-attendance-actions">
           {profile.attendanceStatus === "YET_TO_CHECK_IN" ? (
-            <button
-              type="button"
-              className="mnx-button mnx-button-primary mnx-button-wide"
+            <MonolithAction
+              variant="primary"
+              className="mnx-button-wide"
               disabled={loading}
               onClick={() => handlePunch("CHECK_IN")}
             >
               <span>{loading ? "Updating…" : "Check in"}</span>
               {loading ? <span className="mnx-button-spinner" /> : <Play size={16} fill="currentColor" />}
-            </button>
+            </MonolithAction>
           ) : null}
 
           {profile.attendanceStatus === "CHECKED_IN" ? (
             <>
-              <button
-                type="button"
-                className="mnx-button mnx-button-secondary"
+              <MonolithAction
+                variant="secondary"
                 disabled={loading}
                 onClick={() => handlePunch("START_BREAK")}
               >
                 <Coffee size={16} />
                 Start break
-              </button>
-              <button
-                type="button"
-                className="mnx-button mnx-button-primary"
+              </MonolithAction>
+              <MonolithAction
+                variant="primary"
                 disabled={loading}
                 onClick={() => handlePunch("CHECK_OUT")}
               >
                 Check out
                 <LogOut size={16} />
-              </button>
+              </MonolithAction>
             </>
           ) : null}
 
           {profile.attendanceStatus === "ON_BREAK" ? (
-            <button
-              type="button"
-              className="mnx-button mnx-button-primary mnx-button-wide"
+            <MonolithAction
+              variant="primary"
+              className="mnx-button-wide"
               disabled={loading}
               onClick={() => handlePunch("RESUME_WORK")}
             >
               <span>{loading ? "Updating…" : "Resume work"}</span>
               {loading ? <span className="mnx-button-spinner" /> : <ArrowRight size={17} />}
-            </button>
+            </MonolithAction>
           ) : null}
 
           {profile.attendanceStatus === "CHECKED_OUT" ? (

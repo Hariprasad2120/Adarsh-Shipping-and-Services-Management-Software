@@ -1,14 +1,19 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import {
+  MonolithPage,
+  MonolithSpecLabel,
+  MonolithSurface,
+} from "./foundation";
 
 export function WorkspacePage({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      className={cn("mnx-dashboard-page mnx-workspace-page", className)}
+    <MonolithPage
+      className={cn("mnx-workspace-page", className)}
       {...props}
     />
   );
@@ -37,7 +42,7 @@ export function WorkspacePageHeader({
       <div className="mnx-page-header-copy">
         {icon ? <span className="mnx-page-header-icon">{icon}</span> : null}
         <div>
-          <span className="mnx-dashboard-spec-label">{eyebrow}</span>
+          <MonolithSpecLabel>{eyebrow}</MonolithSpecLabel>
           <h1>{title}</h1>
           {description ? <p>{description}</p> : null}
         </div>
@@ -51,7 +56,7 @@ export function WorkspacePanel({
   className,
   ...props
 }: React.HTMLAttributes<HTMLElement>) {
-  return <section className={cn("mnx-panel", className)} {...props} />;
+  return <MonolithSurface as="section" className={className} {...props} />;
 }
 
 interface WorkspacePanelHeaderProps
@@ -74,7 +79,7 @@ export function WorkspacePanelHeader({
     <header className={cn("mnx-table-toolbar", className)} {...props}>
       <div>
         {eyebrow ? (
-          <span className="mnx-dashboard-spec-label">{eyebrow}</span>
+          <MonolithSpecLabel>{eyebrow}</MonolithSpecLabel>
         ) : null}
         <h2>{title}</h2>
         {description ? <p>{description}</p> : null}

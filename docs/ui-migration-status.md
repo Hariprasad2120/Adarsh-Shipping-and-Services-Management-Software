@@ -2,87 +2,171 @@
 
 Last updated: 2026-07-28
 
+## Current milestone
+
+The production migration foundation is implemented and verified. No new
+individual module was migrated in this foundation session.
+
+- Source audit: 211 page routes and 7 layouts.
+- Protected visual reference: `/dashboard`.
+- Previously migrated before this session: `/account/security`.
+- Pending individual route migrations: 209.
+- Exhaustive route/layout record: [UI route and layout audit](ui-route-audit.md).
+
 ## Status definitions
 
-- **Protected**: authoritative working reference; no redesign permitted.
+- **Protected**: authoritative working visual reference; no redesign permitted.
+- **Foundation ready**: shared tokens, typography, themes, AppShell, and page
+  primitives are ready for route migration.
 - **Migrated**: presentation replaced with shared Monolith production
-  components and legacy visual code backed up.
-- **Verified**: migrated route checked for behavior, RBAC, themes, responsive
-  layout, lint, types, and relevant tests.
+  components and its prior visual source backed up.
+- **Verified**: migrated route checked for behavior, RBAC, all themes,
+  responsive layout, lint, types, and relevant tests.
 - **Pending**: discovered route not yet migrated and verified.
 
 ## Route inventory
 
-Route discovery scans `src/app/**/page.tsx`, removes route-group segments, and
-retains dynamic segments. The initial inventory contains **211 page routes**.
+Route discovery scans `src/app/**/page.tsx`, removes route-group segments,
+retains dynamic segments, and calculates layout ancestry. The generated audit is
+the route-by-route source of truth.
 
-| Route family | Discovered | Verified | State |
-| --- | ---: | ---: | --- |
-| `/` | 1 | 0 | Pending audit |
-| `/account` | 1 | 1 | Verified |
-| `/accounting` | 32 | 0 | Pending |
-| `/admin` | 10 | 0 | Pending |
-| `/ams` | 18 | 0 | Pending |
-| `/attendance` | 7 | 0 | Pending |
-| `/cha` | 11 | 0 | Pending |
-| `/communication` | 10 | 0 | Pending |
-| `/crm` | 57 | 0 | Pending |
-| `/customer-portal` | 12 | 0 | Pending |
-| `/dashboard` | 1 | 1 | Protected working reference |
-| `/expense` | 1 | 0 | Pending |
-| `/google-chat-link` | 1 | 0 | Pending |
-| `/hrms` | 38 | 0 | Pending |
-| `/lms` | 5 | 0 | Pending |
-| `/login` | 1 | 0 | Pending audit |
-| `/notifications` | 1 | 0 | Pending |
-| `/product-catalogue` | 1 | 0 | Pending |
-| `/setup` | 1 | 0 | Pending audit |
-| `/todo` | 1 | 0 | Pending |
-| `/verify` | 1 | 0 | Pending |
-| **Total** | **211** | **2** | **209 require verification** |
+| Route family | Discovered | Protected | Previously migrated | Pending |
+| --- | ---: | ---: | ---: | ---: |
+| `/` | 1 | 0 | 0 | 1 |
+| `/account` | 1 | 0 | 1 | 0 |
+| `/accounting` | 32 | 0 | 0 | 32 |
+| `/admin` | 10 | 0 | 0 | 10 |
+| `/ams` | 18 | 0 | 0 | 18 |
+| `/attendance` | 7 | 0 | 0 | 7 |
+| `/cha` | 11 | 0 | 0 | 11 |
+| `/communication` | 10 | 0 | 0 | 10 |
+| `/crm` | 57 | 0 | 0 | 57 |
+| `/customer-portal` | 12 | 0 | 0 | 12 |
+| `/dashboard` | 1 | 1 | 0 | 0 |
+| `/expense` | 1 | 0 | 0 | 1 |
+| `/google-chat-link` | 1 | 0 | 0 | 1 |
+| `/hrms` | 38 | 0 | 0 | 38 |
+| `/lms` | 5 | 0 | 0 | 5 |
+| `/login` | 1 | 0 | 0 | 1 |
+| `/notifications` | 1 | 0 | 0 | 1 |
+| `/product-catalogue` | 1 | 0 | 0 | 1 |
+| `/setup` | 1 | 0 | 0 | 1 |
+| `/todo` | 1 | 0 | 0 | 1 |
+| `/verify` | 1 | 0 | 0 | 1 |
+| **Total** | **211** | **1** | **1** | **209** |
 
-Importing from `@/components/monolith` is not proof of migration. Every route is
-kept pending until its rendered markup and behavior are verified against the
+An import from `@/components/monolith` is not proof of route migration. A route
+remains pending until its rendered presentation and behavior satisfy the
 completion gate.
+
+## Layout audit
+
+| Layout | Covered pages | Responsibility |
+| --- | ---: | --- |
+| `src/app/layout.tsx` | 211 | Fonts, initial theme, metadata, global providers |
+| `src/app/(dashboard)/layout.tsx` | 194 | Authentication, RBAC/module gates, shell selection |
+| `src/app/(dashboard)/cha/layout.tsx` | 11 | CHA spacing container |
+| `src/app/(dashboard)/communication/layout.tsx` | 10 | Workspace connection gate/providers |
+| `src/app/(dashboard)/crm/layout.tsx` | 57 | CRM theme and scroll container |
+| `src/app/(dashboard)/hrms/recruit/layout.tsx` | 15 | Recruitment feature flag |
+| `src/app/customer-portal/layout.tsx` | 12 | Portal session gate and portal shell |
+
+## Reference design-system analysis
+
+The read-only source under
+`_design-reference/Monolith-Design-System-v11-Full-Source-and-Dependencies` was
+reviewed without modification or imports.
+
+- `app/page.tsx` is a single interactive catalogue covering foundations,
+  typography, actions, forms, surfaces, feedback, data display, navigation, and
+  motion.
+- `app/globals.css` defines the reference visual language: warm Light surfaces,
+  true-neutral Night surfaces, deep-cool Violet surfaces, restrained borders,
+  yellow/violet accent hierarchy, compact operational labels, large low-weight
+  headings, 4 px base spacing, 12 px controls, 20 px cards, and 160 ms motion.
+- `app/layout.tsx` establishes Geist Sans and Geist Mono.
+- The reference is a visual specification, not a production dependency.
+
+Production mapping:
+
+- `src/styles/monolith-tokens.css` owns semantic color, surface, border, status,
+  typography, spacing, radius, shadow, gradient, and motion tokens.
+- `src/styles/monolith-system.css` consumes semantic values through stable
+  `--mnx-*` compatibility aliases so the protected dashboard does not change.
+- Light, Night, and Violet are selected by root `theme-*` classes and the shared
+  AppShell keeps `data-theme`, `color-scheme`, and persisted preference aligned.
+
+## Foundation implementation
+
+Completed:
+
+- created the exhaustive, repeatable route/layout audit generator;
+- created a verified baseline backup of legacy `src/app`, `src/components`, and
+  `src/styles`;
+- centralized tokens, typography, shape, motion, and the three themes;
+- established `MonolithAppShell` as the shared authenticated shell;
+- established shared page, surface, action, badge, icon-action, label, and
+  empty-state primitives plus workspace page/table layouts;
+- normalized `/dashboard`, its loading state, and its error state to those
+  shared primitives while retaining the existing HTML element choices, class
+  contracts, business data, interactions, RBAC, and styling;
+- kept all pending module routes on their existing shell.
+
+## OLD UI code backup
+
+Baseline archive:
+`OLD UI code/legacy-ui-before-monolith-foundation-7120d79.zip`
+
+- Source commit: `7120d79`
+- Entries: 1,199
+- Size: 1,598,247 bytes
+- SHA-256:
+  `7271B78353937BDD0BF733E3AA864FFEFCFD05C444172318C3B5D5B71401E043`
+- Verification command: `node scripts/verify-old-ui-backup.mjs`
+- Verification result: passed; checksum, size, archive listing, and required
+  dashboard/system entries matched.
+
+Both `OLD UI code` and `_design-reference` are excluded from production
+TypeScript. They are also excluded from ESLint and are not imported by
+production source.
+
+## Quality log: foundation
+
+Passed:
+
+- OLD UI archive verification.
+- Targeted ESLint for every changed production TypeScript/TSX file and both
+  migration utility scripts.
+- Focused TypeScript: `npx tsc --noEmit -p tsconfig.ui-migration.json`.
+- Production TypeScript: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`.
+- Relevant Vitest suites: 36 tests across shared primitives, AppShell routing,
+  dashboard module behavior, navigation, security, and session security.
+- Production build: `npm run build`.
+  - Prisma Client generated.
+  - Next.js production compilation passed.
+  - Production TypeScript passed.
+  - 315 static pages generated.
+
+Repository-wide `npm run lint` was also executed with an 8 GB heap. It reaches
+pre-existing findings in Prisma seed scripts, maintenance scripts, accounting,
+CHA, and other pending module source. The foundation files pass targeted
+ESLint; no migration-related lint failure remains. The full scan remains a
+repository-quality backlog and was not addressed by changing out-of-scope
+modules.
+
+Production TypeScript excludes `*.test.ts(x)` and `__tests__` because test mocks
+are executed and type-transformed by Vitest, not shipped by Next.js. The
+production program and build pass; known Prisma mock typing debt remains within
+the test sources themselves.
+
+The build emits one existing Turbopack NFT trace warning from
+`src/app/api/customer-portal/checklist-files/[id]/route.ts`; it is non-fatal and
+unrelated to the UI foundation.
 
 ## Migration batches
 
 | Batch | Routes | State | Notes |
 | --- | --- | --- | --- |
-| Reference | `/dashboard` | Protected | Existing working dashboard; do not redesign. |
-| 001 | `/account/security` | Verified | Legacy presentation backed up. Shared workspace primitives are active. Authenticated Light desktop, Night tablet, and Violet mobile browser checks passed. |
-
-## Quality log
-
-### Batch 001
-
-- Passed targeted ESLint for all changed production TypeScript/TSX files.
-- Passed focused TypeScript checking with `tsconfig.ui-migration.json`.
-- Passed 29 tests across dashboard shell routing, navigation, security, and
-  session security.
-- Passed production scans for inline hex colors and legacy visual classes in
-  `/account/security`.
-- Confirmed the workspace primitives use semantic `--mnx-*` tokens and inherit
-  the Light, Night, and Violet shell themes.
-- Confirmed desktop, tablet, and mobile layout rules exist at 1180px, 900px, and
-  680px breakpoints, with the table isolated in its horizontal scroll region.
-- Full-repository `npm run lint` still fails on pre-existing findings in
-  out-of-scope archived/scrap, Prisma, and application files.
-- Full-repository `tsc --noEmit` still fails on pre-existing test-mock typing
-  errors. `_design-reference` and `OLD UI code` are now explicitly excluded from
-  compilation.
-- Passed authenticated Playwright checks at 1440×1000 Light, 1024×900 Night,
-  and 390×844 Violet. Each pass confirmed the migrated table, correct theme,
-  absence of the legacy table, and no page-level horizontal overflow.
-- Screenshot evidence:
-  `artifacts/ui-migration/account-security-light-desktop.png`,
-  `artifacts/ui-migration/account-security-night-tablet.png`, and
-  `artifacts/ui-migration/account-security-violet-mobile.png`.
-- Fixed deterministic `en-IN`/`Asia-Kolkata` session timestamps after the
-  browser pass exposed a server/client locale hydration mismatch.
-- The initial Turbopack server panic was isolated to corrupted HMR package
-  resolution state (`Next.js package not found`). Development verification now
-  runs successfully with Next's supported `--webpack` fallback.
-- Fixed the login CSS module's pure-global selector so `/login` compiles under
-  Webpack without changing its rendered design. `/login` remains pending its
-  separate migration audit.
+| Reference | `/dashboard` | Protected | Normalized to shared primitives; visual contract retained. |
+| Pre-foundation 001 | `/account/security` | Verified previously | Migration predates this foundation-only session. |
+| Foundation | No module routes | Foundation ready | Audit, backup, tokens, themes, AppShell, layouts, dashboard normalization. |

@@ -15,6 +15,10 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
+import {
+  MonolithSpecLabel,
+  MonolithSurface,
+} from "@/components/monolith/foundation";
 import type { DashboardWidgetsData } from "@/modules/hrms/types";
 
 interface DashboardOrganizationProps {
@@ -176,10 +180,10 @@ export function DashboardOrganization({
   );
 
   return (
-    <section className="mnx-panel mnx-organization-workspace">
+    <MonolithSurface as="section" className="mnx-organization-workspace">
       <header className="mnx-organization-header">
         <div>
-          <span className="mnx-dashboard-spec-label">ORGANIZATION SPACE</span>
+          <MonolithSpecLabel>ORGANIZATION SPACE</MonolithSpecLabel>
           <h2>Company services & people</h2>
           <p>Company signals, policy references, structures, and colleague records.</p>
         </div>
@@ -378,7 +382,7 @@ export function DashboardOrganization({
           />
         ) : null}
       </div>
-    </section>
+    </MonolithSurface>
   );
 }
 

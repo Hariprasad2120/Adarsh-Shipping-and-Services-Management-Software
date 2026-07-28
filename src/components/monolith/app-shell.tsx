@@ -29,7 +29,7 @@ const MonaChat = dynamic(
 
 type MonolithTheme = "light" | "night" | "violet";
 
-interface MonolithDashboardShellProps {
+export interface MonolithAppShellProps {
   children: React.ReactNode;
   caps: Caps;
   enabledModuleIds: string[];
@@ -58,21 +58,21 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-export function MonolithDashboardShell(props: MonolithDashboardShellProps) {
+export function MonolithAppShell(props: MonolithAppShellProps) {
   return (
     <MonaProvider>
-      <MonolithDashboardShellBody {...props} />
+      <MonolithAppShellBody {...props} />
       <MonaChat />
     </MonaProvider>
   );
 }
 
-function MonolithDashboardShellBody({
+function MonolithAppShellBody({
   children,
   caps,
   enabledModuleIds,
   userName,
-}: MonolithDashboardShellProps) {
+}: MonolithAppShellProps) {
   const pathname = usePathname();
   const contextLabel = getPathLabel(pathname)
     ?? segmentToLabel(pathname.split("/").filter(Boolean).at(-1) ?? "dashboard");

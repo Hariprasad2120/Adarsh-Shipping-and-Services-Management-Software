@@ -17,6 +17,7 @@ import {
   Users2,
 } from "lucide-react";
 import Link from "next/link";
+import { MonolithSpecLabel } from "@/components/monolith/foundation";
 import type {
   DashboardModuleIcon,
   DashboardModuleSnapshot,
@@ -54,7 +55,7 @@ export function ModuleCommandCenter({ snapshot }: ModuleCommandCenterProps) {
     <section className="mnx-module-command" aria-labelledby="module-command-title">
       <header className="mnx-module-command-header">
         <div>
-          <span className="mnx-dashboard-spec-label">ENABLED OPERATIONS</span>
+          <MonolithSpecLabel>ENABLED OPERATIONS</MonolithSpecLabel>
           <h2 id="module-command-title">Module command center</h2>
           <p>
             A live pulse from the workspaces enabled for your organization and available to your

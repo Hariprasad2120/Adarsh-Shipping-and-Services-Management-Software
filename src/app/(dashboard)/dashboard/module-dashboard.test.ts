@@ -37,4 +37,37 @@ describe("module-aware main dashboard", () => {
     expect(styles).toContain(".mnx-module-card:hover");
     expect(styles).toContain("box-shadow: var(--mnx-theme-shadow)");
   });
+
+  it("renders the protected dashboard through shared foundation primitives", () => {
+    const portalSource = readSource("src/app/(dashboard)/dashboard/portal-client.tsx");
+    const attendanceSource = readSource(
+      "src/app/(dashboard)/dashboard/_components/attendance-command.tsx",
+    );
+    const overviewSource = readSource(
+      "src/app/(dashboard)/dashboard/_components/dashboard-overview.tsx",
+    );
+    const teamSource = readSource(
+      "src/app/(dashboard)/dashboard/_components/dashboard-team.tsx",
+    );
+
+    expect(portalSource).toContain("<MonolithPage>");
+    expect(portalSource).not.toContain('<div className="mnx-dashboard-page">');
+    expect(attendanceSource).toContain("<MonolithAction");
+    expect(attendanceSource).toContain("<MonolithBadge");
+    expect(overviewSource).toContain("<MonolithSurface");
+    expect(teamSource).toContain("<MonolithIconAction");
+  });
+
+  it("maps dashboard aliases to centralized semantic theme tokens", () => {
+    const tokens = readSource("src/styles/monolith-tokens.css");
+    const styles = readSource("src/styles/monolith-system.css");
+
+    expect(tokens).toContain("html.theme-light");
+    expect(tokens).toContain("html.theme-night");
+    expect(tokens).toContain("html.theme-violet");
+    expect(tokens).toContain("--mn-font-sans");
+    expect(tokens).toContain("--mn-color-canvas");
+    expect(styles).toContain("--mnx-page: var(--mn-color-canvas)");
+    expect(styles).toContain("--mnx-accent-gradient: var(--mn-gradient-accent)");
+  });
 });

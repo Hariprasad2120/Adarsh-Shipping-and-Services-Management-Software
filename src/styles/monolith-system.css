@@ -5,50 +5,45 @@
  */
 
 .mnx-dashboard-shell {
-  --mnx-page: #eff0eb;
-  --mnx-card: #fffef9;
-  --mnx-soft: #eeefe8;
-  --mnx-mist: #dedfd8;
-  --mnx-text: #11120e;
-  --mnx-text-strong: #050505;
-  --mnx-muted: #73746d;
-  --mnx-border: rgba(17, 18, 14, 0.1);
-  --mnx-primary: #11120e;
-  --mnx-primary-contrast: #ffffff;
-  --mnx-accent: #f9d972;
-  --mnx-accent-soft: #fce8a8;
-  --mnx-accent-text: #8b640c;
-  --mnx-accent-contrast: #11120e;
-  --mnx-success-bg: #e6f3ea;
-  --mnx-success: #148a46;
-  --mnx-warning-bg: #fff1c7;
-  --mnx-warning: #c87300;
-  --mnx-danger-bg: #fceceb;
-  --mnx-danger: #e02b21;
-  --mnx-info-bg: #dfeef4;
-  --mnx-info: #1479b8;
-  --mnx-radius-sm: 11px;
-  --mnx-radius-md: 18px;
-  --mnx-radius-lg: 26px;
-  --mnx-shadow: 0 18px 44px rgba(26, 27, 22, 0.08);
-  --mnx-page-gradient:
-    radial-gradient(ellipse at 92% -4%, rgba(249, 217, 114, 0.62) 0%, rgba(249, 217, 114, 0.24) 25%, transparent 48%),
-    radial-gradient(ellipse at -8% 102%, rgba(249, 217, 114, 0.3) 0%, transparent 42%),
-    linear-gradient(145deg, #f8f8f4 0%, #eff0eb 55%, #eceee8 100%);
-  --mnx-surface-gradient: linear-gradient(145deg, #fffef9 0%, #faf9f2 58%, #f4f4ec 100%);
-  --mnx-surface-gradient-strong: linear-gradient(145deg, #ffffff 0%, #f7f6ee 100%);
-  --mnx-control-gradient: linear-gradient(145deg, #f7f8f3 0%, #eceee8 100%);
-  --mnx-nav-gradient: linear-gradient(180deg, rgba(255, 254, 249, 0.97) 0%, rgba(247, 247, 242, 0.94) 100%);
-  --mnx-accent-gradient: linear-gradient(135deg, #fde9a3 0%, #f9d972 50%, #f4cc52 100%);
-  --mnx-highlight-gradient: linear-gradient(135deg, #fff5cf 0%, #f9d972 100%);
-  --mnx-primary-gradient: linear-gradient(180deg, #2e2f29 0%, #11120e 52%, #050505 100%);
-  --mnx-hero-gradient:
-    radial-gradient(circle at 83% 16%, rgba(249, 217, 114, 0.5), transparent 34%),
-    linear-gradient(125deg, #f7f8f4 0 48%, #fff2aa 100%);
-  --mnx-glass-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.56));
-  --mnx-task-gradient: linear-gradient(145deg, #34352f 0%, #20211d 100%);
-  --mnx-theme-shadow: 0 16px 36px rgba(249, 217, 114, 0.34), 0 5px 14px rgba(149, 109, 16, 0.14);
-  --mnx-theme-shadow-soft: 0 10px 24px rgba(249, 217, 114, 0.24);
+  --mnx-page: var(--mn-color-canvas);
+  --mnx-card: var(--mn-color-surface);
+  --mnx-soft: var(--mn-color-surface-soft);
+  --mnx-mist: var(--mn-color-surface-muted);
+  --mnx-text: var(--mn-color-text);
+  --mnx-text-strong: var(--mn-color-text-strong);
+  --mnx-muted: var(--mn-color-text-muted);
+  --mnx-border: var(--mn-color-border);
+  --mnx-primary: var(--mn-color-primary);
+  --mnx-primary-contrast: var(--mn-color-on-primary);
+  --mnx-accent: var(--mn-color-accent);
+  --mnx-accent-soft: var(--mn-color-accent-soft);
+  --mnx-accent-text: var(--mn-color-accent-text);
+  --mnx-accent-contrast: var(--mn-color-on-accent);
+  --mnx-success-bg: var(--mn-color-success-surface);
+  --mnx-success: var(--mn-color-success);
+  --mnx-warning-bg: var(--mn-color-warning-surface);
+  --mnx-warning: var(--mn-color-warning);
+  --mnx-danger-bg: var(--mn-color-danger-surface);
+  --mnx-danger: var(--mn-color-danger);
+  --mnx-info-bg: var(--mn-color-info-surface);
+  --mnx-info: var(--mn-color-info);
+  --mnx-radius-sm: var(--mn-radius-control);
+  --mnx-radius-md: var(--mn-radius-panel);
+  --mnx-radius-lg: var(--mn-radius-feature);
+  --mnx-shadow: var(--mn-shadow-panel);
+  --mnx-page-gradient: var(--mn-gradient-canvas);
+  --mnx-surface-gradient: var(--mn-gradient-surface);
+  --mnx-surface-gradient-strong: var(--mn-gradient-surface-strong);
+  --mnx-control-gradient: var(--mn-gradient-control);
+  --mnx-nav-gradient: var(--mn-gradient-navigation);
+  --mnx-accent-gradient: var(--mn-gradient-accent);
+  --mnx-highlight-gradient: var(--mn-gradient-highlight);
+  --mnx-primary-gradient: var(--mn-gradient-primary);
+  --mnx-hero-gradient: var(--mn-gradient-hero);
+  --mnx-glass-gradient: var(--mn-gradient-glass);
+  --mnx-task-gradient: var(--mn-gradient-task);
+  --mnx-theme-shadow: var(--mn-shadow-accent);
+  --mnx-theme-shadow-soft: var(--mn-shadow-accent-soft);
   width: 100%;
   min-width: 0;
   height: 100dvh;
@@ -60,9 +55,9 @@
   color: var(--mnx-text);
   background-color: var(--mnx-page);
   background-image: var(--mnx-page-gradient);
-  font-family: var(--font-geist-sans), "Geist", "Segoe UI", sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
+  font-family: var(--mn-font-sans);
+  font-size: var(--mn-type-body-size);
+  line-height: var(--mn-type-body-line);
   isolation: isolate;
 }
 
@@ -73,16 +68,8 @@ html[data-dashboard-shell="true"] body {
   overflow: hidden;
 }
 
-html[data-dashboard-theme="light"] body {
-  background: #eff0eb;
-}
-
-html[data-dashboard-theme="night"] body {
-  background: #000000;
-}
-
-html[data-dashboard-theme="violet"] body {
-  background: #0a0b13;
+html[data-dashboard-shell="true"] body {
+  background: var(--mn-color-canvas);
 }
 
 .mnx-dashboard-shell[data-theme="light"] {
@@ -90,75 +77,10 @@ html[data-dashboard-theme="violet"] body {
 }
 
 .mnx-dashboard-shell[data-theme="night"] {
-  --mnx-page: #000000;
-  --mnx-card: #090909;
-  --mnx-soft: #151515;
-  --mnx-mist: #292929;
-  --mnx-text: #f7f7f7;
-  --mnx-text-strong: #ffffff;
-  --mnx-muted: #a3a3a3;
-  --mnx-border: rgba(255, 255, 255, 0.13);
-  --mnx-primary: #f9d972;
-  --mnx-primary-contrast: #11120e;
-  --mnx-accent-text: #f9d972;
-  --mnx-page-gradient:
-    radial-gradient(ellipse at 92% -5%, rgba(249, 217, 114, 0.24) 0%, rgba(249, 217, 114, 0.08) 28%, transparent 50%),
-    radial-gradient(ellipse at -10% 105%, rgba(249, 217, 114, 0.11) 0%, transparent 42%),
-    linear-gradient(150deg, #000000 0%, #030303 56%, #000000 100%);
-  --mnx-surface-gradient: linear-gradient(145deg, #111111 0%, #080808 54%, #030303 100%);
-  --mnx-surface-gradient-strong: linear-gradient(145deg, #181818 0%, #090909 62%, #020202 100%);
-  --mnx-control-gradient: linear-gradient(145deg, #020202 0%, #0d0d0d 100%);
-  --mnx-nav-gradient: linear-gradient(180deg, rgba(5, 5, 5, 0.98) 0%, rgba(0, 0, 0, 0.95) 100%);
-  --mnx-accent-gradient: linear-gradient(135deg, #ffe99b 0%, #f9d972 52%, #efc952 100%);
-  --mnx-highlight-gradient: linear-gradient(135deg, #fff0b8 0%, #f9d972 100%);
-  --mnx-primary-gradient: linear-gradient(135deg, #ffe99b 0%, #f9d972 52%, #efc952 100%);
-  --mnx-hero-gradient:
-    radial-gradient(circle at 82% 26%, rgba(249, 217, 114, 0.16), transparent 30%),
-    linear-gradient(125deg, #020202 0 48%, #0d0d0d 100%);
-  --mnx-glass-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025));
-  --mnx-task-gradient: linear-gradient(145deg, #171717 0%, #080808 100%);
-  --mnx-theme-shadow: 0 0 0 1px rgba(249, 217, 114, 0.18), 0 17px 40px rgba(249, 217, 114, 0.3);
-  --mnx-theme-shadow-soft: 0 0 0 1px rgba(249, 217, 114, 0.12), 0 11px 28px rgba(249, 217, 114, 0.2);
-  --mnx-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
   color-scheme: dark;
 }
 
 .mnx-dashboard-shell[data-theme="violet"] {
-  --mnx-page: #0a0b13;
-  --mnx-card: #181827;
-  --mnx-soft: #181827;
-  --mnx-mist: #282a34;
-  --mnx-text: #f8f7ff;
-  --mnx-text-strong: #ffffff;
-  --mnx-muted: #9493a2;
-  --mnx-border: #282a34;
-  --mnx-primary: #b5aaf5;
-  --mnx-primary-contrast: #0a0b13;
-  --mnx-accent: #b5aaf5;
-  --mnx-accent-soft: #cbbde1;
-  --mnx-accent-text: #cbbde1;
-  --mnx-accent-contrast: #0a0b13;
-  --mnx-page-gradient:
-    radial-gradient(ellipse at 92% -5%, rgba(181, 170, 245, 0.38) 0%, rgba(181, 170, 245, 0.13) 28%, transparent 52%),
-    radial-gradient(ellipse at -9% 104%, rgba(137, 116, 185, 0.22) 0%, transparent 44%),
-    radial-gradient(circle at 54% 42%, rgba(80, 58, 139, 0.1), transparent 38%),
-    linear-gradient(150deg, #0a0b13 0%, #0d0e17 55%, #080910 100%);
-  --mnx-surface-gradient: linear-gradient(145deg, #1d1d2e 0%, #181827 52%, #10111a 100%);
-  --mnx-surface-gradient-strong: linear-gradient(145deg, #24243a 0%, #181827 58%, #0d0e17 100%);
-  --mnx-control-gradient: linear-gradient(145deg, #0d0e17 0%, #181827 100%);
-  --mnx-nav-gradient: linear-gradient(180deg, rgba(16, 17, 29, 0.98) 0%, rgba(10, 11, 19, 0.95) 100%);
-  --mnx-accent-gradient: linear-gradient(135deg, #cbbde1 0%, #b5aaf5 48%, #8974b9 100%);
-  --mnx-highlight-gradient: linear-gradient(135deg, #ddd4f5 0%, #cbbde1 46%, #b5aaf5 100%);
-  --mnx-primary-gradient: linear-gradient(135deg, #cbbde1 0%, #b5aaf5 48%, #8974b9 100%);
-  --mnx-hero-gradient:
-    radial-gradient(circle at 84% 20%, rgba(181, 170, 245, 0.42), transparent 34%),
-    radial-gradient(circle at 58% 82%, rgba(80, 58, 139, 0.22), transparent 36%),
-    linear-gradient(125deg, #181827 0 48%, #241a4f 100%);
-  --mnx-glass-gradient: linear-gradient(145deg, rgba(53, 51, 74, 0.88), rgba(24, 24, 39, 0.7));
-  --mnx-task-gradient: linear-gradient(145deg, #181827 0%, #0a0b13 100%);
-  --mnx-theme-shadow: 0 0 0 1px rgba(181, 170, 245, 0.2), 0 17px 42px rgba(137, 116, 185, 0.4);
-  --mnx-theme-shadow-soft: 0 0 0 1px rgba(181, 170, 245, 0.14), 0 11px 30px rgba(137, 116, 185, 0.28);
-  --mnx-shadow: 0 18px 44px rgba(0, 0, 0, 0.42);
   color-scheme: dark;
 }
 

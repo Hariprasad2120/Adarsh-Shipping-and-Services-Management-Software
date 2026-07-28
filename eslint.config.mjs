@@ -13,6 +13,11 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "OLD UI code/**",
+    "_design-reference/**",
+    "Adarsh-Shipping-and-Services-Management-Software/**",
+    "artifacts/**",
+    "scrap/**",
+    "scratch/**",
   ]),
 ]);
 

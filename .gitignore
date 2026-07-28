@@ -69,6 +69,7 @@ pnpm-lock.yaml
 !/docs/full-ui-migration-prompt.md
 !/docs/ui-migration-status.md
 !/docs/ui-migration-handoff.md
+!/docs/ui-route-audit.md
 
 # sensitive data output
 /import-output/

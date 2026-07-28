@@ -36,6 +36,9 @@
     "scrap",
     "scripts",
     "OLD UI code",
-    "_design-reference"
+    "_design-reference",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**"
   ]
 }

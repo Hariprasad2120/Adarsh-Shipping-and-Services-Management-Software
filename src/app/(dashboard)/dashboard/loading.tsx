@@ -1,6 +1,8 @@
+import { MonolithPage } from "@/components/monolith/foundation";
+
 export default function DashboardLoading() {
   return (
-    <div className="mnx-dashboard-page" aria-label="Loading dashboard">
+    <MonolithPage aria-label="Loading dashboard">
       <section className="mnx-dashboard-skeleton mnx-dashboard-skeleton-hero">
         <span /><span /><span /><span />
       </section>
@@ -13,6 +15,6 @@ export default function DashboardLoading() {
         <article className="mnx-dashboard-skeleton"><span /><span /><span /></article>
       </section>
       <span className="sr-only">Loading dashboard data…</span>
-    </div>
+    </MonolithPage>
   );
 }

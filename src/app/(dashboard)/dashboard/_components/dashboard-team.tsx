@@ -11,6 +11,13 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import {
+  MonolithBadge,
+  MonolithEmptyState,
+  MonolithIconAction,
+  MonolithSpecLabel,
+  MonolithSurface,
+} from "@/components/monolith/foundation";
 import type { ReporteeSummary } from "./dashboard-types";
 
 interface DashboardTeamProps {
@@ -96,10 +103,10 @@ export function DashboardTeam({ reportees }: DashboardTeamProps) {
         </article>
       </div>
 
-      <article className="mnx-panel mnx-table-card">
+      <MonolithSurface className="mnx-table-card">
         <header className="mnx-table-toolbar">
           <div>
-            <span className="mnx-dashboard-spec-label">TEAM ATTENDANCE</span>
+            <MonolithSpecLabel>TEAM ATTENDANCE</MonolithSpecLabel>
             <h2>Reportee directory</h2>
             <p>Live attendance context for the people who report to you.</p>
           </div>
@@ -176,17 +183,15 @@ export function DashboardTeam({ reportees }: DashboardTeamProps) {
                         <span className="mnx-muted-value"><TimerOff size={13} />Unassigned</span>
                       )}
                     </td>
-                    <td><span className={`mnx-badge ${status.className}`}><i />{status.label}</span></td>
+                    <td><MonolithBadge className={status.className}><i />{status.label}</MonolithBadge></td>
                     <td>
-                      <button
-                        type="button"
-                        className="mnx-icon-button"
+                      <MonolithIconAction
                         onClick={() => copyEmail(reportee)}
                         aria-label={`Copy ${reportee.name}'s email`}
                         title="Copy email"
                       >
                         {copiedId === reportee.id ? <Check size={15} /> : <Copy size={15} />}
-                      </button>
+                      </MonolithIconAction>
                     </td>
                   </tr>
                 );
@@ -196,18 +201,18 @@ export function DashboardTeam({ reportees }: DashboardTeamProps) {
         </div>
 
         {filteredReportees.length === 0 ? (
-          <div className="mnx-empty-state mnx-table-empty">
+          <MonolithEmptyState className="mnx-table-empty">
             <Search size={24} />
             <h3>No matching reportees</h3>
             <p>Change the search or attendance filter to see more people.</p>
-          </div>
+          </MonolithEmptyState>
         ) : null}
 
         <footer className="mnx-table-footer">
           <span>Showing {filteredReportees.length} of {reportees.length} reportees</span>
           <span>Attendance syncs after every punch action</span>
         </footer>
-      </article>
+      </MonolithSurface>
     </section>
   );
 }
