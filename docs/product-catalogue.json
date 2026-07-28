@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-28T05:05:24.819Z",
+  "generatedAt": "2026-07-28T05:36:36.802Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -10,7 +10,7 @@
     "totalApiRoutes": 196,
     "totalPrismaModels": 277,
     "totalModuleServices": 88,
-    "totalComponents": 92
+    "totalComponents": 94
   },
   "appRoutes": [
     {
@@ -11940,6 +11940,16 @@
     },
     {
       "module": "monolith",
+      "fileName": "page.tsx",
+      "filePath": "src/components/monolith/page.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "stat.tsx",
+      "filePath": "src/components/monolith/stat.tsx"
+    },
+    {
+      "module": "monolith",
       "fileName": "warning-indicator-popover.tsx",
       "filePath": "src/components/monolith/warning-indicator-popover.tsx"
     },
@@ -12163,7 +12173,7 @@
       "apiRoutes": 0,
       "prismaModels": 0,
       "serviceFiles": 0,
-      "components": 18
+      "components": 20
     },
     "notifications": {
       "appRoutes": 1,

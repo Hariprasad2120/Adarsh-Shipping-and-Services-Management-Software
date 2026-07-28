@@ -1,40 +1,11 @@
 import {
   ArrowUpRight,
-  BookOpenText,
-  Boxes,
-  BriefcaseBusiness,
-  Building2,
-  Calculator,
-  ChartNoAxesCombined,
   CheckCircle2,
-  Clock3,
-  GraduationCap,
-  MessageSquareText,
-  PackageSearch,
-  ReceiptIndianRupee,
   ShieldCheck,
   TriangleAlert,
-  Users2,
 } from "lucide-react";
 import Link from "next/link";
-import type {
-  DashboardModuleIcon,
-  DashboardModuleSnapshot,
-} from "@/modules/dashboard/types";
-
-const MODULE_ICONS = {
-  accounting: Calculator,
-  ams: ChartNoAxesCombined,
-  attendance: Clock3,
-  cha: PackageSearch,
-  communication: MessageSquareText,
-  crm: BriefcaseBusiness,
-  expense: ReceiptIndianRupee,
-  hrms: Users2,
-  lms: GraduationCap,
-  "product-catalogue": BookOpenText,
-  recruit: Building2,
-} satisfies Record<DashboardModuleIcon, typeof Boxes>;
+import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
 
 interface ModuleCommandCenterProps {
   snapshot: DashboardModuleSnapshot;
@@ -70,7 +41,6 @@ export function ModuleCommandCenter({ snapshot }: ModuleCommandCenterProps) {
       {snapshot.modules.length > 0 ? (
         <div className="mnx-module-grid">
           {snapshot.modules.map((module) => {
-            const Icon = MODULE_ICONS[module.icon];
             return (
               <article
                 className="mnx-module-card"
@@ -78,7 +48,6 @@ export function ModuleCommandCenter({ snapshot }: ModuleCommandCenterProps) {
                 key={module.id}
               >
                 <header>
-                  <span className="mnx-module-icon"><Icon size={20} /></span>
                   <div>
                     <span>{module.eyebrow}</span>
                     <h3>{module.title}</h3>

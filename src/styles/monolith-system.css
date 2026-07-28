@@ -278,7 +278,7 @@ html[data-dashboard-theme="violet"] body {
   margin: 12px 12px 8px;
   color: var(--mnx-muted);
   font-size: 9px;
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: 0.15em;
 }
 
@@ -403,7 +403,7 @@ html[data-dashboard-theme="violet"] body {
   color: var(--mnx-accent-contrast);
   background: var(--mnx-highlight-gradient);
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .mnx-sidebar-user > span {
@@ -668,7 +668,7 @@ html[data-dashboard-theme="violet"] body {
 .mnx-dashboard-spec-label {
   color: var(--mnx-muted);
   font-size: 9px;
-  font-weight: 760;
+  font-weight: 700;
   letter-spacing: 0.16em;
 }
 
@@ -706,7 +706,7 @@ html[data-dashboard-theme="violet"] body {
   background: var(--mnx-highlight-gradient);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), var(--mnx-theme-shadow-soft);
   font-size: 19px;
-  font-weight: 760;
+  font-weight: 700;
   letter-spacing: -0.04em;
 }
 
@@ -720,7 +720,7 @@ html[data-dashboard-theme="violet"] body {
   margin: 0;
   color: var(--mnx-text-strong);
   font-size: clamp(35px, 4vw, 58px);
-  font-weight: 390;
+  font-weight: 400;
   line-height: 1;
   letter-spacing: -0.055em;
 }
@@ -793,9 +793,9 @@ html[data-dashboard-theme="violet"] body {
 
 .mnx-dashboard-mini-stats strong {
   color: var(--mnx-text-strong);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--mnx-font-sans);
   font-size: 27px;
-  font-weight: 440;
+  font-weight: 400;
   line-height: 1;
   letter-spacing: -0.06em;
 }
@@ -832,7 +832,7 @@ html[data-dashboard-theme="violet"] body {
   margin: 6px 0 0;
   color: var(--mnx-text-strong);
   font-size: 20px;
-  font-weight: 560;
+  font-weight: 500;
   letter-spacing: -0.035em;
 }
 
@@ -847,7 +847,7 @@ html[data-dashboard-theme="violet"] body {
   border: 1px solid transparent;
   border-radius: 999px;
   font-size: 9px;
-  font-weight: 720;
+  font-weight: 700;
   letter-spacing: 0.04em;
   white-space: nowrap;
   transition: transform 180ms ease, box-shadow 180ms ease;
@@ -914,9 +914,9 @@ html[data-dashboard-theme="violet"] body {
 .mnx-dashboard-timer {
   display: block;
   color: var(--mnx-text-strong);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--mnx-font-sans);
   font-size: clamp(24px, 2.8vw, 34px);
-  font-weight: 520;
+  font-weight: 500;
   line-height: 1;
   letter-spacing: -0.055em;
 }
@@ -1034,7 +1034,7 @@ html[data-dashboard-theme="violet"] body {
 .mnx-attendance-guide span {
   color: var(--mnx-accent-text);
   font-size: 9px;
-  font-weight: 760;
+  font-weight: 700;
   letter-spacing: 0.13em;
   text-transform: uppercase;
 }
@@ -1115,7 +1115,7 @@ html[data-dashboard-theme="violet"] body {
 .mnx-dashboard-tabs button b {
   color: var(--mnx-text);
   font-size: 12px;
-  font-weight: 690;
+  font-weight: 600;
 }
 
 .mnx-dashboard-tabs button small {
@@ -1185,7 +1185,7 @@ html[data-dashboard-theme="violet"] body {
   margin: 6px 0 0;
   color: var(--mnx-text-strong);
   font-size: 22px;
-  font-weight: 590;
+  font-weight: 500;
   letter-spacing: -0.04em;
 }
 
@@ -1216,7 +1216,7 @@ html[data-dashboard-theme="violet"] body {
   color: var(--mnx-success);
   background: var(--mnx-success-bg);
   font-size: 10px;
-  font-weight: 720;
+  font-weight: 700;
 }
 
 .mnx-module-command-status i {
@@ -1285,20 +1285,9 @@ html[data-dashboard-theme="violet"] body {
 .mnx-module-card > header {
   min-width: 0;
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 11px;
-}
-
-.mnx-module-icon {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--mnx-module-tone) 18%, transparent);
-  border-radius: 14px;
-  color: var(--mnx-module-tone);
-  background: var(--mnx-module-tone-bg);
 }
 
 .mnx-module-card > header > div {
@@ -1310,7 +1299,7 @@ html[data-dashboard-theme="violet"] body {
   overflow: hidden;
   color: var(--mnx-muted);
   font-size: 8px;
-  font-weight: 760;
+  font-weight: 700;
   letter-spacing: 0.14em;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1321,7 +1310,7 @@ html[data-dashboard-theme="violet"] body {
   margin: 3px 0 0;
   color: var(--mnx-text-strong);
   font-size: 15px;
-  font-weight: 640;
+  font-weight: 600;
   letter-spacing: -0.025em;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1371,9 +1360,9 @@ html[data-dashboard-theme="violet"] body {
 
 .mnx-module-primary-stat > strong {
   color: var(--mnx-text-strong);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--mnx-font-sans);
   font-size: 37px;
-  font-weight: 420;
+  font-weight: 400;
   line-height: 1;
   letter-spacing: -0.07em;
 }
@@ -1388,7 +1377,7 @@ html[data-dashboard-theme="violet"] body {
   overflow: hidden;
   color: var(--mnx-text);
   font-size: 10px;
-  font-weight: 690;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1433,9 +1422,9 @@ html[data-dashboard-theme="violet"] body {
 .mnx-module-supporting-stats dd {
   margin: 0;
   color: var(--mnx-module-tone);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--mnx-font-sans);
   font-size: 13px;
-  font-weight: 620;
+  font-weight: 600;
 }
 
 .mnx-module-unavailable-note {
@@ -1565,7 +1554,7 @@ html[data-dashboard-theme="violet"] body {
 .mnx-summary-stat > span {
   color: var(--mnx-muted);
   font-size: 9px;
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -1601,9 +1590,9 @@ html[data-dashboard-theme="violet"] body {
   display: block;
   margin: 16px 0 7px;
   color: var(--mnx-text-strong);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--mnx-font-sans);
   font-size: 43px;
-  font-weight: 390;
+  font-weight: 400;
   line-height: 1;
   letter-spacing: -0.06em;
 }
@@ -1687,7 +1676,7 @@ html[data-dashboard-theme="violet"] body {
 
 .mnx-inset-card > header span {
   font-size: 9px;
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: 0.11em;
   text-transform: uppercase;
 }
@@ -1775,7 +1764,7 @@ html[data-dashboard-theme="violet"] body {
   margin: 0;
   color: #ffffff;
   font-size: 11px;
-  font-weight: 620;
+  font-weight: 600;
 }
 
 .mnx-task-list p {
@@ -1791,7 +1780,7 @@ html[data-dashboard-theme="violet"] body {
   margin-top: 18px;
   color: var(--mnx-accent);
   font-size: 11px;
-  font-weight: 650;
+  font-weight: 600;
   text-decoration: none;
 }
 
@@ -1872,16 +1861,16 @@ html[data-dashboard-theme="violet"] body {
 }
 
 .mnx-holiday-feature time strong {
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--mnx-font-sans);
   font-size: 28px;
-  font-weight: 520;
+  font-weight: 500;
   line-height: 1;
 }
 
 .mnx-holiday-feature time span,
 .mnx-holiday-feature > div > span {
   font-size: 9px;
-  font-weight: 720;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -2079,7 +2068,7 @@ html[data-dashboard-theme="violet"] body {
   color: var(--mnx-muted);
   background: color-mix(in srgb, var(--mnx-card) 90%, var(--mnx-page));
   font-size: 9px;
-  font-weight: 720;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-align: left;
   text-transform: uppercase;
@@ -2114,7 +2103,7 @@ html[data-dashboard-theme="violet"] body {
 .mnx-table-primary {
   color: var(--mnx-text);
   font-size: 11px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .mnx-person-cell {
@@ -2152,7 +2141,7 @@ html[data-dashboard-theme="violet"] body {
   background: var(--mnx-highlight-gradient);
   font-size: 9px;
   font-style: normal;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .mnx-muted-value {
@@ -2272,9 +2261,9 @@ html[data-dashboard-theme="violet"] body {
 
 .mnx-org-stat-grid strong {
   color: var(--mnx-text);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--mnx-font-sans);
   font-size: 34px;
-  font-weight: 420;
+  font-weight: 400;
 }
 
 .mnx-org-stat-grid span {
@@ -2299,7 +2288,7 @@ html[data-dashboard-theme="violet"] body {
   gap: 7px;
   color: var(--mnx-accent-text);
   font-size: 9px;
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -2308,7 +2297,7 @@ html[data-dashboard-theme="violet"] body {
   margin: 24px 0 8px;
   color: var(--mnx-text);
   font-size: 20px;
-  font-weight: 580;
+  font-weight: 500;
   letter-spacing: -0.03em;
 }
 
@@ -2434,7 +2423,7 @@ html[data-dashboard-theme="violet"] body {
   color: var(--mnx-accent-contrast);
   background: var(--mnx-accent-gradient);
   font-size: 9px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .mnx-tree-root b,
@@ -2474,7 +2463,7 @@ html[data-dashboard-theme="violet"] body {
   background: var(--mnx-highlight-gradient);
   font-size: 7px;
   font-style: normal;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .mnx-tree-person > span {
@@ -2590,7 +2579,7 @@ html[data-dashboard-theme="violet"] body {
   background: var(--mnx-highlight-gradient);
   font-size: 7px;
   font-style: normal;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .mnx-directory-grid {
@@ -2694,7 +2683,7 @@ html[data-dashboard-theme="violet"] body {
   margin: 16px 18px 9px;
   color: var(--mnx-muted);
   font-size: 9px;
-  font-weight: 760;
+  font-weight: 700;
   letter-spacing: 0.14em;
 }
 
@@ -2777,7 +2766,7 @@ html[data-dashboard-theme="violet"] body {
   margin: 10px 0 8px;
   color: var(--mnx-text);
   font-size: 30px;
-  font-weight: 440;
+  font-weight: 400;
   letter-spacing: -0.045em;
 }
 

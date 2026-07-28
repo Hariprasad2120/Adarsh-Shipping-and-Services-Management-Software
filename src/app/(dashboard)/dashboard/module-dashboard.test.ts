@@ -37,4 +37,13 @@ describe("module-aware main dashboard", () => {
     expect(styles).toContain(".mnx-module-card:hover");
     expect(styles).toContain("box-shadow: var(--mnx-theme-shadow)");
   });
+
+  it("uses the shared UI family and approved weights for business figures", () => {
+    const styles = readSource("src/styles/monolith-system.css");
+
+    expect(styles).not.toContain("font-family: var(--font-geist-mono)");
+    for (const disallowedWeight of [390, 420, 440, 520, 560, 580, 590, 620, 640, 650, 690, 720, 750, 760, 800]) {
+      expect(styles).not.toContain(`font-weight: ${disallowedWeight};`);
+    }
+  });
 });

@@ -90,6 +90,27 @@ function MonolithDashboardShellBody({
     () => getVisibleSections(caps, enabledModuleIds),
     [caps, enabledModuleIds],
   );
+  const activeLocation = useMemo(() => {
+    const section = visibleSections
+      .filter((item) => matchesPath(pathname, item.href, item.matchPaths))
+      .sort((left, right) => right.href.length - left.href.length)[0];
+
+    const item = section?.items
+      .filter((entry) => matchesPath(pathname, entry.href, entry.matchPaths))
+      .sort((left, right) => right.href.length - left.href.length)[0];
+
+    const fallback = pathname
+      .split("/")
+      .filter(Boolean)
+      .at(-1)
+      ?.replaceAll("-", " ")
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+    return {
+      section: section?.label ?? "Workspace",
+      page: item?.label ?? section?.label ?? fallback ?? "Workspace",
+    };
+  }, [pathname, visibleSections]);
 
   const filteredSections = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -257,7 +278,11 @@ function MonolithDashboardShellBody({
             >
               <Menu size={19} />
             </button>
-            <div><span>Monolith</span><i>/</i><b>Dashboard</b></div>
+            <div>
+              <span>{activeLocation.section}</span>
+              <i>/</i>
+              <b>{activeLocation.page}</b>
+            </div>
           </div>
 
           <div className="mnx-topbar-actions">
@@ -304,7 +329,11 @@ function MonolithDashboardShellBody({
           </div>
         </header>
 
-        <main className="mnx-dashboard-main">{children}</main>
+        <main className="mnx-dashboard-main">
+          <div className="mnx-route-content" data-route={pathname}>
+            {children}
+          </div>
+        </main>
       </div>
 
       {searchOpen ? (
