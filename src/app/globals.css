@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./../styles/monolith-system.css";
+@import "./../styles/monolith-actions.css";
 @import "./../styles/monolith-foundation.css";
 
 @variant dark (&:where(.dark, .dark *));

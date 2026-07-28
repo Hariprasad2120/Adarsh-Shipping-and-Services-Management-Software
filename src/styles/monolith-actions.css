@@ -1,0 +1,375 @@
+/* =========================================================
+   GLOBAL MONOLITH ACTION SYSTEM
+   No page may define an alternative button appearance.
+   ========================================================= */
+
+:root,
+html.theme-light,
+html.light {
+  --mnx-action-text: #11120e;
+  --mnx-action-muted: #73746d;
+  --mnx-action-border: rgba(17, 18, 14, 0.12);
+  --mnx-action-surface: linear-gradient(145deg, #fffef9, #f4f4ec);
+  --mnx-action-control: linear-gradient(145deg, #f7f8f3, #eceee8);
+  --mnx-action-primary: linear-gradient(180deg, #2e2f29, #11120e 52%, #050505);
+  --mnx-action-primary-text: #ffffff;
+  --mnx-action-primary-icon: #f9d972;
+  --mnx-action-accent: linear-gradient(135deg, #fde9a3, #f9d972 50%, #f4cc52);
+  --mnx-action-accent-text: #11120e;
+  --mnx-action-disabled: #dedfd8;
+  --mnx-action-danger-bg: #fceceb;
+  --mnx-action-danger-text: #e02b21;
+  --mnx-action-danger-border: rgba(224, 43, 33, 0.22);
+  --mnx-action-focus: rgba(249, 217, 114, 0.45);
+  --mnx-action-shadow:
+    0 16px 36px rgba(249, 217, 114, 0.34),
+    0 5px 14px rgba(149, 109, 16, 0.14);
+  --mnx-action-shadow-soft: 0 10px 24px rgba(249, 217, 114, 0.24);
+  --mnx-action-danger-shadow: 0 13px 30px rgba(217, 45, 32, 0.25);
+}
+
+html.theme-night,
+html.night {
+  --mnx-action-text: #f7f7f7;
+  --mnx-action-muted: #a3a3a3;
+  --mnx-action-border: rgba(255, 255, 255, 0.14);
+  --mnx-action-surface: linear-gradient(145deg, #111111, #030303);
+  --mnx-action-control: linear-gradient(145deg, #020202, #0d0d0d);
+  --mnx-action-primary: linear-gradient(135deg, #ffe99b, #f9d972 52%, #efc952);
+  --mnx-action-primary-text: #11120e;
+  --mnx-action-primary-icon: #11120e;
+  --mnx-action-accent: linear-gradient(135deg, #ffe99b, #f9d972 52%, #efc952);
+  --mnx-action-accent-text: #11120e;
+  --mnx-action-disabled: #292929;
+  --mnx-action-danger-bg: #250908;
+  --mnx-action-danger-text: #ff5a50;
+  --mnx-action-danger-border: rgba(255, 90, 80, 0.34);
+  --mnx-action-focus: rgba(249, 217, 114, 0.48);
+  --mnx-action-shadow:
+    0 0 0 1px rgba(249, 217, 114, 0.18),
+    0 17px 40px rgba(249, 217, 114, 0.3);
+  --mnx-action-shadow-soft:
+    0 0 0 1px rgba(249, 217, 114, 0.12),
+    0 11px 28px rgba(249, 217, 114, 0.2);
+  --mnx-action-danger-shadow:
+    0 0 0 1px rgba(255, 90, 80, 0.22),
+    0 14px 32px rgba(217, 45, 32, 0.3);
+}
+
+html.theme-violet,
+html.violet {
+  --mnx-action-text: #f8f7ff;
+  --mnx-action-muted: #9493a2;
+  --mnx-action-border: #282a34;
+  --mnx-action-surface: linear-gradient(145deg, #1d1d2e, #10111a);
+  --mnx-action-control: linear-gradient(145deg, #0d0e17, #181827);
+  --mnx-action-primary: linear-gradient(135deg, #cbbde1, #b5aaf5 48%, #8974b9);
+  --mnx-action-primary-text: #0a0b13;
+  --mnx-action-primary-icon: #0a0b13;
+  --mnx-action-accent: linear-gradient(135deg, #cbbde1, #b5aaf5 48%, #8974b9);
+  --mnx-action-accent-text: #0a0b13;
+  --mnx-action-disabled: #282a34;
+  --mnx-action-danger-bg: #2a1117;
+  --mnx-action-danger-text: #ff6259;
+  --mnx-action-danger-border: rgba(255, 98, 89, 0.32);
+  --mnx-action-focus: rgba(181, 170, 245, 0.48);
+  --mnx-action-shadow:
+    0 0 0 1px rgba(181, 170, 245, 0.2),
+    0 17px 42px rgba(137, 116, 185, 0.4);
+  --mnx-action-shadow-soft:
+    0 0 0 1px rgba(181, 170, 245, 0.14),
+    0 11px 30px rgba(137, 116, 185, 0.28);
+  --mnx-action-danger-shadow:
+    0 0 0 1px rgba(255, 98, 89, 0.18),
+    0 14px 32px rgba(217, 45, 32, 0.3);
+}
+
+.mnx-action {
+  min-width: 148px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  padding: 0 21px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background-position 360ms ease;
+}
+
+.mnx-action--medium {
+  height: 48px;
+}
+
+.mnx-action--small {
+  min-width: auto;
+  height: 39px;
+  padding-inline: 16px;
+}
+
+.mnx-action--full {
+  width: 100%;
+}
+
+.mnx-action--icon-only {
+  min-width: 0;
+  width: 48px;
+  padding-inline: 0;
+}
+
+.mnx-action--small.mnx-action--icon-only {
+  width: 39px;
+}
+
+.mnx-action--primary {
+  min-width: 170px;
+  justify-content: space-between;
+  color: var(--mnx-action-primary-text);
+  background: var(--mnx-action-primary);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 10px 22px rgba(17, 18, 14, 0.18);
+}
+
+.mnx-action--primary .mnx-action__icon {
+  color: var(--mnx-action-primary-icon);
+}
+
+.mnx-action--accent {
+  color: var(--mnx-action-accent-text);
+  background: var(--mnx-action-accent);
+  box-shadow: 0 9px 20px rgba(249, 217, 114, 0.24);
+}
+
+html.theme-violet .mnx-action--accent,
+html.violet .mnx-action--accent {
+  box-shadow: 0 9px 24px rgba(137, 116, 185, 0.3);
+}
+
+.mnx-action--secondary {
+  color: var(--mnx-action-text);
+  border-color: var(--mnx-action-border);
+  background: var(--mnx-action-surface);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.09);
+}
+
+.mnx-action--outline {
+  color: var(--mnx-action-text);
+  border-color: color-mix(
+    in srgb,
+    var(--mnx-action-text) 62%,
+    transparent
+  );
+  background: transparent;
+}
+
+.mnx-action--destructive {
+  color: var(--mnx-action-danger-text);
+  border-color: var(--mnx-action-danger-border);
+  background: var(--mnx-action-danger-bg);
+  box-shadow: 0 8px 18px rgba(217, 45, 32, 0.12);
+}
+
+.mnx-action__label {
+  min-width: 0;
+}
+
+.mnx-action__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.mnx-action__icon svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.mnx-action__spinner {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: mnx-action-spin 700ms linear infinite;
+}
+
+.mnx-action:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: var(--mnx-action-shadow);
+}
+
+.mnx-action--destructive:hover:not(:disabled) {
+  border-color: var(--mnx-action-danger-text);
+  box-shadow: var(--mnx-action-danger-shadow);
+}
+
+.mnx-action:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+.mnx-action:focus-visible,
+.mnx-icon-action:focus-visible,
+.mnx-text-action:focus-visible {
+  outline: 3px solid var(--mnx-action-focus);
+  outline-offset: 3px;
+}
+
+.mnx-action:disabled {
+  color: var(--mnx-action-muted);
+  border-color: transparent;
+  background: var(--mnx-action-disabled);
+  box-shadow: none;
+  opacity: 1;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.mnx-action[data-loading="true"] {
+  cursor: wait;
+}
+
+.mnx-text-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 0;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  border-radius: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-decoration: none;
+  background: transparent;
+  cursor: pointer;
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.mnx-text-action--accent {
+  color: #956d10;
+}
+
+html.theme-night .mnx-text-action--accent,
+html.night .mnx-text-action--accent {
+  color: #f9d972;
+}
+
+html.theme-violet .mnx-text-action--accent,
+html.violet .mnx-text-action--accent {
+  color: #cbbde1;
+}
+
+.mnx-text-action--subtle {
+  color: var(--mnx-action-muted);
+  border-bottom-color: transparent;
+}
+
+.mnx-text-action:hover {
+  color: var(--mnx-action-text);
+  transform: translateY(-1px);
+}
+
+.mnx-text-action__icon {
+  display: inline-flex;
+}
+
+.mnx-text-action__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.mnx-icon-action {
+  width: 40px;
+  height: 40px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 1px solid var(--mnx-action-border);
+  border-radius: 50%;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.mnx-icon-action span {
+  display: inline-flex;
+}
+
+.mnx-icon-action svg {
+  width: 16px;
+  height: 16px;
+}
+
+.mnx-icon-action--neutral {
+  color: var(--mnx-action-text);
+  background: var(--mnx-action-surface);
+}
+
+.mnx-icon-action--solid {
+  color: var(--mnx-action-primary-text);
+  background: var(--mnx-action-primary);
+}
+
+.mnx-icon-action--destructive {
+  color: var(--mnx-action-danger-text);
+  border-color: var(--mnx-action-danger-border);
+  background: var(--mnx-action-danger-bg);
+}
+
+.mnx-icon-action:hover:not(:disabled) {
+  border-color: var(--mnx-action-primary-icon);
+  box-shadow: var(--mnx-action-shadow-soft);
+  transform: translateY(-2px);
+}
+
+.mnx-icon-action--destructive:hover:not(:disabled) {
+  border-color: var(--mnx-action-danger-text);
+  box-shadow: var(--mnx-action-danger-shadow);
+}
+
+.mnx-icon-action:disabled {
+  color: var(--mnx-action-muted);
+  background: var(--mnx-action-disabled);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@keyframes mnx-action-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mnx-action,
+  .mnx-icon-action,
+  .mnx-text-action {
+    transition: none;
+  }
+
+  .mnx-action__spinner {
+    animation-duration: 1.4s;
+  }
+}
