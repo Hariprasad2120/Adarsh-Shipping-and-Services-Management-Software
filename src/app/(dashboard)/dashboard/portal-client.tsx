@@ -2,6 +2,7 @@
 
 import { Building2, Sparkles, Users2 } from "lucide-react";
 import { useState } from "react";
+import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 import { AttendanceCommand } from "./_components/attendance-command";
 import { DashboardOrganization } from "./_components/dashboard-organization";
@@ -21,6 +22,7 @@ interface HrmsPortalClientProps {
   initialProfile: UserProfile;
   initialWidgetsData: DashboardWidgetsData;
   initialReportees: ReporteeSummary[];
+  initialModuleSnapshot: DashboardModuleSnapshot;
 }
 
 type ProfilePayload = {
@@ -94,12 +96,14 @@ export function HrmsPortalClient({
   initialProfile,
   initialWidgetsData,
   initialReportees,
+  initialModuleSnapshot,
 }: HrmsPortalClientProps) {
   const [activeTab, setActiveTab] = useState<DashboardTab>("myspace");
   const [profile, setProfile] = useState(initialProfile);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [reportees, setReportees] = useState(initialReportees);
   const [widgets, setWidgets] = useState(initialWidgetsData);
+  const [moduleSnapshot, setModuleSnapshot] = useState(initialModuleSnapshot);
 
   async function refreshDashboard() {
     const [profileResponse, widgetsResponse, reporteesResponse] = await Promise.all([
@@ -114,9 +118,24 @@ export function HrmsPortalClient({
       readApiResponse<ReporteeSummary[]>(reporteesResponse),
     ]);
 
-    setProfile(toUserProfile(profilePayload));
+    const nextProfile = toUserProfile(profilePayload);
+    setProfile(nextProfile);
     setWidgets(widgetsPayload);
     setReportees(reporteesPayload);
+    setModuleSnapshot((current) => ({
+      ...current,
+      modules: current.modules.map((module) =>
+        module.id === "attendance"
+          ? {
+              ...module,
+              primaryMetric: {
+                ...module.primaryMetric,
+                value: nextProfile.attendanceStatus === "YET_TO_CHECK_IN" ? 0 : 1,
+              },
+            }
+          : module,
+      ),
+    }));
   }
 
   async function handlePunchAction(action: PunchAction) {
@@ -166,7 +185,12 @@ export function HrmsPortalClient({
 
       <div className="mnx-dashboard-tab-content">
         {activeTab === "myspace" ? (
-          <DashboardOverview profile={profile} sessionUser={sessionUser} data={widgets} />
+          <DashboardOverview
+            profile={profile}
+            sessionUser={sessionUser}
+            data={widgets}
+            moduleSnapshot={moduleSnapshot}
+          />
         ) : null}
         {activeTab === "team" ? <DashboardTeam reportees={reportees} /> : null}
         {activeTab === "organization" ? (

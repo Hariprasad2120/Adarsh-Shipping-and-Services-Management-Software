@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-27T18:48:49.292Z
+> Generated at: 2026-07-28T05:05:24.819Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -10,7 +10,7 @@
 | App Routes (Pages) | 205 |
 | API Routes | 196 |
 | Prisma Models | 277 |
-| Module Service Files | 86 |
+| Module Service Files | 88 |
 | UI Components | 92 |
 
 ## Modules Overview
@@ -29,7 +29,7 @@
 | crm | 59 | 4 | 26 | 7 | 1 |
 | cron | 0 | 7 | 0 | 0 | 0 |
 | customer-portal | 0 | 19 | 0 | 12 | 0 |
-| dashboard | 3 | 0 | 0 | 0 | 0 |
+| dashboard | 3 | 0 | 0 | 2 | 0 |
 | dev | 0 | 1 | 0 | 0 | 0 |
 | expense | 1 | 0 | 0 | 0 | 0 |
 | google-chat | 0 | 6 | 6 | 8 | 0 |
@@ -59,11 +59,10 @@
 |---|---|---|
 | POST | `/api/admin/ams-reset` | admin |
 | GET, PATCH | `/api/admin/modules` | admin |
-| GET | `/api/admin/notifications` | admin |
 | POST | `/api/admin/notifications/[id]/resend` | admin |
+| GET | `/api/admin/notifications` | admin |
 | GET, PATCH | `/api/admin/settings` | admin |
 | GET, POST, PATCH | `/api/admin/simulation` | admin |
-| GET, POST | `/api/ams/appraisals` | ams |
 | POST | `/api/ams/appraisals/[id]/availability` | ams |
 | POST | `/api/ams/appraisals/[id]/claim-management` | ams |
 | POST | `/api/ams/appraisals/[id]/hike` | ams |
@@ -75,18 +74,19 @@
 | GET | `/api/ams/appraisals/[id]` | ams |
 | POST | `/api/ams/appraisals/[id]/score-preview` | ams |
 | POST | `/api/ams/appraisals/[id]/self-assessment` | ams |
+| GET, POST | `/api/ams/appraisals` | ams |
 | GET, POST, PATCH, DELETE | `/api/ams/criteria` | ams |
 | POST | `/api/ams/criteria/seed` | ams |
-| GET, POST | `/api/ams/cycles` | ams |
 | PATCH | `/api/ams/cycles/[id]` | ams |
+| GET, POST | `/api/ams/cycles` | ams |
 | GET, PUT | `/api/ams/self-form-template` | ams |
 | GET | `/api/attendance/day-punches` | attendance |
 | GET, POST | `/api/attendance/holidays` | attendance |
 | GET, POST | `/api/attendance/leave-types` | attendance |
-| GET, POST | `/api/attendance/leaves` | attendance |
 | POST | `/api/attendance/leaves/[id]` | attendance |
-| GET, POST | `/api/attendance/ot` | attendance |
+| GET, POST | `/api/attendance/leaves` | attendance |
 | POST | `/api/attendance/ot/[id]` | attendance |
+| GET, POST | `/api/attendance/ot` | attendance |
 | GET, POST | `/api/attendance/punch` | attendance |
 | GET, POST | `/api/attendance/sync/biometric/live` | attendance |
 | GET, POST | `/api/attendance/sync/biometric` | attendance |
@@ -131,14 +131,14 @@
 | POST | `/api/customer-portal/auth/login` | customer-portal |
 | POST | `/api/customer-portal/auth/logout` | customer-portal |
 | GET | `/api/customer-portal/checklist-files/[id]` | customer-portal |
-| POST | `/api/customer-portal/checklists/respond` | customer-portal |
 | POST | `/api/customer-portal/checklists/[checklistId]/decision` | customer-portal |
+| POST | `/api/customer-portal/checklists/respond` | customer-portal |
 | GET | `/api/customer-portal/document-versions/[id]` | customer-portal |
+| GET | `/api/customer-portal/documents/[versionId]` | customer-portal |
 | POST | `/api/customer-portal/documents/confirm` | customer-portal |
 | POST | `/api/customer-portal/documents/upload` | customer-portal |
-| GET | `/api/customer-portal/documents/[versionId]` | customer-portal |
-| POST | `/api/customer-portal/notifications/read-all` | customer-portal |
 | POST | `/api/customer-portal/notifications/[id]/read` | customer-portal |
+| POST | `/api/customer-portal/notifications/read-all` | customer-portal |
 | PATCH | `/api/customer-portal/profile/preferences` | customer-portal |
 | POST | `/api/customer-portal/queries/reply` | customer-portal |
 | POST | `/api/customer-portal/ratings` | customer-portal |
@@ -157,22 +157,22 @@
 | GET | `/api/hrms/attendance/month` | hrms |
 | POST | `/api/hrms/attendance/punch` | hrms |
 | GET, PATCH | `/api/hrms/dashboard` | hrms |
-| GET, PATCH | `/api/hrms/employees` | hrms |
 | POST | `/api/hrms/employees/[id]/salary-structure` | hrms |
+| GET, PATCH | `/api/hrms/employees` | hrms |
 | GET, POST | `/api/hrms/files` | hrms |
-| GET, POST | `/api/hrms/hr-cases` | hrms |
 | POST | `/api/hrms/hr-cases/[id]/comments` | hrms |
+| GET, POST | `/api/hrms/hr-cases` | hrms |
 | POST | `/api/hrms/leave/requests` | hrms |
 | GET | `/api/hrms/leave/summary` | hrms |
+| POST | `/api/hrms/letters/[id]/accept` | hrms |
+| POST | `/api/hrms/letters/[id]/action` | hrms |
+| GET, PUT, DELETE | `/api/hrms/letters/[id]` | hrms |
 | POST | `/api/hrms/letters/assets/upload` | hrms |
 | GET, POST | `/api/hrms/letters` | hrms |
 | GET, POST, PUT | `/api/hrms/letters/settings` | hrms |
 | POST | `/api/hrms/letters/share-mail` | hrms |
 | POST | `/api/hrms/letters/templates/upload` | hrms |
 | GET | `/api/hrms/letters/verify` | hrms |
-| POST | `/api/hrms/letters/[id]/accept` | hrms |
-| POST | `/api/hrms/letters/[id]/action` | hrms |
-| GET, PUT, DELETE | `/api/hrms/letters/[id]` | hrms |
 | GET, POST, PATCH | `/api/hrms/lms` | hrms |
 | GET | `/api/hrms/me` | hrms |
 | GET, POST | `/api/hrms/on-duty` | hrms |
@@ -185,16 +185,16 @@
 | GET, POST | `/api/hrms/timetracker` | hrms |
 | GET | `/api/hrms/tracking` | hrms |
 | GET, POST | `/api/hrms/travel` | hrms |
-| GET, POST | `/api/hrms/work-reports` | hrms |
 | POST | `/api/hrms/work-reports/[id]/approve` | hrms |
+| GET, POST | `/api/hrms/work-reports` | hrms |
 | POST, OPTIONS | `/api/mobile/auth/login` | mobile |
 | POST, OPTIONS | `/api/mobile/crm/auth/login` | mobile |
 | PATCH, OPTIONS | `/api/mobile/crm/call-attempts/[callAttemptId]/complete` | mobile |
 | POST, OPTIONS | `/api/mobile/crm/call-attempts/[callAttemptId]/recording` | mobile |
 | PATCH | `/api/mobile/crm/call-attempts/[callAttemptId]/recording/status` | mobile |
-| GET, OPTIONS | `/api/mobile/crm/leads` | mobile |
 | POST, OPTIONS | `/api/mobile/crm/leads/[leadId]/call-attempts` | mobile |
 | PATCH, OPTIONS | `/api/mobile/crm/leads/[leadId]/status` | mobile |
+| GET, OPTIONS | `/api/mobile/crm/leads` | mobile |
 | GET, OPTIONS | `/api/mobile/crm/update` | mobile |
 | GET, POST, OPTIONS | `/api/mobile/hrms/agreement` | mobile |
 | POST, OPTIONS | `/api/mobile/hrms/attendance/check-in` | mobile |
@@ -207,52 +207,52 @@
 | POST, OPTIONS | `/api/mobile/mona/chat` | mobile |
 | POST | `/api/mona/chat` | mona |
 | GET, POST | `/api/mona/model` | mona |
+| POST | `/api/notifications/[id]/ack` | notifications |
+| POST | `/api/notifications/[id]/dismiss` | notifications |
+| POST | `/api/notifications/[id]/open` | notifications |
+| POST | `/api/notifications/[id]/read` | notifications |
 | GET | `/api/notifications/active` | notifications |
 | POST | `/api/notifications/dismiss-all` | notifications |
 | POST | `/api/notifications/presented` | notifications |
 | POST | `/api/notifications/read-all` | notifications |
 | GET | `/api/notifications` | notifications |
-| POST | `/api/notifications/[id]/ack` | notifications |
-| POST | `/api/notifications/[id]/dismiss` | notifications |
-| POST | `/api/notifications/[id]/open` | notifications |
-| POST | `/api/notifications/[id]/read` | notifications |
-| POST | `/api/org/branches` | org |
 | PATCH, DELETE | `/api/org/branches/[id]` | org |
-| POST | `/api/org/departments` | org |
+| POST | `/api/org/branches` | org |
 | POST | `/api/org/departments/[id]/divisions` | org |
 | PATCH, DELETE | `/api/org/departments/[id]` | org |
+| POST | `/api/org/departments` | org |
 | PATCH, DELETE | `/api/org/divisions/[id]` | org |
 | GET | `/api/org` | org |
-| GET, POST | `/api/recruit/applications` | recruit |
 | GET | `/api/recruit/applications/[id]` | recruit |
 | POST | `/api/recruit/applications/[id]/stage` | recruit |
+| GET, POST | `/api/recruit/applications` | recruit |
 | GET | `/api/recruit/audit` | recruit |
-| GET, POST | `/api/recruit/candidates` | recruit |
 | GET, PATCH, DELETE | `/api/recruit/candidates/[id]` | recruit |
+| GET, POST | `/api/recruit/candidates` | recruit |
 | GET | `/api/recruit/dashboard` | recruit |
-| GET, POST | `/api/recruit/jobs` | recruit |
 | GET, PUT, PATCH | `/api/recruit/jobs/[id]` | recruit |
+| GET, POST | `/api/recruit/jobs` | recruit |
 | GET, POST | `/api/recruit/jobseeker/applications` | recruit |
-| GET, POST | `/api/recruit/jobseeker/career/conversations` | recruit |
 | POST | `/api/recruit/jobseeker/career/conversations/[id]/messages` | recruit |
 | GET | `/api/recruit/jobseeker/career/conversations/[id]` | recruit |
+| GET, POST | `/api/recruit/jobseeker/career/conversations` | recruit |
 | GET | `/api/recruit/jobseeker/dashboard` | recruit |
 | GET, POST | `/api/recruit/jobseeker/listings` | recruit |
 | GET, PATCH | `/api/recruit/jobseeker/profile` | recruit |
 | GET, POST, PATCH | `/api/recruit/jobseeker/resumes` | recruit |
 | GET, PATCH | `/api/recruit/settings` | recruit |
-| GET, POST | `/api/roles` | roles |
 | PUT | `/api/roles/[id]/permissions` | roles |
+| GET, POST | `/api/roles` | roles |
 | GET, POST | `/api/setup` | setup |
+| PATCH, DELETE | `/api/todos/[id]` | todos |
 | POST | `/api/todos/reminders/check` | todos |
 | GET | `/api/todos/reminders/upcoming` | todos |
 | GET, POST | `/api/todos` | todos |
 | PATCH | `/api/todos/subtasks/[id]` | todos |
-| PATCH, DELETE | `/api/todos/[id]` | todos |
-| GET, POST | `/api/users` | users |
 | POST | `/api/users/[id]/password` | users |
 | PUT | `/api/users/[id]/roles` | users |
 | GET, PATCH | `/api/users/[id]` | users |
+| GET, POST | `/api/users` | users |
 
 ## App Routes (Pages)
 
@@ -265,28 +265,28 @@
 | `/accounting/general-ledger` | accounting | page |
 | `/accounting/invoices-sales/new` | accounting | page |
 | `/accounting/invoices-sales` | accounting | page |
+| `/accounting/items/[id]` | accounting | page |
 | `/accounting/items/new` | accounting | page |
 | `/accounting/items` | accounting | page |
-| `/accounting/items/[id]` | accounting | page |
 | `/accounting/jobs` | accounting | page |
+| `/accounting/journal-entries/[id]` | accounting | page |
 | `/accounting/journal-entries/new` | accounting | page |
 | `/accounting/journal-entries` | accounting | page |
-| `/accounting/journal-entries/[id]` | accounting | page |
 | `/accounting` | accounting | page |
+| `/accounting/payment-entries/[id]` | accounting | page |
 | `/accounting/payment-entries/new` | accounting | page |
 | `/accounting/payment-entries` | accounting | page |
-| `/accounting/payment-entries/[id]` | accounting | page |
 | `/accounting/profit-loss` | accounting | page |
+| `/accounting/purchase-invoices/[id]` | accounting | page |
 | `/accounting/purchase-invoices/new` | accounting | page |
 | `/accounting/purchase-invoices` | accounting | page |
-| `/accounting/purchase-invoices/[id]` | accounting | page |
 | `/accounting/purchase-orders/new` | accounting | page |
 | `/accounting/purchase-orders` | accounting | page |
 | `/accounting/quotations` | accounting | page |
 | `/accounting/reports` | accounting | page |
+| `/accounting/sales-invoices/[id]` | accounting | page |
 | `/accounting/sales-invoices/new` | accounting | page |
 | `/accounting/sales-invoices` | accounting | page |
-| `/accounting/sales-invoices/[id]` | accounting | page |
 | `/accounting/sales-orders/new` | accounting | page |
 | `/accounting/sales-orders` | accounting | page |
 | `/accounting/settings` | accounting | page |
@@ -301,21 +301,21 @@
 | `/admin/sessions` | admin | page |
 | `/admin/settings` | admin | page |
 | `/admin/simulation` | admin | page |
-| `/ams/appraisals/assign/[employeeId]` | ams | page |
-| `/ams/appraisals` | ams | page |
 | `/ams/appraisals/[id]/management-review` | ams | page |
 | `/ams/appraisals/[id]` | ams | page |
-| `/ams/assets` | ams | page |
+| `/ams/appraisals/assign/[employeeId]` | ams | page |
+| `/ams/appraisals` | ams | page |
 | `/ams/assets/[id]` | ams | page |
+| `/ams/assets` | ams | page |
 | `/ams/criteria` | ams | page |
 | `/ams/cycles` | ams | page |
 | `/ams/extensions` | ams | page |
 | `/ams/history` | ams | page |
 | `/ams/kpi` | ams | page |
-| `/ams/my-appraisal` | ams | page |
 | `/ams/my-appraisal/[id]/self-assessment` | ams | page |
-| `/ams/my-reviews` | ams | page |
+| `/ams/my-appraisal` | ams | page |
 | `/ams/my-reviews/[id]` | ams | page |
+| `/ams/my-reviews` | ams | page |
 | `/ams` | ams | page |
 | `/ams/pms` | ams | page |
 | `/ams/slabs` | ams | page |
@@ -327,12 +327,12 @@
 | `/attendance/reports` | attendance | page |
 | `/attendance/timesheets` | attendance | page |
 | `/cha/approvals` | cha | page |
+| `/cha/customers/[id]/edit` | cha | page |
 | `/cha/customers/new` | cha | page |
 | `/cha/customers` | cha | page |
-| `/cha/customers/[id]/edit` | cha | page |
 | `/cha/expenses` | cha | page |
-| `/cha/jobs` | cha | page |
 | `/cha/jobs/[jobId]` | cha | page |
+| `/cha/jobs` | cha | page |
 | `/cha` | cha | page |
 | `/cha/reports` | cha | page |
 | `/cha/settings/filing-workflows` | cha | page |
@@ -347,69 +347,69 @@
 | `/communication` | communication | page |
 | `/communication/search` | communication | page |
 | `/communication/settings` | communication | page |
+| `/crm/[...slug]` | crm | page |
 | `/crm/approvals` | crm | page |
 | `/crm/calls` | crm | page |
 | `/crm/campaigns` | crm | page |
-| `/crm/contacts/new` | crm | page |
-| `/crm/contacts` | crm | page |
 | `/crm/contacts/[id]/edit` | crm | page |
 | `/crm/contacts/[id]` | crm | page |
-| `/crm/customers/new` | crm | page |
-| `/crm/customers` | crm | page |
+| `/crm/contacts/new` | crm | page |
+| `/crm/contacts` | crm | page |
 | `/crm/customers/[id]/edit` | crm | page |
 | `/crm/customers/[id]` | crm | page |
+| `/crm/customers/new` | crm | page |
+| `/crm/customers` | crm | page |
 | `/crm/dashboard` | crm | page |
-| `/crm/deals/new` | crm | page |
-| `/crm/deals` | crm | page |
 | `/crm/deals/[id]/edit` | crm | page |
 | `/crm/deals/[id]` | crm | page |
+| `/crm/deals/new` | crm | page |
+| `/crm/deals` | crm | page |
 | `/crm/documents` | crm | page |
 | `/crm/efficiency` | crm | page |
-| `/crm/enquiries` | crm | page |
 | `/crm/enquiries/[id]` | crm | page |
+| `/crm/enquiries` | crm | page |
 | `/crm/events` | crm | page |
 | `/crm/forecasts` | crm | page |
+| `/crm/invoices/[invoiceId]` | crm | page |
 | `/crm/invoices/new` | crm | page |
 | `/crm/invoices` | crm | page |
-| `/crm/invoices/[invoiceId]` | crm | page |
+| `/crm/items/[id]` | crm | page |
 | `/crm/items/new` | crm | page |
 | `/crm/items` | crm | page |
-| `/crm/items/[id]` | crm | page |
 | `/crm/lead-sources/justdial` | crm | page |
 | `/crm/lead-sources/logs` | crm | page |
 | `/crm/lead-sources` | crm | page |
-| `/crm/leads/new` | crm | page |
-| `/crm/leads` | crm | page |
 | `/crm/leads/[id]/edit` | crm | page |
 | `/crm/leads/[id]` | crm | page |
+| `/crm/leads/new` | crm | page |
+| `/crm/leads` | crm | page |
 | `/crm` | crm | page |
 | `/crm/price-books` | crm | page |
 | `/crm/products` | crm | page |
 | `/crm/projects` | crm | page |
 | `/crm/purchase-orders` | crm | page |
-| `/crm/quotes/new` | crm | page |
-| `/crm/quotes` | crm | page |
 | `/crm/quotes/[quoteId]/edit` | crm | page |
 | `/crm/quotes/[quoteId]` | crm | page |
+| `/crm/quotes/new` | crm | page |
+| `/crm/quotes` | crm | page |
 | `/crm/sales-inbox` | crm | page |
 | `/crm/sales-orders` | crm | page |
 | `/crm/services` | crm | page |
 | `/crm/social` | crm | page |
 | `/crm/solutions` | crm | page |
 | `/crm/tasks` | crm | page |
+| `/crm/tickets/[id]` | crm | page |
 | `/crm/tickets/new` | crm | page |
 | `/crm/tickets` | crm | page |
-| `/crm/tickets/[id]` | crm | page |
 | `/crm/vendors` | crm | page |
 | `/crm/visits` | crm | page |
 | `/crm/voc` | crm | page |
-| `/crm/[...slug]` | crm | page |
 | `/dashboard` | dashboard | page |
 | `/expense` | expense | page |
 | `/hrms/approvals` | hrms | page |
+| `/hrms/employees/[id]` | hrms | page |
 | `/hrms/employees/new` | hrms | page |
 | `/hrms/employees` | hrms | page |
-| `/hrms/employees/[id]` | hrms | page |
 | `/hrms/files` | hrms | page |
 | `/hrms/helpdesk` | hrms | page |
 | `/hrms/letters` | hrms | page |
@@ -740,12 +740,12 @@
 ## Module Service Files
 
 ### accounting
+- **accounting.test.ts**: no exports detected
 - **actions.ts**: createAccountAction, updateAccountAction, createJournalEntryAction, submitJournalEntryAction, cancelJournalEntryAction, createSalesInvoiceAction, submitSalesInvoiceAction, cancelSalesInvoiceAction, createPurchaseInvoiceAction, submitPurchaseInvoiceAction, cancelPurchaseInvoiceAction, createPaymentEntryAction, submitPaymentEntryAction, cancelPaymentEntryAction, updateAccountingSettingsAction, initializeCOAAction, generateInvoiceFromDealAction, getPayrollBatchesAction, compilePayrollBatchAction, createPayrollBatchAction, finalizePayrollBatchAction, payPayrollBatchAction, listAssetsAction, getAssetAction, createAssetAction, runDepreciationAction, listQuotationsAction, getQuotationAction, createQuotationAction, convertQuotationToInvoiceAction, listCustomerNotesAction, getCustomerNoteAction, createCustomerNoteAction, submitCustomerNoteAction, getTransactionLockAction, updateTransactionLockAction, listJobCostingsAction, getJobCostingAction, createJobCostingAction, updateJobCostingAction, getARAgeingAction, getAPAgeingAction, getSalesRegisterAction, getPurchaseRegisterAction, getGSTR1SummaryAction, getGSTR2BSummaryAction, getConsolidatedGSTLedgerAction, getDayBookAction, getJournalRegisterAction, getJobProfitabilityAction, getCashAndBankLedgerAction, recordBankTransferAction, getProfitAndLossAction, getBalanceSheetAction, getTrialBalanceAction
 - **reports.ts**: getGeneralLedger, getTrialBalance, getProfitAndLoss, getBalanceSheet, getARAgeing, getAPAgeing, getSalesRegister, getPurchaseRegister, getGSTR1Summary, getGSTR2BSummary, getConsolidatedGSTLedger, getDayBook, getJournalRegister, getJobProfitability, getCashAndBankLedger
 - **service.ts**: seedChartOfAccounts, createAuditLog, listAccounts, getChartOfAccounts, createAccount, updateAccount, validateBalancedEntry, validateAccountPostingAllowed, postGLTransactions, reverseGLTransactions, listJournalEntries, getJournalEntry, createJournalEntry, submitJournalEntry, cancelJournalEntry, listSalesInvoices, getSalesInvoice, createSalesInvoice, submitSalesInvoice, cancelSalesInvoice, listPurchaseInvoices, getPurchaseInvoice, createPurchaseInvoice, submitPurchaseInvoice, cancelPurchaseInvoice, listPaymentEntries, getPaymentEntry, createPaymentEntry, submitPaymentEntry, cancelPaymentEntry, getAccountingSettings, updateAccountingSettings, compilePayrollBatch, getPayrollBatches, createPayrollBatch, finalizePayrollBatch, payPayrollBatch, listAssets, getAsset, createAsset, runDepreciationForAsset, getTransactionLock, updateTransactionLock, validatePostingDateNotLocked, listQuotations, getQuotation, createQuotation, convertQuotationToInvoice, listCustomerNotes, getCustomerNote, createCustomerNote, submitCustomerNote, listVendorNotes, getVendorNote, createVendorNote, submitVendorNote, processRecurringExpenses, processRecurringJournals, listPartnerAccounts, createPartnerAccount, updatePartnerAccount, recordPartnerTransaction, listJobCostings, getJobCosting, createJobCosting, updateJobCosting
 - **types.ts**: no exports detected
 - **validators.ts**: no exports detected
-- **accounting.test.ts**: no exports detected
 
 ### ams
 - **audit-log.ts**: createAppraisalAuditLogCompat
@@ -764,13 +764,13 @@
 - **service.ts**: punchIn, punchOut, getMonthAttendance, getLeaveTypes, createLeaveType, getLeaveBalances, initLeaveBalancesForUser, getLeaveRequests, createLeaveRequest, decideLeaveRequest, createOTEntry, decideOT, getOTEntries, getHolidays, createHoliday, getMonthlyReport
 
 ### cha
+- **cha.test.ts**: no exports detected
+- **checklist-email-automation.test.ts**: no exports detected
+- **do-extension.test.ts**: no exports detected
 - **actions.ts**: ensureSettingsAndDefaultsAction, updateSettingsAction, createJobAction, getNextJobNumberPreviewAction, submitJobDeletionAction, decideJobDeletionRequestAction, retryJobChatCleanupAction, deleteAllChaJobsForTestingAction, createJobTypeAction, updateJobTypeManifestConfigAction, createShipmentTypeAction, deleteShipmentTypeAction, deleteJobTypeAction, updateJobTypeFilingFlowCategoryAction, createTeamGroupAction, deleteTeamGroupAction, getJobDetailsAction, listJobsAction, uploadDocumentVersionAction, createJobCustomDocumentUploadAction, deleteDocumentVersionAction, declareDocumentExceptionAction, markDocumentNotAvailableAction, importChecklistExcelAction, uploadChecklistFileAction, upsertAdditionalDataAction, setDoExtensionDateAction, submitChecklistInternalDecisionAction, submitChecklistCustomerDecisionAction, sendChecklistCustomerMailAction, proceedAdditionalDataAction, submitChecklistForApprovalAction, checklistManagerActionAction, selfApproveChecklistAction, adjustEstimatedFilingDateAction, markAsFiledAction, updateCustomerAdvanceExpectedAction, recordCustomerAdvanceReceiptAction, declareAdvanceNotRequiredAction, createExpenseRequestAction, createExpenseRequestWithAttachmentAction, createDirectExpenseRequestAction, createDirectExpenseRequestWithAttachmentAction, triggerUrgentExpenseEscalationAction, reviewExpenseRequestAction, approveAccountsExpenseRequestAction, routeExpenseRequestToManagerAction, submitExpenseClarificationAction, markExpenseReadyForDisbursementAction, setExpenseStatusAction, postExpensePaymentAction, acknowledgeExpenseReceiptAction, raisePaymentQueryAction, resolvePaymentQueryAction, listAllExpensesAction, listManagerChecklistApprovalsAction, upsertDocumentCategoryAction, deleteDocumentCategoryAction, upsertDocumentItemAction, deleteDocumentItemAction, removeDocumentExceptionAction, proceedDocumentStageAction, setDoUploadToggleAction, setDoExtensionToggleAction, uploadDeliveryOrderDocumentAction, deleteDeliveryOrderDocumentAction, updateSection49ValidityAction, applySection49ExtensionAction, updateJobDetailsAction, submitChecklistOwnerDecisionAction, saveFilingWorkflowDraftAction, loadStarterFilingWorkflowAction, publishFilingWorkflowAction, getFilingWorkflowDetailsAction, deleteFilingWorkflowTemplateAction, getFilingWorkflowInstanceAction, startFilingWorkflowAction, completeFilingNodeAction, saveFilingNodeDraftAction, revertFilingStageAction, redirectBlockedFilingStageAction, resumeBlockedFilingStageAction, toggleFilingSection49Action, getFilingSection49Action, createFilingWorkflowQueryAction, updateFilingWorkflowQueryStatusAction, addFilingWorkflowQueryCommentAction, upsertFilingWorkflowToggleStateAction, uploadFilingAttachmentAction, upsertFilingShipmentDetailsAction, deleteFilingAttachmentAction, acceptCustomerDocumentSubmissionAction, updateFilingAttachmentValidityAction
 - **checklist-email-automation.ts**: queueChecklistMainCustomerEmail, finalizeChecklistMainCustomerEmail
 - **job-report.ts**: listCompletedChaJobsForReports, generateCompletedChaJobReport
 - **service.ts**: ensureDefaultDocumentRequirements, getNextChaJobNumberPreview, ensureSettingsAndDefaults, logChaAudit, getChecklistInternalApproverIds, createJob, createJobType, updateJobTypeManifestConfig, updateJobTypeFilingFlowCategory, deleteJobType, upsertBranchNumberingRules, createShipmentType, deleteShipmentType, createTeamGroup, deleteTeamGroup, listJobTypesForSelection, listJobTypesForSettings, getJobDetails, listJobs, resolveDriveFolderForCategory, uploadDocumentVersion, acceptCustomerDocumentSubmission, createJobCustomDocumentRequirementAndUpload, deleteDocumentVersion, declareDocumentException, markDocumentNotAvailable, verifyDocumentGate, upsertAdditionalData, proceedAdditionalDataStage, setDeliveryOrderUploadToggle, setDeliveryOrderExtensionToggle, setDeliveryOrderExtensionDate, listSection49ValidityWarnings, listChaDueDateWarnings, uploadDeliveryOrderDocument, applyDeliveryOrderExtension, listDeliveryOrderExtensions, uploadChecklistFile, submitChecklistInternalDecision, sendChecklistCustomerMail, submitChecklistCustomerDecision, submitPortalCustomerChecklistDecision, importChecklistExcel, submitChecklistForApproval, checklistManagerAction, selfApproveChecklist, adjustEstimatedFilingDate, markAsFiled, updateCustomerAdvanceExpected, recordCustomerAdvanceReceipt, declareAdvanceNotRequired, createExpenseRequest, triggerUrgentExpenseEscalation, reviewExpenseRequest, listExpenseJobOptions, createDirectExpenseRequest, approveAccountsExpenseRequest, routeExpenseRequestToManager, submitExpenseClarification, markExpenseReadyForDisbursement, setExpenseStatus, postExpensePayment, acknowledgeExpenseReceipt, raisePaymentQuery, resolvePaymentQuery, listAllExpenses, listManagerChecklistApprovals, listManagerJobDeletionRequests, submitJobDeletion, decideJobDeletionRequest, retryJobChatCleanup, upsertDocumentCategory, deleteDocumentCategory, upsertDocumentItem, deleteDocumentItem, removeDocumentException, proceedDocumentStage, getEligibleManagers, updateJobDetails, submitChecklistOwnerDecision, ensureDefaultFilingWorkflows, calculateSlaDueDate, listFilingWorkflows, getFilingWorkflowDetails, loadStarterFilingWorkflowDraft, saveFilingWorkflowDraft, publishFilingWorkflow, deleteFilingWorkflowTemplate, getFilingWorkflowInstance, startFilingWorkflow, completeFilingNode, revertFilingWorkflowToPreviousStage, toggleFilingSection49, getFilingSection49, updateFilingSection49Validity, applyFilingSection49Extension, redirectBlockedFilingWorkflowStage, resumeBlockedFilingWorkflowStage, saveFilingNodeDraft, runFilingWorkflowQueryReminderCron, listFilingQueryEscalationWarnings, createFilingWorkflowQuery, addFilingWorkflowQueryComment, updateFilingWorkflowQueryStatus, deleteDeliveryOrderDocument, upsertFilingWorkflowToggleState, uploadFilingAttachment, upsertFilingShipmentDetails, deleteFilingAttachment, updateFilingAttachmentValidity
-- **cha.test.ts**: no exports detected
-- **checklist-email-automation.test.ts**: no exports detected
-- **do-extension.test.ts**: no exports detected
 
 ### communication
 - **chat-integration.test.ts**: no exports detected
@@ -792,6 +792,9 @@
 - **service.ts**: addTimelineEvent, getTimelineEvents, addNote, getNotes, deleteNote, addAttachment, getAttachments, deleteAttachment, listLeads, listEnquiries, getLead, createLead, updateLead, deleteLead, listContacts, getContact, createContact, updateContact, listAccounts, getAccount, createAccount, updateAccount, listDeals, getDeal, createDeal, updateDealStage, updateDeal, listActivities, createActivity, updateActivity, deleteActivity, listProducts, createProduct, listVendors, createVendor, listInvoices, getInvoice, createInvoice, listProjects, createProject
 
 ### customer-portal
+- **auth.test.ts**: no exports detected
+- **dashboard.test.ts**: no exports detected
+- **shipments.test.ts**: no exports detected
 - **actions.ts**: inviteCustomerPortalUserAction, resendCustomerPortalInvitationAction, suspendCustomerPortalUserAction, createCustomerPortalQueryAction, getPortalFeatureFlagAction, setPortalFeatureFlagAction
 - **auth.ts**: hashPortalToken, buildPortalLink, getPortalRequestMeta, validatePortalPassword, hashPortalPassword, createPortalSession, setPortalSessionCookie, clearPortalSessionCookie, getPortalSessionToken, getPortalSession, requirePortalSession, revokePortalSession, revokeAllPortalSessions, verifyPortalPassword, shouldLockPortalAccount, getPortalLockoutUntil, recordPortalAuthAudit
 - **checklists.ts**: submitPortalChecklistDecision
@@ -801,9 +804,10 @@
 - **service.ts**: inviteCustomerPortalUser, listCustomerPortalUsers, syncCustomerPortalUsersForCrmCustomer, activateCustomerPortalAccount, loginCustomerPortal, logoutCustomerPortal, logoutCustomerPortalAllDevices, requestCustomerPortalPasswordReset, resetCustomerPortalPassword, updatePortalNotificationPreferences, listPortalShipments, getPortalDashboard, getPortalShipmentDetail, listPortalNotifications, markPortalNotificationRead, markAllPortalNotificationsRead, uploadPortalDocument, confirmPortalDocumentSubmission, getPortalDocumentVersion, submitPortalChecklistDecision, listPortalQueries, replyToPortalQuery, createInternalCustomerQuery, listPortalRatingCategories, submitPortalShipmentRating, suspendCustomerPortalUser, resendCustomerPortalInvitation, getCustomerPortalProfile, changeCustomerPortalPassword
 - **shipments.ts**: parseCustomerPortalShipmentFilters, getCustomerPortalShipmentsData, getCustomerPortalShipmentDetailData, getCustomerPortalApprovalQueue
 - **types.ts**: no exports detected
-- **auth.test.ts**: no exports detected
-- **dashboard.test.ts**: no exports detected
-- **shipments.test.ts**: no exports detected
+
+### dashboard
+- **service.ts**: getDashboardModuleSnapshot
+- **types.ts**: no exports detected
 
 ### google-chat
 - **cards.ts**: buildConnectCard, buildHelpCard, buildStatusCard, buildTasksCard, buildAiResponseCard, buildErrorCard, buildNotificationCard, buildSpaceLinkedCard, buildPrivacyCard, buildProcessingCard
@@ -816,6 +820,7 @@
 - **types.ts**: no exports detected
 
 ### hrms
+- **letters.test.ts**: no exports detected
 - **face-enrollment.ts**: enrollFace, verifyFace, resetFaceEnrollment, getFaceEnrollmentStatus, listFaceEnrollments
 - **letter-template-import.ts**: buildFieldSchema, saveEditorHtmlAsDocx, importDocxTemplateFile, getBundledDocxTemplateFiles
 - **letter-template-types.ts**: no exports detected
@@ -829,7 +834,6 @@
 - **types.ts**: no exports detected
 - **user-agreement.ts**: getLatestAgreement, createAgreementVersion, seedDefaultAgreement, checkUserAcceptance, recordAcceptance, getAcceptanceReport, listAgreementVersions
 - **validators.ts**: no exports detected
-- **letters.test.ts**: no exports detected
 
 ### mona
 - **gemini-client.ts**: setPreferredModel, getPreferredModel, resetQuotaCooldown, callGemini, extractTextFromResponse, extractFunctionCalls, hasFunctionCalls, buildFunctionResponseContent

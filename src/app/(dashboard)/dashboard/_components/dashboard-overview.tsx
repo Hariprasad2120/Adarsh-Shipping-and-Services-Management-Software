@@ -8,13 +8,16 @@ import {
   Megaphone,
 } from "lucide-react";
 import Link from "next/link";
+import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 import type { DashboardSessionUser } from "./dashboard-types";
+import { ModuleCommandCenter } from "./module-command-center";
 
 interface DashboardOverviewProps {
   profile: UserProfile;
   sessionUser: DashboardSessionUser;
   data: DashboardWidgetsData;
+  moduleSnapshot: DashboardModuleSnapshot;
 }
 
 function formatDate(value: Date | string, options?: Intl.DateTimeFormatOptions) {
@@ -47,7 +50,12 @@ function buildWeeklySchedule() {
   });
 }
 
-export function DashboardOverview({ profile, sessionUser, data }: DashboardOverviewProps) {
+export function DashboardOverview({
+  profile,
+  sessionUser,
+  data,
+  moduleSnapshot,
+}: DashboardOverviewProps) {
   const nextAnnouncement = data.announcements[0];
   const nextTask = data.recentTasks[0];
   const nextHoliday = data.upcomingHolidays[0];
@@ -79,6 +87,16 @@ export function DashboardOverview({ profile, sessionUser, data }: DashboardOverv
 
   return (
     <div className="mnx-dashboard-overview">
+      <ModuleCommandCenter snapshot={moduleSnapshot} />
+
+      <header className="mnx-dashboard-section-heading">
+        <div>
+          <span className="mnx-dashboard-spec-label">PERSONAL PULSE</span>
+          <h2>Your day at a glance</h2>
+        </div>
+        <p>Company signals, assigned work, and the next date on your calendar.</p>
+      </header>
+
       <section className="mnx-dashboard-metrics" aria-label="Workspace metrics">
         {metrics.map((metric) => {
           const Icon = metric.icon;

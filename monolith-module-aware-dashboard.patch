@@ -1,0 +1,3300 @@
+diff --git a/docs/product-catalogue.generated.md b/docs/product-catalogue.generated.md
+index 91e7b27..4fd727b 100644
+--- a/docs/product-catalogue.generated.md
++++ b/docs/product-catalogue.generated.md
+@@ -1,6 +1,6 @@
+ # Monolith Engine — Product Catalogue (Auto-Generated)
+ 
+-> Generated at: 2026-07-27T18:48:49.292Z
++> Generated at: 2026-07-28T05:05:24.819Z
+ > Version: 0.1.0
+ 
+ ## Codebase Statistics
+@@ -10,7 +10,7 @@
+ | App Routes (Pages) | 205 |
+ | API Routes | 196 |
+ | Prisma Models | 277 |
+-| Module Service Files | 86 |
++| Module Service Files | 88 |
+ | UI Components | 92 |
+ 
+ ## Modules Overview
+@@ -29,7 +29,7 @@
+ | crm | 59 | 4 | 26 | 7 | 1 |
+ | cron | 0 | 7 | 0 | 0 | 0 |
+ | customer-portal | 0 | 19 | 0 | 12 | 0 |
+-| dashboard | 3 | 0 | 0 | 0 | 0 |
++| dashboard | 3 | 0 | 0 | 2 | 0 |
+ | dev | 0 | 1 | 0 | 0 | 0 |
+ | expense | 1 | 0 | 0 | 0 | 0 |
+ | google-chat | 0 | 6 | 6 | 8 | 0 |
+@@ -59,11 +59,10 @@
+ |---|---|---|
+ | POST | `/api/admin/ams-reset` | admin |
+ | GET, PATCH | `/api/admin/modules` | admin |
+-| GET | `/api/admin/notifications` | admin |
+ | POST | `/api/admin/notifications/[id]/resend` | admin |
++| GET | `/api/admin/notifications` | admin |
+ | GET, PATCH | `/api/admin/settings` | admin |
+ | GET, POST, PATCH | `/api/admin/simulation` | admin |
+-| GET, POST | `/api/ams/appraisals` | ams |
+ | POST | `/api/ams/appraisals/[id]/availability` | ams |
+ | POST | `/api/ams/appraisals/[id]/claim-management` | ams |
+ | POST | `/api/ams/appraisals/[id]/hike` | ams |
+@@ -75,18 +74,19 @@
+ | GET | `/api/ams/appraisals/[id]` | ams |
+ | POST | `/api/ams/appraisals/[id]/score-preview` | ams |
+ | POST | `/api/ams/appraisals/[id]/self-assessment` | ams |
++| GET, POST | `/api/ams/appraisals` | ams |
+ | GET, POST, PATCH, DELETE | `/api/ams/criteria` | ams |
+ | POST | `/api/ams/criteria/seed` | ams |
+-| GET, POST | `/api/ams/cycles` | ams |
+ | PATCH | `/api/ams/cycles/[id]` | ams |
++| GET, POST | `/api/ams/cycles` | ams |
+ | GET, PUT | `/api/ams/self-form-template` | ams |
+ | GET | `/api/attendance/day-punches` | attendance |
+ | GET, POST | `/api/attendance/holidays` | attendance |
+ | GET, POST | `/api/attendance/leave-types` | attendance |
+-| GET, POST | `/api/attendance/leaves` | attendance |
+ | POST | `/api/attendance/leaves/[id]` | attendance |
+-| GET, POST | `/api/attendance/ot` | attendance |
++| GET, POST | `/api/attendance/leaves` | attendance |
+ | POST | `/api/attendance/ot/[id]` | attendance |
++| GET, POST | `/api/attendance/ot` | attendance |
+ | GET, POST | `/api/attendance/punch` | attendance |
+ | GET, POST | `/api/attendance/sync/biometric/live` | attendance |
+ | GET, POST | `/api/attendance/sync/biometric` | attendance |
+@@ -131,14 +131,14 @@
+ | POST | `/api/customer-portal/auth/login` | customer-portal |
+ | POST | `/api/customer-portal/auth/logout` | customer-portal |
+ | GET | `/api/customer-portal/checklist-files/[id]` | customer-portal |
+-| POST | `/api/customer-portal/checklists/respond` | customer-portal |
+ | POST | `/api/customer-portal/checklists/[checklistId]/decision` | customer-portal |
++| POST | `/api/customer-portal/checklists/respond` | customer-portal |
+ | GET | `/api/customer-portal/document-versions/[id]` | customer-portal |
++| GET | `/api/customer-portal/documents/[versionId]` | customer-portal |
+ | POST | `/api/customer-portal/documents/confirm` | customer-portal |
+ | POST | `/api/customer-portal/documents/upload` | customer-portal |
+-| GET | `/api/customer-portal/documents/[versionId]` | customer-portal |
+-| POST | `/api/customer-portal/notifications/read-all` | customer-portal |
+ | POST | `/api/customer-portal/notifications/[id]/read` | customer-portal |
++| POST | `/api/customer-portal/notifications/read-all` | customer-portal |
+ | PATCH | `/api/customer-portal/profile/preferences` | customer-portal |
+ | POST | `/api/customer-portal/queries/reply` | customer-portal |
+ | POST | `/api/customer-portal/ratings` | customer-portal |
+@@ -157,22 +157,22 @@
+ | GET | `/api/hrms/attendance/month` | hrms |
+ | POST | `/api/hrms/attendance/punch` | hrms |
+ | GET, PATCH | `/api/hrms/dashboard` | hrms |
+-| GET, PATCH | `/api/hrms/employees` | hrms |
+ | POST | `/api/hrms/employees/[id]/salary-structure` | hrms |
++| GET, PATCH | `/api/hrms/employees` | hrms |
+ | GET, POST | `/api/hrms/files` | hrms |
+-| GET, POST | `/api/hrms/hr-cases` | hrms |
+ | POST | `/api/hrms/hr-cases/[id]/comments` | hrms |
++| GET, POST | `/api/hrms/hr-cases` | hrms |
+ | POST | `/api/hrms/leave/requests` | hrms |
+ | GET | `/api/hrms/leave/summary` | hrms |
++| POST | `/api/hrms/letters/[id]/accept` | hrms |
++| POST | `/api/hrms/letters/[id]/action` | hrms |
++| GET, PUT, DELETE | `/api/hrms/letters/[id]` | hrms |
+ | POST | `/api/hrms/letters/assets/upload` | hrms |
+ | GET, POST | `/api/hrms/letters` | hrms |
+ | GET, POST, PUT | `/api/hrms/letters/settings` | hrms |
+ | POST | `/api/hrms/letters/share-mail` | hrms |
+ | POST | `/api/hrms/letters/templates/upload` | hrms |
+ | GET | `/api/hrms/letters/verify` | hrms |
+-| POST | `/api/hrms/letters/[id]/accept` | hrms |
+-| POST | `/api/hrms/letters/[id]/action` | hrms |
+-| GET, PUT, DELETE | `/api/hrms/letters/[id]` | hrms |
+ | GET, POST, PATCH | `/api/hrms/lms` | hrms |
+ | GET | `/api/hrms/me` | hrms |
+ | GET, POST | `/api/hrms/on-duty` | hrms |
+@@ -185,16 +185,16 @@
+ | GET, POST | `/api/hrms/timetracker` | hrms |
+ | GET | `/api/hrms/tracking` | hrms |
+ | GET, POST | `/api/hrms/travel` | hrms |
+-| GET, POST | `/api/hrms/work-reports` | hrms |
+ | POST | `/api/hrms/work-reports/[id]/approve` | hrms |
++| GET, POST | `/api/hrms/work-reports` | hrms |
+ | POST, OPTIONS | `/api/mobile/auth/login` | mobile |
+ | POST, OPTIONS | `/api/mobile/crm/auth/login` | mobile |
+ | PATCH, OPTIONS | `/api/mobile/crm/call-attempts/[callAttemptId]/complete` | mobile |
+ | POST, OPTIONS | `/api/mobile/crm/call-attempts/[callAttemptId]/recording` | mobile |
+ | PATCH | `/api/mobile/crm/call-attempts/[callAttemptId]/recording/status` | mobile |
+-| GET, OPTIONS | `/api/mobile/crm/leads` | mobile |
+ | POST, OPTIONS | `/api/mobile/crm/leads/[leadId]/call-attempts` | mobile |
+ | PATCH, OPTIONS | `/api/mobile/crm/leads/[leadId]/status` | mobile |
++| GET, OPTIONS | `/api/mobile/crm/leads` | mobile |
+ | GET, OPTIONS | `/api/mobile/crm/update` | mobile |
+ | GET, POST, OPTIONS | `/api/mobile/hrms/agreement` | mobile |
+ | POST, OPTIONS | `/api/mobile/hrms/attendance/check-in` | mobile |
+@@ -207,52 +207,52 @@
+ | POST, OPTIONS | `/api/mobile/mona/chat` | mobile |
+ | POST | `/api/mona/chat` | mona |
+ | GET, POST | `/api/mona/model` | mona |
++| POST | `/api/notifications/[id]/ack` | notifications |
++| POST | `/api/notifications/[id]/dismiss` | notifications |
++| POST | `/api/notifications/[id]/open` | notifications |
++| POST | `/api/notifications/[id]/read` | notifications |
+ | GET | `/api/notifications/active` | notifications |
+ | POST | `/api/notifications/dismiss-all` | notifications |
+ | POST | `/api/notifications/presented` | notifications |
+ | POST | `/api/notifications/read-all` | notifications |
+ | GET | `/api/notifications` | notifications |
+-| POST | `/api/notifications/[id]/ack` | notifications |
+-| POST | `/api/notifications/[id]/dismiss` | notifications |
+-| POST | `/api/notifications/[id]/open` | notifications |
+-| POST | `/api/notifications/[id]/read` | notifications |
+-| POST | `/api/org/branches` | org |
+ | PATCH, DELETE | `/api/org/branches/[id]` | org |
+-| POST | `/api/org/departments` | org |
++| POST | `/api/org/branches` | org |
+ | POST | `/api/org/departments/[id]/divisions` | org |
+ | PATCH, DELETE | `/api/org/departments/[id]` | org |
++| POST | `/api/org/departments` | org |
+ | PATCH, DELETE | `/api/org/divisions/[id]` | org |
+ | GET | `/api/org` | org |
+-| GET, POST | `/api/recruit/applications` | recruit |
+ | GET | `/api/recruit/applications/[id]` | recruit |
+ | POST | `/api/recruit/applications/[id]/stage` | recruit |
++| GET, POST | `/api/recruit/applications` | recruit |
+ | GET | `/api/recruit/audit` | recruit |
+-| GET, POST | `/api/recruit/candidates` | recruit |
+ | GET, PATCH, DELETE | `/api/recruit/candidates/[id]` | recruit |
++| GET, POST | `/api/recruit/candidates` | recruit |
+ | GET | `/api/recruit/dashboard` | recruit |
+-| GET, POST | `/api/recruit/jobs` | recruit |
+ | GET, PUT, PATCH | `/api/recruit/jobs/[id]` | recruit |
++| GET, POST | `/api/recruit/jobs` | recruit |
+ | GET, POST | `/api/recruit/jobseeker/applications` | recruit |
+-| GET, POST | `/api/recruit/jobseeker/career/conversations` | recruit |
+ | POST | `/api/recruit/jobseeker/career/conversations/[id]/messages` | recruit |
+ | GET | `/api/recruit/jobseeker/career/conversations/[id]` | recruit |
++| GET, POST | `/api/recruit/jobseeker/career/conversations` | recruit |
+ | GET | `/api/recruit/jobseeker/dashboard` | recruit |
+ | GET, POST | `/api/recruit/jobseeker/listings` | recruit |
+ | GET, PATCH | `/api/recruit/jobseeker/profile` | recruit |
+ | GET, POST, PATCH | `/api/recruit/jobseeker/resumes` | recruit |
+ | GET, PATCH | `/api/recruit/settings` | recruit |
+-| GET, POST | `/api/roles` | roles |
+ | PUT | `/api/roles/[id]/permissions` | roles |
++| GET, POST | `/api/roles` | roles |
+ | GET, POST | `/api/setup` | setup |
++| PATCH, DELETE | `/api/todos/[id]` | todos |
+ | POST | `/api/todos/reminders/check` | todos |
+ | GET | `/api/todos/reminders/upcoming` | todos |
+ | GET, POST | `/api/todos` | todos |
+ | PATCH | `/api/todos/subtasks/[id]` | todos |
+-| PATCH, DELETE | `/api/todos/[id]` | todos |
+-| GET, POST | `/api/users` | users |
+ | POST | `/api/users/[id]/password` | users |
+ | PUT | `/api/users/[id]/roles` | users |
+ | GET, PATCH | `/api/users/[id]` | users |
++| GET, POST | `/api/users` | users |
+ 
+ ## App Routes (Pages)
+ 
+@@ -265,28 +265,28 @@
+ | `/accounting/general-ledger` | accounting | page |
+ | `/accounting/invoices-sales/new` | accounting | page |
+ | `/accounting/invoices-sales` | accounting | page |
++| `/accounting/items/[id]` | accounting | page |
+ | `/accounting/items/new` | accounting | page |
+ | `/accounting/items` | accounting | page |
+-| `/accounting/items/[id]` | accounting | page |
+ | `/accounting/jobs` | accounting | page |
++| `/accounting/journal-entries/[id]` | accounting | page |
+ | `/accounting/journal-entries/new` | accounting | page |
+ | `/accounting/journal-entries` | accounting | page |
+-| `/accounting/journal-entries/[id]` | accounting | page |
+ | `/accounting` | accounting | page |
++| `/accounting/payment-entries/[id]` | accounting | page |
+ | `/accounting/payment-entries/new` | accounting | page |
+ | `/accounting/payment-entries` | accounting | page |
+-| `/accounting/payment-entries/[id]` | accounting | page |
+ | `/accounting/profit-loss` | accounting | page |
++| `/accounting/purchase-invoices/[id]` | accounting | page |
+ | `/accounting/purchase-invoices/new` | accounting | page |
+ | `/accounting/purchase-invoices` | accounting | page |
+-| `/accounting/purchase-invoices/[id]` | accounting | page |
+ | `/accounting/purchase-orders/new` | accounting | page |
+ | `/accounting/purchase-orders` | accounting | page |
+ | `/accounting/quotations` | accounting | page |
+ | `/accounting/reports` | accounting | page |
++| `/accounting/sales-invoices/[id]` | accounting | page |
+ | `/accounting/sales-invoices/new` | accounting | page |
+ | `/accounting/sales-invoices` | accounting | page |
+-| `/accounting/sales-invoices/[id]` | accounting | page |
+ | `/accounting/sales-orders/new` | accounting | page |
+ | `/accounting/sales-orders` | accounting | page |
+ | `/accounting/settings` | accounting | page |
+@@ -301,21 +301,21 @@
+ | `/admin/sessions` | admin | page |
+ | `/admin/settings` | admin | page |
+ | `/admin/simulation` | admin | page |
+-| `/ams/appraisals/assign/[employeeId]` | ams | page |
+-| `/ams/appraisals` | ams | page |
+ | `/ams/appraisals/[id]/management-review` | ams | page |
+ | `/ams/appraisals/[id]` | ams | page |
+-| `/ams/assets` | ams | page |
++| `/ams/appraisals/assign/[employeeId]` | ams | page |
++| `/ams/appraisals` | ams | page |
+ | `/ams/assets/[id]` | ams | page |
++| `/ams/assets` | ams | page |
+ | `/ams/criteria` | ams | page |
+ | `/ams/cycles` | ams | page |
+ | `/ams/extensions` | ams | page |
+ | `/ams/history` | ams | page |
+ | `/ams/kpi` | ams | page |
+-| `/ams/my-appraisal` | ams | page |
+ | `/ams/my-appraisal/[id]/self-assessment` | ams | page |
+-| `/ams/my-reviews` | ams | page |
++| `/ams/my-appraisal` | ams | page |
+ | `/ams/my-reviews/[id]` | ams | page |
++| `/ams/my-reviews` | ams | page |
+ | `/ams` | ams | page |
+ | `/ams/pms` | ams | page |
+ | `/ams/slabs` | ams | page |
+@@ -327,12 +327,12 @@
+ | `/attendance/reports` | attendance | page |
+ | `/attendance/timesheets` | attendance | page |
+ | `/cha/approvals` | cha | page |
++| `/cha/customers/[id]/edit` | cha | page |
+ | `/cha/customers/new` | cha | page |
+ | `/cha/customers` | cha | page |
+-| `/cha/customers/[id]/edit` | cha | page |
+ | `/cha/expenses` | cha | page |
+-| `/cha/jobs` | cha | page |
+ | `/cha/jobs/[jobId]` | cha | page |
++| `/cha/jobs` | cha | page |
+ | `/cha` | cha | page |
+ | `/cha/reports` | cha | page |
+ | `/cha/settings/filing-workflows` | cha | page |
+@@ -347,69 +347,69 @@
+ | `/communication` | communication | page |
+ | `/communication/search` | communication | page |
+ | `/communication/settings` | communication | page |
++| `/crm/[...slug]` | crm | page |
+ | `/crm/approvals` | crm | page |
+ | `/crm/calls` | crm | page |
+ | `/crm/campaigns` | crm | page |
+-| `/crm/contacts/new` | crm | page |
+-| `/crm/contacts` | crm | page |
+ | `/crm/contacts/[id]/edit` | crm | page |
+ | `/crm/contacts/[id]` | crm | page |
+-| `/crm/customers/new` | crm | page |
+-| `/crm/customers` | crm | page |
++| `/crm/contacts/new` | crm | page |
++| `/crm/contacts` | crm | page |
+ | `/crm/customers/[id]/edit` | crm | page |
+ | `/crm/customers/[id]` | crm | page |
++| `/crm/customers/new` | crm | page |
++| `/crm/customers` | crm | page |
+ | `/crm/dashboard` | crm | page |
+-| `/crm/deals/new` | crm | page |
+-| `/crm/deals` | crm | page |
+ | `/crm/deals/[id]/edit` | crm | page |
+ | `/crm/deals/[id]` | crm | page |
++| `/crm/deals/new` | crm | page |
++| `/crm/deals` | crm | page |
+ | `/crm/documents` | crm | page |
+ | `/crm/efficiency` | crm | page |
+-| `/crm/enquiries` | crm | page |
+ | `/crm/enquiries/[id]` | crm | page |
++| `/crm/enquiries` | crm | page |
+ | `/crm/events` | crm | page |
+ | `/crm/forecasts` | crm | page |
++| `/crm/invoices/[invoiceId]` | crm | page |
+ | `/crm/invoices/new` | crm | page |
+ | `/crm/invoices` | crm | page |
+-| `/crm/invoices/[invoiceId]` | crm | page |
++| `/crm/items/[id]` | crm | page |
+ | `/crm/items/new` | crm | page |
+ | `/crm/items` | crm | page |
+-| `/crm/items/[id]` | crm | page |
+ | `/crm/lead-sources/justdial` | crm | page |
+ | `/crm/lead-sources/logs` | crm | page |
+ | `/crm/lead-sources` | crm | page |
+-| `/crm/leads/new` | crm | page |
+-| `/crm/leads` | crm | page |
+ | `/crm/leads/[id]/edit` | crm | page |
+ | `/crm/leads/[id]` | crm | page |
++| `/crm/leads/new` | crm | page |
++| `/crm/leads` | crm | page |
+ | `/crm` | crm | page |
+ | `/crm/price-books` | crm | page |
+ | `/crm/products` | crm | page |
+ | `/crm/projects` | crm | page |
+ | `/crm/purchase-orders` | crm | page |
+-| `/crm/quotes/new` | crm | page |
+-| `/crm/quotes` | crm | page |
+ | `/crm/quotes/[quoteId]/edit` | crm | page |
+ | `/crm/quotes/[quoteId]` | crm | page |
++| `/crm/quotes/new` | crm | page |
++| `/crm/quotes` | crm | page |
+ | `/crm/sales-inbox` | crm | page |
+ | `/crm/sales-orders` | crm | page |
+ | `/crm/services` | crm | page |
+ | `/crm/social` | crm | page |
+ | `/crm/solutions` | crm | page |
+ | `/crm/tasks` | crm | page |
++| `/crm/tickets/[id]` | crm | page |
+ | `/crm/tickets/new` | crm | page |
+ | `/crm/tickets` | crm | page |
+-| `/crm/tickets/[id]` | crm | page |
+ | `/crm/vendors` | crm | page |
+ | `/crm/visits` | crm | page |
+ | `/crm/voc` | crm | page |
+-| `/crm/[...slug]` | crm | page |
+ | `/dashboard` | dashboard | page |
+ | `/expense` | expense | page |
+ | `/hrms/approvals` | hrms | page |
++| `/hrms/employees/[id]` | hrms | page |
+ | `/hrms/employees/new` | hrms | page |
+ | `/hrms/employees` | hrms | page |
+-| `/hrms/employees/[id]` | hrms | page |
+ | `/hrms/files` | hrms | page |
+ | `/hrms/helpdesk` | hrms | page |
+ | `/hrms/letters` | hrms | page |
+@@ -740,12 +740,12 @@
+ ## Module Service Files
+ 
+ ### accounting
++- **accounting.test.ts**: no exports detected
+ - **actions.ts**: createAccountAction, updateAccountAction, createJournalEntryAction, submitJournalEntryAction, cancelJournalEntryAction, createSalesInvoiceAction, submitSalesInvoiceAction, cancelSalesInvoiceAction, createPurchaseInvoiceAction, submitPurchaseInvoiceAction, cancelPurchaseInvoiceAction, createPaymentEntryAction, submitPaymentEntryAction, cancelPaymentEntryAction, updateAccountingSettingsAction, initializeCOAAction, generateInvoiceFromDealAction, getPayrollBatchesAction, compilePayrollBatchAction, createPayrollBatchAction, finalizePayrollBatchAction, payPayrollBatchAction, listAssetsAction, getAssetAction, createAssetAction, runDepreciationAction, listQuotationsAction, getQuotationAction, createQuotationAction, convertQuotationToInvoiceAction, listCustomerNotesAction, getCustomerNoteAction, createCustomerNoteAction, submitCustomerNoteAction, getTransactionLockAction, updateTransactionLockAction, listJobCostingsAction, getJobCostingAction, createJobCostingAction, updateJobCostingAction, getARAgeingAction, getAPAgeingAction, getSalesRegisterAction, getPurchaseRegisterAction, getGSTR1SummaryAction, getGSTR2BSummaryAction, getConsolidatedGSTLedgerAction, getDayBookAction, getJournalRegisterAction, getJobProfitabilityAction, getCashAndBankLedgerAction, recordBankTransferAction, getProfitAndLossAction, getBalanceSheetAction, getTrialBalanceAction
+ - **reports.ts**: getGeneralLedger, getTrialBalance, getProfitAndLoss, getBalanceSheet, getARAgeing, getAPAgeing, getSalesRegister, getPurchaseRegister, getGSTR1Summary, getGSTR2BSummary, getConsolidatedGSTLedger, getDayBook, getJournalRegister, getJobProfitability, getCashAndBankLedger
+ - **service.ts**: seedChartOfAccounts, createAuditLog, listAccounts, getChartOfAccounts, createAccount, updateAccount, validateBalancedEntry, validateAccountPostingAllowed, postGLTransactions, reverseGLTransactions, listJournalEntries, getJournalEntry, createJournalEntry, submitJournalEntry, cancelJournalEntry, listSalesInvoices, getSalesInvoice, createSalesInvoice, submitSalesInvoice, cancelSalesInvoice, listPurchaseInvoices, getPurchaseInvoice, createPurchaseInvoice, submitPurchaseInvoice, cancelPurchaseInvoice, listPaymentEntries, getPaymentEntry, createPaymentEntry, submitPaymentEntry, cancelPaymentEntry, getAccountingSettings, updateAccountingSettings, compilePayrollBatch, getPayrollBatches, createPayrollBatch, finalizePayrollBatch, payPayrollBatch, listAssets, getAsset, createAsset, runDepreciationForAsset, getTransactionLock, updateTransactionLock, validatePostingDateNotLocked, listQuotations, getQuotation, createQuotation, convertQuotationToInvoice, listCustomerNotes, getCustomerNote, createCustomerNote, submitCustomerNote, listVendorNotes, getVendorNote, createVendorNote, submitVendorNote, processRecurringExpenses, processRecurringJournals, listPartnerAccounts, createPartnerAccount, updatePartnerAccount, recordPartnerTransaction, listJobCostings, getJobCosting, createJobCosting, updateJobCosting
+ - **types.ts**: no exports detected
+ - **validators.ts**: no exports detected
+-- **accounting.test.ts**: no exports detected
+ 
+ ### ams
+ - **audit-log.ts**: createAppraisalAuditLogCompat
+@@ -764,13 +764,13 @@
+ - **service.ts**: punchIn, punchOut, getMonthAttendance, getLeaveTypes, createLeaveType, getLeaveBalances, initLeaveBalancesForUser, getLeaveRequests, createLeaveRequest, decideLeaveRequest, createOTEntry, decideOT, getOTEntries, getHolidays, createHoliday, getMonthlyReport
+ 
+ ### cha
++- **cha.test.ts**: no exports detected
++- **checklist-email-automation.test.ts**: no exports detected
++- **do-extension.test.ts**: no exports detected
+ - **actions.ts**: ensureSettingsAndDefaultsAction, updateSettingsAction, createJobAction, getNextJobNumberPreviewAction, submitJobDeletionAction, decideJobDeletionRequestAction, retryJobChatCleanupAction, deleteAllChaJobsForTestingAction, createJobTypeAction, updateJobTypeManifestConfigAction, createShipmentTypeAction, deleteShipmentTypeAction, deleteJobTypeAction, updateJobTypeFilingFlowCategoryAction, createTeamGroupAction, deleteTeamGroupAction, getJobDetailsAction, listJobsAction, uploadDocumentVersionAction, createJobCustomDocumentUploadAction, deleteDocumentVersionAction, declareDocumentExceptionAction, markDocumentNotAvailableAction, importChecklistExcelAction, uploadChecklistFileAction, upsertAdditionalDataAction, setDoExtensionDateAction, submitChecklistInternalDecisionAction, submitChecklistCustomerDecisionAction, sendChecklistCustomerMailAction, proceedAdditionalDataAction, submitChecklistForApprovalAction, checklistManagerActionAction, selfApproveChecklistAction, adjustEstimatedFilingDateAction, markAsFiledAction, updateCustomerAdvanceExpectedAction, recordCustomerAdvanceReceiptAction, declareAdvanceNotRequiredAction, createExpenseRequestAction, createExpenseRequestWithAttachmentAction, createDirectExpenseRequestAction, createDirectExpenseRequestWithAttachmentAction, triggerUrgentExpenseEscalationAction, reviewExpenseRequestAction, approveAccountsExpenseRequestAction, routeExpenseRequestToManagerAction, submitExpenseClarificationAction, markExpenseReadyForDisbursementAction, setExpenseStatusAction, postExpensePaymentAction, acknowledgeExpenseReceiptAction, raisePaymentQueryAction, resolvePaymentQueryAction, listAllExpensesAction, listManagerChecklistApprovalsAction, upsertDocumentCategoryAction, deleteDocumentCategoryAction, upsertDocumentItemAction, deleteDocumentItemAction, removeDocumentExceptionAction, proceedDocumentStageAction, setDoUploadToggleAction, setDoExtensionToggleAction, uploadDeliveryOrderDocumentAction, deleteDeliveryOrderDocumentAction, updateSection49ValidityAction, applySection49ExtensionAction, updateJobDetailsAction, submitChecklistOwnerDecisionAction, saveFilingWorkflowDraftAction, loadStarterFilingWorkflowAction, publishFilingWorkflowAction, getFilingWorkflowDetailsAction, deleteFilingWorkflowTemplateAction, getFilingWorkflowInstanceAction, startFilingWorkflowAction, completeFilingNodeAction, saveFilingNodeDraftAction, revertFilingStageAction, redirectBlockedFilingStageAction, resumeBlockedFilingStageAction, toggleFilingSection49Action, getFilingSection49Action, createFilingWorkflowQueryAction, updateFilingWorkflowQueryStatusAction, addFilingWorkflowQueryCommentAction, upsertFilingWorkflowToggleStateAction, uploadFilingAttachmentAction, upsertFilingShipmentDetailsAction, deleteFilingAttachmentAction, acceptCustomerDocumentSubmissionAction, updateFilingAttachmentValidityAction
+ - **checklist-email-automation.ts**: queueChecklistMainCustomerEmail, finalizeChecklistMainCustomerEmail
+ - **job-report.ts**: listCompletedChaJobsForReports, generateCompletedChaJobReport
+ - **service.ts**: ensureDefaultDocumentRequirements, getNextChaJobNumberPreview, ensureSettingsAndDefaults, logChaAudit, getChecklistInternalApproverIds, createJob, createJobType, updateJobTypeManifestConfig, updateJobTypeFilingFlowCategory, deleteJobType, upsertBranchNumberingRules, createShipmentType, deleteShipmentType, createTeamGroup, deleteTeamGroup, listJobTypesForSelection, listJobTypesForSettings, getJobDetails, listJobs, resolveDriveFolderForCategory, uploadDocumentVersion, acceptCustomerDocumentSubmission, createJobCustomDocumentRequirementAndUpload, deleteDocumentVersion, declareDocumentException, markDocumentNotAvailable, verifyDocumentGate, upsertAdditionalData, proceedAdditionalDataStage, setDeliveryOrderUploadToggle, setDeliveryOrderExtensionToggle, setDeliveryOrderExtensionDate, listSection49ValidityWarnings, listChaDueDateWarnings, uploadDeliveryOrderDocument, applyDeliveryOrderExtension, listDeliveryOrderExtensions, uploadChecklistFile, submitChecklistInternalDecision, sendChecklistCustomerMail, submitChecklistCustomerDecision, submitPortalCustomerChecklistDecision, importChecklistExcel, submitChecklistForApproval, checklistManagerAction, selfApproveChecklist, adjustEstimatedFilingDate, markAsFiled, updateCustomerAdvanceExpected, recordCustomerAdvanceReceipt, declareAdvanceNotRequired, createExpenseRequest, triggerUrgentExpenseEscalation, reviewExpenseRequest, listExpenseJobOptions, createDirectExpenseRequest, approveAccountsExpenseRequest, routeExpenseRequestToManager, submitExpenseClarification, markExpenseReadyForDisbursement, setExpenseStatus, postExpensePayment, acknowledgeExpenseReceipt, raisePaymentQuery, resolvePaymentQuery, listAllExpenses, listManagerChecklistApprovals, listManagerJobDeletionRequests, submitJobDeletion, decideJobDeletionRequest, retryJobChatCleanup, upsertDocumentCategory, deleteDocumentCategory, upsertDocumentItem, deleteDocumentItem, removeDocumentException, proceedDocumentStage, getEligibleManagers, updateJobDetails, submitChecklistOwnerDecision, ensureDefaultFilingWorkflows, calculateSlaDueDate, listFilingWorkflows, getFilingWorkflowDetails, loadStarterFilingWorkflowDraft, saveFilingWorkflowDraft, publishFilingWorkflow, deleteFilingWorkflowTemplate, getFilingWorkflowInstance, startFilingWorkflow, completeFilingNode, revertFilingWorkflowToPreviousStage, toggleFilingSection49, getFilingSection49, updateFilingSection49Validity, applyFilingSection49Extension, redirectBlockedFilingWorkflowStage, resumeBlockedFilingWorkflowStage, saveFilingNodeDraft, runFilingWorkflowQueryReminderCron, listFilingQueryEscalationWarnings, createFilingWorkflowQuery, addFilingWorkflowQueryComment, updateFilingWorkflowQueryStatus, deleteDeliveryOrderDocument, upsertFilingWorkflowToggleState, uploadFilingAttachment, upsertFilingShipmentDetails, deleteFilingAttachment, updateFilingAttachmentValidity
+-- **cha.test.ts**: no exports detected
+-- **checklist-email-automation.test.ts**: no exports detected
+-- **do-extension.test.ts**: no exports detected
+ 
+ ### communication
+ - **chat-integration.test.ts**: no exports detected
+@@ -792,6 +792,9 @@
+ - **service.ts**: addTimelineEvent, getTimelineEvents, addNote, getNotes, deleteNote, addAttachment, getAttachments, deleteAttachment, listLeads, listEnquiries, getLead, createLead, updateLead, deleteLead, listContacts, getContact, createContact, updateContact, listAccounts, getAccount, createAccount, updateAccount, listDeals, getDeal, createDeal, updateDealStage, updateDeal, listActivities, createActivity, updateActivity, deleteActivity, listProducts, createProduct, listVendors, createVendor, listInvoices, getInvoice, createInvoice, listProjects, createProject
+ 
+ ### customer-portal
++- **auth.test.ts**: no exports detected
++- **dashboard.test.ts**: no exports detected
++- **shipments.test.ts**: no exports detected
+ - **actions.ts**: inviteCustomerPortalUserAction, resendCustomerPortalInvitationAction, suspendCustomerPortalUserAction, createCustomerPortalQueryAction, getPortalFeatureFlagAction, setPortalFeatureFlagAction
+ - **auth.ts**: hashPortalToken, buildPortalLink, getPortalRequestMeta, validatePortalPassword, hashPortalPassword, createPortalSession, setPortalSessionCookie, clearPortalSessionCookie, getPortalSessionToken, getPortalSession, requirePortalSession, revokePortalSession, revokeAllPortalSessions, verifyPortalPassword, shouldLockPortalAccount, getPortalLockoutUntil, recordPortalAuthAudit
+ - **checklists.ts**: submitPortalChecklistDecision
+@@ -801,9 +804,10 @@
+ - **service.ts**: inviteCustomerPortalUser, listCustomerPortalUsers, syncCustomerPortalUsersForCrmCustomer, activateCustomerPortalAccount, loginCustomerPortal, logoutCustomerPortal, logoutCustomerPortalAllDevices, requestCustomerPortalPasswordReset, resetCustomerPortalPassword, updatePortalNotificationPreferences, listPortalShipments, getPortalDashboard, getPortalShipmentDetail, listPortalNotifications, markPortalNotificationRead, markAllPortalNotificationsRead, uploadPortalDocument, confirmPortalDocumentSubmission, getPortalDocumentVersion, submitPortalChecklistDecision, listPortalQueries, replyToPortalQuery, createInternalCustomerQuery, listPortalRatingCategories, submitPortalShipmentRating, suspendCustomerPortalUser, resendCustomerPortalInvitation, getCustomerPortalProfile, changeCustomerPortalPassword
+ - **shipments.ts**: parseCustomerPortalShipmentFilters, getCustomerPortalShipmentsData, getCustomerPortalShipmentDetailData, getCustomerPortalApprovalQueue
+ - **types.ts**: no exports detected
+-- **auth.test.ts**: no exports detected
+-- **dashboard.test.ts**: no exports detected
+-- **shipments.test.ts**: no exports detected
++
++### dashboard
++- **service.ts**: getDashboardModuleSnapshot
++- **types.ts**: no exports detected
+ 
+ ### google-chat
+ - **cards.ts**: buildConnectCard, buildHelpCard, buildStatusCard, buildTasksCard, buildAiResponseCard, buildErrorCard, buildNotificationCard, buildSpaceLinkedCard, buildPrivacyCard, buildProcessingCard
+@@ -816,6 +820,7 @@
+ - **types.ts**: no exports detected
+ 
+ ### hrms
++- **letters.test.ts**: no exports detected
+ - **face-enrollment.ts**: enrollFace, verifyFace, resetFaceEnrollment, getFaceEnrollmentStatus, listFaceEnrollments
+ - **letter-template-import.ts**: buildFieldSchema, saveEditorHtmlAsDocx, importDocxTemplateFile, getBundledDocxTemplateFiles
+ - **letter-template-types.ts**: no exports detected
+@@ -829,7 +834,6 @@
+ - **types.ts**: no exports detected
+ - **user-agreement.ts**: getLatestAgreement, createAgreementVersion, seedDefaultAgreement, checkUserAcceptance, recordAcceptance, getAcceptanceReport, listAgreementVersions
+ - **validators.ts**: no exports detected
+-- **letters.test.ts**: no exports detected
+ 
+ ### mona
+ - **gemini-client.ts**: setPreferredModel, getPreferredModel, resetQuotaCooldown, callGemini, extractTextFromResponse, extractFunctionCalls, hasFunctionCalls, buildFunctionResponseContent
+diff --git a/docs/product-catalogue.json b/docs/product-catalogue.json
+index e6fe398..0b503f3 100644
+--- a/docs/product-catalogue.json
++++ b/docs/product-catalogue.json
+@@ -1,5 +1,5 @@
+ {
+-  "generatedAt": "2026-07-27T18:48:49.292Z",
++  "generatedAt": "2026-07-28T05:05:24.819Z",
+   "product": {
+     "name": "Monolith Engine",
+     "company": "Adarsh Shipping & Services",
+@@ -9,7 +9,7 @@
+     "totalAppRoutes": 205,
+     "totalApiRoutes": 196,
+     "totalPrismaModels": 277,
+-    "totalModuleServices": 86,
++    "totalModuleServices": 88,
+     "totalComponents": 92
+   },
+   "appRoutes": [
+@@ -55,6 +55,12 @@
+       "module": "accounting",
+       "type": "page"
+     },
++    {
++      "route": "/accounting/items/[id]",
++      "filePath": "src/app/(dashboard)/accounting/items/[id]/page.tsx",
++      "module": "accounting",
++      "type": "page"
++    },
+     {
+       "route": "/accounting/items/new",
+       "filePath": "src/app/(dashboard)/accounting/items/new/page.tsx",
+@@ -68,14 +74,14 @@
+       "type": "page"
+     },
+     {
+-      "route": "/accounting/items/[id]",
+-      "filePath": "src/app/(dashboard)/accounting/items/[id]/page.tsx",
++      "route": "/accounting/jobs",
++      "filePath": "src/app/(dashboard)/accounting/jobs/page.tsx",
+       "module": "accounting",
+       "type": "page"
+     },
+     {
+-      "route": "/accounting/jobs",
+-      "filePath": "src/app/(dashboard)/accounting/jobs/page.tsx",
++      "route": "/accounting/journal-entries/[id]",
++      "filePath": "src/app/(dashboard)/accounting/journal-entries/[id]/page.tsx",
+       "module": "accounting",
+       "type": "page"
+     },
+@@ -92,14 +98,14 @@
+       "type": "page"
+     },
+     {
+-      "route": "/accounting/journal-entries/[id]",
+-      "filePath": "src/app/(dashboard)/accounting/journal-entries/[id]/page.tsx",
++      "route": "/accounting",
++      "filePath": "src/app/(dashboard)/accounting/page.tsx",
+       "module": "accounting",
+       "type": "page"
+     },
+     {
+-      "route": "/accounting",
+-      "filePath": "src/app/(dashboard)/accounting/page.tsx",
++      "route": "/accounting/payment-entries/[id]",
++      "filePath": "src/app/(dashboard)/accounting/payment-entries/[id]/page.tsx",
+       "module": "accounting",
+       "type": "page"
+     },
+@@ -116,14 +122,14 @@
+       "type": "page"
+     },
+     {
+-      "route": "/accounting/payment-entries/[id]",
+-      "filePath": "src/app/(dashboard)/accounting/payment-entries/[id]/page.tsx",
++      "route": "/accounting/profit-loss",
++      "filePath": "src/app/(dashboard)/accounting/profit-loss/page.tsx",
+       "module": "accounting",
+       "type": "page"
+     },
+     {
+-      "route": "/accounting/profit-loss",
+-      "filePath": "src/app/(dashboard)/accounting/profit-loss/page.tsx",
++      "route": "/accounting/purchase-invoices/[id]",
++      "filePath": "src/app/(dashboard)/accounting/purchase-invoices/[id]/page.tsx",
+       "module": "accounting",
+       "type": "page"
+     },
+@@ -139,12 +145,6 @@
+       "module": "accounting",
+       "type": "page"
+     },
+-    {
+-      "route": "/accounting/purchase-invoices/[id]",
+-      "filePath": "src/app/(dashboard)/accounting/purchase-invoices/[id]/page.tsx",
+-      "module": "accounting",
+-      "type": "page"
+-    },
+     {
+       "route": "/accounting/purchase-orders/new",
+       "filePath": "src/app/(dashboard)/accounting/purchase-orders/new/page.tsx",
+@@ -170,20 +170,20 @@
+       "type": "page"
+     },
+     {
+-      "route": "/accounting/sales-invoices/new",
+-      "filePath": "src/app/(dashboard)/accounting/sales-invoices/new/page.tsx",
++      "route": "/accounting/sales-invoices/[id]",
++      "filePath": "src/app/(dashboard)/accounting/sales-invoices/[id]/page.tsx",
+       "module": "accounting",
+       "type": "page"
+     },
+     {
+-      "route": "/accounting/sales-invoices",
+-      "filePath": "src/app/(dashboard)/accounting/sales-invoices/page.tsx",
++      "route": "/accounting/sales-invoices/new",
++      "filePath": "src/app/(dashboard)/accounting/sales-invoices/new/page.tsx",
+       "module": "accounting",
+       "type": "page"
+     },
+     {
+-      "route": "/accounting/sales-invoices/[id]",
+-      "filePath": "src/app/(dashboard)/accounting/sales-invoices/[id]/page.tsx",
++      "route": "/accounting/sales-invoices",
++      "filePath": "src/app/(dashboard)/accounting/sales-invoices/page.tsx",
+       "module": "accounting",
+       "type": "page"
+     },
+@@ -272,38 +272,38 @@
+       "type": "page"
+     },
+     {
+-      "route": "/ams/appraisals/assign/[employeeId]",
+-      "filePath": "src/app/(dashboard)/ams/appraisals/assign/[employeeId]/page.tsx",
++      "route": "/ams/appraisals/[id]/management-review",
++      "filePath": "src/app/(dashboard)/ams/appraisals/[id]/management-review/page.tsx",
+       "module": "ams",
+       "type": "page"
+     },
+     {
+-      "route": "/ams/appraisals",
+-      "filePath": "src/app/(dashboard)/ams/appraisals/page.tsx",
++      "route": "/ams/appraisals/[id]",
++      "filePath": "src/app/(dashboard)/ams/appraisals/[id]/page.tsx",
+       "module": "ams",
+       "type": "page"
+     },
+     {
+-      "route": "/ams/appraisals/[id]/management-review",
+-      "filePath": "src/app/(dashboard)/ams/appraisals/[id]/management-review/page.tsx",
++      "route": "/ams/appraisals/assign/[employeeId]",
++      "filePath": "src/app/(dashboard)/ams/appraisals/assign/[employeeId]/page.tsx",
+       "module": "ams",
+       "type": "page"
+     },
+     {
+-      "route": "/ams/appraisals/[id]",
+-      "filePath": "src/app/(dashboard)/ams/appraisals/[id]/page.tsx",
++      "route": "/ams/appraisals",
++      "filePath": "src/app/(dashboard)/ams/appraisals/page.tsx",
+       "module": "ams",
+       "type": "page"
+     },
+     {
+-      "route": "/ams/assets",
+-      "filePath": "src/app/(dashboard)/ams/assets/page.tsx",
++      "route": "/ams/assets/[id]",
++      "filePath": "src/app/(dashboard)/ams/assets/[id]/page.tsx",
+       "module": "ams",
+       "type": "page"
+     },
+     {
+-      "route": "/ams/assets/[id]",
+-      "filePath": "src/app/(dashboard)/ams/assets/[id]/page.tsx",
++      "route": "/ams/assets",
++      "filePath": "src/app/(dashboard)/ams/assets/page.tsx",
+       "module": "ams",
+       "type": "page"
+     },
+@@ -337,12 +337,6 @@
+       "module": "ams",
+       "type": "page"
+     },
+-    {
+-      "route": "/ams/my-appraisal",
+-      "filePath": "src/app/(dashboard)/ams/my-appraisal/page.tsx",
+-      "module": "ams",
+-      "type": "page"
+-    },
+     {
+       "route": "/ams/my-appraisal/[id]/self-assessment",
+       "filePath": "src/app/(dashboard)/ams/my-appraisal/[id]/self-assessment/page.tsx",
+@@ -350,8 +344,8 @@
+       "type": "page"
+     },
+     {
+-      "route": "/ams/my-reviews",
+-      "filePath": "src/app/(dashboard)/ams/my-reviews/page.tsx",
++      "route": "/ams/my-appraisal",
++      "filePath": "src/app/(dashboard)/ams/my-appraisal/page.tsx",
+       "module": "ams",
+       "type": "page"
+     },
+@@ -361,6 +355,12 @@
+       "module": "ams",
+       "type": "page"
+     },
++    {
++      "route": "/ams/my-reviews",
++      "filePath": "src/app/(dashboard)/ams/my-reviews/page.tsx",
++      "module": "ams",
++      "type": "page"
++    },
+     {
+       "route": "/ams",
+       "filePath": "src/app/(dashboard)/ams/page.tsx",
+@@ -428,20 +428,20 @@
+       "type": "page"
+     },
+     {
+-      "route": "/cha/customers/new",
+-      "filePath": "src/app/(dashboard)/cha/customers/new/page.tsx",
++      "route": "/cha/customers/[id]/edit",
++      "filePath": "src/app/(dashboard)/cha/customers/[id]/edit/page.tsx",
+       "module": "cha",
+       "type": "page"
+     },
+     {
+-      "route": "/cha/customers",
+-      "filePath": "src/app/(dashboard)/cha/customers/page.tsx",
++      "route": "/cha/customers/new",
++      "filePath": "src/app/(dashboard)/cha/customers/new/page.tsx",
+       "module": "cha",
+       "type": "page"
+     },
+     {
+-      "route": "/cha/customers/[id]/edit",
+-      "filePath": "src/app/(dashboard)/cha/customers/[id]/edit/page.tsx",
++      "route": "/cha/customers",
++      "filePath": "src/app/(dashboard)/cha/customers/page.tsx",
+       "module": "cha",
+       "type": "page"
+     },
+@@ -452,14 +452,14 @@
+       "type": "page"
+     },
+     {
+-      "route": "/cha/jobs",
+-      "filePath": "src/app/(dashboard)/cha/jobs/page.tsx",
++      "route": "/cha/jobs/[jobId]",
++      "filePath": "src/app/(dashboard)/cha/jobs/[jobId]/page.tsx",
+       "module": "cha",
+       "type": "page"
+     },
+     {
+-      "route": "/cha/jobs/[jobId]",
+-      "filePath": "src/app/(dashboard)/cha/jobs/[jobId]/page.tsx",
++      "route": "/cha/jobs",
++      "filePath": "src/app/(dashboard)/cha/jobs/page.tsx",
+       "module": "cha",
+       "type": "page"
+     },
+@@ -559,6 +559,12 @@
+       "module": "communication",
+       "type": "page"
+     },
++    {
++      "route": "/crm/[...slug]",
++      "filePath": "src/app/(dashboard)/crm/[...slug]/page.tsx",
++      "module": "crm",
++      "type": "page"
++    },
+     {
+       "route": "/crm/approvals",
+       "filePath": "src/app/(dashboard)/crm/approvals/page.tsx",
+@@ -577,18 +583,6 @@
+       "module": "crm",
+       "type": "page"
+     },
+-    {
+-      "route": "/crm/contacts/new",
+-      "filePath": "src/app/(dashboard)/crm/contacts/new/page.tsx",
+-      "module": "crm",
+-      "type": "page"
+-    },
+-    {
+-      "route": "/crm/contacts",
+-      "filePath": "src/app/(dashboard)/crm/contacts/page.tsx",
+-      "module": "crm",
+-      "type": "page"
+-    },
+     {
+       "route": "/crm/contacts/[id]/edit",
+       "filePath": "src/app/(dashboard)/crm/contacts/[id]/edit/page.tsx",
+@@ -602,14 +596,14 @@
+       "type": "page"
+     },
+     {
+-      "route": "/crm/customers/new",
+-      "filePath": "src/app/(dashboard)/crm/customers/new/page.tsx",
++      "route": "/crm/contacts/new",
++      "filePath": "src/app/(dashboard)/crm/contacts/new/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+     {
+-      "route": "/crm/customers",
+-      "filePath": "src/app/(dashboard)/crm/customers/page.tsx",
++      "route": "/crm/contacts",
++      "filePath": "src/app/(dashboard)/crm/contacts/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+@@ -626,20 +620,20 @@
+       "type": "page"
+     },
+     {
+-      "route": "/crm/dashboard",
+-      "filePath": "src/app/(dashboard)/crm/dashboard/page.tsx",
++      "route": "/crm/customers/new",
++      "filePath": "src/app/(dashboard)/crm/customers/new/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+     {
+-      "route": "/crm/deals/new",
+-      "filePath": "src/app/(dashboard)/crm/deals/new/page.tsx",
++      "route": "/crm/customers",
++      "filePath": "src/app/(dashboard)/crm/customers/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+     {
+-      "route": "/crm/deals",
+-      "filePath": "src/app/(dashboard)/crm/deals/page.tsx",
++      "route": "/crm/dashboard",
++      "filePath": "src/app/(dashboard)/crm/dashboard/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+@@ -655,6 +649,18 @@
+       "module": "crm",
+       "type": "page"
+     },
++    {
++      "route": "/crm/deals/new",
++      "filePath": "src/app/(dashboard)/crm/deals/new/page.tsx",
++      "module": "crm",
++      "type": "page"
++    },
++    {
++      "route": "/crm/deals",
++      "filePath": "src/app/(dashboard)/crm/deals/page.tsx",
++      "module": "crm",
++      "type": "page"
++    },
+     {
+       "route": "/crm/documents",
+       "filePath": "src/app/(dashboard)/crm/documents/page.tsx",
+@@ -668,14 +674,14 @@
+       "type": "page"
+     },
+     {
+-      "route": "/crm/enquiries",
+-      "filePath": "src/app/(dashboard)/crm/enquiries/page.tsx",
++      "route": "/crm/enquiries/[id]",
++      "filePath": "src/app/(dashboard)/crm/enquiries/[id]/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+     {
+-      "route": "/crm/enquiries/[id]",
+-      "filePath": "src/app/(dashboard)/crm/enquiries/[id]/page.tsx",
++      "route": "/crm/enquiries",
++      "filePath": "src/app/(dashboard)/crm/enquiries/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+@@ -691,6 +697,12 @@
+       "module": "crm",
+       "type": "page"
+     },
++    {
++      "route": "/crm/invoices/[invoiceId]",
++      "filePath": "src/app/(dashboard)/crm/invoices/[invoiceId]/page.tsx",
++      "module": "crm",
++      "type": "page"
++    },
+     {
+       "route": "/crm/invoices/new",
+       "filePath": "src/app/(dashboard)/crm/invoices/new/page.tsx",
+@@ -704,8 +716,8 @@
+       "type": "page"
+     },
+     {
+-      "route": "/crm/invoices/[invoiceId]",
+-      "filePath": "src/app/(dashboard)/crm/invoices/[invoiceId]/page.tsx",
++      "route": "/crm/items/[id]",
++      "filePath": "src/app/(dashboard)/crm/items/[id]/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+@@ -721,12 +733,6 @@
+       "module": "crm",
+       "type": "page"
+     },
+-    {
+-      "route": "/crm/items/[id]",
+-      "filePath": "src/app/(dashboard)/crm/items/[id]/page.tsx",
+-      "module": "crm",
+-      "type": "page"
+-    },
+     {
+       "route": "/crm",
+       "filePath": "src/app/(dashboard)/crm/layout.tsx",
+@@ -752,26 +758,26 @@
+       "type": "page"
+     },
+     {
+-      "route": "/crm/leads/new",
+-      "filePath": "src/app/(dashboard)/crm/leads/new/page.tsx",
++      "route": "/crm/leads/[id]/edit",
++      "filePath": "src/app/(dashboard)/crm/leads/[id]/edit/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+     {
+-      "route": "/crm/leads",
+-      "filePath": "src/app/(dashboard)/crm/leads/page.tsx",
++      "route": "/crm/leads/[id]",
++      "filePath": "src/app/(dashboard)/crm/leads/[id]/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+     {
+-      "route": "/crm/leads/[id]/edit",
+-      "filePath": "src/app/(dashboard)/crm/leads/[id]/edit/page.tsx",
++      "route": "/crm/leads/new",
++      "filePath": "src/app/(dashboard)/crm/leads/new/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+     {
+-      "route": "/crm/leads/[id]",
+-      "filePath": "src/app/(dashboard)/crm/leads/[id]/page.tsx",
++      "route": "/crm/leads",
++      "filePath": "src/app/(dashboard)/crm/leads/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+@@ -812,26 +818,26 @@
+       "type": "page"
+     },
+     {
+-      "route": "/crm/quotes/new",
+-      "filePath": "src/app/(dashboard)/crm/quotes/new/page.tsx",
++      "route": "/crm/quotes/[quoteId]/edit",
++      "filePath": "src/app/(dashboard)/crm/quotes/[quoteId]/edit/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+     {
+-      "route": "/crm/quotes",
+-      "filePath": "src/app/(dashboard)/crm/quotes/page.tsx",
++      "route": "/crm/quotes/[quoteId]",
++      "filePath": "src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+     {
+-      "route": "/crm/quotes/[quoteId]/edit",
+-      "filePath": "src/app/(dashboard)/crm/quotes/[quoteId]/edit/page.tsx",
++      "route": "/crm/quotes/new",
++      "filePath": "src/app/(dashboard)/crm/quotes/new/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+     {
+-      "route": "/crm/quotes/[quoteId]",
+-      "filePath": "src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx",
++      "route": "/crm/quotes",
++      "filePath": "src/app/(dashboard)/crm/quotes/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+@@ -872,20 +878,20 @@
+       "type": "page"
+     },
+     {
+-      "route": "/crm/tickets/new",
+-      "filePath": "src/app/(dashboard)/crm/tickets/new/page.tsx",
++      "route": "/crm/tickets/[id]",
++      "filePath": "src/app/(dashboard)/crm/tickets/[id]/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+     {
+-      "route": "/crm/tickets",
+-      "filePath": "src/app/(dashboard)/crm/tickets/page.tsx",
++      "route": "/crm/tickets/new",
++      "filePath": "src/app/(dashboard)/crm/tickets/new/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+     {
+-      "route": "/crm/tickets/[id]",
+-      "filePath": "src/app/(dashboard)/crm/tickets/[id]/page.tsx",
++      "route": "/crm/tickets",
++      "filePath": "src/app/(dashboard)/crm/tickets/page.tsx",
+       "module": "crm",
+       "type": "page"
+     },
+@@ -907,12 +913,6 @@
+       "module": "crm",
+       "type": "page"
+     },
+-    {
+-      "route": "/crm/[...slug]",
+-      "filePath": "src/app/(dashboard)/crm/[...slug]/page.tsx",
+-      "module": "crm",
+-      "type": "page"
+-    },
+     {
+       "route": "/dashboard",
+       "filePath": "src/app/(dashboard)/dashboard/error.tsx",
+@@ -944,20 +944,20 @@
+       "type": "page"
+     },
+     {
+-      "route": "/hrms/employees/new",
+-      "filePath": "src/app/(dashboard)/hrms/employees/new/page.tsx",
++      "route": "/hrms/employees/[id]",
++      "filePath": "src/app/(dashboard)/hrms/employees/[id]/page.tsx",
+       "module": "hrms",
+       "type": "page"
+     },
+     {
+-      "route": "/hrms/employees",
+-      "filePath": "src/app/(dashboard)/hrms/employees/page.tsx",
++      "route": "/hrms/employees/new",
++      "filePath": "src/app/(dashboard)/hrms/employees/new/page.tsx",
+       "module": "hrms",
+       "type": "page"
+     },
+     {
+-      "route": "/hrms/employees/[id]",
+-      "filePath": "src/app/(dashboard)/hrms/employees/[id]/page.tsx",
++      "route": "/hrms/employees",
++      "filePath": "src/app/(dashboard)/hrms/employees/page.tsx",
+       "module": "hrms",
+       "type": "page"
+     },
+@@ -1263,19 +1263,19 @@
+       ]
+     },
+     {
+-      "path": "/api/admin/notifications",
+-      "filePath": "src/app/api/admin/notifications/route.ts",
++      "path": "/api/admin/notifications/[id]/resend",
++      "filePath": "src/app/api/admin/notifications/[id]/resend/route.ts",
+       "module": "admin",
+       "methods": [
+-        "GET"
++        "POST"
+       ]
+     },
+     {
+-      "path": "/api/admin/notifications/[id]/resend",
+-      "filePath": "src/app/api/admin/notifications/[id]/resend/route.ts",
++      "path": "/api/admin/notifications",
++      "filePath": "src/app/api/admin/notifications/route.ts",
+       "module": "admin",
+       "methods": [
+-        "POST"
++        "GET"
+       ]
+     },
+     {
+@@ -1297,15 +1297,6 @@
+         "PATCH"
+       ]
+     },
+-    {
+-      "path": "/api/ams/appraisals",
+-      "filePath": "src/app/api/ams/appraisals/route.ts",
+-      "module": "ams",
+-      "methods": [
+-        "GET",
+-        "POST"
+-      ]
+-    },
+     {
+       "path": "/api/ams/appraisals/[id]/availability",
+       "filePath": "src/app/api/ams/appraisals/[id]/availability/route.ts",
+@@ -1394,6 +1385,15 @@
+         "POST"
+       ]
+     },
++    {
++      "path": "/api/ams/appraisals",
++      "filePath": "src/app/api/ams/appraisals/route.ts",
++      "module": "ams",
++      "methods": [
++        "GET",
++        "POST"
++      ]
++    },
+     {
+       "path": "/api/ams/criteria",
+       "filePath": "src/app/api/ams/criteria/route.ts",
+@@ -1414,20 +1414,20 @@
+       ]
+     },
+     {
+-      "path": "/api/ams/cycles",
+-      "filePath": "src/app/api/ams/cycles/route.ts",
++      "path": "/api/ams/cycles/[id]",
++      "filePath": "src/app/api/ams/cycles/[id]/route.ts",
+       "module": "ams",
+       "methods": [
+-        "GET",
+-        "POST"
++        "PATCH"
+       ]
+     },
+     {
+-      "path": "/api/ams/cycles/[id]",
+-      "filePath": "src/app/api/ams/cycles/[id]/route.ts",
++      "path": "/api/ams/cycles",
++      "filePath": "src/app/api/ams/cycles/route.ts",
+       "module": "ams",
+       "methods": [
+-        "PATCH"
++        "GET",
++        "POST"
+       ]
+     },
+     {
+@@ -1466,36 +1466,36 @@
+       ]
+     },
+     {
+-      "path": "/api/attendance/leaves",
+-      "filePath": "src/app/api/attendance/leaves/route.ts",
++      "path": "/api/attendance/leaves/[id]",
++      "filePath": "src/app/api/attendance/leaves/[id]/route.ts",
+       "module": "attendance",
+       "methods": [
+-        "GET",
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/attendance/leaves/[id]",
+-      "filePath": "src/app/api/attendance/leaves/[id]/route.ts",
++      "path": "/api/attendance/leaves",
++      "filePath": "src/app/api/attendance/leaves/route.ts",
+       "module": "attendance",
+       "methods": [
++        "GET",
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/attendance/ot",
+-      "filePath": "src/app/api/attendance/ot/route.ts",
++      "path": "/api/attendance/ot/[id]",
++      "filePath": "src/app/api/attendance/ot/[id]/route.ts",
+       "module": "attendance",
+       "methods": [
+-        "GET",
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/attendance/ot/[id]",
+-      "filePath": "src/app/api/attendance/ot/[id]/route.ts",
++      "path": "/api/attendance/ot",
++      "filePath": "src/app/api/attendance/ot/route.ts",
+       "module": "attendance",
+       "methods": [
++        "GET",
+         "POST"
+       ]
+     },
+@@ -1862,16 +1862,16 @@
+       ]
+     },
+     {
+-      "path": "/api/customer-portal/checklists/respond",
+-      "filePath": "src/app/api/customer-portal/checklists/respond/route.ts",
++      "path": "/api/customer-portal/checklists/[checklistId]/decision",
++      "filePath": "src/app/api/customer-portal/checklists/[checklistId]/decision/route.ts",
+       "module": "customer-portal",
+       "methods": [
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/customer-portal/checklists/[checklistId]/decision",
+-      "filePath": "src/app/api/customer-portal/checklists/[checklistId]/decision/route.ts",
++      "path": "/api/customer-portal/checklists/respond",
++      "filePath": "src/app/api/customer-portal/checklists/respond/route.ts",
+       "module": "customer-portal",
+       "methods": [
+         "POST"
+@@ -1885,6 +1885,14 @@
+         "GET"
+       ]
+     },
++    {
++      "path": "/api/customer-portal/documents/[versionId]",
++      "filePath": "src/app/api/customer-portal/documents/[versionId]/route.ts",
++      "module": "customer-portal",
++      "methods": [
++        "GET"
++      ]
++    },
+     {
+       "path": "/api/customer-portal/documents/confirm",
+       "filePath": "src/app/api/customer-portal/documents/confirm/route.ts",
+@@ -1902,11 +1910,11 @@
+       ]
+     },
+     {
+-      "path": "/api/customer-portal/documents/[versionId]",
+-      "filePath": "src/app/api/customer-portal/documents/[versionId]/route.ts",
++      "path": "/api/customer-portal/notifications/[id]/read",
++      "filePath": "src/app/api/customer-portal/notifications/[id]/read/route.ts",
+       "module": "customer-portal",
+       "methods": [
+-        "GET"
++        "POST"
+       ]
+     },
+     {
+@@ -1917,14 +1925,6 @@
+         "POST"
+       ]
+     },
+-    {
+-      "path": "/api/customer-portal/notifications/[id]/read",
+-      "filePath": "src/app/api/customer-portal/notifications/[id]/read/route.ts",
+-      "module": "customer-portal",
+-      "methods": [
+-        "POST"
+-      ]
+-    },
+     {
+       "path": "/api/customer-portal/profile/preferences",
+       "filePath": "src/app/api/customer-portal/profile/preferences/route.ts",
+@@ -2071,20 +2071,20 @@
+       ]
+     },
+     {
+-      "path": "/api/hrms/employees",
+-      "filePath": "src/app/api/hrms/employees/route.ts",
++      "path": "/api/hrms/employees/[id]/salary-structure",
++      "filePath": "src/app/api/hrms/employees/[id]/salary-structure/route.ts",
+       "module": "hrms",
+       "methods": [
+-        "GET",
+-        "PATCH"
++        "POST"
+       ]
+     },
+     {
+-      "path": "/api/hrms/employees/[id]/salary-structure",
+-      "filePath": "src/app/api/hrms/employees/[id]/salary-structure/route.ts",
++      "path": "/api/hrms/employees",
++      "filePath": "src/app/api/hrms/employees/route.ts",
+       "module": "hrms",
+       "methods": [
+-        "POST"
++        "GET",
++        "PATCH"
+       ]
+     },
+     {
+@@ -2097,19 +2097,19 @@
+       ]
+     },
+     {
+-      "path": "/api/hrms/hr-cases",
+-      "filePath": "src/app/api/hrms/hr-cases/route.ts",
++      "path": "/api/hrms/hr-cases/[id]/comments",
++      "filePath": "src/app/api/hrms/hr-cases/[id]/comments/route.ts",
+       "module": "hrms",
+       "methods": [
+-        "GET",
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/hrms/hr-cases/[id]/comments",
+-      "filePath": "src/app/api/hrms/hr-cases/[id]/comments/route.ts",
++      "path": "/api/hrms/hr-cases",
++      "filePath": "src/app/api/hrms/hr-cases/route.ts",
+       "module": "hrms",
+       "methods": [
++        "GET",
+         "POST"
+       ]
+     },
+@@ -2130,80 +2130,80 @@
+       ]
+     },
+     {
+-      "path": "/api/hrms/letters/assets/upload",
+-      "filePath": "src/app/api/hrms/letters/assets/upload/route.ts",
++      "path": "/api/hrms/letters/[id]/accept",
++      "filePath": "src/app/api/hrms/letters/[id]/accept/route.ts",
+       "module": "hrms",
+       "methods": [
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/hrms/letters",
+-      "filePath": "src/app/api/hrms/letters/route.ts",
++      "path": "/api/hrms/letters/[id]/action",
++      "filePath": "src/app/api/hrms/letters/[id]/action/route.ts",
+       "module": "hrms",
+       "methods": [
+-        "GET",
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/hrms/letters/settings",
+-      "filePath": "src/app/api/hrms/letters/settings/route.ts",
++      "path": "/api/hrms/letters/[id]",
++      "filePath": "src/app/api/hrms/letters/[id]/route.ts",
+       "module": "hrms",
+       "methods": [
+         "GET",
+-        "POST",
+-        "PUT"
++        "PUT",
++        "DELETE"
+       ]
+     },
+     {
+-      "path": "/api/hrms/letters/share-mail",
+-      "filePath": "src/app/api/hrms/letters/share-mail/route.ts",
++      "path": "/api/hrms/letters/assets/upload",
++      "filePath": "src/app/api/hrms/letters/assets/upload/route.ts",
+       "module": "hrms",
+       "methods": [
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/hrms/letters/templates/upload",
+-      "filePath": "src/app/api/hrms/letters/templates/upload/route.ts",
++      "path": "/api/hrms/letters",
++      "filePath": "src/app/api/hrms/letters/route.ts",
+       "module": "hrms",
+       "methods": [
++        "GET",
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/hrms/letters/verify",
+-      "filePath": "src/app/api/hrms/letters/verify/route.ts",
++      "path": "/api/hrms/letters/settings",
++      "filePath": "src/app/api/hrms/letters/settings/route.ts",
+       "module": "hrms",
+       "methods": [
+-        "GET"
++        "GET",
++        "POST",
++        "PUT"
+       ]
+     },
+     {
+-      "path": "/api/hrms/letters/[id]/accept",
+-      "filePath": "src/app/api/hrms/letters/[id]/accept/route.ts",
++      "path": "/api/hrms/letters/share-mail",
++      "filePath": "src/app/api/hrms/letters/share-mail/route.ts",
+       "module": "hrms",
+       "methods": [
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/hrms/letters/[id]/action",
+-      "filePath": "src/app/api/hrms/letters/[id]/action/route.ts",
++      "path": "/api/hrms/letters/templates/upload",
++      "filePath": "src/app/api/hrms/letters/templates/upload/route.ts",
+       "module": "hrms",
+       "methods": [
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/hrms/letters/[id]",
+-      "filePath": "src/app/api/hrms/letters/[id]/route.ts",
++      "path": "/api/hrms/letters/verify",
++      "filePath": "src/app/api/hrms/letters/verify/route.ts",
+       "module": "hrms",
+       "methods": [
+-        "GET",
+-        "PUT",
+-        "DELETE"
++        "GET"
+       ]
+     },
+     {
+@@ -2313,19 +2313,19 @@
+       ]
+     },
+     {
+-      "path": "/api/hrms/work-reports",
+-      "filePath": "src/app/api/hrms/work-reports/route.ts",
++      "path": "/api/hrms/work-reports/[id]/approve",
++      "filePath": "src/app/api/hrms/work-reports/[id]/approve/route.ts",
+       "module": "hrms",
+       "methods": [
+-        "GET",
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/hrms/work-reports/[id]/approve",
+-      "filePath": "src/app/api/hrms/work-reports/[id]/approve/route.ts",
++      "path": "/api/hrms/work-reports",
++      "filePath": "src/app/api/hrms/work-reports/route.ts",
+       "module": "hrms",
+       "methods": [
++        "GET",
+         "POST"
+       ]
+     },
+@@ -2373,15 +2373,6 @@
+         "PATCH"
+       ]
+     },
+-    {
+-      "path": "/api/mobile/crm/leads",
+-      "filePath": "src/app/api/mobile/crm/leads/route.ts",
+-      "module": "mobile",
+-      "methods": [
+-        "GET",
+-        "OPTIONS"
+-      ]
+-    },
+     {
+       "path": "/api/mobile/crm/leads/[leadId]/call-attempts",
+       "filePath": "src/app/api/mobile/crm/leads/[leadId]/call-attempts/route.ts",
+@@ -2400,6 +2391,15 @@
+         "OPTIONS"
+       ]
+     },
++    {
++      "path": "/api/mobile/crm/leads",
++      "filePath": "src/app/api/mobile/crm/leads/route.ts",
++      "module": "mobile",
++      "methods": [
++        "GET",
++        "OPTIONS"
++      ]
++    },
+     {
+       "path": "/api/mobile/crm/update",
+       "filePath": "src/app/api/mobile/crm/update/route.ts",
+@@ -2512,83 +2512,75 @@
+       ]
+     },
+     {
+-      "path": "/api/notifications/active",
+-      "filePath": "src/app/api/notifications/active/route.ts",
+-      "module": "notifications",
+-      "methods": [
+-        "GET"
+-      ]
+-    },
+-    {
+-      "path": "/api/notifications/dismiss-all",
+-      "filePath": "src/app/api/notifications/dismiss-all/route.ts",
++      "path": "/api/notifications/[id]/ack",
++      "filePath": "src/app/api/notifications/[id]/ack/route.ts",
+       "module": "notifications",
+       "methods": [
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/notifications/presented",
+-      "filePath": "src/app/api/notifications/presented/route.ts",
++      "path": "/api/notifications/[id]/dismiss",
++      "filePath": "src/app/api/notifications/[id]/dismiss/route.ts",
+       "module": "notifications",
+       "methods": [
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/notifications/read-all",
+-      "filePath": "src/app/api/notifications/read-all/route.ts",
++      "path": "/api/notifications/[id]/open",
++      "filePath": "src/app/api/notifications/[id]/open/route.ts",
+       "module": "notifications",
+       "methods": [
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/notifications",
+-      "filePath": "src/app/api/notifications/route.ts",
++      "path": "/api/notifications/[id]/read",
++      "filePath": "src/app/api/notifications/[id]/read/route.ts",
+       "module": "notifications",
+       "methods": [
+-        "GET"
++        "POST"
+       ]
+     },
+     {
+-      "path": "/api/notifications/[id]/ack",
+-      "filePath": "src/app/api/notifications/[id]/ack/route.ts",
++      "path": "/api/notifications/active",
++      "filePath": "src/app/api/notifications/active/route.ts",
+       "module": "notifications",
+       "methods": [
+-        "POST"
++        "GET"
+       ]
+     },
+     {
+-      "path": "/api/notifications/[id]/dismiss",
+-      "filePath": "src/app/api/notifications/[id]/dismiss/route.ts",
++      "path": "/api/notifications/dismiss-all",
++      "filePath": "src/app/api/notifications/dismiss-all/route.ts",
+       "module": "notifications",
+       "methods": [
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/notifications/[id]/open",
+-      "filePath": "src/app/api/notifications/[id]/open/route.ts",
++      "path": "/api/notifications/presented",
++      "filePath": "src/app/api/notifications/presented/route.ts",
+       "module": "notifications",
+       "methods": [
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/notifications/[id]/read",
+-      "filePath": "src/app/api/notifications/[id]/read/route.ts",
++      "path": "/api/notifications/read-all",
++      "filePath": "src/app/api/notifications/read-all/route.ts",
+       "module": "notifications",
+       "methods": [
+         "POST"
+       ]
+     },
+     {
+-      "path": "/api/org/branches",
+-      "filePath": "src/app/api/org/branches/route.ts",
+-      "module": "org",
++      "path": "/api/notifications",
++      "filePath": "src/app/api/notifications/route.ts",
++      "module": "notifications",
+       "methods": [
+-        "POST"
++        "GET"
+       ]
+     },
+     {
+@@ -2601,8 +2593,8 @@
+       ]
+     },
+     {
+-      "path": "/api/org/departments",
+-      "filePath": "src/app/api/org/departments/route.ts",
++      "path": "/api/org/branches",
++      "filePath": "src/app/api/org/branches/route.ts",
+       "module": "org",
+       "methods": [
+         "POST"
+@@ -2625,6 +2617,14 @@
+         "DELETE"
+       ]
+     },
++    {
++      "path": "/api/org/departments",
++      "filePath": "src/app/api/org/departments/route.ts",
++      "module": "org",
++      "methods": [
++        "POST"
++      ]
++    },
+     {
+       "path": "/api/org/divisions/[id]",
+       "filePath": "src/app/api/org/divisions/[id]/route.ts",
+@@ -2642,15 +2642,6 @@
+         "GET"
+       ]
+     },
+-    {
+-      "path": "/api/recruit/applications",
+-      "filePath": "src/app/api/recruit/applications/route.ts",
+-      "module": "recruit",
+-      "methods": [
+-        "GET",
+-        "POST"
+-      ]
+-    },
+     {
+       "path": "/api/recruit/applications/[id]",
+       "filePath": "src/app/api/recruit/applications/[id]/route.ts",
+@@ -2668,20 +2659,20 @@
+       ]
+     },
+     {
+-      "path": "/api/recruit/audit",
+-      "filePath": "src/app/api/recruit/audit/route.ts",
++      "path": "/api/recruit/applications",
++      "filePath": "src/app/api/recruit/applications/route.ts",
+       "module": "recruit",
+       "methods": [
+-        "GET"
++        "GET",
++        "POST"
+       ]
+     },
+     {
+-      "path": "/api/recruit/candidates",
+-      "filePath": "src/app/api/recruit/candidates/route.ts",
++      "path": "/api/recruit/audit",
++      "filePath": "src/app/api/recruit/audit/route.ts",
+       "module": "recruit",
+       "methods": [
+-        "GET",
+-        "POST"
++        "GET"
+       ]
+     },
+     {
+@@ -2695,20 +2686,20 @@
+       ]
+     },
+     {
+-      "path": "/api/recruit/dashboard",
+-      "filePath": "src/app/api/recruit/dashboard/route.ts",
++      "path": "/api/recruit/candidates",
++      "filePath": "src/app/api/recruit/candidates/route.ts",
+       "module": "recruit",
+       "methods": [
+-        "GET"
++        "GET",
++        "POST"
+       ]
+     },
+     {
+-      "path": "/api/recruit/jobs",
+-      "filePath": "src/app/api/recruit/jobs/route.ts",
++      "path": "/api/recruit/dashboard",
++      "filePath": "src/app/api/recruit/dashboard/route.ts",
+       "module": "recruit",
+       "methods": [
+-        "GET",
+-        "POST"
++        "GET"
+       ]
+     },
+     {
+@@ -2722,8 +2713,8 @@
+       ]
+     },
+     {
+-      "path": "/api/recruit/jobseeker/applications",
+-      "filePath": "src/app/api/recruit/jobseeker/applications/route.ts",
++      "path": "/api/recruit/jobs",
++      "filePath": "src/app/api/recruit/jobs/route.ts",
+       "module": "recruit",
+       "methods": [
+         "GET",
+@@ -2731,8 +2722,8 @@
+       ]
+     },
+     {
+-      "path": "/api/recruit/jobseeker/career/conversations",
+-      "filePath": "src/app/api/recruit/jobseeker/career/conversations/route.ts",
++      "path": "/api/recruit/jobseeker/applications",
++      "filePath": "src/app/api/recruit/jobseeker/applications/route.ts",
+       "module": "recruit",
+       "methods": [
+         "GET",
+@@ -2755,6 +2746,15 @@
+         "GET"
+       ]
+     },
++    {
++      "path": "/api/recruit/jobseeker/career/conversations",
++      "filePath": "src/app/api/recruit/jobseeker/career/conversations/route.ts",
++      "module": "recruit",
++      "methods": [
++        "GET",
++        "POST"
++      ]
++    },
+     {
+       "path": "/api/recruit/jobseeker/dashboard",
+       "filePath": "src/app/api/recruit/jobseeker/dashboard/route.ts",
+@@ -2801,20 +2801,20 @@
+       ]
+     },
+     {
+-      "path": "/api/roles",
+-      "filePath": "src/app/api/roles/route.ts",
++      "path": "/api/roles/[id]/permissions",
++      "filePath": "src/app/api/roles/[id]/permissions/route.ts",
+       "module": "roles",
+       "methods": [
+-        "GET",
+-        "POST"
++        "PUT"
+       ]
+     },
+     {
+-      "path": "/api/roles/[id]/permissions",
+-      "filePath": "src/app/api/roles/[id]/permissions/route.ts",
++      "path": "/api/roles",
++      "filePath": "src/app/api/roles/route.ts",
+       "module": "roles",
+       "methods": [
+-        "PUT"
++        "GET",
++        "POST"
+       ]
+     },
+     {
+@@ -2826,6 +2826,15 @@
+         "POST"
+       ]
+     },
++    {
++      "path": "/api/todos/[id]",
++      "filePath": "src/app/api/todos/[id]/route.ts",
++      "module": "todos",
++      "methods": [
++        "PATCH",
++        "DELETE"
++      ]
++    },
+     {
+       "path": "/api/todos/reminders/check",
+       "filePath": "src/app/api/todos/reminders/check/route.ts",
+@@ -2859,24 +2868,6 @@
+         "PATCH"
+       ]
+     },
+-    {
+-      "path": "/api/todos/[id]",
+-      "filePath": "src/app/api/todos/[id]/route.ts",
+-      "module": "todos",
+-      "methods": [
+-        "PATCH",
+-        "DELETE"
+-      ]
+-    },
+-    {
+-      "path": "/api/users",
+-      "filePath": "src/app/api/users/route.ts",
+-      "module": "users",
+-      "methods": [
+-        "GET",
+-        "POST"
+-      ]
+-    },
+     {
+       "path": "/api/users/[id]/password",
+       "filePath": "src/app/api/users/[id]/password/route.ts",
+@@ -2901,6 +2892,15 @@
+         "GET",
+         "PATCH"
+       ]
++    },
++    {
++      "path": "/api/users",
++      "filePath": "src/app/api/users/route.ts",
++      "module": "users",
++      "methods": [
++        "GET",
++        "POST"
++      ]
+     }
+   ],
+   "prismaModels": [
+@@ -10037,6 +10037,12 @@
+     }
+   ],
+   "moduleServices": [
++    {
++      "module": "accounting",
++      "fileName": "accounting.test.ts",
++      "filePath": "src/modules/accounting/__tests__/accounting.test.ts",
++      "exportedFunctions": []
++    },
+     {
+       "module": "accounting",
+       "fileName": "actions.ts",
+@@ -10206,12 +10212,6 @@
+       "filePath": "src/modules/accounting/validators.ts",
+       "exportedFunctions": []
+     },
+-    {
+-      "module": "accounting",
+-      "fileName": "accounting.test.ts",
+-      "filePath": "src/modules/accounting/__tests__/accounting.test.ts",
+-      "exportedFunctions": []
+-    },
+     {
+       "module": "ams",
+       "fileName": "audit-log.ts",
+@@ -10381,6 +10381,24 @@
+         "getMonthlyReport"
+       ]
+     },
++    {
++      "module": "cha",
++      "fileName": "cha.test.ts",
++      "filePath": "src/modules/cha/__tests__/cha.test.ts",
++      "exportedFunctions": []
++    },
++    {
++      "module": "cha",
++      "fileName": "checklist-email-automation.test.ts",
++      "filePath": "src/modules/cha/__tests__/checklist-email-automation.test.ts",
++      "exportedFunctions": []
++    },
++    {
++      "module": "cha",
++      "fileName": "do-extension.test.ts",
++      "filePath": "src/modules/cha/__tests__/do-extension.test.ts",
++      "exportedFunctions": []
++    },
+     {
+       "module": "cha",
+       "fileName": "actions.ts",
+@@ -10616,24 +10634,6 @@
+         "updateFilingAttachmentValidity"
+       ]
+     },
+-    {
+-      "module": "cha",
+-      "fileName": "cha.test.ts",
+-      "filePath": "src/modules/cha/__tests__/cha.test.ts",
+-      "exportedFunctions": []
+-    },
+-    {
+-      "module": "cha",
+-      "fileName": "checklist-email-automation.test.ts",
+-      "filePath": "src/modules/cha/__tests__/checklist-email-automation.test.ts",
+-      "exportedFunctions": []
+-    },
+-    {
+-      "module": "cha",
+-      "fileName": "do-extension.test.ts",
+-      "filePath": "src/modules/cha/__tests__/do-extension.test.ts",
+-      "exportedFunctions": []
+-    },
+     {
+       "module": "communication",
+       "fileName": "chat-integration.test.ts",
+@@ -10885,6 +10885,24 @@
+         "createProject"
+       ]
+     },
++    {
++      "module": "customer-portal",
++      "fileName": "auth.test.ts",
++      "filePath": "src/modules/customer-portal/__tests__/auth.test.ts",
++      "exportedFunctions": []
++    },
++    {
++      "module": "customer-portal",
++      "fileName": "dashboard.test.ts",
++      "filePath": "src/modules/customer-portal/__tests__/dashboard.test.ts",
++      "exportedFunctions": []
++    },
++    {
++      "module": "customer-portal",
++      "fileName": "shipments.test.ts",
++      "filePath": "src/modules/customer-portal/__tests__/shipments.test.ts",
++      "exportedFunctions": []
++    },
+     {
+       "module": "customer-portal",
+       "fileName": "actions.ts",
+@@ -11014,21 +11032,17 @@
+       "exportedFunctions": []
+     },
+     {
+-      "module": "customer-portal",
+-      "fileName": "auth.test.ts",
+-      "filePath": "src/modules/customer-portal/__tests__/auth.test.ts",
+-      "exportedFunctions": []
+-    },
+-    {
+-      "module": "customer-portal",
+-      "fileName": "dashboard.test.ts",
+-      "filePath": "src/modules/customer-portal/__tests__/dashboard.test.ts",
+-      "exportedFunctions": []
++      "module": "dashboard",
++      "fileName": "service.ts",
++      "filePath": "src/modules/dashboard/service.ts",
++      "exportedFunctions": [
++        "getDashboardModuleSnapshot"
++      ]
+     },
+     {
+-      "module": "customer-portal",
+-      "fileName": "shipments.test.ts",
+-      "filePath": "src/modules/customer-portal/__tests__/shipments.test.ts",
++      "module": "dashboard",
++      "fileName": "types.ts",
++      "filePath": "src/modules/dashboard/types.ts",
+       "exportedFunctions": []
+     },
+     {
+@@ -11123,6 +11137,12 @@
+       "filePath": "src/modules/google-chat/types.ts",
+       "exportedFunctions": []
+     },
++    {
++      "module": "hrms",
++      "fileName": "letters.test.ts",
++      "filePath": "src/modules/hrms/__tests__/letters.test.ts",
++      "exportedFunctions": []
++    },
+     {
+       "module": "hrms",
+       "fileName": "face-enrollment.ts",
+@@ -11327,12 +11347,6 @@
+       "filePath": "src/modules/hrms/validators.ts",
+       "exportedFunctions": []
+     },
+-    {
+-      "module": "hrms",
+-      "fileName": "letters.test.ts",
+-      "filePath": "src/modules/hrms/__tests__/letters.test.ts",
+-      "exportedFunctions": []
+-    },
+     {
+       "module": "mona",
+       "fileName": "gemini-client.ts",
+@@ -11791,13 +11805,13 @@
+     },
+     {
+       "module": "landing-page",
+-      "fileName": "CompanyOverview.tsx",
+-      "filePath": "src/components/landing-page/CompanyOverview.tsx"
++      "fileName": "CRMModule.tsx",
++      "filePath": "src/components/landing-page/CRMModule.tsx"
+     },
+     {
+       "module": "landing-page",
+-      "fileName": "CRMModule.tsx",
+-      "filePath": "src/components/landing-page/CRMModule.tsx"
++      "fileName": "CompanyOverview.tsx",
++      "filePath": "src/components/landing-page/CompanyOverview.tsx"
+     },
+     {
+       "module": "landing-page",
+@@ -12064,7 +12078,7 @@
+       "appRoutes": 3,
+       "apiRoutes": 0,
+       "prismaModels": 0,
+-      "serviceFiles": 0,
++      "serviceFiles": 2,
+       "components": 0
+     },
+     "dev": {
+diff --git a/src/app/(dashboard)/dashboard/_components/dashboard-overview.tsx b/src/app/(dashboard)/dashboard/_components/dashboard-overview.tsx
+index 8cc4e4a..606699e 100644
+--- a/src/app/(dashboard)/dashboard/_components/dashboard-overview.tsx
++++ b/src/app/(dashboard)/dashboard/_components/dashboard-overview.tsx
+@@ -8,13 +8,16 @@ import {
+   Megaphone,
+ } from "lucide-react";
+ import Link from "next/link";
++import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
+ import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
+ import type { DashboardSessionUser } from "./dashboard-types";
++import { ModuleCommandCenter } from "./module-command-center";
+ 
+ interface DashboardOverviewProps {
+   profile: UserProfile;
+   sessionUser: DashboardSessionUser;
+   data: DashboardWidgetsData;
++  moduleSnapshot: DashboardModuleSnapshot;
+ }
+ 
+ function formatDate(value: Date | string, options?: Intl.DateTimeFormatOptions) {
+@@ -47,7 +50,12 @@ function buildWeeklySchedule() {
+   });
+ }
+ 
+-export function DashboardOverview({ profile, sessionUser, data }: DashboardOverviewProps) {
++export function DashboardOverview({
++  profile,
++  sessionUser,
++  data,
++  moduleSnapshot,
++}: DashboardOverviewProps) {
+   const nextAnnouncement = data.announcements[0];
+   const nextTask = data.recentTasks[0];
+   const nextHoliday = data.upcomingHolidays[0];
+@@ -79,6 +87,16 @@ export function DashboardOverview({ profile, sessionUser, data }: DashboardOverv
+ 
+   return (
+     <div className="mnx-dashboard-overview">
++      <ModuleCommandCenter snapshot={moduleSnapshot} />
++
++      <header className="mnx-dashboard-section-heading">
++        <div>
++          <span className="mnx-dashboard-spec-label">PERSONAL PULSE</span>
++          <h2>Your day at a glance</h2>
++        </div>
++        <p>Company signals, assigned work, and the next date on your calendar.</p>
++      </header>
++
+       <section className="mnx-dashboard-metrics" aria-label="Workspace metrics">
+         {metrics.map((metric) => {
+           const Icon = metric.icon;
+diff --git a/src/app/(dashboard)/dashboard/_components/module-command-center.tsx b/src/app/(dashboard)/dashboard/_components/module-command-center.tsx
+new file mode 100644
+index 0000000..9beed3d
+--- /dev/null
++++ b/src/app/(dashboard)/dashboard/_components/module-command-center.tsx
+@@ -0,0 +1,145 @@
++import {
++  ArrowUpRight,
++  BookOpenText,
++  Boxes,
++  BriefcaseBusiness,
++  Building2,
++  Calculator,
++  ChartNoAxesCombined,
++  CheckCircle2,
++  Clock3,
++  GraduationCap,
++  MessageSquareText,
++  PackageSearch,
++  ReceiptIndianRupee,
++  ShieldCheck,
++  TriangleAlert,
++  Users2,
++} from "lucide-react";
++import Link from "next/link";
++import type {
++  DashboardModuleIcon,
++  DashboardModuleSnapshot,
++} from "@/modules/dashboard/types";
++
++const MODULE_ICONS = {
++  accounting: Calculator,
++  ams: ChartNoAxesCombined,
++  attendance: Clock3,
++  cha: PackageSearch,
++  communication: MessageSquareText,
++  crm: BriefcaseBusiness,
++  expense: ReceiptIndianRupee,
++  hrms: Users2,
++  lms: GraduationCap,
++  "product-catalogue": BookOpenText,
++  recruit: Building2,
++} satisfies Record<DashboardModuleIcon, typeof Boxes>;
++
++interface ModuleCommandCenterProps {
++  snapshot: DashboardModuleSnapshot;
++}
++
++function formatSnapshotTime(value: string) {
++  return new Intl.DateTimeFormat("en-IN", {
++    hour: "2-digit",
++    minute: "2-digit",
++  }).format(new Date(value));
++}
++
++export function ModuleCommandCenter({ snapshot }: ModuleCommandCenterProps) {
++  const availableCount = snapshot.modules.filter((module) => module.available).length;
++
++  return (
++    <section className="mnx-module-command" aria-labelledby="module-command-title">
++      <header className="mnx-module-command-header">
++        <div>
++          <span className="mnx-dashboard-spec-label">ENABLED OPERATIONS</span>
++          <h2 id="module-command-title">Module command center</h2>
++          <p>
++            A live pulse from the workspaces enabled for your organization and available to your
++            role.
++          </p>
++        </div>
++        <div className="mnx-module-command-status" title={`Updated at ${formatSnapshotTime(snapshot.generatedAt)}`}>
++          <span><i />{availableCount} live</span>
++          <small>{snapshot.modules.length} enabled</small>
++        </div>
++      </header>
++
++      {snapshot.modules.length > 0 ? (
++        <div className="mnx-module-grid">
++          {snapshot.modules.map((module) => {
++            const Icon = MODULE_ICONS[module.icon];
++            return (
++              <article
++                className="mnx-module-card"
++                data-tone={module.tone}
++                key={module.id}
++              >
++                <header>
++                  <span className="mnx-module-icon"><Icon size={20} /></span>
++                  <div>
++                    <span>{module.eyebrow}</span>
++                    <h3>{module.title}</h3>
++                  </div>
++                  <span
++                    className={`mnx-module-health ${module.available ? "is-live" : "is-unavailable"}`}
++                  >
++                    {module.available ? <CheckCircle2 size={13} /> : <TriangleAlert size={13} />}
++                    {module.available ? "Live" : "Unavailable"}
++                  </span>
++                </header>
++
++                <p className="mnx-module-description">{module.description}</p>
++
++                <div className="mnx-module-primary-stat">
++                  <strong>{String(module.primaryMetric.value).padStart(2, "0")}</strong>
++                  <div>
++                    <span>{module.primaryMetric.label}</span>
++                    <small>{module.primaryMetric.detail}</small>
++                  </div>
++                </div>
++
++                {module.supportingMetrics.length > 0 ? (
++                  <dl className="mnx-module-supporting-stats">
++                    {module.supportingMetrics.map((metric) => (
++                      <div key={metric.label}>
++                        <dt>{metric.label}</dt>
++                        <dd>{String(metric.value).padStart(2, "0")}</dd>
++                      </div>
++                    ))}
++                  </dl>
++                ) : (
++                  <div className="mnx-module-unavailable-note">
++                    Live counts could not be loaded. You can still open the workspace.
++                  </div>
++                )}
++
++                <footer>
++                  <Link className="mnx-module-open-link" href={module.href}>
++                    Open module <ArrowUpRight size={14} />
++                  </Link>
++                  {module.actions.slice(1, 2).map((action) => (
++                    <Link className="mnx-module-secondary-link" href={action.href} key={action.href}>
++                      {action.label}
++                    </Link>
++                  ))}
++                </footer>
++              </article>
++            );
++          })}
++        </div>
++      ) : (
++        <div className="mnx-module-empty">
++          <ShieldCheck size={24} />
++          <h3>Your core workspace is ready</h3>
++          <p>Enable operational modules in Admin settings to add their live dashboard panels.</p>
++          <Link href="/admin/settings">
++            Review module settings <ArrowUpRight size={14} />
++          </Link>
++        </div>
++      )}
++    </section>
++  );
++}
+diff --git a/src/app/(dashboard)/dashboard/module-dashboard.test.ts b/src/app/(dashboard)/dashboard/module-dashboard.test.ts
+new file mode 100644
+index 0000000..7607b63
+--- /dev/null
++++ b/src/app/(dashboard)/dashboard/module-dashboard.test.ts
+@@ -0,0 +1,40 @@
++import { readFileSync } from "node:fs";
++import { join } from "node:path";
++import { describe, expect, it } from "vitest";
++import { TOGGLEABLE_MODULE_SECTION_IDS } from "@/modules/core/organisation/module-config";
++
++const repoRoot = process.cwd();
++
++function readSource(relativePath: string) {
++  return readFileSync(join(repoRoot, relativePath), "utf8");
++}
++
++describe("module-aware main dashboard", () => {
++  it("defines a live summary for every toggleable module", () => {
++    const serviceSource = readSource("src/modules/dashboard/service.ts");
++
++    for (const moduleId of TOGGLEABLE_MODULE_SECTION_IDS) {
++      expect(serviceSource).toContain(`id: "${moduleId}"`);
++    }
++  });
++
++  it("filters dashboard modules through organization settings and role-visible navigation", () => {
++    const pageSource = readSource("src/app/(dashboard)/dashboard/page.tsx");
++    const portalSource = readSource("src/app/(dashboard)/dashboard/portal-client.tsx");
++
++    expect(pageSource).toContain("getEnabledModuleIds");
++    expect(pageSource).toContain("getVisibleSections(caps, enabledModuleIds)");
++    expect(pageSource).toContain("getDashboardModuleSnapshot");
++    expect(pageSource).toContain("permittedHrefsByModule");
++    expect(portalSource).toContain("setModuleSnapshot");
++    expect(portalSource).toContain('module.id === "attendance"');
++  });
++
++  it("uses a responsive card grid instead of fixed dashboard columns", () => {
++    const styles = readSource("src/styles/monolith-system.css");
++
++    expect(styles).toContain("repeat(auto-fit, minmax(270px, 1fr))");
++    expect(styles).toContain(".mnx-module-card:hover");
++    expect(styles).toContain("box-shadow: var(--mnx-theme-shadow)");
++  });
++});
+diff --git a/src/app/(dashboard)/dashboard/page.tsx b/src/app/(dashboard)/dashboard/page.tsx
+index c68f89f..97a8f46 100644
+--- a/src/app/(dashboard)/dashboard/page.tsx
++++ b/src/app/(dashboard)/dashboard/page.tsx
+@@ -1,12 +1,55 @@
+ import { auth } from "@/lib/auth";
++import { getVisibleSections } from "@/lib/navigation";
++import { loadCaps } from "@/lib/rbac";
+ import { getOrg } from "@/modules/core/organisation/service";
++import {
++  TOGGLEABLE_MODULE_SECTION_IDS,
++  type ToggleableModuleSectionId,
++} from "@/modules/core/organisation/module-config";
++import { getEnabledModuleIds } from "@/modules/core/organisation/module-settings";
+ import { listUsersForDashboard } from "@/modules/core/user/service";
++import { getDashboardModuleSnapshot } from "@/modules/dashboard/service";
+ import { getDashboardWidgets, getMe, getTeamReportees } from "@/modules/hrms/service";
+ import { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
+ import { isChaEdition } from "@/lib/app-edition";
+ import { redirect } from "next/navigation";
+ import { HrmsPortalClient } from "./portal-client";
+ 
++const TOGGLEABLE_MODULE_SET = new Set<string>(TOGGLEABLE_MODULE_SECTION_IDS);
++
++async function getPermittedModuleSnapshot(userId: string, orgId: string) {
++  const [caps, enabledModuleIds] = await Promise.all([
++    loadCaps(userId),
++    getEnabledModuleIds(orgId),
++  ]);
++  const visibleModuleSections = getVisibleSections(caps, enabledModuleIds).filter(
++    (section): section is typeof section & { id: ToggleableModuleSectionId } =>
++      TOGGLEABLE_MODULE_SET.has(section.id),
++  );
++  const moduleSnapshot = await getDashboardModuleSnapshot({
++    orgId,
++    userId,
++    caps,
++    visibleModuleIds: visibleModuleSections.map((section) => section.id),
++  });
++  const permittedHrefsByModule = new Map(
++    visibleModuleSections.map((section) => [
++      section.id,
++      new Set([section.href, ...section.items.map((item) => item.href)]),
++    ]),
++  );
++
++  return {
++    ...moduleSnapshot,
++    modules: moduleSnapshot.modules.map((module) => ({
++      ...module,
++      actions: module.actions.filter((action) =>
++        permittedHrefsByModule.get(module.id)?.has(action.href),
++      ),
++    })),
++  };
++}
++
+ export default async function DashboardPage() {
+   const session = await auth();
+   if (!session) redirect("/login");
+@@ -14,13 +57,15 @@ export default async function DashboardPage() {
+ 
+   const orgId = session.user.orgId!;
+ 
+-  const [org, users, profileData, dashboardData, reportees] = await Promise.all([
+-    getOrg(orgId),
+-    listUsersForDashboard(orgId, { active: true }),
+-    getMe(session.user.id),
+-    getDashboardWidgets(session.user.id, orgId),
+-    getTeamReportees(session.user.id, orgId),
+-  ]);
++  const [org, users, profileData, dashboardData, reportees, permittedModuleSnapshot] =
++    await Promise.all([
++      getOrg(orgId),
++      listUsersForDashboard(orgId, { active: true }),
++      getMe(session.user.id),
++      getDashboardWidgets(session.user.id, orgId),
++      getTeamReportees(session.user.id, orgId),
++      getPermittedModuleSnapshot(session.user.id, orgId),
++    ]);
+ 
+   const initialProfile: UserProfile = {
+     ...profileData.user,
+@@ -43,6 +88,7 @@ export default async function DashboardPage() {
+       initialProfile={initialProfile}
+       initialWidgetsData={dashboardData as DashboardWidgetsData}
+       initialReportees={reportees}
++      initialModuleSnapshot={permittedModuleSnapshot}
+     />
+   );
+ }
+diff --git a/src/app/(dashboard)/dashboard/portal-client.tsx b/src/app/(dashboard)/dashboard/portal-client.tsx
+index 5c6aebc..1290e86 100644
+--- a/src/app/(dashboard)/dashboard/portal-client.tsx
++++ b/src/app/(dashboard)/dashboard/portal-client.tsx
+@@ -2,6 +2,7 @@
+ 
+ import { Building2, Sparkles, Users2 } from "lucide-react";
+ import { useState } from "react";
++import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
+ import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
+ import { AttendanceCommand } from "./_components/attendance-command";
+ import { DashboardOrganization } from "./_components/dashboard-organization";
+@@ -21,6 +22,7 @@ interface HrmsPortalClientProps {
+   initialProfile: UserProfile;
+   initialWidgetsData: DashboardWidgetsData;
+   initialReportees: ReporteeSummary[];
++  initialModuleSnapshot: DashboardModuleSnapshot;
+ }
+ 
+ type ProfilePayload = {
+@@ -94,12 +96,14 @@ export function HrmsPortalClient({
+   initialProfile,
+   initialWidgetsData,
+   initialReportees,
++  initialModuleSnapshot,
+ }: HrmsPortalClientProps) {
+   const [activeTab, setActiveTab] = useState<DashboardTab>("myspace");
+   const [profile, setProfile] = useState(initialProfile);
+   const [attendanceLoading, setAttendanceLoading] = useState(false);
+   const [reportees, setReportees] = useState(initialReportees);
+   const [widgets, setWidgets] = useState(initialWidgetsData);
++  const [moduleSnapshot, setModuleSnapshot] = useState(initialModuleSnapshot);
+ 
+   async function refreshDashboard() {
+     const [profileResponse, widgetsResponse, reporteesResponse] = await Promise.all([
+@@ -114,9 +118,24 @@ export function HrmsPortalClient({
+       readApiResponse<ReporteeSummary[]>(reporteesResponse),
+     ]);
+ 
+-    setProfile(toUserProfile(profilePayload));
++    const nextProfile = toUserProfile(profilePayload);
++    setProfile(nextProfile);
+     setWidgets(widgetsPayload);
+     setReportees(reporteesPayload);
++    setModuleSnapshot((current) => ({
++      ...current,
++      modules: current.modules.map((module) =>
++        module.id === "attendance"
++          ? {
++              ...module,
++              primaryMetric: {
++                ...module.primaryMetric,
++                value: nextProfile.attendanceStatus === "YET_TO_CHECK_IN" ? 0 : 1,
++              },
++            }
++          : module,
++      ),
++    }));
+   }
+ 
+   async function handlePunchAction(action: PunchAction) {
+@@ -166,7 +185,12 @@ export function HrmsPortalClient({
+ 
+       <div className="mnx-dashboard-tab-content">
+         {activeTab === "myspace" ? (
+-          <DashboardOverview profile={profile} sessionUser={sessionUser} data={widgets} />
++          <DashboardOverview
++            profile={profile}
++            sessionUser={sessionUser}
++            data={widgets}
++            moduleSnapshot={moduleSnapshot}
++          />
+         ) : null}
+         {activeTab === "team" ? <DashboardTeam reportees={reportees} /> : null}
+         {activeTab === "organization" ? (
+diff --git a/src/modules/dashboard/service.ts b/src/modules/dashboard/service.ts
+new file mode 100644
+index 0000000..1ae4d2a
+--- /dev/null
++++ b/src/modules/dashboard/service.ts
+@@ -0,0 +1,500 @@
++import "server-only";
++
++import { db } from "@/lib/db";
++import { toAttendanceDate } from "@/lib/attendance-date";
++import { getNow } from "@/lib/clock";
++import { detailedWorkflowStages, modules as catalogueModules } from "@/lib/catalogue-data";
++import type { Caps } from "@/lib/rbac";
++import type { ToggleableModuleSectionId } from "@/modules/core/organisation/module-config";
++import type {
++  DashboardModuleAction,
++  DashboardModuleIcon,
++  DashboardModuleSnapshot,
++  DashboardModuleSummary,
++  DashboardModuleTone,
++} from "./types";
++
++type ModuleCounts = {
++  primary: number;
++  secondary: number;
++  tertiary: number;
++};
++
++type ModuleDefinition = {
++  id: ToggleableModuleSectionId;
++  title: string;
++  eyebrow: string;
++  description: string;
++  href: string;
++  icon: DashboardModuleIcon;
++  tone: DashboardModuleTone;
++  primaryLabel: string;
++  primaryDetail: string;
++  secondaryLabel: string;
++  tertiaryLabel: string;
++  actions: DashboardModuleAction[];
++  read: (context: DashboardReadContext) => Promise<ModuleCounts>;
++};
++
++type DashboardReadContext = {
++  orgId: string;
++  userId: string;
++  caps: Caps;
++  attendanceDate: Date;
++};
++
++const OPEN_EXPENSE_STATUSES = [
++  "UNDER_REVIEW",
++  "ACCOUNTS_REVIEW",
++  "CLARIFICATION_REQUIRED",
++  "APPROVED",
++  "READY_FOR_DISBURSEMENT",
++  "QUERY_RAISED",
++] as const;
++
++const OPEN_APPLICATION_STAGES = [
++  "NEW",
++  "RESUME_REVIEW",
++  "SCREENING",
++  "SHORTLISTED",
++  "ASSESSMENT",
++  "INTERVIEW",
++  "HIRING_MANAGER_REVIEW",
++  "OFFER_APPROVAL",
++  "OFFER_SENT",
++  "ON_HOLD",
++] as const;
++
++const MODULE_DEFINITIONS: readonly ModuleDefinition[] = [
++  {
++    id: "product-catalogue",
++    title: "Product catalogue",
++    eyebrow: "SYSTEM MAP",
++    description: "Explore implemented capabilities, workflows, and technical references.",
++    href: "/product-catalogue",
++    icon: "product-catalogue",
++    tone: "neutral",
++    primaryLabel: "catalogued modules",
++    primaryDetail: "Documented operational workspaces",
++    secondaryLabel: "implemented",
++    tertiaryLabel: "workflow stages",
++    actions: [
++      { label: "Open catalogue", href: "/product-catalogue" },
++    ],
++    read: async () => ({
++      primary: catalogueModules.length,
++      secondary: catalogueModules.filter((module) => module.status === "Implemented").length,
++      tertiary: detailedWorkflowStages.length,
++    }),
++  },
++  {
++    id: "hrms",
++    title: "People operations",
++    eyebrow: "HRMS",
++    description: "Monitor the workforce, employee requests, and open people cases.",
++    href: "/hrms",
++    icon: "hrms",
++    tone: "info",
++    primaryLabel: "my pending tasks",
++    primaryDetail: "People-operations tasks currently assigned to you",
++    secondaryLabel: "my open cases",
++    tertiaryLabel: "pending leaves",
++    actions: [
++      { label: "HR dashboard", href: "/hrms" },
++      { label: "Employees", href: "/hrms/employees" },
++    ],
++    read: async ({ userId }) => {
++      const [primary, secondary, tertiary] = await Promise.all([
++        db.hrmsTask.count({ where: { assigneeId: userId, status: "PENDING" } }),
++        db.hRCase.count({
++          where: { userId, status: { in: ["OPEN", "ASSIGNED", "IN_PROGRESS"] } },
++        }),
++        db.leaveRequest.count({ where: { userId, status: "pending" } }),
++      ]);
++      return { primary, secondary, tertiary };
++    },
++  },
++  {
++    id: "attendance",
++    title: "Attendance control",
++    eyebrow: "ATTENDANCE",
++    description: "See today’s live attendance and requests needing action.",
++    href: "/attendance",
++    icon: "attendance",
++    tone: "success",
++    primaryLabel: "my attendance today",
++    primaryDetail: "Your recorded check-in for today",
++    secondaryLabel: "my pending leaves",
++    tertiaryLabel: "my pending OT",
++    actions: [
++      { label: "Attendance", href: "/attendance" },
++      { label: "Punch workspace", href: "/attendance/punch" },
++    ],
++    read: async ({ userId, attendanceDate }) => {
++      const [primary, secondary, tertiary] = await Promise.all([
++        db.attendancePunch.count({
++          where: {
++            date: attendanceDate,
++            inAt: { not: null },
++            userId,
++          },
++        }),
++        db.leaveRequest.count({ where: { userId, status: "pending" } }),
++        db.oTEntry.count({ where: { userId, status: "pending" } }),
++      ]);
++      return { primary, secondary, tertiary };
++    },
++  },
++  {
++    id: "ams",
++    title: "Performance cycles",
++    eyebrow: "AMS",
++    description: "Track appraisal cycles, active reviews, and scheduled evaluations.",
++    href: "/ams",
++    icon: "ams",
++    tone: "warning",
++    primaryLabel: "open appraisals",
++    primaryDetail: "Appraisals moving through active stages",
++    secondaryLabel: "assigned reviews",
++    tertiaryLabel: "my scheduled",
++    actions: [
++      { label: "AMS dashboard", href: "/ams" },
++      { label: "Appraisals", href: "/ams/appraisals" },
++    ],
++    read: async ({ orgId, userId }) => {
++      const [primary, secondary, tertiary] = await Promise.all([
++        db.appraisal.count({
++          where: { employeeId: userId, cycle: { orgId }, stage: { not: "CLOSED" } },
++        }),
++        db.appraisalReviewer.count({
++          where: {
++            userId,
++            appraisal: { cycle: { orgId }, stage: { not: "CLOSED" } },
++          },
++        }),
++        db.appraisalSchedule.count({
++          where: { orgId, employeeId: userId, status: "SCHEDULED" },
++        }),
++      ]);
++      return { primary, secondary, tertiary };
++    },
++  },
++  {
++    id: "lms",
++    title: "Learning hub",
++    eyebrow: "LMS",
++    description: "Follow available courses and your current learning progress.",
++    href: "/lms",
++    icon: "lms",
++    tone: "info",
++    primaryLabel: "available courses",
++    primaryDetail: "Courses currently available to the organization",
++    secondaryLabel: "in progress",
++    tertiaryLabel: "completed",
++    actions: [
++      { label: "Learning dashboard", href: "/lms" },
++      { label: "My learning", href: "/lms/my-learning" },
++    ],
++    read: async ({ orgId, userId }) => {
++      const [primary, secondary, tertiary] = await Promise.all([
++        db.course.count({ where: { orgId } }),
++        db.courseEnrollment.count({
++          where: { userId, status: { in: ["ENROLLED", "IN_PROGRESS"] }, course: { orgId } },
++        }),
++        db.courseEnrollment.count({
++          where: { userId, status: "COMPLETED", course: { orgId } },
++        }),
++      ]);
++      return { primary, secondary, tertiary };
++    },
++  },
++  {
++    id: "crm",
++    title: "Customer pipeline",
++    eyebrow: "CRM",
++    description: "Watch new demand, active deals, and customer accounts.",
++    href: "/crm/dashboard",
++    icon: "crm",
++    tone: "success",
++    primaryLabel: "open leads",
++    primaryDetail: "Leads still moving through qualification",
++    secondaryLabel: "active deals",
++    tertiaryLabel: "customers",
++    actions: [
++      { label: "CRM dashboard", href: "/crm/dashboard" },
++      { label: "Lead pipeline", href: "/crm/leads" },
++    ],
++    read: async ({ orgId }) => {
++      const [primary, secondary, tertiary] = await Promise.all([
++        db.crmLead.count({ where: { orgId, isConverted: false, status: { not: "LOST" } } }),
++        db.crmDeal.count({ where: { orgId, stage: { notIn: ["WON", "LOST"] } } }),
++        db.crmAccount.count({ where: { orgId, status: "ACTIVE" } }),
++      ]);
++      return { primary, secondary, tertiary };
++    },
++  },
++  {
++    id: "communication",
++    title: "Communication",
++    eyebrow: "WORKSPACE",
++    description: "Keep team spaces, notification routes, and your Workspace connection visible.",
++    href: "/communication",
++    icon: "communication",
++    tone: "info",
++    primaryLabel: "active spaces",
++    primaryDetail: "Connected spaces available to the organization",
++    secondaryLabel: "my subscriptions",
++    tertiaryLabel: "connections",
++    actions: [
++      { label: "Open workspace", href: "/communication" },
++      { label: "Job spaces", href: "/communication/job-spaces" },
++    ],
++    read: async ({ orgId, userId }) => {
++      const [primary, secondary, tertiary] = await Promise.all([
++        db.googleChatSpace.count({ where: { orgId, linkStatus: "active" } }),
++        db.googleChatSubscription.count({ where: { userId, enabled: true } }),
++        db.googleWorkspaceConnection.count({ where: { userId, status: "connected" } }),
++      ]);
++      return { primary, secondary, tertiary };
++    },
++  },
++  {
++    id: "expense",
++    title: "Expense desk",
++    eyebrow: "EXPENSE",
++    description: "Review your expense requests, urgent items, and completed reimbursements.",
++    href: "/expense",
++    icon: "expense",
++    tone: "warning",
++    primaryLabel: "open requests",
++    primaryDetail: "Your requests still moving through approval",
++    secondaryLabel: "urgent",
++    tertiaryLabel: "paid",
++    actions: [
++      { label: "Expense workspace", href: "/expense" },
++      { label: "CHA expenses", href: "/cha/expenses" },
++    ],
++    read: async ({ orgId, userId }) => {
++      const [primary, secondary, tertiary] = await Promise.all([
++        db.chaExpenseRequest.count({
++          where: { orgId, requestedById: userId, status: { in: [...OPEN_EXPENSE_STATUSES] } },
++        }),
++        db.chaExpenseRequest.count({
++          where: {
++            orgId,
++            requestedById: userId,
++            isUrgent: true,
++            status: { in: [...OPEN_EXPENSE_STATUSES] },
++          },
++        }),
++        db.chaExpenseRequest.count({
++          where: { orgId, requestedById: userId, status: "PAID" },
++        }),
++      ]);
++      return { primary, secondary, tertiary };
++    },
++  },
++  {
++    id: "cha",
++    title: "Shipment operations",
++    eyebrow: "CHA",
++    description: "Track active customs jobs, high-priority work, and jobs nearing closure.",
++    href: "/cha",
++    icon: "cha",
++    tone: "warning",
++    primaryLabel: "active jobs",
++    primaryDetail: "Customs jobs currently in motion",
++    secondaryLabel: "high priority",
++    tertiaryLabel: "on hold",
++    actions: [
++      { label: "CHA dashboard", href: "/cha" },
++      { label: "Job workspace", href: "/cha/jobs" },
++    ],
++    read: async ({ orgId }) => {
++      const [primary, secondary, tertiary] = await Promise.all([
++        db.chaJob.count({ where: { orgId, deletedAt: null, status: "ACTIVE" } }),
++        db.chaJob.count({
++          where: {
++            orgId,
++            deletedAt: null,
++            status: "ACTIVE",
++            priority: { in: ["HIGH", "URGENT"] },
++          },
++        }),
++        db.chaJob.count({ where: { orgId, deletedAt: null, status: "ON_HOLD" } }),
++      ]);
++      return { primary, secondary, tertiary };
++    },
++  },
++  {
++    id: "accounting",
++    title: "Financial control",
++    eyebrow: "ACCOUNTING",
++    description: "Surface receivables, payables, and journal work awaiting submission.",
++    href: "/accounting",
++    icon: "accounting",
++    tone: "success",
++    primaryLabel: "open receivables",
++    primaryDetail: "Sales invoices with an outstanding balance",
++    secondaryLabel: "open payables",
++    tertiaryLabel: "draft journals",
++    actions: [
++      { label: "Accounting", href: "/accounting" },
++      { label: "Sales invoices", href: "/accounting/sales-invoices" },
++    ],
++    read: async ({ orgId }) => {
++      const [primary, secondary, tertiary] = await Promise.all([
++        db.salesInvoice.count({
++          where: { orgId, status: { in: ["UNPAID", "PARTLY_PAID", "OVERDUE"] } },
++        }),
++        db.purchaseInvoice.count({
++          where: { orgId, status: { in: ["UNPAID", "PARTLY_PAID", "OVERDUE"] } },
++        }),
++        db.journalEntry.count({ where: { orgId, status: "DRAFT" } }),
++      ]);
++      return { primary, secondary, tertiary };
++    },
++  },
++  {
++    id: "recruit",
++    title: "Talent pipeline",
++    eyebrow: "RECRUIT",
++    description: "Follow open positions and candidates progressing through hiring.",
++    href: "/hrms/recruit",
++    icon: "recruit",
++    tone: "info",
++    primaryLabel: "open positions",
++    primaryDetail: "Published or approved roles still accepting candidates",
++    secondaryLabel: "active applications",
++    tertiaryLabel: "candidates",
++    actions: [
++      { label: "Recruit dashboard", href: "/hrms/recruit" },
++      { label: "Job openings", href: "/hrms/recruit/employer/jobs" },
++    ],
++    read: async ({ orgId, userId, caps }) => {
++      const canSeeEmployerData = Boolean(
++        caps["recruit.view"] ||
++          caps["recruit.dashboard.view"] ||
++          caps["recruit.application.manage"],
++      );
++
++      if (!canSeeEmployerData) {
++        const [primary, secondary, tertiary] = await Promise.all([
++          db.recruitJobOpening.count({
++            where: { orgId, deletedAt: null, status: "PUBLISHED" },
++          }),
++          db.recruitJobSeekerApplication.count({
++            where: {
++              ownerId: userId,
++              privateStatus: {
++                notIn: ["ACCEPTED", "REJECTED", "WITHDRAWN", "ARCHIVED"],
++              },
++            },
++          }),
++          db.recruitJobMatch.count({ where: { ownerId: userId } }),
++        ]);
++        return { primary, secondary, tertiary };
++      }
++
++      const [primary, secondary, tertiary] = await Promise.all([
++        db.recruitJobOpening.count({
++          where: {
++            orgId,
++            deletedAt: null,
++            status: { in: ["APPROVED", "PUBLISHED"] },
++          },
++        }),
++        db.recruitApplication.count({
++          where: {
++            orgId,
++            deletedAt: null,
++            stage: { in: [...OPEN_APPLICATION_STAGES] },
++          },
++        }),
++        db.recruitCandidate.count({ where: { orgId, deletedAt: null } }),
++      ]);
++      return { primary, secondary, tertiary };
++    },
++  },
++] as const;
++
++function unavailableSummary(definition: ModuleDefinition): DashboardModuleSummary {
++  return {
++    id: definition.id,
++    title: definition.title,
++    eyebrow: definition.eyebrow,
++    description: definition.description,
++    href: definition.href,
++    icon: definition.icon,
++    tone: "neutral",
++    primaryMetric: {
++      label: "status",
++      value: 0,
++      detail: "Live module data is temporarily unavailable",
++    },
++    supportingMetrics: [],
++    actions: definition.actions,
++    available: false,
++  };
++}
++
++async function readModuleSummary(
++  definition: ModuleDefinition,
++  context: DashboardReadContext,
++): Promise<DashboardModuleSummary> {
++  try {
++    const counts = await definition.read(context);
++    return {
++      id: definition.id,
++      title: definition.title,
++      eyebrow: definition.eyebrow,
++      description: definition.description,
++      href: definition.href,
++      icon: definition.icon,
++      tone: definition.tone,
++      primaryMetric: {
++        label: definition.primaryLabel,
++        value: counts.primary,
++        detail: definition.primaryDetail,
++      },
++      supportingMetrics: [
++        { label: definition.secondaryLabel, value: counts.secondary },
++        { label: definition.tertiaryLabel, value: counts.tertiary },
++      ],
++      actions: definition.actions,
++      available: true,
++    };
++  } catch (error) {
++    console.error(`[dashboard] Failed to read ${definition.id} summary`, error);
++    return unavailableSummary(definition);
++  }
++}
++
++export async function getDashboardModuleSnapshot({
++  orgId,
++  userId,
++  caps,
++  visibleModuleIds,
++}: {
++  orgId: string;
++  userId: string;
++  caps: Caps;
++  visibleModuleIds: readonly ToggleableModuleSectionId[];
++}): Promise<DashboardModuleSnapshot> {
++  const now = await getNow();
++  const visibleSet = new Set<ToggleableModuleSectionId>(visibleModuleIds);
++  const definitions = MODULE_DEFINITIONS.filter((definition) => visibleSet.has(definition.id));
++  const context: DashboardReadContext = {
++    orgId,
++    userId,
++    caps,
++    attendanceDate: toAttendanceDate(now),
++  };
++
++  return {
++    modules: await Promise.all(
++      definitions.map((definition) => readModuleSummary(definition, context)),
++    ),
++    generatedAt: now.toISOString(),
++  };
++}
+diff --git a/src/modules/dashboard/types.ts b/src/modules/dashboard/types.ts
+new file mode 100644
+index 0000000..b02daf5
+--- /dev/null
++++ b/src/modules/dashboard/types.ts
+@@ -0,0 +1,51 @@
++import type { ToggleableModuleSectionId } from "@/modules/core/organisation/module-config";
++
++export type DashboardModuleId = ToggleableModuleSectionId;
++
++export type DashboardModuleIcon =
++  | "accounting"
++  | "ams"
++  | "attendance"
++  | "cha"
++  | "communication"
++  | "crm"
++  | "expense"
++  | "hrms"
++  | "lms"
++  | "product-catalogue"
++  | "recruit";
++
++export type DashboardModuleTone = "neutral" | "info" | "success" | "warning";
++
++export type DashboardModuleMetric = {
++  label: string;
++  value: number;
++};
++
++export type DashboardModuleAction = {
++  label: string;
++  href: string;
++};
++
++export type DashboardModuleSummary = {
++  id: DashboardModuleId;
++  title: string;
++  eyebrow: string;
++  description: string;
++  href: string;
++  icon: DashboardModuleIcon;
++  tone: DashboardModuleTone;
++  primaryMetric: {
++    label: string;
++    value: number;
++    detail: string;
++  };
++  supportingMetrics: DashboardModuleMetric[];
++  actions: DashboardModuleAction[];
++  available: boolean;
++};
++
++export type DashboardModuleSnapshot = {
++  modules: DashboardModuleSummary[];
++  generatedAt: string;
++};
+diff --git a/src/styles/monolith-system.css b/src/styles/monolith-system.css
+index 6cf7d99..dc9d34f 100644
+--- a/src/styles/monolith-system.css
++++ b/src/styles/monolith-system.css
+@@ -1158,6 +1158,368 @@ html[data-dashboard-theme="violet"] body {
+   animation: mnx-panel-in 320ms ease both;
+ }
+ 
++.mnx-module-command {
++  min-width: 0;
++  display: grid;
++  gap: 18px;
++  padding: 25px;
++  overflow: hidden;
++  border: 1px solid var(--mnx-border);
++  border-radius: var(--mnx-radius-lg);
++  background:
++    radial-gradient(circle at 94% 0%, color-mix(in srgb, var(--mnx-accent) 18%, transparent), transparent 30%),
++    var(--mnx-surface-gradient);
++  box-shadow: var(--mnx-shadow);
++}
++
++.mnx-module-command-header,
++.mnx-dashboard-section-heading {
++  display: flex;
++  align-items: flex-end;
++  justify-content: space-between;
++  gap: 24px;
++}
++
++.mnx-module-command-header h2,
++.mnx-dashboard-section-heading h2 {
++  margin: 6px 0 0;
++  color: var(--mnx-text-strong);
++  font-size: 22px;
++  font-weight: 590;
++  letter-spacing: -0.04em;
++}
++
++.mnx-module-command-header p,
++.mnx-dashboard-section-heading p {
++  max-width: 570px;
++  margin: 8px 0 0;
++  color: var(--mnx-muted);
++  font-size: 11px;
++  line-height: 1.6;
++}
++
++.mnx-module-command-status {
++  min-width: 116px;
++  display: grid;
++  justify-items: end;
++  gap: 4px;
++}
++
++.mnx-module-command-status > span {
++  min-height: 31px;
++  display: inline-flex;
++  align-items: center;
++  gap: 7px;
++  padding: 0 11px;
++  border: 1px solid color-mix(in srgb, var(--mnx-success) 22%, var(--mnx-border));
++  border-radius: 999px;
++  color: var(--mnx-success);
++  background: var(--mnx-success-bg);
++  font-size: 10px;
++  font-weight: 720;
++}
++
++.mnx-module-command-status i {
++  width: 6px;
++  height: 6px;
++  border-radius: 50%;
++  background: currentColor;
++  box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 45%, transparent);
++  animation: mnx-pulse-ring 2s infinite;
++}
++
++.mnx-module-command-status small {
++  color: var(--mnx-muted);
++  font-size: 9px;
++}
++
++.mnx-module-grid {
++  min-width: 0;
++  display: grid;
++  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
++  gap: 13px;
++}
++
++.mnx-module-card {
++  --mnx-module-tone: var(--mnx-accent);
++  --mnx-module-tone-bg: color-mix(in srgb, var(--mnx-accent) 17%, var(--mnx-card));
++  min-width: 0;
++  min-height: 296px;
++  display: flex;
++  flex-direction: column;
++  padding: 19px;
++  overflow: hidden;
++  border: 1px solid var(--mnx-border);
++  border-radius: 20px;
++  background:
++    linear-gradient(135deg, color-mix(in srgb, var(--mnx-module-tone) 8%, transparent), transparent 42%),
++    color-mix(in srgb, var(--mnx-card) 84%, transparent);
++  box-shadow: 0 10px 26px rgba(15, 16, 12, 0.06);
++  transition:
++    transform 190ms cubic-bezier(0.2, 0.8, 0.2, 1),
++    border-color 190ms ease,
++    box-shadow 190ms ease;
++}
++
++.mnx-module-card[data-tone="info"] {
++  --mnx-module-tone: var(--mnx-info);
++  --mnx-module-tone-bg: var(--mnx-info-bg);
++}
++
++.mnx-module-card[data-tone="success"] {
++  --mnx-module-tone: var(--mnx-success);
++  --mnx-module-tone-bg: var(--mnx-success-bg);
++}
++
++.mnx-module-card[data-tone="warning"] {
++  --mnx-module-tone: var(--mnx-warning);
++  --mnx-module-tone-bg: var(--mnx-warning-bg);
++}
++
++.mnx-module-card:hover {
++  transform: translateY(-5px);
++  border-color: color-mix(in srgb, var(--mnx-accent) 58%, var(--mnx-border));
++  box-shadow: var(--mnx-theme-shadow);
++}
++
++.mnx-module-card > header {
++  min-width: 0;
++  display: grid;
++  grid-template-columns: 42px minmax(0, 1fr) auto;
++  align-items: center;
++  gap: 11px;
++}
++
++.mnx-module-icon {
++  width: 42px;
++  height: 42px;
++  display: grid;
++  place-items: center;
++  border: 1px solid color-mix(in srgb, var(--mnx-module-tone) 18%, transparent);
++  border-radius: 14px;
++  color: var(--mnx-module-tone);
++  background: var(--mnx-module-tone-bg);
++}
++
++.mnx-module-card > header > div {
++  min-width: 0;
++}
++
++.mnx-module-card > header > div > span {
++  display: block;
++  overflow: hidden;
++  color: var(--mnx-muted);
++  font-size: 8px;
++  font-weight: 760;
++  letter-spacing: 0.14em;
++  text-overflow: ellipsis;
++  white-space: nowrap;
++}
++
++.mnx-module-card h3 {
++  overflow: hidden;
++  margin: 3px 0 0;
++  color: var(--mnx-text-strong);
++  font-size: 15px;
++  font-weight: 640;
++  letter-spacing: -0.025em;
++  text-overflow: ellipsis;
++  white-space: nowrap;
++}
++
++.mnx-module-health {
++  min-height: 25px;
++  display: inline-flex;
++  align-items: center;
++  gap: 5px;
++  padding: 0 8px;
++  border: 1px solid var(--mnx-border);
++  border-radius: 999px;
++  color: var(--mnx-muted);
++  background: var(--mnx-soft);
++  font-size: 8px;
++  font-weight: 700;
++}
++
++.mnx-module-health.is-live {
++  border-color: color-mix(in srgb, var(--mnx-success) 20%, transparent);
++  color: var(--mnx-success);
++  background: var(--mnx-success-bg);
++}
++
++.mnx-module-health.is-unavailable {
++  border-color: color-mix(in srgb, var(--mnx-danger) 20%, transparent);
++  color: var(--mnx-danger);
++  background: var(--mnx-danger-bg);
++}
++
++.mnx-module-description {
++  min-height: 38px;
++  margin: 14px 0 0;
++  color: var(--mnx-muted);
++  font-size: 10px;
++  line-height: 1.55;
++}
++
++.mnx-module-primary-stat {
++  display: grid;
++  grid-template-columns: auto minmax(0, 1fr);
++  align-items: center;
++  gap: 13px;
++  margin-top: 16px;
++}
++
++.mnx-module-primary-stat > strong {
++  color: var(--mnx-text-strong);
++  font-family: var(--font-geist-mono), monospace;
++  font-size: 37px;
++  font-weight: 420;
++  line-height: 1;
++  letter-spacing: -0.07em;
++}
++
++.mnx-module-primary-stat > div {
++  min-width: 0;
++  display: grid;
++  gap: 3px;
++}
++
++.mnx-module-primary-stat span {
++  overflow: hidden;
++  color: var(--mnx-text);
++  font-size: 10px;
++  font-weight: 690;
++  text-overflow: ellipsis;
++  white-space: nowrap;
++}
++
++.mnx-module-primary-stat small {
++  display: -webkit-box;
++  overflow: hidden;
++  color: var(--mnx-muted);
++  font-size: 8px;
++  line-height: 1.45;
++  -webkit-box-orient: vertical;
++  -webkit-line-clamp: 2;
++}
++
++.mnx-module-supporting-stats {
++  display: grid;
++  grid-template-columns: repeat(2, minmax(0, 1fr));
++  gap: 8px;
++  margin: 15px 0 0;
++}
++
++.mnx-module-supporting-stats > div {
++  min-width: 0;
++  display: grid;
++  grid-template-columns: minmax(0, 1fr) auto;
++  align-items: center;
++  gap: 8px;
++  padding: 9px 10px;
++  border: 1px solid var(--mnx-border);
++  border-radius: 12px;
++  background: var(--mnx-control-gradient);
++}
++
++.mnx-module-supporting-stats dt {
++  overflow: hidden;
++  color: var(--mnx-muted);
++  font-size: 8px;
++  text-overflow: ellipsis;
++  white-space: nowrap;
++}
++
++.mnx-module-supporting-stats dd {
++  margin: 0;
++  color: var(--mnx-module-tone);
++  font-family: var(--font-geist-mono), monospace;
++  font-size: 13px;
++  font-weight: 620;
++}
++
++.mnx-module-unavailable-note {
++  margin-top: 15px;
++  padding: 10px;
++  border: 1px solid color-mix(in srgb, var(--mnx-danger) 18%, transparent);
++  border-radius: 12px;
++  color: var(--mnx-danger);
++  background: var(--mnx-danger-bg);
++  font-size: 9px;
++  line-height: 1.5;
++}
++
++.mnx-module-card > footer {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  gap: 10px;
++  margin-top: auto;
++  padding-top: 16px;
++}
++
++.mnx-module-open-link,
++.mnx-module-secondary-link,
++.mnx-module-empty a {
++  display: inline-flex;
++  align-items: center;
++  gap: 5px;
++  color: var(--mnx-accent-text);
++  font-size: 9px;
++  font-weight: 700;
++  text-decoration: none;
++}
++
++.mnx-module-open-link:hover,
++.mnx-module-secondary-link:hover,
++.mnx-module-empty a:hover {
++  text-decoration: underline;
++  text-underline-offset: 4px;
++}
++
++.mnx-module-secondary-link {
++  max-width: 45%;
++  overflow: hidden;
++  color: var(--mnx-muted);
++  text-overflow: ellipsis;
++  white-space: nowrap;
++}
++
++.mnx-module-empty {
++  min-height: 210px;
++  display: grid;
++  place-items: center;
++  align-content: center;
++  padding: 30px;
++  border: 1px dashed var(--mnx-border);
++  border-radius: 20px;
++  color: var(--mnx-accent-text);
++  background: color-mix(in srgb, var(--mnx-card) 70%, transparent);
++  text-align: center;
++}
++
++.mnx-module-empty h3 {
++  margin: 12px 0 0;
++  color: var(--mnx-text-strong);
++  font-size: 16px;
++}
++
++.mnx-module-empty p {
++  max-width: 430px;
++  margin: 6px 0 12px;
++  color: var(--mnx-muted);
++  font-size: 10px;
++}
++
++.mnx-dashboard-section-heading {
++  padding: 4px 3px 0;
++}
++
++.mnx-dashboard-section-heading p {
++  margin: 0;
++  text-align: right;
++}
++
+ .mnx-dashboard-metrics,
+ .mnx-team-summary {
+   width: 100%;
+@@ -2871,6 +3233,37 @@ html[data-dashboard-theme="violet"] body {
+     grid-template-columns: 1fr;
+   }
+ 
++  .mnx-module-command {
++    padding: 19px;
++    border-radius: 20px;
++  }
++
++  .mnx-module-command-header,
++  .mnx-dashboard-section-heading {
++    align-items: flex-start;
++    flex-direction: column;
++    gap: 12px;
++  }
++
++  .mnx-module-command-status {
++    width: 100%;
++    grid-template-columns: auto 1fr;
++    align-items: center;
++    justify-items: start;
++  }
++
++  .mnx-module-grid {
++    grid-template-columns: minmax(0, 1fr);
++  }
++
++  .mnx-module-card {
++    min-height: 286px;
++  }
++
++  .mnx-dashboard-section-heading p {
++    text-align: left;
++  }
++
+   .mnx-dashboard-metrics > article:last-child,
+   .mnx-team-summary > article:last-child {
+     grid-column: auto;
