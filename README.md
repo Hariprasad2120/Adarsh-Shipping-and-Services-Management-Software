@@ -50,10 +50,15 @@ npm run db:seed
 npm run dev
 ```
 
+Development uses Webpack by default because the Next.js 16 Turbopack dev
+server is unstable for this Windows workspace. Turbopack remains available for
+explicit diagnostics with `npm run dev:turbopack`.
+
 ## Common scripts
 
 ```bash
 npm run dev
+npm run dev:turbopack
 npm run build
 npm run start
 npm run lint

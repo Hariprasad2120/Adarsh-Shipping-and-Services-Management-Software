@@ -97,9 +97,11 @@ Runtime behavior exercised:
 - profile menu identity, Security & Sessions, and sign-out affordances.
 
 The local Turbopack development server panicked while compiling `/login`
-(`Next.js package not found`), so runtime verification used
-`next dev --webpack`. The production Turbopack build passed; this was a local
-development-bundler issue.
+(`Next.js package not found`). The repository now defaults `npm run dev` to
+the officially supported `next dev --webpack` path so normal development no
+longer enters the failing Turbopack code path. Turbopack remains an explicit
+diagnostic opt-in through `npm run dev:turbopack`. The production Turbopack
+build passed; this was a local development-bundler issue.
 
 Repository-wide `npm run lint` was executed with an 8 GB heap and still reports
 the pre-existing backlog in seed/maintenance scripts and pending accounting,
