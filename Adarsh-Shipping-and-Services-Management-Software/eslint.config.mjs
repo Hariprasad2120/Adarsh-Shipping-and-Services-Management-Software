@@ -12,8 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    "OLD UI code/**",
   ]),
 ]);
 
 export default eslintConfig;
+
+_design-reference/**
+OLD UI code/**

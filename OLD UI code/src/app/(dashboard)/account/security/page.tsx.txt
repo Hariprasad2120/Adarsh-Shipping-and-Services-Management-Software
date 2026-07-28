@@ -1,9 +1,5 @@
 import { redirect } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
-import {
-  WorkspacePage,
-  WorkspacePageHeader,
-} from "@/components/monolith";
 import { getSession } from "@/lib/auth";
 import { listActiveSessions } from "@/lib/session-service";
 import {
@@ -36,20 +32,22 @@ export default async function AccountSecurityPage() {
   }));
 
   return (
-    <WorkspacePage>
-      <WorkspacePageHeader
-        eyebrow="Account protection"
-        title="Security & Sessions"
-        icon={<ShieldCheck size={21} aria-hidden="true" />}
-        description={
-          <>
-            Review devices currently signed in to your account. Idle sessions
-            expire after {SESSION_IDLE_TIMEOUT_MINUTES} minutes; every session
-            expires after {SESSION_ABSOLUTE_TIMEOUT_HOURS} hours.
-          </>
-        }
-      />
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <span className="monolith-icon-badge">
+          <ShieldCheck size={18} />
+        </span>
+        <div>
+          <h1 className="monolith-h1">Security &amp; Sessions</h1>
+          <p className="text-sm text-mono-muted">
+            Devices currently signed in to your account. Idle sessions expire
+            after {SESSION_IDLE_TIMEOUT_MINUTES} minutes; all sessions expire
+            after {SESSION_ABSOLUTE_TIMEOUT_HOURS} hours.
+          </p>
+        </div>
+      </div>
+
       <SecuritySessionsClient sessions={rows} />
-    </WorkspacePage>
+    </div>
   );
 }

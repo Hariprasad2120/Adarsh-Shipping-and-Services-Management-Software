@@ -1,5 +1,5 @@
-:global(html:has([data-monolith-login])),
-:global(body:has([data-monolith-login])) {
+:global(html):has(.loginPage),
+:global(body):has(.loginPage) {
   width: 100%;
   height: 100%;
   overflow: hidden;

@@ -14,3 +14,4 @@ export * from "./modal";
 export * from "./native-select";
 export * from "./neon-checkbox";
 export * from "./warning-indicator-popover";
+export * from "./workspace";

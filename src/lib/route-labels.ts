@@ -2,6 +2,7 @@ const PATH_LABELS: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/todo": "To-Do",
   "/notifications": "Notifications",
+  "/account/security": "Security & Sessions",
   "/hrms": "HRMS",
   "/hrms/employees": "Employees",
   "/hrms/employees/new": "Onboard Employee",

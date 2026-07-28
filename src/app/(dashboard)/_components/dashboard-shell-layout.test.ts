@@ -68,4 +68,16 @@ describe("CHA dashboard shell layout safeguards", () => {
     expect(welcomeBarSource).toContain('aria-controls={mobileNavId}');
     expect(welcomeBarSource).toContain('aria-expanded={mobileNavOpen}');
   });
+
+  it("opts only verified routes into the Monolith shell", () => {
+    const dashboardShellSwitcherSource = readFileSync(
+      join(repoRoot, "src/app/(dashboard)/_components/dashboard-shell-switcher.tsx"),
+      "utf8",
+    );
+
+    expect(dashboardShellSwitcherSource).toContain("MONOLITH_MIGRATED_ROUTES");
+    expect(dashboardShellSwitcherSource).toContain('"/dashboard"');
+    expect(dashboardShellSwitcherSource).toContain('"/account/security"');
+    expect(dashboardShellSwitcherSource).toContain("usesMonolithShell");
+  });
 });

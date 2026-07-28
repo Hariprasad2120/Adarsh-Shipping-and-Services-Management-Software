@@ -19,6 +19,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Caps } from "@/lib/rbac";
 import { performLogout } from "@/lib/logout";
 import { getVisibleSections, matchesPath } from "@/lib/navigation";
+import { getPathLabel, segmentToLabel } from "@/lib/route-labels";
 import { MonaProvider, useMonaChat } from "@/components/mona/mona-provider";
 
 const MonaChat = dynamic(
@@ -73,6 +74,8 @@ function MonolithDashboardShellBody({
   userName,
 }: MonolithDashboardShellProps) {
   const pathname = usePathname();
+  const contextLabel = getPathLabel(pathname)
+    ?? segmentToLabel(pathname.split("/").filter(Boolean).at(-1) ?? "dashboard");
   const { toggleChat } = useMonaChat();
   const [theme, setTheme] = useState<MonolithTheme>("light");
   const [themeLoaded, setThemeLoaded] = useState(false);
@@ -257,7 +260,7 @@ function MonolithDashboardShellBody({
             >
               <Menu size={19} />
             </button>
-            <div><span>Monolith</span><i>/</i><b>Dashboard</b></div>
+            <div><span>Monolith</span><i>/</i><b>{contextLabel}</b></div>
           </div>
 
           <div className="mnx-topbar-actions">

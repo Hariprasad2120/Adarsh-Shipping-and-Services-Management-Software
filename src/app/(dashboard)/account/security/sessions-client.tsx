@@ -1,8 +1,26 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { LogOut, MonitorSmartphone } from "lucide-react";
-import {revokeAllOtherSessionsAction,revokeMySessionAction,} from "./actions";
+import {
+  CircleAlert,
+  Laptop,
+  LogOut,
+  MonitorSmartphone,
+  ShieldCheck,
+} from "lucide-react";
+import {
+  WorkspaceAction,
+  WorkspaceAlert,
+  WorkspaceBadge,
+  WorkspaceEmptyTableRow,
+  WorkspacePanel,
+  WorkspacePanelHeader,
+  WorkspaceTable,
+} from "@/components/monolith";
+import {
+  revokeAllOtherSessionsAction,
+  revokeMySessionAction,
+} from "./actions";
 
 type SessionRow = {
   id: string;
@@ -15,20 +33,24 @@ type SessionRow = {
   rememberMe: boolean;
 };
 
+const sessionTimeFormatter = new Intl.DateTimeFormat("en-IN", {
+  day: "2-digit",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: true,
+  timeZone: "Asia/Kolkata",
+});
+
 function formatTime(iso: string | null): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleString(undefined, {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return sessionTimeFormatter.format(new Date(iso));
 }
 
 export function SecuritySessionsClient({ sessions }: { sessions: SessionRow[] }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
-  const otherCount = sessions.filter((s) => !s.isCurrent).length;
+  const otherCount = sessions.filter((session) => !session.isCurrent).length;
 
   const revokeOne = (id: string) => {
     setError("");
@@ -47,92 +69,113 @@ export function SecuritySessionsClient({ sessions }: { sessions: SessionRow[] })
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="monolith-h3">Active Sessions</h2>
-        <button
-          type="button"
-          onClick={revokeOthers}
-          disabled={isPending || otherCount === 0}
-          className="flex items-center gap-2 rounded-xl bg-[#F9D972] px-4 py-2 text-sm uppercase tracking-wide text-white transition-all hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <LogOut size={14} />
-          Logout from all other devices
-        </button>
-      </div>
-
+    <WorkspacePanel className="mnx-table-card">
       {error ? (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-500">
-          {error}
+        <div className="mnx-panel-alert">
+          <WorkspaceAlert variant="danger">
+            <CircleAlert size={17} aria-hidden="true" />
+            <span>{error}</span>
+          </WorkspaceAlert>
         </div>
       ) : null}
 
-      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="monolith-table">
-            <thead>
-              <tr>
-                <th>Device</th>
-                <th>IP</th>
-                <th>Signed In</th>
-                <th>Last Activity</th>
-                <th>Expires</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {sessions.map((s) => (
-                <tr key={s.id}>
-                  <td className="font-medium">
-                    <span className="flex items-center gap-2">
-                      <MonitorSmartphone
-                        size={15}
-                        className="shrink-0 text-[#F9D972]"
-                      />
-                      {s.device}
-                      {s.isCurrent ? (
-                        <span className="rounded-full bg-[#F9D972]/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#F9D972]">
+      <WorkspacePanelHeader
+        eyebrow="Signed-in devices"
+        title="Active sessions"
+        description={`${sessions.length} active ${
+          sessions.length === 1 ? "session" : "sessions"
+        } · ${otherCount} on other devices`}
+        actions={
+          <WorkspaceAction
+            onClick={revokeOthers}
+            disabled={isPending || otherCount === 0}
+          >
+            {isPending ? (
+              <span className="mnx-button-spinner" aria-hidden="true" />
+            ) : (
+              <LogOut size={15} aria-hidden="true" />
+            )}
+            Log out other devices
+          </WorkspaceAction>
+        }
+      />
+
+      <WorkspaceTable aria-label="Active account sessions">
+        <thead>
+          <tr>
+            <th>Device</th>
+            <th>IP address</th>
+            <th>Signed in</th>
+            <th>Last activity</th>
+            <th>Expires</th>
+            <th>
+              <span className="mnx-visually-hidden">Actions</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {sessions.map((session) => (
+            <tr key={session.id}>
+              <td>
+                <span className="mnx-table-identity">
+                  <span className="mnx-table-leading-icon">
+                    <MonitorSmartphone size={16} aria-hidden="true" />
+                  </span>
+                  <span>
+                    <b>{session.device}</b>
+                    <span className="mnx-table-badges">
+                      {session.isCurrent ? (
+                        <WorkspaceBadge variant="accent">
+                          <i aria-hidden="true" />
                           This device
-                        </span>
+                        </WorkspaceBadge>
                       ) : null}
-                      {s.rememberMe ? (
-                        <span className="monolith-label">Remembered</span>
+                      {session.rememberMe ? (
+                        <WorkspaceBadge variant="neutral">
+                          Remembered
+                        </WorkspaceBadge>
                       ) : null}
                     </span>
-                  </td>
-                  <td className="monolith-numeric">{s.ipAddress}</td>
-                  <td>{formatTime(s.loginAt)}</td>
-                  <td>{formatTime(s.lastSeenAt)}</td>
-                  <td>{formatTime(s.expiresAt)}</td>
-                  <td className="text-right">
-                    {s.isCurrent ? (
-                      <span className="text-xs text-mono-muted">
-                        Use logout
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => revokeOne(s.id)}
-                        disabled={isPending}
-                        className="cursor-pointer rounded-lg border border-red-500/30 px-3 py-1 text-xs uppercase tracking-wide text-red-500 transition-colors hover:bg-red-500/10 disabled:opacity-50"
-                      >
-                        Revoke
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {sessions.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center text-mono-muted">
-                    No active sessions.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+                  </span>
+                </span>
+              </td>
+              <td>
+                <span className="mnx-data-mono">{session.ipAddress}</span>
+              </td>
+              <td>{formatTime(session.loginAt)}</td>
+              <td>{formatTime(session.lastSeenAt)}</td>
+              <td>{formatTime(session.expiresAt)}</td>
+              <td>
+                <span className="mnx-table-cell-actions">
+                  {session.isCurrent ? (
+                    <WorkspaceBadge variant="success">
+                      <ShieldCheck size={12} aria-hidden="true" />
+                      Current
+                    </WorkspaceBadge>
+                  ) : (
+                    <WorkspaceAction
+                      variant="destructive"
+                      size="compact"
+                      onClick={() => revokeOne(session.id)}
+                      disabled={isPending}
+                      aria-label={`Revoke session for ${session.device}`}
+                    >
+                      Revoke
+                    </WorkspaceAction>
+                  )}
+                </span>
+              </td>
+            </tr>
+          ))}
+          {sessions.length === 0 ? (
+            <WorkspaceEmptyTableRow colSpan={6}>
+              <Laptop size={24} aria-hidden="true" />
+              <h3>No active sessions</h3>
+              <p>Your signed-in devices will appear here.</p>
+            </WorkspaceEmptyTableRow>
+          ) : null}
+        </tbody>
+      </WorkspaceTable>
+    </WorkspacePanel>
   );
 }

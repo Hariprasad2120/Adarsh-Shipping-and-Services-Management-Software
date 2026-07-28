@@ -30,12 +30,13 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
+  "exclude": ["node_modules", "rubric-&-criteria-builder", "scrap", "scripts"]
+}
+
+{
   "exclude": [
     "node_modules",
-    "rubric-&-criteria-builder",
-    "scrap",
-    "scripts",
-    "OLD UI code",
-    "_design-reference"
+    "_design-reference/**/*",
+    "OLD UI code/**/*"
   ]
 }

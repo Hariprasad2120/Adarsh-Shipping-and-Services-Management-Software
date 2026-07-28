@@ -2196,6 +2196,201 @@ html[data-dashboard-theme="violet"] body {
   font-size: 9px;
 }
 
+/* Shared production workspace primitives used by migrated routes. */
+.mnx-workspace-page {
+  max-width: 1480px;
+  margin: 0 auto;
+}
+
+.mnx-page-header {
+  min-height: 176px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 30px 32px;
+  overflow: hidden;
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-lg);
+  background: var(--mnx-hero-gradient);
+  box-shadow: var(--mnx-shadow);
+}
+
+.mnx-page-header-copy {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.mnx-page-header-icon,
+.mnx-table-leading-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--mnx-accent-contrast);
+  background: var(--mnx-highlight-gradient);
+  box-shadow: var(--mnx-theme-shadow-soft);
+}
+
+.mnx-page-header-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 17px;
+}
+
+.mnx-page-header h1 {
+  margin: 7px 0 0;
+  color: var(--mnx-text-strong);
+  font-size: clamp(30px, 3vw, 44px);
+  font-weight: 410;
+  line-height: 1.05;
+  letter-spacing: -0.05em;
+}
+
+.mnx-page-header p {
+  max-width: 780px;
+  margin: 12px 0 0;
+  color: var(--mnx-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.mnx-page-header-actions,
+.mnx-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.mnx-button-compact {
+  min-height: 34px;
+  padding-inline: 14px;
+  font-size: 10px;
+}
+
+.mnx-button-destructive {
+  border-color: color-mix(in srgb, var(--mnx-danger) 24%, transparent);
+  color: var(--mnx-danger);
+  background: var(--mnx-danger-bg);
+}
+
+.mnx-button-destructive:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--mnx-danger) 46%, transparent);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--mnx-danger) 18%, transparent);
+}
+
+.mnx-badge-accent {
+  border-color: color-mix(in srgb, var(--mnx-accent) 46%, var(--mnx-border));
+  color: var(--mnx-accent-text);
+  background: color-mix(in srgb, var(--mnx-card) 70%, var(--mnx-accent));
+}
+
+.mnx-panel-alert {
+  padding: 18px 24px 0;
+}
+
+.mnx-workspace-alert {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid var(--mnx-border);
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 620;
+}
+
+.mnx-workspace-alert-danger {
+  border-color: color-mix(in srgb, var(--mnx-danger) 24%, transparent);
+  color: var(--mnx-danger);
+  background: var(--mnx-danger-bg);
+}
+
+.mnx-workspace-alert-info {
+  border-color: color-mix(in srgb, var(--mnx-info) 24%, transparent);
+  color: var(--mnx-info);
+  background: var(--mnx-info-bg);
+}
+
+.mnx-workspace-alert-success {
+  border-color: color-mix(in srgb, var(--mnx-success) 24%, transparent);
+  color: var(--mnx-success);
+  background: var(--mnx-success-bg);
+}
+
+.mnx-workspace-alert-warning {
+  border-color: color-mix(in srgb, var(--mnx-warning) 24%, transparent);
+  color: var(--mnx-warning);
+  background: var(--mnx-warning-bg);
+}
+
+.mnx-workspace-table {
+  min-width: 940px;
+}
+
+.mnx-table-identity {
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.mnx-table-identity > span:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.mnx-table-identity b {
+  max-width: 310px;
+  overflow: hidden;
+  color: var(--mnx-text);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mnx-table-leading-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+}
+
+.mnx-table-badges,
+.mnx-table-cell-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mnx-table-cell-actions {
+  justify-content: flex-end;
+}
+
+.mnx-data-mono {
+  color: var(--mnx-text);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+}
+
+.mnx-table-empty-state {
+  min-height: 210px;
+}
+
+.mnx-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .mnx-organization-workspace {
   min-height: 620px;
   animation: mnx-panel-in 320ms ease both;
@@ -3139,6 +3334,50 @@ html[data-dashboard-theme="violet"] body {
 
   .mnx-dashboard-page {
     gap: 15px;
+  }
+
+  .mnx-page-header {
+    min-height: auto;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px 20px;
+    border-radius: 22px;
+  }
+
+  .mnx-page-header-copy {
+    gap: 14px;
+  }
+
+  .mnx-page-header-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+  }
+
+  .mnx-page-header h1 {
+    font-size: 30px;
+  }
+
+  .mnx-page-header-actions,
+  .mnx-panel-actions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mnx-page-header-actions .mnx-button,
+  .mnx-panel-actions .mnx-button {
+    width: 100%;
+  }
+
+  .mnx-panel-alert {
+    padding: 14px 16px 0;
+  }
+
+  .mnx-table-badges {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .mnx-dashboard-hero {
@@ -4544,4 +4783,3 @@ html[data-dashboard-theme="violet"] body {
   border-top: 1px solid var(--sys-card-border);
   margin-top: 32px;
 }
-

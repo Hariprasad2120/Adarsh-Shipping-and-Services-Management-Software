@@ -8,7 +8,7 @@ Read these files before changing UI code:
 
 The authoritative visual references are:
 
-- `_design-reference/Monolith-Design-System-v11-Full-Source-and-Dependencies`
+-`D:\AMS\Adarsh-Shipping-and-Services-Management-Software\Monolith-Design-System-v11-Full-Source-and-Dependencies`
 - The existing working `/dashboard`
 
 Rules:

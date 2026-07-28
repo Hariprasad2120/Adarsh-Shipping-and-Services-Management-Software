@@ -15,6 +15,15 @@ function normalizePathname(pathname: string | null) {
   return normalized || "/";
 }
 
+const MONOLITH_MIGRATED_ROUTES = new Set([
+  "/dashboard",
+  "/account/security",
+]);
+
+export function usesMonolithShell(pathname: string | null) {
+  return MONOLITH_MIGRATED_ROUTES.has(normalizePathname(pathname));
+}
+
 export function DashboardShellSwitcher({
   children,
   caps,
@@ -29,9 +38,9 @@ export function DashboardShellSwitcher({
   userName: string;
 }) {
   const pathname = normalizePathname(usePathname());
-  const isMonolithDashboard = pathname === "/dashboard";
+  const isMonolithRoute = usesMonolithShell(pathname);
 
-  if (isMonolithDashboard) {
+  if (isMonolithRoute) {
     return (
       <MonolithDashboardShell caps={caps} userName={userName} enabledModuleIds={enabledModuleIds}>
         {children}
