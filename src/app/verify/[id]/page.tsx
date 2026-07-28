@@ -50,7 +50,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
           <div className={`size-14 rounded-full flex items-center justify-center ${isValid ? "bg-[#F9D972]/15 text-[#F9D972]" : "bg-[#D88700]/15 text-[#D88700]"}`}>
             {isValid ? <ShieldCheck className="size-8" /> : <AlertTriangle className="size-8" />}
           </div>
-          <h1 className="text-xl font-bold tracking-widest uppercase text-[#f0f6fc]" style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}>
+          <h1 className="text-xl font-bold tracking-widest uppercase text-[#f0f6fc]" style={{ fontFamily: 'Inter, "Segoe UI", Arial, sans-serif' }}>
             Document Authenticity Registry
           </h1>
           <p className="text-xs text-[#8b949e] uppercase font-bold tracking-wider">

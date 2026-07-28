@@ -1,121 +1,215 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+# Monolith Engine — Repository Instructions
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+These instructions apply to the entire repository. More specific `AGENTS.md` files may add
+constraints for a directory, but they must not weaken this design-system contract.
 
-<!-- BEGIN:design-system -->
-# Design System — Monolith Engine
+## 1. Current framework
 
-The active Monolith design system is sourced from `C:\Users\SilverCloud\Documents\Monolith-Design-System-Source` and implemented in this repo through `src/app/globals.css` plus reusable primitives in `src/components/monolith/`.
+- This application uses Next.js App Router and React.
+- Before changing routing, layouts, fonts, CSS loading, caching, or Server/Client Component
+  boundaries, read the matching guide in `node_modules/next/dist/docs/`.
+- Preserve Server Components by default. Add `"use client"` only when browser state, effects, or
+  event handlers are required.
+- Keep authentication, RBAC, server actions, module enablement, forms, and data loading intact
+  while replacing presentation.
 
-## Themes
+## 2. Redesign objective
 
-Support exactly three themes everywhere:
-- Light: Signal Yellow `#F9D972`
-- Night: true black with Signal Yellow
-- Violet: violet primary/highlight palette only
+The authenticated application is being rebuilt one route at a time with the Monolith design
+system. This is a replacement of the old interface, not a reskin.
 
-Theme values are `light`, `night`, and `violet`. Persist the selected value in `localStorage` as `theme`, and apply `theme-light`, `theme-night`, or `theme-violet` on the root document/app shell.
+Every route inside `src/app/(dashboard)/` must use:
 
-## UI Rules
+1. the shared `MonolithDashboardShell`;
+2. tokens from the Monolith foundation;
+3. primitives from `src/components/monolith/`;
+4. the page composition primitives in `src/components/monolith/page.tsx`;
+5. the three supported themes: `light`, `night`, and `violet`.
 
-- Use only `src/components/monolith/` for reusable visual primitives.
-- Do not import from the removed legacy UI namespace; that old directory has been removed.
-- Do not use the removed legacy classes: removed legacy class families.
-- Do not use old cyan/orange brand styling as a default UI language. Primary actions and active states follow the current theme accent.
-- New reusable visual patterns must be added to the Monolith design system layer before page usage.
-- Preserve business logic while replacing presentation. Routes, RBAC, forms, server actions, workflows, filters, pagination, and notifications must continue to work.
+Never create a second shell or keep the legacy Adarsh shell for an unconverted page. An
+unconverted page may temporarily keep its inner content, but it must render inside the shared
+Monolith shell until its content is rebuilt.
 
-## Required Verification For UI Work
+## 3. Sources of truth
 
-1. New Monolith primitives used where a shared primitive exists.
-2. Light, Night, and Violet themes checked.
-3. Desktop, tablet, and mobile layouts checked.
-4. No legacy the removed legacy UI namespace imports.
-5. No legacy removed legacy class families, old token utility classes, or old design-token imports.
-6. Existing functionality and permissions preserved.
-<!-- END:design-system -->
+Use these files in this order:
 
-<!-- BEGIN:graphify -->
-# Codebase Analysis — graphify
+| Concern | Source of truth |
+| --- | --- |
+| Repository rules | `AGENTS.md` |
+| Foundations and typography | `src/styles/monolith-foundation.css` |
+| Theme and shell implementation | `src/styles/monolith-system.css` |
+| Shared UI primitives | `src/components/monolith/` |
+| Route shell | `src/components/monolith/monolith-dashboard-shell.tsx` |
+| Migration status and route order | `docs/monolith-page-migration.md` |
 
-This project has a pre-built knowledge graph at `graphify-out/graph.json` (4351 nodes, 10640 edges, 244 communities).
-Always use Graphify when analyzing this codebase, especially before making architectural changes, tracing dependencies, modifying workflows, or understanding module relationships.
+Do not copy styles from screenshots into a route. Add or correct the shared token/primitive first,
+then consume it from the route.
 
-## Session Start Protocol
+## 4. Typography contract
 
-At the start of every new session, check if `graphify-out/graph.json` exists. If it does:
-1. Silently confirm the graph is available
-2. Notify the user: "Knowledge graph available (`graphify-out/graph.json`). Ask me anything about the codebase architecture."
-3. Be ready to answer structural questions from the graph without re-scanning files
+Geist Sans is the only application UI family. It is loaded once from `src/app/layout.tsx` with
+`next/font`.
 
-## When to Use graphify
+- UI, headings, navigation, buttons, forms, tables, badges, dates, amounts, percentages, timers,
+  and business metrics use `var(--mnx-font-sans)`.
+- Business numerics use the same sans family with `font-variant-numeric: tabular-nums`.
+- Geist Mono is reserved for code, keyboard shortcuts, immutable technical identifiers, hashes,
+  and terminal-like output. It must not be used for dashboard stats, counts, currency values,
+  dates, timers, percentages, labels, or badges.
+- Use only weights `400`, `500`, `600`, and `700`. Do not invent intermediate values such as
+  `390`, `440`, `590`, `690`, `750`, or `760`.
+- Do not use `font-mono`, `ds-numeric`, or `monolith-numeric` for business metrics.
+- Do not add inline `fontFamily`, route-specific font imports, remote font links, or CSS `@import`
+  font URLs.
 
-Use `graphify query "<question>"` (via the Skill tool with `skill: "graphify"`) instead of grep/glob/read when the question is:
-- "What calls X?" / "What does X depend on?"
-- "Which modules touch Y?"
-- "How does data flow through Z?"
-- "What is the relationship between A and B?"
-- "Where is concept X implemented?"
-- Cross-cutting questions that span multiple files or modules
+Approved recipes:
 
-Use grep/read/glob when you need exact line numbers, current file contents, or verifying whether specific code exists now.
+| Role | Size | Weight | Tracking / line-height |
+| --- | ---: | ---: | --- |
+| Display | `clamp(2.5rem, 5vw, 4.5rem)` | 400 | `-0.055em` / `0.96` |
+| Page title | `clamp(2rem, 3vw, 3rem)` | 400 | `-0.045em` / `1` |
+| Section title | `1.75rem` | 500 | `-0.035em` / `1.1` |
+| Card title | `1.125rem` | 500 | `-0.02em` / `1.25` |
+| Body | `0.9375rem` | 400 | normal / `1.6` |
+| Helper text | `0.8125rem` | 400 | normal / `1.5` |
+| Label / eyebrow | `0.6875rem` | 600 | `0.14em` / `1.3`, uppercase |
+| Button | `0.875rem` | 600 | `-0.01em` / `1` |
+| Business stat | responsive | 500 | `-0.04em`, tabular numerics |
 
-## Key Architecture Facts (from graph)
+## 5. Heading composition
 
-- `requirePermission()` — 478 edges, touches every module. Single RBAC gate. Its absence on any route/action is a bug.
-- `getSessionOrUnauth()` — 189 edges. Primary session check.
-- `ok()` / `err()` — Result-type wrappers used across all server actions.
-- `getNow` — 142 edges. Centralized time source (used instead of `new Date()` for testability).
-- `can()` — 88 edges. Capability check (distinct from `requirePermission`).
+Typography creates hierarchy. Decorative icons do not.
 
-## Community Map (top modules)
+- Page, section, panel, card, dialog, and table headings are text-only.
+- Do not place an icon immediately before or inside `h1`–`h6`.
+- Icons are allowed in navigation, buttons, status indicators, inputs, compact metadata, empty
+  states, and standalone illustrations.
+- A section may have an eyebrow above its heading. The eyebrow may use a small status dot, but not
+  a decorative icon.
+- Use `PageHeader` and `SectionHeader`; neither accepts an icon prop by design.
 
-| Community | Module |
-|-----------|--------|
-| CHA Filing Actions / CHA Service Layer | Customs House Agent filing workflow |
-| Google Workspace Services | Gmail, Calendar, Drive, Chat integration |
-| AMS Audit Logs / AMS Appraisals Service | Annual Management System |
-| Accounting Service / Accounting Actions | Finance & accounting |
-| CRM Contacts UI / CRM Deals Pipeline | Sales CRM |
-| HRMS Dashboard Portal / HRMS Letters | Human Resources |
-| Biometric Attendance | Attendance tracking |
-| Android Mobile Components / Android API Client | Mobile CRM app |
-| Identity & Auth / RBAC Permissions | Auth + permissions |
+## 6. Layout contract
 
-## Updating the Graph
+- `MonolithDashboardShell` wraps every authenticated route.
+- A route root uses `Page`.
+- The first block is normally `PageHeader`.
+- Group related content in `PageSection`, `Panel`, or `Card`.
+- Default page width is fluid, with a `100rem` maximum and responsive inline padding supplied by
+  the shell. Do not add a second viewport-height wrapper or fixed sidebar.
+- Avoid page-local top bars, breadcrumbs, theme switches, and sidebars.
+- Do not use `h-screen`, fixed left padding, or fixed widths to compensate for the shell.
+- Responsive layouts must work at 360px, 768px, 1280px, and 1600px.
 
-When significant new code is added, run `/graphify . --update` to incrementally update the graph without full rebuild.
-<!-- END:graphify -->
+## 7. Theme contract
 
-<!-- BEGIN:product-catalogue -->
-# Product Catalogue Update Rule
+Support exactly these themes everywhere:
 
-Before completing any Monolith Engine task that adds, modifies, or removes features, routes, API endpoints, or database models, the product catalogue **MUST** be updated.
+| Theme | Canvas | Surface | Primary / highlight |
+| --- | --- | --- | --- |
+| Light | `#EFF0EB` | `#FFFEF9` | `#F9D972` |
+| Night | `#000000` | `#090909` | `#F9D972` |
+| Violet | `#0A0B13` | `#181827` | `#B5AAF5` / `#CBBDE1` |
 
-## Steps
+Semantic fills:
 
-1. After finishing code changes, run: `npm run catalogue:update`
-2. Verify the catalogue is current: `npm run catalogue:check`
-3. If the manual feature registry needs updates (new features, status changes), edit `docs/product-feature-registry.json`
+- Success fill `#E6F3EA`, with a bright green text/icon token.
+- Danger fill `#FCECEB`, with a bright red text/icon token.
+- Warning fill uses the theme warning token and bright warning text.
 
-## Key Files
+Rules:
 
-| File | Purpose |
-|---|---|
-| `PRODUCT_CATALOGUE.md` | Master product reference (manually maintained) |
-| `docs/product-feature-registry.json` | Manual feature/status registry (manually maintained) |
-| `docs/product-catalogue.json` | Auto-generated machine-readable catalogue |
-| `docs/product-catalogue.generated.md` | Auto-generated human-readable catalogue |
-| `scripts/update-product-catalogue.ts` | Scanner script |
-| `scripts/check-product-catalogue.ts` | Validation script |
-| `src/lib/catalogue-data.ts` | In-app catalogue data for `/product-catalogue` page |
+- Read colors through `--mnx-*` tokens. Do not hard-code old cyan, teal, orange, slate, or Adarsh
+  brand colors in redesigned UI.
+- Night uses true black, not blue-black or tinted black.
+- Hover shadows use the active theme primary color.
+- Theme selection is persisted in `localStorage` under `theme`.
+- The root receives `theme-light`, `theme-night`, or `theme-violet`.
 
-## Rule
+## 8. Components and CSS
 
-No feature change is considered complete unless:
-1. `npm run catalogue:update` has been run successfully
-2. `npm run catalogue:check` shows 0 errors
-3. If adding new modules/features, `docs/product-feature-registry.json` is updated
-<!-- END:product-catalogue -->
+- Reusable UI belongs in `src/components/monolith/`.
+- Shared CSS belongs in `src/styles/monolith-foundation.css` or
+  `src/styles/monolith-system.css`.
+- Route CSS must be a CSS Module and may only handle route-specific arrangement. It must not
+  redefine fonts, colors, radii, shadows, buttons, inputs, cards, badges, or themes.
+- Prefer semantic component props over long route-level utility strings.
+- Do not use legacy `Sidebar`, `MainShell`, `DashboardShell`, `WelcomeBar`, `AutoBreadcrumb`,
+  `ds-*`, or old Adarsh page-header patterns in redesigned routes.
+- Do not add a duplicate button, input, badge, card, modal, dropdown, upload, or table primitive.
+  Extend the existing Monolith primitive.
+- Avoid `!important`. Foundation compatibility selectors are the only temporary exception and must
+  be removed when the last legacy consumer is migrated.
+
+## 9. Page-by-page migration workflow
+
+Migrate one complete route (or one tightly coupled route family) at a time.
+
+1. Read the route, its client components, actions, services, permissions, tests, and navigation
+   entry.
+2. Record the route in `docs/monolith-page-migration.md` as `in progress`.
+3. Keep all business behavior and data contracts.
+4. Delete the route's old presentation markup. Do not wrap it in a new card.
+5. Recompose with `Page`, `PageHeader`, `PageSection`, `Panel`, `Card`, form, feedback, and data
+   primitives.
+6. Remove page-local hard-coded colors, typography utilities, decorative heading icons, duplicate
+   navigation, and viewport shell code.
+7. Verify light, night, and violet themes at desktop, tablet, and mobile widths.
+8. Verify loading, empty, error, permission-denied, validation, and populated states.
+9. Update the migration document to `complete`.
+10. Run the required checks below.
+
+A page is not migrated when only its colors, sidebar, or top bar changed.
+
+## 10. Accessibility and interaction
+
+- Maintain semantic heading order.
+- Every input has a visible label or an accessible name.
+- Icon-only controls have an `aria-label`.
+- Interactive elements are reachable and visible with the keyboard.
+- Use `:focus-visible`; do not remove focus indicators.
+- Respect `prefers-reduced-motion`.
+- Touch targets are at least 40px where space allows.
+- Tables retain semantic headers and expose a responsive alternative when horizontal scrolling is
+  not sufficient.
+
+## 11. Required verification
+
+For every migrated route:
+
+```bash
+npx eslint <changed-ts-or-tsx-files>
+npx tsc --noEmit
+npm test -- <focused-test-files>
+npm run build
+npm run catalogue:update
+npm run catalogue:check
+```
+
+Also search the changed route for prohibited patterns:
+
+```bash
+rg -n "font-mono|monolith-numeric|ds-|text-cyan|bg-cyan|#00cec4|#00c4b6|h-screen" <route>
+rg -n "<h[1-6][^>]*>\\s*<" <route>
+```
+
+Database-backed integration tests may require the configured test database. Report unavailable
+infrastructure separately; do not claim those tests passed.
+
+## 12. Product catalogue
+
+Any task that adds, changes, or removes a feature, route, API endpoint, action, service, or database
+model must finish with:
+
+```bash
+npm run catalogue:update
+npm run catalogue:check
+```
+
+Update `docs/product-feature-registry.json` when feature scope or status changes.
+
+## 13. Architecture graph
+
+If `graphify-out/graph.json` exists, use it for cross-module dependency questions and update it
+after significant architecture changes. If it is absent, do not claim it is available; inspect the
+code directly.

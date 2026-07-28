@@ -428,7 +428,7 @@ export function BiometricSyncClient() {
   }
 
   return (
-    <div className="max-w-6xl space-y-6 text-mono-text dark:text-slate-200">
+    <div className="space-y-6 text-mono-text dark:text-slate-200">
       {/* ── Page subheader + connection pill ─────────────────────────────── */}
       <div className="flex items-center justify-between flex-wrap gap-4 select-none">
         <p className="text-xs font-bold text-mono-muted tracking-wider">

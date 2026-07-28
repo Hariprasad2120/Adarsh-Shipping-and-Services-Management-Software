@@ -52,7 +52,7 @@ function BrandMark() {
       <div className="space-y-1">
         <h1
           className="text-[2.6rem] font-bold uppercase tracking-[-0.05em] text-white"
-          style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
+          style={{ fontFamily: 'Inter, "Segoe UI", Arial, sans-serif' }}
         >
           monolith
         </h1>
@@ -258,7 +258,7 @@ function LinkPageContent() {
                     </p>
                     <h2
                       className="text-[2rem] font-semibold tracking-[-0.04em] text-white"
-                      style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
+                      style={{ fontFamily: 'Inter, "Segoe UI", Arial, sans-serif' }}
                     >
                       LINK YOUR ACCOUNT
                     </h2>
@@ -425,7 +425,7 @@ function LinkPageContent() {
                       <div className="space-y-2 text-center">
                         <h3
                           className="text-[1.8rem] font-semibold tracking-[-0.04em] text-white"
-                          style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
+                          style={{ fontFamily: 'Inter, "Segoe UI", Arial, sans-serif' }}
                         >
                           ACCOUNTS LINKED
                         </h3>
@@ -464,7 +464,7 @@ function LinkPageContent() {
                       <div className="space-y-2 text-center">
                         <h3
                           className="text-[1.8rem] font-semibold tracking-[-0.04em] text-white"
-                          style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
+                          style={{ fontFamily: 'Inter, "Segoe UI", Arial, sans-serif' }}
                         >
                           LINK COULD NOT FINISH
                         </h3>

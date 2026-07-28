@@ -13,4 +13,6 @@ export * from "./label";
 export * from "./modal";
 export * from "./native-select";
 export * from "./neon-checkbox";
+export * from "./page";
+export * from "./stat";
 export * from "./warning-indicator-popover";

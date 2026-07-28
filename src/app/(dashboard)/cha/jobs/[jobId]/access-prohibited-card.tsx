@@ -75,7 +75,7 @@ export function AccessProhibitedCard({ message, fallbackHref = "/cha/jobs" }: Ac
 
           <h1
             id="permission-denied-title"
-            className="mt-5 font-[var(--font-geist-sans)] text-xl uppercase tracking-[0.16em] text-mono-text"
+            className="mt-5 text-xl uppercase tracking-[0.16em] text-mono-text"
           >
             Permission Denied
           </h1>

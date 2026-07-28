@@ -1,0 +1,343 @@
+/*
+ * Monolith foundation
+ *
+ * Imported after Tailwind and before route code. This file owns the shared type scale,
+ * application-level page composition, and compatibility rules used while legacy routes are
+ * migrated one by one.
+ */
+
+:root {
+  --mnx-font-sans: Inter, "Segoe UI", Arial, sans-serif;
+  --mnx-font-code: Inter, "Segoe UI", Arial, sans-serif;
+
+  --mnx-type-display: clamp(2.5rem, 5vw, 4.5rem);
+  --mnx-type-page-title: clamp(2rem, 3vw, 3rem);
+  --mnx-type-section-title: 1.75rem;
+  --mnx-type-card-title: 1.125rem;
+  --mnx-type-body: 0.9375rem;
+  --mnx-type-helper: 0.8125rem;
+  --mnx-type-label: 0.6875rem;
+  --mnx-type-button: 0.875rem;
+
+  --mnx-weight-regular: 400;
+  --mnx-weight-medium: 500;
+  --mnx-weight-semibold: 600;
+  --mnx-weight-bold: 700;
+
+  --page-gutter-desktop: 40px;
+  --page-gutter-tablet: 24px;
+  --page-gutter-mobile: 16px;
+  --page-content-width: 1360px;
+  --mnx-content-max: var(--page-content-width);
+  --mnx-page-gap: clamp(1.25rem, 2vw, 2rem);
+  --mnx-section-gap: clamp(1rem, 1.6vw, 1.5rem);
+}
+
+.monolith-app,
+.mnx-dashboard-shell,
+.mnx-dashboard-shell :where(button, input, select, textarea) {
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-synthesis: none;
+  font-optical-sizing: auto;
+}
+
+.mnx-dashboard-shell {
+  font-size: var(--mnx-type-body);
+  font-weight: var(--mnx-weight-regular);
+}
+
+.mnx-dashboard-shell :where(h1, h2, h3, h4, h5, h6) {
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-style: normal;
+  text-wrap: balance;
+}
+
+.mnx-dashboard-shell :where(p, li, td, th, label, input, select, textarea, button) {
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+
+/*
+ * Business figures use the UI family. Mono is reserved for technical identifiers and code.
+ * These compatibility selectors remove the old split-font numeric treatment while routes migrate.
+ */
+.mnx-dashboard-shell :where(
+  .ds-numeric,
+  .monolith-numeric,
+  [data-ui="metric"],
+  [data-ui="stat-value"],
+  [data-ui="business-number"],
+  .mnx-dashboard-mini-stats strong,
+  .mnx-attendance-time strong,
+  .mnx-module-primary-stat > strong,
+  .mnx-module-supporting-stats dd,
+  .mnx-summary-stat > strong,
+  .mnx-org-stat-grid strong
+) {
+  font-family: Inter, "Segoe UI", Arial, sans-serif !important;
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+  font-style: normal;
+}
+
+.mnx-code,
+.mnx-technical-id,
+kbd,
+code,
+pre {
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+
+.mnx-route-content,
+.monolith-page {
+  box-sizing: border-box;
+  width: min(100%, var(--page-content-width));
+  max-width: var(--page-content-width);
+  min-width: 0;
+  margin-inline: auto;
+}
+
+.mnx-page,
+.monolith-page {
+  box-sizing: border-box;
+  width: min(100%, var(--page-content-width));
+  max-width: var(--page-content-width);
+  min-width: 0;
+  display: grid;
+  gap: var(--mnx-page-gap);
+  margin-inline: auto;
+  animation: mnx-page-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.mnx-page[data-page-variant="reading"],
+.monolith-page[data-page-variant="reading"] {
+  max-width: 72rem;
+  margin-inline: auto;
+}
+
+.mnx-page[data-page-variant="form"],
+.monolith-page[data-page-variant="form"] {
+  max-width: 64rem;
+  margin-inline: auto;
+}
+
+.mnx-page-header {
+  min-width: 0;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-block: clamp(0.25rem, 1vw, 0.75rem);
+}
+
+.mnx-page-header-copy {
+  min-width: 0;
+  max-width: 54rem;
+}
+
+.mnx-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 0.65rem;
+  color: var(--mnx-muted);
+  font-size: var(--mnx-type-label);
+  font-weight: var(--mnx-weight-semibold);
+  line-height: 1.3;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.mnx-eyebrow[data-signal="true"]::before {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--mnx-accent);
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--mnx-accent) 16%, transparent);
+  content: "";
+}
+
+.mnx-page-title {
+  margin: 0;
+  color: var(--mnx-text-strong);
+  font-size: var(--mnx-type-page-title);
+  font-weight: var(--mnx-weight-regular);
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.mnx-page-description {
+  max-width: 46rem;
+  margin: 0.8rem 0 0;
+  color: var(--mnx-muted);
+  font-size: var(--mnx-type-body);
+  font-weight: var(--mnx-weight-regular);
+  line-height: 1.6;
+}
+
+.mnx-page-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.mnx-page-section {
+  min-width: 0;
+  display: grid;
+  gap: var(--mnx-section-gap);
+}
+
+.mnx-section-header {
+  min-width: 0;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.mnx-section-header-copy {
+  min-width: 0;
+  max-width: 48rem;
+}
+
+.mnx-section-title {
+  margin: 0;
+  color: var(--mnx-text-strong);
+  font-size: var(--mnx-type-section-title);
+  font-weight: var(--mnx-weight-medium);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+}
+
+.mnx-section-description {
+  margin: 0.55rem 0 0;
+  color: var(--mnx-muted);
+  font-size: var(--mnx-type-helper);
+  font-weight: var(--mnx-weight-regular);
+  line-height: 1.5;
+}
+
+.mnx-section-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.mnx-panel {
+  min-width: 0;
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-lg);
+  background: var(--mnx-surface-gradient);
+  box-shadow: var(--mnx-shadow);
+}
+
+.mnx-panel[data-padding="none"] {
+  padding: 0;
+}
+
+.mnx-panel[data-padding="compact"] {
+  padding: 1rem;
+}
+
+.mnx-panel[data-padding="default"] {
+  padding: clamp(1.25rem, 2vw, 2rem);
+}
+
+.mnx-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 1rem;
+}
+
+.mnx-stat-card {
+  min-width: 0;
+  display: grid;
+  align-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-md);
+  background: var(--mnx-surface-gradient);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.mnx-stat-card:hover {
+  border-color: color-mix(in srgb, var(--mnx-accent) 58%, var(--mnx-border));
+  box-shadow: var(--mnx-theme-shadow-soft);
+  transform: translateY(-2px);
+}
+
+.mnx-stat-label {
+  margin: 0;
+  color: var(--mnx-muted);
+  font-size: var(--mnx-type-label);
+  font-weight: var(--mnx-weight-semibold);
+  line-height: 1.3;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.mnx-stat-value {
+  margin: 0;
+  color: var(--mnx-text-strong);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-size: clamp(2.25rem, 4vw, 3.75rem);
+  font-weight: var(--mnx-weight-medium);
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+}
+
+.mnx-stat-helper {
+  margin: 0;
+  color: var(--mnx-muted);
+  font-size: var(--mnx-type-helper);
+  font-weight: var(--mnx-weight-regular);
+  line-height: 1.45;
+}
+
+.mnx-dashboard-profile h1,
+.mnx-dashboard-section-heading h2,
+.mnx-module-command-header h2,
+.mnx-panel-heading h2 {
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+
+.mnx-dashboard-profile h1 {
+  font-weight: var(--mnx-weight-regular);
+}
+
+.mnx-dashboard-section-heading h2,
+.mnx-module-command-header h2,
+.mnx-panel-heading h2 {
+  font-weight: var(--mnx-weight-medium);
+}
+
+@media (max-width: 48rem) {
+  .mnx-page-header,
+  .mnx-section-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mnx-page-actions,
+  .mnx-section-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mnx-page,
+  .mnx-stat-card {
+    animation: none;
+    transition: none;
+  }
+}

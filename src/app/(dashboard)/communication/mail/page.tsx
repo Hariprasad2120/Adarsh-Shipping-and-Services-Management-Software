@@ -1016,7 +1016,7 @@ export default function MailPortal() {
                                       <head>
                                         <title>Print Email - ${selectedThread.subject}</title>
                                         <style>
-                                          body { font-family: sans-serif; padding: 20px; line-height: 1.5; color: #191c1e; }
+                                          body { font-family: Inter, "Segoe UI", Arial, sans-serif; padding: 20px; line-height: 1.5; color: #191c1e; }
                                           .header { border-bottom: 2px solid #eceef0; padding-bottom: 10px; margin-bottom: 20px; }
                                           .meta { font-size: 12px; color: #404947; margin-bottom: 5px; }
                                           .body { font-size: 14px; white-space: pre-line; }

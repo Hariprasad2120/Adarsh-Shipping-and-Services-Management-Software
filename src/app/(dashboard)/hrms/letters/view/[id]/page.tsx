@@ -106,7 +106,7 @@ export default function EmployeeLetterViewPage({ params }: { params: Promise<{ i
               <FileText className="size-6" />
             </div>
             <div>
-              <h1 className="text-lg font-black text-mono-text uppercase tracking-widest" style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}>
+              <h1 className="text-lg font-black text-mono-text uppercase tracking-widest" style={{ fontFamily: 'Inter, "Segoe UI", Arial, sans-serif' }}>
                 Letters & Contracts Portal
               </h1>
               <p className="text-xs text-mono-muted font-bold mt-0.5 uppercase tracking-wider">

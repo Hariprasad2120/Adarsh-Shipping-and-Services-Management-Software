@@ -1,6 +1,8 @@
+import styles from "./dashboard.module.css";
+
 export default function DashboardLoading() {
   return (
-    <div className="mnx-dashboard-page" aria-label="Loading dashboard">
+    <div className={`mnx-dashboard-page ${styles.page}`} aria-label="Loading dashboard">
       <section className="mnx-dashboard-skeleton mnx-dashboard-skeleton-hero">
         <span /><span /><span /><span />
       </section>

@@ -15,7 +15,7 @@ export default async function DataToolsPage() {
   await requirePermission(session.user.id, "admin.org.manage");
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="space-y-6">
       <div className="space-y-1">
         <p className="text-sm text-mono-muted dark:text-mono-muted font-medium">
           Manage system data imports, reset operations, and onboarding configurations.

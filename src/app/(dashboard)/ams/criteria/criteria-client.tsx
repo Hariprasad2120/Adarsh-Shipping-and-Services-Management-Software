@@ -1174,7 +1174,7 @@ function SandboxEvaluator({ topics, phase }: { topics: Topic[]; phase: Phase }) 
                   onClick={() => {
                     const pw = window.open("", "_blank");
                     if (pw) {
-                      pw.document.write(`<html><head><title>Appraisal Report</title><style>body{font-family:system-ui,sans-serif;padding:40px;color:#111827;line-height:1.6}h1{border-bottom:2px solid #F9D972;padding-bottom:8px}h2,h3{color:#374151;margin-top:24px}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{border:1px solid #d1d5db;padding:10px;text-align:left;font-size:13px}th{background:#f9fafb}</style></head><body><pre>${generateReport().replace(/</g, "&lt;")}</pre></body></html>`);
+                      pw.document.write(`<html><head><title>Appraisal Report</title><style>body{font-family:Inter,"Segoe UI",Arial,sans-serif;padding:40px;color:#111827;line-height:1.6}h1{border-bottom:2px solid #F9D972;padding-bottom:8px}h2,h3{color:#374151;margin-top:24px}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{border:1px solid #d1d5db;padding:10px;text-align:left;font-size:13px}th{background:#f9fafb}</style></head><body><pre>${generateReport().replace(/</g, "&lt;")}</pre></body></html>`);
                       pw.document.close();
                       pw.print();
                     }

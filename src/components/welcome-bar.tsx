@@ -358,7 +358,7 @@ export function AppHeader({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
                 className="text-3xl md:text-5xl font-black uppercase tracking-wider text-white mt-4 mb-4 select-none"
-                style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
+                style={{ fontFamily: 'Inter, "Segoe UI", Arial, sans-serif' }}
               >
                 {userName}
               </motion.h2>

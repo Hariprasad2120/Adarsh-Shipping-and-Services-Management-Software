@@ -49,7 +49,7 @@ export default async function CommunicationLayout({
             </span>
           </div>
 
-          <h1 className="monolith-h1 font-family-[var(--font-geist-sans)] text-mono-text">
+          <h1 className="monolith-h1 text-mono-text">
             Connect Your Google Workspace
           </h1>
 
